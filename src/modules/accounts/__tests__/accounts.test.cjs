@@ -1,0 +1,266 @@
+/* Run with: node --test src/modules/accounts/__tests__/accounts.test.cjs
+ * Real SQLite + the installed Expo Drizzle driver; only the native SQLite bridge
+ * is adapted to Node so production repositories/services execute unchanged.
+ */
+const { test, beforeEach, afterEach } = require("node:test");
+const assert = require("node:assert/strict");
+const { DatabaseSync } = require("node:sqlite");
+const fs = require("node:fs");
+const path = require("node:path");
+const os = require("node:os");
+const Module = require("node:module");
+const ts = require("typescript");
+const root = path.resolve(__dirname, "../../..");
+let sqlite;
+let database;
+const originalResolve = Module._resolveFilename;
+const originalLoad = Module._load;
+Module._resolveFilename = function (request, parent, ...rest) {
+  return originalResolve.call(this, request.startsWith("@/") ? path.join(root, request.slice(2)) : request, parent, ...rest);
+};
+Module._load = function (request, ...args) {
+  if (request === "@/infrastructure/database/client") return { get db() { return database; } };
+  if (request === "expo-sqlite") return {};
+  return originalLoad.call(this, request, ...args);
+};
+require.extensions[".ts"] = (module, filename) => {
+  const code = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+    fileName: filename,
+  }).outputText;
+  module._compile(code, filename);
+};
+const { drizzle } = require("drizzle-orm/expo-sqlite");
+const schema = require("@/infrastructure/database/schema");
+const repo = require("@/modules/accounts/repositories/accounts.repository");
+const types = require("@/modules/accounts/repositories/account-types.repository");
+const { saveAccount } = require("@/modules/accounts/services/save-account.service");
+const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
+const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
+const { setAccountTypeArchived } = require("@/modules/accounts/services/archive-account-type.service");
+const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
+const { moveAccount, moveAccountType } = require("@/modules/accounts/services/reorder-accounts.service");
+const input = require("@/modules/accounts/utils/account-input");
+const { openingSummary, formatOpeningTotal } = require("@/modules/accounts/utils/opening-summary");
+const { accountColor, accountIcon } = require("@/modules/accounts/constants/account-appearance.constants");
+const presets = require("@/constants/theme/presets");
+const system = require("@/modules/accounts/constants/account-types.constants").SYSTEM_ACCOUNT_TYPE_IDS;
+const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
+const migrations = journal.entries.map((entry) => ({
+  sql: fs.readFileSync(path.join(root, "../drizzle", entry.tag + ".sql"), "utf8").split("--> statement-breakpoint"),
+  folderMillis: entry.when, hash: "", bps: true,
+}));
+
+function connect(filename = ":memory:") {
+  sqlite = new DatabaseSync(filename);
+  sqlite.exec("PRAGMA foreign_keys=ON");
+  database = drizzle({
+    prepareSync(query) {
+      return {
+        executeSync(params) {
+          const stmt = sqlite.prepare(query);
+          if (stmt.columns().length) {
+            const rows = stmt.all(...params);
+            return { getAllSync: () => rows, getFirstSync: () => rows[0] ?? null };
+          }
+          const result = stmt.run(...params);
+          return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
+        },
+        executeForRawResultSync(params) {
+          const stmt = sqlite.prepare(query);
+          stmt.setReturnArrays(true);
+          return { getAllSync: () => stmt.all(...params) };
+        },
+      };
+    },
+  }, { schema });
+}
+function migrate(selected = migrations) { database.dialect.migrate(selected, database.session); }
+const typeInput = (name, accountGroup = "asset") => ({ name, accountGroup, iconKey: "wallet", color: "teal" });
+const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account", openingAmount = "1000.50") =>
+  ({ name, accountTypeId, openingAmount, openingDate: "2026-09-13" });
+beforeEach(() => { connect(); migrate(); });
+afterEach(() => sqlite.close());
+
+test("fresh migrations create exactly the three protected types and run idempotently", () => {
+  assert.equal(types.listAccountTypes().length, 3);
+  migrate();
+  assert.equal(types.listAccountTypes().length, 3);
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+test("decimal input is exact, signed, and rejects malformed or unsafe amounts", () => {
+  for (const [value, expected] of [["1000.50", 100050], ["-1000.50", -100050], ["0", 0], ["-0.00", 0], ["1.2", 120], ["0.29", 29]]) {
+    assert.equal(input.parseOpeningAmount(value), expected);
+    assert.equal(input.parseOpeningAmount(input.openingAmountInput(expected)), expected);
+  }
+  assert.equal(input.parseOpeningAmount("90071992547409.91"), Number.MAX_SAFE_INTEGER);
+  for (const value of ["", "1.001", "1e3", "NaN", "Infinity", "1,000", "1.", "90071992547409.92", "--1"]) {
+    assert.throws(() => input.parseOpeningAmount(value), undefined, value);
+  }
+});
+test("opening dates validate calendar days and round-trip as local dates", () => {
+  assert.equal(input.localDateInput(input.parseOpeningDate("2024-02-29")), "2024-02-29");
+  for (const value of ["2025-02-29", "2026-13-01", "2026-04-31", "invalid"]) assert.throws(() => input.parseOpeningDate(value));
+});
+test("create, edit, archive and restore preserve IDs, signed amounts and creation timestamps", () => {
+  const id = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD, "Credit card", "-1000.50"));
+  const original = repo.findAccountById(id);
+  assert.equal(original.openingBalanceMinorUnits, -100050);
+  assert.equal(original.currencyCode, "PHP");
+  saveAccount(accountInput(system.LIABILITY_CREDIT_CARD, "Renamed", "500"), id);
+  assert.equal(repo.findAccountById(id).openingBalanceMinorUnits, 50000);
+  assert.equal(repo.findAccountById(id).createdAt.getTime(), original.createdAt.getTime());
+  setAccountArchived(id, true);
+  assert.equal(repo.findAccountById(id).isArchived, true);
+  setAccountArchived(id, false);
+  assert.equal(repo.findAccountById(id).isArchived, false);
+});
+test("name-only account edits preserve the existing opening timestamp", () => {
+  const id = saveAccount(accountInput());
+  const exactDate = new Date(2026, 8, 13, 14, 22, 33);
+  repo.updateAccountRecord(id, { openingBalanceAt: exactDate });
+  saveAccount(accountInput(undefined, "New name"), id);
+  assert.equal(repo.findAccountById(id).openingBalanceAt.getTime(), exactDate.getTime());
+});
+test("types have immutable groups and case-insensitive unique names including archived types", () => {
+  const id = saveAccountType(typeInput("Bank"));
+  setAccountTypeArchived(id, true);
+  assert.throws(() => saveAccountType(typeInput(" bank ")), /already exists/);
+  assert.throws(() => saveAccountType(typeInput("Bank", "liability"), id), /group cannot/);
+  assert.ok(saveAccountType(typeInput("Bank", "liability")));
+  setAccountTypeArchived(id, false);
+  saveAccountType({ ...typeInput("Banks"), color: "purple" }, id);
+  assert.equal(types.findAccountTypeById(id).name, "Banks");
+});
+test("system types protect names, groups, deletion and archival but allow appearance changes", () => {
+  for (const id of Object.values(system)) {
+    const type = types.findAccountTypeById(id);
+    assert.throws(() => deleteAccountType(id), /cannot be deleted/);
+    assert.throws(() => setAccountTypeArchived(id, true), /cannot be archived/);
+    assert.throws(() => saveAccountType(typeInput("Changed", type.accountGroup), id), /names cannot/);
+    saveAccountType({ ...typeInput(type.name, type.accountGroup), color: "pink" }, id);
+    assert.equal(types.findAccountTypeById(id).color, "pink");
+  }
+});
+test("archived types stay linked but cannot be newly assigned", () => {
+  const typeId = saveAccountType(typeInput("Archived bank"));
+  const id = saveAccount(accountInput(typeId));
+  setAccountTypeArchived(typeId, true);
+  assert.equal(repo.findAccountById(id).isArchived, false);
+  assert.throws(() => saveAccount(accountInput(typeId, "New account")), /active account type/);
+  saveAccount(accountInput(typeId, "Existing renamed"), id);
+  assert.equal(repo.listAccounts()[0].accountType.isArchived, true);
+  assert.throws(() => saveAccount(accountInput("missing")), /no longer exists/);
+});
+test("deleting a custom type moves active and archived accounts only to its matching Others", () => {
+  for (const group of ["asset", "liability"]) {
+    const typeId = saveAccountType(typeInput("Custom", group));
+    const active = saveAccount(accountInput(typeId));
+    const archived = saveAccount(accountInput(typeId, "Archived", "-20"));
+    setAccountArchived(archived, true);
+    const result = deleteAccountType(typeId);
+    const fallback = group === "asset" ? system.ASSET_OTHERS : system.LIABILITY_OTHERS;
+    assert.equal(result.reassignedAccountsCount, 2);
+    assert.equal(repo.findAccountById(active).accountTypeId, fallback);
+    assert.equal(repo.findAccountById(archived).accountTypeId, fallback);
+    assert.equal(repo.findAccountById(archived).openingBalanceMinorUnits, -2000);
+    assert.equal(repo.findAccountById(archived).isArchived, true);
+    assert.equal(types.findAccountTypeById(typeId), null);
+  }
+});
+test("failed deletion rolls back reassignment and timestamps using the actual synchronous driver", () => {
+  const typeId = saveAccountType(typeInput("Keep"));
+  const id = saveAccount(accountInput(typeId));
+  const before = repo.findAccountById(id);
+  sqlite.exec("CREATE TRIGGER deny_type_delete BEFORE DELETE ON account_types BEGIN SELECT RAISE(ABORT, 'forced failure'); END");
+  assert.throws(() => deleteAccountType(typeId), /forced failure/);
+  assert.deepEqual(repo.findAccountById(id), before);
+  assert.ok(types.findAccountTypeById(typeId));
+  assert.equal(sqlite.isTransaction, false);
+});
+test("invalid fallback aborts without reclassification or deletion", () => {
+  const typeId = saveAccountType(typeInput("Loan", "liability"));
+  const id = saveAccount(accountInput(typeId));
+  sqlite.prepare("UPDATE account_types SET account_group='asset', name='Wrong fallback' WHERE id=?").run(system.LIABILITY_OTHERS);
+  assert.throws(() => deleteAccountType(typeId), /Others type is unavailable/);
+  assert.equal(repo.findAccountById(id).accountTypeId, typeId);
+});
+test("account ordering stays within type and archive state and is atomic", () => {
+  const first = saveAccount(accountInput(undefined, "First"));
+  const second = saveAccount(accountInput(undefined, "Second"));
+  const liability = saveAccount(accountInput(system.LIABILITY_OTHERS, "Debt"));
+  moveAccount(second, -1);
+  assert.deepEqual(repo.findAccountsByAccountTypeId(system.ASSET_OTHERS).map((a) => a.id), [second, first]);
+  assert.equal(repo.findAccountById(liability).sortOrder, 0);
+  const before = repo.listAccounts();
+  sqlite.exec("CREATE TRIGGER deny_account_order BEFORE UPDATE OF sort_order ON accounts WHEN NEW.name='First' BEGIN SELECT RAISE(ABORT, 'order failure'); END");
+  assert.throws(() => moveAccount(first, -1), /order failure/);
+  assert.deepEqual(repo.listAccounts(), before);
+});
+test("type ordering stays within group", () => {
+  const first = saveAccountType(typeInput("First"));
+  const second = saveAccountType(typeInput("Second"));
+  const originalLiability = types.findAccountTypeById(system.LIABILITY_OTHERS);
+  moveAccountType(second, -1);
+  assert.ok(types.listAccountTypes().findIndex((t) => t.id === second) < types.listAccountTypes().findIndex((t) => t.id === first));
+  assert.deepEqual(types.findAccountTypeById(system.LIABILITY_OTHERS), originalLiability);
+});
+test("non-PHP data is preserved, read-only for opening edits, and excluded from PHP totals", () => {
+  const id = saveAccount(accountInput());
+  repo.updateAccountRecord(id, { currencyCode: "USD" });
+  saveAccount(accountInput(undefined, "Dollar account"), id);
+  assert.equal(repo.findAccountById(id).currencyCode, "USD");
+  assert.throws(() => saveAccount(accountInput(undefined, "Dollar account", "2000"), id), /read-only/);
+  assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 0n, liabilities: 0n, excluded: 1 });
+});
+test("summary keeps liability signs, excludes archives, and supports totals above the safe integer limit", () => {
+  saveAccount(accountInput(system.LIABILITY_OTHERS, "Debt", "-1000.50"));
+  saveAccount(accountInput(system.LIABILITY_OTHERS, "Credit", "500"));
+  const archived = saveAccount(accountInput());
+  setAccountArchived(archived, true);
+  saveAccount(accountInput(undefined, "Large 1", "90071992547409.91"));
+  saveAccount(accountInput(undefined, "Large 2", "90071992547409.91"));
+  assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 18014398509481982n, liabilities: -50050n, excluded: 0 });
+  assert.equal(formatOpeningTotal(-50050n), "-₱500.50");
+});
+test("appearance keys resolve across every established theme with safe fallbacks", () => {
+  const themes = Object.values(presets).flatMap((value) => Array.isArray(value) ? value : [value])
+    .filter((value) => value && value.colors && value.id);
+  assert.ok(themes.length >= 6);
+  for (const theme of themes) {
+    assert.equal(accountColor(theme, "teal"), theme.colors.categorical.teal);
+    assert.equal(accountColor(theme, "#bad"), theme.colors.categorical.slate);
+  }
+  assert.equal(accountIcon("unknown"), accountIcon(null));
+});
+test("foreign keys reject direct deletion of an in-use account type", () => {
+  saveAccount(accountInput());
+  assert.throws(() => types.deleteAccountTypeById(system.ASSET_OTHERS), /FOREIGN KEY/);
+});
+test("saved accounts survive closing and reopening a real database file", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "finance-accounts-test-"));
+  const filename = path.join(directory, "accounts.sqlite");
+  sqlite.close();
+  connect(filename);
+  try {
+    migrate();
+    const id = saveAccount(accountInput(undefined, "Persistent"));
+    sqlite.close();
+    connect(filename);
+    migrate();
+    assert.equal(repo.findAccountById(id).name, "Persistent");
+    assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+  } finally {
+    sqlite.close();
+    fs.rmSync(directory, { recursive: true });
+    connect();
+  }
+});
+test("existing current-schema accounts and linked transactions remain unchanged on startup", () => {
+  const id = saveAccount(accountInput());
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('txn', ?, 'expense', 500, 1, 1, 1)").run(id);
+  const before = repo.findAccountById(id);
+  migrate();
+  assert.deepEqual(repo.findAccountById(id), before);
+  assert.equal(sqlite.prepare("SELECT count(*) AS total FROM transactions").get().total, 1);
+});
