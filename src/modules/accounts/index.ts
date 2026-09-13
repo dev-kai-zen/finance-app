@@ -4,3 +4,4 @@ export * from "./repositories/account-types.repository";
 export * from "./repositories/accounts.repository";
 export * from "./services/delete-account-type.service";
 export * from "./types/account.types";
+export { AccountsScreen } from "./screens/accounts-screen";
