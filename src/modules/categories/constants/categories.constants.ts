@@ -1,0 +1,138 @@
+import type { CategoryInput } from "../types/category.types";
+
+export const CATEGORY_COLOR_KEYS = [
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "purple",
+  "pink",
+  "orange",
+  "amber",
+  "slate",
+] as const;
+
+export const CATEGORY_ICONS = [
+  { key: "utensils", label: "Dining" },
+  { key: "shopping-cart", label: "Groceries" },
+  { key: "zap", label: "Utilities" },
+  { key: "car", label: "Transport" },
+  { key: "tag", label: "Shopping" },
+  { key: "heart-pulse", label: "Health" },
+  { key: "film", label: "Entertainment" },
+  { key: "wallet", label: "Salary" },
+  { key: "briefcase", label: "Business" },
+  { key: "trending-up", label: "Investment" },
+  { key: "gift", label: "Gift" },
+  { key: "more-horizontal", label: "Others" },
+] as const;
+
+export const DEFAULT_SEED_CATEGORIES: (CategoryInput & { id: string; isSystem: boolean })[] = [
+  // Expense Categories
+  {
+    id: "cat_exp_food",
+    name: "Food & Dining",
+    type: "expense",
+    color: "orange",
+    icon: "utensils",
+    isSystem: true,
+  },
+  {
+    id: "cat_exp_groceries",
+    name: "Groceries & Market",
+    type: "expense",
+    color: "green",
+    icon: "shopping-cart",
+    isSystem: true,
+  },
+  {
+    id: "cat_exp_utilities",
+    name: "Utilities & Bills",
+    type: "expense",
+    color: "amber",
+    icon: "zap",
+    isSystem: true,
+  },
+  {
+    id: "cat_exp_transport",
+    name: "Transportation & Fuel",
+    type: "expense",
+    color: "blue",
+    icon: "car",
+    isSystem: true,
+  },
+  {
+    id: "cat_exp_shopping",
+    name: "Shopping & Retail",
+    type: "expense",
+    color: "pink",
+    icon: "tag",
+    isSystem: false,
+  },
+  {
+    id: "cat_exp_health",
+    name: "Health & Medical",
+    type: "expense",
+    color: "indigo",
+    icon: "heart-pulse",
+    isSystem: false,
+  },
+  {
+    id: "cat_exp_entertainment",
+    name: "Entertainment & Leisure",
+    type: "expense",
+    color: "purple",
+    icon: "film",
+    isSystem: false,
+  },
+  {
+    id: "cat_exp_others",
+    name: "Other Expenses",
+    type: "expense",
+    color: "slate",
+    icon: "more-horizontal",
+    isSystem: true,
+  },
+
+  // Income Categories
+  {
+    id: "cat_inc_salary",
+    name: "Salary & Wages",
+    type: "income",
+    color: "green",
+    icon: "wallet",
+    isSystem: true,
+  },
+  {
+    id: "cat_inc_freelance",
+    name: "Business & Freelance",
+    type: "income",
+    color: "teal",
+    icon: "briefcase",
+    isSystem: false,
+  },
+  {
+    id: "cat_inc_investments",
+    name: "Investments & Dividends",
+    type: "income",
+    color: "blue",
+    icon: "trending-up",
+    isSystem: false,
+  },
+  {
+    id: "cat_inc_gifts",
+    name: "Gifts & Grants",
+    type: "income",
+    color: "amber",
+    icon: "gift",
+    isSystem: false,
+  },
+  {
+    id: "cat_inc_others",
+    name: "Other Income",
+    type: "income",
+    color: "slate",
+    icon: "more-horizontal",
+    isSystem: true,
+  },
+];

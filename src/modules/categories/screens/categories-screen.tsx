@@ -1,5 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -8,59 +9,99 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
+import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
-
-interface CategoryItem {
-  id: string;
-  name: string;
-  type: "expense" | "income";
-  colorKey: keyof AppTheme["colors"]["categorical"];
-  itemCount: number;
-}
-
-const INITIAL_CATEGORIES: CategoryItem[] = [
-  { id: "c1", name: "Salary & Wages", type: "income", colorKey: "green", itemCount: 12 },
-  { id: "c2", name: "Client Retainers", type: "income", colorKey: "teal", itemCount: 8 },
-  { id: "c3", name: "Investments & Dividends", type: "income", colorKey: "blue", itemCount: 4 },
-  { id: "c4", name: "Groceries & Market", type: "expense", colorKey: "lime", itemCount: 28 },
-  { id: "c5", name: "Electric & Water Utilities", type: "expense", colorKey: "amber", itemCount: 14 },
-  { id: "c6", name: "Dining & Food Delivery", type: "expense", colorKey: "orange", itemCount: 32 },
-  { id: "c7", name: "Transportation & Fuel", type: "expense", colorKey: "indigo", itemCount: 19 },
-  { id: "c8", name: "Health & Medical", type: "expense", colorKey: "pink", itemCount: 6 },
-  { id: "c9", name: "Subscriptions & SaaS", type: "expense", colorKey: "purple", itemCount: 9 },
-];
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { CategoryRow } from "../components/category-row";
+import { CategoryFormModal } from "../components/category-form-modal";
+import { useCategories } from "../hooks/use-categories";
+import type { Category, CategoryType } from "../types/category.types";
 
 export function CategoriesScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+
+  const {
+    categories,
+    loading,
+    saving,
+    error,
+    refresh,
+    saveCategory,
+    deleteCategory,
+  } = useCategories();
+
   const [selectedType, setSelectedType] = useState<"all" | "expense" | "income">("all");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null);
 
-  const incomeCategories = INITIAL_CATEGORIES.filter((c) => c.type === "income");
-  const expenseCategories = INITIAL_CATEGORIES.filter((c) => c.type === "expense");
+  const incomeCategories = categories.filter((c) => c.type === "income");
+  const expenseCategories = categories.filter((c) => c.type === "expense");
 
-  const handleAddCategory = () => {
+  const displayedCategories = categories.filter((c) => {
+    if (selectedType === "all") return true;
+    return c.type === selectedType;
+  });
+
+  const handleOpenCreate = () => {
+    setCategoryToEdit(null);
+    setModalVisible(true);
+  };
+
+  const handleOpenEdit = (category: Category) => {
+    setCategoryToEdit(category);
+    setModalVisible(true);
+  };
+
+  const handleDelete = (category: Category) => {
+    if (category.isSystem) {
+      if (Platform.OS === "web") {
+        window.alert("Default system categories cannot be deleted.");
+      } else {
+        Alert.alert("Protected Category", "Default system categories cannot be deleted.");
+      }
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete "${category.name}"? Any linked transactions will be safely reassigned to "Others".`;
+
     if (Platform.OS === "web") {
-      window.alert("Add Category triggered. Ready for form modal integration.");
+      if (window.confirm(confirmMessage)) {
+        void deleteCategory(category.id);
+      }
     } else {
-      Alert.alert("Add Category", "Add Category triggered. Ready for form modal integration.");
+      Alert.alert("Delete Category", confirmMessage, [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => void deleteCategory(category.id),
+        },
+      ]);
     }
   };
 
   return (
     <PageContainer
+      floatingAction={
+        <FloatingActionButton
+          accessibilityLabel="Add New Category"
+          onPress={handleOpenCreate}
+        />
+      }
       header={
         <PageHeader
           breadcrumb="Kaizen Finance / Categories"
           primaryAction={{
             label: "+ Add Category",
-            onPress: handleAddCategory,
+            onPress: handleOpenCreate,
           }}
-          subtitle="Classify your financial inflows and outflows for organized budgeting."
+          subtitle="Organize your inflows and outflows with theme-driven categorical indicators."
           title="Categories"
         />
       }
@@ -69,10 +110,13 @@ export function CategoriesScreen() {
         {/* Filter Pills */}
         <View style={styles.filterRow}>
           <Pressable
-            accessibilityLabel="Filter All Categories"
+            accessibilityLabel={`Filter All Categories (${categories.length})`}
             accessibilityRole="button"
             onPress={() => setSelectedType("all")}
-            style={[styles.filterPill, selectedType === "all" && styles.filterPillActive]}
+            style={[
+              styles.filterPill,
+              selectedType === "all" && styles.filterPillActive,
+            ]}
           >
             <Text
               style={[
@@ -80,26 +124,12 @@ export function CategoriesScreen() {
                 selectedType === "all" && styles.filterPillTextActive,
               ]}
             >
-              All ({INITIAL_CATEGORIES.length})
+              All ({categories.length})
             </Text>
           </Pressable>
+
           <Pressable
-            accessibilityLabel="Filter Income Categories"
-            accessibilityRole="button"
-            onPress={() => setSelectedType("income")}
-            style={[styles.filterPill, selectedType === "income" && styles.filterPillActive]}
-          >
-            <Text
-              style={[
-                styles.filterPillText,
-                selectedType === "income" && styles.filterPillTextActive,
-              ]}
-            >
-              Income ({incomeCategories.length})
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Filter Expense Categories"
+            accessibilityLabel={`Filter Expense Categories (${expenseCategories.length})`}
             accessibilityRole="button"
             onPress={() => setSelectedType("expense")}
             style={[
@@ -113,87 +143,101 @@ export function CategoriesScreen() {
                 selectedType === "expense" && styles.filterPillTextActive,
               ]}
             >
-              Expenses ({expenseCategories.length})
+              Expense ({expenseCategories.length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel={`Filter Income Categories (${incomeCategories.length})`}
+            accessibilityRole="button"
+            onPress={() => setSelectedType("income")}
+            style={[
+              styles.filterPill,
+              selectedType === "income" && styles.filterPillActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.filterPillText,
+                selectedType === "income" && styles.filterPillTextActive,
+              ]}
+            >
+              Income ({incomeCategories.length})
             </Text>
           </Pressable>
         </View>
 
-        {/* Income Categories Section */}
-        {(selectedType === "all" || selectedType === "income") && (
-          <View style={styles.groupSection}>
-            <View style={styles.groupHeader}>
-              <Text style={styles.groupTitle}>INCOME CATEGORIES</Text>
-              <Text style={styles.groupCount}>{incomeCategories.length} categories</Text>
-            </View>
-
-            <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-              {incomeCategories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))}
-            </View>
+        {error ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
-        )}
+        ) : null}
 
-        {/* Expense Categories Section */}
-        {(selectedType === "all" || selectedType === "expense") && (
-          <View style={styles.groupSection}>
-            <View style={styles.groupHeader}>
-              <Text style={styles.groupTitle}>EXPENSE CATEGORIES</Text>
-              <Text style={styles.groupCount}>{expenseCategories.length} categories</Text>
-            </View>
-
-            <View style={[styles.grid, isDesktop && styles.gridDesktop]}>
-              {expenseCategories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
-              ))}
-            </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator color={theme.colors.primary} size="large" />
+            <Text style={styles.loadingText}>Loading categories from SQLite...</Text>
+          </View>
+        ) : displayedCategories.length === 0 ? (
+          <PageEmptyState
+            actionLabel="+ Add Your First Category"
+            description="Create custom income or expense categories to organize your financial transactions."
+            onAction={handleOpenCreate}
+            title="No Categories Found"
+          />
+        ) : (
+          <View style={[styles.categoriesGrid, isDesktop && styles.categoriesGridDesktop]}>
+            {displayedCategories.map((category) => (
+              <View
+                key={category.id}
+                style={[styles.categoryWrapper, isDesktop && styles.categoryWrapperDesktop]}
+              >
+                <CategoryRow
+                  category={category}
+                  onDelete={handleDelete}
+                  onEdit={handleOpenEdit}
+                />
+              </View>
+            ))}
           </View>
         )}
       </View>
+
+      {/* Category Create/Edit Modal */}
+      <CategoryFormModal
+        categoryToEdit={categoryToEdit}
+        error={error}
+        initialType={selectedType === "all" ? "expense" : (selectedType as CategoryType)}
+        onClose={() => setModalVisible(false)}
+        onSave={saveCategory}
+        pending={saving}
+        visible={modalVisible}
+      />
     </PageContainer>
-  );
-}
-
-function CategoryCard({ category }: { category: CategoryItem }) {
-  const styles = useThemeStyles(createStyles);
-  const colorToken = useThemeStyles((theme) => theme.colors.categorical[category.colorKey]);
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardLeft}>
-        <View style={[styles.colorDot, { backgroundColor: colorToken }]} />
-        <View>
-          <Text style={styles.categoryName}>{category.name}</Text>
-          <Text style={styles.categoryCount}>{category.itemCount} transactions</Text>
-        </View>
-      </View>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{category.type}</Text>
-      </View>
-    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      gap: theme.spacing.xl,
+      gap: theme.spacing.lg,
     },
     filterRow: {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
     },
     filterPill: {
       alignItems: "center",
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
+      borderRadius: 20,
       borderWidth: 1,
       justifyContent: "center",
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
+      minHeight: 40,
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.xs,
+      paddingVertical: 6,
     },
     filterPillActive: {
       backgroundColor: theme.colors.primary,
@@ -201,88 +245,47 @@ function createStyles(theme: AppTheme) {
     },
     filterPillText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontSize: 13,
+      fontWeight: "600",
     },
     filterPillTextActive: {
       color: theme.colors.onPrimary,
     },
-    groupSection: {
+    errorBanner: {
+      backgroundColor: `${theme.colors.danger}15`,
+      borderColor: theme.colors.danger,
+      borderRadius: 12,
+      borderWidth: 1,
+      padding: theme.spacing.md,
+    },
+    errorText: {
+      color: theme.colors.danger,
+      fontSize: 14,
+      fontWeight: "500",
+    },
+    loadingContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 48,
+      gap: 12,
+    },
+    loadingText: {
+      color: theme.colors.textSecondary,
+      fontSize: 14,
+    },
+    categoriesGrid: {
+      flexDirection: "column",
       gap: theme.spacing.md,
     },
-    groupHeader: {
-      alignItems: "center",
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingBottom: theme.spacing.sm,
-    },
-    groupTitle: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.8,
-    },
-    groupCount: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    grid: {
-      flexDirection: "column",
-      gap: theme.spacing.sm,
-    },
-    gridDesktop: {
+    categoriesGridDesktop: {
       flexDirection: "row",
       flexWrap: "wrap",
     },
-    card: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flex: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      minHeight: 56,
-      minWidth: 260,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      ...theme.shadows.card,
+    categoryWrapper: {
+      width: "100%",
     },
-    cardLeft: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.md,
-    },
-    colorDot: {
-      borderRadius: 5,
-      height: 10,
-      width: 10,
-    },
-    categoryName: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    categoryCount: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      marginTop: 2,
-    },
-    badge: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.small,
-      paddingHorizontal: theme.spacing.xs,
-      paddingVertical: 2,
-    },
-    badgeText: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.medium,
-      textTransform: "capitalize",
+    categoryWrapperDesktop: {
+      width: "48.5%",
     },
   });
 }
