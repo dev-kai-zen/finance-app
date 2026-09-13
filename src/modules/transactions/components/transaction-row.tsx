@@ -3,29 +3,32 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { formatCurrency } from "@/utils/currency";
+import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 
 export interface TransactionRowProps {
   transaction: TransactionListItem;
+  onPress?: (tx: TransactionListItem) => void;
   onDelete?: (id: string) => void;
-  isLast?: boolean;
 }
 
 export function TransactionRow({
   transaction,
+  onPress,
   onDelete,
-  isLast = false,
 }: TransactionRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
+  const isPositive = transaction.amountCents > 0;
 
   const categoricalColor =
     transaction.categoryColor && transaction.categoryColor in theme.colors.categorical
-      ? theme.colors.categorical[transaction.categoryColor as keyof AppTheme["colors"]["categorical"]]
+      ? theme.colors.categorical[
+          transaction.categoryColor as keyof AppTheme["colors"]["categorical"]
+        ]
       : isIncome
         ? theme.colors.success
         : isTransfer
@@ -40,170 +43,141 @@ export function TransactionRow({
     ? new Date(transaction.occurredAt).toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
-        year: "numeric",
+      })
+    : "";
+
+  const formattedTime = transaction.occurredAt
+    ? new Date(transaction.occurredAt).toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
       })
     : "";
 
   const title =
+    transaction.name ||
     transaction.note ||
     (isTransfer
       ? `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
-  const amountSign = isIncome ? "+" : isTransfer ? "" : "-";
-  const formattedAmount = `${amountSign}${formatCurrency(
-    transaction.amountCents,
-    transaction.accountCurrency ?? "PHP",
-    true,
-  )}`;
+  const phpResult = formatPhpCurrency(transaction.amountCents, {
+    showPositiveSign: true,
+    positiveColor: theme.colors.success,
+    negativeColor: theme.colors.danger,
+    zeroColor: theme.colors.textMuted,
+  });
+
+  const formattedAmount = isTransfer
+    ? formatCurrency(
+        Math.abs(transaction.amountCents),
+        transaction.accountCurrency ?? "PHP",
+        false,
+      )
+    : phpResult.formatted;
+
+  const amountColor = isTransfer ? theme.colors.info : phpResult.color;
+
+  const routeOrCategory = isTransfer
+    ? `${transaction.accountName ?? "Account"} → ${transaction.transferAccountName ?? "Destination"}`
+    : `${transaction.categoryName || "Uncategorized"} • ${transaction.accountName ?? "Account"}`;
 
   return (
-    <View style={[styles.row, !isLast && styles.rowBorder]}>
-      <View style={styles.leftCol}>
-        {/* Icon Badge */}
-        <View
-          style={[
-            styles.iconBadge,
-            {
-              backgroundColor: `${categoricalColor}20`,
-              borderColor: `${categoricalColor}45`,
-            },
-          ]}
-        >
-          <IconHelper
-            color={categoricalColor}
-            name={iconName}
-            size={18}
-          />
-        </View>
-
-        {/* Info Column */}
-        <View style={styles.infoCol}>
-          <Text numberOfLines={1} style={styles.titleText}>
-            {title}
-          </Text>
-
-          <View style={styles.metaRow}>
-            {isTransfer ? (
-              <Text numberOfLines={1} style={styles.metaAccount}>
-                {transaction.accountName} → {transaction.transferAccountName}
-              </Text>
-            ) : (
-              <>
-                <Text style={styles.metaCategory}>
-                  {transaction.categoryName || "Uncategorized"}
-                </Text>
-                <Text style={styles.metaDot}>•</Text>
-                <Text numberOfLines={1} style={styles.metaAccount}>
-                  {transaction.accountName}
-                </Text>
-              </>
-            )}
-            <Text style={styles.metaDot}>•</Text>
-            <Text style={styles.metaDate}>{formattedDate}</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Right Column: Amount & Delete Button */}
-      <View style={styles.rightCol}>
-        <Text
-          style={[
-            styles.amountText,
-            isIncome && styles.amountIncome,
-            isTransfer && styles.amountTransfer,
-          ]}
-        >
-          {formattedAmount}
-        </Text>
-
-        {onDelete ? (
-          <Pressable
-            accessibilityLabel={`Delete ${title}`}
-            accessibilityRole="button"
-            onPress={() => onDelete(transaction.id)}
-            style={({ pressed }) => [
-              styles.deleteBtn,
-              pressed && styles.deleteBtnPressed,
+    <Pressable
+      accessibilityLabel={`${title}, ${formattedAmount}`}
+      accessibilityRole="button"
+      onPress={() => onPress && onPress(transaction)}
+      style={({ pressed }) => [
+        styles.txCard,
+        pressed && styles.txCardPressed,
+      ]}
+    >
+      {/* Row 1: Icon + Title & Amount (Kaizen Design) */}
+      <View style={styles.txMainRow}>
+        <View style={styles.txTitleGroup}>
+          <View
+            style={[
+              styles.iconBadge,
+              {
+                backgroundColor: `${categoricalColor}20`,
+                borderColor: `${categoricalColor}45`,
+              },
             ]}
           >
-            <Text style={styles.deleteBtnText}>✕</Text>
-          </Pressable>
-        ) : null}
+            <IconHelper color={categoricalColor} name={iconName} size={16} />
+          </View>
+          <Text numberOfLines={1} style={styles.txNameText}>
+            {title}
+          </Text>
+        </View>
+
+        <Text style={[styles.amountText, { color: amountColor }]}>
+          {formattedAmount}
+        </Text>
       </View>
-    </View>
+
+      {/* Row 2: Category / Account Route & Date/Time */}
+      <View style={styles.txSubRow}>
+        <Text numberOfLines={1} style={styles.routeCategoryText}>
+          {routeOrCategory}
+        </Text>
+        <Text style={styles.txTimeText}>
+          {formattedDate} {formattedTime ? `• ${formattedTime}` : ""}
+        </Text>
+      </View>
+
+      {/* Row 3: Notes (if present and different from title) */}
+      {transaction.note && transaction.name && (
+        <Text numberOfLines={2} style={styles.txNoteText}>
+          {transaction.note}
+        </Text>
+      )}
+    </Pressable>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    row: {
+    txCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginBottom: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      ...theme.shadows.card,
+    },
+    txCardPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      opacity: 0.9,
+    },
+    txMainRow: {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      gap: theme.spacing.md,
     },
-    rowBorder: {
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
-    },
-    leftCol: {
+    txTitleGroup: {
       alignItems: "center",
       flex: 1,
       flexDirection: "row",
-      gap: theme.spacing.md,
+      gap: 10,
+      marginRight: 10,
     },
     iconBadge: {
       alignItems: "center",
-      borderRadius: 12,
+      borderRadius: 10,
       borderWidth: 1,
-      height: 40,
+      height: 32,
       justifyContent: "center",
-      width: 40,
+      width: 32,
     },
-    infoCol: {
-      flex: 1,
-    },
-    titleText: {
+    txNameText: {
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: 15,
       fontWeight: "600",
-      lineHeight: 20,
-    },
-    metaRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 4,
-      marginTop: 3,
-    },
-    metaCategory: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      fontWeight: "500",
-    },
-    metaDot: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-    },
-    metaAccount: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      fontWeight: "500",
-    },
-    metaDate: {
-      color: theme.colors.textMuted,
-      fontSize: 12,
-    },
-    rightCol: {
-      alignItems: "flex-end",
-      flexDirection: "row",
-      gap: 10,
     },
     amountText: {
-      color: theme.colors.danger,
       fontSize: 15,
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
@@ -211,24 +185,35 @@ function createStyles(theme: AppTheme) {
     amountIncome: {
       color: theme.colors.success,
     },
+    amountExpense: {
+      color: theme.colors.danger,
+    },
     amountTransfer: {
       color: theme.colors.info,
     },
-    deleteBtn: {
+    txSubRow: {
       alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: 12,
-      height: 24,
-      justifyContent: "center",
-      width: 24,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 6,
     },
-    deleteBtnPressed: {
-      opacity: 0.7,
-    },
-    deleteBtnText: {
+    routeCategoryText: {
       color: theme.colors.textSecondary,
+      flex: 1,
+      fontSize: 12,
+      fontWeight: "500",
+      marginRight: 8,
+    },
+    txTimeText: {
+      color: theme.colors.textMuted,
       fontSize: 11,
-      fontWeight: "bold",
+      fontWeight: "500",
+    },
+    txNoteText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontStyle: "italic",
+      marginTop: 5,
     },
   });
 }

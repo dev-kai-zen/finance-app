@@ -8,6 +8,7 @@ const sqlite = SQLite.openDatabaseSync("finance.db", {
 sqlite.execSync("PRAGMA journal_mode = WAL;");
 sqlite.execSync("PRAGMA foreign_keys = ON;");
 
+export const sqliteDatabase = sqlite;
 export const db = drizzle(sqlite, { schema });
 export type AppDatabase = ExpoSQLiteDatabase<typeof schema>;
 export type DatabaseTransaction = Parameters<

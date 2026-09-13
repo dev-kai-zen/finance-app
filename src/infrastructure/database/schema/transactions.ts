@@ -14,6 +14,7 @@ export const transactions = sqliteTable(
     ),
     type: text("type").notNull(),
     amountCents: integer("amount_cents").notNull(),
+    name: text("name"),
     note: text("note"),
     occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),

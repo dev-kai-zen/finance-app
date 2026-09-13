@@ -9,6 +9,7 @@ export const categoryInputSchema = z.object({
   type: z.enum(["income", "expense"]),
   color: z.string().optional(),
   icon: z.string().optional(),
+  parentId: z.string().nullable().optional(),
 });
 
 export type CategoryInputSchema = z.infer<typeof categoryInputSchema>;

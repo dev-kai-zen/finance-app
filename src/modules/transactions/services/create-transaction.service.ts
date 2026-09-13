@@ -14,8 +14,8 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
   if (input.type !== "income" && input.type !== "expense") {
     throw new Error("Transaction type must be income or expense.");
   }
-  if (!input.amountCents || input.amountCents <= 0) {
-    throw new Error("Transaction amount must be greater than zero.");
+  if (!input.amountCents || input.amountCents === 0) {
+    throw new Error("Transaction amount cannot be zero.");
   }
   if (!Number.isInteger(input.amountCents)) {
     throw new Error("Transaction amount must be an integer in minor units (centavos).");
@@ -39,6 +39,7 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
         transferAccountId: null,
         type: input.type,
         amountCents: input.amountCents,
+        name: input.name?.trim() || null,
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt),
       },

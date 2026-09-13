@@ -7,6 +7,7 @@ export interface Transaction {
   transferAccountId: string | null;
   type: TransactionType;
   amountCents: number;
+  name: string | null;
   note: string | null;
   occurredAt: Date;
   createdAt: Date;
@@ -33,6 +34,7 @@ export interface CreateTransactionInput {
   categoryId: string;
   type: "income" | "expense";
   amountCents: number;
+  name?: string | null;
   note?: string | null;
   occurredAt: Date;
 }
@@ -41,6 +43,7 @@ export interface CreateTransferInput {
   fromAccountId: string;
   toAccountId: string;
   amountCents: number;
+  name?: string | null;
   note?: string | null;
   occurredAt: Date;
 }

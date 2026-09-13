@@ -19,15 +19,16 @@ export interface AmountCalculatorModalProps {
   initialMinorUnits?: number;
   title?: string;
   currencyCode?: string;
+  allowNegative?: boolean;
 }
 
 /**
  * Safely evaluates basic arithmetic expressions (+, -, *, /)
- * without using eval() or external dependencies.
+ * with full support for negative numbers and unary minus signs.
  */
 function evaluateExpression(expr: string): number {
   const sanitized = expr.replace(/×/g, "*").replace(/÷/g, "/").trim();
-  if (!sanitized) return 0;
+  if (!sanitized || sanitized === "-") return 0;
 
   // Split into tokens: numbers and operators
   const tokens: (number | string)[] = [];
@@ -41,7 +42,10 @@ function evaluateExpression(expr: string): number {
       if (currentNum !== "") {
         tokens.push(parseFloat(currentNum) || 0);
         currentNum = "";
-      } else if (char === "-" && (tokens.length === 0 || typeof tokens[tokens.length - 1] === "string")) {
+      } else if (
+        char === "-" &&
+        (tokens.length === 0 || typeof tokens[tokens.length - 1] === "string")
+      ) {
         // Negative sign for next number
         currentNum = "-";
         continue;
@@ -88,14 +92,59 @@ function evaluateExpression(expr: string): number {
   return Number.isFinite(result) ? result : 0;
 }
 
+/**
+ * Checks if the string contains a math operation (addition, multiplication,
+ * division, or subtraction between operands) rather than a lone negative number.
+ */
+function isMathExpression(expr: string): boolean {
+  const trimmed = expr.trim();
+  if (!trimmed) return false;
+  if (
+    trimmed.includes("+") ||
+    trimmed.includes("×") ||
+    trimmed.includes("÷") ||
+    trimmed.includes("*") ||
+    trimmed.includes("/")
+  ) {
+    return true;
+  }
+  const withoutLeadingMinus = trimmed.startsWith("-")
+    ? trimmed.slice(1).trim()
+    : trimmed;
+  return withoutLeadingMinus.includes("-");
+}
+
+/**
+ * Toggles the positive/negative sign of the current number or operand.
+ */
+function toggleSign(expr: string): string {
+  if (!expr || expr === "0") return "-";
+  if (expr === "-") return "";
+  const match = expr.match(/(-?\d+\.?\d*)$/);
+  if (!match) {
+    if (expr.endsWith("-")) {
+      return expr.slice(0, -1).trimEnd();
+    }
+    return expr + "-";
+  }
+  const lastNumStr = match[0];
+  const startIndex = match.index ?? 0;
+  const prefix = expr.slice(0, startIndex);
+  const toggled = lastNumStr.startsWith("-")
+    ? lastNumStr.slice(1)
+    : "-" + lastNumStr;
+  return prefix + toggled;
+}
+
 function formatWithCommas(val: string): string {
   if (!val) return "0";
-  const parts = val.split(".");
+  if (val === "-") return "-";
+  const isNegative = val.startsWith("-");
+  const unsigned = isNegative ? val.slice(1) : val;
+  const parts = unsigned.split(".");
   const intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  if (parts.length > 1) {
-    return `${intPart}.${parts[1]}`;
-  }
-  return intPart;
+  const formatted = parts.length > 1 ? `${intPart}.${parts[1]}` : intPart;
+  return isNegative ? `-${formatted}` : formatted;
 }
 
 export function AmountCalculatorModal({
@@ -105,6 +154,7 @@ export function AmountCalculatorModal({
   initialMinorUnits = 0,
   title = "Enter Amount",
   currencyCode = "PHP",
+  allowNegative = true,
 }: AmountCalculatorModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -115,7 +165,7 @@ export function AmountCalculatorModal({
 
   useEffect(() => {
     if (visible) {
-      if (initialMinorUnits > 0) {
+      if (initialMinorUnits !== 0 && initialMinorUnits !== undefined) {
         setExpression((initialMinorUnits / 100).toFixed(2));
       } else {
         setExpression("");
@@ -132,22 +182,66 @@ export function AmountCalculatorModal({
     }
 
     if (key === "backspace") {
-      setExpression((prev) => prev.slice(0, -1));
+      setExpression((prev) => {
+        if (!prev) return "";
+        if (prev.endsWith(" ")) {
+          return prev.slice(0, -3);
+        }
+        return prev.slice(0, -1);
+      });
+      return;
+    }
+
+    if (key === "±") {
+      if (!allowNegative) return;
+      setExpression((prev) => toggleSign(prev));
       return;
     }
 
     if (key === "=") {
+      if (!expression || expression === "-") return;
       const res = evaluateExpression(expression);
       setExpression(res % 1 === 0 ? res.toString() : res.toFixed(2));
       return;
     }
 
-    // Operators
-    if (["+", "-", "×", "÷"].includes(key)) {
-      if (!expression) return;
-      const lastChar = expression.slice(-1);
+    // Minus / Negative Sign
+    if (key === "-") {
+      if (!expression) {
+        // Direct negative input at start
+        if (!allowNegative) return;
+        setExpression("-");
+        return;
+      }
+      if (expression === "-") {
+        return;
+      }
+      const trimmed = expression.trim();
+      const lastChar = trimmed.slice(-1);
+      // Preceding character is an operator (e.g. +, ×, ÷) -> negative operand
+      if (["+", "×", "÷"].includes(lastChar)) {
+        if (!allowNegative) return;
+        setExpression((prev) => prev + " -");
+        return;
+      }
+      if (lastChar === "-") {
+        return;
+      }
+      setExpression((prev) => prev + " - ");
+      return;
+    }
+
+    // Other Operators (+, ×, ÷)
+    if (["+", "×", "÷"].includes(key)) {
+      if (!expression || expression === "-") return;
+      const trimmed = expression.trim();
+      const lastChar = trimmed.slice(-1);
       if (["+", "-", "×", "÷"].includes(lastChar)) {
-        setExpression((prev) => prev.slice(0, -1) + key);
+        if (expression.endsWith(" -")) {
+          setExpression((prev) => prev.slice(0, -3) + " " + key + " ");
+        } else {
+          setExpression((prev) => prev.slice(0, -1) + key);
+        }
       } else {
         setExpression((prev) => prev + " " + key + " ");
       }
@@ -156,16 +250,20 @@ export function AmountCalculatorModal({
 
     // Decimal point
     if (key === ".") {
-      const parts = expression.split(/[\s+\-×÷]+/);
+      if (!expression || expression === "-") {
+        setExpression((prev) => (prev === "-" ? "-0." : "0."));
+        return;
+      }
+      const parts = expression.split(/[\s+×÷]+|(?<=\d)-(?=\d)/);
       const current = parts[parts.length - 1];
-      if (current.includes(".")) return;
-      setExpression((prev) => (prev ? prev + "." : "0."));
+      if (current && current.includes(".")) return;
+      setExpression((prev) => (prev.endsWith(" ") ? prev + "0." : prev + "."));
       return;
     }
 
     // Numbers
     if (key === "00") {
-      if (!expression || expression.endsWith(" ")) return;
+      if (!expression || expression === "-" || expression.endsWith(" ")) return;
       setExpression((prev) => prev + "00");
       return;
     }
@@ -182,7 +280,22 @@ export function AmountCalculatorModal({
   };
 
   const displayCurrency = currencyCode === "PHP" ? "₱" : `${currencyCode} `;
-  const hasExpression = expression.includes("+") || expression.includes("-") || expression.includes("×") || expression.includes("÷");
+  const isMathExpr = isMathExpression(expression);
+  const isNegative =
+    (!isMathExpr && expression.startsWith("-")) ||
+    (isMathExpr && previewResult < 0);
+
+  let displayAmount: string;
+  if (isMathExpr) {
+    displayAmount = formatWithCommas(Math.abs(previewResult).toFixed(2));
+  } else if (!expression || expression === "-") {
+    displayAmount = "0.00";
+  } else {
+    const unsigned = expression.startsWith("-")
+      ? expression.slice(1)
+      : expression;
+    displayAmount = formatWithCommas(unsigned);
+  }
 
   return (
     <Modal
@@ -221,18 +334,27 @@ export function AmountCalculatorModal({
 
           {/* Amount Display Screen */}
           <View style={styles.screenContainer}>
-            {hasExpression ? (
+            {isMathExpr ? (
               <Text style={styles.expressionText} numberOfLines={1}>
                 {expression}
               </Text>
             ) : null}
 
             <View style={styles.amountHeroRow}>
+              {isNegative && (
+                <Text style={[styles.currencySymbol, styles.negativeSign]}>
+                  -
+                </Text>
+              )}
               <Text style={styles.currencySymbol}>{displayCurrency}</Text>
-              <Text style={styles.amountDisplay} numberOfLines={1}>
-                {hasExpression
-                  ? formatWithCommas(previewResult.toFixed(2))
-                  : formatWithCommas(expression || "0.00")}
+              <Text
+                style={[
+                  styles.amountDisplay,
+                  isNegative && styles.negativeAmountDisplay,
+                ]}
+                numberOfLines={1}
+              >
+                {displayAmount}
               </Text>
             </View>
           </View>
@@ -241,10 +363,26 @@ export function AmountCalculatorModal({
           <View style={styles.keypad}>
             {/* Row 1 */}
             <View style={styles.keypadRow}>
-              <KeypadButton label="C" variant="action" onPress={() => handleKeyPress("C")} />
-              <KeypadButton label="⌫" variant="action" onPress={() => handleKeyPress("backspace")} />
-              <KeypadButton label="÷" variant="operator" onPress={() => handleKeyPress("÷")} />
-              <KeypadButton label="×" variant="operator" onPress={() => handleKeyPress("×")} />
+              <KeypadButton
+                label="C"
+                variant="action"
+                onPress={() => handleKeyPress("C")}
+              />
+              <KeypadButton
+                label="⌫"
+                variant="action"
+                onPress={() => handleKeyPress("backspace")}
+              />
+              <KeypadButton
+                label="÷"
+                variant="operator"
+                onPress={() => handleKeyPress("÷")}
+              />
+              <KeypadButton
+                label="×"
+                variant="operator"
+                onPress={() => handleKeyPress("×")}
+              />
             </View>
 
             {/* Row 2 */}
@@ -252,7 +390,11 @@ export function AmountCalculatorModal({
               <KeypadButton label="7" onPress={() => handleKeyPress("7")} />
               <KeypadButton label="8" onPress={() => handleKeyPress("8")} />
               <KeypadButton label="9" onPress={() => handleKeyPress("9")} />
-              <KeypadButton label="-" variant="operator" onPress={() => handleKeyPress("-")} />
+              <KeypadButton
+                label="-"
+                variant="operator"
+                onPress={() => handleKeyPress("-")}
+              />
             </View>
 
             {/* Row 3 */}
@@ -260,7 +402,11 @@ export function AmountCalculatorModal({
               <KeypadButton label="4" onPress={() => handleKeyPress("4")} />
               <KeypadButton label="5" onPress={() => handleKeyPress("5")} />
               <KeypadButton label="6" onPress={() => handleKeyPress("6")} />
-              <KeypadButton label="+" variant="operator" onPress={() => handleKeyPress("+")} />
+              <KeypadButton
+                label="+"
+                variant="operator"
+                onPress={() => handleKeyPress("+")}
+              />
             </View>
 
             {/* Row 4 */}
@@ -268,15 +414,27 @@ export function AmountCalculatorModal({
               <KeypadButton label="1" onPress={() => handleKeyPress("1")} />
               <KeypadButton label="2" onPress={() => handleKeyPress("2")} />
               <KeypadButton label="3" onPress={() => handleKeyPress("3")} />
-              <KeypadButton label="=" variant="operator" onPress={() => handleKeyPress("=")} />
+              <KeypadButton
+                label="="
+                variant="operator"
+                onPress={() => handleKeyPress("=")}
+              />
             </View>
 
             {/* Row 5 */}
             <View style={styles.keypadRow}>
+              <KeypadButton
+                label="±"
+                variant="action"
+                onPress={() => handleKeyPress("±")}
+              />
               <KeypadButton label="0" onPress={() => handleKeyPress("0")} />
-              <KeypadButton label="00" onPress={() => handleKeyPress("00")} />
               <KeypadButton label="." onPress={() => handleKeyPress(".")} />
-              <KeypadButton label="Done" variant="primary" onPress={handleConfirm} />
+              <KeypadButton
+                label="Done"
+                variant="primary"
+                onPress={handleConfirm}
+              />
             </View>
           </View>
         </View>
@@ -322,9 +480,17 @@ function KeypadButton({
     }
   };
 
+  const getAccessibilityLabel = () => {
+    if (label === "±") return "Toggle positive or negative";
+    if (label === "C") return "Clear";
+    if (label === "⌫") return "Backspace";
+    if (label === "Done") return "Confirm amount";
+    return `Calculator key ${label}`;
+  };
+
   return (
     <Pressable
-      accessibilityLabel={`Calculator key ${label}`}
+      accessibilityLabel={getAccessibilityLabel()}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
@@ -354,10 +520,10 @@ function createStyles(theme: AppTheme) {
     },
     sheetContainer: {
       backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       borderWidth: 1,
-      borderColor: theme.colors.border,
       paddingHorizontal: 16,
       paddingTop: 16,
       width: "100%",
@@ -414,13 +580,19 @@ function createStyles(theme: AppTheme) {
     amountHeroRow: {
       alignItems: "baseline",
       flexDirection: "row",
-      justifyContent: "flex-end",
       gap: 4,
+      justifyContent: "flex-end",
     },
     currencySymbol: {
       color: theme.colors.textSecondary,
       fontSize: 24,
       fontWeight: "600",
+    },
+    negativeSign: {
+      color: theme.colors.warning,
+      fontSize: 28,
+      fontWeight: "700",
+      marginRight: 1,
     },
     amountDisplay: {
       color: theme.colors.textPrimary,
@@ -428,6 +600,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
       letterSpacing: -0.5,
+    },
+    negativeAmountDisplay: {
+      color: theme.colors.warning,
     },
     keypad: {
       gap: 10,

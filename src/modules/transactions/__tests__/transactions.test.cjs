@@ -142,3 +142,36 @@ test("transactions: deletes transaction record cleanly", () => {
   const existsAfter = db.prepare("SELECT count(*) as c FROM transactions WHERE id = 'tx_del'").get().c;
   assert.equal(existsAfter, 0);
 });
+
+test("transactions: records transaction with name column and signed amount", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+
+  const insertStmt = db.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, transfer_account_id, type, amount_cents, name, note, occurred_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Record Expense with name and signed negative amount (-150000 cents)
+  insertStmt.run("tx_name_1", "acc_1", "cat_groceries", null, "expense", -150000, "SM Grocery Shopping", "Weekly fruits and milk", now, now, now);
+
+  // Record Income with name and signed positive amount (+5000000 cents)
+  insertStmt.run("tx_name_2", "acc_1", "cat_salary", null, "income", 5000000, "September Payday", "Regular monthly payroll", now, now, now);
+
+  const row1 = db.prepare("SELECT * FROM transactions WHERE id = 'tx_name_1'").get();
+  assert.equal(row1.name, "SM Grocery Shopping");
+  assert.equal(row1.amount_cents, -150000);
+  assert.equal(row1.type, "expense");
+
+  const row2 = db.prepare("SELECT * FROM transactions WHERE id = 'tx_name_2'").get();
+  assert.equal(row2.name, "September Payday");
+  assert.equal(row2.amount_cents, 5000000);
+  assert.equal(row2.type, "income");
+
+  // Dynamic balance formula: Opening (100,000) + sum(transactions)
+  // 100000 + (-150000) + 5000000 = 4,950,000
+  const sumTx = db.prepare("SELECT SUM(amount_cents) as total FROM transactions WHERE account_id = 'acc_1'").get().total;
+  assert.equal(sumTx, 4850000);
+  assert.equal(100000 + sumTx, 4950000);
+});
+

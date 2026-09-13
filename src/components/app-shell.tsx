@@ -8,8 +8,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname } from "expo-router";
-import { Sidebar } from "@/components/sidebar";
-import { SyncStatusChip } from "@/components/sync-status-chip";
+import { Sidebar } from "./sidebar";
+import { SyncStatusChip } from "./sync-status-chip";
 import {
   isTabletOrDesktop,
   LAYOUT_DIMENSIONS,
@@ -21,6 +21,7 @@ function getScreenTitle(pathname: string): string {
   if (pathname.startsWith("/accounts")) return "Accounts";
   if (pathname.startsWith("/transactions")) return "Transactions";
   if (pathname.startsWith("/categories")) return "Categories";
+  if (pathname.startsWith("/monitor")) return "SQLite Monitor";
   if (pathname.startsWith("/settings")) return "Settings";
   return "Dashboard";
 }
@@ -73,24 +74,24 @@ export function AppShell({ children }: PropsWithChildren) {
         ]}
       >
         <View style={styles.topBarInner}>
-          <Pressable
-            accessibilityLabel="Open navigation menu"
-            accessibilityRole="button"
-            onPress={openDrawer}
-            style={({ pressed }) => [
-              styles.menuButton,
-              pressed && styles.menuButtonPressed,
-            ]}
-          >
-            {/* 3-line hamburger icon */}
-            <View style={styles.hamburgerIcon}>
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-              <View style={styles.hamburgerLine} />
-            </View>
-          </Pressable>
+          <View style={styles.topLeftGroup}>
+            <Pressable
+              accessibilityLabel="Open navigation menu"
+              accessibilityRole="button"
+              onPress={openDrawer}
+              style={({ pressed }) => [
+                styles.menuButton,
+                pressed && styles.menuButtonPressed,
+              ]}
+            >
+              {/* 3-line hamburger icon */}
+              <View style={styles.hamburgerIcon}>
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+                <View style={styles.hamburgerLine} />
+              </View>
+            </Pressable>
 
-          <View style={styles.topBarBrand}>
             <Text style={styles.topBarBrandText}>{screenTitle}</Text>
           </View>
 
@@ -208,6 +209,11 @@ function createStyles(theme: AppTheme) {
       borderRadius: 1,
       height: 2,
       width: 18,
+    },
+    topLeftGroup: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
     },
     topBarBrand: {
       alignItems: "center",

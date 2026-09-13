@@ -5,10 +5,12 @@ import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 
+import { IconHelper } from "./icon-helper";
+
 interface NavItemConfig {
   href: string;
   label: string;
-  icon: "dashboard" | "accounts" | "transactions" | "categories" | "settings";
+  icon: "dashboard" | "accounts" | "transactions" | "categories" | "monitor" | "settings";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -19,6 +21,7 @@ const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
 ];
 
 const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
+  { href: "/monitor", label: "SQLite Monitor", icon: "monitor" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
@@ -144,45 +147,16 @@ function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolea
     active ? theme.colors.primary : theme.colors.textSecondary,
   );
 
-  switch (type) {
-    case "dashboard":
-      return (
-        <View style={iconStyles.gridContainer}>
-          <View style={[iconStyles.square, { borderColor: iconColor }]} />
-          <View style={[iconStyles.square, { borderColor: iconColor }]} />
-          <View style={[iconStyles.square, { borderColor: iconColor }]} />
-          <View style={[iconStyles.square, { borderColor: iconColor }]} />
-        </View>
-      );
-    case "accounts":
-      return (
-        <View style={[iconStyles.cardBox, { borderColor: iconColor }]}>
-          <View style={[iconStyles.cardStripe, { backgroundColor: iconColor }]} />
-        </View>
-      );
-    case "transactions":
-      return (
-        <View style={iconStyles.txContainer}>
-          <View style={[iconStyles.txLineTop, { backgroundColor: iconColor }]} />
-          <View style={[iconStyles.txLineBottom, { backgroundColor: iconColor }]} />
-        </View>
-      );
-    case "categories":
-      return (
-        <View style={iconStyles.categoryContainer}>
-          <View style={[iconStyles.circleDot, { backgroundColor: iconColor }]} />
-          <View style={[iconStyles.tagLine, { backgroundColor: iconColor }]} />
-        </View>
-      );
-    case "settings":
-      return (
-        <View style={[iconStyles.gearBox, { borderColor: iconColor }]}>
-          <View style={[iconStyles.gearCenter, { backgroundColor: iconColor }]} />
-        </View>
-      );
-    default:
-      return null;
-  }
+  const iconNameMap: Record<NavItemConfig["icon"], string> = {
+    dashboard: "layout-dashboard",
+    accounts: "landmark",
+    transactions: "arrow-left-right",
+    categories: "layers",
+    monitor: "database",
+    settings: "settings",
+  };
+
+  return <IconHelper color={iconColor} name={iconNameMap[type]} size={18} />;
 }
 
 const iconStyles = StyleSheet.create({

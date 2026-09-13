@@ -38,6 +38,7 @@ export function createTransfer(input: CreateTransferInput): Transaction {
         transferAccountId: input.toAccountId,
         type: "transfer",
         amountCents: input.amountCents,
+        name: input.name?.trim() || null,
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt),
       },

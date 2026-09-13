@@ -39,7 +39,7 @@ const { saveAccountType } = require("@/modules/accounts/services/save-account-ty
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
 const { setAccountTypeArchived } = require("@/modules/accounts/services/archive-account-type.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
-const { moveAccount, moveAccountType } = require("@/modules/accounts/services/reorder-accounts.service");
+const { moveAccount, moveAccountType, reorderAccountsList } = require("@/modules/accounts/services/reorder-accounts.service");
 const input = require("@/modules/accounts/utils/account-input");
 const { openingSummary, formatOpeningTotal } = require("@/modules/accounts/utils/opening-summary");
 const { accountColor, accountIcon } = require("@/modules/accounts/constants/account-appearance.constants");
@@ -197,6 +197,17 @@ test("account ordering stays within type and archive state and is atomic", () =>
   assert.throws(() => moveAccount(first, -1), /order failure/);
   assert.deepEqual(repo.listAccounts(), before);
 });
+test("reorderAccountsList updates sortOrder atomically for an ordered list of IDs", () => {
+  const a1 = saveAccount(accountInput(undefined, "Alpha"));
+  const a2 = saveAccount(accountInput(undefined, "Beta"));
+  const a3 = saveAccount(accountInput(undefined, "Gamma"));
+
+  reorderAccountsList([a3, a1, a2]);
+
+  assert.equal(repo.findAccountById(a3).sortOrder, 0);
+  assert.equal(repo.findAccountById(a1).sortOrder, 1);
+  assert.equal(repo.findAccountById(a2).sortOrder, 2);
+});
 test("type ordering stays within group", () => {
   const first = saveAccountType(typeInput("First"));
   const second = saveAccountType(typeInput("Second"));
@@ -264,3 +275,29 @@ test("existing current-schema accounts and linked transactions remain unchanged 
   assert.deepEqual(repo.findAccountById(id), before);
   assert.equal(sqlite.prepare("SELECT count(*) AS total FROM transactions").get().total, 1);
 });
+test("listAccounts calculates live current balance reflecting income, expense, and transfer", () => {
+  const acc1 = saveAccount(accountInput(system.ASSET_OTHERS, "Checking", "1000.00")); // 100,000 cents
+  const acc2 = saveAccount(accountInput(system.ASSET_OTHERS, "Savings", "500.00"));    // 50,000 cents
+
+  // Add Income: 200.00 (20,000 cents) to Checking
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_inc', ?, 'income', 20000, 1, 1, 1)").run(acc1);
+
+  // Add Expense: 50.00 (5,000 cents) from Checking
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
+
+  // Add Transfer: 100.00 (10,000 cents) from Checking to Savings
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transfer_account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf', ?, ?, 'transfer', 10000, 3, 3, 3)").run(acc1, acc2);
+
+  const accountsList = repo.listAccounts();
+  const checking = accountsList.find((a) => a.id === acc1);
+  const savings = accountsList.find((a) => a.id === acc2);
+
+  // Checking: 100,000 + 20,000 (inc) - 5,000 (exp) - 10,000 (transfer out) = 105,000
+  assert.equal(checking.openingBalanceMinorUnits, 100000);
+  assert.equal(checking.currentBalanceMinorUnits, 105000);
+
+  // Savings: 50,000 + 10,000 (transfer in) = 60,000
+  assert.equal(savings.openingBalanceMinorUnits, 50000);
+  assert.equal(savings.currentBalanceMinorUnits, 60000);
+});
+

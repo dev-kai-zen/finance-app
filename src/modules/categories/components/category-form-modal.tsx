@@ -23,6 +23,8 @@ export interface CategoryFormModalProps {
   onSave: (input: CategoryInput, id?: string) => Promise<boolean>;
   categoryToEdit?: Category | null;
   initialType?: CategoryType;
+  initialParentId?: string | null;
+  parentCategoryName?: string | null;
   pending?: boolean;
   error?: string | null;
 }
@@ -33,6 +35,8 @@ export function CategoryFormModal({
   onSave,
   categoryToEdit,
   initialType = "expense",
+  initialParentId = null,
+  parentCategoryName = null,
   pending = false,
   error = null,
 }: CategoryFormModalProps) {
@@ -41,6 +45,8 @@ export function CategoryFormModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+
+  const isSubcategory = Boolean(categoryToEdit?.parentId || initialParentId);
 
   const [name, setName] = useState("");
   const [type, setType] = useState<CategoryType>(initialType);
@@ -85,6 +91,7 @@ export function CategoryFormModal({
         type,
         color: selectedColor,
         icon: selectedIcon,
+        parentId: categoryToEdit?.parentId ?? initialParentId ?? null,
       },
       categoryToEdit?.id,
     );
@@ -121,7 +128,13 @@ export function CategoryFormModal({
           {/* Header */}
           <View style={styles.headerRow}>
             <Text style={styles.modalTitle}>
-              {categoryToEdit ? "Edit Category" : "New Category"}
+              {categoryToEdit
+                ? isSubcategory
+                  ? "Edit Subcategory"
+                  : "Edit Category"
+                : isSubcategory
+                  ? "New Subcategory"
+                  : "New Category"}
             </Text>
             <Pressable
               accessibilityLabel="Close category form"
@@ -132,6 +145,14 @@ export function CategoryFormModal({
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
           </View>
+
+          {/* Subcategory Parent Indicator Banner */}
+          {isSubcategory && parentCategoryName ? (
+            <View style={styles.parentBanner}>
+              <Text style={styles.parentBannerLabel}>PARENT CATEGORY</Text>
+              <Text style={styles.parentBannerName}>{parentCategoryName}</Text>
+            </View>
+          ) : null}
 
           {displayError ? (
             <View style={styles.errorBox}>
@@ -147,11 +168,12 @@ export function CategoryFormModal({
                 <Pressable
                   accessibilityLabel="Expense category"
                   accessibilityRole="button"
-                  disabled={Boolean(categoryToEdit?.isSystem)}
+                  disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
                   onPress={() => setType("expense")}
                   style={[
                     styles.typeOption,
                     type === "expense" && styles.typeOptionActiveExpense,
+                    isSubcategory && { opacity: 0.6 },
                   ]}
                 >
                   <Text
@@ -167,11 +189,12 @@ export function CategoryFormModal({
                 <Pressable
                   accessibilityLabel="Income category"
                   accessibilityRole="button"
-                  disabled={Boolean(categoryToEdit?.isSystem)}
+                  disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
                   onPress={() => setType("income")}
                   style={[
                     styles.typeOption,
                     type === "income" && styles.typeOptionActiveIncome,
+                    isSubcategory && { opacity: 0.6 },
                   ]}
                 >
                   <Text
@@ -367,6 +390,29 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 16,
       fontWeight: "bold",
+    },
+    parentBanner: {
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: `${theme.colors.primary}40`,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+    },
+    parentBannerLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 0.5,
+    },
+    parentBannerName: {
+      color: theme.colors.primary,
+      fontSize: 13,
+      fontWeight: "700",
     },
     errorBox: {
       backgroundColor: `${theme.colors.danger}15`,

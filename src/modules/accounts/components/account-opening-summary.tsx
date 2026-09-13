@@ -13,7 +13,7 @@ export function AccountOpeningSummary({ accounts }: { accounts: AccountListItem[
     <View style={s.card}>
       <View style={s.topRow}>
         <View>
-          <Text style={s.eyebrow}>CONSOLIDATED STARTING BALANCE</Text>
+          <Text style={s.eyebrow}>TOTAL NET BALANCE</Text>
           <Text style={s.totalAmount} accessibilityRole="header">
             {formatOpeningTotal(netStartingBalance)}
           </Text>

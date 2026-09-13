@@ -12,7 +12,10 @@ export type NewAccountType = InferInsertModel<typeof accountTypes>;
 export type Account = InferSelectModel<typeof accounts>;
 export type NewAccount = InferInsertModel<typeof accounts>;
 
-export type AccountListItem = Account & { accountType: AccountType | null };
+export type AccountListItem = Account & {
+  accountType: AccountType | null;
+  currentBalanceMinorUnits: number;
+};
 
 export type DeleteAccountTypeResult = {
   deletedAccountTypeId: string;

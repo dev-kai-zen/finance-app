@@ -27,3 +27,13 @@ export function moveAccountType(id: string, direction: -1 | 1) {
     move(siblings, id, direction).forEach((t, sortOrder) => updateAccountTypeRecord(t.id, { sortOrder, updatedAt: now }, tx));
   });
 }
+
+export function reorderAccountsList(orderedIds: string[]): void {
+  if (!orderedIds || orderedIds.length === 0) return;
+  db.transaction((tx) => {
+    const now = new Date();
+    orderedIds.forEach((id, sortOrder) => {
+      updateAccountRecord(id, { sortOrder, updatedAt: now }, tx);
+    });
+  });
+}

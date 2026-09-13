@@ -1,4 +1,8 @@
 export { TransactionsScreen } from "./screens/transactions-screen";
+export { TransactionFormModal } from "./components/transaction-form-modal";
+export { TransactionDetailModal } from "./components/transaction-detail-modal";
+export { TransactionFilterModal } from "./components/transaction-filter-modal";
+export { TransactionRow } from "./components/transaction-row";
 export { useTransactions } from "./hooks/use-transactions";
 export { createTransaction } from "./services/create-transaction.service";
 export { createTransfer } from "./services/create-transfer.service";

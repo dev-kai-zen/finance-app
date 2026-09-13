@@ -6,13 +6,14 @@ export function openingSummary(accounts: AccountListItem[]) {
   let excluded = 0;
   for (const account of accounts) {
     if (account.isArchived) continue;
-    if (account.currencyCode !== "PHP" || !Number.isSafeInteger(account.openingBalanceMinorUnits) ||
+    const balance = account.currentBalanceMinorUnits ?? account.openingBalanceMinorUnits;
+    if (account.currencyCode !== "PHP" || !Number.isSafeInteger(balance) ||
       !["asset", "liability"].includes(account.accountType?.accountGroup ?? "")) {
       excluded++;
       continue;
     }
-    if (account.accountType?.accountGroup === "asset") assets += BigInt(account.openingBalanceMinorUnits);
-    else liabilities += BigInt(account.openingBalanceMinorUnits);
+    if (account.accountType?.accountGroup === "asset") assets += BigInt(balance);
+    else liabilities += BigInt(balance);
   }
   return { assets, liabilities, excluded };
 }

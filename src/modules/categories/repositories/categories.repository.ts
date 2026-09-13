@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
 import { categories } from "@/infrastructure/database/schema/categories";
 import { DEFAULT_SEED_CATEGORIES } from "../constants/categories.constants";
@@ -11,22 +11,57 @@ function mapCategory(row: typeof categories.$inferSelect): Category {
     type: row.type as CategoryType,
     color: row.color,
     icon: row.icon,
+    parentId: row.parentId,
     isSystem: Boolean(row.isSystem),
+    sortOrder: row.sortOrder ?? 0,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
 }
 
-export async function listCategories(db: DbContext): Promise<Category[]> {
+export async function listCategories(
+  db: DbContext,
+  options?: { flat?: boolean },
+): Promise<Category[]> {
   // Ensure default categories exist if database is fresh
   await seedDefaultCategoriesIfEmpty(db);
 
   const rows = await db
     .select()
     .from(categories)
-    .orderBy(categories.type, categories.name);
+    .orderBy(categories.type, asc(categories.sortOrder), categories.name);
 
-  return rows.map(mapCategory);
+  const allCategories = rows.map(mapCategory);
+
+  if (options?.flat) {
+    return allCategories;
+  }
+
+  // Nest subcategories into parent categories
+  const parentCategories: Category[] = [];
+  const subcategoryMap = new Map<string, Category[]>();
+
+  for (const cat of allCategories) {
+    if (cat.parentId) {
+      const list = subcategoryMap.get(cat.parentId) || [];
+      list.push(cat);
+      subcategoryMap.set(cat.parentId, list);
+    } else {
+      parentCategories.push(cat);
+    }
+  }
+
+  for (const parent of parentCategories) {
+    const subs = subcategoryMap.get(parent.id) || [];
+    subs.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name));
+    parent.subcategories = subs;
+  }
+
+  parentCategories.sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name),
+  );
+
+  return parentCategories;
 }
 
 export function findCategoryById(
@@ -81,7 +116,9 @@ export async function insertCategory(
     type: input.type,
     color: input.color ?? "slate",
     icon: input.icon ?? "tag",
+    parentId: input.parentId ?? null,
     isSystem: input.isSystem ?? false,
+    sortOrder: input.sortOrder ?? 0,
     createdAt: now,
     updatedAt: now,
   };
@@ -115,6 +152,12 @@ export async function updateCategory(
   if (input.icon !== undefined) {
     updates.icon = input.icon;
   }
+  if (input.parentId !== undefined) {
+    updates.parentId = input.parentId;
+  }
+  if (input.sortOrder !== undefined) {
+    updates.sortOrder = input.sortOrder;
+  }
 
   await db.update(categories).set(updates).where(eq(categories.id, id));
   return getCategoryById(db, id);
@@ -134,22 +177,16 @@ export async function deleteCategory(
 }
 
 export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void> {
-  const [result] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(categories);
-
-  if (result && result.count > 0) {
-    return;
-  }
-
   const now = new Date();
-  const seedRecords = DEFAULT_SEED_CATEGORIES.map((cat) => ({
+  const seedRecords = DEFAULT_SEED_CATEGORIES.map((cat, idx) => ({
     id: cat.id,
     name: cat.name,
     type: cat.type,
     color: cat.color ?? "slate",
     icon: cat.icon ?? "tag",
+    parentId: cat.parentId ?? null,
     isSystem: cat.isSystem,
+    sortOrder: idx,
     createdAt: now,
     updatedAt: now,
   }));
@@ -157,4 +194,20 @@ export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void>
   for (const record of seedRecords) {
     await db.insert(categories).values(record).onConflictDoNothing();
   }
+}
+
+export async function reorderCategoriesInDb(
+  db: DbContext,
+  orderedIds: string[],
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const now = new Date();
+    for (let i = 0; i < orderedIds.length; i++) {
+      const id = orderedIds[i];
+      await tx
+        .update(categories)
+        .set({ sortOrder: i, updatedAt: now })
+        .where(eq(categories.id, id));
+    }
+  });
 }

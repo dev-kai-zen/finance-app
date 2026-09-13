@@ -55,6 +55,7 @@ export function listTransactions(
     transferAccountId: r.transaction.transferAccountId,
     type: r.transaction.type as Transaction["type"],
     amountCents: r.transaction.amountCents,
+    name: r.transaction.name,
     note: r.transaction.note,
     occurredAt: r.transaction.occurredAt,
     createdAt: r.transaction.createdAt,
@@ -71,6 +72,7 @@ export function listTransactions(
     const q = filter.searchQuery.toLowerCase().trim();
     return mapped.filter(
       (tx) =>
+        (tx.name && tx.name.toLowerCase().includes(q)) ||
         (tx.note && tx.note.toLowerCase().includes(q)) ||
         (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
         tx.accountName.toLowerCase().includes(q) ||
@@ -115,6 +117,7 @@ export function insertTransaction(
     transferAccountId: data.transferAccountId ?? null,
     type: data.type,
     amountCents: data.amountCents,
+    name: data.name ?? null,
     note: data.note ?? null,
     occurredAt: data.occurredAt,
     createdAt: data.createdAt ?? now,
@@ -140,10 +143,13 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
   let totalOutflow = 0;
 
   for (const tx of allTx) {
-    if (tx.type === "income") {
+    if (tx.type === "transfer") {
+      continue;
+    }
+    if (tx.amountCents > 0) {
       totalInflow += tx.amountCents;
-    } else if (tx.type === "expense") {
-      totalOutflow += tx.amountCents;
+    } else if (tx.amountCents < 0) {
+      totalOutflow += Math.abs(tx.amountCents);
     }
   }
 

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
+import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
@@ -31,6 +32,33 @@ export function AccountsScreen() {
   const mutations = useAccountMutations(data.refresh);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [filter, setFilter] = useState<"all" | "asset" | "liability">("all");
+
+  // Direct Account Sorting Modal State
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [sortModalTitle, setSortModalTitle] = useState("");
+  const [sortItems, setSortItems] = useState<SortableItem[]>([]);
+  const [onSaveSort, setOnSaveSort] = useState<
+    ((orderedIds: string[]) => Promise<void>) | null
+  >(null);
+
+  const handleSortAccounts = (
+    groupName: string,
+    groupAccounts: AccountListItem[],
+  ) => {
+    setSortModalTitle(`Sort ${groupName}`);
+    setSortItems(
+      groupAccounts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        icon: a.accountType?.iconKey ?? "landmark",
+        color: a.accountType?.color ?? null,
+      })),
+    );
+    setOnSaveSort(() => async (orderedIds: string[]) => {
+      await mutations.reorderAccounts(orderedIds);
+    });
+    setSortModalVisible(true);
+  };
 
   const open = (next: Overlay) => {
     if (mutations.pending) return;
@@ -168,6 +196,7 @@ export function AccountsScreen() {
               accounts={active}
               types={data.types}
               onSelect={select}
+              onSort={handleSortAccounts}
             />
           )}
 
@@ -178,6 +207,7 @@ export function AccountsScreen() {
               accounts={active}
               types={data.types}
               onSelect={select}
+              onSort={handleSortAccounts}
             />
           )}
 
@@ -239,6 +269,18 @@ export function AccountsScreen() {
           onClose={close}
         />
       )}
+
+      <SortableListModal
+        visible={sortModalVisible}
+        onClose={() => setSortModalVisible(false)}
+        title={sortModalTitle}
+        items={sortItems}
+        onSave={async (orderedIds) => {
+          if (onSaveSort) {
+            await onSaveSort(orderedIds);
+          }
+        }}
+      />
     </PageContainer>
   );
 }

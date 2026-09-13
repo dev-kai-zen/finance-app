@@ -15,6 +15,27 @@
       "when": 1789282475088,
       "tag": "0001_add_account_types_and_update_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789283200000,
+      "tag": "0002_add_parent_id_to_categories",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789286000000,
+      "tag": "0003_add_name_to_transactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1789289000000,
+      "tag": "0004_add_sort_order_to_categories",
+      "breakpoints": true
     }
   ]
 }

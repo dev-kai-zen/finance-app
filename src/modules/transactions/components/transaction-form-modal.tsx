@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Platform,
@@ -11,8 +11,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ChevronRight } from "lucide-react-native";
 import {
+  AccountPickerModal,
   AmountCalculatorModal,
+  CategoryPickerModal,
   DatePickerModal,
   IconHelper,
 } from "@/components";
@@ -25,6 +28,7 @@ import { formatCurrency } from "@/utils/currency";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
+  TransactionListItem,
   TransactionType,
 } from "../types/transaction.types";
 
@@ -37,6 +41,7 @@ export interface TransactionFormModalProps {
   categories: Category[];
   pending?: boolean;
   error?: string | null;
+  initialTransaction?: TransactionListItem | null;
 }
 
 function getTodayIsoString(): string {
@@ -56,6 +61,7 @@ export function TransactionFormModal({
   categories,
   pending = false,
   error = null,
+  initialTransaction = null,
 }: TransactionFormModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -64,6 +70,8 @@ export function TransactionFormModal({
   const styles = useThemeStyles(createStyles);
 
   const [mode, setMode] = useState<TransactionType>("expense");
+  const [name, setName] = useState<string>("");
+  const [amountSign, setAmountSign] = useState<"+" | "-">("-");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [transferToAccountId, setTransferToAccountId] = useState<string>("");
@@ -75,28 +83,61 @@ export function TransactionFormModal({
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
+  const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setMode("expense");
-      const firstAccount = accounts.length > 0 ? accounts[0].id : "";
-      setSelectedAccountId(firstAccount);
-      setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
+      if (initialTransaction) {
+        setMode(initialTransaction.type);
+        setName(initialTransaction.name || "");
+        const isNeg = initialTransaction.amountCents < 0;
+        setAmountSign(isNeg ? "-" : "+");
+        setAmountMinorUnits(Math.abs(initialTransaction.amountCents));
+        setSelectedAccountId(initialTransaction.accountId);
+        setTransferToAccountId(
+          initialTransaction.transferAccountId ||
+            (accounts.find((a) => a.id !== initialTransaction.accountId)?.id ?? "")
+        );
+        setSelectedCategoryId(initialTransaction.categoryId || "");
+        setDateIsoString(
+          initialTransaction.occurredAt
+            ? new Date(initialTransaction.occurredAt).toISOString().split("T")[0]
+            : getTodayIsoString()
+        );
+        setNote(initialTransaction.note || "");
+        setLocalError(null);
+      } else {
+        setMode("expense");
+        setName("");
+        setAmountSign("-");
+        const firstAccount = accounts.length > 0 ? accounts[0].id : "";
+        setSelectedAccountId(firstAccount);
+        setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
 
-      const defaultCategory = categories.find((c) => c.type === "expense");
-      setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
+        const defaultCategory = categories.find((c) => c.type === "expense");
+        setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
 
-      setAmountMinorUnits(0);
-      setDateIsoString(getTodayIsoString());
-      setNote("");
-      setLocalError(null);
+        setAmountMinorUnits(0);
+        setDateIsoString(getTodayIsoString());
+        setNote("");
+        setLocalError(null);
+      }
     }
-  }, [visible, accounts, categories]);
+  }, [visible, initialTransaction, accounts, categories]);
 
-  // When mode changes, switch default category if applicable
+  // When mode changes, switch default category and sign
   const handleModeChange = (newMode: TransactionType) => {
     setMode(newMode);
     setLocalError(null);
+    if (newMode === "expense") {
+      setAmountSign("-");
+    } else if (newMode === "income") {
+      setAmountSign("+");
+    } else {
+      setAmountSign("+");
+    }
     if (newMode !== "transfer") {
       const match = categories.find((c) => c.type === newMode);
       if (match) {
@@ -108,7 +149,31 @@ export function TransactionFormModal({
   const filteredCategories = categories.filter((c) => c.type === mode);
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const transferToAccount = accounts.find((a) => a.id === transferToAccountId);
   const currencyCode = selectedAccount?.currencyCode ?? "PHP";
+
+  const selectedCategory = useMemo(() => {
+    for (const cat of categories) {
+      if (cat.id === selectedCategoryId) return cat;
+      if (cat.subcategories) {
+        const sub = cat.subcategories.find((s) => s.id === selectedCategoryId);
+        if (sub) return sub;
+      }
+    }
+    return null;
+  }, [categories, selectedCategoryId]);
+
+  const parentOfSelectedCategory = useMemo(() => {
+    if (!selectedCategory || !selectedCategory.parentId) return null;
+    return categories.find((c) => c.id === selectedCategory.parentId) ?? null;
+  }, [categories, selectedCategory]);
+
+  const selectedCategoryColor = useMemo(() => {
+    const colorKey = selectedCategory?.color || parentOfSelectedCategory?.color;
+    if (!colorKey) return theme.colors.primary;
+    const catColors = theme.colors.categorical as Record<string, string>;
+    return catColors[colorKey] ?? theme.colors.primary;
+  }, [selectedCategory, parentOfSelectedCategory, theme.colors]);
 
   const handleSave = async () => {
     if (amountMinorUnits <= 0) {
@@ -138,7 +203,8 @@ export function TransactionFormModal({
       const success = await onSaveTransfer({
         fromAccountId: selectedAccountId,
         toAccountId: transferToAccountId,
-        amountCents: amountMinorUnits,
+        amountCents: Math.abs(amountMinorUnits),
+        name: name.trim() || null,
         note: note.trim() || null,
         occurredAt,
       });
@@ -152,12 +218,16 @@ export function TransactionFormModal({
         return;
       }
 
+      const signedAmount =
+        amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
+
       setLocalError(null);
       const success = await onSaveTransaction({
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         type: mode,
-        amountCents: amountMinorUnits,
+        amountCents: signedAmount,
+        name: name.trim() || null,
         note: note.trim() || null,
         occurredAt,
       });
@@ -275,38 +345,84 @@ export function TransactionFormModal({
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
-            {/* Amount Field (Triggers Calculator Modal) */}
+            {/* Transaction Title / Payee Field */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>TRANSACTION TITLE / PAYEE</Text>
+              <TextInput
+                maxLength={100}
+                onChangeText={setName}
+                placeholder={
+                  mode === "transfer"
+                    ? "e.g. Monthly Savings Allocation, Card Payment..."
+                    : mode === "income"
+                      ? "e.g. Salary Payout, Freelance Project, Dividend..."
+                      : "e.g. Grocery run at SM, Starbucks, Electric Bill..."
+                }
+                placeholderTextColor={theme.colors.textSecondary}
+                style={styles.nameInput}
+                value={name}
+              />
+            </View>
+
+            {/* Amount Field (with Sign Toggle + Calculator Modal) */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>AMOUNT ({currencyCode})</Text>
-              <Pressable
-                accessibilityLabel={`Amount ${formatCurrency(amountMinorUnits, currencyCode)}. Tap to calculate.`}
-                accessibilityRole="button"
-                onPress={() => setIsCalculatorOpen(true)}
-                style={styles.amountDisplayCard}
-              >
-                <View>
-                  <Text style={styles.amountLabelSmall}>Tap to enter or calculate</Text>
-                  <Text
+              <View style={styles.amountRowContainer}>
+                {mode !== "transfer" && (
+                  <Pressable
+                    accessibilityLabel={`Toggle amount sign. Currently ${amountSign === "+" ? "positive" : "negative"}`}
+                    accessibilityRole="button"
+                    onPress={() => setAmountSign((prev) => (prev === "+" ? "-" : "+"))}
                     style={[
-                      styles.amountBigValue,
-                      amountMinorUnits > 0 && mode === "income" && {
-                        color: theme.colors.success,
-                      },
-                      amountMinorUnits > 0 && mode === "expense" && {
-                        color: theme.colors.danger,
-                      },
-                      amountMinorUnits > 0 && mode === "transfer" && {
-                        color: theme.colors.info,
-                      },
+                      styles.signToggleBtn,
+                      amountSign === "+" ? styles.signTogglePositive : styles.signToggleNegative,
                     ]}
                   >
-                    {formatCurrency(amountMinorUnits, currencyCode, true)}
-                  </Text>
-                </View>
-                <View style={styles.calcIconBadge}>
-                  <Text style={styles.calcIconText}>⌨</Text>
-                </View>
-              </Pressable>
+                    <Text
+                      style={[
+                        styles.signToggleText,
+                        amountSign === "+" ? styles.signToggleTextPositive : styles.signToggleTextNegative,
+                      ]}
+                    >
+                      {amountSign}
+                    </Text>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  accessibilityLabel={`Amount ${mode !== "transfer" ? amountSign : ""}${formatCurrency(amountMinorUnits, currencyCode)}. Tap to calculate.`}
+                  accessibilityRole="button"
+                  onPress={() => setIsCalculatorOpen(true)}
+                  style={[styles.amountDisplayCard, { flex: 1 }]}
+                >
+                  <View>
+                    <Text style={styles.amountLabelSmall}>Tap to enter or calculate</Text>
+                    <Text
+                      style={[
+                        styles.amountBigValue,
+                        amountSign === "+" && mode === "income" && {
+                          color: theme.colors.success,
+                        },
+                        amountSign === "-" && {
+                          color: theme.colors.danger,
+                        },
+                        amountSign === "+" && mode === "expense" && {
+                          color: theme.colors.success,
+                        },
+                        mode === "transfer" && {
+                          color: theme.colors.info,
+                        },
+                      ]}
+                    >
+                      {mode !== "transfer" ? `${amountSign} ` : ""}
+                      {formatCurrency(Math.abs(amountMinorUnits), currencyCode, false)}
+                    </Text>
+                  </View>
+                  <View style={styles.calcIconBadge}>
+                    <Text style={styles.calcIconText}>⌨</Text>
+                  </View>
+                </Pressable>
+              </View>
             </View>
 
             {/* Account Selector */}
@@ -314,146 +430,166 @@ export function TransactionFormModal({
               <Text style={styles.fieldLabel}>
                 {mode === "transfer" ? "TRANSFER FROM ACCOUNT" : "ACCOUNT"}
               </Text>
-              {accounts.length === 0 ? (
-                <Text style={styles.emptyPrompt}>
-                  No accounts found. Create an account first.
-                </Text>
-              ) : (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.chipsScroll}
-                >
-                  {accounts.map((acc) => {
-                    const isSelected = selectedAccountId === acc.id;
-                    return (
-                      <Pressable
-                        key={acc.id}
-                        accessibilityLabel={`Select account ${acc.name}`}
-                        accessibilityRole="button"
-                        onPress={() => setSelectedAccountId(acc.id)}
-                        style={[
-                          styles.chip,
-                          isSelected && styles.chipSelected,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipText,
-                            isSelected && styles.chipTextSelected,
-                          ]}
-                        >
-                          {acc.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              )}
+              <Pressable
+                accessibilityLabel={`Account ${selectedAccount?.name ?? "none selected"}. Tap to choose account.`}
+                accessibilityRole="button"
+                onPress={() => setIsAccountPickerOpen(true)}
+                style={styles.selectorCard}
+              >
+                <View style={styles.selectorLeft}>
+                  <View
+                    style={[
+                      styles.selectorIconWrap,
+                      {
+                        backgroundColor: `${selectedAccount?.accountType?.color ?? theme.colors.primary}18`,
+                        borderColor: `${selectedAccount?.accountType?.color ?? theme.colors.primary}35`,
+                      },
+                    ]}
+                  >
+                    <IconHelper
+                      name={selectedAccount?.accountType?.iconKey ?? "wallet"}
+                      size={18}
+                      color={selectedAccount?.accountType?.color ?? theme.colors.primary}
+                    />
+                  </View>
+                  <View style={styles.selectorTextCol}>
+                    <Text
+                      numberOfLines={1}
+                      style={
+                        selectedAccount
+                          ? styles.selectorValueText
+                          : styles.selectorPlaceholderText
+                      }
+                    >
+                      {selectedAccount?.name ?? "Select Account"}
+                    </Text>
+                    {selectedAccount && (
+                      <Text style={styles.selectorSubText}>
+                        {selectedAccount.accountType?.name ?? "Account"} ·{" "}
+                        {formatCurrency(
+                          selectedAccount.currentBalanceMinorUnits ??
+                            selectedAccount.openingBalanceMinorUnits,
+                          selectedAccount.currencyCode,
+                        )}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <View style={styles.selectorChangeBadge}>
+                  <Text style={styles.selectorChangeText}>Change</Text>
+                  <ChevronRight size={14} color={theme.colors.textSecondary} />
+                </View>
+              </Pressable>
             </View>
 
             {/* If Transfer: Destination Account */}
             {mode === "transfer" ? (
               <View style={styles.inputGroup}>
                 <Text style={styles.fieldLabel}>TRANSFER TO ACCOUNT</Text>
-                {accounts.length < 2 ? (
-                  <Text style={styles.emptyPrompt}>
-                    At least 2 accounts required for transfer.
-                  </Text>
-                ) : (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chipsScroll}
-                  >
-                    {accounts.map((acc) => {
-                      const isSelected = transferToAccountId === acc.id;
-                      const isSameAsSource = selectedAccountId === acc.id;
-                      return (
-                        <Pressable
-                          key={acc.id}
-                          accessibilityLabel={`Transfer to ${acc.name}`}
-                          accessibilityRole="button"
-                          disabled={isSameAsSource}
-                          onPress={() => setTransferToAccountId(acc.id)}
-                          style={[
-                            styles.chip,
-                            isSelected && styles.chipSelected,
-                            isSameAsSource && styles.chipDisabled,
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.chipText,
-                              isSelected && styles.chipTextSelected,
-                              isSameAsSource && styles.chipTextDisabled,
-                            ]}
-                          >
-                            {acc.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                )}
+                <Pressable
+                  accessibilityLabel={`Destination account ${transferToAccount?.name ?? "none selected"}. Tap to choose account.`}
+                  accessibilityRole="button"
+                  onPress={() => setIsTransferToAccountPickerOpen(true)}
+                  style={styles.selectorCard}
+                >
+                  <View style={styles.selectorLeft}>
+                    <View
+                      style={[
+                        styles.selectorIconWrap,
+                        {
+                          backgroundColor: `${transferToAccount?.accountType?.color ?? theme.colors.primary}18`,
+                          borderColor: `${transferToAccount?.accountType?.color ?? theme.colors.primary}35`,
+                        },
+                      ]}
+                    >
+                      <IconHelper
+                        name={transferToAccount?.accountType?.iconKey ?? "landmark"}
+                        size={18}
+                        color={transferToAccount?.accountType?.color ?? theme.colors.primary}
+                      />
+                    </View>
+                    <View style={styles.selectorTextCol}>
+                      <Text
+                        numberOfLines={1}
+                        style={
+                          transferToAccount
+                            ? styles.selectorValueText
+                            : styles.selectorPlaceholderText
+                        }
+                      >
+                        {transferToAccount?.name ?? "Select Destination Account"}
+                      </Text>
+                      {transferToAccount && (
+                        <Text style={styles.selectorSubText}>
+                          {transferToAccount.accountType?.name ?? "Account"} ·{" "}
+                          {formatCurrency(
+                            transferToAccount.currentBalanceMinorUnits ??
+                              transferToAccount.openingBalanceMinorUnits,
+                            transferToAccount.currencyCode,
+                          )}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.selectorChangeBadge}>
+                    <Text style={styles.selectorChangeText}>Change</Text>
+                    <ChevronRight size={14} color={theme.colors.textSecondary} />
+                  </View>
+                </Pressable>
               </View>
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={styles.inputGroup}>
                 <Text style={styles.fieldLabel}>CATEGORY</Text>
-                {filteredCategories.length === 0 ? (
-                  <Text style={styles.emptyPrompt}>
-                    No {mode} categories found.
-                  </Text>
-                ) : (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chipsScroll}
-                  >
-                    {filteredCategories.map((cat) => {
-                      const isSelected = selectedCategoryId === cat.id;
-                      const catColor =
-                        cat.color && cat.color in theme.colors.categorical
-                          ? theme.colors.categorical[cat.color as keyof AppTheme["colors"]["categorical"]]
-                          : theme.colors.primary;
-
-                      return (
-                        <Pressable
-                          key={cat.id}
-                          accessibilityLabel={`Select category ${cat.name}`}
-                          accessibilityRole="button"
-                          onPress={() => setSelectedCategoryId(cat.id)}
-                          style={[
-                            styles.chip,
-                            isSelected && {
-                              backgroundColor: `${catColor}25`,
-                              borderColor: catColor,
-                            },
-                          ]}
-                        >
-                          <IconHelper
-                            color={isSelected ? catColor : theme.colors.textSecondary}
-                            name={cat.icon}
-                            size={14}
-                          />
-                          <Text
-                            style={[
-                              styles.chipText,
-                              { marginLeft: 6 },
-                              isSelected && {
-                                color: catColor,
-                                fontWeight: "700",
-                              },
-                            ]}
-                          >
-                            {cat.name}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                )}
+                <Pressable
+                  accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
+                  accessibilityRole="button"
+                  onPress={() => setIsCategoryPickerOpen(true)}
+                  style={styles.selectorCard}
+                >
+                  <View style={styles.selectorLeft}>
+                    <View
+                      style={[
+                        styles.selectorIconWrap,
+                        {
+                          backgroundColor: `${selectedCategoryColor}18`,
+                          borderColor: `${selectedCategoryColor}35`,
+                        },
+                      ]}
+                    >
+                      <IconHelper
+                        name={selectedCategory?.icon ?? "tag"}
+                        size={18}
+                        color={selectedCategoryColor}
+                      />
+                    </View>
+                    <View style={styles.selectorTextCol}>
+                      <Text
+                        numberOfLines={1}
+                        style={
+                          selectedCategory
+                            ? styles.selectorValueText
+                            : styles.selectorPlaceholderText
+                        }
+                      >
+                        {selectedCategory?.name ?? "Select Category"}
+                      </Text>
+                      {selectedCategory && (
+                        <Text style={styles.selectorSubText}>
+                          {parentOfSelectedCategory
+                            ? `${parentOfSelectedCategory.name} > Subcategory`
+                            : mode === "expense"
+                              ? "Expense Category"
+                              : "Income Category"}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <View style={styles.selectorChangeBadge}>
+                    <Text style={styles.selectorChangeText}>Change</Text>
+                    <ChevronRight size={14} color={theme.colors.textSecondary} />
+                  </View>
+                </Pressable>
               </View>
             )}
 
@@ -522,7 +658,12 @@ export function TransactionFormModal({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
-          setAmountMinorUnits(minorUnits);
+          if (minorUnits < 0) {
+            setAmountMinorUnits(Math.abs(minorUnits));
+            setAmountSign("-");
+          } else {
+            setAmountMinorUnits(minorUnits);
+          }
           setIsCalculatorOpen(false);
         }}
         title={`Enter ${mode.toUpperCase()} Amount`}
@@ -538,6 +679,40 @@ export function TransactionFormModal({
         selectedDate={dateIsoString}
         title="Select Transaction Date"
         visible={isDatePickerOpen}
+      />
+
+      <AccountPickerModal
+        accounts={accounts}
+        onClose={() => setIsAccountPickerOpen(false)}
+        onSelectAccount={(acc) => {
+          setSelectedAccountId(acc.id);
+          if (mode === "transfer" && transferToAccountId === acc.id) {
+            setTransferToAccountId("");
+          }
+        }}
+        selectedAccountId={selectedAccountId}
+        title={mode === "transfer" ? "Select Source Account" : "Select Account"}
+        visible={isAccountPickerOpen}
+      />
+
+      <AccountPickerModal
+        accounts={accounts}
+        excludeAccountId={selectedAccountId}
+        onClose={() => setIsTransferToAccountPickerOpen(false)}
+        onSelectAccount={(acc) => setTransferToAccountId(acc.id)}
+        selectedAccountId={transferToAccountId}
+        title="Select Destination Account"
+        visible={isTransferToAccountPickerOpen}
+      />
+
+      <CategoryPickerModal
+        categories={categories}
+        onClose={() => setIsCategoryPickerOpen(false)}
+        onSelectCategory={(cat) => setSelectedCategoryId(cat.id)}
+        selectedCategoryId={selectedCategoryId}
+        title={mode === "income" ? "Select Income Category" : "Select Expense Category"}
+        type={mode === "income" ? "income" : "expense"}
+        visible={isCategoryPickerOpen}
       />
     </Modal>
   );
@@ -650,6 +825,49 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
       letterSpacing: 0.6,
       marginBottom: 6,
+    },
+    nameInput: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      color: theme.colors.textPrimary,
+      fontSize: 15,
+      fontWeight: "500",
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    amountRowContainer: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 10,
+    },
+    signToggleBtn: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 2,
+      height: 56,
+      justifyContent: "center",
+      width: 56,
+    },
+    signTogglePositive: {
+      backgroundColor: `${theme.colors.success}18`,
+      borderColor: theme.colors.success,
+    },
+    signToggleNegative: {
+      backgroundColor: `${theme.colors.danger}18`,
+      borderColor: theme.colors.danger,
+    },
+    signToggleText: {
+      fontSize: 26,
+      fontWeight: "800",
+      lineHeight: 28,
+    },
+    signToggleTextPositive: {
+      color: theme.colors.success,
+    },
+    signToggleTextNegative: {
+      color: theme.colors.danger,
     },
     amountDisplayCard: {
       alignItems: "center",
@@ -765,6 +983,67 @@ function createStyles(theme: AppTheme) {
       minHeight: 46,
       paddingHorizontal: 14,
       paddingVertical: 10,
+    },
+    selectorCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 58,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    selectorLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: 12,
+      marginRight: 10,
+    },
+    selectorIconWrap: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    selectorTextCol: {
+      flex: 1,
+    },
+    selectorValueText: {
+      color: theme.colors.textPrimary,
+      fontSize: 15,
+      fontWeight: "600",
+    },
+    selectorPlaceholderText: {
+      color: theme.colors.textMuted,
+      fontSize: 15,
+      fontWeight: "500",
+    },
+    selectorSubText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    selectorChangeBadge: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: 14,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 2,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    selectorChangeText: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
     },
     footerRow: {
       flexDirection: "row",

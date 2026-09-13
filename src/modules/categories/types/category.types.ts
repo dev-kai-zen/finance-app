@@ -10,10 +10,13 @@ export interface Category {
   type: CategoryType;
   color: string | null;
   icon: string | null;
+  parentId?: string | null;
   isSystem: boolean;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
   itemCount?: number;
+  subcategories?: Category[];
 }
 
 export interface CategoryInput {
@@ -21,4 +24,6 @@ export interface CategoryInput {
   type: CategoryType;
   color?: string;
   icon?: string;
+  parentId?: string | null;
+  sortOrder?: number;
 }

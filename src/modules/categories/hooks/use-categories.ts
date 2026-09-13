@@ -3,7 +3,8 @@ import { db } from "@/infrastructure/database/client";
 import { listCategories } from "../repositories/categories.repository";
 import { saveCategory as saveCategoryService } from "../services/save-category.service";
 import { deleteCategory as deleteCategoryService } from "../services/delete-category.service";
-import type { Category, CategoryInput } from "../types/category.types";
+import { reorderCategories as reorderCategoriesService } from "../services/reorder-categories.service";
+import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,6 +68,59 @@ export function useCategories() {
     [refresh],
   );
 
+  const reorder = useCallback(
+    async (orderedIds: string[]): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
+        await reorderCategoriesService(orderedIds);
+        await refresh();
+        return true;
+      } catch (err: any) {
+        console.error("[useCategories] Reorder failed:", err);
+        setError(err?.message ?? "Failed to reorder categories.");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [refresh],
+  );
+
+  const sortAlphabetically = useCallback(
+    async (type: CategoryType, includeSubs: boolean = true): Promise<boolean> => {
+      try {
+        setSaving(true);
+        setError(null);
+        const currentTypeCats = categories.filter((c) => c.type === type);
+        const sortedGroups = [...currentTypeCats].sort((a, b) => a.name.localeCompare(b.name));
+        const groupIds = sortedGroups.map((g) => g.id);
+        await reorderCategoriesService(groupIds);
+
+        if (includeSubs) {
+          for (const group of currentTypeCats) {
+            if (group.subcategories && group.subcategories.length > 1) {
+              const sortedSubs = [...group.subcategories].sort((a, b) =>
+                a.name.localeCompare(b.name),
+              );
+              await reorderCategoriesService(sortedSubs.map((s) => s.id));
+            }
+          }
+        }
+
+        await refresh();
+        return true;
+      } catch (err: any) {
+        console.error("[useCategories] Sort A-Z failed:", err);
+        setError(err?.message ?? "Failed to sort categories.");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [categories, refresh],
+  );
+
   const clearError = useCallback(() => setError(null), []);
 
   return {
@@ -77,6 +131,8 @@ export function useCategories() {
     refresh,
     saveCategory: save,
     deleteCategory: remove,
+    reorderCategories: reorder,
+    sortAlphabetically,
     clearError,
   };
 }

@@ -15,14 +15,18 @@ export function AccountRow({
 }) {
   const styles = useThemeStyles(createStyles);
   const isLiability = account.accountType?.accountGroup === "liability";
+  const displayBalance =
+    account.currentBalanceMinorUnits !== undefined
+      ? account.currentBalanceMinorUnits
+      : account.openingBalanceMinorUnits;
   const amount =
     account.currencyCode === "PHP"
-      ? formatCurrency(account.openingBalanceMinorUnits, "PHP")
-      : `${account.openingBalanceMinorUnits.toLocaleString()} ${account.currencyCode}`;
+      ? formatCurrency(displayBalance, "PHP")
+      : `${displayBalance.toLocaleString()} ${account.currencyCode}`;
 
   return (
     <Pressable
-      accessibilityLabel={`${account.name}, opening balance ${amount}. Open account actions.`}
+      accessibilityLabel={`${account.name}, balance ${amount}. Open account actions.`}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [

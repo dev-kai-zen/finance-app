@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -6,7 +7,7 @@ import type {
   AccountListItem,
   AccountType,
 } from "@/modules/accounts/types/account.types";
-import { AccountRow } from "@/modules/accounts/components/account-row";
+import { AccountTypeGroupCard } from "@/modules/accounts/components/account-type-group-card";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 export function AccountGroupSection({
@@ -14,11 +15,13 @@ export function AccountGroupSection({
   accounts,
   types,
   onSelect,
+  onSort,
 }: {
   group: AccountGroup;
   accounts: AccountListItem[];
   types: AccountType[];
   onSelect: (account: AccountListItem) => void;
+  onSort?: (groupName: string, accounts: AccountListItem[]) => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const grouped = accounts.filter(
@@ -33,6 +36,59 @@ export function AccountGroupSection({
         Number.isSafeInteger(a.openingBalanceMinorUnits),
     )
     .reduce((sum, a) => sum + BigInt(a.openingBalanceMinorUnits), 0n);
+
+  const typeGroups = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        accountType:
+          | AccountType
+          | {
+              id: string;
+              name: string;
+              iconKey?: string | null;
+              color?: string | null;
+              accountGroup?: string;
+            };
+        sortOrder: number;
+        accounts: AccountListItem[];
+      }
+    >();
+
+    for (const account of grouped) {
+      const typeId = account.accountTypeId || "other";
+      if (!map.has(typeId)) {
+        const foundType =
+          types.find((t) => t.id === typeId) || account.accountType;
+        const typeInfo = foundType ?? {
+          id: typeId,
+          name: account.accountType?.name ?? "Other",
+          iconKey: account.accountType?.iconKey ?? "landmark",
+          color: account.accountType?.color ?? null,
+          accountGroup: group,
+        };
+        map.set(typeId, {
+          accountType: typeInfo,
+          sortOrder:
+            "sortOrder" in typeInfo && typeof typeInfo.sortOrder === "number"
+              ? typeInfo.sortOrder
+              : 999,
+          accounts: [],
+        });
+      }
+      map.get(typeId)!.accounts.push(account);
+    }
+
+    const sortedGroups = Array.from(map.values()).sort(
+      (a, b) => a.sortOrder - b.sortOrder,
+    );
+
+    for (const g of sortedGroups) {
+      g.accounts.sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+
+    return sortedGroups;
+  }, [grouped, types, group]);
 
   return (
     <View style={styles.sectionContainer}>
@@ -59,20 +115,22 @@ export function AccountGroupSection({
         </Text>
       </View>
 
-      {/* Account Cards List */}
-      {grouped.length === 0 ? (
+      {/* Account Type Groups List */}
+      {typeGroups.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>
             No {isAsset ? "asset" : "liability"} accounts added yet.
           </Text>
         </View>
       ) : (
-        <View style={styles.accountsList}>
-          {grouped.map((account) => (
-            <AccountRow
-              key={account.id}
-              account={account}
-              onPress={() => onSelect(account)}
+        <View style={styles.typeGroupsList}>
+          {typeGroups.map((typeGroup) => (
+            <AccountTypeGroupCard
+              key={typeGroup.accountType.id}
+              accountType={typeGroup.accountType}
+              accounts={typeGroup.accounts}
+              onSelectAccount={onSelect}
+              onSort={onSort}
             />
           ))}
         </View>
@@ -128,6 +186,9 @@ function createStyles(theme: AppTheme) {
     },
     accountsList: {
       gap: theme.spacing.sm,
+    },
+    typeGroupsList: {
+      gap: theme.spacing.md,
     },
     emptyCard: {
       alignItems: "center",
