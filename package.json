@@ -12,10 +12,12 @@
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0"
+    "react-native-screens": "~4.26.0",
+    "zod": "^4.6.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "drizzle-kit": "^0.31.10",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -26,7 +28,9 @@
     "android:prebuild": "expo prebuild --platform android",
     "android:apk:debug": "cd android && gradlew.bat assembleDebug",
     "android:apk:release": "cd android && gradlew.bat assembleRelease",
-    "android:aab:release": "cd android && gradlew.bat bundleRelease"
+    "android:aab:release": "cd android && gradlew.bat bundleRelease",
+    "db:generate": "drizzle-kit generate",
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }
