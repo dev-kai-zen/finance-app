@@ -6,4 +6,6 @@ export * from "./sync-status-chip";
 export * from "./sidebar";
 export * from "./amount-calculator-modal";
 export * from "./date-picker-modal";
+export * from "./icon-helper";
+export * from "./icon-picker-modal";
 export * from "./theme/app-theme-provider";

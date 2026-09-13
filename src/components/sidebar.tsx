@@ -141,7 +141,7 @@ function SidebarLink({ label, icon, active, onPress }: SidebarLinkProps) {
  */
 function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolean }) {
   const iconColor = useThemeStyles((theme) =>
-    active ? theme.colors.onPrimary : theme.colors.textInverseMuted,
+    active ? theme.colors.primary : theme.colors.textSecondary,
   );
 
   switch (type) {
@@ -285,7 +285,7 @@ function createStyles(theme: AppTheme) {
       width: 38,
     },
     brandEmblemOuter: {
-      borderColor: theme.colors.onPrimary,
+      borderColor: theme.colors.primary,
       borderRadius: 4,
       borderWidth: 2,
       height: 20,
@@ -294,24 +294,24 @@ function createStyles(theme: AppTheme) {
       width: 20,
     },
     brandEmblemInner: {
-      backgroundColor: theme.colors.onPrimary,
+      backgroundColor: theme.colors.primary,
       borderRadius: 1,
       height: 6,
       width: 6,
     },
     brandName: {
-      color: theme.colors.textInverse,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.3,
     },
     brandTagline: {
-      color: theme.colors.textInverseMuted,
+      color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
     },
     sectionLabel: {
-      color: theme.colors.textInverseMuted,
+      color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.8,
@@ -340,7 +340,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surfaceInverseElevated,
     },
     activeIndicator: {
-      backgroundColor: theme.colors.onPrimary,
+      backgroundColor: theme.colors.primary,
       borderBottomRightRadius: 2,
       borderTopRightRadius: 2,
       bottom: 6,
@@ -357,12 +357,12 @@ function createStyles(theme: AppTheme) {
       width: 20,
     },
     linkText: {
-      color: theme.colors.textInverseMuted,
+      color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
     activeLinkText: {
-      color: theme.colors.onPrimary,
+      color: theme.colors.primary,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     divider: {

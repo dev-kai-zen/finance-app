@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Platform,
@@ -7,96 +7,74 @@ import {
   Text,
   View,
 } from "react-native";
-import { PageContainer, PageEmptyState } from "@/components/page-container";
-import { PageHeader } from "@/components/page-header";
+import { FloatingActionButton, PageContainer, PageEmptyState, PageHeader } from "@/components";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
-import { formatCurrency } from "@/utils/currency";
-
-interface TransactionItem {
-  id: string;
-  accountName: string;
-  categoryName: string;
-  description: string;
-  occurredAt: string;
-  amountMinorUnits: number;
-  type: "income" | "expense" | "transfer";
-}
-
-const SAMPLE_TRANSACTIONS: TransactionItem[] = [
-  {
-    id: "tx-1",
-    accountName: "BDO Everyday Checking",
-    categoryName: "Income / Salary",
-    description: "Monthly Software Engineering Retainer",
-    occurredAt: "Today, 10:30 AM",
-    amountMinorUnits: 6500000,
-    type: "income",
-  },
-  {
-    id: "tx-2",
-    accountName: "BDO Everyday Checking",
-    categoryName: "Groceries",
-    description: "SM Supermarket Weekly Provisions",
-    occurredAt: "Yesterday, 6:45 PM",
-    amountMinorUnits: -435000,
-    type: "expense",
-  },
-  {
-    id: "tx-3",
-    accountName: "Maya Digital Wallet",
-    categoryName: "Utilities",
-    description: "Meralco Electric Power Distribution",
-    occurredAt: "Sep 11, 2026",
-    amountMinorUnits: -582000,
-    type: "expense",
-  },
-  {
-    id: "tx-4",
-    accountName: "Metrobank Platinum Card",
-    categoryName: "Dining",
-    description: "Grab Food Meal Delivery",
-    occurredAt: "Sep 11, 2026",
-    amountMinorUnits: -62000,
-    type: "expense",
-  },
-  {
-    id: "tx-5",
-    accountName: "BDO Checking → BPI Savings",
-    categoryName: "Transfer",
-    description: "Emergency Fund Allocation",
-    occurredAt: "Sep 10, 2026",
-    amountMinorUnits: -1000000,
-    type: "transfer",
-  },
-  {
-    id: "tx-6",
-    accountName: "BPI High-Yield Savings",
-    categoryName: "Investments",
-    description: "High-Yield Interest Accrual",
-    occurredAt: "Sep 01, 2026",
-    amountMinorUnits: 42500,
-    type: "income",
-  },
-];
+import { useAccounts } from "@/modules/accounts";
+import { useCategories } from "@/modules/categories";
+import { TransactionFormModal } from "../components/transaction-form-modal";
+import { TransactionRow } from "../components/transaction-row";
+import { TransactionStatsCard } from "../components/transaction-stats-card";
+import { useTransactions } from "../hooks/use-transactions";
+import type { TransactionFilter, TransactionType } from "../types/transaction.types";
 
 export function TransactionsScreen() {
   const styles = useThemeStyles(createStyles);
-  const [filterType, setFilterType] = useState<"all" | "income" | "expense" | "transfer">("all");
 
-  const filteredTransactions = SAMPLE_TRANSACTIONS.filter((tx) => {
-    if (filterType === "all") return true;
-    return tx.type === filterType;
-  });
+  const {
+    transactions,
+    stats,
+    loading,
+    pendingAction,
+    error,
+    filter,
+    setFilter,
+    recordTransaction,
+    recordTransfer,
+    deleteTx,
+  } = useTransactions();
+
+  const { accounts } = useAccounts();
+  const { categories } = useCategories();
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
   const handleAddTransaction = () => {
+    setIsFormModalOpen(true);
+  };
+
+  const handleFilterChange = (type: TransactionFilter["type"]) => {
+    setFilter((prev) => ({ ...prev, type }));
+  };
+
+  const handleDelete = (id: string) => {
+    const executeDelete = async () => {
+      await deleteTx(id);
+    };
+
     if (Platform.OS === "web") {
-      window.alert("Add Transaction action triggered. Ready for form modal integration.");
+      if (window.confirm("Are you sure you want to delete this transaction record?")) {
+        executeDelete();
+      }
     } else {
-      Alert.alert("Add Transaction", "Add Transaction action triggered. Ready for form modal integration.");
+      Alert.alert(
+        "Delete Transaction",
+        "Are you sure you want to delete this transaction record?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Delete", style: "destructive", onPress: executeDelete },
+        ],
+      );
     }
   };
+
+  const filterOptions = [
+    { key: "all", label: `All (${transactions.length})` },
+    { key: "income", label: "Income" },
+    { key: "expense", label: "Expense" },
+    { key: "transfer", label: "Transfers" },
+  ] as const;
 
   return (
     <PageContainer
@@ -104,36 +82,38 @@ export function TransactionsScreen() {
         <PageHeader
           breadcrumb="Kaizen Finance / Transactions"
           primaryAction={{
-            label: "+ Add Transaction",
+            label: "+ Record Transaction",
             onPress: handleAddTransaction,
           }}
-          subtitle="Detailed audit log of your income, expenses, and account transfers."
+          subtitle="Detailed ledger of your income, expenses, and account transfers."
           title="Transactions"
         />
       }
     >
       <View style={styles.container}>
+        {/* Statistics Card */}
+        <TransactionStatsCard stats={stats} />
+
         {/* Filter Pills */}
         <View style={styles.filterRow}>
-          {(["all", "income", "expense", "transfer"] as const).map((type) => {
-            const active = filterType === type;
-            const labels = {
-              all: `All (${SAMPLE_TRANSACTIONS.length})`,
-              income: "Income",
-              expense: "Expense",
-              transfer: "Transfers",
-            };
+          {filterOptions.map((opt) => {
+            const active = (filter.type ?? "all") === opt.key;
 
             return (
               <Pressable
-                key={type}
-                accessibilityLabel={`Filter by ${labels[type]}`}
+                key={opt.key}
+                accessibilityLabel={`Filter by ${opt.label}`}
                 accessibilityRole="button"
-                onPress={() => setFilterType(type)}
+                onPress={() => handleFilterChange(opt.key)}
                 style={[styles.filterPill, active && styles.filterPillActive]}
               >
-                <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>
-                  {labels[type]}
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    active && styles.filterPillTextActive,
+                  ]}
+                >
+                  {opt.label}
                 </Text>
               </Pressable>
             );
@@ -141,67 +121,44 @@ export function TransactionsScreen() {
         </View>
 
         {/* Transactions Table / List */}
-        {filteredTransactions.length === 0 ? (
+        {transactions.length === 0 ? (
           <PageEmptyState
-            actionLabel="+ Record Transaction"
-            description="No transactions match this category."
+            actionLabel="+ Record First Transaction"
+            description="No transaction records match the current filter."
             onAction={handleAddTransaction}
             title="No Transactions Found"
           />
         ) : (
           <View style={styles.card}>
-            {filteredTransactions.map((tx, idx) => {
-              const isIncome = tx.type === "income";
-              const isTransfer = tx.type === "transfer";
-              const isLast = idx === filteredTransactions.length - 1;
-
-              return (
-                <View
-                  key={tx.id}
-                  style={[styles.row, !isLast && styles.rowBorder]}
-                >
-                  <View style={styles.rowLeft}>
-                    <View
-                      style={[
-                        styles.typeBadge,
-                        isIncome && styles.badgeIncome,
-                        isTransfer && styles.badgeTransfer,
-                      ]}
-                    >
-                      <Text style={styles.typeBadgeIcon}>
-                        {isIncome ? "↓" : isTransfer ? "⇄" : "↑"}
-                      </Text>
-                    </View>
-
-                    <View style={styles.info}>
-                      <Text numberOfLines={1} style={styles.description}>
-                        {tx.description}
-                      </Text>
-                      <View style={styles.metaRow}>
-                        <Text style={styles.category}>{tx.categoryName}</Text>
-                        <Text style={styles.separator}>•</Text>
-                        <Text style={styles.account}>{tx.accountName}</Text>
-                        <Text style={styles.separator}>•</Text>
-                        <Text style={styles.date}>{tx.occurredAt}</Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <Text
-                    style={[
-                      styles.amount,
-                      isIncome && styles.amountIncome,
-                      isTransfer && styles.amountTransfer,
-                    ]}
-                  >
-                    {formatCurrency(tx.amountMinorUnits, "PHP", true)}
-                  </Text>
-                </View>
-              );
-            })}
+            {transactions.map((tx, idx) => (
+              <TransactionRow
+                key={tx.id}
+                isLast={idx === transactions.length - 1}
+                onDelete={handleDelete}
+                transaction={tx}
+              />
+            ))}
           </View>
         )}
       </View>
+
+      {/* Floating Action Button for Mobile */}
+      <FloatingActionButton
+        accessibilityLabel="Record new transaction"
+        onPress={handleAddTransaction}
+      />
+
+      {/* Transaction & Transfer Form Modal */}
+      <TransactionFormModal
+        accounts={accounts}
+        categories={categories}
+        error={error}
+        onClose={() => setIsFormModalOpen(false)}
+        onSaveTransaction={recordTransaction}
+        onSaveTransfer={recordTransfer}
+        pending={pendingAction}
+        visible={isFormModalOpen}
+      />
     </PageContainer>
   );
 }
@@ -209,7 +166,8 @@ export function TransactionsScreen() {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      gap: theme.spacing.lg,
+      gap: theme.spacing.md,
+      paddingBottom: 80,
     },
     filterRow: {
       flexDirection: "row",
@@ -246,87 +204,6 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
-    },
-    row: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      gap: theme.spacing.md,
-    },
-    rowBorder: {
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
-    },
-    rowLeft: {
-      alignItems: "center",
-      flex: 1,
-      flexDirection: "row",
-      gap: theme.spacing.md,
-    },
-    typeBadge: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.medium,
-      height: 38,
-      justifyContent: "center",
-      width: 38,
-    },
-    badgeIncome: {
-      backgroundColor: theme.colors.surfaceMuted,
-    },
-    badgeTransfer: {
-      backgroundColor: theme.colors.surfaceMuted,
-    },
-    typeBadgeIcon: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.md,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    info: {
-      flex: 1,
-    },
-    description: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-      lineHeight: theme.typography.lineHeight.sm,
-    },
-    metaRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.xs,
-      marginTop: 2,
-    },
-    category: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    separator: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-    },
-    account: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-    },
-    date: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-    },
-    amount: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    amountIncome: {
-      color: theme.colors.success,
-    },
-    amountTransfer: {
-      color: theme.colors.textSecondary,
     },
   });
 }

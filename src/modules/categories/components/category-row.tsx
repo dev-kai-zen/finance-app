@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { IconHelper } from "@/components";
 import type { Category } from "../types/category.types";
 
 export interface CategoryRowProps {
@@ -24,16 +25,12 @@ export function CategoryRow({ category, onEdit, onDelete }: CategoryRowProps) {
       ? theme.colors.categorical[category.color as keyof AppTheme["colors"]["categorical"]]
       : theme.colors.primary;
 
-  const initialLetter = (category.name || "?").charAt(0).toUpperCase();
-
   return (
     <View style={styles.card}>
       <View style={styles.leftContent}>
         {/* Categorical Icon / Dot Badge */}
         <View style={[styles.badge, { backgroundColor: `${categoricalColor}22`, borderColor: `${categoricalColor}55` }]}>
-          <Text style={[styles.badgeText, { color: categoricalColor }]}>
-            {initialLetter}
-          </Text>
+          <IconHelper color={categoricalColor} name={category.icon} size={20} />
         </View>
 
         <View style={styles.infoCol}>

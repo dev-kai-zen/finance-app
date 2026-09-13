@@ -46,7 +46,7 @@ export const kaizenEmerald: AppTheme = {
 
     textPrimary: "#F5F7FA",
     textSecondary: "#94A3B8",
-    textMuted: "#525C6E",
+    textMuted: "#8E9DAE",
     textInverse: "#0F121A",
     textInverseMuted: "#8E99A8",
 
@@ -87,7 +87,7 @@ export const cyberAzure: AppTheme = {
 
     textPrimary: "#F0F6FC",
     textSecondary: "#8DA0B8",
-    textMuted: "#4F637A",
+    textMuted: "#8DA0B8",
     textInverse: "#0B132B",
     textInverseMuted: "#7A91AD",
 
@@ -128,7 +128,7 @@ export const amethystGlow: AppTheme = {
 
     textPrimary: "#FBF7FF",
     textSecondary: "#A799BC",
-    textMuted: "#65567A",
+    textMuted: "#A799BC",
     textInverse: "#120B1E",
     textInverseMuted: "#9584AD",
 
@@ -169,7 +169,7 @@ export const sunsetAmber: AppTheme = {
 
     textPrimary: "#FFFBEB",
     textSecondary: "#B8A089",
-    textMuted: "#786350",
+    textMuted: "#B8A089",
     textInverse: "#1A120B",
     textInverseMuted: "#A18A74",
 
@@ -210,7 +210,7 @@ export const crimsonObsidian: AppTheme = {
 
     textPrimary: "#FEF2F2",
     textSecondary: "#B88B8B",
-    textMuted: "#755252",
+    textMuted: "#B88B8B",
     textInverse: "#1A0D0D",
     textInverseMuted: "#A67878",
 

@@ -13,10 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import {
-  CATEGORY_COLOR_KEYS,
-  CATEGORY_ICONS,
-} from "../constants/categories.constants";
+import { IconHelper, IconPickerModal } from "@/components";
+import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 export interface CategoryFormModalProps {
@@ -48,7 +46,13 @@ export function CategoryFormModal({
   const [type, setType] = useState<CategoryType>(initialType);
   const [selectedColor, setSelectedColor] = useState<string>("slate");
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const categoricalColor =
+    selectedColor in theme.colors.categorical
+      ? theme.colors.categorical[selectedColor as keyof AppTheme["colors"]["categorical"]]
+      : theme.colors.primary;
 
   useEffect(() => {
     if (visible) {
@@ -226,34 +230,47 @@ export function CategoryFormModal({
 
             {/* Icon Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>ICON LABEL</Text>
-              <View style={styles.iconGrid}>
-                {CATEGORY_ICONS.map((ic) => {
-                  const isSelected = selectedIcon === ic.key;
-
-                  return (
-                    <Pressable
-                      key={ic.key}
-                      accessibilityLabel={`Select icon ${ic.label}`}
-                      accessibilityRole="button"
-                      onPress={() => setSelectedIcon(ic.key)}
-                      style={[
-                        styles.iconChip,
-                        isSelected && styles.iconChipSelected,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.iconChipText,
-                          isSelected && styles.iconChipTextSelected,
-                        ]}
-                      >
-                        {ic.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+              <Text style={styles.fieldLabel}>CATEGORY ICON</Text>
+              <Pressable
+                accessibilityLabel="Choose category icon"
+                accessibilityRole="button"
+                onPress={() => setIsIconPickerOpen(true)}
+                style={styles.iconSelectTrigger}
+              >
+                <View style={styles.iconPreviewLeft}>
+                  <View
+                    style={[
+                      styles.iconPreviewBadge,
+                      {
+                        backgroundColor: `${categoricalColor}22`,
+                        borderColor: `${categoricalColor}55`,
+                      },
+                    ]}
+                  >
+                    <IconHelper
+                      color={categoricalColor}
+                      name={selectedIcon}
+                      size={22}
+                    />
+                  </View>
+                  <View style={styles.iconInfoCol}>
+                    <Text style={styles.iconNameText}>{selectedIcon}</Text>
+                    <Text style={styles.iconSubtext}>
+                      Tap to browse 100+ icons in library
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.changeIconBadge,
+                    { borderColor: `${categoricalColor}66` },
+                  ]}
+                >
+                  <Text style={[styles.changeIconBadgeText, { color: categoricalColor }]}>
+                    Change ▾
+                  </Text>
+                </View>
+              </Pressable>
             </View>
           </ScrollView>
 
@@ -282,6 +299,15 @@ export function CategoryFormModal({
           </View>
         </View>
       </View>
+
+      <IconPickerModal
+        onClose={() => setIsIconPickerOpen(false)}
+        onSelectIcon={setSelectedIcon}
+        selectedIcon={selectedIcon}
+        themeColor={categoricalColor}
+        title="Select Category Icon"
+        visible={isIconPickerOpen}
+      />
     </Modal>
   );
 }
@@ -440,26 +466,55 @@ function createStyles(theme: AppTheme) {
       flexWrap: "wrap",
       gap: 8,
     },
-    iconChip: {
+    iconSelectTrigger: {
+      alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
-      borderRadius: 10,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 58,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    iconPreviewLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    iconPreviewBadge: {
+      alignItems: "center",
+      borderRadius: 12,
+      borderWidth: 1,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
+    iconInfoCol: {
+      flex: 1,
+    },
+    iconNameText: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "600",
+      textTransform: "capitalize",
+    },
+    iconSubtext: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      marginTop: 2,
+    },
+    changeIconBadge: {
+      borderRadius: 8,
       borderWidth: 1,
       paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingVertical: 5,
     },
-    iconChipSelected: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
-    },
-    iconChipText: {
-      color: theme.colors.textSecondary,
+    changeIconBadgeText: {
       fontSize: 12,
-      fontWeight: "500",
-    },
-    iconChipTextSelected: {
-      color: theme.colors.onPrimary,
-      fontWeight: "700",
+      fontWeight: "600",
     },
     footerRow: {
       flexDirection: "row",

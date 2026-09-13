@@ -29,15 +29,28 @@ export async function listCategories(db: DbContext): Promise<Category[]> {
   return rows.map(mapCategory);
 }
 
+export function findCategoryById(
+  id: string,
+  context: DbContext,
+): Category | null {
+  const row = context
+    .select()
+    .from(categories)
+    .where(eq(categories.id, id))
+    .get();
+
+  return row ? mapCategory(row) : null;
+}
+
 export async function getCategoryById(
   db: DbContext,
   id: string,
 ): Promise<Category | null> {
-  const [row] = await db
+  const row = db
     .select()
     .from(categories)
     .where(eq(categories.id, id))
-    .limit(1);
+    .get();
 
   return row ? mapCategory(row) : null;
 }

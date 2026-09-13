@@ -49,9 +49,6 @@ export function AppShell({ children }: PropsWithChildren) {
         <View style={styles.desktopPageArea}>
           <View style={styles.desktopTopBar}>
             <View style={styles.desktopTopBarBrand}>
-              <View style={styles.topBarEmblem}>
-                <View style={styles.topBarEmblemInner} />
-              </View>
               <Text style={styles.desktopScreenTitle}>{screenTitle}</Text>
             </View>
             <SyncStatusChip />
@@ -94,9 +91,6 @@ export function AppShell({ children }: PropsWithChildren) {
           </Pressable>
 
           <View style={styles.topBarBrand}>
-            <View style={styles.topBarEmblem}>
-              <View style={styles.topBarEmblemInner} />
-            </View>
             <Text style={styles.topBarBrandText}>{screenTitle}</Text>
           </View>
 
