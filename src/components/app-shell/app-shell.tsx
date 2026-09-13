@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { usePathname } from "expo-router";
 import { Sidebar } from "@/components/sidebar";
+import { SyncStatusChip } from "@/components/sync-status-chip";
 import {
   isTabletOrDesktop,
   LAYOUT_DIMENSIONS,
@@ -15,12 +17,22 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 
+function getScreenTitle(pathname: string): string {
+  if (pathname.startsWith("/accounts")) return "Accounts";
+  if (pathname.startsWith("/transactions")) return "Transactions";
+  if (pathname.startsWith("/categories")) return "Categories";
+  if (pathname.startsWith("/settings")) return "Settings";
+  return "Dashboard";
+}
+
 export function AppShell({ children }: PropsWithChildren) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
+  const pathname = usePathname();
+  const screenTitle = getScreenTitle(pathname);
 
   const closeDrawer = () => setIsDrawerOpen(false);
   const openDrawer = () => setIsDrawerOpen(true);
@@ -34,7 +46,18 @@ export function AppShell({ children }: PropsWithChildren) {
         </View>
 
         {/* Desktop Page Area */}
-        <View style={styles.desktopPageArea}>{children}</View>
+        <View style={styles.desktopPageArea}>
+          <View style={styles.desktopTopBar}>
+            <View style={styles.desktopTopBarBrand}>
+              <View style={styles.topBarEmblem}>
+                <View style={styles.topBarEmblemInner} />
+              </View>
+              <Text style={styles.desktopScreenTitle}>{screenTitle}</Text>
+            </View>
+            <SyncStatusChip />
+          </View>
+          <View style={styles.desktopContentArea}>{children}</View>
+        </View>
       </View>
     );
   }
@@ -43,33 +66,42 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <View style={styles.mobileLayout}>
       {/* Mobile Top Bar */}
-      <View style={[styles.topBar, { paddingTop: insets.top }]}>
-        <Pressable
-          accessibilityLabel="Open navigation menu"
-          accessibilityRole="button"
-          onPress={openDrawer}
-          style={({ pressed }) => [
-            styles.menuButton,
-            pressed && styles.menuButtonPressed,
-          ]}
-        >
-          {/* 3-line hamburger icon */}
-          <View style={styles.hamburgerIcon}>
-            <View style={styles.hamburgerLine} />
-            <View style={styles.hamburgerLine} />
-            <View style={styles.hamburgerLine} />
-          </View>
-        </Pressable>
+      <View
+        style={[
+          styles.topBar,
+          {
+            paddingTop: insets.top,
+            minHeight: LAYOUT_DIMENSIONS.topBarHeight + insets.top,
+          },
+        ]}
+      >
+        <View style={styles.topBarInner}>
+          <Pressable
+            accessibilityLabel="Open navigation menu"
+            accessibilityRole="button"
+            onPress={openDrawer}
+            style={({ pressed }) => [
+              styles.menuButton,
+              pressed && styles.menuButtonPressed,
+            ]}
+          >
+            {/* 3-line hamburger icon */}
+            <View style={styles.hamburgerIcon}>
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
+              <View style={styles.hamburgerLine} />
+            </View>
+          </Pressable>
 
-        <View style={styles.topBarBrand}>
-          <View style={styles.topBarEmblem}>
-            <View style={styles.topBarEmblemInner} />
+          <View style={styles.topBarBrand}>
+            <View style={styles.topBarEmblem}>
+              <View style={styles.topBarEmblemInner} />
+            </View>
+            <Text style={styles.topBarBrandText}>{screenTitle}</Text>
           </View>
-          <Text style={styles.topBarBrandText}>Kaizen Finance</Text>
+
+          <SyncStatusChip />
         </View>
-
-        {/* Balance space for symmetric layout */}
-        <View style={styles.topBarRightSpacer} />
       </View>
 
       {/* Main Content Area */}
@@ -118,21 +150,49 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       height: "100%",
     },
+    desktopTopBar: {
+      alignItems: "center",
+      backgroundColor: theme.colors.background,
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: 1,
+      flexDirection: "row",
+      height: LAYOUT_DIMENSIONS.topBarHeight,
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.xl,
+    },
+    desktopTopBarBrand: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    desktopScreenTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 18,
+      fontWeight: "700",
+      letterSpacing: -0.2,
+    },
+    desktopContentArea: {
+      flex: 1,
+    },
     mobileLayout: {
       backgroundColor: theme.colors.background,
       flex: 1,
       flexDirection: "column",
     },
     topBar: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.background,
       borderBottomColor: theme.colors.border,
       borderBottomWidth: 1,
+      justifyContent: "flex-end",
+      paddingHorizontal: theme.spacing.md,
+      zIndex: 10,
+    },
+    topBarInner: {
+      alignItems: "center",
       flexDirection: "row",
       height: LAYOUT_DIMENSIONS.topBarHeight,
       justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.md,
-      zIndex: 10,
+      width: "100%",
     },
     menuButton: {
       alignItems: "center",
@@ -163,24 +223,22 @@ function createStyles(theme: AppTheme) {
     topBarEmblem: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
-      borderRadius: 4,
-      height: 20,
+      borderRadius: 5,
+      height: 22,
       justifyContent: "center",
-      width: 20,
+      width: 22,
     },
     topBarEmblemInner: {
       backgroundColor: theme.colors.onPrimary,
-      borderRadius: 1,
-      height: 6,
-      width: 6,
+      borderRadius: 1.5,
+      height: 7,
+      width: 7,
     },
     topBarBrandText: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    topBarRightSpacer: {
-      width: LAYOUT_DIMENSIONS.minTouchTarget,
+      fontSize: 17,
+      fontWeight: "700",
+      letterSpacing: -0.2,
     },
     mobileContent: {
       flex: 1,

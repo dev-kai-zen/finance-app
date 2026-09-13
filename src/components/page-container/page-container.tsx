@@ -20,6 +20,7 @@ import { useThemeStyles } from "@/hooks/use-app-theme";
 
 export interface PageContainerProps extends PropsWithChildren {
   header?: ReactNode;
+  floatingAction?: ReactNode;
   contentContainerStyle?: ViewStyle;
   maxWidth?: number;
   scrollable?: boolean;
@@ -28,6 +29,7 @@ export interface PageContainerProps extends PropsWithChildren {
 export function PageContainer({
   children,
   header,
+  floatingAction,
   contentContainerStyle,
   maxWidth = LAYOUT_DIMENSIONS.maxContentWidth,
   scrollable = true,
@@ -41,7 +43,7 @@ export function PageContainer({
 
   const containerPaddingStyle: ViewStyle = {
     paddingHorizontal: horizontalPadding,
-    paddingBottom: Math.max(insets.bottom, 24),
+    paddingBottom: Math.max(insets.bottom, 24) + (floatingAction ? 64 : 0),
   };
 
   const innerContent = (
@@ -62,19 +64,23 @@ export function PageContainer({
     return (
       <View style={styles.outerWrapper}>
         {innerContent}
+        {floatingAction}
       </View>
     );
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      keyboardShouldPersistTaps="handled"
-      showsVerticalScrollIndicator
-      style={styles.outerWrapper}
-    >
-      {innerContent}
-    </ScrollView>
+    <View style={styles.outerWrapper}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator
+        style={styles.scrollWrapper}
+      >
+        {innerContent}
+      </ScrollView>
+      {floatingAction}
+    </View>
   );
 }
 
@@ -162,6 +168,11 @@ function createStyles(theme: AppTheme) {
     outerWrapper: {
       backgroundColor: theme.colors.background,
       flex: 1,
+      position: "relative",
+    },
+    scrollWrapper: {
+      flex: 1,
+      width: "100%",
     },
     scrollContent: {
       alignItems: "center",

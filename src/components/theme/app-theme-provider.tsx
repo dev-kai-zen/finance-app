@@ -9,7 +9,7 @@ import React, {
 import {
   ALL_THEME_PRESETS,
   THEMES_BY_ID,
-  kaizenLight,
+  kaizenEmerald,
   type AppTheme,
 } from "@/constants/theme";
 
@@ -22,9 +22,9 @@ export interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: kaizenLight,
-  mode: "light",
-  themeId: kaizenLight.id,
+  theme: kaizenEmerald,
+  mode: "dark",
+  themeId: kaizenEmerald.id,
   setThemeId: () => {},
   availableThemes: ALL_THEME_PRESETS,
 });
@@ -39,7 +39,7 @@ export interface AppThemeProviderProps extends PropsWithChildren {
  */
 export function AppThemeProvider({
   children,
-  initialThemeId = kaizenLight.id,
+  initialThemeId = kaizenEmerald.id,
 }: AppThemeProviderProps) {
   const [themeId, setCurrentThemeId] = useState<string>(initialThemeId);
 
@@ -50,7 +50,7 @@ export function AppThemeProvider({
   }, []);
 
   const activeTheme = useMemo<AppTheme>(() => {
-    return THEMES_BY_ID[themeId] ?? kaizenLight;
+    return THEMES_BY_ID[themeId] ?? kaizenEmerald;
   }, [themeId]);
 
   const value = useMemo<ThemeContextValue>(

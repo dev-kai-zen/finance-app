@@ -9,10 +9,12 @@ export const BREAKPOINTS = {
 
 export const LAYOUT_DIMENSIONS = {
   sidebarWidth: 260,
-  topBarHeight: 56,
+  topBarHeight: 64,
   maxContentWidth: 1200,
   minTouchTarget: 44,
   drawerWidth: 280,
+  fabSize: 60,
+  syncChipHeight: 32,
 } as const;
 
 /**

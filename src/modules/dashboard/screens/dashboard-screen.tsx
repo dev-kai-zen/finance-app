@@ -7,21 +7,15 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAccounts } from "@/modules/accounts";
+import type { AccountListItem } from "@/modules/accounts";
 import { formatCurrency } from "@/utils/currency";
-
-interface AccountSnapshot {
-  id: string;
-  name: string;
-  typeName: string;
-  categoryColor: string;
-  balanceMinorUnits: number;
-  isLiability?: boolean;
-}
 
 interface TransactionPreview {
   id: string;
@@ -31,39 +25,6 @@ interface TransactionPreview {
   amountMinorUnits: number;
   type: "income" | "expense" | "transfer";
 }
-
-// Presentational mock data for initial UI presentation
-const DEMO_ACCOUNTS: AccountSnapshot[] = [
-  {
-    id: "1",
-    name: "BDO Everyday Checking",
-    typeName: "Checking",
-    categoryColor: "blue",
-    balanceMinorUnits: 4520000,
-  },
-  {
-    id: "2",
-    name: "BPI High-Yield Savings",
-    typeName: "Savings",
-    categoryColor: "teal",
-    balanceMinorUnits: 12500000,
-  },
-  {
-    id: "3",
-    name: "Maya Digital Wallet",
-    typeName: "E-Wallet",
-    categoryColor: "green",
-    balanceMinorUnits: 1500000,
-  },
-  {
-    id: "4",
-    name: "Metrobank Platinum Card",
-    typeName: "Credit Card",
-    categoryColor: "orange",
-    balanceMinorUnits: -4270000,
-    isLiability: true,
-  },
-];
 
 const DEMO_TRANSACTIONS: TransactionPreview[] = [
   {
@@ -107,13 +68,37 @@ export function DashboardScreen() {
   const styles = useThemeStyles(createStyles);
   const [showEmptyStateDemo, setShowEmptyStateDemo] = useState(false);
 
-  // Financial calculations in minor units
-  const totalAssetsMinorUnits = 18520000;
-  const totalLiabilitiesMinorUnits = 4270000;
+  const { accounts, loading } = useAccounts();
+  const activeAccounts = accounts.filter((a) => !a.isArchived);
+
+  // Financial calculations in minor units from live accounts
+  const assetAccounts = activeAccounts.filter(
+    (a) => a.accountType?.accountGroup === "asset",
+  );
+  const liabilityAccounts = activeAccounts.filter(
+    (a) => a.accountType?.accountGroup === "liability",
+  );
+
+  const totalAssetsMinorUnits = assetAccounts.reduce(
+    (sum, a) => sum + (Number.isSafeInteger(a.openingBalanceMinorUnits) ? a.openingBalanceMinorUnits : 0),
+    0,
+  );
+  const totalLiabilitiesMinorUnits = liabilityAccounts.reduce(
+    (sum, a) => sum + (Number.isSafeInteger(a.openingBalanceMinorUnits) ? a.openingBalanceMinorUnits : 0),
+    0,
+  );
   const netWorthMinorUnits = totalAssetsMinorUnits - totalLiabilitiesMinorUnits;
+
+  const hasRealAccounts = activeAccounts.length > 0;
 
   return (
     <PageContainer
+      floatingAction={
+        <FloatingActionButton
+          accessibilityLabel="Record Transaction"
+          onPress={() => router.navigate("/transactions" as any)}
+        />
+      }
       header={
         <PageHeader
           breadcrumb="Kaizen Finance / Overview"
@@ -127,24 +112,24 @@ export function DashboardScreen() {
               onPress: () => router.navigate("/accounts" as any),
             },
             {
-              label: showEmptyStateDemo ? "View Sample Data" : "Preview Empty State",
+              label: showEmptyStateDemo ? "Live Accounts" : "Preview Empty",
               onPress: () => setShowEmptyStateDemo((prev) => !prev),
             },
           ]}
-          subtitle="Here is your consolidated net worth and recent financial activity."
+          subtitle="Consolidated net worth, account balances, and recent activity."
           title="Financial Overview"
         />
       }
     >
-      {showEmptyStateDemo ? (
+      {showEmptyStateDemo || (!hasRealAccounts && !loading) ? (
         <PageEmptyState
           actionLabel="+ Add Your First Account"
-          description="Get started by adding your bank accounts, cash wallets, or credit cards to see your consolidated net worth and tracking."
+          description="Get started by adding your bank accounts, cash wallets, or credit cards to see your live consolidated net worth and tracking."
           onAction={() => {
             setShowEmptyStateDemo(false);
             router.navigate("/accounts" as any);
           }}
-          title="No Financial Records Yet"
+          title="Welcome to Kaizen Finance!"
         />
       ) : (
         <View style={styles.contentStack}>
@@ -158,7 +143,9 @@ export function DashboardScreen() {
                 </Text>
               </View>
               <View style={styles.netWorthBadge}>
-                <Text style={styles.netWorthBadgeText}>All Accounts</Text>
+                <Text style={styles.netWorthBadgeText}>
+                  {activeAccounts.length} Active Accounts
+                </Text>
               </View>
             </View>
 
@@ -180,7 +167,7 @@ export function DashboardScreen() {
                   <View style={[styles.metricDot, styles.liabilityDot]} />
                   <Text style={styles.metricLabel}>Total Liabilities</Text>
                 </View>
-                <Text style={styles.metricValue}>
+                <Text style={[styles.metricValue, styles.liabilityText]}>
                   {formatCurrency(totalLiabilitiesMinorUnits, "PHP")}
                 </Text>
               </View>
@@ -197,12 +184,19 @@ export function DashboardScreen() {
                 onPress={() => router.navigate("/accounts" as any)}
                 style={styles.viewAllButton}
               >
-                <Text style={styles.viewAllText}>View All ({DEMO_ACCOUNTS.length})</Text>
+                <Text style={styles.viewAllText}>
+                  View All ({activeAccounts.length})
+                </Text>
               </Pressable>
             </View>
 
-            <View style={[styles.accountsGrid, isDesktop && styles.accountsGridDesktop]}>
-              {DEMO_ACCOUNTS.map((account) => (
+            <View
+              style={[
+                styles.accountsGrid,
+                isDesktop && styles.accountsGridDesktop,
+              ]}
+            >
+              {activeAccounts.map((account) => (
                 <AccountCard key={account.id} account={account} />
               ))}
             </View>
@@ -238,13 +232,14 @@ export function DashboardScreen() {
   );
 }
 
-function AccountCard({ account }: { account: AccountSnapshot }) {
+function AccountCard({ account }: { account: AccountListItem }) {
   const styles = useThemeStyles(createStyles);
   const router = useRouter();
+  const isLiability = account.accountType?.accountGroup === "liability";
 
   return (
     <Pressable
-      accessibilityLabel={`${account.name}, balance ${formatCurrency(Math.abs(account.balanceMinorUnits), "PHP")}`}
+      accessibilityLabel={`${account.name}, balance ${formatCurrency(account.openingBalanceMinorUnits, account.currencyCode)}`}
       accessibilityRole="button"
       onPress={() => router.navigate("/accounts" as any)}
       style={styles.accountCard}
@@ -254,17 +249,21 @@ function AccountCard({ account }: { account: AccountSnapshot }) {
           {account.name}
         </Text>
         <View style={styles.accountBadge}>
-          <Text style={styles.accountBadgeText}>{account.typeName}</Text>
+          <Text style={styles.accountBadgeText}>
+            {account.accountType?.name ?? "Account"}
+          </Text>
         </View>
       </View>
 
       <Text
         style={[
           styles.accountBalance,
-          account.isLiability ? styles.accountBalanceLiability : styles.accountBalanceAsset,
+          isLiability
+            ? styles.accountBalanceLiability
+            : styles.accountBalanceAsset,
         ]}
       >
-        {formatCurrency(Math.abs(account.balanceMinorUnits), "PHP")}
+        {formatCurrency(account.openingBalanceMinorUnits, account.currencyCode)}
       </Text>
     </Pressable>
   );
@@ -343,9 +342,10 @@ function createStyles(theme: AppTheme) {
     },
     netWorthValue: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.display,
+      fontSize: 32,
       fontWeight: theme.typography.fontWeight.bold,
-      lineHeight: theme.typography.lineHeight.display,
+      lineHeight: 38,
+      fontVariant: ["tabular-nums"],
     },
     netWorthBadge: {
       backgroundColor: theme.colors.surfaceMuted,
@@ -398,6 +398,10 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.semibold,
+      fontVariant: ["tabular-nums"],
+    },
+    liabilityText: {
+      color: theme.colors.warning,
     },
     sectionContainer: {
       gap: theme.spacing.md,
@@ -409,7 +413,7 @@ function createStyles(theme: AppTheme) {
     },
     sectionTitle: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: 18,
       fontWeight: theme.typography.fontWeight.bold,
     },
     viewAllButton: {
@@ -436,8 +440,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       flex: 1,
-      minWidth: 240,
+      minWidth: 260,
       padding: theme.spacing.lg,
+      ...theme.shadows.card,
     },
     accountCardHeader: {
       alignItems: "center",
@@ -464,8 +469,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
     },
     accountBalance: {
-      fontSize: theme.typography.fontSize.xl,
+      fontSize: 20,
       fontWeight: theme.typography.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
     },
     accountBalanceAsset: {
       color: theme.colors.textPrimary,
@@ -479,6 +485,7 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
       overflow: "hidden",
+      ...theme.shadows.card,
     },
     txRow: {
       alignItems: "center",
@@ -500,17 +507,14 @@ function createStyles(theme: AppTheme) {
     },
     txIconBadge: {
       alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
-      height: 36,
+      height: 38,
       justifyContent: "center",
-      width: 36,
+      width: 38,
     },
-    txIconIncome: {
-      backgroundColor: theme.colors.surfaceMuted,
-    },
-    txIconExpense: {
-      backgroundColor: theme.colors.surfaceMuted,
-    },
+    txIconIncome: {},
+    txIconExpense: {},
     txIconText: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.md,
@@ -544,8 +548,9 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
     },
     txAmount: {
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
     },
     txAmountIncome: {
       color: theme.colors.success,

@@ -35,12 +35,15 @@ export const PageHeader = memo(function PageHeader({
   return (
     <View style={[styles.container, !isDesktopLayout && styles.containerMobile]}>
       <View style={styles.titleArea}>
-        {breadcrumb ? (
+        {breadcrumb && isDesktopLayout ? (
           <Text style={styles.breadcrumb} numberOfLines={1}>
             {breadcrumb}
           </Text>
         ) : null}
-        <Text style={styles.title} accessibilityRole="header">
+        <Text
+          style={[styles.title, !isDesktopLayout && styles.titleMobile]}
+          accessibilityRole="header"
+        >
           {title}
         </Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -90,14 +93,16 @@ function createStyles(theme: AppTheme) {
       alignItems: "flex-start",
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingBottom: theme.spacing.lg,
-      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.xl,
+      paddingTop: theme.spacing.lg,
       gap: theme.spacing.md,
     },
     containerMobile: {
       flexDirection: "column",
       alignItems: "stretch",
-      gap: theme.spacing.md,
+      gap: theme.spacing.sm,
+      paddingBottom: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
     },
     titleArea: {
       flex: 1,
@@ -106,23 +111,29 @@ function createStyles(theme: AppTheme) {
     breadcrumb: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
-      letterSpacing: 0.5,
-      marginBottom: theme.spacing.xxs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.8,
+      marginBottom: theme.spacing.xs,
       textTransform: "uppercase",
     },
     title: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.title,
-      fontWeight: theme.typography.fontWeight.bold,
-      lineHeight: theme.typography.lineHeight.title,
+      fontSize: 28,
+      fontWeight: "700",
+      letterSpacing: -0.5,
+      lineHeight: 36,
+    },
+    titleMobile: {
+      fontSize: 22,
+      lineHeight: 28,
+      letterSpacing: -0.3,
     },
     subtitle: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: 14,
       fontWeight: theme.typography.fontWeight.regular,
-      lineHeight: theme.typography.lineHeight.sm,
-      marginTop: theme.spacing.xs,
+      lineHeight: 20,
+      marginTop: 4,
     },
     actionsArea: {
       alignItems: "center",
@@ -138,10 +149,10 @@ function createStyles(theme: AppTheme) {
     primaryButton: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
-      borderRadius: theme.borderRadius.medium,
+      borderRadius: 10,
       justifyContent: "center",
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
-      paddingHorizontal: theme.spacing.lg,
+      minHeight: 46,
+      paddingHorizontal: 20,
       paddingVertical: theme.spacing.sm,
       ...theme.shadows.card,
     },
@@ -150,18 +161,19 @@ function createStyles(theme: AppTheme) {
     },
     primaryButtonText: {
       color: theme.colors.onPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontSize: 14,
+      fontWeight: "600",
+      letterSpacing: 0.2,
     },
     secondaryButton: {
       alignItems: "center",
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
+      borderRadius: 10,
       borderWidth: 1,
       justifyContent: "center",
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
-      paddingHorizontal: theme.spacing.md,
+      minHeight: 46,
+      paddingHorizontal: 16,
       paddingVertical: theme.spacing.sm,
     },
     secondaryButtonPressed: {
@@ -169,8 +181,8 @@ function createStyles(theme: AppTheme) {
     },
     secondaryButtonText: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontSize: 14,
+      fontWeight: "500",
     },
   });
 }
