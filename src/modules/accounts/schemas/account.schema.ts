@@ -15,6 +15,7 @@ export const accountInputSchema = z.object({
     .string()
     .max(1000, "Use at most 1000 characters for the note.")
     .optional(),
+  iconKey: z.string().optional().nullable(),
   accountTypeId: z.string().min(1, "Choose an account type."),
   openingAmount: checkedString(parseOpeningAmount),
   openingDate: checkedString(parseOpeningDate),

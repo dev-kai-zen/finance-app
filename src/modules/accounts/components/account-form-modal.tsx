@@ -15,6 +15,7 @@ import {
   DatePickerModal,
   FullScreenFormModal,
   IconHelper,
+  IconPickerModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -61,6 +62,7 @@ export function AccountFormModal({
   const [value, setValue] = useState<AccountInput>(() => ({
     name: account?.name ?? "",
     note: account?.note ?? "",
+    iconKey: account?.iconKey ?? null,
     accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
     openingAmount: openingAmountInput(account?.openingBalanceMinorUnits ?? 0),
     openingDate: localDateInput(account?.openingBalanceAt),
@@ -75,6 +77,7 @@ export function AccountFormModal({
     setValue({
       name: account?.name ?? "",
       note: account?.note ?? "",
+      iconKey: account?.iconKey ?? null,
       accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
       openingAmount,
       openingDate: localDateInput(account?.openingBalanceAt),
@@ -85,12 +88,14 @@ export function AccountFormModal({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"archive" | "restore" | null>(
     null,
   );
 
   const foreign = !!account && account.currencyCode !== "PHP";
   const selectedType = types.find((t) => t.id === value.accountTypeId);
+  const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
   const isCreditCardType =
     value.accountTypeId === SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_CREDIT_CARD ||
     selectedType?.name.toLowerCase().includes("credit card");
@@ -195,6 +200,77 @@ export function AccountFormModal({
             onChangeText={(note) => setValue((prev) => ({ ...prev, note }))}
           />
 
+          <Text style={styles.fieldLabel}>Account Type</Text>
+          <Pressable
+            accessibilityLabel="Choose account type"
+            accessibilityRole="button"
+            disabled={pending}
+            onPress={() => setTypePickerOpen(true)}
+            style={styles.selectorPill}
+          >
+            <View style={[styles.typeIcon, { backgroundColor: `${typeColor}20` }]}>
+              <IconHelper
+                color={typeColor}
+                name={selectedType?.iconKey ?? "landmark"}
+                size={18}
+              />
+            </View>
+            <Text numberOfLines={1} style={styles.selectorValue}>
+              {selectedType?.name ?? "Select type"}
+            </Text>
+            <ChevronRight color={theme.colors.textMuted} size={18} />
+          </Pressable>
+
+          <Text style={styles.fieldLabel}>Account Icon</Text>
+          <Pressable
+            accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
+            accessibilityRole="button"
+            disabled={pending}
+            onPress={() => setIconPickerOpen(true)}
+            style={styles.iconCard}
+          >
+            <View style={styles.iconCardLeft}>
+              <View
+                style={[
+                  styles.iconBadge,
+                  {
+                    backgroundColor: `${typeColor}20`,
+                    borderColor: `${typeColor}50`,
+                  },
+                ]}
+              >
+                <IconHelper color={typeColor} name={currentIconKey} size={22} />
+              </View>
+              <View style={styles.iconInfo}>
+                <Text style={styles.iconNameText}>{currentIconKey}</Text>
+                <Text style={styles.iconSubtext}>
+                  {value.iconKey
+                    ? "Custom icon selected · Tap to change"
+                    : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.changeBadge,
+                {
+                  backgroundColor: `${theme.colors.primary}15`,
+                  borderColor: `${theme.colors.primary}40`,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.changeBadgeText,
+                  { color: theme.colors.primary },
+                ]}
+              >
+                Change Icon
+              </Text>
+            </View>
+          </Pressable>
+
           <AmountCalculatorField
             amountMinorUnits={amountMinorUnits}
             amountSign={amountSign}
@@ -228,27 +304,6 @@ export function AccountFormModal({
           >
             <Text style={styles.selectorValue}>
               {formatDisplayDate(value.openingDate)}
-            </Text>
-            <ChevronRight color={theme.colors.textMuted} size={18} />
-          </Pressable>
-
-          <Text style={styles.fieldLabel}>Account Type</Text>
-          <Pressable
-            accessibilityLabel="Choose account type"
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={() => setTypePickerOpen(true)}
-            style={styles.selectorPill}
-          >
-            <View style={[styles.typeIcon, { backgroundColor: `${typeColor}20` }]}>
-              <IconHelper
-                color={typeColor}
-                name={selectedType?.iconKey ?? "landmark"}
-                size={18}
-              />
-            </View>
-            <Text numberOfLines={1} style={styles.selectorValue}>
-              {selectedType?.name ?? "Select type"}
             </Text>
             <ChevronRight color={theme.colors.textMuted} size={18} />
           </Pressable>
@@ -316,6 +371,18 @@ export function AccountFormModal({
         onSelect={(accountTypeId) =>
           setValue((prev) => ({ ...prev, accountTypeId }))
         }
+      />
+
+      <IconPickerModal
+        onClose={() => setIconPickerOpen(false)}
+        onSelectIcon={(selected) => {
+          setValue((prev) => ({ ...prev, iconKey: selected }));
+          setIconPickerOpen(false);
+        }}
+        selectedIcon={currentIconKey}
+        themeColor={typeColor}
+        title="Select Account Icon"
+        visible={iconPickerOpen}
       />
     </>
   );
@@ -389,6 +456,53 @@ function createStyles(theme: AppTheme) {
       height: 28,
       justifyContent: "center",
       width: 28,
+    },
+    iconCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: theme.spacing.md,
+      ...theme.shadows.card,
+    },
+    iconCardLeft: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    iconBadge: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      height: 44,
+      justifyContent: "center",
+      width: 44,
+    },
+    iconInfo: {
+      gap: 2,
+    },
+    iconNameText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.md,
+      fontWeight: theme.typography.fontWeight.semibold,
+      textTransform: "capitalize",
+    },
+    iconSubtext: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+    },
+    changeBadge: {
+      borderRadius: 999,
+      borderWidth: 1,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    changeBadgeText: {
+      fontSize: 12,
+      fontWeight: "600",
     },
     devSection: {
       gap: theme.spacing.sm,

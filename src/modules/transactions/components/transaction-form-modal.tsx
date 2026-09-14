@@ -404,7 +404,7 @@ export function TransactionFormModal({
                     ]}
                   >
                     <IconHelper
-                      name={selectedAccount?.accountType?.iconKey ?? "wallet"}
+                      name={selectedAccount?.iconKey ?? selectedAccount?.accountType?.iconKey ?? "wallet"}
                       size={18}
                       color={selectedAccount?.accountType?.color ?? theme.colors.primary}
                     />
@@ -460,7 +460,7 @@ export function TransactionFormModal({
                       ]}
                     >
                       <IconHelper
-                        name={transferToAccount?.accountType?.iconKey ?? "landmark"}
+                        name={transferToAccount?.iconKey ?? transferToAccount?.accountType?.iconKey ?? "landmark"}
                         size={18}
                         color={transferToAccount?.accountType?.color ?? theme.colors.primary}
                       />

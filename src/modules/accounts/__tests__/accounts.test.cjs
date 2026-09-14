@@ -150,6 +150,14 @@ test("saveAccount persists and clears account notes", () => {
   saveAccount({ ...accountInput(undefined, "Daily account"), note: "" }, id);
   assert.equal(repo.findAccountById(id).note, null);
 });
+test("saveAccount persists, updates, and clears custom icon_key on accounts", () => {
+  const id = saveAccount({ ...accountInput(), iconKey: "piggy-bank" });
+  assert.equal(repo.findAccountById(id).iconKey, "piggy-bank");
+  saveAccount({ ...accountInput(undefined, "Daily account"), iconKey: "credit-card" }, id);
+  assert.equal(repo.findAccountById(id).iconKey, "credit-card");
+  saveAccount({ ...accountInput(undefined, "Daily account"), iconKey: "" }, id);
+  assert.equal(repo.findAccountById(id).iconKey, null);
+});
 test("name-only account edits preserve the existing opening timestamp", () => {
   const id = saveAccount(accountInput());
   const exactDate = new Date(2026, 8, 13, 14, 22, 33);

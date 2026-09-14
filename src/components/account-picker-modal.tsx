@@ -232,7 +232,7 @@ export function AccountPickerModal({
                                 ]}
                               >
                                 <IconHelper
-                                  name={group.iconKey}
+                                  name={account.iconKey ?? group.iconKey}
                                   size={18}
                                   color={group.color}
                                 />

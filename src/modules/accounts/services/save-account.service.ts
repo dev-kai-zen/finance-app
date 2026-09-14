@@ -21,9 +21,11 @@ export function saveAccount(input: AccountInput, id?: string): string {
     const sortOrder = existing && existing.accountTypeId === type.id ? existing.sortOrder
       : Math.max(-1, ...findAccountsByAccountTypeId(type.id, tx).map((a) => a.sortOrder)) + 1;
     const note = value.note?.trim() ? value.note.trim() : null;
+    const iconKey = value.iconKey?.trim() ? value.iconKey.trim() : null;
     const values = {
       name: value.name,
       note,
+      iconKey,
       accountTypeId: type.id,
       openingBalanceMinorUnits,
       openingBalanceAt,

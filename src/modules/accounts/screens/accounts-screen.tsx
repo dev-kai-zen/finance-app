@@ -54,7 +54,7 @@ export function AccountsScreen() {
       groupAccounts.map((a) => ({
         id: a.id,
         name: a.name,
-        icon: a.accountType?.iconKey ?? "landmark",
+        icon: a.iconKey ?? a.accountType?.iconKey ?? "landmark",
         color: a.accountType?.color ?? null,
       })),
     );

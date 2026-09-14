@@ -154,7 +154,7 @@ export function AccountTypeGroupCard({
                 >
                   <IconHelper
                     color={primaryColor}
-                    name={accountType.iconKey ?? "landmark"}
+                    name={account.iconKey ?? accountType.iconKey ?? "landmark"}
                     size={16}
                   />
                 </View>

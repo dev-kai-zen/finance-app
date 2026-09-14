@@ -38,7 +38,7 @@ export function AccountRow({
       <View style={styles.leftCol}>
         <AccountTypeBadge
           color={account.accountType?.color ?? null}
-          iconKey={account.accountType?.iconKey ?? null}
+          iconKey={account.iconKey ?? account.accountType?.iconKey ?? null}
         />
         <View style={styles.infoCol}>
           <Text numberOfLines={1} style={styles.accountName}>
