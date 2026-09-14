@@ -1,6 +1,6 @@
 import { asc, eq, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, accountTypes, transactions } from "@/infrastructure/database/schema";
+import { accounts, accountTypes } from "@/infrastructure/database/schema";
 import type { Account, AccountListItem, NewAccount } from "@/modules/accounts/types/account.types";
 
 export function listAccounts(context: DbContext = db): AccountListItem[] {
@@ -8,23 +8,11 @@ export function listAccounts(context: DbContext = db): AccountListItem[] {
     .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
     .orderBy(asc(accounts.sortOrder), asc(accounts.name), asc(accounts.id)).all();
 
-  // Dynamic balance calculated from transactions
-  const allTransactions = context.select().from(transactions).all();
-  const deltasByAccountId: Record<string, number> = {};
-
-  for (const tx of allTransactions) {
-    deltasByAccountId[tx.accountId] =
-      (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
-  }
-
-  return rows.map(({ account, accountType }) => {
-    const delta = deltasByAccountId[account.id] || 0;
-    return {
-      ...account,
-      accountType,
-      currentBalanceMinorUnits: account.openingBalanceMinorUnits + delta,
-    };
-  });
+  return rows.map(({ account, accountType }) => ({
+    ...account,
+    accountType,
+    currentBalanceMinorUnits: account.openingBalanceMinorUnits,
+  }));
 }
 export function findAccountById(id: string, context: DbContext = db) {
   return context.select().from(accounts).where(eq(accounts.id, id)).get() ?? null;

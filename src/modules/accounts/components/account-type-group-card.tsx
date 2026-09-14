@@ -21,6 +21,7 @@ interface AccountTypeGroupCardProps {
   accounts: AccountListItem[];
   onSelectAccount: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
+  onEditType?: (accountType: AccountType) => void;
 }
 
 export function AccountTypeGroupCard({
@@ -28,6 +29,7 @@ export function AccountTypeGroupCard({
   accounts,
   onSelectAccount,
   onSort,
+  onEditType,
 }: AccountTypeGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -64,7 +66,16 @@ export function AccountTypeGroupCard({
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
+        <Pressable
+          accessibilityLabel={`Edit ${accountType.name} account group`}
+          accessibilityRole="button"
+          disabled={!onEditType}
+          onPress={() => onEditType?.(accountType as AccountType)}
+          style={({ pressed }) => [
+            styles.headerLeft,
+            pressed && onEditType && styles.headerLeftPressed,
+          ]}
+        >
           <View
             style={[styles.iconWrap, { backgroundColor: `${primaryColor}20` }]}
           >
@@ -75,14 +86,23 @@ export function AccountTypeGroupCard({
             />
           </View>
           <View style={styles.titleCol}>
-            <Text numberOfLines={1} style={[styles.groupTitle, { color: primaryColor }]}>
-              {accountType.name}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text numberOfLines={1} style={[styles.groupTitle, { color: primaryColor }]}>
+                {accountType.name}
+              </Text>
+              {onEditType ? (
+                <ChevronRight
+                  color={theme.colors.textMuted}
+                  size={14}
+                  style={styles.chevronIcon}
+                />
+              ) : null}
+            </View>
             <Text style={styles.accountCount}>
               {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
             </Text>
           </View>
-        </View>
+        </Pressable>
 
         <View style={styles.headerRight}>
           {onSort && accounts.length > 1 ? (
@@ -184,9 +204,14 @@ function createStyles(theme: AppTheme) {
     },
     headerLeft: {
       alignItems: "center",
+      borderRadius: theme.borderRadius.small,
       flex: 1,
       flexDirection: "row",
       marginRight: theme.spacing.sm,
+      padding: 2,
+    },
+    headerLeftPressed: {
+      opacity: 0.7,
     },
     iconWrap: {
       alignItems: "center",
@@ -200,6 +225,13 @@ function createStyles(theme: AppTheme) {
     titleCol: {
       flex: 1,
       minWidth: 0,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+    },
+    chevronIcon: {
+      marginLeft: 4,
     },
     groupTitle: {
       fontSize: 15,

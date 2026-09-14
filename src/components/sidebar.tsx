@@ -130,9 +130,6 @@ function SidebarLink({ label, icon, active, onPress }: SidebarLinkProps) {
         pressed && !active && styles.linkPressed,
       ]}
     >
-      {/* Non-color active indicator bar */}
-      {active && <View style={styles.activeIndicator} />}
-
       <View style={styles.iconContainer}>
         <NavIcon active={active} type={icon} />
       </View>
@@ -240,7 +237,7 @@ const iconStyles = StyleSheet.create({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     sidebar: {
-      backgroundColor: theme.colors.surfaceInverse,
+      backgroundColor: theme.colors.surface,
       flex: 1,
       flexDirection: "column",
       justifyContent: "space-between",
@@ -265,19 +262,19 @@ function createStyles(theme: AppTheme) {
       minWidth: 0,
     },
     brandName: {
-      color: theme.colors.textPrimary,
+      color: theme.colors.primary,
       fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.2,
     },
     brandTagline: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       lineHeight: 16,
     },
     sectionLabel: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.8,
@@ -300,20 +297,10 @@ function createStyles(theme: AppTheme) {
       position: "relative",
     },
     linkPressed: {
-      backgroundColor: "rgba(255, 255, 255, 0.05)",
+      backgroundColor: theme.colors.surfaceMuted,
     },
     activeLink: {
-      backgroundColor: theme.colors.surfaceInverseElevated,
-    },
-    activeIndicator: {
-      backgroundColor: theme.colors.primary,
-      borderBottomRightRadius: 2,
-      borderTopRightRadius: 2,
-      bottom: 6,
-      left: 0,
-      position: "absolute",
-      top: 6,
-      width: 3.5,
+      backgroundColor: theme.colors.surfaceMuted,
     },
     iconContainer: {
       alignItems: "center",
@@ -323,7 +310,7 @@ function createStyles(theme: AppTheme) {
       width: 20,
     },
     linkText: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
@@ -332,7 +319,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     divider: {
-      backgroundColor: "rgba(255, 255, 255, 0.1)",
+      backgroundColor: theme.colors.border,
       height: 1,
       marginHorizontal: theme.spacing.sm,
       marginVertical: theme.spacing.md,

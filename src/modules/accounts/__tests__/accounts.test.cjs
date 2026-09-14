@@ -18,22 +18,51 @@ const originalLoad = Module._load;
 Module._resolveFilename = function (request, parent, ...rest) {
   return originalResolve.call(this, request.startsWith("@/") ? path.join(root, request.slice(2)) : request, parent, ...rest);
 };
+const createMock = () => {
+  const fn = () => createMock();
+  return new Proxy(fn, {
+    get: (_target, prop) => {
+      if (prop === Symbol.toPrimitive) return () => "";
+      if (prop === "create") return (s) => s || {};
+      return createMock();
+    },
+  });
+};
 Module._load = function (request, ...args) {
   if (request === "@/infrastructure/database/client") return { get db() { return database; } };
-  if (request === "expo-sqlite") return {};
+  if (
+    request === "expo-sqlite" ||
+    request === "react-native" ||
+    request === "react-native-safe-area-context" ||
+    request === "react-native-screens" ||
+    request === "lucide-react-native" ||
+    request === "expo-router" ||
+    request === "react"
+  ) {
+    return createMock();
+  }
   return originalLoad.call(this, request, ...args);
 };
-require.extensions[".ts"] = (module, filename) => {
+require.extensions[".tsx"] = require.extensions[".ts"] = (module, filename) => {
   const code = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true,
+      jsx: ts.JsxEmit.ReactJSX,
+    },
     fileName: filename,
   }).outputText;
   module._compile(code, filename);
+};
+require.extensions[".png"] = require.extensions[".jpg"] = require.extensions[".jpeg"] = (module) => {
+  module.exports = "test-image";
 };
 const { drizzle } = require("drizzle-orm/expo-sqlite");
 const schema = require("@/infrastructure/database/schema");
 const repo = require("@/modules/accounts/repositories/accounts.repository");
 const types = require("@/modules/accounts/repositories/account-types.repository");
+const { getAccountsWithBalances } = require("@/modules/accounts/services/get-accounts-with-balances.service");
 const { saveAccount } = require("@/modules/accounts/services/save-account.service");
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
@@ -281,7 +310,7 @@ test("existing current-schema accounts and linked transactions remain unchanged 
   assert.deepEqual(repo.findAccountById(id), before);
   assert.equal(sqlite.prepare("SELECT count(*) AS total FROM transactions").get().total, 1);
 });
-test("listAccounts calculates live current balance reflecting income, expense, and transfer", () => {
+test("getAccountsWithBalances calculates live current balance reflecting income, expense, and transfer", () => {
   const acc1 = saveAccount(accountInput(system.ASSET_OTHERS, "Checking", "1000.00")); // 100,000 cents
   const acc2 = saveAccount(accountInput(system.ASSET_OTHERS, "Savings", "500.00"));    // 50,000 cents
 
@@ -295,7 +324,7 @@ test("listAccounts calculates live current balance reflecting income, expense, a
   sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
   sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
 
-  const accountsList = repo.listAccounts();
+  const accountsList = getAccountsWithBalances();
   const checking = accountsList.find((a) => a.id === acc1);
   const savings = accountsList.find((a) => a.id === acc2);
 

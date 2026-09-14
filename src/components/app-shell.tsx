@@ -260,7 +260,7 @@ function createStyles(theme: AppTheme) {
       top: 0,
     },
     drawerPanel: {
-      backgroundColor: theme.colors.surfaceInverse,
+      backgroundColor: theme.colors.surface,
       bottom: 0,
       left: 0,
       position: "absolute",

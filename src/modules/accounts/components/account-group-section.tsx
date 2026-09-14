@@ -20,12 +20,14 @@ export function AccountGroupSection({
   types,
   onSelect,
   onSort,
+  onEditType,
 }: {
   group: AccountGroup;
   accounts: AccountListItem[];
   types: AccountType[];
   onSelect: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
+  onEditType?: (type: AccountType) => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const grouped = accounts.filter(
@@ -136,6 +138,7 @@ export function AccountGroupSection({
               key={typeGroup.accountType.id}
               accountType={typeGroup.accountType}
               accounts={typeGroup.accounts}
+              onEditType={onEditType}
               onSelectAccount={onSelect}
               onSort={onSort}
             />

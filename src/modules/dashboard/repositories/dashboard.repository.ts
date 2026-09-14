@@ -1,7 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { accounts, categories, transactions } from "@/infrastructure/database/schema";
-import { listAccounts } from "@/modules/accounts/repositories/accounts.repository";
+import { getAccountsWithBalances } from "@/modules/accounts";
 import { listTransactions } from "@/modules/transactions/repositories/transactions.repository";
 import type {
   AccountWithBalance,
@@ -13,25 +13,7 @@ import type {
 export function getAccountDynamicBalances(
   context: DbContext = db,
 ): AccountWithBalance[] {
-  const allAccounts = listAccounts(context);
-  const allTransactions = context.select().from(transactions).all();
-
-  // Map account balances
-  const deltasByAccountId: Record<string, number> = {};
-
-  for (const tx of allTransactions) {
-    deltasByAccountId[tx.accountId] =
-      (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
-  }
-
-  return allAccounts.map((acc) => {
-    const delta = deltasByAccountId[acc.id] || 0;
-    const currentBalance = acc.openingBalanceMinorUnits + delta;
-    return {
-      ...acc,
-      currentBalanceMinorUnits: currentBalance,
-    };
-  });
+  return getAccountsWithBalances(context);
 }
 
 export function getMonthlyCashflow(

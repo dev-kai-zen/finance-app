@@ -1,5 +1,6 @@
 export { AccountsScreen } from "./screens/accounts-screen";
 export { useAccounts } from "./hooks/use-accounts";
+export { getAccountsWithBalances } from "./services/get-accounts-with-balances.service";
 export { deleteAccountType } from "./services/delete-account-type.service";
 export {
   SYSTEM_ACCOUNT_TYPE_IDS,

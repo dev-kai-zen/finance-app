@@ -172,6 +172,13 @@ export type { TransactionItem } from "./types/transaction.types";
 
 **Boundary Rule**: External code (routes or other modules) must import only from `@/modules/<feature>`. Never deep-import into internal files of another module (e.g., `import ... from '@/modules/transactions/screens/...'` is strictly forbidden).
 
+### Cross-Module Communication via Services
+
+When a feature module (e.g. `accounts` or `dashboard`) requires data, calculations, or business logic belonging to another feature domain (e.g. `transactions`):
+- **Never** directly query another module's database tables or import another module's repositories.
+- The owning feature module must encapsulate that logic into a reusable **Service** (e.g. `getAccountBalanceDeltas`) and export it via its public API (`@/modules/<feature>`).
+- Consuming modules import and call that Service through the public boundary, preserving domain encapsulation and avoiding duplicate logic.
+
 ---
 
 # 5. Screens
@@ -383,3 +390,5 @@ When modifying this project, AI agents must:
 8. **Preserve offline-first**: Never make local UI actions await remote network requests.
 9. **Verify code**: Run `npx tsc --noEmit` to verify type integrity after making changes.
 10. **Do not over-engineer**: Do not create unnecessary layers of abstraction. Use the simplest implementation that respects the architecture.
+11. **DO NOT EDIT ANY FILES INSIDE THE `node_modules`**: AI agents are strictly forbidden from modifying any file inside `node_modules`. All fixes and adaptations must be made in application code or configuration.
+12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.

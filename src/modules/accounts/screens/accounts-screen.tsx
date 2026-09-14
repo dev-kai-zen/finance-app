@@ -10,6 +10,7 @@ import { AccountGroupSection } from "@/modules/accounts/components/account-group
 import { AccountOpeningSummary } from "@/modules/accounts/components/account-opening-summary";
 import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
+import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountsFabSheet } from "@/modules/accounts/components/accounts-fab-sheet";
 import { ArchivedAccountsSection } from "@/modules/accounts/components/archived-accounts-section";
 import {
@@ -20,12 +21,13 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
-import type { AccountListItem } from "@/modules/accounts/types/account.types";
+import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
 
 type Overlay =
   | { kind: "create" }
   | { kind: "edit"; id: string }
   | { kind: "types" }
+  | { kind: "edit-type"; type: AccountType }
   | null;
 
 export function AccountsScreen() {
@@ -80,6 +82,8 @@ export function AccountsScreen() {
   );
   const select = (account: AccountListItem) =>
     open({ kind: "edit", id: account.id });
+  const handleEditType = (type: AccountType) =>
+    open({ kind: "edit-type", type });
 
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
@@ -116,6 +120,7 @@ export function AccountsScreen() {
             accounts={active}
             group="asset"
             types={data.types}
+            onEditType={handleEditType}
             onSelect={select}
             onSort={handleSortAccounts}
           />
@@ -124,6 +129,7 @@ export function AccountsScreen() {
             accounts={active}
             group="liability"
             types={data.types}
+            onEditType={handleEditType}
             onSelect={select}
             onSort={handleSortAccounts}
           />
@@ -182,6 +188,14 @@ export function AccountsScreen() {
         types={data.types}
         visible={overlay?.kind === "types"}
         onClose={close}
+      />
+
+      <AccountTypeFormModal
+        accounts={data.accounts}
+        mutations={mutations}
+        onClose={close}
+        type={overlay?.kind === "edit-type" ? overlay.type : undefined}
+        visible={overlay?.kind === "edit-type"}
       />
 
       <SortableListModal

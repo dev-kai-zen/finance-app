@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
-import { listAccounts } from "@/modules/accounts/repositories/accounts.repository";
+import { getAccountsWithBalances } from "@/modules/accounts/services/get-accounts-with-balances.service";
 import { listAccountTypes } from "@/modules/accounts/repositories/account-types.repository";
 import { accountErrorMessage } from "@/modules/accounts/schemas/account.schema";
 import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
@@ -12,7 +12,7 @@ export function useAccounts() {
   const refresh = useCallback(() => {
     setLoading(true);
     try {
-      setData({ accounts: listAccounts(), types: listAccountTypes() });
+      setData({ accounts: getAccountsWithBalances(), types: listAccountTypes() });
       setError(null);
     } catch (cause) {
       setError(accountErrorMessage(cause));

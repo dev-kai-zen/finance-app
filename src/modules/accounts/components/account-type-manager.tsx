@@ -12,6 +12,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { AccountTypeForm } from "@/modules/accounts/components/account-type-form";
+import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
   AccountGroup,
@@ -54,22 +55,14 @@ export function AccountTypeManager({
 
   if (editor) {
     return (
-      <FullScreenFormModal
-        pending={mutations.pending}
-        title={editor.type ? "Edit Account Type" : "New Account Type"}
-        visible
+      <AccountTypeFormModal
+        accounts={accounts}
+        initialGroup={group}
+        mutations={mutations}
         onClose={back}
-      >
-        <ScrollView contentContainerStyle={styles.formContent}>
-          <AccountTypeForm
-            initialGroup={group}
-            pending={mutations.pending}
-            type={editor.type}
-            onCancel={back}
-            onSave={mutations.saveType}
-          />
-        </ScrollView>
-      </FullScreenFormModal>
+        type={editor.type}
+        visible={Boolean(editor)}
+      />
     );
   }
 
