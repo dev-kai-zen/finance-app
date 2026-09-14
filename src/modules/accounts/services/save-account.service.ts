@@ -20,7 +20,16 @@ export function saveAccount(input: AccountInput, id?: string): string {
     const now = new Date();
     const sortOrder = existing && existing.accountTypeId === type.id ? existing.sortOrder
       : Math.max(-1, ...findAccountsByAccountTypeId(type.id, tx).map((a) => a.sortOrder)) + 1;
-    const values = { name: value.name, accountTypeId: type.id, openingBalanceMinorUnits, openingBalanceAt, sortOrder, updatedAt: now };
+    const note = value.note?.trim() ? value.note.trim() : null;
+    const values = {
+      name: value.name,
+      note,
+      accountTypeId: type.id,
+      openingBalanceMinorUnits,
+      openingBalanceAt,
+      sortOrder,
+      updatedAt: now,
+    };
     if (existing) {
       updateAccountRecord(existing.id, values, tx);
       return existing.id;

@@ -2,12 +2,16 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import {
+  AccountAmountText,
+  bigintToSafeNumber,
+} from "@/modules/accounts/components/account-amount-text";
+import { AccountTypeGroupCard } from "@/modules/accounts/components/account-type-group-card";
 import type {
   AccountGroup,
   AccountListItem,
   AccountType,
 } from "@/modules/accounts/types/account.types";
-import { AccountTypeGroupCard } from "@/modules/accounts/components/account-type-group-card";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 export function AccountGroupSection({
@@ -33,9 +37,24 @@ export function AccountGroupSection({
     .filter(
       (a) =>
         a.currencyCode === "PHP" &&
-        Number.isSafeInteger(a.openingBalanceMinorUnits),
+        Number.isSafeInteger(
+          a.currentBalanceMinorUnits !== undefined
+            ? a.currentBalanceMinorUnits
+            : a.openingBalanceMinorUnits,
+        ),
     )
-    .reduce((sum, a) => sum + BigInt(a.openingBalanceMinorUnits), 0n);
+    .reduce(
+      (sum, a) =>
+        sum +
+        BigInt(
+          a.currentBalanceMinorUnits !== undefined
+            ? a.currentBalanceMinorUnits
+            : a.openingBalanceMinorUnits,
+        ),
+      0n,
+    );
+
+  const groupTotalNumber = bigintToSafeNumber(groupTotal);
 
   const typeGroups = useMemo(() => {
     const map = new Map<
@@ -92,34 +111,22 @@ export function AccountGroupSection({
 
   return (
     <View style={styles.sectionContainer}>
-      {/* Group Section Header */}
       <View style={styles.headerRow}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.groupTitle}>
-            {isAsset ? "ASSETS" : "LIABILITIES"}
-          </Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>
-              {grouped.length} {grouped.length === 1 ? "account" : "accounts"}
-            </Text>
-          </View>
-        </View>
-
-        <Text
-          style={[
-            styles.groupTotalText,
-            !isAsset && styles.liabilityTotalText,
-          ]}
-        >
-          {formatOpeningTotal(groupTotal)}
+        <Text style={styles.groupTitle}>
+          {isAsset ? "ASSETS" : "LIABILITIES"}
         </Text>
+        {groupTotalNumber !== null ? (
+          <AccountAmountText amountMinorUnits={groupTotalNumber} variant="title" />
+        ) : (
+          <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
+        )}
       </View>
 
-      {/* Account Type Groups List */}
       {typeGroups.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>
-            No {isAsset ? "asset" : "liability"} accounts added yet.
+            No {isAsset ? "asset" : "liability"} accounts added yet. Tap + to
+            add your first account.
           </Text>
         </View>
       ) : (
@@ -147,61 +154,34 @@ function createStyles(theme: AppTheme) {
     },
     headerRow: {
       alignItems: "center",
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingBottom: theme.spacing.sm,
-    },
-    headerLeft: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.xs,
     },
     groupTitle: {
       color: theme.colors.textPrimary,
-      fontSize: 14,
+      fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.8,
+      letterSpacing: 0.4,
     },
-    countBadge: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: 12,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 2,
-    },
-    countBadgeText: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    groupTotalText: {
+    fallbackTotal: {
       color: theme.colors.textPrimary,
-      fontSize: 18,
+      fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
     },
-    liabilityTotalText: {
-      color: theme.colors.warning,
-    },
-    accountsList: {
+    typeGroupsList: {
       gap: theme.spacing.sm,
     },
-    typeGroupsList: {
-      gap: theme.spacing.md,
-    },
     emptyCard: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
+      backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      justifyContent: "center",
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
     },
     emptyText: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.sm,
+      lineHeight: 20,
     },
   });
 }

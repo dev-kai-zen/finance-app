@@ -1,16 +1,23 @@
-import React from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ArrowUpDown, ChevronRight } from "lucide-react-native";
+import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper } from "@/components/icon-helper";
-import { formatCurrency } from "@/utils/currency";
+import {
+  AccountAmountText,
+  bigintToSafeNumber,
+} from "@/modules/accounts/components/account-amount-text";
 import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
-import { localDateInput } from "@/modules/accounts/utils/account-input";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 interface AccountTypeGroupCardProps {
-  accountType: AccountType | { id: string; name: string; iconKey?: string | null; color?: string | null; accountGroup?: string };
+  accountType: AccountType | {
+    id: string;
+    name: string;
+    iconKey?: string | null;
+    color?: string | null;
+    accountGroup?: string;
+  };
   accounts: AccountListItem[];
   onSelectAccount: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
@@ -24,7 +31,12 @@ export function AccountTypeGroupCard({
 }: AccountTypeGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const isLiability = accountType.accountGroup === "liability";
+
+  const primaryColor = accountType.color
+    ? theme.colors.categorical[
+        accountType.color as keyof typeof theme.colors.categorical
+      ] ?? theme.colors.primary
+    : theme.colors.primary;
 
   const groupTotal = accounts
     .filter(
@@ -47,130 +59,98 @@ export function AccountTypeGroupCard({
       0n,
     );
 
-  const primaryColor = accountType.color || theme.colors.primary;
+  const groupTotalNumber = bigintToSafeNumber(groupTotal);
 
   return (
-    <View style={styles.groupCard}>
-      {/* Group Header */}
-      <View style={styles.header}>
+    <View style={styles.card}>
+      <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
           <View
-            style={[
-              styles.iconWrap,
-              { backgroundColor: `${primaryColor}20` },
-            ]}
+            style={[styles.iconWrap, { backgroundColor: `${primaryColor}20` }]}
           >
             <IconHelper
+              color={primaryColor}
               name={accountType.iconKey ?? "landmark"}
               size={18}
-              color={primaryColor}
             />
           </View>
-
           <View style={styles.titleCol}>
-            <Text
-              numberOfLines={1}
-              style={[styles.groupTitle, { color: primaryColor }]}
-            >
+            <Text numberOfLines={1} style={[styles.groupTitle, { color: primaryColor }]}>
               {accountType.name}
             </Text>
-            <Text style={styles.accountCountText}>
+            <Text style={styles.accountCount}>
               {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
             </Text>
           </View>
         </View>
 
         <View style={styles.headerRight}>
-          {onSort && accounts.length > 1 && (
+          {onSort && accounts.length > 1 ? (
             <TouchableOpacity
+              accessibilityLabel={`Sort accounts under ${accountType.name}`}
               onPress={() => onSort(accountType.name, accounts)}
               style={styles.sortBtn}
-              activeOpacity={0.7}
-              accessibilityLabel={`Sort accounts under ${accountType.name}`}
             >
-              <ArrowUpDown size={12} color={theme.colors.textSecondary} />
+              <ArrowUpDown color={theme.colors.textSecondary} size={12} />
               <Text style={styles.sortBtnText}>Sort</Text>
             </TouchableOpacity>
+          ) : null}
+          {groupTotalNumber !== null ? (
+            <AccountAmountText amountMinorUnits={groupTotalNumber} variant="body" />
+          ) : (
+            <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
           )}
-
-          <Text
-            style={[
-              styles.totalAmount,
-              isLiability && styles.liabilityTotalAmount,
-            ]}
-          >
-            {formatOpeningTotal(groupTotal)}
-          </Text>
         </View>
       </View>
 
-      {/* Account Rows Inside Group */}
       <View style={styles.accountsList}>
         {accounts.map((account, index) => {
           const balance =
             account.currentBalanceMinorUnits !== undefined
               ? account.currentBalanceMinorUnits
               : account.openingBalanceMinorUnits;
-          const amount =
-            account.currencyCode === "PHP"
-              ? formatCurrency(balance, "PHP")
-              : `${balance.toLocaleString()} ${account.currencyCode}`;
 
           return (
-            <View key={account.id} style={styles.accountRowWrapper}>
-              {index > 0 && <View style={styles.divider} />}
+            <View key={account.id}>
+              {index > 0 ? <View style={styles.divider} /> : null}
               <Pressable
+                accessibilityLabel={`${account.name}. Open account actions.`}
+                accessibilityRole="button"
                 onPress={() => onSelectAccount(account)}
                 style={({ pressed }) => [
                   styles.accountRow,
                   account.isArchived && styles.archivedRow,
                   pressed && styles.pressedRow,
                 ]}
-                accessibilityLabel={`${account.name}, balance ${amount}. Open account actions.`}
-                accessibilityRole="button"
               >
-                <View style={styles.accountLeft}>
-                  <View
-                    style={[
-                      styles.accountIconWrap,
-                      {
-                        backgroundColor: `${primaryColor}18`,
-                        borderColor: `${primaryColor}30`,
-                      },
-                    ]}
-                  >
-                    <IconHelper
-                      name={accountType.iconKey ?? "wallet"}
-                      size={16}
-                      color={primaryColor}
-                    />
-                  </View>
+                <View
+                  style={[
+                    styles.accountIconWrap,
+                    {
+                      backgroundColor: `${primaryColor}18`,
+                      borderColor: `${primaryColor}35`,
+                    },
+                  ]}
+                >
+                  <IconHelper
+                    color={primaryColor}
+                    name={accountType.iconKey ?? "landmark"}
+                    size={16}
+                  />
+                </View>
 
-                  <View style={styles.accountInfoCol}>
-                    <Text numberOfLines={1} style={styles.accountName}>
-                      {account.name}
-                    </Text>
-                    <Text style={styles.accountMeta}>
-                      Opened {localDateInput(account.openingBalanceAt)}
-                      {account.isArchived ? " · Archived" : ""}
-                    </Text>
-                  </View>
+                <View style={styles.accountInfo}>
+                  <Text numberOfLines={1} style={styles.accountName}>
+                    {account.name}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.accountSubtitle}>
+                    {accountType.name}
+                  </Text>
                 </View>
 
                 <View style={styles.accountRight}>
-                  <Text
-                    style={[
-                      styles.accountAmount,
-                      isLiability && styles.liabilityAmount,
-                    ]}
-                  >
-                    {amount}
-                  </Text>
-                  <ChevronRight
-                    size={16}
-                    color={theme.colors.textMuted}
-                    style={{ marginLeft: 6 }}
-                  />
+                  <AccountAmountText amountMinorUnits={balance} variant="body" />
+                  <ChevronRight color={theme.colors.textMuted} size={16} />
                 </View>
               </Pressable>
             </View>
@@ -183,7 +163,7 @@ export function AccountTypeGroupCard({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    groupCard: {
+    card: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.large,
@@ -192,7 +172,7 @@ function createStyles(theme: AppTheme) {
       overflow: "hidden",
       ...theme.shadows.card,
     },
-    header: {
+    headerRow: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderBottomColor: theme.colors.border,
@@ -219,12 +199,13 @@ function createStyles(theme: AppTheme) {
     },
     titleCol: {
       flex: 1,
+      minWidth: 0,
     },
     groupTitle: {
       fontSize: 15,
       fontWeight: theme.typography.fontWeight.bold,
     },
-    accountCountText: {
+    accountCount: {
       color: theme.colors.textSecondary,
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.medium,
@@ -252,20 +233,14 @@ function createStyles(theme: AppTheme) {
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    totalAmount: {
+    fallbackTotal: {
       color: theme.colors.textPrimary,
       fontSize: 15,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
     },
-    liabilityTotalAmount: {
-      color: theme.colors.warning,
-    },
     accountsList: {
       backgroundColor: theme.colors.surface,
-    },
-    accountRowWrapper: {
-      width: "100%",
     },
     divider: {
       backgroundColor: theme.colors.border,
@@ -275,23 +250,16 @@ function createStyles(theme: AppTheme) {
     accountRow: {
       alignItems: "center",
       flexDirection: "row",
-      justifyContent: "space-between",
+      gap: theme.spacing.sm,
       minHeight: 56,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     archivedRow: {
-      opacity: 0.6,
+      opacity: 0.65,
     },
     pressedRow: {
       backgroundColor: theme.colors.surfaceMuted,
-    },
-    accountLeft: {
-      alignItems: "center",
-      flex: 1,
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      marginRight: theme.spacing.sm,
     },
     accountIconWrap: {
       alignItems: "center",
@@ -301,15 +269,16 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 28,
     },
-    accountInfoCol: {
+    accountInfo: {
       flex: 1,
+      minWidth: 0,
     },
     accountName: {
       color: theme.colors.textPrimary,
       fontSize: 14,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    accountMeta: {
+    accountSubtitle: {
       color: theme.colors.textMuted,
       fontSize: 11,
       marginTop: 2,
@@ -317,15 +286,8 @@ function createStyles(theme: AppTheme) {
     accountRight: {
       alignItems: "center",
       flexDirection: "row",
-    },
-    accountAmount: {
-      color: theme.colors.textPrimary,
-      fontSize: 15,
-      fontWeight: theme.typography.fontWeight.bold,
-      fontVariant: ["tabular-nums"],
-    },
-    liabilityAmount: {
-      color: theme.colors.warning,
+      flexShrink: 0,
+      gap: 4,
     },
   });
 }

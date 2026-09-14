@@ -11,6 +11,10 @@ const checkedString = (parse: (value: string) => unknown) => z.string().superRef
 });
 export const accountInputSchema = z.object({
   name,
+  note: z
+    .string()
+    .max(1000, "Use at most 1000 characters for the note.")
+    .optional(),
   accountTypeId: z.string().min(1, "Choose an account type."),
   openingAmount: checkedString(parseOpeningAmount),
   openingDate: checkedString(parseOpeningDate),

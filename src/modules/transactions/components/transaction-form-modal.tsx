@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight } from "lucide-react-native";
 import {
   AccountPickerModal,
+  AmountCalculatorField,
   AmountCalculatorModal,
   CategoryPickerModal,
   DatePickerModal,
@@ -364,65 +365,21 @@ export function TransactionFormModal({
               />
             </View>
 
-            {/* Amount Field (with Sign Toggle + Calculator Modal) */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>AMOUNT ({currencyCode})</Text>
-              <View style={styles.amountRowContainer}>
-                {mode !== "transfer" && (
-                  <Pressable
-                    accessibilityLabel={`Toggle amount sign. Currently ${amountSign === "+" ? "positive" : "negative"}`}
-                    accessibilityRole="button"
-                    onPress={() => setAmountSign((prev) => (prev === "+" ? "-" : "+"))}
-                    style={[
-                      styles.signToggleBtn,
-                      amountSign === "+" ? styles.signTogglePositive : styles.signToggleNegative,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.signToggleText,
-                        amountSign === "+" ? styles.signToggleTextPositive : styles.signToggleTextNegative,
-                      ]}
-                    >
-                      {amountSign}
-                    </Text>
-                  </Pressable>
-                )}
-
-                <Pressable
-                  accessibilityLabel={`Amount ${mode !== "transfer" ? amountSign : ""}${formatCurrency(amountMinorUnits, currencyCode)}. Tap to calculate.`}
-                  accessibilityRole="button"
-                  onPress={() => setIsCalculatorOpen(true)}
-                  style={[styles.amountDisplayCard, { flex: 1 }]}
-                >
-                  <View>
-                    <Text style={styles.amountLabelSmall}>Tap to enter or calculate</Text>
-                    <Text
-                      style={[
-                        styles.amountBigValue,
-                        amountSign === "+" && mode === "income" && {
-                          color: theme.colors.success,
-                        },
-                        amountSign === "-" && {
-                          color: theme.colors.danger,
-                        },
-                        amountSign === "+" && mode === "expense" && {
-                          color: theme.colors.success,
-                        },
-                        mode === "transfer" && {
-                          color: theme.colors.info,
-                        },
-                      ]}
-                    >
-                      {mode !== "transfer" ? `${amountSign} ` : ""}
-                      {formatCurrency(Math.abs(amountMinorUnits), currencyCode, false)}
-                    </Text>
-                  </View>
-                  <View style={styles.calcIconBadge}>
-                    <Text style={styles.calcIconText}>⌨</Text>
-                  </View>
-                </Pressable>
-              </View>
+              <AmountCalculatorField
+                amountMinorUnits={amountMinorUnits}
+                amountSign={amountSign}
+                currencyCode={currencyCode}
+                disabled={pending}
+                label="Amount"
+                showSignToggle={mode !== "transfer"}
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onToggleSign={
+                  mode !== "transfer"
+                    ? () => setAmountSign((prev) => (prev === "+" ? "-" : "+"))
+                    : undefined
+                }
+              />
             </View>
 
             {/* Account Selector */}
@@ -836,71 +793,6 @@ function createStyles(theme: AppTheme) {
       fontWeight: "500",
       paddingHorizontal: 14,
       paddingVertical: 12,
-    },
-    amountRowContainer: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 10,
-    },
-    signToggleBtn: {
-      alignItems: "center",
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 2,
-      height: 56,
-      justifyContent: "center",
-      width: 56,
-    },
-    signTogglePositive: {
-      backgroundColor: `${theme.colors.success}18`,
-      borderColor: theme.colors.success,
-    },
-    signToggleNegative: {
-      backgroundColor: `${theme.colors.danger}18`,
-      borderColor: theme.colors.danger,
-    },
-    signToggleText: {
-      fontSize: 26,
-      fontWeight: "800",
-      lineHeight: 28,
-    },
-    signToggleTextPositive: {
-      color: theme.colors.success,
-    },
-    signToggleTextNegative: {
-      color: theme.colors.danger,
-    },
-    amountDisplayCard: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-    },
-    amountLabelSmall: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-    },
-    amountBigValue: {
-      color: theme.colors.textPrimary,
-      fontSize: 24,
-      fontWeight: "700",
-      fontVariant: ["tabular-nums"],
-      marginTop: 2,
-    },
-    calcIconBadge: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderRadius: 10,
-      height: 38,
-      justifyContent: "center",
-      width: 38,
-    },
-    calcIconText: {
-      fontSize: 18,
     },
     dateDisplayCard: {
       alignItems: "center",

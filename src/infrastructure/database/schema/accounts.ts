@@ -9,6 +9,7 @@ export const accounts = sqliteTable(
       .notNull()
       .references(() => accountTypes.id, { onDelete: "restrict" }),
     name: text("name").notNull(),
+    note: text("note"),
     currencyCode: text("currency_code").notNull(),
     openingBalanceMinorUnits: integer("opening_balance_minor_units")
       .notNull()

@@ -115,6 +115,12 @@ test("create, edit, archive and restore preserve IDs, signed amounts and creatio
   setAccountArchived(id, false);
   assert.equal(repo.findAccountById(id).isArchived, false);
 });
+test("saveAccount persists and clears account notes", () => {
+  const id = saveAccount({ ...accountInput(), note: "Emergency fund" });
+  assert.equal(repo.findAccountById(id).note, "Emergency fund");
+  saveAccount({ ...accountInput(undefined, "Daily account"), note: "" }, id);
+  assert.equal(repo.findAccountById(id).note, null);
+});
 test("name-only account edits preserve the existing opening timestamp", () => {
   const id = saveAccount(accountInput());
   const exactDate = new Date(2026, 8, 13, 14, 22, 33);
