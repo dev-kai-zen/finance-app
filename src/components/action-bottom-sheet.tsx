@@ -52,7 +52,17 @@ export function ActionBottomSheet({
             { paddingBottom: Math.max(insets.bottom, 16) },
           ]}
         >
-          <View style={styles.handle} />
+          <Pressable
+            accessibilityLabel="Close menu"
+            accessibilityRole="button"
+            hitSlop={{ top: 12, bottom: 12, left: 32, right: 32 }}
+            onPress={onClose}
+            style={styles.handleContainer}
+          >
+            {({ pressed }) => (
+              <View style={[styles.handle, pressed && styles.handlePressed]} />
+            )}
+          </Pressable>
           {items.map((item, index) => (
             <Pressable
               key={item.id}
@@ -96,13 +106,22 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.sm,
       ...theme.shadows.modal,
     },
-    handle: {
+    handleContainer: {
       alignSelf: "center",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: theme.spacing.xs,
+      marginBottom: theme.spacing.sm,
+      width: 60,
+    },
+    handle: {
       backgroundColor: theme.colors.border,
       borderRadius: 999,
       height: 4,
-      marginBottom: theme.spacing.md,
       width: 40,
+    },
+    handlePressed: {
+      backgroundColor: theme.colors.textMuted,
     },
     item: {
       alignItems: "center",
