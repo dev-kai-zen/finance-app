@@ -1,6 +1,7 @@
 import { usePathname, useRouter } from "expo-router";
 import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -52,14 +53,17 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
     <View style={styles.sidebar}>
       {/* Brand Header */}
       <View style={styles.brandContainer}>
-        <View style={styles.brandIcon}>
-          <View style={styles.brandEmblemOuter}>
-            <View style={styles.brandEmblemInner} />
-          </View>
-        </View>
-        <View>
-          <Text style={styles.brandName}>Kaizen</Text>
-          <Text style={styles.brandTagline}>Personal Finance</Text>
+        <Image
+          accessibilityLabel={`${APP_BRAND.name} logo`}
+          resizeMode="cover"
+          source={APP_BRAND.logo}
+          style={styles.brandLogo}
+        />
+        <View style={styles.brandText}>
+          <Text style={styles.brandName}>{APP_BRAND.name}</Text>
+          <Text numberOfLines={2} style={styles.brandTagline}>
+            {APP_BRAND.tagline}
+          </Text>
         </View>
       </View>
 
@@ -250,39 +254,27 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.sm,
       paddingBottom: theme.spacing.xl,
     },
-    brandIcon: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceInverseElevated,
+    brandLogo: {
       borderRadius: theme.borderRadius.medium,
-      height: 38,
-      justifyContent: "center",
-      width: 38,
+      flexShrink: 0,
+      height: 40,
+      width: 40,
     },
-    brandEmblemOuter: {
-      borderColor: theme.colors.primary,
-      borderRadius: 4,
-      borderWidth: 2,
-      height: 20,
-      justifyContent: "center",
-      alignItems: "center",
-      width: 20,
-    },
-    brandEmblemInner: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: 1,
-      height: 6,
-      width: 6,
+    brandText: {
+      flex: 1,
+      minWidth: 0,
     },
     brandName: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
     },
     brandTagline: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
+      lineHeight: 16,
     },
     sectionLabel: {
       color: theme.colors.textSecondary,
