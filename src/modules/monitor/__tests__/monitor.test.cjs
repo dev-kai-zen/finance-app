@@ -48,7 +48,7 @@ test("monitor: inspects columns, primary keys, and types via PRAGMA table_info",
   assert.ok(colNames.includes("id"));
   assert.ok(colNames.includes("account_id"));
   assert.ok(colNames.includes("category_id"));
-  assert.ok(colNames.includes("transfer_account_id"));
+  assert.ok(colNames.includes("transaction_group_id"));
   assert.ok(colNames.includes("type"));
   assert.ok(colNames.includes("amount_cents"));
   assert.ok(colNames.includes("occurred_at"));

@@ -13,18 +13,8 @@ export function listAccounts(context: DbContext = db): AccountListItem[] {
   const deltasByAccountId: Record<string, number> = {};
 
   for (const tx of allTransactions) {
-    if (tx.type === "transfer") {
-      deltasByAccountId[tx.accountId] =
-        (deltasByAccountId[tx.accountId] || 0) - Math.abs(tx.amountCents);
-      if (tx.transferAccountId) {
-        deltasByAccountId[tx.transferAccountId] =
-          (deltasByAccountId[tx.transferAccountId] || 0) + Math.abs(tx.amountCents);
-      }
-    } else {
-      // Non-transfer: income, expense, etc. uses direct signed amount addition
-      deltasByAccountId[tx.accountId] =
-        (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
-    }
+    deltasByAccountId[tx.accountId] =
+      (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
   }
 
   return rows.map(({ account, accountType }) => {

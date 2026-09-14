@@ -1,5 +1,7 @@
 # Kaizen Feature Integration Roadmap & Schema Reassessment
 
+> **Superseded for implementation decisions.** Use [`FEATURES_INTEGRATION.md`](./FEATURES_INTEGRATION.md) as the 1-by-1 playbook. This file is kept as historical context. Several recommendations here are outdated — especially Feature 3 transfers (`transfer_account_id` was replaced by dual-leg rows + `transaction_group_id`) and the “Accounts is the next step” note (accounts, categories, and the core ledger are already live).
+
 ## Purpose & Migration Philosophy
 
 This roadmap defines the step-by-step strategy for recreating features from the legacy **Kaizen Finance app** (`kaizen-finance-app`) inside our refactored **Finance app** (`finance-app`).

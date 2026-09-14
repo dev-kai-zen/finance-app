@@ -286,7 +286,8 @@ test("listAccounts calculates live current balance reflecting income, expense, a
   sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
 
   // Add Transfer: 100.00 (10,000 cents) from Checking to Savings
-  sqlite.prepare("INSERT INTO transactions (id, account_id, transfer_account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf', ?, ?, 'transfer', 10000, 3, 3, 3)").run(acc1, acc2);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
 
   const accountsList = repo.listAccounts();
   const checking = accountsList.find((a) => a.id === acc1);

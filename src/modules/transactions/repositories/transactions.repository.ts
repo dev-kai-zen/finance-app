@@ -1,5 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/sqlite-core";
+import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { accounts, categories, transactions } from "@/infrastructure/database/schema";
 import type {
@@ -10,7 +9,80 @@ import type {
   TransactionStats,
 } from "../types/transaction.types";
 
-const transferAccounts = alias(accounts, "transfer_accounts");
+export function generateId(context: DbContext = db): string {
+  return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
+}
+
+function mapRowToListItem(r: {
+  transaction: typeof transactions.$inferSelect;
+  accountName: string | null;
+  accountCurrency: string | null;
+  categoryName: string | null;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+}): TransactionListItem {
+  return {
+    id: r.transaction.id,
+    accountId: r.transaction.accountId,
+    categoryId: r.transaction.categoryId,
+    transactionGroupId: r.transaction.transactionGroupId,
+    type: r.transaction.type as Transaction["type"],
+    amountCents: r.transaction.amountCents,
+    name: r.transaction.name,
+    note: r.transaction.note,
+    occurredAt: r.transaction.occurredAt,
+    createdAt: r.transaction.createdAt,
+    updatedAt: r.transaction.updatedAt,
+    accountName: r.accountName ?? "Unknown Account",
+    accountCurrency: r.accountCurrency ?? "PHP",
+    categoryName: r.categoryName,
+    categoryIcon: r.categoryIcon,
+    categoryColor: r.categoryColor,
+    transferAccountId: null,
+    transferAccountName: null,
+  };
+}
+
+function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] {
+  const standalone: TransactionListItem[] = [];
+  const groupMap = new Map<string, TransactionListItem[]>();
+
+  for (const item of items) {
+    if (item.transactionGroupId && item.type === "transfer") {
+      const group = groupMap.get(item.transactionGroupId) ?? [];
+      group.push(item);
+      groupMap.set(item.transactionGroupId, group);
+    } else {
+      standalone.push(item);
+    }
+  }
+
+  const grouped: TransactionListItem[] = [];
+
+  for (const [groupId, legs] of groupMap) {
+    if (legs.length !== 2) {
+      standalone.push(...legs);
+      continue;
+    }
+
+    const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
+    const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
+
+    grouped.push({
+      ...outLeg,
+      id: outLeg.id,
+      transactionGroupId: groupId,
+      accountId: outLeg.accountId,
+      accountName: outLeg.accountName,
+      accountCurrency: outLeg.accountCurrency,
+      transferAccountId: inLeg.accountId,
+      transferAccountName: inLeg.accountName,
+      amountCents: Math.abs(outLeg.amountCents),
+    });
+  }
+
+  return [...standalone, ...grouped];
+}
 
 export function listTransactions(
   filter?: TransactionFilter,
@@ -24,12 +96,10 @@ export function listTransactions(
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.color,
-      transferAccountName: transferAccounts.name,
     })
     .from(transactions)
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .leftJoin(transferAccounts, eq(transactions.transferAccountId, transferAccounts.id))
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt));
 
   const conditions = [];
@@ -38,39 +108,37 @@ export function listTransactions(
     conditions.push(eq(transactions.type, filter.type));
   }
   if (filter?.accountId) {
-    conditions.push(eq(transactions.accountId, filter.accountId));
+    conditions.push(
+      or(
+        eq(transactions.accountId, filter.accountId),
+        sql`EXISTS (
+          SELECT 1 FROM transactions grouped_leg
+          WHERE grouped_leg.transaction_group_id = ${transactions.transactionGroupId}
+            AND grouped_leg.account_id = ${filter.accountId}
+        )`,
+      ),
+    );
   }
   if (filter?.categoryId) {
     conditions.push(eq(transactions.categoryId, filter.categoryId));
   }
 
-  const rows = conditions.length > 0
-    ? query.where(and(...conditions)).all()
-    : query.all();
+  const rows =
+    conditions.length > 0 ? query.where(and(...conditions)).all() : query.all();
 
-  const mapped: TransactionListItem[] = rows.map((r) => ({
-    id: r.transaction.id,
-    accountId: r.transaction.accountId,
-    categoryId: r.transaction.categoryId,
-    transferAccountId: r.transaction.transferAccountId,
-    type: r.transaction.type as Transaction["type"],
-    amountCents: r.transaction.amountCents,
-    name: r.transaction.name,
-    note: r.transaction.note,
-    occurredAt: r.transaction.occurredAt,
-    createdAt: r.transaction.createdAt,
-    updatedAt: r.transaction.updatedAt,
-    accountName: r.accountName ?? "Unknown Account",
-    accountCurrency: r.accountCurrency ?? "PHP",
-    categoryName: r.categoryName,
-    categoryIcon: r.categoryIcon,
-    categoryColor: r.categoryColor,
-    transferAccountName: r.transferAccountName,
-  }));
+  const mapped = rows.map(mapRowToListItem);
+  const grouped = groupTransferRows(mapped);
+
+  grouped.sort((a, b) => {
+    const timeA = new Date(a.occurredAt).getTime();
+    const timeB = new Date(b.occurredAt).getTime();
+    if (timeB !== timeA) return timeB - timeA;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
 
   if (filter?.searchQuery) {
     const q = filter.searchQuery.toLowerCase().trim();
-    return mapped.filter(
+    return grouped.filter(
       (tx) =>
         (tx.name && tx.name.toLowerCase().includes(q)) ||
         (tx.note && tx.note.toLowerCase().includes(q)) ||
@@ -80,7 +148,7 @@ export function listTransactions(
     );
   }
 
-  return mapped;
+  return grouped;
 }
 
 export function findTransactionById(
@@ -101,20 +169,33 @@ export function findTransactionById(
   };
 }
 
+export function findTransactionsByGroupId(
+  groupId: string,
+  context: DbContext = db,
+): Transaction[] {
+  return context
+    .select()
+    .from(transactions)
+    .where(eq(transactions.transactionGroupId, groupId))
+    .all()
+    .map((row) => ({
+      ...row,
+      type: row.type as Transaction["type"],
+    }));
+}
+
 export function insertTransaction(
   data: NewTransaction,
   context: DbContext = db,
 ): Transaction {
   const now = new Date();
-  const id =
-    data.id ??
-    context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
+  const id = data.id ?? generateId(context);
 
   const record = {
     id,
     accountId: data.accountId,
     categoryId: data.categoryId ?? null,
-    transferAccountId: data.transferAccountId ?? null,
+    transactionGroupId: data.transactionGroupId ?? null,
     type: data.type,
     amountCents: data.amountCents,
     name: data.name ?? null,
@@ -129,11 +210,44 @@ export function insertTransaction(
   return record;
 }
 
-export function deleteTransaction(
+export function updateTransactionRecord(
   id: string,
+  values: Partial<
+    Pick<
+      NewTransaction,
+      | "accountId"
+      | "categoryId"
+      | "type"
+      | "amountCents"
+      | "name"
+      | "note"
+      | "occurredAt"
+    >
+  >,
   context: DbContext = db,
 ): void {
+  context
+    .update(transactions)
+    .set({
+      ...values,
+      updatedAt: new Date(),
+    })
+    .where(eq(transactions.id, id))
+    .run();
+}
+
+export function deleteTransaction(id: string, context: DbContext = db): void {
   context.delete(transactions).where(eq(transactions.id, id)).run();
+}
+
+export function deleteTransactionsByGroupId(
+  groupId: string,
+  context: DbContext = db,
+): void {
+  context
+    .delete(transactions)
+    .where(eq(transactions.transactionGroupId, groupId))
+    .run();
 }
 
 export function calculateTransactionStats(context: DbContext = db): TransactionStats {
@@ -141,9 +255,11 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
 
   let totalInflow = 0;
   let totalOutflow = 0;
+  const groupedTransferIds = new Set<string>();
 
   for (const tx of allTx) {
-    if (tx.type === "transfer") {
+    if (tx.transactionGroupId) {
+      groupedTransferIds.add(tx.transactionGroupId);
       continue;
     }
     if (tx.amountCents > 0) {
@@ -153,10 +269,13 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
     }
   }
 
+  const transferCount = groupedTransferIds.size;
+  const standaloneCount = allTx.filter((tx) => !tx.transactionGroupId).length;
+
   return {
     totalInflowMinorUnits: totalInflow,
     totalOutflowMinorUnits: totalOutflow,
     netCashflowMinorUnits: totalInflow - totalOutflow,
-    transactionCount: allTx.length,
+    transactionCount: standaloneCount + transferCount,
   };
 }

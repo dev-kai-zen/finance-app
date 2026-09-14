@@ -36,7 +36,7 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
       {
         accountId: input.accountId,
         categoryId: input.categoryId,
-        transferAccountId: null,
+        transactionGroupId: null,
         type: input.type,
         amountCents: input.amountCents,
         name: input.name?.trim() || null,

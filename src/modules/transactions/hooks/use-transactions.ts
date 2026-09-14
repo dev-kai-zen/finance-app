@@ -6,12 +6,14 @@ import {
 import { createTransaction } from "../services/create-transaction.service";
 import { createTransfer } from "../services/create-transfer.service";
 import { removeTransaction } from "../services/delete-transaction.service";
+import { updateTransfer } from "../services/update-transfer.service";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
   TransactionFilter,
   TransactionListItem,
   TransactionStats,
+  UpdateTransferInput,
 } from "../types/transaction.types";
 
 export function useTransactions(initialFilter?: TransactionFilter) {
@@ -102,6 +104,24 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [refresh],
   );
 
+  const editTransfer = useCallback(
+    async (input: UpdateTransferInput): Promise<boolean> => {
+      try {
+        setPendingAction(true);
+        setError(null);
+        updateTransfer(input);
+        refresh();
+        return true;
+      } catch (err: any) {
+        setError(err?.message || "Failed to update transfer.");
+        return false;
+      } finally {
+        setPendingAction(false);
+      }
+    },
+    [refresh],
+  );
+
   return {
     transactions,
     stats,
@@ -112,6 +132,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     setFilter,
     recordTransaction,
     recordTransfer,
+    editTransfer,
     deleteTx,
     refresh,
   };

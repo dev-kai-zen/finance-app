@@ -20,20 +20,8 @@ export function getAccountDynamicBalances(
   const deltasByAccountId: Record<string, number> = {};
 
   for (const tx of allTransactions) {
-    if (tx.type === "transfer") {
-      // Outflow from source account
-      deltasByAccountId[tx.accountId] =
-        (deltasByAccountId[tx.accountId] || 0) - Math.abs(tx.amountCents);
-      // Inflow to destination account
-      if (tx.transferAccountId) {
-        deltasByAccountId[tx.transferAccountId] =
-          (deltasByAccountId[tx.transferAccountId] || 0) + Math.abs(tx.amountCents);
-      }
-    } else {
-      // Non-transfer: direct signed addition (+ for positive, - for negative)
-      deltasByAccountId[tx.accountId] =
-        (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
-    }
+    deltasByAccountId[tx.accountId] =
+      (deltasByAccountId[tx.accountId] || 0) + tx.amountCents;
   }
 
   return allAccounts.map((acc) => {
@@ -68,7 +56,7 @@ export function getMonthlyCashflow(
   for (const tx of allTx) {
     const txDate = new Date(tx.occurredAt);
     if (txDate >= startOfMonth && txDate <= endOfMonth) {
-      if (tx.type === "transfer") {
+      if (tx.transactionGroupId) {
         continue;
       }
       if (tx.amountCents > 0) {
