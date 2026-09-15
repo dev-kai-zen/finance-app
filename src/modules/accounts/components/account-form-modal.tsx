@@ -326,17 +326,6 @@ export function AccountFormModal({
               <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
             </Pressable>
           ) : null}
-          {selectedType?.accountGroup === "liability" ? (
-            <Text style={styles.helperText}>
-              Use a negative amount for money owed. A positive amount means an
-              overpayment or credit balance.
-            </Text>
-          ) : (
-            <Text style={styles.helperText}>
-              Use a negative amount for an overdraft; positive means money
-              available.
-            </Text>
-          )}
 
           <AmountCalculatorField
             amountMinorUnits={maintainingMinorUnits}

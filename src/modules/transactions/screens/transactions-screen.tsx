@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  Alert,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -17,6 +15,7 @@ import {
   X,
 } from "lucide-react-native";
 import {
+  ConfirmModal,
   FeatureNotImplementedModal,
   FloatingActionButton,
   PageContainer,
@@ -115,6 +114,12 @@ export function TransactionsScreen() {
     useState<TransactionListItem | null>(null);
   const [prefilledTransaction, setPrefilledTransaction] =
     useState<TransactionListItem | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const pendingDeleteTransaction = useMemo(
+    () => transactions.find((tx) => tx.id === pendingDeleteId) ?? null,
+    [transactions, pendingDeleteId],
+  );
 
   // Unintegrated feature modal
   const [featureModalVisible, setFeatureModalVisible] = useState(false);
@@ -248,26 +253,27 @@ export function TransactionsScreen() {
   };
 
   const handleDelete = (id: string) => {
-    const executeDelete = async () => {
-      setInspectedTransaction(null);
-      await deleteTx(id);
-    };
-
-    if (Platform.OS === "web") {
-      if (window.confirm("Are you sure you want to delete this transaction record?")) {
-        executeDelete();
-      }
-    } else {
-      Alert.alert(
-        "Delete Transaction",
-        "Are you sure you want to delete this transaction record?",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Delete", style: "destructive", onPress: executeDelete },
-        ],
-      );
-    }
+    setPendingDeleteId(id);
   };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    setInspectedTransaction(null);
+    const deleted = await deleteTx(pendingDeleteId);
+    if (deleted) setPendingDeleteId(null);
+  };
+
+  const deleteConfirmMessage = useMemo(() => {
+    const tx = pendingDeleteTransaction;
+    if (!tx) {
+      return "This record will be permanently removed.";
+    }
+    const label = tx.name?.trim() || tx.categoryName || "this transaction";
+    if (tx.type === "transfer") {
+      return `Delete the transfer from "${tx.accountName}" to "${tx.transferAccountName ?? "another account"}"? Both legs will be permanently removed.`;
+    }
+    return `Delete "${label}"? This record will be permanently removed.`;
+  }, [pendingDeleteTransaction]);
 
   const handleExportCsv = () => {
     setUnintegratedFeature({
@@ -507,6 +513,19 @@ export function TransactionsScreen() {
         featureTitle={unintegratedFeature.title}
         onClose={() => setFeatureModalVisible(false)}
         visible={featureModalVisible}
+      />
+
+      <ConfirmModal
+        confirmLabel="Delete"
+        message={deleteConfirmMessage}
+        pending={pendingAction}
+        title="Delete transaction?"
+        variant="destructive"
+        visible={pendingDeleteId !== null}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
       />
     </PageContainer>
   );
