@@ -25,6 +25,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import type { Category } from "@/modules/categories/types/category.types";
+import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
 import type {
   CreateTransactionInput,
@@ -615,12 +616,9 @@ export function TransactionFormModal({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
-          if (minorUnits < 0) {
-            setAmountMinorUnits(Math.abs(minorUnits));
-            setAmountSign("-");
-          } else {
-            setAmountMinorUnits(minorUnits);
-          }
+          const resolved = applySignedAmount(minorUnits);
+          setAmountSign(resolved.amountSign);
+          setAmountMinorUnits(resolved.amountMinorUnits);
           setIsCalculatorOpen(false);
         }}
         title={`Enter ${mode.toUpperCase()} Amount`}

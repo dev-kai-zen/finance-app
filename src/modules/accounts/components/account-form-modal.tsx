@@ -30,6 +30,7 @@ import {
   openingAmountInput,
 } from "@/modules/accounts/utils/account-input";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
+import { applySignedAmount } from "@/utils/amount-sign";
 
 function parseAmountSign(openingAmount: string): "+" | "-" {
   return openingAmount.trim().startsWith("-") ? "-" : "+";
@@ -450,20 +451,23 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
-        allowNegative={false}
         currencyCode={account?.currencyCode ?? "PHP"}
         initialMinorUnits={amountMinorUnits}
         title="Starting Balance"
         visible={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
-        onConfirm={(_minorUnits, formatted) => {
-          setValue((prev) => ({ ...prev, openingAmount: formatted }));
+        onConfirm={(minorUnits, formatted) => {
+          const resolved = applySignedAmount(minorUnits);
+          setAmountSign(resolved.amountSign);
+          setValue((prev) => ({
+            ...prev,
+            openingAmount: resolved.formattedDecimal || formatted,
+          }));
           setCalculatorOpen(false);
         }}
       />
 
       <AmountCalculatorModal
-        allowNegative={false}
         currencyCode={account?.currencyCode ?? "PHP"}
         initialMinorUnits={maintainingMinorUnits}
         title="Maintaining Balance"

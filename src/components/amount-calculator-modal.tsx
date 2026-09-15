@@ -136,6 +136,20 @@ function toggleSign(expr: string): string {
   return prefix + toggled;
 }
 
+/** Replace a trailing operator (e.g. `100 × ` → `100 + `) when the user corrects it. */
+function replaceTrailingOperator(
+  expression: string,
+  operator: string,
+): string | null {
+  const match = expression.match(/^(.+\d(?:\.\d*)?)\s*([+\-×÷])\s*$/);
+  if (!match) return null;
+  return `${match[1]} ${operator} `;
+}
+
+function appendOrReplaceOperator(expression: string, operator: string): string {
+  return replaceTrailingOperator(expression, operator) ?? `${expression} ${operator} `;
+}
+
 function formatWithCommas(val: string): string {
   if (!val) return "0";
   if (val === "-") return "-";
@@ -193,7 +207,6 @@ export function AmountCalculatorModal({
     }
 
     if (key === "±") {
-      if (!allowNegative) return;
       setExpression((prev) => toggleSign(prev));
       return;
     }
@@ -208,43 +221,36 @@ export function AmountCalculatorModal({
     // Minus / Negative Sign
     if (key === "-") {
       if (!expression) {
-        // Direct negative input at start
         if (!allowNegative) return;
         setExpression("-");
         return;
       }
-      if (expression === "-") {
+      if (expression === "-") return;
+
+      const replaced = replaceTrailingOperator(expression, "-");
+      if (replaced) {
+        setExpression(replaced);
         return;
       }
+
       const trimmed = expression.trim();
       const lastChar = trimmed.slice(-1);
-      // Preceding character is an operator (e.g. +, ×, ÷) -> negative operand
+      // After +, ×, or ÷ → start a negative operand (e.g. `100 × -500`)
       if (["+", "×", "÷"].includes(lastChar)) {
         if (!allowNegative) return;
-        setExpression((prev) => prev + " -");
+        setExpression((prev) => `${prev.trimEnd()} -`);
         return;
       }
-      if (lastChar === "-") {
-        return;
-      }
-      setExpression((prev) => prev + " - ");
+      if (lastChar === "-") return;
+
+      setExpression((prev) => appendOrReplaceOperator(prev, "-"));
       return;
     }
 
     // Other Operators (+, ×, ÷)
     if (["+", "×", "÷"].includes(key)) {
       if (!expression || expression === "-") return;
-      const trimmed = expression.trim();
-      const lastChar = trimmed.slice(-1);
-      if (["+", "-", "×", "÷"].includes(lastChar)) {
-        if (expression.endsWith(" -")) {
-          setExpression((prev) => prev.slice(0, -3) + " " + key + " ");
-        } else {
-          setExpression((prev) => prev.slice(0, -1) + key);
-        }
-      } else {
-        setExpression((prev) => prev + " " + key + " ");
-      }
+      setExpression((prev) => appendOrReplaceOperator(prev, key));
       return;
     }
 
@@ -274,7 +280,7 @@ export function AmountCalculatorModal({
   const handleConfirm = () => {
     const finalAmount = evaluateExpression(expression);
     const minorUnits = Math.round(finalAmount * 100);
-    const formatted = finalAmount.toFixed(2);
+    const formatted = (Math.abs(minorUnits) / 100).toFixed(2);
     onConfirm(minorUnits, formatted);
     onClose();
   };
