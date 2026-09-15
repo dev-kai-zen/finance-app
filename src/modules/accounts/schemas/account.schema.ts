@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { ACCOUNT_COLOR_KEYS, ACCOUNT_ICON_KEYS } from "@/modules/accounts/constants/account-appearance.constants";
-import { parseOpeningAmount, parseOpeningDate } from "@/modules/accounts/utils/account-input";
+import {
+  parseMaintainingAmount,
+  parseOpeningAmount,
+  parseOpeningDate,
+} from "@/modules/accounts/utils/account-input";
 
 export const accountGroupSchema = z.enum(["asset", "liability"]);
 const name = z.string().trim().min(1, "A name is required.").max(100, "Use at most 100 characters.");
@@ -19,6 +23,22 @@ export const accountInputSchema = z.object({
   accountTypeId: z.string().min(1, "Choose an account type."),
   openingAmount: checkedString(parseOpeningAmount),
   openingDate: checkedString(parseOpeningDate),
+  hideFromSelection: z.boolean().default(false),
+  hideFromReports: z.boolean().default(false),
+  maintainingAmount: z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (value === undefined || value.trim() === "") return;
+      try {
+        parseMaintainingAmount(value);
+      } catch (error) {
+        ctx.addIssue({
+          code: "custom",
+          message: error instanceof Error ? error.message : "Invalid value.",
+        });
+      }
+    }),
 });
 export const accountTypeInputSchema = z.object({
   name,

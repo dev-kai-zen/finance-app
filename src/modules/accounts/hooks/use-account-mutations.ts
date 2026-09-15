@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { lockAccountStartingBalance } from "@/modules/accounts/services/lock-account-starting-balance.service";
 import { saveAccount } from "@/modules/accounts/services/save-account.service";
 import { saveAccountType } from "@/modules/accounts/services/save-account-type.service";
 import { setAccountArchived } from "@/modules/accounts/services/archive-account.service";
@@ -36,6 +37,7 @@ export function useAccountMutations(onSuccess: () => void) {
   return {
     pending, error, clearError: () => setError(null),
     saveAccount: (input: AccountInput, id?: string) => run(() => saveAccount(input, id)),
+    lockStartingBalance: (id: string) => run(() => lockAccountStartingBalance(id)),
     saveType: (input: AccountTypeInput, id?: string) => run(() => saveAccountType(input, id)),
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),
     archiveType: (id: string, archived: boolean) => run(() => setAccountTypeArchived(id, archived)),

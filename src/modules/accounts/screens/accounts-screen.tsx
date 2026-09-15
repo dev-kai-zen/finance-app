@@ -183,6 +183,7 @@ export function AccountsScreen() {
         onClose={close}
         onDelete={(accountId) => mutations.archiveAccount(accountId, true)}
         onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
+        onLockStartingBalance={mutations.lockStartingBalance}
         onSave={mutations.saveAccount}
       />
 

@@ -57,6 +57,13 @@
       "when": 1789298000000,
       "tag": "0007_add_icon_key_to_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1789301000000,
+      "tag": "0008_add_account_balance_and_visibility_fields",
+      "breakpoints": true
     }
   ]
 }

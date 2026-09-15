@@ -15,6 +15,26 @@ export function openingAmountInput(minorUnits: number): string {
   return `${minorUnits < 0 ? "-" : ""}${Math.floor(magnitude / 100)}.${String(magnitude % 100).padStart(2, "0")}`;
 }
 
+/** Parse a non-negative decimal amount for target/maintaining balances. */
+export function parseMaintainingAmount(input: string): number {
+  const value = input.trim();
+  if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+    throw new Error("Enter a number with at most two decimal places, e.g. 1000.50.");
+  }
+  const [whole, fraction = ""] = value.split(".");
+  const magnitude = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, "0"));
+  if (magnitude > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error("The amount is too large.");
+  return Number(magnitude);
+}
+
+export function maintainingAmountInput(minorUnits: number | null | undefined): string {
+  if (minorUnits == null) return "";
+  if (!Number.isSafeInteger(minorUnits) || minorUnits < 0) {
+    throw new Error("Invalid stored maintaining balance.");
+  }
+  return `${Math.floor(minorUnits / 100)}.${String(minorUnits % 100).padStart(2, "0")}`;
+}
+
 export function localDateInput(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

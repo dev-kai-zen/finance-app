@@ -42,7 +42,11 @@ export function AccountPickerModal({
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredAccounts = useMemo(() => {
-    let list = accounts.filter((acc) => !acc.isArchived);
+    let list = accounts.filter(
+      (acc) =>
+        !acc.isArchived &&
+        (!acc.hideFromSelection || acc.id === selectedAccountId),
+    );
     if (excludeAccountId) {
       list = list.filter((acc) => acc.id !== excludeAccountId);
     }
@@ -54,7 +58,7 @@ export function AccountPickerModal({
         acc.name.toLowerCase().includes(query) ||
         acc.accountType?.name?.toLowerCase().includes(query),
     );
-  }, [accounts, excludeAccountId, searchQuery]);
+  }, [accounts, excludeAccountId, searchQuery, selectedAccountId]);
 
   // Group accounts by accountType
   const groupedAccounts = useMemo(() => {

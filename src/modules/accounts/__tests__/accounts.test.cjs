@@ -64,6 +64,7 @@ const repo = require("@/modules/accounts/repositories/accounts.repository");
 const types = require("@/modules/accounts/repositories/account-types.repository");
 const { getAccountsWithBalances } = require("@/modules/accounts/services/get-accounts-with-balances.service");
 const { saveAccount } = require("@/modules/accounts/services/save-account.service");
+const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock-account-starting-balance.service");
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
 const { setAccountTypeArchived } = require("@/modules/accounts/services/archive-account-type.service");
@@ -107,7 +108,15 @@ function connect(filename = ":memory:") {
 function migrate(selected = migrations) { database.dialect.migrate(selected, database.session); }
 const typeInput = (name, accountGroup = "asset") => ({ name, accountGroup, iconKey: "wallet", color: "teal" });
 const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account", openingAmount = "1000.50") =>
-  ({ name, accountTypeId, openingAmount, openingDate: "2026-09-13" });
+  ({
+    name,
+    accountTypeId,
+    openingAmount,
+    openingDate: "2026-09-13",
+    hideFromSelection: false,
+    hideFromReports: false,
+    maintainingAmount: "",
+  });
 beforeEach(() => { connect(); migrate(); });
 afterEach(() => sqlite.close());
 
@@ -317,6 +326,40 @@ test("existing current-schema accounts and linked transactions remain unchanged 
   migrate();
   assert.deepEqual(repo.findAccountById(id), before);
   assert.equal(sqlite.prepare("SELECT count(*) AS total FROM transactions").get().total, 1);
+});
+test("saveAccount persists visibility flags and maintaining balance", () => {
+  const id = saveAccount({
+    ...accountInput(),
+    hideFromSelection: true,
+    hideFromReports: true,
+    maintainingAmount: "2500.75",
+  });
+  const saved = repo.findAccountById(id);
+  assert.equal(saved.hideFromSelection, true);
+  assert.equal(saved.hideFromReports, true);
+  assert.equal(saved.maintainingBalanceMinorUnits, 250075);
+  assert.equal(saved.startingBalanceLocked, false);
+  saveAccount({ ...accountInput(undefined, "Daily account"), maintainingAmount: "" }, id);
+  assert.equal(repo.findAccountById(id).maintainingBalanceMinorUnits, null);
+});
+test("locked starting balance cannot be changed again", () => {
+  const id = saveAccount(accountInput(undefined, "Locked account", "1000.00"));
+  lockAccountStartingBalance(id);
+  assert.equal(repo.findAccountById(id).startingBalanceLocked, true);
+  assert.throws(
+    () => saveAccount(accountInput(undefined, "Locked account", "2000.00"), id),
+    /locked/,
+  );
+  saveAccount({ ...accountInput(undefined, "Renamed locked account"), openingAmount: "1000.00" }, id);
+  assert.equal(repo.findAccountById(id).name, "Renamed locked account");
+  assert.equal(repo.findAccountById(id).openingBalanceMinorUnits, 100000);
+});
+test("opening summary excludes accounts hidden from reports", () => {
+  const visible = saveAccount(accountInput(undefined, "Visible", "1000.00"));
+  saveAccount({ ...accountInput(undefined, "Hidden", "500.00"), hideFromReports: true });
+  assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 100000n, liabilities: 0n, excluded: 0 });
+  repo.updateAccountRecord(visible, { hideFromReports: true });
+  assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 0n, liabilities: 0n, excluded: 0 });
 });
 test("getAccountsWithBalances calculates live current balance reflecting income, expense, and transfer", () => {
   const acc1 = saveAccount(accountInput(system.ASSET_OTHERS, "Checking", "1000.00")); // 100,000 cents

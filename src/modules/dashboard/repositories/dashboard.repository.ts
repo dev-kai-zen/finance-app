@@ -142,7 +142,9 @@ export function getDashboardSummary(
   targetDate: Date = new Date(),
 ): DashboardSummary {
   const accountsWithBalances = getAccountDynamicBalances(context);
-  const activeAccounts = accountsWithBalances.filter((a) => !a.isArchived);
+  const activeAccounts = accountsWithBalances.filter(
+    (a) => !a.isArchived && !a.hideFromReports,
+  );
 
   let totalAssets = 0;
   let totalLiabilities = 0;

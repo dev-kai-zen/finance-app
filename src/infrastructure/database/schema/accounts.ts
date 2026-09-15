@@ -18,6 +18,16 @@ export const accounts = sqliteTable(
     openingBalanceAt: integer("opening_balance_at", {
       mode: "timestamp_ms",
     }).notNull(),
+    startingBalanceLocked: integer("starting_balance_locked", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    hideFromSelection: integer("hide_from_selection", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    hideFromReports: integer("hide_from_reports", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    maintainingBalanceMinorUnits: integer("maintaining_balance_minor_units"),
     isArchived: integer("is_archived", { mode: "boolean" })
       .notNull()
       .default(false),

@@ -13,6 +13,7 @@ export interface AmountCalculatorFieldProps {
   currencyCode?: string;
   disabled?: boolean;
   showSignToggle?: boolean;
+  showCurrencyPill?: boolean;
 }
 
 export function AmountCalculatorField({
@@ -24,16 +25,19 @@ export function AmountCalculatorField({
   currencyCode = "PHP",
   disabled = false,
   showSignToggle = true,
+  showCurrencyPill = true,
 }: AmountCalculatorFieldProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const formatted = formatCurrency(
-    Math.abs(amountMinorUnits),
-    currencyCode,
-    false,
-  );
-  const displayAmount = formatted.replace(/^-?₱/, "").replace(/^-?/, "");
+  const absMinorUnits = Math.abs(amountMinorUnits);
+  const major = Math.floor(absMinorUnits / 100);
+  const minor = absMinorUnits % 100;
+  const displayAmount = showCurrencyPill
+    ? formatCurrency(absMinorUnits, currencyCode, false)
+        .replace(/^-?₱/, "")
+        .replace(/^-?/, "")
+    : `${major.toLocaleString("en-PH")}.${String(minor).padStart(2, "0")}`;
 
   const signIsPositive = amountSign === "+";
 
@@ -78,9 +82,11 @@ export function AmountCalculatorField({
           </Pressable>
         </View>
 
-        <View style={styles.currencyPill}>
-          <Text style={styles.currencyPillText}>{currencyCode}</Text>
-        </View>
+        {showCurrencyPill ? (
+          <View style={styles.currencyPill}>
+            <Text style={styles.currencyPillText}>{currencyCode}</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );

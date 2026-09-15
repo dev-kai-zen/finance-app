@@ -3,6 +3,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -23,7 +24,11 @@ import { AccountTypePickerModal } from "@/modules/accounts/components/account-ty
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
 import type { Account, AccountType } from "@/modules/accounts/types/account.types";
-import { localDateInput, openingAmountInput } from "@/modules/accounts/utils/account-input";
+import {
+  localDateInput,
+  maintainingAmountInput,
+  openingAmountInput,
+} from "@/modules/accounts/utils/account-input";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 
 function parseAmountSign(openingAmount: string): "+" | "-" {
@@ -45,6 +50,7 @@ export function AccountFormModal({
   onSave,
   onDelete,
   onRestore,
+  onLockStartingBalance,
 }: {
   visible: boolean;
   account?: Account;
@@ -55,6 +61,7 @@ export function AccountFormModal({
   onSave: (value: AccountInput, id?: string) => Promise<boolean>;
   onDelete?: (accountId: string) => Promise<boolean>;
   onRestore?: (accountId: string) => Promise<boolean>;
+  onLockStartingBalance?: (accountId: string) => Promise<boolean>;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -66,6 +73,9 @@ export function AccountFormModal({
     accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
     openingAmount: openingAmountInput(account?.openingBalanceMinorUnits ?? 0),
     openingDate: localDateInput(account?.openingBalanceAt),
+    hideFromSelection: account?.hideFromSelection ?? false,
+    hideFromReports: account?.hideFromReports ?? false,
+    maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
   }));
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
     parseAmountSign(openingAmountInput(account?.openingBalanceMinorUnits ?? 0)),
@@ -81,19 +91,25 @@ export function AccountFormModal({
       accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
       openingAmount,
       openingDate: localDateInput(account?.openingBalanceAt),
+      hideFromSelection: account?.hideFromSelection ?? false,
+      hideFromReports: account?.hideFromReports ?? false,
+      maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
     });
     setAmountSign(parseAmountSign(openingAmount));
     setConfirmAction(null);
   }, [visible, account]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<"archive" | "restore" | null>(
-    null,
-  );
+  const [confirmAction, setConfirmAction] = useState<
+    "archive" | "restore" | "lock-balance" | null
+  >(null);
 
   const foreign = !!account && account.currencyCode !== "PHP";
+  const startingBalanceLocked = account?.startingBalanceLocked ?? false;
+  const openingBalanceReadOnly = pending || foreign || startingBalanceLocked;
   const selectedType = types.find((t) => t.id === value.accountTypeId);
   const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
   const isCreditCardType =
@@ -105,6 +121,12 @@ export function AccountFormModal({
     const parsed = Math.round(parseFloat(stripped || "0") * 100);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.openingAmount]);
+
+  const maintainingMinorUnits = useMemo(() => {
+    const stripped = (value.maintainingAmount ?? "").trim() || "0";
+    const parsed = Math.round(parseFloat(stripped || "0") * 100);
+    return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+  }, [value.maintainingAmount]);
 
   const typeColor = selectedType?.color
     ? theme.colors.categorical[
@@ -129,6 +151,12 @@ export function AccountFormModal({
           setConfirmAction(null);
           onClose();
         }
+      });
+      return;
+    }
+    if (confirmAction === "lock-balance" && onLockStartingBalance) {
+      void onLockStartingBalance(account.id).then((locked) => {
+        if (locked) setConfirmAction(null);
       });
     }
   };
@@ -275,13 +303,28 @@ export function AccountFormModal({
             amountMinorUnits={amountMinorUnits}
             amountSign={amountSign}
             currencyCode={account?.currencyCode ?? "PHP"}
-            disabled={pending || foreign}
+            disabled={openingBalanceReadOnly}
             label="Starting Balance"
             onOpenCalculator={() => setCalculatorOpen(true)}
             onToggleSign={() => {
               setAmountSign((prev) => (prev === "+" ? "-" : "+"));
             }}
           />
+          {startingBalanceLocked ? (
+            <Text style={styles.helperText}>
+              Starting balance is locked and can no longer be changed.
+            </Text>
+          ) : account && onLockStartingBalance ? (
+            <Pressable
+              accessibilityLabel="Lock starting balance"
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={() => setConfirmAction("lock-balance")}
+              style={styles.lockButton}
+            >
+              <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
+            </Pressable>
+          ) : null}
           {selectedType?.accountGroup === "liability" ? (
             <Text style={styles.helperText}>
               Use a negative amount for money owed. A positive amount means an
@@ -294,11 +337,64 @@ export function AccountFormModal({
             </Text>
           )}
 
+          <AmountCalculatorField
+            amountMinorUnits={maintainingMinorUnits}
+            disabled={pending}
+            label="Maintaining Balance"
+            showCurrencyPill={false}
+            showSignToggle={false}
+            onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
+          />
+
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleCopy}>
+              <Text style={styles.toggleLabel}>Hide from selection</Text>
+              <Text style={styles.toggleHint}>
+                Exclude this account from transaction account pickers.
+              </Text>
+            </View>
+            <Switch
+              accessibilityLabel="Hide from selection"
+              disabled={pending}
+              onValueChange={(hideFromSelection) =>
+                setValue((prev) => ({ ...prev, hideFromSelection }))
+              }
+              thumbColor={theme.colors.surface}
+              trackColor={{
+                false: theme.colors.borderStrong,
+                true: theme.colors.primary,
+              }}
+              value={value.hideFromSelection}
+            />
+          </View>
+
+          <View style={styles.toggleRow}>
+            <View style={styles.toggleCopy}>
+              <Text style={styles.toggleLabel}>Hide from reports</Text>
+              <Text style={styles.toggleHint}>
+                Exclude this account from net worth and opening totals.
+              </Text>
+            </View>
+            <Switch
+              accessibilityLabel="Hide from reports"
+              disabled={pending}
+              onValueChange={(hideFromReports) =>
+                setValue((prev) => ({ ...prev, hideFromReports }))
+              }
+              thumbColor={theme.colors.surface}
+              trackColor={{
+                false: theme.colors.borderStrong,
+                true: theme.colors.primary,
+              }}
+              value={value.hideFromReports}
+            />
+          </View>
+
           <Text style={styles.fieldLabel}>Opening Date</Text>
           <Pressable
             accessibilityLabel="Choose opening date"
             accessibilityRole="button"
-            disabled={pending || foreign}
+            disabled={openingBalanceReadOnly}
             onPress={() => setDatePickerOpen(true)}
             style={styles.selectorPill}
           >
@@ -325,14 +421,28 @@ export function AccountFormModal({
       </FullScreenFormModal>
 
       <ConfirmModal
-        confirmLabel={confirmAction === "restore" ? "Restore" : "Archive"}
+        confirmLabel={
+          confirmAction === "restore"
+            ? "Restore"
+            : confirmAction === "lock-balance"
+              ? "Lock"
+              : "Archive"
+        }
         message={
           confirmAction === "restore"
             ? `Restore "${account?.name ?? "this account"}" to the active accounts list? It will be included in totals again.`
-            : `Archive "${account?.name ?? "this account"}"? It will be hidden from the active list and opening totals, but its data stays intact.`
+            : confirmAction === "lock-balance"
+              ? `Lock the starting balance for "${account?.name ?? "this account"}"? This cannot be undone and the starting balance will no longer be editable.`
+              : `Archive "${account?.name ?? "this account"}"? It will be hidden from the active list and opening totals, but its data stays intact.`
         }
         pending={pending}
-        title={confirmAction === "restore" ? "Restore account?" : "Archive account?"}
+        title={
+          confirmAction === "restore"
+            ? "Restore account?"
+            : confirmAction === "lock-balance"
+              ? "Lock starting balance?"
+              : "Archive account?"
+        }
         variant={confirmAction === "restore" ? "restore" : "destructive"}
         visible={confirmAction !== null}
         onCancel={() => setConfirmAction(null)}
@@ -349,6 +459,19 @@ export function AccountFormModal({
         onConfirm={(_minorUnits, formatted) => {
           setValue((prev) => ({ ...prev, openingAmount: formatted }));
           setCalculatorOpen(false);
+        }}
+      />
+
+      <AmountCalculatorModal
+        allowNegative={false}
+        currencyCode={account?.currencyCode ?? "PHP"}
+        initialMinorUnits={maintainingMinorUnits}
+        title="Maintaining Balance"
+        visible={maintainingCalculatorOpen}
+        onClose={() => setMaintainingCalculatorOpen(false)}
+        onConfirm={(_minorUnits, formatted) => {
+          setValue((prev) => ({ ...prev, maintainingAmount: formatted }));
+          setMaintainingCalculatorOpen(false);
         }}
       />
 
@@ -525,6 +648,48 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: 20,
+    },
+    toggleRow: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+    },
+    toggleCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    toggleLabel: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    toggleHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 16,
+    },
+    lockButton: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: `${theme.colors.warning}15`,
+      borderColor: `${theme.colors.warning}40`,
+      borderRadius: 999,
+      borderWidth: 1,
+      marginTop: -4,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    lockButtonText: {
+      color: theme.colors.warning,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

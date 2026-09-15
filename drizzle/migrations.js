@@ -7,6 +7,7 @@ import m0004 from './0004_add_sort_order_to_categories.sql';
 import m0005 from './0005_transaction_groups_for_transfers.sql';
 import m0006 from './0006_add_note_to_accounts.sql';
 import m0007 from './0007_add_icon_key_to_accounts.sql';
+import m0008 from './0008_add_account_balance_and_visibility_fields.sql';
 
   export default {
     journal,
@@ -19,6 +20,7 @@ import m0007 from './0007_add_icon_key_to_accounts.sql';
       m0005,
       m0006,
       m0007,
+      m0008,
     }
   }
   

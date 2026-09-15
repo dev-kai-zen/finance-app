@@ -5,7 +5,7 @@ export function openingSummary(accounts: AccountListItem[]) {
   let liabilities = 0n;
   let excluded = 0;
   for (const account of accounts) {
-    if (account.isArchived) continue;
+    if (account.isArchived || account.hideFromReports) continue;
     const balance = account.currentBalanceMinorUnits ?? account.openingBalanceMinorUnits;
     if (account.currencyCode !== "PHP" || !Number.isSafeInteger(balance) ||
       !["asset", "liability"].includes(account.accountType?.accountGroup ?? "")) {
