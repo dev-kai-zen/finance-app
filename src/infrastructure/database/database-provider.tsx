@@ -16,6 +16,9 @@ export function DatabaseProvider({ children }: PropsWithChildren) {
         <Text style={styles.errorText}>
           Unable to prepare the local database.
         </Text>
+        {error instanceof Error && error.message ? (
+          <Text style={styles.errorDetails}>{error.message}</Text>
+        ) : null}
       </View>
     );
   }
@@ -44,6 +47,13 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.medium,
+      textAlign: "center",
+    },
+    errorDetails: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.sm,
+      marginTop: theme.spacing.sm,
+      textAlign: "center",
     },
     spinner: {
       color: theme.colors.primary,

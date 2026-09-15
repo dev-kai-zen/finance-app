@@ -38,11 +38,7 @@ export function AccountTypePickerModal({
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             {(["asset", "liability"] as const).map((group) => {
-              const options = types.filter(
-                (t) =>
-                  t.accountGroup === group &&
-                  (!t.isArchived || t.id === existingTypeId),
-              );
+              const options = types.filter((t) => t.accountGroup === group);
               if (options.length === 0) return null;
 
               return (

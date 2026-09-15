@@ -11,7 +11,6 @@ import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
-import { AccountTypeForm } from "@/modules/accounts/components/account-type-form";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
@@ -37,13 +36,10 @@ export function AccountTypeManager({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [group, setGroup] = useState<AccountGroup>("asset");
-  const [archived, setArchived] = useState(false);
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
 
-  const visibleTypes = types.filter(
-    (t) => t.accountGroup === group && t.isArchived === archived,
-  );
+  const visibleTypes = types.filter((t) => t.accountGroup === group);
 
   const back = () => {
     setEditor(null);
@@ -67,6 +63,9 @@ export function AccountTypeManager({
   }
 
   if (deleting) {
+    const linkedCount = accounts.filter((a) => a.accountTypeId === deleting.id).length;
+    const canDelete = linkedCount === 0;
+
     return (
       <FullScreenFormModal
         pending={mutations.pending}
@@ -76,23 +75,30 @@ export function AccountTypeManager({
       >
         <View style={styles.formContent}>
           <Text style={styles.heading}>{deleting.name}</Text>
-          <Text style={styles.bodyText}>
-            {accounts.filter((a) => a.accountTypeId === deleting.id).length}{" "}
-            linked account(s), including archived accounts, will move to{" "}
-            {deleting.accountGroup === "asset" ? "Asset" : "Liability"} →
-            Others.
-          </Text>
-          <Pressable
-            disabled={mutations.pending}
-            onPress={() => {
-              void mutations.deleteType(deleting.id).then((saved) => {
-                if (saved) back();
-              });
-            }}
-            style={[styles.dangerBtn, mutations.pending && styles.btnDisabled]}
-          >
-            <Text style={styles.dangerBtnText}>Delete type and reassign accounts</Text>
-          </Pressable>
+          {canDelete ? (
+            <>
+              <Text style={styles.bodyText}>
+                Delete this account group permanently? This cannot be undone.
+              </Text>
+              <Pressable
+                disabled={mutations.pending}
+                onPress={() => {
+                  void mutations.deleteType(deleting.id).then((saved) => {
+                    if (saved) back();
+                  });
+                }}
+                style={[styles.dangerBtn, mutations.pending && styles.btnDisabled]}
+              >
+                <Text style={styles.dangerBtnText}>Delete group</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Text style={styles.bodyText}>
+              {linkedCount === 1
+                ? "This group has 1 linked account. Reassign or remove it before deleting the group."
+                : `This group has ${linkedCount} linked accounts. Reassign or remove them before deleting the group.`}
+            </Text>
+          )}
           <Pressable disabled={mutations.pending} onPress={back} style={styles.secondaryBtn}>
             <Text style={styles.secondaryBtnText}>Cancel</Text>
           </Pressable>
@@ -116,7 +122,11 @@ export function AccountTypeManager({
               key={item}
               disabled={mutations.pending}
               onPress={() => setGroup(item)}
-              style={[styles.segment, group === item && styles.segmentActive]}
+              style={[
+                styles.segment,
+                group === item &&
+                  (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
+              ]}
             >
               <Text
                 style={[
@@ -132,16 +142,6 @@ export function AccountTypeManager({
 
         <Pressable
           disabled={mutations.pending}
-          onPress={() => setArchived((prev) => !prev)}
-          style={styles.linkBtn}
-        >
-          <Text style={styles.linkBtnText}>
-            {archived ? "Show active types" : "Show archived types"}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          disabled={mutations.pending}
           onPress={() => {
             mutations.clearError();
             setEditor({});
@@ -153,9 +153,7 @@ export function AccountTypeManager({
         </Pressable>
 
         {visibleTypes.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No {archived ? "archived" : "active"} types in this group.
-          </Text>
+          <Text style={styles.emptyText}>No types in this group.</Text>
         ) : (
           visibleTypes.map((type, index) => {
             const protectedType = isProtectedAccountType(type);
@@ -183,50 +181,37 @@ export function AccountTypeManager({
                   >
                     <Text style={styles.actionChipText}>Edit</Text>
                   </Pressable>
+                  <Pressable
+                    disabled={mutations.pending || index === 0}
+                    onPress={() => {
+                      void mutations.moveType(type.id, -1);
+                    }}
+                    style={styles.actionChip}
+                  >
+                    <Text style={styles.actionChipText}>Move up</Text>
+                  </Pressable>
+                  <Pressable
+                    disabled={
+                      mutations.pending || index === visibleTypes.length - 1
+                    }
+                    onPress={() => {
+                      void mutations.moveType(type.id, 1);
+                    }}
+                    style={styles.actionChip}
+                  >
+                    <Text style={styles.actionChipText}>Move down</Text>
+                  </Pressable>
                   {!protectedType ? (
-                    <>
-                      <Pressable
-                        disabled={mutations.pending || index === 0}
-                        onPress={() => {
-                          void mutations.moveType(type.id, -1);
-                        }}
-                        style={styles.actionChip}
-                      >
-                        <Text style={styles.actionChipText}>Move up</Text>
-                      </Pressable>
-                      <Pressable
-                        disabled={
-                          mutations.pending || index === visibleTypes.length - 1
-                        }
-                        onPress={() => {
-                          void mutations.moveType(type.id, 1);
-                        }}
-                        style={styles.actionChip}
-                      >
-                        <Text style={styles.actionChipText}>Move down</Text>
-                      </Pressable>
-                      <Pressable
-                        disabled={mutations.pending}
-                        onPress={() => {
-                          void mutations.archiveType(type.id, !type.isArchived);
-                        }}
-                        style={styles.actionChip}
-                      >
-                        <Text style={styles.actionChipText}>
-                          {type.isArchived ? "Restore" : "Archive"}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        disabled={mutations.pending}
-                        onPress={() => {
-                          mutations.clearError();
-                          setDeleting(type);
-                        }}
-                        style={[styles.actionChip, styles.actionChipDanger]}
-                      >
-                        <Text style={styles.actionChipDangerText}>Delete</Text>
-                      </Pressable>
-                    </>
+                    <Pressable
+                      disabled={mutations.pending}
+                      onPress={() => {
+                        mutations.clearError();
+                        setDeleting(type);
+                      }}
+                      style={[styles.actionChip, styles.actionChipDanger]}
+                    >
+                      <Text style={styles.actionChipDangerText}>Delete</Text>
+                    </Pressable>
                   ) : null}
                 </View>
               </View>
@@ -269,9 +254,13 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       paddingVertical: theme.spacing.sm,
     },
-    segmentActive: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
+    segmentActiveAsset: {
+      backgroundColor: theme.colors.success,
+      borderColor: theme.colors.success,
+    },
+    segmentActiveLiability: {
+      backgroundColor: theme.colors.danger,
+      borderColor: theme.colors.danger,
     },
     segmentText: {
       color: theme.colors.textSecondary,
@@ -279,14 +268,6 @@ function createStyles(theme: AppTheme) {
     },
     segmentTextActive: {
       color: theme.colors.onPrimary,
-    },
-    linkBtn: {
-      alignSelf: "flex-start",
-    },
-    linkBtnText: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
     addBtn: {
       alignItems: "center",

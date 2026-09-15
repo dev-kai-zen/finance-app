@@ -27,11 +27,11 @@ export function AccountTypeForm({ type, initialGroup, pending, onSave, onCancel 
     </View>
     <AccountField label="Type name" value={value.name} maxLength={100} editable={!pending && !protectedType}
       onChangeText={(name) => setValue((prev) => ({ ...prev, name }))} />
-    {protectedType && <AccountText muted>This system type's name and group are protected. You can customize its appearance.</AccountText>}
-    <AccountText>Group {type ? "(fixed)" : ""}</AccountText>
+    {protectedType && <AccountText muted>This system type's name and classification are protected. You can customize its appearance.</AccountText>}
+    <AccountText>Group</AccountText>
     <View style={s.row}>
       {(["asset", "liability"] as const).map((group) => <AccountButton key={group}
-        label={group === "asset" ? "Asset" : "Liability"} selected={value.accountGroup === group} disabled={pending || !!type}
+        label={group === "asset" ? "Asset" : "Liability"} selected={value.accountGroup === group} disabled={pending || protectedType}
         onPress={() => setValue((prev) => ({ ...prev, accountGroup: group }))} />)}
     </View>
     <AccountText>Icon</AccountText>

@@ -109,6 +109,14 @@ export function AccountTypeFormModal({
 
   const handleDeleteTrigger = () => {
     if (isProtected) return;
+    if (linkedAccountsCount > 0) {
+      setLocalError(
+        linkedAccountsCount === 1
+          ? "Reassign or remove the linked account before deleting this group."
+          : `Reassign or remove the ${linkedAccountsCount} linked accounts before deleting this group.`,
+      );
+      return;
+    }
     setIsConfirmDeleteOpen(true);
   };
 
@@ -176,18 +184,18 @@ export function AccountTypeFormModal({
               <Pressable
                 accessibilityLabel="Set as Asset"
                 accessibilityRole="button"
-                disabled={mutations.pending || isEditing}
+                disabled={mutations.pending || isProtected}
                 onPress={() => setAccountGroup("asset")}
                 style={[
                   styles.segmentOption,
-                  accountGroup === "asset" && styles.segmentOptionActive,
-                  isEditing && styles.segmentOptionDisabled,
+                  accountGroup === "asset" && styles.segmentOptionActiveAsset,
+                  isProtected && styles.segmentOptionDisabled,
                 ]}
               >
                 <Text
                   style={[
                     styles.segmentText,
-                    accountGroup === "asset" && styles.segmentTextActive,
+                    accountGroup === "asset" && styles.segmentTextActiveOnColor,
                   ]}
                 >
                   Asset
@@ -197,27 +205,27 @@ export function AccountTypeFormModal({
               <Pressable
                 accessibilityLabel="Set as Liability"
                 accessibilityRole="button"
-                disabled={mutations.pending || isEditing}
+                disabled={mutations.pending || isProtected}
                 onPress={() => setAccountGroup("liability")}
                 style={[
                   styles.segmentOption,
-                  accountGroup === "liability" && styles.segmentOptionActive,
-                  isEditing && styles.segmentOptionDisabled,
+                  accountGroup === "liability" && styles.segmentOptionActiveLiability,
+                  isProtected && styles.segmentOptionDisabled,
                 ]}
               >
                 <Text
                   style={[
                     styles.segmentText,
-                    accountGroup === "liability" && styles.segmentTextActive,
+                    accountGroup === "liability" && styles.segmentTextActiveOnColor,
                   ]}
                 >
                   Liability
                 </Text>
               </Pressable>
             </View>
-            {isEditing ? (
+            {isProtected ? (
               <Text style={styles.helperText}>
-                Group classification cannot be changed once created.
+                System default groups cannot change classification.
               </Text>
             ) : null}
           </View>
@@ -340,9 +348,7 @@ export function AccountTypeFormModal({
         <ConfirmModal
           cancelLabel="Cancel"
           confirmLabel={mutations.pending ? "Deleting..." : "Delete Group"}
-          message={`${linkedAccountsCount} linked account(s) will move to ${
-            accountGroup === "asset" ? "Asset" : "Liability"
-          } → Others.`}
+          message="Delete this account group permanently? This cannot be undone."
           onCancel={() => setIsConfirmDeleteOpen(false)}
           onConfirm={handleConfirmDelete}
           pending={mutations.pending}
@@ -417,9 +423,11 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       paddingVertical: 10,
     },
-    segmentOptionActive: {
-      backgroundColor: theme.colors.surface,
-      ...theme.shadows.card,
+    segmentOptionActiveAsset: {
+      backgroundColor: theme.colors.success,
+    },
+    segmentOptionActiveLiability: {
+      backgroundColor: theme.colors.danger,
     },
     segmentOptionDisabled: {
       opacity: 0.6,
@@ -429,8 +437,8 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
-    segmentTextActive: {
-      color: theme.colors.textPrimary,
+    segmentTextActiveOnColor: {
+      color: theme.colors.onPrimary,
       fontWeight: theme.typography.fontWeight.bold,
     },
     iconCard: {

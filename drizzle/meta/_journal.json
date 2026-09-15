@@ -64,6 +64,13 @@
       "when": 1789301000000,
       "tag": "0008_add_account_balance_and_visibility_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1789304000000,
+      "tag": "0009_remove_is_archived_from_account_types",
+      "breakpoints": true
     }
   ]
 }

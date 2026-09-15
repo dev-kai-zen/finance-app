@@ -22,7 +22,7 @@ export function moveAccount(id: string, direction: -1 | 1) {
 export function moveAccountType(id: string, direction: -1 | 1) {
   db.transaction((tx) => {
     const type = requireAccountType(id, tx);
-    const siblings = listAccountTypes(tx).filter((t) => t.accountGroup === type.accountGroup && t.isArchived === type.isArchived);
+    const siblings = listAccountTypes(tx).filter((t) => t.accountGroup === type.accountGroup);
     const now = new Date();
     move(siblings, id, direction).forEach((t, sortOrder) => updateAccountTypeRecord(t.id, { sortOrder, updatedAt: now }, tx));
   });

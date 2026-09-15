@@ -67,7 +67,6 @@ const { saveAccount } = require("@/modules/accounts/services/save-account.servic
 const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock-account-starting-balance.service");
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
-const { setAccountTypeArchived } = require("@/modules/accounts/services/archive-account-type.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
 const { moveAccount, moveAccountType, reorderAccountsList } = require("@/modules/accounts/services/reorder-accounts.service");
 const input = require("@/modules/accounts/utils/account-input");
@@ -174,68 +173,52 @@ test("name-only account edits preserve the existing opening timestamp", () => {
   saveAccount(accountInput(undefined, "New name"), id);
   assert.equal(repo.findAccountById(id).openingBalanceAt.getTime(), exactDate.getTime());
 });
-test("types have immutable groups and case-insensitive unique names including archived types", () => {
+test("custom types allow classification changes and enforce case-insensitive unique names", () => {
   const id = saveAccountType(typeInput("Bank"));
-  setAccountTypeArchived(id, true);
   assert.throws(() => saveAccountType(typeInput(" bank ")), /already exists/);
-  assert.throws(() => saveAccountType(typeInput("Bank", "liability"), id), /group cannot/);
-  assert.ok(saveAccountType(typeInput("Bank", "liability")));
-  setAccountTypeArchived(id, false);
-  saveAccountType({ ...typeInput("Banks"), color: "purple" }, id);
+  saveAccountType(typeInput("Bank", "liability"), id);
+  assert.equal(types.findAccountTypeById(id).accountGroup, "liability");
+  saveAccountType({ ...typeInput("Banks", "liability"), color: "purple" }, id);
   assert.equal(types.findAccountTypeById(id).name, "Banks");
 });
-test("system types protect names, groups, deletion and archival but allow appearance changes", () => {
+test("system types protect names, classification, and deletion but allow appearance changes", () => {
   for (const id of Object.values(system)) {
     const type = types.findAccountTypeById(id);
     assert.throws(() => deleteAccountType(id), /cannot be deleted/);
-    assert.throws(() => setAccountTypeArchived(id, true), /cannot be archived/);
     assert.throws(() => saveAccountType(typeInput("Changed", type.accountGroup), id), /names cannot/);
+    assert.throws(
+      () => saveAccountType(typeInput(type.name, type.accountGroup === "asset" ? "liability" : "asset"), id),
+      /classification cannot/,
+    );
     saveAccountType({ ...typeInput(type.name, type.accountGroup), color: "pink" }, id);
     assert.equal(types.findAccountTypeById(id).color, "pink");
   }
 });
-test("archived types stay linked but cannot be newly assigned", () => {
-  const typeId = saveAccountType(typeInput("Archived bank"));
-  const id = saveAccount(accountInput(typeId));
-  setAccountTypeArchived(typeId, true);
-  assert.equal(repo.findAccountById(id).isArchived, false);
-  assert.throws(() => saveAccount(accountInput(typeId, "New account")), /active account type/);
-  saveAccount(accountInput(typeId, "Existing renamed"), id);
-  assert.equal(repo.listAccounts()[0].accountType.isArchived, true);
-  assert.throws(() => saveAccount(accountInput("missing")), /no longer exists/);
+test("deleting a custom type requires reassigning or removing linked accounts first", () => {
+  const typeId = saveAccountType(typeInput("Custom"));
+  const active = saveAccount(accountInput(typeId));
+  const archived = saveAccount(accountInput(typeId, "Archived", "-20"));
+  setAccountArchived(archived, true);
+  assert.throws(() => deleteAccountType(typeId), /linked account/);
+  repo.updateAccountRecord(active, { accountTypeId: system.ASSET_OTHERS });
+  assert.throws(() => deleteAccountType(typeId), /linked account/);
+  repo.updateAccountRecord(archived, { accountTypeId: system.ASSET_OTHERS });
+  const result = deleteAccountType(typeId);
+  assert.equal(result.deletedAccountTypeId, typeId);
+  assert.equal(types.findAccountTypeById(typeId), null);
 });
-test("deleting a custom type moves active and archived accounts only to its matching Others", () => {
-  for (const group of ["asset", "liability"]) {
-    const typeId = saveAccountType(typeInput("Custom", group));
-    const active = saveAccount(accountInput(typeId));
-    const archived = saveAccount(accountInput(typeId, "Archived", "-20"));
-    setAccountArchived(archived, true);
-    const result = deleteAccountType(typeId);
-    const fallback = group === "asset" ? system.ASSET_OTHERS : system.LIABILITY_OTHERS;
-    assert.equal(result.reassignedAccountsCount, 2);
-    assert.equal(repo.findAccountById(active).accountTypeId, fallback);
-    assert.equal(repo.findAccountById(archived).accountTypeId, fallback);
-    assert.equal(repo.findAccountById(archived).openingBalanceMinorUnits, -2000);
-    assert.equal(repo.findAccountById(archived).isArchived, true);
-    assert.equal(types.findAccountTypeById(typeId), null);
-  }
-});
-test("failed deletion rolls back reassignment and timestamps using the actual synchronous driver", () => {
+test("failed deletion rolls back without removing the type", () => {
   const typeId = saveAccountType(typeInput("Keep"));
-  const id = saveAccount(accountInput(typeId));
-  const before = repo.findAccountById(id);
   sqlite.exec("CREATE TRIGGER deny_type_delete BEFORE DELETE ON account_types BEGIN SELECT RAISE(ABORT, 'forced failure'); END");
   assert.throws(() => deleteAccountType(typeId), /forced failure/);
-  assert.deepEqual(repo.findAccountById(id), before);
   assert.ok(types.findAccountTypeById(typeId));
   assert.equal(sqlite.isTransaction, false);
 });
-test("invalid fallback aborts without reclassification or deletion", () => {
-  const typeId = saveAccountType(typeInput("Loan", "liability"));
-  const id = saveAccount(accountInput(typeId));
-  sqlite.prepare("UPDATE account_types SET account_group='asset', name='Wrong fallback' WHERE id=?").run(system.LIABILITY_OTHERS);
-  assert.throws(() => deleteAccountType(typeId), /Others type is unavailable/);
-  assert.equal(repo.findAccountById(id).accountTypeId, typeId);
+test("system Others groups can be reordered within their classification", () => {
+  const custom = saveAccountType(typeInput("First custom"));
+  moveAccountType(system.ASSET_OTHERS, 1);
+  const assetTypes = types.listAccountTypes().filter((t) => t.accountGroup === "asset");
+  assert.ok(assetTypes.findIndex((t) => t.id === custom) < assetTypes.findIndex((t) => t.id === system.ASSET_OTHERS));
 });
 test("account ordering stays within type and archive state and is atomic", () => {
   const first = saveAccount(accountInput(undefined, "First"));

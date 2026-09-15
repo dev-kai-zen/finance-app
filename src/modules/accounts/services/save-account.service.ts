@@ -14,7 +14,6 @@ export function saveAccount(input: AccountInput, id?: string): string {
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
     const type = requireAccountType(value.accountTypeId, tx);
-    if (type.isArchived && existing?.accountTypeId !== type.id) throw new Error("Choose an active account type.");
     let openingBalanceMinorUnits = parseOpeningAmount(value.openingAmount);
     let openingBalanceAt = existing && localDateInput(existing.openingBalanceAt) === value.openingDate
       ? existing.openingBalanceAt : parseOpeningDate(value.openingDate);

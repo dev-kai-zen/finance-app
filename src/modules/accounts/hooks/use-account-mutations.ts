@@ -3,7 +3,6 @@ import { lockAccountStartingBalance } from "@/modules/accounts/services/lock-acc
 import { saveAccount } from "@/modules/accounts/services/save-account.service";
 import { saveAccountType } from "@/modules/accounts/services/save-account-type.service";
 import { setAccountArchived } from "@/modules/accounts/services/archive-account.service";
-import { setAccountTypeArchived } from "@/modules/accounts/services/archive-account-type.service";
 import { deleteAccountType } from "@/modules/accounts/services/delete-account-type.service";
 import {
   moveAccount,
@@ -40,7 +39,6 @@ export function useAccountMutations(onSuccess: () => void) {
     lockStartingBalance: (id: string) => run(() => lockAccountStartingBalance(id)),
     saveType: (input: AccountTypeInput, id?: string) => run(() => saveAccountType(input, id)),
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),
-    archiveType: (id: string, archived: boolean) => run(() => setAccountTypeArchived(id, archived)),
     deleteType: (id: string) => run(() => deleteAccountType(id)),
     moveAccount: (id: string, direction: -1 | 1) => run(() => moveAccount(id, direction)),
     moveType: (id: string, direction: -1 | 1) => run(() => moveAccountType(id, direction)),

@@ -10,11 +10,11 @@ export function AccountTypePicker({ types, value, existingTypeId, onChange, disa
   return <View style={s.stack}>
     <AccountText heading>Account type</AccountText>
     {(["asset", "liability"] as const).map((group) => {
-      const options = types.filter((t) => t.accountGroup === group && (!t.isArchived || t.id === existingTypeId));
+      const options = types.filter((t) => t.accountGroup === group);
       return <View key={group} style={s.stack}>
         <AccountText muted>{group === "asset" ? "Assets" : "Liabilities"}</AccountText>
         <View style={s.row}>
-          {options.map((type) => <AccountButton key={type.id} label={type.name + (type.isArchived ? " (archived)" : "")}
+          {options.map((type) => <AccountButton key={type.id} label={type.name}
             selected={value === type.id} disabled={disabled} onPress={() => onChange(type.id)} />)}
           {options.length === 0 && <AccountText muted>No active types. Create one in Manage types.</AccountText>}
         </View>

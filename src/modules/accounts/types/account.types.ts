@@ -19,6 +19,4 @@ export type AccountListItem = Account & {
 
 export type DeleteAccountTypeResult = {
   deletedAccountTypeId: string;
-  reassignedToAccountTypeId: string;
-  reassignedAccountsCount: number;
 };
