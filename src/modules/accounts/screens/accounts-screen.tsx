@@ -12,7 +12,8 @@ import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountsFabSheet } from "@/modules/accounts/components/accounts-fab-sheet";
-import { ArchivedAccountsSection } from "@/modules/accounts/components/archived-accounts-section";
+import { ArchivedAccountsChip } from "@/modules/accounts/components/archived-accounts-chip";
+import { ArchivedAccountsModal } from "@/modules/accounts/components/archived-accounts-modal";
 import {
   AccountButton,
   AccountError,
@@ -37,6 +38,7 @@ export function AccountsScreen() {
   const mutations = useAccountMutations(data.refresh);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
+  const [archivedModalOpen, setArchivedModalOpen] = useState(false);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -82,6 +84,10 @@ export function AccountsScreen() {
   );
   const select = (account: AccountListItem) =>
     open({ kind: "edit", id: account.id });
+  const handleSelectArchivedAccount = (account: AccountListItem) => {
+    setArchivedModalOpen(false);
+    open({ kind: "edit", id: account.id });
+  };
   const handleEditType = (type: AccountType) =>
     open({ kind: "edit-type", type });
 
@@ -114,6 +120,11 @@ export function AccountsScreen() {
         />
       ) : (
         <>
+          <ArchivedAccountsChip
+            count={archived.length}
+            onPress={() => setArchivedModalOpen(true)}
+          />
+
           <AccountOpeningSummary accounts={data.accounts} />
 
           <AccountGroupSection
@@ -150,13 +161,6 @@ export function AccountsScreen() {
               ))}
             </View>
           ) : null}
-
-          <ArchivedAccountsSection
-            accounts={archived}
-            pending={mutations.pending}
-            onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
-            onSelect={select}
-          />
         </>
       )}
 
@@ -208,6 +212,15 @@ export function AccountsScreen() {
             await onSaveSort(orderedIds);
           }
         }}
+      />
+
+      <ArchivedAccountsModal
+        accounts={archived}
+        pending={mutations.pending}
+        visible={archivedModalOpen}
+        onClose={() => setArchivedModalOpen(false)}
+        onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
+        onSelect={handleSelectArchivedAccount}
       />
     </PageContainer>
   );

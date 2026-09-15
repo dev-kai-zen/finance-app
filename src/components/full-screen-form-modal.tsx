@@ -166,7 +166,7 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
     },
     headerActionsPlaceholder: {
-      width: 84,
+      width: 40,
     },
     iconBtn: {
       alignItems: "center",
