@@ -26,12 +26,17 @@ export function FloatingActionButton({
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
 
-  const bottomPosition = Math.max(24, insets.bottom + 16);
+  const bottomPosition = Math.max(24, insets.bottom + 20);
+  const rightPosition = Math.max(20, insets.right + 20);
 
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.container, { bottom: bottomPosition }, style]}
+      style={[
+        styles.container,
+        { bottom: bottomPosition, right: rightPosition },
+        style,
+      ]}
     >
       <Pressable
         accessibilityLabel={accessibilityLabel}
@@ -59,10 +64,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       alignItems: "flex-end",
-      bottom: 24,
       position: "absolute",
-      right: 20,
       zIndex: 999,
+      elevation: 10,
     },
     fab: {
       alignItems: "center",
@@ -72,7 +76,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: size,
       ...theme.shadows.modal,
-      elevation: 6,
+      elevation: 8,
     },
     fabPressed: {
       opacity: 0.88,

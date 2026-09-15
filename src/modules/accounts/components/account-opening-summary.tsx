@@ -6,7 +6,10 @@ import {
   bigintToSafeNumber,
 } from "@/modules/accounts/components/account-amount-text";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
-import { formatOpeningTotal, openingSummary } from "@/modules/accounts/utils/opening-summary";
+import {
+  formatOpeningTotal,
+  openingSummary,
+} from "@/modules/accounts/utils/opening-summary";
 
 export function AccountOpeningSummary({
   accounts,
@@ -15,7 +18,9 @@ export function AccountOpeningSummary({
 }) {
   const s = useThemeStyles(styles);
   const summary = openingSummary(accounts);
-  const netWorth = summary.assets - summary.liabilities;
+  // Liabilities are stored as signed negative balances for easy summation: Assets + Liabilities
+  const netWorth = summary.assets + summary.liabilities;
+
   const netWorthNumber = bigintToSafeNumber(netWorth);
   const assetsNumber = bigintToSafeNumber(summary.assets);
   const liabilitiesNumber = bigintToSafeNumber(summary.liabilities);
@@ -39,9 +44,14 @@ export function AccountOpeningSummary({
         <View style={s.metricItem}>
           <Text style={s.metricLabel}>ASSETS</Text>
           {assetsNumber !== null ? (
-            <AccountAmountText amountMinorUnits={assetsNumber} variant="title" />
+            <AccountAmountText
+              amountMinorUnits={assetsNumber}
+              variant="title"
+            />
           ) : (
-            <Text style={s.fallbackMetric}>{formatOpeningTotal(summary.assets)}</Text>
+            <Text style={s.fallbackMetric}>
+              {formatOpeningTotal(summary.assets)}
+            </Text>
           )}
         </View>
 

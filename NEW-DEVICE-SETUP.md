@@ -208,12 +208,12 @@ Before every Play upload, increment `expo.android.versionCode` in `app.json`. Up
 
 Run these commands from the project root.
 
-| Need | Command | Output |
-| --- | --- | --- |
-| Native project generation | `npm run android:prebuild` | `android/` |
-| Debug APK | `npm run android:apk:debug` | `android/app/build/outputs/apk/debug/app-debug.apk` |
-| Signed release APK | `npm run android:apk:release` | `android/app/build/outputs/apk/release/app-release.apk` |
-| Signed Play bundle | `npm run android:aab:release` | `android/app/build/outputs/bundle/release/app-release.aab` |
+| Need                      | Command                       | Output                                                     |
+| ------------------------- | ----------------------------- | ---------------------------------------------------------- |
+| Native project generation | `npm run android:prebuild`    | `android/`                                                 |
+| Debug APK                 | `npm run android:apk:debug`   | `android/app/build/outputs/apk/debug/app-debug.apk`        |
+| Signed release APK        | `npm run android:apk:release` | `android/app/build/outputs/apk/release/app-release.apk`    |
+| Signed Play bundle        | `npm run android:aab:release` | `android/app/build/outputs/bundle/release/app-release.aab` |
 
 ## 10. Troubleshooting
 
@@ -232,6 +232,10 @@ Run the command from the project root after `npm run android:prebuild`, so the `
 ### The app compiles but changes are missing
 
 For TypeScript/JavaScript changes, run `npm start` and reload the app. For native dependency, plugin, or `app.json` changes, rerun `npm run android:prebuild`, reapply the release-signing customization if building a release, and rebuild.
+
+# Optional: Installation of Expo Skills
+
+npx skills@latest add expo/skills --skill '\*'
 
 ## References
 

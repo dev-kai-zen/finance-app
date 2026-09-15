@@ -87,6 +87,12 @@ export function DashboardScreen() {
 
   return (
     <PageContainer
+      floatingAction={
+        <FloatingActionButton
+          accessibilityLabel="Record new transaction"
+          onPress={() => handleOpenTransactionModal("expense")}
+        />
+      }
       header={
         <PageHeader
           breadcrumb="Kaizen Finance / Overview"
@@ -134,12 +140,6 @@ export function DashboardScreen() {
           </View>
         </View>
       </View>
-
-      {/* Floating Action Button for Mobile */}
-      <FloatingActionButton
-        accessibilityLabel="Record new transaction"
-        onPress={() => handleOpenTransactionModal("expense")}
-      />
 
       {/* Direct Transaction Modal */}
       <TransactionFormModal

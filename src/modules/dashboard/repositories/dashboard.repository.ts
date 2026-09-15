@@ -1,6 +1,10 @@
 import { desc, eq } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, categories, transactions } from "@/infrastructure/database/schema";
+import {
+  accounts,
+  categories,
+  transactions,
+} from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
 import { listTransactions } from "@/modules/transactions/repositories/transactions.repository";
 import type {
@@ -126,9 +130,7 @@ export function getCategorySpendingBreakdown(
       categoryIcon: val.icon,
       totalMinorUnits: val.total,
       percentage:
-        overallExpense > 0
-          ? Math.round((val.total / overallExpense) * 100)
-          : 0,
+        overallExpense > 0 ? Math.round((val.total / overallExpense) * 100) : 0,
     }),
   );
 
@@ -153,7 +155,9 @@ export function getDashboardSummary(
     }
   }
 
-  const netWorth = totalAssets - totalLiabilities;
+  // Liabilities are stored as signed negative balances for easy summation: Assets + Liabilities
+  const netWorth = totalAssets + totalLiabilities;
+
   const monthlyCashflow = getMonthlyCashflow(context, targetDate);
   const topSpendingCategories = getCategorySpendingBreakdown(
     context,

@@ -6,7 +6,16 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/finance-app-logo.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#11231E"
+    },
+    "splash": {
+      "image": "./assets/finance-app-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#11231E"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -22,9 +31,6 @@
     "web": {
       "favicon": "./assets/finance-app-logo.png"
     },
-    "plugins": [
-      "expo-router",
-      "expo-sqlite"
-    ]
+    "plugins": ["expo-router", "expo-sqlite"]
   }
 }

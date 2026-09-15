@@ -64,15 +64,7 @@ export function AppShell({ children }: PropsWithChildren) {
   return (
     <View style={styles.mobileLayout}>
       {/* Mobile Top Bar */}
-      <View
-        style={[
-          styles.topBar,
-          {
-            paddingTop: insets.top,
-            minHeight: LAYOUT_DIMENSIONS.topBarHeight + insets.top,
-          },
-        ]}
-      >
+      <View style={styles.topBar}>
         <View style={styles.topBarInner}>
           <View style={styles.topLeftGroup}>
             <Pressable
@@ -115,7 +107,6 @@ export function AppShell({ children }: PropsWithChildren) {
             style={[
               styles.drawerPanel,
               {
-                paddingTop: insets.top,
                 paddingBottom: insets.bottom,
               },
             ]}
@@ -178,7 +169,8 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.background,
       borderBottomColor: theme.colors.border,
       borderBottomWidth: 1,
-      justifyContent: "flex-end",
+      height: LAYOUT_DIMENSIONS.topBarHeight,
+      justifyContent: "center",
       paddingHorizontal: theme.spacing.md,
       zIndex: 10,
     },

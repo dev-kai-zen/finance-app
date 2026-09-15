@@ -43,7 +43,7 @@ export function PageContainer({
 
   const containerPaddingStyle: ViewStyle = {
     paddingHorizontal: horizontalPadding,
-    paddingBottom: Math.max(insets.bottom, 24) + (floatingAction ? 64 : 0),
+    paddingBottom: Math.max(insets.bottom, 24) + (floatingAction ? 80 : 0),
   };
 
   const innerContent = (

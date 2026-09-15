@@ -299,6 +299,12 @@ export function TransactionsScreen() {
 
   return (
     <PageContainer
+      floatingAction={
+        <FloatingActionButton
+          accessibilityLabel="Record new transaction"
+          onPress={handleOpenNewTransaction}
+        />
+      }
       header={
         <PageHeader
           breadcrumb="Kaizen Finance / Transactions"
@@ -459,12 +465,6 @@ export function TransactionsScreen() {
           ))
         )}
       </View>
-
-      {/* Floating Action Button for quick recording */}
-      <FloatingActionButton
-        accessibilityLabel="Record new transaction"
-        onPress={handleOpenNewTransaction}
-      />
 
       {/* Transaction & Transfer Form Modal */}
       <TransactionFormModal
