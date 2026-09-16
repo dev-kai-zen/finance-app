@@ -9,6 +9,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { hexColors } from "./hex-colors";
+
 export const accountTypes = sqliteTable(
   "account_types",
 
@@ -21,7 +23,9 @@ export const accountTypes = sqliteTable(
 
     iconKey: text("icon_key"),
 
-    color: text("color"),
+    hexColorsId: text("hex_colors_id").references(() => hexColors.id, {
+      onDelete: "restrict",
+    }),
 
     isSystem: integer("is_system", { mode: "boolean" })
       .notNull()

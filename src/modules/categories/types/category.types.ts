@@ -8,6 +8,7 @@ export interface Category {
   id: string;
   name: string;
   type: CategoryType;
+  hexColorsId?: string | null;
   color: string | null;
   icon: string | null;
   parentId?: string | null;
@@ -22,6 +23,7 @@ export interface Category {
 export interface CategoryInput {
   name: string;
   type: CategoryType;
+  hexColorsId?: string | null;
   color?: string;
   icon?: string;
   parentId?: string | null;

@@ -71,6 +71,13 @@
       "when": 1789304000000,
       "tag": "0009_remove_is_archived_from_account_types",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789307000000,
+      "tag": "0010_create_hex_colors_and_update_tables",
+      "breakpoints": true
     }
   ]
 }

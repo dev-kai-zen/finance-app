@@ -37,7 +37,11 @@ function mapRowToListItem(r: {
     accountCurrency: r.accountCurrency ?? "PHP",
     categoryName: r.categoryName,
     categoryIcon: r.categoryIcon,
-    categoryColor: r.categoryColor,
+    categoryColor: r.categoryColor
+      ? r.categoryColor.startsWith("color_")
+        ? r.categoryColor.replace("color_", "")
+        : r.categoryColor
+      : null,
     transferAccountId: null,
     transferAccountName: null,
   };
@@ -95,7 +99,7 @@ export function listTransactions(
       accountCurrency: accounts.currencyCode,
       categoryName: categories.name,
       categoryIcon: categories.icon,
-      categoryColor: categories.color,
+      categoryColor: categories.hexColorsId,
     })
     .from(transactions)
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))

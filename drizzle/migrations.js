@@ -9,6 +9,7 @@ import m0006 from './0006_add_note_to_accounts.sql';
 import m0007 from './0007_add_icon_key_to_accounts.sql';
 import m0008 from './0008_add_account_balance_and_visibility_fields.sql';
 import m0009 from './0009_remove_is_archived_from_account_types.sql';
+import m0010 from './0010_create_hex_colors_and_update_tables.sql';
 
   export default {
     journal,
@@ -23,6 +24,7 @@ import m0009 from './0009_remove_is_archived_from_account_types.sql';
       m0007,
       m0008,
       m0009,
+      m0010,
     }
   }
   

@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Lock } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -24,6 +24,7 @@ import { AccountTypePickerModal } from "@/modules/accounts/components/account-ty
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
 import type { Account, AccountType } from "@/modules/accounts/types/account.types";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import {
   localDateInput,
   maintainingAmountInput,
@@ -129,11 +130,10 @@ export function AccountFormModal({
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.maintainingAmount]);
 
-  const typeColor = selectedType?.color
-    ? theme.colors.categorical[
-        selectedType.color as keyof typeof theme.colors.categorical
-      ] ?? theme.colors.primary
-    : theme.colors.primary;
+  const typeColor = accountColor(
+    theme,
+    selectedType?.hexColorsId ?? (selectedType as any)?.color,
+  );
 
   const handleConfirmAction = () => {
     if (!account) return;
@@ -306,6 +306,26 @@ export function AccountFormModal({
             currencyCode={account?.currencyCode ?? "PHP"}
             disabled={openingBalanceReadOnly}
             label="Starting Balance"
+            labelAccessory={
+              startingBalanceLocked ? (
+                <View style={styles.lockedBadge}>
+                  <Lock color={theme.colors.textMuted} size={12} />
+                  <Text style={styles.lockedBadgeText}>Locked</Text>
+                </View>
+              ) : account && onLockStartingBalance ? (
+                <Pressable
+                  accessibilityLabel="Lock starting balance"
+                  accessibilityRole="button"
+                  disabled={pending}
+                  hitSlop={4}
+                  onPress={() => setConfirmAction("lock-balance")}
+                  style={styles.lockButton}
+                >
+                  <Lock color={theme.colors.warning} size={12} />
+                  <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
+                </Pressable>
+              ) : null
+            }
             onOpenCalculator={() => setCalculatorOpen(true)}
             onToggleSign={() => {
               setAmountSign((prev) => (prev === "+" ? "-" : "+"));
@@ -315,16 +335,6 @@ export function AccountFormModal({
             <Text style={styles.helperText}>
               Starting balance is locked and can no longer be changed.
             </Text>
-          ) : account && onLockStartingBalance ? (
-            <Pressable
-              accessibilityLabel="Lock starting balance"
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={() => setConfirmAction("lock-balance")}
-              style={styles.lockButton}
-            >
-              <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
-            </Pressable>
           ) : null}
 
           <AmountCalculatorField
@@ -349,7 +359,7 @@ export function AccountFormModal({
               onValueChange={(hideFromSelection) =>
                 setValue((prev) => ({ ...prev, hideFromSelection }))
               }
-              thumbColor={theme.colors.surface}
+              thumbColor="#FFFFFF"
               trackColor={{
                 false: theme.colors.borderStrong,
                 true: theme.colors.primary,
@@ -371,7 +381,7 @@ export function AccountFormModal({
               onValueChange={(hideFromReports) =>
                 setValue((prev) => ({ ...prev, hideFromReports }))
               }
-              thumbColor={theme.colors.surface}
+              thumbColor="#FFFFFF"
               trackColor={{
                 false: theme.colors.borderStrong,
                 true: theme.colors.primary,
@@ -670,19 +680,35 @@ function createStyles(theme: AppTheme) {
     },
     lockButton: {
       alignItems: "center",
-      alignSelf: "flex-start",
       backgroundColor: `${theme.colors.warning}15`,
       borderColor: `${theme.colors.warning}40`,
       borderRadius: 999,
       borderWidth: 1,
-      marginTop: -4,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
     },
     lockButtonText: {
       color: theme.colors.warning,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    lockedBadge: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.borderStrong}20`,
+      borderColor: theme.colors.borderStrong,
+      borderRadius: 999,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    lockedBadgeText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontWeight: "600",
     },
   });
 }

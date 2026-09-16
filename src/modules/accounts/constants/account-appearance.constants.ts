@@ -9,7 +9,10 @@ export function accountIcon(key: string | null) {
   return ACCOUNT_ICONS[key as keyof typeof ACCOUNT_ICONS] ?? ACCOUNT_ICONS.landmark;
 }
 export function accountColor(theme: AppTheme, key: string | null) {
-  return ACCOUNT_COLOR_KEYS.includes(key as (typeof ACCOUNT_COLOR_KEYS)[number])
-    ? theme.colors.categorical[key as (typeof ACCOUNT_COLOR_KEYS)[number]]
+  if (!key) return theme.colors.categorical.slate;
+  if (key.startsWith("#")) return key;
+  const strippedKey = key.startsWith("color_") ? key.replace("color_", "") : key;
+  return ACCOUNT_COLOR_KEYS.includes(strippedKey as (typeof ACCOUNT_COLOR_KEYS)[number])
+    ? theme.colors.categorical[strippedKey as (typeof ACCOUNT_COLOR_KEYS)[number]]
     : theme.colors.categorical.slate;
 }

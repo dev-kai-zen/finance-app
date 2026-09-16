@@ -160,7 +160,7 @@ export function AccountTypeManager({
             return (
               <View key={type.id} style={styles.typeCard}>
                 <View style={styles.typeHeader}>
-                  <AccountTypeBadge color={type.color} iconKey={type.iconKey} />
+                  <AccountTypeBadge color={type.color ?? null} iconKey={type.iconKey} />
                   <View style={styles.typeInfo}>
                     <Text style={styles.typeName}>{type.name}</Text>
                     <Text style={styles.typeMeta}>

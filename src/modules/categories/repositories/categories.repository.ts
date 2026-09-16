@@ -5,11 +5,17 @@ import { DEFAULT_SEED_CATEGORIES } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 function mapCategory(row: typeof categories.$inferSelect): Category {
+  const colorName = row.hexColorsId
+    ? row.hexColorsId.startsWith("color_")
+      ? row.hexColorsId.replace("color_", "")
+      : row.hexColorsId
+    : null;
   return {
     id: row.id,
     name: row.name,
     type: row.type as CategoryType,
-    color: row.color,
+    hexColorsId: row.hexColorsId,
+    color: colorName,
     icon: row.icon,
     parentId: row.parentId,
     isSystem: Boolean(row.isSystem),
@@ -110,11 +116,19 @@ export async function insertCategory(
   input: CategoryInput & { id: string; isSystem?: boolean },
 ): Promise<Category> {
   const now = new Date();
-  const record = {
+  const resolvedHexColorsId =
+    input.hexColorsId ??
+    (input.color
+      ? input.color.startsWith("color_")
+        ? input.color
+        : `color_${input.color}`
+      : "color_slate");
+
+  const record: typeof categories.$inferInsert = {
     id: input.id,
     name: input.name.trim(),
     type: input.type,
-    color: input.color ?? "slate",
+    hexColorsId: resolvedHexColorsId,
     icon: input.icon ?? "tag",
     parentId: input.parentId ?? null,
     isSystem: input.isSystem ?? false,
@@ -124,7 +138,7 @@ export async function insertCategory(
   };
 
   await db.insert(categories).values(record);
-  return mapCategory(record);
+  return mapCategory(record as typeof categories.$inferSelect);
 }
 
 export async function updateCategory(
@@ -146,8 +160,14 @@ export async function updateCategory(
   if (input.type !== undefined) {
     updates.type = input.type;
   }
-  if (input.color !== undefined) {
-    updates.color = input.color;
+  if (input.hexColorsId !== undefined) {
+    updates.hexColorsId = input.hexColorsId;
+  } else if (input.color !== undefined) {
+    updates.hexColorsId = input.color
+      ? input.color.startsWith("color_")
+        ? input.color
+        : `color_${input.color}`
+      : null;
   }
   if (input.icon !== undefined) {
     updates.icon = input.icon;
@@ -182,7 +202,7 @@ export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void>
     id: cat.id,
     name: cat.name,
     type: cat.type,
-    color: cat.color ?? "slate",
+    hexColorsId: cat.hexColorsId ?? (cat.color ? `color_${cat.color}` : "color_slate"),
     icon: cat.icon ?? "tag",
     parentId: cat.parentId ?? null,
     isSystem: cat.isSystem,

@@ -5,6 +5,8 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
+import { hexColors } from "./hex-colors";
+
 export const categories = sqliteTable(
   "categories",
   {
@@ -12,7 +14,9 @@ export const categories = sqliteTable(
     name: text("name").notNull(),
     type: text("type").notNull(),
     parentId: text("parent_id").references((): AnySQLiteColumn => categories.id),
-    color: text("color"),
+    hexColorsId: text("hex_colors_id").references(() => hexColors.id, {
+      onDelete: "restrict",
+    }),
     icon: text("icon"),
     isSystem: integer("is_system", { mode: "boolean" })
       .notNull()

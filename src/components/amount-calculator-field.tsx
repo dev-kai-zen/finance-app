@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Calculator } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
@@ -6,6 +7,7 @@ import { formatCurrency } from "@/utils/currency";
 
 export interface AmountCalculatorFieldProps {
   label: string;
+  labelAccessory?: ReactNode;
   amountMinorUnits: number;
   amountSign?: "+" | "-";
   onToggleSign?: () => void;
@@ -18,6 +20,7 @@ export interface AmountCalculatorFieldProps {
 
 export function AmountCalculatorField({
   label,
+  labelAccessory,
   amountMinorUnits,
   amountSign = "+",
   onToggleSign,
@@ -43,7 +46,10 @@ export function AmountCalculatorField({
 
   return (
     <View style={styles.group}>
-      <Text style={styles.label}>{label}</Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.label}>{label}</Text>
+        {labelAccessory}
+      </View>
       <View style={styles.row}>
         <View style={[styles.amountShell, disabled && styles.amountShellDisabled]}>
           {showSignToggle && onToggleSign ? (
@@ -95,6 +101,11 @@ export function AmountCalculatorField({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     group: {
+      gap: theme.spacing.sm,
+    },
+    labelRow: {
+      alignItems: "center",
+      flexDirection: "row",
       gap: theme.spacing.sm,
     },
     label: {

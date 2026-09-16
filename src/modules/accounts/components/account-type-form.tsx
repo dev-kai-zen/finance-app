@@ -16,13 +16,16 @@ export function AccountTypeForm({ type, initialGroup, pending, onSave, onCancel 
   const [value, setValue] = useState<AccountTypeInput>({
     name: type?.name ?? "", accountGroup: type?.accountGroup === "liability" ? "liability" : type ? "asset" : initialGroup,
     iconKey: ACCOUNT_ICON_KEYS.find((key) => key === type?.iconKey) ?? "landmark",
-    color: ACCOUNT_COLOR_KEYS.find((key) => key === type?.color) ?? "slate",
+    color:
+      ACCOUNT_COLOR_KEYS.find(
+        (key) => key === type?.hexColorsId || `color_${key}` === type?.hexColorsId,
+      ) ?? "slate",
   });
   const protectedType = type ? isProtectedAccountType(type) : false;
   return <View style={s.section}>
     <AccountButton label="← Back to account types" onPress={onCancel} disabled={pending} />
     <View style={s.row}>
-      <AccountTypeBadge iconKey={value.iconKey} color={value.color} />
+      <AccountTypeBadge iconKey={value.iconKey} color={value.color ?? null} />
       <AccountText heading>{value.name || "Your account type"}</AccountText>
     </View>
     <AccountField label="Type name" value={value.name} maxLength={100} editable={!pending && !protectedType}

@@ -44,7 +44,8 @@ export const accountTypeInputSchema = z.object({
   name,
   accountGroup: accountGroupSchema,
   iconKey: z.string().min(1, "Choose an icon."),
-  color: z.enum(ACCOUNT_COLOR_KEYS),
+  color: z.string().optional().nullable(),
+  hexColorsId: z.string().optional().nullable(),
 });
 export type AccountInput = z.infer<typeof accountInputSchema>;
 export type AccountTypeInput = z.infer<typeof accountTypeInputSchema>;

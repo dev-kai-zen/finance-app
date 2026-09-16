@@ -1,4 +1,6 @@
-export { db } from './client';
-export type { AppDatabase } from './client';
+export { db, sqliteDatabase } from './client';
+export type { AppDatabase, DbContext, DatabaseTransaction } from './client';
 export { DatabaseProvider } from './database-provider';
+export { runSafeMigrations, useAppMigrations } from './migrator';
+export type { MigrationsConfig, MigrationState } from './migrator';
 export * from './schema';

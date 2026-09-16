@@ -34,20 +34,20 @@ test("categories: seeds default categories on empty database", () => {
   // Seed default categories
   const now = Date.now();
   const seedCategories = [
-    { id: "cat_exp_food", name: "Food & Dining", type: "expense", color: "orange", icon: "utensils", is_system: 1 },
-    { id: "cat_exp_groceries", name: "Groceries & Market", type: "expense", color: "green", icon: "shopping-cart", is_system: 1 },
-    { id: "cat_exp_utilities", name: "Utilities & Bills", type: "expense", color: "amber", icon: "zap", is_system: 1 },
-    { id: "cat_exp_others", name: "Other Expenses", type: "expense", color: "slate", icon: "more-horizontal", is_system: 1 },
-    { id: "cat_inc_salary", name: "Salary & Wages", type: "income", color: "green", icon: "wallet", is_system: 1 },
-    { id: "cat_inc_others", name: "Other Income", type: "income", color: "slate", icon: "more-horizontal", is_system: 1 },
+    { id: "cat_exp_food", name: "Food & Dining", type: "expense", hex_colors_id: "color_orange", icon: "utensils", is_system: 1 },
+    { id: "cat_exp_groceries", name: "Groceries & Market", type: "expense", hex_colors_id: "color_green", icon: "shopping-cart", is_system: 1 },
+    { id: "cat_exp_utilities", name: "Utilities & Bills", type: "expense", hex_colors_id: "color_amber", icon: "zap", is_system: 1 },
+    { id: "cat_exp_others", name: "Other Expenses", type: "expense", hex_colors_id: "color_slate", icon: "more-horizontal", is_system: 1 },
+    { id: "cat_inc_salary", name: "Salary & Wages", type: "income", hex_colors_id: "color_green", icon: "wallet", is_system: 1 },
+    { id: "cat_inc_others", name: "Other Income", type: "income", hex_colors_id: "color_slate", icon: "more-horizontal", is_system: 1 },
   ];
 
   const insertStmt = db.prepare(
-    "INSERT INTO categories (id, name, type, color, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO categories (id, name, type, hex_colors_id, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
   );
 
   for (const cat of seedCategories) {
-    insertStmt.run(cat.id, cat.name, cat.type, cat.color, cat.icon, cat.is_system, now, now);
+    insertStmt.run(cat.id, cat.name, cat.type, cat.hex_colors_id, cat.icon, cat.is_system, now, now);
   }
 
   const countAfter = db.prepare("SELECT count(*) as count FROM categories").get().count;
@@ -65,11 +65,11 @@ test("categories: creates custom category and links subcategories with parent_id
   const now = Date.now();
 
   const insertStmt = db.prepare(
-    "INSERT INTO categories (id, name, type, parent_id, color, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO categories (id, name, type, parent_id, hex_colors_id, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   );
 
   // Create parent category
-  insertStmt.run("cat_food", "Food & Dining", "expense", null, "orange", "utensils", 1, now, now);
+  insertStmt.run("cat_food", "Food & Dining", "expense", null, "color_orange", "utensils", 1, now, now);
 
   const parent = db.prepare("SELECT * FROM categories WHERE id = 'cat_food'").get();
   assert.equal(parent.name, "Food & Dining");
@@ -77,7 +77,7 @@ test("categories: creates custom category and links subcategories with parent_id
   assert.equal(parent.parent_id, null);
 
   // Create subcategory under cat_food
-  insertStmt.run("sub_coffee", "Coffee & Cafes", "expense", "cat_food", "orange", "utensils", 0, now, now);
+  insertStmt.run("sub_coffee", "Coffee & Cafes", "expense", "cat_food", "color_orange", "utensils", 0, now, now);
 
   const sub = db.prepare("SELECT * FROM categories WHERE id = 'sub_coffee'").get();
   assert.equal(sub.name, "Coffee & Cafes");
@@ -90,7 +90,7 @@ test("categories: creates custom category and links subcategories with parent_id
 
   // Foreign key check: inserting subcategory with non-existent parent_id should fail
   assert.throws(() => {
-    insertStmt.run("sub_invalid", "Ghost", "expense", "non_existent_parent", "blue", "tag", 0, now, now);
+    insertStmt.run("sub_invalid", "Ghost", "expense", "non_existent_parent", "color_blue", "tag", 0, now, now);
   }, /FOREIGN KEY constraint failed/);
 });
 
@@ -99,8 +99,8 @@ test("categories: protects system default categories from deletion", () => {
   const now = Date.now();
 
   db.prepare(
-    "INSERT INTO categories (id, name, type, color, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-  ).run("sys_1", "Salary", "income", "green", "wallet", 1, now, now);
+    "INSERT INTO categories (id, name, type, hex_colors_id, icon, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).run("sys_1", "Salary", "income", "color_green", "wallet", 1, now, now);
 
   const cat = db.prepare("SELECT * FROM categories WHERE id = 'sys_1'").get();
   assert.equal(cat.is_system, 1);

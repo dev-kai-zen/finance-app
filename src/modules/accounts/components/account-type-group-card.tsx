@@ -7,17 +7,21 @@ import {
   AccountAmountText,
   bigintToSafeNumber,
 } from "@/modules/accounts/components/account-amount-text";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 interface AccountTypeGroupCardProps {
-  accountType: AccountType | {
-    id: string;
-    name: string;
-    iconKey?: string | null;
-    color?: string | null;
-    accountGroup?: string;
-  };
+  accountType:
+    | AccountType
+    | {
+        id: string;
+        name: string;
+        iconKey?: string | null;
+        color?: string | null;
+        hexColorsId?: string | null;
+        accountGroup?: string;
+      };
   accounts: AccountListItem[];
   onSelectAccount: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
@@ -34,11 +38,11 @@ export function AccountTypeGroupCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const primaryColor = accountType.color
-    ? theme.colors.categorical[
-        accountType.color as keyof typeof theme.colors.categorical
-      ] ?? theme.colors.primary
-    : theme.colors.primary;
+  const rawColor =
+    "hexColorsId" in accountType && accountType.hexColorsId
+      ? accountType.hexColorsId
+      : (accountType as any).color;
+  const primaryColor = accountColor(theme, rawColor);
 
   const groupTotal = accounts
     .filter(

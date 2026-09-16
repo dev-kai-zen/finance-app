@@ -18,6 +18,14 @@ export function saveAccountType(input: AccountTypeInput, id?: string): string {
     }
     requireUniqueTypeName(value.name, value.accountGroup, id, tx);
     const now = new Date();
+    const resolvedHexColorsId =
+      value.hexColorsId ??
+      (value.color
+        ? value.color.startsWith("color_")
+          ? value.color
+          : `color_${value.color}`
+        : null);
+
     if (existing) {
       updateAccountTypeRecord(
         existing.id,
@@ -25,7 +33,7 @@ export function saveAccountType(input: AccountTypeInput, id?: string): string {
           name: value.name,
           accountGroup: value.accountGroup,
           iconKey: value.iconKey,
-          color: value.color,
+          hexColorsId: resolvedHexColorsId,
           updatedAt: now,
         },
         tx,
@@ -40,7 +48,20 @@ export function saveAccountType(input: AccountTypeInput, id?: string): string {
           .filter((t) => t.accountGroup === value.accountGroup)
           .map((t) => t.sortOrder),
       ) + 1;
-    insertAccountType({ ...value, id: newId, isSystem: false, sortOrder, createdAt: now, updatedAt: now }, tx);
+    insertAccountType(
+      {
+        id: newId,
+        name: value.name,
+        accountGroup: value.accountGroup,
+        iconKey: value.iconKey,
+        hexColorsId: resolvedHexColorsId,
+        isSystem: false,
+        sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      tx,
+    );
     return newId;
   });
 }

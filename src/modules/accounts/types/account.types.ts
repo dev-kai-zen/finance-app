@@ -6,7 +6,9 @@ import type {
 
 export type AccountGroup = "asset" | "liability";
 
-export type AccountType = InferSelectModel<typeof accountTypes>;
+export type AccountType = InferSelectModel<typeof accountTypes> & {
+  color?: string | null;
+};
 export type NewAccountType = InferInsertModel<typeof accountTypes>;
 
 export type Account = InferSelectModel<typeof accounts>;

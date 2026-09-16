@@ -57,7 +57,7 @@ export function AccountsScreen() {
         id: a.id,
         name: a.name,
         icon: a.iconKey ?? a.accountType?.iconKey ?? "landmark",
-        color: a.accountType?.color ?? null,
+        color: a.accountType?.hexColorsId ?? (a.accountType as any)?.color ?? null,
       })),
     );
     setOnSaveSort(() => async (orderedIds: string[]) => {

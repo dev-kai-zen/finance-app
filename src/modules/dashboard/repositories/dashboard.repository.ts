@@ -104,7 +104,11 @@ export function getCategorySpendingBreakdown(
     if (txDate >= startOfMonth && txDate <= endOfMonth) {
       const catId = cat?.id ?? "uncategorized";
       const catName = cat?.name ?? "Uncategorized";
-      const catColor = cat?.color ?? "slate";
+      const catColor = cat?.hexColorsId
+        ? cat.hexColorsId.startsWith("color_")
+          ? cat.hexColorsId.replace("color_", "")
+          : cat.hexColorsId
+        : "slate";
       const catIcon = cat?.icon ?? "tag";
 
       if (!spendingByCategory[catId]) {

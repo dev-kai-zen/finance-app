@@ -1,13 +1,13 @@
 import { PropsWithChildren } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { useMigrations } from "drizzle-orm/expo-sqlite/migrator";
 import migrations from "../../../drizzle/migrations";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { db } from "./client";
+import { useAppMigrations } from "./migrator";
 
 export function DatabaseProvider({ children }: PropsWithChildren) {
-  const { success, error } = useMigrations(db, migrations);
+  const { success, error } = useAppMigrations(db, migrations);
   const styles = useThemeStyles(createStyles);
 
   if (error) {
