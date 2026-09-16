@@ -139,7 +139,7 @@ export function AccountFormModal({
 
   const typeColor = accountColor(
     theme,
-    selectedType?.hexColorsId ?? (selectedType as any)?.color,
+    selectedType?.color ?? selectedType?.hexColorsId ?? null,
   );
 
   const handleConfirmAction = () => {

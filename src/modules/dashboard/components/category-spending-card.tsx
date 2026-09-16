@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { CategorySpendingItem } from "../types/dashboard.types";
 
@@ -17,6 +18,7 @@ export function CategorySpendingCard({
 }: CategorySpendingCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const resolveEntityColor = useResolveEntityColor();
 
   return (
     <View style={styles.card}>
@@ -32,10 +34,7 @@ export function CategorySpendingCard({
       ) : (
         <View style={styles.list}>
           {categories.slice(0, 5).map((item) => {
-            const catColor =
-              item.categoryColor && item.categoryColor in theme.colors.categorical
-                ? theme.colors.categorical[item.categoryColor as keyof AppTheme["colors"]["categorical"]]
-                : theme.colors.primary;
+            const catColor = resolveEntityColor(item.categoryColor);
 
             return (
               <View key={item.categoryId} style={styles.row}>

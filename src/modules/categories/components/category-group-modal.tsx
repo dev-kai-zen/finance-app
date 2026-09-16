@@ -14,7 +14,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper, IconPickerModal } from "@/components";
-import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
+import { useHexColors } from "@/modules/hex-colors";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 export interface CategoryGroupModalProps {
@@ -41,35 +41,43 @@ export function CategoryGroupModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { colors: hexColorsList, refresh: refreshHexColors } = useHexColors();
 
   const [name, setName] = useState("");
   const [type, setType] = useState<CategoryType>(initialType);
-  const [selectedColor, setSelectedColor] = useState<string>("slate");
+  const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const categoricalColor =
-    selectedColor in theme.colors.categorical
-      ? theme.colors.categorical[selectedColor as keyof AppTheme["colors"]["categorical"]]
-      : theme.colors.primary;
+  const selectedHexObj = hexColorsList.find((c) => c.id === hexColorsId);
+  const categoricalColor = selectedHexObj?.hex ?? theme.colors.primary;
+
+  useEffect(() => {
+    if (visible) {
+      refreshHexColors();
+    }
+  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (visible) {
       if (categoryToEdit) {
         setName(categoryToEdit.name);
         setType(categoryToEdit.type);
-        setSelectedColor(categoryToEdit.color ?? "slate");
+        const match = hexColorsList.find(
+          (c) => c.id === categoryToEdit.hexColorsId || c.hex.toUpperCase() === (categoryToEdit.color ?? "").toUpperCase(),
+        );
+        setHexColorsId(match?.id ?? categoryToEdit.hexColorsId ?? "color_slate");
         setSelectedIcon(categoryToEdit.icon ?? "tag");
       } else {
         setName("");
         setType(initialType);
-        setSelectedColor(initialType === "income" ? "green" : "orange");
+        setHexColorsId(initialType === "income" ? "color_green" : "color_orange");
         setSelectedIcon("tag");
       }
       setLocalError(null);
     }
-  }, [visible, categoryToEdit, initialType]);
+  }, [visible, categoryToEdit, initialType, hexColorsList]);
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -83,7 +91,8 @@ export function CategoryGroupModal({
       {
         name: trimmed,
         type,
-        color: selectedColor,
+        hexColorsId,
+        color: hexColorsId,
         icon: selectedIcon,
         parentId: null, // Always null for group
       },
@@ -259,24 +268,18 @@ export function CategoryGroupModal({
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>THEME COLOR</Text>
               <View style={styles.colorPalette}>
-                {CATEGORY_COLOR_KEYS.map((colorKey) => {
-                  const hex =
-                    colorKey in theme.colors.categorical
-                      ? theme.colors.categorical[
-                          colorKey as keyof AppTheme["colors"]["categorical"]
-                        ]
-                      : theme.colors.primary;
-                  const isSelected = selectedColor === colorKey;
+                {hexColorsList.map((c) => {
+                  const isSelected = hexColorsId === c.id;
 
                   return (
                     <Pressable
-                      key={colorKey}
-                      accessibilityLabel={`Color ${colorKey}`}
+                      key={c.id}
+                      accessibilityLabel={`Color ${c.name} (${c.hex})`}
                       accessibilityRole="button"
-                      onPress={() => setSelectedColor(colorKey)}
+                      onPress={() => setHexColorsId(c.id)}
                       style={[
                         styles.colorSwatch,
-                        { backgroundColor: hex },
+                        { backgroundColor: c.hex },
                         isSelected && styles.colorSwatchSelected,
                       ]}
                     >

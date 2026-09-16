@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,8 +13,8 @@ import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
-import { FeatureNotImplementedModal } from "@/components/feature-not-implemented-modal";
-import { IconHelper } from "@/components";
+import { ConfirmModal, FeatureNotImplementedModal, IconHelper, InfoModal } from "@/components";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -30,6 +28,7 @@ export function CategoriesScreen() {
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const resolveEntityColor = useResolveEntityColor();
 
   const {
     categories,
@@ -63,6 +62,13 @@ export function CategoriesScreen() {
   const [notImplementedVisible, setNotImplementedVisible] = useState(false);
   const [notImplementedTitle, setNotImplementedTitle] = useState("");
   const [notImplementedDesc, setNotImplementedDesc] = useState("");
+
+  const [sortConfirmVisible, setSortConfirmVisible] = useState(false);
+  const [protectedInfoVisible, setProtectedInfoVisible] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    category: Category;
+    isGroup: boolean;
+  } | null>(null);
 
   // Expand / collapse state for group cards (default all open)
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -110,59 +116,27 @@ export function CategoriesScreen() {
   };
 
   const handleQuickSortAZ = () => {
-    const doSort = async () => {
-      await sortAlphabetically(selectedType, true);
-    };
+    setSortConfirmVisible(true);
+  };
 
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          `Sort all ${selectedType === "expense" ? "Expense" : "Income"} categories and subcategories A to Z?`,
-        )
-      ) {
-        void doSort();
-      }
-    } else {
-      Alert.alert(
-        "Sort Alphabetically",
-        `Sort all ${selectedType === "expense" ? "Expense" : "Income"} categories and subcategories A to Z?`,
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Sort A-Z", onPress: doSort },
-        ],
-      );
-    }
+  const handleConfirmSortAZ = async () => {
+    await sortAlphabetically(selectedType, true);
+    setSortConfirmVisible(false);
   };
 
   const handleDelete = (category: Category, isGroup = false) => {
     if (category.isSystem) {
-      if (Platform.OS === "web") {
-        window.alert("Default system categories cannot be deleted.");
-      } else {
-        Alert.alert("Protected Category", "Default system categories cannot be deleted.");
-      }
+      setProtectedInfoVisible(true);
       return;
     }
 
-    const title = isGroup ? "Delete Category Group?" : "Delete Subcategory?";
-    const confirmMessage = isGroup
-      ? `Are you sure you want to delete "${category.name}"? Any linked transactions will be safely reassigned to "Others".`
-      : `Are you sure you want to delete subcategory "${category.name}"? Any linked transactions will be assigned to its parent or "Others".`;
+    setDeleteConfirm({ category, isGroup });
+  };
 
-    if (Platform.OS === "web") {
-      if (window.confirm(confirmMessage)) {
-        void deleteCategory(category.id);
-      }
-    } else {
-      Alert.alert(title, confirmMessage, [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => void deleteCategory(category.id),
-        },
-      ]);
-    }
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+    await deleteCategory(deleteConfirm.category.id);
+    setDeleteConfirm(null);
   };
 
   const activeColor =
@@ -312,12 +286,7 @@ export function CategoriesScreen() {
               const hasSub = subcategories.length > 0;
               const isExpanded = isGroupExpanded(group.id);
 
-              const groupColor =
-                group.color && group.color in theme.colors.categorical
-                  ? theme.colors.categorical[
-                      group.color as keyof AppTheme["colors"]["categorical"]
-                    ]
-                  : theme.colors.primary;
+              const groupColor = resolveEntityColor(group.color);
 
               return (
                 <View key={group.id} style={styles.groupCard}>
@@ -446,12 +415,7 @@ export function CategoriesScreen() {
                   {hasSub && isExpanded && (
                     <View style={styles.subList}>
                       {subcategories.map((sub, idx) => {
-                        const subColor =
-                          sub.color && sub.color in theme.colors.categorical
-                            ? theme.colors.categorical[
-                                sub.color as keyof AppTheme["colors"]["categorical"]
-                              ]
-                            : groupColor;
+                        const subColor = resolveEntityColor(sub.color, groupColor);
 
                         return (
                           <View
@@ -602,6 +566,46 @@ export function CategoriesScreen() {
         featureTitle={notImplementedTitle}
         onClose={() => setNotImplementedVisible(false)}
         visible={notImplementedVisible}
+      />
+
+      <ConfirmModal
+        cancelLabel="Cancel"
+        confirmLabel="Sort A-Z"
+        message={`Sort all ${selectedType === "expense" ? "Expense" : "Income"} categories and subcategories A to Z?`}
+        onCancel={() => setSortConfirmVisible(false)}
+        onConfirm={() => {
+          void handleConfirmSortAZ();
+        }}
+        title="Sort Alphabetically"
+        variant="primary"
+        visible={sortConfirmVisible}
+      />
+
+      <InfoModal
+        buttonLabel="OK"
+        message="Default system categories cannot be deleted."
+        onClose={() => setProtectedInfoVisible(false)}
+        title="Protected Category"
+        visible={protectedInfoVisible}
+      />
+
+      <ConfirmModal
+        cancelLabel="Cancel"
+        confirmLabel="Delete"
+        message={
+          deleteConfirm?.isGroup
+            ? `Are you sure you want to delete "${deleteConfirm.category.name}"? Any linked transactions will be safely reassigned to "Others".`
+            : `Are you sure you want to delete subcategory "${deleteConfirm?.category.name ?? ""}"? Any linked transactions will be assigned to its parent or "Others".`
+        }
+        onCancel={() => setDeleteConfirm(null)}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
+        title={
+          deleteConfirm?.isGroup ? "Delete Category Group?" : "Delete Subcategory?"
+        }
+        variant="destructive"
+        visible={deleteConfirm !== null}
       />
     </PageContainer>
   );

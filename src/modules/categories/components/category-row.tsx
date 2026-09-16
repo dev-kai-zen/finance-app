@@ -8,6 +8,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import type { Category } from "../types/category.types";
 
 export interface CategoryRowProps {
@@ -29,11 +30,8 @@ export function CategoryRow({
 }: CategoryRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-
-  const categoricalColor =
-    category.color && category.color in theme.colors.categorical
-      ? theme.colors.categorical[category.color as keyof AppTheme["colors"]["categorical"]]
-      : theme.colors.primary;
+  const resolveEntityColor = useResolveEntityColor();
+  const categoricalColor = resolveEntityColor(category.color);
 
   const subcategories = category.subcategories ?? [];
   const hasSubcategories = subcategories.length > 0;
@@ -116,10 +114,7 @@ export function CategoryRow({
       {hasSubcategories ? (
         <View style={styles.subcategoriesSection}>
           {subcategories.map((sub, idx) => {
-            const subColor =
-              sub.color && sub.color in theme.colors.categorical
-                ? theme.colors.categorical[sub.color as keyof AppTheme["colors"]["categorical"]]
-                : categoricalColor;
+            const subColor = resolveEntityColor(sub.color, categoricalColor);
 
             return (
               <View

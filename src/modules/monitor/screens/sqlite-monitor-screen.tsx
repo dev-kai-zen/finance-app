@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Modal,
   Platform,
   Pressable,
@@ -11,7 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { PageContainer, PageHeader } from "@/components";
+import { InfoModal, PageContainer, PageHeader } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -47,6 +46,11 @@ export function SqliteMonitorScreen() {
   const [activeTab, setActiveTab] = useState<MonitorTab>("tables");
   const [customQuery, setCustomQuery] = useState("SELECT * FROM accounts LIMIT 20;");
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [vacuumResult, setVacuumResult] = useState<{
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  } | null>(null);
 
   const totalRecords = tables.reduce((acc, t) => acc + t.rowCount, 0);
 
@@ -67,17 +71,17 @@ export function SqliteMonitorScreen() {
   const handleVacuum = async () => {
     const res = await vacuum();
     if (res.success) {
-      if (Platform.OS === "web") {
-        window.alert("Database vacuumed successfully. Unused pages reclaimed.");
-      } else {
-        Alert.alert("SQLite Vacuum", "Database vacuumed successfully. Unused pages reclaimed.");
-      }
+      setVacuumResult({
+        title: "SQLite Vacuum",
+        message: "Database vacuumed successfully. Unused pages reclaimed.",
+        variant: "success",
+      });
     } else {
-      if (Platform.OS === "web") {
-        window.alert(`Vacuum Failed: ${res.error}`);
-      } else {
-        Alert.alert("Vacuum Failed", res.error);
-      }
+      setVacuumResult({
+        title: "Vacuum Failed",
+        message: res.error ?? "Failed to vacuum SQLite database.",
+        variant: "error",
+      });
     }
   };
 
@@ -329,6 +333,15 @@ export function SqliteMonitorScreen() {
           </View>
         )}
       </View>
+
+      <InfoModal
+        buttonLabel="OK"
+        message={vacuumResult?.message ?? ""}
+        onClose={() => setVacuumResult(null)}
+        title={vacuumResult?.title ?? ""}
+        variant={vacuumResult?.variant ?? "info"}
+        visible={vacuumResult !== null}
+      />
 
       {/* Selected Table Records Modal */}
       <Modal

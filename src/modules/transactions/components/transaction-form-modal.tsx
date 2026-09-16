@@ -23,8 +23,10 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import type { Category } from "@/modules/categories/types/category.types";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
 import type {
@@ -170,12 +172,19 @@ export function TransactionFormModal({
     return categories.find((c) => c.id === selectedCategory.parentId) ?? null;
   }, [categories, selectedCategory]);
 
+  const resolveEntityColor = useResolveEntityColor();
   const selectedCategoryColor = useMemo(() => {
     const colorKey = selectedCategory?.color || parentOfSelectedCategory?.color;
-    if (!colorKey) return theme.colors.primary;
-    const catColors = theme.colors.categorical as Record<string, string>;
-    return catColors[colorKey] ?? theme.colors.primary;
-  }, [selectedCategory, parentOfSelectedCategory, theme.colors]);
+    return resolveEntityColor(colorKey);
+  }, [selectedCategory, parentOfSelectedCategory, resolveEntityColor]);
+  const selectedAccountColor = useMemo(
+    () => accountColor(theme, selectedAccount?.accountType?.color ?? null),
+    [selectedAccount, theme],
+  );
+  const transferToAccountColor = useMemo(
+    () => accountColor(theme, transferToAccount?.accountType?.color ?? null),
+    [transferToAccount, theme],
+  );
 
   const handleSave = async () => {
     if (amountMinorUnits <= 0) {
@@ -399,15 +408,15 @@ export function TransactionFormModal({
                     style={[
                       styles.selectorIconWrap,
                       {
-                        backgroundColor: `${selectedAccount?.accountType?.color ?? theme.colors.primary}18`,
-                        borderColor: `${selectedAccount?.accountType?.color ?? theme.colors.primary}35`,
+                        backgroundColor: `${selectedAccountColor}18`,
+                        borderColor: `${selectedAccountColor}35`,
                       },
                     ]}
                   >
                     <IconHelper
                       name={selectedAccount?.iconKey ?? selectedAccount?.accountType?.iconKey ?? "wallet"}
                       size={18}
-                      color={selectedAccount?.accountType?.color ?? theme.colors.primary}
+                      color={selectedAccountColor}
                     />
                   </View>
                   <View style={styles.selectorTextCol}>
@@ -455,15 +464,15 @@ export function TransactionFormModal({
                       style={[
                         styles.selectorIconWrap,
                         {
-                          backgroundColor: `${transferToAccount?.accountType?.color ?? theme.colors.primary}18`,
-                          borderColor: `${transferToAccount?.accountType?.color ?? theme.colors.primary}35`,
+                          backgroundColor: `${transferToAccountColor}18`,
+                          borderColor: `${transferToAccountColor}35`,
                         },
                       ]}
                     >
                       <IconHelper
                         name={transferToAccount?.iconKey ?? transferToAccount?.accountType?.iconKey ?? "landmark"}
                         size={18}
-                        color={transferToAccount?.accountType?.color ?? theme.colors.primary}
+                        color={transferToAccountColor}
                       />
                     </View>
                     <View style={styles.selectorTextCol}>

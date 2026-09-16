@@ -14,7 +14,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper, IconPickerModal } from "@/components";
-import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
+import { useHexColors } from "@/modules/hex-colors";
 import type { Category, CategoryInput } from "../types/category.types";
 
 export interface SubcategoryModalProps {
@@ -42,38 +42,61 @@ export function SubcategoryModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
+  const { colors: hexColorsList, refresh: refreshHexColors } = useHexColors();
+
   const [name, setName] = useState("");
-  const [selectedColor, setSelectedColor] = useState<string>("slate");
+  const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const parentColor =
-    parentCategory?.color && parentCategory.color in theme.colors.categorical
-      ? theme.colors.categorical[
-          parentCategory.color as keyof AppTheme["colors"]["categorical"]
-        ]
-      : theme.colors.primary;
+  const parentHexObj = hexColorsList.find(
+    (entry) =>
+      entry.id === parentCategory?.hexColorsId ||
+      entry.hex.toUpperCase() === (parentCategory?.color ?? "").toUpperCase(),
+  );
+  const parentColor = parentHexObj?.hex ?? theme.colors.primary;
 
-  const categoricalColor =
-    selectedColor in theme.colors.categorical
-      ? theme.colors.categorical[selectedColor as keyof AppTheme["colors"]["categorical"]]
-      : theme.colors.primary;
+  const selectedHexObj = hexColorsList.find((entry) => entry.id === hexColorsId);
+  const categoricalColor = selectedHexObj?.hex ?? theme.colors.primary;
+
+  useEffect(() => {
+    if (visible) {
+      refreshHexColors();
+    }
+  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (visible) {
       if (subcategoryToEdit) {
         setName(subcategoryToEdit.name);
-        setSelectedColor(subcategoryToEdit.color ?? parentCategory?.color ?? "slate");
+        const match = hexColorsList.find(
+          (entry) =>
+            entry.id === subcategoryToEdit.hexColorsId ||
+            entry.hex.toUpperCase() === (subcategoryToEdit.color ?? "").toUpperCase(),
+        );
+        const parentMatch = hexColorsList.find(
+          (entry) =>
+            entry.id === parentCategory?.hexColorsId ||
+            entry.hex.toUpperCase() === (parentCategory?.color ?? "").toUpperCase(),
+        );
+        setHexColorsId(
+          match?.id ?? parentMatch?.id ?? subcategoryToEdit.hexColorsId ?? "color_slate",
+        );
         setSelectedIcon(subcategoryToEdit.icon ?? "tag");
       } else {
         setName("");
-        setSelectedColor(parentCategory?.color ?? "slate");
+        const parentMatch = hexColorsList.find(
+          (entry) =>
+            entry.id === parentCategory?.hexColorsId ||
+            entry.hex.toUpperCase() === (parentCategory?.color ?? "").toUpperCase(),
+        );
+        setHexColorsId(parentMatch?.id ?? "color_slate");
         setSelectedIcon("tag");
       }
       setLocalError(null);
     }
-  }, [visible, subcategoryToEdit, parentCategory]);
+  }, [visible, subcategoryToEdit, parentCategory, hexColorsList]);
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -92,7 +115,8 @@ export function SubcategoryModal({
       {
         name: trimmed,
         type: parentCategory.type,
-        color: selectedColor,
+        hexColorsId,
+        color: hexColorsId,
         icon: selectedIcon,
         parentId: parentCategory.id,
       },
@@ -272,24 +296,18 @@ export function SubcategoryModal({
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>THEME COLOR</Text>
               <View style={styles.colorPalette}>
-                {CATEGORY_COLOR_KEYS.map((colorKey) => {
-                  const hex =
-                    colorKey in theme.colors.categorical
-                      ? theme.colors.categorical[
-                          colorKey as keyof AppTheme["colors"]["categorical"]
-                        ]
-                      : theme.colors.primary;
-                  const isSelected = selectedColor === colorKey;
+                {hexColorsList.map((entry) => {
+                  const isSelected = hexColorsId === entry.id;
 
                   return (
                     <Pressable
-                      key={colorKey}
-                      accessibilityLabel={`Color ${colorKey}`}
+                      key={entry.id}
+                      accessibilityLabel={`Color ${entry.name} (${entry.hex})`}
                       accessibilityRole="button"
-                      onPress={() => setSelectedColor(colorKey)}
+                      onPress={() => setHexColorsId(entry.id)}
                       style={[
                         styles.colorSwatch,
-                        { backgroundColor: hex },
+                        { backgroundColor: entry.hex },
                         isSelected && styles.colorSwatchSelected,
                       ]}
                     >

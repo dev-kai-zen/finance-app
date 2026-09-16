@@ -11,10 +11,6 @@ import { Check } from "lucide-react-native";
 import { ConfirmModal, FullScreenFormModal, IconHelper, IconPickerModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import {
-  ACCOUNT_COLOR_KEYS,
-  ACCOUNT_ICON_KEYS,
-} from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
   AccountGroup,
@@ -22,6 +18,7 @@ import type {
   AccountType,
 } from "@/modules/accounts/types/account.types";
 import { isProtectedAccountType } from "@/modules/accounts/utils/account-type-protection";
+import { useHexColors } from "@/modules/hex-colors";
 
 export interface AccountTypeFormModalProps {
   visible: boolean;
@@ -42,13 +39,12 @@ export function AccountTypeFormModal({
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-
-  type AccountColorKey = (typeof ACCOUNT_COLOR_KEYS)[number];
+  const { colors: hexColorsList, refresh: refreshHexColors } = useHexColors();
 
   const [name, setName] = useState("");
   const [accountGroup, setAccountGroup] = useState<AccountGroup>("asset");
   const [iconKey, setIconKey] = useState("landmark");
-  const [color, setColor] = useState<AccountColorKey>("blue");
+  const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -58,27 +54,33 @@ export function AccountTypeFormModal({
 
   useEffect(() => {
     if (visible) {
+      refreshHexColors();
+    }
+  }, [visible, refreshHexColors]);
+
+  useEffect(() => {
+    if (visible) {
       if (type) {
         setName(type.name);
         setAccountGroup(type.accountGroup === "liability" ? "liability" : "asset");
         setIconKey(type.iconKey ?? "landmark");
-        const foundColor = ACCOUNT_COLOR_KEYS.find((c) => c === type.color);
-        setColor(foundColor ?? "blue");
+        const match = hexColorsList.find(
+          (c) => c.id === type.hexColorsId || c.hex.toUpperCase() === (type.color ?? "").toUpperCase(),
+        );
+        setHexColorsId(match?.id ?? type.hexColorsId ?? "color_blue");
       } else {
         setName("");
         setAccountGroup(initialGroup);
         setIconKey("landmark");
-        setColor(initialGroup === "liability" ? "amber" : "blue");
+        setHexColorsId(initialGroup === "liability" ? "color_amber" : "color_blue");
       }
       setLocalError(null);
       setIsConfirmDeleteOpen(false);
     }
-  }, [visible, type, initialGroup]);
+  }, [visible, type, initialGroup, hexColorsList]);
 
-  const currentColorHex =
-    color in theme.colors.categorical
-      ? theme.colors.categorical[color as keyof AppTheme["colors"]["categorical"]]
-      : theme.colors.primary;
+  const selectedHexObj = hexColorsList.find((c) => c.id === hexColorsId);
+  const currentColorHex = selectedHexObj?.hex ?? theme.colors.primary;
 
   const linkedAccountsCount = type
     ? accounts.filter((a) => a.accountTypeId === type.id).length
@@ -97,7 +99,8 @@ export function AccountTypeFormModal({
         name: trimmed,
         accountGroup,
         iconKey,
-        color,
+        hexColorsId,
+        color: hexColorsId,
       },
       type?.id,
     );
@@ -283,25 +286,19 @@ export function AccountTypeFormModal({
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>THEME COLOR</Text>
             <View style={styles.colorPalette}>
-              {ACCOUNT_COLOR_KEYS.map((colorKey) => {
-                const hex =
-                  colorKey in theme.colors.categorical
-                    ? theme.colors.categorical[
-                        colorKey as keyof AppTheme["colors"]["categorical"]
-                      ]
-                    : theme.colors.primary;
-                const isSelected = color === colorKey;
+              {hexColorsList.map((c) => {
+                const isSelected = hexColorsId === c.id;
 
                 return (
                   <Pressable
-                    key={colorKey}
-                    accessibilityLabel={`Theme color ${colorKey}`}
+                    key={c.id}
+                    accessibilityLabel={`Theme color ${c.name} (${c.hex})`}
                     accessibilityRole="button"
                     disabled={mutations.pending}
-                    onPress={() => setColor(colorKey)}
+                    onPress={() => setHexColorsId(c.id)}
                     style={[
                       styles.colorSwatch,
-                      { backgroundColor: hex },
+                      { backgroundColor: c.hex },
                       isSelected
                         ? styles.colorSwatchSelected
                         : styles.colorSwatchUnselected,

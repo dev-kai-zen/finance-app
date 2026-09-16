@@ -38,10 +38,7 @@ export function AccountTypeGroupCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const rawColor =
-    "hexColorsId" in accountType && accountType.hexColorsId
-      ? accountType.hexColorsId
-      : (accountType as any).color;
+  const rawColor = accountType.color ?? accountType.hexColorsId ?? null;
   const primaryColor = accountColor(theme, rawColor);
 
   const groupTotal = accounts

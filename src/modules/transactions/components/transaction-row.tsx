@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 
@@ -24,16 +25,15 @@ export function TransactionRow({
   const isTransfer = transaction.type === "transfer";
   const isPositive = transaction.amountCents > 0;
 
-  const categoricalColor =
-    transaction.categoryColor && transaction.categoryColor in theme.colors.categorical
-      ? theme.colors.categorical[
-          transaction.categoryColor as keyof AppTheme["colors"]["categorical"]
-        ]
-      : isIncome
-        ? theme.colors.success
-        : isTransfer
-          ? theme.colors.info
-          : theme.colors.danger;
+  const resolveEntityColor = useResolveEntityColor();
+  const categoricalColor = resolveEntityColor(
+    transaction.categoryColor,
+    isIncome
+      ? theme.colors.success
+      : isTransfer
+        ? theme.colors.info
+        : theme.colors.danger,
+  );
 
   const iconName = isTransfer
     ? "arrow-left-right"

@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
+import { HexColorsProvider } from "@/modules/hex-colors";
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -39,7 +40,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppThemeProvider>
         <DatabaseProvider>
-          <RootLayoutContent />
+          <HexColorsProvider>
+            <RootLayoutContent />
+          </HexColorsProvider>
         </DatabaseProvider>
       </AppThemeProvider>
     </SafeAreaProvider>
@@ -50,4 +53,4 @@ const styles = StyleSheet.create({
   safeAreaBoundary: {
     flex: 1,
   },
-});
+});

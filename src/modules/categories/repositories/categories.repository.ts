@@ -1,28 +1,42 @@
 import { asc, eq, sql } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
-import { categories } from "@/infrastructure/database/schema/categories";
+import { categories, hexColors } from "@/infrastructure/database/schema";
 import { DEFAULT_SEED_CATEGORIES } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
-function mapCategory(row: typeof categories.$inferSelect): Category {
-  const colorName = row.hexColorsId
-    ? row.hexColorsId.startsWith("color_")
-      ? row.hexColorsId.replace("color_", "")
-      : row.hexColorsId
-    : null;
+function mapCategory(
+  category: typeof categories.$inferSelect,
+  hexColor?: typeof hexColors.$inferSelect | null,
+): Category {
   return {
-    id: row.id,
-    name: row.name,
-    type: row.type as CategoryType,
-    hexColorsId: row.hexColorsId,
-    color: colorName,
-    icon: row.icon,
-    parentId: row.parentId,
-    isSystem: Boolean(row.isSystem),
-    sortOrder: row.sortOrder ?? 0,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    id: category.id,
+    name: category.name,
+    type: category.type as CategoryType,
+    hexColorsId: category.hexColorsId,
+    color:
+      hexColor?.hex ??
+      (category.hexColorsId?.startsWith("color_")
+        ? category.hexColorsId.replace("color_", "")
+        : category.hexColorsId),
+    icon: category.icon,
+    parentId: category.parentId,
+    isSystem: Boolean(category.isSystem),
+    sortOrder: category.sortOrder ?? 0,
+    createdAt: category.createdAt,
+    updatedAt: category.updatedAt,
   };
+}
+
+function selectCategoryWithHex(context: DbContext, id: string) {
+  return context
+    .select({
+      category: categories,
+      hexColor: hexColors,
+    })
+    .from(categories)
+    .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
+    .where(eq(categories.id, id))
+    .get();
 }
 
 export async function listCategories(
@@ -33,11 +47,17 @@ export async function listCategories(
   await seedDefaultCategoriesIfEmpty(db);
 
   const rows = await db
-    .select()
+    .select({
+      category: categories,
+      hexColor: hexColors,
+    })
     .from(categories)
+    .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
     .orderBy(categories.type, asc(categories.sortOrder), categories.name);
 
-  const allCategories = rows.map(mapCategory);
+  const allCategories: Category[] = rows.map(({ category, hexColor }) =>
+    mapCategory(category, hexColor),
+  );
 
   if (options?.flat) {
     return allCategories;
@@ -74,26 +94,16 @@ export function findCategoryById(
   id: string,
   context: DbContext,
 ): Category | null {
-  const row = context
-    .select()
-    .from(categories)
-    .where(eq(categories.id, id))
-    .get();
-
-  return row ? mapCategory(row) : null;
+  const row = selectCategoryWithHex(context, id);
+  return row ? mapCategory(row.category, row.hexColor) : null;
 }
 
 export async function getCategoryById(
   db: DbContext,
   id: string,
 ): Promise<Category | null> {
-  const row = db
-    .select()
-    .from(categories)
-    .where(eq(categories.id, id))
-    .get();
-
-  return row ? mapCategory(row) : null;
+  const row = selectCategoryWithHex(db, id);
+  return row ? mapCategory(row.category, row.hexColor) : null;
 }
 
 export async function getCategoryByNameAndType(
@@ -103,12 +113,18 @@ export async function getCategoryByNameAndType(
 ): Promise<Category | null> {
   const trimmedLower = name.trim().toLowerCase();
   const rows = await db
-    .select()
+    .select({
+      category: categories,
+      hexColor: hexColors,
+    })
     .from(categories)
+    .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
     .where(eq(categories.type, type));
 
-  const found = rows.find((r) => r.name.trim().toLowerCase() === trimmedLower);
-  return found ? mapCategory(found) : null;
+  const found = rows.find(
+    (row) => row.category.name.trim().toLowerCase() === trimmedLower,
+  );
+  return found ? mapCategory(found.category, found.hexColor) : null;
 }
 
 export async function insertCategory(
@@ -138,7 +154,10 @@ export async function insertCategory(
   };
 
   await db.insert(categories).values(record);
-  return mapCategory(record as typeof categories.$inferSelect);
+  const created = selectCategoryWithHex(db, input.id);
+  return created
+    ? mapCategory(created.category, created.hexColor)
+    : mapCategory(record as typeof categories.$inferSelect);
 }
 
 export async function updateCategory(

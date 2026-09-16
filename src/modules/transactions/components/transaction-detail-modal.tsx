@@ -13,6 +13,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 
@@ -38,8 +39,11 @@ export function TransactionDetailModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const resolveEntityColor = useResolveEntityColor();
 
   if (!transaction) return null;
+
+  const categoryDisplayColor = resolveEntityColor(transaction.categoryColor);
 
   const isIncome = transaction.type === "income";
   const isExpense = transaction.type === "expense";
@@ -194,14 +198,7 @@ export function TransactionDetailModal({
                 <View style={[styles.detailRow, styles.detailRowBorder]}>
                   <View style={styles.detailIconBadge}>
                     <IconHelper
-                      color={
-                        transaction.categoryColor &&
-                        transaction.categoryColor in theme.colors.categorical
-                          ? theme.colors.categorical[
-                              transaction.categoryColor as keyof AppTheme["colors"]["categorical"]
-                            ]
-                          : theme.colors.primary
-                      }
+                      color={categoryDisplayColor}
                       name={transaction.categoryIcon ?? "tag"}
                       size={16}
                     />

@@ -16,6 +16,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "./icon-helper";
 import type { Category, CategoryType } from "@/modules/categories/types/category.types";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 
 export interface CategoryPickerModalProps {
   visible: boolean;
@@ -123,11 +124,8 @@ export function CategoryPickerModal({
     onClose();
   };
 
-  const getCategoryColor = (colorKey: string | null) => {
-    if (!colorKey) return theme.colors.primary;
-    const catColors = theme.colors.categorical as Record<string, string>;
-    return catColors[colorKey] ?? theme.colors.primary;
-  };
+  const resolveEntityColor = useResolveEntityColor();
+  const getCategoryColor = (colorKey: string | null) => resolveEntityColor(colorKey);
 
   return (
     <Modal

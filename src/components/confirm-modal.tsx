@@ -7,12 +7,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { AlertTriangle, RotateCcw, Trash2 } from "lucide-react-native";
+import { AlertTriangle, ArrowDownAZ, RotateCcw, Trash2 } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 
-export type ConfirmModalVariant = "destructive" | "restore";
+export type ConfirmModalVariant = "destructive" | "restore" | "primary";
 
 export interface ConfirmModalProps {
   visible: boolean;
@@ -43,15 +43,23 @@ export function ConfirmModal({
   const styles = useThemeStyles(createStyles);
 
   const iconColor =
-    variant === "restore" ? theme.colors.success : theme.colors.danger;
+    variant === "restore"
+      ? theme.colors.success
+      : variant === "primary"
+        ? theme.colors.primary
+        : theme.colors.danger;
   const iconBg =
     variant === "restore"
       ? `${theme.colors.success}18`
-      : `${theme.colors.danger}18`;
+      : variant === "primary"
+        ? `${theme.colors.primary}18`
+        : `${theme.colors.danger}18`;
   const iconBorder =
     variant === "restore"
       ? `${theme.colors.success}40`
-      : `${theme.colors.danger}40`;
+      : variant === "primary"
+        ? `${theme.colors.primary}40`
+        : `${theme.colors.danger}40`;
 
   return (
     <Modal
@@ -80,6 +88,8 @@ export function ConfirmModal({
           >
             {variant === "restore" ? (
               <RotateCcw color={iconColor} size={24} />
+            ) : variant === "primary" ? (
+              <ArrowDownAZ color={iconColor} size={24} />
             ) : (
               <Trash2 color={iconColor} size={24} />
             )}
@@ -108,7 +118,9 @@ export function ConfirmModal({
                 styles.confirmBtn,
                 variant === "restore"
                   ? styles.confirmBtnRestore
-                  : styles.confirmBtnDestructive,
+                  : variant === "primary"
+                    ? styles.confirmBtnPrimary
+                    : styles.confirmBtnDestructive,
                 pending && styles.btnDisabled,
               ]}
             >
@@ -220,6 +232,9 @@ function createStyles(theme: AppTheme) {
     },
     confirmBtnRestore: {
       backgroundColor: theme.colors.success,
+    },
+    confirmBtnPrimary: {
+      backgroundColor: theme.colors.primary,
     },
     confirmBtnText: {
       color: theme.colors.onPrimary,

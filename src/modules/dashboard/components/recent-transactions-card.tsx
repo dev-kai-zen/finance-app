@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import type { TransactionListItem } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
 
@@ -21,6 +22,7 @@ export function RecentTransactionsCard({
 }: RecentTransactionsCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const resolveEntityColor = useResolveEntityColor();
 
   return (
     <View style={styles.card}>
@@ -54,14 +56,14 @@ export function RecentTransactionsCard({
             const isTransfer = tx.type === "transfer";
             const isLast = idx === Math.min(5, transactions.length) - 1;
 
-            const catColor =
-              tx.categoryColor && tx.categoryColor in theme.colors.categorical
-                ? theme.colors.categorical[tx.categoryColor as keyof AppTheme["colors"]["categorical"]]
-                : isIncome
-                  ? theme.colors.success
-                  : isTransfer
-                    ? theme.colors.info
-                    : theme.colors.danger;
+            const catColor = resolveEntityColor(
+              tx.categoryColor,
+              isIncome
+                ? theme.colors.success
+                : isTransfer
+                  ? theme.colors.info
+                  : theme.colors.danger,
+            );
 
             const iconName = isTransfer
               ? "arrow-left-right"

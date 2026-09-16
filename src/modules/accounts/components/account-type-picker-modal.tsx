@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react-native";
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountType } from "@/modules/accounts/types/account.types";
 
 export function AccountTypePickerModal({
@@ -48,10 +49,7 @@ export function AccountTypePickerModal({
                   </Text>
                   {options.map((type) => {
                     const selected = value === type.id;
-                    const color = type.color
-                      ? theme.colors.categorical[type.color as keyof typeof theme.colors.categorical] ??
-                        theme.colors.primary
-                      : theme.colors.primary;
+                    const color = accountColor(theme, type.color ?? null);
 
                     return (
                       <Pressable

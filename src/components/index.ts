@@ -16,5 +16,6 @@ export * from "./account-picker-modal";
 export * from "./category-picker-modal";
 export * from "./feature-not-implemented-modal";
 export * from "./confirm-modal";
+export * from "./info-modal";
 export * from "./formatted-currency";
 export * from "./theme/app-theme-provider";
