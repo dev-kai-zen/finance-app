@@ -1,4 +1,4 @@
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   accountTypes,
@@ -39,6 +39,7 @@ function mapRowToListItem(r: {
     occurredAt: r.transaction.occurredAt,
     createdAt: r.transaction.createdAt,
     updatedAt: r.transaction.updatedAt,
+    deletedAt: r.transaction.deletedAt,
     accountName: r.accountName ?? "Unknown Account",
     accountCurrency: r.accountCurrency ?? "PHP",
     accountTypeName: r.accountTypeName ?? "Account",
@@ -73,6 +74,7 @@ function getBalanceAfterByTransactionId(
     })
     .from(transactions)
     .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(isNull(transactions.deletedAt))
     .all();
 
   const rowsByAccountId = new Map<string, typeof rows>();
@@ -172,6 +174,7 @@ export function listTransactions(
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt));
 
   const conditions = [];
+  conditions.push(isNull(transactions.deletedAt));
 
   if (filter?.type && filter.type !== "all") {
     conditions.push(eq(transactions.type, filter.type));
@@ -192,8 +195,7 @@ export function listTransactions(
     conditions.push(eq(transactions.categoryId, filter.categoryId));
   }
 
-  const rows =
-    conditions.length > 0 ? query.where(and(...conditions)).all() : query.all();
+  const rows = query.where(and(...conditions)).all();
 
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
   const mapped = rows.map((row) =>
@@ -230,6 +232,33 @@ export function hasTransactions(context: DbContext = db): boolean {
       .from(transactions)
       .limit(1)
       .get(),
+  );
+}
+
+export function listDeletedTransactions(
+  context: DbContext = db,
+): TransactionListItem[] {
+  const rows = context
+    .select({
+      transaction: transactions,
+      accountName: accounts.name,
+      accountCurrency: accounts.currencyCode,
+      accountTypeName: accountTypes.name,
+      categoryName: categories.name,
+      categoryIcon: categories.icon,
+      categoryColor: categories.hexColorsId,
+    })
+    .from(transactions)
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(isNotNull(transactions.deletedAt))
+    .orderBy(desc(transactions.deletedAt), desc(transactions.occurredAt))
+    .all();
+
+  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  return groupTransferRows(
+    rows.map((row) => mapRowToListItem(row, balanceAfterByTransactionId)),
   );
 }
 
@@ -285,6 +314,7 @@ export function insertTransaction(
     occurredAt: data.occurredAt,
     createdAt: data.createdAt ?? now,
     updatedAt: data.updatedAt ?? now,
+    deletedAt: data.deletedAt ?? null,
   };
 
   context.insert(transactions).values(record).run();
@@ -332,8 +362,58 @@ export function deleteTransactionsByGroupId(
     .run();
 }
 
+export function softDeleteTransaction(
+  id: string,
+  deletedAt = new Date(),
+  context: DbContext = db,
+): void {
+  context
+    .update(transactions)
+    .set({ deletedAt, updatedAt: new Date() })
+    .where(eq(transactions.id, id))
+    .run();
+}
+
+export function softDeleteTransactionsByGroupId(
+  groupId: string,
+  deletedAt = new Date(),
+  context: DbContext = db,
+): void {
+  context
+    .update(transactions)
+    .set({ deletedAt, updatedAt: new Date() })
+    .where(eq(transactions.transactionGroupId, groupId))
+    .run();
+}
+
+export function restoreTransaction(
+  id: string,
+  context: DbContext = db,
+): void {
+  context
+    .update(transactions)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(transactions.id, id))
+    .run();
+}
+
+export function restoreTransactionsByGroupId(
+  groupId: string,
+  context: DbContext = db,
+): void {
+  context
+    .update(transactions)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(transactions.transactionGroupId, groupId))
+    .run();
+}
+
 export function calculateTransactionStats(context: DbContext = db): TransactionStats {
-  const allTx = context.select().from(transactions).all();
+  const allTx = context
+    .select()
+    .from(transactions)
+    .where(isNull(transactions.deletedAt))
+    .all();
 
   let totalInflow = 0;
   let totalOutflow = 0;

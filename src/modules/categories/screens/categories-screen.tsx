@@ -17,7 +17,7 @@ import { InfoModal } from "@/components/info-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { hasTransactions } from "@/modules/transactions";
+import { hasTransactions } from "@/infrastructure/database/queries/transaction-presence";
 import { useFocusEffect } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { CategoryGroupCard } from "../components/category-group-card";

@@ -399,7 +399,7 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: 20,
       borderTopWidth: 1,
       borderColor: theme.colors.border,
-      maxHeight: "85%",
+      maxHeight: "75%",
       minHeight: "55%",
       width: "100%",
       ...theme.shadows.modal,

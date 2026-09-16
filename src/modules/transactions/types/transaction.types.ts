@@ -10,21 +10,24 @@ export interface Transaction {
   name: string | null;
   note: string | null;
   occurredAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt"> & {
-  id?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deletedAt"> & {
+  id?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  deletedAt?: Date | null;
+};
 
 export interface TransactionListItem extends Transaction {
   accountName: string;
   accountCurrency: string;
   accountTypeName: string;
   accountBalanceAfterMinorUnits: number | null;
+  deletedAt: Date | null;
   categoryName: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;

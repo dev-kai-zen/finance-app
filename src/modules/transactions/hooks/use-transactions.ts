@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import {
   calculateTransactionStats,
   listTransactions,
+  listDeletedTransactions,
 } from "../repositories/transactions.repository";
 import { createTransaction } from "../services/create-transaction.service";
 import { createTransfer } from "../services/create-transfer.service";
 import { removeTransaction } from "../services/delete-transaction.service";
+import { restoreTransaction } from "../services/restore-transaction.service";
 import { updateTransfer } from "../services/update-transfer.service";
+import { updateTransaction } from "../services/update-transaction.service";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
@@ -21,6 +24,9 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     initialFilter ?? { type: "all" },
   );
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
+  const [deletedTransactions, setDeletedTransactions] = useState<
+    TransactionListItem[]
+  >([]);
   const [stats, setStats] = useState<TransactionStats>({
     totalInflowMinorUnits: 0,
     totalOutflowMinorUnits: 0,
@@ -36,8 +42,10 @@ export function useTransactions(initialFilter?: TransactionFilter) {
       setLoading(true);
       setError(null);
       const list = listTransactions(filter);
+      const deletedList = listDeletedTransactions();
       const computedStats = calculateTransactionStats();
       setTransactions(list);
+      setDeletedTransactions(deletedList);
       setStats(computedStats);
     } catch (err: any) {
       setError(err?.message || "Failed to load transactions.");
@@ -104,6 +112,24 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [refresh],
   );
 
+  const restoreTx = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        setPendingAction(true);
+        setError(null);
+        restoreTransaction(id);
+        refresh();
+        return true;
+      } catch (err: any) {
+        setError(err?.message || "Failed to restore transaction.");
+        return false;
+      } finally {
+        setPendingAction(false);
+      }
+    },
+    [refresh],
+  );
+
   const editTransfer = useCallback(
     async (input: UpdateTransferInput): Promise<boolean> => {
       try {
@@ -122,8 +148,30 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [refresh],
   );
 
+  const editTransaction = useCallback(
+    async (
+      id: string,
+      input: CreateTransactionInput,
+    ): Promise<boolean> => {
+      try {
+        setPendingAction(true);
+        setError(null);
+        updateTransaction(id, input);
+        refresh();
+        return true;
+      } catch (err: any) {
+        setError(err?.message || "Failed to update transaction.");
+        return false;
+      } finally {
+        setPendingAction(false);
+      }
+    },
+    [refresh],
+  );
+
   return {
     transactions,
+    deletedTransactions,
     stats,
     loading,
     pendingAction,
@@ -133,7 +181,9 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     recordTransaction,
     recordTransfer,
     editTransfer,
+    editTransaction,
     deleteTx,
+    restoreTx,
     refresh,
   };
 }

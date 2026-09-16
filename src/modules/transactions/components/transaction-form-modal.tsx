@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,11 +18,11 @@ import {
   DatePickerModal,
   IconHelper,
 } from "@/components";
-import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
+import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 import type { Category } from "@/modules/categories/types/category.types";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
@@ -34,6 +32,7 @@ import type {
   CreateTransferInput,
   TransactionListItem,
   TransactionType,
+  UpdateTransferInput,
 } from "../types/transaction.types";
 
 export interface TransactionFormModalProps {
@@ -41,11 +40,17 @@ export interface TransactionFormModalProps {
   onClose: () => void;
   onSaveTransaction: (input: CreateTransactionInput) => Promise<boolean>;
   onSaveTransfer: (input: CreateTransferInput) => Promise<boolean>;
+  onUpdateTransaction?: (
+    id: string,
+    input: CreateTransactionInput,
+  ) => Promise<boolean>;
+  onUpdateTransfer?: (input: UpdateTransferInput) => Promise<boolean>;
   accounts: AccountListItem[];
   categories: Category[];
   pending?: boolean;
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
+  isEditing?: boolean;
 }
 
 function getTodayIsoString(): string {
@@ -61,15 +66,16 @@ export function TransactionFormModal({
   onClose,
   onSaveTransaction,
   onSaveTransfer,
+  onUpdateTransaction,
+  onUpdateTransfer,
   accounts,
   categories,
   pending = false,
   error = null,
   initialTransaction = null,
+  isEditing = false,
 }: TransactionFormModalProps) {
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -211,14 +217,21 @@ export function TransactionFormModal({
       }
 
       setLocalError(null);
-      const success = await onSaveTransfer({
+      const transferInput: CreateTransferInput = {
         fromAccountId: selectedAccountId,
         toAccountId: transferToAccountId,
         amountCents: Math.abs(amountMinorUnits),
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt,
-      });
+      };
+      const success =
+        isEditing && initialTransaction && onUpdateTransfer
+          ? await onUpdateTransfer({
+              ...transferInput,
+              transactionGroupId: initialTransaction.transactionGroupId ?? "",
+            })
+          : await onSaveTransfer(transferInput);
 
       if (success) {
         onClose();
@@ -233,7 +246,7 @@ export function TransactionFormModal({
         amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
 
       setLocalError(null);
-      const success = await onSaveTransaction({
+      const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         type: mode,
@@ -241,7 +254,11 @@ export function TransactionFormModal({
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt,
-      });
+      };
+      const success =
+        isEditing && initialTransaction && onUpdateTransaction
+          ? await onUpdateTransaction(initialTransaction.id, transactionInput)
+          : await onSaveTransaction(transactionInput);
 
       if (success) {
         onClose();
@@ -269,13 +286,17 @@ export function TransactionFormModal({
         <View
           style={[
             styles.sheetContainer,
-            isDesktop && styles.sheetContainerDesktop,
-            { paddingBottom: Math.max(insets.bottom, 20) },
+            {
+              paddingBottom: Math.max(insets.bottom, 20),
+              paddingTop: Math.max(insets.top, 16),
+            },
           ]}
         >
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={styles.modalTitle}>Record Transaction</Text>
+            <Text style={styles.modalTitle}>
+              {isEditing ? "Edit Transaction" : "Record Transaction"}
+            </Text>
             <Pressable
               accessibilityLabel="Close form"
               accessibilityRole="button"
@@ -307,15 +328,15 @@ export function TransactionFormModal({
                     active && styles.tabItemActive,
                     active &&
                       tab === "income" && {
-                        backgroundColor: `${theme.colors.success}25`,
+                        backgroundColor: theme.colors.success,
                       },
                     active &&
                       tab === "expense" && {
-                        backgroundColor: `${theme.colors.danger}25`,
+                        backgroundColor: theme.colors.danger,
                       },
                     active &&
                       tab === "transfer" && {
-                        backgroundColor: `${theme.colors.info}25`,
+                        backgroundColor: theme.colors.info,
                       },
                   ]}
                 >
@@ -325,15 +346,15 @@ export function TransactionFormModal({
                       active && styles.tabTextActive,
                       active &&
                         tab === "income" && {
-                          color: theme.colors.success,
+                          color: "#FFFFFF",
                         },
                       active &&
                         tab === "expense" && {
-                          color: theme.colors.danger,
+                          color: "#FFFFFF",
                         },
                       active &&
                         tab === "transfer" && {
-                          color: theme.colors.info,
+                          color: "#FFFFFF",
                         },
                     ]}
                   >
@@ -571,7 +592,9 @@ export function TransactionFormModal({
               >
                 <View>
                   <Text style={styles.dateLabelSmall}>Transaction Date</Text>
-                  <Text style={styles.dateValueText}>{dateIsoString}</Text>
+                  <Text style={styles.dateValueText}>
+                    {formatDisplayDate(dateIsoString)}
+                  </Text>
                 </View>
                 <View style={styles.calendarIconBadge}>
                   <Text style={styles.calendarIconText}>📅</Text>
@@ -584,10 +607,12 @@ export function TransactionFormModal({
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
               <TextInput
                 maxLength={200}
+                multiline
                 onChangeText={setNote}
                 placeholder="e.g. Grocery run at SM, Grab to airport..."
                 placeholderTextColor={theme.colors.textSecondary}
                 style={styles.noteInput}
+                textAlignVertical="top"
                 value={note}
               />
             </View>
@@ -685,7 +710,6 @@ function createStyles(theme: AppTheme) {
     modalOverlay: {
       backgroundColor: "rgba(0, 0, 0, 0.7)",
       flex: 1,
-      justifyContent: "flex-end",
     },
     backdrop: {
       bottom: 0,
@@ -696,15 +720,9 @@ function createStyles(theme: AppTheme) {
     },
     sheetContainer: {
       backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      borderWidth: 1,
-      maxHeight: "92%",
+      flex: 1,
       paddingHorizontal: 20,
-      paddingTop: 16,
       width: "100%",
-      ...theme.shadows.modal,
     },
     sheetContainerDesktop: {
       alignSelf: "center",
@@ -776,7 +794,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "500",
     },
     formScroll: {
-      maxHeight: 460,
+      flex: 1,
     },
     inputGroup: {
       marginBottom: 16,
@@ -877,7 +895,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       color: theme.colors.textPrimary,
       fontSize: 14,
-      minHeight: 46,
+      minHeight: 92,
       paddingHorizontal: 14,
       paddingVertical: 10,
     },
@@ -928,8 +946,8 @@ function createStyles(theme: AppTheme) {
     },
     selectorChangeBadge: {
       alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
+      backgroundColor: `${theme.colors.primary}24`,
+      borderColor: `${theme.colors.primary}65`,
       borderRadius: 14,
       borderWidth: 1,
       flexDirection: "row",
@@ -938,7 +956,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 4,
     },
     selectorChangeText: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.primary,
       fontSize: 11,
       fontWeight: "600",
     },

@@ -48,9 +48,19 @@ export function TransactionDetailModal({
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
 
-  const displayAmountCents = isIncome
+  const displayAmountCents = isTransfer
     ? Math.abs(transaction.amountCents)
-    : -Math.abs(transaction.amountCents);
+    : isIncome
+      ? transaction.amountCents
+      : -Math.abs(transaction.amountCents);
+
+  const amountColor = isTransfer
+    ? theme.colors.info
+    : displayAmountCents < 0
+      ? theme.colors.danger
+      : displayAmountCents > 0
+        ? theme.colors.success
+        : theme.colors.textMuted;
 
   const phpResult = formatPhpCurrency(displayAmountCents, {
     showPositiveSign: false,
@@ -162,7 +172,7 @@ export function TransactionDetailModal({
                 </Text>
               </View>
 
-              <Text style={[styles.amountText, { color: typeColor }]}>
+              <Text style={[styles.amountText, { color: amountColor }]}>
                 {formattedAmount}
               </Text>
 

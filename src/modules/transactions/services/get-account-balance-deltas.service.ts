@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { isNull, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { transactions } from "@/infrastructure/database/schema";
 
@@ -18,6 +18,7 @@ export function getAccountBalanceDeltas(
       delta: sql<number>`coalesce(sum(${transactions.amountCents}), 0)`.as("delta"),
     })
     .from(transactions)
+    .where(isNull(transactions.deletedAt))
     .groupBy(transactions.accountId)
     .all();
 

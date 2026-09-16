@@ -15,9 +15,10 @@ export const transactions = sqliteTable(
     amountCents: integer("amount_cents").notNull(),
     name: text("name"),
     note: text("note"),
-    occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
   (table) => [
     index("transactions_account_occurred_at_index").on(

@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ArrowRightLeft } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
@@ -23,6 +24,16 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
       ? theme.colors.success
       : theme.colors.danger;
   const borderColor = withAlpha(typeColor, 0.55);
+  const displayAmountCents = isTransfer
+    ? Math.abs(transaction.amountCents)
+    : transaction.amountCents;
+  const amountColor = isTransfer
+    ? theme.colors.info
+    : displayAmountCents < 0
+      ? theme.colors.danger
+      : displayAmountCents > 0
+        ? theme.colors.success
+        : theme.colors.textMuted;
 
   const title =
     transaction.name ||
@@ -37,15 +48,12 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         transaction.accountCurrency ?? "PHP",
         false,
       )
-    : formatPhpCurrency(
-        transaction.amountCents,
-        {
-          showPositiveSign: false,
-          positiveColor: theme.colors.success,
-          negativeColor: theme.colors.danger,
-          zeroColor: theme.colors.textMuted,
-        },
-      ).formatted;
+    : formatPhpCurrency(displayAmountCents, {
+        showPositiveSign: false,
+        positiveColor: theme.colors.success,
+        negativeColor: theme.colors.danger,
+        zeroColor: theme.colors.textMuted,
+      }).formatted;
 
   const occurredAt = transaction.occurredAt
     ? new Date(transaction.occurredAt)
@@ -64,16 +72,16 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
   const destinationRoute = `${transaction.transferAccountTypeName ?? "Account"} > ${
     transaction.transferAccountName ?? "Destination"
   }`;
-  const formattedRoute = isTransfer
-    ? `${accountRoute} \u2192 ${destinationRoute}`
-    : `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
+  const formattedRoute = `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
 
   const balanceAfterMinorUnits = isTransfer
     ? transaction.destinationBalanceAfterMinorUnits
     : transaction.accountBalanceAfterMinorUnits;
   const balanceCurrency = isTransfer
-    ? transaction.transferAccountCurrency ?? transaction.accountCurrency ?? "PHP"
-    : transaction.accountCurrency ?? "PHP";
+    ? (transaction.transferAccountCurrency ??
+      transaction.accountCurrency ??
+      "PHP")
+    : (transaction.accountCurrency ?? "PHP");
   const balanceText =
     balanceAfterMinorUnits === null
       ? null
@@ -98,14 +106,29 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         <Text numberOfLines={2} style={styles.txNameText}>
           {title}
         </Text>
-        <Text numberOfLines={1} style={[styles.amountText, { color: typeColor }]}>
+        <Text
+          numberOfLines={1}
+          style={[styles.amountText, { color: amountColor }]}
+        >
           {formattedAmount}
         </Text>
       </View>
 
       <View style={styles.txDetailsRow}>
         <View style={styles.routeColumn}>
-          <Text style={styles.routeCategoryText}>{formattedRoute}</Text>
+          {isTransfer ? (
+            <View style={styles.transferRouteRow}>
+              <Text numberOfLines={2} style={styles.transferRouteText}>
+                {accountRoute}
+              </Text>
+              <ArrowRightLeft color={theme.colors.info} size={14} />
+              <Text numberOfLines={2} style={styles.transferRouteText}>
+                {destinationRoute}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.routeCategoryText}>{formattedRoute}</Text>
+          )}
           {transaction.note && transaction.name ? (
             <Text numberOfLines={2} style={styles.txNoteText}>
               {transaction.note}
@@ -167,6 +190,18 @@ function createStyles(theme: AppTheme) {
     routeColumn: {
       flex: 1,
     },
+    transferRouteRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    transferRouteText: {
+      color: theme.colors.textSecondary,
+      flexShrink: 1,
+      fontSize: theme.typography.fontSize.md,
+      fontWeight: theme.typography.fontWeight.medium,
+      lineHeight: theme.typography.lineHeight.md,
+    },
     routeCategoryText: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.md,
@@ -187,7 +222,7 @@ function createStyles(theme: AppTheme) {
     balanceText: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontWeight: theme.typography.fontWeight.bold,
       marginTop: theme.spacing.xs,
       textAlign: "right",
     },

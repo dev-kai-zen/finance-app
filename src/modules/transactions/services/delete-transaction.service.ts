@@ -1,9 +1,9 @@
 import { db } from "@/infrastructure/database/client";
-import {
-  deleteTransaction,
-  deleteTransactionsByGroupId,
-  findTransactionById,
-} from "../repositories/transactions.repository";
+import {
+  findTransactionById,
+  softDeleteTransaction,
+  softDeleteTransactionsByGroupId,
+} from "../repositories/transactions.repository";
 
 export function removeTransaction(id: string): void {
   if (!id) {
@@ -17,10 +17,10 @@ export function removeTransaction(id: string): void {
     }
 
     if (existing.transactionGroupId) {
-      deleteTransactionsByGroupId(existing.transactionGroupId, tx);
-      return;
-    }
-
-    deleteTransaction(id, tx);
-  });
-}
+      softDeleteTransactionsByGroupId(existing.transactionGroupId, new Date(), tx);
+      return;
+    }
+
+    softDeleteTransaction(id, new Date(), tx);
+  });
+}

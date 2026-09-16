@@ -253,7 +253,9 @@ export function AccountPickerModal({
                                   {account.name}
                                 </Text>
                                 <Text style={styles.accountItemType}>
-                                  {account.accountType?.name ?? "Account"}
+                                  {account.accountType?.accountGroup === "liability"
+                                    ? "Liability"
+                                    : "Asset"} | {account.accountType?.name ?? "Account"}
                                 </Text>
                               </View>
                             </View>

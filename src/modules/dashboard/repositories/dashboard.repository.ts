@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   accounts,
@@ -34,7 +34,11 @@ export function getMonthlyCashflow(
     year: "numeric",
   });
 
-  const allTx = context.select().from(transactions).all();
+  const allTx = context
+    .select()
+    .from(transactions)
+    .where(isNull(transactions.deletedAt))
+    .all();
 
   let totalInflow = 0;
   let totalOutflow = 0;
@@ -84,7 +88,12 @@ export function getCategorySpendingBreakdown(
     })
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(eq(transactions.type, "expense"))
+    .where(
+      and(
+        eq(transactions.type, "expense"),
+        isNull(transactions.deletedAt),
+      ),
+    )
     .all();
 
   const spendingByCategory: Record<

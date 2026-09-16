@@ -10,6 +10,7 @@ import {
   ArrowDown,
   ArrowUp,
   Download,
+  Trash2,
   Search,
   SlidersHorizontal,
   X,
@@ -32,6 +33,7 @@ import {
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
+import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
@@ -89,12 +91,16 @@ export function TransactionsScreen() {
 
   const {
     transactions,
+    deletedTransactions,
     loading,
     pendingAction,
     error,
     recordTransaction,
     recordTransfer,
     deleteTx,
+    restoreTx,
+    editTransaction,
+    editTransfer,
   } = useTransactions();
 
   const { accounts } = useAccounts();
@@ -113,6 +119,8 @@ export function TransactionsScreen() {
     useState<TransactionListItem | null>(null);
   const [prefilledTransaction, setPrefilledTransaction] =
     useState<TransactionListItem | null>(null);
+  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
+  const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const pendingDeleteTransaction = useMemo(
@@ -232,23 +240,22 @@ export function TransactionsScreen() {
 
   const handleOpenNewTransaction = () => {
     setPrefilledTransaction(null);
+    setIsEditingTransaction(false);
     setIsFormModalOpen(true);
   };
 
   const handleDuplicate = (tx: TransactionListItem) => {
     setInspectedTransaction(null);
     setPrefilledTransaction(tx);
+    setIsEditingTransaction(false);
     setIsFormModalOpen(true);
   };
 
-  const handleEdit = (_tx: TransactionListItem) => {
+  const handleEdit = (tx: TransactionListItem) => {
     setInspectedTransaction(null);
-    setUnintegratedFeature({
-      title: "Edit Transaction",
-      description:
-        "Direct transaction editing is under integration. For now, you can duplicate or delete this record and log the adjustment.",
-    });
-    setFeatureModalVisible(true);
+    setPrefilledTransaction(tx);
+    setIsEditingTransaction(true);
+    setIsFormModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -265,13 +272,13 @@ export function TransactionsScreen() {
   const deleteConfirmMessage = useMemo(() => {
     const tx = pendingDeleteTransaction;
     if (!tx) {
-      return "This record will be permanently removed.";
+      return "This record will be moved to Trash. You can restore it later.";
     }
     const label = tx.name?.trim() || tx.categoryName || "this transaction";
     if (tx.type === "transfer") {
-      return `Delete the transfer from "${tx.accountName}" to "${tx.transferAccountName ?? "another account"}"? Both legs will be permanently removed.`;
+      return `Move the transfer from "${tx.accountName}" to "${tx.transferAccountName ?? "another account"}" to Trash? Both legs can be restored later.`;
     }
-    return `Delete "${label}"? This record will be permanently removed.`;
+    return `Move "${label}" to Trash? This record can be restored later.`;
   }, [pendingDeleteTransaction]);
 
   const handleExportCsv = () => {
@@ -363,6 +370,16 @@ export function TransactionsScreen() {
                 <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
               </View>
             )}
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Open transaction trash"
+            accessibilityRole="button"
+            onPress={() => setIsTrashModalOpen(true)}
+            style={styles.trashButton}
+          >
+            <Trash2 color={theme.colors.danger} size={17} />
+            <Text style={styles.trashButtonText}>Trash</Text>
           </Pressable>
 
           {/* Export CSV Trigger Button */}
@@ -474,13 +491,17 @@ export function TransactionsScreen() {
         accounts={accounts}
         categories={categories}
         error={error}
+        isEditing={isEditingTransaction}
         initialTransaction={prefilledTransaction}
         onClose={() => {
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
+          setIsEditingTransaction(false);
         }}
         onSaveTransaction={recordTransaction}
         onSaveTransfer={recordTransfer}
+        onUpdateTransaction={editTransaction}
+        onUpdateTransfer={editTransfer}
         pending={pendingAction}
         visible={isFormModalOpen}
       />
@@ -523,6 +544,16 @@ export function TransactionsScreen() {
         onConfirm={() => {
           void handleConfirmDelete();
         }}
+      />
+
+      <DeletedTransactionsModal
+        onClose={() => setIsTrashModalOpen(false)}
+        onRestore={(id) => {
+          void restoreTx(id);
+        }}
+        pending={pendingAction}
+        transactions={deletedTransactions}
+        visible={isTrashModalOpen}
       />
     </PageContainer>
   );
@@ -579,6 +610,23 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.xs,
       width: 104,
+    },
+    trashButton: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}18`,
+      borderColor: `${theme.colors.danger}60`,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.sm,
+    },
+    trashButtonText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     filterButtonText: {
       color: theme.colors.textSecondary,
