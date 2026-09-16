@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,9 +10,8 @@ import {
 } from "react-native";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer, PageEmptyState } from "@/components/page-container";
-import { PageHeader } from "@/components/page-header";
-import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
-import { ConfirmModal, FeatureNotImplementedModal, IconHelper, InfoModal } from "@/components";
+import { SortableListModal } from "@/components/sortable-list-modal";
+import { ConfirmModal, IconHelper, InfoModal } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -35,7 +33,6 @@ export function CategoriesScreen() {
     loading,
     saving,
     error,
-    refresh,
     saveCategory,
     deleteCategory,
     reorderCategories,
@@ -57,11 +54,6 @@ export function CategoriesScreen() {
   const [reorderGroupsVisible, setReorderGroupsVisible] = useState(false);
   const [reorderSubsVisible, setReorderSubsVisible] = useState(false);
   const [groupForSubReorder, setGroupForSubReorder] = useState<Category | null>(null);
-
-  // Feature Not Implemented Modal State
-  const [notImplementedVisible, setNotImplementedVisible] = useState(false);
-  const [notImplementedTitle, setNotImplementedTitle] = useState("");
-  const [notImplementedDesc, setNotImplementedDesc] = useState("");
 
   const [sortConfirmVisible, setSortConfirmVisible] = useState(false);
   const [protectedInfoVisible, setProtectedInfoVisible] = useState(false);
@@ -150,17 +142,6 @@ export function CategoriesScreen() {
           onPress={handleCreateGroup}
         />
       }
-      header={
-        <PageHeader
-          breadcrumb="Kaizen Finance / Categories"
-          primaryAction={{
-            label: "+ Add Group",
-            onPress: handleCreateGroup,
-          }}
-          subtitle="Organize your inflows and outflows with theme-driven categorical indicators."
-          title="Categories"
-        />
-      }
     >
       <View style={styles.container}>
         {/* Full-Width Type Switcher Bar (Kaizen Design) */}
@@ -206,16 +187,10 @@ export function CategoriesScreen() {
           </View>
         </View>
 
-        {/* Count & Action Header (Kaizen Design) */}
+        {/* Category Group Toolbar */}
         <View style={styles.headerInfo}>
           <View
-            style={[
-              styles.headerCountBadge,
-              {
-                backgroundColor: `${activeColor}18`,
-                borderColor: `${activeColor}40`,
-              },
-            ]}
+            style={styles.headerCountBadge}
           >
             <IconHelper color={activeColor} name="layers" size={14} />
             <Text style={[styles.headerCountText, { color: activeColor }]}>
@@ -258,6 +233,20 @@ export function CategoriesScreen() {
                 </Pressable>
               </>
             )}
+
+            <Pressable
+              accessibilityLabel={`New ${selectedType === "expense" ? "expense" : "income"} category group`}
+              accessibilityRole="button"
+              onPress={handleCreateGroup}
+              style={({ pressed }) => [
+                styles.newGroupBtn,
+                { borderColor: activeColor },
+                pressed && styles.headerActionPressed,
+              ]}
+            >
+              <IconHelper color={activeColor} name="plus" size={15} />
+              <Text style={[styles.headerActionBtnText, { color: activeColor }]}>New Group</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -296,7 +285,10 @@ export function CategoriesScreen() {
                       accessibilityLabel={`Toggle ${group.name} subcategories`}
                       accessibilityRole="button"
                       onPress={() => hasSub && toggleExpand(group.id)}
-                      style={styles.groupLeft}
+                      style={({ pressed }) => [
+                        styles.groupLeft,
+                        pressed && styles.groupLeftPressed,
+                      ]}
                     >
                       {/* Icon Badge */}
                       <View
@@ -317,32 +309,34 @@ export function CategoriesScreen() {
 
                       {/* Group Title and Subcategory Count */}
                       <View style={styles.groupTitleCol}>
-                        <View style={styles.groupTitleRow}>
-                          <Text numberOfLines={1} style={styles.groupNameText}>
-                            {group.name}
-                          </Text>
-                          {group.isSystem ? (
-                            <View style={styles.systemTag}>
-                              <Text style={styles.systemTagText}>Default</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                        <View style={styles.subCountRow}>
-                          <Text style={styles.subCountText}>
-                            {hasSub
-                              ? `${subcategories.length} subcategor${subcategories.length === 1 ? "y" : "ies"}`
-                              : "No subcategories"}
-                          </Text>
-                          {hasSub ? (
-                            <IconHelper
-                              color={theme.colors.textMuted}
-                              name={isExpanded ? "chevron-down" : "chevron-right"}
-                              size={14}
-                            />
-                          ) : null}
-                        </View>
+                        <Text numberOfLines={1} style={styles.groupNameText}>
+                          {group.name}
+                        </Text>
+                        <Text style={styles.subCountText}>
+                          {hasSub
+                            ? `${subcategories.length} subcategor${subcategories.length === 1 ? "y" : "ies"}`
+                            : "No subcategories"}
+                        </Text>
                       </View>
                     </Pressable>
+
+                    {hasSub ? (
+                      <Pressable
+                        accessibilityLabel={`${isExpanded ? "Collapse" : "Expand"} ${group.name} subcategories`}
+                        accessibilityRole="button"
+                        onPress={() => toggleExpand(group.id)}
+                        style={({ pressed }) => [
+                          styles.collapseBtn,
+                          pressed && styles.groupActionPressed,
+                        ]}
+                      >
+                        <IconHelper
+                          color={theme.colors.textSecondary}
+                          name={isExpanded ? "chevron-down" : "chevron-right"}
+                          size={22}
+                        />
+                      </Pressable>
+                    ) : null}
 
                     {/* Action Buttons for Group */}
                     <View style={styles.groupActions}>
@@ -384,12 +378,12 @@ export function CategoriesScreen() {
                         accessibilityLabel={`Edit ${group.name}`}
                         accessibilityRole="button"
                         onPress={() => handleEditGroup(group)}
-                        style={styles.actionIconBtn}
+                        style={styles.plainActionBtn}
                       >
                         <IconHelper
                           color={theme.colors.textSecondary}
                           name="pencil"
-                          size={15}
+                          size={20}
                         />
                       </Pressable>
 
@@ -399,12 +393,12 @@ export function CategoriesScreen() {
                           accessibilityLabel={`Delete ${group.name}`}
                           accessibilityRole="button"
                           onPress={() => handleDelete(group, true)}
-                          style={[styles.actionIconBtn, styles.deleteActionBtn]}
+                          style={styles.plainActionBtn}
                         >
                           <IconHelper
                             color={theme.colors.danger}
                             name="trash-2"
-                            size={15}
+                            size={20}
                           />
                         </Pressable>
                       )}
@@ -414,19 +408,15 @@ export function CategoriesScreen() {
                   {/* Subcategories List (Expanded) */}
                   {hasSub && isExpanded && (
                     <View style={styles.subList}>
-                      {subcategories.map((sub, idx) => {
+                      {subcategories.map((sub) => {
                         const subColor = resolveEntityColor(sub.color, groupColor);
 
                         return (
                           <View
                             key={sub.id}
-                            style={[
-                              styles.subRow,
-                              idx < subcategories.length - 1 && styles.subRowBorder,
-                            ]}
+                            style={styles.subRow}
                           >
                             <View style={styles.subLeft}>
-                              <Text style={styles.subTreeSymbol}>↳</Text>
                               <View
                                 style={[
                                   styles.subIconWrap,
@@ -457,7 +447,7 @@ export function CategoriesScreen() {
                                 <IconHelper
                                   color={theme.colors.textMuted}
                                   name="pencil"
-                                  size={13}
+                                  size={18}
                                 />
                               </Pressable>
 
@@ -473,7 +463,7 @@ export function CategoriesScreen() {
                                 <IconHelper
                                   color={theme.colors.danger}
                                   name="trash-2"
-                                  size={13}
+                                  size={18}
                                 />
                               </Pressable>
                             </View>
@@ -560,14 +550,6 @@ export function CategoriesScreen() {
         />
       )}
 
-      {/* Feature Under Integration Modal */}
-      <FeatureNotImplementedModal
-        featureDescription={notImplementedDesc}
-        featureTitle={notImplementedTitle}
-        onClose={() => setNotImplementedVisible(false)}
-        visible={notImplementedVisible}
-      />
-
       <ConfirmModal
         cancelLabel="Cancel"
         confirmLabel="Sort A-Z"
@@ -617,11 +599,11 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.md,
     },
     tabContainer: {
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
+      borderRadius: theme.borderRadius.large,
       borderWidth: 1,
-      padding: 4,
+      padding: 5,
     },
     tabSegmentWrapper: {
       flexDirection: "row",
@@ -629,10 +611,12 @@ function createStyles(theme: AppTheme) {
     },
     tabBtn: {
       alignItems: "center",
-      borderRadius: theme.borderRadius.medium - 2,
+      borderRadius: theme.borderRadius.medium,
       flex: 1,
       justifyContent: "center",
-      paddingVertical: 9,
+      minHeight: 48,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
     },
     tabBtnExpense: {
       backgroundColor: theme.colors.danger,
@@ -642,44 +626,54 @@ function createStyles(theme: AppTheme) {
     },
     tabText: {
       color: theme.colors.textSecondary,
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: "700",
     },
     tabTextActive: {
-      color: "#FFFFFF",
+      color: theme.colors.onPrimary,
     },
     headerInfo: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingVertical: 4,
+      gap: theme.spacing.sm,
     },
     headerCountBadge: {
       alignItems: "center",
-      borderRadius: 20,
-      borderWidth: 1,
       flexDirection: "row",
       gap: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingVertical: 2,
     },
     headerCountText: {
-      fontSize: 12,
+      fontSize: 16,
       fontWeight: "700",
     },
     headerActions: {
+      alignItems: "center",
       flexDirection: "row",
+      flexWrap: "wrap",
       gap: 8,
     },
     headerActionBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.surface,
+      backgroundColor: theme.colors.surfaceMuted,
       borderRadius: 8,
       borderWidth: 1,
       flexDirection: "row",
       gap: 5,
+      minHeight: 42,
       paddingHorizontal: 10,
       paddingVertical: 6,
+    },
+    newGroupBtn: {
+      alignItems: "center",
+      borderRadius: 8,
+      borderWidth: 1.5,
+      flexDirection: "row",
+      gap: 5,
+      minHeight: 42,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    headerActionPressed: {
+      opacity: 0.7,
     },
     headerActionBtnText: {
       fontSize: 12,
@@ -715,7 +709,7 @@ function createStyles(theme: AppTheme) {
     groupCard: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.large,
+      borderRadius: 24,
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
@@ -724,63 +718,50 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      padding: theme.spacing.md,
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.lg,
     },
     groupLeft: {
       alignItems: "center",
       flex: 1,
       flexDirection: "row",
-      gap: 12,
+      gap: theme.spacing.md,
+      minWidth: 0,
+    },
+    groupLeftPressed: {
+      opacity: 0.72,
     },
     groupIconBadge: {
       alignItems: "center",
-      borderRadius: 12,
+      borderRadius: 18,
       borderWidth: 1,
-      height: 42,
+      height: 60,
       justifyContent: "center",
-      width: 42,
+      width: 60,
     },
     groupTitleCol: {
       flex: 1,
       gap: 2,
     },
-    groupTitleRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 8,
-    },
     groupNameText: {
       color: theme.colors.textPrimary,
-      fontSize: 15,
-      fontWeight: "600",
-    },
-    systemTag: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: 4,
-      borderWidth: 1,
-      paddingHorizontal: 6,
-      paddingVertical: 1,
-    },
-    systemTagText: {
-      color: theme.colors.textMuted,
-      fontSize: 10,
-      fontWeight: "600",
-      textTransform: "uppercase",
-    },
-    subCountRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 4,
+      fontSize: 20,
+      fontWeight: "700",
     },
     subCountText: {
       color: theme.colors.textSecondary,
-      fontSize: 12,
+      fontSize: 14,
+    },
+    collapseBtn: {
+      alignItems: "center",
+      height: 42,
+      justifyContent: "center",
+      width: 36,
     },
     groupActions: {
       alignItems: "center",
       flexDirection: "row",
-      gap: 6,
+      gap: 8,
     },
     actionIconBtn: {
       alignItems: "center",
@@ -788,76 +769,67 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: 8,
       borderWidth: 1,
-      height: 32,
+      height: 42,
       justifyContent: "center",
-      width: 32,
+      width: 42,
     },
     addSubBtn: {
       borderColor: "transparent",
     },
-    deleteActionBtn: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: `${theme.colors.danger}40`,
+    plainActionBtn: {
+      alignItems: "center",
+      height: 42,
+      justifyContent: "center",
+      width: 36,
+    },
+    groupActionPressed: {
+      opacity: 0.65,
     },
     subList: {
       backgroundColor: theme.colors.surfaceMuted,
       borderTopColor: theme.colors.border,
       borderTopWidth: 1,
-      paddingHorizontal: 16,
-      paddingVertical: 4,
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.sm,
     },
     subRow: {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingVertical: 8,
-    },
-    subRowBorder: {
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      minHeight: 56,
+      paddingVertical: theme.spacing.xs,
     },
     subLeft: {
       alignItems: "center",
       flex: 1,
       flexDirection: "row",
-      gap: 8,
-    },
-    subTreeSymbol: {
-      color: theme.colors.textMuted,
-      fontSize: 13,
-      marginLeft: 2,
+      gap: theme.spacing.md,
     },
     subIconWrap: {
       alignItems: "center",
-      borderRadius: 6,
+      borderRadius: 9,
       borderWidth: 1,
-      height: 26,
+      height: 40,
       justifyContent: "center",
-      width: 26,
+      width: 40,
     },
     subName: {
       color: theme.colors.textPrimary,
-      fontSize: 13,
-      fontWeight: "500",
+      fontSize: 16,
+      fontWeight: "600",
     },
     subActions: {
       alignItems: "center",
       flexDirection: "row",
-      gap: 6,
+      gap: theme.spacing.md,
     },
     subActionIconBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: 6,
-      borderWidth: 1,
-      height: 24,
+      height: 40,
       justifyContent: "center",
-      width: 24,
+      width: 32,
     },
     subDeleteBtn: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: `${theme.colors.danger}40`,
     },
   });
 }

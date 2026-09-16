@@ -37,3 +37,13 @@ export function reorderAccountsList(orderedIds: string[]): void {
     });
   });
 }
+
+export function reorderAccountTypesList(orderedIds: string[]): void {
+  if (!orderedIds || orderedIds.length === 0) return;
+  db.transaction((tx) => {
+    const now = new Date();
+    orderedIds.forEach((id, sortOrder) => {
+      updateAccountTypeRecord(id, { sortOrder, updatedAt: now }, tx);
+    });
+  });
+}

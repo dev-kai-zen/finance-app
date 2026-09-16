@@ -6,8 +6,8 @@ import { setAccountArchived } from "@/modules/accounts/services/archive-account.
 import { deleteAccountType } from "@/modules/accounts/services/delete-account-type.service";
 import {
   moveAccount,
-  moveAccountType,
   reorderAccountsList,
+  reorderAccountTypesList,
 } from "@/modules/accounts/services/reorder-accounts.service";
 import { accountErrorMessage, type AccountInput, type AccountTypeInput } from "@/modules/accounts/schemas/account.schema";
 
@@ -41,8 +41,8 @@ export function useAccountMutations(onSuccess: () => void) {
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),
     deleteType: (id: string) => run(() => deleteAccountType(id)),
     moveAccount: (id: string, direction: -1 | 1) => run(() => moveAccount(id, direction)),
-    moveType: (id: string, direction: -1 | 1) => run(() => moveAccountType(id, direction)),
     reorderAccounts: (orderedIds: string[]) => run(() => reorderAccountsList(orderedIds)),
+    reorderAccountTypes: (orderedIds: string[]) => run(() => reorderAccountTypesList(orderedIds)),
   };
 }
 export type AccountMutations = ReturnType<typeof useAccountMutations>;

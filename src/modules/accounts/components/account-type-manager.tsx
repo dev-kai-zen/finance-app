@@ -6,8 +6,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { Plus } from "lucide-react-native";
+import { ConfirmModal, IconHelper, InfoModal } from "@/components";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
+import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
@@ -38,12 +39,15 @@ export function AccountTypeManager({
   const [group, setGroup] = useState<AccountGroup>("asset");
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
+  const [reorderVisible, setReorderVisible] = useState(false);
 
   const visibleTypes = types.filter((t) => t.accountGroup === group);
+  const activeColor = group === "asset" ? theme.colors.success : theme.colors.danger;
 
   const back = () => {
     setEditor(null);
     setDeleting(null);
+    setReorderVisible(false);
     mutations.clearError();
   };
 
@@ -66,99 +70,124 @@ export function AccountTypeManager({
     const linkedCount = accounts.filter((a) => a.accountTypeId === deleting.id).length;
     const canDelete = linkedCount === 0;
 
+    if (!canDelete) {
+      return (
+        <InfoModal
+          message={
+            linkedCount === 1
+              ? "This group has 1 linked account. Reassign or remove it before deleting the group."
+              : `This group has ${linkedCount} linked accounts. Reassign or remove them before deleting the group.`
+          }
+          onClose={back}
+          title="Cannot Delete Account Type"
+          variant="error"
+          visible
+        />
+      );
+    }
+
     return (
-      <FullScreenFormModal
+      <ConfirmModal
+        cancelLabel="Cancel"
+        confirmLabel="Delete group"
+        message={`Delete "${deleting.name}" account group permanently? This cannot be undone.`}
+        onCancel={back}
+        onConfirm={() => {
+          void mutations.deleteType(deleting.id).then((saved) => {
+            if (saved) back();
+          });
+        }}
         pending={mutations.pending}
         title="Delete Account Type?"
         visible
-        onClose={back}
-      >
-        <View style={styles.formContent}>
-          <Text style={styles.heading}>{deleting.name}</Text>
-          {canDelete ? (
-            <>
-              <Text style={styles.bodyText}>
-                Delete this account group permanently? This cannot be undone.
-              </Text>
-              <Pressable
-                disabled={mutations.pending}
-                onPress={() => {
-                  void mutations.deleteType(deleting.id).then((saved) => {
-                    if (saved) back();
-                  });
-                }}
-                style={[styles.dangerBtn, mutations.pending && styles.btnDisabled]}
-              >
-                <Text style={styles.dangerBtnText}>Delete group</Text>
-              </Pressable>
-            </>
-          ) : (
-            <Text style={styles.bodyText}>
-              {linkedCount === 1
-                ? "This group has 1 linked account. Reassign or remove it before deleting the group."
-                : `This group has ${linkedCount} linked accounts. Reassign or remove them before deleting the group.`}
-            </Text>
-          )}
-          <Pressable disabled={mutations.pending} onPress={back} style={styles.secondaryBtn}>
-            <Text style={styles.secondaryBtnText}>Cancel</Text>
-          </Pressable>
-        </View>
-      </FullScreenFormModal>
+      />
     );
   }
 
   return (
-    <FullScreenFormModal pending={mutations.pending} title="Account Group Setup" visible onClose={onClose}>
-      <ScrollView contentContainerStyle={styles.formContent}>
-        {mutations.error ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{mutations.error}</Text>
-          </View>
-        ) : null}
+    <>
+      <FullScreenFormModal
+        pending={mutations.pending}
+        title="Account Group Setup"
+        visible
+        onClose={onClose}
+      >
+        <ScrollView contentContainerStyle={styles.formContent}>
+          {mutations.error ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{mutations.error}</Text>
+            </View>
+          ) : null}
 
-        <View style={styles.segmentRow}>
-          {(["asset", "liability"] as const).map((item) => (
-            <Pressable
-              key={item}
-              disabled={mutations.pending}
-              onPress={() => setGroup(item)}
-              style={[
-                styles.segment,
-                group === item &&
-                  (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
-              ]}
-            >
-              <Text
+          <View style={styles.segmentRow}>
+            {(["asset", "liability"] as const).map((item) => (
+              <Pressable
+                key={item}
+                disabled={mutations.pending}
+                onPress={() => setGroup(item)}
                 style={[
-                  styles.segmentText,
-                  group === item && styles.segmentTextActive,
+                  styles.segment,
+                  group === item &&
+                    (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
                 ]}
               >
-                {item === "asset" ? "Assets" : "Liabilities"}
-              </Text>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    group === item && styles.segmentTextActive,
+                  ]}
+                >
+                  {item === "asset" ? "Assets" : "Liabilities"}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.toolbar}>
+            {visibleTypes.length > 1 ? (
+                <Pressable
+                  accessibilityLabel="Reorder account groups"
+                  accessibilityRole="button"
+                  disabled={mutations.pending}
+                  onPress={() => setReorderVisible(true)}
+                  style={({ pressed }) => [
+                    styles.toolbarChip,
+                    { borderColor: `${activeColor}55` },
+                    pressed && styles.toolbarChipPressed,
+                  ]}
+                >
+                  <IconHelper color={activeColor} name="arrow-up-down" size={15} />
+                  <Text style={[styles.toolbarChipText, { color: activeColor }]}>Reorder</Text>
+                </Pressable>
+            ) : null}
+
+            <Pressable
+              accessibilityLabel="New Account Group"
+              accessibilityRole="button"
+              disabled={mutations.pending}
+              onPress={() => {
+                mutations.clearError();
+                setEditor({});
+              }}
+              style={({ pressed }) => [
+                styles.toolbarChip,
+                styles.newGroupChip,
+                { borderColor: activeColor },
+                pressed && styles.toolbarChipPressed,
+              ]}
+            >
+              <IconHelper color={activeColor} name="plus" size={15} />
+              <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
             </Pressable>
-          ))}
-        </View>
+          </View>
 
-        <Pressable
-          disabled={mutations.pending}
-          onPress={() => {
-            mutations.clearError();
-            setEditor({});
-          }}
-          style={styles.addBtn}
-        >
-          <Plus color={theme.colors.onPrimary} size={18} />
-          <Text style={styles.addBtnText}>New account type</Text>
-        </Pressable>
-
-        {visibleTypes.length === 0 ? (
-          <Text style={styles.emptyText}>No types in this group.</Text>
-        ) : (
-          visibleTypes.map((type, index) => {
-            const protectedType = isProtectedAccountType(type);
-            return (
-              <View key={type.id} style={styles.typeCard}>
+          {visibleTypes.length === 0 ? (
+            <Text style={styles.emptyText}>No types in this group.</Text>
+          ) : (
+            visibleTypes.map((type, index) => {
+              const protectedType = isProtectedAccountType(type);
+              return (
+                <View key={type.id} style={styles.typeCard}>
                 <View style={styles.typeHeader}>
                   <AccountTypeBadge color={type.color ?? null} iconKey={type.iconKey} />
                   <View style={styles.typeInfo}>
@@ -181,26 +210,6 @@ export function AccountTypeManager({
                   >
                     <Text style={styles.actionChipText}>Edit</Text>
                   </Pressable>
-                  <Pressable
-                    disabled={mutations.pending || index === 0}
-                    onPress={() => {
-                      void mutations.moveType(type.id, -1);
-                    }}
-                    style={styles.actionChip}
-                  >
-                    <Text style={styles.actionChipText}>Move up</Text>
-                  </Pressable>
-                  <Pressable
-                    disabled={
-                      mutations.pending || index === visibleTypes.length - 1
-                    }
-                    onPress={() => {
-                      void mutations.moveType(type.id, 1);
-                    }}
-                    style={styles.actionChip}
-                  >
-                    <Text style={styles.actionChipText}>Move down</Text>
-                  </Pressable>
                   {!protectedType ? (
                     <Pressable
                       disabled={mutations.pending}
@@ -214,12 +223,29 @@ export function AccountTypeManager({
                     </Pressable>
                   ) : null}
                 </View>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
-    </FullScreenFormModal>
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+      </FullScreenFormModal>
+
+      <SortableListModal
+        items={visibleTypes.map((type) => ({
+          id: type.id,
+          name: type.name,
+          icon: type.iconKey,
+          color: type.color,
+        }))}
+        onClose={() => setReorderVisible(false)}
+        onSave={async (orderedIds) => {
+          await mutations.reorderAccountTypes(orderedIds);
+        }}
+        title={`Reorder ${group === "asset" ? "Asset" : "Liability"} Groups`}
+        visible={reorderVisible}
+      />
+
+    </>
   );
 }
 
@@ -269,19 +295,32 @@ function createStyles(theme: AppTheme) {
     segmentTextActive: {
       color: theme.colors.onPrimary,
     },
-    addBtn: {
+    toolbar: {
       alignItems: "center",
-      alignSelf: "flex-start",
-      backgroundColor: theme.colors.primary,
-      borderRadius: 999,
       flexDirection: "row",
-      gap: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
+      flexWrap: "nowrap",
+      gap: theme.spacing.sm,
     },
-    addBtnText: {
-      color: theme.colors.onPrimary,
-      fontWeight: theme.typography.fontWeight.bold,
+    toolbarChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+    },
+    newGroupChip: {
+      backgroundColor: "transparent",
+    },
+    toolbarChipPressed: {
+      opacity: 0.7,
+    },
+    toolbarChipText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     emptyText: {
       color: theme.colors.textMuted,
@@ -338,39 +377,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    heading: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    bodyText: {
-      color: theme.colors.textSecondary,
-      lineHeight: 22,
-    },
-    dangerBtn: {
-      alignItems: "center",
-      backgroundColor: theme.colors.danger,
-      borderRadius: theme.borderRadius.medium,
-      padding: theme.spacing.md,
-    },
-    dangerBtnText: {
-      color: theme.colors.onPrimary,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    secondaryBtn: {
-      alignItems: "center",
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    secondaryBtnText: {
-      color: theme.colors.textPrimary,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    btnDisabled: {
-      opacity: 0.6,
     },
   });
 }

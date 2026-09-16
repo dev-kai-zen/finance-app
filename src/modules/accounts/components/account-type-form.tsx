@@ -3,7 +3,12 @@ import { View } from "react-native";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountGroup, AccountType } from "@/modules/accounts/types/account.types";
 import type { AccountTypeInput } from "@/modules/accounts/schemas/account.schema";
-import { ACCOUNT_COLOR_KEYS, ACCOUNT_ICON_KEYS, accountIcon } from "@/modules/accounts/constants/account-appearance.constants";
+import {
+  ACCOUNT_COLOR_KEYS,
+  ACCOUNT_DEFAULT_COLOR_IDS,
+  ACCOUNT_ICON_KEYS,
+  accountIcon,
+} from "@/modules/accounts/constants/account-appearance.constants";
 import { isProtectedAccountType } from "@/modules/accounts/utils/account-type-protection";
 import { AccountButton, AccountField, AccountText, accountStyles } from "@/modules/accounts/components/account-ui";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
@@ -19,7 +24,7 @@ export function AccountTypeForm({ type, initialGroup, pending, onSave, onCancel 
     color:
       ACCOUNT_COLOR_KEYS.find(
         (key) => key === type?.hexColorsId || `color_${key}` === type?.hexColorsId,
-      ) ?? "slate",
+      ) ?? (type ? "slate" : ACCOUNT_DEFAULT_COLOR_IDS[initialGroup].replace("color_", "")),
   });
   const protectedType = type ? isProtectedAccountType(type) : false;
   return <View style={s.section}>
@@ -35,7 +40,11 @@ export function AccountTypeForm({ type, initialGroup, pending, onSave, onCancel 
     <View style={s.row}>
       {(["asset", "liability"] as const).map((group) => <AccountButton key={group}
         label={group === "asset" ? "Asset" : "Liability"} selected={value.accountGroup === group} disabled={pending || protectedType}
-        onPress={() => setValue((prev) => ({ ...prev, accountGroup: group }))} />)}
+        onPress={() => setValue((prev) => ({
+          ...prev,
+          accountGroup: group,
+          color: type ? prev.color : ACCOUNT_DEFAULT_COLOR_IDS[group].replace("color_", ""),
+        }))} />)}
     </View>
     <AccountText>Icon</AccountText>
     <View style={s.row}>

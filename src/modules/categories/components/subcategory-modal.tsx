@@ -10,11 +10,16 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper, IconPickerModal } from "@/components";
-import { useHexColors } from "@/modules/hex-colors";
+import {
+  HexColorFormModal,
+  type HexColorInput,
+  useHexColors,
+} from "@/modules/hex-colors";
 import type { Category, CategoryInput } from "../types/category.types";
 
 export interface SubcategoryModalProps {
@@ -42,12 +47,17 @@ export function SubcategoryModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const { colors: hexColorsList, refresh: refreshHexColors } = useHexColors();
+  const {
+    colors: hexColorsList,
+    refresh: refreshHexColors,
+    addColor,
+  } = useHexColors();
 
   const [name, setName] = useState("");
   const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   const parentHexObj = hexColorsList.find(
@@ -67,36 +77,28 @@ export function SubcategoryModal({
   }, [visible, refreshHexColors]);
 
   useEffect(() => {
-    if (visible) {
-      if (subcategoryToEdit) {
-        setName(subcategoryToEdit.name);
-        const match = hexColorsList.find(
-          (entry) =>
-            entry.id === subcategoryToEdit.hexColorsId ||
-            entry.hex.toUpperCase() === (subcategoryToEdit.color ?? "").toUpperCase(),
-        );
-        const parentMatch = hexColorsList.find(
-          (entry) =>
-            entry.id === parentCategory?.hexColorsId ||
-            entry.hex.toUpperCase() === (parentCategory?.color ?? "").toUpperCase(),
-        );
-        setHexColorsId(
-          match?.id ?? parentMatch?.id ?? subcategoryToEdit.hexColorsId ?? "color_slate",
-        );
-        setSelectedIcon(subcategoryToEdit.icon ?? "tag");
-      } else {
-        setName("");
-        const parentMatch = hexColorsList.find(
-          (entry) =>
-            entry.id === parentCategory?.hexColorsId ||
-            entry.hex.toUpperCase() === (parentCategory?.color ?? "").toUpperCase(),
-        );
-        setHexColorsId(parentMatch?.id ?? "color_slate");
-        setSelectedIcon("tag");
-      }
-      setLocalError(null);
+    if (!visible) return;
+
+    if (subcategoryToEdit) {
+      setName(subcategoryToEdit.name);
+      setHexColorsId(
+        subcategoryToEdit.hexColorsId ?? parentCategory?.hexColorsId ?? "color_slate",
+      );
+      setSelectedIcon(subcategoryToEdit.icon ?? "tag");
+    } else {
+      setName("");
+      setHexColorsId(parentCategory?.hexColorsId ?? "color_slate");
+      setSelectedIcon("tag");
     }
-  }, [visible, subcategoryToEdit, parentCategory, hexColorsList]);
+    setIsColorFormOpen(false);
+    setLocalError(null);
+  }, [visible, subcategoryToEdit, parentCategory]);
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    setHexColorsId(created.id);
+    return true;
+  };
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -294,7 +296,20 @@ export function SubcategoryModal({
 
             {/* Theme Color Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>THEME COLOR</Text>
+              <View style={styles.colorHeaderRow}>
+                <Text style={[styles.fieldLabel, styles.fieldLabelInline]}>THEME COLOR</Text>
+                <View style={styles.selectedColorBadge}>
+                  <View
+                    style={[styles.selectedColorDot, { backgroundColor: categoricalColor }]}
+                  />
+                  <Text style={styles.selectedColorText}>
+                    {categoricalColor.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.colorHelperText}>
+                Select a palette color or create your own custom color.
+              </Text>
               <View style={styles.colorPalette}>
                 {hexColorsList.map((entry) => {
                   const isSelected = hexColorsId === entry.id;
@@ -317,6 +332,18 @@ export function SubcategoryModal({
                     </Pressable>
                   );
                 })}
+                <Pressable
+                  accessibilityLabel="Add custom color"
+                  accessibilityRole="button"
+                  onPress={() => setIsColorFormOpen(true)}
+                  style={({ pressed }) => [
+                    styles.addColorSwatch,
+                    { borderColor: theme.colors.primary },
+                    pressed && styles.addColorSwatchPressed,
+                  ]}
+                >
+                  <Plus color={theme.colors.primary} size={22} strokeWidth={2.5} />
+                </Pressable>
               </View>
             </View>
           </ScrollView>
@@ -362,6 +389,12 @@ export function SubcategoryModal({
         }}
         selectedIcon={selectedIcon}
         visible={isIconPickerOpen}
+      />
+
+      <HexColorFormModal
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
       />
     </Modal>
   );
@@ -494,6 +527,9 @@ function createStyles(theme: AppTheme) {
       letterSpacing: 0.5,
       marginBottom: 8,
     },
+    fieldLabelInline: {
+      marginBottom: 0,
+    },
     textInput: {
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.borderStrong,
@@ -557,6 +593,39 @@ function createStyles(theme: AppTheme) {
       flexWrap: "wrap",
       gap: 12,
     },
+    colorHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    colorHelperText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      marginBottom: 8,
+      marginTop: -2,
+    },
+    selectedColorBadge: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 999,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    selectedColorDot: {
+      borderRadius: 999,
+      height: 12,
+      width: 12,
+    },
+    selectedColorText: {
+      color: theme.colors.textPrimary,
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 0.4,
+    },
     colorSwatch: {
       alignItems: "center",
       borderRadius: 18,
@@ -568,6 +637,19 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.surface,
       borderWidth: 3,
       ...theme.shadows.card,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderRadius: 18,
+      borderStyle: "dashed",
+      borderWidth: 2,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    addColorSwatchPressed: {
+      opacity: 0.65,
+      transform: [{ scale: 0.96 }],
     },
     colorCheckMark: {
       color: "#FFFFFF",

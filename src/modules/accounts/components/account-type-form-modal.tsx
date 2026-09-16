@@ -11,6 +11,7 @@ import { Check } from "lucide-react-native";
 import { ConfirmModal, FullScreenFormModal, IconHelper, IconPickerModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { ACCOUNT_DEFAULT_COLOR_IDS } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
   AccountGroup,
@@ -72,7 +73,7 @@ export function AccountTypeFormModal({
         setName("");
         setAccountGroup(initialGroup);
         setIconKey("landmark");
-        setHexColorsId(initialGroup === "liability" ? "color_amber" : "color_blue");
+        setHexColorsId(ACCOUNT_DEFAULT_COLOR_IDS[initialGroup]);
       }
       setLocalError(null);
       setIsConfirmDeleteOpen(false);
@@ -85,6 +86,13 @@ export function AccountTypeFormModal({
   const linkedAccountsCount = type
     ? accounts.filter((a) => a.accountTypeId === type.id).length
     : 0;
+
+  const handleAccountGroupChange = (nextGroup: AccountGroup) => {
+    setAccountGroup(nextGroup);
+    if (!isEditing && nextGroup !== accountGroup) {
+      setHexColorsId(ACCOUNT_DEFAULT_COLOR_IDS[nextGroup]);
+    }
+  };
 
   const handleSave = async () => {
     const trimmed = name.trim();
@@ -188,7 +196,7 @@ export function AccountTypeFormModal({
                 accessibilityLabel="Set as Asset"
                 accessibilityRole="button"
                 disabled={mutations.pending || isProtected}
-                onPress={() => setAccountGroup("asset")}
+                onPress={() => handleAccountGroupChange("asset")}
                 style={[
                   styles.segmentOption,
                   accountGroup === "asset" && styles.segmentOptionActiveAsset,
@@ -209,7 +217,7 @@ export function AccountTypeFormModal({
                 accessibilityLabel="Set as Liability"
                 accessibilityRole="button"
                 disabled={mutations.pending || isProtected}
-                onPress={() => setAccountGroup("liability")}
+                onPress={() => handleAccountGroupChange("liability")}
                 style={[
                   styles.segmentOption,
                   accountGroup === "liability" && styles.segmentOptionActiveLiability,
