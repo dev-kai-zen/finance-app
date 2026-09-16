@@ -45,7 +45,6 @@ export const DEFAULT_SEED_CATEGORIES: (CategoryInput & { id: string; isSystem: b
   // Expense groups
   { id: "cat_exp_housing", name: "Housing", type: "expense", color: "blue", icon: "home", isSystem: false },
   { id: "cat_exp_food", name: "Food & Dining", type: "expense", color: "orange", icon: "utensils", isSystem: false },
-  { id: "cat_exp_groceries", name: "Groceries", type: "expense", color: "green", icon: "shopping-cart", isSystem: false },
   { id: "cat_exp_transport", name: "Transportation", type: "expense", color: "red", icon: "car", isSystem: false },
   { id: "cat_exp_utilities", name: "Utilities & Bills", type: "expense", color: "amber", icon: "zap", isSystem: false },
   { id: "cat_exp_shopping", name: "Shopping", type: "expense", color: "pink", icon: "tag", isSystem: false },

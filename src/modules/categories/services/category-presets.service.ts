@@ -11,6 +11,7 @@ import {
 
 const EXPENSE_FALLBACK_ID = "cat_exp_others";
 const INCOME_FALLBACK_ID = "cat_inc_others";
+const REMOVED_PRESET_IDS = ["cat_exp_groceries"] as const;
 
 export async function loadCategoryPresets(client: AppDatabase = db): Promise<void> {
   await client.transaction(async (tx) => {
@@ -27,10 +28,14 @@ export async function deleteCategoryPresets(
   const deletablePresets = DEFAULT_SEED_CATEGORIES.filter(
     (category) => !isProtectedCategoryId(category.id),
   );
-  const presetIds = deletablePresets.map((category) => category.id);
+  const presetIds = [
+    ...deletablePresets.map((category) => category.id),
+    ...REMOVED_PRESET_IDS,
+  ];
   const presetGroupIds = deletablePresets
     .filter((category) => !category.parentId)
-    .map((category) => category.id);
+    .map((category) => category.id)
+    .concat([...REMOVED_PRESET_IDS]);
 
   await client.transaction(async (tx) => {
     await detachCustomChildrenFromPresetGroups(tx, presetGroupIds, presetIds);
@@ -50,6 +55,12 @@ export async function deleteCategoryPresets(
         category.id,
         category.type === "income" ? INCOME_FALLBACK_ID : EXPENSE_FALLBACK_ID,
       );
+    }
+
+    // Remove the old standalone Groceries preset from databases created by
+    // the previous preset set.
+    for (const id of REMOVED_PRESET_IDS) {
+      await deleteCategoryPresetData(tx, id, EXPENSE_FALLBACK_ID);
     }
   });
 }
