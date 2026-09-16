@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
   StyleSheet,
@@ -179,6 +180,7 @@ export function AmountCalculatorModal({
 
   useEffect(() => {
     if (visible) {
+      Keyboard.dismiss();
       if (initialMinorUnits !== 0 && initialMinorUnits !== undefined) {
         setExpression((initialMinorUnits / 100).toFixed(2));
       } else {

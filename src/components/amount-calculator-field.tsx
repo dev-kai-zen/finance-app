@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ArrowLeftRight, Calculator } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Keyboard, Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
@@ -32,6 +32,11 @@ export function AmountCalculatorField({
 }: AmountCalculatorFieldProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+
+  const handleOpenCalculator = () => {
+    Keyboard.dismiss();
+    onOpenCalculator();
+  };
 
   const absMinorUnits = Math.abs(amountMinorUnits);
   const major = Math.floor(absMinorUnits / 100);
@@ -84,7 +89,7 @@ export function AmountCalculatorField({
             accessibilityLabel={`Amount ${displayAmount}. Open calculator.`}
             accessibilityRole="button"
             disabled={disabled}
-            onPress={onOpenCalculator}
+            onPress={handleOpenCalculator}
             style={styles.amountTapArea}
           >
             <Text style={styles.amountValue}>{displayAmount}</Text>
@@ -94,7 +99,7 @@ export function AmountCalculatorField({
             accessibilityLabel="Open calculator"
             accessibilityRole="button"
             disabled={disabled}
-            onPress={onOpenCalculator}
+            onPress={handleOpenCalculator}
             style={styles.calcCircle}
           >
             <Calculator color={theme.colors.onPrimary} size={18} />
