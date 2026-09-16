@@ -1,7 +1,10 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, notInArray } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
-import { categories, hexColors } from "@/infrastructure/database/schema";
-import { DEFAULT_SEED_CATEGORIES } from "../constants/categories.constants";
+import { categories, hexColors, transactions } from "@/infrastructure/database/schema";
+import {
+  DEFAULT_SEED_CATEGORIES,
+  isProtectedCategoryId,
+} from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 function mapCategory(
@@ -127,6 +130,19 @@ export async function getCategoryByNameAndType(
   return found ? mapCategory(found.category, found.hexColor) : null;
 }
 
+export async function hasSubcategories(
+  db: DbContext,
+  parentId: string,
+): Promise<boolean> {
+  const child = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(eq(categories.parentId, parentId))
+    .limit(1);
+
+  return child.length > 0;
+}
+
 export async function insertCategory(
   db: DbContext,
   input: CategoryInput & { id: string; isSystem?: boolean },
@@ -207,7 +223,7 @@ export async function deleteCategory(
   id: string,
 ): Promise<boolean> {
   const existing = await getCategoryById(db, id);
-  if (!existing || existing.isSystem) {
+  if (!existing || isProtectedCategoryId(existing.id)) {
     return false;
   }
 
@@ -217,22 +233,79 @@ export async function deleteCategory(
 
 export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void> {
   const now = new Date();
-  const seedRecords = DEFAULT_SEED_CATEGORIES.map((cat, idx) => ({
-    id: cat.id,
-    name: cat.name,
-    type: cat.type,
-    hexColorsId: cat.hexColorsId ?? (cat.color ? `color_${cat.color}` : "color_slate"),
-    icon: cat.icon ?? "tag",
-    parentId: cat.parentId ?? null,
-    isSystem: cat.isSystem,
-    sortOrder: idx,
-    createdAt: now,
-    updatedAt: now,
-  }));
+  const existing = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .limit(1);
 
-  for (const record of seedRecords) {
-    await db.insert(categories).values(record).onConflictDoNothing();
+  if (existing.length === 0) {
+    for (const [idx, cat] of DEFAULT_SEED_CATEGORIES.entries()) {
+      await insertCategoryPreset(db, cat, idx, now);
+    }
   }
+
+  // Existing databases may have older preset rows marked as system. Keep only
+  // the two fallback categories protected when the category list is refreshed.
+  for (const cat of DEFAULT_SEED_CATEGORIES) {
+    await db
+      .update(categories)
+      .set({ isSystem: cat.isSystem })
+      .where(and(eq(categories.id, cat.id), ne(categories.isSystem, cat.isSystem)));
+  }
+}
+
+export async function insertCategoryPreset(
+  db: DbContext,
+  cat: CategoryInput & { id: string; isSystem: boolean },
+  sortOrder: number,
+  now = new Date(),
+): Promise<void> {
+  await db
+    .insert(categories)
+    .values({
+      id: cat.id,
+      name: cat.name,
+      type: cat.type,
+      hexColorsId: cat.hexColorsId ?? (cat.color ? `color_${cat.color}` : "color_slate"),
+      icon: cat.icon ?? "tag",
+      parentId: cat.parentId ?? null,
+      isSystem: cat.isSystem,
+      sortOrder,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoNothing();
+}
+
+export async function detachCustomChildrenFromPresetGroups(
+  db: DbContext,
+  parentIds: string[],
+  presetIds: string[],
+): Promise<void> {
+  if (parentIds.length === 0 || presetIds.length === 0) return;
+
+  await db
+    .update(categories)
+    .set({ parentId: null, updatedAt: new Date() })
+    .where(
+      and(
+        inArray(categories.parentId, parentIds),
+        notInArray(categories.id, presetIds),
+      ),
+    );
+}
+
+export async function deleteCategoryPresetData(
+  db: DbContext,
+  id: string,
+  fallbackId: string,
+): Promise<void> {
+  await db
+    .update(transactions)
+    .set({ categoryId: fallbackId, updatedAt: new Date() })
+    .where(eq(transactions.categoryId, id));
+
+  await db.delete(categories).where(eq(categories.id, id));
 }
 
 export async function reorderCategoriesInDb(

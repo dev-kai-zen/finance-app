@@ -20,6 +20,7 @@ import {
   type HexColorInput,
   useHexColors,
 } from "@/modules/hex-colors";
+import { CATEGORY_DEFAULT_COLOR_IDS } from "@/modules/categories/constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 export interface CategoryGroupModalProps {
@@ -80,12 +81,19 @@ export function CategoryGroupModal({
     } else {
       setName("");
       setType(initialType);
-      setHexColorsId(initialType === "income" ? "color_green" : "color_orange");
+      setHexColorsId(CATEGORY_DEFAULT_COLOR_IDS[initialType]);
       setSelectedIcon("tag");
     }
     setIsColorFormOpen(false);
     setLocalError(null);
   }, [visible, categoryToEdit, initialType]);
+
+  const handleTypeChange = (nextType: CategoryType) => {
+    setType(nextType);
+    if (!categoryToEdit) {
+      setHexColorsId(CATEGORY_DEFAULT_COLOR_IDS[nextType]);
+    }
+  };
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
@@ -172,7 +180,7 @@ export function CategoryGroupModal({
                   accessibilityLabel="Expense category group"
                   accessibilityRole="button"
                   disabled={Boolean(categoryToEdit?.isSystem)}
-                  onPress={() => setType("expense")}
+                  onPress={() => handleTypeChange("expense")}
                   style={[
                     styles.typeOption,
                     type === "expense" && styles.typeOptionActiveExpense,
@@ -192,7 +200,7 @@ export function CategoryGroupModal({
                   accessibilityLabel="Income category group"
                   accessibilityRole="button"
                   disabled={Boolean(categoryToEdit?.isSystem)}
-                  onPress={() => setType("income")}
+                  onPress={() => handleTypeChange("income")}
                   style={[
                     styles.typeOption,
                     type === "income" && styles.typeOptionActiveIncome,
@@ -479,18 +487,18 @@ function createStyles(theme: AppTheme) {
     typeOption: {
       alignItems: "center",
       borderRadius: 9,
+      borderColor: "transparent",
+      borderWidth: 1,
       flex: 1,
       paddingVertical: 8,
     },
     typeOptionActiveExpense: {
-      backgroundColor: theme.colors.surfaceElevated,
+      backgroundColor: theme.colors.danger,
       borderColor: theme.colors.danger,
-      borderWidth: 1,
     },
     typeOptionActiveIncome: {
-      backgroundColor: theme.colors.surfaceElevated,
+      backgroundColor: theme.colors.success,
       borderColor: theme.colors.success,
-      borderWidth: 1,
     },
     typeOptionText: {
       color: theme.colors.textSecondary,
@@ -498,7 +506,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
     },
     typeOptionTextActive: {
-      color: theme.colors.textPrimary,
+      color: theme.colors.onPrimary,
       fontWeight: "700",
     },
     textInput: {

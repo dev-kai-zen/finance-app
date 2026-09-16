@@ -4,7 +4,9 @@ import { transactions } from "@/infrastructure/database/schema/transactions";
 import {
   deleteCategory as repoDeleteCategory,
   getCategoryById,
+  hasSubcategories,
 } from "../repositories/categories.repository";
+import { isProtectedCategoryId } from "../constants/categories.constants";
 
 export async function deleteCategory(
   id: string,
@@ -15,8 +17,14 @@ export async function deleteCategory(
     throw new Error("Category not found.");
   }
 
-  if (existing.isSystem) {
+  if (isProtectedCategoryId(existing.id)) {
     throw new Error("System default categories are protected and cannot be deleted.");
+  }
+
+  if (await hasSubcategories(client, id)) {
+    throw new Error(
+      "Cannot delete a category group while it has subcategories. Delete the subcategories first, then try again.",
+    );
   }
 
   const fallbackId = existing.type === "income" ? "cat_inc_others" : "cat_exp_others";

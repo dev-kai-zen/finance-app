@@ -4,7 +4,11 @@ import { listCategories } from "../repositories/categories.repository";
 import { saveCategory as saveCategoryService } from "../services/save-category.service";
 import { deleteCategory as deleteCategoryService } from "../services/delete-category.service";
 import { reorderCategories as reorderCategoriesService } from "../services/reorder-categories.service";
-import type { Category, CategoryInput, CategoryType } from "../types/category.types";
+import {
+  deleteCategoryPresets as deleteCategoryPresetsService,
+  loadCategoryPresets as loadCategoryPresetsService,
+} from "../services/category-presets.service";
+import type { Category, CategoryInput } from "../types/category.types";
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -87,39 +91,37 @@ export function useCategories() {
     [refresh],
   );
 
-  const sortAlphabetically = useCallback(
-    async (type: CategoryType, includeSubs: boolean = true): Promise<boolean> => {
-      try {
-        setSaving(true);
-        setError(null);
-        const currentTypeCats = categories.filter((c) => c.type === type);
-        const sortedGroups = [...currentTypeCats].sort((a, b) => a.name.localeCompare(b.name));
-        const groupIds = sortedGroups.map((g) => g.id);
-        await reorderCategoriesService(groupIds);
+  const loadPresets = useCallback(async (): Promise<boolean> => {
+    try {
+      setSaving(true);
+      setError(null);
+      await loadCategoryPresetsService();
+      await refresh();
+      return true;
+    } catch (err: any) {
+      console.error("[useCategories] Load presets failed:", err);
+      setError(err?.message ?? "Failed to load category presets.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [refresh]);
 
-        if (includeSubs) {
-          for (const group of currentTypeCats) {
-            if (group.subcategories && group.subcategories.length > 1) {
-              const sortedSubs = [...group.subcategories].sort((a, b) =>
-                a.name.localeCompare(b.name),
-              );
-              await reorderCategoriesService(sortedSubs.map((s) => s.id));
-            }
-          }
-        }
-
-        await refresh();
-        return true;
-      } catch (err: any) {
-        console.error("[useCategories] Sort A-Z failed:", err);
-        setError(err?.message ?? "Failed to sort categories.");
-        return false;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [categories, refresh],
-  );
+  const removePresets = useCallback(async (): Promise<boolean> => {
+    try {
+      setSaving(true);
+      setError(null);
+      await deleteCategoryPresetsService();
+      await refresh();
+      return true;
+    } catch (err: any) {
+      console.error("[useCategories] Delete presets failed:", err);
+      setError(err?.message ?? "Failed to delete category presets.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  }, [refresh]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -132,7 +134,8 @@ export function useCategories() {
     saveCategory: save,
     deleteCategory: remove,
     reorderCategories: reorder,
-    sortAlphabetically,
+    loadCategoryPresets: loadPresets,
+    deleteCategoryPresets: removePresets,
     clearError,
   };
 }
