@@ -155,6 +155,16 @@ export function listTransactions(
   return grouped;
 }
 
+export function hasTransactions(context: DbContext = db): boolean {
+  return Boolean(
+    context
+      .select({ id: transactions.id })
+      .from(transactions)
+      .limit(1)
+      .get(),
+  );
+}
+
 export function findTransactionById(
   id: string,
   context: DbContext = db,

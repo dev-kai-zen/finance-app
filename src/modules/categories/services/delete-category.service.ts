@@ -27,10 +27,13 @@ export async function deleteCategory(
     );
   }
 
-  const fallbackId = existing.type === "income" ? "cat_inc_others" : "cat_exp_others";
+  const fallbackId =
+    existing.parentId ??
+    (existing.type === "income" ? "cat_inc_others" : "cat_exp_others");
 
   await client.transaction(async (tx) => {
-    // Reassign any transactions linked to this category to the fallback "Others" category
+    // Subcategory transactions return to their parent group. Top-level group
+    // transactions return to the protected "Other" category.
     await tx
       .update(transactions)
       .set({ categoryId: fallbackId, updatedAt: new Date() })

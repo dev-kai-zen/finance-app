@@ -9,6 +9,7 @@ export { createTransfer } from "./services/create-transfer.service";
 export { removeTransaction } from "./services/delete-transaction.service";
 export { updateTransfer } from "./services/update-transfer.service";
 export { getAccountBalanceDeltas } from "./services/get-account-balance-deltas.service";
+export { hasTransactions } from "./services/has-transactions.service";
 export type {
   Transaction,
   TransactionListItem,

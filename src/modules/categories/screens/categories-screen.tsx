@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -17,6 +17,8 @@ import { InfoModal } from "@/components/info-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { hasTransactions } from "@/modules/transactions";
+import { useFocusEffect } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { CategoryGroupCard } from "../components/category-group-card";
 import { CategoryGroupModal } from "../components/category-group-modal";
@@ -42,6 +44,13 @@ export function CategoriesScreen() {
   } = useCategories();
 
   const [selectedType, setSelectedType] = useState<CategoryType>("expense");
+  const [hasExistingTransactions, setHasExistingTransactions] = useState<boolean | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      setHasExistingTransactions(hasTransactions());
+    }, []),
+  );
 
   // Category Group Modal State
   const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
@@ -198,17 +207,19 @@ export function CategoriesScreen() {
               </Text>
             </View>
 
-            <Pressable
-              accessibilityLabel="Manage category presets"
-              accessibilityRole="button"
-              onPress={() => setPresetMenuVisible(true)}
-              style={({ pressed }) => [
-                styles.presetsButton,
-                pressed && styles.headerActionPressed,
-              ]}
-            >
-              <IconHelper color={theme.colors.textSecondary} name="settings-2" size={20} />
-            </Pressable>
+            {hasExistingTransactions === false ? (
+              <Pressable
+                accessibilityLabel="Manage category presets"
+                accessibilityRole="button"
+                onPress={() => setPresetMenuVisible(true)}
+                style={({ pressed }) => [
+                  styles.presetsButton,
+                  pressed && styles.headerActionPressed,
+                ]}
+              >
+                <IconHelper color={theme.colors.textSecondary} name="settings-2" size={20} />
+              </Pressable>
+            ) : null}
           </View>
 
           <View style={styles.headerActions}>
@@ -355,24 +366,26 @@ export function CategoriesScreen() {
         />
       )}
 
-      <ActionBottomSheet
-        items={[
-          {
-            id: "load-category-presets",
-            label: "Load category presets",
-            icon: <IconHelper color={theme.colors.success} name="download" size={20} />,
-            onPress: () => setPresetConfirm("load"),
-          },
-          {
-            id: "delete-category-presets",
-            label: "Delete category presets",
-            icon: <IconHelper color={theme.colors.danger} name="trash-2" size={20} />,
-            onPress: () => setPresetConfirm("delete"),
-          },
-        ]}
-        onClose={() => setPresetMenuVisible(false)}
-        visible={presetMenuVisible}
-      />
+      {hasExistingTransactions === false ? (
+        <ActionBottomSheet
+          items={[
+            {
+              id: "load-category-presets",
+              label: "Load category presets",
+              icon: <IconHelper color={theme.colors.success} name="download" size={20} />,
+              onPress: () => setPresetConfirm("load"),
+            },
+            {
+              id: "delete-category-presets",
+              label: "Delete category presets",
+              icon: <IconHelper color={theme.colors.danger} name="trash-2" size={20} />,
+              onPress: () => setPresetConfirm("delete"),
+            },
+          ]}
+          onClose={() => setPresetMenuVisible(false)}
+          visible={presetMenuVisible}
+        />
+      ) : null}
 
       <ConfirmModal
         cancelLabel="Cancel"
