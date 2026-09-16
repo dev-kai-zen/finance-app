@@ -1,6 +1,11 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, categories, transactions } from "@/infrastructure/database/schema";
+import {
+  accountTypes,
+  accounts,
+  categories,
+  transactions,
+} from "@/infrastructure/database/schema";
 import type {
   NewTransaction,
   Transaction,
@@ -17,10 +22,11 @@ function mapRowToListItem(r: {
   transaction: typeof transactions.$inferSelect;
   accountName: string | null;
   accountCurrency: string | null;
+  accountTypeName: string | null;
   categoryName: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
-}): TransactionListItem {
+}, balanceAfterByTransactionId: ReadonlyMap<string, number>): TransactionListItem {
   return {
     id: r.transaction.id,
     accountId: r.transaction.accountId,
@@ -35,6 +41,9 @@ function mapRowToListItem(r: {
     updatedAt: r.transaction.updatedAt,
     accountName: r.accountName ?? "Unknown Account",
     accountCurrency: r.accountCurrency ?? "PHP",
+    accountTypeName: r.accountTypeName ?? "Account",
+    accountBalanceAfterMinorUnits:
+      balanceAfterByTransactionId.get(r.transaction.id) ?? null,
     categoryName: r.categoryName,
     categoryIcon: r.categoryIcon,
     categoryColor: r.categoryColor
@@ -44,7 +53,58 @@ function mapRowToListItem(r: {
       : null,
     transferAccountId: null,
     transferAccountName: null,
+    transferAccountCurrency: null,
+    transferAccountTypeName: null,
+    destinationBalanceAfterMinorUnits: null,
   };
+}
+
+function getBalanceAfterByTransactionId(
+  context: DbContext = db,
+): Map<string, number> {
+  const rows = context
+    .select({
+      id: transactions.id,
+      accountId: transactions.accountId,
+      amountCents: transactions.amountCents,
+      occurredAt: transactions.occurredAt,
+      createdAt: transactions.createdAt,
+      openingBalanceMinorUnits: accounts.openingBalanceMinorUnits,
+    })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .all();
+
+  const rowsByAccountId = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const accountRows = rowsByAccountId.get(row.accountId) ?? [];
+    accountRows.push(row);
+    rowsByAccountId.set(row.accountId, accountRows);
+  }
+
+  const balanceAfterByTransactionId = new Map<string, number>();
+
+  for (const accountRows of rowsByAccountId.values()) {
+    accountRows.sort((a, b) => {
+      const occurredAtDifference =
+        new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
+      if (occurredAtDifference !== 0) return occurredAtDifference;
+
+      const createdAtDifference =
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (createdAtDifference !== 0) return createdAtDifference;
+
+      return a.id.localeCompare(b.id);
+    });
+
+    let balance = accountRows[0]?.openingBalanceMinorUnits ?? 0;
+    for (const row of accountRows) {
+      balance += row.amountCents;
+      balanceAfterByTransactionId.set(row.id, balance);
+    }
+  }
+
+  return balanceAfterByTransactionId;
 }
 
 function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] {
@@ -81,6 +141,9 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       accountCurrency: outLeg.accountCurrency,
       transferAccountId: inLeg.accountId,
       transferAccountName: inLeg.accountName,
+      transferAccountCurrency: inLeg.accountCurrency,
+      transferAccountTypeName: inLeg.accountTypeName,
+      destinationBalanceAfterMinorUnits: inLeg.accountBalanceAfterMinorUnits,
       amountCents: Math.abs(outLeg.amountCents),
     });
   }
@@ -97,12 +160,14 @@ export function listTransactions(
       transaction: transactions,
       accountName: accounts.name,
       accountCurrency: accounts.currencyCode,
+      accountTypeName: accountTypes.name,
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.hexColorsId,
     })
     .from(transactions)
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt));
 
@@ -130,7 +195,10 @@ export function listTransactions(
   const rows =
     conditions.length > 0 ? query.where(and(...conditions)).all() : query.all();
 
-  const mapped = rows.map(mapRowToListItem);
+  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  const mapped = rows.map((row) =>
+    mapRowToListItem(row, balanceAfterByTransactionId),
+  );
   const grouped = groupTransferRows(mapped);
 
   grouped.sort((a, b) => {

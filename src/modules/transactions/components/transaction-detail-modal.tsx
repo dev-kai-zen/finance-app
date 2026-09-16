@@ -46,17 +46,24 @@ export function TransactionDetailModal({
   const categoryDisplayColor = resolveEntityColor(transaction.categoryColor);
 
   const isIncome = transaction.type === "income";
-  const isExpense = transaction.type === "expense";
   const isTransfer = transaction.type === "transfer";
 
-  const phpResult = formatPhpCurrency(transaction.amountCents, {
-    showPositiveSign: true,
+  const displayAmountCents = isIncome
+    ? Math.abs(transaction.amountCents)
+    : -Math.abs(transaction.amountCents);
+
+  const phpResult = formatPhpCurrency(displayAmountCents, {
+    showPositiveSign: false,
     positiveColor: theme.colors.success,
     negativeColor: theme.colors.danger,
     zeroColor: theme.colors.textMuted,
   });
 
-  const typeColor = isTransfer ? theme.colors.info : phpResult.color;
+  const typeColor = isTransfer
+    ? theme.colors.info
+    : isIncome
+      ? theme.colors.success
+      : theme.colors.danger;
 
   const formattedAmount = isTransfer
     ? formatCurrency(

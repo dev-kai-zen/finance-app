@@ -20,7 +20,6 @@ import {
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
-  PageHeader,
 } from "@/components";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -284,13 +283,6 @@ export function TransactionsScreen() {
     setFeatureModalVisible(true);
   };
 
-  const toggleSortBy = () => {
-    setFilterState((prev) => ({
-      ...prev,
-      sortBy: prev.sortBy === "date" ? "amount" : "date",
-    }));
-  };
-
   const toggleSortOrder = () => {
     setFilterState((prev) => ({
       ...prev,
@@ -309,17 +301,6 @@ export function TransactionsScreen() {
         <FloatingActionButton
           accessibilityLabel="Record new transaction"
           onPress={handleOpenNewTransaction}
-        />
-      }
-      header={
-        <PageHeader
-          breadcrumb="Kaizen Finance / Transactions"
-          primaryAction={{
-            label: "+ Record Transaction",
-            onPress: handleOpenNewTransaction,
-          }}
-          subtitle="Detailed ledger of your income, expenses, and account transfers."
-          title="Transactions"
         />
       }
     >
@@ -357,6 +338,7 @@ export function TransactionsScreen() {
             onPress={() => setIsFilterModalOpen(true)}
             style={[
               styles.actionButton,
+              styles.filterActionButton,
               activeFilterCount > 0 && styles.actionButtonActive,
             ]}
           >
@@ -368,6 +350,14 @@ export function TransactionsScreen() {
               }
               size={18}
             />
+            <Text
+              style={[
+                styles.filterButtonText,
+                activeFilterCount > 0 && styles.filterButtonTextActive,
+              ]}
+            >
+              Filter
+            </Text>
             {activeFilterCount > 0 && (
               <View style={styles.filterBadge}>
                 <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -381,7 +371,7 @@ export function TransactionsScreen() {
             onPress={handleExportCsv}
             style={styles.actionButton}
           >
-            <Download color={theme.colors.textSecondary} size={18} />
+            <Download color={theme.colors.success} size={18} />
           </Pressable>
         </View>
 
@@ -396,15 +386,25 @@ export function TransactionsScreen() {
           </Text>
 
           <View style={styles.sortActionsRow}>
-            {/* Sort Field Pill Toggle */}
+            {/* Sort Field Chips */}
             <Pressable
-              accessibilityLabel={`Sort by ${filterState.sortBy}`}
-              onPress={toggleSortBy}
-              style={styles.sortPill}
+              accessibilityLabel="Sort by date"
+              onPress={() =>
+                setFilterState((prev) => ({ ...prev, sortBy: "date" }))
+              }
+              style={[styles.sortPill, filterState.sortBy === "date" && styles.sortPillActive]}
             >
-              <Text style={styles.sortPillText}>
-                {filterState.sortBy === "date" ? "Date" : "Amount"}
-              </Text>
+              <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Sort by amount"
+              onPress={() =>
+                setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
+              }
+              style={[styles.sortPill, filterState.sortBy === "amount" && styles.sortPillActive]}
+            >
+              <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
             </Pressable>
 
             {/* Sort Order Toggle */}
@@ -414,9 +414,9 @@ export function TransactionsScreen() {
               style={styles.sortOrderButton}
             >
               {filterState.sortOrder === "asc" ? (
-                <ArrowUp color={theme.colors.textSecondary} size={16} />
+                <ArrowUp color={theme.colors.success} size={16} />
               ) : (
-                <ArrowDown color={theme.colors.textSecondary} size={16} />
+                <ArrowDown color={theme.colors.success} size={16} />
               )}
             </Pressable>
           </View>
@@ -456,17 +456,14 @@ export function TransactionsScreen() {
                 </View>
               </View>
 
-              {/* Transactions List inside Date Group Card */}
-              <View style={styles.groupCard}>
-                {group.items.map((tx) => (
-                  <TransactionRow
-                    key={tx.id}
-                    onDelete={handleDelete}
-                    onPress={(item) => setInspectedTransaction(item)}
-                    transaction={tx}
-                  />
-                ))}
-              </View>
+              {group.items.map((tx) => (
+                <TransactionRow
+                  key={tx.id}
+                  onDelete={handleDelete}
+                  onPress={(item) => setInspectedTransaction(item)}
+                  transaction={tx}
+                />
+              ))}
             </View>
           ))
         )}
@@ -535,6 +532,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       gap: theme.spacing.md,
+      paddingTop: theme.spacing.lg,
       paddingBottom: 80,
     },
     searchRow: {
@@ -576,6 +574,19 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: LAYOUT_DIMENSIONS.minTouchTarget,
       ...theme.shadows.card,
+    },
+    filterActionButton: {
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      width: 104,
+    },
+    filterButtonText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    filterButtonTextActive: {
+      color: theme.colors.onPrimary,
     },
     actionButtonActive: {
       backgroundColor: theme.colors.primary,
@@ -628,6 +639,12 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
     },
+    sortPillActive: {
+      borderColor: theme.colors.success,
+    },
+    sortPillTextActive: {
+      color: theme.colors.success,
+    },
     sortOrderButton: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
@@ -649,29 +666,17 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.xs,
     },
     dateGroupTitle: {
-      color: theme.colors.textPrimary,
+      color: theme.colors.success,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     dateCountBadge: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.round,
-      paddingHorizontal: theme.spacing.sm,
       paddingVertical: 2,
     },
     dateCountBadgeText: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
-    },
-    groupCard: {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      gap: theme.spacing.sm,
-      padding: theme.spacing.sm,
-      ...theme.shadows.card,
     },
   });
 }

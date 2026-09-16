@@ -20,16 +20,21 @@ export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt">
   updatedAt?: Date;
 };
 
-export interface TransactionListItem extends Transaction {
-  accountName: string;
-  accountCurrency: string;
-  categoryName: string | null;
-  categoryIcon: string | null;
-  categoryColor: string | null;
-  /** Destination account on grouped transfer rows */
-  transferAccountId: string | null;
-  transferAccountName: string | null;
-}
+export interface TransactionListItem extends Transaction {
+  accountName: string;
+  accountCurrency: string;
+  accountTypeName: string;
+  accountBalanceAfterMinorUnits: number | null;
+  categoryName: string | null;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+  /** Destination account on grouped transfer rows */
+  transferAccountId: string | null;
+  transferAccountName: string | null;
+  transferAccountCurrency: string | null;
+  transferAccountTypeName: string | null;
+  destinationBalanceAfterMinorUnits: number | null;
+}
 
 export interface CreateTransactionInput {
   accountId: string;
