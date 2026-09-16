@@ -97,9 +97,16 @@ export function AccountFormModal({
       hideFromReports: account?.hideFromReports ?? false,
       maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
     });
-    setAmountSign(parseAmountSign(openingAmount));
+    if (account) {
+      setAmountSign(parseAmountSign(openingAmount));
+    } else {
+      const defaultType = types.find(
+        (t) => t.id === SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
+      );
+      setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
+    }
     setConfirmAction(null);
-  }, [visible, account]);
+  }, [visible, account, types]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -456,11 +463,10 @@ export function AccountFormModal({
         visible={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(minorUnits, formatted) => {
-          const resolved = applySignedAmount(minorUnits);
-          setAmountSign(resolved.amountSign);
+          const absDecimal = (Math.abs(minorUnits) / 100).toFixed(2);
           setValue((prev) => ({
             ...prev,
-            openingAmount: resolved.formattedDecimal || formatted,
+            openingAmount: absDecimal || formatted,
           }));
           setCalculatorOpen(false);
         }}
@@ -494,9 +500,13 @@ export function AccountFormModal({
         value={value.accountTypeId}
         visible={typePickerOpen}
         onClose={() => setTypePickerOpen(false)}
-        onSelect={(accountTypeId) =>
-          setValue((prev) => ({ ...prev, accountTypeId }))
-        }
+        onSelect={(accountTypeId) => {
+          setValue((prev) => ({ ...prev, accountTypeId }));
+          const selectedType = types.find((t) => t.id === accountTypeId);
+          if (selectedType) {
+            setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
+          }
+        }}
       />
 
       <IconPickerModal

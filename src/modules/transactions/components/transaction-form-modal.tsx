@@ -369,11 +369,11 @@ export function TransactionFormModal({
             <View style={styles.inputGroup}>
               <AmountCalculatorField
                 amountMinorUnits={amountMinorUnits}
-                amountSign={amountSign}
+                amountSign={mode === "transfer" ? "transfer" : amountSign}
                 currencyCode={currencyCode}
                 disabled={pending}
                 label="Amount"
-                showSignToggle={mode !== "transfer"}
+                showSignToggle={true}
                 onOpenCalculator={() => setIsCalculatorOpen(true)}
                 onToggleSign={
                   mode !== "transfer"
@@ -616,9 +616,7 @@ export function TransactionFormModal({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
-          const resolved = applySignedAmount(minorUnits);
-          setAmountSign(resolved.amountSign);
-          setAmountMinorUnits(resolved.amountMinorUnits);
+          setAmountMinorUnits(Math.abs(minorUnits));
           setIsCalculatorOpen(false);
         }}
         title={`Enter ${mode.toUpperCase()} Amount`}

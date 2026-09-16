@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Calculator } from "lucide-react-native";
+import { ArrowLeftRight, Calculator } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -9,7 +9,7 @@ export interface AmountCalculatorFieldProps {
   label: string;
   labelAccessory?: ReactNode;
   amountMinorUnits: number;
-  amountSign?: "+" | "-";
+  amountSign?: "+" | "-" | "transfer";
   onToggleSign?: () => void;
   onOpenCalculator: () => void;
   currencyCode?: string;
@@ -42,6 +42,7 @@ export function AmountCalculatorField({
         .replace(/^-?/, "")
     : `${major.toLocaleString("en-PH")}.${String(minor).padStart(2, "0")}`;
 
+  const isTransfer = amountSign === "transfer";
   const signIsPositive = amountSign === "+";
 
   return (
@@ -52,18 +53,30 @@ export function AmountCalculatorField({
       </View>
       <View style={styles.row}>
         <View style={[styles.amountShell, disabled && styles.amountShellDisabled]}>
-          {showSignToggle && onToggleSign ? (
+          {showSignToggle ? (
             <Pressable
-              accessibilityLabel={`Toggle amount sign. Currently ${amountSign === "+" ? "positive" : "negative"}`}
+              accessibilityLabel={
+                isTransfer
+                  ? "Transfer amount"
+                  : `Toggle amount sign. Currently ${signIsPositive ? "positive" : "negative"}`
+              }
               accessibilityRole="button"
-              disabled={disabled}
-              onPress={onToggleSign}
+              disabled={disabled || isTransfer || !onToggleSign}
+              onPress={isTransfer ? undefined : onToggleSign}
               style={[
                 styles.signCircle,
-                signIsPositive ? styles.signCirclePositive : styles.signCircleNegative,
+                isTransfer
+                  ? styles.signCircleTransfer
+                  : signIsPositive
+                    ? styles.signCirclePositive
+                    : styles.signCircleNegative,
               ]}
             >
-              <Text style={styles.signCircleText}>{amountSign}</Text>
+              {isTransfer ? (
+                <ArrowLeftRight color={theme.colors.onPrimary} size={18} />
+              ) : (
+                <Text style={styles.signCircleText}>{amountSign}</Text>
+              )}
             </Pressable>
           ) : null}
 
@@ -145,6 +158,9 @@ function createStyles(theme: AppTheme) {
     },
     signCircleNegative: {
       backgroundColor: theme.colors.danger,
+    },
+    signCircleTransfer: {
+      backgroundColor: theme.colors.info,
     },
     signCircleText: {
       color: theme.colors.onPrimary,
