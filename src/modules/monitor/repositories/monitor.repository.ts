@@ -1,4 +1,5 @@
-import { sqliteDatabase } from "@/infrastructure/database/client";
+import * as SQLite from "expo-sqlite";
+import { DATABASE_NAME, sqliteDatabase } from "@/infrastructure/database/client";
 import type {
   ColumnInfo,
   QueryResult,
@@ -128,6 +129,54 @@ export function executeRawQuery(rawSql: string): QueryResult {
   }
 }
 
+const VACUUM_MAX_ATTEMPTS = 5;
+const VACUUM_RETRY_DELAY_MS = 300;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableVacuumError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("SQL statements in progress") ||
+    message.includes("database is locked") ||
+    message.includes("SQLITE_BUSY")
+  );
+}
+
 export async function vacuumDatabase(): Promise<void> {
-  await sqliteDatabase.execAsync("VACUUM;");
+  try {
+    await sqliteDatabase.runAsync("PRAGMA wal_checkpoint(TRUNCATE);");
+  } catch {
+    // Best effort: flush WAL pages before vacuuming.
+  }
+
+  const vacuumConnection = SQLite.openDatabaseSync(DATABASE_NAME, {
+    useNewConnection: true,
+  });
+
+  try {
+    await vacuumConnection.runAsync("PRAGMA busy_timeout = 5000;");
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt < VACUUM_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await vacuumConnection.runAsync("VACUUM;");
+        return;
+      } catch (error) {
+        lastError = error;
+        const canRetry =
+          isRetryableVacuumError(error) && attempt < VACUUM_MAX_ATTEMPTS - 1;
+        if (!canRetry) {
+          throw error;
+        }
+        await delay(VACUUM_RETRY_DELAY_MS * (attempt + 1));
+      }
+    }
+
+    throw lastError;
+  } finally {
+    await vacuumConnection.closeAsync();
+  }
 }

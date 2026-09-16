@@ -71,7 +71,10 @@ export function useMonitor() {
       refreshTables();
       return { success: true, error: null };
     } catch (err: any) {
-      const msg = err?.message || "Failed to vacuum SQLite database.";
+      const rawMessage = err?.message || "Failed to vacuum SQLite database.";
+      const msg = rawMessage.includes("SQL statements in progress")
+        ? "Database is busy with other queries. Wait a moment and try VACUUM again."
+        : rawMessage;
       console.error("Failed to vacuum SQLite database:", err);
       setQueryError(msg);
       return { success: false, error: msg };
