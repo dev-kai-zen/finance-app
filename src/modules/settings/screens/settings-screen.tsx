@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -5,17 +6,21 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 import { PageContainer } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
-import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
+import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
+import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 
 export function SettingsScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
   const { theme, themeId, setThemeId, availableThemes } = useThemeController();
+  const { colors } = useHexColors();
+  const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
 
   return (
     <PageContainer
@@ -104,6 +109,36 @@ export function SettingsScreen() {
           </View>
         </View>
 
+        {/* Source Management Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>SOURCE MANAGEMENT</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel="Modify hex colors"
+              accessibilityRole="button"
+              onPress={() => setIsHexColorsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                styles.settingRowPressable,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.settingLeft}>
+                <Text style={styles.settingLabel}>Hex Colors</Text>
+                <Text style={styles.settingDescription}>
+                  Modify palette swatches for accounts and categories, or add your custom hex colors.
+                </Text>
+              </View>
+              <View style={styles.settingBadgeGroup}>
+                <View style={styles.settingBadge}>
+                  <Text style={styles.settingValue}>{colors.length} Colors</Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
         {/* Financial Preferences Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>FINANCIAL PREFERENCES</Text>
@@ -170,6 +205,11 @@ export function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      <HexColorsModal
+        visible={isHexColorsOpen}
+        onClose={() => setIsHexColorsOpen(false)}
+      />
     </PageContainer>
   );
 }
@@ -332,6 +372,17 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       gap: theme.spacing.md,
+    },
+    settingRowPressable: {
+      minHeight: 56,
+    },
+    settingRowPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+    },
+    settingBadgeGroup: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
     },
     settingLeft: {
       flex: 1,

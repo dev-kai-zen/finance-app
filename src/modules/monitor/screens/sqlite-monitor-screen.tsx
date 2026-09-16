@@ -64,12 +64,20 @@ export function SqliteMonitorScreen() {
     setIsRecordModalOpen(true);
   };
 
-  const handleVacuum = () => {
-    vacuum();
-    if (Platform.OS === "web") {
-      window.alert("Database vacuumed successfully. Unused pages reclaimed.");
+  const handleVacuum = async () => {
+    const res = await vacuum();
+    if (res.success) {
+      if (Platform.OS === "web") {
+        window.alert("Database vacuumed successfully. Unused pages reclaimed.");
+      } else {
+        Alert.alert("SQLite Vacuum", "Database vacuumed successfully. Unused pages reclaimed.");
+      }
     } else {
-      Alert.alert("SQLite Vacuum", "Database vacuumed successfully. Unused pages reclaimed.");
+      if (Platform.OS === "web") {
+        window.alert(`Vacuum Failed: ${res.error}`);
+      } else {
+        Alert.alert("Vacuum Failed", res.error);
+      }
     }
   };
 

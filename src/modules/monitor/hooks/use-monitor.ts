@@ -64,12 +64,17 @@ export function useMonitor() {
     }
   }, [refreshTables]);
 
-  const vacuum = useCallback(() => {
+  const vacuum = useCallback(async () => {
     try {
-      vacuumDatabase();
+      setQueryError(null);
+      await vacuumDatabase();
       refreshTables();
+      return { success: true, error: null };
     } catch (err: any) {
+      const msg = err?.message || "Failed to vacuum SQLite database.";
       console.error("Failed to vacuum SQLite database:", err);
+      setQueryError(msg);
+      return { success: false, error: msg };
     }
   }, [refreshTables]);
 

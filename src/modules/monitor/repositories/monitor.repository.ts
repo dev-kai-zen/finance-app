@@ -128,6 +128,6 @@ export function executeRawQuery(rawSql: string): QueryResult {
   }
 }
 
-export function vacuumDatabase(): void {
-  sqliteDatabase.execSync("VACUUM;");
+export async function vacuumDatabase(): Promise<void> {
+  await sqliteDatabase.execAsync("VACUUM;");
 }
