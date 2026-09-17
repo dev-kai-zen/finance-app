@@ -1,5 +1,6 @@
 import { LogBox, StyleSheet } from "react-native";
 import { Stack } from "expo-router";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
@@ -38,13 +39,15 @@ function RootLayoutContent() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AppThemeProvider>
-        <DatabaseProvider>
-          <HexColorsProvider>
-            <RootLayoutContent />
-          </HexColorsProvider>
-        </DatabaseProvider>
-      </AppThemeProvider>
+      <KeyboardProvider>
+        <AppThemeProvider>
+          <DatabaseProvider>
+            <HexColorsProvider>
+              <RootLayoutContent />
+            </HexColorsProvider>
+          </DatabaseProvider>
+        </AppThemeProvider>
+      </KeyboardProvider>
     </SafeAreaProvider>
   );
 }

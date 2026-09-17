@@ -8,6 +8,7 @@ export * from "./amount-calculator-field";
 export * from "./amount-calculator-modal";
 export * from "./action-bottom-sheet";
 export * from "./full-screen-form-modal";
+export * from "./keyboard-aware-form";
 export * from "./date-picker-modal";
 export * from "./icon-helper";
 export * from "./icon-picker-modal";

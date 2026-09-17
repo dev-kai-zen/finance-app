@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -17,6 +16,7 @@ import {
   FullScreenFormModal,
   IconHelper,
   IconPickerModal,
+  KeyboardAwareForm,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -202,9 +202,8 @@ export function AccountFormModal({
         }
         onSave={handleSave}
       >
-        <ScrollView
+        <KeyboardAwareForm
           contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {error ? (
@@ -424,7 +423,7 @@ export function AccountFormModal({
               </View>
             </View>
           ) : null}
-        </ScrollView>
+        </KeyboardAwareForm>
       </FullScreenFormModal>
 
       <ConfirmModal
