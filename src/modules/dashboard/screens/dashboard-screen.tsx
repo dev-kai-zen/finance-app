@@ -31,7 +31,7 @@ export function DashboardScreen() {
   const styles = useThemeStyles(createStyles);
 
   const { summary, refresh: refreshDashboard } = useDashboard();
-  const { accounts } = useAccounts();
+  const { accounts, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
   const {
     recordTransaction,
@@ -44,6 +44,7 @@ export function DashboardScreen() {
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
 
   const handleOpenTransactionModal = (mode: TransactionType) => {
+    refreshAccounts();
     setModalMode(mode);
     setIsModalOpen(true);
   };
@@ -59,6 +60,7 @@ export function DashboardScreen() {
   const handleSaveTx = async (input: any) => {
     const success = await recordTransaction(input);
     if (success) {
+      refreshAccounts();
       refreshDashboard();
     }
     return success;
@@ -67,6 +69,7 @@ export function DashboardScreen() {
   const handleSaveTransfer = async (input: any) => {
     const success = await recordTransfer(input);
     if (success) {
+      refreshAccounts();
       refreshDashboard();
     }
     return success;

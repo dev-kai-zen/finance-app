@@ -103,7 +103,7 @@ export function TransactionsScreen() {
     editTransfer,
   } = useTransactions();
 
-  const { accounts } = useAccounts();
+  const { accounts, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
 
   // Search & Filter state
@@ -239,9 +239,43 @@ export function TransactionsScreen() {
   }, [filteredTransactions]);
 
   const handleOpenNewTransaction = () => {
+    refreshAccounts();
     setPrefilledTransaction(null);
     setIsEditingTransaction(false);
     setIsFormModalOpen(true);
+  };
+
+  const handleRecordTransaction = async (
+    input: Parameters<typeof recordTransaction>[0],
+  ) => {
+    const success = await recordTransaction(input);
+    if (success) refreshAccounts();
+    return success;
+  };
+
+  const handleRecordTransfer = async (
+    input: Parameters<typeof recordTransfer>[0],
+  ) => {
+    const success = await recordTransfer(input);
+    if (success) refreshAccounts();
+    return success;
+  };
+
+  const handleUpdateTransaction = async (
+    id: Parameters<typeof editTransaction>[0],
+    input: Parameters<typeof editTransaction>[1],
+  ) => {
+    const success = await editTransaction(id, input);
+    if (success) refreshAccounts();
+    return success;
+  };
+
+  const handleUpdateTransfer = async (
+    input: Parameters<typeof editTransfer>[0],
+  ) => {
+    const success = await editTransfer(input);
+    if (success) refreshAccounts();
+    return success;
   };
 
   const handleDuplicate = (tx: TransactionListItem) => {
@@ -266,7 +300,10 @@ export function TransactionsScreen() {
     if (!pendingDeleteId) return;
     setInspectedTransaction(null);
     const deleted = await deleteTx(pendingDeleteId);
-    if (deleted) setPendingDeleteId(null);
+    if (deleted) {
+      refreshAccounts();
+      setPendingDeleteId(null);
+    }
   };
 
   const deleteConfirmMessage = useMemo(() => {
@@ -372,24 +409,6 @@ export function TransactionsScreen() {
             )}
           </Pressable>
 
-          <Pressable
-            accessibilityLabel="Open transaction trash"
-            accessibilityRole="button"
-            onPress={() => setIsTrashModalOpen(true)}
-            style={styles.trashButton}
-          >
-            <Trash2 color={theme.colors.danger} size={17} />
-            <Text style={styles.trashButtonText}>Trash</Text>
-          </Pressable>
-
-          {/* Export CSV Trigger Button */}
-          <Pressable
-            accessibilityLabel="Export CSV"
-            onPress={handleExportCsv}
-            style={styles.actionButton}
-          >
-            <Download color={theme.colors.success} size={18} />
-          </Pressable>
         </View>
 
         {/* Sort & Results Bar */}
@@ -437,6 +456,27 @@ export function TransactionsScreen() {
               )}
             </Pressable>
           </View>
+        </View>
+
+        {/* Secondary transaction actions */}
+        <View style={styles.secondaryActionsRow}>
+          <Pressable
+            accessibilityLabel="Open transaction trash"
+            accessibilityRole="button"
+            onPress={() => setIsTrashModalOpen(true)}
+            style={styles.trashButton}
+          >
+            <Trash2 color={theme.colors.danger} size={17} />
+            <Text style={styles.trashButtonText}>Trash</Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Export CSV"
+            onPress={handleExportCsv}
+            style={styles.actionButton}
+          >
+            <Download color={theme.colors.success} size={18} />
+          </Pressable>
         </View>
 
         {/* Transactions Feed Grouped By Date */}
@@ -498,10 +538,10 @@ export function TransactionsScreen() {
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
         }}
-        onSaveTransaction={recordTransaction}
-        onSaveTransfer={recordTransfer}
-        onUpdateTransaction={editTransaction}
-        onUpdateTransfer={editTransfer}
+        onSaveTransaction={handleRecordTransaction}
+        onSaveTransfer={handleRecordTransfer}
+        onUpdateTransaction={handleUpdateTransaction}
+        onUpdateTransfer={handleUpdateTransfer}
         pending={pendingAction}
         visible={isFormModalOpen}
       />
@@ -549,7 +589,9 @@ export function TransactionsScreen() {
       <DeletedTransactionsModal
         onClose={() => setIsTrashModalOpen(false)}
         onRestore={(id) => {
-          void restoreTx(id);
+          void restoreTx(id).then((restored) => {
+            if (restored) refreshAccounts();
+          });
         }}
         pending={pendingAction}
         transactions={deletedTransactions}
@@ -661,6 +703,11 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       justifyContent: "space-between",
       paddingHorizontal: theme.spacing.xs,
+    },
+    secondaryActionsRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
     },
     resultsCountText: {
       color: theme.colors.textSecondary,

@@ -16,6 +16,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "./icon-helper";
 import { formatCurrency } from "@/utils/currency";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
 
 export interface AccountPickerModalProps {
@@ -67,6 +68,8 @@ export function AccountPickerModal({
       typeName: string;
       color: string;
       iconKey: string;
+      accountGroup: string;
+      typeSortOrder: number;
       accounts: AccountListItem[];
     }[] = [];
 
@@ -75,20 +78,55 @@ export function AccountPickerModal({
     for (const acc of filteredAccounts) {
       const typeId = acc.accountType?.id ?? "others";
       const typeName = acc.accountType?.name ?? "Other Accounts";
-      const color = acc.accountType?.color ?? theme.colors.primary;
+      const color = accountColor(
+        theme,
+        acc.accountType?.color ?? acc.accountType?.hexColorsId ?? null,
+      );
       const iconKey = acc.accountType?.iconKey ?? "wallet";
+      const accountGroup = acc.accountType?.accountGroup ?? "other";
+      const typeSortOrder = acc.accountType?.sortOrder ?? Number.MAX_SAFE_INTEGER;
 
       let group = map.get(typeId);
       if (!group) {
-        group = { typeId, typeName, color, iconKey, accounts: [] };
+        group = {
+          typeId,
+          typeName,
+          color,
+          iconKey,
+          accountGroup,
+          typeSortOrder,
+          accounts: [],
+        };
         map.set(typeId, group);
         groups.push(group);
       }
       group.accounts.push(acc);
     }
 
-    return groups;
-  }, [filteredAccounts, theme.colors.primary]);
+    for (const group of groups) {
+      group.accounts.sort(
+        (a, b) =>
+          a.sortOrder - b.sortOrder ||
+          a.name.localeCompare(b.name) ||
+          a.id.localeCompare(b.id),
+      );
+    }
+
+    const groupOrder: Record<string, number> = {
+      asset: 0,
+      liability: 1,
+      other: 2,
+    };
+
+    return groups.sort(
+      (a, b) =>
+        (groupOrder[a.accountGroup] ?? groupOrder.other) -
+          (groupOrder[b.accountGroup] ?? groupOrder.other) ||
+        a.typeSortOrder - b.typeSortOrder ||
+        a.typeName.localeCompare(b.typeName) ||
+        a.typeId.localeCompare(b.typeId),
+    );
+  }, [filteredAccounts, theme]);
 
   const handleSelect = (account: AccountListItem) => {
     onSelectAccount(account);
@@ -200,8 +238,6 @@ export function AccountPickerModal({
                   <View style={styles.groupCards}>
                     {group.accounts.map((account, index) => {
                       const isSelected = selectedAccountId === account.id;
-                      const isLiability =
-                        account.accountType?.accountGroup === "liability";
                       const balance =
                         account.currentBalanceMinorUnits !== undefined
                           ? account.currentBalanceMinorUnits
@@ -264,8 +300,8 @@ export function AccountPickerModal({
                               <Text
                                 style={[
                                   styles.accountItemBalance,
-                                  isLiability && styles.liabilityBalance,
-                                  isSelected && styles.selectedBalanceText,
+                                  balance > 0 && styles.positiveBalance,
+                                  balance < 0 && styles.negativeBalance,
                                 ]}
                               >
                                 {formattedBalance}
@@ -473,11 +509,11 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
     },
-    liabilityBalance: {
-      color: theme.colors.warning,
+    positiveBalance: {
+      color: theme.colors.success,
     },
-    selectedBalanceText: {
-      color: theme.colors.primary,
+    negativeBalance: {
+      color: theme.colors.danger,
     },
     checkBadge: {
       alignItems: "center",
