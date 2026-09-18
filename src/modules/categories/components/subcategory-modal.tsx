@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,7 +13,7 @@ import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper, IconPickerModal } from "@/components";
+import { IconHelper, IconPickerModal, KeyboardAwareForm } from "@/components";
 import {
   HexColorFormModal,
   type HexColorInput,
@@ -229,7 +228,10 @@ export function SubcategoryModal({
             </View>
           ) : null}
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+          <KeyboardAwareForm
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollBody}
+          >
             {/* Subcategory Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>SUBCATEGORY NAME</Text>
@@ -346,7 +348,7 @@ export function SubcategoryModal({
                 </Pressable>
               </View>
             </View>
-          </ScrollView>
+          </KeyboardAwareForm>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>

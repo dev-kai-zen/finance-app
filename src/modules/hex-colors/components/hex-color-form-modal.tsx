@@ -3,7 +3,6 @@ import {
   Keyboard,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, X } from "lucide-react-native";
+import { KeyboardAwareForm } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -157,7 +157,7 @@ export function HexColorFormModal({
             </View>
           ) : null}
 
-          <ScrollView keyboardShouldPersistTaps="handled" style={styles.formScroll}>
+          <KeyboardAwareForm style={styles.formScroll}>
             {/* Color Preview & Swatch */}
             <View style={styles.previewContainer}>
               <View
@@ -227,7 +227,7 @@ export function HexColorFormModal({
                 })}
               </View>
             </View>
-          </ScrollView>
+          </KeyboardAwareForm>
 
           {/* Action Footer */}
           <View style={styles.footerRow}>

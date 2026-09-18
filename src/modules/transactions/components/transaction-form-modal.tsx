@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import {
   CategoryPickerModal,
   DatePickerModal,
   IconHelper,
+  KeyboardAwareForm,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -372,8 +372,7 @@ export function TransactionFormModal({
             </View>
           ) : null}
 
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAwareForm
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -616,7 +615,7 @@ export function TransactionFormModal({
                 value={note}
               />
             </View>
-          </ScrollView>
+          </KeyboardAwareForm>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>

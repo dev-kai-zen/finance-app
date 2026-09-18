@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { Check } from "lucide-react-native";
-import { ConfirmModal, FullScreenFormModal, IconHelper, IconPickerModal } from "@/components";
+import {
+  ConfirmModal,
+  FullScreenFormModal,
+  IconHelper,
+  IconPickerModal,
+  KeyboardAwareForm,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { ACCOUNT_DEFAULT_COLOR_IDS } from "@/modules/accounts/constants/account-appearance.constants";
@@ -153,9 +158,8 @@ export function AccountTypeFormModal({
         title={isEditing ? "Edit Account Group" : "New Account Group"}
         visible={visible}
       >
-        <ScrollView
+        <KeyboardAwareForm
           contentContainerStyle={styles.formContent}
-          keyboardShouldPersistTaps="handled"
         >
           {displayError ? (
             <View style={styles.errorBanner}>
@@ -332,7 +336,7 @@ export function AccountTypeFormModal({
               </Text>
             </View>
           ) : null}
-        </ScrollView>
+        </KeyboardAwareForm>
       </FullScreenFormModal>
 
       {/* Full Icon Picker Modal */}

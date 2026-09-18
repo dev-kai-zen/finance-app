@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper, IconPickerModal } from "@/components";
+import { IconHelper, IconPickerModal, KeyboardAwareForm } from "@/components";
 import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
@@ -160,7 +159,10 @@ export function CategoryFormModal({
             </View>
           ) : null}
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <KeyboardAwareForm
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollBody}
+          >
             {/* Category Type Toggle */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CATEGORY TYPE</Text>
@@ -295,7 +297,7 @@ export function CategoryFormModal({
                 </View>
               </Pressable>
             </View>
-          </ScrollView>
+          </KeyboardAwareForm>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>
