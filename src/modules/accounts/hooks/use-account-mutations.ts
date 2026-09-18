@@ -10,6 +10,10 @@ import {
   reorderAccountTypesList,
 } from "@/modules/accounts/services/reorder-accounts.service";
 import { accountErrorMessage, type AccountInput, type AccountTypeInput } from "@/modules/accounts/schemas/account.schema";
+import { savePocket } from "@/modules/accounts/services/save-pocket.service";
+import { movePocketFunds } from "@/modules/accounts/services/move-pocket-funds.service";
+import { setPocketArchived } from "@/modules/accounts/services/archive-pocket.service";
+import type { MovePocketFundsInput, PocketInput } from "@/modules/accounts/types/account.types";
 
 export function useAccountMutations(onSuccess: () => void) {
   const busy = useRef(false);
@@ -39,6 +43,9 @@ export function useAccountMutations(onSuccess: () => void) {
     lockStartingBalance: (id: string) => run(() => lockAccountStartingBalance(id)),
     saveType: (input: AccountTypeInput, id?: string) => run(() => saveAccountType(input, id)),
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),
+    savePocket: (input: PocketInput, id?: string) => run(() => savePocket(input, id)),
+    movePocketFunds: (input: MovePocketFundsInput) => run(() => movePocketFunds(input)),
+    archivePocket: (id: string, archived: boolean) => run(() => setPocketArchived(id, archived)),
     deleteType: (id: string) => run(() => deleteAccountType(id)),
     moveAccount: (id: string, direction: -1 | 1) => run(() => moveAccount(id, direction)),
     reorderAccounts: (orderedIds: string[]) => run(() => reorderAccountsList(orderedIds)),

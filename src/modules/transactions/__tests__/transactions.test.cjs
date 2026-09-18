@@ -22,8 +22,8 @@ function setupTestDb() {
 
   const now = Date.now();
   db.exec(`
-    INSERT INTO account_types (id, name, account_group, sort_order, color, icon_key, is_system, created_at, updated_at)
-    VALUES ('act_dep', 'Deposit', 'asset', 0, 'blue', 'landmark', 1, ${now}, ${now});
+    INSERT INTO account_types (id, name, account_group, sort_order, icon_key, is_system, created_at, updated_at)
+    VALUES ('act_dep', 'Deposit', 'asset', 0, 'landmark', 1, ${now}, ${now});
   `);
 
   db.exec(`
@@ -33,9 +33,9 @@ function setupTestDb() {
   `);
 
   db.exec(`
-    INSERT INTO categories (id, name, type, color, icon, is_system, created_at, updated_at)
-    VALUES ('cat_groceries', 'Groceries', 'expense', 'green', 'shopping-cart', 1, ${now}, ${now}),
-           ('cat_salary', 'Salary', 'income', 'blue', 'wallet', 1, ${now}, ${now});
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_groceries', 'Groceries', 'expense', 'shopping-cart', 1, ${now}, ${now}),
+           ('cat_salary', 'Salary', 'income', 'wallet', 1, ${now}, ${now});
   `);
 
   return db;

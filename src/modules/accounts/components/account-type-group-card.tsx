@@ -8,7 +8,8 @@ import {
   bigintToSafeNumber,
 } from "@/modules/accounts/components/account-amount-text";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
-import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
+import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
+import { formatCurrency } from "@/utils/currency";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 interface AccountTypeGroupCardProps {
@@ -23,6 +24,7 @@ interface AccountTypeGroupCardProps {
         accountGroup?: string;
       };
   accounts: AccountListItem[];
+  pockets: PocketListItem[];
   onSelectAccount: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
   onEditType?: (accountType: AccountType) => void;
@@ -31,6 +33,7 @@ interface AccountTypeGroupCardProps {
 export function AccountTypeGroupCard({
   accountType,
   accounts,
+  pockets,
   onSelectAccount,
   onSort,
   onEditType,
@@ -130,6 +133,13 @@ export function AccountTypeGroupCard({
             account.currentBalanceMinorUnits !== undefined
               ? account.currentBalanceMinorUnits
               : account.openingBalanceMinorUnits;
+          const accountPockets = pockets.filter((pocket) => pocket.accountId === account.id);
+          const pocketCount = accountPockets.filter((pocket) => !pocket.isArchived).length;
+          const allocated = accountPockets.reduce(
+            (sum, pocket) => sum + pocket.currentBalanceMinorUnits,
+            0,
+          );
+          const available = balance - allocated;
 
           return (
             <View key={account.id}>
@@ -165,7 +175,9 @@ export function AccountTypeGroupCard({
                     {account.name}
                   </Text>
                   <Text numberOfLines={1} style={styles.accountSubtitle}>
-                    {accountType.name}
+                    {pocketCount > 0
+                      ? `${pocketCount} ${pocketCount === 1 ? "pocket" : "pockets"} - ${formatCurrency(available, account.currencyCode)} available`
+                      : accountType.name}
                   </Text>
                 </View>
 

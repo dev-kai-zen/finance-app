@@ -11,6 +11,7 @@ import type {
   AccountGroup,
   AccountListItem,
   AccountType,
+  PocketListItem,
 } from "@/modules/accounts/types/account.types";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
@@ -21,6 +22,7 @@ export function AccountGroupSection({
   onSelect,
   onSort,
   onEditType,
+  pockets,
 }: {
   group: AccountGroup;
   accounts: AccountListItem[];
@@ -28,6 +30,7 @@ export function AccountGroupSection({
   onSelect: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
   onEditType?: (type: AccountType) => void;
+  pockets: PocketListItem[];
 }) {
   const styles = useThemeStyles(createStyles);
   const grouped = accounts.filter(
@@ -138,6 +141,7 @@ export function AccountGroupSection({
               key={typeGroup.accountType.id}
               accountType={typeGroup.accountType}
               accounts={typeGroup.accounts}
+              pockets={pockets}
               onEditType={onEditType}
               onSelectAccount={onSelect}
               onSort={onSort}

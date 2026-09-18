@@ -22,6 +22,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
+import { PocketPickerModal, type PocketListItem } from "@/modules/accounts";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 import type { Category } from "@/modules/categories/types/category.types";
 import { useResolveEntityColor } from "@/modules/hex-colors";
@@ -46,6 +47,7 @@ export interface TransactionFormModalProps {
   ) => Promise<boolean>;
   onUpdateTransfer?: (input: UpdateTransferInput) => Promise<boolean>;
   accounts: AccountListItem[];
+  pockets: PocketListItem[];
   categories: Category[];
   pending?: boolean;
   error?: string | null;
@@ -69,6 +71,7 @@ export function TransactionFormModal({
   onUpdateTransaction,
   onUpdateTransfer,
   accounts,
+  pockets,
   categories,
   pending = false,
   error = null,
@@ -84,7 +87,9 @@ export function TransactionFormModal({
   const [amountSign, setAmountSign] = useState<"+" | "-">("-");
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedPocketId, setSelectedPocketId] = useState<string | null>(null);
   const [transferToAccountId, setTransferToAccountId] = useState<string>("");
+  const [transferToPocketId, setTransferToPocketId] = useState<string | null>(null);
   const [amountMinorUnits, setAmountMinorUnits] = useState<number>(0);
   const [dateIsoString, setDateIsoString] = useState<string>(getTodayIsoString());
   const [note, setNote] = useState<string>("");
@@ -96,6 +101,8 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [isPocketPickerOpen, setIsPocketPickerOpen] = useState(false);
+  const [isTransferToPocketPickerOpen, setIsTransferToPocketPickerOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -106,10 +113,12 @@ export function TransactionFormModal({
         setAmountSign(isNeg ? "-" : "+");
         setAmountMinorUnits(Math.abs(initialTransaction.amountCents));
         setSelectedAccountId(initialTransaction.accountId);
+        setSelectedPocketId(initialTransaction.pocketId);
         setTransferToAccountId(
           initialTransaction.transferAccountId ||
             (accounts.find((a) => a.id !== initialTransaction.accountId)?.id ?? "")
         );
+        setTransferToPocketId(initialTransaction.transferPocketId);
         setSelectedCategoryId(initialTransaction.categoryId || "");
         setDateIsoString(
           initialTransaction.occurredAt
@@ -124,7 +133,9 @@ export function TransactionFormModal({
         setAmountSign("-");
         const firstAccount = accounts.length > 0 ? accounts[0].id : "";
         setSelectedAccountId(firstAccount);
+        setSelectedPocketId(null);
         setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
+        setTransferToPocketId(null);
 
         const defaultCategory = categories.find((c) => c.type === "expense");
         setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
@@ -160,6 +171,14 @@ export function TransactionFormModal({
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const transferToAccount = accounts.find((a) => a.id === transferToAccountId);
+  const selectedPocket = pockets.find((pocket) => pocket.id === selectedPocketId);
+  const transferToPocket = pockets.find((pocket) => pocket.id === transferToPocketId);
+  const sourcePockets = pockets.filter(
+    (pocket) => pocket.accountId === selectedAccountId && !pocket.isArchived,
+  );
+  const destinationPockets = pockets.filter(
+    (pocket) => pocket.accountId === transferToAccountId && !pocket.isArchived,
+  );
   const currencyCode = selectedAccount?.currencyCode ?? "PHP";
 
   const selectedCategory = useMemo(() => {
@@ -220,6 +239,8 @@ export function TransactionFormModal({
       const transferInput: CreateTransferInput = {
         fromAccountId: selectedAccountId,
         toAccountId: transferToAccountId,
+        fromPocketId: selectedPocketId,
+        toPocketId: transferToPocketId,
         amountCents: Math.abs(amountMinorUnits),
         name: name.trim() || null,
         note: note.trim() || null,
@@ -249,6 +270,7 @@ export function TransactionFormModal({
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
+        pocketId: selectedPocketId,
         type: mode,
         amountCents: signedAmount,
         name: name.trim() || null,
@@ -469,11 +491,50 @@ export function TransactionFormModal({
               </Pressable>
             </View>
 
+            {(sourcePockets.length > 0 || selectedPocket) ? (
+              <View style={styles.inputGroup}>
+                <Text style={styles.fieldLabel}>
+                  {mode === "transfer" ? "FROM POCKET (OPTIONAL)" : "POCKET (OPTIONAL)"}
+                </Text>
+                <Pressable
+                  accessibilityLabel={`Pocket ${selectedPocket?.name ?? "Available"}. Tap to choose pocket.`}
+                  accessibilityRole="button"
+                  onPress={() => setIsPocketPickerOpen(true)}
+                  style={styles.selectorCard}
+                >
+                  <View style={styles.selectorLeft}>
+                    <View style={styles.selectorIconWrap}>
+                      <IconHelper
+                        color={theme.colors.info}
+                        name="wallet-cards"
+                        size={18}
+                      />
+                    </View>
+                    <View style={styles.selectorTextCol}>
+                      <Text style={styles.selectorValueText}>
+                        {selectedPocket?.name ?? "Available"}
+                      </Text>
+                      <Text style={styles.selectorSubText}>
+                        {selectedPocket
+                          ? `${formatCurrency(selectedPocket.currentBalanceMinorUnits, currencyCode)} reserved`
+                          : "Use unallocated account funds"}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.selectorChangeBadge}>
+                    <Text style={styles.selectorChangeText}>Change</Text>
+                    <ChevronRight size={14} color={theme.colors.textSecondary} />
+                  </View>
+                </Pressable>
+              </View>
+            ) : null}
+
             {/* If Transfer: Destination Account */}
             {mode === "transfer" ? (
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>TRANSFER TO ACCOUNT</Text>
-                <Pressable
+              <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>TRANSFER TO ACCOUNT</Text>
+                  <Pressable
                   accessibilityLabel={`Destination account ${transferToAccount?.name ?? "none selected"}. Tap to choose account.`}
                   accessibilityRole="button"
                   onPress={() => setIsTransferToAccountPickerOpen(true)}
@@ -522,8 +583,40 @@ export function TransactionFormModal({
                     <Text style={styles.selectorChangeText}>Change</Text>
                     <ChevronRight size={14} color={theme.colors.textSecondary} />
                   </View>
-                </Pressable>
-              </View>
+                  </Pressable>
+                </View>
+                {(destinationPockets.length > 0 || transferToPocket) ? (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.fieldLabel}>TO POCKET (OPTIONAL)</Text>
+                    <Pressable
+                      accessibilityLabel={`Destination pocket ${transferToPocket?.name ?? "Available"}. Tap to choose pocket.`}
+                      accessibilityRole="button"
+                      onPress={() => setIsTransferToPocketPickerOpen(true)}
+                      style={styles.selectorCard}
+                    >
+                      <View style={styles.selectorLeft}>
+                        <View style={styles.selectorIconWrap}>
+                          <IconHelper color={theme.colors.info} name="wallet-cards" size={18} />
+                        </View>
+                        <View style={styles.selectorTextCol}>
+                          <Text style={styles.selectorValueText}>
+                            {transferToPocket?.name ?? "Available"}
+                          </Text>
+                          <Text style={styles.selectorSubText}>
+                            {transferToPocket
+                              ? `${formatCurrency(transferToPocket.currentBalanceMinorUnits, transferToAccount?.currencyCode ?? "PHP")} reserved`
+                              : "Add to unallocated account funds"}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.selectorChangeBadge}>
+                        <Text style={styles.selectorChangeText}>Change</Text>
+                        <ChevronRight size={14} color={theme.colors.textSecondary} />
+                      </View>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </>
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={styles.inputGroup}>
@@ -672,6 +765,7 @@ export function TransactionFormModal({
         onClose={() => setIsAccountPickerOpen(false)}
         onSelectAccount={(acc) => {
           setSelectedAccountId(acc.id);
+          setSelectedPocketId(null);
           if (mode === "transfer" && transferToAccountId === acc.id) {
             setTransferToAccountId("");
           }
@@ -685,10 +779,35 @@ export function TransactionFormModal({
         accounts={accounts}
         excludeAccountId={selectedAccountId}
         onClose={() => setIsTransferToAccountPickerOpen(false)}
-        onSelectAccount={(acc) => setTransferToAccountId(acc.id)}
+        onSelectAccount={(acc) => {
+          setTransferToAccountId(acc.id);
+          setTransferToPocketId(null);
+        }}
         selectedAccountId={transferToAccountId}
         title="Select Destination Account"
         visible={isTransferToAccountPickerOpen}
+      />
+
+      <PocketPickerModal
+        accountId={selectedAccountId}
+        currencyCode={selectedAccount?.currencyCode ?? "PHP"}
+        onClose={() => setIsPocketPickerOpen(false)}
+        onSelectPocket={setSelectedPocketId}
+        pockets={pockets}
+        selectedPocketId={selectedPocketId}
+        title={mode === "transfer" ? "Select Source Pocket" : "Select Pocket"}
+        visible={isPocketPickerOpen}
+      />
+
+      <PocketPickerModal
+        accountId={transferToAccountId}
+        currencyCode={transferToAccount?.currencyCode ?? "PHP"}
+        onClose={() => setIsTransferToPocketPickerOpen(false)}
+        onSelectPocket={setTransferToPocketId}
+        pockets={pockets}
+        selectedPocketId={transferToPocketId}
+        title="Select Destination Pocket"
+        visible={isTransferToPocketPickerOpen}
       />
 
       <CategoryPickerModal

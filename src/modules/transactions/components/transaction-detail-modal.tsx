@@ -195,6 +195,9 @@ export function TransactionDetailModal({
                   <Text style={styles.detailValue}>
                     {transaction.accountName ?? "Account"}
                   </Text>
+                  {transaction.pocketName ? (
+                    <Text style={styles.detailMeta}>Pocket: {transaction.pocketName}</Text>
+                  ) : null}
                 </View>
               </View>
 
@@ -209,6 +212,11 @@ export function TransactionDetailModal({
                     <Text style={styles.detailValue}>
                       {transaction.transferAccountName ?? "Destination Account"}
                     </Text>
+                    {transaction.transferPocketName ? (
+                      <Text style={styles.detailMeta}>
+                        Pocket: {transaction.transferPocketName}
+                      </Text>
+                    ) : null}
                   </View>
                 </View>
               ) : (
@@ -430,6 +438,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 14,
       fontWeight: "600",
+      marginTop: 2,
+    },
+    detailMeta: {
+      color: theme.colors.info,
+      fontSize: theme.typography.fontSize.xs,
       marginTop: 2,
     },
     footerRow: {

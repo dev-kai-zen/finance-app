@@ -34,7 +34,7 @@ export const ICON_LIBRARY: IconItem[] = [
   // ==========================================
   // 1. BUSINESS & ACCOUNTING (65+ icons)
   // ==========================================
-  { name: 'briefcase-business', label: 'Corporate Business', category: 'business', keywords: ['business', 'corporate', 'company', 'enterprise', 'portfolio'] },
+  
   { name: 'briefcase', label: 'Operations & Management', category: 'business', keywords: ['office', 'work', 'job', 'administration', 'operations'] },
   { name: 'building', label: 'Company Headquarters', category: 'business', keywords: ['hq', 'office', 'branch', 'headquarters', 'corporate'] },
   { name: 'building-2', label: 'Commercial Tower', category: 'business', keywords: ['high-rise', 'firm', 'enterprise', 'institution'] },

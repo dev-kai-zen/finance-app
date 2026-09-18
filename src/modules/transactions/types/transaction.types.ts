@@ -3,7 +3,8 @@ export type TransactionType = "income" | "expense" | "transfer";
 export interface Transaction {
   id: string;
   accountId: string;
-  categoryId: string | null;
+  categoryId: string | null;
+  pocketId: string | null;
   transactionGroupId: string | null;
   type: TransactionType;
   amountCents: number;
@@ -31,17 +32,21 @@ export interface TransactionListItem extends Transaction {
   categoryName: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
+  pocketName: string | null;
   /** Destination account on grouped transfer rows */
   transferAccountId: string | null;
   transferAccountName: string | null;
   transferAccountCurrency: string | null;
   transferAccountTypeName: string | null;
+  transferPocketId: string | null;
+  transferPocketName: string | null;
   destinationBalanceAfterMinorUnits: number | null;
 }
 
 export interface CreateTransactionInput {
   accountId: string;
-  categoryId: string;
+  categoryId: string;
+  pocketId?: string | null;
   type: "income" | "expense";
   amountCents: number;
   name?: string | null;
@@ -51,17 +56,21 @@ export interface CreateTransactionInput {
 
 export interface CreateTransferInput {
   fromAccountId: string;
-  toAccountId: string;
+  toAccountId: string;
+  fromPocketId?: string | null;
+  toPocketId?: string | null;
   amountCents: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
 }
 
-export interface UpdateTransferInput {
+export interface UpdateTransferInput {
   transactionGroupId: string;
   fromAccountId: string;
-  toAccountId: string;
+  toAccountId: string;
+  fromPocketId?: string | null;
+  toPocketId?: string | null;
   amountCents: number;
   name?: string | null;
   note?: string | null;

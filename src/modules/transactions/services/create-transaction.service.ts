@@ -1,6 +1,7 @@
 import { db } from "@/infrastructure/database/client";
 import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
 import { findCategoryById } from "@/modules/categories/repositories/categories.repository";
+import { requirePocketForAccount } from "@/modules/accounts";
 import { insertTransaction } from "../repositories/transactions.repository";
 import type { CreateTransactionInput, Transaction } from "../types/transaction.types";
 
@@ -31,11 +32,15 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
     if (!category) {
       throw new Error(`Category not found: ${input.categoryId}`);
     }
+    if (input.pocketId) {
+      requirePocketForAccount(input.pocketId, account.id, tx);
+    }
 
     return insertTransaction(
       {
         accountId: input.accountId,
         categoryId: input.categoryId,
+        pocketId: input.pocketId ?? null,
         transactionGroupId: null,
         type: input.type,
         amountCents: input.amountCents,

@@ -1,5 +1,6 @@
 import { db } from "@/infrastructure/database/client";
 import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
+import { requirePocketForAccount } from "@/modules/accounts";
 import {
   findTransactionsByGroupId,
   updateTransactionRecord,
@@ -44,6 +45,16 @@ export function updateTransfer(input: UpdateTransferInput): void {
 
     const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
     const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
+    if (input.fromPocketId) {
+      requirePocketForAccount(input.fromPocketId, fromAccount.id, tx, {
+        allowArchived: outLeg.pocketId === input.fromPocketId,
+      });
+    }
+    if (input.toPocketId) {
+      requirePocketForAccount(input.toPocketId, toAccount.id, tx, {
+        allowArchived: inLeg.pocketId === input.toPocketId,
+      });
+    }
     const amount = Math.abs(input.amountCents);
     const occurredAt =
       input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
@@ -57,6 +68,7 @@ export function updateTransfer(input: UpdateTransferInput): void {
       {
         ...sharedPatch,
         accountId: input.fromAccountId,
+        pocketId: input.fromPocketId ?? null,
         amountCents: -amount,
       },
       tx,
@@ -67,6 +79,7 @@ export function updateTransfer(input: UpdateTransferInput): void {
       {
         ...sharedPatch,
         accountId: input.toAccountId,
+        pocketId: input.toPocketId ?? null,
         amountCents: amount,
       },
       tx,

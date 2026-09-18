@@ -37,6 +37,8 @@ Module._load = function (request, ...args) {
     request === "react-native-screens" ||
     request === "lucide-react-native" ||
     request === "expo-router" ||
+    request === "react-native-keyboard-controller" ||
+    request === "react-native-worklets" ||
     request === "react"
   ) {
     return createMock();
@@ -63,6 +65,11 @@ const schema = require("@/infrastructure/database/schema");
 const repo = require("@/modules/accounts/repositories/accounts.repository");
 const types = require("@/modules/accounts/repositories/account-types.repository");
 const { getAccountsWithBalances } = require("@/modules/accounts/services/get-accounts-with-balances.service");
+const { getPocketsWithBalances, getAvailablePocketBalance } = require("@/modules/accounts/services/get-pockets-with-balances.service");
+const pocketsRepo = require("@/modules/accounts/repositories/pockets.repository");
+const { savePocket } = require("@/modules/accounts/services/save-pocket.service");
+const { movePocketFunds } = require("@/modules/accounts/services/move-pocket-funds.service");
+const { setPocketArchived } = require("@/modules/accounts/services/archive-pocket.service");
 const { saveAccount } = require("@/modules/accounts/services/save-account.service");
 const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock-account-starting-balance.service");
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
@@ -88,7 +95,7 @@ function connect(filename = ":memory:") {
       return {
         executeSync(params) {
           const stmt = sqlite.prepare(query);
-          if (stmt.columns().length) {
+          if (/^\s*(select|pragma|with)\b/i.test(query) || /\breturning\b/i.test(query)) {
             const rows = stmt.all(...params);
             return { getAllSync: () => rows, getFirstSync: () => rows[0] ?? null };
           }
@@ -369,5 +376,60 @@ test("getAccountsWithBalances calculates live current balance reflecting income,
   // Savings: 50,000 + 10,000 (transfer in) = 60,000
   assert.equal(savings.openingBalanceMinorUnits, 50000);
   assert.equal(savings.currentBalanceMinorUnits, 60000);
+});
+
+test("pockets allocate funds without changing the account balance", () => {
+  const accountId = saveAccount(accountInput(undefined, "Checking", "1000.50"));
+  const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "500.00" });
+
+  movePocketFunds({
+    accountId,
+    fromPocketId: null,
+    toPocketId: pocketId,
+    amountMinorUnits: 30000,
+  });
+
+  const account = getAccountsWithBalances().find((item) => item.id === accountId);
+  const pocket = getPocketsWithBalances().find((item) => item.id === pocketId);
+  assert.equal(account.currentBalanceMinorUnits, 100050);
+  assert.equal(pocket.currentBalanceMinorUnits, 30000);
+  assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 70050);
+});
+
+test("pocket-assigned transactions change the pocket and account by the same amount", () => {
+  const accountId = saveAccount(accountInput(undefined, "Checking", "1000.00"));
+  const pocketId = savePocket({ accountId, name: "Groceries", targetAmount: "" });
+  movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 40000 });
+  sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
+
+  const account = getAccountsWithBalances().find((item) => item.id === accountId);
+  const pocket = getPocketsWithBalances().find((item) => item.id === pocketId);
+  assert.equal(account.currentBalanceMinorUnits, 95000);
+  assert.equal(pocket.currentBalanceMinorUnits, 35000);
+  assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 60000);
+});
+
+test("pocket rules prevent over-allocation, duplicate names, liabilities, and nonzero archival", () => {
+  const accountId = saveAccount(accountInput(undefined, "Checking", "100.00"));
+  const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "" });
+  assert.throws(
+    () => savePocket({ accountId, name: " bills ", targetAmount: "" }),
+    /already exists/,
+  );
+  assert.throws(
+    () => movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 10001 }),
+    /enough funds/,
+  );
+  movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 5000 });
+  assert.throws(() => setPocketArchived(pocketId, true), /remaining pocket balance/);
+  movePocketFunds({ accountId, fromPocketId: pocketId, toPocketId: null, amountMinorUnits: 5000 });
+  setPocketArchived(pocketId, true);
+  assert.equal(pocketsRepo.findPocketById(pocketId).isArchived, true);
+
+  const liabilityId = saveAccount(accountInput(system.LIABILITY_OTHERS, "Loan", "-100.00"));
+  assert.throws(
+    () => savePocket({ accountId: liabilityId, name: "Payment", targetAmount: "" }),
+    /asset accounts/,
+  );
 });
 

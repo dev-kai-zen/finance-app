@@ -103,7 +103,7 @@ export function TransactionsScreen() {
     editTransfer,
   } = useTransactions();
 
-  const { accounts, refresh: refreshAccounts } = useAccounts();
+  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
 
   // Search & Filter state
@@ -529,6 +529,7 @@ export function TransactionsScreen() {
       {/* Transaction & Transfer Form Modal */}
       <TransactionFormModal
         accounts={accounts}
+        pockets={pockets}
         categories={categories}
         error={error}
         isEditing={isEditingTransaction}

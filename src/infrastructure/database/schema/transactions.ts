@@ -1,6 +1,7 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { accounts } from "./accounts";
-import { categories } from "./categories";
+import { accounts } from "./accounts";
+import { categories } from "./categories";
+import { pockets } from "./pockets";
 
 export const transactions = sqliteTable(
   "transactions",
@@ -9,7 +10,10 @@ export const transactions = sqliteTable(
     accountId: text("account_id")
       .notNull()
       .references(() => accounts.id),
-    categoryId: text("category_id").references(() => categories.id),
+    categoryId: text("category_id").references(() => categories.id),
+    pocketId: text("pocket_id").references(() => pockets.id, {
+      onDelete: "set null",
+    }),
     transactionGroupId: text("transaction_group_id"),
     type: text("type").notNull(),
     amountCents: integer("amount_cents").notNull(),
@@ -25,10 +29,14 @@ export const transactions = sqliteTable(
       table.accountId,
       table.occurredAt,
     ),
-    index("transactions_category_occurred_at_index").on(
-      table.categoryId,
-      table.occurredAt,
-    ),
+    index("transactions_category_occurred_at_index").on(
+      table.categoryId,
+      table.occurredAt,
+    ),
+    index("transactions_pocket_occurred_at_index").on(
+      table.pocketId,
+      table.occurredAt,
+    ),
     index("transactions_transaction_group_id_index").on(
       table.transactionGroupId,
     ),

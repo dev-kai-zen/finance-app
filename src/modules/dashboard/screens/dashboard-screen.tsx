@@ -31,7 +31,7 @@ export function DashboardScreen() {
   const styles = useThemeStyles(createStyles);
 
   const { summary, refresh: refreshDashboard } = useDashboard();
-  const { accounts, refresh: refreshAccounts } = useAccounts();
+  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
   const {
     recordTransaction,
@@ -147,6 +147,7 @@ export function DashboardScreen() {
       {/* Direct Transaction Modal */}
       <TransactionFormModal
         accounts={accounts}
+        pockets={pockets}
         categories={categories}
         error={transactionError}
         onClose={() => setIsModalOpen(false)}

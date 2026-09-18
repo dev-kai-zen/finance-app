@@ -14,6 +14,9 @@ import { AccountTypeFormModal } from "@/modules/accounts/components/account-type
 import { AccountsFabSheet } from "@/modules/accounts/components/accounts-fab-sheet";
 import { ArchivedAccountsChip } from "@/modules/accounts/components/archived-accounts-chip";
 import { ArchivedAccountsModal } from "@/modules/accounts/components/archived-accounts-modal";
+import { AccountPocketsModal } from "@/modules/accounts/components/account-pockets-modal";
+import { PocketFormModal } from "@/modules/accounts/components/pocket-form-modal";
+import { PocketMovementModal } from "@/modules/accounts/components/pocket-movement-modal";
 import {
   AccountButton,
   AccountError,
@@ -22,11 +25,14 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
-import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
+import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
 
 type Overlay =
   | { kind: "create" }
   | { kind: "edit"; id: string }
+  | { kind: "details"; id: string }
+  | { kind: "pocket-form"; accountId: string; pocketId?: string }
+  | { kind: "pocket-move"; accountId: string }
   | { kind: "types" }
   | { kind: "edit-type"; type: AccountType }
   | null;
@@ -73,9 +79,17 @@ export function AccountsScreen() {
   };
 
   const close = () => setOverlay(null);
-  const selected =
-    overlay && "id" in overlay
-      ? data.accounts.find((a) => a.id === overlay.id)
+  const selectedAccountId = overlay
+    ? "id" in overlay
+      ? overlay.id
+      : "accountId" in overlay
+        ? overlay.accountId
+        : null
+    : null;
+  const selected = data.accounts.find((a) => a.id === selectedAccountId);
+  const selectedPocket =
+    overlay?.kind === "pocket-form" && overlay.pocketId
+      ? data.pockets.find((pocket) => pocket.id === overlay.pocketId)
       : undefined;
   const active = data.accounts.filter((a) => !a.isArchived);
   const archived = data.accounts.filter((a) => a.isArchived);
@@ -83,7 +97,11 @@ export function AccountsScreen() {
     (a) => !["asset", "liability"].includes(a.accountType?.accountGroup ?? ""),
   );
   const select = (account: AccountListItem) =>
-    open({ kind: "edit", id: account.id });
+    open(
+      account.accountType?.accountGroup === "asset"
+        ? { kind: "details", id: account.id }
+        : { kind: "edit", id: account.id },
+    );
   const handleSelectArchivedAccount = (account: AccountListItem) => {
     setArchivedModalOpen(false);
     open({ kind: "edit", id: account.id });
@@ -130,6 +148,7 @@ export function AccountsScreen() {
           <AccountGroupSection
             accounts={active}
             group="asset"
+            pockets={data.pockets}
             types={data.types}
             onEditType={handleEditType}
             onSelect={select}
@@ -139,6 +158,7 @@ export function AccountsScreen() {
           <AccountGroupSection
             accounts={active}
             group="liability"
+            pockets={data.pockets}
             types={data.types}
             onEditType={handleEditType}
             onSelect={select}
@@ -185,6 +205,55 @@ export function AccountsScreen() {
         onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
         onLockStartingBalance={mutations.lockStartingBalance}
         onSave={mutations.saveAccount}
+      />
+
+      <AccountPocketsModal
+        account={overlay?.kind === "details" ? selected ?? null : null}
+        pockets={data.pockets}
+        visible={overlay?.kind === "details" && !!selected}
+        onAddPocket={() => {
+          if (selected) open({ kind: "pocket-form", accountId: selected.id });
+        }}
+        onClose={close}
+        onEditAccount={() => {
+          if (selected) open({ kind: "edit", id: selected.id });
+        }}
+        onEditPocket={(pocket: PocketListItem) =>
+          open({ kind: "pocket-form", accountId: pocket.accountId, pocketId: pocket.id })
+        }
+        onMoveFunds={() => {
+          if (selected) open({ kind: "pocket-move", accountId: selected.id });
+        }}
+      />
+
+      <PocketFormModal
+        account={overlay?.kind === "pocket-form" ? selected ?? null : null}
+        mutations={mutations}
+        pocket={selectedPocket}
+        visible={overlay?.kind === "pocket-form" && !!selected}
+        onClose={() => {
+          if (selected) open({ kind: "details", id: selected.id });
+          else close();
+        }}
+        onSaved={() => {
+          if (selected) open({ kind: "details", id: selected.id });
+          else close();
+        }}
+      />
+
+      <PocketMovementModal
+        account={overlay?.kind === "pocket-move" ? selected ?? null : null}
+        mutations={mutations}
+        pockets={data.pockets.filter((pocket) => pocket.accountId === selected?.id)}
+        visible={overlay?.kind === "pocket-move" && !!selected}
+        onClose={() => {
+          if (selected) open({ kind: "details", id: selected.id });
+          else close();
+        }}
+        onSaved={() => {
+          if (selected) open({ kind: "details", id: selected.id });
+          else close();
+        }}
       />
 
       <AccountTypeManager

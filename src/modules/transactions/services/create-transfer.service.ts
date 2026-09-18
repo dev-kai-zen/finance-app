@@ -1,5 +1,6 @@
 import { db } from "@/infrastructure/database/client";
-import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
+import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
+import { requirePocketForAccount } from "@/modules/accounts";
 import {
   generateId,
   insertTransaction,
@@ -30,9 +31,15 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
     }
 
     const toAccount = findAccountById(input.toAccountId, tx);
-    if (!toAccount) {
-      throw new Error(`Destination account not found: ${input.toAccountId}`);
-    }
+    if (!toAccount) {
+      throw new Error(`Destination account not found: ${input.toAccountId}`);
+    }
+    if (input.fromPocketId) {
+      requirePocketForAccount(input.fromPocketId, fromAccount.id, tx);
+    }
+    if (input.toPocketId) {
+      requirePocketForAccount(input.toPocketId, toAccount.id, tx);
+    }
 
     const groupId = generateId(tx);
     const occurredAt =
@@ -44,7 +51,8 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
     const outLeg = insertTransaction(
       {
         accountId: input.fromAccountId,
-        categoryId: null,
+        categoryId: null,
+        pocketId: input.fromPocketId ?? null,
         transactionGroupId: groupId,
         type: "transfer",
         amountCents: -amount,
@@ -58,7 +66,8 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
     const inLeg = insertTransaction(
       {
         accountId: input.toAccountId,
-        categoryId: null,
+        categoryId: null,
+        pocketId: input.toPocketId ?? null,
         transactionGroupId: groupId,
         type: "transfer",
         amountCents: amount,

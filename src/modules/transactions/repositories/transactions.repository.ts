@@ -4,6 +4,7 @@ import {
   accountTypes,
   accounts,
   categories,
+  pockets,
   transactions,
 } from "@/infrastructure/database/schema";
 import type {
@@ -26,11 +27,13 @@ function mapRowToListItem(r: {
   categoryName: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
+  pocketName: string | null;
 }, balanceAfterByTransactionId: ReadonlyMap<string, number>): TransactionListItem {
   return {
     id: r.transaction.id,
     accountId: r.transaction.accountId,
     categoryId: r.transaction.categoryId,
+    pocketId: r.transaction.pocketId,
     transactionGroupId: r.transaction.transactionGroupId,
     type: r.transaction.type as Transaction["type"],
     amountCents: r.transaction.amountCents,
@@ -52,10 +55,13 @@ function mapRowToListItem(r: {
         ? r.categoryColor.replace("color_", "")
         : r.categoryColor
       : null,
+    pocketName: r.pocketName,
     transferAccountId: null,
     transferAccountName: null,
     transferAccountCurrency: null,
     transferAccountTypeName: null,
+    transferPocketId: null,
+    transferPocketName: null,
     destinationBalanceAfterMinorUnits: null,
   };
 }
@@ -145,6 +151,8 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       transferAccountName: inLeg.accountName,
       transferAccountCurrency: inLeg.accountCurrency,
       transferAccountTypeName: inLeg.accountTypeName,
+      transferPocketId: inLeg.pocketId,
+      transferPocketName: inLeg.pocketName,
       destinationBalanceAfterMinorUnits: inLeg.accountBalanceAfterMinorUnits,
       amountCents: Math.abs(outLeg.amountCents),
     });
@@ -166,11 +174,13 @@ export function listTransactions(
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.hexColorsId,
+      pocketName: pockets.name,
     })
     .from(transactions)
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(pockets, eq(transactions.pocketId, pockets.id))
     .orderBy(desc(transactions.occurredAt), desc(transactions.createdAt));
 
   const conditions = [];
@@ -217,6 +227,8 @@ export function listTransactions(
         (tx.name && tx.name.toLowerCase().includes(q)) ||
         (tx.note && tx.note.toLowerCase().includes(q)) ||
         (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
+        (tx.pocketName && tx.pocketName.toLowerCase().includes(q)) ||
+        (tx.transferPocketName && tx.transferPocketName.toLowerCase().includes(q)) ||
         tx.accountName.toLowerCase().includes(q) ||
         (tx.transferAccountName && tx.transferAccountName.toLowerCase().includes(q)),
     );
@@ -247,11 +259,13 @@ export function listDeletedTransactions(
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.hexColorsId,
+      pocketName: pockets.name,
     })
     .from(transactions)
     .leftJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(pockets, eq(transactions.pocketId, pockets.id))
     .where(isNotNull(transactions.deletedAt))
     .orderBy(desc(transactions.deletedAt), desc(transactions.occurredAt))
     .all();
@@ -306,6 +320,7 @@ export function insertTransaction(
     id,
     accountId: data.accountId,
     categoryId: data.categoryId ?? null,
+    pocketId: data.pocketId ?? null,
     transactionGroupId: data.transactionGroupId ?? null,
     type: data.type,
     amountCents: data.amountCents,
@@ -329,6 +344,7 @@ export function updateTransactionRecord(
       NewTransaction,
       | "accountId"
       | "categoryId"
+      | "pocketId"
       | "type"
       | "amountCents"
       | "name"
