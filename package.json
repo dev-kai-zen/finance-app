@@ -37,8 +37,8 @@
     "web": "expo start --web",
     "android:prebuild": "expo prebuild --platform android",
     "android:apk:debug": "cd android && gradlew.bat assembleDebug",
-    "android:apk:release": "cd android && gradlew.bat assembleRelease",
-    "android:aab:release": "cd android && gradlew.bat bundleRelease",
+    "android:apk:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease",
+    "android:aab:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat bundleRelease",
     "db:generate": "drizzle-kit generate",
     "typecheck": "tsc --noEmit"
   },
