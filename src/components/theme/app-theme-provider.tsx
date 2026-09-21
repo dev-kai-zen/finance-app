@@ -6,7 +6,6 @@ import React, {
   useState,
   type PropsWithChildren,
 } from "react";
-import { StatusBar } from "expo-status-bar";
 import {
   ALL_THEME_PRESETS,
   THEMES_BY_ID,
@@ -67,7 +66,6 @@ export function AppThemeProvider({
 
   return (
     <ThemeContext.Provider value={value}>
-      <StatusBar style={activeTheme.mode === "dark" ? "light" : "dark"} />
       {children}
     </ThemeContext.Provider>
   );

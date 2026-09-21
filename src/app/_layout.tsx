@@ -1,5 +1,6 @@
 import { LogBox, StyleSheet } from "react-native";
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppShell } from "@/components/app-shell";
@@ -15,44 +16,57 @@ function RootLayoutContent() {
   const { theme } = useThemeContext();
 
   return (
-    <SafeAreaView
-      edges={["top"]}
-      style={[
-        styles.safeAreaBoundary,
-        { backgroundColor: theme.colors.background },
-      ]}
+    <SafeAreaProvider
+      style={[styles.rootLayer, { backgroundColor: theme.colors.background }]}
     >
-      <AppShell>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="accounts" />
-          <Stack.Screen name="transactions" />
-          <Stack.Screen name="categories" />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="monitor" />
-        </Stack>
-      </AppShell>
-    </SafeAreaView>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <SafeAreaProvider>
+      <StatusBar style={theme.mode === "dark" ? "dark" : "light"} />
       <KeyboardProvider>
-        <AppThemeProvider>
-          <DatabaseProvider>
-            <HexColorsProvider>
-              <RootLayoutContent />
-            </HexColorsProvider>
-          </DatabaseProvider>
-        </AppThemeProvider>
+        <DatabaseProvider>
+          <HexColorsProvider>
+            <SafeAreaView
+              edges={["top"]}
+              style={[
+                styles.safeAreaBoundary,
+                { backgroundColor: theme.colors.background },
+              ]}
+            >
+              <AppShell>
+                <Stack
+                  screenOptions={{
+                    contentStyle: {
+                      backgroundColor: theme.colors.background,
+                    },
+                    headerShown: false,
+                  }}
+                >
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="accounts" />
+                  <Stack.Screen name="transactions" />
+                  <Stack.Screen name="categories" />
+                  <Stack.Screen name="settings" />
+                  <Stack.Screen name="monitor" />
+                </Stack>
+              </AppShell>
+            </SafeAreaView>
+          </HexColorsProvider>
+        </DatabaseProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
   );
 }
 
+export default function RootLayout() {
+  return (
+    <AppThemeProvider>
+      <RootLayoutContent />
+    </AppThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
+  rootLayer: {
+    flex: 1,
+  },
   safeAreaBoundary: {
     flex: 1,
   },

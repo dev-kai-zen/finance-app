@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/finance-app-logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.financeapp.app",
+      "package": "com.kaizen.finance",
       "versionCode": 1
     },
     "web": {
