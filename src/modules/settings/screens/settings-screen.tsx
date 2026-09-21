@@ -1,210 +1,89 @@
 import { useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
+
+import { ActionBottomSheet } from "@/components/action-bottom-sheet";
 import { PageContainer } from "@/components/page-container";
-import { PageHeader } from "@/components/page-header";
-import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 
 export function SettingsScreen() {
-  const { width } = useWindowDimensions();
-  const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
   const { theme, themeId, setThemeId, availableThemes } = useThemeController();
   const { colors } = useHexColors();
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
 
   return (
-    <PageContainer
-      header={
-        <PageHeader
-          breadcrumb="Kaizen Finance / Settings"
-          subtitle="Appearance themes, financial preferences, and system architecture."
-          title="Settings"
-        />
-      }
-    >
+    <PageContainer>
       <View style={styles.container}>
-        {/* Theme & Appearance Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>THEME & COLOR PRESETS</Text>
-            <View style={styles.activeThemeBadge}>
-              <Text style={styles.activeThemeBadgeText}>{theme.name}</Text>
-            </View>
-          </View>
+          <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
+          <View style={[styles.card, styles.emptyCard]} />
+        </View>
 
-          <View style={[styles.themeGrid, isDesktop && styles.themeGridDesktop]}>
-            {availableThemes.map((preset) => {
-              const isSelected = preset.id === themeId;
-              return (
-                <Pressable
-                  key={preset.id}
-                  accessibilityLabel={`Select ${preset.name} theme (${preset.mode} mode)`}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
-                  onPress={() => setThemeId(preset.id)}
-                  style={({ pressed }) => [
-                    styles.themeCard,
-                    isSelected && styles.themeCardActive,
-                    pressed && styles.themeCardPressed,
-                  ]}
-                >
-                  <View style={styles.themeCardLeft}>
-                    {/* Swatch preview */}
-                    <View
-                      style={[
-                        styles.swatchBackground,
-                        { backgroundColor: preset.colors.background, borderColor: preset.colors.border },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.swatchPrimary,
-                          { backgroundColor: preset.colors.primary },
-                        ]}
-                      />
-                      <View
-                        style={[
-                          styles.swatchAccent,
-                          { backgroundColor: preset.colors.accent },
-                        ]}
-                      />
-                    </View>
-
-                    <View>
-                      <Text
-                        style={[
-                          styles.themeName,
-                          isSelected && styles.themeNameActive,
-                        ]}
-                      >
-                        {preset.name}
-                      </Text>
-                      <Text style={styles.themeMode}>
-                        {preset.mode === "light" ? "Clean Light" : "Obsidian Dark"}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.radioCircle,
-                      isSelected && styles.radioCircleActive,
-                    ]}
-                  >
-                    {isSelected && <View style={styles.radioDot} />}
-                  </View>
-                </Pressable>
-              );
-            })}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>THEME &amp; COLOR PRESETS</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={`Current theme: ${theme.name}. Tap to change.`}
+              accessibilityRole="button"
+              onPress={() => setIsThemePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <ThemePreview preset={theme} />
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>{theme.name}</Text>
+                <Text style={styles.settingDescription}>Tap to change</Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
         </View>
 
-        {/* Source Management Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>SOURCE MANAGEMENT</Text>
           <View style={styles.card}>
             <Pressable
-              accessibilityLabel="Modify hex colors"
+              accessibilityLabel={`Manage hex colors. ${colors.length} colors available.`}
               accessibilityRole="button"
               onPress={() => setIsHexColorsOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
-                styles.settingRowPressable,
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.settingLeft}>
+              <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>Hex Colors</Text>
-                <Text style={styles.settingDescription}>
-                  Modify palette swatches for accounts and categories, or add your custom hex colors.
-                </Text>
               </View>
-              <View style={styles.settingBadgeGroup}>
-                <View style={styles.settingBadge}>
-                  <Text style={styles.settingValue}>{colors.length} Colors</Text>
+              <View style={styles.rowAccessory}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{colors.length}</Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
               </View>
             </Pressable>
           </View>
         </View>
-
-        {/* Financial Preferences Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>FINANCIAL PREFERENCES</Text>
-          <View style={styles.card}>
-            <SettingItem
-              description="Standard ISO currency for accounts and transactions"
-              label="Primary Currency"
-              value="PHP (₱)"
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              description="Standard formatting for dates and minor-unit amounts"
-              label="Locale & Number Formatting"
-              value="English (Philippines)"
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              description="Day of the month for monthly budget reset"
-              label="Fiscal Cycle Start"
-              value="1st of the month"
-            />
-          </View>
-        </View>
-
-        {/* Database & Architecture Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ARCHITECTURE & LOCAL DATA</Text>
-          <View style={styles.card}>
-            <SettingItem
-              description="Single source of truth with offline-first persistence"
-              label="Local Database"
-              value="Expo SQLite"
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              description="Type-safe SQL schemas and automatic migrations"
-              label="ORM & Migration Engine"
-              value="Drizzle ORM"
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              description="Writes commit locally first with background synchronization"
-              label="Sync Architecture"
-              value="Offline First"
-            />
-          </View>
-        </View>
-
-        {/* Appearance & Version Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SYSTEM & VERSION</Text>
-          <View style={styles.card}>
-            <SettingItem
-              description="Dynamic theme tokens with 6 obsidian & light palettes"
-              label="Theme Engine"
-              value={theme.name}
-            />
-            <View style={styles.divider} />
-            <SettingItem
-              description="React Native 0.86 with Expo SDK 57"
-              label="Framework Version"
-              value="Expo SDK 57"
-            />
-          </View>
-        </View>
       </View>
+
+      <ActionBottomSheet
+        items={availableThemes.map((preset) => ({
+          id: preset.id,
+          label: preset.name,
+          description: preset.mode === "light" ? "Light preset" : "Dark preset",
+          icon: <ThemePreview compact preset={preset} />,
+          selected: preset.id === themeId,
+          onPress: () => setThemeId(preset.id),
+        }))}
+        title="Choose a theme"
+        visible={isThemePickerOpen}
+        onClose={() => setIsThemePickerOpen(false)}
+      />
 
       <HexColorsModal
         visible={isHexColorsOpen}
@@ -214,43 +93,86 @@ export function SettingsScreen() {
   );
 }
 
-function SettingItem({
-  label,
-  value,
-  description,
+function ThemePreview({
+  preset,
+  compact = false,
 }: {
-  label: string;
-  value: string;
-  description: string;
+  preset: AppTheme;
+  compact?: boolean;
 }) {
-  const styles = useThemeStyles(createStyles);
-
   return (
-    <View style={styles.settingRow}>
-      <View style={styles.settingLeft}>
-        <Text style={styles.settingLabel}>{label}</Text>
-        <Text style={styles.settingDescription}>{description}</Text>
-      </View>
-      <View style={styles.settingBadge}>
-        <Text style={styles.settingValue}>{value}</Text>
-      </View>
+    <View
+      style={[
+        previewStyles.container,
+        compact && previewStyles.containerCompact,
+        {
+          backgroundColor: preset.colors.background,
+          borderColor: preset.colors.borderStrong,
+        },
+      ]}
+    >
+      <View
+        style={[
+          previewStyles.primary,
+          compact && previewStyles.primaryCompact,
+          { backgroundColor: preset.colors.primary },
+        ]}
+      />
+      <View
+        style={[
+          previewStyles.accent,
+          compact && previewStyles.accentCompact,
+          { backgroundColor: preset.colors.accent },
+        ]}
+      />
     </View>
   );
 }
+
+const previewStyles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    borderRadius: 10,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    gap: 4,
+    height: 40,
+    justifyContent: "center",
+    width: 48,
+  },
+  containerCompact: {
+    borderRadius: 8,
+    height: 30,
+    width: 34,
+  },
+  primary: {
+    borderRadius: 4,
+    height: 18,
+    width: 18,
+  },
+  primaryCompact: {
+    height: 13,
+    width: 13,
+  },
+  accent: {
+    borderRadius: 3,
+    height: 11,
+    width: 11,
+  },
+  accentCompact: {
+    height: 8,
+    width: 8,
+  },
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
       gap: theme.spacing.xl,
+      paddingTop: theme.spacing.lg,
     },
     section: {
       gap: theme.spacing.sm,
-    },
-    sectionHeaderRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.xs,
     },
     sectionTitle: {
       color: theme.colors.textMuted,
@@ -258,104 +180,6 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.8,
       paddingHorizontal: theme.spacing.xs,
-    },
-    activeThemeBadge: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.small,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 2,
-    },
-    activeThemeBadgeText: {
-      color: theme.colors.primary,
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    themeGrid: {
-      flexDirection: "column",
-      gap: theme.spacing.sm,
-    },
-    themeGridDesktop: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-    },
-    themeCard: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1.5,
-      flex: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      minHeight: 64,
-      minWidth: 280,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      ...theme.shadows.card,
-    },
-    themeCardActive: {
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.surfaceMuted,
-    },
-    themeCardPressed: {
-      opacity: 0.85,
-    },
-    themeCardLeft: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.md,
-    },
-    swatchBackground: {
-      borderRadius: 10,
-      borderWidth: 1.5,
-      height: 38,
-      justifyContent: "center",
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 3,
-      paddingHorizontal: 4,
-      width: 44,
-    },
-    swatchPrimary: {
-      borderRadius: 4,
-      height: 16,
-      width: 16,
-    },
-    swatchAccent: {
-      borderRadius: 3,
-      height: 10,
-      width: 10,
-    },
-    themeName: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    themeNameActive: {
-      color: theme.colors.primary,
-    },
-    themeMode: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      marginTop: 2,
-    },
-    radioCircle: {
-      alignItems: "center",
-      borderColor: theme.colors.borderStrong,
-      borderRadius: 10,
-      borderWidth: 2,
-      height: 20,
-      justifyContent: "center",
-      width: 20,
-    },
-    radioCircleActive: {
-      borderColor: theme.colors.primary,
-    },
-    radioDot: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: 5,
-      height: 10,
-      width: 10,
     },
     card: {
       backgroundColor: theme.colors.surface,
@@ -365,27 +189,23 @@ function createStyles(theme: AppTheme) {
       overflow: "hidden",
       ...theme.shadows.card,
     },
+    emptyCard: {
+      minHeight: 56,
+    },
     settingRow: {
       alignItems: "center",
       flexDirection: "row",
-      justifyContent: "space-between",
+      gap: theme.spacing.md,
+      minHeight: 68,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
-      gap: theme.spacing.md,
-    },
-    settingRowPressable: {
-      minHeight: 56,
     },
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
     },
-    settingBadgeGroup: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.xs,
-    },
-    settingLeft: {
+    settingCopy: {
       flex: 1,
+      gap: 2,
     },
     settingLabel: {
       color: theme.colors.textPrimary,
@@ -393,26 +213,27 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     settingDescription: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
-      lineHeight: theme.typography.lineHeight.xs,
-      marginTop: 2,
     },
-    settingBadge: {
+    rowAccessory: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    countBadge: {
       backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.small,
+      borderRadius: theme.borderRadius.round,
+      minWidth: 28,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: theme.spacing.xs,
     },
-    settingValue: {
-      color: theme.colors.textPrimary,
+    countBadgeText: {
+      color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
+      fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    divider: {
-      backgroundColor: theme.colors.border,
-      height: 1,
-      marginHorizontal: theme.spacing.lg,
+      textAlign: "center",
     },
   });
 }
