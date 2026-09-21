@@ -1,14 +1,24 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import migrations from "../../../drizzle/migrations";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { db } from "./client";
+import { subscribeToDatabaseReplacement } from "./database-replacement";
 import { useAppMigrations } from "./migrator";
 
 export function DatabaseProvider({ children }: PropsWithChildren) {
   const { success, error } = useAppMigrations(db, migrations);
+  const [databaseRevision, setDatabaseRevision] = useState(0);
   const styles = useThemeStyles(createStyles);
+
+  useEffect(
+    () =>
+      subscribeToDatabaseReplacement(() => {
+        setDatabaseRevision((revision) => revision + 1);
+      }),
+    [],
+  );
 
   if (error) {
     return (
@@ -31,7 +41,11 @@ export function DatabaseProvider({ children }: PropsWithChildren) {
     );
   }
 
-  return children;
+  return (
+    <View key={databaseRevision} style={styles.content}>
+      {children}
+    </View>
+  );
 }
 
 function createStyles(theme: AppTheme) {
@@ -57,6 +71,9 @@ function createStyles(theme: AppTheme) {
     },
     spinner: {
       color: theme.colors.primary,
+    },
+    content: {
+      flex: 1,
     },
   });
 }

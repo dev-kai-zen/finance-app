@@ -25,12 +25,21 @@
         "foregroundImage": "./assets/finance-app-logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.kaizen.finance",
+      "package": "com.kaizen.finance.app",
       "versionCode": 1
     },
     "web": {
       "favicon": "./assets/finance-app-logo.png"
     },
-    "plugins": ["expo-router", "expo-sqlite"]
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "react-native-nitro-google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.configure-kaizen-finance"
+        }
+      ]
+    ]
   }
 }

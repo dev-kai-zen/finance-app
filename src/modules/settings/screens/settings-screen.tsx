@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
+import { GoogleDriveBackupSettings } from "@/modules/backup";
 
 export function SettingsScreen() {
   const styles = useThemeStyles(createStyles);
@@ -20,7 +21,7 @@ export function SettingsScreen() {
       <View style={styles.container}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
-          <View style={[styles.card, styles.emptyCard]} />
+          <GoogleDriveBackupSettings />
         </View>
 
         <View style={styles.section}>
@@ -188,9 +189,6 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
-    },
-    emptyCard: {
-      minHeight: 56,
     },
     settingRow: {
       alignItems: "center",

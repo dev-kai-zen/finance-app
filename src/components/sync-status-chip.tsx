@@ -18,8 +18,8 @@ export interface SyncStatusChipProps {
 
 export function SyncStatusChip({
   onPress,
-  label = "Synced",
-  isOnline = true,
+  label = "Local only",
+  isOnline = false,
 }: SyncStatusChipProps) {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
