@@ -35,6 +35,26 @@ export function maintainingAmountInput(minorUnits: number | null | undefined): s
   return `${Math.floor(minorUnits / 100)}.${String(minorUnits % 100).padStart(2, "0")}`;
 }
 
+export function parseCreditLimit(input: string): number {
+  return parseMaintainingAmount(input);
+}
+
+export function creditLimitInput(minorUnits: number | null | undefined): string {
+  return maintainingAmountInput(minorUnits);
+}
+
+export function parseBillingDay(input: string, label: string): number {
+  const value = input.trim();
+  if (!/^\d{1,2}$/.test(value)) {
+    throw new Error(`${label} must be a whole number from 1 to 31.`);
+  }
+  const day = Number(value);
+  if (day < 1 || day > 31) {
+    throw new Error(`${label} must be from 1 to 31.`);
+  }
+  return day;
+}
+
 export function localDateInput(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

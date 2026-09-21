@@ -23,10 +23,14 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
-import type { Account, AccountType } from "@/modules/accounts/types/account.types";
+import type {
+  AccountListItem,
+  AccountType,
+} from "@/modules/accounts/types/account.types";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import {
   localDateInput,
+  creditLimitInput,
   maintainingAmountInput,
   openingAmountInput,
 } from "@/modules/accounts/utils/account-input";
@@ -59,7 +63,7 @@ export function AccountFormModal({
   onLockStartingBalance,
 }: {
   visible: boolean;
-  account?: Account;
+  account?: AccountListItem;
   types: AccountType[];
   pending: boolean;
   error: string | null;
@@ -83,6 +87,15 @@ export function AccountFormModal({
     hideFromReports: account?.hideFromReports ?? false,
     pocketEnabled: account?.pocketEnabled ?? false,
     maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+    creditCardDetails: account?.creditCardDetails
+      ? {
+          creditLimit: creditLimitInput(
+            account.creditCardDetails.creditLimitMinorUnits,
+          ),
+          statementDay: String(account.creditCardDetails.statementDay),
+          paymentDueDay: String(account.creditCardDetails.paymentDueDay),
+        }
+      : undefined,
   }));
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
     parseAmountSign(openingAmountInput(account?.openingBalanceMinorUnits ?? 0)),
@@ -102,6 +115,15 @@ export function AccountFormModal({
       hideFromReports: account?.hideFromReports ?? false,
       pocketEnabled: account?.pocketEnabled ?? false,
       maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+      creditCardDetails: account?.creditCardDetails
+        ? {
+            creditLimit: creditLimitInput(
+              account.creditCardDetails.creditLimitMinorUnits,
+            ),
+            statementDay: String(account.creditCardDetails.statementDay),
+            paymentDueDay: String(account.creditCardDetails.paymentDueDay),
+          }
+        : undefined,
     });
     if (account) {
       setAmountSign(parseAmountSign(openingAmount));
@@ -115,6 +137,7 @@ export function AccountFormModal({
   }, [visible, account, types]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
+  const [creditLimitCalculatorOpen, setCreditLimitCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
@@ -148,6 +171,12 @@ export function AccountFormModal({
     const parsed = Math.round(parseFloat(stripped || "0") * 100);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.maintainingAmount]);
+
+  const creditLimitMinorUnits = useMemo(() => {
+    const input = value.creditCardDetails?.creditLimit.trim() || "0";
+    const parsed = Math.round(parseFloat(input) * 100);
+    return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+  }, [value.creditCardDetails?.creditLimit]);
 
   const typeColor = accountColor(
     theme,
@@ -187,7 +216,16 @@ export function AccountFormModal({
       amountSign === "-" && stripped !== "0" && stripped !== "0.00"
         ? `-${stripped}`
         : stripped;
-    void onSave({ ...value, openingAmount: signedAmount }, account?.id).then(
+    void onSave(
+      {
+        ...value,
+        openingAmount: signedAmount,
+        creditCardDetails: isCreditCardType
+          ? value.creditCardDetails
+          : null,
+      },
+      account?.id,
+    ).then(
       (saved) => {
         if (saved) onClose();
       },
@@ -447,16 +485,74 @@ export function AccountFormModal({
           </Pressable>
 
           {isCreditCardType ? (
-            <View style={styles.devSection}>
-              <Text style={styles.fieldLabel}>Credit Card Details</Text>
-              <View style={styles.devCard}>
-                <Text style={styles.devTitle}>Ongoing Development</Text>
-                <Text style={styles.devText}>
-                  Credit limit, statement day, and payment due fields will be
-                  added here. The layout follows Kaizen Finance, but the logic is
-                  not wired yet.
-                </Text>
+            <View style={styles.creditCardSection}>
+              <Text style={styles.sectionTitle}>Credit Card Details</Text>
+              <AmountCalculatorField
+                amountMinorUnits={creditLimitMinorUnits}
+                currencyCode={account?.currencyCode ?? "PHP"}
+                disabled={pending}
+                label="Credit Limit"
+                showSignToggle={false}
+                onOpenCalculator={() => setCreditLimitCalculatorOpen(true)}
+              />
+              <View style={styles.billingDaysRow}>
+                <View style={styles.billingDayField}>
+                  <Text style={styles.fieldLabel}>Statement Day</Text>
+                  <TextInput
+                    accessibilityLabel="Statement day of the month"
+                    editable={!pending}
+                    inputMode="numeric"
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    placeholder="1–31"
+                    placeholderTextColor={theme.colors.textMuted}
+                    style={styles.textInput}
+                    value={value.creditCardDetails?.statementDay ?? ""}
+                    onChangeText={(statementDay) =>
+                      setValue((prev) => ({
+                        ...prev,
+                        creditCardDetails: {
+                          creditLimit:
+                            prev.creditCardDetails?.creditLimit ?? "",
+                          paymentDueDay:
+                            prev.creditCardDetails?.paymentDueDay ?? "",
+                          statementDay: statementDay.replace(/\D/g, ""),
+                        },
+                      }))
+                    }
+                  />
+                </View>
+                <View style={styles.billingDayField}>
+                  <Text style={styles.fieldLabel}>Payment Due Day</Text>
+                  <TextInput
+                    accessibilityLabel="Payment due day of the month"
+                    editable={!pending}
+                    inputMode="numeric"
+                    keyboardType="number-pad"
+                    maxLength={2}
+                    placeholder="1–31"
+                    placeholderTextColor={theme.colors.textMuted}
+                    style={styles.textInput}
+                    value={value.creditCardDetails?.paymentDueDay ?? ""}
+                    onChangeText={(paymentDueDay) =>
+                      setValue((prev) => ({
+                        ...prev,
+                        creditCardDetails: {
+                          creditLimit:
+                            prev.creditCardDetails?.creditLimit ?? "",
+                          statementDay:
+                            prev.creditCardDetails?.statementDay ?? "",
+                          paymentDueDay: paymentDueDay.replace(/\D/g, ""),
+                        },
+                      }))
+                    }
+                  />
+                </View>
               </View>
+              <Text style={styles.helperText}>
+                For months with fewer days, billing dates use the last day of
+                the month.
+              </Text>
             </View>
           ) : null}
         </KeyboardAwareForm>
@@ -508,6 +604,26 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
+        allowNegative={false}
+        currencyCode={account?.currencyCode ?? "PHP"}
+        initialMinorUnits={creditLimitMinorUnits}
+        title="Credit Limit"
+        visible={creditLimitCalculatorOpen}
+        onClose={() => setCreditLimitCalculatorOpen(false)}
+        onConfirm={(_minorUnits, formatted) => {
+          setValue((prev) => ({
+            ...prev,
+            creditCardDetails: {
+              creditLimit: formatted,
+              statementDay: prev.creditCardDetails?.statementDay ?? "",
+              paymentDueDay: prev.creditCardDetails?.paymentDueDay ?? "",
+            },
+          }));
+          setCreditLimitCalculatorOpen(false);
+        }}
+      />
+
+      <AmountCalculatorModal
         currencyCode={account?.currencyCode ?? "PHP"}
         initialMinorUnits={maintainingMinorUnits}
         title="Maintaining Balance"
@@ -540,6 +656,16 @@ export function AccountFormModal({
           setValue((prev) => ({
             ...prev,
             accountTypeId,
+            creditCardDetails: isCreditCardAccountType(
+              accountTypeId,
+              selectedType?.name,
+            )
+              ? prev.creditCardDetails ?? {
+                  creditLimit: "",
+                  statementDay: "",
+                  paymentDueDay: "",
+                }
+              : prev.creditCardDetails,
             pocketEnabled: supportsPockets(
               accountTypeId,
               selectedType?.accountGroup,
@@ -685,27 +811,22 @@ function createStyles(theme: AppTheme) {
       fontSize: 12,
       fontWeight: "600",
     },
-    devSection: {
+    creditCardSection: {
       gap: theme.spacing.sm,
       marginTop: theme.spacing.sm,
     },
-    devCard: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      gap: theme.spacing.xs,
-      padding: theme.spacing.lg,
-    },
-    devTitle: {
-      color: theme.colors.warning,
-      fontSize: theme.typography.fontSize.sm,
+    sectionTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
     },
-    devText: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: 20,
+    billingDaysRow: {
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    billingDayField: {
+      flex: 1,
+      gap: theme.spacing.sm,
     },
     toggleRow: {
       alignItems: "center",

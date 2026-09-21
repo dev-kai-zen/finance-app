@@ -18,6 +18,7 @@ export type {
   AccountType,
   AccountGroup,
   AccountListItem,
+  CreditCardDetails,
   DeleteAccountTypeResult,
   Pocket,
   PocketInput,

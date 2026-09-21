@@ -1,16 +1,26 @@
 import { asc, eq, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, accountTypes } from "@/infrastructure/database/schema";
+import {
+  accounts,
+  accountTypes,
+  creditCardDetails,
+} from "@/infrastructure/database/schema";
 import type { Account, AccountListItem, NewAccount } from "@/modules/accounts/types/account.types";
 
 export function listAccounts(context: DbContext = db): AccountListItem[] {
-  const rows = context.select({ account: accounts, accountType: accountTypes }).from(accounts)
+  const rows = context.select({
+    account: accounts,
+    accountType: accountTypes,
+    creditCardDetails,
+  }).from(accounts)
     .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
+    .leftJoin(creditCardDetails, eq(accounts.id, creditCardDetails.accountId))
     .orderBy(asc(accounts.sortOrder), asc(accounts.name), asc(accounts.id)).all();
 
-  return rows.map(({ account, accountType }) => ({
+  return rows.map(({ account, accountType, creditCardDetails }) => ({
     ...account,
     accountType,
+    creditCardDetails,
     currentBalanceMinorUnits: account.openingBalanceMinorUnits,
   }));
 }

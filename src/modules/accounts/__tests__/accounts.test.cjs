@@ -63,6 +63,7 @@ require.extensions[".png"] = require.extensions[".jpg"] = require.extensions[".j
 const { drizzle } = require("drizzle-orm/expo-sqlite");
 const schema = require("@/infrastructure/database/schema");
 const repo = require("@/modules/accounts/repositories/accounts.repository");
+const creditCardsRepo = require("@/modules/accounts/repositories/credit-card-details.repository");
 const types = require("@/modules/accounts/repositories/account-types.repository");
 const { getAccountsWithBalances } = require("@/modules/accounts/services/get-accounts-with-balances.service");
 const { getPocketsWithBalances, getAvailablePocketBalance } = require("@/modules/accounts/services/get-pockets-with-balances.service");
@@ -168,8 +169,8 @@ function connect(filename = ":memory:") {
 }
 function migrate(selected = migrations) { database.dialect.migrate(selected, database.session); }
 const typeInput = (name, accountGroup = "asset") => ({ name, accountGroup, iconKey: "wallet", color: "teal" });
-const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account", openingAmount = "1000.50") =>
-  ({
+const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account", openingAmount = "1000.50") => {
+  const value = {
     name,
     accountTypeId,
     openingAmount,
@@ -178,7 +179,16 @@ const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account
     hideFromReports: false,
     pocketEnabled: false,
     maintainingAmount: "",
-  });
+  };
+  if (accountTypeId === system.LIABILITY_CREDIT_CARD) {
+    value.creditCardDetails = {
+      creditLimit: "50000.00",
+      statementDay: "15",
+      paymentDueDay: "5",
+    };
+  }
+  return value;
+};
 const pocketTransfer = (accountId, fromPocketId, toPocketId, amountCents) =>
   createTransfer({
     fromAccountId: accountId,
@@ -441,6 +451,52 @@ test("getAccountsWithBalances calculates live current balance reflecting income,
   // Savings: 50,000 + 10,000 (transfer in) = 60,000
   assert.equal(savings.openingBalanceMinorUnits, 50000);
   assert.equal(savings.currentBalanceMinorUnits, 60000);
+});
+test("credit card details use account_id as their one-to-one primary key", () => {
+  const id = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD, "Visa"));
+  assert.deepEqual(creditCardsRepo.findCreditCardDetailsByAccountId(id), {
+    accountId: id,
+    creditLimitMinorUnits: 5000000,
+    statementDay: 15,
+    paymentDueDay: 5,
+  });
+  assert.equal(repo.listAccounts()[0].creditCardDetails.accountId, id);
+
+  saveAccount({
+    ...accountInput(system.LIABILITY_CREDIT_CARD, "Visa updated"),
+    creditCardDetails: {
+      creditLimit: "75000.50",
+      statementDay: "31",
+      paymentDueDay: "20",
+    },
+  }, id);
+  assert.deepEqual(creditCardsRepo.findCreditCardDetailsByAccountId(id), {
+    accountId: id,
+    creditLimitMinorUnits: 7500050,
+    statementDay: 31,
+    paymentDueDay: 20,
+  });
+});
+test("credit card details are required, validated, and removed when the type changes", () => {
+  assert.throws(
+    () => saveAccount({ ...accountInput(system.LIABILITY_CREDIT_CARD), creditCardDetails: null }),
+    /credit card limit/i,
+  );
+  assert.throws(
+    () => saveAccount({
+      ...accountInput(system.LIABILITY_CREDIT_CARD),
+      creditCardDetails: {
+        creditLimit: "-1",
+        statementDay: "0",
+        paymentDueDay: "32",
+      },
+    }),
+    /number|day/i,
+  );
+
+  const id = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD));
+  saveAccount(accountInput(system.ASSET_OTHERS, "Checking"), id);
+  assert.equal(creditCardsRepo.findCreditCardDetailsByAccountId(id), null);
 });
 
 test("pocket transfers create two grouped transaction legs without changing the account balance", () => {

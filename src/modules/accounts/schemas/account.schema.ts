@@ -2,6 +2,8 @@ import { z } from "zod";
 import { ACCOUNT_COLOR_KEYS, ACCOUNT_ICON_KEYS } from "@/modules/accounts/constants/account-appearance.constants";
 import {
   parseMaintainingAmount,
+  parseBillingDay,
+  parseCreditLimit,
   parseOpeningAmount,
   parseOpeningDate,
 } from "@/modules/accounts/utils/account-input";
@@ -13,6 +15,14 @@ const checkedString = (parse: (value: string) => unknown) => z.string().superRef
     ctx.addIssue({ code: "custom", message: error instanceof Error ? error.message : "Invalid value." });
   }
 });
+const creditCardDetailsInputSchema = z.object({
+  creditLimit: checkedString(parseCreditLimit),
+  statementDay: checkedString((value) => parseBillingDay(value, "Statement day")),
+  paymentDueDay: checkedString((value) =>
+    parseBillingDay(value, "Payment due day"),
+  ),
+});
+
 export const accountInputSchema = z.object({
   name,
   note: z
@@ -40,6 +50,7 @@ export const accountInputSchema = z.object({
         });
       }
     }),
+  creditCardDetails: creditCardDetailsInputSchema.optional().nullable(),
 });
 export const accountTypeInputSchema = z.object({
   name,

@@ -2,6 +2,7 @@ import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
 import type {
   accountTypes,
   accounts,
+  creditCardDetails,
   pockets,
 } from "@/infrastructure/database/schema";
 
@@ -14,6 +15,8 @@ export type NewAccountType = InferInsertModel<typeof accountTypes>;
 
 export type Account = InferSelectModel<typeof accounts>;
 export type NewAccount = InferInsertModel<typeof accounts>;
+export type CreditCardDetails = InferSelectModel<typeof creditCardDetails>;
+export type NewCreditCardDetails = InferInsertModel<typeof creditCardDetails>;
 
 export type Pocket = InferSelectModel<typeof pockets>;
 export type NewPocket = InferInsertModel<typeof pockets>;
@@ -30,6 +33,7 @@ export type PocketInput = {
 
 export type AccountListItem = Account & {
   accountType: AccountType | null;
+  creditCardDetails: CreditCardDetails | null;
   currentBalanceMinorUnits: number;
 };
 

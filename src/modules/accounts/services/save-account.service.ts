@@ -1,21 +1,49 @@
 import { db } from "@/infrastructure/database/client";
 import { accountInputSchema, type AccountInput } from "@/modules/accounts/schemas/account.schema";
 import { findAccountsByAccountTypeId, insertAccount, newAccountRecordId, updateAccountRecord } from "@/modules/accounts/repositories/accounts.repository";
+import {
+  deleteCreditCardDetails,
+  upsertCreditCardDetails,
+} from "@/modules/accounts/repositories/credit-card-details.repository";
 import { listPocketsForAccount } from "@/modules/accounts/repositories/pockets.repository";
 import {
   localDateInput,
+  parseBillingDay,
+  parseCreditLimit,
   parseMaintainingAmount,
   parseOpeningAmount,
   parseOpeningDate,
 } from "@/modules/accounts/utils/account-input";
 import { requireAccount, requireAccountType } from "@/modules/accounts/services/account-rules";
-import { supportsPockets } from "@/modules/accounts/utils/pocket-eligibility";
+import {
+  isCreditCardAccountType,
+  supportsPockets,
+} from "@/modules/accounts/utils/pocket-eligibility";
 
 export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
     const type = requireAccountType(value.accountTypeId, tx);
+    const creditCardType = isCreditCardAccountType(type.id, type.name);
+    if (creditCardType && !value.creditCardDetails) {
+      throw new Error("Enter the credit card limit, statement day, and payment due day.");
+    }
+    const creditCardValues = value.creditCardDetails
+      ? {
+          creditLimitMinorUnits: parseCreditLimit(
+            value.creditCardDetails.creditLimit,
+          ),
+          statementDay: parseBillingDay(
+            value.creditCardDetails.statementDay,
+            "Statement day",
+          ),
+          paymentDueDay: parseBillingDay(
+            value.creditCardDetails.paymentDueDay,
+            "Payment due day",
+          ),
+        }
+      : null;
     const pocketEligible = supportsPockets(type.id, type.accountGroup, type.name);
     if (value.pocketEnabled && !pocketEligible) {
       throw new Error("Pockets are not available for Credit Card accounts.");
@@ -68,21 +96,33 @@ export function saveAccount(input: AccountInput, id?: string): string {
       sortOrder,
       updatedAt: now,
     };
+    let accountId: string;
     if (existing) {
       updateAccountRecord(existing.id, values, tx);
-      return existing.id;
+      accountId = existing.id;
+    } else {
+      accountId = newAccountRecordId(tx);
+      insertAccount(
+        {
+          ...values,
+          id: accountId,
+          currencyCode: "PHP",
+          startingBalanceLocked: false,
+          createdAt: now,
+        },
+        tx,
+      );
     }
-    const newId = newAccountRecordId(tx);
-    insertAccount(
-      {
-        ...values,
-        id: newId,
-        currencyCode: "PHP",
-        startingBalanceLocked: false,
-        createdAt: now,
-      },
-      tx,
-    );
-    return newId;
+
+    if (creditCardType && creditCardValues) {
+      upsertCreditCardDetails(
+        { accountId, ...creditCardValues },
+        tx,
+      );
+    } else {
+      deleteCreditCardDetails(accountId, tx);
+    }
+
+    return accountId;
   });
 }

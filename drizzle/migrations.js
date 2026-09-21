@@ -14,6 +14,7 @@ import m0011 from './0011_add_deleted_at_to_transactions.sql';
 import m0012 from './0012_add_account_pockets.sql';
 import m0013 from './0013_replace_pocket_movements_with_transactions.sql';
 import m0014 from './0014_add_account_pocket_enabled.sql';
+import m0015 from './0015_add_credit_card_details.sql';
 
   export default {
     journal,
@@ -33,5 +34,6 @@ import m0014 from './0014_add_account_pocket_enabled.sql';
       m0012,
       m0013,
       m0014,
+      m0015,
     }
   }
