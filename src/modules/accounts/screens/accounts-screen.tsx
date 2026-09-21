@@ -14,9 +14,7 @@ import { AccountTypeFormModal } from "@/modules/accounts/components/account-type
 import { AccountsFabSheet } from "@/modules/accounts/components/accounts-fab-sheet";
 import { ArchivedAccountsChip } from "@/modules/accounts/components/archived-accounts-chip";
 import { ArchivedAccountsModal } from "@/modules/accounts/components/archived-accounts-modal";
-import { AccountPocketsModal } from "@/modules/accounts/components/account-pockets-modal";
 import { PocketFormModal } from "@/modules/accounts/components/pocket-form-modal";
-import { PocketMovementModal } from "@/modules/accounts/components/pocket-movement-modal";
 import {
   AccountButton,
   AccountError,
@@ -25,14 +23,12 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
-import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
+import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
 
 type Overlay =
   | { kind: "create" }
   | { kind: "edit"; id: string }
-  | { kind: "details"; id: string }
   | { kind: "pocket-form"; accountId: string; pocketId?: string }
-  | { kind: "pocket-move"; accountId: string }
   | { kind: "types" }
   | { kind: "edit-type"; type: AccountType }
   | null;
@@ -45,6 +41,9 @@ export function AccountsScreen() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
+  const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -97,11 +96,15 @@ export function AccountsScreen() {
     (a) => !["asset", "liability"].includes(a.accountType?.accountGroup ?? ""),
   );
   const select = (account: AccountListItem) =>
-    open(
-      account.accountType?.accountGroup === "asset"
-        ? { kind: "details", id: account.id }
-        : { kind: "edit", id: account.id },
-    );
+    open({ kind: "edit", id: account.id });
+  const togglePockets = (accountId: string) => {
+    setExpandedPocketAccountIds((current) => {
+      const next = new Set(current);
+      if (next.has(accountId)) next.delete(accountId);
+      else next.add(accountId);
+      return next;
+    });
+  };
   const handleSelectArchivedAccount = (account: AccountListItem) => {
     setArchivedModalOpen(false);
     open({ kind: "edit", id: account.id });
@@ -151,8 +154,20 @@ export function AccountsScreen() {
             pockets={data.pockets}
             types={data.types}
             onEditType={handleEditType}
+            expandedPocketAccountIds={expandedPocketAccountIds}
+            onAddPocket={(account) =>
+              open({ kind: "pocket-form", accountId: account.id })
+            }
+            onEditPocket={(pocket) =>
+              open({
+                kind: "pocket-form",
+                accountId: pocket.accountId,
+                pocketId: pocket.id,
+              })
+            }
             onSelect={select}
             onSort={handleSortAccounts}
+            onTogglePockets={togglePockets}
           />
 
           <AccountGroupSection
@@ -161,8 +176,20 @@ export function AccountsScreen() {
             pockets={data.pockets}
             types={data.types}
             onEditType={handleEditType}
+            expandedPocketAccountIds={expandedPocketAccountIds}
+            onAddPocket={(account) =>
+              open({ kind: "pocket-form", accountId: account.id })
+            }
+            onEditPocket={(pocket) =>
+              open({
+                kind: "pocket-form",
+                accountId: pocket.accountId,
+                pocketId: pocket.id,
+              })
+            }
             onSelect={select}
             onSort={handleSortAccounts}
+            onTogglePockets={togglePockets}
           />
 
           {unclassified.length > 0 ? (
@@ -207,53 +234,13 @@ export function AccountsScreen() {
         onSave={mutations.saveAccount}
       />
 
-      <AccountPocketsModal
-        account={overlay?.kind === "details" ? selected ?? null : null}
-        pockets={data.pockets}
-        visible={overlay?.kind === "details" && !!selected}
-        onAddPocket={() => {
-          if (selected) open({ kind: "pocket-form", accountId: selected.id });
-        }}
-        onClose={close}
-        onEditAccount={() => {
-          if (selected) open({ kind: "edit", id: selected.id });
-        }}
-        onEditPocket={(pocket: PocketListItem) =>
-          open({ kind: "pocket-form", accountId: pocket.accountId, pocketId: pocket.id })
-        }
-        onMoveFunds={() => {
-          if (selected) open({ kind: "pocket-move", accountId: selected.id });
-        }}
-      />
-
       <PocketFormModal
         account={overlay?.kind === "pocket-form" ? selected ?? null : null}
         mutations={mutations}
         pocket={selectedPocket}
         visible={overlay?.kind === "pocket-form" && !!selected}
-        onClose={() => {
-          if (selected) open({ kind: "details", id: selected.id });
-          else close();
-        }}
-        onSaved={() => {
-          if (selected) open({ kind: "details", id: selected.id });
-          else close();
-        }}
-      />
-
-      <PocketMovementModal
-        account={overlay?.kind === "pocket-move" ? selected ?? null : null}
-        mutations={mutations}
-        pockets={data.pockets.filter((pocket) => pocket.accountId === selected?.id)}
-        visible={overlay?.kind === "pocket-move" && !!selected}
-        onClose={() => {
-          if (selected) open({ kind: "details", id: selected.id });
-          else close();
-        }}
-        onSaved={() => {
-          if (selected) open({ kind: "details", id: selected.id });
-          else close();
-        }}
+        onClose={close}
+        onSaved={close}
       />
 
       <AccountTypeManager

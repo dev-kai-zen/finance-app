@@ -18,6 +18,8 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
 
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
+  const isPocketTransfer =
+    isTransfer && transaction.accountId === transaction.transferAccountId;
   const typeColor = isTransfer
     ? theme.colors.info
     : isIncome
@@ -39,7 +41,9 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     transaction.name ||
     transaction.note ||
     (isTransfer
-      ? `Transfer to ${transaction.transferAccountName ?? "Account"}`
+      ? isPocketTransfer
+        ? `Move to ${transaction.transferPocketName ?? "Main"}`
+        : `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
   const formattedAmount = isTransfer
@@ -72,6 +76,12 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
   const destinationRoute = `${transaction.transferAccountTypeName ?? "Account"} > ${
     transaction.transferAccountName ?? "Destination"
   }`;
+  const sourceTransferRoute = isPocketTransfer
+    ? transaction.pocketName ?? "Main"
+    : accountRoute;
+  const destinationTransferRoute = isPocketTransfer
+    ? transaction.transferPocketName ?? "Main"
+    : destinationRoute;
   const formattedRoute = `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
 
   const balanceAfterMinorUnits = isTransfer
@@ -85,7 +95,7 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
   const balanceText =
     balanceAfterMinorUnits === null
       ? null
-      : `${isTransfer ? "Dest. Bal:" : "Bal:"} ${formatCurrency(
+      : `${isTransfer && !isPocketTransfer ? "Dest. Bal:" : "Bal:"} ${formatCurrency(
           balanceAfterMinorUnits,
           balanceCurrency,
           false,
@@ -118,12 +128,12 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         <View style={styles.routeColumn}>
           {isTransfer ? (
             <View style={styles.transferRouteRow}>
-              <Text numberOfLines={2} style={styles.transferRouteText}>
-                {accountRoute}
+              <Text style={styles.transferRouteText}>
+                {sourceTransferRoute}
               </Text>
               <ArrowRightLeft color={theme.colors.info} size={14} />
-              <Text numberOfLines={2} style={styles.transferRouteText}>
-                {destinationRoute}
+              <Text style={styles.transferRouteText}>
+                {destinationTransferRoute}
               </Text>
             </View>
           ) : (

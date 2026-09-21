@@ -15,7 +15,7 @@ export function setPocketArchived(id: string, isArchived: boolean): void {
       const balance = getPocketsWithBalances(tx).find((item) => item.id === id)
         ?.currentBalanceMinorUnits ?? 0;
       if (balance !== 0) {
-        throw new Error("Move the remaining pocket balance to Available before archiving it.");
+        throw new Error("Move the remaining pocket balance to Main before archiving it.");
       }
     }
     updatePocketRecord(id, { isArchived, updatedAt: new Date() }, tx);

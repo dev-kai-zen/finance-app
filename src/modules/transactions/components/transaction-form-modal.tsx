@@ -21,8 +21,10 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
-import type { AccountListItem } from "@/modules/accounts/types/account.types";
-import { PocketPickerModal, type PocketListItem } from "@/modules/accounts";
+import type {
+  AccountListItem,
+  PocketListItem,
+} from "@/modules/accounts/types/account.types";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 import type { Category } from "@/modules/categories/types/category.types";
 import { useResolveEntityColor } from "@/modules/hex-colors";
@@ -101,8 +103,6 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
-  const [isPocketPickerOpen, setIsPocketPickerOpen] = useState(false);
-  const [isTransferToPocketPickerOpen, setIsTransferToPocketPickerOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -173,12 +173,34 @@ export function TransactionFormModal({
   const transferToAccount = accounts.find((a) => a.id === transferToAccountId);
   const selectedPocket = pockets.find((pocket) => pocket.id === selectedPocketId);
   const transferToPocket = pockets.find((pocket) => pocket.id === transferToPocketId);
-  const sourcePockets = pockets.filter(
-    (pocket) => pocket.accountId === selectedAccountId && !pocket.isArchived,
-  );
-  const destinationPockets = pockets.filter(
-    (pocket) => pocket.accountId === transferToAccountId && !pocket.isArchived,
-  );
+  const selectedAccountBalance = selectedAccount
+    ? selectedAccount.currentBalanceMinorUnits ?? selectedAccount.openingBalanceMinorUnits
+    : 0;
+  const transferToAccountBalance = transferToAccount
+    ? transferToAccount.currentBalanceMinorUnits ?? transferToAccount.openingBalanceMinorUnits
+    : 0;
+  const selectedLocationBalance = selectedPocket
+    ? selectedPocket.currentBalanceMinorUnits
+    : selectedAccount?.pocketEnabled
+      ? selectedAccountBalance -
+        pockets
+          .filter(
+            (pocket) =>
+              pocket.accountId === selectedAccount.id && !pocket.isArchived,
+          )
+          .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
+      : selectedAccountBalance;
+  const transferToLocationBalance = transferToPocket
+    ? transferToPocket.currentBalanceMinorUnits
+    : transferToAccount?.pocketEnabled
+      ? transferToAccountBalance -
+        pockets
+          .filter(
+            (pocket) =>
+              pocket.accountId === transferToAccount.id && !pocket.isArchived,
+          )
+          .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
+      : transferToAccountBalance;
   const currencyCode = selectedAccount?.currencyCode ?? "PHP";
 
   const selectedCategory = useMemo(() => {
@@ -230,8 +252,11 @@ export function TransactionFormModal({
         setLocalError("Please select a destination account.");
         return;
       }
-      if (selectedAccountId === transferToAccountId) {
-        setLocalError("Cannot transfer funds to the same account.");
+      if (
+        selectedAccountId === transferToAccountId &&
+        selectedPocketId === transferToPocketId
+      ) {
+        setLocalError("Choose different pockets when transferring within one account.");
         return;
       }
 
@@ -440,7 +465,7 @@ export function TransactionFormModal({
                 {mode === "transfer" ? "TRANSFER FROM ACCOUNT" : "ACCOUNT"}
               </Text>
               <Pressable
-                accessibilityLabel={`Account ${selectedAccount?.name ?? "none selected"}. Tap to choose account.`}
+                accessibilityLabel={`Account location ${selectedAccount?.name ?? "none selected"}${selectedPocket ? `, ${selectedPocket.name}` : ""}. Tap to choose.`}
                 accessibilityRole="button"
                 onPress={() => setIsAccountPickerOpen(true)}
                 style={styles.selectorCard}
@@ -463,21 +488,25 @@ export function TransactionFormModal({
                   </View>
                   <View style={styles.selectorTextCol}>
                     <Text
-                      numberOfLines={1}
                       style={
                         selectedAccount
                           ? styles.selectorValueText
                           : styles.selectorPlaceholderText
                       }
                     >
-                      {selectedAccount?.name ?? "Select Account"}
+                      {selectedAccount
+                        ? `${selectedAccount.name}${selectedAccount.pocketEnabled ? ` · ${selectedPocket?.name ?? "Main"}` : ""}`
+                        : "Select Account"}
                     </Text>
                     {selectedAccount && (
                       <Text style={styles.selectorSubText}>
-                        {selectedAccount.accountType?.name ?? "Account"} ·{" "}
+                        {selectedPocket
+                          ? "Pocket balance"
+                          : selectedAccount.pocketEnabled
+                            ? "Main balance"
+                            : selectedAccount.accountType?.name ?? "Account"} ·{" "}
                         {formatCurrency(
-                          selectedAccount.currentBalanceMinorUnits ??
-                            selectedAccount.openingBalanceMinorUnits,
+                          selectedLocationBalance,
                           selectedAccount.currencyCode,
                         )}
                       </Text>
@@ -491,51 +520,13 @@ export function TransactionFormModal({
               </Pressable>
             </View>
 
-            {(sourcePockets.length > 0 || selectedPocket) ? (
-              <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>
-                  {mode === "transfer" ? "FROM POCKET (OPTIONAL)" : "POCKET (OPTIONAL)"}
-                </Text>
-                <Pressable
-                  accessibilityLabel={`Pocket ${selectedPocket?.name ?? "Available"}. Tap to choose pocket.`}
-                  accessibilityRole="button"
-                  onPress={() => setIsPocketPickerOpen(true)}
-                  style={styles.selectorCard}
-                >
-                  <View style={styles.selectorLeft}>
-                    <View style={styles.selectorIconWrap}>
-                      <IconHelper
-                        color={theme.colors.info}
-                        name="wallet-cards"
-                        size={18}
-                      />
-                    </View>
-                    <View style={styles.selectorTextCol}>
-                      <Text style={styles.selectorValueText}>
-                        {selectedPocket?.name ?? "Available"}
-                      </Text>
-                      <Text style={styles.selectorSubText}>
-                        {selectedPocket
-                          ? `${formatCurrency(selectedPocket.currentBalanceMinorUnits, currencyCode)} reserved`
-                          : "Use unallocated account funds"}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.selectorChangeBadge}>
-                    <Text style={styles.selectorChangeText}>Change</Text>
-                    <ChevronRight size={14} color={theme.colors.textSecondary} />
-                  </View>
-                </Pressable>
-              </View>
-            ) : null}
-
             {/* If Transfer: Destination Account */}
             {mode === "transfer" ? (
               <>
                 <View style={styles.inputGroup}>
                   <Text style={styles.fieldLabel}>TRANSFER TO ACCOUNT</Text>
                   <Pressable
-                  accessibilityLabel={`Destination account ${transferToAccount?.name ?? "none selected"}. Tap to choose account.`}
+                  accessibilityLabel={`Destination account location ${transferToAccount?.name ?? "none selected"}${transferToPocket ? `, ${transferToPocket.name}` : ""}. Tap to choose.`}
                   accessibilityRole="button"
                   onPress={() => setIsTransferToAccountPickerOpen(true)}
                   style={styles.selectorCard}
@@ -558,21 +549,25 @@ export function TransactionFormModal({
                     </View>
                     <View style={styles.selectorTextCol}>
                       <Text
-                        numberOfLines={1}
                         style={
                           transferToAccount
                             ? styles.selectorValueText
                             : styles.selectorPlaceholderText
                         }
                       >
-                        {transferToAccount?.name ?? "Select Destination Account"}
+                        {transferToAccount
+                          ? `${transferToAccount.name}${transferToAccount.pocketEnabled ? ` · ${transferToPocket?.name ?? "Main"}` : ""}`
+                          : "Select Destination Account"}
                       </Text>
                       {transferToAccount && (
                         <Text style={styles.selectorSubText}>
-                          {transferToAccount.accountType?.name ?? "Account"} ·{" "}
+                          {transferToPocket
+                            ? "Pocket balance"
+                            : transferToAccount.pocketEnabled
+                              ? "Main balance"
+                              : transferToAccount.accountType?.name ?? "Account"} ·{" "}
                           {formatCurrency(
-                            transferToAccount.currentBalanceMinorUnits ??
-                              transferToAccount.openingBalanceMinorUnits,
+                            transferToLocationBalance,
                             transferToAccount.currencyCode,
                           )}
                         </Text>
@@ -585,37 +580,6 @@ export function TransactionFormModal({
                   </View>
                   </Pressable>
                 </View>
-                {(destinationPockets.length > 0 || transferToPocket) ? (
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.fieldLabel}>TO POCKET (OPTIONAL)</Text>
-                    <Pressable
-                      accessibilityLabel={`Destination pocket ${transferToPocket?.name ?? "Available"}. Tap to choose pocket.`}
-                      accessibilityRole="button"
-                      onPress={() => setIsTransferToPocketPickerOpen(true)}
-                      style={styles.selectorCard}
-                    >
-                      <View style={styles.selectorLeft}>
-                        <View style={styles.selectorIconWrap}>
-                          <IconHelper color={theme.colors.info} name="wallet-cards" size={18} />
-                        </View>
-                        <View style={styles.selectorTextCol}>
-                          <Text style={styles.selectorValueText}>
-                            {transferToPocket?.name ?? "Available"}
-                          </Text>
-                          <Text style={styles.selectorSubText}>
-                            {transferToPocket
-                              ? `${formatCurrency(transferToPocket.currentBalanceMinorUnits, transferToAccount?.currencyCode ?? "PHP")} reserved`
-                              : "Add to unallocated account funds"}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.selectorChangeBadge}>
-                        <Text style={styles.selectorChangeText}>Change</Text>
-                        <ChevronRight size={14} color={theme.colors.textSecondary} />
-                      </View>
-                    </Pressable>
-                  </View>
-                ) : null}
               </>
             ) : (
               /* If Expense / Income: Category Selector */
@@ -673,24 +637,18 @@ export function TransactionFormModal({
               </View>
             )}
 
-            {/* Date Field (Triggers DatePickerModal) */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>DATE</Text>
+              <Text style={styles.fieldLabel}>Date</Text>
               <Pressable
                 accessibilityLabel={`Selected date ${dateIsoString}. Tap to change.`}
                 accessibilityRole="button"
                 onPress={() => setIsDatePickerOpen(true)}
-                style={styles.dateDisplayCard}
+                style={styles.selectorPill}
               >
-                <View>
-                  <Text style={styles.dateLabelSmall}>Transaction Date</Text>
-                  <Text style={styles.dateValueText}>
-                    {formatDisplayDate(dateIsoString)}
-                  </Text>
-                </View>
-                <View style={styles.calendarIconBadge}>
-                  <Text style={styles.calendarIconText}>📅</Text>
-                </View>
+                <Text style={styles.selectorPillValue}>
+                  {formatDisplayDate(dateIsoString)}
+                </Text>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </View>
 
@@ -762,52 +720,30 @@ export function TransactionFormModal({
 
       <AccountPickerModal
         accounts={accounts}
+        pockets={pockets}
         onClose={() => setIsAccountPickerOpen(false)}
-        onSelectAccount={(acc) => {
+        onSelectLocation={(acc, pocketId) => {
           setSelectedAccountId(acc.id);
-          setSelectedPocketId(null);
-          if (mode === "transfer" && transferToAccountId === acc.id) {
-            setTransferToAccountId("");
-          }
+          setSelectedPocketId(pocketId);
         }}
         selectedAccountId={selectedAccountId}
+        selectedPocketId={selectedPocketId}
         title={mode === "transfer" ? "Select Source Account" : "Select Account"}
         visible={isAccountPickerOpen}
       />
 
       <AccountPickerModal
         accounts={accounts}
-        excludeAccountId={selectedAccountId}
+        pockets={pockets}
         onClose={() => setIsTransferToAccountPickerOpen(false)}
-        onSelectAccount={(acc) => {
+        onSelectLocation={(acc, pocketId) => {
           setTransferToAccountId(acc.id);
-          setTransferToPocketId(null);
+          setTransferToPocketId(pocketId);
         }}
         selectedAccountId={transferToAccountId}
+        selectedPocketId={transferToPocketId}
         title="Select Destination Account"
         visible={isTransferToAccountPickerOpen}
-      />
-
-      <PocketPickerModal
-        accountId={selectedAccountId}
-        currencyCode={selectedAccount?.currencyCode ?? "PHP"}
-        onClose={() => setIsPocketPickerOpen(false)}
-        onSelectPocket={setSelectedPocketId}
-        pockets={pockets}
-        selectedPocketId={selectedPocketId}
-        title={mode === "transfer" ? "Select Source Pocket" : "Select Pocket"}
-        visible={isPocketPickerOpen}
-      />
-
-      <PocketPickerModal
-        accountId={transferToAccountId}
-        currencyCode={transferToAccount?.currencyCode ?? "PHP"}
-        onClose={() => setIsTransferToPocketPickerOpen(false)}
-        onSelectPocket={setTransferToPocketId}
-        pockets={pockets}
-        selectedPocketId={transferToPocketId}
-        title="Select Destination Pocket"
-        visible={isTransferToPocketPickerOpen}
       />
 
       <CategoryPickerModal
@@ -935,37 +871,23 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
-    dateDisplayCard: {
+    selectorPill: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
+      borderRadius: 999,
       borderWidth: 1,
       flexDirection: "row",
+      gap: theme.spacing.sm,
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      minHeight: 48,
+      paddingHorizontal: theme.spacing.lg,
     },
-    dateLabelSmall: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-    },
-    dateValueText: {
+    selectorPillValue: {
       color: theme.colors.textPrimary,
-      fontSize: 16,
-      fontWeight: "600",
-      marginTop: 2,
-    },
-    calendarIconBadge: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderRadius: 10,
-      height: 36,
-      justifyContent: "center",
-      width: 36,
-    },
-    calendarIconText: {
-      fontSize: 16,
+      flex: 1,
+      fontSize: theme.typography.fontSize.md,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     chipsScroll: {
       flexDirection: "row",

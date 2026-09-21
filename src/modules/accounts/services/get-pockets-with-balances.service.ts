@@ -1,18 +1,13 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getPocketTransactionBalanceDeltas } from "@/modules/transactions";
-import {
-  getPocketMovementBalanceDeltas,
-  listPockets,
-} from "@/modules/accounts/repositories/pockets.repository";
+import { getPocketTransactionBalanceDeltas } from "@/modules/transactions/services/get-pocket-transaction-balance-deltas.service";
+import { listPockets } from "@/modules/accounts/repositories/pockets.repository";
 import type { PocketListItem } from "@/modules/accounts/types/account.types";
 
 export function getPocketsWithBalances(context: DbContext = db): PocketListItem[] {
   const transactionDeltas = getPocketTransactionBalanceDeltas(context);
-  const movementDeltas = getPocketMovementBalanceDeltas(context);
   return listPockets(context).map((pocket) => ({
     ...pocket,
-    currentBalanceMinorUnits:
-      (transactionDeltas[pocket.id] ?? 0) + (movementDeltas[pocket.id] ?? 0),
+    currentBalanceMinorUnits: transactionDeltas[pocket.id] ?? 0,
   }));
 }
 

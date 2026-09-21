@@ -27,6 +27,9 @@ export const accounts = sqliteTable(
     hideFromReports: integer("hide_from_reports", { mode: "boolean" })
       .notNull()
       .default(false),
+    pocketEnabled: integer("pocket_enabled", { mode: "boolean" })
+      .notNull()
+      .default(false),
     maintainingBalanceMinorUnits: integer("maintaining_balance_minor_units"),
     isArchived: integer("is_archived", { mode: "boolean" })
       .notNull()

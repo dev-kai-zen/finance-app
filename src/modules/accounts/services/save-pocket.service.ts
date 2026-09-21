@@ -11,14 +11,24 @@ import { pocketInputSchema } from "@/modules/accounts/schemas/pocket.schema";
 import { requireAccount, requireAccountType } from "@/modules/accounts/services/account-rules";
 import type { PocketInput } from "@/modules/accounts/types/account.types";
 import { parseMaintainingAmount } from "@/modules/accounts/utils/account-input";
+import { supportsPockets } from "@/modules/accounts/utils/pocket-eligibility";
 
 export function savePocket(input: PocketInput, id?: string): string {
   const value = pocketInputSchema.parse(input);
   return db.transaction((tx) => {
     const account = requireAccount(value.accountId, tx);
     const accountType = requireAccountType(account.accountTypeId, tx);
-    if (accountType.accountGroup !== "asset") {
-      throw new Error("Pockets are available only for asset accounts.");
+    if (
+      !supportsPockets(
+        account.accountTypeId,
+        accountType.accountGroup,
+        accountType.name,
+      )
+    ) {
+      throw new Error("Pockets are not available for Credit Card accounts.");
+    }
+    if (!account.pocketEnabled) {
+      throw new Error("Enable pockets in the account settings before adding a pocket.");
     }
 
     const existing = id ? findPocketById(id, tx) : null;

@@ -1,12 +1,7 @@
 import { and, asc, eq, ne, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { pocketMovements, pockets } from "@/infrastructure/database/schema";
-import type {
-  NewPocket,
-  NewPocketMovement,
-  Pocket,
-  PocketMovement,
-} from "@/modules/accounts/types/account.types";
+import { pockets } from "@/infrastructure/database/schema";
+import type { NewPocket, Pocket } from "@/modules/accounts/types/account.types";
 
 export function listPockets(context: DbContext = db): Pocket[] {
   return context.select().from(pockets)
@@ -46,39 +41,6 @@ export function updatePocketRecord(
   context: DbContext = db,
 ): void {
   context.update(pockets).set(values).where(eq(pockets.id, id)).run();
-}
-
-export function insertPocketMovement(
-  value: NewPocketMovement,
-  context: DbContext = db,
-): PocketMovement {
-  context.insert(pocketMovements).values(value).run();
-  return value as PocketMovement;
-}
-
-export function listPocketMovementsForAccount(
-  accountId: string,
-  context: DbContext = db,
-): PocketMovement[] {
-  return context.select().from(pocketMovements)
-    .where(eq(pocketMovements.accountId, accountId))
-    .orderBy(asc(pocketMovements.occurredAt), asc(pocketMovements.createdAt)).all();
-}
-
-export function getPocketMovementBalanceDeltas(
-  context: DbContext = db,
-): Record<string, number> {
-  const rows = context.select().from(pocketMovements).all();
-  const deltas: Record<string, number> = {};
-  for (const row of rows) {
-    if (row.fromPocketId) {
-      deltas[row.fromPocketId] = (deltas[row.fromPocketId] ?? 0) - row.amountMinorUnits;
-    }
-    if (row.toPocketId) {
-      deltas[row.toPocketId] = (deltas[row.toPocketId] ?? 0) + row.amountMinorUnits;
-    }
-  }
-  return deltas;
 }
 
 export function newPocketRecordId(context: DbContext = db): string {

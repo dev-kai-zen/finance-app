@@ -22,6 +22,10 @@ export function AccountGroupSection({
   onSelect,
   onSort,
   onEditType,
+  onAddPocket,
+  onEditPocket,
+  onTogglePockets,
+  expandedPocketAccountIds,
   pockets,
 }: {
   group: AccountGroup;
@@ -30,6 +34,10 @@ export function AccountGroupSection({
   onSelect: (account: AccountListItem) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
   onEditType?: (type: AccountType) => void;
+  onAddPocket: (account: AccountListItem) => void;
+  onEditPocket: (pocket: PocketListItem) => void;
+  onTogglePockets: (accountId: string) => void;
+  expandedPocketAccountIds: ReadonlySet<string>;
   pockets: PocketListItem[];
 }) {
   const styles = useThemeStyles(createStyles);
@@ -141,10 +149,14 @@ export function AccountGroupSection({
               key={typeGroup.accountType.id}
               accountType={typeGroup.accountType}
               accounts={typeGroup.accounts}
+              expandedPocketAccountIds={expandedPocketAccountIds}
               pockets={pockets}
+              onAddPocket={onAddPocket}
               onEditType={onEditType}
+              onEditPocket={onEditPocket}
               onSelectAccount={onSelect}
               onSort={onSort}
+              onTogglePockets={onTogglePockets}
             />
           ))}
         </View>

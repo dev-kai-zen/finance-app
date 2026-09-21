@@ -12,6 +12,8 @@ import m0009 from './0009_remove_is_archived_from_account_types.sql';
 import m0010 from './0010_create_hex_colors_and_update_tables.sql';
 import m0011 from './0011_add_deleted_at_to_transactions.sql';
 import m0012 from './0012_add_account_pockets.sql';
+import m0013 from './0013_replace_pocket_movements_with_transactions.sql';
+import m0014 from './0014_add_account_pocket_enabled.sql';
 
   export default {
     journal,
@@ -29,5 +31,7 @@ import m0012 from './0012_add_account_pockets.sql';
       m0010,
       m0011,
       m0012,
+      m0013,
+      m0014,
     }
   }

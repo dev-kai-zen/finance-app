@@ -4,7 +4,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const { DatabaseSync } = require("node:sqlite");
 
-function setupTestDb() {
+function setupTestDb(upToTag) {
   const db = new DatabaseSync(":memory:");
   db.exec("PRAGMA foreign_keys = ON;");
 
@@ -18,6 +18,7 @@ function setupTestDb() {
         db.exec(trimmed);
       }
     }
+    if (entry.tag === upToTag) break;
   }
 
   const now = Date.now();
@@ -86,6 +87,92 @@ test("transactions: records transfer as two signed legs linked by transaction_gr
   assert.equal(legs[0].amount_cents, -1000000);
   assert.equal(legs[1].account_id, "acc_2");
   assert.equal(legs[1].amount_cents, 1000000);
+});
+
+test("transactions: migrates legacy pocket movements and enables pockets on their accounts", () => {
+  const db = setupTestDb("0012_add_account_pockets");
+  const now = Date.now();
+
+  db.prepare(`
+    INSERT INTO accounts (
+      id, account_type_id, name, currency_code, opening_balance_minor_units,
+      opening_balance_at, is_archived, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "acc_pocket_migration",
+    "system:asset:others",
+    "Legacy Pocket Account",
+    "PHP",
+    100000,
+    now,
+    0,
+    0,
+    now,
+    now,
+  );
+  db.prepare(`
+    INSERT INTO pockets (
+      id, account_id, name, is_archived, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run("pocket_legacy", "acc_pocket_migration", "Bills", 0, 0, now, now);
+  db.prepare(`
+    INSERT INTO pocket_movements (
+      id, account_id, from_pocket_id, to_pocket_id, amount_minor_units,
+      note, occurred_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "movement_legacy",
+    "acc_pocket_migration",
+    null,
+    "pocket_legacy",
+    25000,
+    "Initial allocation",
+    now,
+    now,
+  );
+
+  for (const migration of [
+    "0013_replace_pocket_movements_with_transactions.sql",
+    "0014_add_account_pocket_enabled.sql",
+  ]) {
+    const migrationSql = fs.readFileSync(
+      path.join(__dirname, "../../../../drizzle", migration),
+      "utf-8",
+    );
+    for (const statement of migrationSql.split("--> statement-breakpoint")) {
+      if (statement.trim()) db.exec(statement);
+    }
+  }
+
+  const legs = db.prepare(`
+    SELECT account_id, pocket_id, amount_cents, transaction_group_id
+    FROM transactions
+    WHERE transaction_group_id = 'pocket-transfer:movement_legacy'
+    ORDER BY amount_cents
+  `).all();
+  assert.equal(legs.length, 2);
+  assert.deepEqual(
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
+    [
+      ["acc_pocket_migration", null, -25000],
+      ["acc_pocket_migration", "pocket_legacy", 25000],
+    ],
+  );
+  assert.equal(
+    db.prepare("SELECT SUM(amount_cents) AS total FROM transactions WHERE account_id = ?")
+      .get("acc_pocket_migration").total,
+    0,
+  );
+  assert.equal(
+    db.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'pocket_movements'")
+      .get().count,
+    0,
+  );
+  assert.equal(
+    db.prepare("SELECT pocket_enabled FROM accounts WHERE id = ?")
+      .get("acc_pocket_migration").pocket_enabled,
+    1,
+  );
 });
 
 test("transactions: aggregates inflow, outflow and net cashflow accurately", () => {

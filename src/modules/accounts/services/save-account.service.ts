@@ -1,6 +1,7 @@
 import { db } from "@/infrastructure/database/client";
 import { accountInputSchema, type AccountInput } from "@/modules/accounts/schemas/account.schema";
 import { findAccountsByAccountTypeId, insertAccount, newAccountRecordId, updateAccountRecord } from "@/modules/accounts/repositories/accounts.repository";
+import { listPocketsForAccount } from "@/modules/accounts/repositories/pockets.repository";
 import {
   localDateInput,
   parseMaintainingAmount,
@@ -8,12 +9,26 @@ import {
   parseOpeningDate,
 } from "@/modules/accounts/utils/account-input";
 import { requireAccount, requireAccountType } from "@/modules/accounts/services/account-rules";
+import { supportsPockets } from "@/modules/accounts/utils/pocket-eligibility";
 
 export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
     const type = requireAccountType(value.accountTypeId, tx);
+    const pocketEligible = supportsPockets(type.id, type.accountGroup, type.name);
+    if (value.pocketEnabled && !pocketEligible) {
+      throw new Error("Pockets are not available for Credit Card accounts.");
+    }
+    if (
+      existing &&
+      (!pocketEligible || !value.pocketEnabled) &&
+      listPocketsForAccount(existing.id, tx).some((pocket) => !pocket.isArchived)
+    ) {
+      throw new Error(
+        "Archive every active pocket before disabling pockets for this account.",
+      );
+    }
     let openingBalanceMinorUnits = parseOpeningAmount(value.openingAmount);
     let openingBalanceAt = existing && localDateInput(existing.openingBalanceAt) === value.openingDate
       ? existing.openingBalanceAt : parseOpeningDate(value.openingDate);
@@ -48,6 +63,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
       openingBalanceAt,
       hideFromSelection: value.hideFromSelection,
       hideFromReports: value.hideFromReports,
+      pocketEnabled: pocketEligible && value.pocketEnabled,
       maintainingBalanceMinorUnits,
       sortOrder,
       updatedAt: now,

@@ -14,8 +14,11 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
   if (!input.toAccountId) {
     throw new Error("Destination account ('To') is required.");
   }
-  if (input.fromAccountId === input.toAccountId) {
-    throw new Error("Cannot transfer funds to the same account.");
+  if (
+    input.fromAccountId === input.toAccountId &&
+    (input.fromPocketId ?? null) === (input.toPocketId ?? null)
+  ) {
+    throw new Error("Choose different pockets when transferring within one account.");
   }
   if (!input.amountCents || input.amountCents <= 0) {
     throw new Error("Transfer amount must be greater than zero.");

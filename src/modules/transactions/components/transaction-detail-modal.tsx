@@ -47,6 +47,8 @@ export function TransactionDetailModal({
 
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
+  const isPocketTransfer =
+    isTransfer && transaction.accountId === transaction.transferAccountId;
 
   const displayAmountCents = isTransfer
     ? Math.abs(transaction.amountCents)
@@ -96,7 +98,9 @@ export function TransactionDetailModal({
     transaction.name ||
     transaction.note ||
     (isTransfer
-      ? `Transfer to ${transaction.transferAccountName ?? "Account"}`
+      ? isPocketTransfer
+        ? `Move to ${transaction.transferPocketName ?? "Main"}`
+        : `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
   const handleDeletePress = () => {
@@ -190,12 +194,18 @@ export function TransactionDetailModal({
                 </View>
                 <View style={styles.detailInfoCol}>
                   <Text style={styles.detailLabel}>
-                    {isTransfer ? "SOURCE ACCOUNT" : "ACCOUNT"}
+                    {isPocketTransfer
+                      ? "SOURCE POCKET"
+                      : isTransfer
+                        ? "SOURCE ACCOUNT"
+                        : "ACCOUNT"}
                   </Text>
                   <Text style={styles.detailValue}>
-                    {transaction.accountName ?? "Account"}
+                    {isPocketTransfer
+                      ? transaction.pocketName ?? "Main"
+                      : transaction.accountName ?? "Account"}
                   </Text>
-                  {transaction.pocketName ? (
+                  {!isPocketTransfer && transaction.pocketName ? (
                     <Text style={styles.detailMeta}>Pocket: {transaction.pocketName}</Text>
                   ) : null}
                 </View>
@@ -208,11 +218,15 @@ export function TransactionDetailModal({
                     <IconHelper color={theme.colors.info} name="arrow-right" size={16} />
                   </View>
                   <View style={styles.detailInfoCol}>
-                    <Text style={styles.detailLabel}>DESTINATION ACCOUNT</Text>
-                    <Text style={styles.detailValue}>
-                      {transaction.transferAccountName ?? "Destination Account"}
+                    <Text style={styles.detailLabel}>
+                      {isPocketTransfer ? "DESTINATION POCKET" : "DESTINATION ACCOUNT"}
                     </Text>
-                    {transaction.transferPocketName ? (
+                    <Text style={styles.detailValue}>
+                      {isPocketTransfer
+                        ? transaction.transferPocketName ?? "Main"
+                        : transaction.transferAccountName ?? "Destination Account"}
+                    </Text>
+                    {!isPocketTransfer && transaction.transferPocketName ? (
                       <Text style={styles.detailMeta}>
                         Pocket: {transaction.transferPocketName}
                       </Text>

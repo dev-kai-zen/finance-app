@@ -31,6 +31,10 @@ import {
   openingAmountInput,
 } from "@/modules/accounts/utils/account-input";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
+import {
+  isCreditCardAccountType,
+  supportsPockets,
+} from "@/modules/accounts/utils/pocket-eligibility";
 import { applySignedAmount } from "@/utils/amount-sign";
 
 function parseAmountSign(openingAmount: string): "+" | "-" {
@@ -77,6 +81,7 @@ export function AccountFormModal({
     openingDate: localDateInput(account?.openingBalanceAt),
     hideFromSelection: account?.hideFromSelection ?? false,
     hideFromReports: account?.hideFromReports ?? false,
+    pocketEnabled: account?.pocketEnabled ?? false,
     maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
   }));
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
@@ -95,6 +100,7 @@ export function AccountFormModal({
       openingDate: localDateInput(account?.openingBalanceAt),
       hideFromSelection: account?.hideFromSelection ?? false,
       hideFromReports: account?.hideFromReports ?? false,
+      pocketEnabled: account?.pocketEnabled ?? false,
       maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
     });
     if (account) {
@@ -121,9 +127,15 @@ export function AccountFormModal({
   const openingBalanceReadOnly = pending || foreign || startingBalanceLocked;
   const selectedType = types.find((t) => t.id === value.accountTypeId);
   const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
-  const isCreditCardType =
-    value.accountTypeId === SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_CREDIT_CARD ||
-    selectedType?.name.toLowerCase().includes("credit card");
+  const isCreditCardType = isCreditCardAccountType(
+    value.accountTypeId,
+    selectedType?.name,
+  );
+  const pocketEligible = supportsPockets(
+    value.accountTypeId,
+    selectedType?.accountGroup,
+    selectedType?.name,
+  );
 
   const amountMinorUnits = useMemo(() => {
     const stripped = stripAmountSign(value.openingAmount || "0");
@@ -352,6 +364,30 @@ export function AccountFormModal({
             onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
           />
 
+          {pocketEligible ? (
+            <View style={styles.toggleRow}>
+              <View style={styles.toggleCopy}>
+                <Text style={styles.toggleLabel}>Enable pockets</Text>
+                <Text style={styles.toggleHint}>
+                  Show Main and allow separate pocket balances for this account.
+                </Text>
+              </View>
+              <Switch
+                accessibilityLabel="Enable pockets"
+                disabled={pending}
+                onValueChange={(pocketEnabled) =>
+                  setValue((prev) => ({ ...prev, pocketEnabled }))
+                }
+                thumbColor="#FFFFFF"
+                trackColor={{
+                  false: theme.colors.borderStrong,
+                  true: theme.colors.primary,
+                }}
+                value={value.pocketEnabled}
+              />
+            </View>
+          ) : null}
+
           <View style={styles.toggleRow}>
             <View style={styles.toggleCopy}>
               <Text style={styles.toggleLabel}>Hide from selection</Text>
@@ -500,8 +536,18 @@ export function AccountFormModal({
         visible={typePickerOpen}
         onClose={() => setTypePickerOpen(false)}
         onSelect={(accountTypeId) => {
-          setValue((prev) => ({ ...prev, accountTypeId }));
           const selectedType = types.find((t) => t.id === accountTypeId);
+          setValue((prev) => ({
+            ...prev,
+            accountTypeId,
+            pocketEnabled: supportsPockets(
+              accountTypeId,
+              selectedType?.accountGroup,
+              selectedType?.name,
+            )
+              ? prev.pocketEnabled
+              : false,
+          }));
           if (selectedType) {
             setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
           }

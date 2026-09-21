@@ -68,7 +68,7 @@ const { getAccountsWithBalances } = require("@/modules/accounts/services/get-acc
 const { getPocketsWithBalances, getAvailablePocketBalance } = require("@/modules/accounts/services/get-pockets-with-balances.service");
 const pocketsRepo = require("@/modules/accounts/repositories/pockets.repository");
 const { savePocket } = require("@/modules/accounts/services/save-pocket.service");
-const { movePocketFunds } = require("@/modules/accounts/services/move-pocket-funds.service");
+const { createTransfer } = require("@/modules/transactions/services/create-transfer.service");
 const { setPocketArchived } = require("@/modules/accounts/services/archive-pocket.service");
 const { saveAccount } = require("@/modules/accounts/services/save-account.service");
 const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock-account-starting-balance.service");
@@ -81,11 +81,66 @@ const { openingSummary, formatOpeningTotal } = require("@/modules/accounts/utils
 const { accountColor, accountIcon } = require("@/modules/accounts/constants/account-appearance.constants");
 const presets = require("@/constants/theme/presets");
 const system = require("@/modules/accounts/constants/account-types.constants").SYSTEM_ACCOUNT_TYPE_IDS;
+const { supportsPockets } = require("@/modules/accounts/utils/pocket-eligibility");
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
   sql: fs.readFileSync(path.join(root, "../drizzle", entry.tag + ".sql"), "utf8").split("--> statement-breakpoint"),
   folderMillis: entry.when, hash: "", bps: true,
 }));
+
+function aliasSelectColumns(query) {
+  const selectMatch = /^\s*select\s+/i.exec(query);
+  if (!selectMatch) return query;
+  const selectStart = selectMatch[0].length;
+  let depth = 0;
+  let quote = null;
+  let fromStart = -1;
+
+  for (let index = selectStart; index < query.length; index += 1) {
+    const char = query[index];
+    if (quote) {
+      if (char === quote && query[index - 1] !== "\\") quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") {
+      quote = char;
+      continue;
+    }
+    if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    else if (depth === 0 && /^\sfrom\s/i.test(query.slice(index))) {
+      fromStart = index;
+      break;
+    }
+  }
+
+  if (fromStart < 0) return query;
+  const selectList = query.slice(selectStart, fromStart);
+  const columns = [];
+  let columnStart = 0;
+  depth = 0;
+  quote = null;
+  for (let index = 0; index <= selectList.length; index += 1) {
+    const char = selectList[index];
+    if (quote) {
+      if (char === quote && selectList[index - 1] !== "\\") quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'" || char === "`") quote = char;
+    else if (char === "(") depth += 1;
+    else if (char === ")") depth -= 1;
+    else if ((char === "," && depth === 0) || index === selectList.length) {
+      columns.push(selectList.slice(columnStart, index).trim());
+      columnStart = index + 1;
+    }
+  }
+
+  return `${query.slice(0, selectStart)}${columns
+    .map((column, index) =>
+      `${column.replace(/\s+as\s+"[^"]+"\s*$/i, "")} AS "__raw_${index}"`,
+    )
+    .join(", ")}${query.slice(fromStart)}`;
+}
 
 function connect(filename = ":memory:") {
   sqlite = new DatabaseSync(filename);
@@ -103,9 +158,9 @@ function connect(filename = ":memory:") {
           return { changes: Number(result.changes), lastInsertRowId: Number(result.lastInsertRowid) };
         },
         executeForRawResultSync(params) {
-          const stmt = sqlite.prepare(query);
-          stmt.setReturnArrays(true);
-          return { getAllSync: () => stmt.all(...params) };
+          const stmt = sqlite.prepare(aliasSelectColumns(query));
+          const rows = stmt.all(...params);
+          return { getAllSync: () => rows.map((row) => Object.values(row)) };
         },
       };
     },
@@ -121,7 +176,17 @@ const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account
     openingDate: "2026-09-13",
     hideFromSelection: false,
     hideFromReports: false,
+    pocketEnabled: false,
     maintainingAmount: "",
+  });
+const pocketTransfer = (accountId, fromPocketId, toPocketId, amountCents) =>
+  createTransfer({
+    fromAccountId: accountId,
+    toAccountId: accountId,
+    fromPocketId,
+    toPocketId,
+    amountCents,
+    occurredAt: new Date("2026-09-13T12:00:00"),
   });
 beforeEach(() => { connect(); migrate(); });
 afterEach(() => sqlite.close());
@@ -378,28 +443,44 @@ test("getAccountsWithBalances calculates live current balance reflecting income,
   assert.equal(savings.currentBalanceMinorUnits, 60000);
 });
 
-test("pockets allocate funds without changing the account balance", () => {
-  const accountId = saveAccount(accountInput(undefined, "Checking", "1000.50"));
+test("pocket transfers create two grouped transaction legs without changing the account balance", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Checking", "1000.50"),
+    pocketEnabled: true,
+  });
   const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "500.00" });
 
-  movePocketFunds({
+  const { transactionGroupId: groupId } = pocketTransfer(
     accountId,
-    fromPocketId: null,
-    toPocketId: pocketId,
-    amountMinorUnits: 30000,
-  });
+    null,
+    pocketId,
+    30000,
+  );
 
   const account = getAccountsWithBalances().find((item) => item.id === accountId);
   const pocket = getPocketsWithBalances().find((item) => item.id === pocketId);
   assert.equal(account.currentBalanceMinorUnits, 100050);
   assert.equal(pocket.currentBalanceMinorUnits, 30000);
   assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 70050);
+  const legs = sqlite.prepare(
+    "SELECT account_id, pocket_id, amount_cents FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents",
+  ).all(groupId);
+  assert.deepEqual(
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
+    [
+      [accountId, null, -30000],
+      [accountId, pocketId, 30000],
+    ],
+  );
 });
 
 test("pocket-assigned transactions change the pocket and account by the same amount", () => {
-  const accountId = saveAccount(accountInput(undefined, "Checking", "1000.00"));
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Checking", "1000.00"),
+    pocketEnabled: true,
+  });
   const pocketId = savePocket({ accountId, name: "Groceries", targetAmount: "" });
-  movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 40000 });
+  pocketTransfer(accountId, null, pocketId, 40000);
   sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
 
   const account = getAccountsWithBalances().find((item) => item.id === accountId);
@@ -409,27 +490,67 @@ test("pocket-assigned transactions change the pocket and account by the same amo
   assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 60000);
 });
 
-test("pocket rules prevent over-allocation, duplicate names, liabilities, and nonzero archival", () => {
-  const accountId = saveAccount(accountInput(undefined, "Checking", "100.00"));
+test("pocket settings gate creation, reject duplicates and Credit Cards, and protect nonzero archival", () => {
+  assert.equal(supportsPockets("custom:credit", "liability", " Credit Card "), false);
+  assert.equal(supportsPockets("custom:credit", "liability", "Credit Cards"), true);
+  const disabledId = saveAccount(accountInput(undefined, "Disabled", "100.00"));
+  assert.throws(
+    () => savePocket({ accountId: disabledId, name: "Bills", targetAmount: "" }),
+    /Enable pockets/,
+  );
+
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Checking", "100.00"),
+    pocketEnabled: true,
+  });
   const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "" });
+  assert.equal(repo.findAccountById(accountId).pocketEnabled, true);
   assert.throws(
     () => savePocket({ accountId, name: " bills ", targetAmount: "" }),
     /already exists/,
   );
-  assert.throws(
-    () => movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 10001 }),
-    /enough funds/,
-  );
-  movePocketFunds({ accountId, fromPocketId: null, toPocketId: pocketId, amountMinorUnits: 5000 });
+  pocketTransfer(accountId, null, pocketId, 5000);
   assert.throws(() => setPocketArchived(pocketId, true), /remaining pocket balance/);
-  movePocketFunds({ accountId, fromPocketId: pocketId, toPocketId: null, amountMinorUnits: 5000 });
+  assert.throws(
+    () => saveAccount({ ...accountInput(undefined, "Checking", "100.00"), pocketEnabled: false }, accountId),
+    /Archive every active pocket/,
+  );
+  pocketTransfer(accountId, pocketId, null, 5000);
   setPocketArchived(pocketId, true);
   assert.equal(pocketsRepo.findPocketById(pocketId).isArchived, true);
 
-  const liabilityId = saveAccount(accountInput(system.LIABILITY_OTHERS, "Loan", "-100.00"));
+  const liabilityId = saveAccount({
+    ...accountInput(system.LIABILITY_OTHERS, "Loan", "-100.00"),
+    pocketEnabled: true,
+  });
+  const liabilityPocketId = savePocket({
+    accountId: liabilityId,
+    name: "Housing Loan",
+    targetAmount: "",
+  });
+  pocketTransfer(liabilityId, null, liabilityPocketId, 15000);
+  assert.equal(
+    getPocketsWithBalances().find((item) => item.id === liabilityPocketId).currentBalanceMinorUnits,
+    15000,
+  );
+
+  const creditCardId = saveAccount(
+    accountInput(system.LIABILITY_CREDIT_CARD, "Credit Card", "-100.00"),
+  );
   assert.throws(
-    () => savePocket({ accountId: liabilityId, name: "Payment", targetAmount: "" }),
-    /asset accounts/,
+    () => savePocket({ accountId: creditCardId, name: "Payment", targetAmount: "" }),
+    /Credit Card/,
+  );
+  assert.throws(
+    () =>
+      saveAccount(
+        {
+          ...accountInput(system.LIABILITY_CREDIT_CARD, "Credit Card", "-100.00"),
+          pocketEnabled: true,
+        },
+        creditCardId,
+      ),
+    /Credit Card/,
   );
 });
 

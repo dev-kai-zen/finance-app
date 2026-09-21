@@ -25,6 +25,7 @@ export const accountInputSchema = z.object({
   openingDate: checkedString(parseOpeningDate),
   hideFromSelection: z.boolean().default(false),
   hideFromReports: z.boolean().default(false),
+  pocketEnabled: z.boolean().default(false),
   maintainingAmount: z
     .string()
     .optional()

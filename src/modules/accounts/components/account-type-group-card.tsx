@@ -1,5 +1,13 @@
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { ArrowUpDown, ChevronRight } from "lucide-react-native";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Folder,
+  Plus,
+  WalletCards,
+} from "lucide-react-native";
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -25,7 +33,11 @@ interface AccountTypeGroupCardProps {
       };
   accounts: AccountListItem[];
   pockets: PocketListItem[];
+  expandedPocketAccountIds: ReadonlySet<string>;
+  onAddPocket: (account: AccountListItem) => void;
+  onEditPocket: (pocket: PocketListItem) => void;
   onSelectAccount: (account: AccountListItem) => void;
+  onTogglePockets: (accountId: string) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
   onEditType?: (accountType: AccountType) => void;
 }
@@ -33,10 +45,14 @@ interface AccountTypeGroupCardProps {
 export function AccountTypeGroupCard({
   accountType,
   accounts,
+  expandedPocketAccountIds,
   pockets,
+  onAddPocket,
+  onEditPocket,
   onSelectAccount,
   onSort,
   onEditType,
+  onTogglePockets,
 }: AccountTypeGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -133,16 +149,20 @@ export function AccountTypeGroupCard({
             account.currentBalanceMinorUnits !== undefined
               ? account.currentBalanceMinorUnits
               : account.openingBalanceMinorUnits;
-          const accountPockets = pockets.filter((pocket) => pocket.accountId === account.id);
-          const pocketCount = accountPockets.filter((pocket) => !pocket.isArchived).length;
+          const accountPockets = pockets.filter(
+            (pocket) => pocket.accountId === account.id && !pocket.isArchived,
+          );
+          const pocketCount = accountPockets.length;
           const allocated = accountPockets.reduce(
             (sum, pocket) => sum + pocket.currentBalanceMinorUnits,
             0,
           );
           const available = balance - allocated;
+          const pocketsExpanded =
+            account.pocketEnabled && expandedPocketAccountIds.has(account.id);
 
           return (
-            <View key={account.id}>
+            <View key={account.id} style={styles.accountBlock}>
               {index > 0 ? <View style={styles.divider} /> : null}
               <Pressable
                 accessibilityLabel={`${account.name}. Open account actions.`}
@@ -175,9 +195,7 @@ export function AccountTypeGroupCard({
                     {account.name}
                   </Text>
                   <Text numberOfLines={1} style={styles.accountSubtitle}>
-                    {pocketCount > 0
-                      ? `${pocketCount} ${pocketCount === 1 ? "pocket" : "pockets"} - ${formatCurrency(available, account.currencyCode)} available`
-                      : accountType.name}
+                    {accountType.name}
                   </Text>
                 </View>
 
@@ -186,6 +204,85 @@ export function AccountTypeGroupCard({
                   <ChevronRight color={theme.colors.textMuted} size={16} />
                 </View>
               </Pressable>
+              {account.pocketEnabled ? (
+                <Pressable
+                  accessibilityLabel={`${pocketsExpanded ? "Collapse" : "Expand"} pockets for ${account.name}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: pocketsExpanded }}
+                  onPress={() => onTogglePockets(account.id)}
+                  style={({ pressed }) => [
+                    styles.pocketToggle,
+                    pressed && styles.pocketActionPressed,
+                  ]}
+                >
+                  <Text style={styles.pocketToggleText}>
+                    {pocketCount > 0
+                      ? `${pocketCount} ${pocketCount === 1 ? "pocket" : "pockets"}`
+                      : "Pockets"}
+                  </Text>
+                  {pocketsExpanded ? (
+                    <ChevronUp color={primaryColor} size={14} />
+                  ) : (
+                    <ChevronDown color={primaryColor} size={14} />
+                  )}
+                </Pressable>
+              ) : null}
+
+              {pocketsExpanded ? (
+                <View style={styles.pocketPanel}>
+                  <View style={styles.pocketPanelHeader}>
+                    <Text style={styles.pocketPanelTitle}>POCKETS</Text>
+                    <Pressable
+                      accessibilityLabel={`Add pocket to ${account.name}`}
+                      accessibilityRole="button"
+                      onPress={() => onAddPocket(account)}
+                      style={({ pressed }) => [
+                        styles.addPocketButton,
+                        pressed && styles.pocketActionPressed,
+                      ]}
+                    >
+                      <Plus color={primaryColor} size={16} />
+                      <Text style={[styles.addPocketText, { color: primaryColor }]}>Add Pocket</Text>
+                    </Pressable>
+                  </View>
+
+                  <View
+                    accessibilityLabel={`Main balance ${formatCurrency(available, account.currencyCode)}`}
+                    style={styles.pocketRow}
+                  >
+                    <View style={styles.pocketBranch} />
+                    <View style={styles.mainPocketIcon}>
+                      <WalletCards color={theme.colors.textSecondary} size={17} />
+                    </View>
+                    <Text numberOfLines={1} style={styles.pocketName}>Main</Text>
+                    <AccountAmountText amountMinorUnits={available} variant="body" />
+                  </View>
+
+                  {accountPockets.map((pocket) => (
+                    <Pressable
+                      key={pocket.id}
+                      accessibilityLabel={`${pocket.name}, ${formatCurrency(pocket.currentBalanceMinorUnits, account.currencyCode)}. Edit pocket.`}
+                      accessibilityRole="button"
+                      onPress={() => onEditPocket(pocket)}
+                      style={({ pressed }) => [
+                        styles.pocketRow,
+                        pressed && styles.pocketActionPressed,
+                      ]}
+                    >
+                      <View style={styles.pocketBranch} />
+                      <View style={styles.namedPocketIcon}>
+                        <Folder color={theme.colors.info} size={17} />
+                      </View>
+                      <Text numberOfLines={1} style={styles.pocketName}>{pocket.name}</Text>
+                      <AccountAmountText
+                        amountMinorUnits={pocket.currentBalanceMinorUnits}
+                        variant="body"
+                      />
+                      <ChevronRight color={theme.colors.textMuted} size={15} />
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
             </View>
           );
         })}
@@ -195,6 +292,9 @@ export function AccountTypeGroupCard({
 }
 
 function createStyles(theme: AppTheme) {
+  const accountRowInset = theme.spacing.xl;
+  const accountTextInset = accountRowInset + 28 + theme.spacing.sm;
+
   return StyleSheet.create({
     card: {
       backgroundColor: theme.colors.surface,
@@ -290,14 +390,18 @@ function createStyles(theme: AppTheme) {
     divider: {
       backgroundColor: theme.colors.border,
       height: 1,
-      marginLeft: 54,
+      marginLeft: accountTextInset,
+    },
+    accountBlock: {
+      position: "relative",
     },
     accountRow: {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
       minHeight: 56,
-      paddingHorizontal: theme.spacing.md,
+      paddingLeft: accountRowInset,
+      paddingRight: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     archivedRow: {
@@ -333,6 +437,100 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       flexShrink: 0,
       gap: 4,
+    },
+    pocketToggle: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
+      marginBottom: theme.spacing.sm,
+      marginLeft: accountTextInset,
+      paddingHorizontal: 9,
+      paddingVertical: 5,
+    },
+    pocketToggleText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    pocketActionPressed: {
+      opacity: 0.65,
+    },
+    pocketPanel: {
+      backgroundColor: theme.colors.background,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      paddingBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: theme.spacing.md,
+    },
+    pocketPanelHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.xs,
+      paddingLeft: accountTextInset - theme.spacing.md,
+    },
+    pocketPanelTitle: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.medium,
+      letterSpacing: 0.4,
+    },
+    addPocketButton: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 5,
+    },
+    addPocketText: {
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    pocketRow: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 46,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: theme.spacing.xs,
+    },
+    pocketBranch: {
+      borderBottomColor: theme.colors.borderStrong,
+      borderBottomWidth: 1,
+      borderLeftColor: theme.colors.borderStrong,
+      borderLeftWidth: 1,
+      height: 23,
+      width: 20,
+    },
+    mainPocketIcon: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.small,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
+    },
+    namedPocketIcon: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.info}18`,
+      borderRadius: theme.borderRadius.small,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
+    },
+    pocketName: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

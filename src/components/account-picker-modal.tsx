@@ -11,20 +11,25 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Check, Search, X } from "lucide-react-native";
+import { Check, Folder, Search, WalletCards, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "./icon-helper";
 import { formatCurrency } from "@/utils/currency";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
-import type { AccountListItem } from "@/modules/accounts/types/account.types";
+import type {
+  AccountListItem,
+  PocketListItem,
+} from "@/modules/accounts/types/account.types";
 
 export interface AccountPickerModalProps {
   visible: boolean;
   onClose: () => void;
   accounts: AccountListItem[];
+  pockets: PocketListItem[];
   selectedAccountId?: string | null;
-  onSelectAccount: (account: AccountListItem) => void;
+  selectedPocketId?: string | null;
+  onSelectLocation: (account: AccountListItem, pocketId: string | null) => void;
   title?: string;
   excludeAccountId?: string | null;
 }
@@ -33,8 +38,10 @@ export function AccountPickerModal({
   visible,
   onClose,
   accounts,
+  pockets,
   selectedAccountId,
-  onSelectAccount,
+  selectedPocketId,
+  onSelectLocation,
   title = "Select Account",
   excludeAccountId,
 }: AccountPickerModalProps) {
@@ -57,9 +64,16 @@ export function AccountPickerModal({
     return list.filter(
       (acc) =>
         acc.name.toLowerCase().includes(query) ||
-        acc.accountType?.name?.toLowerCase().includes(query),
+        acc.accountType?.name?.toLowerCase().includes(query) ||
+        (acc.pocketEnabled &&
+          pockets.some(
+            (pocket) =>
+              pocket.accountId === acc.id &&
+              !pocket.isArchived &&
+              pocket.name.toLowerCase().includes(query),
+          )),
     );
-  }, [accounts, excludeAccountId, searchQuery, selectedAccountId]);
+  }, [accounts, excludeAccountId, pockets, searchQuery, selectedAccountId]);
 
   // Group accounts by accountType
   const groupedAccounts = useMemo(() => {
@@ -128,8 +142,8 @@ export function AccountPickerModal({
     );
   }, [filteredAccounts, theme]);
 
-  const handleSelect = (account: AccountListItem) => {
-    onSelectAccount(account);
+  const handleSelect = (account: AccountListItem, pocketId: string | null) => {
+    onSelectLocation(account, pocketId);
     setSearchQuery("");
     onClose();
   };
@@ -157,7 +171,7 @@ export function AccountPickerModal({
             <View style={styles.headerTextCol}>
               <Text style={styles.headerTitle}>{title}</Text>
               <Text style={styles.headerSubtitle}>
-                Choose an account for this transaction
+                Choose an account, Main balance, or pocket
               </Text>
             </View>
             <TouchableOpacity
@@ -180,7 +194,7 @@ export function AccountPickerModal({
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search account by name or type..."
+              placeholder="Search account, pocket, or type..."
               placeholderTextColor={theme.colors.textMuted}
               style={styles.searchInput}
               clearButtonMode="while-editing"
@@ -237,11 +251,34 @@ export function AccountPickerModal({
                   {/* Account Cards */}
                   <View style={styles.groupCards}>
                     {group.accounts.map((account, index) => {
-                      const isSelected = selectedAccountId === account.id;
+                      const isSelected =
+                        selectedAccountId === account.id && !selectedPocketId;
                       const balance =
                         account.currentBalanceMinorUnits !== undefined
                           ? account.currentBalanceMinorUnits
                           : account.openingBalanceMinorUnits;
+                      const activePockets = account.pocketEnabled
+                        ? pockets.filter(
+                            (pocket) =>
+                              pocket.accountId === account.id && !pocket.isArchived,
+                          )
+                        : [];
+                      const allocated = activePockets.reduce(
+                        (sum, pocket) => sum + pocket.currentBalanceMinorUnits,
+                        0,
+                      );
+                      const locations = [
+                        {
+                          id: null as string | null,
+                          name: "Main",
+                          balance: balance - allocated,
+                        },
+                        ...activePockets.map((pocket) => ({
+                          id: pocket.id as string | null,
+                          name: pocket.name,
+                          balance: pocket.currentBalanceMinorUnits,
+                        })),
+                      ];
 
                       const formattedBalance =
                         account.currencyCode === "PHP"
@@ -251,16 +288,124 @@ export function AccountPickerModal({
                       return (
                         <View key={account.id}>
                           {index > 0 && <View style={styles.cardDivider} />}
-                          <TouchableOpacity
-                            onPress={() => handleSelect(account)}
-                            activeOpacity={0.7}
-                            style={[
-                              styles.accountItem,
-                              isSelected && styles.selectedAccountItem,
-                            ]}
-                            accessibilityRole="button"
-                            accessibilityLabel={`${account.name}, balance ${formattedBalance}`}
-                          >
+                          {account.pocketEnabled ? (
+                            <>
+                              <View style={styles.accountItem}>
+                                <View style={styles.accountItemLeft}>
+                                  <View
+                                    style={[
+                                      styles.accountIconWrap,
+                                      {
+                                        backgroundColor: `${group.color}15`,
+                                        borderColor: `${group.color}30`,
+                                      },
+                                    ]}
+                                  >
+                                    <IconHelper
+                                      name={account.iconKey ?? group.iconKey}
+                                      size={18}
+                                      color={group.color}
+                                    />
+                                  </View>
+                                  <View style={styles.accountItemTextCol}>
+                                    <Text style={styles.accountItemName}>
+                                      {account.name}
+                                    </Text>
+                                    <Text style={styles.accountItemType}>
+                                      {account.accountType?.accountGroup === "liability"
+                                        ? "Liability"
+                                        : "Asset"} | {account.accountType?.name ?? "Account"}
+                                    </Text>
+                                  </View>
+                                </View>
+                                <Text
+                                  style={[
+                                    styles.accountItemBalance,
+                                    balance > 0 && styles.positiveBalance,
+                                    balance < 0 && styles.negativeBalance,
+                                  ]}
+                                >
+                                  {formattedBalance}
+                                </Text>
+                              </View>
+                              <View style={styles.locationList}>
+                                {locations.map((location) => {
+                                  const locationSelected =
+                                    selectedAccountId === account.id &&
+                                    (selectedPocketId ?? null) === location.id;
+                                  const locationBalance = formatCurrency(
+                                    location.balance,
+                                    account.currencyCode,
+                                  );
+                                  return (
+                                    <TouchableOpacity
+                                      key={location.id ?? "main"}
+                                      accessibilityLabel={`${account.name}, ${location.name}, balance ${locationBalance}`}
+                                      accessibilityRole="button"
+                                      activeOpacity={0.7}
+                                      onPress={() => handleSelect(account, location.id)}
+                                      style={[
+                                        styles.locationItem,
+                                        locationSelected && styles.selectedAccountItem,
+                                      ]}
+                                    >
+                                      <View style={styles.locationItemLeft}>
+                                        <View style={styles.locationBranch} />
+                                        <View style={styles.locationIconWrap}>
+                                          {location.id ? (
+                                            <Folder color={theme.colors.info} size={16} />
+                                          ) : (
+                                            <WalletCards
+                                              color={theme.colors.textSecondary}
+                                              size={16}
+                                            />
+                                          )}
+                                        </View>
+                                        <Text
+                                          style={[
+                                            styles.locationName,
+                                            locationSelected && styles.selectedText,
+                                          ]}
+                                        >
+                                          {location.name}
+                                        </Text>
+                                      </View>
+                                      <View style={styles.accountItemRight}>
+                                        <Text
+                                          style={[
+                                            styles.locationBalance,
+                                            location.balance > 0 && styles.positiveBalance,
+                                            location.balance < 0 && styles.negativeBalance,
+                                          ]}
+                                        >
+                                          {locationBalance}
+                                        </Text>
+                                        {locationSelected ? (
+                                          <View style={styles.checkBadge}>
+                                            <Check
+                                              size={14}
+                                              color={theme.colors.surface}
+                                              strokeWidth={3}
+                                            />
+                                          </View>
+                                        ) : null}
+                                      </View>
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </View>
+                            </>
+                          ) : (
+                            <TouchableOpacity
+                              onPress={() => handleSelect(account, null)}
+                              activeOpacity={0.7}
+                              style={[
+                                styles.accountItem,
+                                isSelected && styles.selectedAccountItem,
+                              ]}
+                              accessibilityRole="button"
+                              accessibilityLabel={`${account.name}, balance ${formattedBalance}`}
+                            >
                             <View style={styles.accountItemLeft}>
                               <View
                                 style={[
@@ -280,7 +425,6 @@ export function AccountPickerModal({
 
                               <View style={styles.accountItemTextCol}>
                                 <Text
-                                  numberOfLines={1}
                                   style={[
                                     styles.accountItemName,
                                     isSelected && styles.selectedText,
@@ -316,7 +460,8 @@ export function AccountPickerModal({
                                 </View>
                               )}
                             </View>
-                          </TouchableOpacity>
+                            </TouchableOpacity>
+                          )}
                         </View>
                       );
                     })}
@@ -461,6 +606,56 @@ function createStyles(theme: AppTheme) {
     },
     selectedAccountItem: {
       backgroundColor: `${theme.colors.primary}12`,
+    },
+    locationList: {
+      backgroundColor: theme.colors.background,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      paddingBottom: theme.spacing.xs,
+      paddingLeft: theme.spacing.lg,
+    },
+    locationItem: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 48,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+    },
+    locationItemLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minWidth: 0,
+    },
+    locationBranch: {
+      borderBottomColor: theme.colors.borderStrong,
+      borderBottomWidth: 1,
+      borderLeftColor: theme.colors.borderStrong,
+      borderLeftWidth: 1,
+      height: 24,
+      width: 16,
+    },
+    locationIconWrap: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.small,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
+    },
+    locationName: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    locationBalance: {
+      color: theme.colors.textPrimary,
+      fontSize: 13,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     cardDivider: {
       backgroundColor: theme.colors.border,
