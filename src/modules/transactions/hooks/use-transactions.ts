@@ -7,6 +7,7 @@ import {
 import { createTransaction } from "../services/create-transaction.service";
 import { createTransfer } from "../services/create-transfer.service";
 import { removeTransaction } from "../services/delete-transaction.service";
+import { permanentlyDeleteTransaction } from "../services/permanently-delete-transaction.service";
 import { restoreTransaction } from "../services/restore-transaction.service";
 import { updateTransfer } from "../services/update-transfer.service";
 import { updateTransaction } from "../services/update-transaction.service";
@@ -57,6 +58,10 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   const recordTransaction = useCallback(
     async (input: CreateTransactionInput): Promise<boolean> => {
@@ -130,6 +135,24 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [refresh],
   );
 
+  const permanentlyDeleteTx = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        setPendingAction(true);
+        setError(null);
+        permanentlyDeleteTransaction(id);
+        refresh();
+        return true;
+      } catch (err: any) {
+        setError(err?.message || "Failed to permanently delete transaction.");
+        return false;
+      } finally {
+        setPendingAction(false);
+      }
+    },
+    [refresh],
+  );
+
   const editTransfer = useCallback(
     async (input: UpdateTransferInput): Promise<boolean> => {
       try {
@@ -184,6 +207,8 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     editTransaction,
     deleteTx,
     restoreTx,
+    permanentlyDeleteTx,
+    clearError,
     refresh,
   };
 }

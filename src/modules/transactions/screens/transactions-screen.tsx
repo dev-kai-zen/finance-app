@@ -95,10 +95,12 @@ export function TransactionsScreen() {
     loading,
     pendingAction,
     error,
+    clearError,
     recordTransaction,
     recordTransfer,
     deleteTx,
     restoreTx,
+    permanentlyDeleteTx,
     editTransaction,
     editTransfer,
   } = useTransactions();
@@ -463,7 +465,10 @@ export function TransactionsScreen() {
           <Pressable
             accessibilityLabel="Open transaction trash"
             accessibilityRole="button"
-            onPress={() => setIsTrashModalOpen(true)}
+            onPress={() => {
+              clearError();
+              setIsTrashModalOpen(true);
+            }}
             style={styles.trashButton}
           >
             <Trash2 color={theme.colors.danger} size={17} />
@@ -588,7 +593,16 @@ export function TransactionsScreen() {
       />
 
       <DeletedTransactionsModal
-        onClose={() => setIsTrashModalOpen(false)}
+        error={error}
+        onClose={() => {
+          clearError();
+          setIsTrashModalOpen(false);
+        }}
+        onPermanentlyDelete={async (id) => {
+          const deleted = await permanentlyDeleteTx(id);
+          if (deleted) refreshAccounts();
+          return deleted;
+        }}
         onRestore={(id) => {
           void restoreTx(id).then((restored) => {
             if (restored) refreshAccounts();

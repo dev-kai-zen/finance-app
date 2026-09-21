@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -7,8 +7,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { ChevronLeft, RotateCcw } from "lucide-react-native";
+import { ChevronLeft, RotateCcw, Trash2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ConfirmModal } from "@/components/confirm-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
@@ -18,7 +19,9 @@ export interface DeletedTransactionsModalProps {
   visible: boolean;
   transactions: TransactionListItem[];
   pending?: boolean;
+  error?: string | null;
   onClose: () => void;
+  onPermanentlyDelete: (id: string) => Promise<boolean>;
   onRestore: (id: string) => void;
 }
 
@@ -26,49 +29,78 @@ export function DeletedTransactionsModal({
   visible,
   transactions,
   pending = false,
+  error = null,
   onClose,
+  onPermanentlyDelete,
   onRestore,
 }: DeletedTransactionsModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const [pendingPermanentDelete, setPendingPermanentDelete] =
+    useState<TransactionListItem | null>(null);
+
+  const handleClose = () => {
+    setPendingPermanentDelete(null);
+    onClose();
+  };
+
+  const handleConfirmPermanentDelete = async () => {
+    if (!pendingPermanentDelete) return;
+    await onPermanentlyDelete(pendingPermanentDelete.id);
+    setPendingPermanentDelete(null);
+  };
+
+  const permanentDeleteLabel = pendingPermanentDelete
+    ? pendingPermanentDelete.name ||
+      pendingPermanentDelete.note ||
+      pendingPermanentDelete.categoryName ||
+      "this transaction"
+    : "this transaction";
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={() => {
-        if (!pending) onClose();
-      }}
-      visible={visible}
-    >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Close trash"
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={onClose}
-            style={styles.backButton}
-          >
-            <ChevronLeft color={theme.colors.textPrimary} size={24} />
-          </Pressable>
-          <View style={styles.titleColumn}>
-            <Text style={styles.title}>Trash</Text>
-            <Text style={styles.subtitle}>
-              {transactions.length} deleted{" "}
-              {transactions.length === 1 ? "transaction" : "transactions"}
-            </Text>
+    <>
+      <Modal
+        animationType="slide"
+        onRequestClose={() => {
+          if (!pending) handleClose();
+        }}
+        visible={visible}
+      >
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+          <View style={styles.header}>
+            <Pressable
+              accessibilityLabel="Close trash"
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={handleClose}
+              style={styles.backButton}
+            >
+              <ChevronLeft color={theme.colors.textPrimary} size={24} />
+            </Pressable>
+            <View style={styles.titleColumn}>
+              <Text style={styles.title}>Trash</Text>
+              <Text style={styles.subtitle}>
+                {transactions.length} deleted{" "}
+                {transactions.length === 1 ? "transaction" : "transactions"}
+              </Text>
+            </View>
+            <View style={styles.headerSpacer} />
           </View>
-          <View style={styles.headerSpacer} />
-        </View>
 
-        <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom, 24) },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
+          {error ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(insets.bottom, 24) },
+            ]}
+            showsVerticalScrollIndicator={false}
+          >
           {transactions.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>Trash is empty</Text>
@@ -131,24 +163,54 @@ export function DeletedTransactionsModal({
                         ? new Date(transaction.deletedAt).toLocaleDateString()
                         : ""}
                     </Text>
-                    <Pressable
-                      accessibilityLabel={"Restore " + transactionTitle}
-                      accessibilityRole="button"
-                      disabled={pending}
-                      onPress={() => onRestore(transaction.id)}
-                      style={[styles.restoreButton, pending && styles.disabled]}
-                    >
-                      <RotateCcw color={theme.colors.success} size={16} />
-                      <Text style={styles.restoreText}>Restore</Text>
-                    </Pressable>
+                    <View style={styles.cardActions}>
+                      <Pressable
+                        accessibilityLabel={"Permanently delete " + transactionTitle}
+                        accessibilityRole="button"
+                        disabled={pending}
+                        onPress={() => setPendingPermanentDelete(transaction)}
+                        style={[styles.deleteButton, pending && styles.disabled]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={16} />
+                        <Text style={styles.deleteText}>Delete</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityLabel={"Restore " + transactionTitle}
+                        accessibilityRole="button"
+                        disabled={pending}
+                        onPress={() => onRestore(transaction.id)}
+                        style={[styles.restoreButton, pending && styles.disabled]}
+                      >
+                        <RotateCcw color={theme.colors.success} size={16} />
+                        <Text style={styles.restoreText}>Restore</Text>
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
               );
             })
           )}
-        </ScrollView>
-      </View>
-    </Modal>
+          </ScrollView>
+        </View>
+      </Modal>
+
+      <ConfirmModal
+        confirmLabel="Delete permanently"
+        message={
+          pendingPermanentDelete?.type === "transfer"
+            ? "Both records for this transfer will be permanently deleted. This cannot be undone."
+            : `Permanently delete "${permanentDeleteLabel}"? This cannot be undone.`
+        }
+        onCancel={() => setPendingPermanentDelete(null)}
+        onConfirm={() => {
+          void handleConfirmPermanentDelete();
+        }}
+        pending={pending}
+        title="Permanently delete transaction?"
+        variant="destructive"
+        visible={pendingPermanentDelete !== null}
+      />
+    </>
   );
 }
 
@@ -229,6 +291,11 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       justifyContent: "space-between",
     },
+    cardActions: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
     deletedDate: {
       color: theme.colors.textMuted,
       flex: 1,
@@ -248,6 +315,32 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.success,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    deleteButton: {
+      alignItems: "center",
+      borderColor: theme.colors.danger,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    deleteText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    errorBanner: {
+      backgroundColor: `${theme.colors.danger}14`,
+      borderBottomColor: `${theme.colors.danger}45`,
+      borderBottomWidth: 1,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+    },
+    errorText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.sm,
     },
     disabled: {
       opacity: 0.5,
