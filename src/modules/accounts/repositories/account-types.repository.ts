@@ -47,3 +47,7 @@ export function updateAccountTypeRecord(id: string, values: Partial<Omit<NewAcco
 export function deleteAccountTypeById(id: string, context: DbContext = db): void {
   context.delete(accountTypes).where(eq(accountTypes.id, id)).run();
 }
+
+export function deleteNonSystemAccountTypes(context: DbContext = db): void {
+  context.delete(accountTypes).where(eq(accountTypes.isSystem, false)).run();
+}

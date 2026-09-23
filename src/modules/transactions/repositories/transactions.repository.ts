@@ -368,6 +368,10 @@ export function deleteTransaction(id: string, context: DbContext = db): void {
   context.delete(transactions).where(eq(transactions.id, id)).run();
 }
 
+export function deleteAllTransactionRecords(context: DbContext = db): void {
+  context.delete(transactions).run();
+}
+
 export function deleteTransactionsByGroupId(
   groupId: string,
   context: DbContext = db,

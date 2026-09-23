@@ -3,6 +3,11 @@ export { CategoryGroupModal } from "./components/category-group-modal";
 export { SubcategoryModal } from "./components/subcategory-modal";
 export { useCategories } from "./hooks/use-categories";
 export { reorderCategories } from "./services/reorder-categories.service";
+export {
+  clearCustomWorkspaceCategories,
+  prepareWorkspaceCategories,
+} from "./services/prepare-workspace-categories.service";
+export type { CategorySetup } from "./services/prepare-workspace-categories.service";
 export type {
   Category,
   CategoryInput,

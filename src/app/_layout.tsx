@@ -7,6 +7,11 @@ import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { HexColorsProvider } from "@/modules/hex-colors";
+import {
+  OnboardingGate,
+  SampleWorkspaceBanner,
+  WorkspaceProvider,
+} from "@/modules/onboarding";
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -22,33 +27,37 @@ function RootLayoutContent() {
       <StatusBar style={theme.mode === "dark" ? "dark" : "light"} />
       <KeyboardProvider>
         <DatabaseProvider>
-          <HexColorsProvider>
-            <SafeAreaView
-              edges={["top"]}
-              style={[
-                styles.safeAreaBoundary,
-                { backgroundColor: theme.colors.background },
-              ]}
-            >
-              <AppShell>
-                <Stack
-                  screenOptions={{
-                    contentStyle: {
-                      backgroundColor: theme.colors.background,
-                    },
-                    headerShown: false,
-                  }}
-                >
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="accounts" />
-                  <Stack.Screen name="transactions" />
-                  <Stack.Screen name="categories" />
-                  <Stack.Screen name="settings" />
-                  <Stack.Screen name="monitor" />
-                </Stack>
-              </AppShell>
-            </SafeAreaView>
-          </HexColorsProvider>
+          <WorkspaceProvider>
+            <HexColorsProvider>
+              <SafeAreaView
+                edges={["top"]}
+                style={[
+                  styles.safeAreaBoundary,
+                  { backgroundColor: theme.colors.background },
+                ]}
+              >
+                <OnboardingGate>
+                  <AppShell banner={<SampleWorkspaceBanner />}>
+                    <Stack
+                      screenOptions={{
+                        contentStyle: {
+                          backgroundColor: theme.colors.background,
+                        },
+                        headerShown: false,
+                      }}
+                    >
+                      <Stack.Screen name="index" />
+                      <Stack.Screen name="accounts" />
+                      <Stack.Screen name="transactions" />
+                      <Stack.Screen name="categories" />
+                      <Stack.Screen name="settings" />
+                      <Stack.Screen name="monitor" />
+                    </Stack>
+                  </AppShell>
+                </OnboardingGate>
+              </SafeAreaView>
+            </HexColorsProvider>
+          </WorkspaceProvider>
         </DatabaseProvider>
       </KeyboardProvider>
     </SafeAreaProvider>

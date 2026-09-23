@@ -14,6 +14,10 @@ export { updateTransaction } from "./services/update-transaction.service";
 export { getAccountBalanceDeltas } from "./services/get-account-balance-deltas.service";
 export { getPocketTransactionBalanceDeltas } from "./services/get-pocket-transaction-balance-deltas.service";
 export { hasTransactions } from "./services/has-transactions.service";
+export {
+  clearTransactionWorkspace,
+  createSampleTransactions,
+} from "./services/workspace-transactions.service";
 export type {
   Transaction,
   TransactionListItem,

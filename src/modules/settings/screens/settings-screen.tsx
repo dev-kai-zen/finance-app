@@ -8,11 +8,13 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { GoogleDriveBackupSettings } from "@/modules/backup";
+import { useWorkspace } from "@/modules/onboarding";
 
 export function SettingsScreen() {
   const styles = useThemeStyles(createStyles);
   const { theme, themeId, setThemeId, availableThemes } = useThemeController();
   const { colors } = useHexColors();
+  const workspace = useWorkspace();
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
 
@@ -20,8 +22,55 @@ export function SettingsScreen() {
     <PageContainer>
       <View style={styles.container}>
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>WORKSPACE</Text>
+          <View style={styles.card}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {workspace.state.mode === "sample"
+                    ? "Sample workspace"
+                    : "Personal workspace"}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {workspace.state.mode === "sample"
+                    ? "Fictional records are active and cloud backup is paused."
+                    : "Your local accounts and transactions are active."}
+                </Text>
+              </View>
+              {workspace.state.mode === "sample" ? (
+                <Pressable
+                  accessibilityLabel="Start setting up my personal workspace"
+                  accessibilityRole="button"
+                  onPress={workspace.requestPersonalSetup}
+                  style={({ pressed }) => [
+                    styles.workspaceAction,
+                    pressed && styles.settingRowPressed,
+                  ]}
+                >
+                  <Text style={styles.workspaceActionText}>Start setup</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
-          <GoogleDriveBackupSettings />
+          {workspace.state.mode === "sample" ? (
+            <View style={styles.card}>
+              <View style={styles.settingRow}>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Backup paused</Text>
+                  <Text style={styles.settingDescription}>
+                    Sample records are temporary and are not uploaded to Google
+                    Drive. Start a personal workspace to enable backup.
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <GoogleDriveBackupSettings />
+          )}
         </View>
 
         <View style={styles.section}>
@@ -200,6 +249,17 @@ function createStyles(theme: AppTheme) {
     },
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
+    },
+    workspaceAction: {
+      borderRadius: theme.borderRadius.medium,
+      justifyContent: "center",
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.md,
+    },
+    workspaceActionText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     settingCopy: {
       flex: 1,

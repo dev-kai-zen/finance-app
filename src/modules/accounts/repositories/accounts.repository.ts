@@ -37,6 +37,9 @@ export function insertAccount(value: NewAccount, context: DbContext = db) {
 export function updateAccountRecord(id: string, values: Partial<Omit<NewAccount, "id" | "createdAt">>, context: DbContext = db) {
   context.update(accounts).set(values).where(eq(accounts.id, id)).run();
 }
+export function deleteAllAccountRecords(context: DbContext = db): void {
+  context.delete(accounts).run();
+}
 export function reassignAccountsType(fromAccountTypeId: string, toAccountTypeId: string, updatedAt = new Date(), context: DbContext = db): void {
   context.update(accounts).set({ accountTypeId: toAccountTypeId, updatedAt })
     .where(eq(accounts.accountTypeId, fromAccountTypeId)).run();

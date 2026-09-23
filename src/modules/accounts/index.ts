@@ -7,6 +7,17 @@ export {
 } from "./services/get-pockets-with-balances.service";
 export { requirePocketForAccount } from "./services/pocket-rules";
 export { savePocket } from "./services/save-pocket.service";
+export {
+  clearAccountWorkspace,
+  createInitialAccount,
+  createSampleAccounts,
+  hasAccountWorkspaceData,
+} from "./services/workspace-accounts.service";
+export type {
+  InitialAccountInput,
+  InitialAccountTemplate,
+  SampleAccountIds,
+} from "./services/workspace-accounts.service";
 export { setPocketArchived } from "./services/archive-pocket.service";
 export { deleteAccountType } from "./services/delete-account-type.service";
 export {

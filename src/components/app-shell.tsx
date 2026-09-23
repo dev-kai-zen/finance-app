@@ -1,4 +1,4 @@
-import { PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, type ReactNode, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -26,7 +26,11 @@ function getScreenTitle(pathname: string): string {
   return "Dashboard";
 }
 
-export function AppShell({ children }: PropsWithChildren) {
+export interface AppShellProps extends PropsWithChildren {
+  banner?: ReactNode;
+}
+
+export function AppShell({ children, banner }: AppShellProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -54,6 +58,7 @@ export function AppShell({ children }: PropsWithChildren) {
             </View>
             <SyncStatusChip />
           </View>
+          {banner}
           <View style={styles.desktopContentArea}>{children}</View>
         </View>
       </View>
@@ -90,6 +95,8 @@ export function AppShell({ children }: PropsWithChildren) {
           <SyncStatusChip />
         </View>
       </View>
+
+      {banner}
 
       {/* Main Content Area */}
       <View style={styles.mobileContent}>{children}</View>

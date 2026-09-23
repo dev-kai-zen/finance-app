@@ -254,6 +254,14 @@ export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void>
   }
 }
 
+export function deleteNonSystemCategoryRecords(db: DbContext): void {
+  db.update(categories)
+    .set({ parentId: null, updatedAt: new Date() })
+    .where(eq(categories.isSystem, false))
+    .run();
+  db.delete(categories).where(eq(categories.isSystem, false)).run();
+}
+
 export async function insertCategoryPreset(
   db: DbContext,
   cat: CategoryInput & { id: string; isSystem: boolean },
