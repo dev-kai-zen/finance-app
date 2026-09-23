@@ -5,6 +5,13 @@ import type { GoogleDriveUser } from "@/modules/backup/types/backup.types";
 
 export const GOOGLE_DRIVE_APPDATA_SCOPE =
   "https://www.googleapis.com/auth/drive.appdata";
+export const GOOGLE_DRIVE_FILE_SCOPE =
+  "https://www.googleapis.com/auth/drive.file";
+
+const GOOGLE_DRIVE_SCOPES = [
+  GOOGLE_DRIVE_APPDATA_SCOPE,
+  GOOGLE_DRIVE_FILE_SCOPE,
+];
 
 type GoogleSignInModule = typeof import("react-native-nitro-google-signin");
 
@@ -30,7 +37,10 @@ export function getGoogleDriveConfigurationError(): string | null {
 export async function restoreGoogleDriveSession(): Promise<GoogleDriveUser | null> {
   const google = await getConfiguredGoogleModule();
   const current = google.GoogleOneTapSignIn.getCurrentUser();
-  return current ? toGoogleDriveUser(current.user) : null;
+  if (!current) return null;
+
+  await ensureGoogleDriveScopes(google, current.scopes);
+  return toGoogleDriveUser(current.user);
 }
 
 export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
@@ -49,12 +59,7 @@ export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
     throw new Error("Google sign-in could not be completed.");
   }
 
-  if (!response.data.scopes.includes(GOOGLE_DRIVE_APPDATA_SCOPE)) {
-    const authorization = await google.GoogleOneTapSignIn.requestScopes([
-      GOOGLE_DRIVE_APPDATA_SCOPE,
-    ]);
-    if (!authorization.accessToken) return null;
-  }
+  await ensureGoogleDriveScopes(google, response.data.scopes);
 
   return toGoogleDriveUser(response.data.user);
 }
@@ -95,7 +100,7 @@ async function getConfiguredGoogleModule(): Promise<GoogleSignInModule> {
     google.GoogleOneTapSignIn.configure({
       webClientId: clientId,
       iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || null,
-      scopes: [GOOGLE_DRIVE_APPDATA_SCOPE],
+      scopes: GOOGLE_DRIVE_SCOPES,
       offlineAccess: false,
       autoSelectOnSignIn: false,
     });
@@ -103,6 +108,24 @@ async function getConfiguredGoogleModule(): Promise<GoogleSignInModule> {
   }
 
   return google;
+}
+
+async function ensureGoogleDriveScopes(
+  google: GoogleSignInModule,
+  grantedScopes: string[],
+): Promise<void> {
+  const missingScopes = GOOGLE_DRIVE_SCOPES.filter(
+    (scope) => !grantedScopes.includes(scope),
+  );
+  if (missingScopes.length === 0) return;
+
+  const authorization =
+    await google.GoogleOneTapSignIn.requestScopes(missingScopes);
+  if (!authorization.accessToken) {
+    throw new Error(
+      "Google Drive permission is required to create the visible backup folder.",
+    );
+  }
 }
 
 function toGoogleDriveUser(user: OneTapUser): GoogleDriveUser {

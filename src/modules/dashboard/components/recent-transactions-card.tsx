@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ArrowRight } from "lucide-react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -10,14 +11,12 @@ import { formatCurrency } from "@/utils/currency";
 export interface RecentTransactionsCardProps {
   transactions: TransactionListItem[];
   onViewAll: () => void;
-  onAddTransaction: () => void;
   currencyCode?: string;
 }
 
 export function RecentTransactionsCard({
   transactions,
   onViewAll,
-  onAddTransaction,
   currencyCode = "PHP",
 }: RecentTransactionsCardProps) {
   const theme = useAppTheme();
@@ -27,27 +26,27 @@ export function RecentTransactionsCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>RECENT TRANSACTIONS</Text>
+        <Text style={styles.title}>Recent Transactions</Text>
         <Pressable
           accessibilityLabel="View all transactions"
           accessibilityRole="button"
           onPress={onViewAll}
+          style={({ pressed }) => [
+            styles.viewAllButton,
+            pressed && styles.viewAllButtonPressed,
+          ]}
         >
-          <Text style={styles.viewAllText}>View All →</Text>
+          <Text style={styles.viewAllText}>View all</Text>
+          <ArrowRight color={theme.colors.primary} size={15} />
         </Pressable>
       </View>
 
       {transactions.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No transactions recorded yet.</Text>
-          <Pressable
-            accessibilityLabel="Record first transaction"
-            accessibilityRole="button"
-            onPress={onAddTransaction}
-            style={styles.addBtn}
-          >
-            <Text style={styles.addBtnText}>+ Record Transaction</Text>
-          </Pressable>
+          <Text style={styles.emptyHint}>
+            Use the + button to record your first transaction.
+          </Text>
         </View>
       ) : (
         <View style={styles.list}>
@@ -153,18 +152,29 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: 14,
+      marginBottom: theme.spacing.sm,
     },
     title: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      fontWeight: "700",
-      letterSpacing: 0.8,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: -0.2,
+    },
+    viewAllButton: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    viewAllButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
     },
     viewAllText: {
       color: theme.colors.primary,
-      fontSize: 12,
-      fontWeight: "600",
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     emptyContainer: {
       alignItems: "center",
@@ -172,22 +182,15 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 24,
     },
     emptyText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    emptyHint: {
       color: theme.colors.textSecondary,
-      fontSize: 13,
-      marginBottom: 12,
-    },
-    addBtn: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: 8,
-      borderWidth: 1,
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-    },
-    addBtnText: {
-      color: theme.colors.primary,
-      fontSize: 13,
-      fontWeight: "600",
+      fontSize: theme.typography.fontSize.xs,
+      marginTop: theme.spacing.xs,
+      textAlign: "center",
     },
     list: {},
     row: {

@@ -6,13 +6,21 @@ import {
   transactions,
 } from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
-import { listTransactions } from "@/modules/transactions/repositories/transactions.repository";
+import {
+  getAccountBalanceDeltasAtDates,
+  getRecentTransactions,
+} from "@/modules/transactions";
 import type {
   AccountWithBalance,
   CategorySpendingItem,
   DashboardSummary,
   MonthlyCashflow,
+  NetWorthHistory,
+  NetWorthHistoryPoint,
+  NetWorthPeriod,
 } from "../types/dashboard.types";
+
+const NET_WORTH_PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
 
 export function getAccountDynamicBalances(
   context: DbContext = db,
@@ -178,15 +186,156 @@ export function getDashboardSummary(
     context,
     targetDate,
   );
-  const recentTransactions = listTransactions(undefined, context).slice(0, 5);
+  const recentTransactions = getRecentTransactions(5, context);
+  const netWorthHistory = getNetWorthHistory(
+    accountsWithBalances,
+    context,
+    targetDate,
+  );
+  const monthlyPoints = netWorthHistory["1Y"];
+  const currentPoint = monthlyPoints.at(-1);
+  const previousMonthPoint = monthlyPoints.at(-2);
+  const netWorthChangePercentage =
+    currentPoint &&
+    previousMonthPoint &&
+    previousMonthPoint.netWorthMinorUnits !== 0
+      ? Math.round(
+          ((currentPoint.netWorthMinorUnits -
+            previousMonthPoint.netWorthMinorUnits) /
+            Math.abs(previousMonthPoint.netWorthMinorUnits)) *
+            100,
+        )
+      : null;
 
   return {
     netWorthMinorUnits: netWorth,
     totalAssetsMinorUnits: totalAssets,
     totalLiabilitiesMinorUnits: totalLiabilities,
+    netWorthChangePercentage,
+    netWorthHistory,
     monthlyCashflow,
     topSpendingCategories,
     recentTransactions,
     accountsWithBalances,
   };
+}
+
+export function getNetWorthHistory(
+  accountsWithBalances: AccountWithBalance[],
+  context: DbContext = db,
+  targetDate: Date = new Date(),
+): NetWorthHistory {
+  const cutoffsByPeriod = Object.fromEntries(
+    NET_WORTH_PERIODS.map((period) => [
+      period,
+      getPeriodCutoffDates(period, targetDate),
+    ]),
+  ) as Record<NetWorthPeriod, Date[]>;
+
+  const uniqueCutoffs = Array.from(
+    new Map(
+      NET_WORTH_PERIODS.flatMap((period) => cutoffsByPeriod[period]).map(
+        (date) => [date.getTime(), date],
+      ),
+    ).values(),
+  ).sort((a, b) => a.getTime() - b.getTime());
+  const deltasAtCutoffs = getAccountBalanceDeltasAtDates(
+    uniqueCutoffs,
+    context,
+  );
+  const deltasByCutoff = new Map(
+    uniqueCutoffs.map((date, index) => [
+      date.getTime(),
+      deltasAtCutoffs[index] ?? {},
+    ]),
+  );
+
+  return Object.fromEntries(
+    NET_WORTH_PERIODS.map((period) => [
+      period,
+      cutoffsByPeriod[period].map((date) =>
+        calculateNetWorthPoint(
+          accountsWithBalances,
+          date,
+          deltasByCutoff.get(date.getTime()) ?? {},
+          period,
+        ),
+      ),
+    ]),
+  ) as NetWorthHistory;
+}
+
+function calculateNetWorthPoint(
+  accountRows: AccountWithBalance[],
+  date: Date,
+  transactionDeltas: Record<string, number>,
+  period: NetWorthPeriod,
+): NetWorthHistoryPoint {
+  let totalAssetsMinorUnits = 0;
+  let totalLiabilitiesMinorUnits = 0;
+
+  for (const account of accountRows) {
+    if (
+      account.isArchived ||
+      account.hideFromReports ||
+      account.openingBalanceAt.getTime() > date.getTime()
+    ) {
+      continue;
+    }
+
+    const balance =
+      account.openingBalanceMinorUnits +
+      (transactionDeltas[account.id] ?? 0);
+    if (account.accountType?.accountGroup === "liability") {
+      totalLiabilitiesMinorUnits += balance;
+    } else {
+      totalAssetsMinorUnits += balance;
+    }
+  }
+
+  return {
+    date,
+    label: date.toLocaleDateString(undefined, {
+      month: "short",
+      ...(period === "1M" ? { day: "numeric" } : {}),
+    }),
+    netWorthMinorUnits:
+      totalAssetsMinorUnits + totalLiabilitiesMinorUnits,
+    totalAssetsMinorUnits,
+    totalLiabilitiesMinorUnits,
+  };
+}
+
+function getPeriodCutoffDates(
+  period: NetWorthPeriod,
+  targetDate: Date,
+): Date[] {
+  if (period === "1M") {
+    return [28, 21, 14, 7, 0].map((daysAgo) => {
+      const date = new Date(targetDate);
+      date.setDate(date.getDate() - daysAgo);
+      date.setHours(23, 59, 59, 999);
+      return date;
+    });
+  }
+
+  const monthCount = period === "3M" ? 3 : period === "6M" ? 6 : 12;
+  return Array.from({ length: monthCount }, (_, index) => {
+    const monthsAgo = monthCount - index - 1;
+    if (monthsAgo === 0) {
+      const current = new Date(targetDate);
+      current.setHours(23, 59, 59, 999);
+      return current;
+    }
+
+    return new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth() - monthsAgo + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+  });
 }

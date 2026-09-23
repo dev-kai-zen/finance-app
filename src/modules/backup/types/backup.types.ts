@@ -1,4 +1,7 @@
-import type { GoogleDriveBackupFile } from "@/infrastructure/sync";
+import type {
+  GoogleDriveBackupCatalog,
+  GoogleDriveBackupFile,
+} from "@/infrastructure/sync";
 
 export interface GoogleDriveUser {
   id: string;
@@ -7,6 +10,7 @@ export interface GoogleDriveUser {
 }
 
 export type BackupFile = GoogleDriveBackupFile;
+export type BackupCatalog = GoogleDriveBackupCatalog;
 
 export type BackupOperation =
   | "idle"

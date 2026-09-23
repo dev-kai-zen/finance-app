@@ -12,6 +12,8 @@ export { restoreTransaction } from "./services/restore-transaction.service";
 export { updateTransfer } from "./services/update-transfer.service";
 export { updateTransaction } from "./services/update-transaction.service";
 export { getAccountBalanceDeltas } from "./services/get-account-balance-deltas.service";
+export { getAccountBalanceDeltasAtDates } from "./services/get-account-balance-deltas.service";
+export { getRecentTransactions } from "./services/get-recent-transactions.service";
 export { getPocketTransactionBalanceDeltas } from "./services/get-pocket-transaction-balance-deltas.service";
 export { hasTransactions } from "./services/has-transactions.service";
 export {

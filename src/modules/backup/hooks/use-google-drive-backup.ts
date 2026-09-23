@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type {
+  BackupCatalog,
   BackupFile,
   BackupNotice,
   BackupOperation,
@@ -22,6 +23,7 @@ import {
 export function useGoogleDriveBackup() {
   const [user, setUser] = useState<GoogleDriveUser | null>(null);
   const [backups, setBackups] = useState<BackupFile[]>([]);
+  const [folderUrl, setFolderUrl] = useState<string | null>(null);
   const [operation, setOperation] = useState<BackupOperation>("loading");
   const [notice, setNotice] = useState<BackupNotice | null>(() => {
     const message = consumeRestoreNotice();
@@ -50,7 +52,7 @@ export function useGoogleDriveBackup() {
 
   const refresh = useCallback(async (): Promise<void> => {
     const result = await run("loading", listGoogleDriveBackups);
-    if (result) setBackups(result);
+    if (result) applyCatalog(result, setBackups, setFolderUrl, setNotice);
   }, [run]);
 
   useEffect(() => {
@@ -68,8 +70,10 @@ export function useGoogleDriveBackup() {
         if (!active) return;
         setUser(restoredUser);
         if (restoredUser) {
-          const files = await listGoogleDriveBackups();
-          if (active) setBackups(files);
+          const catalog = await listGoogleDriveBackups();
+          if (active) {
+            applyCatalog(catalog, setBackups, setFolderUrl, setNotice);
+          }
         }
       })
       .catch((error: unknown) => {
@@ -92,7 +96,7 @@ export function useGoogleDriveBackup() {
     setUser(connectedUser);
 
     const files = await run("loading", listGoogleDriveBackups);
-    if (files) setBackups(files);
+    if (files) applyCatalog(files, setBackups, setFolderUrl, setNotice);
   }, [run]);
 
   const disconnect = useCallback(async (): Promise<void> => {
@@ -103,6 +107,7 @@ export function useGoogleDriveBackup() {
     if (!completed) return;
     setUser(null);
     setBackups([]);
+    setFolderUrl(null);
   }, [run]);
 
   const createBackup = useCallback(
@@ -117,7 +122,7 @@ export function useGoogleDriveBackup() {
       ]);
       setNotice({
         variant: "success",
-        message: "Encrypted backup saved to Google Drive.",
+        message: "Encrypted backup saved to Kaizen Finance / Backups.",
       });
       return true;
     },
@@ -138,6 +143,7 @@ export function useGoogleDriveBackup() {
   return {
     backups,
     configurationError,
+    folderUrl,
     notice,
     operation,
     user,
@@ -148,6 +154,34 @@ export function useGoogleDriveBackup() {
     refresh,
     restoreBackup,
   };
+}
+
+function applyCatalog(
+  catalog: BackupCatalog,
+  setBackups: (files: BackupFile[]) => void,
+  setFolderUrl: (url: string) => void,
+  setNotice: (notice: BackupNotice | null) => void,
+): void {
+  setBackups(catalog.files);
+  setFolderUrl(catalog.folderUrl);
+
+  if (catalog.migrationFailureCount > 0) {
+    const copiedMessage =
+      catalog.migratedCount > 0
+        ? `${catalog.migratedCount} copied; `
+        : "";
+    setNotice({
+      variant: "error",
+      message:
+        `${copiedMessage}${catalog.migrationFailureCount} hidden backup(s) could not be copied. ` +
+        "They remain available for restore.",
+    });
+  } else if (catalog.migratedCount > 0) {
+    setNotice({
+      variant: "success",
+      message: `${catalog.migratedCount} existing backup(s) copied to Kaizen Finance / Backups.`,
+    });
+  }
 }
 
 function getErrorMessage(error: unknown): string {

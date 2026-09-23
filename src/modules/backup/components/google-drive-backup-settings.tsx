@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import * as Linking from "expo-linking";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +13,7 @@ import {
   Cloud,
   CloudDownload,
   CloudUpload,
+  FolderOpen,
   LogOut,
   RefreshCw,
   ShieldAlert,
@@ -54,6 +57,19 @@ export function GoogleDriveBackupSettings() {
   const beginRestore = (file: BackupFile) => {
     setSelectedBackup(file);
     setConfirmRestore(true);
+  };
+
+  const openBackupFolder = async () => {
+    if (!backup.folderUrl) return;
+
+    try {
+      await Linking.openURL(backup.folderUrl);
+    } catch {
+      Alert.alert(
+        "Unable to open Google Drive",
+        "Open Google Drive and look for Kaizen Finance / Backups.",
+      );
+    }
   };
 
   return (
@@ -103,7 +119,28 @@ export function GoogleDriveBackupSettings() {
               <View style={styles.copy}>
                 <Text style={styles.actionTitle}>Back up now</Text>
                 <Text style={styles.description}>
-                  Create a new encrypted snapshot
+                  Save an encrypted snapshot to Kaizen Finance / Backups
+                </Text>
+              </View>
+            </Pressable>
+
+            <View style={styles.insetDivider} />
+            <Pressable
+              accessibilityLabel="Open Kaizen Finance backups in Google Drive"
+              accessibilityRole="button"
+              disabled={busy || !backup.folderUrl}
+              onPress={() => void openBackupFolder()}
+              style={({ pressed }) => [
+                styles.actionRow,
+                pressed && styles.pressed,
+                (busy || !backup.folderUrl) && styles.disabled,
+              ]}
+            >
+              <FolderOpen color={theme.colors.primary} size={20} />
+              <View style={styles.copy}>
+                <Text style={styles.actionTitle}>Open backups folder</Text>
+                <Text style={styles.description}>
+                  View Kaizen Finance / Backups in Google Drive
                 </Text>
               </View>
             </Pressable>
@@ -155,6 +192,9 @@ export function GoogleDriveBackupSettings() {
                       </Text>
                       <Text style={styles.description} selectable>
                         {formatBytes(file.size)} · Encrypted
+                        {file.location === "legacy-hidden"
+                          ? " · Hidden legacy copy"
+                          : ""}
                       </Text>
                     </View>
                     <Text style={styles.restoreLabel}>Restore</Text>

@@ -22,10 +22,27 @@ export interface MonthlyCashflow {
   monthLabel: string;
 }
 
+export type NetWorthPeriod = "1M" | "3M" | "6M" | "1Y";
+
+export interface NetWorthHistoryPoint {
+  date: Date;
+  label: string;
+  netWorthMinorUnits: number;
+  totalAssetsMinorUnits: number;
+  totalLiabilitiesMinorUnits: number;
+}
+
+export type NetWorthHistory = Record<
+  NetWorthPeriod,
+  NetWorthHistoryPoint[]
+>;
+
 export interface DashboardSummary {
   netWorthMinorUnits: number;
   totalAssetsMinorUnits: number;
   totalLiabilitiesMinorUnits: number;
+  netWorthChangePercentage: number | null;
+  netWorthHistory: NetWorthHistory;
   monthlyCashflow: MonthlyCashflow;
   topSpendingCategories: CategorySpendingItem[];
   recentTransactions: TransactionListItem[];

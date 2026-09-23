@@ -1,16 +1,19 @@
 # Google Drive Backup Setup
 
-The Phase 1 implementation stores encrypted `.kfb` snapshots in the signed-in
-user's private Google Drive `appDataFolder`. The app requests only the
-non-sensitive `drive.appdata` scope.
+The implementation stores encrypted `.kfb` snapshots in the signed-in user's
+visible `Kaizen Finance/Backups` folder. The app uses the non-sensitive
+`drive.file` scope so it can manage only the files it creates. It temporarily
+retains `drive.appdata` access to discover and copy backups created by older
+versions of the app.
 
 ## Google Cloud
 
 1. Create or select a Google Cloud project.
 2. Enable the **Google Drive API**.
 3. Configure the OAuth consent screen. Add
-   `https://www.googleapis.com/auth/drive.appdata` and add your Google account as
-   a test user while the app is in testing mode.
+   `https://www.googleapis.com/auth/drive.file` and
+   `https://www.googleapis.com/auth/drive.appdata`, then add your Google account
+   as a test user while the app is in testing mode.
 4. Create a **Web application** OAuth client. Copy its client ID into a local
    `.env.local` file as `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`.
 5. Create an **Android** OAuth client with package name
@@ -51,6 +54,12 @@ not valid for iOS authentication.
 
 ## Backup behavior
 
+- The app creates `Kaizen Finance/Backups` automatically and provides an action
+  to open it in Google Drive.
+- Existing hidden backups are copied to the visible folder without decrypting
+  them. Hidden originals are retained as a safety fallback.
+- Drive folder IDs and private app properties are used for discovery, so users
+  may rename the visible folders without breaking backup or restore.
 - The passphrase is never stored or uploaded.
 - Scrypt derives a unique AES-256 key for each backup.
 - AES-GCM encrypts and authenticates the SQLite snapshot and its metadata.

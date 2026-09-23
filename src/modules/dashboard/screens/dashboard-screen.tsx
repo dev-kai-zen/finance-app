@@ -1,13 +1,12 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import {
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { FloatingActionButton, PageContainer, PageHeader } from "@/components";
-import { isTabletOrDesktop } from "@/constants/layout";
+  FloatingActionButton,
+  PageContainer,
+  PageErrorState,
+  PageLoadingState,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
@@ -17,20 +16,20 @@ import {
   useTransactions,
   type TransactionType,
 } from "@/modules/transactions";
-import { CategorySpendingCard } from "../components/category-spending-card";
-import { DashboardMonthlyCashflowCard } from "../components/dashboard-monthly-cashflow-card";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
-import { DashboardQuickActions } from "../components/dashboard-quick-actions";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
 import { useDashboard } from "../hooks/use-dashboard";
 
 export function DashboardScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
 
-  const { summary, refresh: refreshDashboard } = useDashboard();
+  const {
+    summary,
+    loading,
+    error: dashboardError,
+    refresh: refreshDashboard,
+  } = useDashboard();
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
   const {
@@ -47,10 +46,6 @@ export function DashboardScreen() {
     refreshAccounts();
     setModalMode(mode);
     setIsModalOpen(true);
-  };
-
-  const handleNavigateToAccounts = () => {
-    router.navigate("/accounts" as any);
   };
 
   const handleViewAllTransactions = () => {
@@ -78,14 +73,6 @@ export function DashboardScreen() {
   const netWorth = summary?.netWorthMinorUnits ?? 0;
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
-  const monthlyCashflow = summary?.monthlyCashflow ?? {
-    totalInflowMinorUnits: 0,
-    totalOutflowMinorUnits: 0,
-    netSavingsMinorUnits: 0,
-    savingsRatePercentage: 0,
-    monthLabel: "Current Month",
-  };
-  const topSpending = summary?.topSpendingCategories ?? [];
   const recentTx = summary?.recentTransactions ?? [];
 
   return (
@@ -96,52 +83,31 @@ export function DashboardScreen() {
           onPress={() => handleOpenTransactionModal("expense")}
         />
       }
-      header={
-        <PageHeader
-          breadcrumb="Kaizen Finance / Overview"
-          primaryAction={{
-            label: "+ Add Transaction",
-            onPress: () => handleOpenTransactionModal("expense"),
-          }}
-          subtitle="Real-time financial pulse, cash flow, and spending overview."
-          title="Dashboard"
-        />
-      }
     >
       <View style={styles.container}>
-        {/* Quick Action Buttons */}
-        <DashboardQuickActions
-          onNavigateToAccounts={handleNavigateToAccounts}
-          onOpenTransactionModal={handleOpenTransactionModal}
-        />
-
-        {/* Top Hero Cards: Net Worth & Monthly Cashflow */}
-        <View style={[styles.heroRow, isDesktop && styles.heroRowDesktop]}>
-          <View style={styles.heroCol}>
+        {!summary ? (
+          dashboardError ? (
+            <PageErrorState message={dashboardError} onRetry={refreshDashboard} />
+          ) : (
+            <PageLoadingState
+              message={loading ? "Loading your dashboard..." : "Preparing dashboard..."}
+            />
+          )
+        ) : (
+          <>
             <DashboardNetWorthCard
+              history={summary.netWorthHistory}
+              monthlyChangePercentage={summary.netWorthChangePercentage}
               netWorthMinorUnits={netWorth}
               totalAssetsMinorUnits={assets}
               totalLiabilitiesMinorUnits={liabilities}
             />
-          </View>
-          <View style={styles.heroCol}>
-            <DashboardMonthlyCashflowCard cashflow={monthlyCashflow} />
-          </View>
-        </View>
-
-        {/* Secondary Grid: Category Spending & Recent Transactions */}
-        <View style={[styles.heroRow, isDesktop && styles.heroRowDesktop]}>
-          <View style={styles.heroCol}>
-            <CategorySpendingCard categories={topSpending} />
-          </View>
-          <View style={styles.heroCol}>
             <RecentTransactionsCard
-              onAddTransaction={() => handleOpenTransactionModal("expense")}
               onViewAll={handleViewAllTransactions}
               transactions={recentTx}
             />
-          </View>
-        </View>
+          </>
+        )}
       </View>
 
       {/* Direct Transaction Modal */}
@@ -165,17 +131,7 @@ function createStyles(theme: AppTheme) {
     container: {
       gap: theme.spacing.lg,
       paddingBottom: 80,
-    },
-    heroRow: {
-      flexDirection: "column",
-      gap: theme.spacing.lg,
-    },
-    heroRowDesktop: {
-      flexDirection: "row",
-      alignItems: "stretch",
-    },
-    heroCol: {
-      flex: 1,
+      paddingTop: theme.spacing.lg,
     },
   });
 }
