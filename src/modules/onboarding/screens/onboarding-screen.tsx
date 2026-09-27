@@ -30,9 +30,13 @@ import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
 import type { InitialAccountTemplate } from "@/modules/accounts";
-import type { CategorySetup } from "@/modules/categories";
 
-type OnboardingStep = "welcome" | "personal" | "sample" | "restore";
+type OnboardingStep =
+  | "welcome"
+  | "manual"
+  | "recommended"
+  | "sample"
+  | "restore";
 
 const ACCOUNT_TEMPLATES: Array<{
   id: InitialAccountTemplate;
@@ -50,14 +54,10 @@ export function OnboardingScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
-  const [step, setStep] = useState<OnboardingStep>(() =>
-    workspace.personalSetupRequested ? "personal" : "welcome",
-  );
+  const [step, setStep] = useState<OnboardingStep>("welcome");
   const [template, setTemplate] = useState<InitialAccountTemplate>("bank");
   const [accountName, setAccountName] = useState("Everyday Account");
   const [openingAmount, setOpeningAmount] = useState("0.00");
-  const [categorySetup, setCategorySetup] =
-    useState<CategorySetup>("recommended");
   const [nameEdited, setNameEdited] = useState(false);
 
   const chooseTemplate = (nextTemplate: InitialAccountTemplate) => {
@@ -72,17 +72,16 @@ export function OnboardingScreen() {
 
   const goBack = () => {
     workspace.clearError();
-    if (workspace.personalSetupRequested) {
+    if (workspace.personalSetupRequested && step === "welcome") {
       workspace.cancelPersonalSetup();
       return;
     }
     setStep("welcome");
   };
 
-  const submitPersonalSetup = async () => {
-    await workspace.completePersonalSetup({
+  const submitRecommendedSetup = async () => {
+    await workspace.completeRecommendedSetup({
       account: { name: accountName, openingAmount, template },
-      categorySetup,
     });
   };
 
@@ -93,10 +92,10 @@ export function OnboardingScreen() {
         contentInsetAdjustmentBehavior="automatic"
       >
         <View style={styles.container}>
-          {step !== "welcome" ? (
+          {step !== "welcome" || workspace.personalSetupRequested ? (
             <Pressable
               accessibilityLabel={
-                workspace.personalSetupRequested
+                workspace.personalSetupRequested && step === "welcome"
                   ? "Return to sample workspace"
                   : "Back to welcome choices"
               }
@@ -110,7 +109,9 @@ export function OnboardingScreen() {
             >
               <ArrowLeft color={theme.colors.textSecondary} size={18} />
               <Text style={styles.backText}>
-                {workspace.personalSetupRequested ? "Back to sample" : "Back"}
+                {workspace.personalSetupRequested && step === "welcome"
+                  ? "Back to sample"
+                  : "Back"}
               </Text>
             </Pressable>
           ) : null}
@@ -130,6 +131,7 @@ export function OnboardingScreen() {
           {step === "welcome" ? (
             <WelcomeStep
               disabled={workspace.busy}
+              personalOnly={workspace.personalSetupRequested}
               onChoose={(nextStep) => {
                 workspace.clearError();
                 setStep(nextStep);
@@ -137,19 +139,64 @@ export function OnboardingScreen() {
             />
           ) : null}
 
-          {step === "personal" ? (
+          {step === "manual" ? (
             <View style={styles.stepContent}>
               <StepHeading
-                description="Create one real account now. You can add more accounts and customize everything later."
-                title="Set up your finances"
+                description="Begin with only the protected fallback records, then define every part of your financial structure yourself."
+                title="Start from scratch"
               />
 
               {workspace.state.mode === "sample" ? (
                 <View style={styles.infoCard}>
                   <ShieldCheck color={theme.colors.info} size={20} />
                   <Text style={styles.infoText}>
-                    Finishing setup replaces all fictional sample records. Your
-                    selected category starter set will remain.
+                    Starting from scratch permanently replaces the fictional
+                    sample accounts, transactions, and categories.
+                  </Text>
+                </View>
+              ) : null}
+
+              <View style={styles.samplePreview}>
+                {[
+                  "Create your own account types",
+                  "Add your real accounts and opening balances",
+                  "Build income and expense category groups",
+                  "Add the subcategories that fit your life",
+                ].map((item) => (
+                  <View key={item} style={styles.bulletRow}>
+                    <Check color={theme.colors.success} size={18} />
+                    <Text style={styles.bulletText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.helperText}>
+                A checklist on the dashboard will guide you through these steps.
+                The protected "Others" fallbacks remain available for data safety.
+              </Text>
+              <WorkspaceError message={workspace.error} />
+              <PrimaryButton
+                disabled={workspace.busy}
+                label="Create empty workspace"
+                loading={workspace.busy}
+                onPress={() => void workspace.completeManualSetup()}
+              />
+            </View>
+          ) : null}
+
+          {step === "recommended" ? (
+            <View style={styles.stepContent}>
+              <StepHeading
+                description="We will prepare useful account types and categories, then create your first real account."
+                title="Use recommended setup"
+              />
+
+              {workspace.state.mode === "sample" ? (
+                <View style={styles.infoCard}>
+                  <ShieldCheck color={theme.colors.info} size={20} />
+                  <Text style={styles.infoText}>
+                    Finishing setup replaces all fictional sample records with
+                    your real account and the recommended starter structure.
                   </Text>
                 </View>
               ) : null}
@@ -248,27 +295,12 @@ export function OnboardingScreen() {
                 </View>
               </View>
 
-              <View style={styles.formSection}>
-                <Text style={styles.sectionLabel}>CATEGORY STARTER SET</Text>
-                <View style={styles.optionList}>
-                  <OnboardingOptionCard
-                    badge="Recommended"
-                    description="Complete groups for bills, food, transport, health, income, and more."
-                    disabled={workspace.busy}
-                    icon={<Sparkles color={theme.colors.primary} size={22} />}
-                    onPress={() => setCategorySetup("recommended")}
-                    selected={categorySetup === "recommended"}
-                    title="Recommended categories"
-                  />
-                  <OnboardingOptionCard
-                    description="Only salary, food, transport, utilities, and fallback categories."
-                    disabled={workspace.busy}
-                    icon={<Check color={theme.colors.success} size={22} />}
-                    onPress={() => setCategorySetup("essentials")}
-                    selected={categorySetup === "essentials"}
-                    title="Essentials only"
-                  />
-                </View>
+              <View style={styles.infoCard}>
+                <Sparkles color={theme.colors.primary} size={20} />
+                <Text style={styles.infoText}>
+                  Includes Cash, Bank Account, Savings, and E-Wallet types plus
+                  complete income, expense, and subcategory recommendations.
+                </Text>
               </View>
 
               <WorkspaceError message={workspace.error} />
@@ -276,7 +308,7 @@ export function OnboardingScreen() {
                 disabled={workspace.busy}
                 label="Create my workspace"
                 loading={workspace.busy}
-                onPress={() => void submitPersonalSetup()}
+                onPress={() => void submitRecommendedSetup()}
               />
             </View>
           ) : null}
@@ -356,9 +388,11 @@ export function OnboardingScreen() {
 function WelcomeStep({
   disabled,
   onChoose,
+  personalOnly,
 }: {
   disabled: boolean;
   onChoose: (step: Exclude<OnboardingStep, "welcome">) => void;
+  personalOnly: boolean;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -366,32 +400,47 @@ function WelcomeStep({
   return (
     <View style={styles.stepContent}>
       <StepHeading
-        description="Begin with your real finances, explore a safe fictional workspace, or restore an existing backup."
-        title="How would you like to begin?"
+        description={
+          personalOnly
+            ? "Choose how you want to replace the fictional sample workspace."
+            : "Build your own structure, use helpful defaults, explore fictional data, or restore an existing backup."
+        }
+        title={personalOnly ? "Start your personal workspace" : "How would you like to begin?"}
       />
       <View style={styles.optionList}>
         <OnboardingOptionCard
+          description="Define your own account types, accounts, category groups, and subcategories with a guided checklist."
+          disabled={disabled}
+          icon={<Wallet color={theme.colors.textSecondary} size={23} />}
+          onPress={() => onChoose("manual")}
+          title="Start from scratch"
+        />
+        <OnboardingOptionCard
           badge="Recommended"
-          description="Create your first real account and choose a category starter set."
+          description="Create your first real account while the app prepares standard account types and categories."
           disabled={disabled}
-          icon={<Landmark color={theme.colors.primary} size={23} />}
-          onPress={() => onChoose("personal")}
-          title="Set up my finances"
+          icon={<Sparkles color={theme.colors.primary} size={23} />}
+          onPress={() => onChoose("recommended")}
+          title="Use recommended setup"
         />
-        <OnboardingOptionCard
-          description="Learn the dashboard, pockets, and every transaction type with fictional data."
-          disabled={disabled}
-          icon={<Database color={theme.colors.info} size={23} />}
-          onPress={() => onChoose("sample")}
-          title="Explore a sample workspace"
-        />
-        <OnboardingOptionCard
-          description="Bring back accounts and transaction history from Google Drive."
-          disabled={disabled}
-          icon={<CloudDownload color={theme.colors.success} size={23} />}
-          onPress={() => onChoose("restore")}
-          title="Restore a backup"
-        />
+        {!personalOnly ? (
+          <>
+            <OnboardingOptionCard
+              description="Learn the dashboard, pockets, and every transaction type with fictional data."
+              disabled={disabled}
+              icon={<Database color={theme.colors.info} size={23} />}
+              onPress={() => onChoose("sample")}
+              title="Explore a sample workspace"
+            />
+            <OnboardingOptionCard
+              description="Bring back accounts and transaction history from Google Drive."
+              disabled={disabled}
+              icon={<CloudDownload color={theme.colors.success} size={23} />}
+              onPress={() => onChoose("restore")}
+              title="Restore a backup"
+            />
+          </>
+        ) : null}
       </View>
       <View style={styles.privacyRow}>
         <ShieldCheck color={theme.colors.textMuted} size={16} />

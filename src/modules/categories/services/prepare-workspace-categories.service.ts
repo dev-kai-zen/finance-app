@@ -5,7 +5,12 @@ import {
   insertCategoryPreset,
 } from "@/modules/categories/repositories/categories.repository";
 
-export type CategorySetup = "recommended" | "essentials";
+export type CategorySetup = "manual" | "recommended" | "essentials";
+
+const MANUAL_CATEGORY_IDS = new Set([
+  "cat_exp_others",
+  "cat_inc_others",
+]);
 
 const ESSENTIAL_CATEGORY_IDS = new Set([
   "cat_exp_food",
@@ -23,12 +28,12 @@ export async function prepareWorkspaceCategories(
   context: DbContext,
   now = new Date(),
 ): Promise<void> {
-  const categories =
-    setup === "recommended"
-      ? DEFAULT_SEED_CATEGORIES
-      : DEFAULT_SEED_CATEGORIES.filter(({ id }) =>
-          ESSENTIAL_CATEGORY_IDS.has(id),
-        );
+  const categories = DEFAULT_SEED_CATEGORIES.filter(({ id }) => {
+    if (setup === "recommended") return true;
+    const selectedIds =
+      setup === "manual" ? MANUAL_CATEGORY_IDS : ESSENTIAL_CATEGORY_IDS;
+    return selectedIds.has(id);
+  });
 
   for (const [sortOrder, category] of categories.entries()) {
     await insertCategoryPreset(context, category, sortOrder, now);

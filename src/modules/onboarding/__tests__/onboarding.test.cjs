@@ -81,6 +81,7 @@ const { drizzle } = require("drizzle-orm/expo-sqlite");
 const schema = require("@/infrastructure/database/schema");
 const workspace = require("@/modules/onboarding/services/workspace.service");
 const accountWorkspace = require("@/modules/accounts");
+const { DEFAULT_SEED_CATEGORIES } = require("@/modules/categories/constants/categories.constants");
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
   sql: fs
@@ -185,12 +186,14 @@ test("fresh databases remain pending until the user chooses a path", () => {
     status: "pending",
     mode: null,
     primaryCurrency: "PHP",
+    setupStrategy: null,
   });
 });
 
 test("sample loading is coherent, idempotent, and relationally valid", async () => {
   const state = await workspace.loadSampleWorkspace();
   assert.equal(state.mode, "sample");
+  assert.equal(state.setupStrategy, null);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 6);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM pockets").get().count, 2);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 31);
@@ -205,28 +208,58 @@ test("sample loading is coherent, idempotent, and relationally valid", async () 
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 31);
 });
 
-test("personal setup atomically replaces every sample account and transaction", async () => {
+test("manual setup creates only protected fallbacks and no personal records", async () => {
   await workspace.loadSampleWorkspace();
-  const state = await workspace.completePersonalSetup({
-    account: {
-      name: "My Checking",
-      openingAmount: "12500.50",
-      template: "bank",
-    },
-    categorySetup: "essentials",
-  });
+  const state = await workspace.completeManualSetup();
 
   assert.equal(state.mode, "personal");
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 1);
+  assert.equal(state.setupStrategy, "manual");
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 0);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
     0,
   );
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM categories").get().count, 8);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM categories").get().count, 2);
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM categories WHERE is_system = 1").get().count,
+    2,
+  );
+  assert.equal(workspace.initializeWorkspaceState().setupStrategy, "manual");
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("recommended setup atomically replaces sample data with real starter data", async () => {
+  await workspace.loadSampleWorkspace();
+  const state = await workspace.completeRecommendedSetup({
+    account: {
+      name: "My Checking",
+      openingAmount: "12500.50",
+      template: "bank",
+    },
+  });
+
+  assert.equal(state.mode, "personal");
+  assert.equal(state.setupStrategy, "recommended");
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 1);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
+    4,
+  );
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
+    DEFAULT_SEED_CATEGORIES.length,
+  );
   assert.equal(
     sqlite.prepare("SELECT opening_balance_minor_units AS amount FROM accounts").get().amount,
     1_250_050,
+  );
+  assert.equal(
+    sqlite.prepare(
+      "SELECT account_types.name AS name FROM accounts JOIN account_types ON account_types.id = accounts.account_type_id",
+    ).get().name,
+    "Bank Account",
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });
@@ -236,9 +269,41 @@ test("existing account data is adopted as a personal workspace", () => {
     { name: "Existing account", openingAmount: "10", template: "cash" },
     database,
   );
-  assert.equal(workspace.initializeWorkspaceState().mode, "personal");
+  const state = workspace.initializeWorkspaceState();
+  assert.equal(state.mode, "personal");
+  assert.equal(state.setupStrategy, null);
   assert.equal(
     sqlite.prepare("SELECT value FROM settings WHERE key = 'workspace.mode'").get().value,
     "personal",
   );
+});
+
+test("each recommended account template links to its matching account type", () => {
+  const expectedNames = {
+    cash: "Cash",
+    bank: "Bank Account",
+    ewallet: "E-Wallet",
+    savings: "Savings",
+  };
+
+  for (const template of Object.keys(expectedNames)) {
+    accountWorkspace.createInitialAccount(
+      { name: template, openingAmount: "0", template },
+      database,
+    );
+  }
+
+  const rows = sqlite.prepare(
+    "SELECT accounts.name AS account_name, account_types.name AS type_name FROM accounts JOIN account_types ON account_types.id = accounts.account_type_id",
+  ).all();
+  const typeNameByAccount = Object.fromEntries(
+    rows.map((row) => [row.account_name, row.type_name]),
+  );
+
+  assert.deepEqual(typeNameByAccount, expectedNames);
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
+    4,
+  );
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });

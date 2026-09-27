@@ -33,12 +33,20 @@ type Overlay =
   | { kind: "edit-type"; type: AccountType }
   | null;
 
-export function AccountsScreen() {
+export function AccountsScreen({
+  initialView,
+}: {
+  initialView?: "types" | "account";
+}) {
   const theme = useAppTheme();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
   const mutations = useAccountMutations(data.refresh);
-  const [overlay, setOverlay] = useState<Overlay>(null);
+  const [overlay, setOverlay] = useState<Overlay>(() => {
+    if (initialView === "types") return { kind: "types" };
+    if (initialView === "account") return { kind: "create" };
+    return null;
+  });
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(

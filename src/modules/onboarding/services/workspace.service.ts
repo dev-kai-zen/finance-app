@@ -22,8 +22,9 @@ import {
   saveOnboardingSettings,
 } from "@/modules/onboarding/repositories/onboarding.repository";
 import type {
-  PersonalSetupInput,
+  RecommendedSetupInput,
   WorkspaceMode,
+  WorkspaceSetupStrategy,
   WorkspaceState,
 } from "@/modules/onboarding/types/onboarding.types";
 
@@ -33,37 +34,51 @@ export function initializeWorkspaceState(): WorkspaceState {
   const mode = values[ONBOARDING_SETTING_KEYS.workspaceMode];
 
   if (status === "completed" && isWorkspaceMode(mode)) {
-    return completedState(mode);
+    return completedState(
+      mode,
+      parseSetupStrategy(values[ONBOARDING_SETTING_KEYS.setupStrategy]),
+    );
   }
 
   // Databases created before onboarding existed must remain immediately usable.
   if (hasAccountWorkspaceData()) {
-    saveCompletedSettings("personal");
-    return completedState("personal");
+    saveCompletedSettings("personal", null);
+    return completedState("personal", null);
   }
 
-  return { status: "pending", mode: null, primaryCurrency: "PHP" };
+  return {
+    status: "pending",
+    mode: null,
+    primaryCurrency: "PHP",
+    setupStrategy: null,
+  };
 }
 
-export async function completePersonalSetup(
-  input: PersonalSetupInput,
+export async function completeManualSetup(): Promise<WorkspaceState> {
+  const now = new Date();
+
+  await db.transaction(async (tx) => {
+    clearSampleWorkspaceIfNeeded(tx);
+    await prepareWorkspaceCategories("manual", tx, now);
+    saveCompletedSettings("personal", "manual", tx, now);
+  });
+
+  return completedState("personal", "manual");
+}
+
+export async function completeRecommendedSetup(
+  input: RecommendedSetupInput,
 ): Promise<WorkspaceState> {
   const now = new Date();
 
   await db.transaction(async (tx) => {
-    const values = getOnboardingSettings(tx);
-    if (values[ONBOARDING_SETTING_KEYS.workspaceMode] === "sample") {
-      clearTransactionWorkspace(tx);
-      clearAccountWorkspace(tx);
-      clearCustomWorkspaceCategories(tx);
-    }
-
-    await prepareWorkspaceCategories(input.categorySetup, tx, now);
+    clearSampleWorkspaceIfNeeded(tx);
+    await prepareWorkspaceCategories("recommended", tx, now);
     createInitialAccount(input.account, tx, now);
-    saveCompletedSettings("personal", tx, now);
+    saveCompletedSettings("personal", "recommended", tx, now);
   });
 
-  return completedState("personal");
+  return completedState("personal", "recommended");
 }
 
 export async function loadSampleWorkspace(): Promise<WorkspaceState> {
@@ -82,14 +97,24 @@ export async function loadSampleWorkspace(): Promise<WorkspaceState> {
     await prepareWorkspaceCategories("recommended", tx, now);
     const accountIds = createSampleAccounts(tx, now);
     createSampleTransactions(accountIds, tx, now);
-    saveCompletedSettings("sample", tx, now);
+    saveCompletedSettings("sample", null, tx, now);
   });
 
-  return completedState("sample");
+  return completedState("sample", null);
+}
+
+function clearSampleWorkspaceIfNeeded(context: DbContext): void {
+  const values = getOnboardingSettings(context);
+  if (values[ONBOARDING_SETTING_KEYS.workspaceMode] !== "sample") return;
+
+  clearTransactionWorkspace(context);
+  clearAccountWorkspace(context);
+  clearCustomWorkspaceCategories(context);
 }
 
 function saveCompletedSettings(
   mode: WorkspaceMode,
+  setupStrategy: WorkspaceSetupStrategy | null,
   context: DbContext = db,
   now = new Date(),
 ): void {
@@ -97,6 +122,7 @@ function saveCompletedSettings(
     {
       [ONBOARDING_SETTING_KEYS.status]: "completed",
       [ONBOARDING_SETTING_KEYS.workspaceMode]: mode,
+      [ONBOARDING_SETTING_KEYS.setupStrategy]: setupStrategy ?? "",
       [ONBOARDING_SETTING_KEYS.primaryCurrency]: "PHP",
       [ONBOARDING_SETTING_KEYS.sampleVersion]:
         mode === "sample" ? String(SAMPLE_DATA_VERSION) : "0",
@@ -106,10 +132,19 @@ function saveCompletedSettings(
   );
 }
 
-function completedState(mode: WorkspaceMode): WorkspaceState {
-  return { status: "completed", mode, primaryCurrency: "PHP" };
+function completedState(
+  mode: WorkspaceMode,
+  setupStrategy: WorkspaceSetupStrategy | null,
+): WorkspaceState {
+  return { status: "completed", mode, primaryCurrency: "PHP", setupStrategy };
 }
 
 function isWorkspaceMode(value: string | undefined): value is WorkspaceMode {
   return value === "personal" || value === "sample";
+}
+
+function parseSetupStrategy(
+  value: string | undefined,
+): WorkspaceSetupStrategy | null {
+  return value === "manual" || value === "recommended" ? value : null;
 }

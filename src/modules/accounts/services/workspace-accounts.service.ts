@@ -45,14 +45,49 @@ const SAMPLE_IDS: SampleAccountIds = {
   travelPocket: "sample:pocket:travel",
 };
 
-const TEMPLATE_APPEARANCE: Record<
+const RECOMMENDED_ACCOUNT_TYPES: Record<
   InitialAccountTemplate,
-  { iconKey: string; pocketEnabled: boolean }
+  {
+    id: string;
+    name: string;
+    iconKey: string;
+    hexColorsId: string;
+    pocketEnabled: boolean;
+    sortOrder: number;
+  }
 > = {
-  cash: { iconKey: "wallet", pocketEnabled: false },
-  bank: { iconKey: "landmark", pocketEnabled: false },
-  ewallet: { iconKey: "smartphone", pocketEnabled: false },
-  savings: { iconKey: "piggy-bank", pocketEnabled: true },
+  cash: {
+    id: "recommended:type:cash",
+    name: "Cash",
+    iconKey: "wallet",
+    hexColorsId: "color_amber",
+    pocketEnabled: false,
+    sortOrder: 0,
+  },
+  bank: {
+    id: "recommended:type:bank",
+    name: "Bank Account",
+    iconKey: "landmark",
+    hexColorsId: "color_blue",
+    pocketEnabled: false,
+    sortOrder: 1,
+  },
+  savings: {
+    id: "recommended:type:savings",
+    name: "Savings",
+    iconKey: "piggy-bank",
+    hexColorsId: "color_green",
+    pocketEnabled: true,
+    sortOrder: 2,
+  },
+  ewallet: {
+    id: "recommended:type:ewallet",
+    name: "E-Wallet",
+    iconKey: "smartphone",
+    hexColorsId: "color_purple",
+    pocketEnabled: false,
+    sortOrder: 3,
+  },
 };
 
 export function hasAccountWorkspaceData(context: DbContext = db): boolean {
@@ -72,7 +107,8 @@ export function createInitialAccount(
   if (name.length > 100) throw new Error("Use at most 100 characters for the account name.");
 
   const openingBalanceMinorUnits = parseOpeningAmount(input.openingAmount);
-  const appearance = TEMPLATE_APPEARANCE[input.template];
+  const accountTypeIds = ensureRecommendedAccountTypes(context, now);
+  const template = RECOMMENDED_ACCOUNT_TYPES[input.template];
   const id = newAccountRecordId(context);
   const openingBalanceAt = new Date(now);
   openingBalanceAt.setHours(0, 0, 0, 0);
@@ -80,17 +116,17 @@ export function createInitialAccount(
   insertAccount(
     {
       id,
-      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
+      accountTypeId: accountTypeIds[input.template],
       name,
       note: null,
-      iconKey: appearance.iconKey,
+      iconKey: template.iconKey,
       currencyCode: "PHP",
       openingBalanceMinorUnits,
       openingBalanceAt,
       startingBalanceLocked: false,
       hideFromSelection: false,
       hideFromReports: false,
-      pocketEnabled: appearance.pocketEnabled,
+      pocketEnabled: template.pocketEnabled,
       maintainingBalanceMinorUnits: null,
       isArchived: false,
       sortOrder: 0,
@@ -101,6 +137,49 @@ export function createInitialAccount(
   );
 
   return id;
+}
+
+function ensureRecommendedAccountTypes(
+  context: DbContext,
+  now: Date,
+): Record<InitialAccountTemplate, string> {
+  const existingTypes = listAccountTypes(context);
+  const ids = {} as Record<InitialAccountTemplate, string>;
+
+  for (const template of Object.keys(
+    RECOMMENDED_ACCOUNT_TYPES,
+  ) as InitialAccountTemplate[]) {
+    const definition = RECOMMENDED_ACCOUNT_TYPES[template];
+    const existing = existingTypes.find(
+      (type) =>
+        type.id === definition.id ||
+        (type.accountGroup === "asset" &&
+          type.name.trim().toLowerCase() === definition.name.toLowerCase()),
+    );
+
+    if (existing) {
+      ids[template] = existing.id;
+      continue;
+    }
+
+    insertAccountType(
+      {
+        id: definition.id,
+        name: definition.name,
+        accountGroup: "asset",
+        iconKey: definition.iconKey,
+        hexColorsId: definition.hexColorsId,
+        isSystem: false,
+        sortOrder: definition.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+    ids[template] = definition.id;
+  }
+
+  return ids;
 }
 
 export function createSampleAccounts(

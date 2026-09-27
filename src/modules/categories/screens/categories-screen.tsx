@@ -26,7 +26,11 @@ import { SubcategoryModal } from "../components/subcategory-modal";
 import { useCategories } from "../hooks/use-categories";
 import type { Category, CategoryType } from "../types/category.types";
 
-export function CategoriesScreen() {
+export function CategoriesScreen({
+  initialView,
+}: {
+  initialView?: "group";
+}) {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -53,7 +57,9 @@ export function CategoriesScreen() {
   );
 
   // Category Group Modal State
-  const [isGroupModalVisible, setIsGroupModalVisible] = useState(false);
+  const [isGroupModalVisible, setIsGroupModalVisible] = useState(
+    initialView === "group",
+  );
   const [groupToEdit, setGroupToEdit] = useState<Category | null>(null);
 
   // Subcategory Modal State
