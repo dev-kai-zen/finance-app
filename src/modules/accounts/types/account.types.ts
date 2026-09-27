@@ -35,6 +35,12 @@ export type AccountListItem = Account & {
   accountType: AccountType | null;
   creditCardDetails: CreditCardDetails | null;
   currentBalanceMinorUnits: number;
+  creditCardMonitoring?: {
+    billedMinorUnits: number;
+    unbilledMinorUnits: number;
+    outstandingMinorUnits: number;
+    utilizationPercent: number;
+  } | null;
 };
 
 export type DeleteAccountTypeResult = {

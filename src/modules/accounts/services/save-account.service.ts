@@ -19,6 +19,7 @@ import {
   isCreditCardAccountType,
   supportsPockets,
 } from "@/modules/accounts/utils/pocket-eligibility";
+import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 
 export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
@@ -123,6 +124,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
       deleteCreditCardDetails(accountId, tx);
     }
 
+    reconcileCreditCardBillingInContext(new Date(), tx);
     return accountId;
   });
 }

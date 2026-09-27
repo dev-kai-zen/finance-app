@@ -3,6 +3,7 @@ import {
   Modal,
   Pressable,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -95,6 +96,8 @@ export function TransactionFormModal({
   const [amountMinorUnits, setAmountMinorUnits] = useState<number>(0);
   const [dateIsoString, setDateIsoString] = useState<string>(getTodayIsoString());
   const [note, setNote] = useState<string>("");
+  const [installmentEnabled, setInstallmentEnabled] = useState(false);
+  const [installmentTerm, setInstallmentTerm] = useState("12");
   const [localError, setLocalError] = useState<string | null>(null);
 
   // Sub-modal states
@@ -126,6 +129,8 @@ export function TransactionFormModal({
             : getTodayIsoString()
         );
         setNote(initialTransaction.note || "");
+        setInstallmentEnabled(false);
+        setInstallmentTerm("12");
         setLocalError(null);
       } else {
         setMode("expense");
@@ -143,6 +148,8 @@ export function TransactionFormModal({
         setAmountMinorUnits(0);
         setDateIsoString(getTodayIsoString());
         setNote("");
+        setInstallmentEnabled(false);
+        setInstallmentTerm("12");
         setLocalError(null);
       }
     }
@@ -202,6 +209,11 @@ export function TransactionFormModal({
           .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
       : transferToAccountBalance;
   const currencyCode = selectedAccount?.currencyCode ?? "PHP";
+  const canUseInstallments =
+    mode === "expense" &&
+    amountSign === "-" &&
+    Boolean(selectedAccount?.creditCardDetails) &&
+    !isEditing;
 
   const selectedCategory = useMemo(() => {
     for (const cat of categories) {
@@ -291,6 +303,18 @@ export function TransactionFormModal({
       const signedAmount =
         amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
 
+      if (canUseInstallments && installmentEnabled) {
+        const termMonths = Number(installmentTerm);
+        if (
+          !Number.isInteger(termMonths) ||
+          termMonths < 2 ||
+          termMonths > 120
+        ) {
+          setLocalError("Installment term must be between 2 and 120 months.");
+          return;
+        }
+      }
+
       setLocalError(null);
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
@@ -301,6 +325,10 @@ export function TransactionFormModal({
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt,
+        installment:
+          canUseInstallments && installmentEnabled
+            ? { termMonths: Number(installmentTerm) }
+            : null,
       };
       const success =
         isEditing && initialTransaction && onUpdateTransaction
@@ -637,6 +665,46 @@ export function TransactionFormModal({
               </View>
             )}
 
+            {canUseInstallments ? (
+              <View style={styles.installmentPanel}>
+                <View style={styles.installmentHeader}>
+                  <View style={styles.installmentHeaderText}>
+                    <Text style={styles.installmentTitle}>Installment purchase</Text>
+                    <Text style={styles.installmentDescription}>
+                      The full purchase uses your credit limit now; one portion is
+                      billed per statement.
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="Installment purchase"
+                    onValueChange={setInstallmentEnabled}
+                    trackColor={{
+                      false: theme.colors.borderStrong,
+                      true: theme.colors.primary,
+                    }}
+                    value={installmentEnabled}
+                  />
+                </View>
+                {installmentEnabled ? (
+                  <View style={styles.installmentTermRow}>
+                    <Text style={styles.fieldLabel}>TERM IN MONTHS</Text>
+                    <TextInput
+                      accessibilityLabel="Installment term in months"
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      onChangeText={(value) =>
+                        setInstallmentTerm(value.replace(/\D/g, ""))
+                      }
+                      placeholder="12"
+                      placeholderTextColor={theme.colors.textMuted}
+                      style={styles.installmentTermInput}
+                      value={installmentTerm}
+                    />
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>Date</Text>
               <Pressable
@@ -852,6 +920,47 @@ function createStyles(theme: AppTheme) {
     },
     inputGroup: {
       marginBottom: 16,
+    },
+    installmentPanel: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginBottom: 16,
+      padding: 14,
+    },
+    installmentHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+    },
+    installmentHeaderText: {
+      flex: 1,
+    },
+    installmentTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    installmentDescription: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: 3,
+    },
+    installmentTermRow: {
+      marginTop: 12,
+    },
+    installmentTermInput: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      color: theme.colors.textPrimary,
+      fontSize: 15,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
     },
     fieldLabel: {
       color: theme.colors.textSecondary,

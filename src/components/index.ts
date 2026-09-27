@@ -19,4 +19,5 @@ export * from "./feature-not-implemented-modal";
 export * from "./confirm-modal";
 export * from "./info-modal";
 export * from "./formatted-currency";
+export * from "./credit-utilization-ring";
 export * from "./theme/app-theme-provider";

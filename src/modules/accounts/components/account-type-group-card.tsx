@@ -9,6 +9,7 @@ import {
   WalletCards,
 } from "lucide-react-native";
 import { IconHelper } from "@/components/icon-helper";
+import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -200,7 +201,39 @@ export function AccountTypeGroupCard({
                 </View>
 
                 <View style={styles.accountRight}>
-                  <AccountAmountText amountMinorUnits={balance} variant="body" />
+                  {account.creditCardMonitoring ? (
+                    <>
+                      <View style={styles.creditCardMetrics}>
+                        <Text style={styles.creditCardMetric}>
+                          Billed{" "}
+                          {formatCurrency(
+                            account.creditCardMonitoring.billedMinorUnits,
+                            account.currencyCode,
+                          )}
+                        </Text>
+                        <Text style={styles.creditCardMetric}>
+                          Unbilled{" "}
+                          {formatCurrency(
+                            account.creditCardMonitoring.unbilledMinorUnits,
+                            account.currencyCode,
+                          )}
+                        </Text>
+                        <Text style={styles.creditCardOutstanding}>
+                          Outstanding{" "}
+                          {formatCurrency(
+                            account.creditCardMonitoring.outstandingMinorUnits,
+                            account.currencyCode,
+                          )}
+                        </Text>
+                      </View>
+                      <CreditUtilizationRing
+                        percent={account.creditCardMonitoring.utilizationPercent}
+                        size={42}
+                      />
+                    </>
+                  ) : (
+                    <AccountAmountText amountMinorUnits={balance} variant="body" />
+                  )}
                   <ChevronRight color={theme.colors.textMuted} size={16} />
                 </View>
               </Pressable>
@@ -437,6 +470,20 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       flexShrink: 0,
       gap: 4,
+    },
+    creditCardMetrics: {
+      alignItems: "flex-end",
+      marginRight: theme.spacing.xs,
+    },
+    creditCardMetric: {
+      color: theme.colors.textSecondary,
+      fontSize: 10,
+    },
+    creditCardOutstanding: {
+      color: theme.colors.textPrimary,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      marginTop: 1,
     },
     pocketToggle: {
       alignItems: "center",

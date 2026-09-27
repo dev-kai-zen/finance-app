@@ -5,6 +5,10 @@ import {
 } from "../repositories/transactions.repository";
 import type { CreateTransactionInput } from "../types/transaction.types";
 import { requirePocketForAccount } from "@/modules/accounts";
+import {
+  getInstallmentPlanForTransaction,
+  reconcileCreditCardBillingInContext,
+} from "@/modules/credit-cards";
 
 export function updateTransaction(
   id: string,
@@ -22,6 +26,17 @@ export function updateTransaction(
   db.transaction((tx) => {
     const existing = findTransactionById(id, tx);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
+    const installmentPlan = getInstallmentPlanForTransaction(id, tx);
+    if (
+      installmentPlan &&
+      (existing.accountId !== input.accountId ||
+        existing.amountCents !== input.amountCents ||
+        existing.occurredAt.getTime() !== input.occurredAt.getTime())
+    ) {
+      throw new Error(
+        "Account, amount, and date cannot be changed after creating an installment plan.",
+      );
+    }
     if (input.pocketId) {
       requirePocketForAccount(input.pocketId, input.accountId, tx, {
         allowArchived: existing.pocketId === input.pocketId,
@@ -42,5 +57,6 @@ export function updateTransaction(
       },
       tx,
     );
+    reconcileCreditCardBillingInContext(new Date(), tx);
   });
 }

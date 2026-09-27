@@ -43,7 +43,7 @@ export interface TransactionListItem extends Transaction {
   destinationBalanceAfterMinorUnits: number | null;
 }
 
-export interface CreateTransactionInput {
+export interface CreateTransactionInput {
   accountId: string;
   categoryId: string;
   pocketId?: string | null;
@@ -51,8 +51,11 @@ export interface CreateTransactionInput {
   amountCents: number;
   name?: string | null;
   note?: string | null;
-  occurredAt: Date;
-}
+  occurredAt: Date;
+  installment?: {
+    termMonths: number;
+  } | null;
+}
 
 export interface CreateTransferInput {
   fromAccountId: string;

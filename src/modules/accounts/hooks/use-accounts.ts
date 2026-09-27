@@ -5,6 +5,7 @@ import { getPocketsWithBalances } from "@/modules/accounts/services/get-pockets-
 import { listAccountTypes } from "@/modules/accounts/repositories/account-types.repository";
 import { accountErrorMessage } from "@/modules/accounts/schemas/account.schema";
 import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
+import { getCreditCardMonitoring } from "@/modules/credit-cards";
 
 export function useAccounts() {
   const [data, setData] = useState<{
@@ -17,8 +18,26 @@ export function useAccounts() {
   const refresh = useCallback(() => {
     setLoading(true);
     try {
+      const monitoring = getCreditCardMonitoring();
+      const monitoringByAccountId = new Map(
+        monitoring.cards.map((card) => [card.accountId, card]),
+      );
+      const accounts = getAccountsWithBalances().map((account) => {
+        const card = monitoringByAccountId.get(account.id);
+        return {
+          ...account,
+          creditCardMonitoring: card
+            ? {
+                billedMinorUnits: card.billedMinorUnits,
+                unbilledMinorUnits: card.unbilledMinorUnits,
+                outstandingMinorUnits: card.outstandingMinorUnits,
+                utilizationPercent: card.utilizationPercent,
+              }
+            : null,
+        };
+      });
       setData({
-        accounts: getAccountsWithBalances(),
+        accounts,
         pockets: getPocketsWithBalances(),
         types: listAccountTypes(),
       });

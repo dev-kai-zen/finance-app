@@ -39,6 +39,7 @@ Module._load = function (request, ...args) {
     request === "expo-router" ||
     request === "react-native-keyboard-controller" ||
     request === "react-native-worklets" ||
+    request === "react-native-svg" ||
     request === "react"
   ) {
     return createMock();

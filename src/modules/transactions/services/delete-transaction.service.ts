@@ -4,6 +4,7 @@ import {
   softDeleteTransaction,
   softDeleteTransactionsByGroupId,
 } from "../repositories/transactions.repository";
+import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 
 export function removeTransaction(id: string): void {
   if (!id) {
@@ -16,11 +17,13 @@ export function removeTransaction(id: string): void {
       throw new Error(`Transaction with ID ${id} was not found.`);
     }
 
-    if (existing.transactionGroupId) {
+    if (existing.transactionGroupId) {
       softDeleteTransactionsByGroupId(existing.transactionGroupId, new Date(), tx);
+      reconcileCreditCardBillingInContext(new Date(), tx);
       return;
     }
 
     softDeleteTransaction(id, new Date(), tx);
+    reconcileCreditCardBillingInContext(new Date(), tx);
   });
 }

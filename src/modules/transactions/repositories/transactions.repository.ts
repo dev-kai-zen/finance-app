@@ -309,6 +309,30 @@ export function findTransactionsByGroupId(
     }));
 }
 
+export function listLedgerTransactionsForAccount(
+  accountId: string,
+  context: DbContext = db,
+  options: { includeDeleted?: boolean } = {},
+): Transaction[] {
+  const condition = options.includeDeleted
+    ? eq(transactions.accountId, accountId)
+    : and(
+        eq(transactions.accountId, accountId),
+        isNull(transactions.deletedAt),
+      );
+
+  return context
+    .select()
+    .from(transactions)
+    .where(condition)
+    .orderBy(transactions.occurredAt, transactions.createdAt)
+    .all()
+    .map((row) => ({
+      ...row,
+      type: row.type as Transaction["type"],
+    }));
+}
+
 export function insertTransaction(
   data: NewTransaction,
   context: DbContext = db,

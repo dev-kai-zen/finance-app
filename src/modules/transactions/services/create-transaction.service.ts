@@ -2,6 +2,10 @@ import { db } from "@/infrastructure/database/client";
 import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
 import { findCategoryById } from "@/modules/categories/repositories/categories.repository";
 import { requirePocketForAccount } from "@/modules/accounts";
+import {
+  createCreditCardInstallmentPlan,
+  reconcileCreditCardBillingInContext,
+} from "@/modules/credit-cards";
 import { insertTransaction } from "../repositories/transactions.repository";
 import type { CreateTransactionInput, Transaction } from "../types/transaction.types";
 
@@ -36,7 +40,7 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
       requirePocketForAccount(input.pocketId, account.id, tx);
     }
 
-    return insertTransaction(
+    const transaction = insertTransaction(
       {
         accountId: input.accountId,
         categoryId: input.categoryId,
@@ -50,5 +54,10 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
       },
       tx,
     );
+    if (input.installment) {
+      createCreditCardInstallmentPlan(transaction, input.installment, tx);
+    }
+    reconcileCreditCardBillingInContext(new Date(), tx);
+    return transaction;
   });
 }

@@ -20,6 +20,7 @@ import { useThemeStyles } from "@/hooks/use-app-theme";
 function getScreenTitle(pathname: string): string {
   if (pathname.startsWith("/accounts")) return "Accounts";
   if (pathname.startsWith("/transactions")) return "Transactions";
+  if (pathname.startsWith("/credit-cards")) return "Credit Card Monitoring";
   if (pathname.startsWith("/categories")) return "Categories";
   if (pathname.startsWith("/monitor")) return "SQLite Monitor";
   if (pathname.startsWith("/settings")) return "Settings";

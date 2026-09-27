@@ -1,6 +1,7 @@
 import { db } from "@/infrastructure/database/client";
 import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
 import { requirePocketForAccount } from "@/modules/accounts";
+import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 import {
   findTransactionsByGroupId,
   updateTransactionRecord,
@@ -87,5 +88,6 @@ export function updateTransfer(input: UpdateTransferInput): void {
       },
       tx,
     );
+    reconcileCreditCardBillingInContext(new Date(), tx);
   });
 }

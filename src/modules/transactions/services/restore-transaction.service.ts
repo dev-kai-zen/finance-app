@@ -4,6 +4,7 @@ import {
   restoreTransaction as restoreTransactionRecord,
   restoreTransactionsByGroupId,
 } from "../repositories/transactions.repository";
+import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 
 export function restoreTransaction(id: string): void {
   if (!id) {
@@ -18,9 +19,11 @@ export function restoreTransaction(id: string): void {
 
     if (existing.transactionGroupId) {
       restoreTransactionsByGroupId(existing.transactionGroupId, tx);
+      reconcileCreditCardBillingInContext(new Date(), tx);
       return;
     }
 
     restoreTransactionRecord(id, tx);
+    reconcileCreditCardBillingInContext(new Date(), tx);
   });
 }
