@@ -47,13 +47,8 @@ export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
   const google = await getConfiguredGoogleModule();
   await google.GoogleOneTapSignIn.checkPlayServices();
 
-  let response = await google.GoogleOneTapSignIn.signIn();
-  if (google.isNoSavedCredentialFoundResponse(response)) {
-    response = await google.GoogleOneTapSignIn.createAccount();
-  }
-  if (google.isNoSavedCredentialFoundResponse(response)) {
-    response = await google.GoogleOneTapSignIn.presentExplicitSignIn();
-  }
+  const response =
+    await google.GoogleOneTapSignIn.presentExplicitSignIn();
   if (google.isCancelledResponse(response)) return null;
   if (!google.isSuccessResponse(response)) {
     throw new Error("Google sign-in could not be completed.");
