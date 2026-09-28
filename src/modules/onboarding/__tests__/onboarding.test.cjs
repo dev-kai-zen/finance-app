@@ -231,17 +231,11 @@ test("manual setup creates only protected fallbacks and no personal records", as
 
 test("recommended setup atomically replaces sample data with real starter data", async () => {
   await workspace.loadSampleWorkspace();
-  const state = await workspace.completeRecommendedSetup({
-    account: {
-      name: "My Checking",
-      openingAmount: "12500.50",
-      template: "bank",
-    },
-  });
+  const state = await workspace.completeRecommendedSetup();
 
   assert.equal(state.mode, "personal");
   assert.equal(state.setupStrategy, "recommended");
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 1);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 4);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
@@ -252,14 +246,12 @@ test("recommended setup atomically replaces sample data with real starter data",
     DEFAULT_SEED_CATEGORIES.length,
   );
   assert.equal(
-    sqlite.prepare("SELECT opening_balance_minor_units AS amount FROM accounts").get().amount,
-    1_250_050,
+    sqlite.prepare("SELECT count(*) AS count FROM accounts WHERE opening_balance_minor_units = 0").get().count,
+    4,
   );
-  assert.equal(
-    sqlite.prepare(
-      "SELECT account_types.name AS name FROM accounts JOIN account_types ON account_types.id = accounts.account_type_id",
-    ).get().name,
-    "Bank Account",
+  assert.deepEqual(
+    sqlite.prepare("SELECT name FROM accounts ORDER BY name").all().map(({ name }) => name),
+    ["Bank Account", "Cash Wallet", "E-Wallet", "Savings Account"],
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });

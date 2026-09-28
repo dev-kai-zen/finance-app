@@ -44,7 +44,7 @@ export function GoogleDriveBackupSettings() {
       case "loading":
         return "Loading backups...";
       case "creating":
-        return "Encrypting and uploading...";
+        return "Creating and uploading...";
       case "restoring":
         return "Verifying and restoring...";
       case "disconnecting":
@@ -57,6 +57,20 @@ export function GoogleDriveBackupSettings() {
   const beginRestore = (file: BackupFile) => {
     setSelectedBackup(file);
     setConfirmRestore(true);
+  };
+
+  const confirmSelectedRestore = () => {
+    setConfirmRestore(false);
+    if (!selectedBackup) return;
+
+    if (selectedBackup.passwordProtected) {
+      setPassphraseMode("restore");
+      return;
+    }
+
+    const fileId = selectedBackup.id;
+    setSelectedBackup(null);
+    void backup.restoreBackup(fileId, null);
   };
 
   const openBackupFolder = async () => {
@@ -105,7 +119,7 @@ export function GoogleDriveBackupSettings() {
           <>
             <View style={styles.divider} />
             <Pressable
-              accessibilityLabel="Create encrypted backup"
+              accessibilityLabel="Create backup"
               accessibilityRole="button"
               disabled={busy}
               onPress={() => setPassphraseMode("create")}
@@ -119,7 +133,7 @@ export function GoogleDriveBackupSettings() {
               <View style={styles.copy}>
                 <Text style={styles.actionTitle}>Back up now</Text>
                 <Text style={styles.description}>
-                  Save an encrypted snapshot to Kaizen Finance / Backups
+                  Save with a password, or choose an unprotected backup
                 </Text>
               </View>
             </Pressable>
@@ -191,7 +205,9 @@ export function GoogleDriveBackupSettings() {
                         {formatDate(file.createdTime)}
                       </Text>
                       <Text style={styles.description} selectable>
-                        {formatBytes(file.size)} · Encrypted
+                        {formatBytes(file.size)} · {file.passwordProtected
+                          ? "Password protected"
+                          : "No password"}
                         {file.location === "legacy-hidden"
                           ? " · Hidden legacy copy"
                           : ""}
@@ -281,10 +297,7 @@ export function GoogleDriveBackupSettings() {
         confirmLabel="Continue"
         message="Restoring replaces all current local data with the selected backup. A safety copy is kept in memory and restored automatically if validation fails."
         onCancel={() => setConfirmRestore(false)}
-        onConfirm={() => {
-          setConfirmRestore(false);
-          setPassphraseMode("restore");
-        }}
+        onConfirm={confirmSelectedRestore}
         title="Replace local data?"
         variant="restore"
         visible={confirmRestore}

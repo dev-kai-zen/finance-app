@@ -16,23 +16,31 @@ const REQUIRED_TABLES = [
 ] as const;
 
 export async function createDatabaseSnapshot(): Promise<Uint8Array> {
-  await sqliteDatabase.execAsync("PRAGMA wal_checkpoint(PASSIVE);");
-  return sqliteDatabase.serializeAsync();
+  await sqliteDatabase.execAsync("PRAGMA wal_checkpoint(TRUNCATE);");
+  return normalizeSerializedDatabaseForMemory(
+    await sqliteDatabase.serializeAsync(),
+  );
 }
 
 export async function replaceDatabaseFromSnapshot(
   snapshot: Uint8Array,
 ): Promise<void> {
-  const replacement = await SQLite.deserializeDatabaseAsync(snapshot);
+  const replacement = await SQLite.deserializeDatabaseAsync(
+    normalizeSerializedDatabaseForMemory(snapshot),
+  );
   const rollbackBytes = await createDatabaseSnapshot();
   let rollback: SQLite.SQLiteDatabase | null = null;
+  let replacementStarted = false;
 
   try {
     validateSnapshot(replacement);
 
+    replacementStarted = true;
     await SQLite.backupDatabaseAsync({
       sourceDatabase: replacement,
+      sourceDatabaseName: "main",
       destDatabase: sqliteDatabase,
+      destDatabaseName: "main",
     });
 
     await runSafeMigrations(db, migrations);
@@ -40,18 +48,45 @@ export async function replaceDatabaseFromSnapshot(
     await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
     await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
   } catch (error) {
-    rollback = await SQLite.deserializeDatabaseAsync(rollbackBytes);
-    await SQLite.backupDatabaseAsync({
-      sourceDatabase: rollback,
-      destDatabase: sqliteDatabase,
-    });
-    await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
-    await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
+    if (replacementStarted) {
+      rollback = await SQLite.deserializeDatabaseAsync(
+        normalizeSerializedDatabaseForMemory(rollbackBytes),
+      );
+      await SQLite.backupDatabaseAsync({
+        sourceDatabase: rollback,
+        sourceDatabaseName: "main",
+        destDatabase: sqliteDatabase,
+        destDatabaseName: "main",
+      });
+      await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
+      await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
+    }
     throw error;
   } finally {
     await replacement.closeAsync();
     await rollback?.closeAsync();
   }
+}
+
+function normalizeSerializedDatabaseForMemory(
+  snapshot: Uint8Array,
+): Uint8Array {
+  const sqliteHeader = "SQLite format 3\u0000";
+  if (
+    snapshot.byteLength < 100 ||
+    new TextDecoder().decode(snapshot.slice(0, sqliteHeader.length)) !==
+      sqliteHeader
+  ) {
+    throw new Error("The backup does not contain a valid SQLite database.");
+  }
+
+  const normalized = new Uint8Array(snapshot);
+  // sqlite3_deserialize cannot access a WAL-mode image because an in-memory
+  // database cannot open the corresponding -wal/-shm sidecars. A checkpoint
+  // has already merged all pages, so mark the image as rollback-journal mode.
+  normalized[18] = 1;
+  normalized[19] = 1;
+  return normalized;
 }
 
 function validateSnapshot(database: SQLite.SQLiteDatabase): void {

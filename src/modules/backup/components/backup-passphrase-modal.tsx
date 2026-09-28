@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { KeyRound, X } from "lucide-react-native";
+import { Check, KeyRound, ShieldOff, X } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -20,7 +20,7 @@ interface BackupPassphraseModalProps {
   mode: "create" | "restore";
   pending: boolean;
   onCancel: () => void;
-  onSubmit: (passphrase: string) => Promise<boolean>;
+  onSubmit: (passphrase: string | null) => Promise<boolean>;
 }
 
 export function BackupPassphraseModal({
@@ -34,17 +34,26 @@ export function BackupPassphraseModal({
   const styles = useThemeStyles(createStyles);
   const [passphrase, setPassphrase] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [protection, setProtection] = useState<"password" | "none">("password");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!visible) {
       setPassphrase("");
       setConfirmation("");
+      setProtection("password");
       setError(null);
     }
   }, [visible]);
 
   const handleSubmit = async () => {
+    if (mode === "create" && protection === "none") {
+      setError(null);
+      const succeeded = await onSubmit(null);
+      if (succeeded) onCancel();
+      return;
+    }
+
     const validationError = validateBackupPassphrase(passphrase);
     if (validationError) {
       setError(validationError);
@@ -89,12 +98,12 @@ export function BackupPassphraseModal({
               </View>
               <View style={styles.titleCopy}>
                 <Text style={styles.title}>
-                  {mode === "create" ? "Protect this backup" : "Unlock backup"}
+                  {mode === "create" ? "Backup protection" : "Unlock backup"}
                 </Text>
                 <Text style={styles.subtitle}>
                   {mode === "create"
-                    ? "You will need this passphrase to restore on any device."
-                    : "Enter the passphrase used when this backup was created."}
+                    ? "Choose whether this backup needs a password to restore."
+                    : "Enter the password used when this backup was created."}
                 </Text>
               </View>
             </View>
@@ -109,22 +118,51 @@ export function BackupPassphraseModal({
             </Pressable>
           </View>
 
-          <TextInput
-            accessibilityLabel="Backup passphrase"
-            autoCapitalize="none"
-            autoCorrect={false}
-            editable={!pending}
-            onChangeText={setPassphrase}
-            onSubmitEditing={mode === "restore" ? handleSubmit : undefined}
-            placeholder="At least 12 characters"
-            placeholderTextColor={theme.colors.textMuted}
-            returnKeyType={mode === "restore" ? "done" : "next"}
-            secureTextEntry
-            style={styles.input}
-            value={passphrase}
-          />
-
           {mode === "create" ? (
+            <View style={styles.protectionChoices}>
+              <ProtectionChoice
+                description="Encrypt the backup. You will need this password to restore it."
+                disabled={pending}
+                icon="password"
+                label="Use a password"
+                onPress={() => {
+                  setProtection("password");
+                  setError(null);
+                }}
+                selected={protection === "password"}
+              />
+              <ProtectionChoice
+                description="Restore without a password. Anyone with the file can read it."
+                disabled={pending}
+                icon="none"
+                label="No password"
+                onPress={() => {
+                  setProtection("none");
+                  setError(null);
+                }}
+                selected={protection === "none"}
+              />
+            </View>
+          ) : null}
+
+          {mode === "restore" || protection === "password" ? (
+            <TextInput
+              accessibilityLabel="Backup password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!pending}
+              onChangeText={setPassphrase}
+              onSubmitEditing={mode === "restore" ? handleSubmit : undefined}
+              placeholder="At least 12 characters"
+              placeholderTextColor={theme.colors.textMuted}
+              returnKeyType={mode === "restore" ? "done" : "next"}
+              secureTextEntry
+              style={styles.input}
+              value={passphrase}
+            />
+          ) : null}
+
+          {mode === "create" && protection === "password" ? (
             <TextInput
               accessibilityLabel="Confirm backup passphrase"
               autoCapitalize="none"
@@ -143,7 +181,9 @@ export function BackupPassphraseModal({
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.warning}>
-            Kaizen Finance cannot recover a forgotten passphrase.
+            {mode === "create" && protection === "none"
+              ? "This backup will not be encrypted. Keep the file and your Google account secure."
+              : "Kaizen Finance cannot recover a forgotten password."}
           </Text>
 
           <View style={styles.actions}>
@@ -173,6 +213,52 @@ export function BackupPassphraseModal({
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  );
+}
+
+function ProtectionChoice({
+  description,
+  disabled,
+  icon,
+  label,
+  onPress,
+  selected,
+}: {
+  description: string;
+  disabled: boolean;
+  icon: "password" | "none";
+  label: string;
+  onPress: () => void;
+  selected: boolean;
+}) {
+  const theme = useAppTheme();
+  const styles = useThemeStyles(createStyles);
+  const Icon = icon === "password" ? KeyRound : ShieldOff;
+
+  return (
+    <Pressable
+      accessibilityRole="radio"
+      accessibilityState={{ checked: selected }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.protectionChoice,
+        selected && styles.protectionChoiceSelected,
+        disabled && styles.disabled,
+      ]}
+    >
+      <Icon
+        color={selected ? theme.colors.primary : theme.colors.textMuted}
+        size={19}
+      />
+      <View style={styles.protectionCopy}>
+        <Text style={styles.protectionLabel}>{label}</Text>
+        <Text style={styles.protectionDescription}>{description}</Text>
+      </View>
+      <View style={[styles.radio, selected && styles.radioSelected]}>
+        {selected ? <Check color={theme.colors.onPrimary} size={13} /> : null}
+      </View>
+    </Pressable>
   );
 }
 
@@ -246,6 +332,51 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.base,
       minHeight: 48,
       paddingHorizontal: theme.spacing.md,
+    },
+    protectionChoices: {
+      gap: theme.spacing.sm,
+    },
+    protectionChoice: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      minHeight: 68,
+      padding: theme.spacing.md,
+    },
+    protectionChoiceSelected: {
+      backgroundColor: `${theme.colors.primary}10`,
+      borderColor: theme.colors.primary,
+    },
+    protectionCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    protectionLabel: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    protectionDescription: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.xs,
+    },
+    radio: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: 999,
+      borderWidth: 1,
+      height: 22,
+      justifyContent: "center",
+      width: 22,
+    },
+    radioSelected: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
     },
     error: {
       color: theme.colors.danger,

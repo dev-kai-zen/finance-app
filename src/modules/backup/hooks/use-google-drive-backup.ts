@@ -111,7 +111,7 @@ export function useGoogleDriveBackup() {
   }, [run]);
 
   const createBackup = useCallback(
-    async (passphrase: string): Promise<boolean> => {
+    async (passphrase: string | null): Promise<boolean> => {
       const backup = await run("creating", () =>
         createGoogleDriveBackup(passphrase),
       );
@@ -122,7 +122,7 @@ export function useGoogleDriveBackup() {
       ]);
       setNotice({
         variant: "success",
-        message: "Encrypted backup saved to Kaizen Finance / Backups.",
+        message: `${passphrase ? "Password-protected" : "Unprotected"} backup saved to Kaizen Finance / Backups.`,
       });
       return true;
     },
@@ -130,7 +130,7 @@ export function useGoogleDriveBackup() {
   );
 
   const restoreBackup = useCallback(
-    async (fileId: string, passphrase: string): Promise<boolean> => {
+    async (fileId: string, passphrase: string | null): Promise<boolean> => {
       const completed = await run("restoring", async () => {
         await restoreGoogleDriveBackup(fileId, passphrase);
         return true;

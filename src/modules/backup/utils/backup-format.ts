@@ -10,9 +10,10 @@ import {
 import { scryptAsync } from "@noble/hashes/scrypt.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
-const MAGIC = "KAIZENB1";
+const ENCRYPTED_MAGIC = "KAIZENB1";
+const UNPROTECTED_MAGIC = "KAIZENP1";
 const FORMAT_VERSION = 1;
-const HEADER_PREFIX_LENGTH = MAGIC.length + 4;
+const HEADER_PREFIX_LENGTH = ENCRYPTED_MAGIC.length + 4;
 const MAX_HEADER_BYTES = 64 * 1024;
 const SCRYPT_N = 2 ** 15;
 const SCRYPT_R = 8;
@@ -40,10 +41,79 @@ interface BackupHeader {
   };
 }
 
+interface UnprotectedBackupHeader {
+  formatVersion: number;
+  createdAt: string;
+  appVersion: string;
+  databaseBytes: number;
+  databaseSha256: string;
+  protection: {
+    name: "none";
+  };
+}
+
 export interface DecryptedBackup {
   database: Uint8Array;
   createdAt: Date;
   appVersion: string;
+}
+
+export async function createDatabaseBackup(
+  database: Uint8Array,
+  passphrase: string | null,
+  appVersion: string,
+  createdAt = new Date(),
+): Promise<Uint8Array> {
+  if (passphrase !== null) {
+    return encryptDatabaseBackup(database, passphrase, appVersion, createdAt);
+  }
+
+  const header: UnprotectedBackupHeader = {
+    formatVersion: FORMAT_VERSION,
+    createdAt: createdAt.toISOString(),
+    appVersion,
+    databaseBytes: database.byteLength,
+    databaseSha256: await sha256(database),
+    protection: { name: "none" },
+  };
+  const headerBytes = utf8ToBytes(JSON.stringify(header));
+  return joinBytes(
+    utf8ToBytes(UNPROTECTED_MAGIC),
+    encodeUint32(headerBytes.byteLength),
+    headerBytes,
+    database,
+  );
+}
+
+export async function readDatabaseBackup(
+  archive: Uint8Array,
+  passphrase: string | null,
+): Promise<DecryptedBackup> {
+  const magic = readMagic(archive);
+  if (magic === ENCRYPTED_MAGIC) {
+    if (passphrase === null) {
+      throw new Error("This backup needs its password before it can be restored.");
+    }
+    return decryptDatabaseBackup(archive, passphrase);
+  }
+  if (magic !== UNPROTECTED_MAGIC) {
+    throw new Error("This file is not a Kaizen Finance backup.");
+  }
+
+  const { headerBytes, payload } = splitArchive(archive);
+  const header = parseAndValidateUnprotectedHeader(headerBytes);
+  if (payload.byteLength !== header.databaseBytes) {
+    throw new Error("The restored database size does not match the backup.");
+  }
+  if ((await sha256(payload)) !== header.databaseSha256) {
+    throw new Error("The backup checksum is invalid.");
+  }
+
+  return {
+    database: payload,
+    createdAt: new Date(header.createdAt),
+    appVersion: header.appVersion,
+  };
 }
 
 export async function encryptDatabaseBackup(
@@ -55,11 +125,7 @@ export async function encryptDatabaseBackup(
   assertPassphrase(passphrase);
 
   const salt = await getRandomBytesAsync(16);
-  const hash = bytesToHex(
-    new Uint8Array(
-      await digest(CryptoDigestAlgorithm.SHA256, toNativeBytes(database)),
-    ),
-  );
+  const hash = await sha256(database);
   const header: BackupHeader = {
     formatVersion: FORMAT_VERSION,
     createdAt: createdAt.toISOString(),
@@ -92,7 +158,7 @@ export async function encryptDatabaseBackup(
     });
     const encrypted = await sealed.combined();
     return joinBytes(
-      utf8ToBytes(MAGIC),
+      utf8ToBytes(ENCRYPTED_MAGIC),
       encodeUint32(headerBytes.byteLength),
       headerBytes,
       encrypted,
@@ -112,26 +178,13 @@ export async function decryptDatabaseBackup(
     throw new Error("This file is not a Kaizen Finance backup.");
   }
 
-  const magic = new TextDecoder().decode(archive.slice(0, MAGIC.length));
-  if (magic !== MAGIC) {
+  const magic = readMagic(archive);
+  if (magic !== ENCRYPTED_MAGIC) {
     throw new Error("This file is not a Kaizen Finance backup.");
   }
 
-  const headerLength = decodeUint32(archive, MAGIC.length);
-  if (
-    headerLength <= 0 ||
-    headerLength > MAX_HEADER_BYTES ||
-    HEADER_PREFIX_LENGTH + headerLength >= archive.byteLength
-  ) {
-    throw new Error("The backup header is invalid.");
-  }
-
-  const headerBytes = archive.slice(
-    HEADER_PREFIX_LENGTH,
-    HEADER_PREFIX_LENGTH + headerLength,
-  );
+  const { headerBytes, payload: encrypted } = splitArchive(archive);
   const header = parseAndValidateHeader(headerBytes);
-  const encrypted = archive.slice(HEADER_PREFIX_LENGTH + headerLength);
   const salt = base64ToBytes(header.kdf.saltBase64);
   const keyBytes = await deriveKey(passphrase, salt);
 
@@ -148,18 +201,14 @@ export async function decryptDatabaseBackup(
         additionalData: headerBytes,
       });
     } catch {
-      throw new Error("The passphrase is incorrect or the backup is damaged.");
+      throw new Error("The password is incorrect or the backup is damaged.");
     }
 
     if (database.byteLength !== header.databaseBytes) {
       throw new Error("The restored database size does not match the backup.");
     }
 
-    const actualHash = bytesToHex(
-      new Uint8Array(
-        await digest(CryptoDigestAlgorithm.SHA256, toNativeBytes(database)),
-      ),
-    );
+    const actualHash = await sha256(database);
     if (actualHash !== header.databaseSha256) {
       throw new Error("The backup checksum is invalid.");
     }
@@ -172,6 +221,19 @@ export async function decryptDatabaseBackup(
   } finally {
     keyBytes.fill(0);
   }
+}
+
+function parseAndValidateUnprotectedHeader(
+  bytes: Uint8Array,
+): UnprotectedBackupHeader {
+  const header = parseHeader(bytes) as Partial<UnprotectedBackupHeader>;
+  if (
+    !hasValidCommonHeader(header) ||
+    header.protection?.name !== "none"
+  ) {
+    throw new Error("This backup format is unsupported or invalid.");
+  }
+  return header as UnprotectedBackupHeader;
 }
 
 export function validateBackupPassphrase(passphrase: string): string | null {
@@ -204,23 +266,9 @@ async function deriveKey(
 }
 
 function parseAndValidateHeader(bytes: Uint8Array): BackupHeader {
-  let value: unknown;
-  try {
-    value = JSON.parse(new TextDecoder().decode(bytes));
-  } catch {
-    throw new Error("The backup header could not be read.");
-  }
-
-  const header = value as Partial<BackupHeader>;
+  const header = parseHeader(bytes) as Partial<BackupHeader>;
   const valid =
-    header.formatVersion === FORMAT_VERSION &&
-    typeof header.createdAt === "string" &&
-    !Number.isNaN(Date.parse(header.createdAt)) &&
-    typeof header.appVersion === "string" &&
-    Number.isSafeInteger(header.databaseBytes) &&
-    (header.databaseBytes ?? 0) > 0 &&
-    typeof header.databaseSha256 === "string" &&
-    /^[a-f0-9]{64}$/.test(header.databaseSha256) &&
+    hasValidCommonHeader(header) &&
     header.kdf?.name === "scrypt" &&
     header.kdf.N === SCRYPT_N &&
     header.kdf.r === SCRYPT_R &&
@@ -236,6 +284,65 @@ function parseAndValidateHeader(bytes: Uint8Array): BackupHeader {
   }
 
   return header as BackupHeader;
+}
+
+function parseHeader(bytes: Uint8Array): unknown {
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw new Error("The backup header could not be read.");
+  }
+}
+
+function hasValidCommonHeader(
+  header: Partial<UnprotectedBackupHeader | BackupHeader>,
+): boolean {
+  return (
+    header.formatVersion === FORMAT_VERSION &&
+    typeof header.createdAt === "string" &&
+    !Number.isNaN(Date.parse(header.createdAt)) &&
+    typeof header.appVersion === "string" &&
+    Number.isSafeInteger(header.databaseBytes) &&
+    (header.databaseBytes ?? 0) > 0 &&
+    typeof header.databaseSha256 === "string" &&
+    /^[a-f0-9]{64}$/.test(header.databaseSha256)
+  );
+}
+
+function readMagic(archive: Uint8Array): string {
+  if (archive.byteLength < HEADER_PREFIX_LENGTH) {
+    throw new Error("This file is not a Kaizen Finance backup.");
+  }
+  return new TextDecoder().decode(archive.slice(0, ENCRYPTED_MAGIC.length));
+}
+
+function splitArchive(archive: Uint8Array): {
+  headerBytes: Uint8Array;
+  payload: Uint8Array;
+} {
+  const headerLength = decodeUint32(archive, ENCRYPTED_MAGIC.length);
+  if (
+    headerLength <= 0 ||
+    headerLength > MAX_HEADER_BYTES ||
+    HEADER_PREFIX_LENGTH + headerLength >= archive.byteLength
+  ) {
+    throw new Error("The backup header is invalid.");
+  }
+  return {
+    headerBytes: archive.slice(
+      HEADER_PREFIX_LENGTH,
+      HEADER_PREFIX_LENGTH + headerLength,
+    ),
+    payload: archive.slice(HEADER_PREFIX_LENGTH + headerLength),
+  };
+}
+
+async function sha256(bytes: Uint8Array): Promise<string> {
+  return bytesToHex(
+    new Uint8Array(
+      await digest(CryptoDigestAlgorithm.SHA256, toNativeBytes(bytes)),
+    ),
+  );
 }
 
 function encodeUint32(value: number): Uint8Array {
@@ -292,4 +399,3 @@ function joinBytes(...parts: Uint8Array[]): Uint8Array {
   });
   return output;
 }
-

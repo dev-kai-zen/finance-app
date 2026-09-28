@@ -6,7 +6,6 @@ export {
   useWorkspace,
 } from "./providers/workspace-provider";
 export type {
-  RecommendedSetupInput,
   WorkspaceMode,
   WorkspaceSetupStrategy,
   WorkspaceState,

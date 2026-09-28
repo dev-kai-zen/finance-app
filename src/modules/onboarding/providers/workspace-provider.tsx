@@ -6,10 +6,7 @@ import {
   initializeWorkspaceState,
   loadSampleWorkspace as loadSampleWorkspaceService,
 } from "@/modules/onboarding/services/workspace.service";
-import type {
-  RecommendedSetupInput,
-  WorkspaceState,
-} from "@/modules/onboarding/types/onboarding.types";
+import type { WorkspaceState } from "@/modules/onboarding/types/onboarding.types";
 
 interface WorkspaceContextValue {
   state: WorkspaceState;
@@ -19,7 +16,7 @@ interface WorkspaceContextValue {
   cancelPersonalSetup: () => void;
   clearError: () => void;
   completeManualSetup: () => Promise<boolean>;
-  completeRecommendedSetup: (input: RecommendedSetupInput) => Promise<boolean>;
+  completeRecommendedSetup: () => Promise<boolean>;
   loadSampleWorkspace: () => Promise<boolean>;
   requestPersonalSetup: () => void;
 }
@@ -69,8 +66,7 @@ export function WorkspaceProvider({ children }: React.PropsWithChildren) {
       },
       clearError: () => setError(null),
       completeManualSetup: () => run(completeManualSetupService),
-      completeRecommendedSetup: (input) =>
-        run(() => completeRecommendedSetupService(input)),
+      completeRecommendedSetup: () => run(completeRecommendedSetupService),
       loadSampleWorkspace: () => run(loadSampleWorkspaceService),
       requestPersonalSetup: () => {
         setError(null);

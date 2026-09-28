@@ -5,7 +5,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import {
@@ -14,10 +13,7 @@ import {
   CloudDownload,
   Database,
   FlaskConical,
-  Landmark,
-  PiggyBank,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   Wallet,
 } from "lucide-react-native";
@@ -29,7 +25,6 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
-import type { InitialAccountTemplate } from "@/modules/accounts";
 
 type OnboardingStep =
   | "welcome"
@@ -38,38 +33,11 @@ type OnboardingStep =
   | "sample"
   | "restore";
 
-const ACCOUNT_TEMPLATES: Array<{
-  id: InitialAccountTemplate;
-  label: string;
-  defaultName: string;
-  icon: typeof Wallet;
-}> = [
-  { id: "bank", label: "Bank", defaultName: "Everyday Account", icon: Landmark },
-  { id: "cash", label: "Cash", defaultName: "Cash Wallet", icon: Wallet },
-  { id: "ewallet", label: "E-Wallet", defaultName: "Everyday E-Wallet", icon: Smartphone },
-  { id: "savings", label: "Savings", defaultName: "Savings Account", icon: PiggyBank },
-];
-
 export function OnboardingScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
   const [step, setStep] = useState<OnboardingStep>("welcome");
-  const [template, setTemplate] = useState<InitialAccountTemplate>("bank");
-  const [accountName, setAccountName] = useState("Everyday Account");
-  const [openingAmount, setOpeningAmount] = useState("0.00");
-  const [nameEdited, setNameEdited] = useState(false);
-
-  const chooseTemplate = (nextTemplate: InitialAccountTemplate) => {
-    setTemplate(nextTemplate);
-    if (!nameEdited) {
-      setAccountName(
-        ACCOUNT_TEMPLATES.find(({ id }) => id === nextTemplate)?.defaultName ??
-          "My Account",
-      );
-    }
-  };
-
   const goBack = () => {
     workspace.clearError();
     if (workspace.personalSetupRequested && step === "welcome") {
@@ -77,12 +45,6 @@ export function OnboardingScreen() {
       return;
     }
     setStep("welcome");
-  };
-
-  const submitRecommendedSetup = async () => {
-    await workspace.completeRecommendedSetup({
-      account: { name: accountName, openingAmount, template },
-    });
   };
 
   return (
@@ -187,7 +149,7 @@ export function OnboardingScreen() {
           {step === "recommended" ? (
             <View style={styles.stepContent}>
               <StepHeading
-                description="We will prepare useful account types and categories, then create your first real account."
+                description="We will prepare ready-to-use accounts and complete category presets for you."
                 title="Use recommended setup"
               />
 
@@ -196,111 +158,24 @@ export function OnboardingScreen() {
                   <ShieldCheck color={theme.colors.info} size={20} />
                   <Text style={styles.infoText}>
                     Finishing setup replaces all fictional sample records with
-                    your real account and the recommended starter structure.
+                    ready-to-use accounts and the recommended starter structure.
                   </Text>
                 </View>
               ) : null}
 
-              <View style={styles.formSection}>
-                <Text style={styles.sectionLabel}>PRIMARY CURRENCY</Text>
-                <View style={styles.readonlyField}>
-                  <Text style={styles.readonlyValue}>Philippine peso</Text>
-                  <Text style={styles.currencyCode}>PHP</Text>
-                </View>
-                <Text style={styles.helperText}>
-                  Multi-currency account creation can be added later; the current
-                  app records new accounts in PHP.
-                </Text>
-              </View>
-
-              <View style={styles.formSection}>
-                <Text style={styles.sectionLabel}>FIRST ACCOUNT</Text>
-                <View style={styles.templateGrid}>
-                  {ACCOUNT_TEMPLATES.map((item) => {
-                    const Icon = item.icon;
-                    const selected = item.id === template;
-                    return (
-                      <Pressable
-                        key={item.id}
-                        accessibilityLabel={`${item.label} account`}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        disabled={workspace.busy}
-                        onPress={() => chooseTemplate(item.id)}
-                        style={({ pressed }) => [
-                          styles.templateButton,
-                          selected && styles.templateButtonSelected,
-                          pressed && styles.buttonPressed,
-                        ]}
-                      >
-                        <Icon
-                          color={
-                            selected
-                              ? theme.colors.primary
-                              : theme.colors.textSecondary
-                          }
-                          size={20}
-                        />
-                        <Text
-                          style={[
-                            styles.templateLabel,
-                            selected && styles.templateLabelSelected,
-                          ]}
-                        >
-                          {item.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Account name</Text>
-                  <TextInput
-                    accessibilityLabel="Account name"
-                    autoCapitalize="words"
-                    editable={!workspace.busy}
-                    maxLength={100}
-                    onChangeText={(value) => {
-                      setNameEdited(true);
-                      setAccountName(value);
-                    }}
-                    placeholder="e.g. Everyday Account"
-                    placeholderTextColor={theme.colors.textMuted}
-                    returnKeyType="next"
-                    style={styles.textInput}
-                    value={accountName}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Current balance</Text>
-                  <View style={styles.amountInputRow}>
-                    <Text style={styles.amountPrefix}>₱</Text>
-                    <TextInput
-                      accessibilityLabel="Current account balance"
-                      editable={!workspace.busy}
-                      keyboardType="decimal-pad"
-                      onChangeText={setOpeningAmount}
-                      placeholder="0.00"
-                      placeholderTextColor={theme.colors.textMuted}
-                      returnKeyType="done"
-                      style={styles.amountInput}
-                      value={openingAmount}
-                    />
-                  </View>
-                  <Text style={styles.helperText}>
-                    This becomes the account’s opening balance as of today.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.infoCard}>
+              <View style={styles.samplePreview}>
                 <Sparkles color={theme.colors.primary} size={20} />
-                <Text style={styles.infoText}>
-                  Includes Cash, Bank Account, Savings, and E-Wallet types plus
-                  complete income, expense, and subcategory recommendations.
-                </Text>
+                {[
+                  "Cash Wallet, Bank Account, Savings Account, and E-Wallet",
+                  "Complete income and expense category groups",
+                  "Recommended subcategories ready for transactions",
+                  "PHP as the primary currency with zero opening balances",
+                ].map((item) => (
+                  <View key={item} style={styles.bulletRow}>
+                    <Check color={theme.colors.success} size={18} />
+                    <Text style={styles.bulletText}>{item}</Text>
+                  </View>
+                ))}
               </View>
 
               <WorkspaceError message={workspace.error} />
@@ -308,7 +183,7 @@ export function OnboardingScreen() {
                 disabled={workspace.busy}
                 label="Create my workspace"
                 loading={workspace.busy}
-                onPress={() => void submitRecommendedSetup()}
+                onPress={() => void workspace.completeRecommendedSetup()}
               />
             </View>
           ) : null}
@@ -417,7 +292,7 @@ function WelcomeStep({
         />
         <OnboardingOptionCard
           badge="Recommended"
-          description="Create your first real account while the app prepares standard account types and categories."
+          description="Start with ready-to-use accounts, standard account types, and complete category presets."
           disabled={disabled}
           icon={<Sparkles color={theme.colors.primary} size={23} />}
           onPress={() => onChoose("recommended")}
@@ -614,114 +489,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
-    formSection: {
-      gap: theme.spacing.md,
-    },
-    sectionLabel: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.8,
-    },
-    readonlyField: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexDirection: "row",
-      minHeight: 52,
-      paddingHorizontal: theme.spacing.lg,
-    },
-    readonlyValue: {
-      color: theme.colors.textPrimary,
-      flex: 1,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    currencyCode: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
     helperText: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
       lineHeight: theme.typography.lineHeight.xs,
-    },
-    templateGrid: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.sm,
-    },
-    templateButton: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexBasis: "47%",
-      flexDirection: "row",
-      flexGrow: 1,
-      gap: theme.spacing.sm,
-      minHeight: 48,
-      paddingHorizontal: theme.spacing.md,
-    },
-    templateButtonSelected: {
-      backgroundColor: `${theme.colors.primary}10`,
-      borderColor: theme.colors.primary,
-    },
-    templateLabel: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    templateLabelSelected: {
-      color: theme.colors.primary,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    fieldGroup: {
-      gap: theme.spacing.sm,
-    },
-    fieldLabel: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    textInput: {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.base,
-      minHeight: 52,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-    },
-    amountInputRow: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexDirection: "row",
-      minHeight: 52,
-      paddingHorizontal: theme.spacing.lg,
-    },
-    amountPrefix: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    amountInput: {
-      color: theme.colors.textPrimary,
-      flex: 1,
-      fontSize: theme.typography.fontSize.base,
-      fontVariant: ["tabular-nums"],
-      minHeight: 50,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: theme.spacing.md,
     },
     samplePreview: {
       backgroundColor: theme.colors.surface,

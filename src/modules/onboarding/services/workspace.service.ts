@@ -1,7 +1,7 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   clearAccountWorkspace,
-  createInitialAccount,
+  createRecommendedAccounts,
   createSampleAccounts,
   hasAccountWorkspaceData,
 } from "@/modules/accounts";
@@ -22,7 +22,6 @@ import {
   saveOnboardingSettings,
 } from "@/modules/onboarding/repositories/onboarding.repository";
 import type {
-  RecommendedSetupInput,
   WorkspaceMode,
   WorkspaceSetupStrategy,
   WorkspaceState,
@@ -66,15 +65,13 @@ export async function completeManualSetup(): Promise<WorkspaceState> {
   return completedState("personal", "manual");
 }
 
-export async function completeRecommendedSetup(
-  input: RecommendedSetupInput,
-): Promise<WorkspaceState> {
+export async function completeRecommendedSetup(): Promise<WorkspaceState> {
   const now = new Date();
 
   await db.transaction(async (tx) => {
     clearSampleWorkspaceIfNeeded(tx);
     await prepareWorkspaceCategories("recommended", tx, now);
-    createInitialAccount(input.account, tx, now);
+    createRecommendedAccounts(tx, now);
     saveCompletedSettings("personal", "recommended", tx, now);
   });
 

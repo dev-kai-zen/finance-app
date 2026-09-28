@@ -50,6 +50,11 @@ export const createInitialAccount = deferFunction(
     require("./services/workspace-accounts.service").createInitialAccount,
 ) as typeof import("./services/workspace-accounts.service").createInitialAccount;
 
+export const createRecommendedAccounts = deferFunction(
+  () =>
+    require("./services/workspace-accounts.service").createRecommendedAccounts,
+) as typeof import("./services/workspace-accounts.service").createRecommendedAccounts;
+
 export const createSampleAccounts = deferFunction(
   () =>
     require("./services/workspace-accounts.service").createSampleAccounts,

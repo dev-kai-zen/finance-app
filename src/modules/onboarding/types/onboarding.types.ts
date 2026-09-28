@@ -1,5 +1,3 @@
-import type { InitialAccountInput } from "@/modules/accounts";
-
 export type WorkspaceMode = "personal" | "sample";
 export type WorkspaceSetupStrategy = "manual" | "recommended";
 
@@ -16,7 +14,3 @@ export type WorkspaceState =
       primaryCurrency: "PHP";
       setupStrategy: WorkspaceSetupStrategy | null;
     };
-
-export interface RecommendedSetupInput {
-  account: InitialAccountInput;
-}

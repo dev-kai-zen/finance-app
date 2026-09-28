@@ -3,15 +3,15 @@ import Constants from "expo-constants";
 import { createDatabaseSnapshot } from "@/infrastructure/database";
 import { uploadGoogleDriveBackupFile } from "@/infrastructure/sync";
 import type { BackupFile } from "@/modules/backup/types/backup.types";
-import { encryptDatabaseBackup } from "@/modules/backup/utils/backup-format";
+import { createDatabaseBackup } from "@/modules/backup/utils/backup-format";
 import { withGoogleDriveAccessToken } from "./google-drive-auth.service";
 
 export async function createGoogleDriveBackup(
-  passphrase: string,
+  passphrase: string | null,
 ): Promise<BackupFile> {
   const createdAt = new Date();
   const snapshot = await createDatabaseSnapshot();
-  const archive = await encryptDatabaseBackup(
+  const archive = await createDatabaseBackup(
     snapshot,
     passphrase,
     Constants.expoConfig?.version ?? "unknown",
@@ -19,6 +19,11 @@ export async function createGoogleDriveBackup(
   );
 
   return withGoogleDriveAccessToken((accessToken) =>
-    uploadGoogleDriveBackupFile(accessToken, archive, createdAt),
+    uploadGoogleDriveBackupFile(
+      accessToken,
+      archive,
+      createdAt,
+      passphrase !== null,
+    ),
   );
 }

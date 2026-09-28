@@ -11,6 +11,7 @@ const APP_PROPERTY_KIND = "kaizenFinanceKind";
 const ROOT_FOLDER_KIND = "root-folder";
 const BACKUPS_FOLDER_KIND = "backups-folder";
 const BACKUP_FILE_KIND = "encrypted-backup";
+const BACKUP_PROTECTION_PROPERTY = "backupProtection";
 const LEGACY_FILE_ID_PROPERTY = "legacyFileId";
 const ORIGINAL_CREATED_AT_PROPERTY = "originalCreatedAt";
 
@@ -23,6 +24,7 @@ export interface GoogleDriveBackupFile {
   modifiedTime: string;
   size: number;
   location: GoogleDriveBackupLocation;
+  passwordProtected: boolean;
 }
 
 export interface GoogleDriveBackupCatalog {
@@ -134,6 +136,7 @@ export async function uploadGoogleDriveBackupFile(
   accessToken: string,
   bytes: Uint8Array,
   createdAt: Date,
+  passwordProtected: boolean,
 ): Promise<GoogleDriveBackupFile> {
   const backupFolder = await ensureBackupFolder(accessToken);
   const name = `${BACKUP_NAME_PREFIX}${createdAt
@@ -146,6 +149,8 @@ export async function uploadGoogleDriveBackupFile(
     backupFolder.id,
     createdAt.toISOString(),
     name,
+    undefined,
+    passwordProtected,
   ).then(toVisibleBackupFile);
 }
 
@@ -156,6 +161,7 @@ async function uploadBackupToFolder(
   originalCreatedAt: string,
   name: string,
   legacyFileId?: string,
+  passwordProtected = true,
 ): Promise<DriveFileResponse> {
   if (bytes.byteLength > MAX_MULTIPART_BYTES) {
     throw new Error(
@@ -171,6 +177,7 @@ async function uploadBackupToFolder(
     appProperties: {
       [APP_PROPERTY_KIND]: BACKUP_FILE_KIND,
       [ORIGINAL_CREATED_AT_PROPERTY]: originalCreatedAt,
+      [BACKUP_PROTECTION_PROPERTY]: passwordProtected ? "password" : "none",
       ...(legacyFileId ? { [LEGACY_FILE_ID_PROPERTY]: legacyFileId } : {}),
     },
   });
@@ -316,6 +323,8 @@ function toBackupFile(
     modifiedTime: file.modifiedTime ?? createdTime,
     size: Number(file.size ?? 0),
     location,
+    passwordProtected:
+      file.appProperties?.[BACKUP_PROTECTION_PROPERTY] !== "none",
   };
 }
 

@@ -139,6 +139,59 @@ export function createInitialAccount(
   return id;
 }
 
+export function createRecommendedAccounts(
+  context: DbContext,
+  now = new Date(),
+): void {
+  const accountTypeIds = ensureRecommendedAccountTypes(context, now);
+  const openingBalanceAt = new Date(now);
+  openingBalanceAt.setHours(0, 0, 0, 0);
+  const recommendedAccounts: Array<{
+    id: string;
+    name: string;
+    template: InitialAccountTemplate;
+  }> = [
+    { id: "recommended:account:cash", name: "Cash Wallet", template: "cash" },
+    { id: "recommended:account:bank", name: "Bank Account", template: "bank" },
+    {
+      id: "recommended:account:savings",
+      name: "Savings Account",
+      template: "savings",
+    },
+    {
+      id: "recommended:account:ewallet",
+      name: "E-Wallet",
+      template: "ewallet",
+    },
+  ];
+
+  for (const account of recommendedAccounts) {
+    const template = RECOMMENDED_ACCOUNT_TYPES[account.template];
+    insertAccount(
+      {
+        id: account.id,
+        accountTypeId: accountTypeIds[account.template],
+        name: account.name,
+        note: null,
+        iconKey: template.iconKey,
+        currencyCode: "PHP",
+        openingBalanceMinorUnits: 0,
+        openingBalanceAt,
+        startingBalanceLocked: false,
+        hideFromSelection: false,
+        hideFromReports: false,
+        pocketEnabled: template.pocketEnabled,
+        maintainingBalanceMinorUnits: null,
+        isArchived: false,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+  }
+}
+
 function ensureRecommendedAccountTypes(
   context: DbContext,
   now: Date,
