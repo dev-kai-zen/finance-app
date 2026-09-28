@@ -24,7 +24,7 @@ function RootLayoutContent() {
     <SafeAreaProvider
       style={[styles.rootLayer, { backgroundColor: theme.colors.background }]}
     >
-      <StatusBar style={theme.mode === "dark" ? "dark" : "light"} />
+      <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
       <KeyboardProvider>
         <DatabaseProvider>
           <WorkspaceProvider>

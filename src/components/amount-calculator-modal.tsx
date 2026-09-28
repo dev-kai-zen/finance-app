@@ -515,7 +515,7 @@ function KeypadButton({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     modalOverlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },

@@ -1,7 +1,6 @@
 import { PropsWithChildren, ReactNode } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,6 +9,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppButton } from "@/components/app-button";
 import {
   getResponsiveGutter,
   isTabletOrDesktop,
@@ -109,14 +109,11 @@ export function PageEmptyState({
         <Text style={styles.emptyDescription}>{description}</Text>
       ) : null}
       {actionLabel && onAction ? (
-        <Pressable
-          accessibilityLabel={actionLabel}
-          accessibilityRole="button"
+        <AppButton
+          label={actionLabel}
           onPress={onAction}
           style={styles.emptyAction}
-        >
-          <Text style={styles.emptyActionText}>{actionLabel}</Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );
@@ -150,14 +147,11 @@ export function PageErrorState({ message, onRetry }: PageErrorStateProps) {
       <Text style={styles.errorTitle}>Something went wrong</Text>
       <Text style={styles.errorMessage}>{message}</Text>
       {onRetry ? (
-        <Pressable
-          accessibilityLabel="Retry"
-          accessibilityRole="button"
+        <AppButton
+          label="Retry"
           onPress={onRetry}
           style={styles.retryButton}
-        >
-          <Text style={styles.retryButtonText}>Retry</Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );
@@ -215,19 +209,7 @@ function createEmptyStyles(theme: AppTheme) {
       textAlign: "center",
     },
     emptyAction: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: theme.borderRadius.medium,
       marginTop: theme.spacing.lg,
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    emptyActionText: {
-      color: theme.colors.onPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }
@@ -275,16 +257,7 @@ function createErrorStyles(theme: AppTheme) {
       textAlign: "center",
     },
     retryButton: {
-      backgroundColor: theme.colors.primary,
-      borderRadius: theme.borderRadius.medium,
       marginTop: theme.spacing.lg,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
-    },
-    retryButtonText: {
-      color: theme.colors.onPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

@@ -421,15 +421,15 @@ export function TransactionFormModal({
                       active && styles.tabTextActive,
                       active &&
                         tab === "income" && {
-                          color: "#FFFFFF",
+                          color: theme.colors.textInverse,
                         },
                       active &&
                         tab === "expense" && {
-                          color: "#FFFFFF",
+                          color: theme.colors.textInverse,
                         },
                       active &&
                         tab === "transfer" && {
-                          color: "#FFFFFF",
+                          color: theme.colors.textInverse,
                         },
                     ]}
                   >
@@ -830,7 +830,7 @@ export function TransactionFormModal({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     modalOverlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
     },
     backdrop: {
@@ -903,7 +903,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     errorBanner: {
-      backgroundColor: "rgba(255, 92, 92, 0.15)",
+      backgroundColor: `${theme.colors.danger}26`,
       borderColor: theme.colors.danger,
       borderRadius: 8,
       borderWidth: 1,

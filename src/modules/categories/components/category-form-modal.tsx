@@ -340,7 +340,7 @@ export function CategoryFormModal({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     modalOverlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },
@@ -499,12 +499,12 @@ function createStyles(theme: AppTheme) {
       width: 36,
     },
     colorSwatchSelected: {
-      borderColor: "#FFFFFF",
+      borderColor: theme.colors.textInverse,
       borderWidth: 2.5,
       transform: [{ scale: 1.1 }],
     },
     colorCheckDot: {
-      backgroundColor: "#FFFFFF",
+      backgroundColor: theme.colors.textInverse,
       borderRadius: 3,
       height: 6,
       width: 6,

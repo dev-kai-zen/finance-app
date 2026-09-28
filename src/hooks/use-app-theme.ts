@@ -23,12 +23,22 @@ export function useThemeStyles<T>(factory: (theme: AppTheme) => T): T {
  * Hook to access active theme info and switch theme presets.
  */
 export function useThemeController() {
-  const { theme, mode, themeId, setThemeId, availableThemes } = useThemeContext();
+  const {
+    theme,
+    mode,
+    themeId,
+    setThemeId,
+    isFollowingSystem,
+    setFollowSystem,
+    availableThemes,
+  } = useThemeContext();
   return {
     theme,
     mode,
     themeId,
     setThemeId,
+    isFollowingSystem,
+    setFollowSystem,
     availableThemes,
   };
 }

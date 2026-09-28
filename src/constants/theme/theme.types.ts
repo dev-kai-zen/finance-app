@@ -3,6 +3,10 @@ import type { CategoricalColorKey } from "./palette";
 
 export type ThemeMode = "light" | "dark";
 
+export type ThemeSelection =
+  | { kind: "system" }
+  | { kind: "preset"; presetId: string };
+
 export interface ThemeColors {
   // Application surfaces & backgrounds
   background: string;
@@ -26,13 +30,17 @@ export interface ThemeColors {
   // Brand & Action
   primary: string;
   onPrimary: string;
+  controlSecondary: string;
+  onControlSecondary: string;
   accent: string;
   onAccent: string;
+  focusRing: string;
 
   // Status & Feedback
   success: string;
   warning: string;
   danger: string;
+  onDanger: string;
   info: string;
 
   // Scrims & Backdrops
@@ -91,13 +99,7 @@ export interface ThemeTypography {
   };
 }
 
-export interface ShadowStyle {
-  shadowColor: string;
-  shadowOffset: { width: number; height: number };
-  shadowOpacity: number;
-  shadowRadius: number;
-  elevation: number;
-}
+export type ShadowStyle = Pick<ViewStyle, "boxShadow">;
 
 export interface ThemeShadows {
   none: ShadowStyle;
@@ -108,6 +110,7 @@ export interface ThemeShadows {
 export interface AppTheme {
   id: string;
   name: string;
+  description: string;
   mode: ThemeMode;
   colors: ThemeColors;
   spacing: ThemeSpacing;

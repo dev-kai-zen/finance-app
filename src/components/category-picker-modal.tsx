@@ -386,7 +386,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: "flex-end",
     },
     scrim: {
-      backgroundColor: "rgba(0, 0, 0, 0.55)",
+      backgroundColor: theme.colors.overlay,
       bottom: 0,
       left: 0,
       position: "absolute",
@@ -460,7 +460,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     activeTypeTabText: {
-      color: "#FFFFFF",
+      color: theme.colors.textInverse,
     },
     searchContainer: {
       alignItems: "center",

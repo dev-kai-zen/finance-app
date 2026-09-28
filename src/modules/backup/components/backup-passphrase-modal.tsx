@@ -266,7 +266,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlay: {
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.72)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "center",
       padding: theme.spacing.lg,

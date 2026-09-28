@@ -21,8 +21,8 @@ This guide establishes the styling rules and design token usage conventions for 
    - Semantic tokens (`background`, `surface`, `textPrimary`, `border`, `primary`, etc.) control application UI hierarchy and respond to light/dark themes.
    - Categorical colors (`theme.colors.categorical`) are reserved exclusively for domain entities: charts, category indicators, tags, and account types. Never use categorical colors as general UI background or text colors.
 
-5. **Theme State in React Context, Never in SQLite**:
-   Application theme preferences (light/dark mode) belong in device storage / React state, not in local SQLite business tables. Local SQLite is reserved for offline domain entities (accounts, categories, transactions).
+5. **Theme State in React Context and Device Preferences**:
+   The resolved theme belongs in `AppThemeProvider`. Persist only the user's `ThemeSelection` through `expo-sqlite/kv-store`; never store theme preferences in the Drizzle business tables used for accounts, categories, and transactions.
 
 6. **Do Not Add Premature One-Off Tokens**:
    Use the existing foundational scales. Only add new tokens to `AppTheme` when an app-wide design pattern genuinely requires them.
@@ -30,9 +30,39 @@ This guide establishes the styling rules and design token usage conventions for 
 7. **Promote Reusable Components Strictly When Needed**:
    Keep feature-specific UI inside `src/modules/<feature>/components/`. Only promote a component to `src/components/` once it is reused across multiple unrelated modules.
 
+8. **Treat System Appearance as a Selection Mode**:
+   `Follow device appearance` is not a color palette. It resolves to Paper for light mode and Ink for dark mode. Explicit palette selections override native appearance so alerts, pickers, status-bar content, and application surfaces agree.
+
 ---
 
-## 2. Standard Component Styling Pattern
+## 2. Theme Architecture
+
+```text
+ThemeSelection (system or preset ID)
+    |
+    v
+theme-registry.ts
+    |
+    v
+AppThemeProvider
+    |
+    v
+useAppTheme / useThemeStyles
+    |
+    v
+Shared components and feature screens
+```
+
+- `foundations.ts` owns spacing, typography, radii, and shadows shared by every palette.
+- `presets.ts` owns the Paper, Ink, Tide, Moss, Clay, and Dune semantic palettes.
+- `theme-registry.ts` owns ordering, lookup, fallbacks, and system light/dark mappings.
+- `theme-preference.storage.ts` persists the small preference object outside the domain database.
+- `AppButton` maps interaction variants to semantic control colors.
+- The settings module owns the theme picker and its finance-specific preview cards.
+
+---
+
+## 3. Standard Component Styling Pattern
 
 Use `useThemeStyles` with a typed style factory function to ensure styles are memoized and only recalculated if the theme changes:
 
@@ -72,9 +102,9 @@ function createStyles(theme: AppTheme) {
 
 ---
 
-## 3. Handling Domain Colors (e.g. `account_types.color`)
+## 4. Handling Domain Colors (e.g. `account_types.color`)
 
 The `account_types` table includes an optional `color: text("color")` column.
 
 * **Convention**: In future UI work, values stored in `account_types.color` should be treated as **Categorical Color Keys** (e.g. `'blue'`, `'teal'`, `'green'`, `'purple'`) mapped to `theme.colors.categorical[key]`, with fallback to a default categorical color if an arbitrary hex string is supplied.
-* **Why**: This ensures custom account-type badges remain legible, harmonious with the Kaizen visual identity, and accessible across future light and dark modes.
+* **Why**: This ensures custom account-type badges remain legible, harmonious with the active palette, and accessible across light and dark modes.

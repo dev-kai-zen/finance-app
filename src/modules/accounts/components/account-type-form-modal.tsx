@@ -317,7 +317,11 @@ export function AccountTypeFormModal({
                     ]}
                   >
                     {isSelected ? (
-                      <Check color="#FFFFFF" size={20} strokeWidth={3} />
+                      <Check
+                        color={theme.colors.textInverse}
+                        size={20}
+                        strokeWidth={3}
+                      />
                     ) : null}
                   </Pressable>
                 );
@@ -521,7 +525,7 @@ function createStyles(theme: AppTheme) {
       width: 30,
     },
     colorSwatchSelected: {
-      borderColor: "rgba(255, 255, 255, 0.95)",
+      borderColor: theme.colors.textInverse,
       borderRadius: 22,
       borderWidth: 2.5,
       height: 44,

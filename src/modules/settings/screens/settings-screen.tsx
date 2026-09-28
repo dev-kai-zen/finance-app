@@ -2,17 +2,26 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
-import { ActionBottomSheet } from "@/components/action-bottom-sheet";
+import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { useWorkspace } from "@/modules/onboarding";
+import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
+import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 
 export function SettingsScreen() {
   const styles = useThemeStyles(createStyles);
-  const { theme, themeId, setThemeId, availableThemes } = useThemeController();
+  const {
+    theme,
+    themeId,
+    setThemeId,
+    isFollowingSystem,
+    setFollowSystem,
+    availableThemes,
+  } = useThemeController();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
@@ -38,17 +47,13 @@ export function SettingsScreen() {
                 </Text>
               </View>
               {workspace.state.mode === "sample" ? (
-                <Pressable
+                <AppButton
                   accessibilityLabel="Start setting up my personal workspace"
-                  accessibilityRole="button"
+                  label="Start setup"
                   onPress={workspace.requestPersonalSetup}
-                  style={({ pressed }) => [
-                    styles.workspaceAction,
-                    pressed && styles.settingRowPressed,
-                  ]}
-                >
-                  <Text style={styles.workspaceActionText}>Start setup</Text>
-                </Pressable>
+                  size="small"
+                  variant="ghost"
+                />
               ) : null}
             </View>
           </View>
@@ -85,10 +90,14 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <ThemePreview preset={theme} />
+              <ThemeSwatchPreview preset={theme} />
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>{theme.name}</Text>
-                <Text style={styles.settingDescription}>Tap to change</Text>
+                <Text style={styles.settingDescription}>
+                  {isFollowingSystem
+                    ? "Following device appearance"
+                    : `${theme.mode === "light" ? "Light" : "Dark"} palette - saved on this device`}
+                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -121,18 +130,14 @@ export function SettingsScreen() {
         </View>
       </View>
 
-      <ActionBottomSheet
-        items={availableThemes.map((preset) => ({
-          id: preset.id,
-          label: preset.name,
-          description: preset.mode === "light" ? "Light preset" : "Dark preset",
-          icon: <ThemePreview compact preset={preset} />,
-          selected: preset.id === themeId,
-          onPress: () => setThemeId(preset.id),
-        }))}
-        title="Choose a theme"
+      <ThemePickerModal
+        isFollowingSystem={isFollowingSystem}
+        selectedThemeId={themeId}
+        themes={availableThemes}
         visible={isThemePickerOpen}
         onClose={() => setIsThemePickerOpen(false)}
+        onFollowSystem={() => setFollowSystem(true)}
+        onSelectTheme={setThemeId}
       />
 
       <HexColorsModal
@@ -142,78 +147,6 @@ export function SettingsScreen() {
     </PageContainer>
   );
 }
-
-function ThemePreview({
-  preset,
-  compact = false,
-}: {
-  preset: AppTheme;
-  compact?: boolean;
-}) {
-  return (
-    <View
-      style={[
-        previewStyles.container,
-        compact && previewStyles.containerCompact,
-        {
-          backgroundColor: preset.colors.background,
-          borderColor: preset.colors.borderStrong,
-        },
-      ]}
-    >
-      <View
-        style={[
-          previewStyles.primary,
-          compact && previewStyles.primaryCompact,
-          { backgroundColor: preset.colors.primary },
-        ]}
-      />
-      <View
-        style={[
-          previewStyles.accent,
-          compact && previewStyles.accentCompact,
-          { backgroundColor: preset.colors.accent },
-        ]}
-      />
-    </View>
-  );
-}
-
-const previewStyles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    borderRadius: 10,
-    borderWidth: 1.5,
-    flexDirection: "row",
-    gap: 4,
-    height: 40,
-    justifyContent: "center",
-    width: 48,
-  },
-  containerCompact: {
-    borderRadius: 8,
-    height: 30,
-    width: 34,
-  },
-  primary: {
-    borderRadius: 4,
-    height: 18,
-    width: 18,
-  },
-  primaryCompact: {
-    height: 13,
-    width: 13,
-  },
-  accent: {
-    borderRadius: 3,
-    height: 11,
-    width: 11,
-  },
-  accentCompact: {
-    height: 8,
-    width: 8,
-  },
-});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
@@ -249,17 +182,6 @@ function createStyles(theme: AppTheme) {
     },
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
-    },
-    workspaceAction: {
-      borderRadius: theme.borderRadius.medium,
-      justifyContent: "center",
-      minHeight: 40,
-      paddingHorizontal: theme.spacing.md,
-    },
-    workspaceActionText: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.bold,
     },
     settingCopy: {
       flex: 1,

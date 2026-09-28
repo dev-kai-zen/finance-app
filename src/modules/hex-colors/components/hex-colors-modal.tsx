@@ -218,7 +218,7 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },
@@ -328,7 +328,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     swatchCircle: {
-      borderColor: "rgba(255, 255, 255, 0.2)",
+      borderColor: theme.colors.borderStrong,
       borderRadius: 999,
       borderWidth: 2,
       height: 36,

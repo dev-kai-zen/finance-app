@@ -1,256 +1,252 @@
-import { lightTheme } from "./light-theme";
+import {
+  darkShadows,
+  lightShadows,
+  themeBorderRadius,
+  themeSpacing,
+  themeTypography,
+} from "./foundations";
 import { palette } from "./palette";
-import type { AppTheme } from "./theme.types";
+import type { AppTheme, ThemeColors } from "./theme.types";
 
-const baseSpacing = lightTheme.spacing;
-const baseBorderRadius = lightTheme.borderRadius;
-const baseTypography = lightTheme.typography;
+const lightCategorical = { ...palette.categorical };
+const darkCategorical = {
+  blue: "#60A5FA",
+  teal: "#2DD4BF",
+  green: "#4ADE80",
+  lime: "#A3E635",
+  amber: "#FBBF24",
+  orange: "#FB923C",
+  red: "#F87171",
+  purple: "#C084FC",
+  indigo: "#818CF8",
+  pink: "#F472B6",
+  slate: "#94A3B8",
+} satisfies ThemeColors["categorical"];
 
-const darkShadows = {
-  none: {
-    shadowColor: "transparent",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+function createTheme(
+  definition: Pick<AppTheme, "id" | "name" | "description" | "mode" | "colors">,
+): AppTheme {
+  return {
+    ...definition,
+    spacing: themeSpacing,
+    borderRadius: themeBorderRadius,
+    typography: themeTypography,
+    shadows: definition.mode === "dark" ? darkShadows : lightShadows,
+  };
+}
+
+export const paperTheme = createTheme({
+  id: "paper",
+  name: "Paper",
+  description: "Pure white, quiet contrast, and focused green actions.",
+  mode: "light",
+  colors: {
+    background: "#FFFFFF",
+    surface: "#F6F7F5",
+    surfaceMuted: "#ECEFEB",
+    surfaceElevated: "#FFFFFF",
+    surfaceInverse: "#171A18",
+    surfaceInverseElevated: "#242825",
+    textPrimary: "#171A18",
+    textSecondary: "#515A55",
+    textMuted: "#6B746F",
+    textInverse: "#FFFFFF",
+    textInverseMuted: "#C9D0CC",
+    border: "#D7DDD9",
+    borderStrong: "#AAB5AF",
+    primary: "#205F4A",
+    onPrimary: "#FFFFFF",
+    controlSecondary: "#E6ECE8",
+    onControlSecondary: "#173A2E",
+    accent: "#B9DB5C",
+    onAccent: "#172006",
+    focusRing: "#4C8C77",
+    success: "#187A4C",
+    warning: "#9A5B00",
+    danger: "#B42318",
+    onDanger: "#FFFFFF",
+    info: "#176B87",
+    overlay: "rgba(10, 18, 14, 0.48)",
+    categorical: lightCategorical,
   },
-  card: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  modal: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.55,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-};
+});
 
-export const kaizenLight: AppTheme = lightTheme;
-
-export const kaizenEmerald: AppTheme = {
-  id: "kaizen-emerald",
-  name: "Kaizen Emerald",
+export const inkTheme = createTheme({
+  id: "ink",
+  name: "Ink",
+  description: "True black for OLED screens with soft mint controls.",
   mode: "dark",
   colors: {
-    background: "#0F121A",
-    surface: "#181E2C",
-    surfaceMuted: "#222B3D",
-    surfaceElevated: "#2C374D",
-    surfaceInverse: "#090C12",
-    surfaceInverseElevated: "#121824",
-
-    textPrimary: "#F5F7FA",
-    textSecondary: "#94A3B8",
-    textMuted: "#8E9DAE",
-    textInverse: "#0F121A",
-    textInverseMuted: "#8E99A8",
-
-    border: "#283348",
-    borderStrong: "#364560",
-
-    primary: "#28C76F",
-    onPrimary: "#071C10",
-    accent: "#FFB020",
-    onAccent: "#1F1302",
-
-    success: "#28C76F",
-    warning: "#FFB020",
-    danger: "#FF5C5C",
-    info: "#3898EC",
-
-    overlay: "rgba(0, 0, 0, 0.65)",
-
-    categorical: { ...palette.categorical },
+    background: "#000000",
+    surface: "#0D0F0E",
+    surfaceMuted: "#171A18",
+    surfaceElevated: "#1F2321",
+    surfaceInverse: "#F6F7F5",
+    surfaceInverseElevated: "#FFFFFF",
+    textPrimary: "#FFFFFF",
+    textSecondary: "#B7BDBA",
+    textMuted: "#8D9691",
+    textInverse: "#171A18",
+    textInverseMuted: "#515A55",
+    border: "#2A2E2C",
+    borderStrong: "#4B524E",
+    primary: "#7ED7B3",
+    onPrimary: "#062018",
+    controlSecondary: "#1F2924",
+    onControlSecondary: "#D9E5DF",
+    accent: "#D1F26A",
+    onAccent: "#172006",
+    focusRing: "#A2E6CC",
+    success: "#63D69B",
+    warning: "#F0B45A",
+    danger: "#FF7770",
+    onDanger: "#2A0402",
+    info: "#72C5E8",
+    overlay: "rgba(0, 0, 0, 0.76)",
+    categorical: darkCategorical,
   },
-  spacing: baseSpacing,
-  borderRadius: baseBorderRadius,
-  typography: baseTypography,
-  shadows: darkShadows,
-};
+});
 
-export const cyberAzure: AppTheme = {
-  id: "cyber-azure",
-  name: "Cyber Azure",
-  mode: "dark",
+export const tideTheme = createTheme({
+  id: "tide",
+  name: "Tide",
+  description: "A cool blue-gray workspace with calm, steady contrast.",
+  mode: "light",
   colors: {
-    background: "#0B132B",
-    surface: "#1C2541",
-    surfaceMuted: "#283454",
-    surfaceElevated: "#3A506B",
-    surfaceInverse: "#060A17",
-    surfaceInverseElevated: "#0E1833",
-
-    textPrimary: "#F0F6FC",
-    textSecondary: "#8DA0B8",
-    textMuted: "#8DA0B8",
-    textInverse: "#0B132B",
-    textInverseMuted: "#7A91AD",
-
-    border: "#2E3D5C",
-    borderStrong: "#435882",
-
-    primary: "#00B0FF",
-    onPrimary: "#001B29",
-    accent: "#00E676",
-    onAccent: "#002412",
-
-    success: "#00E676",
-    warning: "#FFB300",
-    danger: "#FF5252",
-    info: "#00B0FF",
-
-    overlay: "rgba(0, 0, 0, 0.65)",
-
-    categorical: { ...palette.categorical },
+    background: "#F4F8FA",
+    surface: "#FFFFFF",
+    surfaceMuted: "#E8F0F3",
+    surfaceElevated: "#FFFFFF",
+    surfaceInverse: "#142027",
+    surfaceInverseElevated: "#23333C",
+    textPrimary: "#142027",
+    textSecondary: "#52626A",
+    textMuted: "#718089",
+    textInverse: "#FFFFFF",
+    textInverseMuted: "#CAD7DD",
+    border: "#D5E0E5",
+    borderStrong: "#AABCC5",
+    primary: "#2E6073",
+    onPrimary: "#FFFFFF",
+    controlSecondary: "#DFEAEE",
+    onControlSecondary: "#234A59",
+    accent: "#8AC5D5",
+    onAccent: "#0B2530",
+    focusRing: "#5A91A5",
+    success: "#247451",
+    warning: "#956000",
+    danger: "#B23A32",
+    onDanger: "#FFFFFF",
+    info: "#176B87",
+    overlay: "rgba(10, 25, 33, 0.48)",
+    categorical: lightCategorical,
   },
-  spacing: baseSpacing,
-  borderRadius: baseBorderRadius,
-  typography: baseTypography,
-  shadows: darkShadows,
-};
+});
 
-export const amethystGlow: AppTheme = {
-  id: "amethyst-glow",
-  name: "Amethyst Glow",
-  mode: "dark",
+export const mossTheme = createTheme({
+  id: "moss",
+  name: "Moss",
+  description: "Soft natural surfaces with grounded evergreen actions.",
+  mode: "light",
   colors: {
-    background: "#120B1E",
-    surface: "#1E1430",
-    surfaceMuted: "#2E2048",
-    surfaceElevated: "#3F2D61",
-    surfaceInverse: "#090510",
-    surfaceInverseElevated: "#150D24",
-
-    textPrimary: "#FBF7FF",
-    textSecondary: "#A799BC",
-    textMuted: "#A799BC",
-    textInverse: "#120B1E",
-    textInverseMuted: "#9584AD",
-
-    border: "#33224E",
-    borderStrong: "#4A3370",
-
-    primary: "#A855F7",
-    onPrimary: "#1C062E",
-    accent: "#F43F5E",
-    onAccent: "#24040A",
-
-    success: "#10B981",
-    warning: "#F59E0B",
-    danger: "#F43F5E",
-    info: "#818CF8",
-
-    overlay: "rgba(0, 0, 0, 0.65)",
-
-    categorical: { ...palette.categorical },
+    background: "#F4F7F2",
+    surface: "#FFFFFF",
+    surfaceMuted: "#E7EDE4",
+    surfaceElevated: "#FFFFFF",
+    surfaceInverse: "#172018",
+    surfaceInverseElevated: "#29342B",
+    textPrimary: "#172018",
+    textSecondary: "#566358",
+    textMuted: "#748077",
+    textInverse: "#FFFFFF",
+    textInverseMuted: "#CDD6CF",
+    border: "#D4DED1",
+    borderStrong: "#A9BAA6",
+    primary: "#3B684A",
+    onPrimary: "#FFFFFF",
+    controlSecondary: "#E0E9DD",
+    onControlSecondary: "#294B34",
+    accent: "#B8D98B",
+    onAccent: "#1B2D12",
+    focusRing: "#6F987A",
+    success: "#27774A",
+    warning: "#906000",
+    danger: "#B23A32",
+    onDanger: "#FFFFFF",
+    info: "#2F6C7D",
+    overlay: "rgba(14, 28, 17, 0.48)",
+    categorical: lightCategorical,
   },
-  spacing: baseSpacing,
-  borderRadius: baseBorderRadius,
-  typography: baseTypography,
-  shadows: darkShadows,
-};
+});
 
-export const sunsetAmber: AppTheme = {
-  id: "sunset-amber",
-  name: "Sunset Amber",
-  mode: "dark",
+export const clayTheme = createTheme({
+  id: "clay",
+  name: "Clay",
+  description: "Warm neutral surfaces with restrained terracotta accents.",
+  mode: "light",
   colors: {
-    background: "#1A120B",
-    surface: "#2B1E12",
-    surfaceMuted: "#3E2D1D",
-    surfaceElevated: "#523C27",
-    surfaceInverse: "#0D0905",
-    surfaceInverseElevated: "#1A120B",
-
-    textPrimary: "#FFFBEB",
-    textSecondary: "#B8A089",
-    textMuted: "#B8A089",
-    textInverse: "#1A120B",
-    textInverseMuted: "#A18A74",
-
-    border: "#423020",
-    borderStrong: "#5E452E",
-
-    primary: "#F59E0B",
-    onPrimary: "#241501",
-    accent: "#FACC15",
-    onAccent: "#241D01",
-
-    success: "#10B981",
-    warning: "#F59E0B",
-    danger: "#EF4444",
-    info: "#38BDF8",
-
-    overlay: "rgba(0, 0, 0, 0.65)",
-
-    categorical: { ...palette.categorical },
+    background: "#FBF6F3",
+    surface: "#FFFFFF",
+    surfaceMuted: "#F1E8E3",
+    surfaceElevated: "#FFFFFF",
+    surfaceInverse: "#261B17",
+    surfaceInverseElevated: "#3A2B25",
+    textPrimary: "#261B17",
+    textSecondary: "#6A5A53",
+    textMuted: "#89776F",
+    textInverse: "#FFFFFF",
+    textInverseMuted: "#DDCEC7",
+    border: "#E5D7D0",
+    borderStrong: "#C4AEA4",
+    primary: "#875240",
+    onPrimary: "#FFFFFF",
+    controlSecondary: "#EFE2DC",
+    onControlSecondary: "#633C2F",
+    accent: "#E7B29E",
+    onAccent: "#3B1E14",
+    focusRing: "#B47B67",
+    success: "#397153",
+    warning: "#946000",
+    danger: "#AE382F",
+    onDanger: "#FFFFFF",
+    info: "#376A7B",
+    overlay: "rgba(35, 20, 15, 0.48)",
+    categorical: lightCategorical,
   },
-  spacing: baseSpacing,
-  borderRadius: baseBorderRadius,
-  typography: baseTypography,
-  shadows: darkShadows,
-};
+});
 
-export const crimsonObsidian: AppTheme = {
-  id: "crimson-obsidian",
-  name: "Crimson Obsidian",
-  mode: "dark",
+export const duneTheme = createTheme({
+  id: "dune",
+  name: "Dune",
+  description: "Low-glare sand tones for a quiet, paper-like workspace.",
+  mode: "light",
   colors: {
-    background: "#1A0D0D",
-    surface: "#291414",
-    surfaceMuted: "#3D1E1E",
-    surfaceElevated: "#522A2A",
-    surfaceInverse: "#0D0606",
-    surfaceInverseElevated: "#1A0E0E",
-
-    textPrimary: "#FEF2F2",
-    textSecondary: "#B88B8B",
-    textMuted: "#B88B8B",
-    textInverse: "#1A0D0D",
-    textInverseMuted: "#A67878",
-
-    border: "#422222",
-    borderStrong: "#5E3131",
-
-    primary: "#EF4444",
-    onPrimary: "#260505",
-    accent: "#F97316",
-    onAccent: "#260E02",
-
-    success: "#22C55E",
-    warning: "#F59E0B",
-    danger: "#EF4444",
-    info: "#38BDF8",
-
-    overlay: "rgba(0, 0, 0, 0.65)",
-
-    categorical: { ...palette.categorical },
+    background: "#F8F5EC",
+    surface: "#FFFDF8",
+    surfaceMuted: "#EEE9DA",
+    surfaceElevated: "#FFFFFF",
+    surfaceInverse: "#242219",
+    surfaceInverseElevated: "#38352A",
+    textPrimary: "#242219",
+    textSecondary: "#646052",
+    textMuted: "#827C6C",
+    textInverse: "#FFFFFF",
+    textInverseMuted: "#DAD4C4",
+    border: "#DED8C5",
+    borderStrong: "#B9B19A",
+    primary: "#665F46",
+    onPrimary: "#FFFFFF",
+    controlSecondary: "#E9E3D2",
+    onControlSecondary: "#4C4734",
+    accent: "#D8CB86",
+    onAccent: "#2C2711",
+    focusRing: "#918867",
+    success: "#4F7047",
+    warning: "#8B620A",
+    danger: "#A64235",
+    onDanger: "#FFFFFF",
+    info: "#496879",
+    overlay: "rgba(31, 28, 18, 0.48)",
+    categorical: lightCategorical,
   },
-  spacing: baseSpacing,
-  borderRadius: baseBorderRadius,
-  typography: baseTypography,
-  shadows: darkShadows,
-};
-
-export const ALL_THEME_PRESETS: AppTheme[] = [
-  kaizenLight,
-  kaizenEmerald,
-  cyberAzure,
-  amethystGlow,
-  sunsetAmber,
-  crimsonObsidian,
-];
-
-export const THEMES_BY_ID: Record<string, AppTheme> = {
-  [kaizenLight.id]: kaizenLight,
-  [kaizenEmerald.id]: kaizenEmerald,
-  [cyberAzure.id]: cyberAzure,
-  [amethystGlow.id]: amethystGlow,
-  [sunsetAmber.id]: sunsetAmber,
-  [crimsonObsidian.id]: crimsonObsidian,
-};
+});

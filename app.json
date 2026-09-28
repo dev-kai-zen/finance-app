@@ -6,10 +6,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/finance-app-logo.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "androidStatusBar": {
       "barStyle": "light-content",
-      "backgroundColor": "#11231E"
+      "backgroundColor": "#000000"
     },
     "splash": {
       "image": "./assets/finance-app-logo.png",

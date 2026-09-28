@@ -405,7 +405,7 @@ export function SubcategoryModal({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     modalOverlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },
@@ -654,7 +654,7 @@ function createStyles(theme: AppTheme) {
       transform: [{ scale: 0.96 }],
     },
     colorCheckMark: {
-      color: "#FFFFFF",
+      color: theme.colors.textInverse,
       fontSize: 14,
       fontWeight: "bold",
     },

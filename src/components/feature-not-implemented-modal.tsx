@@ -86,7 +86,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     modalOverlay: {
       alignItems: "center",
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "center",
       padding: 20,

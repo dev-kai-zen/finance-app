@@ -428,7 +428,7 @@ export function AccountFormModal({
                 onValueChange={(pocketEnabled) =>
                   setValue((prev) => ({ ...prev, pocketEnabled }))
                 }
-                thumbColor="#FFFFFF"
+                thumbColor={theme.colors.textInverse}
                 trackColor={{
                   false: theme.colors.borderStrong,
                   true: theme.colors.primary,
@@ -451,7 +451,7 @@ export function AccountFormModal({
               onValueChange={(hideFromSelection) =>
                 setValue((prev) => ({ ...prev, hideFromSelection }))
               }
-              thumbColor="#FFFFFF"
+              thumbColor={theme.colors.textInverse}
               trackColor={{
                 false: theme.colors.borderStrong,
                 true: theme.colors.primary,
@@ -473,7 +473,7 @@ export function AccountFormModal({
               onValueChange={(hideFromReports) =>
                 setValue((prev) => ({ ...prev, hideFromReports }))
               }
-              thumbColor="#FFFFFF"
+              thumbColor={theme.colors.textInverse}
               trackColor={{
                 false: theme.colors.borderStrong,
                 true: theme.colors.primary,

@@ -221,7 +221,9 @@ export function HexColorFormModal({
                         isSelected && styles.presetChipSelected,
                       ]}
                     >
-                      {isSelected ? <Check color="#FFFFFF" size={14} /> : null}
+                      {isSelected ? (
+                        <Check color={theme.colors.textInverse} size={14} />
+                      ) : null}
                     </Pressable>
                   );
                 })}
@@ -253,7 +255,7 @@ export function HexColorFormModal({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.65)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },
@@ -324,7 +326,7 @@ function createStyles(theme: AppTheme) {
       padding: theme.spacing.md,
     },
     previewSwatch: {
-      borderColor: "rgba(255, 255, 255, 0.2)",
+      borderColor: theme.colors.borderStrong,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 2,
       height: 48,
@@ -378,7 +380,7 @@ function createStyles(theme: AppTheme) {
     },
     presetChip: {
       alignItems: "center",
-      borderColor: "rgba(255, 255, 255, 0.2)",
+      borderColor: theme.colors.borderStrong,
       borderRadius: 999,
       borderWidth: 1,
       height: 32,

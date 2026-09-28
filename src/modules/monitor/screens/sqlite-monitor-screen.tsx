@@ -602,7 +602,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     errorBox: {
-      backgroundColor: "rgba(255, 92, 92, 0.15)",
+      backgroundColor: `${theme.colors.danger}26`,
       borderColor: theme.colors.danger,
       borderRadius: 8,
       borderWidth: 1,
@@ -742,7 +742,7 @@ function createStyles(theme: AppTheme) {
       lineHeight: 16,
     },
     modalOverlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },
