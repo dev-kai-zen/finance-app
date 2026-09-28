@@ -280,14 +280,14 @@ export function AccountTypeGroupCard({
                   </View>
 
                   <View
-                    accessibilityLabel={`Main balance ${formatCurrency(available, account.currencyCode)}`}
+                    accessibilityLabel={`Available balance ${formatCurrency(available, account.currencyCode)}`}
                     style={styles.pocketRow}
                   >
                     <View style={styles.pocketBranch} />
                     <View style={styles.mainPocketIcon}>
                       <WalletCards color={theme.colors.textSecondary} size={17} />
                     </View>
-                    <Text numberOfLines={1} style={styles.pocketName}>Main</Text>
+                    <Text numberOfLines={1} style={styles.pocketName}>Available</Text>
                     <AccountAmountText amountMinorUnits={available} variant="body" />
                   </View>
 
@@ -512,7 +512,8 @@ function createStyles(theme: AppTheme) {
       borderTopColor: theme.colors.border,
       borderTopWidth: 1,
       paddingBottom: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
+      paddingLeft: accountTextInset,
+      paddingRight: theme.spacing.md,
       paddingTop: theme.spacing.md,
     },
     pocketPanelHeader: {
@@ -520,7 +521,6 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: theme.spacing.xs,
-      paddingLeft: accountTextInset - theme.spacing.md,
     },
     pocketPanelTitle: {
       color: theme.colors.textMuted,

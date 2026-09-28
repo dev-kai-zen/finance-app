@@ -13,6 +13,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
+import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
   AccountGroup,
@@ -42,6 +43,9 @@ export function AccountTypeManager({
   const [reorderVisible, setReorderVisible] = useState(false);
 
   const visibleTypes = types.filter((t) => t.accountGroup === group);
+  const reorderableTypes = visibleTypes.filter(
+    (type) => !isSystemOthersAccountTypeId(type.id),
+  );
   const activeColor = group === "asset" ? theme.colors.success : theme.colors.danger;
 
   const back = () => {
@@ -144,7 +148,7 @@ export function AccountTypeManager({
           </View>
 
           <View style={styles.toolbar}>
-            {visibleTypes.length > 1 ? (
+            {reorderableTypes.length > 1 ? (
                 <Pressable
                   accessibilityLabel="Reorder account groups"
                   accessibilityRole="button"
@@ -231,7 +235,7 @@ export function AccountTypeManager({
       </FullScreenFormModal>
 
       <SortableListModal
-        items={visibleTypes.map((type) => ({
+        items={reorderableTypes.map((type) => ({
           id: type.id,
           name: type.name,
           icon: type.iconKey,

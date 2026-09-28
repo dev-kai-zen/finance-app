@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -11,12 +10,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Check, Folder, Search, WalletCards, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "./icon-helper";
 import { formatCurrency } from "@/utils/currency";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
+import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
 import type {
   AccountListItem,
   PocketListItem,
@@ -136,6 +137,8 @@ export function AccountPickerModal({
       (a, b) =>
         (groupOrder[a.accountGroup] ?? groupOrder.other) -
           (groupOrder[b.accountGroup] ?? groupOrder.other) ||
+        Number(isSystemOthersAccountTypeId(a.typeId)) -
+          Number(isSystemOthersAccountTypeId(b.typeId)) ||
         a.typeSortOrder - b.typeSortOrder ||
         a.typeName.localeCompare(b.typeName) ||
         a.typeId.localeCompare(b.typeId),
@@ -161,7 +164,8 @@ export function AccountPickerModal({
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        automaticOffset
+        behavior="height"
         style={styles.backdrop}
       >
         <Pressable style={styles.scrim} onPress={handleClose} />

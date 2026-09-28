@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { accountTypes, hexColors } from "@/infrastructure/database/schema";
 import type { AccountType, NewAccountType } from "@/modules/accounts/types/account.types";
+import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
 
 export function listAccountTypes(context: DbContext = db): AccountType[] {
   const rows = context
@@ -14,10 +15,16 @@ export function listAccountTypes(context: DbContext = db): AccountType[] {
     .orderBy(asc(accountTypes.sortOrder), asc(accountTypes.name), asc(accountTypes.id))
     .all();
 
-  return rows.map(({ accountType, hexColor }) => ({
-    ...accountType,
-    color: hexColor?.hex ?? (accountType.hexColorsId?.startsWith("color_") ? accountType.hexColorsId.replace("color_", "") : accountType.hexColorsId),
-  }));
+  return rows
+    .map(({ accountType, hexColor }) => ({
+      ...accountType,
+      color:
+        hexColor?.hex ??
+        (accountType.hexColorsId?.startsWith("color_")
+          ? accountType.hexColorsId.replace("color_", "")
+          : accountType.hexColorsId),
+    }))
+    .sort(compareAccountTypesForDisplay);
 }
 
 export function findAccountTypeById(id: string, context: DbContext = db): AccountType | null {

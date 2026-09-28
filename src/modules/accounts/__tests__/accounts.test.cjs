@@ -77,7 +77,12 @@ const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
-const { moveAccount, moveAccountType, reorderAccountsList } = require("@/modules/accounts/services/reorder-accounts.service");
+const {
+  moveAccount,
+  moveAccountType,
+  reorderAccountsList,
+  reorderAccountTypesList,
+} = require("@/modules/accounts/services/reorder-accounts.service");
 const input = require("@/modules/accounts/utils/account-input");
 const { openingSummary, formatOpeningTotal } = require("@/modules/accounts/utils/opening-summary");
 const { accountColor, accountIcon } = require("@/modules/accounts/constants/account-appearance.constants");
@@ -297,11 +302,26 @@ test("failed deletion rolls back without removing the type", () => {
   assert.ok(types.findAccountTypeById(typeId));
   assert.equal(sqlite.isTransaction, false);
 });
-test("system Others groups can be reordered within their classification", () => {
-  const custom = saveAccountType(typeInput("First custom"));
-  moveAccountType(system.ASSET_OTHERS, 1);
+test("system Others groups stay last and cannot be reordered", () => {
+  const first = saveAccountType(typeInput("First custom"));
+  const second = saveAccountType(typeInput("Second custom"));
+
+  assert.throws(
+    () => moveAccountType(system.ASSET_OTHERS, -1),
+    /always the last account type/,
+  );
+  reorderAccountTypesList([system.ASSET_OTHERS, second, first]);
+
   const assetTypes = types.listAccountTypes().filter((t) => t.accountGroup === "asset");
-  assert.ok(assetTypes.findIndex((t) => t.id === custom) < assetTypes.findIndex((t) => t.id === system.ASSET_OTHERS));
+  assert.deepEqual(
+    assetTypes.map((type) => type.id),
+    [second, first, system.ASSET_OTHERS],
+  );
+
+  const liabilityTypes = types
+    .listAccountTypes()
+    .filter((type) => type.accountGroup === "liability");
+  assert.equal(liabilityTypes.at(-1).id, system.LIABILITY_OTHERS);
 });
 test("account ordering stays within type and archive state and is atomic", () => {
   const first = saveAccount(accountInput(undefined, "First"));

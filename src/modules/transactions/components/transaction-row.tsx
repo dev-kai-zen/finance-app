@@ -84,22 +84,37 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     : destinationRoute;
   const formattedRoute = `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
 
-  const balanceAfterMinorUnits = isTransfer
-    ? transaction.destinationBalanceAfterMinorUnits
-    : transaction.accountBalanceAfterMinorUnits;
-  const balanceCurrency = isTransfer
-    ? (transaction.transferAccountCurrency ??
-      transaction.accountCurrency ??
-      "PHP")
-    : (transaction.accountCurrency ?? "PHP");
-  const balanceText =
-    balanceAfterMinorUnits === null
-      ? null
-      : `${isTransfer && !isPocketTransfer ? "Dest. Bal:" : "Bal:"} ${formatCurrency(
-          balanceAfterMinorUnits,
-          balanceCurrency,
+  const balanceTexts: string[] = [];
+  if (isTransfer) {
+    if (transaction.accountBalanceAfterMinorUnits !== null) {
+      balanceTexts.push(
+        `Source Bal: ${formatCurrency(
+          transaction.accountBalanceAfterMinorUnits,
+          transaction.accountCurrency ?? "PHP",
           false,
-        )}`;
+        )}`,
+      );
+    }
+    if (transaction.destinationBalanceAfterMinorUnits !== null) {
+      balanceTexts.push(
+        `Dest. Bal: ${formatCurrency(
+          transaction.destinationBalanceAfterMinorUnits,
+          transaction.transferAccountCurrency ??
+            transaction.accountCurrency ??
+            "PHP",
+          false,
+        )}`,
+      );
+    }
+  } else if (transaction.accountBalanceAfterMinorUnits !== null) {
+    balanceTexts.push(
+      `Bal: ${formatCurrency(
+        transaction.accountBalanceAfterMinorUnits,
+        transaction.accountCurrency ?? "PHP",
+        false,
+      )}`,
+    );
+  }
 
   return (
     <Pressable
@@ -147,9 +162,11 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         </View>
         <View style={styles.timeColumn}>
           <Text style={styles.txTimeText}>{formattedDateTime}</Text>
-          {balanceText ? (
-            <Text style={styles.balanceText}>{balanceText}</Text>
-          ) : null}
+          {balanceTexts.map((balanceText) => (
+            <Text key={balanceText} style={styles.balanceText}>
+              {balanceText}
+            </Text>
+          ))}
         </View>
       </View>
     </Pressable>

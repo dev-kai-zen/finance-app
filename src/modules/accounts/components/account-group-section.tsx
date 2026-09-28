@@ -14,6 +14,7 @@ import type {
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
+import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
 
 export function AccountGroupSection({
   group,
@@ -111,8 +112,19 @@ export function AccountGroupSection({
       map.get(typeId)!.accounts.push(account);
     }
 
-    const sortedGroups = Array.from(map.values()).sort(
-      (a, b) => a.sortOrder - b.sortOrder,
+    const sortedGroups = Array.from(map.values()).sort((a, b) =>
+      compareAccountTypesForDisplay(
+        {
+          id: a.accountType.id,
+          name: a.accountType.name,
+          sortOrder: a.sortOrder,
+        },
+        {
+          id: b.accountType.id,
+          name: b.accountType.name,
+          sortOrder: b.sortOrder,
+        },
+      ),
     );
 
     for (const g of sortedGroups) {

@@ -1,4 +1,5 @@
 import { db } from "@/infrastructure/database/client";
+import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
 import { findAccountsByAccountTypeId, updateAccountRecord } from "@/modules/accounts/repositories/accounts.repository";
 import { listAccountTypes, updateAccountTypeRecord } from "@/modules/accounts/repositories/account-types.repository";
 import { requireAccount, requireAccountType } from "@/modules/accounts/services/account-rules";
@@ -22,7 +23,14 @@ export function moveAccount(id: string, direction: -1 | 1) {
 export function moveAccountType(id: string, direction: -1 | 1) {
   db.transaction((tx) => {
     const type = requireAccountType(id, tx);
-    const siblings = listAccountTypes(tx).filter((t) => t.accountGroup === type.accountGroup);
+    if (isSystemOthersAccountTypeId(type.id)) {
+      throw new Error("Others is always the last account type.");
+    }
+    const siblings = listAccountTypes(tx).filter(
+      (candidate) =>
+        candidate.accountGroup === type.accountGroup &&
+        !isSystemOthersAccountTypeId(candidate.id),
+    );
     const now = new Date();
     move(siblings, id, direction).forEach((t, sortOrder) => updateAccountTypeRecord(t.id, { sortOrder, updatedAt: now }, tx));
   });
@@ -39,10 +47,13 @@ export function reorderAccountsList(orderedIds: string[]): void {
 }
 
 export function reorderAccountTypesList(orderedIds: string[]): void {
-  if (!orderedIds || orderedIds.length === 0) return;
+  const reorderableIds = orderedIds.filter(
+    (id) => !isSystemOthersAccountTypeId(id),
+  );
+  if (reorderableIds.length === 0) return;
   db.transaction((tx) => {
     const now = new Date();
-    orderedIds.forEach((id, sortOrder) => {
+    reorderableIds.forEach((id, sortOrder) => {
       updateAccountTypeRecord(id, { sortOrder, updatedAt: now }, tx);
     });
   });

@@ -35,6 +35,7 @@ import {
   openingAmountInput,
 } from "@/modules/accounts/utils/account-input";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
+import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
 import {
   isCreditCardAccountType,
   supportsPockets,
@@ -48,6 +49,15 @@ function parseAmountSign(openingAmount: string): "+" | "-" {
 function stripAmountSign(openingAmount: string): string {
   const trimmed = openingAmount.trim();
   return trimmed.startsWith("-") ? trimmed.slice(1) : trimmed;
+}
+
+function getDefaultAssetAccountTypeId(types: AccountType[]): string {
+  return (
+    types
+      .filter((type) => type.accountGroup === "asset")
+      .sort(compareAccountTypesForDisplay)[0]?.id ??
+    SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS
+  );
 }
 
 export function AccountFormModal({
@@ -80,7 +90,7 @@ export function AccountFormModal({
     name: account?.name ?? "",
     note: account?.note ?? "",
     iconKey: account?.iconKey ?? null,
-    accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
+    accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
     openingAmount: openingAmountInput(account?.openingBalanceMinorUnits ?? 0),
     openingDate: localDateInput(account?.openingBalanceAt),
     hideFromSelection: account?.hideFromSelection ?? false,
@@ -108,7 +118,7 @@ export function AccountFormModal({
       name: account?.name ?? "",
       note: account?.note ?? "",
       iconKey: account?.iconKey ?? null,
-      accountTypeId: account?.accountTypeId ?? SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
+      accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
       openingAmount,
       openingDate: localDateInput(account?.openingBalanceAt),
       hideFromSelection: account?.hideFromSelection ?? false,
@@ -129,7 +139,7 @@ export function AccountFormModal({
       setAmountSign(parseAmountSign(openingAmount));
     } else {
       const defaultType = types.find(
-        (t) => t.id === SYSTEM_ACCOUNT_TYPE_IDS.ASSET_OTHERS,
+        (type) => type.id === getDefaultAssetAccountTypeId(types),
       );
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
     }
@@ -327,8 +337,10 @@ export function AccountFormModal({
                 <IconHelper color={typeColor} name={currentIconKey} size={22} />
               </View>
               <View style={styles.iconInfo}>
-                <Text style={styles.iconNameText}>{currentIconKey}</Text>
-                <Text style={styles.iconSubtext}>
+                <Text numberOfLines={1} style={styles.iconNameText}>
+                  {currentIconKey}
+                </Text>
+                <Text numberOfLines={2} style={styles.iconSubtext}>
                   {value.iconKey
                     ? "Custom icon selected · Tap to change"
                     : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
@@ -771,14 +783,17 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       flexDirection: "row",
+      gap: theme.spacing.sm,
       justifyContent: "space-between",
       padding: theme.spacing.md,
       ...theme.shadows.card,
     },
     iconCardLeft: {
       alignItems: "center",
+      flex: 1,
       flexDirection: "row",
       gap: theme.spacing.md,
+      minWidth: 0,
     },
     iconBadge: {
       alignItems: "center",
@@ -789,7 +804,9 @@ function createStyles(theme: AppTheme) {
       width: 44,
     },
     iconInfo: {
+      flex: 1,
       gap: 2,
+      minWidth: 0,
     },
     iconNameText: {
       color: theme.colors.textPrimary,
@@ -804,6 +821,7 @@ function createStyles(theme: AppTheme) {
     changeBadge: {
       borderRadius: 999,
       borderWidth: 1,
+      flexShrink: 0,
       paddingHorizontal: 12,
       paddingVertical: 6,
     },

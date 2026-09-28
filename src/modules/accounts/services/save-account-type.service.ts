@@ -1,4 +1,5 @@
 import { db } from "@/infrastructure/database/client";
+import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
 import { accountTypeInputSchema, type AccountTypeInput } from "@/modules/accounts/schemas/account.schema";
 import { insertAccountType, listAccountTypes, updateAccountTypeRecord } from "@/modules/accounts/repositories/account-types.repository";
 import { newAccountRecordId } from "@/modules/accounts/repositories/accounts.repository";
@@ -45,7 +46,11 @@ export function saveAccountType(input: AccountTypeInput, id?: string): string {
       Math.max(
         -1,
         ...listAccountTypes(tx)
-          .filter((t) => t.accountGroup === value.accountGroup)
+          .filter(
+            (type) =>
+              type.accountGroup === value.accountGroup &&
+              !isSystemOthersAccountTypeId(type.id),
+          )
           .map((t) => t.sortOrder),
       ) + 1;
     insertAccountType(
