@@ -1,7 +1,13 @@
 import {
+  blushTheme,
   clayTheme,
+  cobaltTheme,
+  contrastTheme,
   duneTheme,
+  graphiteTheme,
   inkTheme,
+  lavenderTheme,
+  midnightTheme,
   mossTheme,
   paperTheme,
   tideTheme,
@@ -17,8 +23,14 @@ export const SYSTEM_THEME_IDS: Record<ThemeMode, string> = {
 export const ALL_THEME_PRESETS: AppTheme[] = [
   paperTheme,
   inkTheme,
+  contrastTheme,
+  midnightTheme,
+  cobaltTheme,
+  graphiteTheme,
   tideTheme,
+  lavenderTheme,
   mossTheme,
+  blushTheme,
   clayTheme,
   duneTheme,
 ];

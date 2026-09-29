@@ -54,7 +54,8 @@ Shared components and feature screens
 ```
 
 - `foundations.ts` owns spacing, typography, radii, and shadows shared by every palette.
-- `presets.ts` owns the Paper, Ink, Tide, Moss, Clay, and Dune semantic palettes.
+- `presets.ts` owns all semantic palettes: Paper, Ink, Contrast, Midnight,
+  Cobalt, Graphite, Tide, Lavender, Moss, Blush, Clay, and Dune.
 - `theme-registry.ts` owns ordering, lookup, fallbacks, and system light/dark mappings.
 - `theme-preference.storage.ts` persists the small preference object outside the domain database.
 - `AppButton` maps interaction variants to semantic control colors.
