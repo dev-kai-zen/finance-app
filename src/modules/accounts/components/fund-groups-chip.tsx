@@ -1,32 +1,30 @@
+import { Layers3 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Archive } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 
-export interface ArchivedAccountsChipProps {
+export function FundGroupsChip({
+  count,
+  onPress,
+}: {
   count: number;
   onPress: () => void;
-}
-
-export function ArchivedAccountsChip({ count, onPress }: ArchivedAccountsChipProps) {
+}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
   return (
     <Pressable
-        accessibilityLabel={`Archived accounts: ${count}. Tap to view.`}
-        accessibilityRole="button"
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.chip,
-          pressed && styles.chipPressed,
-        ]}
+      accessibilityLabel={`Fund Groups: ${count}. Tap to manage.`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
     >
-        <Archive color={theme.colors.textSecondary} size={14} />
-        <Text style={styles.chipText}>Archived Accounts</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{count}</Text>
-        </View>
+      <Layers3 color={theme.colors.textSecondary} size={14} />
+      <Text style={styles.chipText}>Fund Groups</Text>
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{count}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -67,8 +65,8 @@ function createStyles(theme: AppTheme) {
     badgeText: {
       color: theme.colors.textSecondary,
       fontSize: 11,
-      fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
 }

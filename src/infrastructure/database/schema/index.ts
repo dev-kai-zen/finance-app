@@ -3,6 +3,7 @@ export * from "./accounts";
 export * from "./categories";
 export * from "./credit-card-details";
 export * from "./credit-card-billing";
+export * from "./fund-groups";
 export * from "./hex-colors";
 export * from "./pockets";
 export * from "./settings";

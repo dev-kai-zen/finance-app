@@ -16,6 +16,7 @@ import m0013 from './0013_replace_pocket_movements_with_transactions.sql';
 import m0014 from './0014_add_account_pocket_enabled.sql';
 import m0015 from './0015_add_credit_card_details.sql';
 import m0016 from './0016_add_credit_card_monitoring.sql';
+import m0017 from './0017_add_fund_groups.sql';
 
   export default {
     journal,
@@ -37,5 +38,6 @@ import m0016 from './0016_add_credit_card_monitoring.sql';
       m0014,
       m0015,
       m0016,
+      m0017,
     }
   }

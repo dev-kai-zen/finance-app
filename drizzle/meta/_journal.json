@@ -120,6 +120,13 @@
       "when": 1790003000000,
       "tag": "0016_add_credit_card_monitoring",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790650000000,
+      "tag": "0017_add_fund_groups",
+      "breakpoints": true
     }
   ]
 }

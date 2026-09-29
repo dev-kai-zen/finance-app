@@ -9,11 +9,14 @@ import { AccountFormModal } from "@/modules/accounts/components/account-form-mod
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
 import { AccountOpeningSummary } from "@/modules/accounts/components/account-opening-summary";
 import { AccountRow } from "@/modules/accounts/components/account-row";
+import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountsFabSheet } from "@/modules/accounts/components/accounts-fab-sheet";
 import { ArchivedAccountsChip } from "@/modules/accounts/components/archived-accounts-chip";
 import { ArchivedAccountsModal } from "@/modules/accounts/components/archived-accounts-modal";
+import { FundGroupsChip } from "@/modules/accounts/components/fund-groups-chip";
+import { FundGroupsModal } from "@/modules/accounts/components/fund-groups-modal";
 import { PocketFormModal } from "@/modules/accounts/components/pocket-form-modal";
 import {
   AccountButton,
@@ -23,6 +26,7 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
+import { useFundGroups } from "@/modules/accounts/hooks/use-fund-groups";
 import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
 
 type Overlay =
@@ -41,6 +45,7 @@ export function AccountsScreen({
   const theme = useAppTheme();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
+  const fundGroups = useFundGroups();
   const mutations = useAccountMutations(data.refresh);
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (initialView === "types") return { kind: "types" };
@@ -49,6 +54,8 @@ export function AccountsScreen({
   });
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
+  const [fundGroupsModalOpen, setFundGroupsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -100,9 +107,16 @@ export function AccountsScreen({
       : undefined;
   const active = data.accounts.filter((a) => !a.isArchived);
   const archived = data.accounts.filter((a) => a.isArchived);
-  const unclassified = active.filter(
+  const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase();
+  const filteredActive = normalizedSearchQuery
+    ? active.filter((account) =>
+        account.name.toLocaleLowerCase().includes(normalizedSearchQuery),
+      )
+    : active;
+  const unclassified = filteredActive.filter(
     (a) => !["asset", "liability"].includes(a.accountType?.accountGroup ?? ""),
   );
+  const hasSearchResults = filteredActive.length > 0;
   const select = (account: AccountListItem) =>
     open({ kind: "edit", id: account.id });
   const togglePockets = (accountId: string) => {
@@ -122,6 +136,15 @@ export function AccountsScreen({
 
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
+  }));
+  const managementActions = useThemeStyles((theme) => ({
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  }));
+  const searchSpacing = useThemeStyles((theme) => ({
+    marginBottom: theme.spacing.lg,
   }));
 
   return (
@@ -149,56 +172,90 @@ export function AccountsScreen({
         />
       ) : (
         <>
-          <ArchivedAccountsChip
-            count={archived.length}
-            onPress={() => setArchivedModalOpen(true)}
+          <View style={managementActions}>
+            <ArchivedAccountsChip
+              count={archived.length}
+              onPress={() => setArchivedModalOpen(true)}
+            />
+            <FundGroupsChip
+              count={fundGroups.groups.length}
+              onPress={() => {
+                fundGroups.refresh();
+                setFundGroupsModalOpen(true);
+              }}
+            />
+          </View>
+
+          <AccountSearchBox
+            style={searchSpacing}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
 
           <AccountOpeningSummary accounts={data.accounts} />
 
-          <AccountGroupSection
-            accounts={active}
-            group="asset"
-            pockets={data.pockets}
-            types={data.types}
-            onEditType={handleEditType}
-            expandedPocketAccountIds={expandedPocketAccountIds}
-            onAddPocket={(account) =>
-              open({ kind: "pocket-form", accountId: account.id })
-            }
-            onEditPocket={(pocket) =>
-              open({
-                kind: "pocket-form",
-                accountId: pocket.accountId,
-                pocketId: pocket.id,
-              })
-            }
-            onSelect={select}
-            onSort={handleSortAccounts}
-            onTogglePockets={togglePockets}
-          />
+          {!normalizedSearchQuery || hasSearchResults ? (
+            <>
+              {filteredActive.some(
+                (account) => account.accountType?.accountGroup === "asset",
+              ) || !normalizedSearchQuery ? (
+                <AccountGroupSection
+                  accounts={filteredActive}
+                  group="asset"
+                  pockets={data.pockets}
+                  types={data.types}
+                  onEditType={handleEditType}
+                  expandedPocketAccountIds={expandedPocketAccountIds}
+                  onAddPocket={(account) =>
+                    open({ kind: "pocket-form", accountId: account.id })
+                  }
+                  onEditPocket={(pocket) =>
+                    open({
+                      kind: "pocket-form",
+                      accountId: pocket.accountId,
+                      pocketId: pocket.id,
+                    })
+                  }
+                  onSelect={select}
+                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                  onTogglePockets={togglePockets}
+                />
+              ) : null}
 
-          <AccountGroupSection
-            accounts={active}
-            group="liability"
-            pockets={data.pockets}
-            types={data.types}
-            onEditType={handleEditType}
-            expandedPocketAccountIds={expandedPocketAccountIds}
-            onAddPocket={(account) =>
-              open({ kind: "pocket-form", accountId: account.id })
-            }
-            onEditPocket={(pocket) =>
-              open({
-                kind: "pocket-form",
-                accountId: pocket.accountId,
-                pocketId: pocket.id,
-              })
-            }
-            onSelect={select}
-            onSort={handleSortAccounts}
-            onTogglePockets={togglePockets}
-          />
+              {filteredActive.some(
+                (account) => account.accountType?.accountGroup === "liability",
+              ) || !normalizedSearchQuery ? (
+                <AccountGroupSection
+                  accounts={filteredActive}
+                  group="liability"
+                  pockets={data.pockets}
+                  types={data.types}
+                  onEditType={handleEditType}
+                  expandedPocketAccountIds={expandedPocketAccountIds}
+                  onAddPocket={(account) =>
+                    open({ kind: "pocket-form", accountId: account.id })
+                  }
+                  onEditPocket={(pocket) =>
+                    open({
+                      kind: "pocket-form",
+                      accountId: pocket.accountId,
+                      pocketId: pocket.id,
+                    })
+                  }
+                  onSelect={select}
+                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                  onTogglePockets={togglePockets}
+                />
+              ) : null}
+            </>
+          ) : (
+            <View style={s.section}>
+              <AccountText heading>No matching accounts</AccountText>
+              <AccountText muted>
+                No active account matches “{searchQuery.trim()}”.
+              </AccountText>
+            </View>
+          )}
 
           {unclassified.length > 0 ? (
             <View style={s.section}>
@@ -286,6 +343,17 @@ export function AccountsScreen({
         onClose={() => setArchivedModalOpen(false)}
         onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
         onSelect={handleSelectArchivedAccount}
+      />
+
+      <FundGroupsModal
+        accounts={fundGroups.accounts}
+        groups={fundGroups.groups}
+        loadError={fundGroups.error}
+        loading={fundGroups.loading}
+        pockets={fundGroups.pockets}
+        visible={fundGroupsModalOpen}
+        onClose={() => setFundGroupsModalOpen(false)}
+        onRefresh={fundGroups.refresh}
       />
     </PageContainer>
   );

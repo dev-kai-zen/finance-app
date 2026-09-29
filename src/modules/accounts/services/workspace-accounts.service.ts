@@ -14,6 +14,7 @@ import {
 import { upsertCreditCardDetails } from "@/modules/accounts/repositories/credit-card-details.repository";
 import { insertPocket } from "@/modules/accounts/repositories/pockets.repository";
 import { parseOpeningAmount } from "@/modules/accounts/utils/account-input";
+import { clearFundGroupWorkspace } from "@/modules/accounts/services/delete-fund-group.service";
 
 export type InitialAccountTemplate = "cash" | "bank" | "ewallet" | "savings";
 
@@ -413,6 +414,7 @@ export function createSampleAccounts(
 }
 
 export function clearAccountWorkspace(context: DbContext): void {
+  clearFundGroupWorkspace(context);
   deleteAllAccountRecords(context);
   deleteNonSystemAccountTypes(context);
 }

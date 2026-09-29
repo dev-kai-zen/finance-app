@@ -9,6 +9,10 @@ export const useAccounts = deferFunction(
   () => require("./hooks/use-accounts").useAccounts,
 ) as typeof import("./hooks/use-accounts").useAccounts;
 
+export const useFundGroups = deferFunction(
+  () => require("./hooks/use-fund-groups").useFundGroups,
+) as typeof import("./hooks/use-fund-groups").useFundGroups;
+
 export const getAccountsWithBalances = deferFunction(
   () =>
     require("./services/get-accounts-with-balances.service")
@@ -93,3 +97,10 @@ export type {
   PocketInput,
   PocketListItem,
 } from "./types/account.types";
+export type {
+  FundGroup,
+  FundGroupInput,
+  FundGroupListItem,
+  FundGroupMemberItem,
+  FundGroupsWorkspace,
+} from "./types/fund-group.types";

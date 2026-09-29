@@ -4,7 +4,7 @@ import migrations from "../../../drizzle/migrations";
 import { db, sqliteDatabase } from "./client";
 import { runSafeMigrations } from "./migrator";
 
-const REQUIRED_TABLES = [
+const LEGACY_REQUIRED_TABLES = [
   "account_types",
   "accounts",
   "categories",
@@ -13,6 +13,13 @@ const REQUIRED_TABLES = [
   "pockets",
   "settings",
   "transactions",
+] as const;
+
+const CURRENT_REQUIRED_TABLES = [
+  ...LEGACY_REQUIRED_TABLES,
+  "fund_groups",
+  "fund_group_accounts",
+  "fund_group_pockets",
 ] as const;
 
 export async function createDatabaseSnapshot(): Promise<Uint8Array> {
@@ -33,7 +40,7 @@ export async function replaceDatabaseFromSnapshot(
   let replacementStarted = false;
 
   try {
-    validateSnapshot(replacement);
+    validateSnapshot(replacement, LEGACY_REQUIRED_TABLES);
 
     replacementStarted = true;
     await SQLite.backupDatabaseAsync({
@@ -44,7 +51,7 @@ export async function replaceDatabaseFromSnapshot(
     });
 
     await runSafeMigrations(db, migrations);
-    validateSnapshot(sqliteDatabase);
+    validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
     await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
     await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
   } catch (error) {
@@ -89,7 +96,10 @@ function normalizeSerializedDatabaseForMemory(
   return normalized;
 }
 
-function validateSnapshot(database: SQLite.SQLiteDatabase): void {
+function validateSnapshot(
+  database: SQLite.SQLiteDatabase,
+  requiredTables: readonly string[],
+): void {
   const integrity = database.getFirstSync<{ integrity_check: string }>(
     "PRAGMA integrity_check;",
   );
@@ -102,7 +112,7 @@ function validateSnapshot(database: SQLite.SQLiteDatabase): void {
     "SELECT name FROM sqlite_master WHERE type = 'table';",
   );
   const tableNames = new Set(tableRows.map(({ name }) => name));
-  const missingTables = REQUIRED_TABLES.filter((name) => !tableNames.has(name));
+  const missingTables = requiredTables.filter((name) => !tableNames.has(name));
 
   if (missingTables.length > 0) {
     throw new Error(

@@ -32,6 +32,7 @@ Module._load = function (request, ...args) {
   if (request === "@/infrastructure/database/client") return { get db() { return database; } };
   if (
     request === "expo-sqlite" ||
+    request.startsWith("expo-sqlite/") ||
     request === "react-native" ||
     request === "react-native-safe-area-context" ||
     request === "react-native-screens" ||
@@ -89,6 +90,11 @@ const { accountColor, accountIcon } = require("@/modules/accounts/constants/acco
 const presets = require("@/constants/theme/presets");
 const system = require("@/modules/accounts/constants/account-types.constants").SYSTEM_ACCOUNT_TYPE_IDS;
 const { supportsPockets } = require("@/modules/accounts/utils/pocket-eligibility");
+const fundGroupsRepo = require("@/modules/accounts/repositories/fund-groups.repository");
+const { getFundGroupsWorkspace } = require("@/modules/accounts/services/get-fund-groups.service");
+const { saveFundGroup } = require("@/modules/accounts/services/save-fund-group.service");
+const { deleteFundGroup } = require("@/modules/accounts/services/delete-fund-group.service");
+const { clearAccountWorkspace } = require("@/modules/accounts/services/workspace-accounts.service");
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
   sql: fs.readFileSync(path.join(root, "../drizzle", entry.tag + ".sql"), "utf8").split("--> statement-breakpoint"),
@@ -629,5 +635,110 @@ test("pocket settings gate creation, reject duplicates and Credit Cards, and pro
       ),
     /Credit Card/,
   );
+});
+
+test("Fund Groups save atomically, enforce unique names and exclusive account membership", () => {
+  const cashId = saveAccount(accountInput(undefined, "Business Cash", "1000.00"));
+  const debtId = saveAccount(
+    accountInput(system.LIABILITY_OTHERS, "Business Loan", "-250.00"),
+  );
+  const groupId = saveFundGroup({
+    name: " Microbusiness ",
+    accountIds: [cashId, debtId],
+    pocketIds: [],
+  });
+
+  const group = getFundGroupsWorkspace().groups.find((item) => item.id === groupId);
+  assert.equal(group.name, "Microbusiness");
+  assert.deepEqual(group.accountIds, [cashId, debtId]);
+  assert.deepEqual(group.pocketIds, []);
+  assert.deepEqual(group.totalsByCurrency, { PHP: 75000 });
+  assert.throws(
+    () => saveFundGroup({ name: "microBUSINESS", accountIds: [cashId], pocketIds: [] }),
+    /already exists/,
+  );
+  assert.throws(
+    () => saveFundGroup({ name: "Other", accountIds: [cashId], pocketIds: [] }),
+    /already belongs/,
+  );
+  assert.equal(fundGroupsRepo.listFundGroups().length, 1);
+});
+
+test("Fund Groups retain archived members, exclude them from totals, and delete non-destructively", () => {
+  const activeId = saveAccount(accountInput(undefined, "Active", "300.00"));
+  const archivedId = saveAccount(accountInput(undefined, "Archived", "200.00"));
+  const groupId = saveFundGroup({
+    name: "Operations",
+    accountIds: [activeId, archivedId],
+    pocketIds: [],
+  });
+
+  setAccountArchived(archivedId, true);
+  const group = getFundGroupsWorkspace().groups.find((item) => item.id === groupId);
+  assert.deepEqual(group.accountIds, [activeId, archivedId]);
+  assert.equal(group.archivedMemberCount, 1);
+  assert.deepEqual(group.totalsByCurrency, { PHP: 30000 });
+
+  deleteFundGroup(groupId);
+  assert.equal(fundGroupsRepo.findFundGroupById(groupId), null);
+  assert.equal(repo.findAccountById(activeId).name, "Active");
+  assert.equal(repo.findAccountById(archivedId).name, "Archived");
+});
+
+test("Fund Groups mix accounts and pockets without allowing parent-child double counting", () => {
+  const parentAccountId = saveAccount({
+    ...accountInput(undefined, "Business Savings", "500.00"),
+    pocketEnabled: true,
+  });
+  const operatingAccountId = saveAccount(
+    accountInput(undefined, "Business Checking", "200.00"),
+  );
+  const pocketId = savePocket({
+    accountId: parentAccountId,
+    name: "Inventory",
+    targetAmount: "",
+  });
+  pocketTransfer(parentAccountId, null, pocketId, 12500);
+  const groupId = saveFundGroup({
+    name: "Microbusiness",
+    accountIds: [operatingAccountId],
+    pocketIds: [pocketId],
+  });
+
+  const group = getFundGroupsWorkspace().groups.find((item) => item.id === groupId);
+  assert.deepEqual(group.accountIds, [operatingAccountId]);
+  assert.deepEqual(group.pocketIds, [pocketId]);
+  assert.deepEqual(group.totalsByCurrency, { PHP: 32500 });
+  assert.equal(group.members.find((member) => member.id === pocketId).parentName, "Business Savings");
+  assert.throws(
+    () => saveFundGroup(
+      {
+        name: "Microbusiness",
+        accountIds: [parentAccountId, operatingAccountId],
+        pocketIds: [pocketId],
+      },
+      groupId,
+    ),
+    /counting the same money twice/,
+  );
+  assert.throws(
+    () => saveFundGroup({ name: "Duplicate Pocket", accountIds: [], pocketIds: [pocketId] }),
+    /already belongs/,
+  );
+});
+
+test("workspace reset removes Fund Groups before deleting their accounts", () => {
+  const accountId = saveAccount(accountInput(undefined, "Temporary", "10.00"));
+  saveFundGroup({
+    name: "Temporary Group",
+    accountIds: [accountId],
+    pocketIds: [],
+  });
+
+  database.transaction((tx) => clearAccountWorkspace(tx));
+
+  assert.deepEqual(fundGroupsRepo.listFundGroups(), []);
+  assert.equal(repo.findAccountById(accountId), null);
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });
 
