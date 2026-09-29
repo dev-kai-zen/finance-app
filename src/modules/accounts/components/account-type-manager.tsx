@@ -156,7 +156,6 @@ export function AccountTypeManager({
                   onPress={() => setReorderVisible(true)}
                   style={({ pressed }) => [
                     styles.toolbarChip,
-                    { borderColor: `${activeColor}55` },
                     pressed && styles.toolbarChipPressed,
                   ]}
                 >
@@ -175,8 +174,6 @@ export function AccountTypeManager({
               }}
               style={({ pressed }) => [
                 styles.toolbarChip,
-                styles.newGroupChip,
-                { borderColor: activeColor },
                 pressed && styles.toolbarChipPressed,
               ]}
             >
@@ -307,17 +304,12 @@ function createStyles(theme: AppTheme) {
     },
     toolbarChip: {
       alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
       flexDirection: "row",
       gap: 5,
       minHeight: 40,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.xs,
-    },
-    newGroupChip: {
-      backgroundColor: "transparent",
     },
     toolbarChipPressed: {
       opacity: 0.7,

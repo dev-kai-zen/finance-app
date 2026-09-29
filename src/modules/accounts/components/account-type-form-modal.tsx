@@ -6,7 +6,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Check } from "lucide-react-native";
+import { Check, Plus } from "lucide-react-native";
 import {
   ConfirmModal,
   FullScreenFormModal,
@@ -24,7 +24,11 @@ import type {
   AccountType,
 } from "@/modules/accounts/types/account.types";
 import { isProtectedAccountType } from "@/modules/accounts/utils/account-type-protection";
-import { useHexColors } from "@/modules/hex-colors";
+import {
+  HexColorFormModal,
+  type HexColorInput,
+  useHexColors,
+} from "@/modules/hex-colors";
 
 export interface AccountTypeFormModalProps {
   visible: boolean;
@@ -45,13 +49,18 @@ export function AccountTypeFormModal({
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { colors: hexColorsList, refresh: refreshHexColors } = useHexColors();
+  const {
+    colors: hexColorsList,
+    refresh: refreshHexColors,
+    addColor,
+  } = useHexColors();
 
   const [name, setName] = useState("");
   const [accountGroup, setAccountGroup] = useState<AccountGroup>("asset");
   const [iconKey, setIconKey] = useState("landmark");
   const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -121,6 +130,12 @@ export function AccountTypeFormModal({
     if (success) {
       onClose();
     }
+  };
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    setHexColorsId(created.id);
+    return true;
   };
 
   const handleDeleteTrigger = () => {
@@ -326,6 +341,19 @@ export function AccountTypeFormModal({
                   </Pressable>
                 );
               })}
+              <Pressable
+                accessibilityLabel="Add custom color"
+                accessibilityRole="button"
+                disabled={mutations.pending}
+                onPress={() => setIsColorFormOpen(true)}
+                style={({ pressed }) => [
+                  styles.addColorSwatch,
+                  { borderColor: theme.colors.primary },
+                  pressed && styles.addColorSwatchPressed,
+                ]}
+              >
+                <Plus color={theme.colors.primary} size={22} strokeWidth={2.5} />
+              </Pressable>
             </View>
           </View>
 
@@ -354,6 +382,12 @@ export function AccountTypeFormModal({
         themeColor={currentColorHex}
         title="Select Group Icon"
         visible={isIconPickerOpen}
+      />
+
+      <HexColorFormModal
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
       />
 
       {/* Delete Confirmation Modal */}
@@ -531,6 +565,19 @@ function createStyles(theme: AppTheme) {
       height: 44,
       width: 44,
       ...theme.shadows.card,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderRadius: 22,
+      borderStyle: "dashed",
+      borderWidth: 2,
+      height: 44,
+      justifyContent: "center",
+      width: 44,
+    },
+    addColorSwatchPressed: {
+      opacity: 0.65,
+      transform: [{ scale: 0.96 }],
     },
     infoBox: {
       backgroundColor: theme.colors.surfaceMuted,

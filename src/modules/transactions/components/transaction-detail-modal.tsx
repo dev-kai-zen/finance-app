@@ -99,7 +99,7 @@ export function TransactionDetailModal({
     transaction.note ||
     (isTransfer
       ? isPocketTransfer
-        ? `Move to ${transaction.transferPocketName ?? "Main"}`
+        ? `Move to ${transaction.transferPocketName ?? "Available"}`
         : `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
@@ -202,7 +202,7 @@ export function TransactionDetailModal({
                   </Text>
                   <Text style={styles.detailValue}>
                     {isPocketTransfer
-                      ? transaction.pocketName ?? "Main"
+                      ? transaction.pocketName ?? "Available"
                       : transaction.accountName ?? "Account"}
                   </Text>
                   {!isPocketTransfer && transaction.pocketName ? (
@@ -223,7 +223,7 @@ export function TransactionDetailModal({
                     </Text>
                     <Text style={styles.detailValue}>
                       {isPocketTransfer
-                        ? transaction.transferPocketName ?? "Main"
+                        ? transaction.transferPocketName ?? "Available"
                         : transaction.transferAccountName ?? "Destination Account"}
                     </Text>
                     {!isPocketTransfer && transaction.transferPocketName ? (

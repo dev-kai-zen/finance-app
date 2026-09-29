@@ -68,7 +68,7 @@ export function CategoryGroupCard({
             <Text numberOfLines={2} style={styles.groupName}>
               {group.name}
             </Text>
-            <Text style={styles.subCount}>
+            <Text numberOfLines={1} style={styles.subCount}>
               {hasSub
                 ? `${subcategories.length} subcategor${subcategories.length === 1 ? "y" : "ies"}`
                 : "No subcategories"}
@@ -246,7 +246,7 @@ function createStyles(theme: AppTheme) {
     },
     subCount: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.xs,
     },
     headerActions: {
       alignItems: "center",

@@ -40,56 +40,46 @@ export function ThemePresetCard({
         style,
       ]}
     >
-      <FinanceThemePreview preset={preset} />
-
-      <View style={styles.details}>
-        <View style={styles.titleRow}>
-          <View style={styles.titleCopy}>
-            <Text numberOfLines={1} style={styles.name}>
-              {preset.name}
-            </Text>
-            <Text style={styles.mode}>{preset.mode.toUpperCase()}</Text>
-          </View>
-
-          <View
-            style={[
-              styles.selection,
-              selected && styles.selectionSelected,
-            ]}
-          >
-            {selected ? (
-              <Check color={activeTheme.colors.onPrimary} size={14} strokeWidth={3} />
-            ) : null}
-          </View>
-        </View>
+      <View style={styles.titleRow}>
+        <Text numberOfLines={1} style={styles.name}>
+          {preset.name}
+        </Text>
 
         <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={styles.swatches}
+          style={[
+            styles.selection,
+            selected && styles.selectionSelected,
+          ]}
         >
-          {[
-            preset.colors.background,
-            preset.colors.surface,
-            preset.colors.primary,
-            preset.colors.accent,
-          ].map((color, index) => (
-            <View
-              key={`${preset.id}-${color}-${index}`}
-              style={[
-                styles.swatch,
-                {
-                  backgroundColor: color,
-                  borderColor: preset.colors.borderStrong,
-                },
-              ]}
-            />
-          ))}
+          {selected ? (
+            <Check color={activeTheme.colors.onPrimary} size={14} strokeWidth={3} />
+          ) : null}
         </View>
+      </View>
 
-        <Text numberOfLines={2} style={styles.description}>
-          {preset.description}
-        </Text>
+      <FinanceThemePreview preset={preset} />
+
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.swatches}
+      >
+        {[
+          preset.colors.background,
+          preset.colors.primary,
+          preset.colors.accent,
+        ].map((color, index) => (
+          <View
+            key={`${preset.id}-${color}-${index}`}
+            style={[
+              styles.swatch,
+              {
+                backgroundColor: color,
+                borderColor: preset.colors.borderStrong,
+              },
+            ]}
+          />
+        ))}
       </View>
     </Pressable>
   );
@@ -232,15 +222,14 @@ function FinanceThemePreview({ preset }: { preset: AppTheme }) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     card: {
-      alignItems: "center",
+      alignItems: "stretch",
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
       borderCurve: "continuous",
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
-      flexDirection: "row",
       gap: theme.spacing.md,
-      minHeight: 142,
+      minHeight: 210,
       padding: theme.spacing.md,
     },
     cardSelected: {
@@ -252,32 +241,17 @@ function createStyles(theme: AppTheme) {
       opacity: 0.78,
       transform: [{ scale: 0.99 }],
     },
-    details: {
-      flex: 1,
-      gap: theme.spacing.sm,
-      minWidth: 0,
-    },
     titleRow: {
-      alignItems: "flex-start",
+      alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
       justifyContent: "space-between",
     },
-    titleCopy: {
-      flex: 1,
-      gap: theme.spacing.xxs,
-      minWidth: 0,
-    },
     name: {
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
-    },
-    mode: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.8,
     },
     selection: {
       alignItems: "center",
@@ -286,6 +260,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1.5,
       height: 24,
       justifyContent: "center",
+      flexShrink: 0,
       width: 24,
     },
     selectionSelected: {
@@ -293,19 +268,16 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.primary,
     },
     swatches: {
+      alignItems: "center",
       flexDirection: "row",
-      gap: theme.spacing.xs,
+      gap: theme.spacing.sm,
+      justifyContent: "center",
     },
     swatch: {
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
       height: 18,
       width: 18,
-    },
-    description: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      lineHeight: theme.typography.lineHeight.xs,
     },
   });
 }
@@ -316,10 +288,10 @@ const previewStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     gap: 6,
-    height: 112,
+    height: 142,
     overflow: "hidden",
-    padding: 8,
-    width: 116,
+    padding: 10,
+    width: "100%",
   },
   header: {
     alignItems: "center",
@@ -328,40 +300,40 @@ const previewStyles = StyleSheet.create({
   },
   brandMark: {
     borderRadius: 3,
-    height: 8,
-    width: 8,
+    height: 10,
+    width: 10,
   },
   headerLine: {
     borderRadius: 2,
     height: 3,
     opacity: 0.65,
-    width: 24,
+    width: 48,
   },
   balanceCard: {
     borderCurve: "continuous",
     borderRadius: 7,
     borderWidth: 1,
-    height: 61,
-    padding: 6,
+    height: 78,
+    padding: 8,
     position: "relative",
   },
   balanceLabel: {
-    fontSize: 6, // Deliberately miniature; this is a visual preview, not app copy.
+    fontSize: 7, // Deliberately miniature; this is a visual preview, not app copy.
     fontWeight: "700",
     letterSpacing: 0.4,
   },
   balance: {
-    fontSize: 12, // Deliberately miniature; this is a visual preview, not app copy.
+    fontSize: 15, // Deliberately miniature; this is a visual preview, not app copy.
     fontVariant: ["tabular-nums"],
     fontWeight: "700",
   },
   chart: {
     alignItems: "flex-end",
-    bottom: 5,
+    bottom: 7,
     flexDirection: "row",
     gap: 3,
     position: "absolute",
-    right: 6,
+    right: 8,
   },
   chartBar: {
     borderRadius: 1,
@@ -375,8 +347,8 @@ const previewStyles = StyleSheet.create({
   },
   transactionIcon: {
     borderRadius: 3,
-    height: 11,
-    width: 11,
+    height: 14,
+    width: 14,
   },
   transactionCopy: {
     flex: 1,
@@ -386,19 +358,19 @@ const previewStyles = StyleSheet.create({
     borderRadius: 2,
     height: 3,
     opacity: 0.7,
-    width: 31,
+    width: 64,
   },
   transactionLineShort: {
     borderRadius: 2,
     height: 2,
     opacity: 0.5,
-    width: 20,
+    width: 42,
   },
   amountLine: {
     borderRadius: 2,
     height: 3,
     opacity: 0.8,
-    width: 16,
+    width: 30,
   },
 });
 

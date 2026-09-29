@@ -141,7 +141,7 @@ export function TransactionsScreen() {
     let count = 0;
     if (filterState.type !== "all") count += 1;
     if (filterState.datePreset !== "all") count += 1;
-    if (filterState.accountId !== null) count += 1;
+    if (filterState.accountIds.length > 0) count += 1;
     return count;
   }, [filterState]);
 
@@ -170,11 +170,12 @@ export function TransactionsScreen() {
     }
 
     // 3. Account filter
-    if (filterState.accountId) {
+    if (filterState.accountIds.length > 0) {
       list = list.filter(
         (tx) =>
-          tx.accountId === filterState.accountId ||
-          tx.transferAccountId === filterState.accountId,
+          filterState.accountIds.includes(tx.accountId) ||
+          (tx.transferAccountId !== null &&
+            filterState.accountIds.includes(tx.transferAccountId)),
       );
     }
 

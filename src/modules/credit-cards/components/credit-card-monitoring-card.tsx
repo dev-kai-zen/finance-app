@@ -151,7 +151,7 @@ function Metric({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.metric}>
       <Text style={styles.metricLabel}>{label}</Text>
-      <Text numberOfLines={1} style={styles.metricValue}>
+      <Text selectable style={styles.metricValue}>
         {value}
       </Text>
     </View>
@@ -186,16 +186,19 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.xs,
     },
     metrics: {
-      flexDirection: "row",
-      gap: theme.spacing.sm,
+      gap: theme.spacing.xs,
       marginVertical: theme.spacing.lg,
     },
     metric: {
+      alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
-      flex: 1,
-      minWidth: 0,
-      padding: theme.spacing.md,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      justifyContent: "space-between",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
     },
     metricLabel: {
       color: theme.colors.textMuted,
@@ -203,9 +206,11 @@ function createStyles(theme: AppTheme) {
     },
     metricValue: {
       color: theme.colors.textPrimary,
+      flexShrink: 1,
       fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
-      marginTop: theme.spacing.xs,
+      fontVariant: ["tabular-nums"],
+      textAlign: "right",
     },
     detailRow: {
       alignItems: "center",

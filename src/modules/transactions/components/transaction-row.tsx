@@ -12,6 +12,32 @@ export interface TransactionRowProps {
   onDelete?: (id: string) => void;
 }
 
+const SHORT_MONTHS = [
+  "Jan.",
+  "Feb.",
+  "Mar.",
+  "Apr.",
+  "May.",
+  "Jun.",
+  "Jul.",
+  "Aug.",
+  "Sep.",
+  "Oct.",
+  "Nov.",
+  "Dec.",
+] as const;
+
+function formatTransactionDateTime(date: Date) {
+  const formattedDate = `${SHORT_MONTHS[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}, ${date.getFullYear()}`;
+  const formattedTime = date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return `${formattedDate} | ${formattedTime}`;
+}
+
 export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -42,7 +68,7 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     transaction.note ||
     (isTransfer
       ? isPocketTransfer
-        ? `Move to ${transaction.transferPocketName ?? "Main"}`
+        ? `Move to ${transaction.transferPocketName ?? "Available"}`
         : `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
@@ -63,7 +89,7 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     ? new Date(transaction.occurredAt)
     : null;
   const formattedDateTime = occurredAt
-    ? `${occurredAt.getFullYear()}-${String(occurredAt.getMonth() + 1).padStart(2, "0")}-${String(occurredAt.getDate()).padStart(2, "0")} | ${occurredAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false })}`
+    ? formatTransactionDateTime(occurredAt)
     : "";
 
   const routeOrCategory = isTransfer
@@ -77,10 +103,10 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     transaction.transferAccountName ?? "Destination"
   }`;
   const sourceTransferRoute = isPocketTransfer
-    ? transaction.pocketName ?? "Main"
+    ? transaction.pocketName ?? "Available"
     : accountRoute;
   const destinationTransferRoute = isPocketTransfer
-    ? transaction.transferPocketName ?? "Main"
+    ? transaction.transferPocketName ?? "Available"
     : destinationRoute;
   const formattedRoute = `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
 
@@ -142,11 +168,15 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
       <View style={styles.txDetailsRow}>
         <View style={styles.routeColumn}>
           {isTransfer ? (
-            <View style={styles.transferRouteRow}>
+            <View style={styles.transferRouteStack}>
               <Text style={styles.transferRouteText}>
                 {sourceTransferRoute}
               </Text>
-              <ArrowRightLeft color={theme.colors.info} size={14} />
+              <ArrowRightLeft
+                color={theme.colors.info}
+                size={14}
+                style={styles.transferRouteIcon}
+              />
               <Text style={styles.transferRouteText}>
                 {destinationTransferRoute}
               </Text>
@@ -177,10 +207,10 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     txCard: {
       backgroundColor: theme.colors.surface,
-      borderRadius: theme.borderRadius.large,
+      borderRadius: theme.borderRadius.medium,
       borderWidth: 1.5,
       paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
       ...theme.shadows.card,
     },
     txCardPressed: {
@@ -190,19 +220,19 @@ function createStyles(theme: AppTheme) {
     txHeaderRow: {
       alignItems: "flex-start",
       flexDirection: "row",
-      gap: theme.spacing.md,
+      gap: theme.spacing.sm,
       justifyContent: "space-between",
     },
     txNameText: {
       color: theme.colors.textPrimary,
       flex: 1,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
-      lineHeight: theme.typography.lineHeight.lg,
+      lineHeight: theme.typography.lineHeight.md,
     },
     amountText: {
       flexShrink: 1,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
       textAlign: "right",
@@ -210,35 +240,37 @@ function createStyles(theme: AppTheme) {
     txDetailsRow: {
       alignItems: "flex-start",
       flexDirection: "row",
-      gap: theme.spacing.md,
+      gap: theme.spacing.sm,
       justifyContent: "space-between",
       marginTop: theme.spacing.sm,
     },
     routeColumn: {
       flex: 1,
     },
-    transferRouteRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.xs,
+    transferRouteStack: {
+      alignItems: "flex-start",
+      gap: theme.spacing.xxs,
+    },
+    transferRouteIcon: {
+      marginLeft: theme.spacing.xs,
     },
     transferRouteText: {
       color: theme.colors.textSecondary,
       flexShrink: 1,
-      fontSize: theme.typography.fontSize.md,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
-      lineHeight: theme.typography.lineHeight.md,
+      lineHeight: theme.typography.lineHeight.xs,
     },
     routeCategoryText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.md,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
-      lineHeight: theme.typography.lineHeight.md,
+      lineHeight: theme.typography.lineHeight.xs,
     },
     txTimeText: {
       color: theme.colors.textSecondary,
       flexShrink: 1,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       textAlign: "right",
     },
@@ -248,16 +280,16 @@ function createStyles(theme: AppTheme) {
     },
     balanceText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
       marginTop: theme.spacing.xs,
       textAlign: "right",
     },
     txNoteText: {
       color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.xs,
       fontStyle: "italic",
-      lineHeight: theme.typography.lineHeight.sm,
+      lineHeight: theme.typography.lineHeight.xs,
       marginTop: theme.spacing.xs,
     },
   });

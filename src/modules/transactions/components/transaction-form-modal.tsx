@@ -523,7 +523,7 @@ export function TransactionFormModal({
                       }
                     >
                       {selectedAccount
-                        ? `${selectedAccount.name}${selectedAccount.pocketEnabled ? ` · ${selectedPocket?.name ?? "Main"}` : ""}`
+                        ? `${selectedAccount.name}${selectedAccount.pocketEnabled ? ` · ${selectedPocket?.name ?? "Available"}` : ""}`
                         : "Select Account"}
                     </Text>
                     {selectedAccount && (
@@ -531,7 +531,7 @@ export function TransactionFormModal({
                         {selectedPocket
                           ? "Pocket balance"
                           : selectedAccount.pocketEnabled
-                            ? "Main balance"
+                            ? "Available balance"
                             : selectedAccount.accountType?.name ?? "Account"} ·{" "}
                         {formatCurrency(
                           selectedLocationBalance,
@@ -584,7 +584,7 @@ export function TransactionFormModal({
                         }
                       >
                         {transferToAccount
-                          ? `${transferToAccount.name}${transferToAccount.pocketEnabled ? ` · ${transferToPocket?.name ?? "Main"}` : ""}`
+                          ? `${transferToAccount.name}${transferToAccount.pocketEnabled ? ` · ${transferToPocket?.name ?? "Available"}` : ""}`
                           : "Select Destination Account"}
                       </Text>
                       {transferToAccount && (
@@ -592,7 +592,7 @@ export function TransactionFormModal({
                           {transferToPocket
                             ? "Pocket balance"
                             : transferToAccount.pocketEnabled
-                              ? "Main balance"
+                              ? "Available balance"
                               : transferToAccount.accountType?.name ?? "Account"} ·{" "}
                           {formatCurrency(
                             transferToLocationBalance,

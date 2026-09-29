@@ -56,7 +56,14 @@ export function CreditUtilizationRing({
         />
       </Svg>
       <View pointerEvents="none" style={styles.center}>
-        <Text style={[styles.percent, { color }]}>
+        <Text
+          maxFontSizeMultiplier={size >= 80 ? 1.35 : 1.1}
+          style={[
+            styles.percent,
+            size < 80 && styles.percentCompact,
+            { color },
+          ]}
+        >
           {Math.round(percent)}%
         </Text>
         {size >= 80 ? <Text style={styles.used}>used</Text> : null}
@@ -79,6 +86,10 @@ function createStyles(theme: AppTheme) {
     percent: {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    percentCompact: {
+      fontSize: 9,
+      lineHeight: 11,
     },
     used: {
       color: theme.colors.textMuted,

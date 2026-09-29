@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Check, ChevronDown, ChevronUp } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -20,7 +21,7 @@ export type DatePreset = "all" | "this_month" | "last_month" | "this_year";
 export interface TransactionFilterState {
   type: TransactionType | "all";
   datePreset: DatePreset;
-  accountId: string | null;
+  accountIds: string[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";
 }
@@ -28,7 +29,7 @@ export interface TransactionFilterState {
 export const DEFAULT_TRANSACTION_FILTERS: TransactionFilterState = {
   type: "all",
   datePreset: "all",
-  accountId: null,
+  accountIds: [],
   sortBy: "date",
   sortOrder: "desc",
 };
@@ -69,11 +70,13 @@ export function TransactionFilterModal({
   const styles = useThemeStyles(createStyles);
 
   const [localFilters, setLocalFilters] = useState<TransactionFilterState>(filters);
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
 
   // Sync with prop when opened
   React.useEffect(() => {
     if (visible) {
       setLocalFilters(filters);
+      setAccountDropdownOpen(false);
     }
   }, [visible, filters]);
 
@@ -89,7 +92,17 @@ export function TransactionFilterModal({
   const hasActiveFilters =
     localFilters.type !== "all" ||
     localFilters.datePreset !== "all" ||
-    localFilters.accountId !== null;
+    localFilters.accountIds.length > 0;
+
+  const selectedAccountNames = accounts
+    .filter((account) => localFilters.accountIds.includes(account.id))
+    .map((account) => account.name);
+  const accountSelectionLabel =
+    selectedAccountNames.length === 0
+      ? "All accounts"
+      : selectedAccountNames.length <= 2
+        ? selectedAccountNames.join(", ")
+        : `${selectedAccountNames.length} accounts selected`;
 
   return (
     <Modal
@@ -201,56 +214,84 @@ export function TransactionFilterModal({
             {/* Account Filter */}
             <View style={styles.filterGroup}>
               <Text style={styles.groupTitle}>ACCOUNT</Text>
-              <View style={styles.accountPills}>
+              <Pressable
+                accessibilityLabel={`Account filter: ${accountSelectionLabel}`}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: accountDropdownOpen }}
+                onPress={() => setAccountDropdownOpen((open) => !open)}
+                style={({ pressed }) => [
+                  styles.accountDropdownTrigger,
+                  pressed && styles.accountDropdownPressed,
+                ]}
+              >
+                <Text numberOfLines={1} style={styles.accountDropdownText}>
+                  {accountSelectionLabel}
+                </Text>
+                {accountDropdownOpen ? (
+                  <ChevronUp color={theme.colors.textSecondary} size={18} />
+                ) : (
+                  <ChevronDown color={theme.colors.textSecondary} size={18} />
+                )}
+              </Pressable>
+
+              {accountDropdownOpen ? (
+                <ScrollView
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={accounts.length > 5}
+                  style={styles.accountOptionsList}
+                >
                 <Pressable
                   accessibilityLabel="All Accounts"
-                  accessibilityRole="button"
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: localFilters.accountIds.length === 0 }}
                   onPress={() =>
-                    setLocalFilters((prev) => ({ ...prev, accountId: null }))
+                    setLocalFilters((prev) => ({ ...prev, accountIds: [] }))
                   }
                   style={[
-                    styles.accountPill,
-                    localFilters.accountId === null && styles.accountPillActive,
+                    styles.accountOption,
+                    localFilters.accountIds.length === 0 && styles.accountOptionActive,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.accountPillText,
-                      localFilters.accountId === null && styles.accountPillTextActive,
-                    ]}
-                  >
+                  <Text style={styles.accountOptionText}>
                     All Accounts
                   </Text>
+                  {localFilters.accountIds.length === 0 ? (
+                    <Check color={theme.colors.primary} size={17} strokeWidth={2.5} />
+                  ) : null}
                 </Pressable>
 
                 {accounts.map((acc) => {
-                  const active = localFilters.accountId === acc.id;
+                  const active = localFilters.accountIds.includes(acc.id);
                   return (
                     <Pressable
                       key={acc.id}
                       accessibilityLabel={`Filter account ${acc.name}`}
-                      accessibilityRole="button"
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: active }}
                       onPress={() =>
                         setLocalFilters((prev) => ({
                           ...prev,
-                          accountId: active ? null : acc.id,
+                          accountIds: active
+                            ? prev.accountIds.filter((id) => id !== acc.id)
+                            : [...prev.accountIds, acc.id],
                         }))
                       }
-                      style={[styles.accountPill, active && styles.accountPillActive]}
+                      style={[styles.accountOption, active && styles.accountOptionActive]}
                     >
                       <Text
                         numberOfLines={1}
-                        style={[
-                          styles.accountPillText,
-                          active && styles.accountPillTextActive,
-                        ]}
+                        style={styles.accountOptionText}
                       >
                         {acc.name}
                       </Text>
+                      {active ? (
+                        <Check color={theme.colors.primary} size={17} strokeWidth={2.5} />
+                      ) : null}
                     </Pressable>
                   );
                 })}
-              </View>
+                </ScrollView>
+              ) : null}
             </View>
           </ScrollView>
 
@@ -400,33 +441,51 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.primary,
       fontWeight: "700",
     },
-    accountPills: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 8,
-    },
-    accountPill: {
+    accountDropdownTrigger: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
-      borderRadius: 20,
+      borderRadius: 10,
       borderWidth: 1,
-      maxWidth: "100%",
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
     },
-    accountPillActive: {
+    accountDropdownPressed: {
+      opacity: 0.72,
+    },
+    accountDropdownText: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    accountOptionsList: {
+      borderColor: theme.colors.border,
+      borderRadius: 10,
+      borderWidth: 1,
+      marginTop: theme.spacing.xs,
+      maxHeight: 220,
+    },
+    accountOption: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 42,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    accountOptionActive: {
       backgroundColor: `${theme.colors.primary}20`,
-      borderColor: theme.colors.primary,
     },
-    accountPillText: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
+    accountOptionText: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 13,
       fontWeight: "500",
-    },
-    accountPillTextActive: {
-      color: theme.colors.primary,
-      fontWeight: "700",
+      paddingRight: theme.spacing.sm,
     },
     footerRow: {
       flexDirection: "row",

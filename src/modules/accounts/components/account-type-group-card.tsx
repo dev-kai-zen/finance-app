@@ -1,9 +1,7 @@
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
   ArrowUpDown,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
   Folder,
   Plus,
   WalletCards,
@@ -253,11 +251,6 @@ export function AccountTypeGroupCard({
                       ? `${pocketCount} ${pocketCount === 1 ? "pocket" : "pockets"}`
                       : "Pockets"}
                   </Text>
-                  {pocketsExpanded ? (
-                    <ChevronUp color={primaryColor} size={14} />
-                  ) : (
-                    <ChevronDown color={primaryColor} size={14} />
-                  )}
                 </Pressable>
               ) : null}
 
@@ -283,7 +276,6 @@ export function AccountTypeGroupCard({
                     accessibilityLabel={`Available balance ${formatCurrency(available, account.currencyCode)}`}
                     style={styles.pocketRow}
                   >
-                    <View style={styles.pocketBranch} />
                     <View style={styles.mainPocketIcon}>
                       <WalletCards color={theme.colors.textSecondary} size={17} />
                     </View>
@@ -302,7 +294,6 @@ export function AccountTypeGroupCard({
                         pressed && styles.pocketActionPressed,
                       ]}
                     >
-                      <View style={styles.pocketBranch} />
                       <View style={styles.namedPocketIcon}>
                         <Folder color={theme.colors.info} size={17} />
                       </View>
@@ -546,16 +537,9 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.sm,
       minHeight: 46,
-      paddingHorizontal: theme.spacing.xs,
+      paddingLeft: 9,
+      paddingRight: theme.spacing.xs,
       paddingVertical: theme.spacing.xs,
-    },
-    pocketBranch: {
-      borderBottomColor: theme.colors.borderStrong,
-      borderBottomWidth: 1,
-      borderLeftColor: theme.colors.borderStrong,
-      borderLeftWidth: 1,
-      height: 23,
-      width: 20,
     },
     mainPocketIcon: {
       alignItems: "center",

@@ -175,7 +175,7 @@ export function AccountPickerModal({
             <View style={styles.headerTextCol}>
               <Text style={styles.headerTitle}>{title}</Text>
               <Text style={styles.headerSubtitle}>
-                Choose an account, Main balance, or pocket
+                Choose an account, Available balance, or pocket
               </Text>
             </View>
             <TouchableOpacity
@@ -274,7 +274,7 @@ export function AccountPickerModal({
                       const locations = [
                         {
                           id: null as string | null,
-                          name: "Main",
+                          name: "Available",
                           balance: balance - allocated,
                         },
                         ...activePockets.map((pocket) => ({
