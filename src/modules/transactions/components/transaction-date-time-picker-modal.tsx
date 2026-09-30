@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import DateTimePicker from "@expo/ui/community/datetime-picker";
 import {
   Modal,
   Pressable,
@@ -14,6 +13,7 @@ import { X } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { TransactionDateTimePickerControl } from "./transaction-date-time-picker-control";
 
 type PickerMode = "date" | "time";
 
@@ -76,12 +76,9 @@ export function TransactionDateTimePickerModal({
             </Pressable>
           </View>
 
-          <DateTimePicker
-            accentColor={theme.colors.primary}
-            display={mode === "date" ? "inline" : "spinner"}
+          <TransactionDateTimePickerControl
             mode={mode}
-            onValueChange={(_, selectedValue) => setDraft(selectedValue)}
-            presentation="inline"
+            onValueChange={setDraft}
             style={mode === "date" ? styles.datePicker : styles.timePicker}
             value={draft}
           />
