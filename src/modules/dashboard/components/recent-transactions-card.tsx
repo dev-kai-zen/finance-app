@@ -92,43 +92,46 @@ export function RecentTransactionsCard({
                 key={tx.id}
                 style={[styles.row, !isLast && styles.rowBorder]}
               >
-                <View style={styles.rowLeft}>
-                  <View
-                    style={[
-                      styles.iconBadge,
-                      {
-                        backgroundColor: `${catColor}20`,
-                        borderColor: `${catColor}40`,
-                      },
-                    ]}
-                  >
-                    <IconHelper color={catColor} name={iconName} size={16} />
-                  </View>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    {
+                      backgroundColor: `${catColor}20`,
+                      borderColor: `${catColor}40`,
+                    },
+                  ]}
+                >
+                  <IconHelper color={catColor} name={iconName} size={16} />
+                </View>
 
-                  <View style={styles.infoCol}>
+                <View style={styles.infoCol}>
+                  <View style={styles.primaryRow}>
                     <Text numberOfLines={1} style={styles.titleText}>
                       {title}
                     </Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.metaCategory}>
-                        {isTransfer
-                          ? `${tx.accountName} → ${tx.transferAccountName}`
-                          : tx.categoryName || "Uncategorized"}
-                      </Text>
-                      <Text style={styles.metaDot}>•</Text>
-                      <Text style={styles.metaDate}>{formattedDate}</Text>
-                    </View>
+                    <Text
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.8}
+                      numberOfLines={1}
+                      style={[
+                        styles.amountText,
+                        isTransfer ? styles.transferText : isPositive ? styles.incomeText : null,
+                      ]}
+                    >
+                      {formattedAmount}
+                    </Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text numberOfLines={1} style={styles.metaCategory}>
+                      {isTransfer
+                        ? `${tx.accountName} → ${tx.transferAccountName}`
+                        : tx.categoryName || "Uncategorized"}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.metaDate}>
+                      {formattedDate}
+                    </Text>
                   </View>
                 </View>
-
-                <Text
-                  style={[
-                    styles.amountText,
-                    isTransfer ? styles.transferText : isPositive ? styles.incomeText : null,
-                  ]}
-                >
-                  {formattedAmount}
-                </Text>
               </View>
             );
           })}
@@ -196,60 +199,66 @@ function createStyles(theme: AppTheme) {
     row: {
       alignItems: "center",
       flexDirection: "row",
-      justifyContent: "space-between",
+      gap: theme.spacing.md,
       paddingVertical: 10,
     },
     rowBorder: {
       borderBottomColor: theme.colors.border,
       borderBottomWidth: 1,
     },
-    rowLeft: {
-      alignItems: "center",
-      flex: 1,
-      flexDirection: "row",
-      gap: 12,
-    },
     iconBadge: {
       alignItems: "center",
       borderRadius: 10,
       borderWidth: 1,
+      flexShrink: 0,
       height: 36,
       justifyContent: "center",
       width: 36,
     },
     infoCol: {
       flex: 1,
+      minWidth: 0,
+    },
+    primaryRow: {
+      alignItems: "flex-start",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
     },
     titleText: {
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: 14,
       fontWeight: "600",
       lineHeight: 18,
     },
     metaRow: {
-      alignItems: "center",
       flexDirection: "row",
-      gap: 5,
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
       marginTop: 2,
     },
     metaCategory: {
       color: theme.colors.textSecondary,
+      flex: 1,
       fontSize: 11,
       fontWeight: "500",
-    },
-    metaDot: {
-      color: theme.colors.textSecondary,
-      fontSize: 10,
+      minWidth: 0,
     },
     metaDate: {
       color: theme.colors.textMuted,
+      flexShrink: 0,
       fontSize: 11,
+      textAlign: "right",
     },
     amountText: {
       color: theme.colors.danger,
+      flexShrink: 1,
       fontSize: 14,
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
+      maxWidth: "48%",
+      textAlign: "right",
     },
     incomeText: {
       color: theme.colors.success,

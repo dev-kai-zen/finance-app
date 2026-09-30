@@ -5,7 +5,6 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
-  Sparkles,
   TrendingDown,
   TrendingUp,
 } from "lucide-react-native";
@@ -51,10 +50,7 @@ export function DashboardNetWorthCard({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.titleGroup}>
-          <View style={styles.titleIcon}>
-            <Sparkles color={theme.colors.primary} size={18} />
-          </View>
-          <Text style={styles.label}>TOTAL NET WORTH</Text>
+          <Text style={styles.label}>Net Worth</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
@@ -62,6 +58,7 @@ export function DashboardNetWorthCard({
               chartVisible ? "Hide net worth chart" : "Show net worth chart"
             }
             accessibilityRole="button"
+            hitSlop={5}
             onPress={() => setChartVisible((current) => !current)}
             style={({ pressed }) => [
               styles.iconButton,
@@ -77,6 +74,7 @@ export function DashboardNetWorthCard({
           <Pressable
             accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
             accessibilityRole="button"
+            hitSlop={5}
             onPress={() => setValuesVisible((current) => !current)}
             style={({ pressed }) => [
               styles.iconButton,
@@ -92,50 +90,48 @@ export function DashboardNetWorthCard({
         </View>
       </View>
 
-      <Text
-        adjustsFontSizeToFit
-        minimumFontScale={0.6}
-        numberOfLines={1}
-        selectable
-        style={[
-          styles.netWorthValue,
-          !isPositive && styles.netWorthValueNegative,
-        ]}
-      >
-        {valuesVisible
-          ? formatCurrency(netWorthMinorUnits, currencyCode)
-          : privateValue}
-      </Text>
-      {chartVisible ? (
-        <>
-          <View
+      <View style={styles.summaryRow}>
+        <Text
+          adjustsFontSizeToFit
+          minimumFontScale={0.65}
+          numberOfLines={1}
+          selectable
+          style={[
+            styles.netWorthValue,
+            !isPositive && styles.netWorthValueNegative,
+          ]}
+        >
+          {valuesVisible
+            ? formatCurrency(netWorthMinorUnits, currencyCode)
+            : privateValue}
+        </Text>
+        <View
+          style={[
+            styles.trendPill,
+            !trendIsPositive && styles.trendPillNegative,
+          ]}
+        >
+          <TrendIcon
+            color={trendIsPositive ? theme.colors.success : theme.colors.danger}
+            size={14}
+          />
+          <Text
+            numberOfLines={1}
             style={[
-              styles.trendPill,
-              !trendIsPositive && styles.trendPillNegative,
+              styles.trendText,
+              !trendIsPositive && styles.trendTextNegative,
             ]}
           >
-            <TrendIcon
-              color={
-                trendIsPositive
-                  ? theme.colors.success
-                  : theme.colors.danger
-              }
-              size={15}
-            />
-            <Text
-              style={[
-                styles.trendText,
-                !trendIsPositive && styles.trendTextNegative,
-              ]}
-            >
-              {!valuesVisible
-                ? "Hidden"
-                : monthlyChangePercentage === null
-                  ? "No prior month"
-                  : `${monthlyChangePercentage >= 0 ? "+" : ""}${monthlyChangePercentage}% vs last mo`}
-            </Text>
-          </View>
-
+            {!valuesVisible
+              ? "Hidden"
+              : monthlyChangePercentage === null
+                ? "No prior month"
+                : `${monthlyChangePercentage >= 0 ? "+" : ""}${monthlyChangePercentage}%`}
+          </Text>
+        </View>
+      </View>
+      {chartVisible ? (
+        <>
           <View style={styles.periodSelector}>
             {PERIODS.map((option) => {
               const selected = option === period;
@@ -220,7 +216,7 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
       ...theme.shadows.card,
     },
     header: {
@@ -233,21 +229,12 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       flexShrink: 1,
-      gap: theme.spacing.sm,
-    },
-    titleIcon: {
-      alignItems: "center",
-      backgroundColor: `${theme.colors.primary}18`,
-      borderRadius: theme.borderRadius.medium,
-      height: 34,
-      justifyContent: "center",
-      width: 34,
     },
     label: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.7,
+      letterSpacing: -0.2,
     },
     headerActions: {
       alignItems: "center",
@@ -258,20 +245,28 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
-      height: 42,
+      height: 34,
       justifyContent: "center",
-      width: 42,
+      width: 34,
     },
     buttonPressed: {
       opacity: 0.65,
     },
+    summaryRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
+      marginTop: theme.spacing.md,
+    },
     netWorthValue: {
       color: theme.colors.success,
-      fontSize: 40,
+      flex: 1,
+      fontSize: theme.typography.fontSize.title,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
-      letterSpacing: -1,
-      marginTop: theme.spacing.lg,
+      letterSpacing: -0.5,
+      minWidth: 0,
     },
     netWorthValueNegative: {
       color: theme.colors.danger,
@@ -283,9 +278,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
       flexDirection: "row",
       gap: theme.spacing.xs,
-      marginTop: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      flexShrink: 0,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
     },
     trendPillNegative: {
       backgroundColor: `${theme.colors.danger}18`,
@@ -305,17 +300,17 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       flexDirection: "row",
-      marginTop: theme.spacing.xl,
+      marginTop: theme.spacing.md,
       overflow: "hidden",
-      padding: 3,
+      padding: theme.spacing.xxs,
     },
     periodButton: {
       alignItems: "center",
       borderRadius: theme.borderRadius.small,
       justifyContent: "center",
-      minHeight: 36,
-      minWidth: 46,
-      paddingHorizontal: theme.spacing.sm,
+      minHeight: 30,
+      minWidth: 40,
+      paddingHorizontal: theme.spacing.xs,
     },
     periodButtonSelected: {
       backgroundColor: theme.colors.primary,
@@ -330,18 +325,17 @@ function createStyles(theme: AppTheme) {
     },
     breakdownRow: {
       flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.md,
-      marginTop: theme.spacing.lg,
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.md,
     },
     breakdownCard: {
       backgroundColor: theme.colors.background,
       borderRadius: theme.borderRadius.medium,
-      borderLeftWidth: 4,
+      borderLeftWidth: 3,
       flex: 1,
-      minWidth: 150,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
+      minWidth: 0,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
     },
     assetCard: {
       borderLeftColor: theme.colors.success,
@@ -371,7 +365,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     breakdownValue: {
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
       marginTop: theme.spacing.xs,

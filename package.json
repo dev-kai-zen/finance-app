@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/ui": "~57.0.21",
     "@noble/hashes": "^2.4.0",
     "babel-preset-expo": "~57.0.0",
     "drizzle-orm": "^0.45.2",

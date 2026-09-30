@@ -15,7 +15,6 @@ import {
   CloudUpload,
   FolderOpen,
   LogOut,
-  RefreshCw,
   ShieldAlert,
 } from "lucide-react-native";
 
@@ -25,6 +24,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useGoogleDriveBackup } from "@/modules/backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/backup/types/backup.types";
 import { BackupPassphraseModal } from "./backup-passphrase-modal";
+import { RestoreBackupModal } from "./restore-backup-modal";
 
 export function GoogleDriveBackupSettings() {
   const theme = useAppTheme();
@@ -35,6 +35,7 @@ export function GoogleDriveBackupSettings() {
   >(null);
   const [selectedBackup, setSelectedBackup] = useState<BackupFile | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
+  const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const busy = backup.operation !== "idle";
 
   const operationLabel = useMemo(() => {
@@ -55,8 +56,14 @@ export function GoogleDriveBackupSettings() {
   }, [backup.operation]);
 
   const beginRestore = (file: BackupFile) => {
+    setRestoreModalVisible(false);
     setSelectedBackup(file);
     setConfirmRestore(true);
+  };
+
+  const openRestoreModal = () => {
+    setRestoreModalVisible(true);
+    void backup.refresh();
   };
 
   const confirmSelectedRestore = () => {
@@ -140,6 +147,27 @@ export function GoogleDriveBackupSettings() {
 
             <View style={styles.insetDivider} />
             <Pressable
+              accessibilityLabel="Restore from backup"
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={openRestoreModal}
+              style={({ pressed }) => [
+                styles.actionRow,
+                pressed && styles.pressed,
+                busy && styles.disabled,
+              ]}
+            >
+              <CloudDownload color={theme.colors.primary} size={20} />
+              <View style={styles.copy}>
+                <Text style={styles.actionTitle}>Restore from Backup</Text>
+                <Text style={styles.description}>
+                  Choose a saved backup from Google Drive
+                </Text>
+              </View>
+            </Pressable>
+
+            <View style={styles.insetDivider} />
+            <Pressable
               accessibilityLabel="Open Kaizen Finance backups in Google Drive"
               accessibilityRole="button"
               disabled={busy || !backup.folderUrl}
@@ -158,66 +186,6 @@ export function GoogleDriveBackupSettings() {
                 </Text>
               </View>
             </Pressable>
-
-            <View style={styles.divider} />
-            <View style={styles.backupHeader}>
-              <Text style={styles.backupHeaderTitle}>AVAILABLE BACKUPS</Text>
-              <Pressable
-                accessibilityLabel="Refresh backups"
-                accessibilityRole="button"
-                disabled={busy}
-                hitSlop={10}
-                onPress={backup.refresh}
-                style={busy && styles.disabled}
-              >
-                <RefreshCw color={theme.colors.textMuted} size={17} />
-              </Pressable>
-            </View>
-
-            {backup.operation === "loading" && backup.backups.length === 0 ? (
-              <View style={styles.inlineState}>
-                <ActivityIndicator color={theme.colors.primary} size="small" />
-                <Text style={styles.description}>Loading backups...</Text>
-              </View>
-            ) : backup.backups.length === 0 ? (
-              <View style={styles.inlineState}>
-                <CloudDownload color={theme.colors.textMuted} size={18} />
-                <Text style={styles.description}>No backups yet.</Text>
-              </View>
-            ) : (
-              backup.backups.map((file, index) => (
-                <View key={file.id}>
-                  {index > 0 ? <View style={styles.insetDivider} /> : null}
-                  <Pressable
-                    accessibilityLabel={`Restore backup from ${formatDate(file.createdTime)}`}
-                    accessibilityRole="button"
-                    disabled={busy}
-                    onPress={() => beginRestore(file)}
-                    style={({ pressed }) => [
-                      styles.backupRow,
-                      pressed && styles.pressed,
-                      busy && styles.disabled,
-                    ]}
-                  >
-                    <CloudDownload color={theme.colors.textSecondary} size={18} />
-                    <View style={styles.copy}>
-                      <Text style={styles.backupDate} selectable>
-                        {formatDate(file.createdTime)}
-                      </Text>
-                      <Text style={styles.description} selectable>
-                        {formatBytes(file.size)} · {file.passwordProtected
-                          ? "Password protected"
-                          : "No password"}
-                        {file.location === "legacy-hidden"
-                          ? " · Hidden legacy copy"
-                          : ""}
-                      </Text>
-                    </View>
-                    <Text style={styles.restoreLabel}>Restore</Text>
-                  </Pressable>
-                </View>
-              ))
-            )}
 
             <View style={styles.divider} />
             <Pressable
@@ -293,6 +261,15 @@ export function GoogleDriveBackupSettings() {
         ) : null}
       </View>
 
+      <RestoreBackupModal
+        backups={backup.backups}
+        loading={backup.operation === "loading"}
+        onClose={() => setRestoreModalVisible(false)}
+        onRefresh={() => void backup.refresh()}
+        onSelect={beginRestore}
+        visible={restoreModalVisible}
+      />
+
       <ConfirmModal
         confirmLabel="Continue"
         message="Restoring replaces all current local data with the selected backup. A safety copy is kept in memory and restored automatically if validation fails."
@@ -323,22 +300,6 @@ export function GoogleDriveBackupSettings() {
       />
     </>
   );
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown date";
-  return date.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "Unknown size";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function createStyles(theme: AppTheme) {
@@ -441,46 +402,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
-    },
-    backupHeader: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      minHeight: 42,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
-    },
-    backupHeaderTitle: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.6,
-    },
-    backupRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.md,
-      minHeight: 62,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
-    },
-    backupDate: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    restoreLabel: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    inlineState: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      minHeight: 58,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
     },
     disconnectText: {
       color: theme.colors.textSecondary,

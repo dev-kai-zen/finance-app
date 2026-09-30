@@ -15,7 +15,6 @@ import {
   AmountCalculatorField,
   AmountCalculatorModal,
   CategoryPickerModal,
-  DatePickerModal,
   IconHelper,
   KeyboardAwareForm,
 } from "@/components";
@@ -26,7 +25,6 @@ import type {
   AccountListItem,
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
-import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 import type { Category } from "@/modules/categories/types/category.types";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
@@ -38,6 +36,7 @@ import type {
   TransactionType,
   UpdateTransferInput,
 } from "../types/transaction.types";
+import { TransactionDateTimePickerModal } from "./transaction-date-time-picker-modal";
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -58,12 +57,37 @@ export interface TransactionFormModalProps {
   isEditing?: boolean;
 }
 
-function getTodayIsoString(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+const SHORT_MONTHS = [
+  "Jan.",
+  "Feb.",
+  "Mar.",
+  "Apr.",
+  "May",
+  "Jun.",
+  "Jul.",
+  "Aug.",
+  "Sep.",
+  "Oct.",
+  "Nov.",
+  "Dec.",
+] as const;
+
+function getCurrentTransactionDate(): Date {
+  const value = new Date();
+  value.setSeconds(0, 0);
+  return value;
+}
+
+function formatTransactionDate(value: Date): string {
+  return `${SHORT_MONTHS[value.getMonth()]} ${value.getDate()}, ${value.getFullYear()}`;
+}
+
+function formatTransactionTime(value: Date): string {
+  return value.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    hour12: true,
+    minute: "2-digit",
+  });
 }
 
 export function TransactionFormModal({
@@ -94,7 +118,7 @@ export function TransactionFormModal({
   const [transferToAccountId, setTransferToAccountId] = useState<string>("");
   const [transferToPocketId, setTransferToPocketId] = useState<string | null>(null);
   const [amountMinorUnits, setAmountMinorUnits] = useState<number>(0);
-  const [dateIsoString, setDateIsoString] = useState<string>(getTodayIsoString());
+  const [occurredAt, setOccurredAt] = useState<Date>(getCurrentTransactionDate);
   const [note, setNote] = useState<string>("");
   const [installmentEnabled, setInstallmentEnabled] = useState(false);
   const [installmentTerm, setInstallmentTerm] = useState("12");
@@ -102,7 +126,7 @@ export function TransactionFormModal({
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [dateTimePickerMode, setDateTimePickerMode] = useState<"date" | "time" | null>(null);
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
@@ -123,10 +147,10 @@ export function TransactionFormModal({
         );
         setTransferToPocketId(initialTransaction.transferPocketId);
         setSelectedCategoryId(initialTransaction.categoryId || "");
-        setDateIsoString(
+        setOccurredAt(
           initialTransaction.occurredAt
-            ? new Date(initialTransaction.occurredAt).toISOString().split("T")[0]
-            : getTodayIsoString()
+            ? new Date(initialTransaction.occurredAt)
+            : getCurrentTransactionDate()
         );
         setNote(initialTransaction.note || "");
         setInstallmentEnabled(false);
@@ -146,7 +170,7 @@ export function TransactionFormModal({
         setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
 
         setAmountMinorUnits(0);
-        setDateIsoString(getTodayIsoString());
+        setOccurredAt(getCurrentTransactionDate());
         setNote("");
         setInstallmentEnabled(false);
         setInstallmentTerm("12");
@@ -245,6 +269,27 @@ export function TransactionFormModal({
     [transferToAccount, theme],
   );
 
+  const handleDateTimeConfirm = (selectedValue: Date) => {
+    setOccurredAt((currentValue) =>
+      dateTimePickerMode === "date"
+        ? new Date(
+            selectedValue.getFullYear(),
+            selectedValue.getMonth(),
+            selectedValue.getDate(),
+            currentValue.getHours(),
+            currentValue.getMinutes(),
+          )
+        : new Date(
+            currentValue.getFullYear(),
+            currentValue.getMonth(),
+            currentValue.getDate(),
+            selectedValue.getHours(),
+            selectedValue.getMinutes(),
+          ),
+    );
+    setDateTimePickerMode(null);
+  };
+
   const handleSave = async () => {
     if (amountMinorUnits <= 0) {
       setLocalError("Please enter an amount greater than zero.");
@@ -256,8 +301,7 @@ export function TransactionFormModal({
       return;
     }
 
-    const [year, month, day] = dateIsoString.split("-").map(Number);
-    const occurredAt = new Date(year, month - 1, day, 12, 0, 0);
+    const transactionOccurredAt = new Date(occurredAt);
 
     if (mode === "transfer") {
       if (!transferToAccountId) {
@@ -281,7 +325,7 @@ export function TransactionFormModal({
         amountCents: Math.abs(amountMinorUnits),
         name: name.trim() || null,
         note: note.trim() || null,
-        occurredAt,
+        occurredAt: transactionOccurredAt,
       };
       const success =
         isEditing && initialTransaction && onUpdateTransfer
@@ -324,7 +368,7 @@ export function TransactionFormModal({
         amountCents: signedAmount,
         name: name.trim() || null,
         note: note.trim() || null,
-        occurredAt,
+        occurredAt: transactionOccurredAt,
         installment:
           canUseInstallments && installmentEnabled
             ? { termMonths: Number(installmentTerm) }
@@ -451,23 +495,48 @@ export function TransactionFormModal({
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
-            {/* Transaction Title / Payee Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>TRANSACTION TITLE / PAYEE</Text>
+            <View style={styles.nameDateGroup}>
               <TextInput
                 maxLength={100}
                 onChangeText={setName}
-                placeholder={
-                  mode === "transfer"
-                    ? "e.g. Monthly Savings Allocation, Card Payment..."
-                    : mode === "income"
-                      ? "e.g. Salary Payout, Freelance Project, Dividend..."
-                      : "e.g. Grocery run at SM, Starbucks, Electric Bill..."
-                }
+                placeholder="Name"
                 placeholderTextColor={theme.colors.textSecondary}
                 style={styles.nameInput}
                 value={name}
               />
+              <View style={styles.dateTimeRow}>
+                <Pressable
+                  accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
+                  accessibilityRole="button"
+                  disabled={pending}
+                  onPress={() => setDateTimePickerMode("date")}
+                  style={({ pressed }) => [
+                    styles.dateTimeButton,
+                    pressed && styles.dateTimeButtonPressed,
+                  ]}
+                >
+                  <Text numberOfLines={1} style={styles.dateTimeText}>
+                    {formatTransactionDate(occurredAt)}
+                  </Text>
+                </Pressable>
+                <Text accessible={false} style={styles.dateTimeSeparator}>
+                  |
+                </Text>
+                <Pressable
+                  accessibilityLabel={`Transaction time ${formatTransactionTime(occurredAt)}. Tap to change.`}
+                  accessibilityRole="button"
+                  disabled={pending}
+                  onPress={() => setDateTimePickerMode("time")}
+                  style={({ pressed }) => [
+                    styles.dateTimeButton,
+                    pressed && styles.dateTimeButtonPressed,
+                  ]}
+                >
+                  <Text numberOfLines={1} style={styles.dateTimeText}>
+                    {formatTransactionTime(occurredAt)}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             <View style={styles.inputGroup}>
@@ -489,9 +558,9 @@ export function TransactionFormModal({
 
             {/* Account Selector */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>
-                {mode === "transfer" ? "TRANSFER FROM ACCOUNT" : "ACCOUNT"}
-              </Text>
+              {mode === "transfer" ? (
+                <Text style={styles.fieldLabel}>TRANSFER FROM</Text>
+              ) : null}
               <Pressable
                 accessibilityLabel={`Account location ${selectedAccount?.name ?? "none selected"}${selectedPocket ? `, ${selectedPocket.name}` : ""}. Tap to choose.`}
                 accessibilityRole="button"
@@ -552,7 +621,7 @@ export function TransactionFormModal({
             {mode === "transfer" ? (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.fieldLabel}>TRANSFER TO ACCOUNT</Text>
+                  <Text style={styles.fieldLabel}>TRANSFER TO</Text>
                   <Pressable
                   accessibilityLabel={`Destination account location ${transferToAccount?.name ?? "none selected"}${transferToPocket ? `, ${transferToPocket.name}` : ""}. Tap to choose.`}
                   accessibilityRole="button"
@@ -612,7 +681,6 @@ export function TransactionFormModal({
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={styles.inputGroup}>
-                <Text style={styles.fieldLabel}>CATEGORY</Text>
                 <Pressable
                   accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
                   accessibilityRole="button"
@@ -705,21 +773,6 @@ export function TransactionFormModal({
               </View>
             ) : null}
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Date</Text>
-              <Pressable
-                accessibilityLabel={`Selected date ${dateIsoString}. Tap to change.`}
-                accessibilityRole="button"
-                onPress={() => setIsDatePickerOpen(true)}
-                style={styles.selectorPill}
-              >
-                <Text style={styles.selectorPillValue}>
-                  {formatDisplayDate(dateIsoString)}
-                </Text>
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </Pressable>
-            </View>
-
             {/* Note / Memo Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
@@ -762,7 +815,7 @@ export function TransactionFormModal({
         </View>
       </View>
 
-      {/* Sub-Modals: Amount Calculator & Date Picker */}
+      {/* Sub-Modals */}
       <AmountCalculatorModal
         currencyCode={currencyCode}
         initialMinorUnits={amountMinorUnits}
@@ -775,15 +828,12 @@ export function TransactionFormModal({
         visible={isCalculatorOpen}
       />
 
-      <DatePickerModal
-        onClose={() => setIsDatePickerOpen(false)}
-        onSelectDate={(iso) => {
-          setDateIsoString(iso);
-          setIsDatePickerOpen(false);
-        }}
-        selectedDate={dateIsoString}
-        title="Select Transaction Date"
-        visible={isDatePickerOpen}
+      <TransactionDateTimePickerModal
+        mode={dateTimePickerMode ?? "date"}
+        onClose={() => setDateTimePickerMode(null)}
+        onConfirm={handleDateTimeConfirm}
+        value={occurredAt}
+        visible={dateTimePickerMode !== null}
       />
 
       <AccountPickerModal
@@ -921,6 +971,9 @@ function createStyles(theme: AppTheme) {
     inputGroup: {
       marginBottom: 16,
     },
+    nameDateGroup: {
+      marginBottom: 16,
+    },
     installmentPanel: {
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
@@ -980,23 +1033,33 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
-    selectorPill: {
+    dateTimeRow: {
       alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: 999,
-      borderWidth: 1,
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
       flexDirection: "row",
-      gap: theme.spacing.sm,
-      justifyContent: "space-between",
-      minHeight: 48,
-      paddingHorizontal: theme.spacing.lg,
+      justifyContent: "flex-start",
+      marginTop: theme.spacing.xs,
     },
-    selectorPillValue: {
-      color: theme.colors.textPrimary,
-      flex: 1,
+    dateTimeButton: {
+      borderRadius: theme.borderRadius.small,
+      justifyContent: "center",
+      minHeight: 42,
+      paddingHorizontal: theme.spacing.xs,
+    },
+    dateTimeSeparator: {
+      color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.md,
-      fontWeight: theme.typography.fontWeight.semibold,
+      paddingHorizontal: theme.spacing.xxs,
+    },
+    dateTimeButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+    },
+    dateTimeText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.md,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.medium,
     },
     chipsScroll: {
       flexDirection: "row",

@@ -22,11 +22,11 @@ interface NetWorthChartProps {
   valuesVisible: boolean;
 }
 
-const CHART_HEIGHT = 230;
-const PLOT_TOP = 14;
-const PLOT_BOTTOM = 36;
-const PLOT_LEFT = 50;
-const PLOT_RIGHT = 10;
+const CHART_HEIGHT = 160;
+const PLOT_TOP = 10;
+const PLOT_BOTTOM = 26;
+const PLOT_LEFT = 44;
+const PLOT_RIGHT = 6;
 
 export function NetWorthChart({
   points,
@@ -113,7 +113,7 @@ export function NetWorthChart({
             stroke={theme.colors.success}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={3}
+            strokeWidth={2.25}
           />
           <Path
             d={liabilitiesPath}
@@ -121,7 +121,7 @@ export function NetWorthChart({
             stroke={theme.colors.danger}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={3}
+            strokeWidth={2.25}
           />
           <Path
             d={netWorthPath}
@@ -129,7 +129,7 @@ export function NetWorthChart({
             stroke={theme.colors.info}
             strokeLinecap="round"
             strokeLinejoin="round"
-            strokeWidth={3}
+            strokeWidth={2.25}
           />
 
           {points.map((point, index) => {
@@ -142,7 +142,7 @@ export function NetWorthChart({
                   cx={x}
                   cy={yForValue(point.totalAssetsMinorUnits)}
                   fill={theme.colors.success}
-                  r={4}
+                  r={3}
                   stroke={theme.colors.surface}
                   strokeWidth={1.5}
                 />
@@ -150,7 +150,7 @@ export function NetWorthChart({
                   cx={x}
                   cy={yForValue(Math.abs(point.totalLiabilitiesMinorUnits))}
                   fill={theme.colors.danger}
-                  r={4}
+                  r={3}
                   stroke={theme.colors.surface}
                   strokeWidth={1.5}
                 />
@@ -158,7 +158,7 @@ export function NetWorthChart({
                   cx={x}
                   cy={yForValue(point.netWorthMinorUnits)}
                   fill={theme.colors.info}
-                  r={4.5}
+                  r={3.5}
                   stroke={theme.colors.surface}
                   strokeWidth={1.5}
                 />
@@ -168,7 +168,7 @@ export function NetWorthChart({
                     fontSize={10}
                     textAnchor="middle"
                     x={x}
-                    y={CHART_HEIGHT - 10}
+                    y={CHART_HEIGHT - 6}
                   >
                     {point.label}
                   </SvgText>
@@ -253,16 +253,16 @@ function formatAxisValue(minorUnits: number): string {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      minHeight: CHART_HEIGHT + 38,
+      minHeight: CHART_HEIGHT + 30,
       width: "100%",
     },
     legend: {
       alignItems: "center",
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: theme.spacing.lg,
+      gap: theme.spacing.md,
       justifyContent: "center",
-      paddingTop: theme.spacing.sm,
+      paddingTop: theme.spacing.xs,
     },
     legendItem: {
       alignItems: "center",
@@ -270,9 +270,9 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.xs,
     },
     legendDot: {
-      borderRadius: 5,
-      height: 10,
-      width: 10,
+      borderRadius: 4,
+      height: 8,
+      width: 8,
     },
     legendText: {
       color: theme.colors.textSecondary,

@@ -345,6 +345,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       flexDirection: "row",
       marginRight: theme.spacing.sm,
+      minWidth: 0,
       padding: 2,
     },
     headerLeftPressed: {
@@ -365,14 +366,19 @@ function createStyles(theme: AppTheme) {
     },
     titleRow: {
       alignItems: "center",
+      flex: 1,
       flexDirection: "row",
+      minWidth: 0,
     },
     chevronIcon: {
+      flexShrink: 0,
       marginLeft: 4,
     },
     groupTitle: {
+      flexShrink: 1,
       fontSize: 15,
       fontWeight: theme.typography.fontWeight.bold,
+      minWidth: 0,
     },
     accountCount: {
       color: theme.colors.textSecondary,
