@@ -1,6 +1,5 @@
-import { db } from "@/infrastructure/database/client";
-import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
-import { requirePocketForAccount } from "@/modules/accounts";
+import { db, type DbContext } from "@/infrastructure/database/client";
+import { requireAccount, requirePocketForAccount } from "@/modules/accounts";
 import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 import {
   generateId,
@@ -8,7 +7,14 @@ import {
 } from "../repositories/transactions.repository";
 import type { CreateTransferInput, TransferResult } from "../types/transaction.types";
 
-export function createTransfer(input: CreateTransferInput): TransferResult {
+export function createTransfer(input: CreateTransferInput): TransferResult {
+  return db.transaction((tx) => createTransferInContext(input, tx));
+}
+
+export function createTransferInContext(
+  input: CreateTransferInput,
+  context: DbContext,
+): TransferResult {
   if (!input.fromAccountId) {
     throw new Error("Source account ('From') is required.");
   }
@@ -28,24 +34,16 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
     throw new Error("Transfer amount must be an integer in minor units (centavos).");
   }
 
-  return db.transaction((tx) => {
-    const fromAccount = findAccountById(input.fromAccountId, tx);
-    if (!fromAccount) {
-      throw new Error(`Source account not found: ${input.fromAccountId}`);
-    }
-
-    const toAccount = findAccountById(input.toAccountId, tx);
-    if (!toAccount) {
-      throw new Error(`Destination account not found: ${input.toAccountId}`);
-    }
+    const fromAccount = requireAccount(input.fromAccountId, context);
+    const toAccount = requireAccount(input.toAccountId, context);
     if (input.fromPocketId) {
-      requirePocketForAccount(input.fromPocketId, fromAccount.id, tx);
+      requirePocketForAccount(input.fromPocketId, fromAccount.id, context);
     }
     if (input.toPocketId) {
-      requirePocketForAccount(input.toPocketId, toAccount.id, tx);
+      requirePocketForAccount(input.toPocketId, toAccount.id, context);
     }
 
-    const groupId = generateId(tx);
+    const groupId = generateId(context);
     const occurredAt =
       input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
     const name = input.name?.trim() || null;
@@ -64,7 +62,7 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
         note,
         occurredAt,
       },
-      tx,
+      context,
     );
 
     const inLeg = insertTransaction(
@@ -79,10 +77,9 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
         note,
         occurredAt,
       },
-      tx,
-    );
-
-    reconcileCreditCardBillingInContext(new Date(), tx);
+      context,
+    );
+
+    reconcileCreditCardBillingInContext(new Date(), context);
     return { transactionGroupId: groupId, outLeg, inLeg };
-  });
-}
+}

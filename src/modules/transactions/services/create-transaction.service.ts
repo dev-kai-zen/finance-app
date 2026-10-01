@@ -1,7 +1,6 @@
-import { db } from "@/infrastructure/database/client";
-import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
-import { findCategoryById } from "@/modules/categories/repositories/categories.repository";
-import { requirePocketForAccount } from "@/modules/accounts";
+import { db, type DbContext } from "@/infrastructure/database/client";
+import { requireAccount, requirePocketForAccount } from "@/modules/accounts";
+import { requireCategory } from "@/modules/categories";
 import {
   createCreditCardInstallmentPlan,
   reconcileCreditCardBillingInContext,
@@ -10,6 +9,13 @@ import { insertTransaction } from "../repositories/transactions.repository";
 import type { CreateTransactionInput, Transaction } from "../types/transaction.types";
 
 export function createTransaction(input: CreateTransactionInput): Transaction {
+  return db.transaction((tx) => createTransactionInContext(input, tx));
+}
+
+export function createTransactionInContext(
+  input: CreateTransactionInput,
+  context: DbContext,
+): Transaction {
   if (!input.accountId) {
     throw new Error("Account is required for recording a transaction.");
   }
@@ -26,18 +32,10 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
     throw new Error("Transaction amount must be an integer in minor units (centavos).");
   }
 
-  return db.transaction((tx) => {
-    const account = findAccountById(input.accountId, tx);
-    if (!account) {
-      throw new Error(`Account not found: ${input.accountId}`);
-    }
-
-    const category = findCategoryById(input.categoryId, tx);
-    if (!category) {
-      throw new Error(`Category not found: ${input.categoryId}`);
-    }
+    const account = requireAccount(input.accountId, context);
+    requireCategory(input.categoryId, context);
     if (input.pocketId) {
-      requirePocketForAccount(input.pocketId, account.id, tx);
+      requirePocketForAccount(input.pocketId, account.id, context);
     }
 
     const transaction = insertTransaction(
@@ -52,12 +50,11 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt),
       },
-      tx,
+      context,
     );
     if (input.installment) {
-      createCreditCardInstallmentPlan(transaction, input.installment, tx);
+      createCreditCardInstallmentPlan(transaction, input.installment, context);
     }
-    reconcileCreditCardBillingInContext(new Date(), tx);
+    reconcileCreditCardBillingInContext(new Date(), context);
     return transaction;
-  });
 }

@@ -7,6 +7,7 @@ import {
   hasSubcategories,
 } from "../repositories/categories.repository";
 import { isProtectedCategoryId } from "../constants/categories.constants";
+import { reassignTransactionPresetCategory } from "@/modules/transactions";
 
 export async function deleteCategory(
   id: string,
@@ -38,6 +39,8 @@ export async function deleteCategory(
       .update(transactions)
       .set({ categoryId: fallbackId, updatedAt: new Date() })
       .where(eq(transactions.categoryId, id));
+
+    reassignTransactionPresetCategory(id, fallbackId, tx);
 
     const deleted = await repoDeleteCategory(tx, id);
     if (!deleted) {

@@ -4,6 +4,7 @@ import {
   deleteAllTransactionRecords,
   insertTransaction,
 } from "@/modules/transactions/repositories/transactions.repository";
+import { deleteAllTransactionPresetRecords } from "@/modules/transactions/repositories/transaction-presets.repository";
 import type { TransactionType } from "@/modules/transactions/types/transaction.types";
 
 interface SampleTransactionDefinition {
@@ -371,5 +372,6 @@ function sampleDate(
 }
 
 export function clearTransactionWorkspace(context: DbContext): void {
+  deleteAllTransactionPresetRecords(context);
   deleteAllTransactionRecords(context);
 }

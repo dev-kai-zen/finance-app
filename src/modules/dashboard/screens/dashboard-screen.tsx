@@ -14,6 +14,7 @@ import { useCategories } from "@/modules/categories";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import {
   TransactionFormModal,
+  useTransactionPresets,
   useTransactions,
   type TransactionType,
 } from "@/modules/transactions";
@@ -39,7 +40,19 @@ export function DashboardScreen() {
     recordTransfer,
     pendingAction,
     error: transactionError,
+    clearError: clearTransactionError,
   } = useTransactions();
+  const {
+    presets,
+    loading: presetsLoading,
+    pending: presetPending,
+    error: presetError,
+    refresh: refreshPresets,
+    savePreset,
+    deletePreset,
+    reorderPresets,
+    clearError: clearPresetError,
+  } = useTransactionPresets();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
@@ -97,20 +110,28 @@ export function DashboardScreen() {
     router.navigate("/transactions" as any);
   };
 
-  const handleSaveTx = async (input: any) => {
-    const success = await recordTransaction(input);
+  const handleSaveTx = async (
+    input: Parameters<typeof recordTransaction>[0],
+    preset?: Parameters<typeof recordTransaction>[1],
+  ) => {
+    const success = await recordTransaction(input, preset);
     if (success) {
       refreshAccounts();
       refreshDashboard();
+      refreshPresets();
     }
     return success;
   };
 
-  const handleSaveTransfer = async (input: any) => {
-    const success = await recordTransfer(input);
+  const handleSaveTransfer = async (
+    input: Parameters<typeof recordTransfer>[0],
+    preset?: Parameters<typeof recordTransfer>[1],
+  ) => {
+    const success = await recordTransfer(input, preset);
     if (success) {
       refreshAccounts();
       refreshDashboard();
+      refreshPresets();
     }
     return success;
   };
@@ -165,10 +186,19 @@ export function DashboardScreen() {
         accounts={accounts}
         pockets={pockets}
         categories={categories}
+        presets={presets}
+        presetsLoading={presetsLoading}
+        presetPending={presetPending}
+        presetError={presetError}
         error={transactionError}
+        onClearError={clearTransactionError}
+        onClearPresetError={clearPresetError}
         onClose={() => setIsModalOpen(false)}
         onSaveTransaction={handleSaveTx}
         onSaveTransfer={handleSaveTransfer}
+        onSavePreset={savePreset}
+        onDeletePreset={deletePreset}
+        onReorderPresets={reorderPresets}
         pending={pendingAction}
         visible={isModalOpen}
       />

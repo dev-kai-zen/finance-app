@@ -4,8 +4,7 @@ import {
   listTransactions,
   listDeletedTransactions,
 } from "../repositories/transactions.repository";
-import { createTransaction } from "../services/create-transaction.service";
-import { createTransfer } from "../services/create-transfer.service";
+import { recordTransaction as recordTransactionService } from "../services/record-transaction.service";
 import { removeTransaction } from "../services/delete-transaction.service";
 import { permanentlyDeleteTransaction } from "../services/permanently-delete-transaction.service";
 import { restoreTransaction } from "../services/restore-transaction.service";
@@ -19,6 +18,7 @@ import type {
   TransactionStats,
   UpdateTransferInput,
 } from "../types/transaction.types";
+import type { TransactionPresetSubmission } from "../types/transaction-preset.types";
 
 export function useTransactions(initialFilter?: TransactionFilter) {
   const [filter, setFilter] = useState<TransactionFilter>(
@@ -64,11 +64,14 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   }, []);
 
   const recordTransaction = useCallback(
-    async (input: CreateTransactionInput): Promise<boolean> => {
+    async (
+      input: CreateTransactionInput,
+      preset?: TransactionPresetSubmission,
+    ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        createTransaction(input);
+        recordTransactionService({ kind: "transaction", input, preset });
         refresh();
         return true;
       } catch (err: any) {
@@ -82,11 +85,14 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   );
 
   const recordTransfer = useCallback(
-    async (input: CreateTransferInput): Promise<boolean> => {
+    async (
+      input: CreateTransferInput,
+      preset?: TransactionPresetSubmission,
+    ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        createTransfer(input);
+        recordTransactionService({ kind: "transfer", input, preset });
         refresh();
         return true;
       } catch (err: any) {

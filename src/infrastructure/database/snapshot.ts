@@ -20,6 +20,7 @@ const CURRENT_REQUIRED_TABLES = [
   "fund_groups",
   "fund_group_accounts",
   "fund_group_pockets",
+  "transaction_presets",
 ] as const;
 
 export async function createDatabaseSnapshot(): Promise<Uint8Array> {

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Checkbox, Host } from "@expo/ui";
 import {
   Modal,
   Pressable,
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Sparkles } from "lucide-react-native";
 import {
   AccountPickerModal,
   AmountCalculatorField,
@@ -17,15 +18,16 @@ import {
   CategoryPickerModal,
   IconHelper,
   KeyboardAwareForm,
+  NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type {
   AccountListItem,
   PocketListItem,
-} from "@/modules/accounts/types/account.types";
-import type { Category } from "@/modules/categories/types/category.types";
+} from "@/modules/accounts";
+import { accountColor } from "@/modules/accounts";
+import type { Category } from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
@@ -36,13 +38,27 @@ import type {
   TransactionType,
   UpdateTransferInput,
 } from "../types/transaction.types";
+import type {
+  TransactionPreset,
+  TransactionPresetInput,
+  TransactionPresetSubmission,
+} from "../types/transaction-preset.types";
+import { normalizeQuickPresetTransactionName } from "../services/save-transaction-preset.service";
 import { TransactionDateTimePickerModal } from "./transaction-date-time-picker-modal";
+import { QuickPresetsModal } from "./quick-presets-modal";
+import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 
 export interface TransactionFormModalProps {
   visible: boolean;
   onClose: () => void;
-  onSaveTransaction: (input: CreateTransactionInput) => Promise<boolean>;
-  onSaveTransfer: (input: CreateTransferInput) => Promise<boolean>;
+  onSaveTransaction: (
+    input: CreateTransactionInput,
+    preset?: TransactionPresetSubmission,
+  ) => Promise<boolean>;
+  onSaveTransfer: (
+    input: CreateTransferInput,
+    preset?: TransactionPresetSubmission,
+  ) => Promise<boolean>;
   onUpdateTransaction?: (
     id: string,
     input: CreateTransactionInput,
@@ -51,6 +67,18 @@ export interface TransactionFormModalProps {
   accounts: AccountListItem[];
   pockets: PocketListItem[];
   categories: Category[];
+  presets: TransactionPreset[];
+  presetsLoading?: boolean;
+  presetPending?: boolean;
+  presetError?: string | null;
+  onClearError?: () => void;
+  onClearPresetError: () => void;
+  onSavePreset: (
+    input: TransactionPresetInput,
+    id?: string,
+  ) => Promise<boolean>;
+  onDeletePreset: (id: string) => Promise<boolean>;
+  onReorderPresets: (orderedIds: string[]) => Promise<boolean>;
   pending?: boolean;
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
@@ -100,6 +128,15 @@ export function TransactionFormModal({
   accounts,
   pockets,
   categories,
+  presets,
+  presetsLoading = false,
+  presetPending = false,
+  presetError = null,
+  onClearError,
+  onClearPresetError,
+  onSavePreset,
+  onDeletePreset,
+  onReorderPresets,
   pending = false,
   error = null,
   initialTransaction = null,
@@ -123,6 +160,10 @@ export function TransactionFormModal({
   const [installmentEnabled, setInstallmentEnabled] = useState(false);
   const [installmentTerm, setInstallmentTerm] = useState("12");
   const [localError, setLocalError] = useState<string | null>(null);
+  const [saveAsQuickPreset, setSaveAsQuickPreset] = useState(false);
+  const [includePresetAmount, setIncludePresetAmount] = useState(true);
+  const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
+  const [suggestionsSuppressed, setSuggestionsSuppressed] = useState(false);
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -130,6 +171,7 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -176,6 +218,11 @@ export function TransactionFormModal({
         setInstallmentTerm("12");
         setLocalError(null);
       }
+      setSaveAsQuickPreset(false);
+      setIncludePresetAmount(true);
+      setAppliedPresetId(null);
+      setSuggestionsSuppressed(false);
+      setIsQuickPresetsOpen(false);
     }
   }, [visible, initialTransaction, accounts, categories]);
 
@@ -238,6 +285,18 @@ export function TransactionFormModal({
     amountSign === "-" &&
     Boolean(selectedAccount?.creditCardDetails) &&
     !isEditing;
+  const matchingPreset = useMemo(() => {
+    const normalizedName = normalizeQuickPresetTransactionName(name);
+    if (!normalizedName) return null;
+    return (
+      presets.find(
+        (preset) =>
+          preset.id !== appliedPresetId &&
+          normalizeQuickPresetTransactionName(preset.transactionName) ===
+          normalizedName,
+      ) ?? null
+    );
+  }, [appliedPresetId, name, presets]);
 
   const selectedCategory = useMemo(() => {
     for (const cat of categories) {
@@ -290,6 +349,33 @@ export function TransactionFormModal({
     setDateTimePickerMode(null);
   };
 
+  const applyQuickPreset = (preset: TransactionPreset) => {
+    setMode(preset.type);
+    setName(preset.transactionName);
+    setSelectedAccountId(preset.accountId);
+    setSelectedPocketId(preset.pocketId);
+    setSelectedCategoryId(preset.categoryId ?? "");
+    setTransferToAccountId(preset.toAccountId ?? "");
+    setTransferToPocketId(preset.toPocketId);
+    setAmountMinorUnits(Math.abs(preset.amountCents ?? 0));
+    setAmountSign(
+      preset.type === "expense"
+        ? preset.amountCents !== null && preset.amountCents > 0
+          ? "+"
+          : "-"
+        : "+",
+    );
+    setNote(preset.note ?? "");
+    setOccurredAt(getCurrentTransactionDate());
+    setInstallmentEnabled(false);
+    setInstallmentTerm("12");
+    setSaveAsQuickPreset(false);
+    setAppliedPresetId(preset.id);
+    setSuggestionsSuppressed(true);
+    setIsQuickPresetsOpen(false);
+    setLocalError(null);
+  };
+
   const handleSave = async () => {
     if (amountMinorUnits <= 0) {
       setLocalError("Please enter an amount greater than zero.");
@@ -300,6 +386,24 @@ export function TransactionFormModal({
       setLocalError("Please select an account.");
       return;
     }
+
+    if (!isEditing && saveAsQuickPreset && !name.trim()) {
+      setLocalError("Enter a transaction name to save a Quick Preset.");
+      return;
+    }
+
+    const presetSubmission: TransactionPresetSubmission | undefined = isEditing
+      ? undefined
+      : saveAsQuickPreset
+        ? {
+            saveRequest: {
+              includeAmount: includePresetAmount,
+              existingPresetId: matchingPreset?.id ?? null,
+            },
+          }
+        : appliedPresetId
+          ? { appliedPresetId }
+          : undefined;
 
     const transactionOccurredAt = new Date(occurredAt);
 
@@ -333,7 +437,7 @@ export function TransactionFormModal({
               ...transferInput,
               transactionGroupId: initialTransaction.transactionGroupId ?? "",
             })
-          : await onSaveTransfer(transferInput);
+          : await onSaveTransfer(transferInput, presetSubmission);
 
       if (success) {
         onClose();
@@ -377,7 +481,7 @@ export function TransactionFormModal({
       const success =
         isEditing && initialTransaction && onUpdateTransaction
           ? await onUpdateTransaction(initialTransaction.id, transactionInput)
-          : await onSaveTransaction(transactionInput);
+          : await onSaveTransaction(transactionInput, presetSubmission);
 
       if (success) {
         onClose();
@@ -386,14 +490,19 @@ export function TransactionFormModal({
   };
 
   const displayError = localError || error;
+  const dismissNotification = () => {
+    setLocalError(null);
+    onClearError?.();
+  };
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
+    <>
+      <Modal
+        animationType="slide"
+        onRequestClose={onClose}
+        transparent
+        visible={visible}
+      >
       <View style={styles.modalOverlay}>
         <Pressable
           accessibilityLabel="Dismiss transaction form"
@@ -425,6 +534,24 @@ export function TransactionFormModal({
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
           </View>
+
+          {!isEditing ? (
+            <Pressable
+              accessibilityLabel="Open Quick Presets"
+              accessibilityRole="button"
+              disabled={pending || presetPending}
+              onPress={() => setIsQuickPresetsOpen(true)}
+              style={styles.quickPresetsButton}
+            >
+              <Sparkles color={theme.colors.primary} size={16} />
+              <Text style={styles.quickPresetsButtonText}>Quick Presets</Text>
+              {presets.length > 0 ? (
+                <View style={styles.quickPresetsCount}>
+                  <Text style={styles.quickPresetsCountText}>{presets.length}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          ) : null}
 
           {/* Mode Switcher Tabs */}
           <View style={styles.tabBar}>
@@ -484,26 +611,34 @@ export function TransactionFormModal({
             })}
           </View>
 
-          {/* Error Banner */}
-          {displayError ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{displayError}</Text>
-            </View>
-          ) : null}
-
           <KeyboardAwareForm
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
             <View style={styles.nameDateGroup}>
-              <TextInput
-                maxLength={100}
-                onChangeText={setName}
-                placeholder="Name"
-                placeholderTextColor={theme.colors.textSecondary}
-                style={styles.nameInput}
-                value={name}
-              />
+              <View style={styles.nameSuggestionAnchor}>
+                <TextInput
+                  maxLength={100}
+                  onChangeText={(value) => {
+                    setName(value);
+                    setSuggestionsSuppressed(false);
+                  }}
+                  placeholder="Name"
+                  placeholderTextColor={theme.colors.textSecondary}
+                  style={styles.nameInput}
+                  value={name}
+                />
+                {!isEditing && !suggestionsSuppressed ? (
+                  <QuickPresetSuggestions
+                    accounts={accounts}
+                    categories={categories}
+                    onSelect={applyQuickPreset}
+                    pockets={pockets}
+                    presets={presets}
+                    value={name}
+                  />
+                ) : null}
+              </View>
               <View style={styles.dateTimeRow}>
                 <Pressable
                   accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
@@ -787,6 +922,47 @@ export function TransactionFormModal({
                 value={note}
               />
             </View>
+
+            {!isEditing && !appliedPresetId ? (
+              <View style={styles.quickPresetSavePanel}>
+                <Host matchContents style={styles.quickPresetCheckbox}>
+                  <Checkbox
+                    disabled={pending || !name.trim()}
+                    label={
+                      matchingPreset
+                        ? "Update matching Quick Preset"
+                        : "Save as a Quick Preset"
+                    }
+                    onValueChange={setSaveAsQuickPreset}
+                    value={saveAsQuickPreset}
+                  />
+                </Host>
+                <Text style={styles.quickPresetHelp}>
+                  {matchingPreset
+                    ? `Reuse this name by updating “${matchingPreset.transactionName}” with the current details.`
+                    : name.trim()
+                      ? "Reuse these details when you type this transaction name."
+                      : "Enter a transaction name to enable Quick Presets."}
+                </Text>
+                {saveAsQuickPreset ? (
+                  <Host matchContents style={styles.quickPresetCheckbox}>
+                    <Checkbox
+                      disabled={pending}
+                      label="Include amount"
+                      onValueChange={setIncludePresetAmount}
+                      value={includePresetAmount}
+                    />
+                  </Host>
+                ) : null}
+              </View>
+            ) : appliedPresetId ? (
+              <View style={styles.appliedPresetBanner}>
+                <Sparkles color={theme.colors.primary} size={15} />
+                <Text style={styles.appliedPresetText}>
+                  Quick Preset applied. Review the details before saving.
+                </Text>
+              </View>
+            ) : null}
           </KeyboardAwareForm>
 
           {/* Action Buttons */}
@@ -873,7 +1049,33 @@ export function TransactionFormModal({
         type={mode === "income" ? "income" : "expense"}
         visible={isCategoryPickerOpen}
       />
-    </Modal>
+
+      <QuickPresetsModal
+        accounts={accounts}
+        categories={categories}
+        error={presetError}
+        loading={presetsLoading}
+        onClearError={onClearPresetError}
+        onClose={() => setIsQuickPresetsOpen(false)}
+        onDelete={onDeletePreset}
+        onReorder={onReorderPresets}
+        onSave={onSavePreset}
+        onSelect={applyQuickPreset}
+        pending={presetPending}
+        pockets={pockets}
+        presets={presets}
+        visible={isQuickPresetsOpen}
+      />
+      </Modal>
+
+      <NotificationModal
+        message={displayError ?? ""}
+        onClose={dismissNotification}
+        title={localError ? "Check transaction details" : "Unable to save transaction"}
+        variant={localError ? "warning" : "error"}
+        visible={visible && Boolean(displayError)}
+      />
+    </>
   );
 }
 
@@ -908,6 +1110,38 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: 14,
+    },
+    quickPresetsButton: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}45`,
+      borderRadius: 999,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.sm,
+      minHeight: 34,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    quickPresetsButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    quickPresetsCount: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      borderRadius: 999,
+      height: 20,
+      justifyContent: "center",
+      minWidth: 20,
+      paddingHorizontal: 5,
+    },
+    quickPresetsCountText: {
+      color: theme.colors.onPrimary,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     modalTitle: {
       color: theme.colors.textPrimary,
@@ -952,19 +1186,6 @@ function createStyles(theme: AppTheme) {
     tabTextActive: {
       fontWeight: "700",
     },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}26`,
-      borderColor: theme.colors.danger,
-      borderRadius: 8,
-      borderWidth: 1,
-      marginBottom: 12,
-      padding: 10,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: 13,
-      fontWeight: "500",
-    },
     formScroll: {
       flex: 1,
     },
@@ -973,6 +1194,11 @@ function createStyles(theme: AppTheme) {
     },
     nameDateGroup: {
       marginBottom: 16,
+      zIndex: 30,
+    },
+    nameSuggestionAnchor: {
+      position: "relative",
+      zIndex: 40,
     },
     installmentPanel: {
       backgroundColor: theme.colors.surfaceMuted,
@@ -1110,6 +1336,38 @@ function createStyles(theme: AppTheme) {
       minHeight: 92,
       paddingHorizontal: 14,
       paddingVertical: 10,
+    },
+    quickPresetSavePanel: {
+      backgroundColor: `${theme.colors.primary}0D`,
+      borderColor: `${theme.colors.primary}35`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    quickPresetCheckbox: { alignSelf: "flex-start" },
+    quickPresetHelp: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.xs,
+      paddingHorizontal: 2,
+    },
+    appliedPresetBanner: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}0D`,
+      borderColor: `${theme.colors.primary}35`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      marginBottom: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    appliedPresetText: {
+      color: theme.colors.textSecondary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
     },
     selectorCard: {
       alignItems: "center",

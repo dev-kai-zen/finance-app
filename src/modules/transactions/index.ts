@@ -32,6 +32,17 @@ export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;
 
+export const useTransactionPresets = deferFunction(
+  () =>
+    require("./hooks/use-transaction-presets").useTransactionPresets,
+) as typeof import("./hooks/use-transaction-presets").useTransactionPresets;
+
+export const reassignTransactionPresetCategory = deferFunction(
+  () =>
+    require("./services/reassign-transaction-preset-category.service")
+      .reassignTransactionPresetCategory,
+) as typeof import("./services/reassign-transaction-preset-category.service").reassignTransactionPresetCategory;
+
 export const createTransaction = deferFunction(
   () => require("./services/create-transaction.service").createTransaction,
 ) as typeof import("./services/create-transaction.service").createTransaction;
@@ -119,3 +130,9 @@ export type {
   TransactionStats,
   TransactionType,
 } from "./types/transaction.types";
+export type {
+  QuickPresetSaveRequest,
+  TransactionPreset,
+  TransactionPresetInput,
+  TransactionPresetSubmission,
+} from "./types/transaction-preset.types";

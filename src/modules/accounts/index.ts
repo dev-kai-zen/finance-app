@@ -40,6 +40,10 @@ export const requirePocketForAccount = deferFunction(
   () => require("./services/pocket-rules").requirePocketForAccount,
 ) as typeof import("./services/pocket-rules").requirePocketForAccount;
 
+export const requireAccount = deferFunction(
+  () => require("./services/account-rules").requireAccount,
+) as typeof import("./services/account-rules").requireAccount;
+
 export const savePocket = deferFunction(
   () => require("./services/save-pocket.service").savePocket,
 ) as typeof import("./services/save-pocket.service").savePocket;
@@ -86,6 +90,7 @@ export {
   SYSTEM_ACCOUNT_TYPE_IDS,
   FALLBACK_ACCOUNT_TYPE_BY_GROUP,
 } from "./constants/account-types.constants";
+export { accountColor } from "./constants/account-appearance.constants";
 export type {
   Account,
   AccountType,

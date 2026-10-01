@@ -37,6 +37,7 @@ import { DeletedTransactionsModal } from "../components/deleted-transactions-mod
 import { TransactionFormModal } from "../components/transaction-form-modal";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
+import { useTransactionPresets } from "../hooks/use-transaction-presets";
 import type { TransactionListItem } from "../types/transaction.types";
 
 interface DateGroup {
@@ -104,6 +105,17 @@ export function TransactionsScreen() {
     editTransaction,
     editTransfer,
   } = useTransactions();
+  const {
+    presets,
+    loading: presetsLoading,
+    pending: presetPending,
+    error: presetError,
+    refresh: refreshPresets,
+    savePreset,
+    deletePreset,
+    reorderPresets,
+    clearError: clearPresetError,
+  } = useTransactionPresets();
 
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
@@ -250,17 +262,25 @@ export function TransactionsScreen() {
 
   const handleRecordTransaction = async (
     input: Parameters<typeof recordTransaction>[0],
+    preset?: Parameters<typeof recordTransaction>[1],
   ) => {
-    const success = await recordTransaction(input);
-    if (success) refreshAccounts();
+    const success = await recordTransaction(input, preset);
+    if (success) {
+      refreshAccounts();
+      refreshPresets();
+    }
     return success;
   };
 
   const handleRecordTransfer = async (
     input: Parameters<typeof recordTransfer>[0],
+    preset?: Parameters<typeof recordTransfer>[1],
   ) => {
-    const success = await recordTransfer(input);
-    if (success) refreshAccounts();
+    const success = await recordTransfer(input, preset);
+    if (success) {
+      refreshAccounts();
+      refreshPresets();
+    }
     return success;
   };
 
@@ -537,9 +557,15 @@ export function TransactionsScreen() {
         accounts={accounts}
         pockets={pockets}
         categories={categories}
+        presets={presets}
+        presetsLoading={presetsLoading}
+        presetPending={presetPending}
+        presetError={presetError}
         error={error}
         isEditing={isEditingTransaction}
         initialTransaction={prefilledTransaction}
+        onClearError={clearError}
+        onClearPresetError={clearPresetError}
         onClose={() => {
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
@@ -547,6 +573,9 @@ export function TransactionsScreen() {
         }}
         onSaveTransaction={handleRecordTransaction}
         onSaveTransfer={handleRecordTransfer}
+        onSavePreset={savePreset}
+        onDeletePreset={deletePreset}
+        onReorderPresets={reorderPresets}
         onUpdateTransaction={handleUpdateTransaction}
         onUpdateTransfer={handleUpdateTransfer}
         pending={pendingAction}
