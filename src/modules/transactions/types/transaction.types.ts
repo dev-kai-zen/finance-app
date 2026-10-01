@@ -1,16 +1,16 @@
-export type TransactionType = "income" | "expense" | "transfer";
-
-export interface Transaction {
-  id: string;
-  accountId: string;
+export type TransactionType = "income" | "expense" | "transfer";
+
+export interface Transaction {
+  id: string;
+  accountId: string;
   categoryId: string | null;
   pocketId: string | null;
-  transactionGroupId: string | null;
-  type: TransactionType;
-  amountCents: number;
-  name: string | null;
-  note: string | null;
-  occurredAt: Date;
+  transactionGroupId: string | null;
+  type: TransactionType;
+  amountCents: number;
+  name: string | null;
+  note: string | null;
+  occurredAt: Date;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
@@ -22,12 +22,14 @@ export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt" 
   updatedAt?: Date;
   deletedAt?: Date | null;
 };
-
+
 export interface TransactionListItem extends Transaction {
   accountName: string;
   accountCurrency: string;
   accountTypeName: string;
+  accountPocketEnabled: boolean;
   accountBalanceAfterMinorUnits: number | null;
+  locationBalanceAfterMinorUnits: number | null;
   deletedAt: Date | null;
   categoryName: string | null;
   categoryIcon: string | null;
@@ -38,64 +40,66 @@ export interface TransactionListItem extends Transaction {
   transferAccountName: string | null;
   transferAccountCurrency: string | null;
   transferAccountTypeName: string | null;
+  transferAccountPocketEnabled: boolean | null;
   transferPocketId: string | null;
   transferPocketName: string | null;
   destinationBalanceAfterMinorUnits: number | null;
+  destinationLocationBalanceAfterMinorUnits: number | null;
 }
-
+
 export interface CreateTransactionInput {
-  accountId: string;
+  accountId: string;
   categoryId: string;
   pocketId?: string | null;
-  type: "income" | "expense";
-  amountCents: number;
-  name?: string | null;
-  note?: string | null;
+  type: "income" | "expense";
+  amountCents: number;
+  name?: string | null;
+  note?: string | null;
   occurredAt: Date;
   installment?: {
     termMonths: number;
   } | null;
 }
-
-export interface CreateTransferInput {
-  fromAccountId: string;
+
+export interface CreateTransferInput {
+  fromAccountId: string;
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
-  name?: string | null;
-  note?: string | null;
-  occurredAt: Date;
-}
-
+  amountCents: number;
+  name?: string | null;
+  note?: string | null;
+  occurredAt: Date;
+}
+
 export interface UpdateTransferInput {
-  transactionGroupId: string;
-  fromAccountId: string;
+  transactionGroupId: string;
+  fromAccountId: string;
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
-  name?: string | null;
-  note?: string | null;
-  occurredAt: Date;
-}
-
-export interface TransactionFilter {
-  type?: "all" | "income" | "expense" | "transfer";
-  accountId?: string;
-  categoryId?: string;
-  searchQuery?: string;
-}
-
-export interface TransactionStats {
-  totalInflowMinorUnits: number;
-  totalOutflowMinorUnits: number;
-  netCashflowMinorUnits: number;
-  transactionCount: number;
-}
-
-export interface TransferResult {
-  transactionGroupId: string;
-  outLeg: Transaction;
-  inLeg: Transaction;
-}
+  amountCents: number;
+  name?: string | null;
+  note?: string | null;
+  occurredAt: Date;
+}
+
+export interface TransactionFilter {
+  type?: "all" | "income" | "expense" | "transfer";
+  accountId?: string;
+  categoryId?: string;
+  searchQuery?: string;
+}
+
+export interface TransactionStats {
+  totalInflowMinorUnits: number;
+  totalOutflowMinorUnits: number;
+  netCashflowMinorUnits: number;
+  transactionCount: number;
+}
+
+export interface TransferResult {
+  transactionGroupId: string;
+  outLeg: Transaction;
+  inLeg: Transaction;
+}

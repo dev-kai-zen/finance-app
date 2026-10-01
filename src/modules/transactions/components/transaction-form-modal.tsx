@@ -45,6 +45,7 @@ import type {
 } from "../types/transaction-preset.types";
 import { normalizeQuickPresetTransactionName } from "../services/save-transaction-preset.service";
 import { TransactionDateTimePickerModal } from "./transaction-date-time-picker-modal";
+import { TransactionTypePicker } from "./transaction-type-picker";
 import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 
@@ -553,62 +554,12 @@ export function TransactionFormModal({
             </Pressable>
           ) : null}
 
-          {/* Mode Switcher Tabs */}
-          <View style={styles.tabBar}>
-            {(["expense", "income", "transfer"] as const).map((tab) => {
-              const active = mode === tab;
-              const labels = {
-                expense: "Expense",
-                income: "Income",
-                transfer: "Transfer",
-              };
-
-              return (
-                <Pressable
-                  key={tab}
-                  accessibilityLabel={`Switch to ${labels[tab]}`}
-                  accessibilityRole="button"
-                  onPress={() => handleModeChange(tab)}
-                  style={[
-                    styles.tabItem,
-                    active && styles.tabItemActive,
-                    active &&
-                      tab === "income" && {
-                        backgroundColor: theme.colors.success,
-                      },
-                    active &&
-                      tab === "expense" && {
-                        backgroundColor: theme.colors.danger,
-                      },
-                    active &&
-                      tab === "transfer" && {
-                        backgroundColor: theme.colors.info,
-                      },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.tabText,
-                      active && styles.tabTextActive,
-                      active &&
-                        tab === "income" && {
-                          color: theme.colors.textInverse,
-                        },
-                      active &&
-                        tab === "expense" && {
-                          color: theme.colors.textInverse,
-                        },
-                      active &&
-                        tab === "transfer" && {
-                          color: theme.colors.textInverse,
-                        },
-                    ]}
-                  >
-                    {labels[tab]}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.typePickerSpacing}>
+            <TransactionTypePicker
+              disabled={pending}
+              onChange={handleModeChange}
+              value={mode}
+            />
           </View>
 
           <KeyboardAwareForm
@@ -1161,30 +1112,8 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "bold",
     },
-    tabBar: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.medium,
-      flexDirection: "row",
+    typePickerSpacing: {
       marginBottom: 16,
-      padding: 4,
-    },
-    tabItem: {
-      alignItems: "center",
-      borderRadius: theme.borderRadius.medium - 2,
-      flex: 1,
-      paddingVertical: 8,
-    },
-    tabItemActive: {
-      backgroundColor: theme.colors.surface,
-      ...theme.shadows.card,
-    },
-    tabText: {
-      color: theme.colors.textSecondary,
-      fontSize: 13,
-      fontWeight: "600",
-    },
-    tabTextActive: {
-      fontWeight: "700",
     },
     formScroll: {
       flex: 1,

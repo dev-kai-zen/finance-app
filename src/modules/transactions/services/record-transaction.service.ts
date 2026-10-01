@@ -1,4 +1,4 @@
-import { db } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   findTransactionPresetById,
   updateTransactionPresetRecord,
@@ -35,18 +35,41 @@ export function recordTransaction(
 export function recordTransaction(
   command: RecordTransactionCommand,
 ): Transaction | TransferResult {
-  return db.transaction((tx) => {
-    const result =
-      command.kind === "transaction"
-        ? createTransactionInContext(command.input, tx)
-        : createTransferInContext(command.input, tx);
+  return db.transaction((tx) =>
+    recordTransactionCommandInContext(command, tx),
+  );
+}
 
-    const saveRequest = command.preset?.saveRequest;
-    if (saveRequest) {
-      if (command.kind === "transaction") {
-        const input = command.input;
-        const transactionName = input.name?.trim() ?? "";
-        saveTransactionPresetInContext(
+export function recordTransactionInContext(
+  command: Extract<RecordTransactionCommand, { kind: "transaction" }>,
+  context: DbContext,
+): Transaction;
+export function recordTransactionInContext(
+  command: Extract<RecordTransactionCommand, { kind: "transfer" }>,
+  context: DbContext,
+): TransferResult;
+export function recordTransactionInContext(
+  command: RecordTransactionCommand,
+  context: DbContext,
+): Transaction | TransferResult {
+  return recordTransactionCommandInContext(command, context);
+}
+
+function recordTransactionCommandInContext(
+  command: RecordTransactionCommand,
+  context: DbContext,
+): Transaction | TransferResult {
+  const result =
+    command.kind === "transaction"
+      ? createTransactionInContext(command.input, context)
+      : createTransferInContext(command.input, context);
+
+  const saveRequest = command.preset?.saveRequest;
+  if (saveRequest) {
+    if (command.kind === "transaction") {
+      const input = command.input;
+      const transactionName = input.name?.trim() ?? "";
+      saveTransactionPresetInContext(
           {
             transactionName,
             type: input.type,
@@ -59,12 +82,12 @@ export function recordTransaction(
             note: input.note ?? null,
           },
           saveRequest.existingPresetId ?? undefined,
-          tx,
-        );
-      } else {
-        const input = command.input;
-        const transactionName = input.name?.trim() ?? "";
-        saveTransactionPresetInContext(
+        context,
+      );
+    } else {
+      const input = command.input;
+      const transactionName = input.name?.trim() ?? "";
+      saveTransactionPresetInContext(
           {
             transactionName,
             type: "transfer",
@@ -79,28 +102,27 @@ export function recordTransaction(
             note: input.note ?? null,
           },
           saveRequest.existingPresetId ?? undefined,
-          tx,
-        );
-      }
-    } else if (command.preset?.appliedPresetId) {
-      const preset = findTransactionPresetById(
-        command.preset.appliedPresetId,
-        tx,
+        context,
       );
-      if (preset && !preset.deletedAt) {
-        const now = new Date();
-        updateTransactionPresetRecord(
-          preset.id,
-          {
-            usageCount: preset.usageCount + 1,
-            lastUsedAt: now,
-            updatedAt: now,
-          },
-          tx,
-        );
-      }
     }
+  } else if (command.preset?.appliedPresetId) {
+    const preset = findTransactionPresetById(
+      command.preset.appliedPresetId,
+      context,
+    );
+    if (preset && !preset.deletedAt) {
+      const now = new Date();
+      updateTransactionPresetRecord(
+        preset.id,
+        {
+          usageCount: preset.usageCount + 1,
+          lastUsedAt: now,
+          updatedAt: now,
+        },
+        context,
+      );
+    }
+  }
 
-    return result;
-  });
+  return result;
 }

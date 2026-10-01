@@ -1,6 +1,7 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft } from "lucide-react-native";
+
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
@@ -17,7 +18,7 @@ const SHORT_MONTHS = [
   "Feb.",
   "Mar.",
   "Apr.",
-  "May.",
+  "May",
   "Jun.",
   "Jul.",
   "Aug.",
@@ -28,14 +29,42 @@ const SHORT_MONTHS = [
 ] as const;
 
 function formatTransactionDateTime(date: Date) {
-  const formattedDate = `${SHORT_MONTHS[date.getMonth()]} ${String(date.getDate()).padStart(2, "0")}, ${date.getFullYear()}`;
+  const formattedDate = `${SHORT_MONTHS[date.getMonth()]} ${String(
+    date.getDate(),
+  ).padStart(2, "0")}, ${date.getFullYear()}`;
   const formattedTime = date.toLocaleTimeString(undefined, {
-    hour: "2-digit",
+    hour: "numeric",
+    hour12: true,
     minute: "2-digit",
-    hour12: false,
   });
 
   return `${formattedDate} | ${formattedTime}`;
+}
+
+function formatLocationRoute(
+  accountTypeName: string | null,
+  accountName: string | null,
+  pocketName: string | null,
+  pocketEnabled = false,
+) {
+  const pocketSegment = pocketEnabled ? (pocketName ?? "Available") : pocketName;
+  return [
+    accountTypeName || "Account",
+    accountName || "Unknown Account",
+    pocketSegment,
+  ]
+    .filter(Boolean)
+    .join(" > ");
+}
+
+function withAlpha(color: string, alpha: number) {
+  if (/^#[\da-f]{6}$/i.test(color)) {
+    return `${color}${Math.round(alpha * 255)
+      .toString(16)
+      .padStart(2, "0")}`;
+  }
+
+  return color;
 }
 
 export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
@@ -51,7 +80,6 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     : isIncome
       ? theme.colors.success
       : theme.colors.danger;
-  const borderColor = withAlpha(typeColor, 0.55);
   const displayAmountCents = isTransfer
     ? Math.abs(transaction.amountCents)
     : transaction.amountCents;
@@ -85,62 +113,33 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         zeroColor: theme.colors.textMuted,
       }).formatted;
 
-  const occurredAt = transaction.occurredAt
-    ? new Date(transaction.occurredAt)
-    : null;
-  const formattedDateTime = occurredAt
-    ? formatTransactionDateTime(occurredAt)
+  const formattedDateTime = transaction.occurredAt
+    ? formatTransactionDateTime(new Date(transaction.occurredAt))
     : "";
-
-  const routeOrCategory = isTransfer
-    ? `${transaction.accountName ?? "Account"} → ${transaction.transferAccountName ?? "Destination"}`
-    : `${transaction.categoryName || "Uncategorized"} • ${transaction.accountName ?? "Account"}`;
-
-  const accountRoute = `${transaction.accountTypeName} > ${
-    transaction.accountName ?? "Account"
-  }`;
-  const destinationRoute = `${transaction.transferAccountTypeName ?? "Account"} > ${
-    transaction.transferAccountName ?? "Destination"
-  }`;
-  const sourceTransferRoute = isPocketTransfer
-    ? transaction.pocketName ?? "Available"
-    : accountRoute;
-  const destinationTransferRoute = isPocketTransfer
-    ? transaction.transferPocketName ?? "Available"
-    : destinationRoute;
-  const formattedRoute = `${transaction.categoryName || "Uncategorized"} \u00b7 ${accountRoute}`;
-
-  const balanceTexts: string[] = [];
-  if (isTransfer) {
-    if (transaction.accountBalanceAfterMinorUnits !== null) {
-      balanceTexts.push(
-        `Source Bal: ${formatCurrency(
-          transaction.accountBalanceAfterMinorUnits,
-          transaction.accountCurrency ?? "PHP",
-          false,
-        )}`,
-      );
-    }
-    if (transaction.destinationBalanceAfterMinorUnits !== null) {
-      balanceTexts.push(
-        `Dest. Bal: ${formatCurrency(
-          transaction.destinationBalanceAfterMinorUnits,
-          transaction.transferAccountCurrency ??
-            transaction.accountCurrency ??
-            "PHP",
-          false,
-        )}`,
-      );
-    }
-  } else if (transaction.accountBalanceAfterMinorUnits !== null) {
-    balanceTexts.push(
-      `Bal: ${formatCurrency(
-        transaction.accountBalanceAfterMinorUnits,
-        transaction.accountCurrency ?? "PHP",
-        false,
-      )}`,
-    );
-  }
+  const sourceRoute = formatLocationRoute(
+    transaction.accountTypeName,
+    transaction.accountName,
+    transaction.pocketName,
+    transaction.accountPocketEnabled,
+  );
+  const destinationRoute = formatLocationRoute(
+    transaction.transferAccountTypeName,
+    transaction.transferAccountName,
+    transaction.transferPocketName,
+    transaction.transferAccountPocketEnabled ?? false,
+  );
+  const sourceBalance = formatCurrency(
+    transaction.locationBalanceAfterMinorUnits ?? 0,
+    transaction.accountCurrency ?? "PHP",
+    false,
+  );
+  const destinationBalance = formatCurrency(
+    transaction.destinationLocationBalanceAfterMinorUnits ?? 0,
+    transaction.transferAccountCurrency ??
+      transaction.accountCurrency ??
+      "PHP",
+    false,
+  );
 
   return (
     <Pressable
@@ -149,11 +148,11 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
       onPress={() => onPress?.(transaction)}
       style={({ pressed }) => [
         styles.txCard,
-        { borderColor },
+        { borderColor: withAlpha(typeColor, 0.55) },
         pressed && styles.txCardPressed,
       ]}
     >
-      <View style={styles.txHeaderRow}>
+      <View style={styles.line}>
         <Text numberOfLines={2} style={styles.txNameText}>
           {title}
         </Text>
@@ -165,40 +164,51 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         </Text>
       </View>
 
-      <View style={styles.txDetailsRow}>
-        <View style={styles.routeColumn}>
-          {isTransfer ? (
-            <View style={styles.transferRouteStack}>
-              <Text style={styles.transferRouteText}>
-                {sourceTransferRoute}
-              </Text>
-              <ArrowRightLeft
-                color={theme.colors.info}
-                size={14}
-                style={styles.transferRouteIcon}
-              />
-              <Text style={styles.transferRouteText}>
-                {destinationTransferRoute}
-              </Text>
-            </View>
-          ) : (
-            <Text style={styles.routeCategoryText}>{formattedRoute}</Text>
-          )}
-          {transaction.note && transaction.name ? (
-            <Text numberOfLines={2} style={styles.txNoteText}>
-              {transaction.note}
+      {isTransfer ? (
+        <>
+          <View style={styles.detailLine}>
+            <Text numberOfLines={2} style={styles.detailLeft}>
+              {sourceRoute}
             </Text>
-          ) : null}
-        </View>
-        <View style={styles.timeColumn}>
-          <Text style={styles.txTimeText}>{formattedDateTime}</Text>
-          {balanceTexts.map((balanceText) => (
-            <Text key={balanceText} style={styles.balanceText}>
-              {balanceText}
+            <Text style={styles.detailRight}>{formattedDateTime}</Text>
+          </View>
+          <View style={styles.detailLine}>
+            <ArrowRightLeft color={theme.colors.info} size={15} />
+            <Text style={styles.balanceText}>
+              Source Bal: {sourceBalance}
             </Text>
-          ))}
-        </View>
-      </View>
+          </View>
+          <View style={styles.detailLine}>
+            <Text numberOfLines={2} style={styles.detailLeft}>
+              {destinationRoute}
+            </Text>
+            <Text style={styles.balanceText}>
+              Dest Bal: {destinationBalance}
+            </Text>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.detailLine}>
+            <Text numberOfLines={1} style={styles.detailLeft}>
+              {transaction.categoryName || "Uncategorized"}
+            </Text>
+            <Text style={styles.detailRight}>{formattedDateTime}</Text>
+          </View>
+          <View style={styles.detailLine}>
+            <Text numberOfLines={2} style={styles.detailLeft}>
+              {sourceRoute}
+            </Text>
+            <Text style={styles.balanceText}>Bal: {sourceBalance}</Text>
+          </View>
+        </>
+      )}
+
+      {transaction.note && transaction.name ? (
+        <Text numberOfLines={2} style={styles.txNoteText}>
+          {transaction.note}
+        </Text>
+      ) : null}
     </Pressable>
   );
 }
@@ -209,6 +219,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1.5,
+      gap: theme.spacing.xs,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       ...theme.shadows.card,
@@ -217,7 +228,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surfaceMuted,
       opacity: 0.9,
     },
-    txHeaderRow: {
+    line: {
       alignItems: "flex-start",
       flexDirection: "row",
       gap: theme.spacing.sm,
@@ -237,52 +248,31 @@ function createStyles(theme: AppTheme) {
       fontVariant: ["tabular-nums"],
       textAlign: "right",
     },
-    txDetailsRow: {
-      alignItems: "flex-start",
+    detailLine: {
+      alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
       justifyContent: "space-between",
-      marginTop: theme.spacing.sm,
     },
-    routeColumn: {
+    detailLeft: {
+      color: theme.colors.textSecondary,
       flex: 1,
-    },
-    transferRouteStack: {
-      alignItems: "flex-start",
-      gap: theme.spacing.xxs,
-    },
-    transferRouteIcon: {
-      marginLeft: theme.spacing.xs,
-    },
-    transferRouteText: {
-      color: theme.colors.textSecondary,
-      flexShrink: 1,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       lineHeight: theme.typography.lineHeight.xs,
     },
-    routeCategoryText: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
-      lineHeight: theme.typography.lineHeight.xs,
-    },
-    txTimeText: {
+    detailRight: {
       color: theme.colors.textSecondary,
       flexShrink: 1,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       textAlign: "right",
     },
-    timeColumn: {
-      alignItems: "flex-end",
-      flexShrink: 1,
-    },
     balanceText: {
       color: theme.colors.textSecondary,
+      flexShrink: 1,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
-      marginTop: theme.spacing.xs,
       textAlign: "right",
     },
     txNoteText: {
@@ -290,17 +280,7 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontStyle: "italic",
       lineHeight: theme.typography.lineHeight.xs,
-      marginTop: theme.spacing.xs,
+      marginTop: theme.spacing.xxs,
     },
   });
-}
-
-function withAlpha(color: string, alpha: number) {
-  if (/^#[\da-f]{6}$/i.test(color)) {
-    return `${color}${Math.round(alpha * 255)
-      .toString(16)
-      .padStart(2, "0")}`;
-  }
-
-  return color;
 }

@@ -24,11 +24,14 @@ function mapRowToListItem(r: {
   accountName: string | null;
   accountCurrency: string | null;
   accountTypeName: string | null;
+  accountPocketEnabled: boolean | null;
   categoryName: string | null;
   categoryIcon: string | null;
   categoryColor: string | null;
   pocketName: string | null;
-}, balanceAfterByTransactionId: ReadonlyMap<string, number>): TransactionListItem {
+}, balanceAfterByTransactionId: ReadonlyMap<string, number>,
+  pocketBalanceAfterByTransactionId: ReadonlyMap<string, number>,
+): TransactionListItem {
   return {
     id: r.transaction.id,
     accountId: r.transaction.accountId,
@@ -46,8 +49,12 @@ function mapRowToListItem(r: {
     accountName: r.accountName ?? "Unknown Account",
     accountCurrency: r.accountCurrency ?? "PHP",
     accountTypeName: r.accountTypeName ?? "Account",
+    accountPocketEnabled: r.accountPocketEnabled ?? false,
     accountBalanceAfterMinorUnits:
       balanceAfterByTransactionId.get(r.transaction.id) ?? null,
+    locationBalanceAfterMinorUnits: r.transaction.pocketId
+      ? pocketBalanceAfterByTransactionId.get(r.transaction.id) ?? null
+      : balanceAfterByTransactionId.get(r.transaction.id) ?? null,
     categoryName: r.categoryName,
     categoryIcon: r.categoryIcon,
     categoryColor: r.categoryColor
@@ -60,9 +67,11 @@ function mapRowToListItem(r: {
     transferAccountName: null,
     transferAccountCurrency: null,
     transferAccountTypeName: null,
+    transferAccountPocketEnabled: null,
     transferPocketId: null,
     transferPocketName: null,
     destinationBalanceAfterMinorUnits: null,
+    destinationLocationBalanceAfterMinorUnits: null,
   };
 }
 
@@ -115,6 +124,58 @@ function getBalanceAfterByTransactionId(
   return balanceAfterByTransactionId;
 }
 
+function getPocketBalanceAfterByTransactionId(
+  context: DbContext = db,
+): Map<string, number> {
+  const rows = context
+    .select({
+      id: transactions.id,
+      pocketId: transactions.pocketId,
+      amountCents: transactions.amountCents,
+      occurredAt: transactions.occurredAt,
+      createdAt: transactions.createdAt,
+    })
+    .from(transactions)
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        isNotNull(transactions.pocketId),
+      ),
+    )
+    .all();
+
+  const rowsByPocketId = new Map<string, typeof rows>();
+  for (const row of rows) {
+    if (!row.pocketId) continue;
+    const pocketRows = rowsByPocketId.get(row.pocketId) ?? [];
+    pocketRows.push(row);
+    rowsByPocketId.set(row.pocketId, pocketRows);
+  }
+
+  const balanceAfterByTransactionId = new Map<string, number>();
+  for (const pocketRows of rowsByPocketId.values()) {
+    pocketRows.sort((a, b) => {
+      const occurredAtDifference =
+        new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
+      if (occurredAtDifference !== 0) return occurredAtDifference;
+
+      const createdAtDifference =
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (createdAtDifference !== 0) return createdAtDifference;
+
+      return a.id.localeCompare(b.id);
+    });
+
+    let balance = 0;
+    for (const row of pocketRows) {
+      balance += row.amountCents;
+      balanceAfterByTransactionId.set(row.id, balance);
+    }
+  }
+
+  return balanceAfterByTransactionId;
+}
+
 function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] {
   const standalone: TransactionListItem[] = [];
   const groupMap = new Map<string, TransactionListItem[]>();
@@ -151,9 +212,12 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       transferAccountName: inLeg.accountName,
       transferAccountCurrency: inLeg.accountCurrency,
       transferAccountTypeName: inLeg.accountTypeName,
+      transferAccountPocketEnabled: inLeg.accountPocketEnabled,
       transferPocketId: inLeg.pocketId,
       transferPocketName: inLeg.pocketName,
       destinationBalanceAfterMinorUnits: inLeg.accountBalanceAfterMinorUnits,
+      destinationLocationBalanceAfterMinorUnits:
+        inLeg.locationBalanceAfterMinorUnits,
       amountCents: Math.abs(outLeg.amountCents),
     });
   }
@@ -171,6 +235,7 @@ export function listTransactions(
       accountName: accounts.name,
       accountCurrency: accounts.currencyCode,
       accountTypeName: accountTypes.name,
+      accountPocketEnabled: accounts.pocketEnabled,
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.hexColorsId,
@@ -208,8 +273,14 @@ export function listTransactions(
   const rows = query.where(and(...conditions)).all();
 
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  const pocketBalanceAfterByTransactionId =
+    getPocketBalanceAfterByTransactionId(context);
   const mapped = rows.map((row) =>
-    mapRowToListItem(row, balanceAfterByTransactionId),
+    mapRowToListItem(
+      row,
+      balanceAfterByTransactionId,
+      pocketBalanceAfterByTransactionId,
+    ),
   );
   const grouped = groupTransferRows(mapped);
 
@@ -256,6 +327,7 @@ export function listDeletedTransactions(
       accountName: accounts.name,
       accountCurrency: accounts.currencyCode,
       accountTypeName: accountTypes.name,
+      accountPocketEnabled: accounts.pocketEnabled,
       categoryName: categories.name,
       categoryIcon: categories.icon,
       categoryColor: categories.hexColorsId,
@@ -271,8 +343,16 @@ export function listDeletedTransactions(
     .all();
 
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  const pocketBalanceAfterByTransactionId =
+    getPocketBalanceAfterByTransactionId(context);
   return groupTransferRows(
-    rows.map((row) => mapRowToListItem(row, balanceAfterByTransactionId)),
+    rows.map((row) =>
+      mapRowToListItem(
+        row,
+        balanceAfterByTransactionId,
+        pocketBalanceAfterByTransactionId,
+      ),
+    ),
   );
 }
 

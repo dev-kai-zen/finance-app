@@ -23,6 +23,7 @@ interface TransactionDateTimePickerModalProps {
   onConfirm: (value: Date) => void;
   value: Date;
   visible: boolean;
+  title?: string;
 }
 
 export function TransactionDateTimePickerModal({
@@ -31,6 +32,7 @@ export function TransactionDateTimePickerModal({
   onConfirm,
   value,
   visible,
+  title,
 }: TransactionDateTimePickerModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -64,7 +66,7 @@ export function TransactionDateTimePickerModal({
         >
           <View style={styles.headerRow}>
             <Text style={styles.title}>
-              {mode === "date" ? "Transaction Date" : "Transaction Time"}
+              {title ?? (mode === "date" ? "Transaction Date" : "Transaction Time")}
             </Text>
             <Pressable
               accessibilityLabel="Close picker"

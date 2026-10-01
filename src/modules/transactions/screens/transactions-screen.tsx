@@ -9,12 +9,14 @@ import {
 import {
   ArrowDown,
   ArrowUp,
+  CalendarClock,
   Download,
   Trash2,
   Search,
   SlidersHorizontal,
   X,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import {
   ConfirmModal,
   FeatureNotImplementedModal,
@@ -87,6 +89,7 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
 }
 
 export function TransactionsScreen() {
+  const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -484,6 +487,18 @@ export function TransactionsScreen() {
         {/* Secondary transaction actions */}
         <View style={styles.secondaryActionsRow}>
           <Pressable
+            accessibilityLabel="Open scheduled transactions"
+            accessibilityRole="button"
+            onPress={() =>
+              router.navigate("/transactions/scheduled" as never)
+            }
+            style={styles.schedulesButton}
+          >
+            <CalendarClock color={theme.colors.primary} size={17} />
+            <Text style={styles.schedulesButtonText}>Scheduled</Text>
+          </Pressable>
+
+          <Pressable
             accessibilityLabel="Open transaction trash"
             accessibilityRole="button"
             onPress={() => {
@@ -710,6 +725,23 @@ function createStyles(theme: AppTheme) {
       height: LAYOUT_DIMENSIONS.minTouchTarget,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.sm,
+    },
+    schedulesButton: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}14`,
+      borderColor: `${theme.colors.primary}55`,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.sm,
+    },
+    schedulesButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     trashButtonText: {
       color: theme.colors.danger,

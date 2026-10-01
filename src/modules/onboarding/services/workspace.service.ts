@@ -13,6 +13,7 @@ import {
   clearTransactionWorkspace,
   createSampleTransactions,
 } from "@/modules/transactions";
+import { clearScheduledTransactionWorkspace } from "@/modules/scheduled-transactions";
 import {
   ONBOARDING_SETTING_KEYS,
   SAMPLE_DATA_VERSION,
@@ -104,6 +105,7 @@ function clearSampleWorkspaceIfNeeded(context: DbContext): void {
   const values = getOnboardingSettings(context);
   if (values[ONBOARDING_SETTING_KEYS.workspaceMode] !== "sample") return;
 
+  clearScheduledTransactionWorkspace(context);
   clearTransactionWorkspace(context);
   clearAccountWorkspace(context);
   clearCustomWorkspaceCategories(context);

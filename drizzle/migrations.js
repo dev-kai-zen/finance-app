@@ -19,6 +19,8 @@ import m0016 from './0016_add_credit_card_monitoring.sql';
 import m0017 from './0017_add_fund_groups.sql';
 import m0018 from './0018_add_transaction_presets.sql';
 import m0019 from './0019_remove_transaction_preset_name.sql';
+import m0020 from './0020_add_transaction_schedules.sql';
+import m0021 from './0021_archive_transaction_schedules.sql';
 
 export default {
   journal,
@@ -43,5 +45,7 @@ export default {
     m0017,
     m0018,
     m0019,
+    m0020,
+    m0021,
   },
 };

@@ -1,5 +1,6 @@
-import { TransactionsScreen } from '@/modules/transactions';
+import { TransactionsScreen } from "@/modules/transactions";
 
 export default function TransactionsRoute() {
   return <TransactionsScreen />;
 }
+

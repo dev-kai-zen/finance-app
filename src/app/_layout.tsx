@@ -12,6 +12,7 @@ import {
   SampleWorkspaceBanner,
   WorkspaceProvider,
 } from "@/modules/onboarding";
+import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -37,24 +38,27 @@ function RootLayoutContent() {
                 ]}
               >
                 <OnboardingGate>
-                  <AppShell banner={<SampleWorkspaceBanner />}>
-                    <Stack
-                      screenOptions={{
-                        contentStyle: {
-                          backgroundColor: theme.colors.background,
-                        },
-                        headerShown: false,
-                      }}
-                    >
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="accounts" />
-                      <Stack.Screen name="transactions" />
-                      <Stack.Screen name="credit-cards" />
-                      <Stack.Screen name="categories" />
-                      <Stack.Screen name="settings" />
-                      <Stack.Screen name="monitor" />
-                    </Stack>
-                  </AppShell>
+                  <>
+                    <ScheduledTransactionsProcessor />
+                    <AppShell banner={<SampleWorkspaceBanner />}>
+                      <Stack
+                        screenOptions={{
+                          contentStyle: {
+                            backgroundColor: theme.colors.background,
+                          },
+                          headerShown: false,
+                        }}
+                      >
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="accounts" />
+                        <Stack.Screen name="transactions" />
+                        <Stack.Screen name="credit-cards" />
+                        <Stack.Screen name="categories" />
+                        <Stack.Screen name="settings" />
+                        <Stack.Screen name="monitor" />
+                      </Stack>
+                    </AppShell>
+                  </>
                 </OnboardingGate>
               </SafeAreaView>
             </HexColorsProvider>

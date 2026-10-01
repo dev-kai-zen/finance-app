@@ -28,6 +28,19 @@ export const TransactionRow = deferComponent(
   "TransactionRow",
 ) as typeof import("./components/transaction-row").TransactionRow;
 
+export const TransactionTypePicker = deferComponent(
+  () =>
+    require("./components/transaction-type-picker").TransactionTypePicker,
+  "TransactionTypePicker",
+) as typeof import("./components/transaction-type-picker").TransactionTypePicker;
+
+export const TransactionDateTimePickerModal = deferComponent(
+  () =>
+    require("./components/transaction-date-time-picker-modal")
+      .TransactionDateTimePickerModal,
+  "TransactionDateTimePickerModal",
+) as typeof import("./components/transaction-date-time-picker-modal").TransactionDateTimePickerModal;
+
 export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;
@@ -50,6 +63,12 @@ export const createTransaction = deferFunction(
 export const createTransfer = deferFunction(
   () => require("./services/create-transfer.service").createTransfer,
 ) as typeof import("./services/create-transfer.service").createTransfer;
+
+export const recordTransactionInContext = deferFunction(
+  () =>
+    require("./services/record-transaction.service")
+      .recordTransactionInContext,
+) as typeof import("./services/record-transaction.service").recordTransactionInContext;
 
 export const removeTransaction = deferFunction(
   () => require("./services/delete-transaction.service").removeTransaction,
