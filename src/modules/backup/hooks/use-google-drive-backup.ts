@@ -171,7 +171,7 @@ function applyCatalog(
         ? `${catalog.migratedCount} copied; `
         : "";
     setNotice({
-      variant: "error",
+      variant: "warning",
       message:
         `${copiedMessage}${catalog.migrationFailureCount} hidden backup(s) could not be copied. ` +
         "They remain available for restore.",

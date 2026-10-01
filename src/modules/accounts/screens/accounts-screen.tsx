@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
+import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -158,7 +159,6 @@ export function AccountsScreen({
       }
     >
       <AccountError message={data.error} />
-      {!overlay && <AccountError message={mutations.error} />}
       {data.error ? (
         <AccountButton label="Retry loading accounts" onPress={data.refresh} />
       ) : null}
@@ -286,6 +286,7 @@ export function AccountsScreen({
       <AccountFormModal
         account={overlay?.kind === "edit" ? selected : undefined}
         error={mutations.error}
+        onClearError={mutations.clearError}
         pending={mutations.pending}
         types={data.types}
         visible={
@@ -354,6 +355,14 @@ export function AccountsScreen({
         visible={fundGroupsModalOpen}
         onClose={() => setFundGroupsModalOpen(false)}
         onRefresh={fundGroups.refresh}
+      />
+
+      <NotificationModal
+        message={mutations.error ?? ""}
+        onClose={mutations.clearError}
+        title="Unable to update accounts"
+        variant="error"
+        visible={!overlay && Boolean(mutations.error)}
       />
     </PageContainer>
   );

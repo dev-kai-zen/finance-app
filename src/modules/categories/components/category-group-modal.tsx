@@ -13,7 +13,12 @@ import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper, IconPickerModal, KeyboardAwareForm } from "@/components";
+import {
+  IconHelper,
+  IconPickerModal,
+  KeyboardAwareForm,
+  NotificationModal,
+} from "@/components";
 import {
   HexColorFormModal,
   type HexColorInput,
@@ -30,6 +35,7 @@ export interface CategoryGroupModalProps {
   initialType?: CategoryType;
   pending?: boolean;
   error?: string | null;
+  onClearError: () => void;
 }
 
 export function CategoryGroupModal({
@@ -40,6 +46,7 @@ export function CategoryGroupModal({
   initialType = "expense",
   pending = false,
   error = null,
+  onClearError,
 }: CategoryGroupModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -163,12 +170,6 @@ export function CategoryGroupModal({
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
           </View>
-
-          {displayError ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{displayError}</Text>
-            </View>
-          ) : null}
 
           <KeyboardAwareForm
             showsVerticalScrollIndicator={false}
@@ -388,6 +389,19 @@ export function CategoryGroupModal({
         onSave={handleSaveCustomColor}
         visible={isColorFormOpen}
       />
+
+      <NotificationModal
+        message={displayError ?? ""}
+        onClose={() => {
+          setLocalError(null);
+          onClearError();
+        }}
+        title={
+          localError ? "Check category group details" : "Unable to save category group"
+        }
+        variant={localError ? "warning" : "error"}
+        visible={visible && !isColorFormOpen && Boolean(displayError)}
+      />
     </Modal>
   );
 }
@@ -447,19 +461,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 16,
       fontWeight: "bold",
-    },
-    errorBox: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: theme.colors.danger,
-      borderRadius: 10,
-      borderWidth: 1,
-      marginBottom: 12,
-      padding: 10,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: 13,
-      fontWeight: "500",
     },
     scrollBody: {
       marginBottom: 16,

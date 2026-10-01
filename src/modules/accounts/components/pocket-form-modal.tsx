@@ -4,11 +4,9 @@ import {
   ConfirmModal,
   FullScreenFormModal,
   KeyboardAwareForm,
+  NotificationModal,
 } from "@/components";
-import {
-  AccountError,
-  AccountField,
-} from "@/modules/accounts/components/account-ui";
+import { AccountField } from "@/modules/accounts/components/account-ui";
 import type { AppTheme } from "@/constants/theme";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type { AccountListItem, PocketListItem } from "@/modules/accounts/types/account.types";
@@ -97,8 +95,6 @@ export function PocketFormModal({
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <AccountError message={archiveError ?? mutations.error} />
-
           <View style={styles.contextCard}>
             <Text style={styles.contextTitle}>{account.name}</Text>
             <Text style={styles.contextText}>
@@ -164,6 +160,17 @@ export function PocketFormModal({
         }
         onCancel={() => setConfirmArchive(false)}
         onConfirm={() => void archive()}
+      />
+
+      <NotificationModal
+        message={archiveError ?? mutations.error ?? ""}
+        onClose={() => {
+          setArchiveError(null);
+          mutations.clearError();
+        }}
+        title={archiveError ? "Pocket cannot be archived" : "Unable to save pocket"}
+        variant={archiveError ? "warning" : "error"}
+        visible={visible && Boolean(archiveError ?? mutations.error)}
       />
     </>
   );

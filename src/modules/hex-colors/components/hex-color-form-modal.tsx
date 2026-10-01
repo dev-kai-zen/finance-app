@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, X } from "lucide-react-native";
 import { KeyboardAwareForm } from "@/components/keyboard-aware-form";
+import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -58,6 +59,7 @@ export function HexColorFormModal({
   const [name, setName] = useState("");
   const [hex, setHex] = useState("#");
   const [error, setError] = useState<string | null>(null);
+  const [errorVariant, setErrorVariant] = useState<"warning" | "error">("warning");
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
@@ -92,12 +94,14 @@ export function HexColorFormModal({
   const handleSave = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
+      setErrorVariant("warning");
       setError("Please enter a color name.");
       return;
     }
 
     const formattedHex = hex.trim().startsWith("#") ? hex.trim() : `#${hex.trim()}`;
     if (!isValidHex(formattedHex)) {
+      setErrorVariant("warning");
       setError("Invalid hex color format. Use 6-digit hex like #10B981.");
       return;
     }
@@ -114,6 +118,7 @@ export function HexColorFormModal({
         onClose();
       }
     } catch (err) {
+      setErrorVariant("error");
       setError(err instanceof Error ? err.message : "Failed to save hex color.");
     } finally {
       setPending(false);
@@ -123,6 +128,7 @@ export function HexColorFormModal({
   const currentPreviewColor = isValidHex(hex) ? hex : theme.colors.surfaceMuted;
 
   return (
+    <>
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.overlay}>
         <Pressable
@@ -150,12 +156,6 @@ export function HexColorFormModal({
               <X color={theme.colors.textSecondary} size={18} />
             </Pressable>
           </View>
-
-          {error ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
 
           <KeyboardAwareForm style={styles.formScroll}>
             {/* Color Preview & Swatch */}
@@ -249,6 +249,15 @@ export function HexColorFormModal({
         </View>
       </View>
     </Modal>
+
+    <NotificationModal
+      message={error ?? ""}
+      onClose={() => setError(null)}
+      title={errorVariant === "warning" ? "Check color details" : "Unable to save color"}
+      variant={errorVariant}
+      visible={visible && Boolean(error)}
+    />
+    </>
   );
 }
 
@@ -298,18 +307,6 @@ function createStyles(theme: AppTheme) {
       height: 32,
       justifyContent: "center",
       width: 32,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: theme.colors.danger,
-      borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
-      marginBottom: theme.spacing.md,
-      padding: theme.spacing.sm,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.xs,
     },
     formScroll: {
       maxHeight: 380,

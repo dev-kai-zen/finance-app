@@ -10,7 +10,7 @@ export function AccountActionsSheet({ account, siblings, mutations, onClose, onE
 }) {
   const s = useThemeStyles(accountStyles);
   const index = siblings.findIndex((a) => a.id === account.id);
-  return <AccountModalSheet title={account.name} onClose={onClose} pending={mutations.pending} error={mutations.error}>
+  return <AccountModalSheet title={account.name} onClose={onClose} onClearError={mutations.clearError} pending={mutations.pending} error={mutations.error}>
     <AccountText muted>{account.accountType?.name ?? "Missing account type"} · {account.currencyCode}</AccountText>
     <AccountButton label="Edit account" onPress={onEdit} disabled={mutations.pending} primary />
     <AccountText heading>Order within this account type</AccountText>

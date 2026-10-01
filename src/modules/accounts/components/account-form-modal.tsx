@@ -17,6 +17,7 @@ import {
   IconHelper,
   IconPickerModal,
   KeyboardAwareForm,
+  NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -67,6 +68,7 @@ export function AccountFormModal({
   pending,
   error,
   onClose,
+  onClearError,
   onSave,
   onDelete,
   onRestore,
@@ -78,6 +80,7 @@ export function AccountFormModal({
   pending: boolean;
   error: string | null;
   onClose: () => void;
+  onClearError: () => void;
   onSave: (value: AccountInput, id?: string) => Promise<boolean>;
   onDelete?: (accountId: string) => Promise<boolean>;
   onRestore?: (accountId: string) => Promise<boolean>;
@@ -266,12 +269,6 @@ export function AccountFormModal({
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          {error ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
-
           <Text style={styles.fieldLabel}>Account Name</Text>
           <TextInput
             editable={!pending}
@@ -703,6 +700,14 @@ export function AccountFormModal({
         title="Select Account Icon"
         visible={iconPickerOpen}
       />
+
+      <NotificationModal
+        message={error ?? ""}
+        onClose={onClearError}
+        title="Unable to save account"
+        variant="error"
+        visible={visible && Boolean(error)}
+      />
     </>
   );
 }
@@ -713,17 +718,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.md,
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: `${theme.colors.danger}40`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.sm,
     },
     fieldLabel: {
       color: theme.colors.textSecondary,

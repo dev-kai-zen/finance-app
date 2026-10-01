@@ -21,6 +21,6 @@ export type BackupOperation =
   | "disconnecting";
 
 export interface BackupNotice {
-  variant: "success" | "error";
+  variant: "success" | "warning" | "error";
   message: string;
 }

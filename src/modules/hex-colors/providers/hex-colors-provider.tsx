@@ -17,6 +17,7 @@ interface HexColorsContextValue {
   colors: HexColor[];
   loading: boolean;
   error: string | null;
+  clearError: () => void;
   refresh: () => void;
   addColor: (input: HexColorInput) => HexColor;
   editColor: (id: string, input: Partial<HexColorInput>) => void;
@@ -29,6 +30,7 @@ export function HexColorsProvider({ children }: { children: ReactNode }) {
   const [colors, setColors] = useState<HexColor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const clearError = useCallback(() => setError(null), []);
 
   const refresh = useCallback(() => {
     try {
@@ -76,12 +78,13 @@ export function HexColorsProvider({ children }: { children: ReactNode }) {
       colors,
       loading,
       error,
+      clearError,
       refresh,
       addColor,
       editColor,
       removeColor,
     }),
-    [colors, loading, error, refresh, addColor, editColor, removeColor],
+    [colors, loading, error, clearError, refresh, addColor, editColor, removeColor],
   );
 
   return (

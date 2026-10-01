@@ -13,6 +13,7 @@ import {
   IconHelper,
   IconPickerModal,
   KeyboardAwareForm,
+  NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -176,12 +177,6 @@ export function AccountTypeFormModal({
         <KeyboardAwareForm
           contentContainerStyle={styles.formContent}
         >
-          {displayError ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{displayError}</Text>
-            </View>
-          ) : null}
-
           {/* Group Name Field */}
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>GROUP NAME</Text>
@@ -404,6 +399,17 @@ export function AccountTypeFormModal({
           visible={isConfirmDeleteOpen}
         />
       ) : null}
+
+      <NotificationModal
+        message={displayError ?? ""}
+        onClose={() => {
+          setLocalError(null);
+          mutations.clearError();
+        }}
+        title={localError ? "Check account group details" : "Unable to save account group"}
+        variant={localError ? "warning" : "error"}
+        visible={visible && !isColorFormOpen && Boolean(displayError)}
+      />
     </>
   );
 }
@@ -414,18 +420,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.lg,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.lg,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: `${theme.colors.danger}40`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
     },
     inputGroup: {
       gap: theme.spacing.xs,

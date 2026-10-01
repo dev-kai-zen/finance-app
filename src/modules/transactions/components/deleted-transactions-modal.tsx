@@ -10,6 +10,7 @@ import {
 import { ChevronLeft, RotateCcw, Trash2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { NotificationModal } from "@/components/notification-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
@@ -21,6 +22,7 @@ export interface DeletedTransactionsModalProps {
   pending?: boolean;
   error?: string | null;
   onClose: () => void;
+  onClearError: () => void;
   onPermanentlyDelete: (id: string) => Promise<boolean>;
   onRestore: (id: string) => void;
 }
@@ -31,6 +33,7 @@ export function DeletedTransactionsModal({
   pending = false,
   error = null,
   onClose,
+  onClearError,
   onPermanentlyDelete,
   onRestore,
 }: DeletedTransactionsModalProps) {
@@ -87,12 +90,6 @@ export function DeletedTransactionsModal({
             </View>
             <View style={styles.headerSpacer} />
           </View>
-
-          {error ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          ) : null}
 
           <ScrollView
             contentContainerStyle={[
@@ -209,6 +206,14 @@ export function DeletedTransactionsModal({
         title="Permanently delete transaction?"
         variant="destructive"
         visible={pendingPermanentDelete !== null}
+      />
+
+      <NotificationModal
+        message={error ?? ""}
+        onClose={onClearError}
+        title="Unable to update Trash"
+        variant="error"
+        visible={visible && Boolean(error)}
       />
     </>
   );
@@ -330,17 +335,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}14`,
-      borderBottomColor: `${theme.colors.danger}45`,
-      borderBottomWidth: 1,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.sm,
     },
     disabled: {
       opacity: 0.5,

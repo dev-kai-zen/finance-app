@@ -19,6 +19,7 @@ import {
 } from "lucide-react-native";
 
 import { KeyboardAwareForm } from "@/components/keyboard-aware-form";
+import { NotificationModal } from "@/components/notification-modal";
 import { APP_BRAND } from "@/constants/brand";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -136,7 +137,6 @@ export function OnboardingScreen() {
                 A checklist on the dashboard will guide you through these steps.
                 The protected "Others" fallbacks remain available for data safety.
               </Text>
-              <WorkspaceError message={workspace.error} />
               <PrimaryButton
                 disabled={workspace.busy}
                 label="Create empty workspace"
@@ -178,7 +178,6 @@ export function OnboardingScreen() {
                 ))}
               </View>
 
-              <WorkspaceError message={workspace.error} />
               <PrimaryButton
                 disabled={workspace.busy}
                 label="Create my workspace"
@@ -231,7 +230,6 @@ export function OnboardingScreen() {
                 </Text>
               </View>
 
-              <WorkspaceError message={workspace.error} />
               <PrimaryButton
                 disabled={workspace.busy}
                 label="Open sample workspace"
@@ -256,6 +254,14 @@ export function OnboardingScreen() {
           ) : null}
         </View>
       </KeyboardAwareForm>
+
+      <NotificationModal
+        message={workspace.error ?? ""}
+        onClose={workspace.clearError}
+        title="Unable to prepare workspace"
+        variant="error"
+        visible={Boolean(workspace.error)}
+      />
     </View>
   );
 }
@@ -337,17 +343,6 @@ function StepHeading({ title, description }: { title: string; description: strin
       <Text style={styles.headingDescription}>{description}</Text>
     </View>
   );
-}
-
-function WorkspaceError({ message }: { message: string | null }) {
-  const styles = useThemeStyles(createStyles);
-  return message ? (
-    <View accessibilityRole="alert" style={styles.errorCard}>
-      <Text selectable style={styles.errorText}>
-        {message}
-      </Text>
-    </View>
-  ) : null;
 }
 
 function PrimaryButton({
@@ -545,18 +540,6 @@ function createStyles(theme: AppTheme) {
     bulletText: {
       color: theme.colors.textSecondary,
       flex: 1,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
-    },
-    errorCard: {
-      backgroundColor: `${theme.colors.danger}10`,
-      borderColor: `${theme.colors.danger}40`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    errorText: {
-      color: theme.colors.danger,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },

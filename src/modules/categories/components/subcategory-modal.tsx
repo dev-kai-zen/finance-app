@@ -13,7 +13,12 @@ import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper, IconPickerModal, KeyboardAwareForm } from "@/components";
+import {
+  IconHelper,
+  IconPickerModal,
+  KeyboardAwareForm,
+  NotificationModal,
+} from "@/components";
 import {
   HexColorFormModal,
   type HexColorInput,
@@ -29,6 +34,7 @@ export interface SubcategoryModalProps {
   onSave: (input: CategoryInput, id?: string) => Promise<boolean>;
   pending?: boolean;
   error?: string | null;
+  onClearError: () => void;
 }
 
 export function SubcategoryModal({
@@ -39,6 +45,7 @@ export function SubcategoryModal({
   onSave,
   pending = false,
   error = null,
+  onClearError,
 }: SubcategoryModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -222,12 +229,6 @@ export function SubcategoryModal({
             </View>
           )}
 
-          {displayError ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{displayError}</Text>
-            </View>
-          ) : null}
-
           <KeyboardAwareForm
             showsVerticalScrollIndicator={false}
             style={styles.scrollBody}
@@ -398,6 +399,17 @@ export function SubcategoryModal({
         onSave={handleSaveCustomColor}
         visible={isColorFormOpen}
       />
+
+      <NotificationModal
+        message={displayError ?? ""}
+        onClose={() => {
+          setLocalError(null);
+          onClearError();
+        }}
+        title={localError ? "Check subcategory details" : "Unable to save subcategory"}
+        variant={localError ? "warning" : "error"}
+        visible={visible && !isColorFormOpen && Boolean(displayError)}
+      />
     </Modal>
   );
 }
@@ -502,19 +514,6 @@ function createStyles(theme: AppTheme) {
     typePillText: {
       fontSize: 11,
       fontWeight: "700",
-    },
-    errorBox: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: theme.colors.danger,
-      borderRadius: 10,
-      borderWidth: 1,
-      marginBottom: 12,
-      padding: 10,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: 13,
-      fontWeight: "500",
     },
     scrollBody: {
       marginBottom: 16,

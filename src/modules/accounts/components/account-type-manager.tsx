@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { ConfirmModal, IconHelper, InfoModal } from "@/components";
+import { ConfirmModal, IconHelper, InfoModal, NotificationModal } from "@/components";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
@@ -91,20 +91,29 @@ export function AccountTypeManager({
     }
 
     return (
-      <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete group"
-        message={`Delete "${deleting.name}" account group permanently? This cannot be undone.`}
-        onCancel={back}
-        onConfirm={() => {
-          void mutations.deleteType(deleting.id).then((saved) => {
-            if (saved) back();
-          });
-        }}
-        pending={mutations.pending}
-        title="Delete Account Type?"
-        visible
-      />
+      <>
+        <ConfirmModal
+          cancelLabel="Cancel"
+          confirmLabel="Delete group"
+          message={`Delete "${deleting.name}" account group permanently? This cannot be undone.`}
+          onCancel={back}
+          onConfirm={() => {
+            void mutations.deleteType(deleting.id).then((saved) => {
+              if (saved) back();
+            });
+          }}
+          pending={mutations.pending}
+          title="Delete Account Type?"
+          visible
+        />
+        <NotificationModal
+          message={mutations.error ?? ""}
+          onClose={mutations.clearError}
+          title="Unable to delete account group"
+          variant="error"
+          visible={Boolean(mutations.error)}
+        />
+      </>
     );
   }
 
@@ -117,12 +126,6 @@ export function AccountTypeManager({
         onClose={onClose}
       >
         <ScrollView contentContainerStyle={styles.formContent}>
-          {mutations.error ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorText}>{mutations.error}</Text>
-            </View>
-          ) : null}
-
           <View style={styles.segmentRow}>
             {(["asset", "liability"] as const).map((item) => (
               <Pressable
@@ -246,6 +249,14 @@ export function AccountTypeManager({
         visible={reorderVisible}
       />
 
+      <NotificationModal
+        message={mutations.error ?? ""}
+        onClose={mutations.clearError}
+        title="Unable to update account groups"
+        variant="error"
+        visible={Boolean(mutations.error)}
+      />
+
     </>
   );
 }
@@ -256,17 +267,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.md,
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: `${theme.colors.danger}40`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.sm,
     },
     segmentRow: {
       flexDirection: "row",

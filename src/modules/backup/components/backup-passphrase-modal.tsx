@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Check, KeyRound, ShieldOff, X } from "lucide-react-native";
 
+import { NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { validateBackupPassphrase } from "@/modules/backup/utils/backup-format";
@@ -70,14 +71,15 @@ export function BackupPassphraseModal({
   };
 
   return (
-    <Modal
-      animationType="fade"
-      onRequestClose={() => {
-        if (!pending) onCancel();
-      }}
-      transparent
-      visible={visible}
-    >
+    <>
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {
+          if (!pending) onCancel();
+        }}
+        transparent
+        visible={visible}
+      >
       <KeyboardAvoidingView
         behavior={process.env.EXPO_OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
@@ -179,7 +181,6 @@ export function BackupPassphraseModal({
             />
           ) : null}
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
           <Text style={styles.warning}>
             {mode === "create" && protection === "none"
               ? "This backup will not be encrypted. Keep the file and your Google account secure."
@@ -212,7 +213,16 @@ export function BackupPassphraseModal({
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+      </Modal>
+
+      <NotificationModal
+        message={error ?? ""}
+        onClose={() => setError(null)}
+        title="Check backup protection"
+        variant="warning"
+        visible={visible && Boolean(error)}
+      />
+    </>
   );
 }
 
@@ -377,10 +387,6 @@ function createStyles(theme: AppTheme) {
     radioSelected: {
       backgroundColor: theme.colors.primary,
       borderColor: theme.colors.primary,
-    },
-    error: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.xs,
     },
     warning: {
       color: theme.colors.textMuted,

@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { InfoModal, PageContainer, PageHeader } from "@/components";
+import { InfoModal, NotificationModal, PageContainer, PageHeader } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -38,6 +38,7 @@ export function SqliteMonitorScreen() {
     tableData,
     queryResult,
     queryError,
+    clearQueryError,
     runQuery,
     vacuum,
     refreshTables,
@@ -232,13 +233,6 @@ export function SqliteMonitorScreen() {
               </Pressable>
             </View>
 
-            {/* Query Error */}
-            {queryError && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorBoxText}>Error: {queryError}</Text>
-              </View>
-            )}
-
             {/* Query Results */}
             {queryResult && (
               <View style={styles.resultBox}>
@@ -341,6 +335,14 @@ export function SqliteMonitorScreen() {
         title={vacuumResult?.title ?? ""}
         variant={vacuumResult?.variant ?? "info"}
         visible={vacuumResult !== null}
+      />
+
+      <NotificationModal
+        message={queryError ?? ""}
+        onClose={clearQueryError}
+        title="SQL query failed"
+        variant="error"
+        visible={Boolean(queryError)}
       />
 
       {/* Selected Table Records Modal */}
@@ -600,18 +602,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: 14,
       fontWeight: "700",
-    },
-    errorBox: {
-      backgroundColor: `${theme.colors.danger}26`,
-      borderColor: theme.colors.danger,
-      borderRadius: 8,
-      borderWidth: 1,
-      marginTop: 12,
-      padding: 10,
-    },
-    errorBoxText: {
-      color: theme.colors.danger,
-      fontSize: 13,
     },
     resultBox: {
       borderTopColor: theme.colors.border,

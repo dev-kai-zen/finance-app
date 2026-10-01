@@ -14,6 +14,7 @@ import { ActionBottomSheet } from "@/components/action-bottom-sheet";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { IconHelper } from "@/components/icon-helper";
 import { InfoModal } from "@/components/info-modal";
+import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -45,6 +46,7 @@ export function CategoriesScreen({
     reorderCategories,
     loadCategoryPresets,
     deleteCategoryPresets,
+    clearError,
   } = useCategories();
 
   const [selectedType, setSelectedType] = useState<CategoryType>("expense");
@@ -260,12 +262,6 @@ export function CategoriesScreen({
           </View>
         </View>
 
-        {error ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
-
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={theme.colors.primary} size="large" />
@@ -304,6 +300,7 @@ export function CategoriesScreen({
         categoryToEdit={groupToEdit}
         error={error}
         initialType={selectedType}
+        onClearError={clearError}
         onClose={() => {
           setIsGroupModalVisible(false);
           setGroupToEdit(null);
@@ -316,6 +313,7 @@ export function CategoriesScreen({
       {/* 2. Subcategory Modal */}
       <SubcategoryModal
         error={error}
+        onClearError={clearError}
         onClose={() => {
           setIsSubModalVisible(false);
           setParentForSub(null);
@@ -449,6 +447,18 @@ export function CategoriesScreen({
         variant="destructive"
         visible={deleteConfirm !== null}
       />
+
+      <NotificationModal
+        message={error ?? ""}
+        onClose={clearError}
+        title="Unable to update categories"
+        variant="error"
+        visible={
+          Boolean(error) &&
+          !isGroupModalVisible &&
+          !isSubModalVisible
+        }
+      />
     </PageContainer>
   );
 }
@@ -550,18 +560,6 @@ function createStyles(theme: AppTheme) {
     headerActionBtnText: {
       fontSize: 12,
       fontWeight: "600",
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: theme.colors.danger,
-      borderRadius: 8,
-      borderWidth: 1,
-      padding: 10,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: 13,
-      fontWeight: "500",
     },
     loadingContainer: {
       alignItems: "center",

@@ -76,7 +76,6 @@ export function useMonitor() {
         ? "Database is busy with other queries. Wait a moment and try VACUUM again."
         : rawMessage;
       console.error("Failed to vacuum SQLite database:", err);
-      setQueryError(msg);
       return { success: false, error: msg };
     }
   }, [refreshTables]);
@@ -88,6 +87,7 @@ export function useMonitor() {
     tableData,
     queryResult,
     queryError,
+    clearQueryError: () => setQueryError(null),
     loading,
     runQuery,
     vacuum,

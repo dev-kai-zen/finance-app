@@ -624,6 +624,7 @@ export function TransactionsScreen() {
 
       <DeletedTransactionsModal
         error={error}
+        onClearError={clearError}
         onClose={() => {
           clearError();
           setIsTrashModalOpen(false);

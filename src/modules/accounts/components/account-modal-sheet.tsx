@@ -1,19 +1,19 @@
-import { useEffect, useRef, type PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
-import { AccountButton, AccountError, AccountText, accountStyles } from "@/modules/accounts/components/account-ui";
+import { NotificationModal } from "@/components/notification-modal";
+import { AccountButton, AccountText, accountStyles } from "@/modules/accounts/components/account-ui";
 
-export function AccountModalSheet({ title, onClose, pending = false, error, children }: PropsWithChildren<{
-  title: string; onClose: () => void; pending?: boolean; error?: string | null;
+export function AccountModalSheet({ title, onClose, onClearError, pending = false, error, children }: PropsWithChildren<{
+  title: string; onClose: () => void; onClearError: () => void; pending?: boolean; error?: string | null;
 }>) {
   const s = useThemeStyles(styles);
   const common = useThemeStyles(accountStyles);
   const insets = useSafeAreaInsets();
-  const scroll = useRef<ScrollView>(null);
-  useEffect(() => { if (error) scroll.current?.scrollTo({ y: 0, animated: true }); }, [error]);
   return (
+    <>
     <Modal visible transparent animationType="slide" onRequestClose={() => { if (!pending) onClose(); }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={s.overlay}>
         <View accessibilityViewIsModal style={[s.sheet, { marginTop: insets.top + 16, marginBottom: insets.bottom + 16 }]}>
@@ -21,13 +21,20 @@ export function AccountModalSheet({ title, onClose, pending = false, error, chil
             <AccountText heading>{title}</AccountText>
             <AccountButton label="Close" onPress={onClose} disabled={pending} />
           </View>
-          <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
-            <AccountError message={error} />
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
             {children}
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
+    <NotificationModal
+      message={error ?? ""}
+      onClose={onClearError}
+      title="Unable to update account"
+      variant="error"
+      visible={Boolean(error)}
+    />
+    </>
   );
 }
 function styles(theme: AppTheme) {

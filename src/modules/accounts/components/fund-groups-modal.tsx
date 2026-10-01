@@ -19,7 +19,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ConfirmModal, FullScreenFormModal } from "@/components";
+import { ConfirmModal, FullScreenFormModal, NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
@@ -397,12 +397,6 @@ export function FundGroupsModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {mutations.error ? (
-              <View style={styles.errorBanner}>
-                <Text selectable style={styles.errorText}>{mutations.error}</Text>
-              </View>
-            ) : null}
-
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Group Name</Text>
               <TextInput
@@ -636,6 +630,14 @@ export function FundGroupsModal({
         visible={confirmAction !== null}
         onCancel={() => setConfirmAction(null)}
         onConfirm={confirm}
+      />
+
+      <NotificationModal
+        message={mutations.error ?? ""}
+        onClose={mutations.clearError}
+        title="Unable to update Fund Group"
+        variant="error"
+        visible={visible && Boolean(mutations.error)}
       />
     </>
   );
@@ -959,13 +961,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 10,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}12`,
-      borderColor: `${theme.colors.danger}40`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
     },
     errorText: {
       color: theme.colors.danger,

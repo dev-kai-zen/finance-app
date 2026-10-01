@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import * as Linking from "expo-linking";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -18,7 +17,7 @@ import {
   ShieldAlert,
 } from "lucide-react-native";
 
-import { ConfirmModal } from "@/components/confirm-modal";
+import { ConfirmModal, NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useGoogleDriveBackup } from "@/modules/backup/hooks/use-google-drive-backup";
@@ -36,6 +35,7 @@ export function GoogleDriveBackupSettings() {
   const [selectedBackup, setSelectedBackup] = useState<BackupFile | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
+  const [linkingError, setLinkingError] = useState<string | null>(null);
   const busy = backup.operation !== "idle";
 
   const operationLabel = useMemo(() => {
@@ -86,8 +86,7 @@ export function GoogleDriveBackupSettings() {
     try {
       await Linking.openURL(backup.folderUrl);
     } catch {
-      Alert.alert(
-        "Unable to open Google Drive",
+      setLinkingError(
         "Open Google Drive and look for Kaizen Finance / Backups.",
       );
     }
@@ -234,31 +233,6 @@ export function GoogleDriveBackupSettings() {
           </View>
         ) : null}
 
-        {backup.notice ? (
-          <Pressable
-            accessibilityLabel="Dismiss backup message"
-            accessibilityRole="button"
-            onPress={backup.clearNotice}
-            style={[
-              styles.notice,
-              backup.notice.variant === "error"
-                ? styles.errorNotice
-                : styles.successNotice,
-            ]}
-          >
-            <Text
-              selectable
-              style={[
-                styles.noticeText,
-                backup.notice.variant === "error"
-                  ? styles.errorText
-                  : styles.successText,
-              ]}
-            >
-              {backup.notice.message}
-            </Text>
-          </Pressable>
-        ) : null}
       </View>
 
       <RestoreBackupModal
@@ -297,6 +271,28 @@ export function GoogleDriveBackupSettings() {
           backup.operation === "creating" || backup.operation === "restoring"
         }
         visible={passphraseMode !== null}
+      />
+
+      <NotificationModal
+        message={backup.notice?.message ?? ""}
+        onClose={backup.clearNotice}
+        title={
+          backup.notice?.variant === "success"
+            ? "Backup complete"
+            : backup.notice?.variant === "warning"
+              ? "Backup needs attention"
+              : "Backup failed"
+        }
+        variant={backup.notice?.variant ?? "error"}
+        visible={Boolean(backup.notice)}
+      />
+
+      <NotificationModal
+        message={linkingError ?? ""}
+        onClose={() => setLinkingError(null)}
+        title="Unable to open Google Drive"
+        variant="error"
+        visible={Boolean(linkingError)}
       />
     </>
   );
@@ -415,29 +411,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
-    },
-    notice: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-    },
-    successNotice: {
-      backgroundColor: `${theme.colors.success}12`,
-      borderTopColor: `${theme.colors.success}40`,
-    },
-    errorNotice: {
-      backgroundColor: `${theme.colors.danger}12`,
-      borderTopColor: `${theme.colors.danger}40`,
-    },
-    noticeText: {
-      fontSize: theme.typography.fontSize.xs,
-      lineHeight: theme.typography.lineHeight.xs,
-    },
-    successText: {
-      color: theme.colors.success,
-    },
-    errorText: {
-      color: theme.colors.danger,
     },
   });
 }

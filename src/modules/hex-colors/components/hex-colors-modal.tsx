@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pencil, Plus, Trash2, X } from "lucide-react-native";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -30,7 +31,7 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const { colors, loading, error, addColor, editColor, removeColor } = useHexColors();
+  const { colors, loading, error, clearError, addColor, editColor, removeColor } = useHexColors();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<HexColor | null>(null);
@@ -104,13 +105,6 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
                 <X color={theme.colors.textSecondary} size={18} />
               </Pressable>
             </View>
-
-            {/* Error Banner */}
-            {actionError || error ? (
-              <View style={styles.errorBanner}>
-                <Text style={styles.errorText}>{actionError || error}</Text>
-              </View>
-            ) : null}
 
             {/* Top Toolbar Action */}
             <View style={styles.toolbarRow}>
@@ -211,6 +205,17 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
         onCancel={() => setDeletingColor(null)}
         onConfirm={handleConfirmDelete}
       />
+
+      <NotificationModal
+        message={actionError ?? error ?? ""}
+        onClose={() => {
+          setActionError(null);
+          clearError();
+        }}
+        title="Unable to update color palette"
+        variant="error"
+        visible={visible && Boolean(actionError ?? error)}
+      />
     </>
   );
 }
@@ -269,18 +274,6 @@ function createStyles(theme: AppTheme) {
       height: 32,
       justifyContent: "center",
       width: 32,
-    },
-    errorBanner: {
-      backgroundColor: `${theme.colors.danger}15`,
-      borderColor: theme.colors.danger,
-      borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
-      marginBottom: theme.spacing.md,
-      padding: theme.spacing.sm,
-    },
-    errorText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.xs,
     },
     toolbarRow: {
       flexDirection: "row",
