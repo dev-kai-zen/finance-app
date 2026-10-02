@@ -4,12 +4,12 @@ import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { AccountModalSheet } from "@/modules/accounts/components/account-modal-sheet";
 import { AccountButton, AccountText, accountStyles } from "@/modules/accounts/components/account-ui";
-
 export function AccountActionsSheet({ account, siblings, mutations, onClose, onEdit }: {
   account: AccountListItem; siblings: AccountListItem[]; mutations: AccountMutations; onClose: () => void; onEdit: () => void;
 }) {
   const s = useThemeStyles(accountStyles);
   const index = siblings.findIndex((a) => a.id === account.id);
+
   return <AccountModalSheet title={account.name} onClose={onClose} onClearError={mutations.clearError} pending={mutations.pending} error={mutations.error}>
     <AccountText muted>{account.accountType?.name ?? "Missing account type"} · {account.currencyCode}</AccountText>
     <AccountButton label="Edit account" onPress={onEdit} disabled={mutations.pending} primary />

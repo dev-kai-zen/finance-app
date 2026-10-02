@@ -21,6 +21,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useDefaultAccounts } from "@/modules/settings";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
@@ -113,9 +114,24 @@ export function AccountFormModal({
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
     parseAmountSign(openingAmountInput(account?.openingBalanceMinorUnits ?? 0)),
   );
+  const {
+    defaultExpenseAccountId,
+    defaultIncomeAccountId,
+    setExpenseAccount,
+    setIncomeAccount,
+  } = useDefaultAccounts();
+  const [isDefaultExpense, setIsDefaultExpense] = useState(false);
+  const [isDefaultIncome, setIsDefaultIncome] = useState(false);
 
   useEffect(() => {
     if (!visible) return;
+    if (account) {
+      setIsDefaultExpense(defaultExpenseAccountId === account.id);
+      setIsDefaultIncome(defaultIncomeAccountId === account.id);
+    } else {
+      setIsDefaultExpense(false);
+      setIsDefaultIncome(false);
+    }
     const openingAmount = openingAmountInput(account?.openingBalanceMinorUnits ?? 0);
     setValue({
       name: account?.name ?? "",
@@ -240,7 +256,21 @@ export function AccountFormModal({
       account?.id,
     ).then(
       (saved) => {
-        if (saved) onClose();
+        if (saved) {
+          if (account?.id) {
+            if (isDefaultExpense && defaultExpenseAccountId !== account.id) {
+              setExpenseAccount(account.id);
+            } else if (!isDefaultExpense && defaultExpenseAccountId === account.id) {
+              setExpenseAccount(null);
+            }
+            if (isDefaultIncome && defaultIncomeAccountId !== account.id) {
+              setIncomeAccount(account.id);
+            } else if (!isDefaultIncome && defaultIncomeAccountId === account.id) {
+              setIncomeAccount(null);
+            }
+          }
+          onClose();
+        }
       },
     );
   };
@@ -478,6 +508,50 @@ export function AccountFormModal({
               value={value.hideFromReports}
             />
           </View>
+
+          {account && !account.isArchived ? (
+            <>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Default for Expense</Text>
+                  <Text style={styles.toggleHint}>
+                    Pre-select this account when recording expense transactions.
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Default for Expense"
+                  disabled={pending}
+                  onValueChange={setIsDefaultExpense}
+                  thumbColor={theme.colors.textInverse}
+                  trackColor={{
+                    false: theme.colors.borderStrong,
+                    true: theme.colors.primary,
+                  }}
+                  value={isDefaultExpense}
+                />
+              </View>
+
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Default for Income</Text>
+                  <Text style={styles.toggleHint}>
+                    Pre-select this account when recording income transactions.
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Default for Income"
+                  disabled={pending}
+                  onValueChange={setIsDefaultIncome}
+                  thumbColor={theme.colors.textInverse}
+                  trackColor={{
+                    false: theme.colors.borderStrong,
+                    true: theme.colors.primary,
+                  }}
+                  value={isDefaultIncome}
+                />
+              </View>
+            </>
+          ) : null}
 
           <Text style={styles.fieldLabel}>Opening Date</Text>
           <Pressable

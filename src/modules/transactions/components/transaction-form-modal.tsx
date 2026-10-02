@@ -29,6 +29,7 @@ import type {
 import { accountColor } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
 import { previewInstallmentPlan } from "@/modules/credit-cards";
+import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
@@ -106,6 +107,10 @@ export interface TransactionFormModalProps {
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
   isEditing?: boolean;
+  defaultExpenseAccountId?: string | null;
+  defaultExpensePocketId?: string | null;
+  defaultIncomeAccountId?: string | null;
+  defaultIncomePocketId?: string | null;
 }
 
 const SHORT_MONTHS = [
@@ -164,10 +169,31 @@ export function TransactionFormModal({
   error = null,
   initialTransaction = null,
   isEditing = false,
+  defaultExpenseAccountId: propsDefaultExpenseAccountId,
+  defaultExpensePocketId: propsDefaultExpensePocketId,
+  defaultIncomeAccountId: propsDefaultIncomeAccountId,
+  defaultIncomePocketId: propsDefaultIncomePocketId,
 }: TransactionFormModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const defaultAccounts = useDefaultAccounts();
+  const effectiveDefaultExpenseAccountId =
+    propsDefaultExpenseAccountId !== undefined
+      ? propsDefaultExpenseAccountId
+      : defaultAccounts.defaultExpenseAccountId;
+  const effectiveDefaultExpensePocketId =
+    propsDefaultExpensePocketId !== undefined
+      ? propsDefaultExpensePocketId
+      : defaultAccounts.defaultExpensePocketId;
+  const effectiveDefaultIncomeAccountId =
+    propsDefaultIncomeAccountId !== undefined
+      ? propsDefaultIncomeAccountId
+      : defaultAccounts.defaultIncomeAccountId;
+  const effectiveDefaultIncomePocketId =
+    propsDefaultIncomePocketId !== undefined
+      ? propsDefaultIncomePocketId
+      : defaultAccounts.defaultIncomePocketId;
 
   const [mode, setMode] = useState<TransactionType>("expense");
   const [name, setName] = useState<string>("");
@@ -297,9 +323,23 @@ export function TransactionFormModal({
         setMode("expense");
         setName("");
         setAmountSign("-");
-        const firstAccount = accounts.length > 0 ? accounts[0].id : "";
+        const defaultExpenseAccount = accounts.find(
+          (a) => a.id === effectiveDefaultExpenseAccountId && !a.isArchived,
+        );
+        const firstAccount = defaultExpenseAccount
+          ? defaultExpenseAccount.id
+          : (accounts.length > 0 ? accounts[0].id : "");
         setSelectedAccountId(firstAccount);
-        setSelectedPocketId(null);
+        const defaultExpensePocket =
+          defaultExpenseAccount && effectiveDefaultExpensePocketId
+            ? pockets.find(
+                (p) =>
+                  p.id === effectiveDefaultExpensePocketId &&
+                  p.accountId === defaultExpenseAccount.id &&
+                  !p.isArchived,
+              )
+            : null;
+        setSelectedPocketId(defaultExpensePocket ? defaultExpensePocket.id : null);
         setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
         setTransferToPocketId(null);
 
@@ -332,16 +372,58 @@ export function TransactionFormModal({
       setIsFeeAccountPickerOpen(false);
       setIsFeeCategoryPickerOpen(false);
     }
-  }, [visible, initialTransaction, accounts, categories]);
+  }, [
+    visible,
+    initialTransaction,
+    accounts,
+    categories,
+    pockets,
+    effectiveDefaultExpenseAccountId,
+    effectiveDefaultExpensePocketId,
+  ]);
 
-  // When mode changes, switch default category and sign
+  // When mode changes, switch default category, sign, and default account
   const handleModeChange = (newMode: TransactionType) => {
     setMode(newMode);
     setLocalError(null);
     if (newMode === "expense") {
       setAmountSign("-");
+      if (!initialTransaction) {
+        const defaultExpense = accounts.find(
+          (a) => a.id === effectiveDefaultExpenseAccountId && !a.isArchived,
+        );
+        if (defaultExpense) {
+          setSelectedAccountId(defaultExpense.id);
+          const defaultPocket = effectiveDefaultExpensePocketId
+            ? pockets.find(
+                (p) =>
+                  p.id === effectiveDefaultExpensePocketId &&
+                  p.accountId === defaultExpense.id &&
+                  !p.isArchived,
+              )
+            : null;
+          setSelectedPocketId(defaultPocket ? defaultPocket.id : null);
+        }
+      }
     } else if (newMode === "income") {
       setAmountSign("+");
+      if (!initialTransaction) {
+        const defaultIncome = accounts.find(
+          (a) => a.id === effectiveDefaultIncomeAccountId && !a.isArchived,
+        );
+        if (defaultIncome) {
+          setSelectedAccountId(defaultIncome.id);
+          const defaultPocket = effectiveDefaultIncomePocketId
+            ? pockets.find(
+                (p) =>
+                  p.id === effectiveDefaultIncomePocketId &&
+                  p.accountId === defaultIncome.id &&
+                  !p.isArchived,
+              )
+            : null;
+          setSelectedPocketId(defaultPocket ? defaultPocket.id : null);
+        }
+      }
     } else {
       setAmountSign("+");
     }
@@ -1575,6 +1657,12 @@ export function TransactionFormModal({
         selectedPocketId={selectedPocketId}
         title={mode === "transfer" ? "Select Source Account" : "Select Account"}
         visible={isAccountPickerOpen}
+        defaultExpenseAccountId={effectiveDefaultExpenseAccountId}
+        defaultExpensePocketId={effectiveDefaultExpensePocketId}
+        defaultIncomeAccountId={effectiveDefaultIncomeAccountId}
+        defaultIncomePocketId={effectiveDefaultIncomePocketId}
+        onSetDefaultExpense={defaultAccounts.setExpenseAccount}
+        onSetDefaultIncome={defaultAccounts.setIncomeAccount}
       />
 
       <AccountPickerModal
@@ -1589,6 +1677,12 @@ export function TransactionFormModal({
         selectedPocketId={transferToPocketId}
         title="Select Destination Account"
         visible={isTransferToAccountPickerOpen}
+        defaultExpenseAccountId={effectiveDefaultExpenseAccountId}
+        defaultExpensePocketId={effectiveDefaultExpensePocketId}
+        defaultIncomeAccountId={effectiveDefaultIncomeAccountId}
+        defaultIncomePocketId={effectiveDefaultIncomePocketId}
+        onSetDefaultExpense={defaultAccounts.setExpenseAccount}
+        onSetDefaultIncome={defaultAccounts.setIncomeAccount}
       />
 
       <CategoryPickerModal
@@ -1626,6 +1720,12 @@ export function TransactionFormModal({
         selectedPocketId={feePocketId}
         title="Deduct Fee From Account"
         visible={isFeeAccountPickerOpen}
+        defaultExpenseAccountId={effectiveDefaultExpenseAccountId}
+        defaultExpensePocketId={effectiveDefaultExpensePocketId}
+        defaultIncomeAccountId={effectiveDefaultIncomeAccountId}
+        defaultIncomePocketId={effectiveDefaultIncomePocketId}
+        onSetDefaultExpense={defaultAccounts.setExpenseAccount}
+        onSetDefaultIncome={defaultAccounts.setIncomeAccount}
       />
 
       <CategoryPickerModal

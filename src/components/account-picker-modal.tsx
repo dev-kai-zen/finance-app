@@ -11,7 +11,15 @@ import {
   View,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { Check, Folder, Search, WalletCards, X } from "lucide-react-native";
+import {
+  Check,
+  Folder,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  WalletCards,
+  X,
+} from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "./icon-helper";
@@ -33,6 +41,16 @@ export interface AccountPickerModalProps {
   onSelectLocation: (account: AccountListItem, pocketId: string | null) => void;
   title?: string;
   excludeAccountId?: string | null;
+  allowNone?: boolean;
+  noneLabel?: string;
+  onSelectNone?: () => void;
+  hidePockets?: boolean;
+  defaultExpenseAccountId?: string | null;
+  defaultExpensePocketId?: string | null;
+  defaultIncomeAccountId?: string | null;
+  defaultIncomePocketId?: string | null;
+  onSetDefaultExpense?: (accountId: string | null, pocketId: string | null) => void;
+  onSetDefaultIncome?: (accountId: string | null, pocketId: string | null) => void;
 }
 
 export function AccountPickerModal({
@@ -45,6 +63,16 @@ export function AccountPickerModal({
   onSelectLocation,
   title = "Select Account",
   excludeAccountId,
+  allowNone,
+  noneLabel,
+  onSelectNone,
+  hidePockets,
+  defaultExpenseAccountId,
+  defaultExpensePocketId,
+  defaultIncomeAccountId,
+  defaultIncomePocketId,
+  onSetDefaultExpense,
+  onSetDefaultIncome,
 }: AccountPickerModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -145,16 +173,65 @@ export function AccountPickerModal({
     );
   }, [filteredAccounts, theme]);
 
+  const [longPressTarget, setLongPressTarget] = useState<{
+    account: AccountListItem;
+    pocketId: string | null;
+    locationName: string | null;
+  } | null>(null);
+
+  const canSetDefaults = Boolean(onSetDefaultExpense || onSetDefaultIncome);
+
+  const targetIsDefaultExpense = Boolean(
+    longPressTarget &&
+      longPressTarget.account.id === defaultExpenseAccountId &&
+      (longPressTarget.pocketId ?? null) === (defaultExpensePocketId ?? null),
+  );
+
+  const targetIsDefaultIncome = Boolean(
+    longPressTarget &&
+      longPressTarget.account.id === defaultIncomeAccountId &&
+      (longPressTarget.pocketId ?? null) === (defaultIncomePocketId ?? null),
+  );
+
+  const handleToggleDefaultExpense = () => {
+    if (!longPressTarget || !onSetDefaultExpense) return;
+    if (targetIsDefaultExpense) {
+      onSetDefaultExpense(null, null);
+    } else {
+      onSetDefaultExpense(longPressTarget.account.id, longPressTarget.pocketId);
+    }
+    setLongPressTarget(null);
+  };
+
+  const handleToggleDefaultIncome = () => {
+    if (!longPressTarget || !onSetDefaultIncome) return;
+    if (targetIsDefaultIncome) {
+      onSetDefaultIncome(null, null);
+    } else {
+      onSetDefaultIncome(longPressTarget.account.id, longPressTarget.pocketId);
+    }
+    setLongPressTarget(null);
+  };
+
   const handleSelect = (account: AccountListItem, pocketId: string | null) => {
+    setLongPressTarget(null);
     onSelectLocation(account, pocketId);
     setSearchQuery("");
     onClose();
   };
 
   const handleClose = () => {
+    setLongPressTarget(null);
     setSearchQuery("");
     onClose();
   };
+
+  const showNoneOption =
+    allowNone &&
+    (!searchQuery.trim() ||
+      (noneLabel ?? "None (Use first active account)")
+        .toLowerCase()
+        .includes(searchQuery.trim().toLowerCase()));
 
   return (
     <Modal
@@ -222,7 +299,61 @@ export function AccountPickerModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {groupedAccounts.length === 0 ? (
+            {showNoneOption ? (
+              <View style={styles.groupContainer}>
+                <View style={styles.groupCards}>
+                  <TouchableOpacity
+                    accessibilityLabel={noneLabel ?? "None (Use first active account)"}
+                    accessibilityRole="button"
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      onSelectNone?.();
+                      handleClose();
+                    }}
+                    style={[
+                      styles.accountItem,
+                      !selectedAccountId && styles.selectedAccountItem,
+                    ]}
+                  >
+                    <View style={styles.accountItemLeft}>
+                      <View
+                        style={[
+                          styles.accountIconWrap,
+                          {
+                            backgroundColor: theme.colors.surfaceMuted,
+                            borderColor: theme.colors.border,
+                          },
+                        ]}
+                      >
+                        <WalletCards size={18} color={theme.colors.textMuted} />
+                      </View>
+                      <View style={styles.accountItemTextCol}>
+                        <Text
+                          style={[
+                            styles.accountItemName,
+                            !selectedAccountId && styles.selectedText,
+                          ]}
+                        >
+                          {noneLabel ?? "None (Use first active account)"}
+                        </Text>
+                        <Text style={styles.accountItemType}>Dynamic fallback</Text>
+                      </View>
+                    </View>
+                    {!selectedAccountId ? (
+                      <View style={styles.checkBadge}>
+                        <Check
+                          size={14}
+                          color={theme.colors.surface}
+                          strokeWidth={3}
+                        />
+                      </View>
+                    ) : null}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : null}
+
+            {groupedAccounts.length === 0 && !showNoneOption ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateTitle}>No accounts found</Text>
                 <Text style={styles.emptyStateDesc}>
@@ -292,9 +423,26 @@ export function AccountPickerModal({
                       return (
                         <View key={account.id}>
                           {index > 0 && <View style={styles.cardDivider} />}
-                          {account.pocketEnabled ? (
+                          {account.pocketEnabled && !hidePockets ? (
                             <>
-                              <View style={styles.accountItem}>
+                              <TouchableOpacity
+                                activeOpacity={0.7}
+                                accessibilityRole="button"
+                                accessibilityLabel={`${account.name}, select available balance, balance ${formattedBalance}`}
+                                onPress={() => handleSelect(account, null)}
+                                onLongPress={
+                                  canSetDefaults
+                                    ? () => {
+                                        setLongPressTarget({
+                                          account,
+                                          pocketId: null,
+                                          locationName: null,
+                                        });
+                                      }
+                                    : undefined
+                                }
+                                style={styles.accountItem}
+                              >
                                 <View style={styles.accountItemLeft}>
                                   <View
                                     style={[
@@ -312,9 +460,27 @@ export function AccountPickerModal({
                                     />
                                   </View>
                                   <View style={styles.accountItemTextCol}>
-                                    <Text style={styles.accountItemName}>
-                                      {account.name}
-                                    </Text>
+                                    <View style={styles.nameRow}>
+                                      <Text style={styles.accountItemName}>
+                                        {account.name}
+                                      </Text>
+                                      {defaultExpenseAccountId === account.id &&
+                                        !defaultExpensePocketId && (
+                                          <View style={styles.defaultBadgeExpense}>
+                                            <Text style={styles.defaultBadgeExpenseText}>
+                                              Default Exp
+                                            </Text>
+                                          </View>
+                                        )}
+                                      {defaultIncomeAccountId === account.id &&
+                                        !defaultIncomePocketId && (
+                                          <View style={styles.defaultBadgeIncome}>
+                                            <Text style={styles.defaultBadgeIncomeText}>
+                                              Default Inc
+                                            </Text>
+                                          </View>
+                                        )}
+                                    </View>
                                     <Text style={styles.accountItemType}>
                                       {account.accountType?.accountGroup === "liability"
                                         ? "Liability"
@@ -331,7 +497,7 @@ export function AccountPickerModal({
                                 >
                                   {formattedBalance}
                                 </Text>
-                              </View>
+                              </TouchableOpacity>
                               <View style={styles.locationList}>
                                 {locations.map((location) => {
                                   const locationSelected =
@@ -341,6 +507,13 @@ export function AccountPickerModal({
                                     location.balance,
                                     account.currencyCode,
                                   );
+                                  const isLocDefaultExp =
+                                    defaultExpenseAccountId === account.id &&
+                                    (defaultExpensePocketId ?? null) === location.id;
+                                  const isLocDefaultInc =
+                                    defaultIncomeAccountId === account.id &&
+                                    (defaultIncomePocketId ?? null) === location.id;
+
                                   return (
                                     <TouchableOpacity
                                       key={location.id ?? "main"}
@@ -348,6 +521,17 @@ export function AccountPickerModal({
                                       accessibilityRole="button"
                                       activeOpacity={0.7}
                                       onPress={() => handleSelect(account, location.id)}
+                                      onLongPress={
+                                        canSetDefaults
+                                          ? () => {
+                                              setLongPressTarget({
+                                                account,
+                                                pocketId: location.id,
+                                                locationName: location.name,
+                                              });
+                                            }
+                                          : undefined
+                                      }
                                       style={[
                                         styles.locationItem,
                                         locationSelected && styles.selectedAccountItem,
@@ -365,14 +549,32 @@ export function AccountPickerModal({
                                             />
                                           )}
                                         </View>
-                                        <Text
-                                          style={[
-                                            styles.locationName,
-                                            locationSelected && styles.selectedText,
-                                          ]}
-                                        >
-                                          {location.name}
-                                        </Text>
+                                        <View style={styles.locationTextCol}>
+                                          <View style={styles.nameRow}>
+                                            <Text
+                                              style={[
+                                                styles.locationName,
+                                                locationSelected && styles.selectedText,
+                                              ]}
+                                            >
+                                              {location.name}
+                                            </Text>
+                                            {isLocDefaultExp && (
+                                              <View style={styles.defaultBadgeExpense}>
+                                                <Text style={styles.defaultBadgeExpenseText}>
+                                                  Default Exp
+                                                </Text>
+                                              </View>
+                                            )}
+                                            {isLocDefaultInc && (
+                                              <View style={styles.defaultBadgeIncome}>
+                                                <Text style={styles.defaultBadgeIncomeText}>
+                                                  Default Inc
+                                                </Text>
+                                              </View>
+                                            )}
+                                          </View>
+                                        </View>
                                       </View>
                                       <View style={styles.accountItemRight}>
                                         <Text
@@ -402,6 +604,17 @@ export function AccountPickerModal({
                           ) : (
                             <TouchableOpacity
                               onPress={() => handleSelect(account, null)}
+                              onLongPress={
+                                canSetDefaults
+                                  ? () => {
+                                      setLongPressTarget({
+                                        account,
+                                        pocketId: null,
+                                        locationName: null,
+                                      });
+                                    }
+                                  : undefined
+                              }
                               activeOpacity={0.7}
                               style={[
                                 styles.accountItem,
@@ -428,14 +641,32 @@ export function AccountPickerModal({
                               </View>
 
                               <View style={styles.accountItemTextCol}>
-                                <Text
-                                  style={[
-                                    styles.accountItemName,
-                                    isSelected && styles.selectedText,
-                                  ]}
-                                >
-                                  {account.name}
-                                </Text>
+                                <View style={styles.nameRow}>
+                                  <Text
+                                    style={[
+                                      styles.accountItemName,
+                                      isSelected && styles.selectedText,
+                                    ]}
+                                  >
+                                    {account.name}
+                                  </Text>
+                                  {defaultExpenseAccountId === account.id &&
+                                    !defaultExpensePocketId && (
+                                      <View style={styles.defaultBadgeExpense}>
+                                        <Text style={styles.defaultBadgeExpenseText}>
+                                          Default Exp
+                                        </Text>
+                                      </View>
+                                    )}
+                                  {defaultIncomeAccountId === account.id &&
+                                    !defaultIncomePocketId && (
+                                      <View style={styles.defaultBadgeIncome}>
+                                        <Text style={styles.defaultBadgeIncomeText}>
+                                          Default Inc
+                                        </Text>
+                                      </View>
+                                    )}
+                                </View>
                                 <Text style={styles.accountItemType}>
                                   {account.accountType?.accountGroup === "liability"
                                     ? "Liability"
@@ -475,6 +706,172 @@ export function AccountPickerModal({
             )}
           </ScrollView>
         </View>
+
+        {/* Default Account Modal Sheet on Long Press */}
+        {longPressTarget && (
+          <View style={styles.actionModalOverlay}>
+            <Pressable
+              style={styles.actionModalScrim}
+              onPress={() => setLongPressTarget(null)}
+            />
+            <View style={styles.actionModalCard}>
+              <View style={styles.actionModalHeader}>
+                <View style={styles.actionModalIconWrap}>
+                  <IconHelper
+                    name={longPressTarget.account.iconKey ?? "wallet"}
+                    size={22}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <View style={styles.actionModalTitleCol}>
+                  <Text style={styles.actionModalAccountName} numberOfLines={1}>
+                    {longPressTarget.account.name}
+                    {longPressTarget.locationName && longPressTarget.pocketId
+                      ? ` · ${longPressTarget.locationName}`
+                      : ""}
+                  </Text>
+                  <Text style={styles.actionModalSubtitle}>
+                    Default Account Assignment
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setLongPressTarget(null)}
+                  style={styles.actionModalCloseBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close default options"
+                >
+                  <X size={18} color={theme.colors.textSecondary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.actionModalDivider} />
+
+              {onSetDefaultExpense && (
+                <TouchableOpacity
+                  style={[
+                    styles.actionOptionBtn,
+                    targetIsDefaultExpense && styles.actionOptionBtnActiveExpense,
+                  ]}
+                  onPress={handleToggleDefaultExpense}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.actionOptionIconWrap,
+                      {
+                        backgroundColor: targetIsDefaultExpense
+                          ? `${theme.colors.danger}20`
+                          : theme.colors.surfaceMuted,
+                      },
+                    ]}
+                  >
+                    <TrendingDown
+                      size={20}
+                      color={
+                        targetIsDefaultExpense
+                          ? theme.colors.danger
+                          : theme.colors.textSecondary
+                      }
+                    />
+                  </View>
+                  <View style={styles.actionOptionTextCol}>
+                    <Text
+                      style={[
+                        styles.actionOptionTitle,
+                        targetIsDefaultExpense && { color: theme.colors.danger },
+                      ]}
+                    >
+                      {targetIsDefaultExpense
+                        ? "✓ Default for Expense"
+                        : "Set as default for Expense"}
+                    </Text>
+                    <Text style={styles.actionOptionDesc}>
+                      {targetIsDefaultExpense
+                        ? "Currently active default · Tap to remove"
+                        : "Pre-select when creating expense transactions"}
+                    </Text>
+                  </View>
+                  {targetIsDefaultExpense && (
+                    <View
+                      style={[
+                        styles.actionCheckBadge,
+                        { backgroundColor: theme.colors.danger },
+                      ]}
+                    >
+                      <Check size={12} color="#ffffff" strokeWidth={3} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              {onSetDefaultIncome && (
+                <TouchableOpacity
+                  style={[
+                    styles.actionOptionBtn,
+                    targetIsDefaultIncome && styles.actionOptionBtnActiveIncome,
+                  ]}
+                  onPress={handleToggleDefaultIncome}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={[
+                      styles.actionOptionIconWrap,
+                      {
+                        backgroundColor: targetIsDefaultIncome
+                          ? `${theme.colors.success}20`
+                          : theme.colors.surfaceMuted,
+                      },
+                    ]}
+                  >
+                    <TrendingUp
+                      size={20}
+                      color={
+                        targetIsDefaultIncome
+                          ? theme.colors.success
+                          : theme.colors.textSecondary
+                      }
+                    />
+                  </View>
+                  <View style={styles.actionOptionTextCol}>
+                    <Text
+                      style={[
+                        styles.actionOptionTitle,
+                        targetIsDefaultIncome && { color: theme.colors.success },
+                      ]}
+                    >
+                      {targetIsDefaultIncome
+                        ? "✓ Default for Income"
+                        : "Set as default for Income"}
+                    </Text>
+                    <Text style={styles.actionOptionDesc}>
+                      {targetIsDefaultIncome
+                        ? "Currently active default · Tap to remove"
+                        : "Pre-select when creating income transactions"}
+                    </Text>
+                  </View>
+                  {targetIsDefaultIncome && (
+                    <View
+                      style={[
+                        styles.actionCheckBadge,
+                        { backgroundColor: theme.colors.success },
+                      ]}
+                    >
+                      <Check size={12} color="#ffffff" strokeWidth={3} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.actionCancelBtn}
+                onPress={() => setLongPressTarget(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.actionCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -500,8 +897,8 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: 20,
       borderTopWidth: 1,
       borderColor: theme.colors.border,
-      maxHeight: "85%",
-      minHeight: "50%",
+      height: "75%",
+      maxHeight: "75%",
       width: "100%",
       ...theme.shadows.modal,
     },
@@ -736,6 +1133,158 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 13,
       textAlign: "center",
+    },
+    nameRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    locationTextCol: {
+      flex: 1,
+    },
+    defaultBadgeExpense: {
+      backgroundColor: `${theme.colors.danger}18`,
+      borderRadius: 4,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+    },
+    defaultBadgeExpenseText: {
+      color: theme.colors.danger,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    defaultBadgeIncome: {
+      backgroundColor: `${theme.colors.success}18`,
+      borderRadius: 4,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+    },
+    defaultBadgeIncomeText: {
+      color: theme.colors.success,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    actionModalOverlay: {
+      alignItems: "center",
+      bottom: 0,
+      justifyContent: "center",
+      left: 0,
+      padding: theme.spacing.lg,
+      position: "absolute",
+      right: 0,
+      top: 0,
+      zIndex: 100,
+    },
+    actionModalScrim: {
+      backgroundColor: theme.colors.overlay,
+      bottom: 0,
+      left: 0,
+      position: "absolute",
+      right: 0,
+      top: 0,
+    },
+    actionModalCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.md,
+      maxWidth: 380,
+      padding: theme.spacing.lg,
+      width: "100%",
+      ...theme.shadows.modal,
+    },
+    actionModalHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    actionModalIconWrap: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}15`,
+      borderRadius: theme.borderRadius.medium,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
+    actionModalTitleCol: {
+      flex: 1,
+    },
+    actionModalAccountName: {
+      color: theme.colors.textPrimary,
+      fontSize: 16,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    actionModalSubtitle: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      marginTop: 2,
+    },
+    actionModalCloseBtn: {
+      padding: 4,
+    },
+    actionModalDivider: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+    },
+    actionOptionBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    actionOptionBtnActiveExpense: {
+      backgroundColor: `${theme.colors.danger}10`,
+      borderColor: theme.colors.danger,
+    },
+    actionOptionBtnActiveIncome: {
+      backgroundColor: `${theme.colors.success}10`,
+      borderColor: theme.colors.success,
+    },
+    actionOptionIconWrap: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    actionOptionTextCol: {
+      flex: 1,
+    },
+    actionOptionTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    actionOptionDesc: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+      marginTop: 2,
+    },
+    actionCheckBadge: {
+      alignItems: "center",
+      borderRadius: 10,
+      height: 20,
+      justifyContent: "center",
+      width: 20,
+    },
+    actionCancelBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      justifyContent: "center",
+      marginTop: 4,
+      paddingVertical: theme.spacing.md,
+    },
+    actionCancelText: {
+      color: theme.colors.textSecondary,
+      fontSize: 14,
+      fontWeight: theme.typography.fontWeight.medium,
     },
   });
 }

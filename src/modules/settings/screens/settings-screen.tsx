@@ -3,14 +3,17 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
+import { AccountPickerModal } from "@/components/account-picker-modal";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
+import { useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { useWorkspace } from "@/modules/onboarding";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
+import { useDefaultAccounts } from "../hooks/use-default-accounts";
 
 export function SettingsScreen() {
   const styles = useThemeStyles(createStyles);
@@ -24,8 +27,60 @@ export function SettingsScreen() {
   } = useThemeController();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
+  const { accounts, pockets } = useAccounts();
+  const {
+    defaultExpenseAccountId,
+    defaultExpensePocketId,
+    defaultIncomeAccountId,
+    defaultIncomePocketId,
+    setExpenseAccount,
+    setIncomeAccount,
+  } = useDefaultAccounts();
+
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
+  const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
+  const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
+
+  const expenseAccount = accounts.find(
+    (a) => a.id === defaultExpenseAccountId && !a.isArchived,
+  );
+  const expensePocket =
+    expenseAccount && defaultExpensePocketId
+      ? pockets.find(
+          (p) =>
+            p.id === defaultExpensePocketId &&
+            p.accountId === expenseAccount.id &&
+            !p.isArchived,
+        )
+      : null;
+  const expenseAccountName = expenseAccount
+    ? expensePocket
+      ? `${expenseAccount.name} · ${expensePocket.name}`
+      : expenseAccount.pocketEnabled
+        ? `${expenseAccount.name} · Available`
+        : expenseAccount.name
+    : "None (First available)";
+
+  const incomeAccount = accounts.find(
+    (a) => a.id === defaultIncomeAccountId && !a.isArchived,
+  );
+  const incomePocket =
+    incomeAccount && defaultIncomePocketId
+      ? pockets.find(
+          (p) =>
+            p.id === defaultIncomePocketId &&
+            p.accountId === incomeAccount.id &&
+            !p.isArchived,
+        )
+      : null;
+  const incomeAccountName = incomeAccount
+    ? incomePocket
+      ? `${incomeAccount.name} · ${incomePocket.name}`
+      : incomeAccount.pocketEnabled
+        ? `${incomeAccount.name} · Available`
+        : incomeAccount.name
+    : "None (First available)";
 
   return (
     <PageContainer>
@@ -56,6 +111,49 @@ export function SettingsScreen() {
                 />
               ) : null}
             </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>DEFAULT ACCOUNTS</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={`Default expense account: ${expenseAccountName}. Tap to change.`}
+              accessibilityRole="button"
+              onPress={() => setIsExpensePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Expense</Text>
+                <Text style={styles.settingDescription}>
+                  {expenseAccountName}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={`Default income account: ${incomeAccountName}. Tap to change.`}
+              accessibilityRole="button"
+              onPress={() => setIsIncomePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Income</Text>
+                <Text style={styles.settingDescription}>
+                  {incomeAccountName}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
         </View>
 
@@ -144,6 +242,46 @@ export function SettingsScreen() {
         visible={isHexColorsOpen}
         onClose={() => setIsHexColorsOpen(false)}
       />
+
+      <AccountPickerModal
+        accounts={accounts}
+        allowNone
+        noneLabel="None (First available account)"
+        onClose={() => setIsExpensePickerOpen(false)}
+        onSelectLocation={(account, pocketId) => {
+          setExpenseAccount(account.id, pocketId);
+          setIsExpensePickerOpen(false);
+        }}
+        onSelectNone={() => {
+          setExpenseAccount(null, null);
+          setIsExpensePickerOpen(false);
+        }}
+        pockets={pockets}
+        selectedAccountId={defaultExpenseAccountId}
+        selectedPocketId={defaultExpensePocketId}
+        title="Default Expense Account"
+        visible={isExpensePickerOpen}
+      />
+
+      <AccountPickerModal
+        accounts={accounts}
+        allowNone
+        noneLabel="None (First available account)"
+        onClose={() => setIsIncomePickerOpen(false)}
+        onSelectLocation={(account, pocketId) => {
+          setIncomeAccount(account.id, pocketId);
+          setIsIncomePickerOpen(false);
+        }}
+        onSelectNone={() => {
+          setIncomeAccount(null, null);
+          setIsIncomePickerOpen(false);
+        }}
+        pockets={pockets}
+        selectedAccountId={defaultIncomeAccountId}
+        selectedPocketId={defaultIncomePocketId}
+        title="Default Income Account"
+        visible={isIncomePickerOpen}
+      />
     </PageContainer>
   );
 }
@@ -182,6 +320,11 @@ function createStyles(theme: AppTheme) {
     },
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
+    },
+    rowDivider: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+      marginLeft: theme.spacing.lg,
     },
     settingCopy: {
       flex: 1,

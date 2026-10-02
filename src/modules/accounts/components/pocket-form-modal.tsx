@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Switch, Text, View } from "react-native";
 import {
   ConfirmModal,
   FullScreenFormModal,
@@ -12,6 +12,7 @@ import type { AccountMutations } from "@/modules/accounts/hooks/use-account-muta
 import type { AccountListItem, PocketListItem } from "@/modules/accounts/types/account.types";
 import { maintainingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useDefaultAccounts } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 
 export function PocketFormModal({
@@ -36,6 +37,18 @@ export function PocketFormModal({
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
+  const {
+    defaultExpenseAccountId,
+    defaultExpensePocketId,
+    defaultIncomeAccountId,
+    defaultIncomePocketId,
+    setExpenseAccount,
+    setIncomeAccount,
+  } = useDefaultAccounts();
+
+  const [isDefaultExpense, setIsDefaultExpense] = useState(false);
+  const [isDefaultIncome, setIsDefaultIncome] = useState(false);
+
   useEffect(() => {
     if (visible) {
       setName(pocket?.name ?? "");
@@ -43,8 +56,29 @@ export function PocketFormModal({
       setConfirmArchive(false);
       setArchiveError(null);
       mutations.clearError();
+      if (pocket && account) {
+        setIsDefaultExpense(
+          defaultExpenseAccountId === account.id &&
+            defaultExpensePocketId === pocket.id,
+        );
+        setIsDefaultIncome(
+          defaultIncomeAccountId === account.id &&
+            defaultIncomePocketId === pocket.id,
+        );
+      } else {
+        setIsDefaultExpense(false);
+        setIsDefaultIncome(false);
+      }
     }
-  }, [visible, pocket]);
+  }, [
+    visible,
+    pocket,
+    account,
+    defaultExpenseAccountId,
+    defaultExpensePocketId,
+    defaultIncomeAccountId,
+    defaultIncomePocketId,
+  ]);
 
   if (!visible || !account) return null;
 
@@ -54,6 +88,35 @@ export function PocketFormModal({
       pocket?.id,
     );
     if (saved) {
+      if (pocket && account) {
+        if (
+          isDefaultExpense &&
+          (defaultExpenseAccountId !== account.id ||
+            defaultExpensePocketId !== pocket.id)
+        ) {
+          setExpenseAccount(account.id, pocket.id);
+        } else if (
+          !isDefaultExpense &&
+          defaultExpenseAccountId === account.id &&
+          defaultExpensePocketId === pocket.id
+        ) {
+          setExpenseAccount(null, null);
+        }
+
+        if (
+          isDefaultIncome &&
+          (defaultIncomeAccountId !== account.id ||
+            defaultIncomePocketId !== pocket.id)
+        ) {
+          setIncomeAccount(account.id, pocket.id);
+        } else if (
+          !isDefaultIncome &&
+          defaultIncomeAccountId === account.id &&
+          defaultIncomePocketId === pocket.id
+        ) {
+          setIncomeAccount(null, null);
+        }
+      }
       setConfirmArchive(false);
       onSaved();
     }
@@ -141,6 +204,50 @@ export function PocketFormModal({
             placeholder="0.00"
             value={targetAmount}
           />
+
+          {pocket && !pocket.isArchived ? (
+            <>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Default for Expense</Text>
+                  <Text style={styles.toggleHint}>
+                    Pre-select this pocket when recording expense transactions.
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Default for Expense"
+                  disabled={mutations.pending}
+                  onValueChange={setIsDefaultExpense}
+                  thumbColor={theme.colors.textInverse}
+                  trackColor={{
+                    false: theme.colors.borderStrong,
+                    true: theme.colors.primary,
+                  }}
+                  value={isDefaultExpense}
+                />
+              </View>
+
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Default for Income</Text>
+                  <Text style={styles.toggleHint}>
+                    Pre-select this pocket when recording income transactions.
+                  </Text>
+                </View>
+                <Switch
+                  accessibilityLabel="Default for Income"
+                  disabled={mutations.pending}
+                  onValueChange={setIsDefaultIncome}
+                  thumbColor={theme.colors.textInverse}
+                  trackColor={{
+                    false: theme.colors.borderStrong,
+                    true: theme.colors.primary,
+                  }}
+                  value={isDefaultIncome}
+                />
+              </View>
+            </>
+          ) : null}
         </KeyboardAwareForm>
       </FullScreenFormModal>
 
@@ -219,6 +326,27 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.md,
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    toggleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.xs,
+    },
+    toggleCopy: {
+      flex: 1,
+      gap: 2,
+      marginRight: theme.spacing.md,
+    },
+    toggleLabel: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    toggleHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 18,
     },
   });
 }

@@ -5,6 +5,7 @@ import { formatCurrency } from "@/utils/currency";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import { localDateInput } from "@/modules/accounts/utils/account-input";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
+import { useDefaultAccounts } from "@/modules/settings";
 
 export function AccountRow({
   account,
@@ -14,7 +15,10 @@ export function AccountRow({
   onPress: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { defaultExpenseAccountId, defaultIncomeAccountId } = useDefaultAccounts();
   const isLiability = account.accountType?.accountGroup === "liability";
+  const isDefaultExpense = !account.isArchived && defaultExpenseAccountId === account.id;
+  const isDefaultIncome = !account.isArchived && defaultIncomeAccountId === account.id;
   const displayBalance =
     account.currentBalanceMinorUnits !== undefined
       ? account.currentBalanceMinorUnits
@@ -53,6 +57,12 @@ export function AccountRow({
             <Text style={styles.dateText}>
               · {localDateInput(account.openingBalanceAt)}
             </Text>
+            {isDefaultExpense && (
+              <Text style={styles.defaultTag}>· Default Expense</Text>
+            )}
+            {isDefaultIncome && (
+              <Text style={styles.defaultTag}>· Default Income</Text>
+            )}
             {account.isArchived && (
               <Text style={styles.archivedTag}>· Archived</Text>
             )}
@@ -138,6 +148,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.warning,
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    defaultTag: {
+      color: theme.colors.primary,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     rightCol: {
       alignItems: "flex-end",
