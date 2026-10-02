@@ -181,7 +181,10 @@ export function TransactionFormModal({
   const [occurredAt, setOccurredAt] = useState<Date>(getCurrentTransactionDate);
   const [note, setNote] = useState<string>("");
   const [installmentEnabled, setInstallmentEnabled] = useState(false);
-  const [installmentTerm, setInstallmentTerm] = useState("12");
+  const [installmentTermOption, setInstallmentTermOption] = useState<
+    "3" | "6" | "12" | "24" | "custom"
+  >("12");
+  const [customTermMonths, setCustomTermMonths] = useState<string>("12");
   const [installmentDeferral, setInstallmentDeferral] = useState<
     "0" | "1" | "2" | "3" | "6" | "custom"
   >("0");
@@ -270,7 +273,8 @@ export function TransactionFormModal({
         );
         setNote(initialTransaction.note || "");
         setInstallmentEnabled(false);
-        setInstallmentTerm("12");
+        setInstallmentTermOption("12");
+        setCustomTermMonths("12");
         setInstallmentDeferral("0");
         setCustomDeferralMonths("3");
         setLocalError(null);
@@ -306,7 +310,8 @@ export function TransactionFormModal({
         setOccurredAt(getCurrentTransactionDate());
         setNote("");
         setInstallmentEnabled(false);
-        setInstallmentTerm("12");
+        setInstallmentTermOption("12");
+        setCustomTermMonths("12");
         setInstallmentDeferral("0");
         setCustomDeferralMonths("3");
         setLocalError(null);
@@ -389,6 +394,14 @@ export function TransactionFormModal({
     Boolean(selectedAccount?.creditCardDetails) &&
     !isEditing;
 
+  const resolvedTermMonths = useMemo(() => {
+    if (installmentTermOption === "custom") {
+      const parsed = parseInt(customTermMonths, 10);
+      return Number.isInteger(parsed) ? parsed : 0;
+    }
+    return parseInt(installmentTermOption, 10);
+  }, [installmentTermOption, customTermMonths]);
+
   const resolvedDeferredMonths = useMemo(() => {
     if (installmentDeferral === "custom") {
       const parsed = parseInt(customDeferralMonths, 10);
@@ -405,13 +418,16 @@ export function TransactionFormModal({
     ) {
       return null;
     }
-    const term = Number(installmentTerm);
-    if (!Number.isInteger(term) || term < 2 || term > 120) {
+    if (
+      !Number.isInteger(resolvedTermMonths) ||
+      resolvedTermMonths < 2 ||
+      resolvedTermMonths > 120
+    ) {
       return null;
     }
     return previewInstallmentPlan({
       amountMinorUnits,
-      termMonths: term,
+      termMonths: resolvedTermMonths,
       occurredAt: occurredAt ? new Date(occurredAt) : new Date(),
       statementDay: selectedAccount.creditCardDetails.statementDay,
       paymentDueDay: selectedAccount.creditCardDetails.paymentDueDay,
@@ -421,7 +437,7 @@ export function TransactionFormModal({
     canUseInstallments,
     installmentEnabled,
     selectedAccount?.creditCardDetails,
-    installmentTerm,
+    resolvedTermMonths,
     amountMinorUnits,
     occurredAt,
     resolvedDeferredMonths,
@@ -548,7 +564,8 @@ export function TransactionFormModal({
     setNote(preset.note ?? "");
     setOccurredAt(getCurrentTransactionDate());
     setInstallmentEnabled(false);
-    setInstallmentTerm("12");
+    setInstallmentTermOption("12");
+    setCustomTermMonths("12");
     setInstallmentDeferral("0");
     setCustomDeferralMonths("3");
     setSaveAsQuickPreset(false);
@@ -666,13 +683,16 @@ export function TransactionFormModal({
         amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
 
       if (canUseInstallments && installmentEnabled) {
-        const termMonths = Number(installmentTerm);
         if (
-          !Number.isInteger(termMonths) ||
-          termMonths < 2 ||
-          termMonths > 120
+          !Number.isInteger(resolvedTermMonths) ||
+          resolvedTermMonths < 2 ||
+          resolvedTermMonths > 120
         ) {
-          setLocalError("Installment term must be between 2 and 120 months.");
+          setLocalError(
+            installmentTermOption === "custom"
+              ? "Custom installment term must be between 2 and 120 months."
+              : "Installment term must be between 2 and 120 months.",
+          );
           return;
         }
         if (installmentDeferral === "custom") {
@@ -697,7 +717,7 @@ export function TransactionFormModal({
         installment:
           canUseInstallments && installmentEnabled
             ? {
-                termMonths: Number(installmentTerm),
+                termMonths: resolvedTermMonths,
                 deferredMonths: resolvedDeferredMonths,
               }
             : null,
@@ -1244,44 +1264,65 @@ export function TransactionFormModal({
                   <>
                     <View style={styles.installmentTermRow}>
                       <Text style={styles.fieldLabel}>TERM IN MONTHS</Text>
-                      <View style={styles.installmentTermInputContainer}>
-                        <TextInput
-                          accessibilityLabel="Installment term in months"
-                          keyboardType="number-pad"
-                          maxLength={3}
-                          onChangeText={(value) =>
-                            setInstallmentTerm(value.replace(/\D/g, ""))
-                          }
-                          placeholder="12"
-                          placeholderTextColor={theme.colors.textMuted}
-                          style={styles.installmentTermInput}
-                          value={installmentTerm}
-                        />
-                        <View style={styles.installmentChipGroup}>
-                          {["3", "6", "12", "24"].map((term) => {
-                            const isSelected = installmentTerm === term;
-                            return (
-                              <Pressable
-                                key={term}
-                                onPress={() => setInstallmentTerm(term)}
+                      <View style={styles.deferralChipsRow}>
+                        {[
+                          { label: "3m", value: "3" },
+                          { label: "6m", value: "6" },
+                          { label: "12m", value: "12" },
+                          { label: "24m", value: "24" },
+                          { label: "Custom", value: "custom" },
+                        ].map((opt) => {
+                          const isSelected = installmentTermOption === opt.value;
+                          return (
+                            <Pressable
+                              key={opt.value}
+                              onPress={() =>
+                                setInstallmentTermOption(
+                                  opt.value as
+                                    | "3"
+                                    | "6"
+                                    | "12"
+                                    | "24"
+                                    | "custom",
+                                )
+                              }
+                              style={[
+                                styles.deferralChip,
+                                isSelected && styles.deferralChipActive,
+                              ]}
+                            >
+                              <Text
                                 style={[
-                                  styles.installmentChip,
-                                  isSelected && styles.installmentChipActive,
+                                  styles.deferralChipText,
+                                  isSelected && styles.deferralChipTextActive,
                                 ]}
                               >
-                                <Text
-                                  style={[
-                                    styles.installmentChipText,
-                                    isSelected && styles.installmentChipTextActive,
-                                  ]}
-                                >
-                                  {term}m
-                                </Text>
-                              </Pressable>
-                            );
-                          })}
-                        </View>
+                                {opt.label}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
                       </View>
+                      {installmentTermOption === "custom" ? (
+                        <View style={styles.customDeferralRow}>
+                          <Text style={styles.customDeferralLabel}>
+                            Number of months:
+                          </Text>
+                          <TextInput
+                            accessibilityLabel="Custom installment term in months"
+                            keyboardType="number-pad"
+                            maxLength={3}
+                            onChangeText={(value) =>
+                              setCustomTermMonths(value.replace(/\D/g, ""))
+                            }
+                            placeholder="12"
+                            placeholderTextColor={theme.colors.textMuted}
+                            style={styles.customDeferralInput}
+                            value={customTermMonths}
+                          />
+                          <Text style={styles.customDeferralSuffix}>months</Text>
+                        </View>
+                      ) : null}
                     </View>
 
                     <View style={styles.installmentDeferralSection}>
