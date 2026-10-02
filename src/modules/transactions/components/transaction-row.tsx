@@ -201,6 +201,15 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
               Dest Bal: {destinationBalance}
             </Text>
           </View>
+          {transaction.transferFeeAmountMinorUnits ? (
+            <View style={styles.detailLine}>
+              <View style={styles.feeBadge}>
+                <Text style={styles.feeBadgeText}>
+                  Fee: {formatCurrency(transaction.transferFeeAmountMinorUnits, transaction.accountCurrency ?? "PHP", false)}
+                </Text>
+              </View>
+            </View>
+          ) : null}
         </>
       ) : (
         <>
@@ -310,6 +319,22 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "right",
+    },
+    feeBadge: {
+      alignSelf: "flex-start",
+      backgroundColor: `${theme.colors.danger}14`,
+      borderColor: `${theme.colors.danger}30`,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      marginTop: 2,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    feeBadgeText: {
+      color: theme.colors.danger,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.semibold,
+      fontVariant: ["tabular-nums"],
     },
     txNoteText: {
       color: theme.colors.textMuted,

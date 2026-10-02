@@ -75,6 +75,13 @@ function mapRowToListItem(r: {
     transferPocketName: null,
     destinationBalanceAfterMinorUnits: null,
     destinationLocationBalanceAfterMinorUnits: null,
+    transferFeeAmountMinorUnits: null,
+    transferFeeAccountId: null,
+    transferFeeAccountName: null,
+    transferFeePocketId: null,
+    transferFeePocketName: null,
+    transferFeeCategoryId: null,
+    transferFeeCategoryName: null,
   };
 }
 
@@ -182,6 +189,7 @@ function getPocketBalanceAfterByTransactionId(
 function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] {
   const standalone: TransactionListItem[] = [];
   const groupMap = new Map<string, TransactionListItem[]>();
+  const feeMap = new Map<string, TransactionListItem>();
 
   for (const item of items) {
     if (item.transactionGroupId && item.type === "transfer") {
@@ -189,6 +197,9 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       group.push(item);
       groupMap.set(item.transactionGroupId, group);
     } else {
+      if (item.transactionGroupId && item.type === "expense") {
+        feeMap.set(item.transactionGroupId, item);
+      }
       standalone.push(item);
     }
   }
@@ -203,6 +214,7 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
 
     const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
     const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
+    const feeItem = feeMap.get(groupId);
 
     grouped.push({
       ...outLeg,
@@ -221,6 +233,13 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       destinationBalanceAfterMinorUnits: inLeg.accountBalanceAfterMinorUnits,
       destinationLocationBalanceAfterMinorUnits:
         inLeg.locationBalanceAfterMinorUnits,
+      transferFeeAmountMinorUnits: feeItem ? Math.abs(feeItem.amountCents) : null,
+      transferFeeAccountId: feeItem?.accountId ?? null,
+      transferFeeAccountName: feeItem?.accountName ?? null,
+      transferFeePocketId: feeItem?.pocketId ?? null,
+      transferFeePocketName: feeItem?.pocketName ?? null,
+      transferFeeCategoryId: feeItem?.categoryId ?? null,
+      transferFeeCategoryName: feeItem?.categoryName ?? null,
       amountCents: Math.abs(outLeg.amountCents),
       attachmentCount: legs.reduce(
         (total, leg) => total + leg.attachmentCount,
@@ -572,8 +591,8 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
   const groupedTransferIds = new Set<string>();
 
   for (const tx of allTx) {
-    if (tx.transactionGroupId) {
-      groupedTransferIds.add(tx.transactionGroupId);
+    if (tx.type === "transfer") {
+      if (tx.transactionGroupId) groupedTransferIds.add(tx.transactionGroupId);
       continue;
     }
     if (tx.amountCents > 0) {
@@ -584,7 +603,7 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
   }
 
   const transferCount = groupedTransferIds.size;
-  const standaloneCount = allTx.filter((tx) => !tx.transactionGroupId).length;
+  const standaloneCount = allTx.filter((tx) => tx.type !== "transfer").length;
 
   return {
     totalInflowMinorUnits: totalInflow,

@@ -54,7 +54,7 @@ export function getMonthlyCashflow(
   for (const tx of allTx) {
     const txDate = new Date(tx.occurredAt);
     if (txDate >= startOfMonth && txDate <= endOfMonth) {
-      if (tx.transactionGroupId) {
+      if (tx.type === "transfer") {
         continue;
       }
       if (tx.amountCents > 0) {

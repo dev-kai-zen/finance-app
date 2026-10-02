@@ -24,7 +24,7 @@ export interface DeletedTransactionsModalProps {
   onClose: () => void;
   onClearError: () => void;
   onPermanentlyDelete: (id: string) => Promise<boolean>;
-  onRestore: (id: string) => void;
+  onRestore: (id: string) => Promise<boolean | void> | void;
 }
 
 export function DeletedTransactionsModal({
@@ -42,22 +42,44 @@ export function DeletedTransactionsModal({
   const styles = useThemeStyles(createStyles);
   const [pendingPermanentDelete, setPendingPermanentDelete] =
     useState<TransactionListItem | null>(null);
+  const [pendingRestore, setPendingRestore] =
+    useState<TransactionListItem | null>(null);
 
   const handleClose = () => {
     setPendingPermanentDelete(null);
+    setPendingRestore(null);
     onClose();
   };
 
   const handleConfirmPermanentDelete = async () => {
     if (!pendingPermanentDelete) return;
-    await onPermanentlyDelete(pendingPermanentDelete.id);
-    setPendingPermanentDelete(null);
+    try {
+      await onPermanentlyDelete(pendingPermanentDelete.id);
+    } finally {
+      setPendingPermanentDelete(null);
+    }
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!pendingRestore) return;
+    try {
+      await onRestore(pendingRestore.id);
+    } finally {
+      setPendingRestore(null);
+    }
   };
 
   const permanentDeleteLabel = pendingPermanentDelete
     ? pendingPermanentDelete.name ||
       pendingPermanentDelete.note ||
       pendingPermanentDelete.categoryName ||
+      "this transaction"
+    : "this transaction";
+
+  const restoreLabel = pendingRestore
+    ? pendingRestore.name ||
+      pendingRestore.note ||
+      pendingRestore.categoryName ||
       "this transaction"
     : "this transaction";
 
@@ -175,7 +197,7 @@ export function DeletedTransactionsModal({
                         accessibilityLabel={"Restore " + transactionTitle}
                         accessibilityRole="button"
                         disabled={pending}
-                        onPress={() => onRestore(transaction.id)}
+                        onPress={() => setPendingRestore(transaction)}
                         style={[styles.restoreButton, pending && styles.disabled]}
                       >
                         <RotateCcw color={theme.colors.success} size={16} />
@@ -190,6 +212,23 @@ export function DeletedTransactionsModal({
           </ScrollView>
         </View>
       </Modal>
+
+      <ConfirmModal
+        confirmLabel="Restore"
+        message={
+          pendingRestore?.type === "transfer"
+            ? "All records associated with this transfer will be restored to your active transactions."
+            : `Restore "${restoreLabel}"? It will be moved back to your active transactions.`
+        }
+        onCancel={() => setPendingRestore(null)}
+        onConfirm={() => {
+          void handleConfirmRestore();
+        }}
+        pending={pending}
+        title="Restore transaction?"
+        variant="restore"
+        visible={pendingRestore !== null}
+      />
 
       <ConfirmModal
         confirmLabel="Delete permanently"

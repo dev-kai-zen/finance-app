@@ -17,7 +17,7 @@ export function removeTransaction(id: string): void {
       throw new Error(`Transaction with ID ${id} was not found.`);
     }
 
-    if (existing.transactionGroupId) {
+    if (existing.transactionGroupId && existing.type === "transfer") {
       softDeleteTransactionsByGroupId(existing.transactionGroupId, new Date(), tx);
       reconcileCreditCardBillingInContext(new Date(), tx);
       return;

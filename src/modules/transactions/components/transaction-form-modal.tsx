@@ -37,6 +37,7 @@ import type {
   TransactionAttachmentChanges,
   TransactionListItem,
   TransactionType,
+  TransferFeeInput,
   UpdateTransferInput,
 } from "../types/transaction.types";
 import type {
@@ -174,6 +175,12 @@ export function TransactionFormModal({
   const [includePresetAmount, setIncludePresetAmount] = useState(true);
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   const [suggestionsSuppressed, setSuggestionsSuppressed] = useState(false);
+  const [feeEnabled, setFeeEnabled] = useState(false);
+  const [feeAmountMinorUnits, setFeeAmountMinorUnits] = useState(0);
+  const [feeAccountId, setFeeAccountId] = useState("");
+  const [feePocketId, setFeePocketId] = useState<string | null>(null);
+  const [feeCategoryId, setFeeCategoryId] = useState("");
+  const [feeAccountManuallyChanged, setFeeAccountManuallyChanged] = useState(false);
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -183,11 +190,46 @@ export function TransactionFormModal({
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
   const [isAttachmentManagerOpen, setIsAttachmentManagerOpen] = useState(false);
+  const [isFeeCalculatorOpen, setIsFeeCalculatorOpen] = useState(false);
+  const [isFeeAccountPickerOpen, setIsFeeAccountPickerOpen] = useState(false);
+  const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,
     isEditing,
     transactionId: initialTransaction?.id,
   });
+
+  const defaultFeeCategory = useMemo(() => {
+    const allExpenseCategories = [];
+    for (const cat of categories) {
+      if (cat.type === "expense") allExpenseCategories.push(cat);
+      if (cat.subcategories) {
+        for (const sub of cat.subcategories) {
+          if (sub.type === "expense") allExpenseCategories.push(sub);
+        }
+      }
+    }
+
+    // 1. Exact Seeder ID
+    const byId = allExpenseCategories.find((c) => c.id === "cat_sub_financial_fees");
+    if (byId) return byId;
+
+    // 2. Contains "bank fee" (case-insensitive)
+    const byBankFee = allExpenseCategories.find((c) =>
+      c.name.toLowerCase().includes("bank fee"),
+    );
+    if (byBankFee) return byBankFee;
+
+    // 3. Contains "fee" (case-insensitive)
+    const byFee = allExpenseCategories.find((c) =>
+      c.name.toLowerCase().includes("fee"),
+    );
+    if (byFee) return byFee;
+
+    // 4. First available expense category fallback
+    return allExpenseCategories[0] ?? null;
+  }, [categories]);
+
 
   useEffect(() => {
     if (visible) {
@@ -214,6 +256,21 @@ export function TransactionFormModal({
         setInstallmentEnabled(false);
         setInstallmentTerm("12");
         setLocalError(null);
+        if (initialTransaction.transferFeeAmountMinorUnits) {
+          setFeeEnabled(true);
+          setFeeAmountMinorUnits(initialTransaction.transferFeeAmountMinorUnits);
+          setFeeAccountId(initialTransaction.transferFeeAccountId || initialTransaction.accountId);
+          setFeePocketId(initialTransaction.transferFeePocketId ?? null);
+          setFeeCategoryId(initialTransaction.transferFeeCategoryId || (defaultFeeCategory?.id ?? ""));
+          setFeeAccountManuallyChanged(true);
+        } else {
+          setFeeEnabled(false);
+          setFeeAmountMinorUnits(0);
+          setFeeAccountId(initialTransaction.accountId);
+          setFeePocketId(initialTransaction.pocketId);
+          setFeeCategoryId(defaultFeeCategory?.id ?? "");
+          setFeeAccountManuallyChanged(false);
+        }
       } else {
         setMode("expense");
         setName("");
@@ -233,6 +290,12 @@ export function TransactionFormModal({
         setInstallmentEnabled(false);
         setInstallmentTerm("12");
         setLocalError(null);
+        setFeeEnabled(false);
+        setFeeAmountMinorUnits(0);
+        setFeeAccountId(firstAccount);
+        setFeePocketId(null);
+        setFeeCategoryId(defaultFeeCategory?.id ?? "");
+        setFeeAccountManuallyChanged(false);
       }
       setSaveAsQuickPreset(false);
       setIncludePresetAmount(true);
@@ -240,6 +303,9 @@ export function TransactionFormModal({
       setSuggestionsSuppressed(false);
       setIsQuickPresetsOpen(false);
       setIsAttachmentManagerOpen(false);
+      setIsFeeCalculatorOpen(false);
+      setIsFeeAccountPickerOpen(false);
+      setIsFeeCategoryPickerOpen(false);
     }
   }, [visible, initialTransaction, accounts, categories]);
 
@@ -344,6 +410,45 @@ export function TransactionFormModal({
     () => accountColor(theme, transferToAccount?.accountType?.color ?? null),
     [transferToAccount, theme],
   );
+  const feeAccount = accounts.find((a) => a.id === feeAccountId) ?? selectedAccount;
+  const feePocket = pockets.find((pocket) => pocket.id === feePocketId);
+  const feeCategory = useMemo(() => {
+    for (const cat of categories) {
+      if (cat.id === feeCategoryId) return cat;
+      if (cat.subcategories) {
+        const sub = cat.subcategories.find((s) => s.id === feeCategoryId);
+        if (sub) return sub;
+      }
+    }
+    return defaultFeeCategory ?? null;
+  }, [categories, feeCategoryId, defaultFeeCategory]);
+  const parentOfFeeCategory = useMemo(() => {
+    if (!feeCategory || !feeCategory.parentId) return null;
+    return categories.find((c) => c.id === feeCategory.parentId) ?? null;
+  }, [categories, feeCategory]);
+  const feeCategoryColor = useMemo(() => {
+    const colorKey = feeCategory?.color || parentOfFeeCategory?.color;
+    return resolveEntityColor(colorKey);
+  }, [feeCategory, parentOfFeeCategory, resolveEntityColor]);
+  const feeAccountColor = useMemo(
+    () => accountColor(theme, feeAccount?.accountType?.color ?? null),
+    [feeAccount, theme],
+  );
+  const feeAccountBalance = feeAccount
+    ? feeAccount.currentBalanceMinorUnits ?? feeAccount.openingBalanceMinorUnits
+    : 0;
+  const feeLocationBalance = feePocket
+    ? feePocket.currentBalanceMinorUnits
+    : feeAccount?.pocketEnabled
+      ? feeAccountBalance -
+        pockets
+          .filter(
+            (pocket) =>
+              pocket.accountId === feeAccount.id && !pocket.isArchived,
+          )
+          .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
+      : feeAccountBalance;
+  const feeAccountCurrency = feeAccount?.currencyCode ?? currencyCode;
 
   const handleDateTimeConfirm = (selectedValue: Date) => {
     setOccurredAt((currentValue) =>
@@ -437,7 +542,31 @@ export function TransactionFormModal({
         return;
       }
 
+      if (feeEnabled) {
+        if (feeAmountMinorUnits <= 0) {
+          setLocalError("Please enter a fee amount greater than zero, or turn off the transfer fee.");
+          return;
+        }
+        if (!feeAccountId && !selectedAccountId) {
+          setLocalError("Please select an account to deduct the fee from.");
+          return;
+        }
+        if (!feeCategoryId && !defaultFeeCategory?.id) {
+          setLocalError("Please select a category for the fee.");
+          return;
+        }
+      }
+
       setLocalError(null);
+      const feeInput: TransferFeeInput | null =
+        feeEnabled && feeAmountMinorUnits > 0
+          ? {
+              amountCents: Math.abs(feeAmountMinorUnits),
+              accountId: feeAccountId || selectedAccountId,
+              pocketId: feePocketId,
+              categoryId: feeCategoryId || (defaultFeeCategory?.id ?? ""),
+            }
+          : null;
       const transferInput: CreateTransferInput = {
         fromAccountId: selectedAccountId,
         toAccountId: transferToAccountId,
@@ -447,6 +576,7 @@ export function TransactionFormModal({
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
+        fee: feeInput,
       };
       const success =
         isEditing && initialTransaction && onUpdateTransfer
@@ -817,6 +947,153 @@ export function TransactionFormModal({
                   </View>
                   </Pressable>
                 </View>
+                <View style={styles.transferFeePanel}>
+                  <View style={styles.transferFeeHeader}>
+                    <View style={styles.transferFeeHeaderText}>
+                      <Text style={styles.transferFeeTitle}>Transfer Fee</Text>
+                      <Text style={styles.transferFeeDescription}>
+                        Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges)
+                      </Text>
+                    </View>
+                    <Switch
+                      accessibilityLabel="Add transfer fee"
+                      onValueChange={setFeeEnabled}
+                      trackColor={{
+                        false: theme.colors.borderStrong,
+                        true: theme.colors.primary,
+                      }}
+                      value={feeEnabled}
+                    />
+                  </View>
+
+                  {feeEnabled ? (
+                    <View style={styles.transferFeeBody}>
+                      {/* Fee Amount */}
+                      <View style={styles.transferFeeFieldGroup}>
+                        <AmountCalculatorField
+                          amountMinorUnits={feeAmountMinorUnits}
+                          amountSign="-"
+                          currencyCode={feeAccountCurrency}
+                          disabled={pending}
+                          label="FEE AMOUNT"
+                          onOpenCalculator={() => setIsFeeCalculatorOpen(true)}
+                          showSignToggle={false}
+                        />
+                      </View>
+
+                      {/* Deduct Fee From Account */}
+                      <View style={styles.transferFeeFieldGroup}>
+                        <Text style={styles.fieldLabel}>DEDUCT FEE FROM</Text>
+                        <Pressable
+                          accessibilityLabel={`Deduct fee from ${feeAccount?.name ?? "none selected"}${feePocket ? `, ${feePocket.name}` : ""}. Tap to change.`}
+                          accessibilityRole="button"
+                          onPress={() => setIsFeeAccountPickerOpen(true)}
+                          style={styles.selectorCard}
+                        >
+                          <View style={styles.selectorLeft}>
+                            <View
+                              style={[
+                                styles.selectorIconWrap,
+                                {
+                                  backgroundColor: `${feeAccountColor}18`,
+                                  borderColor: `${feeAccountColor}35`,
+                                },
+                              ]}
+                            >
+                              <IconHelper
+                                name={feeAccount?.iconKey ?? feeAccount?.accountType?.iconKey ?? "wallet"}
+                                size={18}
+                                color={feeAccountColor}
+                              />
+                            </View>
+                            <View style={styles.selectorTextCol}>
+                              <Text
+                                style={
+                                  feeAccount
+                                    ? styles.selectorValueText
+                                    : styles.selectorPlaceholderText
+                                }
+                              >
+                                {feeAccount
+                                  ? `${feeAccount.name}${feeAccount.pocketEnabled ? ` · ${feePocket?.name ?? "Available"}` : ""}`
+                                  : "Select Fee Account"}
+                              </Text>
+                              {feeAccount && (
+                                <Text style={styles.selectorSubText}>
+                                  {feePocket
+                                    ? "Pocket balance"
+                                    : feeAccount.pocketEnabled
+                                      ? "Available balance"
+                                      : feeAccount.accountType?.name ?? "Account"} ·{" "}
+                                  {formatCurrency(
+                                    feeLocationBalance,
+                                    feeAccount.currencyCode,
+                                  )}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                          <View style={styles.selectorChangeBadge}>
+                            <Text style={styles.selectorChangeText}>Change</Text>
+                            <ChevronRight size={14} color={theme.colors.textSecondary} />
+                          </View>
+                        </Pressable>
+                      </View>
+
+                      {/* Fee Category */}
+                      <View style={styles.transferFeeFieldGroup}>
+                        <Text style={styles.fieldLabel}>FEE CATEGORY</Text>
+                        <Pressable
+                          accessibilityLabel={`Fee category ${feeCategory?.name ?? "none selected"}. Tap to change.`}
+                          accessibilityRole="button"
+                          onPress={() => setIsFeeCategoryPickerOpen(true)}
+                          style={styles.selectorCard}
+                        >
+                          <View style={styles.selectorLeft}>
+                            <View
+                              style={[
+                                styles.selectorIconWrap,
+                                {
+                                  backgroundColor: `${feeCategoryColor}18`,
+                                  borderColor: `${feeCategoryColor}35`,
+                                },
+                              ]}
+                            >
+                              <IconHelper
+                                name={feeCategory?.icon ?? "tag"}
+                                size={18}
+                                color={feeCategoryColor}
+                              />
+                            </View>
+                            <View style={styles.selectorTextCol}>
+                              <Text
+                                numberOfLines={1}
+                                style={
+                                  feeCategory
+                                    ? styles.selectorValueText
+                                    : styles.selectorPlaceholderText
+                                }
+                              >
+                                {feeCategory?.name ?? "Select Fee Category"}
+                              </Text>
+                              {feeCategory && (
+                                <Text style={styles.selectorSubText}>
+                                  {parentOfFeeCategory
+                                    ? `${parentOfFeeCategory.name} > Subcategory`
+                                    : "Expense Category"}
+                                </Text>
+                              )}
+                            </View>
+                          </View>
+                          <View style={styles.selectorChangeBadge}>
+                            <Text style={styles.selectorChangeText}>Change</Text>
+                            <ChevronRight size={14} color={theme.colors.textSecondary} />
+                          </View>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
               </>
             ) : (
               /* If Expense / Income: Category Selector */
@@ -1024,6 +1301,10 @@ export function TransactionFormModal({
         onSelectLocation={(acc, pocketId) => {
           setSelectedAccountId(acc.id);
           setSelectedPocketId(pocketId);
+          if (!feeAccountManuallyChanged) {
+            setFeeAccountId(acc.id);
+            setFeePocketId(pocketId);
+          }
         }}
         selectedAccountId={selectedAccountId}
         selectedPocketId={selectedPocketId}
@@ -1053,6 +1334,43 @@ export function TransactionFormModal({
         title={mode === "income" ? "Select Income Category" : "Select Expense Category"}
         type={mode === "income" ? "income" : "expense"}
         visible={isCategoryPickerOpen}
+      />
+
+      <AmountCalculatorModal
+        currencyCode={feeAccountCurrency}
+        initialMinorUnits={feeAmountMinorUnits}
+        onClose={() => setIsFeeCalculatorOpen(false)}
+        onConfirm={(minorUnits) => {
+          setFeeAmountMinorUnits(Math.abs(minorUnits));
+          setIsFeeCalculatorOpen(false);
+        }}
+        title="Enter Transfer Fee Amount"
+        visible={isFeeCalculatorOpen}
+      />
+
+      <AccountPickerModal
+        accounts={accounts}
+        pockets={pockets}
+        onClose={() => setIsFeeAccountPickerOpen(false)}
+        onSelectLocation={(acc, pocketId) => {
+          setFeeAccountId(acc.id);
+          setFeePocketId(pocketId);
+          setFeeAccountManuallyChanged(true);
+        }}
+        selectedAccountId={feeAccountId || selectedAccountId}
+        selectedPocketId={feePocketId}
+        title="Deduct Fee From Account"
+        visible={isFeeAccountPickerOpen}
+      />
+
+      <CategoryPickerModal
+        categories={categories}
+        onClose={() => setIsFeeCategoryPickerOpen(false)}
+        onSelectCategory={(cat) => setFeeCategoryId(cat.id)}
+        selectedCategoryId={feeCategoryId || (defaultFeeCategory?.id ?? "")}
+        title="Select Fee Category"
+        type="expense"
+        visible={isFeeCategoryPickerOpen}
       />
 
       <QuickPresetsModal
@@ -1269,6 +1587,44 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       paddingHorizontal: 14,
       paddingVertical: 10,
+    },
+    transferFeePanel: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginBottom: 16,
+      padding: 14,
+    },
+    transferFeeHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 12,
+      justifyContent: "space-between",
+    },
+    transferFeeHeaderText: {
+      flex: 1,
+    },
+    transferFeeTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      fontWeight: "700",
+    },
+    transferFeeDescription: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginTop: 3,
+    },
+    transferFeeBody: {
+      gap: 12,
+      marginTop: 14,
+      paddingTop: 12,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    transferFeeFieldGroup: {
+      gap: 4,
     },
     fieldLabel: {
       color: theme.colors.textSecondary,

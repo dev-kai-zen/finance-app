@@ -310,3 +310,93 @@ test("transaction attachments: supports an unbounded collection and cascades met
     0,
   );
 });
+
+test("transactions: records transfer with instant fee as grouped transactions", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+  const groupId = "grp_transfer_with_fee";
+
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_fees', 'Bank Fees', 'expense', 'receipt', 1, ${now}, ${now});
+  `).run();
+
+  const insertStmt = db.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Transfer out
+  insertStmt.run("tx_out", "acc_1", null, groupId, "transfer", -100000, "Bank Transfer", now, now, now);
+  // Transfer in
+  insertStmt.run("tx_in", "acc_2", null, groupId, "transfer", 100000, "Bank Transfer", now, now, now);
+  // Transfer fee
+  insertStmt.run("tx_fee", "acc_1", "cat_fees", groupId, "expense", -1500, "Bank Transfer Fee", now, now, now);
+
+  const groupRows = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents ASC").all(groupId);
+  assert.equal(groupRows.length, 3);
+
+  const transferLegs = groupRows.filter((r) => r.type === "transfer");
+  assert.equal(transferLegs.length, 2);
+
+  const feeLeg = groupRows.find((r) => r.type === "expense");
+  assert.ok(feeLeg);
+  assert.equal(feeLeg.id, "tx_fee");
+  assert.equal(feeLeg.account_id, "acc_1");
+  assert.equal(feeLeg.category_id, "cat_fees");
+  assert.equal(feeLeg.amount_cents, -1500);
+
+  // Group soft-delete cascades to fee
+  db.prepare("UPDATE transactions SET deleted_at = ? WHERE transaction_group_id = ?").run(now, groupId);
+  const activeRows = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? AND deleted_at IS NULL").all(groupId);
+  assert.equal(activeRows.length, 0);
+
+  // Group restore cascades to fee
+  db.prepare("UPDATE transactions SET deleted_at = NULL WHERE transaction_group_id = ?").run(groupId);
+  const restoredRows = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? AND deleted_at IS NULL").all(groupId);
+  assert.equal(restoredRows.length, 3);
+});
+
+test("transactions: calculates stats where transfer fee counts toward outflow", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+  const groupId = "grp_transfer_fee_stats";
+
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_fees', 'Bank Fees', 'expense', 'receipt', 1, ${now}, ${now});
+  `).run();
+
+  const insertStmt = db.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Transfer out & in
+  insertStmt.run("tx_out", "acc_1", null, groupId, "transfer", -100000, "Bank Transfer", now, now, now);
+  insertStmt.run("tx_in", "acc_2", null, groupId, "transfer", 100000, "Bank Transfer", now, now, now);
+  // Transfer fee
+  insertStmt.run("tx_fee", "acc_1", "cat_fees", groupId, "expense", -2500, "Transfer Fee", now, now, now);
+
+  const allTx = db.prepare("SELECT * FROM transactions WHERE deleted_at IS NULL").all();
+
+  let totalInflow = 0;
+  let totalOutflow = 0;
+  const groupedTransferIds = new Set();
+
+  for (const tx of allTx) {
+    if (tx.type === "transfer") {
+      if (tx.transaction_group_id) groupedTransferIds.add(tx.transaction_group_id);
+      continue;
+    }
+    if (tx.amount_cents > 0) {
+      totalInflow += tx.amount_cents;
+    } else if (tx.amount_cents < 0) {
+      totalOutflow += Math.abs(tx.amount_cents);
+    }
+  }
+
+  assert.equal(totalInflow, 0);
+  assert.equal(totalOutflow, 2500); // Only the fee is counted as cash outflow!
+  assert.equal(groupedTransferIds.size, 1);
+});

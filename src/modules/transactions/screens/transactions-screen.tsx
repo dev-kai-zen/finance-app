@@ -664,10 +664,10 @@ export function TransactionsScreen() {
           if (deleted) refreshAccounts();
           return deleted;
         }}
-        onRestore={(id) => {
-          void restoreTx(id).then((restored) => {
-            if (restored) refreshAccounts();
-          });
+        onRestore={async (id) => {
+          const restored = await restoreTx(id);
+          if (restored) refreshAccounts();
+          return restored;
         }}
         pending={pendingAction}
         transactions={deletedTransactions}

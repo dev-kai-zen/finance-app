@@ -3,7 +3,9 @@ import { findAccountById } from "@/modules/accounts/repositories/accounts.reposi
 import { requirePocketForAccount } from "@/modules/accounts";
 import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 import {
+  deleteTransaction,
   findTransactionsByGroupId,
+  insertTransaction,
   updateTransactionRecord,
 } from "../repositories/transactions.repository";
 import type {
@@ -62,62 +64,124 @@ export function updateTransferInContext(
     throw new Error("Transfer amount must be an integer in minor units (centavos).");
   }
 
-    const legs = findTransactionsByGroupId(input.transactionGroupId, context);
-    if (legs.length !== 2) {
-      throw new Error(`Transfer group ${input.transactionGroupId} is incomplete.`);
-    }
+  const legs = findTransactionsByGroupId(input.transactionGroupId, context);
+  const transferLegs = legs.filter((leg) => leg.type === "transfer");
+  if (transferLegs.length !== 2) {
+    throw new Error(`Transfer group ${input.transactionGroupId} is incomplete.`);
+  }
 
-    const fromAccount = findAccountById(input.fromAccountId, context);
-    if (!fromAccount) {
-      throw new Error(`Source account not found: ${input.fromAccountId}`);
-    }
+  const fromAccount = findAccountById(input.fromAccountId, context);
+  if (!fromAccount) {
+    throw new Error(`Source account not found: ${input.fromAccountId}`);
+  }
 
-    const toAccount = findAccountById(input.toAccountId, context);
-    if (!toAccount) {
-      throw new Error(`Destination account not found: ${input.toAccountId}`);
-    }
+  const toAccount = findAccountById(input.toAccountId, context);
+  if (!toAccount) {
+    throw new Error(`Destination account not found: ${input.toAccountId}`);
+  }
 
-    const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
-    const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
-    if (input.fromPocketId) {
-      requirePocketForAccount(input.fromPocketId, fromAccount.id, context, {
-        allowArchived: outLeg.pocketId === input.fromPocketId,
+  const outLeg = transferLegs.find((leg) => leg.amountCents < 0) ?? transferLegs[0];
+  const inLeg = transferLegs.find((leg) => leg.amountCents > 0) ?? transferLegs[1];
+  if (input.fromPocketId) {
+    requirePocketForAccount(input.fromPocketId, fromAccount.id, context, {
+      allowArchived: outLeg.pocketId === input.fromPocketId,
+    });
+  }
+  if (input.toPocketId) {
+    requirePocketForAccount(input.toPocketId, toAccount.id, context, {
+      allowArchived: inLeg.pocketId === input.toPocketId,
+    });
+  }
+  const amount = Math.abs(input.amountCents);
+  const occurredAt =
+    input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
+  const name = input.name?.trim() || null;
+  const note = input.note?.trim() || null;
+
+  const sharedPatch = { name, note, occurredAt, type: "transfer" as const };
+
+  updateTransactionRecord(
+    outLeg.id,
+    {
+      ...sharedPatch,
+      accountId: input.fromAccountId,
+      pocketId: input.fromPocketId ?? null,
+      amountCents: -amount,
+    },
+    context,
+  );
+
+  updateTransactionRecord(
+    inLeg.id,
+    {
+      ...sharedPatch,
+      accountId: input.toAccountId,
+      pocketId: input.toPocketId ?? null,
+      amountCents: amount,
+    },
+    context,
+  );
+
+  const existingFeeLeg = legs.find((leg) => leg.type === "expense");
+
+  if (input.fee && input.fee.amountCents > 0) {
+    if (!input.fee.accountId) {
+      throw new Error("Fee account is required.");
+    }
+    if (!input.fee.categoryId) {
+      throw new Error("Fee category is required.");
+    }
+    if (!Number.isInteger(input.fee.amountCents)) {
+      throw new Error("Fee amount must be an integer in minor units (centavos).");
+    }
+    const feeAccount = findAccountById(input.fee.accountId, context);
+    if (!feeAccount) {
+      throw new Error(`Fee account not found: ${input.fee.accountId}`);
+    }
+    if (input.fee.pocketId) {
+      requirePocketForAccount(input.fee.pocketId, feeAccount.id, context, {
+        allowArchived: existingFeeLeg?.pocketId === input.fee.pocketId,
       });
     }
-    if (input.toPocketId) {
-      requirePocketForAccount(input.toPocketId, toAccount.id, context, {
-        allowArchived: inLeg.pocketId === input.toPocketId,
-      });
+
+    const feeAmount = Math.abs(input.fee.amountCents);
+    const feeName = name ? `${name} Fee` : "Transfer Fee";
+
+    if (existingFeeLeg) {
+      updateTransactionRecord(
+        existingFeeLeg.id,
+        {
+          accountId: input.fee.accountId,
+          pocketId: input.fee.pocketId ?? null,
+          categoryId: input.fee.categoryId,
+          amountCents: -feeAmount,
+          name: feeName,
+          note,
+          occurredAt,
+          type: "expense",
+        },
+        context,
+      );
+    } else {
+      insertTransaction(
+        {
+          accountId: input.fee.accountId,
+          categoryId: input.fee.categoryId,
+          pocketId: input.fee.pocketId ?? null,
+          transactionGroupId: input.transactionGroupId,
+          type: "expense",
+          amountCents: -feeAmount,
+          name: feeName,
+          note,
+          occurredAt,
+        },
+        context,
+      );
     }
-    const amount = Math.abs(input.amountCents);
-    const occurredAt =
-      input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
-    const name = input.name?.trim() || null;
-    const note = input.note?.trim() || null;
+  } else if (existingFeeLeg) {
+    deleteTransaction(existingFeeLeg.id, context);
+  }
 
-    const sharedPatch = { name, note, occurredAt, type: "transfer" as const };
-
-    updateTransactionRecord(
-      outLeg.id,
-      {
-        ...sharedPatch,
-        accountId: input.fromAccountId,
-        pocketId: input.fromPocketId ?? null,
-        amountCents: -amount,
-      },
-      context,
-    );
-
-    updateTransactionRecord(
-      inLeg.id,
-      {
-        ...sharedPatch,
-        accountId: input.toAccountId,
-        pocketId: input.toPocketId ?? null,
-        amountCents: amount,
-      },
-      context,
-    );
-    reconcileCreditCardBillingInContext(new Date(), context);
-    return outLeg.id;
+  reconcileCreditCardBillingInContext(new Date(), context);
+  return outLeg.id;
 }

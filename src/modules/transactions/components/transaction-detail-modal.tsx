@@ -223,6 +223,7 @@ export function TransactionDetailModal({
 
               {/* Transfer Destination or Category Row */}
               {isTransfer ? (
+                <>
                 <View style={[styles.detailRow, styles.detailRowBorder]}>
                   <View style={styles.detailIconBadge}>
                     <IconHelper color={theme.colors.info} name="arrow-right" size={16} />
@@ -243,6 +244,29 @@ export function TransactionDetailModal({
                     ) : null}
                   </View>
                 </View>
+                {transaction.transferFeeAmountMinorUnits ? (
+                  <View style={[styles.detailRow, styles.detailRowBorder]}>
+                    <View style={styles.detailIconBadge}>
+                      <IconHelper color={theme.colors.danger} name="receipt" size={16} />
+                    </View>
+                    <View style={styles.detailInfoCol}>
+                      <Text style={styles.detailLabel}>TRANSFER FEE</Text>
+                      <Text style={styles.detailValue}>
+                        {formatCurrency(
+                          transaction.transferFeeAmountMinorUnits,
+                          transaction.accountCurrency ?? "PHP",
+                          false,
+                        )}
+                      </Text>
+                      <Text style={styles.detailMeta}>
+                        Deducted from: {transaction.transferFeeAccountName ?? "Account"}
+                        {transaction.transferFeePocketName ? ` (${transaction.transferFeePocketName})` : ""}
+                        {transaction.transferFeeCategoryName ? ` · ${transaction.transferFeeCategoryName}` : ""}
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+                </>
               ) : (
                 <View style={[styles.detailRow, styles.detailRowBorder]}>
                   <View style={styles.detailIconBadge}>

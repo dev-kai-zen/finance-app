@@ -46,6 +46,14 @@ export interface TransactionListItem extends Transaction {
   transferPocketName: string | null;
   destinationBalanceAfterMinorUnits: number | null;
   destinationLocationBalanceAfterMinorUnits: number | null;
+  /** Transfer fee details on grouped transfer rows */
+  transferFeeAmountMinorUnits?: number | null;
+  transferFeeAccountId?: string | null;
+  transferFeeAccountName?: string | null;
+  transferFeePocketId?: string | null;
+  transferFeePocketName?: string | null;
+  transferFeeCategoryId?: string | null;
+  transferFeeCategoryName?: string | null;
 }
 
 export type TransactionAttachmentSyncStatus =
@@ -96,6 +104,13 @@ export interface CreateTransactionInput {
   } | null;
 }
 
+export interface TransferFeeInput {
+  amountCents: number;
+  accountId: string;
+  pocketId?: string | null;
+  categoryId: string;
+}
+
 export interface CreateTransferInput {
   fromAccountId: string;
   toAccountId: string;
@@ -105,6 +120,7 @@ export interface CreateTransferInput {
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
+  fee?: TransferFeeInput | null;
 }
 
 export interface UpdateTransferInput {
@@ -117,6 +133,7 @@ export interface UpdateTransferInput {
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
+  fee?: TransferFeeInput | null;
 }
 
 export interface TransactionFilter {
@@ -137,4 +154,5 @@ export interface TransferResult {
   transactionGroupId: string;
   outLeg: Transaction;
   inLeg: Transaction;
+  feeLeg?: Transaction | null;
 }
