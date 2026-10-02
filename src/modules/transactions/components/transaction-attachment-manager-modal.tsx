@@ -34,6 +34,7 @@ import {
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AttachmentManagerItem } from "../hooks/use-transaction-attachments";
 import type { TransactionAttachmentDraft } from "../types/transaction.types";
+import { AttachmentViewerModal } from "./attachment-viewer-modal";
 
 export interface TransactionAttachmentManagerModalProps {
   visible: boolean;
@@ -46,7 +47,7 @@ export interface TransactionAttachmentManagerModalProps {
   onAdd: (drafts: TransactionAttachmentDraft[]) => void | Promise<void>;
   onClearError?: () => void;
   onClose: () => void;
-  onOpen: (item: AttachmentManagerItem) => void | Promise<void>;
+  onOpen?: (item: AttachmentManagerItem) => void | Promise<void>;
   onRemove: (item: AttachmentManagerItem) => void | Promise<void>;
   onLoadMore?: () => void;
 }
@@ -83,6 +84,7 @@ export function TransactionAttachmentManagerModal({
   const [removeTarget, setRemoveTarget] =
     useState<AttachmentManagerItem | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const pickerLaunchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export function TransactionAttachmentManagerModal({
       setSourceSheetOpen(false);
       setPickerError(null);
       setRemoveTarget(null);
+      setViewerIndex(null);
     }
     return () => {
       if (pickerLaunchTimer.current) {
@@ -229,11 +232,17 @@ export function TransactionAttachmentManagerModal({
             }
             onEndReached={onLoadMore}
             onEndReachedThreshold={0.35}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <AttachmentRow
                 disabled={busy}
                 item={item}
-                onOpen={() => void onOpen(item)}
+                onOpen={() => {
+                  if (onOpen) {
+                    void onOpen(item);
+                  } else {
+                    setViewerIndex(index);
+                  }
+                }}
                 onRemove={() => confirmRemove(item)}
               />
             )}
@@ -299,6 +308,13 @@ export function TransactionAttachmentManagerModal({
         title="Attachment error"
         variant="error"
         visible={visible && Boolean(displayError) && removeTarget === null}
+      />
+
+      <AttachmentViewerModal
+        initialIndex={viewerIndex ?? 0}
+        items={items}
+        onClose={() => setViewerIndex(null)}
+        visible={visible && viewerIndex !== null}
       />
     </>
   );

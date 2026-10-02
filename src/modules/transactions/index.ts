@@ -48,6 +48,12 @@ export const TransactionAttachmentsSyncProcessor = deferComponent(
   "TransactionAttachmentsSyncProcessor",
 ) as typeof import("./components/transaction-attachments-sync-processor").TransactionAttachmentsSyncProcessor;
 
+export const AttachmentViewerModal = deferComponent(
+  () =>
+    require("./components/attachment-viewer-modal").AttachmentViewerModal,
+  "AttachmentViewerModal",
+) as typeof import("./components/attachment-viewer-modal").AttachmentViewerModal;
+
 export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;

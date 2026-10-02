@@ -392,7 +392,6 @@ export function TransactionDetailModal({
       onClearError={attachmentState.clearError}
       onClose={() => setAttachmentManagerOpen(false)}
         onLoadMore={attachmentState.loadMore}
-        onOpen={attachmentState.open}
         onRemove={async (item) => {
           await attachmentState.remove(item);
           onAttachmentsChanged?.();

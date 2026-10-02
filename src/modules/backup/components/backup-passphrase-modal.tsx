@@ -35,14 +35,14 @@ export function BackupPassphraseModal({
   const styles = useThemeStyles(createStyles);
   const [passphrase, setPassphrase] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [protection, setProtection] = useState<"password" | "none">("password");
+  const [protection, setProtection] = useState<"password" | "none">("none");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!visible) {
       setPassphrase("");
       setConfirmation("");
-      setProtection("password");
+      setProtection("none");
       setError(null);
     }
   }, [visible]);
@@ -123,17 +123,6 @@ export function BackupPassphraseModal({
           {mode === "create" ? (
             <View style={styles.protectionChoices}>
               <ProtectionChoice
-                description="Encrypt the backup. You will need this password to restore it."
-                disabled={pending}
-                icon="password"
-                label="Use a password"
-                onPress={() => {
-                  setProtection("password");
-                  setError(null);
-                }}
-                selected={protection === "password"}
-              />
-              <ProtectionChoice
                 description="Restore without a password. Anyone with the file can read it."
                 disabled={pending}
                 icon="none"
@@ -143,6 +132,17 @@ export function BackupPassphraseModal({
                   setError(null);
                 }}
                 selected={protection === "none"}
+              />
+              <ProtectionChoice
+                description="Encrypt the backup. You will need this password to restore it."
+                disabled={pending}
+                icon="password"
+                label="Use a password"
+                onPress={() => {
+                  setProtection("password");
+                  setError(null);
+                }}
+                selected={protection === "password"}
               />
             </View>
           ) : null}

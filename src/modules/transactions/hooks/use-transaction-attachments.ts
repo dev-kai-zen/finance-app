@@ -354,7 +354,7 @@ function toManagerItem(
   };
 }
 
-async function shareAttachment(
+export async function shareAttachment(
   uri: string,
   item: Pick<AttachmentManagerItem, "mimeType" | "name">,
 ): Promise<void> {

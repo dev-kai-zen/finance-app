@@ -1764,7 +1764,6 @@ export function TransactionFormModal({
         onClearError={attachmentDraft.clearError}
         onClose={() => setIsAttachmentManagerOpen(false)}
         onLoadMore={attachmentDraft.loadMore}
-        onOpen={attachmentDraft.openItem}
         onRemove={attachmentDraft.removeItem}
         totalCount={attachmentDraft.totalCount}
         visible={visible && isAttachmentManagerOpen}
