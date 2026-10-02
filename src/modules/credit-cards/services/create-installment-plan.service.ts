@@ -24,16 +24,25 @@ export function createCreditCardInstallmentPlan(
     throw new Error("Installment term must be between 2 and 120 months.");
   }
 
+  const deferredMonths = Math.max(0, Math.floor(input.deferredMonths ?? 0));
+  if (deferredMonths < 0 || deferredMonths > 36) {
+    throw new Error("Deferred billing months must be between 0 and 36.");
+  }
+
   const details = getCreditCardDetails(transaction.accountId, context);
   if (!details) {
     throw new Error("Installments are available only for Credit Card accounts.");
   }
 
   const principal = Math.abs(transaction.amountCents);
-  const firstStatementOn = statementDateForTransaction(
+  const baseStatementOn = statementDateForTransaction(
     transaction.occurredAt,
     details.statementDay,
   );
+  const firstStatementOn =
+    deferredMonths > 0
+      ? addBillingMonths(baseStatementOn, deferredMonths, details.statementDay)
+      : baseStatementOn;
   const now = new Date();
   const planId = newCreditCardBillingId(context);
   insertInstallmentPlan(
@@ -44,6 +53,7 @@ export function createCreditCardInstallmentPlan(
       termMonths: input.termMonths,
       principalMinorUnits: principal,
       firstStatementOn,
+      deferredMonths,
       status: "active",
       createdAt: now,
       updatedAt: now,

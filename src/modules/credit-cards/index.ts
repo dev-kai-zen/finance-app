@@ -42,6 +42,12 @@ export const getInstallmentPlanForTransaction = deferFunction(
       .getInstallmentPlanForTransaction,
 ) as typeof import("./services/get-installment-plan.service").getInstallmentPlanForTransaction;
 
+export const previewInstallmentPlan = deferFunction(
+  () =>
+    require("./services/preview-installment-plan.service")
+      .previewInstallmentPlan,
+) as typeof import("./services/preview-installment-plan.service").previewInstallmentPlan;
+
 export type {
   CreditCardInstallment,
   CreditCardInstallmentPlan,
@@ -53,3 +59,4 @@ export type {
   CreditCardStatementSummary,
   InstallmentInput,
 } from "./types/credit-card.types";
+export type { InstallmentPlanPreview } from "./services/preview-installment-plan.service";

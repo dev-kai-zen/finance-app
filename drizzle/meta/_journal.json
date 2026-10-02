@@ -6,7 +6,7 @@
       "idx": 0,
       "version": "6",
       "when": 1789278809639,
-      "tag": "0000_uneven_mercury",
+      "tag": "0000_initial_schema",
       "breakpoints": true
     },
     {
@@ -160,7 +160,14 @@
       "idx": 22,
       "version": "6",
       "when": 1790912504278,
-      "tag": "0022_whole_blue_marvel",
+      "tag": "0022_add_transaction_attachments_and_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1790949928373,
+      "tag": "0023_add_credit_card_bnpl_deferred_months",
       "breakpoints": true
     }
   ]

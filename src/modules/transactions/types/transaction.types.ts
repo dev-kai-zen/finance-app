@@ -101,6 +101,7 @@ export interface CreateTransactionInput {
   occurredAt: Date;
   installment?: {
     termMonths: number;
+    deferredMonths?: number;
   } | null;
 }
 

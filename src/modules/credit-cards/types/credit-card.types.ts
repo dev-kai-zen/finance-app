@@ -19,6 +19,7 @@ export type CreditCardInstallment = InferSelectModel<
 
 export interface InstallmentInput {
   termMonths: number;
+  deferredMonths?: number;
 }
 
 export interface CreditCardStatementSummary extends CreditCardStatement {

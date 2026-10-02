@@ -1,0 +1,1 @@
+ALTER TABLE `credit_card_installment_plans` ADD `deferred_months` integer DEFAULT 0 NOT NULL;

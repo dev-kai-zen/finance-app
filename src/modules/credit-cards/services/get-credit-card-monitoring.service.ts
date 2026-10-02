@@ -132,12 +132,17 @@ export function getCreditCardMonitoring(
           plan.principalMinorUnits - billedPrincipal,
         );
         if (remainingPrincipal <= 0) continue;
+        const isDeferred =
+          (plan.deferredMonths ?? 0) > 0 && plan.firstStatementOn > todayOn;
+        const detail = isDeferred
+          ? `${plan.termMonths}-mo installment · BNPL: First bill on ${plan.firstStatementOn}`
+          : `${plan.termMonths}-month installment · remaining principal`;
         unbilledItems.push({
           id: plan.id,
           description: purchase.name ?? "Installment purchase",
           amountMinorUnits: remainingPrincipal,
           occurredOn: toCalendarDate(purchase.occurredAt),
-          detail: `${plan.termMonths}-month installment · remaining principal`,
+          detail,
         });
       }
       return {

@@ -144,6 +144,94 @@ test("credit cards: installment schedule preserves the full purchase principal",
   assert.equal(total, 1200000);
 });
 
+test("credit cards: BNPL 3-month deferred installment plan defers first statement cutoff", () => {
+  const { db, now } = setupTestDb();
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_bnpl', 'Electronics', 'expense', 'laptop', 0, ?, ?)
+  `).run(now, now);
+  db.prepare(`
+    INSERT INTO transactions (
+      id, account_id, category_id, type, amount_cents, name,
+      occurred_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "tx_bnpl_phone",
+    "card_1",
+    "cat_bnpl",
+    "expense",
+    -6000000,
+    "Flagship Phone",
+    now,
+    now,
+    now,
+  );
+  // Deferred 3 months: purchase in Oct 2026, first statement in Jan 2027
+  db.prepare(`
+    INSERT INTO credit_card_installment_plans (
+      id, account_id, purchase_transaction_id, term_months,
+      principal_minor_units, first_statement_on, deferred_months, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "plan_bnpl_phone",
+    "card_1",
+    "tx_bnpl_phone",
+    6,
+    6000000,
+    "2027-01-18",
+    3,
+    "active",
+    now,
+    now,
+  );
+  const insertInstallment = db.prepare(`
+    INSERT INTO credit_card_installments (
+      id, plan_id, installment_number, scheduled_statement_on,
+      principal_minor_units, interest_minor_units, fee_minor_units, created_at
+    ) VALUES (?, ?, ?, ?, ?, 0, 0, ?)
+  `);
+  // 6 monthly installments starting Jan 2027
+  const statementDates = [
+    "2027-01-18",
+    "2027-02-18",
+    "2027-03-18",
+    "2027-04-18",
+    "2027-05-18",
+    "2027-06-18",
+  ];
+  for (let i = 0; i < statementDates.length; i += 1) {
+    insertInstallment.run(
+      `inst_bnpl_${i + 1}`,
+      "plan_bnpl_phone",
+      i + 1,
+      statementDates[i],
+      1000000,
+      now,
+    );
+  }
+  const plan = db
+    .prepare("SELECT * FROM credit_card_installment_plans WHERE id = ?")
+    .get("plan_bnpl_phone");
+  assert.equal(plan.deferred_months, 3);
+  assert.equal(plan.first_statement_on, "2027-01-18");
+
+  // In Nov 2026 (before first statement), 0 installments are scheduled <= 2026-11-30
+  const earlyCount = db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM credit_card_installments WHERE plan_id = ? AND scheduled_statement_on <= ?",
+    )
+    .get("plan_bnpl_phone", "2026-11-30").count;
+  assert.equal(earlyCount, 0);
+
+  // In Jan 2027 (at first statement), 1 installment is due
+  const janCount = db
+    .prepare(
+      "SELECT COUNT(*) AS count FROM credit_card_installments WHERE plan_id = ? AND scheduled_statement_on <= ?",
+    )
+    .get("plan_bnpl_phone", "2027-01-18").count;
+  assert.equal(janCount, 1);
+});
+
 test("credit cards: deleting a source transaction preserves statement history", () => {
   const { db, now } = setupTestDb();
   db.prepare(`

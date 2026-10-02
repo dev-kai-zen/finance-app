@@ -28,6 +28,7 @@ import type {
 } from "@/modules/accounts";
 import { accountColor } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
+import { previewInstallmentPlan } from "@/modules/credit-cards";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
@@ -52,6 +53,17 @@ import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
+
+function formatDateString(value: string | null): string {
+  if (!value) return "None";
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -170,6 +182,10 @@ export function TransactionFormModal({
   const [note, setNote] = useState<string>("");
   const [installmentEnabled, setInstallmentEnabled] = useState(false);
   const [installmentTerm, setInstallmentTerm] = useState("12");
+  const [installmentDeferral, setInstallmentDeferral] = useState<
+    "0" | "1" | "2" | "3" | "6" | "custom"
+  >("0");
+  const [customDeferralMonths, setCustomDeferralMonths] = useState<string>("3");
   const [localError, setLocalError] = useState<string | null>(null);
   const [saveAsQuickPreset, setSaveAsQuickPreset] = useState(false);
   const [includePresetAmount, setIncludePresetAmount] = useState(true);
@@ -255,6 +271,8 @@ export function TransactionFormModal({
         setNote(initialTransaction.note || "");
         setInstallmentEnabled(false);
         setInstallmentTerm("12");
+        setInstallmentDeferral("0");
+        setCustomDeferralMonths("3");
         setLocalError(null);
         if (initialTransaction.transferFeeAmountMinorUnits) {
           setFeeEnabled(true);
@@ -289,6 +307,8 @@ export function TransactionFormModal({
         setNote("");
         setInstallmentEnabled(false);
         setInstallmentTerm("12");
+        setInstallmentDeferral("0");
+        setCustomDeferralMonths("3");
         setLocalError(null);
         setFeeEnabled(false);
         setFeeAmountMinorUnits(0);
@@ -368,6 +388,44 @@ export function TransactionFormModal({
     amountSign === "-" &&
     Boolean(selectedAccount?.creditCardDetails) &&
     !isEditing;
+
+  const resolvedDeferredMonths = useMemo(() => {
+    if (installmentDeferral === "custom") {
+      const parsed = parseInt(customDeferralMonths, 10);
+      return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+    }
+    return parseInt(installmentDeferral, 10) || 0;
+  }, [installmentDeferral, customDeferralMonths]);
+
+  const installmentPreview = useMemo(() => {
+    if (
+      !canUseInstallments ||
+      !installmentEnabled ||
+      !selectedAccount?.creditCardDetails
+    ) {
+      return null;
+    }
+    const term = Number(installmentTerm);
+    if (!Number.isInteger(term) || term < 2 || term > 120) {
+      return null;
+    }
+    return previewInstallmentPlan({
+      amountMinorUnits,
+      termMonths: term,
+      occurredAt: occurredAt ? new Date(occurredAt) : new Date(),
+      statementDay: selectedAccount.creditCardDetails.statementDay,
+      paymentDueDay: selectedAccount.creditCardDetails.paymentDueDay,
+      deferredMonths: resolvedDeferredMonths,
+    });
+  }, [
+    canUseInstallments,
+    installmentEnabled,
+    selectedAccount?.creditCardDetails,
+    installmentTerm,
+    amountMinorUnits,
+    occurredAt,
+    resolvedDeferredMonths,
+  ]);
   const matchingPreset = useMemo(() => {
     const normalizedName = normalizeQuickPresetTransactionName(name);
     if (!normalizedName) return null;
@@ -491,6 +549,8 @@ export function TransactionFormModal({
     setOccurredAt(getCurrentTransactionDate());
     setInstallmentEnabled(false);
     setInstallmentTerm("12");
+    setInstallmentDeferral("0");
+    setCustomDeferralMonths("3");
     setSaveAsQuickPreset(false);
     setAppliedPresetId(preset.id);
     setSuggestionsSuppressed(true);
@@ -615,6 +675,13 @@ export function TransactionFormModal({
           setLocalError("Installment term must be between 2 and 120 months.");
           return;
         }
+        if (installmentDeferral === "custom") {
+          const customVal = Number(customDeferralMonths);
+          if (!Number.isInteger(customVal) || customVal < 1 || customVal > 36) {
+            setLocalError("Custom deferred months must be between 1 and 36.");
+            return;
+          }
+        }
       }
 
       setLocalError(null);
@@ -629,7 +696,10 @@ export function TransactionFormModal({
         occurredAt: transactionOccurredAt,
         installment:
           canUseInstallments && installmentEnabled
-            ? { termMonths: Number(installmentTerm) }
+            ? {
+                termMonths: Number(installmentTerm),
+                deferredMonths: resolvedDeferredMonths,
+              }
             : null,
       };
       const success =
@@ -1171,21 +1241,175 @@ export function TransactionFormModal({
                   />
                 </View>
                 {installmentEnabled ? (
-                  <View style={styles.installmentTermRow}>
-                    <Text style={styles.fieldLabel}>TERM IN MONTHS</Text>
-                    <TextInput
-                      accessibilityLabel="Installment term in months"
-                      keyboardType="number-pad"
-                      maxLength={3}
-                      onChangeText={(value) =>
-                        setInstallmentTerm(value.replace(/\D/g, ""))
-                      }
-                      placeholder="12"
-                      placeholderTextColor={theme.colors.textMuted}
-                      style={styles.installmentTermInput}
-                      value={installmentTerm}
-                    />
-                  </View>
+                  <>
+                    <View style={styles.installmentTermRow}>
+                      <Text style={styles.fieldLabel}>TERM IN MONTHS</Text>
+                      <View style={styles.installmentTermInputContainer}>
+                        <TextInput
+                          accessibilityLabel="Installment term in months"
+                          keyboardType="number-pad"
+                          maxLength={3}
+                          onChangeText={(value) =>
+                            setInstallmentTerm(value.replace(/\D/g, ""))
+                          }
+                          placeholder="12"
+                          placeholderTextColor={theme.colors.textMuted}
+                          style={styles.installmentTermInput}
+                          value={installmentTerm}
+                        />
+                        <View style={styles.installmentChipGroup}>
+                          {["3", "6", "12", "24"].map((term) => {
+                            const isSelected = installmentTerm === term;
+                            return (
+                              <Pressable
+                                key={term}
+                                onPress={() => setInstallmentTerm(term)}
+                                style={[
+                                  styles.installmentChip,
+                                  isSelected && styles.installmentChipActive,
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.installmentChipText,
+                                    isSelected && styles.installmentChipTextActive,
+                                  ]}
+                                >
+                                  {term}m
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={styles.installmentDeferralSection}>
+                      <View style={styles.installmentDeferralHeader}>
+                        <Text style={styles.fieldLabel}>
+                          BILLING START (DEFERRED / BNPL)
+                        </Text>
+                        {resolvedDeferredMonths > 0 ? (
+                          <View style={styles.bnplTag}>
+                            <Text style={styles.bnplTagText}>BNPL</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <View style={styles.deferralChipsRow}>
+                        {[
+                          { label: "Standard", value: "0" },
+                          { label: "+1 mo", value: "1" },
+                          { label: "+2 mos", value: "2" },
+                          { label: "+3 mos (BNPL)", value: "3" },
+                          { label: "+6 mos", value: "6" },
+                          { label: "Custom", value: "custom" },
+                        ].map((opt) => {
+                          const isSelected = installmentDeferral === opt.value;
+                          return (
+                            <Pressable
+                              key={opt.value}
+                              onPress={() =>
+                                setInstallmentDeferral(
+                                  opt.value as
+                                    | "0"
+                                    | "1"
+                                    | "2"
+                                    | "3"
+                                    | "6"
+                                    | "custom",
+                                )
+                              }
+                              style={[
+                                styles.deferralChip,
+                                isSelected && styles.deferralChipActive,
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.deferralChipText,
+                                  isSelected && styles.deferralChipTextActive,
+                                ]}
+                              >
+                                {opt.label}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                      {installmentDeferral === "custom" ? (
+                        <View style={styles.customDeferralRow}>
+                          <Text style={styles.customDeferralLabel}>
+                            Months to defer:
+                          </Text>
+                          <TextInput
+                            accessibilityLabel="Custom months deferred"
+                            keyboardType="number-pad"
+                            maxLength={2}
+                            onChangeText={(value) =>
+                              setCustomDeferralMonths(value.replace(/\D/g, ""))
+                            }
+                            placeholder="3"
+                            placeholderTextColor={theme.colors.textMuted}
+                            style={styles.customDeferralInput}
+                            value={customDeferralMonths}
+                          />
+                          <Text style={styles.customDeferralSuffix}>months</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    {installmentPreview ? (
+                      <View style={styles.installmentPreviewCard}>
+                        <View style={styles.installmentPreviewTopRow}>
+                          <Text style={styles.installmentPreviewTitle}>
+                            Payment Schedule
+                          </Text>
+                          <Text style={styles.installmentMonthlyAmount}>
+                            {formatCurrency(
+                              installmentPreview.monthlyAmountMinorUnits,
+                              currencyCode,
+                            )}{" "}
+                            <Text style={styles.installmentMonthlySub}>
+                              / month
+                            </Text>
+                          </Text>
+                        </View>
+                        <View style={styles.installmentPreviewDetails}>
+                          <View style={styles.installmentPreviewDetailItem}>
+                            <Text style={styles.installmentDetailLabel}>
+                              First Statement
+                            </Text>
+                            <Text style={styles.installmentDetailValue}>
+                              {formatDateString(
+                                installmentPreview.firstStatementOn,
+                              )}
+                            </Text>
+                          </View>
+                          <View style={styles.installmentPreviewDetailItem}>
+                            <Text style={styles.installmentDetailLabel}>
+                              Estimated Due Date
+                            </Text>
+                            <Text style={styles.installmentDetailValue}>
+                              {formatDateString(installmentPreview.firstDueOn)}
+                            </Text>
+                          </View>
+                        </View>
+                        {installmentPreview.deferredMonths > 0 ? (
+                          <View style={styles.bnplCallout}>
+                            <Sparkles color={theme.colors.primary} size={14} />
+                            <Text style={styles.bnplCalloutText}>
+                              Buy Now, Pay Later active: First bill deferred by{" "}
+                              {installmentPreview.deferredMonths}{" "}
+                              {installmentPreview.deferredMonths === 1
+                                ? "month"
+                                : "months"}
+                              .
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : null}
+                  </>
                 ) : null}
               </View>
             ) : null}
@@ -1578,6 +1802,12 @@ function createStyles(theme: AppTheme) {
     installmentTermRow: {
       marginTop: 12,
     },
+    installmentTermInputContainer: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 4,
+    },
     installmentTermInput: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
@@ -1585,8 +1815,186 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       color: theme.colors.textPrimary,
       fontSize: 15,
+      minWidth: 70,
       paddingHorizontal: 14,
       paddingVertical: 10,
+      textAlign: "center",
+    },
+    installmentChipGroup: {
+      flex: 1,
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    installmentChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      justifyContent: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 9,
+    },
+    installmentChipActive: {
+      backgroundColor: `${theme.colors.primary}18`,
+      borderColor: theme.colors.primary,
+    },
+    installmentChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    installmentChipTextActive: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+    },
+    installmentDeferralSection: {
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      marginTop: 14,
+      paddingTop: 12,
+    },
+    installmentDeferralHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    bnplTag: {
+      backgroundColor: `${theme.colors.primary}20`,
+      borderRadius: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    bnplTagText: {
+      color: theme.colors.primary,
+      fontSize: 10,
+      fontWeight: "800",
+      letterSpacing: 0.5,
+    },
+    deferralChipsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+      marginTop: 8,
+    },
+    deferralChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      justifyContent: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+    },
+    deferralChipActive: {
+      backgroundColor: `${theme.colors.primary}18`,
+      borderColor: theme.colors.primary,
+    },
+    deferralChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    deferralChipTextActive: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+    },
+    customDeferralRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      marginTop: 8,
+    },
+    customDeferralLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "500",
+    },
+    customDeferralInput: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      color: theme.colors.textPrimary,
+      fontSize: 14,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      textAlign: "center",
+      width: 54,
+    },
+    customDeferralSuffix: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+    },
+    installmentPreviewCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginTop: 14,
+      padding: 12,
+    },
+    installmentPreviewTopRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    installmentPreviewTitle: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "600",
+      textTransform: "uppercase",
+    },
+    installmentMonthlyAmount: {
+      color: theme.colors.primary,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    installmentMonthlySub: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "500",
+    },
+    installmentPreviewDetails: {
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 10,
+      paddingTop: 8,
+    },
+    installmentPreviewDetailItem: {
+      flex: 1,
+    },
+    installmentDetailLabel: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+      marginBottom: 2,
+    },
+    installmentDetailValue: {
+      color: theme.colors.textPrimary,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    bnplCallout: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}30`,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      marginTop: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 7,
+    },
+    bnplCalloutText: {
+      color: theme.colors.primary,
+      flex: 1,
+      fontSize: 12,
+      fontWeight: "600",
     },
     transferFeePanel: {
       backgroundColor: theme.colors.surfaceMuted,

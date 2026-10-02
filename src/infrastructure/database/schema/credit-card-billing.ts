@@ -63,6 +63,7 @@ export const creditCardInstallmentPlans = sqliteTable(
     termMonths: integer("term_months").notNull(),
     principalMinorUnits: integer("principal_minor_units").notNull(),
     firstStatementOn: text("first_statement_on").notNull(),
+    deferredMonths: integer("deferred_months").notNull().default(0),
     status: text("status").notNull().default("active"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
@@ -71,6 +72,10 @@ export const creditCardInstallmentPlans = sqliteTable(
     check(
       "credit_card_installment_plans_term_check",
       sql`${table.termMonths} BETWEEN 2 AND 120`,
+    ),
+    check(
+      "credit_card_installment_plans_deferred_months_check",
+      sql`${table.deferredMonths} >= 0`,
     ),
     check(
       "credit_card_installment_plans_principal_check",
