@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -107,6 +107,7 @@ export function TransactionsScreen() {
     permanentlyDeleteTx,
     editTransaction,
     editTransfer,
+    refresh,
   } = useTransactions();
   const {
     presets,
@@ -139,6 +140,15 @@ export function TransactionsScreen() {
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setInspectedTransaction((current) =>
+      current
+        ? transactions.find((transaction) => transaction.id === current.id) ??
+          current
+        : null,
+    );
+  }, [transactions]);
 
   const pendingDeleteTransaction = useMemo(
     () => transactions.find((tx) => tx.id === pendingDeleteId) ?? null,
@@ -266,8 +276,9 @@ export function TransactionsScreen() {
   const handleRecordTransaction = async (
     input: Parameters<typeof recordTransaction>[0],
     preset?: Parameters<typeof recordTransaction>[1],
+    attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
-    const success = await recordTransaction(input, preset);
+    const success = await recordTransaction(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshPresets();
@@ -278,8 +289,9 @@ export function TransactionsScreen() {
   const handleRecordTransfer = async (
     input: Parameters<typeof recordTransfer>[0],
     preset?: Parameters<typeof recordTransfer>[1],
+    attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
-    const success = await recordTransfer(input, preset);
+    const success = await recordTransfer(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshPresets();
@@ -290,16 +302,18 @@ export function TransactionsScreen() {
   const handleUpdateTransaction = async (
     id: Parameters<typeof editTransaction>[0],
     input: Parameters<typeof editTransaction>[1],
+    attachmentChanges?: Parameters<typeof editTransaction>[2],
   ) => {
-    const success = await editTransaction(id, input);
+    const success = await editTransaction(id, input, attachmentChanges);
     if (success) refreshAccounts();
     return success;
   };
 
   const handleUpdateTransfer = async (
     input: Parameters<typeof editTransfer>[0],
+    attachmentChanges?: Parameters<typeof editTransfer>[1],
   ) => {
-    const success = await editTransfer(input);
+    const success = await editTransfer(input, attachmentChanges);
     if (success) refreshAccounts();
     return success;
   };
@@ -599,6 +613,7 @@ export function TransactionsScreen() {
 
       {/* Transaction Details Inspector Modal */}
       <TransactionDetailModal
+        onAttachmentsChanged={refresh}
         onClose={() => setInspectedTransaction(null)}
         onDelete={handleDelete}
         onDuplicate={handleDuplicate}

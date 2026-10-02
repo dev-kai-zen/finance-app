@@ -5,13 +5,18 @@ import {
   findTransactionById,
   findTransactionsByGroupId,
 } from "../repositories/transactions.repository";
+import {
+  finalizeRemovedAttachmentFiles,
+  queueTransactionAttachmentDeletionsInContext,
+  triggerTransactionAttachmentSync,
+} from "./transaction-attachments.service";
 
 export function permanentlyDeleteTransaction(id: string): void {
   if (!id) {
     throw new Error("Transaction ID is required to permanently delete.");
   }
 
-  db.transaction((tx) => {
+  const attachments = db.transaction((tx) => {
     const existing = findTransactionById(id, tx);
     if (!existing) {
       throw new Error(`Transaction with ID ${id} was not found.`);
@@ -31,10 +36,18 @@ export function permanentlyDeleteTransaction(id: string): void {
         );
       }
 
+      const queued = queueTransactionAttachmentDeletionsInContext(
+        groupedTransactions.map((transaction) => transaction.id),
+        tx,
+      );
       deleteTransactionsByGroupId(existing.transactionGroupId, tx);
-      return;
+      return queued;
     }
 
+    const queued = queueTransactionAttachmentDeletionsInContext([id], tx);
     deleteTransaction(id, tx);
+    return queued;
   });
+  finalizeRemovedAttachmentFiles(attachments);
+  triggerTransactionAttachmentSync();
 }

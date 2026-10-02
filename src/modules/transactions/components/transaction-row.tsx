@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ArrowRightLeft } from "lucide-react-native";
+import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -143,7 +143,7 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
 
   return (
     <Pressable
-      accessibilityLabel={`${title}, ${formattedAmount}`}
+      accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
       accessibilityRole="button"
       onPress={() => onPress?.(transaction)}
       style={({ pressed }) => [
@@ -153,9 +153,24 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
       ]}
     >
       <View style={styles.line}>
-        <Text numberOfLines={2} style={styles.txNameText}>
-          {title}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text numberOfLines={2} style={styles.txNameText}>
+            {title}
+          </Text>
+          {transaction.attachmentCount > 0 ? (
+            <View
+              accessibilityLabel={`${transaction.attachmentCount} attachments`}
+              style={styles.attachmentBadge}
+            >
+              <Paperclip color={theme.colors.primary} size={13} />
+              <Text style={styles.attachmentCount}>
+                {transaction.attachmentCount > 99
+                  ? "99+"
+                  : transaction.attachmentCount}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         <Text
           numberOfLines={1}
           style={[styles.amountText, { color: amountColor }]}
@@ -240,6 +255,27 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       lineHeight: theme.typography.lineHeight.md,
+    },
+    titleRow: {
+      alignItems: "flex-start",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    attachmentBadge: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderRadius: theme.borderRadius.round,
+      flexDirection: "row",
+      gap: 2,
+      minHeight: 22,
+      paddingHorizontal: 6,
+    },
+    attachmentCount: {
+      color: theme.colors.primary,
+      fontSize: 10,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.bold,
     },
     amountText: {
       flexShrink: 1,

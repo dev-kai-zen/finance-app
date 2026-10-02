@@ -1,4 +1,5 @@
 import { fetch } from "expo/fetch";
+import { File, UploadType } from "expo-file-system";
 
 const DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files";
@@ -7,10 +8,13 @@ const MAX_MULTIPART_BYTES = 5 * 1024 * 1024;
 const FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const ROOT_FOLDER_NAME = "Kaizen Finance";
 const BACKUPS_FOLDER_NAME = "Backups";
+const ATTACHMENTS_FOLDER_NAME = "Attachments";
 const APP_PROPERTY_KIND = "kaizenFinanceKind";
 const ROOT_FOLDER_KIND = "root-folder";
 const BACKUPS_FOLDER_KIND = "backups-folder";
 const BACKUP_FILE_KIND = "encrypted-backup";
+const ATTACHMENTS_FOLDER_KIND = "attachments-folder";
+const ATTACHMENT_FILE_KIND = "transaction-attachment";
 const BACKUP_PROTECTION_PROPERTY = "backupProtection";
 const LEGACY_FILE_ID_PROPERTY = "legacyFileId";
 const ORIGINAL_CREATED_AT_PROPERTY = "originalCreatedAt";
@@ -46,6 +50,12 @@ interface DriveFileResponse {
 
 interface DriveFileListResponse {
   files?: DriveFileResponse[];
+}
+
+export interface GoogleDriveAttachmentFile {
+  id: string;
+  name: string;
+  size: number;
 }
 
 export class GoogleDriveApiError extends Error {
@@ -217,6 +227,108 @@ export async function downloadGoogleDriveBackupFile(
   return new Uint8Array(await response.arrayBuffer());
 }
 
+export async function uploadGoogleDriveAttachmentFile(
+  accessToken: string,
+  input: {
+    attachmentId: string;
+    transactionId: string;
+    originalName: string;
+    mimeType: string;
+    sha256: string;
+    localUri: string;
+  },
+): Promise<GoogleDriveAttachmentFile> {
+  const folder = await ensureAttachmentsFolder(accessToken);
+  const localFile = new File(input.localUri);
+  if (!localFile.exists) {
+    throw new Error(`Attachment file is missing: ${input.originalName}`);
+  }
+
+  const name = `${input.attachmentId}__${sanitizeDriveFileName(input.originalName)}`;
+  const fields = encodeURIComponent("id,name,size");
+  const sessionResponse = await driveFetch(
+    `${DRIVE_UPLOAD_URL}?uploadType=resumable&fields=${fields}`,
+    accessToken,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Length": String(localFile.size),
+        "X-Upload-Content-Type": input.mimeType,
+      },
+      body: JSON.stringify({
+        name,
+        parents: [folder.id],
+        appProperties: {
+          [APP_PROPERTY_KIND]: ATTACHMENT_FILE_KIND,
+          attachmentId: input.attachmentId,
+          transactionId: input.transactionId,
+          sha256: input.sha256,
+        },
+      }),
+    },
+  );
+  const uploadUrl = sessionResponse.headers.get("location");
+  if (!uploadUrl) {
+    throw new GoogleDriveApiError(
+      "Google Drive did not provide an attachment upload session.",
+      0,
+    );
+  }
+
+  const result = await localFile.upload(uploadUrl, {
+    httpMethod: "PUT",
+    uploadType: UploadType.BINARY_CONTENT,
+    mimeType: input.mimeType,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Length": String(localFile.size),
+    },
+    sessionType: "background",
+  });
+  if (result.status < 200 || result.status >= 300) {
+    throw new GoogleDriveApiError(
+      getDriveErrorMessage(result.status, result.body),
+      result.status,
+    );
+  }
+
+  const file = JSON.parse(result.body) as DriveFileResponse;
+  return { id: file.id, name: file.name, size: Number(file.size ?? localFile.size) };
+}
+
+export async function downloadGoogleDriveAttachmentFile(
+  accessToken: string,
+  fileId: string,
+  destinationUri: string,
+): Promise<void> {
+  const destination = new File(destinationUri);
+  await File.downloadFileAsync(
+    `${DRIVE_FILES_URL}/${encodeURIComponent(fileId)}?alt=media`,
+    destination,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      idempotent: true,
+    },
+  );
+}
+
+export async function deleteGoogleDriveAttachmentFile(
+  accessToken: string,
+  fileId: string,
+): Promise<void> {
+  try {
+    await driveFetch(
+      `${DRIVE_FILES_URL}/${encodeURIComponent(fileId)}`,
+      accessToken,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    if (error instanceof GoogleDriveApiError && error.status === 404) return;
+    throw error;
+  }
+}
+
 async function ensureBackupFolder(
   accessToken: string,
 ): Promise<DriveFileResponse> {
@@ -230,6 +342,22 @@ async function ensureBackupFolder(
     accessToken,
     BACKUPS_FOLDER_NAME,
     BACKUPS_FOLDER_KIND,
+    rootFolder.id,
+  );
+}
+
+async function ensureAttachmentsFolder(
+  accessToken: string,
+): Promise<DriveFileResponse> {
+  const rootFolder = await findOrCreateFolder(
+    accessToken,
+    ROOT_FOLDER_NAME,
+    ROOT_FOLDER_KIND,
+  );
+  return findOrCreateFolder(
+    accessToken,
+    ATTACHMENTS_FOLDER_NAME,
+    ATTACHMENTS_FOLDER_KIND,
     rootFolder.id,
   );
 }
@@ -330,6 +458,14 @@ function toBackupFile(
 
 function escapeDriveQueryValue(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
+}
+
+function sanitizeDriveFileName(value: string): string {
+  const sanitized = value
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_")
+    .replace(/\s+/g, " ")
+    .trim();
+  return (sanitized || "attachment").slice(0, 180);
 }
 
 async function driveFetch(

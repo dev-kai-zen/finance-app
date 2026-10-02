@@ -74,6 +74,19 @@ export function removeScheduledTransaction(
   });
 }
 
+export function restoreScheduledTransaction(id: string): void {
+  db.transaction((tx) => {
+    const schedule = findScheduledTransaction(id, tx);
+    if (!schedule) throw new Error("Scheduled transaction was not found.");
+    if (!schedule.archivedAt) return;
+    updateScheduledTransactionRecord(
+      id,
+      { archivedAt: null, updatedAt: new Date() },
+      tx,
+    );
+  });
+}
+
 export function clearScheduledTransactionWorkspace(
   context: DbContext,
 ): void {

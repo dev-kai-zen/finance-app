@@ -9,6 +9,7 @@ import { scheduledTransactionErrorMessage } from "../schemas/scheduled-transacti
 import {
   endScheduledTransaction,
   removeScheduledTransaction,
+  restoreScheduledTransaction,
   setScheduledTransactionPaused,
 } from "../services/manage-scheduled-transaction.service";
 import {
@@ -34,7 +35,7 @@ export function useScheduledTransactions() {
     setLoading(true);
     try {
       processDueSchedules();
-      setSchedules(listScheduledTransactions());
+      setSchedules(listScheduledTransactions({ includeArchived: true }));
       setOccurrences(listScheduleOccurrences());
       setError(null);
     } catch (cause) {
@@ -96,6 +97,12 @@ export function useScheduledTransactions() {
     [runMutation],
   );
 
+  const restore = useCallback(
+    (id: string): boolean =>
+      runMutation(() => restoreScheduledTransaction(id)),
+    [runMutation],
+  );
+
   const postOccurrence = useCallback(
     (id: string): boolean =>
       runMutation(() => postScheduledOccurrence(id)),
@@ -120,6 +127,7 @@ export function useScheduledTransactions() {
     setPaused,
     end,
     remove,
+    restore,
     postOccurrence,
     skipOccurrence,
   };

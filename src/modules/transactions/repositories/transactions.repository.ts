@@ -5,6 +5,7 @@ import {
   accounts,
   categories,
   pockets,
+  transactionAttachments,
   transactions,
 } from "@/infrastructure/database/schema";
 import type {
@@ -31,6 +32,7 @@ function mapRowToListItem(r: {
   pocketName: string | null;
 }, balanceAfterByTransactionId: ReadonlyMap<string, number>,
   pocketBalanceAfterByTransactionId: ReadonlyMap<string, number>,
+  attachmentCountByTransactionId: ReadonlyMap<string, number>,
 ): TransactionListItem {
   return {
     id: r.transaction.id,
@@ -46,6 +48,7 @@ function mapRowToListItem(r: {
     createdAt: r.transaction.createdAt,
     updatedAt: r.transaction.updatedAt,
     deletedAt: r.transaction.deletedAt,
+    attachmentCount: attachmentCountByTransactionId.get(r.transaction.id) ?? 0,
     accountName: r.accountName ?? "Unknown Account",
     accountCurrency: r.accountCurrency ?? "PHP",
     accountTypeName: r.accountTypeName ?? "Account",
@@ -219,6 +222,10 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       destinationLocationBalanceAfterMinorUnits:
         inLeg.locationBalanceAfterMinorUnits,
       amountCents: Math.abs(outLeg.amountCents),
+      attachmentCount: legs.reduce(
+        (total, leg) => total + leg.attachmentCount,
+        0,
+      ),
     });
   }
 
@@ -275,11 +282,14 @@ export function listTransactions(
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
   const pocketBalanceAfterByTransactionId =
     getPocketBalanceAfterByTransactionId(context);
+  const attachmentCountByTransactionId =
+    getAttachmentCountByTransactionId(context);
   const mapped = rows.map((row) =>
     mapRowToListItem(
       row,
       balanceAfterByTransactionId,
       pocketBalanceAfterByTransactionId,
+      attachmentCountByTransactionId,
     ),
   );
   const grouped = groupTransferRows(mapped);
@@ -345,15 +355,33 @@ export function listDeletedTransactions(
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
   const pocketBalanceAfterByTransactionId =
     getPocketBalanceAfterByTransactionId(context);
+  const attachmentCountByTransactionId =
+    getAttachmentCountByTransactionId(context);
   return groupTransferRows(
     rows.map((row) =>
       mapRowToListItem(
         row,
         balanceAfterByTransactionId,
         pocketBalanceAfterByTransactionId,
+        attachmentCountByTransactionId,
       ),
     ),
   );
+}
+
+function getAttachmentCountByTransactionId(
+  context: DbContext = db,
+): Map<string, number> {
+  const rows = context
+    .select({
+      transactionId: transactionAttachments.transactionId,
+      count: sql<number>`count(*)`,
+    })
+    .from(transactionAttachments)
+    .where(isNull(transactionAttachments.deletedAt))
+    .groupBy(transactionAttachments.transactionId)
+    .all();
+  return new Map(rows.map((row) => [row.transactionId, Number(row.count)]));
 }
 
 export function findTransactionById(

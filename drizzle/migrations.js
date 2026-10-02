@@ -21,6 +21,7 @@ import m0018 from './0018_add_transaction_presets.sql';
 import m0019 from './0019_remove_transaction_preset_name.sql';
 import m0020 from './0020_add_transaction_schedules.sql';
 import m0021 from './0021_archive_transaction_schedules.sql';
+import m0022 from './0022_whole_blue_marvel.sql';
 
 export default {
   journal,
@@ -47,5 +48,6 @@ export default {
     m0019,
     m0020,
     m0021,
+    m0022,
   },
 };

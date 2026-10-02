@@ -251,3 +251,62 @@ test("transactions: records transaction with name column and signed amount", () 
   assert.equal(sumTx, 4850000);
   assert.equal(100000 + sumTx, 4950000);
 });
+
+test("transaction attachments: supports an unbounded collection and cascades metadata", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+  db.prepare(`
+    INSERT INTO transactions (
+      id, account_id, category_id, transaction_group_id, type, amount_cents,
+      name, occurred_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "tx_many_attachments",
+    "acc_1",
+    "cat_groceries",
+    null,
+    "expense",
+    -10000,
+    "Receipt archive",
+    now,
+    now,
+    now,
+  );
+
+  const insertAttachment = db.prepare(`
+    INSERT INTO transaction_attachments (
+      id, transaction_id, original_name, storage_key, mime_type, size_bytes,
+      sha256, sync_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  for (let index = 0; index < 125; index += 1) {
+    insertAttachment.run(
+      `attachment_${index}`,
+      "tx_many_attachments",
+      `receipt-${index}.jpg`,
+      `attachment_${index}.jpg`,
+      "image/jpeg",
+      1024 + index,
+      `sha256-${index}`,
+      "pending",
+      now + index,
+      now + index,
+    );
+  }
+
+  assert.equal(
+    db.prepare(
+      "SELECT count(*) AS count FROM transaction_attachments WHERE transaction_id = ?",
+    ).get("tx_many_attachments").count,
+    125,
+  );
+
+  db.prepare("DELETE FROM transactions WHERE id = ?").run(
+    "tx_many_attachments",
+  );
+  assert.equal(
+    db.prepare("SELECT count(*) AS count FROM transaction_attachments").get()
+      .count,
+    0,
+  );
+});

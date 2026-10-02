@@ -8,11 +8,19 @@ import type {
   CreateTransferInput,
   Transaction,
   TransferResult,
+  TransactionAttachmentChanges,
 } from "../types/transaction.types";
 import type { TransactionPresetSubmission } from "../types/transaction-preset.types";
 import { createTransactionInContext } from "./create-transaction.service";
 import { createTransferInContext } from "./create-transfer.service";
 import { saveTransactionPresetInContext } from "./save-transaction-preset.service";
+import {
+  applyAttachmentChangesInContext,
+  discardPreparedAttachmentChanges,
+  finalizeRemovedAttachmentFiles,
+  prepareAttachmentChanges,
+  triggerTransactionAttachmentSync,
+} from "./transaction-attachments.service";
 
 export type RecordTransactionCommand =
   | {
@@ -28,16 +36,34 @@ export type RecordTransactionCommand =
 
 export function recordTransaction(
   command: Extract<RecordTransactionCommand, { kind: "transaction" }>,
-): Transaction;
+  attachmentChanges?: TransactionAttachmentChanges,
+): Promise<Transaction>;
 export function recordTransaction(
   command: Extract<RecordTransactionCommand, { kind: "transfer" }>,
-): TransferResult;
-export function recordTransaction(
+  attachmentChanges?: TransactionAttachmentChanges,
+): Promise<TransferResult>;
+export async function recordTransaction(
   command: RecordTransactionCommand,
-): Transaction | TransferResult {
-  return db.transaction((tx) =>
-    recordTransactionCommandInContext(command, tx),
-  );
+  attachmentChanges?: TransactionAttachmentChanges,
+): Promise<Transaction | TransferResult> {
+  const prepared = await prepareAttachmentChanges(attachmentChanges);
+  try {
+    const committed = db.transaction((tx) => {
+      const result = recordTransactionCommandInContext(command, tx);
+      const ownerId =
+        command.kind === "transaction"
+          ? (result as Transaction).id
+          : (result as TransferResult).outLeg.id;
+      const removed = applyAttachmentChangesInContext(ownerId, prepared, tx);
+      return { result, removed };
+    });
+    finalizeRemovedAttachmentFiles(committed.removed);
+    triggerTransactionAttachmentSync();
+    return committed.result;
+  } catch (error) {
+    await discardPreparedAttachmentChanges(prepared);
+    throw error;
+  }
 }
 
 export function recordTransactionInContext(

@@ -41,6 +41,13 @@ export const TransactionDateTimePickerModal = deferComponent(
   "TransactionDateTimePickerModal",
 ) as typeof import("./components/transaction-date-time-picker-modal").TransactionDateTimePickerModal;
 
+export const TransactionAttachmentsSyncProcessor = deferComponent(
+  () =>
+    require("./components/transaction-attachments-sync-processor")
+      .TransactionAttachmentsSyncProcessor,
+  "TransactionAttachmentsSyncProcessor",
+) as typeof import("./components/transaction-attachments-sync-processor").TransactionAttachmentsSyncProcessor;
+
 export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;
@@ -148,6 +155,10 @@ export type {
   TransactionFilter,
   TransactionStats,
   TransactionType,
+  TransactionAttachment,
+  TransactionAttachmentChanges,
+  TransactionAttachmentDraft,
+  TransactionAttachmentSyncStatus,
 } from "./types/transaction.types";
 export type {
   QuickPresetSaveRequest,

@@ -39,18 +39,21 @@ function mapOccurrence(
 }
 
 export function listScheduledTransactions(
+  options: { includeArchived?: boolean } = {},
   context: DbContext = db,
 ): ScheduledTransaction[] {
-  return context
+  const query = context
     .select()
     .from(transactionSchedules)
-    .where(isNull(transactionSchedules.archivedAt))
     .orderBy(
       asc(transactionSchedules.status),
       asc(transactionSchedules.nextEffectiveAt),
       desc(transactionSchedules.updatedAt),
-    )
-    .all()
+    );
+  const rows = options.includeArchived
+    ? query.all()
+    : query.where(isNull(transactionSchedules.archivedAt)).all();
+  return rows
     .map(mapSchedule);
 }
 

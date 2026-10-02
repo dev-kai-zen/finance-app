@@ -2,6 +2,7 @@ import { LogBox, StyleSheet } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
@@ -13,6 +14,7 @@ import {
   WorkspaceProvider,
 } from "@/modules/onboarding";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
+import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -40,6 +42,7 @@ function RootLayoutContent() {
                 <OnboardingGate>
                   <>
                     <ScheduledTransactionsProcessor />
+                    <TransactionAttachmentsSyncProcessor />
                     <AppShell banner={<SampleWorkspaceBanner />}>
                       <Stack
                         screenOptions={{
@@ -71,9 +74,11 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <RootLayoutContent />
-    </AppThemeProvider>
+    <GestureHandlerRootView style={styles.rootLayer}>
+      <AppThemeProvider>
+        <RootLayoutContent />
+      </AppThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

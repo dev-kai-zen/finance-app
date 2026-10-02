@@ -1,7 +1,8 @@
 # Google Drive Backup Setup
 
 The implementation stores encrypted `.kfb` snapshots in the signed-in user's
-visible `Kaizen Finance/Backups` folder. The app uses the non-sensitive
+visible `Kaizen Finance/Backups` folder and transaction files in
+`Kaizen Finance/Attachments`. The app uses the non-sensitive
 `drive.file` scope so it can manage only the files it creates. It temporarily
 retains `drive.appdata` access to discover and copy backups created by older
 versions of the app.
@@ -56,6 +57,11 @@ not valid for iOS authentication.
 
 - The app creates `Kaizen Finance/Backups` automatically and provides an action
   to open it in Google Drive.
+- Transaction attachments are stored locally first and uploaded in the
+  background to `Kaizen Finance/Attachments`. They remain ordinary,
+  user-openable files in Drive and are not protected by the backup passphrase.
+- Attachment IDs and Drive private properties are used for discovery; visible
+  filenames and folder names may be changed without breaking existing links.
 - Existing hidden backups are copied to the visible folder without decrypting
   them. Hidden originals are retained as a safety fallback.
 - Drive folder IDs and private app properties are used for discovery, so users

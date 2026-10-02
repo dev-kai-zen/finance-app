@@ -1,18 +1,48 @@
-import { db } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   findTransactionById,
   updateTransactionRecord,
 } from "../repositories/transactions.repository";
-import type { CreateTransactionInput } from "../types/transaction.types";
+import type {
+  CreateTransactionInput,
+  TransactionAttachmentChanges,
+} from "../types/transaction.types";
 import { requirePocketForAccount } from "@/modules/accounts";
 import {
   getInstallmentPlanForTransaction,
   reconcileCreditCardBillingInContext,
 } from "@/modules/credit-cards";
+import {
+  applyAttachmentChangesInContext,
+  discardPreparedAttachmentChanges,
+  finalizeRemovedAttachmentFiles,
+  prepareAttachmentChanges,
+  triggerTransactionAttachmentSync,
+} from "./transaction-attachments.service";
 
-export function updateTransaction(
+export async function updateTransaction(
   id: string,
   input: CreateTransactionInput,
+  attachmentChanges?: TransactionAttachmentChanges,
+): Promise<void> {
+  const prepared = await prepareAttachmentChanges(attachmentChanges);
+  try {
+    const removed = db.transaction((tx) => {
+      updateTransactionInContext(id, input, tx);
+      return applyAttachmentChangesInContext(id, prepared, tx);
+    });
+    finalizeRemovedAttachmentFiles(removed);
+    triggerTransactionAttachmentSync();
+  } catch (error) {
+    await discardPreparedAttachmentChanges(prepared);
+    throw error;
+  }
+}
+
+export function updateTransactionInContext(
+  id: string,
+  input: CreateTransactionInput,
+  context: DbContext,
 ): void {
   if (!id) throw new Error("Transaction ID is required to update.");
   if (!input.accountId) throw new Error("Account is required.");
@@ -23,10 +53,9 @@ export function updateTransaction(
     );
   }
 
-  db.transaction((tx) => {
-    const existing = findTransactionById(id, tx);
+    const existing = findTransactionById(id, context);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
-    const installmentPlan = getInstallmentPlanForTransaction(id, tx);
+    const installmentPlan = getInstallmentPlanForTransaction(id, context);
     if (
       installmentPlan &&
       (existing.accountId !== input.accountId ||
@@ -38,7 +67,7 @@ export function updateTransaction(
       );
     }
     if (input.pocketId) {
-      requirePocketForAccount(input.pocketId, input.accountId, tx, {
+      requirePocketForAccount(input.pocketId, input.accountId, context, {
         allowArchived: existing.pocketId === input.pocketId,
       });
     }
@@ -55,8 +84,7 @@ export function updateTransaction(
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt,
       },
-      tx,
+      context,
     );
-    reconcileCreditCardBillingInContext(new Date(), tx);
-  });
+    reconcileCreditCardBillingInContext(new Date(), context);
 }

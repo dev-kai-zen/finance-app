@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { Checkbox, Host } from "@expo/ui";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   CalendarClock,
   Pause,
   Play,
+  RotateCcw,
   SquarePen,
   Trash2,
 } from "lucide-react-native";
@@ -47,6 +49,7 @@ export function ScheduledTransactionsScreen() {
     setPaused,
     end,
     remove,
+    restore,
     postOccurrence,
     skipOccurrence,
   } = useScheduledTransactions();
@@ -57,9 +60,25 @@ export function ScheduledTransactionsScreen() {
     useState<ScheduledTransaction | null>(null);
   const [pendingDelete, setPendingDelete] =
     useState<ScheduledTransaction | null>(null);
+  const [pendingRestore, setPendingRestore] =
+    useState<ScheduledTransaction | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+
+  const visibleSchedules = useMemo(
+    () =>
+      schedules.filter(
+        (schedule) => showArchived || schedule.archivedAt === null,
+      ),
+    [schedules, showArchived],
+  );
 
   const scheduleById = useMemo(
-    () => new Map(schedules.map((schedule) => [schedule.id, schedule])),
+    () =>
+      new Map(
+        schedules
+          .filter((schedule) => schedule.archivedAt === null)
+          .map((schedule) => [schedule.id, schedule]),
+      ),
     [schedules],
   );
   const actionableOccurrences = occurrences.filter(
@@ -164,17 +183,31 @@ export function ScheduledTransactionsScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.sectionHeading}>Schedules</Text>
+        <View style={styles.scheduleHeadingRow}>
+          <Text style={styles.sectionHeading}>Schedules</Text>
+          <Host matchContents style={styles.archiveCheckbox}>
+            <Checkbox
+              disabled={pending}
+              label="Show archived"
+              onValueChange={setShowArchived}
+              value={showArchived}
+            />
+          </Host>
+        </View>
         {loading ? (
           <PageLoadingState message="Loading schedules..." />
-        ) : schedules.length === 0 ? (
+        ) : visibleSchedules.length === 0 ? (
           <PageEmptyState
-            description="Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule."
+            description={
+              schedules.some((schedule) => schedule.archivedAt !== null)
+                ? "Only archived schedules are available. Turn on Show archived to view and restore them."
+                : "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule."
+            }
             icon={<CalendarClock color={theme.colors.primary} size={34} />}
             title="No scheduled transactions"
           />
         ) : (
-          schedules.map((schedule) => {
+          visibleSchedules.map((schedule) => {
             const source = accounts.find(
               (account) => account.id === schedule.accountId,
             );
@@ -190,7 +223,13 @@ export function ScheduledTransactionsScreen() {
                 : schedule.amountCents;
 
             return (
-              <View key={schedule.id} style={styles.scheduleCard}>
+              <View
+                key={schedule.id}
+                style={[
+                  styles.scheduleCard,
+                  schedule.archivedAt && styles.archivedScheduleCard,
+                ]}
+              >
                 <View style={styles.cardHeader}>
                   <View style={styles.cardMain}>
                     <View style={styles.titleRow}>
@@ -204,14 +243,18 @@ export function ScheduledTransactionsScreen() {
                       <View
                         style={[
                           styles.statusBadge,
-                          schedule.status === "active"
+                          schedule.archivedAt
+                            ? styles.statusArchived
+                            : schedule.status === "active"
                             ? styles.statusActive
                             : schedule.status === "paused"
                               ? styles.statusPaused
                               : styles.statusCompleted,
                         ]}
                       >
-                        <Text style={styles.statusText}>{schedule.status}</Text>
+                        <Text style={styles.statusText}>
+                          {schedule.archivedAt ? "archived" : schedule.status}
+                        </Text>
                       </View>
                     </View>
                     <Text style={styles.cardMeta}>
@@ -253,53 +296,75 @@ export function ScheduledTransactionsScreen() {
                 </View>
 
                 <View style={styles.cardActions}>
-                  <Pressable
-                    accessibilityLabel="Edit schedule"
-                    onPress={() => openEdit(schedule)}
-                    style={styles.iconAction}
-                  >
-                    <SquarePen color={theme.colors.textSecondary} size={17} />
-                    <Text style={styles.actionText}>Edit</Text>
-                  </Pressable>
-                  {schedule.status !== "completed" ? (
+                  {schedule.archivedAt ? (
                     <Pressable
-                      accessibilityLabel={
-                        schedule.status === "paused"
-                          ? "Resume schedule"
-                          : "Pause schedule"
-                      }
-                      onPress={() =>
-                        setPaused(schedule.id, schedule.status !== "paused")
-                      }
+                      accessibilityLabel="Restore schedule"
+                      onPress={() => setPendingRestore(schedule)}
                       style={styles.iconAction}
                     >
-                      {schedule.status === "paused" ? (
-                        <Play color={theme.colors.success} size={17} />
-                      ) : (
-                        <Pause color={theme.colors.textSecondary} size={17} />
-                      )}
-                      <Text style={styles.actionText}>
-                        {schedule.status === "paused" ? "Resume" : "Pause"}
-                      </Text>
+                      <RotateCcw color={theme.colors.success} size={17} />
+                      <Text style={styles.restoreActionText}>Restore</Text>
                     </Pressable>
-                  ) : null}
-                  {schedule.status !== "completed" ? (
-                    <Pressable
-                      accessibilityLabel="End schedule"
-                      onPress={() => setPendingEnd(schedule)}
-                      style={styles.iconAction}
-                    >
-                      <Text style={styles.endActionText}>End</Text>
-                    </Pressable>
-                  ) : null}
-                  <Pressable
-                    accessibilityLabel="Delete schedule"
-                    onPress={() => setPendingDelete(schedule)}
-                    style={styles.deleteAction}
-                  >
-                    <Trash2 color={theme.colors.danger} size={17} />
-                    <Text style={styles.endActionText}>Delete</Text>
-                  </Pressable>
+                  ) : (
+                    <>
+                      <Pressable
+                        accessibilityLabel="Edit schedule"
+                        onPress={() => openEdit(schedule)}
+                        style={styles.iconAction}
+                      >
+                        <SquarePen
+                          color={theme.colors.textSecondary}
+                          size={17}
+                        />
+                        <Text style={styles.actionText}>Edit</Text>
+                      </Pressable>
+                      {schedule.status !== "completed" ? (
+                        <Pressable
+                          accessibilityLabel={
+                            schedule.status === "paused"
+                              ? "Resume schedule"
+                              : "Pause schedule"
+                          }
+                          onPress={() =>
+                            setPaused(
+                              schedule.id,
+                              schedule.status !== "paused",
+                            )
+                          }
+                          style={styles.iconAction}
+                        >
+                          {schedule.status === "paused" ? (
+                            <Play color={theme.colors.success} size={17} />
+                          ) : (
+                            <Pause
+                              color={theme.colors.textSecondary}
+                              size={17}
+                            />
+                          )}
+                          <Text style={styles.actionText}>
+                            {schedule.status === "paused" ? "Resume" : "Pause"}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                      {schedule.status !== "completed" ? (
+                        <Pressable
+                          accessibilityLabel="End schedule"
+                          onPress={() => setPendingEnd(schedule)}
+                          style={styles.iconAction}
+                        >
+                          <Text style={styles.endActionText}>End</Text>
+                        </Pressable>
+                      ) : null}
+                      <Pressable
+                        accessibilityLabel="Delete schedule"
+                        onPress={() => setPendingDelete(schedule)}
+                        style={styles.deleteAction}
+                      >
+                        <Trash2 color={theme.colors.danger} size={17} />
+                        <Text style={styles.endActionText}>Delete</Text>
+                      </Pressable>
+                    </>
+                  )}
                 </View>
               </View>
             );
@@ -320,6 +385,22 @@ export function ScheduledTransactionsScreen() {
         pending={pending}
         pockets={pockets}
         visible={formVisible}
+      />
+
+      <ConfirmModal
+        cancelLabel="Keep Archived"
+        confirmLabel="Restore Schedule"
+        message="This schedule will return to the schedules list. Its completed status and transaction history will remain unchanged."
+        onCancel={() => setPendingRestore(null)}
+        onConfirm={() => {
+          if (pendingRestore && restore(pendingRestore.id)) {
+            setPendingRestore(null);
+          }
+        }}
+        pending={pending}
+        title="Restore scheduled transaction?"
+        variant="restore"
+        visible={pendingRestore !== null}
       />
 
       <ConfirmModal
@@ -390,6 +471,14 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.xs,
       textTransform: "uppercase",
     },
+    scheduleHeadingRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    archiveCheckbox: {
+      minHeight: 36,
+    },
     dueSection: {
       gap: theme.spacing.sm,
     },
@@ -415,6 +504,9 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       padding: theme.spacing.md,
       ...theme.shadows.card,
+    },
+    archivedScheduleCard: {
+      backgroundColor: theme.colors.surfaceMuted,
     },
     cardHeader: {
       alignItems: "flex-start",
@@ -482,6 +574,9 @@ function createStyles(theme: AppTheme) {
     statusCompleted: {
       backgroundColor: theme.colors.surfaceMuted,
     },
+    statusArchived: {
+      backgroundColor: theme.colors.warning + "20",
+    },
     statusText: {
       color: theme.colors.textSecondary,
       fontSize: 10,
@@ -506,6 +601,11 @@ function createStyles(theme: AppTheme) {
     },
     actionText: {
       color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    restoreActionText: {
+      color: theme.colors.success,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

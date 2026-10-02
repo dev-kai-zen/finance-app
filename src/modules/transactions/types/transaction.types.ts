@@ -24,6 +24,7 @@ export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt" 
 };
 
 export interface TransactionListItem extends Transaction {
+  attachmentCount: number;
   accountName: string;
   accountCurrency: string;
   accountTypeName: string;
@@ -45,6 +46,40 @@ export interface TransactionListItem extends Transaction {
   transferPocketName: string | null;
   destinationBalanceAfterMinorUnits: number | null;
   destinationLocationBalanceAfterMinorUnits: number | null;
+}
+
+export type TransactionAttachmentSyncStatus =
+  | "pending"
+  | "syncing"
+  | "synced"
+  | "failed";
+
+export interface TransactionAttachment {
+  id: string;
+  transactionId: string;
+  originalName: string;
+  storageKey: string;
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  driveFileId: string | null;
+  syncStatus: TransactionAttachmentSyncStatus;
+  lastSyncError: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date | null;
+}
+
+export interface TransactionAttachmentDraft {
+  uri: string;
+  name: string;
+  mimeType: string;
+  sizeBytes?: number;
+}
+
+export interface TransactionAttachmentChanges {
+  added: TransactionAttachmentDraft[];
+  removedIds: string[];
 }
 
 export interface CreateTransactionInput {

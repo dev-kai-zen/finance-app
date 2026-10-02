@@ -113,8 +113,9 @@ export function DashboardScreen() {
   const handleSaveTx = async (
     input: Parameters<typeof recordTransaction>[0],
     preset?: Parameters<typeof recordTransaction>[1],
+    attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
-    const success = await recordTransaction(input, preset);
+    const success = await recordTransaction(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();
@@ -126,8 +127,9 @@ export function DashboardScreen() {
   const handleSaveTransfer = async (
     input: Parameters<typeof recordTransfer>[0],
     preset?: Parameters<typeof recordTransfer>[1],
+    attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
-    const success = await recordTransfer(input, preset);
+    const success = await recordTransfer(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();

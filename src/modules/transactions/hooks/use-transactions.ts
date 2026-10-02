@@ -14,6 +14,7 @@ import type {
   CreateTransactionInput,
   CreateTransferInput,
   TransactionFilter,
+  TransactionAttachmentChanges,
   TransactionListItem,
   TransactionStats,
   UpdateTransferInput,
@@ -67,11 +68,15 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     async (
       input: CreateTransactionInput,
       preset?: TransactionPresetSubmission,
+      attachmentChanges?: TransactionAttachmentChanges,
     ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        recordTransactionService({ kind: "transaction", input, preset });
+        await recordTransactionService(
+          { kind: "transaction", input, preset },
+          attachmentChanges,
+        );
         refresh();
         return true;
       } catch (err: any) {
@@ -88,11 +93,15 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     async (
       input: CreateTransferInput,
       preset?: TransactionPresetSubmission,
+      attachmentChanges?: TransactionAttachmentChanges,
     ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        recordTransactionService({ kind: "transfer", input, preset });
+        await recordTransactionService(
+          { kind: "transfer", input, preset },
+          attachmentChanges,
+        );
         refresh();
         return true;
       } catch (err: any) {
@@ -160,11 +169,14 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   );
 
   const editTransfer = useCallback(
-    async (input: UpdateTransferInput): Promise<boolean> => {
+    async (
+      input: UpdateTransferInput,
+      attachmentChanges?: TransactionAttachmentChanges,
+    ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        updateTransfer(input);
+        await updateTransfer(input, attachmentChanges);
         refresh();
         return true;
       } catch (err: any) {
@@ -181,11 +193,12 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     async (
       id: string,
       input: CreateTransactionInput,
+      attachmentChanges?: TransactionAttachmentChanges,
     ): Promise<boolean> => {
       try {
         setPendingAction(true);
         setError(null);
-        updateTransaction(id, input);
+        await updateTransaction(id, input, attachmentChanges);
         refresh();
         return true;
       } catch (err: any) {

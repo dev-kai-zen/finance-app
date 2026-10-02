@@ -24,6 +24,8 @@ const CURRENT_REQUIRED_TABLES = [
   "transaction_schedules",
   "transaction_schedule_occurrences",
   "transaction_schedule_postings",
+  "transaction_attachments",
+  "sync_operations",
 ] as const;
 
 export async function createDatabaseSnapshot(): Promise<Uint8Array> {

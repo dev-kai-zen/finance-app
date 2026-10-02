@@ -1,4 +1,4 @@
-import { db } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
 import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
 import { requirePocketForAccount } from "@/modules/accounts";
 import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
@@ -6,9 +6,40 @@ import {
   findTransactionsByGroupId,
   updateTransactionRecord,
 } from "../repositories/transactions.repository";
-import type { UpdateTransferInput } from "../types/transaction.types";
+import type {
+  TransactionAttachmentChanges,
+  UpdateTransferInput,
+} from "../types/transaction.types";
+import {
+  applyAttachmentChangesInContext,
+  discardPreparedAttachmentChanges,
+  finalizeRemovedAttachmentFiles,
+  prepareAttachmentChanges,
+  triggerTransactionAttachmentSync,
+} from "./transaction-attachments.service";
 
-export function updateTransfer(input: UpdateTransferInput): void {
+export async function updateTransfer(
+  input: UpdateTransferInput,
+  attachmentChanges?: TransactionAttachmentChanges,
+): Promise<void> {
+  const prepared = await prepareAttachmentChanges(attachmentChanges);
+  try {
+    const removed = db.transaction((tx) => {
+      const ownerId = updateTransferInContext(input, tx);
+      return applyAttachmentChangesInContext(ownerId, prepared, tx);
+    });
+    finalizeRemovedAttachmentFiles(removed);
+    triggerTransactionAttachmentSync();
+  } catch (error) {
+    await discardPreparedAttachmentChanges(prepared);
+    throw error;
+  }
+}
+
+export function updateTransferInContext(
+  input: UpdateTransferInput,
+  context: DbContext,
+): string {
   if (!input.transactionGroupId) {
     throw new Error("Transaction group ID is required.");
   }
@@ -31,18 +62,17 @@ export function updateTransfer(input: UpdateTransferInput): void {
     throw new Error("Transfer amount must be an integer in minor units (centavos).");
   }
 
-  db.transaction((tx) => {
-    const legs = findTransactionsByGroupId(input.transactionGroupId, tx);
+    const legs = findTransactionsByGroupId(input.transactionGroupId, context);
     if (legs.length !== 2) {
       throw new Error(`Transfer group ${input.transactionGroupId} is incomplete.`);
     }
 
-    const fromAccount = findAccountById(input.fromAccountId, tx);
+    const fromAccount = findAccountById(input.fromAccountId, context);
     if (!fromAccount) {
       throw new Error(`Source account not found: ${input.fromAccountId}`);
     }
 
-    const toAccount = findAccountById(input.toAccountId, tx);
+    const toAccount = findAccountById(input.toAccountId, context);
     if (!toAccount) {
       throw new Error(`Destination account not found: ${input.toAccountId}`);
     }
@@ -50,12 +80,12 @@ export function updateTransfer(input: UpdateTransferInput): void {
     const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
     const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
     if (input.fromPocketId) {
-      requirePocketForAccount(input.fromPocketId, fromAccount.id, tx, {
+      requirePocketForAccount(input.fromPocketId, fromAccount.id, context, {
         allowArchived: outLeg.pocketId === input.fromPocketId,
       });
     }
     if (input.toPocketId) {
-      requirePocketForAccount(input.toPocketId, toAccount.id, tx, {
+      requirePocketForAccount(input.toPocketId, toAccount.id, context, {
         allowArchived: inLeg.pocketId === input.toPocketId,
       });
     }
@@ -75,7 +105,7 @@ export function updateTransfer(input: UpdateTransferInput): void {
         pocketId: input.fromPocketId ?? null,
         amountCents: -amount,
       },
-      tx,
+      context,
     );
 
     updateTransactionRecord(
@@ -86,8 +116,8 @@ export function updateTransfer(input: UpdateTransferInput): void {
         pocketId: input.toPocketId ?? null,
         amountCents: amount,
       },
-      tx,
+      context,
     );
-    reconcileCreditCardBillingInContext(new Date(), tx);
-  });
+    reconcileCreditCardBillingInContext(new Date(), context);
+    return outLeg.id;
 }

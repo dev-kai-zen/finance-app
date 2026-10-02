@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -16,6 +16,8 @@ import { IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
+import { useTransactionAttachments } from "../hooks/use-transaction-attachments";
+import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 
 export interface TransactionDetailModalProps {
   visible: boolean;
@@ -24,6 +26,7 @@ export interface TransactionDetailModalProps {
   onEdit?: (tx: TransactionListItem) => void;
   onDuplicate?: (tx: TransactionListItem) => void;
   onDelete?: (id: string) => void;
+  onAttachmentsChanged?: () => void;
 }
 
 export function TransactionDetailModal({
@@ -33,6 +36,7 @@ export function TransactionDetailModal({
   onEdit,
   onDuplicate,
   onDelete,
+  onAttachmentsChanged,
 }: TransactionDetailModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -40,6 +44,11 @@ export function TransactionDetailModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
+  const [attachmentManagerOpen, setAttachmentManagerOpen] = useState(false);
+  const attachmentState = useTransactionAttachments(
+    transaction?.id,
+    visible && attachmentManagerOpen,
+  );
 
   if (!transaction) return null;
 
@@ -125,12 +134,13 @@ export function TransactionDetailModal({
   };
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
+    <>
+      <Modal
+        animationType="slide"
+        onRequestClose={onClose}
+        transparent
+        visible={visible}
+      >
       <View style={styles.modalOverlay}>
         <Pressable
           accessibilityLabel="Dismiss transaction details"
@@ -274,6 +284,34 @@ export function TransactionDetailModal({
                   </View>
                 </View>
               ) : null}
+
+              <Pressable
+                accessibilityLabel={`Attachments, ${transaction.attachmentCount} files`}
+                accessibilityRole="button"
+                onPress={() => setAttachmentManagerOpen(true)}
+                style={[styles.detailRow, styles.detailRowBorder]}
+              >
+                <View style={styles.detailIconBadge}>
+                  <IconHelper
+                    color={theme.colors.primary}
+                    name="paperclip"
+                    size={16}
+                  />
+                </View>
+                <View style={styles.detailInfoCol}>
+                  <Text style={styles.detailLabel}>ATTACHMENTS</Text>
+                  <Text style={styles.detailValue}>
+                    {transaction.attachmentCount === 0
+                      ? "Add attachments"
+                      : `${transaction.attachmentCount} ${transaction.attachmentCount === 1 ? "file" : "files"}`}
+                  </Text>
+                </View>
+                <IconHelper
+                  color={theme.colors.textMuted}
+                  name="chevron-right"
+                  size={18}
+                />
+              </Pressable>
             </View>
           </ScrollView>
 
@@ -317,7 +355,29 @@ export function TransactionDetailModal({
           </View>
         </View>
       </View>
-    </Modal>
+      </Modal>
+      <TransactionAttachmentManagerModal
+        error={attachmentState.error}
+        items={attachmentState.items}
+        loading={attachmentState.loading}
+        loadingMore={attachmentState.loadingMore}
+      onAdd={async (drafts) => {
+        await attachmentState.add(drafts);
+        onAttachmentsChanged?.();
+      }}
+      onClearError={attachmentState.clearError}
+      onClose={() => setAttachmentManagerOpen(false)}
+        onLoadMore={attachmentState.loadMore}
+        onOpen={attachmentState.open}
+        onRemove={async (item) => {
+          await attachmentState.remove(item);
+          onAttachmentsChanged?.();
+        }}
+      pending={attachmentState.pending}
+        totalCount={attachmentState.totalCount}
+        visible={visible && attachmentManagerOpen}
+      />
+    </>
   );
 }
 

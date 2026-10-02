@@ -39,6 +39,16 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.configure-kaizen-finance"
         }
+      ],
+      "expo-image",
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Kaizen Finance to attach receipt and document images to transactions.",
+          "cameraPermission": "Allow Kaizen Finance to take photos for transaction attachments.",
+          "microphonePermission": false
+        }
       ]
     ]
   }

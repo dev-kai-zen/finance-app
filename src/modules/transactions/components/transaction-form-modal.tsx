@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Sparkles } from "lucide-react-native";
+import { ChevronRight, Paperclip, Sparkles } from "lucide-react-native";
 import {
   AccountPickerModal,
   AmountCalculatorField,
@@ -34,6 +34,7 @@ import { formatCurrency } from "@/utils/currency";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
+  TransactionAttachmentChanges,
   TransactionListItem,
   TransactionType,
   UpdateTransferInput,
@@ -48,6 +49,8 @@ import { TransactionDateTimePickerModal } from "./transaction-date-time-picker-m
 import { TransactionTypePicker } from "./transaction-type-picker";
 import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
+import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
+import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -55,16 +58,22 @@ export interface TransactionFormModalProps {
   onSaveTransaction: (
     input: CreateTransactionInput,
     preset?: TransactionPresetSubmission,
+    attachmentChanges?: TransactionAttachmentChanges,
   ) => Promise<boolean>;
   onSaveTransfer: (
     input: CreateTransferInput,
     preset?: TransactionPresetSubmission,
+    attachmentChanges?: TransactionAttachmentChanges,
   ) => Promise<boolean>;
   onUpdateTransaction?: (
     id: string,
     input: CreateTransactionInput,
+    attachmentChanges?: TransactionAttachmentChanges,
   ) => Promise<boolean>;
-  onUpdateTransfer?: (input: UpdateTransferInput) => Promise<boolean>;
+  onUpdateTransfer?: (
+    input: UpdateTransferInput,
+    attachmentChanges?: TransactionAttachmentChanges,
+  ) => Promise<boolean>;
   accounts: AccountListItem[];
   pockets: PocketListItem[];
   categories: Category[];
@@ -173,6 +182,12 @@ export function TransactionFormModal({
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
   const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
+  const [isAttachmentManagerOpen, setIsAttachmentManagerOpen] = useState(false);
+  const attachmentDraft = useTransactionAttachmentDraft({
+    visible,
+    isEditing,
+    transactionId: initialTransaction?.id,
+  });
 
   useEffect(() => {
     if (visible) {
@@ -224,6 +239,7 @@ export function TransactionFormModal({
       setAppliedPresetId(null);
       setSuggestionsSuppressed(false);
       setIsQuickPresetsOpen(false);
+      setIsAttachmentManagerOpen(false);
     }
   }, [visible, initialTransaction, accounts, categories]);
 
@@ -434,11 +450,18 @@ export function TransactionFormModal({
       };
       const success =
         isEditing && initialTransaction && onUpdateTransfer
-          ? await onUpdateTransfer({
-              ...transferInput,
-              transactionGroupId: initialTransaction.transactionGroupId ?? "",
-            })
-          : await onSaveTransfer(transferInput, presetSubmission);
+          ? await onUpdateTransfer(
+              {
+                ...transferInput,
+                transactionGroupId: initialTransaction.transactionGroupId ?? "",
+              },
+              attachmentDraft.changes,
+            )
+          : await onSaveTransfer(
+              transferInput,
+              presetSubmission,
+              attachmentDraft.changes,
+            );
 
       if (success) {
         onClose();
@@ -481,8 +504,16 @@ export function TransactionFormModal({
       };
       const success =
         isEditing && initialTransaction && onUpdateTransaction
-          ? await onUpdateTransaction(initialTransaction.id, transactionInput)
-          : await onSaveTransaction(transactionInput, presetSubmission);
+          ? await onUpdateTransaction(
+              initialTransaction.id,
+              transactionInput,
+              attachmentDraft.changes,
+            )
+          : await onSaveTransaction(
+              transactionInput,
+              presetSubmission,
+              attachmentDraft.changes,
+            );
 
       if (success) {
         onClose();
@@ -568,17 +599,19 @@ export function TransactionFormModal({
           >
             <View style={styles.nameDateGroup}>
               <View style={styles.nameSuggestionAnchor}>
-                <TextInput
-                  maxLength={100}
-                  onChangeText={(value) => {
-                    setName(value);
-                    setSuggestionsSuppressed(false);
-                  }}
-                  placeholder="Name"
-                  placeholderTextColor={theme.colors.textSecondary}
-                  style={styles.nameInput}
-                  value={name}
-                />
+                <View style={styles.nameInputContainer}>
+                  <TextInput
+                    maxLength={100}
+                    onChangeText={(value) => {
+                      setName(value);
+                      setSuggestionsSuppressed(false);
+                    }}
+                    placeholder="Name"
+                    placeholderTextColor={theme.colors.textSecondary}
+                    style={styles.nameInput}
+                    value={name}
+                  />
+                </View>
                 {!isEditing && !suggestionsSuppressed ? (
                   <QuickPresetSuggestions
                     accounts={accounts}
@@ -623,6 +656,27 @@ export function TransactionFormModal({
                   </Text>
                 </Pressable>
               </View>
+              <Pressable
+                accessibilityLabel={
+                  attachmentDraft.totalCount > 0
+                    ? `View ${attachmentDraft.totalCount} attachments`
+                    : "Add attachment"
+                }
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={() => setIsAttachmentManagerOpen(true)}
+                style={styles.attachmentSummary}
+              >
+                <Paperclip color={theme.colors.primary} size={16} />
+                <Text style={styles.attachmentSummaryText}>
+                  {attachmentDraft.totalCount > 0
+                    ? `Attachments (${attachmentDraft.totalCount})`
+                    : "Add attachment"}
+                </Text>
+                <Text style={styles.attachmentSummaryAction}>
+                  {attachmentDraft.totalCount > 0 ? "View all" : "Add"}
+                </Text>
+              </Pressable>
             </View>
 
             <View style={styles.inputGroup}>
@@ -1019,6 +1073,20 @@ export function TransactionFormModal({
       />
       </Modal>
 
+      <TransactionAttachmentManagerModal
+        error={attachmentDraft.error}
+        items={attachmentDraft.items}
+        loadingMore={attachmentDraft.loadingMore}
+        onAdd={attachmentDraft.addDrafts}
+        onClearError={attachmentDraft.clearError}
+        onClose={() => setIsAttachmentManagerOpen(false)}
+        onLoadMore={attachmentDraft.loadMore}
+        onOpen={attachmentDraft.openItem}
+        onRemove={attachmentDraft.removeItem}
+        totalCount={attachmentDraft.totalCount}
+        visible={visible && isAttachmentManagerOpen}
+      />
+
       <NotificationModal
         message={displayError ?? ""}
         onClose={dismissNotification}
@@ -1129,6 +1197,38 @@ function createStyles(theme: AppTheme) {
       position: "relative",
       zIndex: 40,
     },
+    nameInputContainer: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+    },
+    attachmentSummary: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}10`,
+      borderColor: `${theme.colors.primary}30`,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    attachmentSummaryText: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.sm,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    attachmentSummaryAction: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
     installmentPanel: {
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
@@ -1178,11 +1278,8 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     nameInput: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: 15,
       fontWeight: "500",
       paddingHorizontal: 14,
