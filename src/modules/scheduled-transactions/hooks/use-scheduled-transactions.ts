@@ -8,6 +8,8 @@ import {
 import { scheduledTransactionErrorMessage } from "../schemas/scheduled-transaction.schema";
 import {
   endScheduledTransaction,
+  getScheduleIdsWithPostings,
+  permanentlyDeleteScheduledTransaction,
   removeScheduledTransaction,
   restoreScheduledTransaction,
   setScheduledTransactionPaused,
@@ -27,6 +29,9 @@ import type {
 export function useScheduledTransactions() {
   const [schedules, setSchedules] = useState<ScheduledTransaction[]>([]);
   const [occurrences, setOccurrences] = useState<ScheduleOccurrence[]>([]);
+  const [scheduleIdsWithPostings, setScheduleIdsWithPostings] = useState<
+    Set<string>
+  >(new Set());
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +42,7 @@ export function useScheduledTransactions() {
       processDueSchedules();
       setSchedules(listScheduledTransactions({ includeArchived: true }));
       setOccurrences(listScheduleOccurrences());
+      setScheduleIdsWithPostings(getScheduleIdsWithPostings());
       setError(null);
     } catch (cause) {
       setError(scheduledTransactionErrorMessage(cause));
@@ -97,6 +103,12 @@ export function useScheduledTransactions() {
     [runMutation],
   );
 
+  const permanentlyDelete = useCallback(
+    (id: string): boolean =>
+      runMutation(() => permanentlyDeleteScheduledTransaction(id)),
+    [runMutation],
+  );
+
   const restore = useCallback(
     (id: string): boolean =>
       runMutation(() => restoreScheduledTransaction(id)),
@@ -118,6 +130,7 @@ export function useScheduledTransactions() {
   return {
     schedules,
     occurrences,
+    scheduleIdsWithPostings,
     loading,
     pending,
     error,
@@ -127,6 +140,7 @@ export function useScheduledTransactions() {
     setPaused,
     end,
     remove,
+    permanentlyDelete,
     restore,
     postOccurrence,
     skipOccurrence,

@@ -49,9 +49,11 @@ export function ScheduledTransactionsScreen() {
     setPaused,
     end,
     remove,
+    permanentlyDelete,
     restore,
     postOccurrence,
     skipOccurrence,
+    scheduleIdsWithPostings,
   } = useScheduledTransactions();
   const [formVisible, setFormVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] =
@@ -59,6 +61,8 @@ export function ScheduledTransactionsScreen() {
   const [pendingEnd, setPendingEnd] =
     useState<ScheduledTransaction | null>(null);
   const [pendingDelete, setPendingDelete] =
+    useState<ScheduledTransaction | null>(null);
+  const [pendingPermanentDelete, setPendingPermanentDelete] =
     useState<ScheduledTransaction | null>(null);
   const [pendingRestore, setPendingRestore] =
     useState<ScheduledTransaction | null>(null);
@@ -87,12 +91,7 @@ export function ScheduledTransactionsScreen() {
       (occurrence.status === "due" || occurrence.status === "failed"),
   );
   const pendingDeleteHasHistory = Boolean(
-    pendingDelete &&
-      occurrences.some(
-        (occurrence) =>
-          occurrence.scheduleId === pendingDelete.id &&
-          occurrence.processedAt !== null,
-      ),
+    pendingDelete && scheduleIdsWithPostings.has(pendingDelete.id),
   );
 
   const openNew = () => {
@@ -297,14 +296,24 @@ export function ScheduledTransactionsScreen() {
 
                 <View style={styles.cardActions}>
                   {schedule.archivedAt ? (
-                    <Pressable
-                      accessibilityLabel="Restore schedule"
-                      onPress={() => setPendingRestore(schedule)}
-                      style={styles.iconAction}
-                    >
-                      <RotateCcw color={theme.colors.success} size={17} />
-                      <Text style={styles.restoreActionText}>Restore</Text>
-                    </Pressable>
+                    <>
+                      <Pressable
+                        accessibilityLabel="Restore schedule"
+                        onPress={() => setPendingRestore(schedule)}
+                        style={styles.iconAction}
+                      >
+                        <RotateCcw color={theme.colors.success} size={17} />
+                        <Text style={styles.restoreActionText}>Restore</Text>
+                      </Pressable>
+                      <Pressable
+                        accessibilityLabel="Permanently delete schedule"
+                        onPress={() => setPendingPermanentDelete(schedule)}
+                        style={styles.deleteAction}
+                      >
+                        <Trash2 color={theme.colors.danger} size={17} />
+                        <Text style={styles.endActionText}>Delete</Text>
+                      </Pressable>
+                    </>
                   ) : (
                     <>
                       <Pressable
@@ -424,8 +433,8 @@ export function ScheduledTransactionsScreen() {
         }
         message={
           pendingDeleteHasHistory
-            ? "This schedule has posted or processed history. It will be archived and removed from your active schedule list. Posted transactions and occurrence history stay in place."
-            : "This schedule has no processed occurrences and will be permanently deleted."
+            ? "This schedule has posted transactions in your accounts. It will be archived and removed from your active schedule list. Posted transactions stay in place."
+            : "This schedule has no posted transactions and will be permanently deleted."
         }
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
@@ -441,6 +450,25 @@ export function ScheduledTransactionsScreen() {
         }
         variant="destructive"
         visible={pendingDelete !== null}
+      />
+
+      <ConfirmModal
+        cancelLabel="Keep Archived"
+        confirmLabel="Delete Permanently"
+        message="This schedule and its run history will be permanently deleted. Any transactions already posted to your accounts will remain safe and unchanged."
+        onCancel={() => setPendingPermanentDelete(null)}
+        onConfirm={() => {
+          if (
+            pendingPermanentDelete &&
+            permanentlyDelete(pendingPermanentDelete.id)
+          ) {
+            setPendingPermanentDelete(null);
+          }
+        }}
+        pending={pending}
+        title="Permanently delete schedule?"
+        variant="destructive"
+        visible={pendingPermanentDelete !== null}
       />
     </PageContainer>
   );

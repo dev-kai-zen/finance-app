@@ -4,11 +4,28 @@ import {
   deleteScheduledTransactionRecord,
   deleteUnprocessedScheduleOccurrences,
   findScheduledTransaction,
-  hasProcessedScheduleOccurrences,
+  hasSchedulePostings,
+  listScheduleIdsWithPostings,
   updateScheduledTransactionRecord,
 } from "../repositories/scheduled-transactions.repository";
 
 export type RemoveScheduledTransactionResult = "deleted" | "archived";
+
+export function hasScheduledTransactionPostings(id: string): boolean {
+  return hasSchedulePostings(id);
+}
+
+export function getScheduleIdsWithPostings(): Set<string> {
+  return listScheduleIdsWithPostings();
+}
+
+export function permanentlyDeleteScheduledTransaction(id: string): void {
+  db.transaction((tx) => {
+    const schedule = findScheduledTransaction(id, tx);
+    if (!schedule) throw new Error("Scheduled transaction was not found.");
+    deleteScheduledTransactionRecord(id, tx);
+  });
+}
 
 export function setScheduledTransactionPaused(
   id: string,
@@ -52,7 +69,7 @@ export function removeScheduledTransaction(
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
 
-    if (!hasProcessedScheduleOccurrences(id, tx)) {
+    if (!hasSchedulePostings(id, tx)) {
       deleteScheduledTransactionRecord(id, tx);
       return "deleted";
     }

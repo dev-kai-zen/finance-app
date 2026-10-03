@@ -123,6 +123,44 @@ export function deleteScheduledTransactionRecord(
     .run();
 }
 
+export function hasSchedulePostings(
+  scheduleId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactionSchedulePostings.id })
+      .from(transactionSchedulePostings)
+      .innerJoin(
+        transactionScheduleOccurrences,
+        eq(
+          transactionSchedulePostings.occurrenceId,
+          transactionScheduleOccurrences.id,
+        ),
+      )
+      .where(eq(transactionScheduleOccurrences.scheduleId, scheduleId))
+      .limit(1)
+      .get(),
+  );
+}
+
+export function listScheduleIdsWithPostings(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .selectDistinct({ scheduleId: transactionScheduleOccurrences.scheduleId })
+    .from(transactionSchedulePostings)
+    .innerJoin(
+      transactionScheduleOccurrences,
+      eq(
+        transactionSchedulePostings.occurrenceId,
+        transactionScheduleOccurrences.id,
+      ),
+    )
+    .all();
+  return new Set(rows.map((row) => row.scheduleId));
+}
+
 export function hasProcessedScheduleOccurrences(
   scheduleId: string,
   context: DbContext = db,

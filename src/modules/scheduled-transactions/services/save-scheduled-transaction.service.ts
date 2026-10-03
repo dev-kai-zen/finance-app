@@ -68,8 +68,10 @@ function saveScheduledTransactionInContext(
 
   const nextOccurrenceNumber = existing?.nextOccurrenceNumber ?? 1;
   const anchorOccurrenceNumber = existing ? nextOccurrenceNumber : 1;
+  const weekendPolicy =
+    input.frequency === "once" ? "exact" : input.weekendPolicy;
   const next = calculateScheduleOccurrence(
-    { ...input, anchorOccurrenceNumber },
+    { ...input, weekendPolicy, anchorOccurrenceNumber },
     nextOccurrenceNumber,
   );
   if (!next) {
@@ -99,7 +101,7 @@ function saveScheduledTransactionInContext(
     endMode: input.endMode,
     maxOccurrences: input.maxOccurrences ?? null,
     endsOn: input.endsOn ?? null,
-    weekendPolicy: input.weekendPolicy,
+    weekendPolicy,
     autoPost: input.autoPost,
     anchorOccurrenceNumber,
     nextOccurrenceNumber,

@@ -20,6 +20,18 @@ export const clearScheduledTransactionWorkspace = deferFunction(
       .clearScheduledTransactionWorkspace,
 ) as typeof import("./services/manage-scheduled-transaction.service").clearScheduledTransactionWorkspace;
 
+export const permanentlyDeleteScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .permanentlyDeleteScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").permanentlyDeleteScheduledTransaction;
+
+export const hasScheduledTransactionPostings = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .hasScheduledTransactionPostings,
+) as typeof import("./services/manage-scheduled-transaction.service").hasScheduledTransactionPostings;
+
 export const useScheduledTransactions = deferFunction(
   () => require("./hooks/use-scheduled-transactions").useScheduledTransactions,
 ) as typeof import("./hooks/use-scheduled-transactions").useScheduledTransactions;

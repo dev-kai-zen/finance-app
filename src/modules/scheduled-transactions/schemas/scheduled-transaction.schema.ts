@@ -22,7 +22,7 @@ export const scheduledTransactionInputSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .nullable()
       .optional(),
-    weekendPolicy: z.enum(["next_weekday", "previous_weekday", "skip"]),
+    weekendPolicy: z.enum(["exact", "next_weekday", "previous_weekday", "skip"]),
     autoPost: z.boolean(),
   })
   .superRefine((value, context) => {

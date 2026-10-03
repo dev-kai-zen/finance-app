@@ -64,8 +64,16 @@ test("scheduled transactions: yearly February 29 clamps only non-leap years", ()
 
 test("scheduled transactions: weekend policies retain nominal date and adjust execution", () => {
   const saturday = new Date("2028-01-01T10:00:00.000Z");
+  const exact = calculateScheduleOccurrence(
+    rule({ startsAt: saturday, frequency: "once", weekendPolicy: "exact" }),
+    1,
+  );
   const next = calculateScheduleOccurrence(
-    rule({ startsAt: saturday, frequency: "once" }),
+    rule({
+      startsAt: saturday,
+      frequency: "once",
+      weekendPolicy: "next_weekday",
+    }),
     1,
   );
   const previous = calculateScheduleOccurrence(
@@ -85,6 +93,9 @@ test("scheduled transactions: weekend policies retain nominal date and adjust ex
     1,
   );
 
+  assert.equal(exact.nominalAt.toISOString(), "2028-01-01T10:00:00.000Z");
+  assert.equal(exact.effectiveAt.toISOString(), "2028-01-01T10:00:00.000Z");
+  assert.equal(exact.skippedForWeekend, false);
   assert.equal(next.nominalAt.toISOString(), "2028-01-01T10:00:00.000Z");
   assert.equal(next.effectiveAt.toISOString(), "2028-01-03T10:00:00.000Z");
   assert.equal(
@@ -183,6 +194,39 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
     now,
   );
 
+  const insertExactSchedule = database.prepare(
+    "INSERT INTO transaction_schedules (" +
+      "id, status, transaction_type, account_id, category_id, amount_cents, " +
+      "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
+      "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
+      ") VALUES (?, 'active', 'expense', ?, ?, ?, 'once', 1, ?, 'UTC', 'never', 'exact', 1, 1, 1, ?, ?, ?, ?)",
+  );
+  insertExactSchedule.run(
+    "schedule_exact",
+    "account_1",
+    "category_1",
+    10000,
+    now,
+    now,
+    now,
+    now,
+    now,
+  );
+  const exactRow = database
+    .prepare("SELECT weekend_policy FROM transaction_schedules WHERE id = 'schedule_exact'")
+    .get();
+  assert.equal(exactRow.weekend_policy, "exact");
+
+  assert.throws(() =>
+    database.prepare(
+      "INSERT INTO transaction_schedules (" +
+        "id, status, transaction_type, account_id, category_id, amount_cents, " +
+        "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
+        "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
+        ") VALUES ('invalid_weekend_policy', 'active', 'expense', 'account_1', 'category_1', 10000, 'monthly', 1, ?, 'UTC', 'never', 'invalid_policy', 1, 1, 1, ?, ?, ?, ?)",
+    ).run(now, now, now, now, now),
+  );
+
   assert.throws(() =>
     insertSchedule.run(
       "invalid_schedule",
@@ -206,5 +250,59 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
   assert.throws(() =>
     insertOccurrence.run("occurrence_duplicate", now, now, now, now),
   );
+
+  database.exec(
+    "INSERT INTO transactions (id, account_id, category_id, type, amount_cents, occurred_at, created_at, updated_at) " +
+      "VALUES ('tx_1', 'account_1', 'category_1', 'expense', -10000, " +
+      now +
+      ", " +
+      now +
+      ", " +
+      now +
+      ");",
+  );
+
+  const insertPosting = database.prepare(
+    "INSERT INTO transaction_schedule_postings (id, occurrence_id, transaction_id, created_at) " +
+      "VALUES ('posting_1', 'occurrence_1', 'tx_1', ?)",
+  );
+  insertPosting.run(now);
+
+  const postingExists = database
+    .prepare(
+      "SELECT 1 FROM transaction_schedule_postings WHERE id = 'posting_1'",
+    )
+    .get();
+  assert.ok(postingExists);
+
+  // Permanently deleting the transaction cascades and removes the posting
+  database.exec("DELETE FROM transactions WHERE id = 'tx_1';");
+  const postingAfterTxDelete = database
+    .prepare(
+      "SELECT 1 FROM transaction_schedule_postings WHERE id = 'posting_1'",
+    )
+    .get();
+  assert.equal(postingAfterTxDelete, undefined);
+
+  // But the occurrence still exists
+  const occurrenceStillExists = database
+    .prepare(
+      "SELECT 1 FROM transaction_schedule_occurrences WHERE id = 'occurrence_1'",
+    )
+    .get();
+  assert.ok(occurrenceStillExists);
+
+  // Permanently deleting the schedule deletes the schedule and cascades occurrences
+  database.exec("DELETE FROM transaction_schedules WHERE id = 'schedule_1';");
+  const scheduleAfterDelete = database
+    .prepare("SELECT 1 FROM transaction_schedules WHERE id = 'schedule_1'")
+    .get();
+  assert.equal(scheduleAfterDelete, undefined);
+  const occurrenceAfterScheduleDelete = database
+    .prepare(
+      "SELECT 1 FROM transaction_schedule_occurrences WHERE id = 'occurrence_1'",
+    )
+    .get();
+  assert.equal(occurrenceAfterScheduleDelete, undefined);
 });
 

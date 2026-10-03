@@ -148,8 +148,9 @@ export function ScheduledTransactionFormModal({
   const [endMode, setEndMode] = useState<ScheduleEndMode>("never");
   const [maxOccurrencesText, setMaxOccurrencesText] = useState("12");
   const [endsOn, setEndsOn] = useState(dateKey(defaultStart()));
+  const [weekendAdjust, setWeekendAdjust] = useState(false);
   const [weekendPolicy, setWeekendPolicy] =
-    useState<ScheduleWeekendPolicy>("next_weekday");
+    useState<Exclude<ScheduleWeekendPolicy, "exact">>("next_weekday");
   const [autoPost, setAutoPost] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [accountPicker, setAccountPicker] = useState<"from" | "to" | null>(null);
@@ -179,7 +180,13 @@ export function ScheduledTransactionFormModal({
       setEndMode(initialSchedule.endMode);
       setMaxOccurrencesText(String(initialSchedule.maxOccurrences ?? 12));
       setEndsOn(initialSchedule.endsOn ?? dateKey(start));
-      setWeekendPolicy(initialSchedule.weekendPolicy);
+      if (initialSchedule.weekendPolicy !== "exact") {
+        setWeekendAdjust(true);
+        setWeekendPolicy(initialSchedule.weekendPolicy);
+      } else {
+        setWeekendAdjust(false);
+        setWeekendPolicy("next_weekday");
+      }
       setAutoPost(initialSchedule.autoPost);
     } else {
       const resolved = resolveScheduledDefaultLocation({
@@ -207,6 +214,7 @@ export function ScheduledTransactionFormModal({
       setEndMode("never");
       setMaxOccurrencesText("12");
       setEndsOn(dateKey(start));
+      setWeekendAdjust(false);
       setWeekendPolicy("next_weekday");
       setAutoPost(false);
     }
@@ -339,6 +347,9 @@ export function ScheduledTransactionFormModal({
       return;
     }
 
+    const resolvedWeekendPolicy: ScheduleWeekendPolicy =
+      frequency === "once" || !weekendAdjust ? "exact" : weekendPolicy;
+
     const success = onSave(
       {
         transactionType,
@@ -361,7 +372,7 @@ export function ScheduledTransactionFormModal({
             : null,
         endsOn:
           frequency !== "once" && endMode === "on_date" ? endsOn : null,
-        weekendPolicy,
+        weekendPolicy: resolvedWeekendPolicy,
         autoPost,
       },
       initialSchedule?.id,
@@ -642,25 +653,49 @@ export function ScheduledTransactionFormModal({
               </Section>
 
               <Section title="WEEKENDS">
-                <Text style={styles.fieldLabel}>
-                  IF DATE FALLS ON A WEEKEND
-                </Text>
-                <ChoiceRow wrap>
-                  {(
-                    [
-                      ["next_weekday", "Move next weekday"],
-                      ["previous_weekday", "Move previous weekday"],
-                      ["skip", "Skip"],
-                    ] as const
-                  ).map(([value, label]) => (
-                    <ChoiceChip
-                      key={value}
-                      active={weekendPolicy === value}
-                      label={label}
-                      onPress={() => setWeekendPolicy(value)}
-                    />
-                  ))}
-                </ChoiceRow>
+                <View style={styles.toggleCard}>
+                  <View style={styles.toggleText}>
+                    <Text style={styles.toggleTitle}>
+                      If date falls on a weekend
+                    </Text>
+                    <Text style={styles.toggleDescription}>
+                      Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="If date falls on a weekend"
+                    onValueChange={setWeekendAdjust}
+                    trackColor={{
+                      false: theme.colors.borderStrong,
+                      true: theme.colors.primary,
+                    }}
+                    value={weekendAdjust}
+                  />
+                </View>
+
+                {weekendAdjust ? (
+                  <View style={styles.weekendOptionsContainer}>
+                    <Text style={styles.fieldLabel}>
+                      ADJUSTMENT ACTION
+                    </Text>
+                    <ChoiceRow wrap>
+                      {(
+                        [
+                          ["next_weekday", "Move next weekday"],
+                          ["previous_weekday", "Move previous weekday"],
+                          ["skip", "Skip"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <ChoiceChip
+                          key={value}
+                          active={weekendPolicy === value}
+                          label={label}
+                          onPress={() => setWeekendPolicy(value)}
+                        />
+                      ))}
+                    </ChoiceRow>
+                  </View>
+                ) : null}
               </Section>
             </>
           ) : null}
@@ -1153,6 +1188,35 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       lineHeight: 18,
       marginTop: theme.spacing.xs,
+    },
+    toggleCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      justifyContent: "space-between",
+      padding: theme.spacing.md,
+    },
+    toggleText: {
+      flex: 1,
+    },
+    toggleTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    toggleDescription: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 18,
+      marginTop: theme.spacing.xs,
+    },
+    weekendOptionsContainer: {
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.sm,
     },
   });
 }

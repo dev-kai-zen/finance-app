@@ -6,6 +6,7 @@ export type ScheduleFrequency =
   | "yearly";
 export type ScheduleEndMode = "never" | "after_count" | "on_date";
 export type ScheduleWeekendPolicy =
+  | "exact"
   | "next_weekday"
   | "previous_weekday"
   | "skip";

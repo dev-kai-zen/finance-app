@@ -55,10 +55,10 @@ export const transactionSchedules = sqliteTable(
     maxOccurrences: integer("max_occurrences"),
     endsOn: text("ends_on"),
     weekendPolicy: text("weekend_policy", {
-      enum: ["next_weekday", "previous_weekday", "skip"],
+      enum: ["exact", "next_weekday", "previous_weekday", "skip"],
     })
       .notNull()
-      .default("next_weekday"),
+      .default("exact"),
     autoPost: integer("auto_post", { mode: "boolean" })
       .notNull()
       .default(false),
@@ -93,7 +93,7 @@ export const transactionSchedules = sqliteTable(
     ),
     check(
       "transaction_schedules_weekend_policy_check",
-      sql`${table.weekendPolicy} in ('next_weekday', 'previous_weekday', 'skip')`,
+      sql`${table.weekendPolicy} in ('exact', 'next_weekday', 'previous_weekday', 'skip')`,
     ),
     check("transaction_schedules_amount_check", sql`${table.amountCents} > 0`),
     check(

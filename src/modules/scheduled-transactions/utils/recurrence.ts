@@ -144,6 +144,7 @@ function shiftWeekend(
   parts: ZonedDateParts,
   policy: RecurrenceRule["weekendPolicy"],
 ): ZonedDateParts | null {
+  if (policy === "exact") return parts;
   const weekday = new Date(
     Date.UTC(parts.year, parts.month - 1, parts.day),
   ).getUTCDay();
