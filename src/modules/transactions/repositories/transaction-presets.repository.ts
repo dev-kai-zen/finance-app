@@ -1,7 +1,8 @@
-import { asc, eq, isNull, sql } from "drizzle-orm";
+import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { transactionPresets } from "@/infrastructure/database/schema";
 import type {
+  ListPresetsOptions,
   NewTransactionPreset,
   TransactionPreset,
 } from "../types/transaction-preset.types";
@@ -13,13 +14,72 @@ export function newTransactionPresetId(context: DbContext = db): string {
 }
 
 export function listActiveTransactionPresets(
-  context: DbContext = db,
+  optionsOrContext?: ListPresetsOptions | DbContext,
+  maybeContext?: DbContext,
 ): TransactionPreset[] {
-  return context
+  const isOptions = Boolean(optionsOrContext && "sortBy" in optionsOrContext);
+  const options: ListPresetsOptions = isOptions
+    ? (optionsOrContext as ListPresetsOptions)
+    : {};
+  const context: DbContext = isOptions
+    ? (maybeContext ?? db)
+    : ((optionsOrContext as DbContext | undefined) ?? db);
+
+  const query = context
     .select()
     .from(transactionPresets)
-    .where(isNull(transactionPresets.deletedAt))
+    .where(isNull(transactionPresets.deletedAt));
+
+  if (options.sortBy === "last_used_at") {
+    return query
+      .orderBy(
+        sql`CASE WHEN ${transactionPresets.lastUsedAt} IS NULL THEN 1 ELSE 0 END ASC`,
+        desc(transactionPresets.lastUsedAt),
+        asc(transactionPresets.sortOrder),
+        asc(transactionPresets.transactionName),
+      )
+      .all();
+  }
+
+  return query
     .orderBy(
+      asc(transactionPresets.sortOrder),
+      asc(transactionPresets.transactionName),
+    )
+    .all();
+}
+
+export function listArchivedTransactionPresets(
+  optionsOrContext?: ListPresetsOptions | DbContext,
+  maybeContext?: DbContext,
+): TransactionPreset[] {
+  const isOptions = Boolean(optionsOrContext && "sortBy" in optionsOrContext);
+  const options: ListPresetsOptions = isOptions
+    ? (optionsOrContext as ListPresetsOptions)
+    : {};
+  const context: DbContext = isOptions
+    ? (maybeContext ?? db)
+    : ((optionsOrContext as DbContext | undefined) ?? db);
+
+  const query = context
+    .select()
+    .from(transactionPresets)
+    .where(isNotNull(transactionPresets.deletedAt));
+
+  if (options.sortBy === "last_used_at") {
+    return query
+      .orderBy(
+        sql`CASE WHEN ${transactionPresets.lastUsedAt} IS NULL THEN 1 ELSE 0 END ASC`,
+        desc(transactionPresets.lastUsedAt),
+        desc(transactionPresets.deletedAt),
+        asc(transactionPresets.transactionName),
+      )
+      .all();
+  }
+
+  return query
+    .orderBy(
+      desc(transactionPresets.deletedAt),
       asc(transactionPresets.sortOrder),
       asc(transactionPresets.transactionName),
     )
@@ -87,6 +147,25 @@ export function softDeleteTransactionPreset(
     { deletedAt, updatedAt: deletedAt },
     context,
   );
+}
+
+export function restoreTransactionPresetRecord(
+  id: string,
+  context: DbContext = db,
+  updatedAt = new Date(),
+): void {
+  updateTransactionPresetRecord(
+    id,
+    { deletedAt: null, updatedAt },
+    context,
+  );
+}
+
+export function deleteTransactionPresetRecord(
+  id: string,
+  context: DbContext = db,
+): void {
+  context.delete(transactionPresets).where(eq(transactionPresets.id, id)).run();
 }
 
 export function deleteAllTransactionPresetRecords(

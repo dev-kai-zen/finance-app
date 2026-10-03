@@ -25,3 +25,9 @@ export interface TransactionPresetSubmission {
   saveRequest?: QuickPresetSaveRequest | null;
   appliedPresetId?: string | null;
 }
+
+export type PresetSortBy = "sort_order" | "last_used_at";
+
+export interface ListPresetsOptions {
+  sortBy?: PresetSortBy;
+}

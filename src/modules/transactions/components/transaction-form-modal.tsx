@@ -49,6 +49,7 @@ import type {
   UpdateTransferInput,
 } from "../types/transaction.types";
 import type {
+  PresetSortBy,
   TransactionPreset,
   TransactionPresetInput,
   TransactionPresetSubmission,
@@ -109,7 +110,13 @@ export interface TransactionFormModalProps {
     id?: string,
   ) => Promise<boolean>;
   onDeletePreset: (id: string) => Promise<boolean>;
+  onArchivePreset?: (id: string) => Promise<boolean>;
+  onRestorePreset?: (id: string) => Promise<boolean>;
+  onPermanentlyDeletePreset?: (id: string) => Promise<boolean>;
   onReorderPresets: (orderedIds: string[]) => Promise<boolean>;
+  archivedPresets?: TransactionPreset[];
+  presetSortBy?: PresetSortBy;
+  onChangePresetSortBy?: (sortBy: PresetSortBy) => void;
   pending?: boolean;
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
@@ -171,7 +178,13 @@ export function TransactionFormModal({
   onClearPresetError,
   onSavePreset,
   onDeletePreset,
+  onArchivePreset,
+  onRestorePreset,
+  onPermanentlyDeletePreset,
   onReorderPresets,
+  archivedPresets,
+  presetSortBy,
+  onChangePresetSortBy,
   pending = false,
   error = null,
   initialTransaction = null,
@@ -1888,12 +1901,18 @@ export function TransactionFormModal({
         onClearError={onClearPresetError}
         onClose={() => setIsQuickPresetsOpen(false)}
         onDelete={onDeletePreset}
+        onArchive={onArchivePreset}
+        onRestore={onRestorePreset}
+        onPermanentlyDelete={onPermanentlyDeletePreset}
         onReorder={onReorderPresets}
         onSave={onSavePreset}
         onSelect={applyQuickPreset}
         pending={presetPending}
         pockets={pockets}
         presets={presets}
+        archivedPresets={archivedPresets}
+        sortBy={presetSortBy}
+        onChangeSortBy={onChangePresetSortBy}
         visible={isQuickPresetsOpen}
       />
       </Modal>

@@ -44,13 +44,19 @@ export function DashboardScreen() {
   } = useTransactions();
   const {
     presets,
+    archivedPresets,
     loading: presetsLoading,
     pending: presetPending,
     error: presetError,
     refresh: refreshPresets,
     savePreset,
+    archivePreset,
     deletePreset,
+    restorePreset,
+    permanentlyDeletePreset,
     reorderPresets,
+    sortBy: presetSortBy,
+    setSortBy: setPresetSortBy,
     clearError: clearPresetError,
   } = useTransactionPresets();
 
@@ -200,7 +206,13 @@ export function DashboardScreen() {
         onSaveTransfer={handleSaveTransfer}
         onSavePreset={savePreset}
         onDeletePreset={deletePreset}
+        onArchivePreset={archivePreset}
+        onRestorePreset={restorePreset}
+        onPermanentlyDeletePreset={permanentlyDeletePreset}
         onReorderPresets={reorderPresets}
+        archivedPresets={archivedPresets}
+        presetSortBy={presetSortBy}
+        onChangePresetSortBy={setPresetSortBy}
         pending={pendingAction}
         visible={isModalOpen}
       />

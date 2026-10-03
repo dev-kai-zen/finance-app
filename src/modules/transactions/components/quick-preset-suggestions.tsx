@@ -53,6 +53,7 @@ export function QuickPresetSuggestions({
     () =>
       rankTransactionPresets(
         presets.filter((preset) => {
+          if (preset.deletedAt) return false;
           const account = accountById.get(preset.accountId);
           if (!account || account.isArchived) return false;
           if (preset.pocketId && !activePocketIds.has(preset.pocketId)) return false;

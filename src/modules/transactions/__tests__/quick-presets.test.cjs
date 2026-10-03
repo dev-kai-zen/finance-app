@@ -260,3 +260,103 @@ test("quick presets: suggestions normalize text and rank exact, prefix, and rece
   );
   assert.deepEqual(rankTransactionPresets(presets, "g"), []);
 });
+
+test("quick presets: archive, restore, and permanently delete workflow", () => {
+  const { database, now } = setupTestDb();
+  const insert = database.prepare(`
+    INSERT INTO transaction_presets (
+      id, transaction_name, type, account_id, category_id,
+      amount_cents, sort_order, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, 'expense', 'account_from', 'category_food', -100, ?, ?, ?, ?)
+  `);
+  insert.run("preset_1", "Active Preset", 0, now, now, null);
+  insert.run("preset_2", "Archived Preset", 1, now, now, now);
+
+  // 1. Check active vs archived lists
+  const active = database
+    .prepare("SELECT id FROM transaction_presets WHERE deleted_at IS NULL")
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(active, ["preset_1"]);
+
+  const archived = database
+    .prepare("SELECT id FROM transaction_presets WHERE deleted_at IS NOT NULL")
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(archived, ["preset_2"]);
+
+  // 2. Archive active preset
+  database
+    .prepare("UPDATE transaction_presets SET deleted_at = ?, updated_at = ? WHERE id = ?")
+    .run(now + 100, now + 100, "preset_1");
+
+  const activeAfterArchive = database
+    .prepare("SELECT id FROM transaction_presets WHERE deleted_at IS NULL")
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(activeAfterArchive, []);
+
+  // 3. Restore archived preset
+  database
+    .prepare("UPDATE transaction_presets SET deleted_at = NULL, updated_at = ? WHERE id = ?")
+    .run(now + 200, "preset_2");
+
+  const activeAfterRestore = database
+    .prepare("SELECT id FROM transaction_presets WHERE deleted_at IS NULL")
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(activeAfterRestore, ["preset_2"]);
+
+  // 4. Permanently delete preset
+  database
+    .prepare("DELETE FROM transaction_presets WHERE id = ?")
+    .run("preset_1");
+
+  const row = database
+    .prepare("SELECT id FROM transaction_presets WHERE id = ?")
+    .get("preset_1");
+  assert.equal(row, undefined);
+});
+
+test("quick presets: sorting by sort_order vs last_used_at", () => {
+  const { database, now } = setupTestDb();
+  const insert = database.prepare(`
+    INSERT INTO transaction_presets (
+      id, transaction_name, type, account_id, category_id,
+      amount_cents, sort_order, last_used_at, created_at, updated_at, deleted_at
+    ) VALUES (?, ?, 'expense', 'account_from', 'category_food', -100, ?, ?, ?, ?, null)
+  `);
+
+  // preset_a: sort_order 0, used 1 hr ago
+  insert.run("preset_a", "Preset A", 0, now - 3600000, now, now);
+  // preset_b: sort_order 1, used 5 min ago (most recent)
+  insert.run("preset_b", "Preset B", 1, now - 300000, now, now);
+  // preset_c: sort_order 2, never used (null)
+  insert.run("preset_c", "Preset C", 2, null, now, now);
+
+  // By sort_order ASC
+  const bySortOrder = database
+    .prepare(`
+      SELECT id FROM transaction_presets
+      WHERE deleted_at IS NULL
+      ORDER BY sort_order ASC, transaction_name ASC
+    `)
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(bySortOrder, ["preset_a", "preset_b", "preset_c"]);
+
+  // By last_used_at DESC (nulls last)
+  const byLastUsed = database
+    .prepare(`
+      SELECT id FROM transaction_presets
+      WHERE deleted_at IS NULL
+      ORDER BY
+        CASE WHEN last_used_at IS NULL THEN 1 ELSE 0 END ASC,
+        last_used_at DESC,
+        sort_order ASC,
+        transaction_name ASC
+    `)
+    .all()
+    .map((r) => r.id);
+  assert.deepEqual(byLastUsed, ["preset_b", "preset_a", "preset_c"]);
+});

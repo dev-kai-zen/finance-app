@@ -163,6 +163,24 @@ export const createSampleTransactions = deferFunction(
       .createSampleTransactions,
 ) as typeof import("./services/workspace-transactions.service").createSampleTransactions;
 
+export const archiveTransactionPreset = deferFunction(
+  () =>
+    require("./services/archive-transaction-preset.service")
+      .archiveTransactionPreset,
+) as typeof import("./services/archive-transaction-preset.service").archiveTransactionPreset;
+
+export const restoreTransactionPreset = deferFunction(
+  () =>
+    require("./services/restore-transaction-preset.service")
+      .restoreTransactionPreset,
+) as typeof import("./services/restore-transaction-preset.service").restoreTransactionPreset;
+
+export const permanentlyDeleteTransactionPreset = deferFunction(
+  () =>
+    require("./services/permanently-delete-transaction-preset.service")
+      .permanentlyDeleteTransactionPreset,
+) as typeof import("./services/permanently-delete-transaction-preset.service").permanentlyDeleteTransactionPreset;
+
 export type {
   Transaction,
   TransactionListItem,
@@ -179,6 +197,8 @@ export type {
   TransactionAttachmentSyncStatus,
 } from "./types/transaction.types";
 export type {
+  ListPresetsOptions,
+  PresetSortBy,
   QuickPresetSaveRequest,
   TransactionPreset,
   TransactionPresetInput,

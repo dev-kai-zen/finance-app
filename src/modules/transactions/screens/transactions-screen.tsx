@@ -111,13 +111,19 @@ export function TransactionsScreen() {
   } = useTransactions();
   const {
     presets,
+    archivedPresets,
     loading: presetsLoading,
     pending: presetPending,
     error: presetError,
     refresh: refreshPresets,
     savePreset,
+    archivePreset,
     deletePreset,
+    restorePreset,
+    permanentlyDeletePreset,
     reorderPresets,
+    sortBy: presetSortBy,
+    setSortBy: setPresetSortBy,
     clearError: clearPresetError,
   } = useTransactionPresets();
 
@@ -613,7 +619,13 @@ export function TransactionsScreen() {
         onSaveTransfer={handleRecordTransfer}
         onSavePreset={savePreset}
         onDeletePreset={deletePreset}
+        onArchivePreset={archivePreset}
+        onRestorePreset={restorePreset}
+        onPermanentlyDeletePreset={permanentlyDeletePreset}
         onReorderPresets={reorderPresets}
+        archivedPresets={archivedPresets}
+        presetSortBy={presetSortBy}
+        onChangePresetSortBy={setPresetSortBy}
         onUpdateTransaction={handleUpdateTransaction}
         onUpdateTransfer={handleUpdateTransfer}
         pending={pendingAction}
