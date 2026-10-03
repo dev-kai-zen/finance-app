@@ -159,6 +159,16 @@ export const getCategoryExpenseTotalsGrouped = deferFunction(
       .getCategoryExpenseTotalsGrouped,
 ) as typeof import("./services/get-category-expense-summary.service").getCategoryExpenseTotalsGrouped;
 
+export const getCategoryBreakdown = deferFunction(
+  () =>
+    require("./services/get-category-breakdown.service").getCategoryBreakdown,
+) as typeof import("./services/get-category-breakdown.service").getCategoryBreakdown;
+
+export const getCashFlowHistory = deferFunction(
+  () =>
+    require("./services/get-cashflow-history.service").getCashFlowHistory,
+) as typeof import("./services/get-cashflow-history.service").getCashFlowHistory;
+
 export const hasTransactions = deferFunction(
   () => require("./services/has-transactions.service").hasTransactions,
 ) as typeof import("./services/has-transactions.service").hasTransactions;
@@ -216,3 +226,13 @@ export type {
   TransactionPresetInput,
   TransactionPresetSubmission,
 } from "./types/transaction-preset.types";
+export type {
+  CategoryBreakdownItem,
+  CategoryBreakdownQuery,
+  CategoryBreakdownResult,
+} from "./services/get-category-breakdown.service";
+export type {
+  CashFlowHistoryQuery,
+  CashFlowHistoryResult,
+  CashFlowPeriodPoint,
+} from "./services/get-cashflow-history.service";
