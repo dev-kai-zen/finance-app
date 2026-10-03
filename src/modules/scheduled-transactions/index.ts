@@ -20,6 +20,26 @@ export const clearScheduledTransactionWorkspace = deferFunction(
       .clearScheduledTransactionWorkspace,
 ) as typeof import("./services/manage-scheduled-transaction.service").clearScheduledTransactionWorkspace;
 
+export const useScheduledTransactions = deferFunction(
+  () => require("./hooks/use-scheduled-transactions").useScheduledTransactions,
+) as typeof import("./hooks/use-scheduled-transactions").useScheduledTransactions;
+
+export const getCalendarScheduleOccurrences = deferFunction(
+  () =>
+    require("./services/get-calendar-schedules.service")
+      .getCalendarScheduleOccurrences,
+) as typeof import("./services/get-calendar-schedules.service").getCalendarScheduleOccurrences;
+
+export const postScheduledOccurrence = deferFunction(
+  () =>
+    require("./services/process-due-schedules.service").postScheduledOccurrence,
+) as typeof import("./services/process-due-schedules.service").postScheduledOccurrence;
+
+export const skipScheduledOccurrence = deferFunction(
+  () =>
+    require("./services/process-due-schedules.service").skipScheduledOccurrence,
+) as typeof import("./services/process-due-schedules.service").skipScheduledOccurrence;
+
 export type {
   CalculatedScheduleOccurrence,
   SaveScheduledTransactionInput,
@@ -33,4 +53,5 @@ export type {
   ScheduledTransactionListItem,
   ScheduledTransactionType,
 } from "./types/scheduled-transaction.types";
+export type { CalendarScheduleOccurrence } from "./services/get-calendar-schedules.service";
 

@@ -1,0 +1,371 @@
+import { useCallback, useMemo, useState } from "react";
+import { useAccounts } from "@/modules/accounts";
+import { useCategories } from "@/modules/categories";
+import {
+  getCalendarScheduleOccurrences,
+  useScheduledTransactions,
+  type CalendarScheduleOccurrence,
+} from "@/modules/scheduled-transactions";
+import { useTransactions, type TransactionListItem } from "@/modules/transactions";
+import type {
+  CalendarDayCellData,
+  CalendarMonth,
+  CalendarSummaryMetrics,
+  CalendarTab,
+} from "../types/calendar.types";
+import {
+  buildCalendarMonthGrid,
+  formatDateKey,
+  getDateKeyFromDate,
+  getTodayParts,
+  parseDateKey,
+} from "../utils/calendar-dates";
+
+export interface CategoryExpenseBreakdown {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  totalMinorUnits: number;
+  percentage: number;
+}
+
+export function useCalendarData() {
+  const todayParts = useMemo(() => getTodayParts(), []);
+
+  const [activeMonth, setActiveMonth] = useState<CalendarMonth>({
+    year: todayParts.year,
+    month: todayParts.month,
+  });
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
+
+  const { transactions, refresh: refreshTransactions } = useTransactions();
+  const { categories } = useCategories();
+  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
+  const {
+    refresh: refreshSchedules,
+    postOccurrence,
+    skipOccurrence,
+  } = useScheduledTransactions();
+
+  const refreshAll = useCallback(() => {
+    refreshTransactions();
+    refreshSchedules();
+    refreshAccounts();
+  }, [refreshTransactions, refreshSchedules, refreshAccounts]);
+
+  // Compute month start and end dates
+  const monthDateRange = useMemo(() => {
+    const startDate = new Date(activeMonth.year, activeMonth.month, 1, 0, 0, 0, 0);
+    const endDate = new Date(
+      activeMonth.year,
+      activeMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+    return { startDate, endDate };
+  }, [activeMonth]);
+
+  // Compute schedule occurrences for this month
+  const monthScheduleOccurrences = useMemo(() => {
+    try {
+      return getCalendarScheduleOccurrences({
+        startDate: monthDateRange.startDate,
+        endDate: monthDateRange.endDate,
+      });
+    } catch {
+      return [];
+    }
+  }, [monthDateRange, transactions]);
+
+  // Group transactions by dateKey (YYYY-MM-DD)
+  const transactionsByDateKey = useMemo(() => {
+    const map = new Map<string, TransactionListItem[]>();
+    for (const tx of transactions) {
+      if (!tx.occurredAt) continue;
+      const key = getDateKeyFromDate(tx.occurredAt);
+      const list = map.get(key) ?? [];
+      list.push(tx);
+      map.set(key, list);
+    }
+    return map;
+  }, [transactions]);
+
+  // Group schedules by dateKey (YYYY-MM-DD)
+  const schedulesByDateKey = useMemo(() => {
+    const map = new Map<string, CalendarScheduleOccurrence[]>();
+    for (const occ of monthScheduleOccurrences) {
+      const key = getDateKeyFromDate(occ.effectiveDueAt);
+      const list = map.get(key) ?? [];
+      list.push(occ);
+      map.set(key, list);
+    }
+    return map;
+  }, [monthScheduleOccurrences]);
+
+  // Transactions belonging to the active month
+  const activeMonthTransactions = useMemo(() => {
+    return transactions.filter((tx) => {
+      if (!tx.occurredAt) return false;
+      const d = new Date(tx.occurredAt);
+      return (
+        d.getFullYear() === activeMonth.year &&
+        d.getMonth() === activeMonth.month
+      );
+    });
+  }, [transactions, activeMonth]);
+
+  // Scoped transactions (selectedDay OR whole activeMonth)
+  const scopedTransactions = useMemo(() => {
+    if (selectedDay) {
+      return transactionsByDateKey.get(selectedDay) ?? [];
+    }
+    return activeMonthTransactions;
+  }, [selectedDay, transactionsByDateKey, activeMonthTransactions]);
+
+  // Scoped schedule occurrences (selectedDay OR whole activeMonth)
+  const scopedSchedules = useMemo(() => {
+    if (selectedDay) {
+      return schedulesByDateKey.get(selectedDay) ?? [];
+    }
+    return monthScheduleOccurrences;
+  }, [selectedDay, schedulesByDateKey, monthScheduleOccurrences]);
+
+  // Calendar Grid Cells with complete activity data
+  const gridCells = useMemo<CalendarDayCellData[]>(() => {
+    const rawCells = buildCalendarMonthGrid(activeMonth.year, activeMonth.month);
+
+    return rawCells.map((cell) => {
+      const dayTxs = transactionsByDateKey.get(cell.dateKey) ?? [];
+      const daySchedules = schedulesByDateKey.get(cell.dateKey) ?? [];
+
+      let totalIncomeMinorUnits = 0;
+      let totalExpenseMinorUnits = 0;
+      let incomeCount = 0;
+      let expenseCount = 0;
+
+      for (const tx of dayTxs) {
+        if (tx.type === "income") {
+          totalIncomeMinorUnits += tx.amountCents;
+          incomeCount++;
+        } else if (tx.type === "expense") {
+          totalExpenseMinorUnits += Math.abs(tx.amountCents);
+          expenseCount++;
+        }
+      }
+
+      const netMinorUnits = totalIncomeMinorUnits - totalExpenseMinorUnits;
+      const hasDueSchedule = daySchedules.some((s) => s.status === "due");
+      const hasUpcomingSchedule = daySchedules.some(
+        (s) => s.status === "upcoming",
+      );
+
+      return {
+        dateKey: cell.dateKey,
+        dayNumber: cell.dayNumber,
+        isCurrentMonth: cell.isCurrentMonth,
+        isToday: cell.isToday,
+        isSelected: cell.dateKey === selectedDay,
+        date: cell.date,
+        transactionCount: dayTxs.length,
+        hasIncome: incomeCount > 0,
+        hasExpense: expenseCount > 0,
+        totalIncomeMinorUnits,
+        totalExpenseMinorUnits,
+        netMinorUnits,
+        scheduleCount: daySchedules.length,
+        hasDueSchedule,
+        hasUpcomingSchedule,
+      };
+    });
+  }, [
+    activeMonth,
+    selectedDay,
+    transactionsByDateKey,
+    schedulesByDateKey,
+  ]);
+
+  // Summary Metrics for the current scope (selectedDay OR activeMonth)
+  const summaryMetrics = useMemo<CalendarSummaryMetrics>(() => {
+    let inflow = 0;
+    let outflow = 0;
+
+    for (const tx of scopedTransactions) {
+      if (tx.type === "income") {
+        inflow += tx.amountCents;
+      } else if (tx.type === "expense") {
+        outflow += Math.abs(tx.amountCents);
+      }
+    }
+
+    const net = inflow - outflow;
+    const txCount = scopedTransactions.length;
+
+    let schedulesTotalDue = 0;
+    let pendingCount = 0;
+    let postedCount = 0;
+
+    for (const occ of scopedSchedules) {
+      if (occ.status === "due" || occ.status === "upcoming") {
+        schedulesTotalDue += occ.amountCents;
+        pendingCount++;
+      } else if (occ.status === "posted") {
+        postedCount++;
+      }
+    }
+
+    const savingsRate =
+      inflow > 0 ? Math.round(((inflow - outflow) / inflow) * 100) : 0;
+
+    // Projected Month-End Net:
+    // Takes the month's total actual net, and adds pending scheduled inflows and subtracts pending scheduled outflows
+    let monthPendingInflows = 0;
+    let monthPendingOutflows = 0;
+
+    for (const occ of monthScheduleOccurrences) {
+      if (occ.status === "due" || occ.status === "upcoming") {
+        if (occ.transactionType === "income") {
+          monthPendingInflows += occ.amountCents;
+        } else if (occ.transactionType === "expense") {
+          monthPendingOutflows += occ.amountCents;
+        }
+      }
+    }
+
+    let monthActualInflow = 0;
+    let monthActualOutflow = 0;
+    for (const tx of activeMonthTransactions) {
+      if (tx.type === "income") monthActualInflow += tx.amountCents;
+      if (tx.type === "expense") monthActualOutflow += Math.abs(tx.amountCents);
+    }
+    const monthActualNet = monthActualInflow - monthActualOutflow;
+    const projectedMonthEndNet =
+      monthActualNet + monthPendingInflows - monthPendingOutflows;
+
+    return {
+      totalInflowMinorUnits: inflow,
+      totalOutflowMinorUnits: outflow,
+      netCashflowMinorUnits: net,
+      transactionCount: txCount,
+      schedulesTotalDueMinorUnits: schedulesTotalDue,
+      schedulesPendingCount: pendingCount,
+      schedulesPostedCount: postedCount,
+      savingsRatePercent: savingsRate,
+      projectedMonthEndNetMinorUnits: projectedMonthEndNet,
+    };
+  }, [
+    scopedTransactions,
+    scopedSchedules,
+    monthScheduleOccurrences,
+    activeMonthTransactions,
+  ]);
+
+  // Top spending categories breakdown for current scope
+  const categoryBreakdown = useMemo<CategoryExpenseBreakdown[]>(() => {
+    const categoryTotals = new Map<string, number>();
+    let totalExpenseInScope = 0;
+
+    for (const tx of scopedTransactions) {
+      if (tx.type === "expense" && tx.categoryId) {
+        const amt = Math.abs(tx.amountCents);
+        const current = categoryTotals.get(tx.categoryId) ?? 0;
+        categoryTotals.set(tx.categoryId, current + amt);
+        totalExpenseInScope += amt;
+      }
+    }
+
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+    const result: CategoryExpenseBreakdown[] = [];
+
+    for (const [catId, total] of categoryTotals.entries()) {
+      const cat = categoryMap.get(catId);
+      const percentage =
+        totalExpenseInScope > 0
+          ? Math.round((total / totalExpenseInScope) * 100)
+          : 0;
+
+      result.push({
+        id: catId,
+        name: cat?.name ?? "Other",
+        icon: cat?.icon ?? null,
+        color: cat?.color ?? null,
+        totalMinorUnits: total,
+        percentage,
+      });
+    }
+
+    result.sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
+    return result;
+  }, [scopedTransactions, categories]);
+
+  // Navigation handlers
+  const goToPrevMonth = useCallback(() => {
+    setSelectedDay(null);
+    setActiveMonth((prev) => {
+      if (prev.month === 0) {
+        return { year: prev.year - 1, month: 11 };
+      }
+      return { year: prev.year, month: prev.month - 1 };
+    });
+  }, []);
+
+  const goToNextMonth = useCallback(() => {
+    setSelectedDay(null);
+    setActiveMonth((prev) => {
+      if (prev.month === 11) {
+        return { year: prev.year + 1, month: 0 };
+      }
+      return { year: prev.year, month: prev.month + 1 };
+    });
+  }, []);
+
+  const goToToday = useCallback(() => {
+    const parts = getTodayParts();
+    setActiveMonth({ year: parts.year, month: parts.month });
+    setSelectedDay(null);
+  }, []);
+
+  const toggleSelectDay = useCallback((dateKey: string) => {
+    const cellParts = parseDateKey(dateKey);
+    // If the selected cell belongs to another month, switch to that month
+    setActiveMonth((prev) => {
+      if (prev.year !== cellParts.year || prev.month !== cellParts.month) {
+        return { year: cellParts.year, month: cellParts.month };
+      }
+      return prev;
+    });
+
+    setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+  }, []);
+
+  const clearDaySelection = useCallback(() => {
+    setSelectedDay(null);
+  }, []);
+
+  return {
+    activeMonth,
+    selectedDay,
+    activeTab,
+    gridCells,
+    scopedTransactions,
+    scopedSchedules,
+    summaryMetrics,
+    categoryBreakdown,
+    accounts,
+    categories,
+    pockets,
+    goToPrevMonth,
+    goToNextMonth,
+    goToToday,
+    toggleSelectDay,
+    clearDaySelection,
+    setActiveTab,
+    refreshAll,
+    postOccurrence,
+    skipOccurrence,
+  };
+}

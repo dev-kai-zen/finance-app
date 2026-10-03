@@ -11,13 +11,14 @@ import { IconHelper } from "./icon-helper";
 interface NavItemConfig {
   href: string;
   label: string;
-  icon: "dashboard" | "accounts" | "transactions" | "credit-cards" | "categories" | "budgets" | "monitor" | "settings";
+  icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "monitor" | "settings";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/accounts", label: "Accounts", icon: "accounts" },
   { href: "/transactions", label: "Transactions", icon: "transactions" },
+  { href: "/calendar", label: "Calendar", icon: "calendar" },
   { href: "/credit-cards", label: "Credit Cards", icon: "credit-cards" },
   { href: "/categories", label: "Categories", icon: "categories" },
   { href: "/budgets", label: "Budgets", icon: "budgets" },
@@ -154,6 +155,7 @@ function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolea
     dashboard: "layout-dashboard",
     accounts: "landmark",
     transactions: "arrow-left-right",
+    calendar: "calendar",
     "credit-cards": "credit-card",
     categories: "layers",
     budgets: "pie-chart",
