@@ -16,6 +16,7 @@ import { IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
+import { LabelBadge } from "@/modules/labels";
 import { useTransactionAttachments } from "../hooks/use-transaction-attachments";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 
@@ -305,6 +306,22 @@ export function TransactionDetailModal({
                   <View style={styles.detailInfoCol}>
                     <Text style={styles.detailLabel}>NOTES</Text>
                     <Text style={styles.detailValue}>{transaction.note}</Text>
+                  </View>
+                </View>
+              ) : null}
+
+              {transaction.labels && transaction.labels.length > 0 ? (
+                <View style={[styles.detailRow, styles.detailRowBorder]}>
+                  <View style={styles.detailIconBadge}>
+                    <IconHelper color={theme.colors.textSecondary} name="tag" size={16} />
+                  </View>
+                  <View style={styles.detailInfoCol}>
+                    <Text style={styles.detailLabel}>LABELS</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                      {transaction.labels.map((lbl) => (
+                        <LabelBadge key={lbl.id} label={lbl} size="md" />
+                      ))}
+                    </View>
                   </View>
                 </View>
               ) : null}

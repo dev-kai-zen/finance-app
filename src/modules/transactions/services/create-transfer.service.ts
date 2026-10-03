@@ -5,6 +5,7 @@ import {
   generateId,
   insertTransaction,
 } from "../repositories/transactions.repository";
+import { assignTransactionLabels } from "@/modules/labels";
 import type {
   CreateTransferInput,
   Transaction,
@@ -118,6 +119,14 @@ export function createTransferInContext(
       },
       context,
     );
+  }
+
+  if (input.labelIds && input.labelIds.length > 0) {
+    assignTransactionLabels(outLeg.id, input.labelIds, context);
+    assignTransactionLabels(inLeg.id, input.labelIds, context);
+    if (feeLeg) {
+      assignTransactionLabels(feeLeg.id, input.labelIds, context);
+    }
   }
 
   reconcileCreditCardBillingInContext(new Date(), context);

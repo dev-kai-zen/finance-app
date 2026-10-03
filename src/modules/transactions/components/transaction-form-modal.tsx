@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Paperclip, Sparkles } from "lucide-react-native";
+import { ChevronRight, Paperclip, Plus, Sparkles, X } from "lucide-react-native";
 import {
   AccountPickerModal,
   AmountCalculatorField,
@@ -60,6 +60,7 @@ import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
+import { LabelPickerModal, useLabels } from "@/modules/labels";
 
 function formatDateString(value: string | null): string {
   if (!value) return "None";
@@ -232,6 +233,7 @@ export function TransactionFormModal({
   const [feePocketId, setFeePocketId] = useState<string | null>(null);
   const [feeCategoryId, setFeeCategoryId] = useState("");
   const [feeAccountManuallyChanged, setFeeAccountManuallyChanged] = useState(false);
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -239,6 +241,7 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [isLabelPickerOpen, setIsLabelPickerOpen] = useState(false);
   const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
   const [isAttachmentManagerOpen, setIsAttachmentManagerOpen] = useState(false);
   const [isFeeCalculatorOpen, setIsFeeCalculatorOpen] = useState(false);
@@ -246,6 +249,7 @@ export function TransactionFormModal({
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
+  const { labels } = useLabels({ includeArchived: true });
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,
     isEditing,
@@ -327,6 +331,13 @@ export function TransactionFormModal({
           setFeeCategoryId(defaultFeeCategory?.id ?? "");
           setFeeAccountManuallyChanged(false);
         }
+        setSelectedLabelIds(
+          initialTransaction.labels
+            ? initialTransaction.labels
+                .filter((l) => labels.some((lbl) => lbl.id === l.id))
+                .map((l) => l.id)
+            : [],
+        );
       } else {
         setMode("expense");
         setName("");
@@ -357,6 +368,7 @@ export function TransactionFormModal({
         setAmountMinorUnits(0);
         setOccurredAt(getCurrentTransactionDate());
         setNote("");
+        setSelectedLabelIds([]);
         setInstallmentEnabled(false);
         setInstallmentTermOption("12");
         setCustomTermMonths("12");
@@ -744,6 +756,7 @@ export function TransactionFormModal({
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
         fee: feeInput,
+        labelIds: selectedLabelIds.filter((id) => labels.some((lbl) => lbl.id === id)),
       };
       const success =
         isEditing && initialTransaction && onUpdateTransfer
@@ -837,6 +850,7 @@ export function TransactionFormModal({
                 deferredMonths: resolvedDeferredMonths,
               }
             : null,
+        labelIds: selectedLabelIds.filter((id) => labels.some((lbl) => lbl.id === id)),
       };
       const success =
         isEditing && initialTransaction && onUpdateTransaction
@@ -1590,6 +1604,74 @@ export function TransactionFormModal({
               </View>
             ) : null}
 
+            {/* Labels Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>LABELS (OPTIONAL)</Text>
+              <View style={styles.labelChipsRow}>
+                {selectedLabelIds.length === 0 ? (
+                  <Pressable
+                    accessibilityLabel="Select labels"
+                    accessibilityRole="button"
+                    onPress={() => setIsLabelPickerOpen(true)}
+                    style={styles.labelChipButton}
+                  >
+                    <Text style={styles.labelChipButtonText}># Label</Text>
+                  </Pressable>
+                ) : (
+                  <>
+                    {selectedLabelIds.map((id) => {
+                      const lbl = labels.find((l) => l.id === id);
+                      if (!lbl) return null;
+                      const badgeColor = lbl.color || theme.colors.primary;
+                      return (
+                        <View
+                          key={lbl.id}
+                          style={[
+                            styles.selectedLabelChip,
+                            {
+                              backgroundColor: `${badgeColor}18`,
+                              borderColor: `${badgeColor}44`,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.selectedLabelChipText,
+                              { color: badgeColor },
+                            ]}
+                          >
+                            #{lbl.name}
+                          </Text>
+                          <Pressable
+                            accessibilityLabel={`Remove label ${lbl.name}`}
+                            accessibilityRole="button"
+                            hitSlop={8}
+                            onPress={() =>
+                              setSelectedLabelIds((prev) =>
+                                prev.filter((item) => item !== id),
+                              )
+                            }
+                            style={styles.removeLabelChipBtn}
+                          >
+                            <X size={13} color={badgeColor} strokeWidth={2.5} />
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                    <Pressable
+                      accessibilityLabel="Add more labels"
+                      accessibilityRole="button"
+                      onPress={() => setIsLabelPickerOpen(true)}
+                      style={styles.addLabelChipButton}
+                    >
+                      <Plus size={13} color={theme.colors.primary} strokeWidth={2.5} />
+                      <Text style={styles.addLabelChipButtonText}>Add Label</Text>
+                    </Pressable>
+                  </>
+                )}
+              </View>
+            </View>
+
             {/* Note / Memo Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
@@ -1746,6 +1828,13 @@ export function TransactionFormModal({
         title={mode === "income" ? "Select Income Category" : "Select Expense Category"}
         type={mode === "income" ? "income" : "expense"}
         visible={isCategoryPickerOpen}
+      />
+
+      <LabelPickerModal
+        onClose={() => setIsLabelPickerOpen(false)}
+        onSelectLabels={setSelectedLabelIds}
+        selectedLabelIds={selectedLabelIds}
+        visible={isLabelPickerOpen}
       />
 
       <AmountCalculatorModal
@@ -2327,6 +2416,64 @@ function createStyles(theme: AppTheme) {
       minHeight: 92,
       paddingHorizontal: 14,
       paddingVertical: 10,
+    },
+    labelChipsRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginTop: 2,
+    },
+    labelChipButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+    },
+    labelChipButtonText: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    selectedLabelChip: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      paddingLeft: 12,
+      paddingRight: 8,
+      paddingVertical: 6,
+    },
+    selectedLabelChipText: {
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    removeLabelChipBtn: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 2,
+    },
+    addLabelChipButton: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}40`,
+      borderRadius: theme.borderRadius.round,
+      borderStyle: "dashed",
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    addLabelChipButtonText: {
+      color: theme.colors.primary,
+      fontSize: 13,
+      fontWeight: "600",
     },
     quickPresetSavePanel: {
       backgroundColor: `${theme.colors.primary}0D`,

@@ -14,6 +14,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountListItem } from "@/modules/accounts";
+import { LabelBadge, useLabels } from "@/modules/labels";
 import type { TransactionType } from "../types/transaction.types";
 
 export type DatePreset = "all" | "this_month" | "last_month" | "this_year";
@@ -22,6 +23,7 @@ export interface TransactionFilterState {
   type: TransactionType | "all";
   datePreset: DatePreset;
   accountIds: string[];
+  labelIds?: string[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";
 }
@@ -30,6 +32,7 @@ export const DEFAULT_TRANSACTION_FILTERS: TransactionFilterState = {
   type: "all",
   datePreset: "all",
   accountIds: [],
+  labelIds: [],
   sortBy: "date",
   sortOrder: "desc",
 };
@@ -71,6 +74,7 @@ export function TransactionFilterModal({
 
   const [localFilters, setLocalFilters] = useState<TransactionFilterState>(filters);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const { activeLabels } = useLabels({ includeArchived: false });
 
   // Sync with prop when opened
   React.useEffect(() => {
@@ -92,7 +96,8 @@ export function TransactionFilterModal({
   const hasActiveFilters =
     localFilters.type !== "all" ||
     localFilters.datePreset !== "all" ||
-    localFilters.accountIds.length > 0;
+    localFilters.accountIds.length > 0 ||
+    (localFilters.labelIds?.length ?? 0) > 0;
 
   const selectedAccountNames = accounts
     .filter((account) => localFilters.accountIds.includes(account.id))
@@ -293,6 +298,47 @@ export function TransactionFilterModal({
                 </ScrollView>
               ) : null}
             </View>
+
+            {/* Labels Section */}
+            {activeLabels.length > 0 && (
+              <View style={styles.filterGroup}>
+                <Text style={styles.groupTitle}>LABELS</Text>
+                <View style={styles.labelsWrap}>
+                  {activeLabels.map((lbl) => {
+                    const isSelected = localFilters.labelIds?.includes(lbl.id);
+                    return (
+                      <Pressable
+                        key={lbl.id}
+                        onPress={() =>
+                          setLocalFilters((prev) => {
+                            const current = prev.labelIds ?? [];
+                            return {
+                              ...prev,
+                              labelIds: isSelected
+                                ? current.filter((id) => id !== lbl.id)
+                                : [...current, lbl.id],
+                            };
+                          })
+                        }
+                        style={[
+                          styles.labelFilterChip,
+                          isSelected && styles.labelFilterChipSelected,
+                        ]}
+                      >
+                        <LabelBadge label={lbl} size="md" />
+                        {isSelected && (
+                          <Check
+                            size={14}
+                            color={theme.colors.primary}
+                            strokeWidth={3}
+                          />
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
           </ScrollView>
 
           {/* Footer */}
@@ -486,6 +532,26 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "500",
       paddingRight: theme.spacing.sm,
+    },
+    labelsWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
+    },
+    labelFilterChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+    },
+    labelFilterChipSelected: {
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: theme.colors.primary,
     },
     footerRow: {
       flexDirection: "row",

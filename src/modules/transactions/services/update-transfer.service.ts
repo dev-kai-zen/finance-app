@@ -8,6 +8,7 @@ import {
   insertTransaction,
   updateTransactionRecord,
 } from "../repositories/transactions.repository";
+import { assignTransactionLabels } from "@/modules/labels";
 import type {
   TransactionAttachmentChanges,
   UpdateTransferInput,
@@ -180,6 +181,17 @@ export function updateTransferInContext(
     }
   } else if (existingFeeLeg) {
     deleteTransaction(existingFeeLeg.id, context);
+  }
+
+  if (input.labelIds !== undefined) {
+    assignTransactionLabels(outLeg.id, input.labelIds, context);
+    assignTransactionLabels(inLeg.id, input.labelIds, context);
+    const updatedFeeLeg = findTransactionsByGroupId(input.transactionGroupId, context).find(
+      (tx) => tx.type === "expense",
+    );
+    if (updatedFeeLeg) {
+      assignTransactionLabels(updatedFeeLeg.id, input.labelIds, context);
+    }
   }
 
   reconcileCreditCardBillingInContext(new Date(), context);

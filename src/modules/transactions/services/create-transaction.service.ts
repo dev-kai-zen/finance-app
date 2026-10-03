@@ -6,6 +6,7 @@ import {
   reconcileCreditCardBillingInContext,
 } from "@/modules/credit-cards";
 import { insertTransaction } from "../repositories/transactions.repository";
+import { assignTransactionLabels } from "@/modules/labels";
 import type { CreateTransactionInput, Transaction } from "../types/transaction.types";
 
 export function createTransaction(input: CreateTransactionInput): Transaction {
@@ -54,6 +55,9 @@ export function createTransactionInContext(
     );
     if (input.installment) {
       createCreditCardInstallmentPlan(transaction, input.installment, context);
+    }
+    if (input.labelIds && input.labelIds.length > 0) {
+      assignTransactionLabels(transaction.id, input.labelIds, context);
     }
     reconcileCreditCardBillingInContext(new Date(), context);
     return transaction;

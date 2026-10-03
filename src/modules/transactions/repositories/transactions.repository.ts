@@ -15,6 +15,7 @@ import type {
   TransactionListItem,
   TransactionStats,
 } from "../types/transaction.types";
+import { getLabelsByTransactionIds, type LabelBadgeItem } from "@/modules/labels";
 
 export function generateId(context: DbContext = db): string {
   return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
@@ -33,6 +34,7 @@ function mapRowToListItem(r: {
 }, balanceAfterByTransactionId: ReadonlyMap<string, number>,
   pocketBalanceAfterByTransactionId: ReadonlyMap<string, number>,
   attachmentCountByTransactionId: ReadonlyMap<string, number>,
+  labelsByTransactionId: ReadonlyMap<string, LabelBadgeItem[]>,
 ): TransactionListItem {
   return {
     id: r.transaction.id,
@@ -49,6 +51,7 @@ function mapRowToListItem(r: {
     updatedAt: r.transaction.updatedAt,
     deletedAt: r.transaction.deletedAt,
     attachmentCount: attachmentCountByTransactionId.get(r.transaction.id) ?? 0,
+    labels: labelsByTransactionId.get(r.transaction.id) ?? [],
     accountName: r.accountName ?? "Unknown Account",
     accountCurrency: r.accountCurrency ?? "PHP",
     accountTypeName: r.accountTypeName ?? "Account",
@@ -295,6 +298,25 @@ export function listTransactions(
   if (filter?.categoryId) {
     conditions.push(eq(transactions.categoryId, filter.categoryId));
   }
+  if (filter?.labelIds && filter.labelIds.length > 0) {
+    conditions.push(
+      sql`EXISTS (
+        SELECT 1 FROM transaction_labels tl
+        WHERE (
+          tl.transaction_id = ${transactions.id}
+          OR (
+            ${transactions.transactionGroupId} IS NOT NULL
+            AND EXISTS (
+              SELECT 1 FROM transactions sibling
+              WHERE sibling.transaction_group_id = ${transactions.transactionGroupId}
+                AND sibling.id = tl.transaction_id
+            )
+          )
+        )
+        AND tl.label_id IN ${filter.labelIds}
+      )`,
+    );
+  }
 
   const rows = query.where(and(...conditions)).all();
 
@@ -303,12 +325,17 @@ export function listTransactions(
     getPocketBalanceAfterByTransactionId(context);
   const attachmentCountByTransactionId =
     getAttachmentCountByTransactionId(context);
+  const labelsByTransactionId = getLabelsByTransactionIds(
+    rows.map((row) => row.transaction.id),
+    context,
+  );
   const mapped = rows.map((row) =>
     mapRowToListItem(
       row,
       balanceAfterByTransactionId,
       pocketBalanceAfterByTransactionId,
       attachmentCountByTransactionId,
+      labelsByTransactionId,
     ),
   );
   const grouped = groupTransferRows(mapped);
@@ -329,6 +356,7 @@ export function listTransactions(
         (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
         (tx.pocketName && tx.pocketName.toLowerCase().includes(q)) ||
         (tx.transferPocketName && tx.transferPocketName.toLowerCase().includes(q)) ||
+        (tx.labels && tx.labels.some((lbl) => lbl.name.toLowerCase().includes(q))) ||
         tx.accountName.toLowerCase().includes(q) ||
         (tx.transferAccountName && tx.transferAccountName.toLowerCase().includes(q)),
     );
@@ -376,6 +404,10 @@ export function listDeletedTransactions(
     getPocketBalanceAfterByTransactionId(context);
   const attachmentCountByTransactionId =
     getAttachmentCountByTransactionId(context);
+  const labelsByTransactionId = getLabelsByTransactionIds(
+    rows.map((row) => row.transaction.id),
+    context,
+  );
   return groupTransferRows(
     rows.map((row) =>
       mapRowToListItem(
@@ -383,6 +415,7 @@ export function listDeletedTransactions(
         balanceAfterByTransactionId,
         pocketBalanceAfterByTransactionId,
         attachmentCountByTransactionId,
+        labelsByTransactionId,
       ),
     ),
   );

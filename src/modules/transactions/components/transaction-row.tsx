@@ -5,6 +5,7 @@ import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
 
 export interface TransactionRowProps {
@@ -233,12 +234,26 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
           {transaction.note}
         </Text>
       ) : null}
+
+      {transaction.labels && transaction.labels.length > 0 ? (
+        <View style={styles.labelsRow}>
+          {transaction.labels.map((lbl) => (
+            <LabelBadge key={lbl.id} label={lbl} size="sm" />
+          ))}
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    labelsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 4,
+      marginTop: 2,
+    },
     txCard: {
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.medium,

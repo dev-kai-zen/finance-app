@@ -183,6 +183,13 @@
       "when": 1791001207649,
       "tag": "0025_add_semi_monthly_frequency",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1791004631707,
+      "tag": "0026_add_labels_and_transaction_labels",
+      "breakpoints": true
     }
   ]
 }

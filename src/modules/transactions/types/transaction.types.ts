@@ -1,3 +1,5 @@
+import type { LabelBadgeItem } from "@/modules/labels";
+
 export type TransactionType = "income" | "expense" | "transfer";
 
 export interface Transaction {
@@ -54,6 +56,7 @@ export interface TransactionListItem extends Transaction {
   transferFeePocketName?: string | null;
   transferFeeCategoryId?: string | null;
   transferFeeCategoryName?: string | null;
+  labels?: LabelBadgeItem[];
 }
 
 export type TransactionAttachmentSyncStatus =
@@ -103,6 +106,7 @@ export interface CreateTransactionInput {
     termMonths: number;
     deferredMonths?: number;
   } | null;
+  labelIds?: string[];
 }
 
 export interface TransferFeeInput {
@@ -122,6 +126,7 @@ export interface CreateTransferInput {
   note?: string | null;
   occurredAt: Date;
   fee?: TransferFeeInput | null;
+  labelIds?: string[];
 }
 
 export interface UpdateTransferInput {
@@ -135,6 +140,7 @@ export interface UpdateTransferInput {
   note?: string | null;
   occurredAt: Date;
   fee?: TransferFeeInput | null;
+  labelIds?: string[];
 }
 
 export interface TransactionFilter {
@@ -142,6 +148,7 @@ export interface TransactionFilter {
   accountId?: string;
   categoryId?: string;
   searchQuery?: string;
+  labelIds?: string[];
 }
 
 export interface TransactionStats {

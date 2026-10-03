@@ -3,6 +3,7 @@ import {
   findTransactionById,
   updateTransactionRecord,
 } from "../repositories/transactions.repository";
+import { assignTransactionLabels } from "@/modules/labels";
 import type {
   CreateTransactionInput,
   TransactionAttachmentChanges,
@@ -86,5 +87,8 @@ export function updateTransactionInContext(
       },
       context,
     );
+    if (input.labelIds !== undefined) {
+      assignTransactionLabels(id, input.labelIds, context);
+    }
     reconcileCreditCardBillingInContext(new Date(), context);
 }

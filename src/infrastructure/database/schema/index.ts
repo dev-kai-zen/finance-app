@@ -13,3 +13,5 @@ export * from "./transaction-schedules";
 export * from "./transaction-attachments";
 export * from "./sync-operations";
 export * from "./budgets";
+export * from "./labels";
+export * from "./transaction-labels";

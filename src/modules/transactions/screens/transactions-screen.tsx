@@ -167,6 +167,7 @@ export function TransactionsScreen() {
     if (filterState.type !== "all") count += 1;
     if (filterState.datePreset !== "all") count += 1;
     if (filterState.accountIds.length > 0) count += 1;
+    if (filterState.labelIds && filterState.labelIds.length > 0) count += 1;
     return count;
   }, [filterState]);
 
@@ -182,6 +183,7 @@ export function TransactionsScreen() {
           (tx.name && tx.name.toLowerCase().includes(q)) ||
           (tx.note && tx.note.toLowerCase().includes(q)) ||
           (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
+          (tx.labels && tx.labels.some((lbl) => lbl.name.toLowerCase().includes(q))) ||
           tx.accountName.toLowerCase().includes(q) ||
           (tx.transferAccountName &&
             tx.transferAccountName.toLowerCase().includes(q))
@@ -201,6 +203,13 @@ export function TransactionsScreen() {
           filterState.accountIds.includes(tx.accountId) ||
           (tx.transferAccountId !== null &&
             filterState.accountIds.includes(tx.transferAccountId)),
+      );
+    }
+
+    // 4. Label filter
+    if (filterState.labelIds && filterState.labelIds.length > 0) {
+      list = list.filter((tx) =>
+        tx.labels?.some((lbl) => filterState.labelIds!.includes(lbl.id)),
       );
     }
 
