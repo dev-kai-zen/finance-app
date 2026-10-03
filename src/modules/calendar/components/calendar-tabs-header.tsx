@@ -1,5 +1,5 @@
 import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { CalendarTab } from "../types/calendar.types";
@@ -27,102 +27,125 @@ export function CalendarTabsHeader({
 
   return (
     <View style={styles.container}>
-      <Pressable
-        accessibilityLabel="Transactions tab"
-        accessibilityRole="tab"
-        accessibilityState={{ selected: activeTab === "transactions" }}
-        onPress={() => onSelectTab("transactions")}
-        style={[
-          styles.tab,
-          activeTab === "transactions" && styles.activeTab,
-        ]}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        <Text
-          numberOfLines={1}
+        <Pressable
+          accessibilityLabel="Transactions tab"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "transactions" }}
+          onPress={() => onSelectTab("transactions")}
           style={[
-            styles.tabText,
-            activeTab === "transactions" && styles.activeTabText,
+            styles.tab,
+            activeTab === "transactions" && styles.activeTab,
           ]}
         >
-          Transactions
-        </Text>
-        {transactionCount > 0 && (
-          <View
+          <Text
             style={[
-              styles.badge,
-              activeTab === "transactions" && styles.activeBadge,
+              styles.tabText,
+              activeTab === "transactions" && styles.activeTabText,
             ]}
           >
-            <Text
+            Transactions
+          </Text>
+          {transactionCount > 0 && (
+            <View
               style={[
-                styles.badgeText,
-                activeTab === "transactions" && styles.activeBadgeText,
+                styles.badge,
+                activeTab === "transactions" && styles.activeBadge,
               ]}
             >
-              {formatCount(transactionCount)}
-            </Text>
-          </View>
-        )}
-      </Pressable>
+              <Text
+                style={[
+                  styles.badgeText,
+                  activeTab === "transactions" && styles.activeBadgeText,
+                ]}
+              >
+                {formatCount(transactionCount)}
+              </Text>
+            </View>
+          )}
+        </Pressable>
 
-      <Pressable
-        accessibilityLabel="Schedules tab"
-        accessibilityRole="tab"
-        accessibilityState={{ selected: activeTab === "schedules" }}
-        onPress={() => onSelectTab("schedules")}
-        style={[
-          styles.tab,
-          activeTab === "schedules" && styles.activeTab,
-        ]}
-      >
-        <Text
-          numberOfLines={1}
+        <Pressable
+          accessibilityLabel="Schedules tab"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "schedules" }}
+          onPress={() => onSelectTab("schedules")}
           style={[
-            styles.tabText,
-            activeTab === "schedules" && styles.activeTabText,
+            styles.tab,
+            activeTab === "schedules" && styles.activeTab,
           ]}
         >
-          Schedules
-        </Text>
-        {scheduleCount > 0 && (
-          <View
+          <Text
             style={[
-              styles.badge,
-              activeTab === "schedules" && styles.activeBadge,
+              styles.tabText,
+              activeTab === "schedules" && styles.activeTabText,
             ]}
           >
-            <Text
+            Schedules
+          </Text>
+          {scheduleCount > 0 && (
+            <View
               style={[
-                styles.badgeText,
-                activeTab === "schedules" && styles.activeBadgeText,
+                styles.badge,
+                activeTab === "schedules" && styles.activeBadge,
               ]}
             >
-              {formatCount(scheduleCount)}
-            </Text>
-          </View>
-        )}
-      </Pressable>
+              <Text
+                style={[
+                  styles.badgeText,
+                  activeTab === "schedules" && styles.activeBadgeText,
+                ]}
+              >
+                {formatCount(scheduleCount)}
+              </Text>
+            </View>
+          )}
+        </Pressable>
 
-      <Pressable
-        accessibilityLabel="Net Earnings tab"
-        accessibilityRole="tab"
-        accessibilityState={{ selected: activeTab === "net" }}
-        onPress={() => onSelectTab("net")}
-        style={[
-          styles.tab,
-          activeTab === "net" && styles.activeTab,
-        ]}
-      >
-        <Text
-          numberOfLines={1}
+        <Pressable
+          accessibilityLabel="Net Earnings tab"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "net" }}
+          onPress={() => onSelectTab("net")}
           style={[
-            styles.tabText,
-            activeTab === "net" && styles.activeTabText,
+            styles.tab,
+            activeTab === "net" && styles.activeTab,
           ]}
         >
-          Net Earnings
-        </Text>
-      </Pressable>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "net" && styles.activeTabText,
+            ]}
+          >
+            Net Earnings
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityLabel="Balance Sheet tab"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "balance_sheet" }}
+          onPress={() => onSelectTab("balance_sheet")}
+          style={[
+            styles.tab,
+            activeTab === "balance_sheet" && styles.activeTab,
+          ]}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === "balance_sheet" && styles.activeTabText,
+            ]}
+          >
+            Balance Sheet
+          </Text>
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }
@@ -130,34 +153,35 @@ export function CalendarTabsHeader({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     container: {
-      flexDirection: "row",
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: 3,
-      gap: 4,
+    },
+    scrollContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 2,
     },
     tab: {
-      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: 8,
-      paddingHorizontal: 6,
+      paddingHorizontal: 12,
       borderRadius: theme.borderRadius.small,
-      gap: 4,
-      minWidth: 0,
-      overflow: "hidden",
+      gap: 6,
+      flexShrink: 0,
     },
     activeTab: {
       backgroundColor: theme.colors.primary + "18",
     },
     tabText: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "500",
       color: theme.colors.textSecondary,
-      flexShrink: 1,
     },
     activeTabText: {
       color: theme.colors.primary,
@@ -165,11 +189,11 @@ function createStyles(theme: AppTheme) {
     },
     badge: {
       backgroundColor: theme.colors.border,
-      borderRadius: 9,
-      paddingHorizontal: 5,
-      paddingVertical: 1,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
       minWidth: 18,
-      height: 17,
+      height: 18,
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,

@@ -19,6 +19,10 @@ export const getAccountsWithBalances = deferFunction(
       .getAccountsWithBalances,
 ) as typeof import("./services/get-accounts-with-balances.service").getAccountsWithBalances;
 
+export const getBalanceSheet = deferFunction(
+  () => require("./services/get-balance-sheet.service").getBalanceSheet,
+) as typeof import("./services/get-balance-sheet.service").getBalanceSheet;
+
 export const getCreditCardDetails = deferFunction(
   () =>
     require("./services/get-credit-card-details.service").getCreditCardDetails,
@@ -109,3 +113,10 @@ export type {
   FundGroupMemberItem,
   FundGroupsWorkspace,
 } from "./types/fund-group.types";
+export type {
+  BalanceSheetData,
+  BalanceSheetGroupData,
+  BalanceSheetAccountTypeGroup,
+  BalanceSheetAccountItem,
+  BalanceSheetPocketItem,
+} from "./services/get-balance-sheet.service";

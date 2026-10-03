@@ -118,6 +118,12 @@ export const getAccountBalanceDeltasAtDates = deferFunction(
       .getAccountBalanceDeltasAtDates,
 ) as typeof import("./services/get-account-balance-deltas.service").getAccountBalanceDeltasAtDates;
 
+export const getAccountBalanceDeltasAtDate = deferFunction(
+  () =>
+    require("./services/get-account-balance-deltas.service")
+      .getAccountBalanceDeltasAtDate,
+) as typeof import("./services/get-account-balance-deltas.service").getAccountBalanceDeltasAtDate;
+
 export const getRecentTransactions = deferFunction(
   () =>
     require("./services/get-recent-transactions.service").getRecentTransactions,
@@ -134,6 +140,12 @@ export const getPocketTransactionBalanceDeltas = deferFunction(
     require("./services/get-pocket-transaction-balance-deltas.service")
       .getPocketTransactionBalanceDeltas,
 ) as typeof import("./services/get-pocket-transaction-balance-deltas.service").getPocketTransactionBalanceDeltas;
+
+export const getPocketBalanceDeltasAtDate = deferFunction(
+  () =>
+    require("./services/get-pocket-transaction-balance-deltas.service")
+      .getPocketBalanceDeltasAtDate,
+) as typeof import("./services/get-pocket-transaction-balance-deltas.service").getPocketBalanceDeltasAtDate;
 
 export const getCategoryExpenseTotal = deferFunction(
   () =>

@@ -14,6 +14,7 @@ import {
   useTransactions,
   type TransactionListItem,
 } from "@/modules/transactions";
+import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
 import { CalendarMonthHeader } from "../components/calendar-month-header";
 import { CalendarNetTab } from "../components/calendar-net-tab";
@@ -38,6 +39,7 @@ export function CalendarScreen() {
     scopedSchedules,
     summaryMetrics,
     categoryBreakdown,
+    balanceSheetData,
     accounts,
     categories,
     pockets,
@@ -133,10 +135,24 @@ export function CalendarScreen() {
     refreshAll();
   };
 
+  const balanceSheetAccountCount =
+    balanceSheetData.assets.accountTypes.reduce(
+      (sum, g) => sum + g.accounts.length,
+      0,
+    ) +
+    balanceSheetData.liabilities.accountTypes.reduce(
+      (sum, g) => sum + g.accounts.length,
+      0,
+    );
+
   const currentTabCount =
     activeTab === "transactions"
       ? scopedTransactions.length
-      : scopedSchedules.length;
+      : activeTab === "schedules"
+        ? scopedSchedules.length
+        : activeTab === "balance_sheet"
+          ? balanceSheetAccountCount
+          : scopedTransactions.length;
 
   return (
     <PageContainer>
@@ -208,6 +224,14 @@ export function CalendarScreen() {
             categoryBreakdown={categoryBreakdown}
             isMonthScope={selectedDay === null}
             metrics={summaryMetrics}
+          />
+        )}
+
+        {activeTab === "balance_sheet" && (
+          <CalendarBalanceSheetTab
+            activeMonth={activeMonth}
+            balanceSheet={balanceSheetData}
+            selectedDay={selectedDay}
           />
         )}
       </View>

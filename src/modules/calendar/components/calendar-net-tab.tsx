@@ -30,11 +30,13 @@ export function CalendarNetTab({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
+  const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
+  const isOutflowPositive = metrics.totalOutflowMinorUnits >= 0;
   const isNetPositive = metrics.netCashflowMinorUnits >= 0;
   const isProjectedPositive = metrics.projectedMonthEndNetMinorUnits >= 0;
 
-  const totalInflow = metrics.totalInflowMinorUnits;
-  const totalOutflow = metrics.totalOutflowMinorUnits;
+  const totalInflow = Math.max(0, metrics.totalInflowMinorUnits);
+  const totalOutflow = Math.abs(metrics.totalOutflowMinorUnits);
   const totalFlow = totalInflow + totalOutflow;
 
   const inflowPercent =
@@ -51,14 +53,33 @@ export function CalendarNetTab({
             <View
               style={[
                 styles.iconBubble,
-                { backgroundColor: theme.colors.success + "18" },
+                {
+                  backgroundColor:
+                    (isInflowPositive
+                      ? theme.colors.success
+                      : theme.colors.danger) + "18",
+                },
               ]}
             >
-              <ArrowDownLeft color={theme.colors.success} size={15} />
+              <ArrowDownLeft
+                color={
+                  isInflowPositive ? theme.colors.success : theme.colors.danger
+                }
+                size={15}
+              />
             </View>
             <Text style={styles.statCardLabel}>Inflow</Text>
           </View>
-          <Text style={[styles.statCardValue, { color: theme.colors.success }]}>
+          <Text
+            style={[
+              styles.statCardValue,
+              {
+                color: isInflowPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
             {formatCurrency(metrics.totalInflowMinorUnits, "PHP", false)}
           </Text>
         </View>
@@ -69,14 +90,33 @@ export function CalendarNetTab({
             <View
               style={[
                 styles.iconBubble,
-                { backgroundColor: theme.colors.danger + "18" },
+                {
+                  backgroundColor:
+                    (isOutflowPositive
+                      ? theme.colors.success
+                      : theme.colors.danger) + "18",
+                },
               ]}
             >
-              <ArrowUpRight color={theme.colors.danger} size={15} />
+              <ArrowUpRight
+                color={
+                  isOutflowPositive ? theme.colors.success : theme.colors.danger
+                }
+                size={15}
+              />
             </View>
             <Text style={styles.statCardLabel}>Outflow</Text>
           </View>
-          <Text style={[styles.statCardValue, { color: theme.colors.danger }]}>
+          <Text
+            style={[
+              styles.statCardValue,
+              {
+                color: isOutflowPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
             {formatCurrency(metrics.totalOutflowMinorUnits, "PHP", false)}
           </Text>
         </View>
@@ -454,7 +494,7 @@ function createStyles(theme: AppTheme) {
     categoryAmount: {
       fontSize: 13,
       fontWeight: "700",
-      color: theme.colors.textPrimary,
+      color: theme.colors.danger,
     },
     categoryPercent: {
       fontSize: 10,

@@ -21,3 +21,28 @@ export function getPocketTransactionBalanceDeltas(
   }
   return deltas;
 }
+
+export function getPocketBalanceDeltasAtDate(
+  cutoffDate: Date,
+  context: DbContext = db,
+): Record<string, number> {
+  const cutoffTime = cutoffDate.getTime();
+  const rows = context
+    .select({
+      pocketId: transactions.pocketId,
+      amountCents: transactions.amountCents,
+      occurredAt: transactions.occurredAt,
+    })
+    .from(transactions)
+    .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
+    .all();
+
+  const deltas: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.occurredAt.getTime() > cutoffTime) continue;
+    if (row.pocketId) {
+      deltas[row.pocketId] = (deltas[row.pocketId] ?? 0) + row.amountCents;
+    }
+  }
+  return deltas;
+}

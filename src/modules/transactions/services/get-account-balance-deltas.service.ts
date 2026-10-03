@@ -65,3 +65,13 @@ export function getAccountBalanceDeltasAtDates(
     return deltas;
   });
 }
+
+/**
+ * Calculates account transaction deltas at a single historical cutoff date.
+ */
+export function getAccountBalanceDeltasAtDate(
+  cutoffDate: Date,
+  context: DbContext = db,
+): Record<string, number> {
+  return getAccountBalanceDeltasAtDates([cutoffDate], context)[0] ?? {};
+}

@@ -1,5 +1,9 @@
 import { useCallback, useMemo, useState } from "react";
-import { useAccounts } from "@/modules/accounts";
+import {
+  getBalanceSheet,
+  useAccounts,
+  type BalanceSheetData,
+} from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import {
   getCalendarScheduleOccurrences,
@@ -149,16 +153,17 @@ export function useCalendarData() {
       let expenseCount = 0;
 
       for (const tx of dayTxs) {
-        if (tx.type === "income") {
+        if (tx.type === "transfer") continue;
+        if (tx.amountCents > 0 || tx.type === "income") {
           totalIncomeMinorUnits += tx.amountCents;
           incomeCount++;
-        } else if (tx.type === "expense") {
-          totalExpenseMinorUnits += Math.abs(tx.amountCents);
+        } else if (tx.amountCents < 0 || tx.type === "expense") {
+          totalExpenseMinorUnits += tx.amountCents;
           expenseCount++;
         }
       }
 
-      const netMinorUnits = totalIncomeMinorUnits - totalExpenseMinorUnits;
+      const netMinorUnits = totalIncomeMinorUnits + totalExpenseMinorUnits;
       const hasDueSchedule = daySchedules.some((s) => s.status === "due");
       const hasUpcomingSchedule = daySchedules.some(
         (s) => s.status === "upcoming",
@@ -195,14 +200,15 @@ export function useCalendarData() {
     let outflow = 0;
 
     for (const tx of scopedTransactions) {
-      if (tx.type === "income") {
+      if (tx.type === "transfer") continue;
+      if (tx.amountCents > 0 || tx.type === "income") {
         inflow += tx.amountCents;
-      } else if (tx.type === "expense") {
-        outflow += Math.abs(tx.amountCents);
+      } else if (tx.amountCents < 0 || tx.type === "expense") {
+        outflow += tx.amountCents;
       }
     }
 
-    const net = inflow - outflow;
+    const net = inflow + outflow;
     const txCount = scopedTransactions.length;
 
     let schedulesTotalDue = 0;
@@ -219,7 +225,7 @@ export function useCalendarData() {
     }
 
     const savingsRate =
-      inflow > 0 ? Math.round(((inflow - outflow) / inflow) * 100) : 0;
+      inflow > 0 ? Math.max(0, Math.round(((inflow + outflow) / inflow) * 100)) : 0;
 
     // Projected Month-End Net:
     // Takes the month's total actual net, and adds pending scheduled inflows and subtracts pending scheduled outflows
@@ -239,12 +245,44 @@ export function useCalendarData() {
     let monthActualInflow = 0;
     let monthActualOutflow = 0;
     for (const tx of activeMonthTransactions) {
-      if (tx.type === "income") monthActualInflow += tx.amountCents;
-      if (tx.type === "expense") monthActualOutflow += Math.abs(tx.amountCents);
+      if (tx.type === "transfer") continue;
+      if (tx.amountCents > 0 || tx.type === "income") monthActualInflow += tx.amountCents;
+      if (tx.amountCents < 0 || tx.type === "expense") monthActualOutflow += tx.amountCents;
     }
-    const monthActualNet = monthActualInflow - monthActualOutflow;
+    const monthActualNet = monthActualInflow + monthActualOutflow;
     const projectedMonthEndNet =
       monthActualNet + monthPendingInflows - monthPendingOutflows;
+
+    // Compute cutoff date for Balance Sheet
+    // If selectedDay: end of that selected day (23:59:59.999)
+    // If no selectedDay: end of activeMonth (last day of month 23:59:59.999)
+    const cutoffDate = selectedDay
+      ? (() => {
+          const parts = parseDateKey(selectedDay);
+          return new Date(parts.year, parts.month, parts.day, 23, 59, 59, 999);
+        })()
+      : new Date(
+          activeMonth.year,
+          activeMonth.month + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
+
+    let bsAssets = 0;
+    let bsLiabilities = 0;
+    let bsNetWorth = 0;
+
+    try {
+      const bs = getBalanceSheet(cutoffDate);
+      bsAssets = bs.assets.totalMinorUnits;
+      bsLiabilities = bs.liabilities.totalMinorUnits;
+      bsNetWorth = bs.netWorthMinorUnits;
+    } catch {
+      // Graceful fallback
+    }
 
     return {
       totalInflowMinorUnits: inflow,
@@ -256,13 +294,50 @@ export function useCalendarData() {
       schedulesPostedCount: postedCount,
       savingsRatePercent: savingsRate,
       projectedMonthEndNetMinorUnits: projectedMonthEndNet,
+      balanceSheetAssetsMinorUnits: bsAssets,
+      balanceSheetLiabilitiesMinorUnits: bsLiabilities,
+      balanceSheetNetWorthMinorUnits: bsNetWorth,
     };
   }, [
     scopedTransactions,
     scopedSchedules,
     monthScheduleOccurrences,
     activeMonthTransactions,
+    selectedDay,
+    activeMonth,
+    accounts,
+    pockets,
   ]);
+
+  // Compute live Balance Sheet data for the balance sheet tab
+  const balanceSheetCutoffDate = useMemo(() => {
+    if (selectedDay) {
+      const parts = parseDateKey(selectedDay);
+      return new Date(parts.year, parts.month, parts.day, 23, 59, 59, 999);
+    }
+    return new Date(
+      activeMonth.year,
+      activeMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+  }, [selectedDay, activeMonth]);
+
+  const balanceSheetData = useMemo<BalanceSheetData>(() => {
+    try {
+      return getBalanceSheet(balanceSheetCutoffDate);
+    } catch {
+      return {
+        cutoffDate: balanceSheetCutoffDate,
+        assets: { totalMinorUnits: 0, accountTypes: [] },
+        liabilities: { totalMinorUnits: 0, accountTypes: [] },
+        netWorthMinorUnits: 0,
+      };
+    }
+  }, [balanceSheetCutoffDate, transactions, accounts, pockets]);
 
   // Top spending categories breakdown for current scope
   const categoryBreakdown = useMemo<CategoryExpenseBreakdown[]>(() => {
@@ -355,6 +430,7 @@ export function useCalendarData() {
     scopedSchedules,
     summaryMetrics,
     categoryBreakdown,
+    balanceSheetData,
     accounts,
     categories,
     pockets,

@@ -222,13 +222,17 @@ function createStyles(theme: AppTheme) {
       borderRadius: 16,
       alignItems: "center",
       justifyContent: "center",
+      overflow: "hidden",
     },
     todayBadge: {
       borderWidth: 1.5,
       borderColor: theme.colors.primary,
+      borderRadius: 16,
     },
     selectedBadge: {
       backgroundColor: theme.colors.primary,
+      borderRadius: 16,
+      overflow: "hidden",
       shadowColor: theme.colors.primary,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.25,

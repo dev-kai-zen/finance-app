@@ -1,6 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { ArrowDownLeft, ArrowUpRight, Clock, Scale } from "lucide-react-native";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Clock,
+  CreditCard,
+  Landmark,
+  Scale,
+} from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
@@ -24,16 +31,32 @@ export function CalendarSummaryRibbon({
   const styles = useThemeStyles(createStyles);
 
   if (activeTab === "transactions") {
+    const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
+    const isOutflowPositive = metrics.totalOutflowMinorUnits >= 0;
     const isNetPositive = metrics.netCashflowMinorUnits >= 0;
 
     return (
       <View style={styles.ribbon}>
         <View style={styles.metricItem}>
           <View style={styles.metricLabelRow}>
-            <ArrowDownLeft color={theme.colors.success} size={13} />
+            <ArrowDownLeft
+              color={
+                isInflowPositive ? theme.colors.success : theme.colors.danger
+              }
+              size={13}
+            />
             <Text style={styles.metricLabel}>Inflow</Text>
           </View>
-          <Text style={[styles.metricValue, { color: theme.colors.success }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              {
+                color: isInflowPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
             {formatCurrency(metrics.totalInflowMinorUnits, "PHP", false)}
           </Text>
         </View>
@@ -42,10 +65,24 @@ export function CalendarSummaryRibbon({
 
         <View style={styles.metricItem}>
           <View style={styles.metricLabelRow}>
-            <ArrowUpRight color={theme.colors.danger} size={13} />
+            <ArrowUpRight
+              color={
+                isOutflowPositive ? theme.colors.success : theme.colors.danger
+              }
+              size={13}
+            />
             <Text style={styles.metricLabel}>Outflow</Text>
           </View>
-          <Text style={[styles.metricValue, { color: theme.colors.danger }]}>
+          <Text
+            style={[
+              styles.metricValue,
+              {
+                color: isOutflowPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
             {formatCurrency(metrics.totalOutflowMinorUnits, "PHP", false)}
           </Text>
         </View>
@@ -73,6 +110,98 @@ export function CalendarSummaryRibbon({
             ]}
           >
             {formatCurrency(metrics.netCashflowMinorUnits, "PHP", false)}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (activeTab === "balance_sheet") {
+    const assets = metrics.balanceSheetAssetsMinorUnits ?? 0;
+    const liabilities = metrics.balanceSheetLiabilitiesMinorUnits ?? 0;
+    const netWorth = metrics.balanceSheetNetWorthMinorUnits ?? 0;
+
+    const isAssetsPositive = assets >= 0;
+    const isLiabilitiesPositive = liabilities >= 0;
+    const isNetWorthPositive = netWorth >= 0;
+
+    return (
+      <View style={styles.ribbon}>
+        <View style={styles.metricItem}>
+          <View style={styles.metricLabelRow}>
+            <Landmark
+              color={
+                isAssetsPositive ? theme.colors.success : theme.colors.danger
+              }
+              size={13}
+            />
+            <Text style={styles.metricLabel}>Assets</Text>
+          </View>
+          <Text
+            style={[
+              styles.metricValue,
+              {
+                color: isAssetsPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
+            {formatCurrency(assets, "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.separator} />
+
+        <View style={styles.metricItem}>
+          <View style={styles.metricLabelRow}>
+            <CreditCard
+              color={
+                isLiabilitiesPositive
+                  ? theme.colors.success
+                  : theme.colors.danger
+              }
+              size={13}
+            />
+            <Text style={styles.metricLabel}>Liabilities</Text>
+          </View>
+          <Text
+            style={[
+              styles.metricValue,
+              {
+                color: isLiabilitiesPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
+            {formatCurrency(liabilities, "PHP", false)}
+          </Text>
+        </View>
+
+        <View style={styles.separator} />
+
+        <View style={styles.metricItem}>
+          <View style={styles.metricLabelRow}>
+            <Scale
+              color={
+                isNetWorthPositive ? theme.colors.success : theme.colors.danger
+              }
+              size={13}
+            />
+            <Text style={styles.metricLabel}>Net Worth</Text>
+          </View>
+          <Text
+            style={[
+              styles.metricValue,
+              {
+                color: isNetWorthPositive
+                  ? theme.colors.success
+                  : theme.colors.danger,
+              },
+            ]}
+          >
+            {formatCurrency(netWorth, "PHP", false)}
           </Text>
         </View>
       </View>

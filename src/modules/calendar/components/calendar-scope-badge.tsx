@@ -33,7 +33,11 @@ export function CalendarScopeBadge({
         ? itemCount === 1
           ? "schedule"
           : "schedules"
-        : "records";
+        : activeTab === "balance_sheet"
+          ? itemCount === 1
+            ? "account"
+            : "accounts"
+          : "records";
 
   if (selectedDay) {
     const formatted = formatFriendlyDate(selectedDay);
@@ -47,7 +51,9 @@ export function CalendarScopeBadge({
           <View>
             <Text style={styles.title}>{formatted}</Text>
             <Text style={styles.subtitle}>
-              {itemCount} {noun} on this day
+              {activeTab === "balance_sheet"
+                ? `Balances as of this day (${itemCount} ${noun})`
+                : `${itemCount} ${noun} on this day`}
             </Text>
           </View>
         </View>
@@ -79,7 +85,9 @@ export function CalendarScopeBadge({
         <View>
           <Text style={styles.titleMuted}>{monthLabel} (Whole Month)</Text>
           <Text style={styles.subtitle}>
-            {itemCount} {noun} · Tap a day to inspect
+            {activeTab === "balance_sheet"
+              ? "Balances as of end of month · Tap a day to inspect"
+              : `${itemCount} ${noun} · Tap a day to inspect`}
           </Text>
         </View>
       </View>

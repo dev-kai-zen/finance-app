@@ -1,4 +1,4 @@
-export type CalendarTab = "transactions" | "schedules" | "net";
+export type CalendarTab = "transactions" | "schedules" | "net" | "balance_sheet";
 
 export interface CalendarMonth {
   year: number;
@@ -37,4 +37,8 @@ export interface CalendarSummaryMetrics {
   // Net analytics
   savingsRatePercent: number;
   projectedMonthEndNetMinorUnits: number;
+  // Balance Sheet metrics
+  balanceSheetAssetsMinorUnits?: number;
+  balanceSheetLiabilitiesMinorUnits?: number;
+  balanceSheetNetWorthMinorUnits?: number;
 }
