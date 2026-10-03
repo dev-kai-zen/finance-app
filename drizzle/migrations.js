@@ -25,6 +25,7 @@ import m0020 from './0020_add_transaction_schedules.sql';
 import m0021 from './0021_archive_transaction_schedules.sql';
 import m0022 from './0022_add_transaction_attachments_and_sync.sql';
 import m0023 from './0023_add_credit_card_bnpl_deferred_months.sql';
+import m0024 from './0024_add_category_budgets.sql';
 
   export default {
     journal,
@@ -52,7 +53,8 @@ m0019,
 m0020,
 m0021,
 m0022,
-m0023
+m0023,
+m0024
     }
   }
   

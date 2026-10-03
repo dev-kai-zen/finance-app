@@ -290,6 +290,12 @@ src/infrastructure/database/
 - Migrations are generated into `drizzle/` and executed via `useMigrations` in `database-provider.tsx`.
 - Database schemas define data models only; form/input validations belong in `src/modules/<feature>/schemas/`.
 
+### Drizzle Migration Generation & Naming Rule
+
+- **Always provide a descriptive name**: Run `npx drizzle-kit generate --name <descriptive_name>` (e.g., `npx drizzle-kit generate --name add_category_budgets`).
+- **NEVER use default auto-generated names**: Drizzle Kit defaults to random names (e.g., `bitter_meltdown`, `slippery_gargoyle`). This is strictly forbidden. All migration files in `drizzle/` must have clear, human-readable names describing the schema change (e.g., `0024_add_category_budgets.sql`).
+- Verify that `drizzle/migrations.js` and `drizzle/meta/_journal.json` reflect the descriptive migration tag.
+
 ---
 
 # 11. Offline-First Architecture
@@ -392,3 +398,4 @@ When modifying this project, AI agents must:
 10. **Do not over-engineer**: Do not create unnecessary layers of abstraction. Use the simplest implementation that respects the architecture.
 11. **DO NOT EDIT ANY FILES INSIDE THE `node_modules`**: AI agents are strictly forbidden from modifying any file inside `node_modules`. All fixes and adaptations must be made in application code or configuration.
 12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.
+13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).

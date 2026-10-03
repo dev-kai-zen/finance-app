@@ -33,6 +33,12 @@ import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { formatCurrency } from "@/utils/currency";
+import {
+  checkBudgetExceeded,
+  BudgetLiveIndicator,
+  OverBudgetWarningModal,
+  type BudgetCheckResult,
+} from "@/modules/budgets";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
@@ -238,6 +244,8 @@ export function TransactionFormModal({
   const [isFeeCalculatorOpen, setIsFeeCalculatorOpen] = useState(false);
   const [isFeeAccountPickerOpen, setIsFeeAccountPickerOpen] = useState(false);
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
+  const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
+  const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,
     isEditing,
@@ -657,7 +665,7 @@ export function TransactionFormModal({
     setLocalError(null);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (bypassBudgetCheck: boolean = false) => {
     if (amountMinorUnits <= 0) {
       setLocalError("Please enter an amount greater than zero.");
       return;
@@ -786,6 +794,32 @@ export function TransactionFormModal({
         }
       }
 
+      if (
+        !bypassBudgetCheck &&
+        mode === "expense" &&
+        selectedCategoryId &&
+        amountMinorUnits > 0
+      ) {
+        const budgetCheck = checkBudgetExceeded({
+          categoryId: selectedCategoryId,
+          amountCents: Math.abs(amountMinorUnits),
+          occurredAt: transactionOccurredAt,
+          excludeTransactionId:
+            isEditing && initialTransaction ? initialTransaction.id : null,
+        });
+
+        if (
+          budgetCheck.hasBudget &&
+          budgetCheck.isEnabled &&
+          budgetCheck.exceeds &&
+          budgetCheck.notifyOnExceeded
+        ) {
+          setPendingBudgetWarning(budgetCheck);
+          setIsBudgetWarningOpen(true);
+          return;
+        }
+      }
+
       setLocalError(null);
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
@@ -821,6 +855,15 @@ export function TransactionFormModal({
         onClose();
       }
     }
+  };
+
+  const handleProceedOverBudget = async () => {
+    setIsBudgetWarningOpen(false);
+    await handleSave(true);
+  };
+
+  const handleCancelOverBudget = () => {
+    setIsBudgetWarningOpen(false);
   };
 
   const displayError = localError || error;
@@ -1319,6 +1362,16 @@ export function TransactionFormModal({
                     <ChevronRight size={14} color={theme.colors.textSecondary} />
                   </View>
                 </Pressable>
+                {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
+                  <BudgetLiveIndicator
+                    amountMinorUnits={amountMinorUnits}
+                    categoryId={selectedCategoryId}
+                    excludeTransactionId={
+                      isEditing && initialTransaction ? initialTransaction.id : null
+                    }
+                    occurredAt={occurredAt}
+                  />
+                ) : null}
               </View>
             )}
 
@@ -1609,7 +1662,7 @@ export function TransactionFormModal({
               accessibilityLabel={pending ? "Saving..." : "Save Record"}
               accessibilityRole="button"
               disabled={pending}
-              onPress={handleSave}
+              onPress={() => handleSave(false)}
               style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
             >
               <Text style={styles.saveBtnText}>
@@ -1775,6 +1828,14 @@ export function TransactionFormModal({
         title={localError ? "Check transaction details" : "Unable to save transaction"}
         variant={localError ? "warning" : "error"}
         visible={visible && Boolean(displayError)}
+      />
+
+      <OverBudgetWarningModal
+        onCancel={handleCancelOverBudget}
+        onProceed={handleProceedOverBudget}
+        pending={pending}
+        result={pendingBudgetWarning}
+        visible={isBudgetWarningOpen}
       />
     </>
   );

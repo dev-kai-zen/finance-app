@@ -169,6 +169,13 @@
       "when": 1790949928373,
       "tag": "0023_add_credit_card_bnpl_deferred_months",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1790995940088,
+      "tag": "0024_add_category_budgets",
+      "breakpoints": true
     }
   ]
 }

@@ -11,7 +11,7 @@ import { IconHelper } from "./icon-helper";
 interface NavItemConfig {
   href: string;
   label: string;
-  icon: "dashboard" | "accounts" | "transactions" | "credit-cards" | "categories" | "monitor" | "settings";
+  icon: "dashboard" | "accounts" | "transactions" | "credit-cards" | "categories" | "budgets" | "monitor" | "settings";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -20,6 +20,7 @@ const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
   { href: "/transactions", label: "Transactions", icon: "transactions" },
   { href: "/credit-cards", label: "Credit Cards", icon: "credit-cards" },
   { href: "/categories", label: "Categories", icon: "categories" },
+  { href: "/budgets", label: "Budgets", icon: "budgets" },
 ];
 
 const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -155,6 +156,7 @@ function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolea
     transactions: "arrow-left-right",
     "credit-cards": "credit-card",
     categories: "layers",
+    budgets: "pie-chart",
     monitor: "database",
     settings: "settings",
   };

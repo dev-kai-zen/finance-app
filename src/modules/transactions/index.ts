@@ -135,6 +135,18 @@ export const getPocketTransactionBalanceDeltas = deferFunction(
       .getPocketTransactionBalanceDeltas,
 ) as typeof import("./services/get-pocket-transaction-balance-deltas.service").getPocketTransactionBalanceDeltas;
 
+export const getCategoryExpenseTotal = deferFunction(
+  () =>
+    require("./services/get-category-expense-summary.service")
+      .getCategoryExpenseTotal,
+) as typeof import("./services/get-category-expense-summary.service").getCategoryExpenseTotal;
+
+export const getCategoryExpenseTotalsGrouped = deferFunction(
+  () =>
+    require("./services/get-category-expense-summary.service")
+      .getCategoryExpenseTotalsGrouped,
+) as typeof import("./services/get-category-expense-summary.service").getCategoryExpenseTotalsGrouped;
+
 export const hasTransactions = deferFunction(
   () => require("./services/has-transactions.service").hasTransactions,
 ) as typeof import("./services/has-transactions.service").hasTransactions;

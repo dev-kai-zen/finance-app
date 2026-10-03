@@ -1,4 +1,4 @@
-import type { DbContext } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
 import { findCategoryById } from "../repositories/categories.repository";
 
 export function requireCategory(id: string, context: DbContext) {
@@ -7,5 +7,9 @@ export function requireCategory(id: string, context: DbContext) {
     throw new Error("This category no longer exists. Refresh and try again.");
   }
   return category;
+}
+
+export function getCategory(id: string, context: DbContext = db) {
+  return findCategoryById(id, context);
 }
 
