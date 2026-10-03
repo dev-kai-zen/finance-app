@@ -25,6 +25,7 @@ export const categoryBudgets = sqliteTable(
         "daily",
         "weekly",
         "biweekly",
+        "semi_monthly",
         "monthly",
         "custom_monthly",
         "quarterly",
@@ -54,7 +55,7 @@ export const categoryBudgets = sqliteTable(
     check("category_budgets_amount_check", sql`${table.amountCents} >= 0`),
     check(
       "category_budgets_frequency_check",
-      sql`${table.frequency} in ('daily', 'weekly', 'biweekly', 'monthly', 'custom_monthly', 'quarterly', 'yearly')`,
+      sql`${table.frequency} in ('daily', 'weekly', 'biweekly', 'semi_monthly', 'monthly', 'custom_monthly', 'quarterly', 'yearly')`,
     ),
     check(
       "category_budgets_rollover_mode_check",

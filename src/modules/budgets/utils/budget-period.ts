@@ -116,18 +116,49 @@ export function getBudgetPeriodInfo(
   if (frequency === "biweekly") {
     // 14-day cycle anchored at anchorStartDate or Jan 1 of current year
     const anchor = anchorStartDate ? new Date(anchorStartDate) : new Date(d.getFullYear(), 0, 1);
+    anchor.setHours(0, 0, 0, 0);
+
     const msInDay = 86400000;
-    const msIn14Days = 14 * msInDay;
     const diffMs = d.getTime() - anchor.getTime();
-    const cycleCount = Math.floor(diffMs / msIn14Days);
+    const dayDiff = Math.floor(diffMs / msInDay);
+    const cycleCount = Math.floor(dayDiff / 14);
 
-    const startMs = anchor.getTime() + cycleCount * msIn14Days;
-    const startDate = new Date(startMs);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date(startDate.getTime() + 14 * msInDay - 1);
-    const previousStartDate = new Date(startDate.getTime() - msIn14Days);
-    const previousEndDate = new Date(endDate.getTime() - msIn14Days);
+    const startDate = new Date(
+      anchor.getFullYear(),
+      anchor.getMonth(),
+      anchor.getDate() + cycleCount * 14,
+      0,
+      0,
+      0,
+      0,
+    );
+    const endDate = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() + 13,
+      23,
+      59,
+      59,
+      999,
+    );
+    const previousStartDate = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() - 14,
+      0,
+      0,
+      0,
+      0,
+    );
+    const previousEndDate = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() - 1,
+      23,
+      59,
+      59,
+      999,
+    );
 
     const periodLabel = `${SHORT_MONTHS[startDate.getMonth()]} ${startDate.getDate()} - ${SHORT_MONTHS[endDate.getMonth()]} ${endDate.getDate()}`;
 
@@ -138,6 +169,50 @@ export function getBudgetPeriodInfo(
       previousEndDate,
       periodLabel,
     };
+  }
+
+  if (frequency === "semi_monthly") {
+    const isFirstHalf = d.getDate() <= 15;
+
+    if (isFirstHalf) {
+      // 1st to 15th of current month
+      const startDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+      const endDate = new Date(d.getFullYear(), d.getMonth(), 15, 23, 59, 59, 999);
+
+      // Previous period: 16th to end of previous month
+      const prevMonth = d.getMonth() === 0 ? 11 : d.getMonth() - 1;
+      const prevYear = d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear();
+      const previousStartDate = new Date(prevYear, prevMonth, 16, 0, 0, 0, 0);
+      const previousEndDate = new Date(prevYear, prevMonth + 1, 0, 23, 59, 59, 999);
+
+      const periodLabel = `${SHORT_MONTHS[d.getMonth()]} 1 - 15`;
+
+      return {
+        startDate,
+        endDate,
+        previousStartDate,
+        previousEndDate,
+        periodLabel,
+      };
+    } else {
+      // 16th to end of current month
+      const startDate = new Date(d.getFullYear(), d.getMonth(), 16, 0, 0, 0, 0);
+      const endDate = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      // Previous period: 1st to 15th of current month
+      const previousStartDate = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+      const previousEndDate = new Date(d.getFullYear(), d.getMonth(), 15, 23, 59, 59, 999);
+
+      const periodLabel = `${SHORT_MONTHS[d.getMonth()]} 16 - ${endDate.getDate()}`;
+
+      return {
+        startDate,
+        endDate,
+        previousStartDate,
+        previousEndDate,
+        periodLabel,
+      };
+    }
   }
 
   if (frequency === "quarterly") {

@@ -39,7 +39,10 @@ const FILTER_TABS: Array<{ key: FrequencyFilter; label: string }> = [
   { key: "all", label: "All" },
   { key: "daily", label: "Daily" },
   { key: "weekly", label: "Weekly" },
+  { key: "biweekly", label: "Bi-Weekly" },
+  { key: "semi_monthly", label: "Semi-Monthly" },
   { key: "monthly", label: "Monthly" },
+  { key: "quarterly", label: "Quarterly" },
   { key: "custom_monthly", label: "Custom" },
   { key: "yearly", label: "Yearly" },
 ];

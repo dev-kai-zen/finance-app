@@ -4,6 +4,7 @@ export type BudgetFrequency =
   | "daily"
   | "weekly"
   | "biweekly"
+  | "semi_monthly"
   | "monthly"
   | "custom_monthly"
   | "quarterly"

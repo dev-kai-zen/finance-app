@@ -176,6 +176,13 @@
       "when": 1790995940088,
       "tag": "0024_add_category_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1791001207649,
+      "tag": "0025_add_semi_monthly_frequency",
+      "breakpoints": true
     }
   ]
 }

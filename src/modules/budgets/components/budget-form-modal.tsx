@@ -50,12 +50,24 @@ export interface BudgetFormModalProps {
 const FREQUENCY_OPTIONS: Array<{ key: BudgetFrequency; label: string }> = [
   { key: "daily", label: "Daily" },
   { key: "weekly", label: "Weekly" },
+  { key: "biweekly", label: "Bi-Weekly" },
+  { key: "semi_monthly", label: "Semi-Monthly" },
   { key: "monthly", label: "Monthly" },
+  { key: "quarterly", label: "Quarterly" },
   { key: "custom_monthly", label: "Custom (12-Mo)" },
   { key: "yearly", label: "Yearly" },
-  { key: "biweekly", label: "Bi-Weekly" },
-  { key: "quarterly", label: "Quarterly" },
 ];
+
+const FREQUENCY_DESCRIPTIONS: Record<BudgetFrequency, string> = {
+  daily: "Resets every day at midnight",
+  weekly: "Resets every Monday to Sunday",
+  biweekly: "Resets every 14 days (every 2 weeks)",
+  semi_monthly: "Resets twice a month: 1st–15th and 16th–End of Month",
+  monthly: "Resets on the 1st of every month",
+  quarterly: "Resets every 3 months (Q1–Q4)",
+  custom_monthly: "Custom budget limit per calendar month (Jan–Dec)",
+  yearly: "Resets on January 1st every year",
+};
 
 export function BudgetFormModal({
   visible,
@@ -345,6 +357,9 @@ export function BudgetFormModal({
                     );
                   })}
                 </ScrollView>
+                <Text style={styles.frequencyHelpText}>
+                  {FREQUENCY_DESCRIPTIONS[frequency]}
+                </Text>
               </View>
 
               {/* Custom Monthly 12-Month Table */}
@@ -689,6 +704,11 @@ function createStyles(theme: AppTheme) {
     },
     frequencyChipTextSelected: {
       color: theme.colors.onPrimary,
+    },
+    frequencyHelpText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      marginTop: 6,
     },
     actionsContainer: {
       gap: theme.spacing.sm,
