@@ -20,6 +20,7 @@ import {
 } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { useDefaultAccounts } from "@/modules/settings";
 import {
   TransactionDateTimePickerModal,
   TransactionTypePicker,
@@ -34,6 +35,7 @@ import type {
   ScheduledTransactionType,
 } from "../types/scheduled-transaction.types";
 import { getCurrentTimeZone } from "../utils/recurrence";
+import { resolveScheduledDefaultLocation } from "../utils/resolve-scheduled-defaults";
 
 interface ScheduledTransactionFormModalProps {
   visible: boolean;
@@ -45,6 +47,10 @@ interface ScheduledTransactionFormModalProps {
   error: string | null;
   onClose: () => void;
   onSave: (input: SaveScheduledTransactionInput, id?: string) => boolean;
+  defaultExpenseAccountId?: string | null;
+  defaultExpensePocketId?: string | null;
+  defaultIncomeAccountId?: string | null;
+  defaultIncomePocketId?: string | null;
 }
 
 type DateTimePickerTarget = "start-date" | "start-time" | "end-date";
@@ -99,10 +105,33 @@ export function ScheduledTransactionFormModal({
   error,
   onClose,
   onSave,
+  defaultExpenseAccountId: propsDefaultExpenseAccountId,
+  defaultExpensePocketId: propsDefaultExpensePocketId,
+  defaultIncomeAccountId: propsDefaultIncomeAccountId,
+  defaultIncomePocketId: propsDefaultIncomePocketId,
 }: ScheduledTransactionFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
+  const defaultAccounts = useDefaultAccounts();
+
+  const effectiveDefaultExpenseAccountId =
+    propsDefaultExpenseAccountId !== undefined
+      ? propsDefaultExpenseAccountId
+      : defaultAccounts.defaultExpenseAccountId;
+  const effectiveDefaultExpensePocketId =
+    propsDefaultExpensePocketId !== undefined
+      ? propsDefaultExpensePocketId
+      : defaultAccounts.defaultExpensePocketId;
+  const effectiveDefaultIncomeAccountId =
+    propsDefaultIncomeAccountId !== undefined
+      ? propsDefaultIncomeAccountId
+      : defaultAccounts.defaultIncomeAccountId;
+  const effectiveDefaultIncomePocketId =
+    propsDefaultIncomePocketId !== undefined
+      ? propsDefaultIncomePocketId
+      : defaultAccounts.defaultIncomePocketId;
+
   const [transactionType, setTransactionType] =
     useState<ScheduledTransactionType>("expense");
   const [accountId, setAccountId] = useState("");
@@ -132,25 +161,67 @@ export function ScheduledTransactionFormModal({
   useEffect(() => {
     if (!visible) return;
     const start = initialSchedule?.startsAt ?? defaultStart();
-    setTransactionType(initialSchedule?.transactionType ?? "expense");
-    setAccountId(initialSchedule?.accountId ?? accounts[0]?.id ?? "");
-    setPocketId(initialSchedule?.pocketId ?? null);
-    setCategoryId(initialSchedule?.categoryId ?? null);
-    setToAccountId(initialSchedule?.toAccountId ?? null);
-    setToPocketId(initialSchedule?.toPocketId ?? null);
-    setAmountCents(initialSchedule?.amountCents ?? 0);
-    setName(initialSchedule?.name ?? "");
-    setNote(initialSchedule?.note ?? "");
-    setFrequency(initialSchedule?.frequency ?? "monthly");
-    setIntervalText(String(initialSchedule?.intervalCount ?? 1));
-    setStartsAt(start);
-    setEndMode(initialSchedule?.endMode ?? "never");
-    setMaxOccurrencesText(String(initialSchedule?.maxOccurrences ?? 12));
-    setEndsOn(initialSchedule?.endsOn ?? dateKey(start));
-    setWeekendPolicy(initialSchedule?.weekendPolicy ?? "next_weekday");
-    setAutoPost(initialSchedule?.autoPost ?? false);
+    const type = initialSchedule?.transactionType ?? "expense";
+    setTransactionType(type);
+
+    if (initialSchedule) {
+      setAccountId(initialSchedule.accountId);
+      setPocketId(initialSchedule.pocketId ?? null);
+      setToAccountId(initialSchedule.toAccountId ?? null);
+      setToPocketId(initialSchedule.toPocketId ?? null);
+      setCategoryId(initialSchedule.categoryId ?? null);
+      setAmountCents(initialSchedule.amountCents);
+      setName(initialSchedule.name ?? "");
+      setNote(initialSchedule.note ?? "");
+      setFrequency(initialSchedule.frequency);
+      setIntervalText(String(initialSchedule.intervalCount));
+      setStartsAt(start);
+      setEndMode(initialSchedule.endMode);
+      setMaxOccurrencesText(String(initialSchedule.maxOccurrences ?? 12));
+      setEndsOn(initialSchedule.endsOn ?? dateKey(start));
+      setWeekendPolicy(initialSchedule.weekendPolicy);
+      setAutoPost(initialSchedule.autoPost);
+    } else {
+      const resolved = resolveScheduledDefaultLocation({
+        transactionType: type,
+        accounts,
+        pockets,
+        defaultExpenseAccountId: effectiveDefaultExpenseAccountId,
+        defaultExpensePocketId: effectiveDefaultExpensePocketId,
+        defaultIncomeAccountId: effectiveDefaultIncomeAccountId,
+        defaultIncomePocketId: effectiveDefaultIncomePocketId,
+      });
+      setAccountId(resolved.accountId);
+      setPocketId(resolved.pocketId);
+      setToAccountId(null);
+      setToPocketId(null);
+      setCategoryId(
+        categories.find((item) => item.type === "expense")?.id ?? null,
+      );
+      setAmountCents(0);
+      setName("");
+      setNote("");
+      setFrequency("monthly");
+      setIntervalText("1");
+      setStartsAt(start);
+      setEndMode("never");
+      setMaxOccurrencesText("12");
+      setEndsOn(dateKey(start));
+      setWeekendPolicy("next_weekday");
+      setAutoPost(false);
+    }
     setLocalError(null);
-  }, [accounts, initialSchedule, visible]);
+  }, [
+    accounts,
+    categories,
+    effectiveDefaultExpenseAccountId,
+    effectiveDefaultExpensePocketId,
+    effectiveDefaultIncomeAccountId,
+    effectiveDefaultIncomePocketId,
+    initialSchedule,
+    pockets,
+    visible,
+  ]);
 
   const selectedAccount = accounts.find((item) => item.id === accountId);
   const selectedPocket = pockets.find((item) => item.id === pocketId);
@@ -185,6 +256,41 @@ export function ScheduledTransactionFormModal({
     if (value !== "transfer") {
       setToAccountId(null);
       setToPocketId(null);
+    }
+    if (!initialSchedule) {
+      if (value === "expense") {
+        const defaultExpense = accounts.find(
+          (a) => a.id === effectiveDefaultExpenseAccountId && !a.isArchived,
+        );
+        if (defaultExpense) {
+          setAccountId(defaultExpense.id);
+          const defaultPocket = effectiveDefaultExpensePocketId
+            ? pockets.find(
+                (p) =>
+                  p.id === effectiveDefaultExpensePocketId &&
+                  p.accountId === defaultExpense.id &&
+                  !p.isArchived,
+              )
+            : null;
+          setPocketId(defaultPocket ? defaultPocket.id : null);
+        }
+      } else if (value === "income") {
+        const defaultIncome = accounts.find(
+          (a) => a.id === effectiveDefaultIncomeAccountId && !a.isArchived,
+        );
+        if (defaultIncome) {
+          setAccountId(defaultIncome.id);
+          const defaultPocket = effectiveDefaultIncomePocketId
+            ? pockets.find(
+                (p) =>
+                  p.id === effectiveDefaultIncomePocketId &&
+                  p.accountId === defaultIncome.id &&
+                  !p.isArchived,
+              )
+            : null;
+          setPocketId(defaultPocket ? defaultPocket.id : null);
+        }
+      }
     }
   };
 
@@ -595,6 +701,10 @@ export function ScheduledTransactionFormModal({
 
       <AccountPickerModal
         accounts={accounts}
+        defaultExpenseAccountId={effectiveDefaultExpenseAccountId}
+        defaultExpensePocketId={effectiveDefaultExpensePocketId}
+        defaultIncomeAccountId={effectiveDefaultIncomeAccountId}
+        defaultIncomePocketId={effectiveDefaultIncomePocketId}
         onClose={() => setAccountPicker(null)}
         onSelectLocation={(account, selectedPocketId) => {
           if (accountPicker === "to") {
@@ -605,6 +715,8 @@ export function ScheduledTransactionFormModal({
             setPocketId(selectedPocketId);
           }
         }}
+        onSetDefaultExpense={defaultAccounts.setExpenseAccount}
+        onSetDefaultIncome={defaultAccounts.setIncomeAccount}
         pockets={pockets}
         selectedAccountId={accountPicker === "to" ? toAccountId : accountId}
         selectedPocketId={accountPicker === "to" ? toPocketId : pocketId}
