@@ -60,3 +60,15 @@ export type {
   InstallmentInput,
 } from "./types/credit-card.types";
 export type { InstallmentPlanPreview } from "./services/preview-installment-plan.service";
+export {
+  calculateCreditCardAvailableLimit,
+  calculateCreditCardBilled,
+  calculateCreditCardOutstanding,
+  calculateCreditCardUnbilled,
+  calculateCreditCardUtilization,
+  CreditCardAvailableLimitComputation,
+  CreditCardBilledComputation,
+  CreditCardOutstandingComputation,
+  CreditCardUnbilledComputation,
+  CreditCardUtilizationComputation,
+} from "./utils/credit-card-computations";

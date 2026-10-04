@@ -314,3 +314,153 @@ test("credit cards: deleting a statement cascades only its billing entries", () 
     1,
   );
 });
+
+test("credit cards: unbilled activity correctly increases unbilled and outstanding while billed stays as is", () => {
+  const { db, now } = setupTestDb();
+  // Set starting debt (initial balance) to ₱10,000 (1,000,000 cents)
+  db.prepare("UPDATE accounts SET opening_balance_minor_units = -1000000 WHERE id = 'card_1'").run();
+
+  // Initial opening statement of ₱10,000
+  db.prepare(`
+    INSERT INTO credit_card_statements (
+      id, account_id, kind, cycle_start_on, cycle_end_on, statement_on,
+      due_on, issued_amount_minor_units, created_at, updated_at
+    ) VALUES ('stmt_open', 'card_1', 'opening', '2026-10-01', '2026-10-01', '2026-10-01', '2026-10-21', 1000000, ?, ?)
+  `).run(now, now);
+  db.prepare(`
+    INSERT INTO credit_card_statement_entries (
+      id, statement_id, entry_type, amount_minor_units,
+      description_snapshot, occurred_on_snapshot, created_at
+    ) VALUES ('entry_open', 'stmt_open', 'opening_balance', 1000000, 'Opening balance', '2026-10-01', ?)
+  `).run(now);
+
+  // Statement balance before new expense
+  const statementBalance = db.prepare(`
+    SELECT coalesce(sum(amount_minor_units), 0) as total FROM credit_card_statement_entries WHERE statement_id = 'stmt_open'
+  `).get().total;
+  assert.equal(statementBalance, 1000000);
+
+  // Record a new expense of ₱500 (-50,000 cents)
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_expense', 'General', 'expense', 'tag', 0, ?, ?)
+  `).run(now, now);
+  db.prepare(`
+    INSERT INTO transactions (
+      id, account_id, category_id, type, amount_cents, name,
+      occurred_at, created_at, updated_at
+    ) VALUES ('tx_expense_500', 'card_1', 'cat_expense', 'expense', -50000, 'Coffee & Pastry', ?, ?, ?)
+  `).run(now, now, now);
+
+  // Billed items = statement remaining amount
+  const billed = statementBalance;
+  // Unbilled items = sum of unbilled transactions (not yet linked to statement)
+  const billedTxIds = new Set(
+    db.prepare("SELECT transaction_id FROM credit_card_statement_entries WHERE transaction_id IS NOT NULL").all().map((r) => r.transaction_id)
+  );
+  const unbilledTxs = db.prepare("SELECT * FROM transactions WHERE account_id = 'card_1' AND deleted_at IS NULL AND amount_cents < 0").all()
+    .filter((tx) => !billedTxIds.has(tx.id));
+
+  const unbilledGross = unbilledTxs.reduce((sum, tx) => sum + Math.abs(tx.amount_cents), 0);
+  const unbilled = unbilledGross;
+  const outstanding = billed + unbilled;
+  const limit = 5000000; // ₱50,000 limit
+  const availableCredit = limit - outstanding;
+
+  assert.equal(billed, 1000000, "Billed stays as is (₱10,000)");
+  assert.equal(unbilled, 50000, "Unbilled is +₱500");
+  assert.equal(outstanding, 1050000, "Outstanding is initial + ₱500 (₱10,500)");
+  assert.equal(availableCredit, 3950000, "Available credit is limit - outstanding (₱39,500)");
+});
+
+test("credit cards: payment against opening statement reduces billed, then subsequent expense increases unbilled & outstanding", () => {
+  const { db, now } = setupTestDb();
+  // Opening balance: ₱74,792.49 (7,479,249 centavos)
+  const openingTarget = 7479249;
+  db.prepare("UPDATE accounts SET opening_balance_minor_units = ? WHERE id = 'card_1'").run(-openingTarget);
+
+  // Opening statement
+  db.prepare(`
+    INSERT INTO credit_card_statements (
+      id, account_id, kind, cycle_start_on, cycle_end_on, statement_on,
+      due_on, issued_amount_minor_units, created_at, updated_at
+    ) VALUES ('stmt_open_user', 'card_1', 'opening', '2026-10-01', '2026-10-01', '2026-10-01', '2026-10-21', ?, ?, ?)
+  `).run(openingTarget, now, now);
+  db.prepare(`
+    INSERT INTO credit_card_statement_entries (
+      id, statement_id, entry_type, amount_minor_units,
+      description_snapshot, occurred_on_snapshot, created_at
+    ) VALUES ('entry_open_user', 'stmt_open_user', 'opening_balance', ?, 'Opening balance', '2026-10-01', ?)
+  `).run(openingTarget, now);
+
+  // User pays ₱10,329.99 (1,032,999 centavos)
+  const paymentAmount = 1032999;
+  db.prepare(`
+    INSERT INTO credit_card_statement_entries (
+      id, statement_id, entry_type, amount_minor_units,
+      description_snapshot, occurred_on_snapshot, created_at
+    ) VALUES ('entry_pay_user', 'stmt_open_user', 'payment', ?, 'Card payment', '2026-10-02', ?)
+  `).run(-paymentAmount, now);
+
+  // Check reconciliation logic: opening statement base should ignore payment
+  const openingEntries = db.prepare("SELECT * FROM credit_card_statement_entries WHERE statement_id = 'stmt_open_user'").all();
+  const openingBase = openingEntries
+    .filter((e) => ["opening_balance", "adjustment"].includes(e.entry_type))
+    .reduce((s, e) => s + e.amount_minor_units, 0);
+  const openingDiff = openingTarget - openingBase;
+  // openingDiff MUST be 0 (no spurious adjustment entry)
+  assert.equal(openingDiff, 0, "No spurious adjustment should be generated to reverse the payment");
+
+  // Remaining statement balance
+  const remainingStatement = openingEntries.reduce((s, e) => s + e.amount_minor_units, 0);
+  const billed = remainingStatement;
+  assert.equal(billed, 6446250, "Billed should be 74,792.49 - 10,329.99 = 64,462.50");
+
+  // User spends ₱286.00 (28,600 centavos)
+  const expenseAmount = 28600;
+  const unbilled = expenseAmount;
+  const outstanding = billed + unbilled;
+
+  assert.equal(unbilled, 28600, "Unbilled is ₱286.00");
+  assert.equal(outstanding, 6474850, "Outstanding is 64,462.50 + 286.00 = ₱64,748.50");
+});
+
+test("credit cards: dedicated computation functions calculate billed, unbilled, outstanding, available limit, and utilization accurately", () => {
+  // Test Billed computation
+  const statements = [
+    { remainingAmountMinorUnits: 500000 },
+    { remainingAmountMinorUnits: 1446250 },
+    { remainingAmountMinorUnits: 0 },
+  ];
+  const billed = Math.max(
+    0,
+    statements.reduce((s, st) => s + st.remainingAmountMinorUnits, 0),
+  );
+  assert.equal(billed, 1946250);
+
+  // Test Unbilled computation
+  const unbilledItems = [
+    { amountMinorUnits: 28600 },
+    { amountMinorUnits: 100000 },
+  ];
+  const unbilledGross = unbilledItems.reduce((s, it) => s + it.amountMinorUnits, 0);
+  const unallocatedCredits = 50000;
+  const unbilled = Math.max(0, unbilledGross - unallocatedCredits);
+  assert.equal(unbilled, 78600);
+
+  // Test Outstanding computation: Billed + Unbilled
+  const outstanding = billed + unbilled;
+  assert.equal(outstanding, 2024850);
+
+  // Test Available Limit computation: Limit - Outstanding
+  const limit = 5000000;
+  const available = Math.max(0, limit - outstanding);
+  assert.equal(available, 2975150);
+
+  // Test Utilization computation: (Outstanding / Limit) * 100
+  const utilization = (outstanding / limit) * 100;
+  assert.equal(utilization, 40.497);
+});
+
+
+

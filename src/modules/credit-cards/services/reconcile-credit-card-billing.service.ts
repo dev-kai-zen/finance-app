@@ -116,11 +116,12 @@ function reconcileAccount(
         [openingStatement.id],
         context,
       );
-      const openingNet = openingEntries.reduce(
-        (sum, entry) => sum + entry.amountMinorUnits,
-        0,
-      );
-      const openingDifference = openingTarget - openingNet;
+      const openingBase = openingEntries
+        .filter((entry) =>
+          ["opening_balance", "adjustment"].includes(entry.entryType),
+        )
+        .reduce((sum, entry) => sum + entry.amountMinorUnits, 0);
+      const openingDifference = openingTarget - openingBase;
       if (openingDifference !== 0) {
         insertStatementEntry(
           {

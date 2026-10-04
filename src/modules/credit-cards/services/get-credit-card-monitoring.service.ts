@@ -10,6 +10,13 @@ import type {
   CreditCardMonitoringSummary,
 } from "../types/credit-card.types";
 import { endOfMonth, toCalendarDate } from "../utils/billing-dates";
+import {
+  calculateCreditCardAvailableLimit,
+  calculateCreditCardBilled,
+  calculateCreditCardOutstanding,
+  calculateCreditCardUnbilled,
+  calculateCreditCardUtilization,
+} from "../utils/credit-card-computations";
 import { reconcileCreditCardBilling } from "./reconcile-credit-card-billing.service";
 
 export function getCreditCardMonitoring(
@@ -36,13 +43,6 @@ export function getCreditCardMonitoring(
         ),
         entries: entries.filter((entry) => entry.statementId === statement.id),
       }));
-      const statementBalance = statementSummaries.reduce(
-        (sum, statement) => sum + statement.remainingAmountMinorUnits,
-        0,
-      );
-      const outstanding = Math.max(0, -account.currentBalanceMinorUnits);
-      const billed = Math.min(outstanding, statementBalance);
-      const unbilled = Math.max(0, outstanding - billed);
       const dueThisMonth = statementSummaries
         .filter(
           (statement) =>
@@ -145,6 +145,36 @@ export function getCreditCardMonitoring(
           detail,
         });
       }
+      const unbilledGross = unbilledItems.reduce(
+        (sum, item) => sum + item.amountMinorUnits,
+        0,
+      );
+      const unallocatedCredits = ledger
+        .filter((transaction) => transaction.amountCents > 0)
+        .reduce((sum, transaction) => {
+          const allocated = entries
+            .filter(
+              (entry) =>
+                entry.transactionId === transaction.id &&
+                entry.amountMinorUnits < 0,
+            )
+            .reduce((eSum, entry) => eSum + Math.abs(entry.amountMinorUnits), 0);
+          return sum + Math.max(0, transaction.amountCents - allocated);
+        }, 0);
+      const billed = calculateCreditCardBilled(statementSummaries);
+      const unbilled = calculateCreditCardUnbilled(
+        unbilledItems,
+        unallocatedCredits,
+      );
+      const outstanding = calculateCreditCardOutstanding(billed, unbilled);
+      const availableCredit = calculateCreditCardAvailableLimit(
+        details.creditLimitMinorUnits,
+        outstanding,
+      );
+      const utilizationPercent = calculateCreditCardUtilization(
+        details.creditLimitMinorUnits,
+        outstanding,
+      );
       return {
         accountId: account.id,
         accountName: account.name,
@@ -153,14 +183,8 @@ export function getCreditCardMonitoring(
         billedMinorUnits: billed,
         unbilledMinorUnits: unbilled,
         outstandingMinorUnits: outstanding,
-        availableCreditMinorUnits: Math.max(
-          0,
-          details.creditLimitMinorUnits - outstanding,
-        ),
-        utilizationPercent:
-          details.creditLimitMinorUnits > 0
-            ? (outstanding / details.creditLimitMinorUnits) * 100
-            : 0,
+        availableCreditMinorUnits: availableCredit,
+        utilizationPercent,
         dueThisMonthMinorUnits: Math.min(dueThisMonth, billed),
         overdueMinorUnits: Math.min(overdue, billed),
         nextDueOn: nextDue,

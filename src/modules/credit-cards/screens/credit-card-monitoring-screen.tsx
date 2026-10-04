@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { CreditCard } from "lucide-react-native";
 import {
   PageContainer,
@@ -16,6 +17,15 @@ export function CreditCardMonitoringScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const data = useCreditCardMonitoring();
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  const activeAccountId =
+    data.cards.find((c) => c.accountId === selectedAccountId)?.accountId ??
+    data.cards[0]?.accountId ??
+    null;
+
+  const selectedCard =
+    data.cards.find((c) => c.accountId === activeAccountId) ?? data.cards[0] ?? null;
 
   return (
     <PageContainer contentContainerStyle={styles.content}>
@@ -47,9 +57,74 @@ export function CreditCardMonitoringScreen() {
               </View>
             ) : null}
           </View>
-          {data.cards.map((card) => (
-            <CreditCardMonitoringCard card={card} key={card.accountId} />
-          ))}
+
+          <View style={styles.chipsSection}>
+            <ScrollView
+              contentContainerStyle={styles.chipsScrollContent}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            >
+              {data.cards.map((card) => {
+                const isSelected = card.accountId === activeAccountId;
+                return (
+                  <Pressable
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isSelected }}
+                    key={card.accountId}
+                    onPress={() => setSelectedAccountId(card.accountId)}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      isSelected && styles.activeChip,
+                      pressed && styles.pressedChip,
+                    ]}
+                  >
+                    <CreditCard
+                      color={
+                        isSelected
+                          ? theme.colors.onPrimary
+                          : theme.colors.textSecondary
+                      }
+                      size={15}
+                    />
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.chipLabel,
+                        isSelected && styles.activeChipLabel,
+                      ]}
+                    >
+                      {card.accountName}
+                    </Text>
+                    <View
+                      style={[
+                        styles.chipBadge,
+                        isSelected && styles.activeChipBadge,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.chipBadgeText,
+                          isSelected && styles.activeChipBadgeText,
+                        ]}
+                      >
+                        {formatCurrency(
+                          card.outstandingMinorUnits,
+                          card.currencyCode,
+                        )}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {selectedCard ? (
+            <CreditCardMonitoringCard
+              card={selectedCard}
+              key={selectedCard.accountId}
+            />
+          ) : null}
         </>
       )}
     </PageContainer>
@@ -93,6 +168,63 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       marginTop: theme.spacing.xs,
+    },
+    chipsSection: {
+      marginBottom: theme.spacing.lg,
+    },
+    chipsScrollContent: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      paddingVertical: 2,
+    },
+    chip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceElevated,
+      borderColor: theme.colors.borderStrong,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    activeChip: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+      ...theme.shadows.card,
+    },
+    pressedChip: {
+      opacity: 0.85,
+    },
+    chipLabel: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+      maxWidth: 140,
+    },
+    activeChipLabel: {
+      color: theme.colors.onPrimary,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    chipBadge: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      marginLeft: 2,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    activeChipBadge: {
+      backgroundColor: "rgba(255, 255, 255, 0.22)",
+    },
+    chipBadgeText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    activeChipBadgeText: {
+      color: theme.colors.onPrimary,
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
 }
