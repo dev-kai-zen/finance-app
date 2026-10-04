@@ -18,7 +18,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { hasTransactions } from "@/infrastructure/database/queries/transaction-presence";
+import { hasTransactions } from "@/modules/transactions";
 import { useFocusEffect } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { CategoryGroupCard } from "../components/category-group-card";

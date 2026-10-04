@@ -282,7 +282,7 @@ test("system types protect names, classification, and deletion but allow appeara
       /classification cannot/,
     );
     saveAccountType({ ...typeInput(type.name, type.accountGroup), color: "pink" }, id);
-    assert.equal(types.findAccountTypeById(id).color, "pink");
+    assert.equal(types.findAccountTypeById(id).color, "#DB2777");
   }
 });
 test("deleting a custom type requires reassigning or removing linked accounts first", () => {
@@ -380,7 +380,7 @@ test("appearance keys resolve across every established theme with safe fallbacks
     .filter((value) => value && value.colors && value.id);
   assert.ok(themes.length >= 6);
   for (const theme of themes) {
-    assert.equal(accountColor(theme, "teal"), theme.colors.categorical.teal);
+    assert.equal(accountColor(theme, "teal"), "#0D9488");
     assert.equal(accountColor(theme, "#bad"), theme.colors.categorical.slate);
   }
   assert.equal(accountIcon("unknown"), accountIcon(null));

@@ -31,10 +31,10 @@ function setupTestDb() {
 
   // Seed categories
   db.exec(`
-    INSERT INTO categories (id, name, type, color, icon, is_system, created_at, updated_at)
-    VALUES ('cat_groceries', 'Groceries', 'expense', 'green', 'shopping-cart', 1, ${now}, ${now}),
-           ('cat_dining', 'Dining', 'expense', 'orange', 'utensils', 1, ${now}, ${now}),
-           ('cat_salary', 'Salary', 'income', 'blue', 'wallet', 1, ${now}, ${now});
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_groceries', 'Groceries', 'expense', 'shopping-cart', 1, ${now}, ${now}),
+           ('cat_dining', 'Dining', 'expense', 'utensils', 1, ${now}, ${now}),
+           ('cat_salary', 'Salary', 'income', 'wallet', 1, ${now}, ${now});
   `);
 
   return db;

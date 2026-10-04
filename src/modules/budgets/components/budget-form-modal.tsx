@@ -19,13 +19,12 @@ import {
   AmountCalculatorField,
   AmountCalculatorModal,
   AppButton,
-  CategoryPickerModal,
   IconHelper,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import type { Category } from "@/modules/categories";
+import { CategoryPickerModal, type Category } from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import type {
   BudgetFrequency,

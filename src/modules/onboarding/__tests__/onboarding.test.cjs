@@ -17,7 +17,8 @@ const createMock = () => {
   return new Proxy(fn, {
     get: (_target, property) => {
       if (property === Symbol.toPrimitive) return () => "";
-      if (property === "create") return (value) => value || {};
+      if (property === "create") return (value) => ({ panHandlers: {}, ...(value || {}) });
+      if (property === "panHandlers") return {};
       return createMock();
     },
   });
@@ -33,7 +34,12 @@ Module._resolveFilename = function (request, parent, ...rest) {
 };
 
 Module._load = function (request, parent, ...rest) {
-  if (request === "expo-sqlite") return createMock();
+  if (
+    request.startsWith("expo-") ||
+    request.startsWith("react-native")
+  ) {
+    return createMock();
+  }
   if (request === "@/infrastructure/database/client") {
     return { get db() { return database; } };
   }

@@ -1,6 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
-import { requirePocketForAccount } from "@/modules/accounts";
+import { findAccountById, requirePocketForAccount } from "@/modules/accounts";
 import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 import {
   deleteTransaction,

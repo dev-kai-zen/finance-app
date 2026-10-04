@@ -15,6 +15,11 @@ export const SubcategoryModal = deferComponent(
   "SubcategoryModal",
 ) as typeof import("./components/subcategory-modal").SubcategoryModal;
 
+export const CategoryPickerModal = deferComponent(
+  () => require("./components/category-picker-modal").CategoryPickerModal,
+  "CategoryPickerModal",
+) as typeof import("./components/category-picker-modal").CategoryPickerModal;
+
 export const useCategories = deferFunction(
   () => require("./hooks/use-categories").useCategories,
 ) as typeof import("./hooks/use-categories").useCategories;
@@ -50,3 +55,4 @@ export type {
   CategoryType,
   CategoricalColorKey,
 } from "./types/category.types";
+export type { CategoryPickerModalProps } from "./components/category-picker-modal";

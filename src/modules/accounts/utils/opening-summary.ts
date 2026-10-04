@@ -6,9 +6,13 @@ export function openingSummary(accounts: AccountListItem[]) {
   let excluded = 0;
   for (const account of accounts) {
     if (account.isArchived || account.hideFromReports) continue;
-    const balance = account.currentBalanceMinorUnits ?? account.openingBalanceMinorUnits;
-    if (account.currencyCode !== "PHP" || !Number.isSafeInteger(balance) ||
-      !["asset", "liability"].includes(account.accountType?.accountGroup ?? "")) {
+    const balance =
+      account.currentBalanceMinorUnits ?? account.openingBalanceMinorUnits;
+    if (
+      account.currencyCode !== "PHP" ||
+      !Number.isSafeInteger(balance) ||
+      !["asset", "liability"].includes(account.accountType?.accountGroup ?? "")
+    ) {
       excluded++;
       continue;
     }
@@ -17,6 +21,7 @@ export function openingSummary(accounts: AccountListItem[]) {
   }
   return { assets, liabilities, excluded };
 }
+
 export function formatOpeningTotal(amount: bigint) {
   const absolute = amount < 0n ? -amount : amount;
   return `${amount < 0n ? "-" : ""}₱${(absolute / 100n).toLocaleString("en-PH")}.${String(absolute % 100n).padStart(2, "0")}`;

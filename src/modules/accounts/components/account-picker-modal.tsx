@@ -22,14 +22,14 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper } from "./icon-helper";
+import { IconHelper } from "@/components/icon-helper";
 import { formatCurrency } from "@/utils/currency";
-import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
-import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
+import { accountColor } from "../constants/account-appearance.constants";
+import { isSystemOthersAccountTypeId } from "../constants/account-types.constants";
 import type {
   AccountListItem,
   PocketListItem,
-} from "@/modules/accounts/types/account.types";
+} from "../types/account.types";
 
 export interface AccountPickerModalProps {
   visible: boolean;

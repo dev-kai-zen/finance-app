@@ -20,8 +20,8 @@ import type { MonitorTab, TableInfo } from "../types/monitor.types";
 const QUERY_PRESETS = [
   { label: "Accounts", sql: "SELECT id, name, currency_code, opening_balance_minor_units, is_archived FROM accounts;" },
   { label: "Transactions", sql: "SELECT id, type, amount_cents, account_id, category_id, occurred_at FROM transactions ORDER BY occurred_at DESC LIMIT 20;" },
-  { label: "Categories", sql: "SELECT id, name, type, color, icon, is_system FROM categories ORDER BY type, name;" },
-  { label: "Account Types", sql: "SELECT id, name, account_group, color, icon_key FROM account_types;" },
+  { label: "Categories", sql: "SELECT id, name, type, hex_colors_id, icon, is_system FROM categories ORDER BY type, name;" },
+  { label: "Account Types", sql: "SELECT id, name, account_group, hex_colors_id, icon_key FROM account_types;" },
   { label: "Settings", sql: "SELECT * FROM settings;" },
   { label: "Database Info", sql: "PRAGMA page_count; PRAGMA page_size;" },
 ];

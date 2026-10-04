@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   accountTypes,
@@ -89,101 +89,83 @@ function mapRowToListItem(r: {
 }
 
 function getBalanceAfterByTransactionId(
+  targetAccountId?: string | null,
   context: DbContext = db,
 ): Map<string, number> {
+  const conditions = [isNull(transactions.deletedAt)];
+  if (targetAccountId) {
+    conditions.push(eq(transactions.accountId, targetAccountId));
+  }
+
   const rows = context
     .select({
       id: transactions.id,
       accountId: transactions.accountId,
       amountCents: transactions.amountCents,
-      occurredAt: transactions.occurredAt,
-      createdAt: transactions.createdAt,
       openingBalanceMinorUnits: accounts.openingBalanceMinorUnits,
     })
     .from(transactions)
     .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(isNull(transactions.deletedAt))
+    .where(and(...conditions))
+    .orderBy(
+      asc(transactions.occurredAt),
+      asc(transactions.createdAt),
+      asc(transactions.id),
+    )
     .all();
 
-  const rowsByAccountId = new Map<string, typeof rows>();
-  for (const row of rows) {
-    const accountRows = rowsByAccountId.get(row.accountId) ?? [];
-    accountRows.push(row);
-    rowsByAccountId.set(row.accountId, accountRows);
-  }
-
   const balanceAfterByTransactionId = new Map<string, number>();
+  const runningBalances = new Map<string, number>();
 
-  for (const accountRows of rowsByAccountId.values()) {
-    accountRows.sort((a, b) => {
-      const occurredAtDifference =
-        new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
-      if (occurredAtDifference !== 0) return occurredAtDifference;
-
-      const createdAtDifference =
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      if (createdAtDifference !== 0) return createdAtDifference;
-
-      return a.id.localeCompare(b.id);
-    });
-
-    let balance = accountRows[0]?.openingBalanceMinorUnits ?? 0;
-    for (const row of accountRows) {
-      balance += row.amountCents;
-      balanceAfterByTransactionId.set(row.id, balance);
+  for (const row of rows) {
+    let balance = runningBalances.get(row.accountId);
+    if (balance === undefined) {
+      balance = row.openingBalanceMinorUnits ?? 0;
     }
+    balance += row.amountCents;
+    runningBalances.set(row.accountId, balance);
+    balanceAfterByTransactionId.set(row.id, balance);
   }
 
   return balanceAfterByTransactionId;
 }
 
 function getPocketBalanceAfterByTransactionId(
+  targetPocketId?: string | null,
   context: DbContext = db,
 ): Map<string, number> {
+  const conditions = [
+    isNull(transactions.deletedAt),
+    isNotNull(transactions.pocketId),
+  ];
+  if (targetPocketId) {
+    conditions.push(eq(transactions.pocketId, targetPocketId));
+  }
+
   const rows = context
     .select({
       id: transactions.id,
       pocketId: transactions.pocketId,
       amountCents: transactions.amountCents,
-      occurredAt: transactions.occurredAt,
-      createdAt: transactions.createdAt,
     })
     .from(transactions)
-    .where(
-      and(
-        isNull(transactions.deletedAt),
-        isNotNull(transactions.pocketId),
-      ),
+    .where(and(...conditions))
+    .orderBy(
+      asc(transactions.occurredAt),
+      asc(transactions.createdAt),
+      asc(transactions.id),
     )
     .all();
 
-  const rowsByPocketId = new Map<string, typeof rows>();
+  const balanceAfterByTransactionId = new Map<string, number>();
+  const runningBalances = new Map<string, number>();
+
   for (const row of rows) {
     if (!row.pocketId) continue;
-    const pocketRows = rowsByPocketId.get(row.pocketId) ?? [];
-    pocketRows.push(row);
-    rowsByPocketId.set(row.pocketId, pocketRows);
-  }
-
-  const balanceAfterByTransactionId = new Map<string, number>();
-  for (const pocketRows of rowsByPocketId.values()) {
-    pocketRows.sort((a, b) => {
-      const occurredAtDifference =
-        new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
-      if (occurredAtDifference !== 0) return occurredAtDifference;
-
-      const createdAtDifference =
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      if (createdAtDifference !== 0) return createdAtDifference;
-
-      return a.id.localeCompare(b.id);
-    });
-
-    let balance = 0;
-    for (const row of pocketRows) {
-      balance += row.amountCents;
-      balanceAfterByTransactionId.set(row.id, balance);
-    }
+    let balance = runningBalances.get(row.pocketId) ?? 0;
+    balance += row.amountCents;
+    runningBalances.set(row.pocketId, balance);
+    balanceAfterByTransactionId.set(row.id, balance);
   }
 
   return balanceAfterByTransactionId;
@@ -320,9 +302,12 @@ export function listTransactions(
 
   const rows = query.where(and(...conditions)).all();
 
-  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(
+    filter?.accountId,
+    context,
+  );
   const pocketBalanceAfterByTransactionId =
-    getPocketBalanceAfterByTransactionId(context);
+    getPocketBalanceAfterByTransactionId(null, context);
   const attachmentCountByTransactionId =
     getAttachmentCountByTransactionId(context);
   const labelsByTransactionId = getLabelsByTransactionIds(
@@ -399,9 +384,12 @@ export function listDeletedTransactions(
     .orderBy(desc(transactions.deletedAt), desc(transactions.occurredAt))
     .all();
 
-  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(context);
+  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(
+    null,
+    context,
+  );
   const pocketBalanceAfterByTransactionId =
-    getPocketBalanceAfterByTransactionId(context);
+    getPocketBalanceAfterByTransactionId(null, context);
   const attachmentCountByTransactionId =
     getAttachmentCountByTransactionId(context);
   const labelsByTransactionId = getLabelsByTransactionIds(

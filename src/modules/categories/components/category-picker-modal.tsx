@@ -14,8 +14,8 @@ import {
 import { Check, ChevronRight, Search, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper } from "./icon-helper";
-import type { Category, CategoryType } from "@/modules/categories/types/category.types";
+import { IconHelper } from "@/components/icon-helper";
+import type { Category, CategoryType } from "../types/category.types";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 
 export interface CategoryPickerModalProps {

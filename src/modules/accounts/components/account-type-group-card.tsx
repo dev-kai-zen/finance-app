@@ -16,7 +16,11 @@ import {
 } from "@/modules/accounts/components/account-amount-text";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
-import { formatCurrency } from "@/utils/currency";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+  formatCurrency,
+} from "@/utils/currency";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 
 interface AccountTypeGroupCardProps {
@@ -62,7 +66,6 @@ export function AccountTypeGroupCard({
   const groupTotal = accounts
     .filter(
       (a) =>
-        a.currencyCode === "PHP" &&
         Number.isSafeInteger(
           a.currentBalanceMinorUnits !== undefined
             ? a.currentBalanceMinorUnits
@@ -70,13 +73,18 @@ export function AccountTypeGroupCard({
         ),
     )
     .reduce(
-      (sum, a) =>
-        sum +
-        BigInt(
+      (sum, a) => {
+        const raw =
           a.currentBalanceMinorUnits !== undefined
             ? a.currentBalanceMinorUnits
-            : a.openingBalanceMinorUnits,
-        ),
+            : a.openingBalanceMinorUnits;
+        const converted = convertCurrencyMinorUnits(
+          raw,
+          a.currencyCode,
+          DEFAULT_BASE_CURRENCY,
+        );
+        return sum + BigInt(converted);
+      },
       0n,
     );
 

@@ -5,6 +5,15 @@ export const AccountsScreen = deferComponent(
   "AccountsScreen",
 ) as typeof import("./screens/accounts-screen").AccountsScreen;
 
+export const AccountPickerModal = deferComponent(
+  () => require("./components/account-picker-modal").AccountPickerModal,
+  "AccountPickerModal",
+) as typeof import("./components/account-picker-modal").AccountPickerModal;
+
+export const findAccountById = deferFunction(
+  () => require("./repositories/accounts.repository").findAccountById,
+) as typeof import("./repositories/accounts.repository").findAccountById;
+
 export const useAccounts = deferFunction(
   () => require("./hooks/use-accounts").useAccounts,
 ) as typeof import("./hooks/use-accounts").useAccounts;
@@ -118,6 +127,7 @@ export type {
   PocketInput,
   PocketListItem,
 } from "./types/account.types";
+export type { AccountPickerModalProps } from "./components/account-picker-modal";
 export type {
   FundGroup,
   FundGroupInput,

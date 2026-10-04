@@ -1,7 +1,12 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { getAccountsWithBalances } from "@/modules/accounts";
+import { getExchangeRateMap } from "@/modules/currencies";
 import { getAccountBalanceDeltasAtDates } from "@/modules/transactions";
-import { formatCurrency } from "@/utils/currency";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+  formatCurrency,
+} from "@/utils/currency";
 import { REPORT_COLORS } from "../constants/reports.constants";
 import type {
   NetWorthGrowthDateRange,
@@ -19,6 +24,7 @@ export function getNetWorthGrowthReport(
     (a) => !a.isArchived && !a.hideFromReports,
   );
 
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
   const cutoffDates = getHistoricalCutoffDates(range.startDate, range.endDate);
   const deltasAtCutoffs = getAccountBalanceDeltasAtDates(cutoffDates, context);
 
@@ -34,11 +40,17 @@ export function getNetWorthGrowthReport(
 
       const delta = deltas[acc.id] ?? 0;
       const balance = acc.openingBalanceMinorUnits + delta;
+      const convertedBalance = convertCurrencyMinorUnits(
+        balance,
+        acc.currencyCode,
+        DEFAULT_BASE_CURRENCY,
+        ratesMap,
+      );
 
       if (acc.accountType?.accountGroup === "liability") {
-        totalLiabilities += balance;
+        totalLiabilities += convertedBalance;
       } else {
-        totalAssets += balance;
+        totalAssets += convertedBalance;
       }
     }
 

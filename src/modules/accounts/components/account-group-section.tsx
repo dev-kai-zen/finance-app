@@ -15,6 +15,10 @@ import type {
 } from "@/modules/accounts/types/account.types";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 
 export function AccountGroupSection({
   group,
@@ -50,7 +54,6 @@ export function AccountGroupSection({
   const groupTotal = grouped
     .filter(
       (a) =>
-        a.currencyCode === "PHP" &&
         Number.isSafeInteger(
           a.currentBalanceMinorUnits !== undefined
             ? a.currentBalanceMinorUnits
@@ -58,13 +61,18 @@ export function AccountGroupSection({
         ),
     )
     .reduce(
-      (sum, a) =>
-        sum +
-        BigInt(
+      (sum, a) => {
+        const raw =
           a.currentBalanceMinorUnits !== undefined
             ? a.currentBalanceMinorUnits
-            : a.openingBalanceMinorUnits,
-        ),
+            : a.openingBalanceMinorUnits;
+        const converted = convertCurrencyMinorUnits(
+          raw,
+          a.currencyCode,
+          DEFAULT_BASE_CURRENCY,
+        );
+        return sum + BigInt(converted);
+      },
       0n,
     );
 

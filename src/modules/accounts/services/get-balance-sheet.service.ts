@@ -1,8 +1,13 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { getExchangeRateMap } from "@/modules/currencies";
 import {
   getAccountBalanceDeltasAtDate,
   getPocketBalanceDeltasAtDate,
 } from "@/modules/transactions";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import { listAccounts } from "../repositories/accounts.repository";
 import { listPockets } from "../repositories/pockets.repository";
 import { compareAccountTypesForDisplay } from "../utils/account-type-order";
@@ -67,6 +72,7 @@ export function getBalanceSheet(
   const pocketDeltas = getPocketBalanceDeltasAtDate(cutoffDate, context);
 
   const cutoffTime = cutoffDate.getTime();
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
   // Index pockets by accountId
   const pocketsByAccountId = new Map<string, BalanceSheetPocketItem[]>();
@@ -98,6 +104,13 @@ export function getBalanceSheet(
     const delta = accountDeltas[account.id] ?? 0;
     const balance = openingBalance + delta;
 
+    const convertedBalance = convertCurrencyMinorUnits(
+      balance,
+      account.currencyCode,
+      DEFAULT_BASE_CURRENCY,
+      ratesMap,
+    );
+
     const accountPockets = pocketsByAccountId.get(account.id) ?? [];
     const totalPocketsBalance = accountPockets.reduce(
       (sum, p) => sum + p.balanceMinorUnits,
@@ -120,16 +133,16 @@ export function getBalanceSheet(
     const targetMap = isLiability ? liabilityTypeMap : assetTypeMap;
 
     if (isLiability) {
-      totalLiabilitiesMinorUnits += balance;
+      totalLiabilitiesMinorUnits += convertedBalance;
     } else {
-      totalAssetsMinorUnits += balance;
+      totalAssetsMinorUnits += convertedBalance;
     }
 
     const typeId = account.accountTypeId || "other";
     const existingGroup = targetMap.get(typeId);
 
     if (existingGroup) {
-      existingGroup.totalBalanceMinorUnits += balance;
+      existingGroup.totalBalanceMinorUnits += convertedBalance;
       existingGroup.accounts.push(accountItem);
     } else {
       const typeInfo = account.accountType;
@@ -139,7 +152,7 @@ export function getBalanceSheet(
         iconKey: typeInfo?.iconKey ?? "landmark",
         color: typeInfo?.color ?? null,
         sortOrder: typeInfo?.sortOrder ?? 999,
-        totalBalanceMinorUnits: balance,
+        totalBalanceMinorUnits: convertedBalance,
         accounts: [accountItem],
       });
     }

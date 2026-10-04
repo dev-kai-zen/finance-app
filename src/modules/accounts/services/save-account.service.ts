@@ -107,7 +107,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
         {
           ...values,
           id: accountId,
-          currencyCode: "PHP",
+          currencyCode: value.currencyCode ?? "PHP",
           startingBalanceLocked: false,
           createdAt: now,
         },

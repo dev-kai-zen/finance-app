@@ -53,6 +53,7 @@
     "android:apk:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat assembleRelease",
     "android:aab:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat bundleRelease",
     "db:generate": "drizzle-kit generate",
+    "test": "node --test src/**/*.test.cjs",
     "typecheck": "tsc --noEmit"
   },
   "private": true

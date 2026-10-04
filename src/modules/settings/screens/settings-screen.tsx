@@ -3,11 +3,10 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
-import { AccountPickerModal } from "@/components/account-picker-modal";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
-import { useAccounts } from "@/modules/accounts";
+import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { useWorkspace } from "@/modules/onboarding";

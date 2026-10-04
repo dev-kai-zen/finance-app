@@ -3,10 +3,8 @@ import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-nati
 import { ChevronRight } from "lucide-react-native";
 
 import {
-  AccountPickerModal,
   AmountCalculatorField,
   AmountCalculatorModal,
-  CategoryPickerModal,
   FullScreenFormModal,
   IconHelper,
   KeyboardAwareForm,
@@ -14,11 +12,15 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
+  AccountPickerModal,
   accountColor,
   type AccountListItem,
   type PocketListItem,
 } from "@/modules/accounts";
-import type { Category } from "@/modules/categories";
+import {
+  CategoryPickerModal,
+  type Category,
+} from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { useDefaultAccounts } from "@/modules/settings";
 import {

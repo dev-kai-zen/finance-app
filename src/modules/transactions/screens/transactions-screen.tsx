@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Platform,
   Pressable,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
@@ -394,14 +396,27 @@ export function TransactionsScreen() {
     setFilterState(DEFAULT_TRANSACTION_FILTERS);
   };
 
+  const sections = useMemo(
+    () =>
+      groupedTransactions.map((group) => ({
+        key: group.key,
+        title: group.label,
+        count: group.items.length,
+        data: group.items,
+      })),
+    [groupedTransactions],
+  );
+
   return (
     <PageContainer
+      contentContainerStyle={styles.pageContent}
       floatingAction={
         <FloatingActionButton
           accessibilityLabel="Record new transaction"
           onPress={handleOpenNewTransaction}
         />
       }
+      scrollable={false}
     >
       <View style={styles.container}>
         {/* Search & Actions Header (Kaizen SearchScreen Design) */}
@@ -550,50 +565,56 @@ export function TransactionsScreen() {
         </View>
 
         {/* Transactions Feed Grouped By Date */}
-        {groupedTransactions.length === 0 ? (
-          <PageEmptyState
-            actionLabel={
-              activeFilterCount > 0 || searchQuery.length > 0
-                ? "Clear Filters"
-                : "+ Record First Transaction"
-            }
-            description={
-              activeFilterCount > 0 || searchQuery.length > 0
-                ? "No transaction records match your search or filter criteria."
-                : "Your transaction history is empty. Start recording your expenses, income, or transfers."
-            }
-            onAction={
-              activeFilterCount > 0 || searchQuery.length > 0
-                ? handleClearFilters
-                : handleOpenNewTransaction
-            }
-            title="No Transactions Found"
-          />
-        ) : (
-          groupedTransactions.map((group) => (
-            <View key={group.key} style={styles.dateGroupContainer}>
-              {/* Date Group Header */}
-              <View style={styles.dateGroupHeader}>
-                <Text style={styles.dateGroupTitle}>{group.label}</Text>
-                <View style={styles.dateCountBadge}>
-                  <Text style={styles.dateCountBadgeText}>
-                    {group.items.length}{" "}
-                    {group.items.length === 1 ? "record" : "records"}
-                  </Text>
-                </View>
+        <SectionList
+          ListEmptyComponent={
+            <PageEmptyState
+              actionLabel={
+                activeFilterCount > 0 || searchQuery.length > 0
+                  ? "Clear Filters"
+                  : "+ Record First Transaction"
+              }
+              description={
+                activeFilterCount > 0 || searchQuery.length > 0
+                  ? "No transaction records match your search or filter criteria."
+                  : "Your transaction history is empty. Start recording your expenses, income, or transfers."
+              }
+              onAction={
+                activeFilterCount > 0 || searchQuery.length > 0
+                  ? handleClearFilters
+                  : handleOpenNewTransaction
+              }
+              title="No Transactions Found"
+            />
+          }
+          contentContainerStyle={styles.listContentContainer}
+          initialNumToRender={20}
+          keyExtractor={(item) => item.id}
+          maxToRenderPerBatch={15}
+          removeClippedSubviews={Platform.OS !== "web"}
+          renderItem={({ item }) => (
+            <TransactionRow
+              key={item.id}
+              onDelete={handleDelete}
+              onPress={(item) => setInspectedTransaction(item)}
+              transaction={item}
+            />
+          )}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.dateGroupHeader}>
+              <Text style={styles.dateGroupTitle}>{section.title}</Text>
+              <View style={styles.dateCountBadge}>
+                <Text style={styles.dateCountBadgeText}>
+                  {section.count} {section.count === 1 ? "record" : "records"}
+                </Text>
               </View>
-
-              {group.items.map((tx) => (
-                <TransactionRow
-                  key={tx.id}
-                  onDelete={handleDelete}
-                  onPress={(item) => setInspectedTransaction(item)}
-                  transaction={tx}
-                />
-              ))}
             </View>
-          ))
-        )}
+          )}
+          sections={sections}
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+          style={styles.sectionList}
+          windowSize={7}
+        />
       </View>
 
       {/* Transaction & Transfer Form Modal */}
@@ -700,10 +721,19 @@ export function TransactionsScreen() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    pageContent: {
+      flex: 1,
+    },
     container: {
+      flex: 1,
       gap: theme.spacing.md,
       paddingTop: theme.spacing.lg,
-      paddingBottom: 80,
+    },
+    sectionList: {
+      flex: 1,
+    },
+    listContentContainer: {
+      paddingBottom: 100,
     },
     searchRow: {
       alignItems: "center",

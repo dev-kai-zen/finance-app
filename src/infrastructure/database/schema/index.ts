@@ -17,3 +17,4 @@ export * from "./labels";
 export * from "./transaction-labels";
 export * from "./notes";
 export * from "./note-attachments";
+export * from "./exchange-rates";

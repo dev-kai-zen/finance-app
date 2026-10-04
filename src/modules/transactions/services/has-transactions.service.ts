@@ -1,6 +1,6 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { hasTransactions as hasTransactionsQuery } from "@/infrastructure/database/queries/transaction-presence";
+import { hasTransactions as hasTransactionsRepo } from "../repositories/transactions.repository";
 
 export function hasTransactions(context: DbContext = db): boolean {
-  return hasTransactionsQuery(context);
+  return hasTransactionsRepo(context);
 }

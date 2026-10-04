@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   accounts,
@@ -6,10 +6,15 @@ import {
   transactions,
 } from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
+import { getExchangeRateMap } from "@/modules/currencies";
 import {
   getAccountBalanceDeltasAtDates,
   getRecentTransactions,
 } from "@/modules/transactions";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import type {
   AccountWithBalance,
   CategorySpendingItem,
@@ -42,26 +47,42 @@ export function getMonthlyCashflow(
     year: "numeric",
   });
 
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+
   const allTx = context
-    .select()
+    .select({
+      type: transactions.type,
+      amountCents: transactions.amountCents,
+      currencyCode: accounts.currencyCode,
+    })
     .from(transactions)
-    .where(isNull(transactions.deletedAt))
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, startOfMonth),
+        lte(transactions.occurredAt, endOfMonth),
+      ),
+    )
     .all();
 
   let totalInflow = 0;
   let totalOutflow = 0;
 
   for (const tx of allTx) {
-    const txDate = new Date(tx.occurredAt);
-    if (txDate >= startOfMonth && txDate <= endOfMonth) {
-      if (tx.type === "transfer") {
-        continue;
-      }
-      if (tx.amountCents > 0) {
-        totalInflow += tx.amountCents;
-      } else if (tx.amountCents < 0) {
-        totalOutflow += Math.abs(tx.amountCents);
-      }
+    if (tx.type === "transfer") {
+      continue;
+    }
+    const convertedAmount = convertCurrencyMinorUnits(
+      tx.amountCents,
+      tx.currencyCode ?? DEFAULT_BASE_CURRENCY,
+      DEFAULT_BASE_CURRENCY,
+      ratesMap,
+    );
+    if (convertedAmount > 0) {
+      totalInflow += convertedAmount;
+    } else if (convertedAmount < 0) {
+      totalOutflow += Math.abs(convertedAmount);
     }
   }
 
@@ -89,17 +110,23 @@ export function getCategorySpendingBreakdown(
   const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
   const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+
   const txRows = context
     .select({
       transaction: transactions,
       category: categories,
+      currencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(
         eq(transactions.type, "expense"),
         isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, startOfMonth),
+        lte(transactions.occurredAt, endOfMonth),
       ),
     )
     .all();
@@ -116,31 +143,33 @@ export function getCategorySpendingBreakdown(
 
   let overallExpense = 0;
 
-  for (const { transaction: tx, category: cat } of txRows) {
-    const txDate = new Date(tx.occurredAt);
-    if (txDate >= startOfMonth && txDate <= endOfMonth) {
-      const catId = cat?.id ?? "uncategorized";
-      const catName = cat?.name ?? "Uncategorized";
-      const catColor = cat?.hexColorsId
-        ? cat.hexColorsId.startsWith("color_")
-          ? cat.hexColorsId.replace("color_", "")
-          : cat.hexColorsId
-        : "slate";
-      const catIcon = cat?.icon ?? "tag";
+  for (const { transaction: tx, category: cat, currencyCode } of txRows) {
+    const catId = cat?.id ?? "uncategorized";
+    const catName = cat?.name ?? "Uncategorized";
+    const catColor = cat?.hexColorsId
+      ? cat.hexColorsId.startsWith("color_")
+        ? cat.hexColorsId.replace("color_", "")
+        : cat.hexColorsId
+      : "slate";
+    const catIcon = cat?.icon ?? "tag";
 
-      if (!spendingByCategory[catId]) {
-        spendingByCategory[catId] = {
-          name: catName,
-          color: catColor,
-          icon: catIcon,
-          total: 0,
-        };
-      }
-
-      const expenseMagnitude = Math.abs(tx.amountCents);
-      spendingByCategory[catId].total += expenseMagnitude;
-      overallExpense += expenseMagnitude;
+    if (!spendingByCategory[catId]) {
+      spendingByCategory[catId] = {
+        name: catName,
+        color: catColor,
+        icon: catIcon,
+        total: 0,
+      };
     }
+
+    const expenseMagnitude = convertCurrencyMinorUnits(
+      Math.abs(tx.amountCents),
+      currencyCode ?? DEFAULT_BASE_CURRENCY,
+      DEFAULT_BASE_CURRENCY,
+      ratesMap,
+    );
+    spendingByCategory[catId].total += expenseMagnitude;
+    overallExpense += expenseMagnitude;
   }
 
   const items: CategorySpendingItem[] = Object.entries(spendingByCategory).map(
@@ -167,14 +196,22 @@ export function getDashboardSummary(
     (a) => !a.isArchived && !a.hideFromReports,
   );
 
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+
   let totalAssets = 0;
   let totalLiabilities = 0;
 
   for (const acc of activeAccounts) {
+    const convertedBalance = convertCurrencyMinorUnits(
+      acc.currentBalanceMinorUnits,
+      acc.currencyCode,
+      DEFAULT_BASE_CURRENCY,
+      ratesMap,
+    );
     if (acc.accountType?.accountGroup === "liability") {
-      totalLiabilities += acc.currentBalanceMinorUnits;
+      totalLiabilities += convertedBalance;
     } else {
-      totalAssets += acc.currentBalanceMinorUnits;
+      totalAssets += convertedBalance;
     }
   }
 
@@ -225,6 +262,7 @@ export function getNetWorthHistory(
   context: DbContext = db,
   targetDate: Date = new Date(),
 ): NetWorthHistory {
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
   const cutoffsByPeriod = Object.fromEntries(
     NET_WORTH_PERIODS.map((period) => [
       period,
@@ -259,6 +297,7 @@ export function getNetWorthHistory(
           date,
           deltasByCutoff.get(date.getTime()) ?? {},
           period,
+          ratesMap,
         ),
       ),
     ]),
@@ -270,6 +309,7 @@ function calculateNetWorthPoint(
   date: Date,
   transactionDeltas: Record<string, number>,
   period: NetWorthPeriod,
+  ratesMap?: Map<string, number>,
 ): NetWorthHistoryPoint {
   let totalAssetsMinorUnits = 0;
   let totalLiabilitiesMinorUnits = 0;
@@ -286,10 +326,16 @@ function calculateNetWorthPoint(
     const balance =
       account.openingBalanceMinorUnits +
       (transactionDeltas[account.id] ?? 0);
+    const convertedBalance = convertCurrencyMinorUnits(
+      balance,
+      account.currencyCode,
+      DEFAULT_BASE_CURRENCY,
+      ratesMap,
+    );
     if (account.accountType?.accountGroup === "liability") {
-      totalLiabilitiesMinorUnits += balance;
+      totalLiabilitiesMinorUnits += convertedBalance;
     } else {
-      totalAssetsMinorUnits += balance;
+      totalAssetsMinorUnits += convertedBalance;
     }
   }
 

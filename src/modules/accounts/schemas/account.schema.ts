@@ -25,6 +25,7 @@ const creditCardDetailsInputSchema = z.object({
 
 export const accountInputSchema = z.object({
   name,
+  currencyCode: z.string().default("PHP").optional(),
   note: z
     .string()
     .max(1000, "Use at most 1000 characters for the note.")

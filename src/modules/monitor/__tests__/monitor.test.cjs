@@ -62,9 +62,9 @@ test("monitor: executes arbitrary SELECT and measures row count", () => {
   const now = Date.now();
 
   db.exec(`
-    INSERT INTO categories (id, name, type, color, icon, is_system, created_at, updated_at)
-    VALUES ('cat_t1', 'Dining Out', 'expense', 'orange', 'utensils', 0, ${now}, ${now}),
-           ('cat_t2', 'Internet', 'expense', 'blue', 'wifi', 0, ${now}, ${now});
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_t1', 'Dining Out', 'expense', 'utensils', 0, ${now}, ${now}),
+           ('cat_t2', 'Internet', 'expense', 'wifi', 0, ${now}, ${now});
   `);
 
   const rows = db.prepare("SELECT id, name, type FROM categories WHERE is_system = 0;").all();

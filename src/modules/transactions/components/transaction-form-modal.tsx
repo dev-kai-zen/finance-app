@@ -12,22 +12,24 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronRight, Paperclip, Plus, Sparkles, X } from "lucide-react-native";
 import {
-  AccountPickerModal,
   AmountCalculatorField,
   AmountCalculatorModal,
-  CategoryPickerModal,
   IconHelper,
   KeyboardAwareForm,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import type {
-  AccountListItem,
-  PocketListItem,
+import {
+  AccountPickerModal,
+  accountColor,
+  type AccountListItem,
+  type PocketListItem,
 } from "@/modules/accounts";
-import { accountColor } from "@/modules/accounts";
-import type { Category } from "@/modules/categories";
+import {
+  CategoryPickerModal,
+  type Category,
+} from "@/modules/categories";
 import { previewInstallmentPlan } from "@/modules/credit-cards";
 import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";

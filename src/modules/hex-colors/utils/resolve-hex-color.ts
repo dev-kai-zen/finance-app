@@ -22,7 +22,7 @@ export function resolveHexColor(
     return fallback;
   }
 
-  if (normalized.startsWith("#")) {
+  if (/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(normalized)) {
     return normalized;
   }
 

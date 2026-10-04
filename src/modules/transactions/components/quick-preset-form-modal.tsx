@@ -3,10 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import {
-  AccountPickerModal,
   AmountCalculatorField,
   AmountCalculatorModal,
-  CategoryPickerModal,
   FullScreenFormModal,
   IconHelper,
   KeyboardAwareForm,
@@ -14,12 +12,16 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import type {
-  AccountListItem,
-  PocketListItem,
+import {
+  AccountPickerModal,
+  accountColor,
+  type AccountListItem,
+  type PocketListItem,
 } from "@/modules/accounts";
-import { accountColor } from "@/modules/accounts";
-import type { Category } from "@/modules/categories";
+import {
+  CategoryPickerModal,
+  type Category,
+} from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type {

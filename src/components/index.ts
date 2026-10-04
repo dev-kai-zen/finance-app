@@ -14,8 +14,6 @@ export * from "./date-picker-modal";
 export * from "./icon-helper";
 export * from "./icon-picker-modal";
 export * from "./sortable-list-modal";
-export * from "./account-picker-modal";
-export * from "./category-picker-modal";
 export * from "./feature-not-implemented-modal";
 export * from "./confirm-modal";
 export * from "./info-modal";
