@@ -203,6 +203,17 @@ export const permanentlyDeleteTransactionPreset = deferFunction(
       .permanentlyDeleteTransactionPreset,
 ) as typeof import("./services/permanently-delete-transaction-preset.service").permanentlyDeleteTransactionPreset;
 
+export const isAccountInUseByTransactions = deferFunction(
+  () =>
+    require("./services/is-account-in-use.service").isAccountInUseByTransactions,
+) as typeof import("./services/is-account-in-use.service").isAccountInUseByTransactions;
+
+export const getAccountIdsInUseByTransactions = deferFunction(
+  () =>
+    require("./services/is-account-in-use.service")
+      .getAccountIdsInUseByTransactions,
+) as typeof import("./services/is-account-in-use.service").getAccountIdsInUseByTransactions;
+
 export type {
   Transaction,
   TransactionListItem,

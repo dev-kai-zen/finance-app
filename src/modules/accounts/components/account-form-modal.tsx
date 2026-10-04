@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ChevronRight, Lock } from "lucide-react-native";
+import { ChevronRight, Lock, Trash2 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -73,6 +73,7 @@ export function AccountFormModal({
   onSave,
   onDelete,
   onRestore,
+  onPermanentDelete,
   onLockStartingBalance,
 }: {
   visible: boolean;
@@ -85,6 +86,7 @@ export function AccountFormModal({
   onSave: (value: AccountInput, id?: string) => Promise<boolean>;
   onDelete?: (accountId: string) => Promise<boolean>;
   onRestore?: (accountId: string) => Promise<boolean>;
+  onPermanentDelete?: (accountId: string) => Promise<boolean>;
   onLockStartingBalance?: (accountId: string) => Promise<boolean>;
 }) {
   const theme = useAppTheme();
@@ -171,7 +173,7 @@ export function AccountFormModal({
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
-    "archive" | "restore" | "lock-balance" | null
+    "archive" | "restore" | "lock-balance" | "delete" | null
   >(null);
 
   const foreign = !!account && account.currencyCode !== "PHP";
@@ -217,6 +219,15 @@ export function AccountFormModal({
     if (confirmAction === "restore" && onRestore) {
       void onRestore(account.id).then((restored) => {
         if (restored) {
+          setConfirmAction(null);
+          onClose();
+        }
+      });
+      return;
+    }
+    if (confirmAction === "delete" && onPermanentDelete) {
+      void onPermanentDelete(account.id).then((deleted) => {
+        if (deleted) {
           setConfirmAction(null);
           onClose();
         }
@@ -277,20 +288,43 @@ export function AccountFormModal({
 
   if (!visible) return null;
 
+  const isDeletable = Boolean(account && account.isDeletable);
+  const deleteLabel = account?.isArchived
+    ? "Restore account"
+    : isDeletable
+      ? "Delete account"
+      : "Archive account";
+
+  const handleDeleteTrigger = () => {
+    if (account?.isArchived && onRestore) {
+      setConfirmAction("restore");
+    } else if (account && !account.isArchived) {
+      if (isDeletable && onPermanentDelete) {
+        setConfirmAction("delete");
+      } else if (onDelete) {
+        setConfirmAction("archive");
+      }
+    }
+  };
+
   return (
     <>
       <FullScreenFormModal
         deleteAction={account?.isArchived ? "restore" : "delete"}
-        deleteLabel={account?.isArchived ? "Restore account" : "Archive account"}
+        deleteLabel={deleteLabel}
         pending={pending}
         title={account ? "Edit Account" : "New Account"}
         visible={visible}
         onClose={onClose}
         onDelete={
-          account?.isArchived && onRestore
-            ? () => setConfirmAction("restore")
-            : account && !account.isArchived && onDelete
-              ? () => setConfirmAction("archive")
+          account?.isArchived
+            ? onRestore
+              ? () => setConfirmAction("restore")
+              : undefined
+            : account
+              ? (isDeletable ? onPermanentDelete : onDelete)
+                ? handleDeleteTrigger
+                : undefined
               : undefined
         }
         onSave={handleSave}
@@ -638,6 +672,24 @@ export function AccountFormModal({
               </Text>
             </View>
           ) : null}
+
+          {account?.isArchived && isDeletable && onPermanentDelete ? (
+            <View style={styles.archivedDeleteContainer}>
+              <Pressable
+                accessibilityLabel="Permanently delete archived account"
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={() => setConfirmAction("delete")}
+                style={styles.archivedDeleteBtn}
+              >
+                <Trash2 color={theme.colors.danger} size={16} />
+                <Text style={styles.archivedDeleteBtnText}>Permanently Delete Account</Text>
+              </Pressable>
+              <Text style={styles.helperText}>
+                This archived account has no transaction history and can be safely deleted permanently.
+              </Text>
+            </View>
+          ) : null}
         </KeyboardAwareForm>
       </FullScreenFormModal>
 
@@ -647,14 +699,18 @@ export function AccountFormModal({
             ? "Restore"
             : confirmAction === "lock-balance"
               ? "Lock"
-              : "Archive"
+              : confirmAction === "delete"
+                ? "Delete"
+                : "Archive"
         }
         message={
           confirmAction === "restore"
             ? `Restore "${account?.name ?? "this account"}" to the active accounts list? It will be included in totals again.`
             : confirmAction === "lock-balance"
               ? `Lock the starting balance for "${account?.name ?? "this account"}"? This cannot be undone and the starting balance will no longer be editable.`
-              : `Archive "${account?.name ?? "this account"}"? It will be hidden from the active list and opening totals, but its data stays intact.`
+              : confirmAction === "delete"
+                ? `Permanently delete "${account?.name ?? "this account"}"? This action cannot be undone.`
+                : `Archive "${account?.name ?? "this account"}"? This account has transaction history and cannot be deleted. It will be hidden from the active list, but its records stay intact.`
         }
         pending={pending}
         title={
@@ -662,7 +718,9 @@ export function AccountFormModal({
             ? "Restore account?"
             : confirmAction === "lock-balance"
               ? "Lock starting balance?"
-              : "Archive account?"
+              : confirmAction === "delete"
+                ? "Delete account permanently?"
+                : "Archive account?"
         }
         variant={confirmAction === "restore" ? "restore" : "destructive"}
         visible={confirmAction !== null}
@@ -971,6 +1029,30 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 12,
       fontWeight: "600",
+    },
+    archivedDeleteContainer: {
+      alignItems: "center",
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+    },
+    archivedDeleteBtn: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}15`,
+      borderColor: `${theme.colors.danger}40`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.lg,
+      width: "100%",
+    },
+    archivedDeleteBtnText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

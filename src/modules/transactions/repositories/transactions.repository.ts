@@ -645,3 +645,27 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
     transactionCount: standaloneCount + transferCount,
   };
 }
+
+export function hasTransactionsForAccount(
+  accountId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactions.id })
+      .from(transactions)
+      .where(eq(transactions.accountId, accountId))
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getAccountIdsWithTransactions(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .selectDistinct({ accountId: transactions.accountId })
+    .from(transactions)
+    .all();
+  return new Set(rows.map((r) => r.accountId));
+}

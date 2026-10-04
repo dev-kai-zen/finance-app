@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Archive, Info, RotateCcw } from "lucide-react-native";
+import { Archive, Info, RotateCcw, Trash2 } from "lucide-react-native";
 import { ConfirmModal, FullScreenFormModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -14,6 +14,7 @@ export interface ArchivedAccountsModalProps {
   onClose: () => void;
   onSelect: (account: AccountListItem) => void;
   onRestore: (accountId: string) => Promise<boolean>;
+  onPermanentDelete?: (accountId: string) => Promise<boolean>;
 }
 
 export function ArchivedAccountsModal({
@@ -23,10 +24,12 @@ export function ArchivedAccountsModal({
   onClose,
   onSelect,
   onRestore,
+  onPermanentDelete,
 }: ArchivedAccountsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [restoreTarget, setRestoreTarget] = useState<AccountListItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AccountListItem | null>(null);
 
   return (
     <>
@@ -67,6 +70,22 @@ export function ArchivedAccountsModal({
                 <View key={account.id} style={styles.accountItem}>
                   <AccountRow account={account} onPress={() => onSelect(account)} />
                   <View style={styles.actionRow}>
+                    {account.isDeletable && onPermanentDelete ? (
+                      <Pressable
+                        accessibilityLabel={`Delete ${account.name} permanently`}
+                        accessibilityRole="button"
+                        disabled={pending}
+                        onPress={() => setDeleteTarget(account)}
+                        style={({ pressed }) => [
+                          styles.deleteBtn,
+                          pending && styles.deleteBtnDisabled,
+                          pressed && styles.deleteBtnPressed,
+                        ]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={15} />
+                        <Text style={styles.deleteBtnText}>Delete</Text>
+                      </Pressable>
+                    ) : null}
                     <Pressable
                       accessibilityLabel={`Restore ${account.name}`}
                       accessibilityRole="button"
@@ -101,6 +120,22 @@ export function ArchivedAccountsModal({
           if (!restoreTarget) return;
           void onRestore(restoreTarget.id).then((restored) => {
             if (restored) setRestoreTarget(null);
+          });
+        }}
+      />
+
+      <ConfirmModal
+        confirmLabel="Delete"
+        message={`Permanently delete "${deleteTarget?.name ?? "this account"}"? This action cannot be undone.`}
+        pending={pending}
+        title="Delete account permanently?"
+        variant="destructive"
+        visible={deleteTarget !== null}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget || !onPermanentDelete) return;
+          void onPermanentDelete(deleteTarget.id).then((deleted) => {
+            if (deleted) setDeleteTarget(null);
           });
         }}
       />
@@ -142,8 +177,32 @@ function createStyles(theme: AppTheme) {
     },
     actionRow: {
       flexDirection: "row",
+      gap: theme.spacing.sm,
       justifyContent: "flex-end",
       marginTop: 2,
+    },
+    deleteBtn: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}18`,
+      borderColor: `${theme.colors.danger}40`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 36,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+    },
+    deleteBtnDisabled: {
+      opacity: 0.5,
+    },
+    deleteBtnPressed: {
+      opacity: 0.8,
+    },
+    deleteBtnText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     restoreBtn: {
       alignItems: "center",

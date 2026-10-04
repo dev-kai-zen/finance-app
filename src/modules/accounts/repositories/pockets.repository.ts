@@ -46,3 +46,10 @@ export function updatePocketRecord(
 export function newPocketRecordId(context: DbContext = db): string {
   return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
 }
+
+export function deletePocketsForAccount(
+  accountId: string,
+  context: DbContext = db,
+): void {
+  context.delete(pockets).where(eq(pockets.accountId, accountId)).run();
+}

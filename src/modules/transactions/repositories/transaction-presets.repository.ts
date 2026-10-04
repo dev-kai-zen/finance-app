@@ -1,4 +1,4 @@
-import { asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { transactionPresets } from "@/infrastructure/database/schema";
 import type {
@@ -184,4 +184,42 @@ export function reassignTransactionPresetCategoryRecords(
     .set({ categoryId: toCategoryId, updatedAt: new Date() })
     .where(eq(transactionPresets.categoryId, fromCategoryId))
     .run();
+}
+
+export function hasPresetsForAccount(
+  accountId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactionPresets.id })
+      .from(transactionPresets)
+      .where(
+        or(
+          eq(transactionPresets.accountId, accountId),
+          eq(transactionPresets.toAccountId, accountId),
+        ),
+      )
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getAccountIdsWithPresets(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .select({
+      accountId: transactionPresets.accountId,
+      toAccountId: transactionPresets.toAccountId,
+    })
+    .from(transactionPresets)
+    .all();
+
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.accountId) set.add(row.accountId);
+    if (row.toAccountId) set.add(row.toAccountId);
+  }
+  return set;
 }

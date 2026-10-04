@@ -30,18 +30,13 @@ const createMock = () => {
 };
 Module._load = function (request, ...args) {
   if (request === "@/infrastructure/database/client") return { get db() { return database; } };
+  if (request.includes("drizzle/migrations") || request.endsWith("migrations")) return {};
   if (
-    request === "expo-sqlite" ||
-    request.startsWith("expo-sqlite/") ||
-    request === "react-native" ||
-    request === "react-native-safe-area-context" ||
-    request === "react-native-screens" ||
-    request === "lucide-react-native" ||
-    request === "expo-router" ||
-    request === "react-native-keyboard-controller" ||
-    request === "react-native-worklets" ||
-    request === "react-native-svg" ||
-    request === "react"
+    request.startsWith("expo") ||
+    request.startsWith("@expo") ||
+    request.startsWith("react-native") ||
+    request.startsWith("react") ||
+    request === "lucide-react-native"
   ) {
     return createMock();
   }
@@ -77,6 +72,8 @@ const { saveAccount } = require("@/modules/accounts/services/save-account.servic
 const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock-account-starting-balance.service");
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
+const { deleteAccount } = require("@/modules/accounts/services/delete-account.service");
+const { canDeleteAccount } = require("@/modules/accounts/services/can-delete-account.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
 const {
   moveAccount,
@@ -740,5 +737,36 @@ test("workspace reset removes Fund Groups before deleting their accounts", () =>
   assert.deepEqual(fundGroupsRepo.listFundGroups(), []);
   assert.equal(repo.findAccountById(accountId), null);
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("permanent delete is allowed for unused accounts and cleans up associated records", () => {
+  const accountId = saveAccount(accountInput(undefined, "Unused Account", "250.00"));
+  assert.equal(canDeleteAccount(accountId), true);
+
+  const accounts = getAccountsWithBalances();
+  const item = accounts.find((a) => a.id === accountId);
+  assert.equal(item?.isDeletable, true);
+
+  deleteAccount(accountId);
+  assert.equal(repo.findAccountById(accountId), null);
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("permanent delete is blocked for accounts with transaction history", () => {
+  const accountId = saveAccount(accountInput(undefined, "Used Account", "100.00"));
+  sqlite.prepare(
+    "INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_test_1', ?, 'expense', 5000, 1000, 1000, 1000)"
+  ).run(accountId);
+
+  assert.equal(canDeleteAccount(accountId), false);
+  const accounts = getAccountsWithBalances();
+  const item = accounts.find((a) => a.id === accountId);
+  assert.equal(item?.isDeletable, false);
+
+  assert.throws(
+    () => deleteAccount(accountId),
+    /Cannot permanently delete an account that has transaction history/,
+  );
+  assert.notEqual(repo.findAccountById(accountId), null);
 });
 

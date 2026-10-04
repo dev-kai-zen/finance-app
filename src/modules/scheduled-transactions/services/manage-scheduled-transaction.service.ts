@@ -4,7 +4,9 @@ import {
   deleteScheduledTransactionRecord,
   deleteUnprocessedScheduleOccurrences,
   findScheduledTransaction,
+  getAccountIdsWithSchedules as repoGetAccountIdsWithSchedules,
   hasSchedulePostings,
+  hasSchedulesForAccount as repoHasSchedulesForAccount,
   listScheduleIdsWithPostings,
   updateScheduledTransactionRecord,
 } from "../repositories/scheduled-transactions.repository";
@@ -108,4 +110,17 @@ export function clearScheduledTransactionWorkspace(
   context: DbContext,
 ): void {
   deleteAllScheduledTransactionRecords(context);
+}
+
+export function hasSchedulesForAccount(
+  accountId: string,
+  context: DbContext = db,
+): boolean {
+  return repoHasSchedulesForAccount(accountId, context);
+}
+
+export function getAccountIdsWithSchedules(
+  context: DbContext = db,
+): Set<string> {
+  return repoGetAccountIdsWithSchedules(context);
 }

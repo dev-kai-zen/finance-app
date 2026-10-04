@@ -32,6 +32,18 @@ export const hasScheduledTransactionPostings = deferFunction(
       .hasScheduledTransactionPostings,
 ) as typeof import("./services/manage-scheduled-transaction.service").hasScheduledTransactionPostings;
 
+export const hasSchedulesForAccount = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .hasSchedulesForAccount,
+) as typeof import("./services/manage-scheduled-transaction.service").hasSchedulesForAccount;
+
+export const getAccountIdsWithSchedules = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getAccountIdsWithSchedules,
+) as typeof import("./services/manage-scheduled-transaction.service").getAccountIdsWithSchedules;
+
 export const useScheduledTransactions = deferFunction(
   () => require("./hooks/use-scheduled-transactions").useScheduledTransactions,
 ) as typeof import("./hooks/use-scheduled-transactions").useScheduledTransactions;

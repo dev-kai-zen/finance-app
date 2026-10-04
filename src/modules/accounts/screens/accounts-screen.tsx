@@ -296,6 +296,7 @@ export function AccountsScreen({
         onClose={close}
         onDelete={(accountId) => mutations.archiveAccount(accountId, true)}
         onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
+        onPermanentDelete={mutations.deleteAccount}
         onLockStartingBalance={mutations.lockStartingBalance}
         onSave={mutations.saveAccount}
       />
@@ -343,6 +344,7 @@ export function AccountsScreen({
         visible={archivedModalOpen}
         onClose={() => setArchivedModalOpen(false)}
         onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
+        onPermanentDelete={mutations.deleteAccount}
         onSelect={handleSelectArchivedAccount}
       />
 

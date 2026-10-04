@@ -35,6 +35,7 @@ export type AccountListItem = Account & {
   accountType: AccountType | null;
   creditCardDetails: CreditCardDetails | null;
   currentBalanceMinorUnits: number;
+  isDeletable?: boolean;
   creditCardMonitoring?: {
     billedMinorUnits: number;
     unbilledMinorUnits: number;

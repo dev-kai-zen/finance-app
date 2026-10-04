@@ -6,6 +6,7 @@ import {
   isNotNull,
   isNull,
   lte,
+  or,
   sql,
 } from "drizzle-orm";
 
@@ -308,4 +309,42 @@ export function deleteAllScheduledTransactionRecords(
   context: DbContext = db,
 ): void {
   context.delete(transactionSchedules).run();
+}
+
+export function hasSchedulesForAccount(
+  accountId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactionSchedules.id })
+      .from(transactionSchedules)
+      .where(
+        or(
+          eq(transactionSchedules.accountId, accountId),
+          eq(transactionSchedules.toAccountId, accountId),
+        ),
+      )
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getAccountIdsWithSchedules(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .select({
+      accountId: transactionSchedules.accountId,
+      toAccountId: transactionSchedules.toAccountId,
+    })
+    .from(transactionSchedules)
+    .all();
+
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.accountId) set.add(row.accountId);
+    if (row.toAccountId) set.add(row.toAccountId);
+  }
+  return set;
 }

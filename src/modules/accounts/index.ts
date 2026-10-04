@@ -85,6 +85,18 @@ export const deleteAccountType = deferFunction(
   () => require("./services/delete-account-type.service").deleteAccountType,
 ) as typeof import("./services/delete-account-type.service").deleteAccountType;
 
+export const deleteAccount = deferFunction(
+  () => require("./services/delete-account.service").deleteAccount,
+) as typeof import("./services/delete-account.service").deleteAccount;
+
+export const canDeleteAccount = deferFunction(
+  () => require("./services/can-delete-account.service").canDeleteAccount,
+) as typeof import("./services/can-delete-account.service").canDeleteAccount;
+
+export const isAccountInUse = deferFunction(
+  () => require("./services/can-delete-account.service").isAccountInUse,
+) as typeof import("./services/can-delete-account.service").isAccountInUse;
+
 export type {
   InitialAccountInput,
   InitialAccountTemplate,

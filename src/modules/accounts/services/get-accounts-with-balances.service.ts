@@ -1,7 +1,8 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getAccountBalanceDeltas } from "@/modules/transactions/services/get-account-balance-deltas.service";
+import { getAccountBalanceDeltas } from "@/modules/transactions";
 import { listAccounts } from "../repositories/accounts.repository";
 import type { AccountListItem } from "../types/account.types";
+import { getAccountIdsInUse } from "./can-delete-account.service";
 
 /**
  * Retrieves all accounts combined with their dynamic current balances
@@ -15,12 +16,14 @@ export function getAccountsWithBalances(
 ): AccountListItem[] {
   const accounts = listAccounts(context);
   const deltas = getAccountBalanceDeltas(context);
+  const inUseAccountIds = getAccountIdsInUse(context);
 
   return accounts.map((account) => {
     const delta = deltas[account.id] || 0;
     return {
       ...account,
       currentBalanceMinorUnits: account.openingBalanceMinorUnits + delta,
+      isDeletable: !inUseAccountIds.has(account.id),
     };
   });
 }

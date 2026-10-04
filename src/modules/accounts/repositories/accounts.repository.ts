@@ -37,6 +37,9 @@ export function insertAccount(value: NewAccount, context: DbContext = db) {
 export function updateAccountRecord(id: string, values: Partial<Omit<NewAccount, "id" | "createdAt">>, context: DbContext = db) {
   context.update(accounts).set(values).where(eq(accounts.id, id)).run();
 }
+export function deleteAccountRecord(id: string, context: DbContext = db): void {
+  context.delete(accounts).where(eq(accounts.id, id)).run();
+}
 export function deleteAllAccountRecords(context: DbContext = db): void {
   context.delete(accounts).run();
 }
