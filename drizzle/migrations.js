@@ -29,6 +29,7 @@ import m0024 from './0024_add_category_budgets.sql';
 import m0025 from './0025_add_semi_monthly_frequency.sql';
 import m0026 from './0026_add_labels_and_transaction_labels.sql';
 import m0027 from './0027_add_exact_weekend_policy.sql';
+import m0028 from './0028_add_notes_and_note_attachments.sql';
 
   export default {
     journal,
@@ -60,7 +61,8 @@ m0023,
 m0024,
 m0025,
 m0026,
-m0027
+m0027,
+m0028
     }
   }
   

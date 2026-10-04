@@ -15,3 +15,5 @@ export * from "./sync-operations";
 export * from "./budgets";
 export * from "./labels";
 export * from "./transaction-labels";
+export * from "./notes";
+export * from "./note-attachments";

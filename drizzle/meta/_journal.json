@@ -197,6 +197,13 @@
       "when": 1791031229112,
       "tag": "0027_add_exact_weekend_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1791093996451,
+      "tag": "0028_add_notes_and_note_attachments",
+      "breakpoints": true
     }
   ]
 }

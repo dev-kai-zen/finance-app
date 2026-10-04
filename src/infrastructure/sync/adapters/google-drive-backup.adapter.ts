@@ -15,6 +15,9 @@ const BACKUPS_FOLDER_KIND = "backups-folder";
 const BACKUP_FILE_KIND = "encrypted-backup";
 const ATTACHMENTS_FOLDER_KIND = "attachments-folder";
 const ATTACHMENT_FILE_KIND = "transaction-attachment";
+const NOTES_ATTACHMENTS_FOLDER_NAME = "Notes Attachments";
+const NOTES_ATTACHMENTS_FOLDER_KIND = "notes-attachments-folder";
+const NOTE_ATTACHMENT_FILE_KIND = "note-attachment";
 const BACKUP_PROTECTION_PROPERTY = "backupProtection";
 const LEGACY_FILE_ID_PROPERTY = "legacyFileId";
 const ORIGINAL_CREATED_AT_PROPERTY = "originalCreatedAt";
@@ -297,6 +300,76 @@ export async function uploadGoogleDriveAttachmentFile(
   return { id: file.id, name: file.name, size: Number(file.size ?? localFile.size) };
 }
 
+export async function uploadGoogleDriveNoteAttachmentFile(
+  accessToken: string,
+  input: {
+    attachmentId: string;
+    noteId: string;
+    originalName: string;
+    mimeType: string;
+    sha256: string;
+    localUri: string;
+  },
+): Promise<GoogleDriveAttachmentFile> {
+  const folder = await ensureNotesAttachmentsFolder(accessToken);
+  const localFile = new File(input.localUri);
+  if (!localFile.exists) {
+    throw new Error(`Note attachment file is missing: ${input.originalName}`);
+  }
+
+  const name = `${input.attachmentId}__${sanitizeDriveFileName(input.originalName)}`;
+  const fields = encodeURIComponent("id,name,size");
+  const sessionResponse = await driveFetch(
+    `${DRIVE_UPLOAD_URL}?uploadType=resumable&fields=${fields}`,
+    accessToken,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        "X-Upload-Content-Length": String(localFile.size),
+        "X-Upload-Content-Type": input.mimeType,
+      },
+      body: JSON.stringify({
+        name,
+        parents: [folder.id],
+        appProperties: {
+          [APP_PROPERTY_KIND]: NOTE_ATTACHMENT_FILE_KIND,
+          attachmentId: input.attachmentId,
+          noteId: input.noteId,
+          sha256: input.sha256,
+        },
+      }),
+    },
+  );
+  const uploadUrl = sessionResponse.headers.get("location");
+  if (!uploadUrl) {
+    throw new GoogleDriveApiError(
+      "Google Drive did not provide a note attachment upload session.",
+      0,
+    );
+  }
+
+  const result = await localFile.upload(uploadUrl, {
+    httpMethod: "PUT",
+    uploadType: UploadType.BINARY_CONTENT,
+    mimeType: input.mimeType,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Length": String(localFile.size),
+    },
+    sessionType: "background",
+  });
+  if (result.status < 200 || result.status >= 300) {
+    throw new GoogleDriveApiError(
+      getDriveErrorMessage(result.status, result.body),
+      result.status,
+    );
+  }
+
+  const file = JSON.parse(result.body) as DriveFileResponse;
+  return { id: file.id, name: file.name, size: Number(file.size ?? localFile.size) };
+}
+
 export async function downloadGoogleDriveAttachmentFile(
   accessToken: string,
   fileId: string,
@@ -358,6 +431,22 @@ async function ensureAttachmentsFolder(
     accessToken,
     ATTACHMENTS_FOLDER_NAME,
     ATTACHMENTS_FOLDER_KIND,
+    rootFolder.id,
+  );
+}
+
+export async function ensureNotesAttachmentsFolder(
+  accessToken: string,
+): Promise<DriveFileResponse> {
+  const rootFolder = await findOrCreateFolder(
+    accessToken,
+    ROOT_FOLDER_NAME,
+    ROOT_FOLDER_KIND,
+  );
+  return findOrCreateFolder(
+    accessToken,
+    NOTES_ATTACHMENTS_FOLDER_NAME,
+    NOTES_ATTACHMENTS_FOLDER_KIND,
     rootFolder.id,
   );
 }

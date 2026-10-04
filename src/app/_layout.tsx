@@ -60,6 +60,7 @@ function RootLayoutContent() {
                         <Stack.Screen name="categories" />
                         <Stack.Screen name="budgets" />
                         <Stack.Screen name="reports" />
+                        <Stack.Screen name="notes" />
                         <Stack.Screen name="settings" />
                         <Stack.Screen name="monitor" />
                       </Stack>

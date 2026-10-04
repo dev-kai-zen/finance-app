@@ -10,10 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname } from "expo-router";
 import { Sidebar } from "./sidebar";
 import { SyncStatusChip } from "./sync-status-chip";
-import {
-  isTabletOrDesktop,
-  LAYOUT_DIMENSIONS,
-} from "@/constants/layout";
+import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 
@@ -26,6 +23,8 @@ function getScreenTitle(pathname: string): string {
   if (pathname.startsWith("/credit-cards")) return "Credit Card Monitoring";
   if (pathname.startsWith("/categories")) return "Categories";
   if (pathname.startsWith("/budgets")) return "Budgets";
+  if (pathname.startsWith("/reports")) return "Reports";
+  if (pathname.startsWith("/notes")) return "Notes";
   if (pathname.startsWith("/monitor")) return "SQLite Monitor";
   if (pathname.startsWith("/settings")) return "Settings";
   return "Dashboard";
