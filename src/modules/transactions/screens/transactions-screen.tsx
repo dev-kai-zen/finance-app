@@ -13,9 +13,11 @@ import {
   ArrowUp,
   CalendarClock,
   Download,
-  Trash2,
+  LayoutList,
+  Rows3,
   Search,
   SlidersHorizontal,
+  Trash2,
   X,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -137,6 +139,7 @@ export function TransactionsScreen() {
   const [filterState, setFilterState] = useState<TransactionFilterState>(
     DEFAULT_TRANSACTION_FILTERS,
   );
+  const [viewMode, setViewMode] = useState<"compact" | "detailed">("compact");
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -525,6 +528,25 @@ export function TransactionsScreen() {
                 <ArrowDown color={theme.colors.success} size={16} />
               )}
             </Pressable>
+
+            {/* View Mode Toggle */}
+            <Pressable
+              accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
+              accessibilityRole="button"
+              onPress={() =>
+                setViewMode((prev) => (prev === "compact" ? "detailed" : "compact"))
+              }
+              style={[
+                styles.sortOrderButton,
+                viewMode === "compact" && styles.viewModeButtonActive,
+              ]}
+            >
+              {viewMode === "compact" ? (
+                <Rows3 color={theme.colors.success} size={16} />
+              ) : (
+                <LayoutList color={theme.colors.textSecondary} size={16} />
+              )}
+            </Pressable>
           </View>
         </View>
 
@@ -566,6 +588,7 @@ export function TransactionsScreen() {
 
         {/* Transactions Feed Grouped By Date */}
         <SectionList
+          ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
             <PageEmptyState
               actionLabel={
@@ -597,6 +620,7 @@ export function TransactionsScreen() {
               onDelete={handleDelete}
               onPress={(item) => setInspectedTransaction(item)}
               transaction={item}
+              viewMode={viewMode}
             />
           )}
           renderSectionHeader={({ section }) => (
@@ -894,6 +918,12 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 28,
     },
+    viewModeButtonActive: {
+      borderColor: theme.colors.success,
+    },
+    rowSeparator: {
+      height: theme.spacing.sm,
+    },
     dateGroupContainer: {
       gap: theme.spacing.xs,
     },
@@ -901,6 +931,7 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
+      marginBottom: theme.spacing.xs,
       paddingHorizontal: theme.spacing.xs,
       paddingTop: theme.spacing.xs,
     },

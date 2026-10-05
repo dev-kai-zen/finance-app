@@ -46,6 +46,20 @@ export function parseDateKey(key: string): { year: number; month: number; day: n
   };
 }
 
+export function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+export function getStartOfMonthDateKey(year: number, month: number): string {
+  return formatDateKey(year, month, 1);
+}
+
+export function getEndOfMonthDateKey(year: number, month: number): string {
+  const lastDay = getDaysInMonth(year, month);
+  return formatDateKey(year, month, lastDay);
+}
+
+
 export interface GridCellMeta {
   dateKey: string;
   dayNumber: number;

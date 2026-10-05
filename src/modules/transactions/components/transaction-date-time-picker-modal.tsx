@@ -13,6 +13,7 @@ import { X } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { CalendarPicker } from "@/components";
 import { TransactionDateTimePickerControl } from "./transaction-date-time-picker-control";
 
 type PickerMode = "date" | "time";
@@ -78,12 +79,20 @@ export function TransactionDateTimePickerModal({
             </Pressable>
           </View>
 
-          <TransactionDateTimePickerControl
-            mode={mode}
-            onValueChange={setDraft}
-            style={mode === "date" ? styles.datePicker : styles.timePicker}
-            value={draft}
-          />
+          {mode === "date" ? (
+            <CalendarPicker
+              onChange={setDraft}
+              style={styles.datePicker}
+              value={draft}
+            />
+          ) : (
+            <TransactionDateTimePickerControl
+              mode={mode}
+              onValueChange={setDraft}
+              style={styles.timePicker}
+              value={draft}
+            />
+          )}
 
           <Pressable
             accessibilityLabel={`Use selected transaction ${mode}`}

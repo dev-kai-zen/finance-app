@@ -12,6 +12,7 @@ export interface TransactionRowProps {
   transaction: TransactionListItem;
   onPress?: (tx: TransactionListItem) => void;
   onDelete?: (id: string) => void;
+  viewMode?: "compact" | "detailed";
 }
 
 const SHORT_MONTHS = [
@@ -58,6 +59,19 @@ function formatLocationRoute(
     .join(" > ");
 }
 
+function formatCompactLocation(
+  accountName: string | null,
+  pocketName: string | null,
+  pocketEnabled = false,
+) {
+  const effectivePocket = pocketName ?? (pocketEnabled ? "Available" : null);
+  const accName = accountName?.trim() || "Account";
+  if (effectivePocket) {
+    return `${accName} · ${effectivePocket} (Pockets)`;
+  }
+  return accName;
+}
+
 function withAlpha(color: string, alpha: number) {
   if (/^#[\da-f]{6}$/i.test(color)) {
     return `${color}${Math.round(alpha * 255)
@@ -68,9 +82,14 @@ function withAlpha(color: string, alpha: number) {
   return color;
 }
 
-export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
+export function TransactionRow({
+  transaction,
+  onPress,
+  viewMode = "compact",
+}: TransactionRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const isCompact = viewMode === "compact";
 
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
@@ -114,6 +133,76 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
         zeroColor: theme.colors.textMuted,
       }).formatted;
 
+  const sourceBalance = formatCurrency(
+    transaction.locationBalanceAfterMinorUnits ??
+      transaction.accountBalanceAfterMinorUnits ??
+      0,
+    transaction.accountCurrency ?? "PHP",
+    false,
+  );
+
+  if (isCompact) {
+    const compactLocation = formatCompactLocation(
+      transaction.accountName,
+      transaction.pocketName,
+      transaction.accountPocketEnabled,
+    );
+    const compactDestLocation = isTransfer
+      ? formatCompactLocation(
+          transaction.transferAccountName,
+          transaction.transferPocketName,
+          transaction.transferAccountPocketEnabled ?? false,
+        )
+      : "";
+    const compactCategory = transaction.categoryName || "Uncategorized";
+    const compactMeta = isTransfer
+      ? `${compactLocation} → ${compactDestLocation}`
+      : `${compactCategory}  ·  ${compactLocation}`;
+
+    return (
+      <Pressable
+        accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
+        accessibilityRole="button"
+        onPress={() => onPress?.(transaction)}
+        style={({ pressed }) => [
+          styles.compactCard,
+          { borderColor: withAlpha(typeColor, 0.55) },
+          pressed && styles.txCardPressed,
+        ]}
+      >
+        <View style={styles.compactRow}>
+          <View style={styles.compactLeftCol}>
+            <View style={styles.compactTitleRow}>
+              <Text numberOfLines={1} style={styles.compactTitleText}>
+                {title}
+              </Text>
+              {transaction.attachmentCount > 0 ? (
+                <View style={styles.compactAttachmentBadge}>
+                  <Paperclip color={theme.colors.primary} size={11} />
+                </View>
+              ) : null}
+            </View>
+            <Text numberOfLines={1} style={styles.compactMetaText}>
+              {compactMeta}
+            </Text>
+          </View>
+
+          <View style={styles.compactRightCol}>
+            <Text
+              numberOfLines={1}
+              style={[styles.compactAmountText, { color: amountColor }]}
+            >
+              {formattedAmount}
+            </Text>
+            <Text numberOfLines={1} style={styles.compactBalanceText}>
+              {sourceBalance}
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    );
+  }
+
   const formattedDateTime = transaction.occurredAt
     ? formatTransactionDateTime(new Date(transaction.occurredAt))
     : "";
@@ -128,11 +217,6 @@ export function TransactionRow({ transaction, onPress }: TransactionRowProps) {
     transaction.transferAccountName,
     transaction.transferPocketName,
     transaction.transferAccountPocketEnabled ?? false,
-  );
-  const sourceBalance = formatCurrency(
-    transaction.locationBalanceAfterMinorUnits ?? 0,
-    transaction.accountCurrency ?? "PHP",
-    false,
   );
   const destinationBalance = formatCurrency(
     transaction.destinationLocationBalanceAfterMinorUnits ?? 0,
@@ -262,6 +346,69 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
       ...theme.shadows.card,
+    },
+    compactCard: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1.5,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      ...theme.shadows.card,
+    },
+    compactRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
+    },
+    compactLeftCol: {
+      flex: 1,
+      gap: 2,
+      justifyContent: "center",
+    },
+    compactTitleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 4,
+    },
+    compactTitleText: {
+      color: theme.colors.textPrimary,
+      flexShrink: 1,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+      lineHeight: theme.typography.lineHeight.sm,
+    },
+    compactAttachmentBadge: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 2,
+    },
+    compactMetaText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+      lineHeight: theme.typography.lineHeight.xs,
+    },
+    compactRightCol: {
+      alignItems: "flex-end",
+      flexShrink: 0,
+      gap: 2,
+      justifyContent: "center",
+    },
+    compactAmountText: {
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+      fontVariant: ["tabular-nums"],
+      lineHeight: theme.typography.lineHeight.sm,
+      textAlign: "right",
+    },
+    compactBalanceText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+      fontVariant: ["tabular-nums"],
+      lineHeight: theme.typography.lineHeight.xs,
+      textAlign: "right",
     },
     txCardPressed: {
       backgroundColor: theme.colors.surfaceMuted,
