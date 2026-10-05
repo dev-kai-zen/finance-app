@@ -12,7 +12,6 @@ import {
 } from "lucide-react-native";
 
 import {
-  AppButton,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
@@ -25,6 +24,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { formatCurrency } from "@/utils/currency";
+import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
 import { useScheduledTransactions } from "../hooks/use-scheduled-transactions";
 import type {
@@ -143,40 +143,30 @@ export function ScheduledTransactionsScreen() {
             <Text style={styles.sectionHeading}>Needs attention</Text>
             {actionableOccurrences.map((occurrence) => {
               const schedule = scheduleById.get(occurrence.scheduleId);
+              if (!schedule) return null;
+              const source = accounts.find(
+                (account) => account.id === schedule.accountId,
+              );
+              const destination = accounts.find(
+                (account) => account.id === schedule.toAccountId,
+              );
+              const category = categories.find(
+                (item) => item.id === schedule.categoryId,
+              );
+
               return (
-                <View key={occurrence.id} style={styles.dueCard}>
-                  <View style={styles.cardMain}>
-                    <Text style={styles.cardTitle}>
-                      {schedule?.name?.trim() ||
-                        schedule?.transactionType ||
-                        "Scheduled transaction"}
-                    </Text>
-                    <Text style={styles.cardMeta}>
-                      Due{" "}
-                      {(occurrence.effectiveDueAt ??
-                        occurrence.nominalDueAt
-                      ).toLocaleString()}
-                    </Text>
-                    {occurrence.errorMessage ? (
-                      <Text style={styles.failureText}>
-                        {occurrence.errorMessage}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <View style={styles.dueActions}>
-                    <AppButton
-                      label="Skip"
-                      onPress={() => skipOccurrence(occurrence.id)}
-                      size="small"
-                      variant="ghost"
-                    />
-                    <AppButton
-                      label={occurrence.status === "failed" ? "Retry" : "Post"}
-                      onPress={() => handlePost(occurrence)}
-                      size="small"
-                    />
-                  </View>
-                </View>
+                <ScheduledOccurrenceCard
+                  key={occurrence.id}
+                  category={category}
+                  destinationAccount={destination}
+                  occurrence={occurrence}
+                  onEdit={openEdit}
+                  onPost={handlePost}
+                  onSkip={skipOccurrence}
+                  pending={pending}
+                  schedule={schedule}
+                  sourceAccount={source}
+                />
               );
             })}
           </View>
@@ -509,21 +499,6 @@ function createStyles(theme: AppTheme) {
     },
     dueSection: {
       gap: theme.spacing.sm,
-    },
-    dueCard: {
-      alignItems: "center",
-      backgroundColor: theme.colors.primary + "0D",
-      borderColor: theme.colors.primary + "45",
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.md,
-      padding: theme.spacing.md,
-    },
-    dueActions: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.xs,
     },
     scheduleCard: {
       backgroundColor: theme.colors.surface,
