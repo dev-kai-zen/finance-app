@@ -14,6 +14,7 @@ import {
   createSampleTransactions,
 } from "@/modules/transactions";
 import { clearScheduledTransactionWorkspace } from "@/modules/scheduled-transactions";
+import { clearGoalWorkspace } from "@/modules/goals";
 import {
   ONBOARDING_SETTING_KEYS,
   SAMPLE_DATA_VERSION,
@@ -107,6 +108,7 @@ function clearSampleWorkspaceIfNeeded(context: DbContext): void {
 
   clearScheduledTransactionWorkspace(context);
   clearTransactionWorkspace(context);
+  clearGoalWorkspace(context);
   clearAccountWorkspace(context);
   clearCustomWorkspaceCategories(context);
 }

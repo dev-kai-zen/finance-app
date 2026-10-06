@@ -31,6 +31,9 @@ import m0026 from './0026_add_labels_and_transaction_labels.sql';
 import m0027 from './0027_add_exact_weekend_policy.sql';
 import m0028 from './0028_add_notes_and_note_attachments.sql';
 import m0029 from './0029_add_exchange_rates.sql';
+import m0030 from './0030_add_goals.sql';
+import m0031 from './0031_add_goal_accounts.sql';
+import m0032 from './0032_add_goal_pockets.sql';
 
   export default {
     journal,
@@ -64,7 +67,10 @@ m0025,
 m0026,
 m0027,
 m0028,
-m0029
+m0029,
+m0030,
+m0031,
+m0032
     }
   }
   

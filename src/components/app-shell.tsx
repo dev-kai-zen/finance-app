@@ -23,6 +23,7 @@ function getScreenTitle(pathname: string): string {
   if (pathname.startsWith("/credit-cards")) return "Credit Card Monitoring";
   if (pathname.startsWith("/categories")) return "Categories";
   if (pathname.startsWith("/budgets")) return "Budgets";
+  if (pathname.startsWith("/goals")) return "Goals";
   if (pathname.startsWith("/reports")) return "Reports";
   if (pathname.startsWith("/notes")) return "Notes";
   if (pathname.startsWith("/monitor")) return "SQLite Monitor";
