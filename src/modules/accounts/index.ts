@@ -114,6 +114,7 @@ export type {
 export {
   SYSTEM_ACCOUNT_TYPE_IDS,
   FALLBACK_ACCOUNT_TYPE_BY_GROUP,
+  isSystemOthersAccountTypeId,
 } from "./constants/account-types.constants";
 export { accountColor } from "./constants/account-appearance.constants";
 export type {
