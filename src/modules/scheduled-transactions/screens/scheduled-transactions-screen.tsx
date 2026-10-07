@@ -147,6 +147,7 @@ export function ScheduledTransactionsScreen() {
             <Pressable
               accessibilityLabel="Back to Transactions"
               accessibilityRole="button"
+              hitSlop={8}
               style={({ pressed }) => [
                 styles.backButton,
                 pressed && styles.backButtonPressed,
@@ -522,7 +523,6 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.sm,
       minHeight: 44,
-      paddingHorizontal: theme.spacing.sm,
     },
     backButtonPressed: {
       backgroundColor: theme.colors.surfaceMuted,
