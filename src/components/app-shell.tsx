@@ -15,6 +15,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 
 function getScreenTitle(pathname: string): string {
+  if (pathname.startsWith("/local-backup")) return "Local Backup";
   if (pathname.startsWith("/accounts")) return "Accounts";
   if (pathname.startsWith("/transactions/scheduled"))
     return "Scheduled Transactions";
@@ -46,6 +47,10 @@ export function AppShell({ children, banner }: AppShellProps) {
 
   const closeDrawer = () => setIsDrawerOpen(false);
   const openDrawer = () => setIsDrawerOpen(true);
+
+  if (pathname.startsWith("/local-backup")) {
+    return <View style={styles.fullScreenModal}>{children}</View>;
+  }
 
   if (isDesktop) {
     return (
@@ -245,6 +250,10 @@ function createStyles(theme: AppTheme) {
       letterSpacing: -0.2,
     },
     mobileContent: {
+      flex: 1,
+    },
+    fullScreenModal: {
+      backgroundColor: theme.colors.background,
       flex: 1,
     },
     drawerLayer: {

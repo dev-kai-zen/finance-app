@@ -1,28 +1,18 @@
-import Constants from "expo-constants";
-
-import { createDatabaseSnapshot } from "@/infrastructure/database";
 import { uploadGoogleDriveBackupFile } from "@/infrastructure/sync";
 import type { BackupFile } from "@/modules/backup/types/backup.types";
-import { createDatabaseBackup } from "@/modules/backup/utils/backup-format";
+import { createBackupArchive } from "./create-backup-archive.service";
 import { withGoogleDriveAccessToken } from "./google-drive-auth.service";
 
 export async function createGoogleDriveBackup(
   passphrase: string | null,
 ): Promise<BackupFile> {
-  const createdAt = new Date();
-  const snapshot = await createDatabaseSnapshot();
-  const archive = await createDatabaseBackup(
-    snapshot,
-    passphrase,
-    Constants.expoConfig?.version ?? "unknown",
-    createdAt,
-  );
+  const archive = await createBackupArchive(passphrase);
 
   return withGoogleDriveAccessToken((accessToken) =>
     uploadGoogleDriveBackupFile(
       accessToken,
-      archive,
-      createdAt,
+      archive.bytes,
+      archive.createdAt,
       passphrase !== null,
     ),
   );

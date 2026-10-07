@@ -58,6 +58,13 @@ export interface DecryptedBackup {
   appVersion: string;
 }
 
+export interface DatabaseBackupInfo {
+  createdAt: Date;
+  appVersion: string;
+  databaseBytes: number;
+  passwordProtected: boolean;
+}
+
 export async function createDatabaseBackup(
   database: Uint8Array,
   passphrase: string | null,
@@ -113,6 +120,39 @@ export async function readDatabaseBackup(
     database: payload,
     createdAt: new Date(header.createdAt),
     appVersion: header.appVersion,
+  };
+}
+
+export function inspectDatabaseBackup(
+  archive: Uint8Array,
+): DatabaseBackupInfo {
+  const magic = readMagic(archive);
+  const { headerBytes, payload } = splitArchive(archive);
+
+  if (magic === ENCRYPTED_MAGIC) {
+    const header = parseAndValidateHeader(headerBytes);
+    return {
+      createdAt: new Date(header.createdAt),
+      appVersion: header.appVersion,
+      databaseBytes: header.databaseBytes,
+      passwordProtected: true,
+    };
+  }
+
+  if (magic !== UNPROTECTED_MAGIC) {
+    throw new Error("This file is not a Kaizen Finance backup.");
+  }
+
+  const header = parseAndValidateUnprotectedHeader(headerBytes);
+  if (payload.byteLength !== header.databaseBytes) {
+    throw new Error("The restored database size does not match the backup.");
+  }
+
+  return {
+    createdAt: new Date(header.createdAt),
+    appVersion: header.appVersion,
+    databaseBytes: header.databaseBytes,
+    passwordProtected: false,
   };
 }
 

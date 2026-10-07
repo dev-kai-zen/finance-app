@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Archive, ChevronRight } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
@@ -15,6 +16,7 @@ import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-c
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
 
 export function SettingsScreen() {
+  const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const {
     theme,
@@ -158,6 +160,28 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel="Manage local backups"
+              accessibilityRole="button"
+              onPress={() => router.push("/local-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Archive color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Local Backup</Text>
+                <Text style={styles.settingDescription}>
+                  Create, export, or restore an on-device backup
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
               <View style={styles.settingRow}>
@@ -328,6 +352,14 @@ function createStyles(theme: AppTheme) {
     settingCopy: {
       flex: 1,
       gap: 2,
+    },
+    backupIcon: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}14`,
+      borderRadius: theme.borderRadius.round,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
     },
     settingLabel: {
       color: theme.colors.textPrimary,

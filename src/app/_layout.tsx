@@ -1,5 +1,5 @@
 import { LogBox, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { HexColorsProvider } from "@/modules/hex-colors";
+import { LocalBackupProcessor } from "@/modules/backup";
 import {
   OnboardingGate,
   SampleWorkspaceBanner,
@@ -22,6 +23,8 @@ LogBox.ignoreLogs([
 
 function RootLayoutContent() {
   const { theme } = useThemeContext();
+  const pathname = usePathname();
+  const isLocalBackupRoute = pathname.startsWith("/local-backup");
 
   return (
     <SafeAreaProvider
@@ -33,7 +36,7 @@ function RootLayoutContent() {
           <WorkspaceProvider>
             <HexColorsProvider>
               <SafeAreaView
-                edges={["top"]}
+                edges={isLocalBackupRoute ? [] : ["top"]}
                 style={[
                   styles.safeAreaBoundary,
                   { backgroundColor: theme.colors.background },
@@ -43,6 +46,7 @@ function RootLayoutContent() {
                   <>
                     <ScheduledTransactionsProcessor />
                     <TransactionAttachmentsSyncProcessor />
+                    <LocalBackupProcessor />
                     <AppShell banner={<SampleWorkspaceBanner />}>
                       <Stack
                         screenOptions={{
@@ -63,6 +67,21 @@ function RootLayoutContent() {
                         <Stack.Screen name="reports" />
                         <Stack.Screen name="notes" />
                         <Stack.Screen name="settings" />
+                        <Stack.Screen
+                          name="local-backup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Back to Settings",
+                            headerBackTitle: "Back to Settings",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
                         <Stack.Screen name="monitor" />
                       </Stack>
                     </AppShell>
