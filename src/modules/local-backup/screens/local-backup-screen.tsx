@@ -7,9 +7,10 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Archive,
   CalendarClock,
@@ -24,6 +25,7 @@ import {
 
 import { AppButton, ConfirmModal, NotificationModal } from "@/components";
 import { PageContainer } from "@/components/page-container";
+import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { BackupPassphraseModal } from "@/modules/local-backup/components/backup-passphrase-modal";
@@ -36,6 +38,9 @@ import type {
 import { useWorkspace } from "@/modules/onboarding";
 
 export function LocalBackupScreen() {
+  const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
@@ -250,14 +255,14 @@ export function LocalBackupScreen() {
       ) : null}
 
       <Modal
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => {
           if (!busy) setRestoreListVisible(false);
         }}
         transparent
         visible={restoreListVisible}
       >
-        <SafeAreaView edges={["top", "bottom"]} style={styles.modalOverlay}>
+        <View style={styles.modalOverlay}>
           <Pressable
             accessibilityLabel="Close local backup list"
             accessibilityRole="button"
@@ -265,7 +270,13 @@ export function LocalBackupScreen() {
             onPress={() => setRestoreListVisible(false)}
             style={styles.modalBackdrop}
           />
-          <View style={styles.backupListModal}>
+          <View
+            style={[
+              styles.backupListModal,
+              isDesktop && styles.backupListModalDesktop,
+              { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleCopy}>
                 <Text accessibilityRole="header" style={styles.modalTitle}>
@@ -290,6 +301,13 @@ export function LocalBackupScreen() {
               </Pressable>
             </View>
 
+            <View style={styles.modalToolbar}>
+              <Text style={styles.backupCount}>
+                {backup.backups.length} backup
+                {backup.backups.length === 1 ? "" : "s"}
+              </Text>
+            </View>
+
             {backup.operation === "loading" ? (
               <View style={styles.loadingCard}>
                 <ActivityIndicator color={theme.colors.primary} />
@@ -308,7 +326,6 @@ export function LocalBackupScreen() {
               <FlatList
                 contentContainerStyle={styles.backupListContent}
                 data={backup.backups}
-                ItemSeparatorComponent={() => <View style={styles.insetDivider} />}
                 keyExtractor={(file) => file.id}
                 renderItem={({ item: file }) => (
                   <BackupRow
@@ -333,7 +350,7 @@ export function LocalBackupScreen() {
               />
             )}
           </View>
-        </SafeAreaView>
+        </View>
       </Modal>
 
       <BackupPassphraseModal
@@ -652,11 +669,6 @@ function createStyles(theme: AppTheme) {
       lineHeight: theme.typography.lineHeight.xs,
     },
     divider: { backgroundColor: theme.colors.border, height: 1 },
-    insetDivider: {
-      backgroundColor: theme.colors.border,
-      height: 1,
-      marginLeft: 68,
-    },
     frequencyRow: {
       alignItems: "center",
       flexDirection: "row",
@@ -690,6 +702,11 @@ function createStyles(theme: AppTheme) {
     },
     frequencyOptionTextSelected: { color: theme.colors.onPrimary },
     backupRow: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderCurve: "continuous",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
       gap: theme.spacing.md,
       minHeight: 76,
       paddingHorizontal: theme.spacing.lg,
@@ -702,7 +719,7 @@ function createStyles(theme: AppTheme) {
     },
     backupIcon: {
       alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
+      backgroundColor: `${theme.colors.primary}18`,
       borderRadius: theme.borderRadius.medium,
       height: 40,
       justifyContent: "center",
@@ -792,11 +809,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
     },
     modalOverlay: {
-      alignItems: "center",
       backgroundColor: theme.colors.overlay,
       flex: 1,
-      justifyContent: "center",
-      padding: theme.spacing.lg,
+      justifyContent: "flex-end",
     },
     modalBackdrop: {
       bottom: 0,
@@ -808,23 +823,29 @@ function createStyles(theme: AppTheme) {
     backupListModal: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
-      borderCurve: "continuous",
-      borderRadius: theme.borderRadius.large,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
       borderWidth: 1,
-      maxHeight: "82%",
-      maxWidth: 620,
+      maxHeight: "88%",
       overflow: "hidden",
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
       width: "100%",
       ...theme.shadows.modal,
     },
+    backupListModalDesktop: {
+      alignSelf: "center",
+      borderRadius: 24,
+      marginBottom: "auto",
+      marginTop: "auto",
+      maxWidth: 620,
+    },
     modalHeader: {
-      alignItems: "flex-start",
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
+      alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.md,
       justifyContent: "space-between",
-      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
     },
     modalTitleCopy: {
       flex: 1,
@@ -849,9 +870,22 @@ function createStyles(theme: AppTheme) {
     },
     backupList: {
       flexGrow: 0,
+      maxHeight: 460,
     },
     backupListContent: {
-      paddingVertical: theme.spacing.xs,
+      gap: theme.spacing.sm,
+      paddingTop: theme.spacing.md,
+    },
+    modalToolbar: {
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      paddingBottom: theme.spacing.md,
+    },
+    backupCount: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

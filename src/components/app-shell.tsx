@@ -51,7 +51,8 @@ export function AppShell({ children, banner }: AppShellProps) {
 
   if (
     pathname.startsWith("/local-backup") ||
-    pathname.startsWith("/google-drive-backup")
+    pathname.startsWith("/google-drive-backup") ||
+    pathname.startsWith("/transactions/scheduled")
   ) {
     return <View style={styles.fullScreenModal}>{children}</View>;
   }

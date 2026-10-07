@@ -24,9 +24,10 @@ LogBox.ignoreLogs([
 function RootLayoutContent() {
   const { theme } = useThemeContext();
   const pathname = usePathname();
-  const isBackupRoute =
+  const usesNativeHeader =
     pathname.startsWith("/local-backup") ||
-    pathname.startsWith("/google-drive-backup");
+    pathname.startsWith("/google-drive-backup") ||
+    pathname.startsWith("/transactions/scheduled");
 
   return (
     <SafeAreaProvider
@@ -38,7 +39,7 @@ function RootLayoutContent() {
           <WorkspaceProvider>
             <HexColorsProvider>
               <SafeAreaView
-                edges={isBackupRoute ? [] : ["top"]}
+                edges={usesNativeHeader ? [] : ["top"]}
                 style={[
                   styles.safeAreaBoundary,
                   { backgroundColor: theme.colors.background },
@@ -74,8 +75,8 @@ function RootLayoutContent() {
                           options={{
                             presentation: "fullScreenModal",
                             headerShown: true,
-                            title: "Back to Settings",
-                            headerBackTitle: "Back to Settings",
+                            title: "Local Backup",
+                            headerBackTitle: "Local Backup",
                             headerBackButtonDisplayMode: "default",
                             headerShadowVisible: true,
                             headerStyle: {
@@ -89,8 +90,8 @@ function RootLayoutContent() {
                           options={{
                             presentation: "fullScreenModal",
                             headerShown: true,
-                            title: "Back to Settings",
-                            headerBackTitle: "Back to Settings",
+                            title: "Google Drive Backup",
+                            headerBackTitle: "Google Drive Backup",
                             headerBackButtonDisplayMode: "default",
                             headerShadowVisible: true,
                             headerStyle: {

@@ -559,7 +559,7 @@ export function TransactionsScreen() {
             accessibilityLabel="Open scheduled transactions"
             accessibilityRole="button"
             onPress={() =>
-              router.navigate("/transactions/scheduled" as never)
+              router.push("/transactions/scheduled")
             }
             style={styles.schedulesButton}
           >
