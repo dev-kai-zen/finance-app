@@ -81,6 +81,12 @@ export function deleteLocalBackupFile(uri: string): void {
   if (file.exists) file.delete();
 }
 
+export function deleteAllLocalBackupFiles(): void {
+  if (!isLocalBackupStorageAvailable()) return;
+  const directory = getLocalBackupsDirectory();
+  if (directory.exists) directory.delete();
+}
+
 export async function pruneAutomaticLocalBackups(
   retainCount: number,
 ): Promise<void> {

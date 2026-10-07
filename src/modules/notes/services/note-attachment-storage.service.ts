@@ -102,6 +102,12 @@ export function deleteNoteAttachmentLocalFile(storageKey: string): void {
   deleteAttachmentFileByUri(getNoteAttachmentLocalUri(storageKey));
 }
 
+export function clearNoteAttachmentStorage(): void {
+  if (process.env.EXPO_OS === "web") return;
+  const directory = getNotesAttachmentsDirectory();
+  if (directory.exists) directory.delete();
+}
+
 function deleteAttachmentFileByUri(uri: string): void {
   const file = new File(uri);
   if (file.exists) file.delete();

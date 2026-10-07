@@ -179,6 +179,12 @@ export const clearTransactionWorkspace = deferFunction(
       .clearTransactionWorkspace,
 ) as typeof import("./services/workspace-transactions.service").clearTransactionWorkspace;
 
+export const clearTransactionAttachmentStorage = deferFunction(
+  () =>
+    require("./services/transaction-attachment-storage.service")
+      .clearTransactionAttachmentStorage,
+) as typeof import("./services/transaction-attachment-storage.service").clearTransactionAttachmentStorage;
+
 export const createSampleTransactions = deferFunction(
   () =>
     require("./services/workspace-transactions.service")

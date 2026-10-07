@@ -10,6 +10,7 @@ export {
   discardPreparedNoteAttachments,
   isNoteAttachmentAvailableLocally,
   deleteNoteAttachmentLocalFile,
+  clearNoteAttachmentStorage,
 } from "./services/note-attachment-storage.service";
 export {
   NOTES_ATTACHMENTS_FOLDER_NAME,

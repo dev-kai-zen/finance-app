@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Archive, ChevronRight, Cloud } from "lucide-react-native";
+import { Archive, ChevronRight, Cloud, Trash2 } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
@@ -12,7 +12,9 @@ import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { useWorkspace } from "@/modules/onboarding";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
+import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
+import { useResetData } from "../hooks/use-reset-data";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -41,6 +43,8 @@ export function SettingsScreen() {
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
+  const [isResetDataOpen, setIsResetDataOpen] = useState(false);
+  const resetData = useResetData();
 
   const expenseAccount = accounts.find(
     (a) => a.id === defaultExpenseAccountId && !a.isArchived,
@@ -269,7 +273,51 @@ export function SettingsScreen() {
             </Pressable>
           </View>
         </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>
+            DANGER ZONE
+          </Text>
+          <View style={[styles.card, styles.dangerCard]}>
+            <View style={styles.resetContent}>
+              <View style={styles.resetHeading}>
+                <View style={styles.resetIcon}>
+                  <Trash2 color={theme.colors.danger} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Reset Data</Text>
+                  <Text style={styles.settingDescription}>
+                    Permanently erase all local app data and start over.
+                  </Text>
+                </View>
+              </View>
+              <AppButton
+                label="Reset Data"
+                onPress={() => {
+                  resetData.clearError();
+                  setIsResetDataOpen(true);
+                }}
+                variant="destructive"
+              />
+            </View>
+          </View>
+        </View>
       </View>
+
+      <ResetDataModal
+        error={resetData.error}
+        pending={resetData.pending}
+        visible={isResetDataOpen}
+        onCancel={() => {
+          resetData.clearError();
+          setIsResetDataOpen(false);
+        }}
+        onConfirm={() => {
+          void resetData.resetData().then((completed) => {
+            if (completed) setIsResetDataOpen(false);
+          });
+        }}
+      />
 
       <ThemePickerModal
         isFollowingSystem={isFollowingSystem}
@@ -408,6 +456,29 @@ function createStyles(theme: AppTheme) {
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.semibold,
       textAlign: "center",
+    },
+    dangerSectionTitle: {
+      color: theme.colors.danger,
+    },
+    dangerCard: {
+      borderColor: `${theme.colors.danger}50`,
+    },
+    resetContent: {
+      gap: theme.spacing.md,
+      padding: theme.spacing.lg,
+    },
+    resetHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    resetIcon: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}18`,
+      borderRadius: theme.borderRadius.round,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
     },
   });
 }
