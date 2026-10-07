@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Archive, ChevronRight } from "lucide-react-native";
+import { Archive, ChevronRight, Cloud } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
@@ -9,7 +9,6 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
-import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { useWorkspace } from "@/modules/onboarding";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
@@ -181,6 +180,29 @@ export function SettingsScreen() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel="Manage Google Drive backups"
+              accessibilityRole="button"
+              onPress={() => router.push("/google-drive-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Cloud color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Google Drive</Text>
+                <Text style={styles.settingDescription}>
+                  Connect, create, or restore a cloud backup
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
@@ -194,9 +216,7 @@ export function SettingsScreen() {
                 </View>
               </View>
             </View>
-          ) : (
-            <GoogleDriveBackupSettings />
-          )}
+          ) : null}
         </View>
 
         <View style={styles.section}>

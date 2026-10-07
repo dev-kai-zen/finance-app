@@ -11,7 +11,7 @@ import {
   retrySyncOperationsForEntity,
   uploadGoogleDriveAttachmentFile,
 } from "@/infrastructure/sync";
-import { withGoogleDriveAccessToken } from "@/modules/backup";
+import { withGoogleDriveAccessToken } from "@/modules/google-drive-backup";
 import {
   deleteTransactionAttachmentRecord,
   countTransactionAttachmentsByOwner,

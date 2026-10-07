@@ -8,7 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { HexColorsProvider } from "@/modules/hex-colors";
-import { LocalBackupProcessor } from "@/modules/backup";
+import { LocalBackupProcessor } from "@/modules/local-backup";
 import {
   OnboardingGate,
   SampleWorkspaceBanner,
@@ -24,7 +24,9 @@ LogBox.ignoreLogs([
 function RootLayoutContent() {
   const { theme } = useThemeContext();
   const pathname = usePathname();
-  const isLocalBackupRoute = pathname.startsWith("/local-backup");
+  const isBackupRoute =
+    pathname.startsWith("/local-backup") ||
+    pathname.startsWith("/google-drive-backup");
 
   return (
     <SafeAreaProvider
@@ -36,7 +38,7 @@ function RootLayoutContent() {
           <WorkspaceProvider>
             <HexColorsProvider>
               <SafeAreaView
-                edges={isLocalBackupRoute ? [] : ["top"]}
+                edges={isBackupRoute ? [] : ["top"]}
                 style={[
                   styles.safeAreaBoundary,
                   { backgroundColor: theme.colors.background },
@@ -69,6 +71,21 @@ function RootLayoutContent() {
                         <Stack.Screen name="settings" />
                         <Stack.Screen
                           name="local-backup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Back to Settings",
+                            headerBackTitle: "Back to Settings",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="google-drive-backup"
                           options={{
                             presentation: "fullScreenModal",
                             headerShown: true,

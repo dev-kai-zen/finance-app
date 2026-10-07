@@ -1,4 +1,4 @@
-import { LocalBackupScreen } from "@/modules/backup";
+import { LocalBackupScreen } from "@/modules/local-backup";
 
 export default function LocalBackupRoute() {
   return <LocalBackupScreen />;
