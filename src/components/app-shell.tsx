@@ -13,24 +13,32 @@ import { SyncStatusChip } from "./sync-status-chip";
 import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 
-function getScreenTitle(pathname: string): string {
-  if (pathname.startsWith("/google-drive-backup")) return "Google Drive Backup";
-  if (pathname.startsWith("/local-backup")) return "Local Backup";
-  if (pathname.startsWith("/accounts")) return "Accounts";
+type Translate = ReturnType<typeof useLocalization>["t"];
+
+function getScreenTitle(pathname: string, t: Translate): string {
+  if (pathname.startsWith("/google-drive-backup"))
+    return t("navigation.googleDriveBackup");
+  if (pathname.startsWith("/local-backup"))
+    return t("navigation.localBackup");
+  if (pathname.startsWith("/language")) return t("navigation.language");
+  if (pathname.startsWith("/accounts")) return t("navigation.accounts");
   if (pathname.startsWith("/transactions/scheduled"))
-    return "Scheduled Transactions";
-  if (pathname.startsWith("/transactions")) return "Transactions";
-  if (pathname.startsWith("/calendar")) return "Calendar";
-  if (pathname.startsWith("/credit-cards")) return "Credit Card Monitoring";
-  if (pathname.startsWith("/categories")) return "Categories";
-  if (pathname.startsWith("/budgets")) return "Budgets";
-  if (pathname.startsWith("/goals")) return "Goals";
-  if (pathname.startsWith("/reports")) return "Reports";
-  if (pathname.startsWith("/notes")) return "Notes";
-  if (pathname.startsWith("/monitor")) return "SQLite Monitor";
-  if (pathname.startsWith("/settings")) return "Settings";
-  return "Dashboard";
+    return t("navigation.scheduledTransactions");
+  if (pathname.startsWith("/transactions"))
+    return t("navigation.transactions");
+  if (pathname.startsWith("/calendar")) return t("navigation.calendar");
+  if (pathname.startsWith("/credit-cards"))
+    return t("navigation.creditCardMonitoring");
+  if (pathname.startsWith("/categories")) return t("navigation.categories");
+  if (pathname.startsWith("/budgets")) return t("navigation.budgets");
+  if (pathname.startsWith("/goals")) return t("navigation.goals");
+  if (pathname.startsWith("/reports")) return t("navigation.reports");
+  if (pathname.startsWith("/notes")) return t("navigation.notes");
+  if (pathname.startsWith("/monitor")) return t("navigation.sqliteMonitor");
+  if (pathname.startsWith("/settings")) return t("navigation.settings");
+  return t("navigation.dashboard");
 }
 
 export interface AppShellProps extends PropsWithChildren {
@@ -44,12 +52,14 @@ export function AppShell({ children, banner }: AppShellProps) {
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
   const pathname = usePathname();
-  const screenTitle = getScreenTitle(pathname);
+  const { t } = useLocalization();
+  const screenTitle = getScreenTitle(pathname, t);
 
   const closeDrawer = () => setIsDrawerOpen(false);
   const openDrawer = () => setIsDrawerOpen(true);
 
   if (
+    pathname.startsWith("/language") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/transactions/scheduled")
@@ -88,7 +98,7 @@ export function AppShell({ children, banner }: AppShellProps) {
         <View style={styles.topBarInner}>
           <View style={styles.topLeftGroup}>
             <Pressable
-              accessibilityLabel="Open navigation menu"
+              accessibilityLabel={t("navigation.openMenu")}
               accessibilityRole="button"
               onPress={openDrawer}
               style={({ pressed }) => [
@@ -120,7 +130,7 @@ export function AppShell({ children, banner }: AppShellProps) {
       {isDrawerOpen && (
         <View style={styles.drawerLayer}>
           <Pressable
-            accessibilityLabel="Close navigation menu"
+            accessibilityLabel={t("navigation.closeMenu")}
             accessibilityRole="button"
             onPress={closeDrawer}
             style={styles.backdrop}

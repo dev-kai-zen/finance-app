@@ -52,6 +52,23 @@
           "resizeMode": "contain",
           "backgroundColor": "#11231E"
         }
+      ],
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": [
+              "en",
+              "fil",
+              "es"
+            ],
+            "android": [
+              "en",
+              "fil",
+              "es"
+            ]
+          }
+        }
       ]
     ]
   }
