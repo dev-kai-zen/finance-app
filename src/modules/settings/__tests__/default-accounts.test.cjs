@@ -74,6 +74,10 @@ const {
   setDefaultIncomeAccount,
   subscribeToDefaultAccounts,
 } = require("@/modules/settings/services/default-accounts.service");
+const {
+  getTransactionViewMode,
+  setTransactionViewMode,
+} = require("@/modules/settings/services/transaction-view-mode.service");
 
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
@@ -185,6 +189,26 @@ test("returns null defaults when settings are not configured", () => {
   assert.equal(defaults.defaultExpensePocketId, null);
   assert.equal(defaults.defaultIncomeAccountId, null);
   assert.equal(defaults.defaultIncomePocketId, null);
+});
+
+test("transaction view mode defaults to compact and persists user changes", () => {
+  assert.equal(getTransactionViewMode(database), "compact");
+
+  setTransactionViewMode("detailed", database);
+  assert.equal(getTransactionViewMode(database), "detailed");
+
+  setTransactionViewMode("compact", database);
+  assert.equal(getTransactionViewMode(database), "compact");
+});
+
+test("transaction view mode falls back to compact for an invalid stored value", () => {
+  sqlite
+    .prepare(
+      "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)",
+    )
+    .run("transaction_list_view_mode", "grid", Date.now());
+
+  assert.equal(getTransactionViewMode(database), "compact");
 });
 
 test("sets and retrieves default expense and income accounts and pockets", () => {

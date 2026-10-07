@@ -7,3 +7,6 @@ export const DEFAULT_ACCOUNT_SETTINGS_KEYS = {
 
 export type DefaultAccountSettingKey =
   (typeof DEFAULT_ACCOUNT_SETTINGS_KEYS)[keyof typeof DEFAULT_ACCOUNT_SETTINGS_KEYS];
+
+export const TRANSACTION_VIEW_MODE_SETTING_KEY =
+  "transaction_list_view_mode";

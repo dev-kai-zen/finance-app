@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ConfirmModal,
   FeatureNotImplementedModal,
@@ -44,6 +45,7 @@ import { TransactionFormModal } from "../components/transaction-form-modal";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
+import { useTransactionViewMode } from "../hooks/use-transaction-view-mode";
 import type { TransactionListItem } from "../types/transaction.types";
 
 interface DateGroup {
@@ -94,6 +96,7 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
 
 export function TransactionsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -139,7 +142,7 @@ export function TransactionsScreen() {
   const [filterState, setFilterState] = useState<TransactionFilterState>(
     DEFAULT_TRANSACTION_FILTERS,
   );
-  const [viewMode, setViewMode] = useState<"compact" | "detailed">("compact");
+  const { viewMode, setViewMode } = useTransactionViewMode();
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -534,7 +537,7 @@ export function TransactionsScreen() {
               accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
               accessibilityRole="button"
               onPress={() =>
-                setViewMode((prev) => (prev === "compact" ? "detailed" : "compact"))
+                setViewMode(viewMode === "compact" ? "detailed" : "compact")
               }
               style={[
                 styles.sortOrderButton,
@@ -609,7 +612,10 @@ export function TransactionsScreen() {
               title="No Transactions Found"
             />
           }
-          contentContainerStyle={styles.listContentContainer}
+          contentContainerStyle={[
+            styles.listContentContainer,
+            { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+          ]}
           initialNumToRender={20}
           keyExtractor={(item) => item.id}
           maxToRenderPerBatch={15}
@@ -747,6 +753,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     pageContent: {
       flex: 1,
+      paddingBottom: 0,
     },
     container: {
       flex: 1,
@@ -757,7 +764,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     listContentContainer: {
-      paddingBottom: 100,
+      flexGrow: 1,
     },
     searchRow: {
       alignItems: "center",

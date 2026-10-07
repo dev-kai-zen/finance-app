@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Link } from "expo-router";
 import {
+  ArrowLeft,
   CalendarClock,
   Pause,
   Play,
@@ -16,7 +17,6 @@ import {
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
-  PageHeader,
   PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -32,9 +32,22 @@ import type {
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
 import { formatScheduleRecurrence } from "../utils/recurrence";
+import {
+  DEFAULT_SCHEDULE_LIST_FILTERS,
+  filterSchedulesByStatus,
+  type ScheduleListFilter,
+} from "../utils/schedule-list-filter";
+
+const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: ScheduleListFilter;
+}> = [
+  { label: "Active", value: "active" },
+  { label: "Completed", value: "completed" },
+  { label: "Archived", value: "archived" },
+];
 
 export function ScheduledTransactionsScreen() {
-  const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
@@ -66,14 +79,13 @@ export function ScheduledTransactionsScreen() {
     useState<ScheduledTransaction | null>(null);
   const [pendingRestore, setPendingRestore] =
     useState<ScheduledTransaction | null>(null);
-  const [showArchived, setShowArchived] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<
+    ReadonlySet<ScheduleListFilter>
+  >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
 
   const visibleSchedules = useMemo(
-    () =>
-      schedules.filter(
-        (schedule) => showArchived || schedule.archivedAt === null,
-      ),
-    [schedules, showArchived],
+    () => filterSchedulesByStatus(schedules, selectedFilters),
+    [schedules, selectedFilters],
   );
 
   const scheduleById = useMemo(
@@ -108,6 +120,18 @@ export function ScheduledTransactionsScreen() {
     if (postOccurrence(occurrence.id)) refreshAccounts();
   };
 
+  const setFilterSelected = (
+    filter: ScheduleListFilter,
+    selected: boolean,
+  ) => {
+    setSelectedFilters((current) => {
+      const next = new Set(current);
+      if (selected) next.add(filter);
+      else next.delete(filter);
+      return next;
+    });
+  };
+
   return (
     <PageContainer
       floatingAction={
@@ -118,17 +142,21 @@ export function ScheduledTransactionsScreen() {
         />
       }
       header={
-        <PageHeader
-          breadcrumb="Transactions"
-          secondaryActions={[
-            {
-              label: "Transaction History",
-              onPress: () => router.navigate("/transactions" as never),
-            },
-          ]}
-          subtitle="Plan one-time or recurring income, expenses, and transfers."
-          title="Scheduled Transactions"
-        />
+        <View style={styles.navigationRow}>
+          <Link href="/transactions" replace asChild>
+            <Pressable
+              accessibilityLabel="Back to Transactions"
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed && styles.backButtonPressed,
+              ]}
+            >
+              <ArrowLeft color={theme.colors.textPrimary} size={20} />
+              <Text style={styles.backButtonText}>Back to Transactions</Text>
+            </Pressable>
+          </Link>
+        </View>
       }
     >
       <View style={styles.content}>
@@ -138,7 +166,7 @@ export function ScheduledTransactionsScreen() {
           </View>
         ) : null}
 
-        {actionableOccurrences.length > 0 ? (
+        {selectedFilters.has("active") && actionableOccurrences.length > 0 ? (
           <View style={styles.dueSection}>
             <Text style={styles.sectionHeading}>Needs attention</Text>
             {actionableOccurrences.map((occurrence) => {
@@ -174,26 +202,39 @@ export function ScheduledTransactionsScreen() {
 
         <View style={styles.scheduleHeadingRow}>
           <Text style={styles.sectionHeading}>Schedules</Text>
-          <Host matchContents style={styles.archiveCheckbox}>
-            <Checkbox
-              disabled={pending}
-              label="Show archived"
-              onValueChange={setShowArchived}
-              value={showArchived}
-            />
-          </Host>
+          <View
+            accessibilityLabel="Schedule status filters"
+            style={styles.filterOptions}
+          >
+            {SCHEDULE_FILTER_OPTIONS.map((option) => (
+              <Host key={option.value} matchContents style={styles.filterCheckbox}>
+                <Checkbox
+                  disabled={pending}
+                  label={option.label}
+                  onValueChange={(selected) =>
+                    setFilterSelected(option.value, selected)
+                  }
+                  value={selectedFilters.has(option.value)}
+                />
+              </Host>
+            ))}
+          </View>
         </View>
         {loading ? (
           <PageLoadingState message="Loading schedules..." />
         ) : visibleSchedules.length === 0 ? (
           <PageEmptyState
             description={
-              schedules.some((schedule) => schedule.archivedAt !== null)
-                ? "Only archived schedules are available. Turn on Show archived to view and restore them."
+              schedules.length > 0
+                ? "No schedules match the selected status filters. Select another status to view them."
                 : "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule."
             }
             icon={<CalendarClock color={theme.colors.primary} size={34} />}
-            title="No scheduled transactions"
+            title={
+              schedules.length > 0
+                ? "No matching schedules"
+                : "No scheduled transactions"
+            }
           />
         ) : (
           visibleSchedules.map((schedule) => {
@@ -470,6 +511,27 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.md,
       paddingBottom: 80,
     },
+    navigationRow: {
+      alignItems: "flex-start",
+      paddingBottom: theme.spacing.sm,
+      paddingTop: theme.spacing.lg,
+    },
+    backButton: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    backButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+    },
+    backButtonText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
     errorBanner: {
       backgroundColor: theme.colors.danger + "18",
       borderColor: theme.colors.danger + "55",
@@ -492,9 +554,17 @@ function createStyles(theme: AppTheme) {
     scheduleHeadingRow: {
       alignItems: "center",
       flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
       justifyContent: "space-between",
     },
-    archiveCheckbox: {
+    filterOptions: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
+    },
+    filterCheckbox: {
       minHeight: 36,
     },
     dueSection: {

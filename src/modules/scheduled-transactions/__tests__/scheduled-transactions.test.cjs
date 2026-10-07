@@ -20,6 +20,10 @@ require.extensions[".ts"] = (module, filename) => {
 const {
   calculateScheduleOccurrence,
 } = require("../utils/recurrence.ts");
+const {
+  filterSchedulesByStatus,
+  getScheduleListFilter,
+} = require("../utils/schedule-list-filter.ts");
 
 function rule(overrides = {}) {
   return {
@@ -116,6 +120,36 @@ test("scheduled transactions: occurrence limits are relative to an edited schedu
   assert.ok(calculateScheduleOccurrence(editedRule, 7));
   assert.ok(calculateScheduleOccurrence(editedRule, 8));
   assert.equal(calculateScheduleOccurrence(editedRule, 9), null);
+});
+
+test("scheduled transactions: status filters separate active, completed, and archived schedules", () => {
+  const active = { id: "active", status: "active", archivedAt: null };
+  const paused = { id: "paused", status: "paused", archivedAt: null };
+  const completed = { id: "completed", status: "completed", archivedAt: null };
+  const archived = {
+    id: "archived",
+    status: "completed",
+    archivedAt: new Date("2028-01-01T00:00:00.000Z"),
+  };
+  const schedules = [active, paused, completed, archived];
+
+  assert.equal(getScheduleListFilter(active), "active");
+  assert.equal(getScheduleListFilter(paused), "active");
+  assert.equal(getScheduleListFilter(completed), "completed");
+  assert.equal(getScheduleListFilter(archived), "archived");
+  assert.deepEqual(
+    filterSchedulesByStatus(schedules, new Set(["active"])).map(
+      (schedule) => schedule.id,
+    ),
+    ["active", "paused"],
+  );
+  assert.deepEqual(
+    filterSchedulesByStatus(
+      schedules,
+      new Set(["completed", "archived"]),
+    ).map((schedule) => schedule.id),
+    ["completed", "archived"],
+  );
 });
 
 test("scheduled transactions: migration creates constrained schedule tables", () => {
