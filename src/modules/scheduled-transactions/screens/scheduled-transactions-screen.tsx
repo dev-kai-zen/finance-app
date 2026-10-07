@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import {
   ArrowLeft,
   CalendarClock,
@@ -143,20 +143,21 @@ export function ScheduledTransactionsScreen() {
       }
       header={
         <View style={styles.navigationRow}>
-          <Link href="/transactions" replace asChild>
-            <Pressable
-              accessibilityLabel="Back to Transactions"
-              accessibilityRole="button"
-              hitSlop={8}
-              style={({ pressed }) => [
-                styles.backButton,
-                pressed && styles.backButtonPressed,
-              ]}
-            >
-              <ArrowLeft color={theme.colors.textPrimary} size={20} />
-              <Text style={styles.backButtonText}>Back to Transactions</Text>
-            </Pressable>
-          </Link>
+          <Pressable
+            accessibilityLabel="Back to Transactions"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => router.replace("/transactions")}
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.backButtonPressed,
+            ]}
+          >
+            <ArrowLeft color={theme.colors.textPrimary} size={20} />
+            <Text numberOfLines={1} style={styles.backButtonText}>
+              Back to Transactions
+            </Text>
+          </Pressable>
         </View>
       }
     >
@@ -519,8 +520,11 @@ function createStyles(theme: AppTheme) {
     },
     backButton: {
       alignItems: "center",
+      alignSelf: "flex-start",
       borderRadius: theme.borderRadius.medium,
+      display: "flex",
       flexDirection: "row",
+      flexWrap: "nowrap",
       gap: theme.spacing.sm,
       minHeight: 44,
     },
@@ -529,6 +533,7 @@ function createStyles(theme: AppTheme) {
     },
     backButtonText: {
       color: theme.colors.textPrimary,
+      flexShrink: 0,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

@@ -399,3 +399,22 @@ When modifying this project, AI agents must:
 11. **DO NOT EDIT ANY FILES INSIDE THE `node_modules`**: AI agents are strictly forbidden from modifying any file inside `node_modules`. All fixes and adaptations must be made in application code or configuration.
 12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.
 13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).
+
+---
+
+# 17. Minimal Diff Principle
+
+Prefer minimal, surgical changes to existing code.
+
+- Make only the changes necessary to complete the requested task.
+- Preserve unrelated code, comments, formatting, naming, ordering, and structure.
+- Do not refactor, reorganize, rename, or reformat unrelated code.
+- Apply localized patches instead of rewriting entire files or large blocks when a smaller edit is sufficient.
+- Preserve each file's existing line endings, encoding, and final-newline convention.
+- Do not run repository-wide formatters, linters with automatic fixes, or import organizers unless explicitly requested or required by the task.
+- If formatting is necessary, limit it to the directly affected code.
+- Larger changes are acceptable when required for correctness. Make all necessary supporting changes, but keep unrelated code untouched.
+- Before finishing, review the Git diff and remove any unrelated or incidental changes.
+- Report any unavoidable formatting or generated-file changes in the final response.
+
+The Minimal Diff Principle means minimizing unrelated and incidental changes, not minimizing the raw number of changed lines. Make all changes required for correctness, type safety, tests, migrations, and consistency with the requested behavior. Do not omit necessary changes merely to produce a smaller diff.
