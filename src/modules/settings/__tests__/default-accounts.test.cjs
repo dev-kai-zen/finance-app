@@ -78,6 +78,9 @@ const {
   getTransactionViewMode,
   setTransactionViewMode,
 } = require("@/modules/settings/services/transaction-view-mode.service");
+const {
+  deleteAllUserData,
+} = require("@/modules/settings/repositories/reset-data.repository");
 
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
@@ -261,4 +264,141 @@ test("notifies subscribers when default accounts change", () => {
   unsubscribe();
   setDefaultExpenseAccount(null, null, database);
   assert.equal(callCount, 2); // Unsubscribed, should not increase
+});
+
+test("reset data removes user records while preserving built-in catalog rows", async () => {
+  const now = Date.now();
+  const systemCountsBefore = {
+    accountTypes: sqlite
+      .prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 1")
+      .get().count,
+    categories: sqlite
+      .prepare("SELECT count(*) AS count FROM categories WHERE is_system = 1")
+      .get().count,
+    hexColors: sqlite
+      .prepare("SELECT count(*) AS count FROM hex_colors WHERE is_system = 1")
+      .get().count,
+  };
+
+  sqlite
+    .prepare(
+      "INSERT INTO hex_colors (id, name, hex, is_system, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?)",
+    )
+    .run("reset-color", "Reset color", "#123456", now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO account_types (id, name, account_group, hex_colors_id, is_system, sort_order, created_at, updated_at) VALUES (?, ?, 'asset', ?, 0, 0, ?, ?)",
+    )
+    .run("reset-type", "Reset type", "reset-color", now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO categories (id, name, type, hex_colors_id, is_system, sort_order, created_at, updated_at) VALUES (?, ?, 'expense', ?, 0, 0, ?, ?)",
+    )
+    .run("reset-category", "Reset category", "reset-color", now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO accounts (id, account_type_id, name, currency_code, opening_balance_minor_units, opening_balance_at, starting_balance_locked, hide_from_selection, hide_from_reports, pocket_enabled, is_archived, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'PHP', 0, ?, 0, 0, 0, 0, 0, 0, ?, ?)",
+    )
+    .run("reset-account", "reset-type", "Reset account", now, now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, category_id, type, amount_cents, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'expense', -100, ?, ?, ?, ?)",
+    )
+    .run(
+      "reset-transaction",
+      "reset-account",
+      "reset-category",
+      "Reset transaction",
+      now,
+      now,
+      now,
+    );
+  sqlite
+    .prepare(
+      "INSERT INTO transaction_attachments (id, transaction_id, original_name, storage_key, mime_type, size_bytes, sha256, sync_status, created_at, updated_at) VALUES (?, ?, ?, ?, 'image/jpeg', 1, ?, 'pending', ?, ?)",
+    )
+    .run(
+      "reset-transaction-attachment",
+      "reset-transaction",
+      "receipt.jpg",
+      "receipt.jpg",
+      "hash",
+      now,
+      now,
+    );
+  sqlite
+    .prepare(
+      "INSERT INTO notes (id, title, content, is_pinned, created_at, updated_at) VALUES (?, ?, '', 0, ?, ?)",
+    )
+    .run("reset-note", "Reset note", now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO note_attachments (id, note_id, original_name, storage_key, mime_type, size_bytes, sha256, sync_status, created_at, updated_at) VALUES (?, ?, ?, ?, 'image/jpeg', 1, ?, 'pending', ?, ?)",
+    )
+    .run(
+      "reset-note-attachment",
+      "reset-note",
+      "note.jpg",
+      "note.jpg",
+      "hash",
+      now,
+      now,
+    );
+  sqlite
+    .prepare("INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)")
+    .run("reset-setting", "value", now);
+
+  await database.transaction(async (tx) => {
+    deleteAllUserData(tx);
+  });
+
+  for (const table of [
+    "accounts",
+    "transactions",
+    "transaction_attachments",
+    "notes",
+    "note_attachments",
+    "settings",
+  ]) {
+    assert.equal(
+      sqlite.prepare(`SELECT count(*) AS count FROM ${table}`).get().count,
+      0,
+      `${table} should be empty`,
+    );
+  }
+
+  assert.deepEqual(
+    {
+      accountTypes: sqlite
+        .prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 1")
+        .get().count,
+      categories: sqlite
+        .prepare("SELECT count(*) AS count FROM categories WHERE is_system = 1")
+        .get().count,
+      hexColors: sqlite
+        .prepare("SELECT count(*) AS count FROM hex_colors WHERE is_system = 1")
+        .get().count,
+    },
+    systemCountsBefore,
+  );
+  assert.equal(
+    sqlite
+      .prepare(
+        "SELECT count(*) AS count FROM account_types WHERE is_system = 0",
+      )
+      .get().count,
+    0,
+  );
+  assert.equal(
+    sqlite
+      .prepare("SELECT count(*) AS count FROM categories WHERE is_system = 0")
+      .get().count,
+    0,
+  );
+  assert.equal(
+    sqlite
+      .prepare("SELECT count(*) AS count FROM hex_colors WHERE is_system = 0")
+      .get().count,
+    0,
+  );
 });

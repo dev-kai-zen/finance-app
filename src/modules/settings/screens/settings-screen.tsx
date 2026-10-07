@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Archive, ChevronRight, Cloud, Trash2 } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
@@ -8,13 +9,15 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
-import { GoogleDriveBackupSettings } from "@/modules/backup";
 import { useWorkspace } from "@/modules/onboarding";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
+import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
+import { useResetData } from "../hooks/use-reset-data";
 
 export function SettingsScreen() {
+  const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const {
     theme,
@@ -40,6 +43,8 @@ export function SettingsScreen() {
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
+  const [isResetDataOpen, setIsResetDataOpen] = useState(false);
+  const resetData = useResetData();
 
   const expenseAccount = accounts.find(
     (a) => a.id === defaultExpenseAccountId && !a.isArchived,
@@ -158,6 +163,51 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel="Manage local backups"
+              accessibilityRole="button"
+              onPress={() => router.push("/local-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Archive color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Local Backup</Text>
+                <Text style={styles.settingDescription}>
+                  Create, export, or restore an on-device backup
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel="Manage Google Drive backups"
+              accessibilityRole="button"
+              onPress={() => router.push("/google-drive-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Cloud color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>Google Drive</Text>
+                <Text style={styles.settingDescription}>
+                  Connect, create, or restore a cloud backup
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
               <View style={styles.settingRow}>
@@ -170,9 +220,7 @@ export function SettingsScreen() {
                 </View>
               </View>
             </View>
-          ) : (
-            <GoogleDriveBackupSettings />
-          )}
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -225,7 +273,51 @@ export function SettingsScreen() {
             </Pressable>
           </View>
         </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>
+            DANGER ZONE
+          </Text>
+          <View style={[styles.card, styles.dangerCard]}>
+            <View style={styles.resetContent}>
+              <View style={styles.resetHeading}>
+                <View style={styles.resetIcon}>
+                  <Trash2 color={theme.colors.danger} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Reset Data</Text>
+                  <Text style={styles.settingDescription}>
+                    Permanently erase all local app data and start over.
+                  </Text>
+                </View>
+              </View>
+              <AppButton
+                label="Reset Data"
+                onPress={() => {
+                  resetData.clearError();
+                  setIsResetDataOpen(true);
+                }}
+                variant="destructive"
+              />
+            </View>
+          </View>
+        </View>
       </View>
+
+      <ResetDataModal
+        error={resetData.error}
+        pending={resetData.pending}
+        visible={isResetDataOpen}
+        onCancel={() => {
+          resetData.clearError();
+          setIsResetDataOpen(false);
+        }}
+        onConfirm={() => {
+          void resetData.resetData().then((completed) => {
+            if (completed) setIsResetDataOpen(false);
+          });
+        }}
+      />
 
       <ThemePickerModal
         isFollowingSystem={isFollowingSystem}
@@ -329,6 +421,14 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       gap: 2,
     },
+    backupIcon: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}14`,
+      borderRadius: theme.borderRadius.round,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
     settingLabel: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
@@ -356,6 +456,29 @@ function createStyles(theme: AppTheme) {
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.semibold,
       textAlign: "center",
+    },
+    dangerSectionTitle: {
+      color: theme.colors.danger,
+    },
+    dangerCard: {
+      borderColor: `${theme.colors.danger}50`,
+    },
+    resetContent: {
+      gap: theme.spacing.md,
+      padding: theme.spacing.lg,
+    },
+    resetHeading: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    resetIcon: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}18`,
+      borderRadius: theme.borderRadius.round,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
     },
   });
 }

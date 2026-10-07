@@ -23,7 +23,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { APP_BRAND } from "@/constants/brand";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { GoogleDriveBackupSettings } from "@/modules/backup";
+import { GoogleDriveBackupPanel } from "@/modules/google-drive-backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
 
@@ -245,7 +245,7 @@ export function OnboardingScreen() {
                 description="Connect Google Drive and restore an encrypted Kaizen Finance backup."
                 title="Restore your data"
               />
-              <GoogleDriveBackupSettings />
+              <GoogleDriveBackupPanel />
               <Text style={styles.restoreFootnote}>
                 After a successful restore, the app will reopen using the restored
                 accounts and transaction history.

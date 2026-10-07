@@ -14,7 +14,7 @@ import { CloudDownload, LockKeyhole, RefreshCw, X } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import type { BackupFile } from "@/modules/backup/types/backup.types";
+import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 
 interface RestoreBackupModalProps {
   backups: BackupFile[];

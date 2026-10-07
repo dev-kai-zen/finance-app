@@ -17,15 +17,15 @@ import {
   ShieldAlert,
 } from "lucide-react-native";
 
-import { ConfirmModal, NotificationModal } from "@/components";
+import { AppButton, ConfirmModal, NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { useGoogleDriveBackup } from "@/modules/backup/hooks/use-google-drive-backup";
-import type { BackupFile } from "@/modules/backup/types/backup.types";
-import { BackupPassphraseModal } from "./backup-passphrase-modal";
-import { RestoreBackupModal } from "./restore-backup-modal";
+import { BackupPassphraseModal } from "@/modules/local-backup";
+import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
+import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
+import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
 
-export function GoogleDriveBackupSettings() {
+export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const backup = useGoogleDriveBackup();
@@ -34,6 +34,7 @@ export function GoogleDriveBackupSettings() {
   >(null);
   const [selectedBackup, setSelectedBackup] = useState<BackupFile | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [linkingError, setLinkingError] = useState<string | null>(null);
   const busy = backup.operation !== "idle";
@@ -80,6 +81,11 @@ export function GoogleDriveBackupSettings() {
     void backup.restoreBackup(fileId, null);
   };
 
+  const confirmGoogleDriveDisconnect = () => {
+    setConfirmDisconnect(false);
+    void backup.disconnect();
+  };
+
   const openBackupFolder = async () => {
     if (!backup.folderUrl) return;
 
@@ -94,145 +100,142 @@ export function GoogleDriveBackupSettings() {
 
   return (
     <>
-      <View style={styles.card}>
-        <View style={styles.statusRow}>
-          <View style={styles.iconCircle}>
-            <Cloud color={theme.colors.primary} size={22} />
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <View style={styles.statusRow}>
+            <View style={styles.iconCircle}>
+              <Cloud color={theme.colors.primary} size={22} />
+            </View>
+            <View style={styles.copy}>
+              <Text style={styles.title}>Google Drive</Text>
+              <Text style={styles.description} selectable>
+                {backup.configurationError
+                  ? "Setup required"
+                  : backup.user
+                    ? backup.user.email ?? backup.user.name ?? "Connected"
+                    : "Not connected"}
+              </Text>
+            </View>
+            {backup.user ? (
+              <CheckCircle2 color={theme.colors.success} size={20} />
+            ) : null}
           </View>
-          <View style={styles.copy}>
-            <Text style={styles.title}>Google Drive</Text>
-            <Text style={styles.description} selectable>
-              {backup.configurationError
-                ? "Setup required"
-                : backup.user
-                  ? backup.user.email ?? backup.user.name ?? "Connected"
-                  : "Not connected"}
-            </Text>
-          </View>
-          {backup.user ? (
-            <CheckCircle2 color={theme.colors.success} size={20} />
+
+          {backup.configurationError ? (
+            <View style={styles.configurationMessage}>
+              <ShieldAlert color={theme.colors.warning} size={18} />
+              <Text style={styles.configurationText} selectable>
+                {backup.configurationError}
+              </Text>
+            </View>
+          ) : backup.user ? (
+            <>
+              <View style={styles.divider} />
+              <Pressable
+                accessibilityLabel="Create backup"
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={() => setPassphraseMode("create")}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  pressed && styles.pressed,
+                  busy && styles.disabled,
+                ]}
+              >
+                <CloudUpload color={theme.colors.primary} size={20} />
+                <View style={styles.copy}>
+                  <Text style={styles.actionTitle}>Back up now</Text>
+                  <Text style={styles.description}>
+                    Save with a password, or choose an unprotected backup
+                  </Text>
+                </View>
+              </Pressable>
+
+              <View style={styles.insetDivider} />
+              <Pressable
+                accessibilityLabel="Restore from backup"
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={openRestoreModal}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  pressed && styles.pressed,
+                  busy && styles.disabled,
+                ]}
+              >
+                <CloudDownload color={theme.colors.primary} size={20} />
+                <View style={styles.copy}>
+                  <Text style={styles.actionTitle}>Restore from backup</Text>
+                  <Text style={styles.description}>
+                    Choose a saved backup from Google Drive
+                  </Text>
+                </View>
+              </Pressable>
+
+              <View style={styles.insetDivider} />
+              <Pressable
+                accessibilityLabel="Open Kaizen Finance backups in Google Drive"
+                accessibilityRole="button"
+                disabled={busy || !backup.folderUrl}
+                onPress={() => void openBackupFolder()}
+                style={({ pressed }) => [
+                  styles.actionRow,
+                  pressed && styles.pressed,
+                  (busy || !backup.folderUrl) && styles.disabled,
+                ]}
+              >
+                <FolderOpen color={theme.colors.primary} size={20} />
+                <View style={styles.copy}>
+                  <Text style={styles.actionTitle}>Open backups folder</Text>
+                  <Text style={styles.description}>
+                    View Kaizen Finance / Backups in Google Drive
+                  </Text>
+                </View>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <View style={styles.divider} />
+              <Pressable
+                accessibilityLabel="Connect to Google Drive"
+                accessibilityRole="button"
+                disabled={busy}
+                onPress={backup.connect}
+                style={({ pressed }) => [
+                  styles.connectButton,
+                  pressed && styles.connectButtonPressed,
+                  busy && styles.disabled,
+                ]}
+              >
+                {backup.operation === "connecting" ? (
+                  <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                ) : (
+                  <Cloud color={theme.colors.onPrimary} size={18} />
+                )}
+                <Text style={styles.connectButtonText}>
+                  Connect to Google Drive
+                </Text>
+              </Pressable>
+            </>
+          )}
+
+          {operationLabel && backup.operation !== "loading" ? (
+            <View style={styles.operationRow}>
+              <ActivityIndicator color={theme.colors.primary} size="small" />
+              <Text style={styles.description}>{operationLabel}</Text>
+            </View>
           ) : null}
         </View>
 
-        {backup.configurationError ? (
-          <View style={styles.configurationMessage}>
-            <ShieldAlert color={theme.colors.warning} size={18} />
-            <Text style={styles.configurationText} selectable>
-              {backup.configurationError}
-            </Text>
-          </View>
-        ) : backup.user ? (
-          <>
-            <View style={styles.divider} />
-            <Pressable
-              accessibilityLabel="Create backup"
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={() => setPassphraseMode("create")}
-              style={({ pressed }) => [
-                styles.actionRow,
-                pressed && styles.pressed,
-                busy && styles.disabled,
-              ]}
-            >
-              <CloudUpload color={theme.colors.primary} size={20} />
-              <View style={styles.copy}>
-                <Text style={styles.actionTitle}>Back up now</Text>
-                <Text style={styles.description}>
-                  Save with a password, or choose an unprotected backup
-                </Text>
-              </View>
-            </Pressable>
-
-            <View style={styles.insetDivider} />
-            <Pressable
-              accessibilityLabel="Restore from backup"
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={openRestoreModal}
-              style={({ pressed }) => [
-                styles.actionRow,
-                pressed && styles.pressed,
-                busy && styles.disabled,
-              ]}
-            >
-              <CloudDownload color={theme.colors.primary} size={20} />
-              <View style={styles.copy}>
-                <Text style={styles.actionTitle}>Restore from Backup</Text>
-                <Text style={styles.description}>
-                  Choose a saved backup from Google Drive
-                </Text>
-              </View>
-            </Pressable>
-
-            <View style={styles.insetDivider} />
-            <Pressable
-              accessibilityLabel="Open Kaizen Finance backups in Google Drive"
-              accessibilityRole="button"
-              disabled={busy || !backup.folderUrl}
-              onPress={() => void openBackupFolder()}
-              style={({ pressed }) => [
-                styles.actionRow,
-                pressed && styles.pressed,
-                (busy || !backup.folderUrl) && styles.disabled,
-              ]}
-            >
-              <FolderOpen color={theme.colors.primary} size={20} />
-              <View style={styles.copy}>
-                <Text style={styles.actionTitle}>Open backups folder</Text>
-                <Text style={styles.description}>
-                  View Kaizen Finance / Backups in Google Drive
-                </Text>
-              </View>
-            </Pressable>
-
-            <View style={styles.divider} />
-            <Pressable
-              accessibilityLabel="Disconnect Google Drive"
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={backup.disconnect}
-              style={({ pressed }) => [
-                styles.actionRow,
-                pressed && styles.pressed,
-                busy && styles.disabled,
-              ]}
-            >
-              <LogOut color={theme.colors.textMuted} size={19} />
-              <Text style={styles.disconnectText}>Disconnect</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <View style={styles.divider} />
-            <Pressable
-              accessibilityLabel="Connect Google Drive"
-              accessibilityRole="button"
-              disabled={busy}
-              onPress={backup.connect}
-              style={({ pressed }) => [
-                styles.connectButton,
-                pressed && styles.connectButtonPressed,
-                busy && styles.disabled,
-              ]}
-            >
-              {backup.operation === "connecting" ? (
-                <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-              ) : (
-                <Cloud color={theme.colors.onPrimary} size={18} />
-              )}
-              <Text style={styles.connectButtonText}>Connect Google Drive</Text>
-            </Pressable>
-          </>
-        )}
-
-        {operationLabel && backup.operation !== "loading" ? (
-          <View style={styles.operationRow}>
-            <ActivityIndicator color={theme.colors.primary} size="small" />
-            <Text style={styles.description}>{operationLabel}</Text>
-          </View>
+        {backup.user ? (
+          <AppButton
+            disabled={busy}
+            label="Disconnect"
+            leading={<LogOut color={theme.colors.onDanger} size={18} />}
+            onPress={() => setConfirmDisconnect(true)}
+            variant="destructive"
+          />
         ) : null}
-
       </View>
 
       <RestoreBackupModal
@@ -242,6 +245,16 @@ export function GoogleDriveBackupSettings() {
         onRefresh={() => void backup.refresh()}
         onSelect={beginRestore}
         visible={restoreModalVisible}
+      />
+
+      <ConfirmModal
+        confirmLabel="Disconnect"
+        message="Disconnect this Google account from Kaizen Finance? Existing backups will remain in Google Drive."
+        onCancel={() => setConfirmDisconnect(false)}
+        onConfirm={confirmGoogleDriveDisconnect}
+        pending={backup.operation === "disconnecting"}
+        title="Disconnect Google Drive?"
+        visible={confirmDisconnect}
       />
 
       <ConfirmModal
@@ -300,6 +313,9 @@ export function GoogleDriveBackupSettings() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    container: {
+      gap: theme.spacing.lg,
+    },
     card: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
@@ -398,11 +414,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
-    },
-    disconnectText: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.medium,
     },
     operationRow: {
       alignItems: "center",

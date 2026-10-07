@@ -1,9 +1,7 @@
 import { useMemo, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { router } from "expo-router";
 import {
-  ArrowLeft,
   CalendarClock,
   Pause,
   Play,
@@ -140,25 +138,6 @@ export function ScheduledTransactionsScreen() {
           icon={<CalendarClock color={theme.colors.onPrimary} size={24} />}
           onPress={openNew}
         />
-      }
-      header={
-        <View style={styles.navigationRow}>
-          <Pressable
-            accessibilityLabel="Back to Transactions"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => router.replace("/transactions")}
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed && styles.backButtonPressed,
-            ]}
-          >
-            <ArrowLeft color={theme.colors.textPrimary} size={20} />
-            <Text numberOfLines={1} style={styles.backButtonText}>
-              Back to Transactions
-            </Text>
-          </Pressable>
-        </View>
       }
     >
       <View style={styles.content}>
@@ -512,30 +491,6 @@ function createStyles(theme: AppTheme) {
     content: {
       gap: theme.spacing.md,
       paddingBottom: 80,
-    },
-    navigationRow: {
-      alignItems: "flex-start",
-      paddingBottom: theme.spacing.sm,
-      paddingTop: theme.spacing.lg,
-    },
-    backButton: {
-      alignItems: "center",
-      alignSelf: "flex-start",
-      borderRadius: theme.borderRadius.medium,
-      display: "flex",
-      flexDirection: "row",
-      flexWrap: "nowrap",
-      gap: theme.spacing.sm,
-      minHeight: 44,
-    },
-    backButtonPressed: {
-      backgroundColor: theme.colors.surfaceMuted,
-    },
-    backButtonText: {
-      color: theme.colors.textPrimary,
-      flexShrink: 0,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
     errorBanner: {
       backgroundColor: theme.colors.danger + "18",

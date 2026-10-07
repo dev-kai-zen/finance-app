@@ -6,19 +6,19 @@ import type {
   BackupNotice,
   BackupOperation,
   GoogleDriveUser,
-} from "@/modules/backup/types/backup.types";
-import { createGoogleDriveBackup } from "@/modules/backup/services/create-google-drive-backup.service";
+} from "@/modules/google-drive-backup/types/google-drive-backup.types";
+import { createGoogleDriveBackup } from "@/modules/google-drive-backup/services/create-google-drive-backup.service";
 import {
   connectGoogleDrive,
   disconnectGoogleDrive,
   getGoogleDriveConfigurationError,
   restoreGoogleDriveSession,
-} from "@/modules/backup/services/google-drive-auth.service";
-import { listGoogleDriveBackups } from "@/modules/backup/services/list-google-drive-backups.service";
+} from "@/modules/google-drive-backup/services/google-drive-auth.service";
+import { listGoogleDriveBackups } from "@/modules/google-drive-backup/services/list-google-drive-backups.service";
 import {
   consumeRestoreNotice,
   restoreGoogleDriveBackup,
-} from "@/modules/backup/services/restore-google-drive-backup.service";
+} from "@/modules/google-drive-backup/services/restore-google-drive-backup.service";
 
 export function useGoogleDriveBackup() {
   const [user, setUser] = useState<GoogleDriveUser | null>(null);

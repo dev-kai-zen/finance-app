@@ -14,7 +14,7 @@ import { Check, KeyRound, ShieldOff, X } from "lucide-react-native";
 import { NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { validateBackupPassphrase } from "@/modules/backup/utils/backup-format";
+import { validateBackupPassphrase } from "@/modules/local-backup/utils/backup-format";
 
 interface BackupPassphraseModalProps {
   visible: boolean;

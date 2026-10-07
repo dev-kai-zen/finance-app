@@ -3,7 +3,7 @@ import {
   replaceDatabaseFromSnapshot,
 } from "@/infrastructure/database";
 import { downloadGoogleDriveBackupFile } from "@/infrastructure/sync";
-import { readDatabaseBackup } from "@/modules/backup/utils/backup-format";
+import { readDatabaseBackup } from "@/modules/local-backup";
 import { withGoogleDriveAccessToken } from "./google-drive-auth.service";
 
 let restoreNotice: string | null = null;

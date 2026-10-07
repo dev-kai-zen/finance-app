@@ -45,8 +45,12 @@ require.extensions[".ts"] = (module, filename) => {
 
 const {
   createDatabaseBackup,
+  inspectDatabaseBackup,
   readDatabaseBackup,
-} = require(path.join(root, "modules/backup/utils/backup-format.ts"));
+} = require(path.join(root, "modules/local-backup/utils/backup-format.ts"));
+const {
+  isAutomaticBackupDue,
+} = require(path.join(root, "modules/local-backup/utils/automatic-backup-schedule.ts"));
 
 test("unprotected backups round-trip without a password", async () => {
   const database = Uint8Array.from([1, 2, 3, 4, 5]);
@@ -58,11 +62,16 @@ test("unprotected backups round-trip without a password", async () => {
     createdAt,
   );
   const restored = await readDatabaseBackup(archive, null);
+  const info = inspectDatabaseBackup(archive);
 
   assert.equal(new TextDecoder().decode(archive.slice(0, 8)), "KAIZENP1");
   assert.deepEqual(restored.database, database);
   assert.equal(restored.appVersion, "1.0.0");
   assert.equal(restored.createdAt.toISOString(), createdAt.toISOString());
+  assert.equal(info.appVersion, "1.0.0");
+  assert.equal(info.createdAt.toISOString(), createdAt.toISOString());
+  assert.equal(info.databaseBytes, database.byteLength);
+  assert.equal(info.passwordProtected, false);
 });
 
 test("unprotected backups reject modified database bytes", async () => {
@@ -84,5 +93,27 @@ test("password-protected backups never restore without their password", async ()
   await assert.rejects(
     readDatabaseBackup(archive, null),
     /needs its password/i,
+  );
+});
+
+test("automatic backup schedule respects daily and weekly intervals", () => {
+  const now = new Date("2026-10-07T12:00:00.000Z");
+
+  assert.equal(isAutomaticBackupDue(null, "daily", now), true);
+  assert.equal(
+    isAutomaticBackupDue(new Date("2026-10-06T13:00:00.000Z"), "daily", now),
+    false,
+  );
+  assert.equal(
+    isAutomaticBackupDue(new Date("2026-10-06T12:00:00.000Z"), "daily", now),
+    true,
+  );
+  assert.equal(
+    isAutomaticBackupDue(new Date("2026-10-01T12:00:00.000Z"), "weekly", now),
+    false,
+  );
+  assert.equal(
+    isAutomaticBackupDue(new Date("2026-09-30T12:00:00.000Z"), "weekly", now),
+    true,
   );
 });

@@ -1,5 +1,5 @@
 import { LogBox, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { HexColorsProvider } from "@/modules/hex-colors";
+import { LocalBackupProcessor } from "@/modules/local-backup";
 import {
   OnboardingGate,
   SampleWorkspaceBanner,
@@ -22,6 +23,11 @@ LogBox.ignoreLogs([
 
 function RootLayoutContent() {
   const { theme } = useThemeContext();
+  const pathname = usePathname();
+  const usesNativeHeader =
+    pathname.startsWith("/local-backup") ||
+    pathname.startsWith("/google-drive-backup") ||
+    pathname.startsWith("/transactions/scheduled");
 
   return (
     <SafeAreaProvider
@@ -33,7 +39,7 @@ function RootLayoutContent() {
           <WorkspaceProvider>
             <HexColorsProvider>
               <SafeAreaView
-                edges={["top"]}
+                edges={usesNativeHeader ? [] : ["top"]}
                 style={[
                   styles.safeAreaBoundary,
                   { backgroundColor: theme.colors.background },
@@ -43,6 +49,7 @@ function RootLayoutContent() {
                   <>
                     <ScheduledTransactionsProcessor />
                     <TransactionAttachmentsSyncProcessor />
+                    <LocalBackupProcessor />
                     <AppShell banner={<SampleWorkspaceBanner />}>
                       <Stack
                         screenOptions={{
@@ -63,6 +70,36 @@ function RootLayoutContent() {
                         <Stack.Screen name="reports" />
                         <Stack.Screen name="notes" />
                         <Stack.Screen name="settings" />
+                        <Stack.Screen
+                          name="local-backup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Local Backup",
+                            headerBackTitle: "Local Backup",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="google-drive-backup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Google Drive Backup",
+                            headerBackTitle: "Google Drive Backup",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
                         <Stack.Screen name="monitor" />
                       </Stack>
                     </AppShell>

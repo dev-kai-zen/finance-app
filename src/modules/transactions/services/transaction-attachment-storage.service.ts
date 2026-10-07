@@ -87,6 +87,12 @@ export function deleteTransactionAttachmentLocalFile(storageKey: string): void {
   deleteAttachmentFileByUri(getTransactionAttachmentLocalUri(storageKey));
 }
 
+export function clearTransactionAttachmentStorage(): void {
+  if (process.env.EXPO_OS === "web") return;
+  const directory = getAttachmentsDirectory();
+  if (directory.exists) directory.delete();
+}
+
 function getAttachmentsDirectory(): Directory {
   return new Directory(Paths.document, ATTACHMENTS_DIRECTORY_NAME);
 }

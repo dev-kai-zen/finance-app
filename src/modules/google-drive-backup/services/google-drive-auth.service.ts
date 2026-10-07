@@ -1,7 +1,7 @@
 import Constants from "expo-constants";
 import type { OneTapUser } from "react-native-nitro-google-signin";
 
-import type { GoogleDriveUser } from "@/modules/backup/types/backup.types";
+import type { GoogleDriveUser } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 
 export const GOOGLE_DRIVE_APPDATA_SCOPE =
   "https://www.googleapis.com/auth/drive.appdata";
