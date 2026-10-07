@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { ThemePresetCard } from "@/modules/settings/components/theme-preset-card";
 
 export interface ThemePickerModalProps {
@@ -39,6 +40,7 @@ export function ThemePickerModal({
   const isWide = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   if (!visible) return null;
 
@@ -51,7 +53,7 @@ export function ThemePickerModal({
     >
       <View accessibilityViewIsModal style={styles.overlay}>
         <Pressable
-          accessibilityLabel="Close theme picker"
+          accessibilityLabel={t("themePicker.closeAccessibility")}
           accessibilityRole="button"
           onPress={onClose}
           style={styles.backdrop}
@@ -66,13 +68,13 @@ export function ThemePickerModal({
         >
           <View style={styles.header}>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>Choose appearance</Text>
+              <Text style={styles.title}>{t("themePicker.title")}</Text>
               <Text style={styles.subtitle}>
-                Preview the full app palette before you leave this screen.
+                {t("themePicker.subtitle")}
               </Text>
             </View>
             <Pressable
-              accessibilityLabel="Close theme picker"
+              accessibilityLabel={t("themePicker.closeAccessibility")}
               accessibilityRole="button"
               onPress={onClose}
               style={({ pressed }) => [
@@ -89,7 +91,7 @@ export function ThemePickerModal({
             showsVerticalScrollIndicator={false}
           >
             <Pressable
-              accessibilityLabel="Follow device appearance"
+              accessibilityLabel={t("themePicker.followDevice")}
               accessibilityRole="button"
               accessibilityState={{ selected: isFollowingSystem }}
               onPress={onFollowSystem}
@@ -103,9 +105,11 @@ export function ThemePickerModal({
                 <Smartphone color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.systemCopy}>
-                <Text style={styles.systemTitle}>Follow device appearance</Text>
+                <Text style={styles.systemTitle}>
+                  {t("themePicker.followDevice")}
+                </Text>
                 <Text style={styles.systemDescription}>
-                  Paper in light mode and Ink in dark mode.
+                  {t("themePicker.followDeviceDescription")}
                 </Text>
               </View>
               <View
@@ -125,8 +129,12 @@ export function ThemePickerModal({
             </Pressable>
 
             <View style={styles.sectionHeading}>
-              <Text style={styles.sectionTitle}>PALETTES</Text>
-              <Text style={styles.sectionHint}>{themes.length} choices</Text>
+              <Text style={styles.sectionTitle}>
+                {t("themePicker.palettes")}
+              </Text>
+              <Text style={styles.sectionHint}>
+                {t("themePicker.choices", { count: themes.length })}
+              </Text>
             </View>
 
             <View style={styles.cards}>

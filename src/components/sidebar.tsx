@@ -5,31 +5,35 @@ import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import {
+  useLocalization,
+  type TranslationKey,
+} from "@/infrastructure/localization";
 
 import { IconHelper } from "./icon-helper";
 
 interface NavItemConfig {
   href: string;
-  label: string;
+  labelKey: TranslationKey;
   icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "goals" | "reports" | "notes" | "monitor" | "settings";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
-  { href: "/", label: "Dashboard", icon: "dashboard" },
-  { href: "/accounts", label: "Accounts", icon: "accounts" },
-  { href: "/transactions", label: "Transactions", icon: "transactions" },
-  { href: "/calendar", label: "Calendar", icon: "calendar" },
-  { href: "/credit-cards", label: "Credit Cards", icon: "credit-cards" },
-  { href: "/categories", label: "Categories", icon: "categories" },
-  { href: "/budgets", label: "Budgets", icon: "budgets" },
-  { href: "/goals", label: "Goals", icon: "goals" },
-  { href: "/reports", label: "Reports", icon: "reports" },
-  { href: "/notes", label: "Notes", icon: "notes" },
+  { href: "/", labelKey: "navigation.dashboard", icon: "dashboard" },
+  { href: "/accounts", labelKey: "navigation.accounts", icon: "accounts" },
+  { href: "/transactions", labelKey: "navigation.transactions", icon: "transactions" },
+  { href: "/calendar", labelKey: "navigation.calendar", icon: "calendar" },
+  { href: "/credit-cards", labelKey: "navigation.creditCards", icon: "credit-cards" },
+  { href: "/categories", labelKey: "navigation.categories", icon: "categories" },
+  { href: "/budgets", labelKey: "navigation.budgets", icon: "budgets" },
+  { href: "/goals", labelKey: "navigation.goals", icon: "goals" },
+  { href: "/reports", labelKey: "navigation.reports", icon: "reports" },
+  { href: "/notes", labelKey: "navigation.notes", icon: "notes" },
 ];
 
 const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
-  { href: "/monitor", label: "SQLite Monitor", icon: "monitor" },
-  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: "/monitor", labelKey: "navigation.sqliteMonitor", icon: "monitor" },
+  { href: "/settings", labelKey: "navigation.settings", icon: "settings" },
 ];
 
 export interface SidebarProps {
@@ -40,6 +44,7 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   const handlePress = (href: string) => {
     router.navigate(href as any);
@@ -60,7 +65,9 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
       {/* Brand Header */}
       <View style={styles.brandContainer}>
         <Image
-          accessibilityLabel={`${APP_BRAND.name} logo`}
+          accessibilityLabel={t("brand.logoAccessibility", {
+            name: APP_BRAND.name,
+          })}
           resizeMode="cover"
           source={APP_BRAND.logo}
           style={styles.brandLogo}
@@ -68,14 +75,14 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
         <View style={styles.brandText}>
           <Text style={styles.brandName}>{APP_BRAND.name}</Text>
           <Text numberOfLines={2} style={styles.brandTagline}>
-            {APP_BRAND.tagline}
+            {t("brand.tagline")}
           </Text>
         </View>
       </View>
 
       {/* Primary Navigation */}
       <View style={styles.primaryNav}>
-        <Text style={styles.sectionLabel}>MENU</Text>
+        <Text style={styles.sectionLabel}>{t("navigation.menu")}</Text>
         <View style={styles.navGroup}>
           {PRIMARY_NAVIGATION_ITEMS.map((item) => {
             const active = isItemActive(item.href);
@@ -84,7 +91,7 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
                 key={item.href}
                 active={active}
                 icon={item.icon}
-                label={item.label}
+                label={t(item.labelKey)}
                 onPress={() => handlePress(item.href)}
               />
             );
@@ -103,7 +110,7 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
                 key={item.href}
                 active={active}
                 icon={item.icon}
-                label={item.label}
+                label={t(item.labelKey)}
                 onPress={() => handlePress(item.href)}
               />
             );

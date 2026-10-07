@@ -9,6 +9,7 @@ import { useRouter } from "expo-router";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
+import { useLocalization } from "@/infrastructure/localization";
 
 export interface SyncStatusChipProps {
   onPress?: () => void;
@@ -18,11 +19,13 @@ export interface SyncStatusChipProps {
 
 export function SyncStatusChip({
   onPress,
-  label = "Local only",
+  label,
   isOnline = false,
 }: SyncStatusChipProps) {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+  const displayLabel = label ?? t("sync.localOnly");
 
   const handlePress = () => {
     if (onPress) {
@@ -34,7 +37,7 @@ export function SyncStatusChip({
 
   return (
     <Pressable
-      accessibilityLabel={`Sync status: ${label}. Tap to open settings.`}
+      accessibilityLabel={t("sync.accessibility", { label: displayLabel })}
       accessibilityRole="button"
       onPress={handlePress}
       style={({ pressed }) => [
@@ -43,7 +46,7 @@ export function SyncStatusChip({
       ]}
     >
       <View style={[styles.statusDot, isOnline ? styles.dotOnline : styles.dotOffline]} />
-      <Text style={styles.chipText}>{label}</Text>
+      <Text style={styles.chipText}>{displayLabel}</Text>
     </Pressable>
   );
 }

@@ -19,6 +19,7 @@ import {
   useAppTheme,
   useThemeStyles,
 } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 
 export const RESET_DATA_CONFIRMATION_PHRASE = "KAIZEN";
 
@@ -42,6 +43,7 @@ export function ResetDataModal({
   const { width } = useWindowDimensions();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const isConfirmed = confirmation === RESET_DATA_CONFIRMATION_PHRASE;
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function ResetDataModal({
         style={styles.overlay}
       >
         <Pressable
-          accessibilityLabel="Dismiss reset data confirmation"
+          accessibilityLabel={t("resetData.dismissAccessibility")}
           accessibilityRole="button"
           disabled={pending}
           onPress={onCancel}
@@ -87,23 +89,20 @@ export function ResetDataModal({
               <AlertTriangle color={theme.colors.danger} size={26} />
             </View>
 
-            <Text style={styles.title}>Reset all data?</Text>
+            <Text style={styles.title}>{t("resetData.title")}</Text>
             <Text style={styles.message}>
-              This permanently deletes your accounts, transactions, budgets,
-              goals, notes, settings, attachments, and app-managed local
-              backups from this device.
+              {t("resetData.message")}
             </Text>
             <Text style={styles.externalNote}>
-              Exported files and Google Drive backups will not be deleted.
+              {t("resetData.externalNote")}
             </Text>
 
             <Text style={styles.inputLabel}>
-              Type <Text style={styles.confirmationPhrase}>KAIZEN</Text> to
-              confirm
+              {t("resetData.confirmationInstruction")}
             </Text>
             <TextInput
               ref={inputRef}
-              accessibilityLabel="Type KAIZEN to confirm resetting all data"
+              accessibilityLabel={t("resetData.confirmationAccessibility")}
               autoCapitalize="characters"
               autoCorrect={false}
               editable={!pending}
@@ -124,14 +123,14 @@ export function ResetDataModal({
             <View style={styles.actions}>
               <AppButton
                 disabled={pending}
-                label="Cancel"
+                label={t("common.cancel")}
                 onPress={onCancel}
                 style={styles.action}
                 variant="secondary"
               />
               <AppButton
                 disabled={!isConfirmed}
-                label="Delete all data"
+                label={t("resetData.deleteAll")}
                 loading={pending}
                 onPress={onConfirm}
                 style={styles.action}

@@ -7,6 +7,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
+import { LocalizationProvider } from "@/infrastructure/localization";
 import { HexColorsProvider } from "@/modules/hex-colors";
 import { LocalBackupProcessor } from "@/modules/local-backup";
 import {
@@ -25,6 +26,7 @@ function RootLayoutContent() {
   const { theme } = useThemeContext();
   const pathname = usePathname();
   const usesNativeHeader =
+    pathname.startsWith("/language") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/transactions/scheduled");
@@ -36,15 +38,16 @@ function RootLayoutContent() {
       <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
       <KeyboardProvider>
         <DatabaseProvider>
-          <WorkspaceProvider>
-            <HexColorsProvider>
-              <SafeAreaView
-                edges={usesNativeHeader ? [] : ["top"]}
-                style={[
-                  styles.safeAreaBoundary,
-                  { backgroundColor: theme.colors.background },
-                ]}
-              >
+          <LocalizationProvider>
+            <WorkspaceProvider>
+              <HexColorsProvider>
+                <SafeAreaView
+                  edges={usesNativeHeader ? [] : ["top"]}
+                  style={[
+                    styles.safeAreaBoundary,
+                    { backgroundColor: theme.colors.background },
+                  ]}
+                >
                 <OnboardingGate>
                   <>
                     <ScheduledTransactionsProcessor />
@@ -70,6 +73,21 @@ function RootLayoutContent() {
                         <Stack.Screen name="reports" />
                         <Stack.Screen name="notes" />
                         <Stack.Screen name="settings" />
+                        <Stack.Screen
+                          name="language"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Language",
+                            headerBackTitle: "Language",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
                         <Stack.Screen
                           name="local-backup"
                           options={{
@@ -105,9 +123,10 @@ function RootLayoutContent() {
                     </AppShell>
                   </>
                 </OnboardingGate>
-              </SafeAreaView>
-            </HexColorsProvider>
-          </WorkspaceProvider>
+                </SafeAreaView>
+              </HexColorsProvider>
+            </WorkspaceProvider>
+          </LocalizationProvider>
         </DatabaseProvider>
       </KeyboardProvider>
     </SafeAreaProvider>

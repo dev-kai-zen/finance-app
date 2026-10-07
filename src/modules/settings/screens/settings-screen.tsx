@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { Archive, ChevronRight, Cloud, Trash2 } from "lucide-react-native";
+import {
+  Archive,
+  ChevronRight,
+  Cloud,
+  Languages,
+  Trash2,
+} from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
 import { PageContainer } from "@/components/page-container";
@@ -9,6 +15,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
+import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
@@ -27,6 +34,7 @@ export function SettingsScreen() {
     setFollowSystem,
     availableThemes,
   } = useThemeController();
+  const { activeLanguage, preference, t } = useLocalization();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
   const { accounts, pockets } = useAccounts();
@@ -45,6 +53,12 @@ export function SettingsScreen() {
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const resetData = useResetData();
+  const languageValue =
+    preference === "system"
+      ? t("settings.languageSystemValue", {
+          language: activeLanguage.nativeName,
+        })
+      : activeLanguage.nativeName;
 
   const expenseAccount = accounts.find(
     (a) => a.id === defaultExpenseAccountId && !a.isArchived,
@@ -62,9 +76,9 @@ export function SettingsScreen() {
     ? expensePocket
       ? `${expenseAccount.name} · ${expensePocket.name}`
       : expenseAccount.pocketEnabled
-        ? `${expenseAccount.name} · Available`
+        ? `${expenseAccount.name} · ${t("settings.availablePocket")}`
         : expenseAccount.name
-    : "None (First available)";
+    : t("settings.defaultAccountNone");
 
   const incomeAccount = accounts.find(
     (a) => a.id === defaultIncomeAccountId && !a.isArchived,
@@ -82,47 +96,52 @@ export function SettingsScreen() {
     ? incomePocket
       ? `${incomeAccount.name} · ${incomePocket.name}`
       : incomeAccount.pocketEnabled
-        ? `${incomeAccount.name} · Available`
+        ? `${incomeAccount.name} · ${t("settings.availablePocket")}`
         : incomeAccount.name
-    : "None (First available)";
+    : t("settings.defaultAccountNone");
 
   return (
     <PageContainer>
       <View style={styles.container}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>WORKSPACE</Text>
+          <Text style={styles.sectionTitle}>
+            {t("settings.languageSection")}
+          </Text>
           <View style={styles.card}>
-            <View style={styles.settingRow}>
+            <Pressable
+              accessibilityLabel={t("settings.languageAccessibility", {
+                language: languageValue,
+              })}
+              accessibilityRole="button"
+              onPress={() => router.push("/language")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Languages color={theme.colors.primary} size={21} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
-                  {workspace.state.mode === "sample"
-                    ? "Sample workspace"
-                    : "Personal workspace"}
+                  {t("settings.languageTitle")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {workspace.state.mode === "sample"
-                    ? "Fictional records are active and cloud backup is paused."
-                    : "Your local accounts and transactions are active."}
-                </Text>
+                <Text style={styles.settingDescription}>{languageValue}</Text>
               </View>
-              {workspace.state.mode === "sample" ? (
-                <AppButton
-                  accessibilityLabel="Start setting up my personal workspace"
-                  label="Start setup"
-                  onPress={workspace.requestPersonalSetup}
-                  size="small"
-                  variant="ghost"
-                />
-              ) : null}
-            </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>DEFAULT ACCOUNTS</Text>
+          <Text style={styles.sectionTitle}>
+            {t("settings.defaultAccountsSection")}
+          </Text>
           <View style={styles.card}>
             <Pressable
-              accessibilityLabel={`Default expense account: ${expenseAccountName}. Tap to change.`}
+              accessibilityLabel={t("settings.defaultExpenseAccessibility", {
+                account: expenseAccountName,
+              })}
               accessibilityRole="button"
               onPress={() => setIsExpensePickerOpen(true)}
               style={({ pressed }) => [
@@ -131,7 +150,7 @@ export function SettingsScreen() {
               ]}
             >
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>Expense</Text>
+                <Text style={styles.settingLabel}>{t("settings.expense")}</Text>
                 <Text style={styles.settingDescription}>
                   {expenseAccountName}
                 </Text>
@@ -142,7 +161,9 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
-              accessibilityLabel={`Default income account: ${incomeAccountName}. Tap to change.`}
+              accessibilityLabel={t("settings.defaultIncomeAccessibility", {
+                account: incomeAccountName,
+              })}
               accessibilityRole="button"
               onPress={() => setIsIncomePickerOpen(true)}
               style={({ pressed }) => [
@@ -151,7 +172,7 @@ export function SettingsScreen() {
               ]}
             >
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>Income</Text>
+                <Text style={styles.settingLabel}>{t("settings.income")}</Text>
                 <Text style={styles.settingDescription}>
                   {incomeAccountName}
                 </Text>
@@ -162,10 +183,10 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>BACKUP &amp; SYNC</Text>
+          <Text style={styles.sectionTitle}>{t("settings.backupSection")}</Text>
           <View style={styles.card}>
             <Pressable
-              accessibilityLabel="Manage local backups"
+              accessibilityLabel={t("settings.localBackupAccessibility")}
               accessibilityRole="button"
               onPress={() => router.push("/local-backup")}
               style={({ pressed }) => [
@@ -177,9 +198,11 @@ export function SettingsScreen() {
                 <Archive color={theme.colors.primary} size={21} />
               </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>Local Backup</Text>
+                <Text style={styles.settingLabel}>
+                  {t("navigation.localBackup")}
+                </Text>
                 <Text style={styles.settingDescription}>
-                  Create, export, or restore an on-device backup
+                  {t("settings.localBackupDescription")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -188,7 +211,7 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
-              accessibilityLabel="Manage Google Drive backups"
+              accessibilityLabel={t("settings.googleDriveAccessibility")}
               accessibilityRole="button"
               onPress={() => router.push("/google-drive-backup")}
               style={({ pressed }) => [
@@ -200,9 +223,11 @@ export function SettingsScreen() {
                 <Cloud color={theme.colors.primary} size={21} />
               </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>Google Drive</Text>
+                <Text style={styles.settingLabel}>
+                  {t("settings.googleDrive")}
+                </Text>
                 <Text style={styles.settingDescription}>
-                  Connect, create, or restore a cloud backup
+                  {t("settings.googleDriveDescription")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -212,10 +237,11 @@ export function SettingsScreen() {
             <View style={styles.card}>
               <View style={styles.settingRow}>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.settingLabel}>Backup paused</Text>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.backupPaused")}
+                  </Text>
                   <Text style={styles.settingDescription}>
-                    Sample records are temporary and are not uploaded to Google
-                    Drive. Start a personal workspace to enable backup.
+                    {t("settings.backupPausedDescription")}
                   </Text>
                 </View>
               </View>
@@ -224,10 +250,14 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>THEME &amp; COLOR PRESETS</Text>
+          <Text style={styles.sectionTitle}>
+            {t("settings.appearanceSection")}
+          </Text>
           <View style={styles.card}>
             <Pressable
-              accessibilityLabel={`Current theme: ${theme.name}. Tap to change.`}
+              accessibilityLabel={t("settings.themeAccessibility", {
+                theme: theme.name,
+              })}
               accessibilityRole="button"
               onPress={() => setIsThemePickerOpen(true)}
               style={({ pressed }) => [
@@ -240,8 +270,14 @@ export function SettingsScreen() {
                 <Text style={styles.settingLabel}>{theme.name}</Text>
                 <Text style={styles.settingDescription}>
                   {isFollowingSystem
-                    ? "Following device appearance"
-                    : `${theme.mode === "light" ? "Light" : "Dark"} palette - saved on this device`}
+                    ? t("settings.followingAppearance")
+                    : t("settings.paletteSaved", {
+                        mode: t(
+                          theme.mode === "light"
+                            ? "settings.light"
+                            : "settings.dark",
+                        ),
+                      })}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -250,10 +286,14 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>SOURCE MANAGEMENT</Text>
+          <Text style={styles.sectionTitle}>
+            {t("settings.sourceManagementSection")}
+          </Text>
           <View style={styles.card}>
             <Pressable
-              accessibilityLabel={`Manage hex colors. ${colors.length} colors available.`}
+              accessibilityLabel={t("settings.hexColorsAccessibility", {
+                count: colors.length,
+              })}
               accessibilityRole="button"
               onPress={() => setIsHexColorsOpen(true)}
               style={({ pressed }) => [
@@ -262,7 +302,9 @@ export function SettingsScreen() {
               ]}
             >
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>Hex Colors</Text>
+                <Text style={styles.settingLabel}>
+                  {t("settings.hexColors")}
+                </Text>
               </View>
               <View style={styles.rowAccessory}>
                 <View style={styles.countBadge}>
@@ -276,7 +318,7 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>
-            DANGER ZONE
+            {t("settings.dangerZone")}
           </Text>
           <View style={[styles.card, styles.dangerCard]}>
             <View style={styles.resetContent}>
@@ -285,14 +327,16 @@ export function SettingsScreen() {
                   <Trash2 color={theme.colors.danger} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.settingLabel}>Reset Data</Text>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.resetData")}
+                  </Text>
                   <Text style={styles.settingDescription}>
-                    Permanently erase all local app data and start over.
+                    {t("settings.resetDataDescription")}
                   </Text>
                 </View>
               </View>
               <AppButton
-                label="Reset Data"
+                label={t("settings.resetData")}
                 onPress={() => {
                   resetData.clearError();
                   setIsResetDataOpen(true);
@@ -337,7 +381,7 @@ export function SettingsScreen() {
       <AccountPickerModal
         accounts={accounts}
         allowNone
-        noneLabel="None (First available account)"
+        noneLabel={t("settings.defaultAccountPickerNone")}
         onClose={() => setIsExpensePickerOpen(false)}
         onSelectLocation={(account, pocketId) => {
           setExpenseAccount(account.id, pocketId);
@@ -350,14 +394,14 @@ export function SettingsScreen() {
         pockets={pockets}
         selectedAccountId={defaultExpenseAccountId}
         selectedPocketId={defaultExpensePocketId}
-        title="Default Expense Account"
+        title={t("settings.defaultExpenseTitle")}
         visible={isExpensePickerOpen}
       />
 
       <AccountPickerModal
         accounts={accounts}
         allowNone
-        noneLabel="None (First available account)"
+        noneLabel={t("settings.defaultAccountPickerNone")}
         onClose={() => setIsIncomePickerOpen(false)}
         onSelectLocation={(account, pocketId) => {
           setIncomeAccount(account.id, pocketId);
@@ -370,7 +414,7 @@ export function SettingsScreen() {
         pockets={pockets}
         selectedAccountId={defaultIncomeAccountId}
         selectedPocketId={defaultIncomePocketId}
-        title="Default Income Account"
+        title={t("settings.defaultIncomeTitle")}
         visible={isIncomePickerOpen}
       />
     </PageContainer>
