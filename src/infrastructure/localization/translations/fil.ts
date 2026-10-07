@@ -94,6 +94,7 @@ export const fil = {
     systemDefaultDescription: "Kasalukuyang %{language}",
     selectedAccessibility: "%{language}, napili",
     optionAccessibility: "Gamitin ang %{language}",
+    moreComingSoon: "Mas marami pang wika ang paparating.",
     noResultsTitle: "Walang nahanap na wika",
     noResultsDescription: "Subukan ang ibang pangalan ng wika o locale code.",
   },

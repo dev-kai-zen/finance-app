@@ -94,6 +94,7 @@ export const es = {
     systemDefaultDescription: "Actualmente %{language}",
     selectedAccessibility: "%{language}, seleccionado",
     optionAccessibility: "Usar %{language}",
+    moreComingSoon: "Próximamente habrá más idiomas.",
     noResultsTitle: "No se encontraron idiomas",
     noResultsDescription: "Prueba otro nombre de idioma o código regional.",
   },

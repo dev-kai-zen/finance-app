@@ -100,6 +100,13 @@ export function LanguageScreen() {
             </View>
           </View>
         }
+        ListFooterComponent={
+          data.length > 0 ? (
+            <Text style={styles.footerText}>
+              {t("language.moreComingSoon")}
+            </Text>
+          ) : null
+        }
         contentContainerStyle={[
           styles.content,
           {
@@ -287,6 +294,12 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.border,
       height: StyleSheet.hairlineWidth,
       marginLeft: theme.spacing.lg + 42 + theme.spacing.md,
+    },
+    footerText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.sm,
+      paddingTop: theme.spacing.xl,
+      textAlign: "center",
     },
     emptyState: {
       alignItems: "center",

@@ -83,6 +83,7 @@ export const en = {
     systemDefaultDescription: "Currently %{language}",
     selectedAccessibility: "%{language}, selected",
     optionAccessibility: "Use %{language}",
+    moreComingSoon: "More languages coming soon.",
     noResultsTitle: "No languages found",
     noResultsDescription: "Try another language name or locale code.",
   },
