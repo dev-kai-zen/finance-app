@@ -164,7 +164,7 @@ function reconcileAccount(
   );
 
   for (const transaction of activeTransactions) {
-    if (transaction.amountCents >= 0) continue;
+    if (transaction.amountMinorUnits >= 0) continue;
     if (activePlanTransactionIds.has(transaction.id)) continue;
     const statementOn = statementDateForTransaction(
       transaction.occurredAt,
@@ -195,7 +195,7 @@ function reconcileAccount(
         transactionId: transaction.id,
         installmentId: null,
         entryType: "charge",
-        amountMinorUnits: Math.abs(transaction.amountCents),
+        amountMinorUnits: Math.abs(transaction.amountMinorUnits),
         descriptionSnapshot: transaction.name ?? transaction.note ?? "Card purchase",
         occurredOnSnapshot: toCalendarDate(transaction.occurredAt),
         reversesEntryId: null,
@@ -311,11 +311,11 @@ function reconcileAccount(
   }
 
   for (const transaction of activeTransactions) {
-    if (transaction.amountCents <= 0) continue;
+    if (transaction.amountMinorUnits <= 0) continue;
     const allocated = (entriesByTransaction.get(transaction.id) ?? [])
       .filter((entry) => entry.amountMinorUnits < 0)
       .reduce((sum, entry) => sum + Math.abs(entry.amountMinorUnits), 0);
-    let available = transaction.amountCents - allocated;
+    let available = transaction.amountMinorUnits - allocated;
     if (available <= 0) continue;
     const eligibleStatements = statements.filter(
       (statement) =>

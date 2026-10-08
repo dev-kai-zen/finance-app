@@ -88,7 +88,7 @@ test("credit cards: installment schedule preserves the full purchase principal",
   `).run(now, now);
   db.prepare(`
     INSERT INTO transactions (
-      id, account_id, category_id, type, amount_cents, name,
+      id, account_id, category_id, type, amount_minor_units, name,
       occurred_at, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -152,7 +152,7 @@ test("credit cards: BNPL 3-month deferred installment plan defers first statemen
   `).run(now, now);
   db.prepare(`
     INSERT INTO transactions (
-      id, account_id, category_id, type, amount_cents, name,
+      id, account_id, category_id, type, amount_minor_units, name,
       occurred_at, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -240,7 +240,7 @@ test("credit cards: deleting a source transaction preserves statement history", 
   `).run(now, now);
   db.prepare(`
     INSERT INTO transactions (
-      id, account_id, category_id, type, amount_cents, name,
+      id, account_id, category_id, type, amount_minor_units, name,
       occurred_at, created_at, updated_at
     ) VALUES ('tx_food', 'card_1', 'cat_food_test', 'expense', -200000, 'Dinner', ?, ?, ?)
   `).run(now, now, now);
@@ -347,7 +347,7 @@ test("credit cards: unbilled activity correctly increases unbilled and outstandi
   `).run(now, now);
   db.prepare(`
     INSERT INTO transactions (
-      id, account_id, category_id, type, amount_cents, name,
+      id, account_id, category_id, type, amount_minor_units, name,
       occurred_at, created_at, updated_at
     ) VALUES ('tx_expense_500', 'card_1', 'cat_expense', 'expense', -50000, 'Coffee & Pastry', ?, ?, ?)
   `).run(now, now, now);
@@ -358,10 +358,10 @@ test("credit cards: unbilled activity correctly increases unbilled and outstandi
   const billedTxIds = new Set(
     db.prepare("SELECT transaction_id FROM credit_card_statement_entries WHERE transaction_id IS NOT NULL").all().map((r) => r.transaction_id)
   );
-  const unbilledTxs = db.prepare("SELECT * FROM transactions WHERE account_id = 'card_1' AND deleted_at IS NULL AND amount_cents < 0").all()
+  const unbilledTxs = db.prepare("SELECT * FROM transactions WHERE account_id = 'card_1' AND deleted_at IS NULL AND amount_minor_units < 0").all()
     .filter((tx) => !billedTxIds.has(tx.id));
 
-  const unbilledGross = unbilledTxs.reduce((sum, tx) => sum + Math.abs(tx.amount_cents), 0);
+  const unbilledGross = unbilledTxs.reduce((sum, tx) => sum + Math.abs(tx.amount_minor_units), 0);
   const unbilled = unbilledGross;
   const outstanding = billed + unbilled;
   const limit = 5000000; // ₱50,000 limit

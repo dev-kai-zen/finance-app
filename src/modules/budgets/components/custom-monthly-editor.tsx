@@ -45,16 +45,16 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
     const existing = monthlyTargets.find(
       (t) => t.year === year && t.month === month,
     );
-    return existing ? existing.amountCents : baseAmountCents;
+    return existing ? existing.amountMinorUnits : baseAmountCents;
   };
 
-  const handleSetMonthAmount = (month: number, amountCents: number) => {
+  const handleSetMonthAmount = (month: number, amountMinorUnits: number) => {
     const updated = [...monthlyTargets];
     const index = updated.findIndex((t) => t.year === year && t.month === month);
     if (index >= 0) {
-      updated[index] = { year, month, amountCents };
+      updated[index] = { year, month, amountMinorUnits };
     } else {
-      updated.push({ year, month, amountCents });
+      updated.push({ year, month, amountMinorUnits });
     }
     onChange(updated);
   };
@@ -62,7 +62,7 @@ export const CustomMonthlyEditor = memo(function CustomMonthlyEditor({
   const handleApplyBaseToAll = () => {
     const all12: MonthlyTargetInput[] = [];
     for (let m = 1; m <= 12; m++) {
-      all12.push({ year, month: m, amountCents: baseAmountCents });
+      all12.push({ year, month: m, amountMinorUnits: baseAmountCents });
     }
     onChange(all12);
   };

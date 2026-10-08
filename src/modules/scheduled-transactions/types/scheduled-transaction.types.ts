@@ -23,7 +23,7 @@ export interface ScheduledTransaction {
   categoryId: string | null;
   toAccountId: string | null;
   toPocketId: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
   name: string | null;
   note: string | null;
   frequency: ScheduleFrequency;
@@ -74,7 +74,7 @@ export interface SaveScheduledTransactionInput {
   categoryId?: string | null;
   toAccountId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
   name?: string | null;
   note?: string | null;
   frequency: ScheduleFrequency;

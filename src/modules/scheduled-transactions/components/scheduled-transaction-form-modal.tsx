@@ -141,7 +141,7 @@ export function ScheduledTransactionFormModal({
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [toPocketId, setToPocketId] = useState<string | null>(null);
-  const [amountCents, setAmountCents] = useState(0);
+  const [amountMinorUnits, setAmountMinorUnits] = useState(0);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
@@ -173,7 +173,7 @@ export function ScheduledTransactionFormModal({
       setToAccountId(initialSchedule.toAccountId ?? null);
       setToPocketId(initialSchedule.toPocketId ?? null);
       setCategoryId(initialSchedule.categoryId ?? null);
-      setAmountCents(initialSchedule.amountCents);
+      setAmountMinorUnits(initialSchedule.amountMinorUnits);
       setName(initialSchedule.name ?? "");
       setNote(initialSchedule.note ?? "");
       setFrequency(initialSchedule.frequency);
@@ -207,7 +207,7 @@ export function ScheduledTransactionFormModal({
       setCategoryId(
         categories.find((item) => item.type === "expense")?.id ?? null,
       );
-      setAmountCents(0);
+      setAmountMinorUnits(0);
       setName("");
       setNote("");
       setFrequency("monthly");
@@ -332,7 +332,7 @@ export function ScheduledTransactionFormModal({
       setLocalError("Please select an account.");
       return;
     }
-    if (amountCents <= 0) {
+    if (amountMinorUnits <= 0) {
       setLocalError("Please enter an amount greater than zero.");
       return;
     }
@@ -360,7 +360,7 @@ export function ScheduledTransactionFormModal({
         categoryId,
         toAccountId,
         toPocketId,
-        amountCents,
+        amountMinorUnits,
         name,
         note,
         frequency,
@@ -424,7 +424,7 @@ export function ScheduledTransactionFormModal({
             </View>
 
             <AmountCalculatorField
-              amountMinorUnits={amountCents}
+              amountMinorUnits={amountMinorUnits}
               amountSign={
                 transactionType === "transfer"
                   ? "transfer"
@@ -726,10 +726,10 @@ export function ScheduledTransactionFormModal({
 
       <AmountCalculatorModal
         currencyCode={currencyCode}
-        initialMinorUnits={amountCents}
+        initialMinorUnits={amountMinorUnits}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(value) => {
-          setAmountCents(Math.abs(value));
+          setAmountMinorUnits(Math.abs(value));
           setCalculatorOpen(false);
         }}
         title="Schedule Amount"

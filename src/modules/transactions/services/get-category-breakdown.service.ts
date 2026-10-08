@@ -77,7 +77,7 @@ export function getCategoryBreakdown(
     const catColor = cat?.hexColorsId ?? null;
     const catIcon = cat?.icon ?? (query.type === "income" ? "wallet" : "tag");
     const amount = convertCurrencyMinorUnits(
-      Math.abs(tx.amountCents),
+      Math.abs(tx.amountMinorUnits),
       currencyCode,
       homeCurrency,
       ratesMap,

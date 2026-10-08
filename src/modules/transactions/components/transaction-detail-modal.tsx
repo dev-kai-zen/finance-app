@@ -63,10 +63,10 @@ export function TransactionDetailModal({
     isTransfer && transaction.accountId === transaction.transferAccountId;
 
   const displayAmountCents = isTransfer
-    ? Math.abs(transaction.amountCents)
+    ? Math.abs(transaction.amountMinorUnits)
     : isIncome
-      ? transaction.amountCents
-      : -Math.abs(transaction.amountCents);
+      ? transaction.amountMinorUnits
+      : -Math.abs(transaction.amountMinorUnits);
 
   const amountColor = !preferences.colorAmounts
     ? theme.colors.textPrimary
@@ -86,7 +86,7 @@ export function TransactionDetailModal({
 
   const formattedAmount = isTransfer
     ? formatCurrency(
-        Math.abs(transaction.amountCents),
+        Math.abs(transaction.amountMinorUnits),
         transaction.accountCurrency ?? "PHP",
         false,
       )

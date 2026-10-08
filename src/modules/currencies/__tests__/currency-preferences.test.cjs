@@ -24,23 +24,15 @@ afterEach(() => {
   );
 });
 
-test("currency preferences support decimal digits from 0 through 9", () => {
-  for (let decimalDigits = 0; decimalDigits <= 9; decimalDigits += 1) {
-    currency.setActiveCurrencyFormattingPreferences({
-      ...currency.DEFAULT_CURRENCY_PREFERENCES,
-      decimalDigits,
-      decimalFormat: "comma-dot",
-    });
+test("formatCurrency uses each currency standard decimal places", () => {
+  currency.setActiveCurrencyFormattingPreferences({
+    ...currency.DEFAULT_CURRENCY_PREFERENCES,
+    decimalDigits: 9,
+    decimalFormat: "comma-dot",
+  });
 
-    const formatted = currency.formatCurrency(123456, "PHP");
-    const expected = decimalDigits === 0
-      ? "₱1,235"
-      : decimalDigits === 1
-        ? "₱1,234.6"
-        : `₱1,234.56${"0".repeat(decimalDigits - 2)}`;
-    assert.equal(formatted, expected);
-    assert.equal(formatted.split(".")[1]?.length ?? 0, decimalDigits);
-  }
+  assert.equal(currency.formatCurrency(123456, "PHP"), "₱1,234.56");
+  assert.equal(currency.formatCurrency(1234, "JPY"), "¥1,234");
 });
 
 test("currency preferences control symbol, negative style, and separators", () => {
@@ -52,5 +44,5 @@ test("currency preferences control symbol, negative style, and separators", () =
     decimalFormat: "dot-comma",
   });
 
-  assert.equal(currency.formatCurrency(-123456, "PHP"), "(1.234,560)");
+  assert.equal(currency.formatCurrency(-123456, "PHP"), "(1.234,56)");
 });

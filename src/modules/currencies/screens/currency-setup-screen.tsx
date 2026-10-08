@@ -23,10 +23,12 @@ import {
   CURRENCY_NAMES,
   SUPPORTED_CURRENCY_CODES,
 } from "../constants/currency-preferences.constants";
+import { CurrencyCatalogModal } from "../components/currency-catalog-modal";
 import { CurrencyOptionSheet } from "../components/currency-option-sheet";
+import { useCurrencies } from "../hooks/use-currencies";
 import { useCurrencyPreferences } from "../hooks/use-currency-preferences";
 
-type SheetKind = "currency" | "negative" | "digits" | "format" | null;
+type SheetKind = "currency" | "negative" | "format" | null;
 
 export function CurrencySetupScreen({
   helpVisible,
@@ -39,7 +41,9 @@ export function CurrencySetupScreen({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { preferences, updatePreferences } = useCurrencyPreferences();
+  const { currencies } = useCurrencies();
   const [sheet, setSheet] = useState<SheetKind>(null);
+  const [catalogVisible, setCatalogVisible] = useState(false);
   const [draft, setDraft] = useState<CurrencyPreferences>(preferences);
 
   const currencyOptions = useMemo(
@@ -48,10 +52,6 @@ export function CurrencySetupScreen({
         label: `${code} · ${CURRENCY_NAMES[code] ?? code}`,
         value: code,
       })),
-    [],
-  );
-  const digitOptions = useMemo(
-    () => Array.from({ length: 10 }, (_, value) => ({ label: String(value), value })),
     [],
   );
   const negativeOptions = [
@@ -129,9 +129,9 @@ export function CurrencySetupScreen({
         <Divider />
         <SettingRow
           icon={<Hash color={theme.colors.primary} size={24} />}
-          label={t("currency.decimalDigits")}
-          onPress={() => openSheet("digits")}
-          value={String(preferences.decimalDigits)}
+          label={t("currency.catalogRowLabel")}
+          onPress={() => setCatalogVisible(true)}
+          value={t("currency.catalogRowValue", { count: currencies.length })}
         />
         <Divider />
         <SettingRow
@@ -172,17 +172,9 @@ export function CurrencySetupScreen({
         title={t("currency.negativeNumber")}
         visible={sheet === "negative"}
       />
-      <CurrencyOptionSheet
-        cancelLabel={t("common.cancel")}
-        confirmLabel={t("common.ok")}
-        description={t("currency.decimalDigitsDescription")}
-        onChange={(value) => setDraft((current) => ({ ...current, decimalDigits: value }))}
-        onClose={() => setSheet(null)}
-        onConfirm={confirmSheet}
-        options={digitOptions}
-        selectedValue={draft.decimalDigits}
-        title={t("currency.decimalDigits")}
-        visible={sheet === "digits"}
+      <CurrencyCatalogModal
+        visible={catalogVisible}
+        onClose={() => setCatalogVisible(false)}
       />
       <CurrencyOptionSheet
         cancelLabel={t("common.cancel")}

@@ -232,6 +232,20 @@
       "when": 1791266262406,
       "tag": "0032_add_goal_pockets",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1791270000000,
+      "tag": "0033_add_currencies_and_rename_amount_minor_units",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1791273600000,
+      "tag": "0034_add_currency_is_custom",
+      "breakpoints": true
     }
   ]
 }

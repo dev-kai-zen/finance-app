@@ -15,7 +15,7 @@ export function getAccountBalanceDeltas(
   const rows = context
     .select({
       accountId: transactions.accountId,
-      delta: sql<number>`coalesce(sum(${transactions.amountCents}), 0)`.as("delta"),
+      delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
     })
     .from(transactions)
     .where(isNull(transactions.deletedAt))
@@ -44,7 +44,7 @@ export function getAccountBalanceDeltasAtDates(
   const rows = context
     .select({
       accountId: transactions.accountId,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
       occurredAt: transactions.occurredAt,
     })
     .from(transactions)
@@ -59,7 +59,7 @@ export function getAccountBalanceDeltasAtDates(
     for (const row of rows) {
       if (row.occurredAt.getTime() > cutoffTime) break;
       deltas[row.accountId] =
-        (deltas[row.accountId] ?? 0) + row.amountCents;
+        (deltas[row.accountId] ?? 0) + row.amountMinorUnits;
     }
 
     return deltas;

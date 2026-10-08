@@ -32,10 +32,10 @@ export function createTransferInContext(
   ) {
     throw new Error("Choose different pockets when transferring within one account.");
   }
-  if (!input.amountCents || input.amountCents <= 0) {
+  if (!input.amountMinorUnits || input.amountMinorUnits <= 0) {
     throw new Error("Transfer amount must be greater than zero.");
   }
-  if (!Number.isInteger(input.amountCents)) {
+  if (!Number.isInteger(input.amountMinorUnits)) {
     throw new Error("Transfer amount must be an integer in minor units (centavos).");
   }
 
@@ -48,14 +48,14 @@ export function createTransferInContext(
     requirePocketForAccount(input.toPocketId, toAccount.id, context);
   }
 
-  if (input.fee && input.fee.amountCents > 0) {
+  if (input.fee && input.fee.amountMinorUnits > 0) {
     if (!input.fee.accountId) {
       throw new Error("Fee account is required.");
     }
     if (!input.fee.categoryId) {
       throw new Error("Fee category is required.");
     }
-    if (!Number.isInteger(input.fee.amountCents)) {
+    if (!Number.isInteger(input.fee.amountMinorUnits)) {
       throw new Error("Fee amount must be an integer in minor units (centavos).");
     }
     const feeAccount = requireAccount(input.fee.accountId, context);
@@ -69,7 +69,7 @@ export function createTransferInContext(
     input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
   const name = input.name?.trim() || null;
   const note = input.note?.trim() || null;
-  const amount = Math.abs(input.amountCents);
+  const amount = Math.abs(input.amountMinorUnits);
 
   const outLeg = insertTransaction(
     {
@@ -78,7 +78,7 @@ export function createTransferInContext(
       pocketId: input.fromPocketId ?? null,
       transactionGroupId: groupId,
       type: "transfer",
-      amountCents: -amount,
+      amountMinorUnits: -amount,
       name,
       note,
       occurredAt,
@@ -93,7 +93,7 @@ export function createTransferInContext(
       pocketId: input.toPocketId ?? null,
       transactionGroupId: groupId,
       type: "transfer",
-      amountCents: amount,
+      amountMinorUnits: amount,
       name,
       note,
       occurredAt,
@@ -102,8 +102,8 @@ export function createTransferInContext(
   );
 
   let feeLeg: Transaction | undefined;
-  if (input.fee && input.fee.amountCents > 0) {
-    const feeAmount = Math.abs(input.fee.amountCents);
+  if (input.fee && input.fee.amountMinorUnits > 0) {
+    const feeAmount = Math.abs(input.fee.amountMinorUnits);
     const feeName = name ? `${name} Fee` : "Transfer Fee";
     feeLeg = insertTransaction(
       {
@@ -112,7 +112,7 @@ export function createTransferInContext(
         pocketId: input.fee.pocketId ?? null,
         transactionGroupId: groupId,
         type: "expense",
-        amountCents: -feeAmount,
+        amountMinorUnits: -feeAmount,
         name: feeName,
         note,
         occurredAt,

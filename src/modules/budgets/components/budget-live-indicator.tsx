@@ -26,7 +26,7 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
     if (!categoryId) return null;
     return checkBudgetExceeded({
       categoryId,
-      amountCents: amountMinorUnits,
+      amountMinorUnits: amountMinorUnits,
       occurredAt,
       excludeTransactionId,
     });

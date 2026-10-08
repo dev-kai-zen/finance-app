@@ -448,10 +448,10 @@ export function QuickPresetsModal({
                             }
                           >
                             {unavailableReason ??
-                              (preset.amountCents === null
+                              (preset.amountMinorUnits === null
                                 ? "Enter amount"
                                 : formatCurrency(
-                                    Math.abs(preset.amountCents),
+                                    Math.abs(preset.amountMinorUnits),
                                     account?.currencyCode ?? "PHP",
                                   ))}
                           </Text>
@@ -579,10 +579,10 @@ export function QuickPresetsModal({
                             </Text>
                             <View style={styles.rowBottomMeta}>
                               <Text style={styles.archivedAmountText}>
-                                {preset.amountCents === null
+                                {preset.amountMinorUnits === null
                                   ? "No amount set"
                                   : formatCurrency(
-                                      Math.abs(preset.amountCents),
+                                      Math.abs(preset.amountMinorUnits),
                                       account?.currencyCode ?? "PHP",
                                     )}
                               </Text>

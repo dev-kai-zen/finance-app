@@ -198,13 +198,13 @@ const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account
   }
   return value;
 };
-const pocketTransfer = (accountId, fromPocketId, toPocketId, amountCents) =>
+const pocketTransfer = (accountId, fromPocketId, toPocketId, amountMinorUnits) =>
   createTransfer({
     fromAccountId: accountId,
     toAccountId: accountId,
     fromPocketId,
     toPocketId,
-    amountCents,
+    amountMinorUnits,
     occurredAt: new Date("2026-09-13T12:00:00"),
   });
 beforeEach(() => { connect(); migrate(); });
@@ -426,7 +426,7 @@ test("saved accounts survive closing and reopening a real database file", () => 
 });
 test("existing current-schema accounts and linked transactions remain unchanged on startup", () => {
   const id = saveAccount(accountInput());
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('txn', ?, 'expense', 500, 1, 1, 1)").run(id);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('txn', ?, 'expense', 500, 1, 1, 1)").run(id);
   const before = repo.findAccountById(id);
   migrate();
   assert.deepEqual(repo.findAccountById(id), before);
@@ -471,14 +471,14 @@ test("getAccountsWithBalances calculates live current balance reflecting income,
   const acc2 = saveAccount(accountInput(system.ASSET_OTHERS, "Savings", "500.00"));    // 50,000 cents
 
   // Add Income: 200.00 (20,000 cents) to Checking
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_inc', ?, 'income', 20000, 1, 1, 1)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_inc', ?, 'income', 20000, 1, 1, 1)").run(acc1);
 
   // Add Expense: 50.00 (5,000 cents) from Checking
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
 
   // Add Transfer: 100.00 (10,000 cents) from Checking to Savings
-  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
-  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
 
   const accountsList = getAccountsWithBalances();
   const checking = accountsList.find((a) => a.id === acc1);
@@ -559,10 +559,10 @@ test("pocket transfers create two grouped transaction legs without changing the 
   assert.equal(pocket.currentBalanceMinorUnits, 30000);
   assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 70050);
   const legs = sqlite.prepare(
-    "SELECT account_id, pocket_id, amount_cents FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents",
+    "SELECT account_id, pocket_id, amount_minor_units FROM transactions WHERE transaction_group_id = ? ORDER BY amount_minor_units",
   ).all(groupId);
   assert.deepEqual(
-    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_minor_units]),
     [
       [accountId, null, -30000],
       [accountId, pocketId, 30000],
@@ -577,7 +577,7 @@ test("pocket-assigned transactions change the pocket and account by the same amo
   });
   const pocketId = savePocket({ accountId, name: "Groceries", targetAmount: "" });
   pocketTransfer(accountId, null, pocketId, 40000);
-  sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
 
   const account = getAccountsWithBalances().find((item) => item.id === accountId);
   const pocket = getPocketsWithBalances().find((item) => item.id === pocketId);
@@ -771,7 +771,7 @@ test("permanent delete is allowed for unused accounts and cleans up associated r
 test("permanent delete is blocked for accounts with transaction history", () => {
   const accountId = saveAccount(accountInput(undefined, "Used Account", "100.00"));
   sqlite.prepare(
-    "INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_test_1', ?, 'expense', 5000, 1000, 1000, 1000)"
+    "INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_test_1', ?, 'expense', 5000, 1000, 1000, 1000)"
   ).run(accountId);
 
   assert.equal(canDeleteAccount(accountId), false);

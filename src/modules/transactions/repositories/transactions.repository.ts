@@ -43,7 +43,7 @@ function mapRowToListItem(r: {
     pocketId: r.transaction.pocketId,
     transactionGroupId: r.transaction.transactionGroupId,
     type: r.transaction.type as Transaction["type"],
-    amountCents: r.transaction.amountCents,
+    amountMinorUnits: r.transaction.amountMinorUnits,
     name: r.transaction.name,
     note: r.transaction.note,
     occurredAt: r.transaction.occurredAt,
@@ -101,7 +101,7 @@ function getBalanceAfterByTransactionId(
     .select({
       id: transactions.id,
       accountId: transactions.accountId,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
       openingBalanceMinorUnits: accounts.openingBalanceMinorUnits,
     })
     .from(transactions)
@@ -122,7 +122,7 @@ function getBalanceAfterByTransactionId(
     if (balance === undefined) {
       balance = row.openingBalanceMinorUnits ?? 0;
     }
-    balance += row.amountCents;
+    balance += row.amountMinorUnits;
     runningBalances.set(row.accountId, balance);
     balanceAfterByTransactionId.set(row.id, balance);
   }
@@ -146,7 +146,7 @@ function getPocketBalanceAfterByTransactionId(
     .select({
       id: transactions.id,
       pocketId: transactions.pocketId,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
     })
     .from(transactions)
     .where(and(...conditions))
@@ -163,7 +163,7 @@ function getPocketBalanceAfterByTransactionId(
   for (const row of rows) {
     if (!row.pocketId) continue;
     let balance = runningBalances.get(row.pocketId) ?? 0;
-    balance += row.amountCents;
+    balance += row.amountMinorUnits;
     runningBalances.set(row.pocketId, balance);
     balanceAfterByTransactionId.set(row.id, balance);
   }
@@ -197,8 +197,8 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       continue;
     }
 
-    const outLeg = legs.find((leg) => leg.amountCents < 0) ?? legs[0];
-    const inLeg = legs.find((leg) => leg.amountCents > 0) ?? legs[1];
+    const outLeg = legs.find((leg) => leg.amountMinorUnits < 0) ?? legs[0];
+    const inLeg = legs.find((leg) => leg.amountMinorUnits > 0) ?? legs[1];
     const feeItem = feeMap.get(groupId);
 
     grouped.push({
@@ -218,14 +218,14 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       destinationBalanceAfterMinorUnits: inLeg.accountBalanceAfterMinorUnits,
       destinationLocationBalanceAfterMinorUnits:
         inLeg.locationBalanceAfterMinorUnits,
-      transferFeeAmountMinorUnits: feeItem ? Math.abs(feeItem.amountCents) : null,
+      transferFeeAmountMinorUnits: feeItem ? Math.abs(feeItem.amountMinorUnits) : null,
       transferFeeAccountId: feeItem?.accountId ?? null,
       transferFeeAccountName: feeItem?.accountName ?? null,
       transferFeePocketId: feeItem?.pocketId ?? null,
       transferFeePocketName: feeItem?.pocketName ?? null,
       transferFeeCategoryId: feeItem?.categoryId ?? null,
       transferFeeCategoryName: feeItem?.categoryName ?? null,
-      amountCents: Math.abs(outLeg.amountCents),
+      amountMinorUnits: Math.abs(outLeg.amountMinorUnits),
       attachmentCount: legs.reduce(
         (total, leg) => total + leg.attachmentCount,
         0,
@@ -495,7 +495,7 @@ export function insertTransaction(
     pocketId: data.pocketId ?? null,
     transactionGroupId: data.transactionGroupId ?? null,
     type: data.type,
-    amountCents: data.amountCents,
+    amountMinorUnits: data.amountMinorUnits,
     name: data.name ?? null,
     note: data.note ?? null,
     occurredAt: data.occurredAt,
@@ -518,7 +518,7 @@ export function updateTransactionRecord(
       | "categoryId"
       | "pocketId"
       | "type"
-      | "amountCents"
+      | "amountMinorUnits"
       | "name"
       | "note"
       | "occurredAt"
@@ -616,10 +616,10 @@ export function calculateTransactionStats(context: DbContext = db): TransactionS
       if (tx.transactionGroupId) groupedTransferIds.add(tx.transactionGroupId);
       continue;
     }
-    if (tx.amountCents > 0) {
-      totalInflow += tx.amountCents;
-    } else if (tx.amountCents < 0) {
-      totalOutflow += Math.abs(tx.amountCents);
+    if (tx.amountMinorUnits > 0) {
+      totalInflow += tx.amountMinorUnits;
+    } else if (tx.amountMinorUnits < 0) {
+      totalOutflow += Math.abs(tx.amountMinorUnits);
     }
   }
 

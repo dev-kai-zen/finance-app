@@ -18,6 +18,7 @@ import {
   saveCurrencyPreferences,
   subscribeToCurrencyPreferences,
 } from "../services/currency-preferences.service";
+import { seedCurrenciesIfEmpty } from "../services/seed-currencies.service";
 
 interface CurrencyPreferencesContextValue {
   preferences: CurrencyPreferences;
@@ -48,6 +49,14 @@ export function CurrencyPreferencesProvider({ children }: PropsWithChildren) {
     () => subscribeToCurrencyPreferences(setPreferences),
     [],
   );
+
+  useEffect(() => {
+    try {
+      seedCurrenciesIfEmpty();
+    } catch {
+      // Database may not be ready during early boot.
+    }
+  }, []);
 
   useEffect(
     () =>

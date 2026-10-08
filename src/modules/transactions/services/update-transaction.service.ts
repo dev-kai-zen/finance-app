@@ -48,7 +48,7 @@ export function updateTransactionInContext(
   if (!id) throw new Error("Transaction ID is required to update.");
   if (!input.accountId) throw new Error("Account is required.");
   if (!input.categoryId) throw new Error("Category is required.");
-  if (!input.amountCents || !Number.isInteger(input.amountCents)) {
+  if (!input.amountMinorUnits || !Number.isInteger(input.amountMinorUnits)) {
     throw new Error(
       "Transaction amount must be a non-zero integer in minor units (centavos).",
     );
@@ -60,7 +60,7 @@ export function updateTransactionInContext(
     if (
       installmentPlan &&
       (existing.accountId !== input.accountId ||
-        existing.amountCents !== input.amountCents ||
+        existing.amountMinorUnits !== input.amountMinorUnits ||
         existing.occurredAt.getTime() !== input.occurredAt.getTime())
     ) {
       throw new Error(
@@ -80,7 +80,7 @@ export function updateTransactionInContext(
         categoryId: input.categoryId,
         pocketId: input.pocketId ?? null,
         type: input.type,
-        amountCents: input.amountCents,
+        amountMinorUnits: input.amountMinorUnits,
         name: input.name?.trim() || null,
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt,

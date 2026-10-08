@@ -73,7 +73,7 @@ test("quick presets: migration removes preset_name without losing existing prese
   database.prepare(`
     INSERT INTO transaction_presets (
       id, preset_name, transaction_name, type, account_id, category_id,
-      amount_cents, created_at, updated_at
+      amount_minor_units, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     "existing_preset",
@@ -100,7 +100,7 @@ test("quick presets: migration removes preset_name without losing existing prese
     .prepare("SELECT * FROM transaction_presets WHERE id = ?")
     .get("existing_preset");
   assert.equal(preset.transaction_name, "Groceries");
-  assert.equal(preset.amount_cents, -2500);
+  assert.equal(preset.amount_minor_units, -2500);
 });
 
 test("quick presets: stores typed relational transaction defaults", () => {
@@ -108,7 +108,7 @@ test("quick presets: stores typed relational transaction defaults", () => {
   database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, pocket_id,
-      category_id, amount_cents, note, sort_order, usage_count,
+      category_id, amount_minor_units, note, sort_order, usage_count,
       created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -130,7 +130,7 @@ test("quick presets: stores typed relational transaction defaults", () => {
     .prepare("SELECT * FROM transaction_presets WHERE id = ?")
     .get("preset_grocery");
   assert.equal(preset.transaction_name, "Groceries");
-  assert.equal(preset.amount_cents, null);
+  assert.equal(preset.amount_minor_units, null);
   assert.equal(preset.account_id, "account_from");
   assert.equal(preset.category_id, "category_food");
 });
@@ -140,7 +140,7 @@ test("quick presets: validates names, types, zero amounts, and transfer directio
   const insert = database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, to_account_id,
-      amount_cents, created_at, updated_at
+      amount_minor_units, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -163,7 +163,7 @@ test("quick presets: preserves repairable presets when category or pocket is del
   database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, pocket_id,
-      category_id, amount_cents, created_at, updated_at
+      category_id, amount_minor_units, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     "repairable",
@@ -194,7 +194,7 @@ test("quick presets: active ordering excludes sync tombstones", () => {
   const insert = database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, category_id,
-      amount_cents, sort_order, created_at, updated_at, deleted_at
+      amount_minor_units, sort_order, created_at, updated_at, deleted_at
     ) VALUES (?, ?, 'expense', 'account_from', 'category_food', -100, ?, ?, ?, ?)
   `);
   insert.run("second", "Second", 1, now, now, null);
@@ -220,7 +220,7 @@ test("quick presets: suggestions normalize text and rank exact, prefix, and rece
     categoryId: "category_food",
     toAccountId: null,
     toPocketId: null,
-    amountCents: null,
+    amountMinorUnits: null,
     note: null,
     sortOrder: 0,
     usageCount: 0,
@@ -266,7 +266,7 @@ test("quick presets: archive, restore, and permanently delete workflow", () => {
   const insert = database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, category_id,
-      amount_cents, sort_order, created_at, updated_at, deleted_at
+      amount_minor_units, sort_order, created_at, updated_at, deleted_at
     ) VALUES (?, ?, 'expense', 'account_from', 'category_food', -100, ?, ?, ?, ?)
   `);
   insert.run("preset_1", "Active Preset", 0, now, now, null);
@@ -323,7 +323,7 @@ test("quick presets: sorting by sort_order vs last_used_at", () => {
   const insert = database.prepare(`
     INSERT INTO transaction_presets (
       id, transaction_name, type, account_id, category_id,
-      amount_cents, sort_order, last_used_at, created_at, updated_at, deleted_at
+      amount_minor_units, sort_order, last_used_at, created_at, updated_at, deleted_at
     ) VALUES (?, ?, 'expense', 'account_from', 'category_food', -100, ?, ?, ?, ?, null)
   `);
 

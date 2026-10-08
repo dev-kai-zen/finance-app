@@ -12,7 +12,7 @@ export interface TransactionPresetInput {
   categoryId?: string | null;
   toAccountId?: string | null;
   toPocketId?: string | null;
-  amountCents?: number | null;
+  amountMinorUnits?: number | null;
   note?: string | null;
 }
 

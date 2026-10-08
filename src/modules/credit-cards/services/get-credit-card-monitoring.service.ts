@@ -112,14 +112,14 @@ export function getCreditCardMonitoring(
       const unbilledItems = ledger
         .filter(
           (transaction) =>
-            transaction.amountCents < 0 &&
+            transaction.amountMinorUnits < 0 &&
             !planTransactionIds.has(transaction.id) &&
             !billedTransactionIds.has(transaction.id),
         )
         .map((transaction) => ({
           id: transaction.id,
           description: transaction.name ?? transaction.note ?? "Card purchase",
-          amountMinorUnits: Math.abs(transaction.amountCents),
+          amountMinorUnits: Math.abs(transaction.amountMinorUnits),
           occurredOn: toCalendarDate(transaction.occurredAt),
           detail: "One-time purchase",
         }));
@@ -158,7 +158,7 @@ export function getCreditCardMonitoring(
         0,
       );
       const unallocatedCredits = ledger
-        .filter((transaction) => transaction.amountCents > 0)
+        .filter((transaction) => transaction.amountMinorUnits > 0)
         .reduce((sum, transaction) => {
           const allocated = entries
             .filter(
@@ -167,7 +167,7 @@ export function getCreditCardMonitoring(
                 entry.amountMinorUnits < 0,
             )
             .reduce((eSum, entry) => eSum + Math.abs(entry.amountMinorUnits), 0);
-          return sum + Math.max(0, transaction.amountCents - allocated);
+          return sum + Math.max(0, transaction.amountMinorUnits - allocated);
         }, 0);
       const billed = calculateCreditCardBilled(statementSummaries);
       const unbilled = calculateCreditCardUnbilled(

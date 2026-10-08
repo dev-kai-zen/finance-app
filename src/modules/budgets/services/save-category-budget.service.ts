@@ -6,7 +6,7 @@ export function saveCategoryBudget(
   input: CategoryBudgetInput,
   context: DbContext = db,
 ): CategoryBudget {
-  if (input.amountCents < 0) {
+  if (input.amountMinorUnits < 0) {
     throw new Error("Budget amount cannot be negative.");
   }
   if (!input.categoryId) {
@@ -15,7 +15,7 @@ export function saveCategoryBudget(
 
   if (input.monthlyTargets) {
     for (const target of input.monthlyTargets) {
-      if (target.amountCents < 0) {
+      if (target.amountMinorUnits < 0) {
         throw new Error("Monthly target amount cannot be negative.");
       }
       if (target.month < 1 || target.month > 12) {

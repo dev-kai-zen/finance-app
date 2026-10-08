@@ -88,7 +88,7 @@ export function saveTransactionPresetInContext(
     categoryId,
     toAccountId,
     toPocketId,
-    amountCents: value.amountCents ?? null,
+    amountMinorUnits: value.amountMinorUnits ?? null,
     note: value.note?.trim() || null,
     updatedAt: now,
   };

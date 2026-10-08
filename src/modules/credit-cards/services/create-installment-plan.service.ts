@@ -17,7 +17,7 @@ export function createCreditCardInstallmentPlan(
   input: InstallmentInput,
   context: DbContext,
 ): void {
-  if (transaction.type !== "expense" || transaction.amountCents >= 0) {
+  if (transaction.type !== "expense" || transaction.amountMinorUnits >= 0) {
     throw new Error("Installments are available only for credit-card expenses.");
   }
   if (!Number.isInteger(input.termMonths) || input.termMonths < 2 || input.termMonths > 120) {
@@ -34,7 +34,7 @@ export function createCreditCardInstallmentPlan(
     throw new Error("Installments are available only for Credit Card accounts.");
   }
 
-  const principal = Math.abs(transaction.amountCents);
+  const principal = Math.abs(transaction.amountMinorUnits);
   const baseStatementOn = statementDateForTransaction(
     transaction.occurredAt,
     details.statementDay,

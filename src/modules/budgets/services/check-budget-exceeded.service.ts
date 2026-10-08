@@ -9,14 +9,14 @@ import { calculateCategoryBudgetStatus } from "./calculate-category-budget.servi
 
 export interface CheckBudgetExceededInput {
   categoryId: string;
-  amountCents: number; // Positive minor units of the pending expense
+  amountMinorUnits: number; // Positive minor units of the pending expense
   occurredAt?: Date;
   excludeTransactionId?: string | null;
   context?: DbContext;
 }
 
 /**
- * Checks whether an expense of `amountCents` will exceed the category's budget
+ * Checks whether an expense of `amountMinorUnits` will exceed the category's budget
  * (or its parent category's budget).
  */
 export function checkBudgetExceeded(
@@ -24,7 +24,7 @@ export function checkBudgetExceeded(
 ): BudgetCheckResult {
   const {
     categoryId,
-    amountCents,
+    amountMinorUnits,
     occurredAt = new Date(),
     excludeTransactionId,
     context = db,
@@ -38,8 +38,8 @@ export function checkBudgetExceeded(
     periodLabel: "",
     effectiveBudgetCents: 0,
     currentSpentCents: 0,
-    additionalExpenseCents: Math.abs(amountCents),
-    newSpentCents: Math.abs(amountCents),
+    additionalExpenseCents: Math.abs(amountMinorUnits),
+    newSpentCents: Math.abs(amountMinorUnits),
     remainingBeforeCents: 0,
     remainingAfterCents: 0,
     exceeds: false,
@@ -95,7 +95,7 @@ export function checkBudgetExceeded(
     context,
   });
 
-  const additionalExpenseCents = Math.abs(amountCents);
+  const additionalExpenseCents = Math.abs(amountMinorUnits);
   const newSpentCents = status.spentCents + additionalExpenseCents;
   const exceeds =
     status.effectiveTargetCents > 0

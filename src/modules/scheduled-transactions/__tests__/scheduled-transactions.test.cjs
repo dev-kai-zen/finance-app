@@ -211,7 +211,7 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
 
   const insertSchedule = database.prepare(
     "INSERT INTO transaction_schedules (" +
-      "id, status, transaction_type, account_id, category_id, amount_cents, " +
+      "id, status, transaction_type, account_id, category_id, amount_minor_units, " +
       "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
       "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
       ") VALUES (?, 'active', 'expense', ?, ?, ?, 'monthly', 1, ?, 'UTC', 'never', 'next_weekday', 1, 1, 1, ?, ?, ?, ?)",
@@ -230,7 +230,7 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
 
   const insertExactSchedule = database.prepare(
     "INSERT INTO transaction_schedules (" +
-      "id, status, transaction_type, account_id, category_id, amount_cents, " +
+      "id, status, transaction_type, account_id, category_id, amount_minor_units, " +
       "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
       "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
       ") VALUES (?, 'active', 'expense', ?, ?, ?, 'once', 1, ?, 'UTC', 'never', 'exact', 1, 1, 1, ?, ?, ?, ?)",
@@ -254,7 +254,7 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
   assert.throws(() =>
     database.prepare(
       "INSERT INTO transaction_schedules (" +
-        "id, status, transaction_type, account_id, category_id, amount_cents, " +
+        "id, status, transaction_type, account_id, category_id, amount_minor_units, " +
         "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
         "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
         ") VALUES ('invalid_weekend_policy', 'active', 'expense', 'account_1', 'category_1', 10000, 'monthly', 1, ?, 'UTC', 'never', 'invalid_policy', 1, 1, 1, ?, ?, ?, ?)",
@@ -286,7 +286,7 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
   );
 
   database.exec(
-    "INSERT INTO transactions (id, account_id, category_id, type, amount_cents, occurred_at, created_at, updated_at) " +
+    "INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, occurred_at, created_at, updated_at) " +
       "VALUES ('tx_1', 'account_1', 'category_1', 'expense', -10000, " +
       now +
       ", " +

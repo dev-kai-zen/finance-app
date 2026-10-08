@@ -50,7 +50,7 @@ export function calculateCategoryBudgetStatus(
   }
 
   // 1. Determine base target for current period
-  let baseTargetCents = budget.amountCents;
+  let baseTargetCents = budget.amountMinorUnits;
   if (budget.frequency === "custom_monthly" && budget.monthlyTargets) {
     const year = period.startDate.getFullYear();
     const month = period.startDate.getMonth() + 1;
@@ -58,14 +58,14 @@ export function calculateCategoryBudgetStatus(
       (t) => t.year === year && t.month === month,
     );
     if (target) {
-      baseTargetCents = target.amountCents;
+      baseTargetCents = target.amountMinorUnits;
     }
   }
 
   // 2. Rollover calculation from previous period
   let rolloverCents = 0;
   if (budget.allowRollover) {
-    let previousTargetCents = budget.amountCents;
+    let previousTargetCents = budget.amountMinorUnits;
     if (budget.frequency === "custom_monthly" && budget.monthlyTargets) {
       const prevYear = period.previousStartDate.getFullYear();
       const prevMonth = period.previousStartDate.getMonth() + 1;
@@ -73,7 +73,7 @@ export function calculateCategoryBudgetStatus(
         (t) => t.year === prevYear && t.month === prevMonth,
       );
       if (prevTarget) {
-        previousTargetCents = prevTarget.amountCents;
+        previousTargetCents = prevTarget.amountMinorUnits;
       }
     }
 

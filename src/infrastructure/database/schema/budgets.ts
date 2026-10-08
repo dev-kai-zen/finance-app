@@ -19,7 +19,7 @@ export const categoryBudgets = sqliteTable(
     isEnabled: integer("is_enabled", { mode: "boolean" })
       .notNull()
       .default(true),
-    amountCents: integer("amount_cents").notNull().default(0),
+    amountMinorUnits: integer("amount_minor_units").notNull().default(0),
     frequency: text("frequency", {
       enum: [
         "daily",
@@ -52,7 +52,7 @@ export const categoryBudgets = sqliteTable(
   (table) => [
     uniqueIndex("category_budgets_category_id_unique").on(table.categoryId),
     index("category_budgets_enabled_index").on(table.isEnabled),
-    check("category_budgets_amount_check", sql`${table.amountCents} >= 0`),
+    check("category_budgets_amount_check", sql`${table.amountMinorUnits} >= 0`),
     check(
       "category_budgets_frequency_check",
       sql`${table.frequency} in ('daily', 'weekly', 'biweekly', 'semi_monthly', 'monthly', 'custom_monthly', 'quarterly', 'yearly')`,
@@ -73,7 +73,7 @@ export const budgetMonthlyTargets = sqliteTable(
       .references(() => categoryBudgets.id, { onDelete: "cascade" }),
     year: integer("year").notNull(),
     month: integer("month").notNull(), // 1 - 12
-    amountCents: integer("amount_cents").notNull(),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
@@ -88,6 +88,6 @@ export const budgetMonthlyTargets = sqliteTable(
       "budget_monthly_targets_month_check",
       sql`${table.month} >= 1 and ${table.month} <= 12`,
     ),
-    check("budget_monthly_targets_amount_check", sql`${table.amountCents} >= 0`),
+    check("budget_monthly_targets_amount_check", sql`${table.amountMinorUnits} >= 0`),
   ],
 );

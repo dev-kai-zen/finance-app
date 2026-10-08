@@ -9,7 +9,7 @@ export interface Transaction {
   pocketId: string | null;
   transactionGroupId: string | null;
   type: TransactionType;
-  amountCents: number;
+  amountMinorUnits: number;
   name: string | null;
   note: string | null;
   occurredAt: Date;
@@ -98,7 +98,7 @@ export interface CreateTransactionInput {
   categoryId: string;
   pocketId?: string | null;
   type: "income" | "expense";
-  amountCents: number;
+  amountMinorUnits: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
@@ -110,7 +110,7 @@ export interface CreateTransactionInput {
 }
 
 export interface TransferFeeInput {
-  amountCents: number;
+  amountMinorUnits: number;
   accountId: string;
   pocketId?: string | null;
   categoryId: string;
@@ -121,7 +121,7 @@ export interface CreateTransferInput {
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
@@ -135,7 +135,7 @@ export interface UpdateTransferInput {
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;

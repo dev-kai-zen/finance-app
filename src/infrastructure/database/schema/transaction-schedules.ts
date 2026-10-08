@@ -38,7 +38,7 @@ export const transactionSchedules = sqliteTable(
     toPocketId: text("to_pocket_id").references(() => pockets.id, {
       onDelete: "set null",
     }),
-    amountCents: integer("amount_cents").notNull(),
+    amountMinorUnits: integer("amount_minor_units").notNull(),
     name: text("name"),
     note: text("note"),
     frequency: text("frequency", {
@@ -95,7 +95,7 @@ export const transactionSchedules = sqliteTable(
       "transaction_schedules_weekend_policy_check",
       sql`${table.weekendPolicy} in ('exact', 'next_weekday', 'previous_weekday', 'skip')`,
     ),
-    check("transaction_schedules_amount_check", sql`${table.amountCents} > 0`),
+    check("transaction_schedules_amount_check", sql`${table.amountMinorUnits} > 0`),
     check(
       "transaction_schedules_interval_check",
       sql`${table.intervalCount} > 0`,

@@ -308,9 +308,9 @@ export function TransactionFormModal({
       if (initialTransaction) {
         setMode(initialTransaction.type);
         setName(initialTransaction.name || "");
-        const isNeg = initialTransaction.amountCents < 0;
+        const isNeg = initialTransaction.amountMinorUnits < 0;
         setAmountSign(isNeg ? "-" : "+");
-        setAmountMinorUnits(Math.abs(initialTransaction.amountCents));
+        setAmountMinorUnits(Math.abs(initialTransaction.amountMinorUnits));
         setSelectedAccountId(initialTransaction.accountId);
         setSelectedPocketId(initialTransaction.pocketId);
         setTransferToAccountId(
@@ -670,10 +670,10 @@ export function TransactionFormModal({
     setSelectedCategoryId(preset.categoryId ?? "");
     setTransferToAccountId(preset.toAccountId ?? "");
     setTransferToPocketId(preset.toPocketId);
-    setAmountMinorUnits(Math.abs(preset.amountCents ?? 0));
+    setAmountMinorUnits(Math.abs(preset.amountMinorUnits ?? 0));
     setAmountSign(
       preset.type === "expense"
-        ? preset.amountCents !== null && preset.amountCents > 0
+        ? preset.amountMinorUnits !== null && preset.amountMinorUnits > 0
           ? "+"
           : "-"
         : "+",
@@ -755,7 +755,7 @@ export function TransactionFormModal({
       const feeInput: TransferFeeInput | null =
         feeEnabled && feeAmountMinorUnits > 0
           ? {
-              amountCents: Math.abs(feeAmountMinorUnits),
+              amountMinorUnits: Math.abs(feeAmountMinorUnits),
               accountId: feeAccountId || selectedAccountId,
               pocketId: feePocketId,
               categoryId: feeCategoryId || (defaultFeeCategory?.id ?? ""),
@@ -766,7 +766,7 @@ export function TransactionFormModal({
         toAccountId: transferToAccountId,
         fromPocketId: selectedPocketId,
         toPocketId: transferToPocketId,
-        amountCents: Math.abs(amountMinorUnits),
+        amountMinorUnits: Math.abs(amountMinorUnits),
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
@@ -830,7 +830,7 @@ export function TransactionFormModal({
       ) {
         const budgetCheck = checkBudgetExceeded({
           categoryId: selectedCategoryId,
-          amountCents: Math.abs(amountMinorUnits),
+          amountMinorUnits: Math.abs(amountMinorUnits),
           occurredAt: transactionOccurredAt,
           excludeTransactionId:
             isEditing && initialTransaction ? initialTransaction.id : null,
@@ -854,7 +854,7 @@ export function TransactionFormModal({
         categoryId: selectedCategoryId,
         pocketId: selectedPocketId,
         type: mode,
-        amountCents: signedAmount,
+        amountMinorUnits: signedAmount,
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,

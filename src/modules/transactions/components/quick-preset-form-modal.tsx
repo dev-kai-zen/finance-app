@@ -100,9 +100,9 @@ export function QuickPresetFormModal({
         "",
     );
     setToPocketId(preset?.toPocketId ?? null);
-    setIncludeAmount(preset ? preset.amountCents !== null : true);
-    setAmountMinorUnits(Math.abs(preset?.amountCents ?? 0));
-    setAmountSign((preset?.amountCents ?? -1) < 0 ? "-" : "+");
+    setIncludeAmount(preset ? preset.amountMinorUnits !== null : true);
+    setAmountMinorUnits(Math.abs(preset?.amountMinorUnits ?? 0));
+    setAmountSign((preset?.amountMinorUnits ?? -1) < 0 ? "-" : "+");
     setNote(preset?.note ?? "");
     setLocalError(null);
   }, [accounts, categories, preset, visible]);
@@ -217,7 +217,7 @@ export function QuickPresetFormModal({
         categoryId: mode === "transfer" ? null : categoryId,
         toAccountId: mode === "transfer" ? toAccountId : null,
         toPocketId: mode === "transfer" ? toPocketId : null,
-        amountCents: includeAmount ? signedAmount : null,
+        amountMinorUnits: includeAmount ? signedAmount : null,
         note: note.trim() || null,
       },
       preset?.id,

@@ -230,8 +230,8 @@ export function ScheduledTransactionsScreen() {
             );
             const signedAmount =
               schedule.transactionType === "expense"
-                ? -schedule.amountCents
-                : schedule.amountCents;
+                ? -schedule.amountMinorUnits
+                : schedule.amountMinorUnits;
 
             return (
               <View

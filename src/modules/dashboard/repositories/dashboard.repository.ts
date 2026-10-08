@@ -56,7 +56,7 @@ export function getMonthlyCashflow(
   const allTx = context
     .select({
       type: transactions.type,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
       currencyCode: accounts.currencyCode,
     })
     .from(transactions)
@@ -78,7 +78,7 @@ export function getMonthlyCashflow(
       continue;
     }
     const convertedAmount = convertCurrencyMinorUnits(
-      tx.amountCents,
+      tx.amountMinorUnits,
       tx.currencyCode ?? DEFAULT_BASE_CURRENCY,
       homeCurrency,
       ratesMap,
@@ -169,7 +169,7 @@ export function getCategorySpendingBreakdown(
     }
 
     const expenseMagnitude = convertCurrencyMinorUnits(
-      Math.abs(tx.amountCents),
+      Math.abs(tx.amountMinorUnits),
       currencyCode ?? DEFAULT_BASE_CURRENCY,
       homeCurrency,
       ratesMap,

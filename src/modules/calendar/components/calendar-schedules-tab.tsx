@@ -119,8 +119,8 @@ export function CalendarSchedulesTab({
               const isIncome = item.transactionType === "income";
 
               const signedAmount = isExpense
-                ? -item.amountCents
-                : item.amountCents;
+                ? -item.amountMinorUnits
+                : item.amountMinorUnits;
 
               const amountColor = isIncome
                 ? theme.colors.success

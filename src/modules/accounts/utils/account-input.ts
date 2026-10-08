@@ -1,7 +1,10 @@
-import { CURRENCY_DECIMALS, DEFAULT_BASE_CURRENCY } from "@/utils/currency";
+import {
+  DEFAULT_BASE_CURRENCY,
+  getCurrencyMinorUnitExponent,
+} from "@/utils/currency";
 
 function currencyDecimalPlaces(currencyCode: string): number {
-  return CURRENCY_DECIMALS[currencyCode] ?? 2;
+  return getCurrencyMinorUnitExponent(currencyCode);
 }
 
 function amountPattern(decimalPlaces: number, allowNegative: boolean): RegExp {

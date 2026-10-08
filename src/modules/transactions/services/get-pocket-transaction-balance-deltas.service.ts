@@ -8,7 +8,7 @@ export function getPocketTransactionBalanceDeltas(
   const rows = context
     .select({
       pocketId: transactions.pocketId,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
     })
     .from(transactions)
     .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
@@ -16,7 +16,7 @@ export function getPocketTransactionBalanceDeltas(
   const deltas: Record<string, number> = {};
   for (const row of rows) {
     if (row.pocketId) {
-      deltas[row.pocketId] = (deltas[row.pocketId] ?? 0) + row.amountCents;
+      deltas[row.pocketId] = (deltas[row.pocketId] ?? 0) + row.amountMinorUnits;
     }
   }
   return deltas;
@@ -30,7 +30,7 @@ export function getPocketBalanceDeltasAtDate(
   const rows = context
     .select({
       pocketId: transactions.pocketId,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
       occurredAt: transactions.occurredAt,
     })
     .from(transactions)
@@ -41,7 +41,7 @@ export function getPocketBalanceDeltasAtDate(
   for (const row of rows) {
     if (row.occurredAt.getTime() > cutoffTime) continue;
     if (row.pocketId) {
-      deltas[row.pocketId] = (deltas[row.pocketId] ?? 0) + row.amountCents;
+      deltas[row.pocketId] = (deltas[row.pocketId] ?? 0) + row.amountMinorUnits;
     }
   }
   return deltas;

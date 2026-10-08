@@ -104,7 +104,7 @@ function recordTransactionCommandInContext(
             categoryId: input.categoryId,
             toAccountId: null,
             toPocketId: null,
-            amountCents: saveRequest.includeAmount ? input.amountCents : null,
+            amountMinorUnits: saveRequest.includeAmount ? input.amountMinorUnits : null,
             note: input.note ?? null,
           },
           saveRequest.existingPresetId ?? undefined,
@@ -122,8 +122,8 @@ function recordTransactionCommandInContext(
             categoryId: null,
             toAccountId: input.toAccountId,
             toPocketId: input.toPocketId ?? null,
-            amountCents: saveRequest.includeAmount
-              ? Math.abs(input.amountCents)
+            amountMinorUnits: saveRequest.includeAmount
+              ? Math.abs(input.amountMinorUnits)
               : null,
             note: input.note ?? null,
           },

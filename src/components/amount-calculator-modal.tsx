@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
-import { CURRENCY_DECIMALS, CURRENCY_SYMBOLS } from "@/utils/currency";
+import { CURRENCY_SYMBOLS, getCurrencyMinorUnitExponent } from "@/utils/currency";
 
 export interface AmountCalculatorModalProps {
   visible: boolean;
@@ -176,7 +176,7 @@ export function AmountCalculatorModal({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
-  const decimalPlaces = CURRENCY_DECIMALS[currencyCode] ?? 2;
+  const decimalPlaces = getCurrencyMinorUnitExponent(currencyCode);
   const minorUnitDivisor = 10 ** decimalPlaces;
 
   const [expression, setExpression] = useState<string>("");

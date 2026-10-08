@@ -132,7 +132,7 @@ export function DeletedTransactionsModal({
           ) : (
             transactions.map((transaction) => {
               const isTransfer = transaction.type === "transfer";
-              const isNegative = transaction.amountCents < 0;
+              const isNegative = transaction.amountMinorUnits < 0;
               const amountColor = !preferences.colorAmounts
                 ? theme.colors.textPrimary
                 : isTransfer
@@ -142,11 +142,11 @@ export function DeletedTransactionsModal({
                   : theme.colors.success;
               const amount = isTransfer
                 ? formatCurrency(
-                    Math.abs(transaction.amountCents),
+                    Math.abs(transaction.amountMinorUnits),
                     transaction.accountCurrency,
                   )
                 : formatCurrency(
-                    transaction.amountCents,
+                    transaction.amountMinorUnits,
                     transaction.accountCurrency,
                     false,
                   );

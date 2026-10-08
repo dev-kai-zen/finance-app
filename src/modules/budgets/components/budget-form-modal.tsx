@@ -85,7 +85,7 @@ export function BudgetFormModal({
 
   const [categoryId, setCategoryId] = useState<string>("");
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
-  const [amountCents, setAmountCents] = useState<number>(0);
+  const [amountMinorUnits, setAmountCents] = useState<number>(0);
   const [frequency, setFrequency] = useState<BudgetFrequency>("monthly");
   const [allowRollover, setAllowRollover] = useState<boolean>(false);
   const [rolloverMode, setRolloverMode] =
@@ -106,7 +106,7 @@ export function BudgetFormModal({
     if (initialBudget) {
       setCategoryId(initialBudget.categoryId);
       setIsEnabled(initialBudget.isEnabled);
-      setAmountCents(initialBudget.amountCents);
+      setAmountCents(initialBudget.amountMinorUnits);
       setFrequency(initialBudget.frequency);
       setAllowRollover(initialBudget.allowRollover);
       setRolloverMode(initialBudget.rolloverMode);
@@ -115,7 +115,7 @@ export function BudgetFormModal({
         initialBudget.monthlyTargets?.map((t) => ({
           year: t.year,
           month: t.month,
-          amountCents: t.amountCents,
+          amountMinorUnits: t.amountMinorUnits,
         })) || [],
       );
     } else {
@@ -161,7 +161,7 @@ export function BudgetFormModal({
       setErrorNotification("Please select a category for this budget.");
       return;
     }
-    if (amountCents <= 0 && frequency !== "custom_monthly") {
+    if (amountMinorUnits <= 0 && frequency !== "custom_monthly") {
       setErrorNotification("Please enter a budget amount greater than zero.");
       return;
     }
@@ -170,7 +170,7 @@ export function BudgetFormModal({
       id: initialBudget?.id,
       categoryId,
       isEnabled,
-      amountCents,
+      amountMinorUnits,
       frequency,
       allowRollover,
       rolloverMode,
@@ -311,7 +311,7 @@ export function BudgetFormModal({
               {/* Amount Calculator Field */}
               <View style={styles.section}>
                 <AmountCalculatorField
-                  amountMinorUnits={amountCents}
+                  amountMinorUnits={amountMinorUnits}
                   amountSign="+"
                   currencyCode="PHP"
                   label={
@@ -364,7 +364,7 @@ export function BudgetFormModal({
               {/* Custom Monthly 12-Month Table */}
               {frequency === "custom_monthly" && (
                 <CustomMonthlyEditor
-                  baseAmountCents={amountCents}
+                  baseAmountCents={amountMinorUnits}
                   monthlyTargets={monthlyTargets}
                   onChange={setMonthlyTargets}
                   year={new Date().getFullYear()}
@@ -505,7 +505,7 @@ export function BudgetFormModal({
 
       {/* Amount Calculator Modal */}
       <AmountCalculatorModal
-        initialMinorUnits={amountCents}
+        initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(val) => {
           setAmountCents(val);

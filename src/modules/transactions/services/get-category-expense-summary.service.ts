@@ -36,7 +36,7 @@ export function getCategoryExpenseTotal(
 
   const result = context
     .select({
-      total: sql<number>`coalesce(sum(abs(${transactions.amountCents})), 0)`.as("total"),
+      total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as("total"),
     })
     .from(transactions)
     .where(and(...conditions))
@@ -63,7 +63,7 @@ export function getCategoryExpenseTotalsGrouped(
   const rows = context
     .select({
       categoryId: transactions.categoryId,
-      total: sql<number>`coalesce(sum(abs(${transactions.amountCents})), 0)`.as("total"),
+      total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as("total"),
     })
     .from(transactions)
     .where(

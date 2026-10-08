@@ -46,13 +46,13 @@ test("dashboard: computes real-time dynamic account balances and net worth", () 
 
   // Add Income of ₱500.00 (50,000 cents) into acc_bank
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_1', 'acc_bank', 'cat_salary', null, 'income', 50000, 'Bonus', ${now}, ${now}, ${now})
   `).run();
 
   // Add Expense of ₱150.00 (15,000 cents) from acc_bank
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_2', 'acc_bank', 'cat_groceries', null, 'expense', -15000, 'Supermarket', ${now}, ${now}, ${now})
   `).run();
 
@@ -61,7 +61,7 @@ test("dashboard: computes real-time dynamic account balances and net worth", () 
   let bankDelta = 0;
   for (const t of allTx) {
     if (t.account_id === "acc_bank") {
-      bankDelta += t.amount_cents;
+      bankDelta += t.amount_minor_units;
     }
   }
 
@@ -84,19 +84,19 @@ test("dashboard: computes monthly cashflow and category spending percentages", (
 
   // Income: 100,000 cents
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_inc', 'acc_bank', 'cat_salary', null, 'income', 100000, 'Salary', ${now}, ${now}, ${now})
   `).run();
 
   // Expense Groceries: 30,000 cents
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_groc', 'acc_bank', 'cat_groceries', null, 'expense', -30000, 'Groceries', ${now}, ${now}, ${now})
   `).run();
 
   // Expense Dining: 10,000 cents
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_dine', 'acc_bank', 'cat_dining', null, 'expense', -10000, 'Restaurant', ${now}, ${now}, ${now})
   `).run();
 

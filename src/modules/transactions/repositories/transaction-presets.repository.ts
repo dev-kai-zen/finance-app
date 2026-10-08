@@ -119,7 +119,7 @@ export function updateTransactionPresetRecord(
       | "categoryId"
       | "toAccountId"
       | "toPocketId"
-      | "amountCents"
+      | "amountMinorUnits"
       | "note"
       | "sortOrder"
       | "usageCount"

@@ -103,8 +103,8 @@ export function TransactionRow({
       ? theme.colors.success
       : theme.colors.danger;
   const displayAmountCents = isTransfer
-    ? Math.abs(transaction.amountCents)
-    : transaction.amountCents;
+    ? Math.abs(transaction.amountMinorUnits)
+    : transaction.amountMinorUnits;
   const amountColor = !preferences.colorAmounts
     ? theme.colors.textPrimary
     : isTransfer
@@ -126,7 +126,7 @@ export function TransactionRow({
 
   const formattedAmount = isTransfer
     ? formatCurrency(
-        Math.abs(transaction.amountCents),
+        Math.abs(transaction.amountMinorUnits),
         transaction.accountCurrency ?? "PHP",
         false,
       )

@@ -82,10 +82,10 @@ export function RecentTransactionsCard({
                 ? `Transfer to ${tx.transferAccountName ?? "Account"}`
                 : tx.categoryName || "Transaction");
 
-            const isPositive = tx.amountCents > 0;
+            const isPositive = tx.amountMinorUnits > 0;
             const formattedAmount = isTransfer
-              ? formatCurrency(Math.abs(tx.amountCents), tx.accountCurrency ?? currencyCode, false)
-              : formatCurrency(tx.amountCents, tx.accountCurrency ?? currencyCode, true);
+              ? formatCurrency(Math.abs(tx.amountMinorUnits), tx.accountCurrency ?? currencyCode, false)
+              : formatCurrency(tx.amountMinorUnits, tx.accountCurrency ?? currencyCode, true);
 
             return (
               <View

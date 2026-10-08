@@ -131,6 +131,22 @@ export const CURRENCY_DECIMALS: Record<string, number> = {
   TWD: 2,
 };
 
+let activeMinorUnitExponents: Record<string, number> = { ...CURRENCY_DECIMALS };
+
+export function setActiveCurrencyMinorUnitExponents(
+  exponents: Record<string, number>,
+): void {
+  activeMinorUnitExponents = { ...exponents };
+}
+
+export function getCurrencyMinorUnitExponent(currencyCode: string): number {
+  return (
+    activeMinorUnitExponents[currencyCode] ??
+    CURRENCY_DECIMALS[currencyCode] ??
+    2
+  );
+}
+
 /**
  * Default offline exchange rates against base currency (PHP).
  * Scale is 10,000 basis points (1.0000x = 10,000 bps).
@@ -243,9 +259,9 @@ export function formatCurrency(
   const locale = options?.locale ?? activeCurrencyLocale;
   const isNegative = amountMinorUnits < 0;
   const absMinorUnits = Math.abs(amountMinorUnits);
-  const sourceDecimals = CURRENCY_DECIMALS[currencyCode] ?? 2;
+  const sourceDecimals = getCurrencyMinorUnitExponent(currencyCode);
   const divisor = 10 ** sourceDecimals;
-  const decimalDigits = Math.min(9, Math.max(0, preferences.decimalDigits));
+  const decimalDigits = sourceDecimals;
   const baseNumber = formatAbsoluteNumber(
     absMinorUnits / divisor,
     decimalDigits,
@@ -337,8 +353,8 @@ export function convertCurrencyMinorUnits(
   const fromRate = getRate(fromCurrency);
   const toRate = getRate(toCurrency);
 
-  const fromDecimals = CURRENCY_DECIMALS[fromCurrency] ?? 2;
-  const toDecimals = CURRENCY_DECIMALS[toCurrency] ?? 2;
+  const fromDecimals = getCurrencyMinorUnitExponent(fromCurrency);
+  const toDecimals = getCurrencyMinorUnitExponent(toCurrency);
   const decimalDiff = toDecimals - fromDecimals;
 
   let scaledAmount = BigInt(amountMinorUnits) * BigInt(fromRate);

@@ -89,7 +89,7 @@ export function getCashFlowHistory(
   const txRows = context
     .select({
       type: transactions.type,
-      amountCents: transactions.amountCents,
+      amountMinorUnits: transactions.amountMinorUnits,
       occurredAt: transactions.occurredAt,
       currencyCode: accounts.currencyCode,
     })
@@ -118,7 +118,7 @@ export function getCashFlowHistory(
     if (!slot) continue;
 
     const convertedAmount = convertCurrencyMinorUnits(
-      tx.amountCents,
+      tx.amountMinorUnits,
       tx.currencyCode,
       homeCurrency,
       ratesMap,
