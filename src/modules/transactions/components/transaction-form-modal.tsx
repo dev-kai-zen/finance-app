@@ -831,6 +831,7 @@ export function TransactionFormModal({
         const budgetCheck = checkBudgetExceeded({
           categoryId: selectedCategoryId,
           amountMinorUnits: Math.abs(amountMinorUnits),
+          expenseCurrencyCode: currencyCode,
           occurredAt: transactionOccurredAt,
           excludeTransactionId:
             isEditing && initialTransaction ? initialTransaction.id : null,
@@ -1395,6 +1396,7 @@ export function TransactionFormModal({
                   <BudgetLiveIndicator
                     amountMinorUnits={amountMinorUnits}
                     categoryId={selectedCategoryId}
+                    expenseCurrencyCode={currencyCode}
                     excludeTransactionId={
                       isEditing && initialTransaction ? initialTransaction.id : null
                     }

@@ -92,6 +92,11 @@ export function updateTransferInContext(
       allowArchived: inLeg.pocketId === input.toPocketId,
     });
   }
+  if (fromAccount.currencyCode !== toAccount.currencyCode) {
+    throw new Error(
+      "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
+    );
+  }
   const amount = Math.abs(input.amountMinorUnits);
   const occurredAt =
     input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);

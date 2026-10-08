@@ -1,5 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { getCurrencyPreferences } from "@/modules/currencies";
 import {
   budgetMonthlyTargets,
   categoryBudgets,
@@ -26,6 +27,7 @@ function mapBudgetRow(
     categoryId: row.categoryId,
     isEnabled: Boolean(row.isEnabled),
     amountMinorUnits: row.amountMinorUnits,
+    currencyCode: row.currencyCode,
     frequency: row.frequency as any,
     startDate: row.startDate,
     allowRollover: Boolean(row.allowRollover),
@@ -137,6 +139,10 @@ export function upsertCategoryBudgetInContext(
 
   const id = existing ? existing.id : input.id ?? generateBudgetId(context);
   const startDate = input.startDate ?? (existing ? existing.startDate : now);
+  const currencyCode =
+    input.currencyCode?.trim().toUpperCase() ??
+    existing?.currencyCode ??
+    getCurrencyPreferences(context).defaultCurrency;
 
   if (existing) {
     context
@@ -145,6 +151,7 @@ export function upsertCategoryBudgetInContext(
         isEnabled:
           input.isEnabled !== undefined ? input.isEnabled : existing.isEnabled,
         amountMinorUnits: input.amountMinorUnits,
+        currencyCode,
         frequency: input.frequency,
         startDate,
         allowRollover:
@@ -168,6 +175,7 @@ export function upsertCategoryBudgetInContext(
         categoryId: input.categoryId,
         isEnabled: input.isEnabled ?? true,
         amountMinorUnits: input.amountMinorUnits,
+        currencyCode,
         frequency: input.frequency,
         startDate,
         allowRollover: input.allowRollover ?? false,

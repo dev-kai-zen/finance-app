@@ -253,6 +253,13 @@
       "when": 1791277200000,
       "tag": "0035_add_transactions_currency_code",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1791280800000,
+      "tag": "0036_add_currency_code_budgets_schedules_presets",
+      "breakpoints": true
     }
   ]
 }

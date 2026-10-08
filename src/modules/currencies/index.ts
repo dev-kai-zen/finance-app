@@ -39,3 +39,10 @@ export {
   convertAccountBalanceToBase,
   convertAccountsTotalToBase,
 } from "./services/currency-conversion.service";
+export {
+  addToCurrencyMinorUnitsBucket,
+  createCurrencyMinorUnitsBucket,
+  sumCurrencyMinorUnitsBucketsToTarget,
+  sumRowsByCurrencyToTarget,
+  type CurrencyMinorUnitsBucket,
+} from "./services/aggregate-minor-units-by-currency.service";

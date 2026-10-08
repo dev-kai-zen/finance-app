@@ -27,6 +27,7 @@ export interface CategoryBudget {
   categoryId: string;
   isEnabled: boolean;
   amountMinorUnits: number;
+  currencyCode: string;
   frequency: BudgetFrequency;
   startDate: Date;
   allowRollover: boolean;
@@ -48,6 +49,7 @@ export interface CategoryBudgetInput {
   categoryId: string;
   isEnabled?: boolean;
   amountMinorUnits: number;
+  currencyCode?: string;
   frequency: BudgetFrequency;
   startDate?: Date;
   allowRollover?: boolean;
@@ -76,6 +78,7 @@ export interface BudgetCheckResult {
   hasBudget: boolean;
   isEnabled: boolean;
   categoryName: string;
+  budgetCurrencyCode: string;
   frequency: BudgetFrequency;
   periodLabel: string;
   effectiveBudgetCents: number;

@@ -47,6 +47,11 @@ export function createTransferInContext(
   if (input.toPocketId) {
     requirePocketForAccount(input.toPocketId, toAccount.id, context);
   }
+  if (fromAccount.currencyCode !== toAccount.currencyCode) {
+    throw new Error(
+      "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
+    );
+  }
 
   if (input.fee && input.fee.amountMinorUnits > 0) {
     if (!input.fee.accountId) {

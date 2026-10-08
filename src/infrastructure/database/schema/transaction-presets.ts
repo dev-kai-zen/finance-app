@@ -1,5 +1,6 @@
 import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { pockets } from "./pockets";
@@ -28,6 +29,7 @@ export const transactionPresets = sqliteTable(
       onDelete: "set null",
     }),
     amountMinorUnits: integer("amount_minor_units"),
+    currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     note: text("note"),
     sortOrder: integer("sort_order").notNull().default(0),
     usageCount: integer("usage_count").notNull().default(0),

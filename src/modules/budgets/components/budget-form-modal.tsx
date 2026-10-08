@@ -25,6 +25,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { CategoryPickerModal, type Category } from "@/modules/categories";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import type {
   BudgetFrequency,
@@ -82,6 +83,7 @@ export function BudgetFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
+  const { preferences } = useCurrencyPreferences();
 
   const [categoryId, setCategoryId] = useState<string>("");
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -171,6 +173,8 @@ export function BudgetFormModal({
       categoryId,
       isEnabled,
       amountMinorUnits,
+      currencyCode:
+        initialBudget?.currencyCode ?? preferences.defaultCurrency,
       frequency,
       allowRollover,
       rolloverMode,

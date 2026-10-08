@@ -1,10 +1,6 @@
 import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import {
-  accounts,
-  categories,
-  transactions,
-} from "@/infrastructure/database/schema";
+import { categories, transactions } from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
 import {
   getCurrencyPreferences,
@@ -57,10 +53,9 @@ export function getMonthlyCashflow(
     .select({
       type: transactions.type,
       amountMinorUnits: transactions.amountMinorUnits,
-      currencyCode: accounts.currencyCode,
+      currencyCode: transactions.currencyCode,
     })
     .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(
       and(
         isNull(transactions.deletedAt),
@@ -122,10 +117,9 @@ export function getCategorySpendingBreakdown(
     .select({
       transaction: transactions,
       category: categories,
-      currencyCode: accounts.currencyCode,
+      currencyCode: transactions.currencyCode,
     })
     .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(

@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, categories, transactions } from "@/infrastructure/database/schema";
+import { categories, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
@@ -40,10 +40,9 @@ export function getCategoryBreakdown(
     .select({
       transaction: transactions,
       category: categories,
-      currencyCode: accounts.currencyCode,
+      currencyCode: transactions.currencyCode,
     })
     .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(

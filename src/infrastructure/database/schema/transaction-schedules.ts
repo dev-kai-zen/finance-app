@@ -8,6 +8,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { pockets } from "./pockets";
@@ -39,6 +40,7 @@ export const transactionSchedules = sqliteTable(
       onDelete: "set null",
     }),
     amountMinorUnits: integer("amount_minor_units").notNull(),
+    currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     name: text("name"),
     note: text("note"),
     frequency: text("frequency", {

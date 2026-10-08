@@ -66,6 +66,11 @@ export function saveTransactionPresetInContext(
     if (destination.isArchived) {
       throw new Error("Choose an active destination account for this Quick Preset.");
     }
+    if (account.currencyCode !== destination.currencyCode) {
+      throw new Error(
+        "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
+      );
+    }
     toAccountId = destination.id;
     toPocketId = value.toPocketId ?? null;
     if (toPocketId) {
@@ -89,6 +94,7 @@ export function saveTransactionPresetInContext(
     toAccountId,
     toPocketId,
     amountMinorUnits: value.amountMinorUnits ?? null,
+    currencyCode: account.currencyCode,
     note: value.note?.trim() || null,
     updatedAt: now,
   };

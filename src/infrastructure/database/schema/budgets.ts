@@ -7,6 +7,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { categories } from "./categories";
 
 export const categoryBudgets = sqliteTable(
@@ -20,6 +21,7 @@ export const categoryBudgets = sqliteTable(
       .notNull()
       .default(true),
     amountMinorUnits: integer("amount_minor_units").notNull().default(0),
+    currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     frequency: text("frequency", {
       enum: [
         "daily",

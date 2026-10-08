@@ -57,6 +57,11 @@ function saveScheduledTransactionInContext(
     if (input.toPocketId) {
       requirePocketForAccount(input.toPocketId, destination.id, context);
     }
+    if (account.currencyCode !== destination.currencyCode) {
+      throw new Error(
+        "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
+      );
+    }
   } else {
     requireCategory(input.categoryId!, context);
   }
@@ -92,6 +97,7 @@ function saveScheduledTransactionInContext(
     toPocketId:
       input.transactionType === "transfer" ? input.toPocketId ?? null : null,
     amountMinorUnits: input.amountMinorUnits,
+    currencyCode: account.currencyCode,
     name: input.name ?? null,
     note: input.note ?? null,
     frequency: input.frequency,

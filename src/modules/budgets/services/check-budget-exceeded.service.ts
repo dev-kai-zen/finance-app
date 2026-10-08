@@ -1,5 +1,10 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { getCategory } from "@/modules/categories";
+import { getExchangeRateMap } from "@/modules/currencies";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import {
   findCategoryBudgetByCategoryId,
   listCategoryBudgets,
@@ -10,6 +15,7 @@ import { calculateCategoryBudgetStatus } from "./calculate-category-budget.servi
 export interface CheckBudgetExceededInput {
   categoryId: string;
   amountMinorUnits: number; // Positive minor units of the pending expense
+  expenseCurrencyCode?: string;
   occurredAt?: Date;
   excludeTransactionId?: string | null;
   context?: DbContext;
@@ -34,6 +40,7 @@ export function checkBudgetExceeded(
     hasBudget: false,
     isEnabled: false,
     categoryName: "",
+    budgetCurrencyCode: "",
     frequency: "monthly",
     periodLabel: "",
     effectiveBudgetCents: 0,
@@ -95,7 +102,16 @@ export function checkBudgetExceeded(
     context,
   });
 
-  const additionalExpenseCents = Math.abs(amountMinorUnits);
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const expenseCurrency =
+    input.expenseCurrencyCode?.trim().toUpperCase() ?? budget.currencyCode;
+  const additionalExpenseCents = convertCurrencyMinorUnits(
+    Math.abs(amountMinorUnits),
+    expenseCurrency,
+    budget.currencyCode,
+    ratesMap,
+    DEFAULT_BASE_CURRENCY,
+  );
   const newSpentCents = status.spentCents + additionalExpenseCents;
   const exceeds =
     status.effectiveTargetCents > 0
@@ -107,6 +123,7 @@ export function checkBudgetExceeded(
     hasBudget: true,
     isEnabled: budget.isEnabled,
     categoryName: budgetedCategory.name,
+    budgetCurrencyCode: budget.currencyCode,
     frequency: budget.frequency,
     periodLabel: status.periodLabel,
     effectiveBudgetCents: status.effectiveTargetCents,

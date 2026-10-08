@@ -9,6 +9,7 @@ import { checkBudgetExceeded } from "../services/check-budget-exceeded.service";
 export interface BudgetLiveIndicatorProps {
   categoryId: string;
   amountMinorUnits: number;
+  expenseCurrencyCode?: string;
   occurredAt?: Date;
   excludeTransactionId?: string | null;
 }
@@ -16,6 +17,7 @@ export interface BudgetLiveIndicatorProps {
 export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
   categoryId,
   amountMinorUnits,
+  expenseCurrencyCode,
   occurredAt,
   excludeTransactionId,
 }: BudgetLiveIndicatorProps) {
@@ -27,10 +29,11 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
     return checkBudgetExceeded({
       categoryId,
       amountMinorUnits: amountMinorUnits,
+      expenseCurrencyCode,
       occurredAt,
       excludeTransactionId,
     });
-  }, [categoryId, amountMinorUnits, occurredAt, excludeTransactionId]);
+  }, [categoryId, amountMinorUnits, expenseCurrencyCode, occurredAt, excludeTransactionId]);
 
   if (!result || !result.hasBudget || !result.isEnabled) {
     return null;
@@ -43,6 +46,7 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
     remainingAfterCents,
     exceeds,
     exceededByCents,
+    budgetCurrencyCode,
   } = result;
 
   const percentage =
@@ -93,17 +97,17 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
       <View style={styles.textWrap}>
         <Text numberOfLines={1} style={[styles.mainText, { color: statusColor }]}>
           {exceeds
-            ? `Exceeds ${periodLabel} budget by ${formatCurrency(exceededByCents, "PHP", false)}!`
+            ? `Exceeds ${periodLabel} budget by ${formatCurrency(exceededByCents, budgetCurrencyCode, false)}!`
             : isNearLimit
               ? `Near ${periodLabel} limit (${percentage}% used)`
               : `Within ${periodLabel} budget (${percentage}% used)`}
         </Text>
         <Text numberOfLines={1} style={styles.subText}>
-          {formatCurrency(newSpentCents, "PHP", false)} of{" "}
-          {formatCurrency(effectiveBudgetCents, "PHP", false)} (
+          {formatCurrency(newSpentCents, budgetCurrencyCode, false)} of{" "}
+          {formatCurrency(effectiveBudgetCents, budgetCurrencyCode, false)} (
           {exceeds
-            ? `${formatCurrency(exceededByCents, "PHP", false)} over`
-            : `${formatCurrency(remainingAfterCents, "PHP", false)} left`}
+            ? `${formatCurrency(exceededByCents, budgetCurrencyCode, false)} over`
+            : `${formatCurrency(remainingAfterCents, budgetCurrencyCode, false)} left`}
           )
         </Text>
       </View>

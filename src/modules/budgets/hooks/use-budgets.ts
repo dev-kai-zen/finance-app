@@ -2,6 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "@/infrastructure/database/client";
 import { useCategories, type Category } from "@/modules/categories";
 import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
+import {
   findCategoryBudgetByCategoryId,
   listCategoryBudgets,
 } from "../repositories/category-budgets.repository";
@@ -111,12 +119,26 @@ export function useBudgets(referenceDate: Date = new Date()) {
     let activeCount = 0;
     let exceededCount = 0;
     let nearLimitCount = 0;
+    const homeCurrency = getCurrencyPreferences(db).defaultCurrency;
+    const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, db);
 
     for (const item of budgetStatuses) {
       if (!item.budget.isEnabled) continue;
       activeCount += 1;
-      totalBudgetedCents += item.effectiveTargetCents;
-      totalSpentCents += item.spentCents;
+      totalBudgetedCents += convertCurrencyMinorUnits(
+        item.effectiveTargetCents,
+        item.budget.currencyCode,
+        homeCurrency,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      );
+      totalSpentCents += convertCurrencyMinorUnits(
+        item.spentCents,
+        item.budget.currencyCode,
+        homeCurrency,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      );
       if (item.isExceeded) exceededCount += 1;
       else if (item.isNearLimit) nearLimitCount += 1;
     }
