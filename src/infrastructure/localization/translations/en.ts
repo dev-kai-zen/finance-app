@@ -97,6 +97,7 @@ export const en = {
     sampleAmount: "Example",
     addCurrency: "Add currency",
     usedChip: "Used",
+    usedChipClickToView: "Used - Click to view",
     usedLockedMessage:
       "This currency is tied to accounts, goals, or your default currency. Decimal places and details cannot be changed.",
     usageChipAccessibility: "Used, show where this currency is referenced",

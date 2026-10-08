@@ -214,8 +214,9 @@ export function CurrencyCatalogModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {editorLocked ? (
-              <View style={styles.usedBanner}>
+            {editor.mode === "edit" && editor.source?.isUsed ? (
+              <View style={styles.usedSection}>
+                <Text style={styles.usedDescription}>{t("currency.usedLockedMessage")}</Text>
                 <Pressable
                   accessibilityLabel={t("currency.usageChipAccessibility")}
                   accessibilityRole="button"
@@ -223,16 +224,10 @@ export function CurrencyCatalogModal({
                   style={({ pressed }) => [pressed && styles.pressed]}
                 >
                   <View style={styles.usedChip}>
-                    <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
+                    <Text style={styles.usedChipActionText}>
+                      {t("currency.usedChipClickToView")}
+                    </Text>
                   </View>
-                </Pressable>
-                <Text style={styles.usedBannerText}>{t("currency.usedLockedMessage")}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => openUsageDetails(editor.value.code)}
-                  style={({ pressed }) => [styles.usageLink, pressed && styles.pressed]}
-                >
-                  <Text style={styles.usageLinkText}>{t("currency.usageModalLink")}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -380,24 +375,9 @@ export function CurrencyCatalogModal({
                       <Text style={styles.symbolText}>{currency.symbol.trim()}</Text>
                     </View>
                     <View style={styles.copy}>
-                      <View style={styles.titleRow}>
-                        <Text style={styles.codeName}>
-                          {currency.code} · {currency.name}
-                        </Text>
-                        {currency.isUsed ? (
-                          <Pressable
-                            accessibilityLabel={t("currency.usageChipAccessibility")}
-                            accessibilityRole="button"
-                            hitSlop={8}
-                            onPress={() => openUsageDetails(currency.code)}
-                            style={({ pressed }) => [pressed && styles.pressed]}
-                          >
-                            <View style={styles.usedChip}>
-                              <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
-                            </View>
-                          </Pressable>
-                        ) : null}
-                      </View>
+                      <Text style={styles.codeName}>
+                        {currency.code} · {currency.name}
+                      </Text>
                       <Text style={styles.meta}>
                         {t("currency.decimalPlacesLabel", {
                           count: currency.minorUnitExponent,
@@ -515,12 +495,6 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     copy: { flex: 1, gap: 2, minWidth: 0 },
-    titleRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.xs,
-    },
     codeName: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.base,
@@ -538,25 +512,18 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 2,
     },
-    usedChipText: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
+    usedChipActionText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
-      textTransform: "uppercase",
     },
-    usedBanner: {
+    usedSection: {
       gap: theme.spacing.sm,
     },
-    usedBannerText: {
+    usedDescription: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
-    },
-    usageLink: { alignSelf: "flex-start" },
-    usageLinkText: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
     fieldGroup: { gap: theme.spacing.xs },
     fieldLabel: {

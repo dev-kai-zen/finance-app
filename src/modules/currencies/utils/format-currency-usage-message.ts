@@ -10,18 +10,18 @@ export function formatCurrencyUsageMessage(
   reasons: CurrencyUsageReason[],
   t: UsageTranslator,
 ): string {
-  if (reasons.length === 0) {
+  const displayReasons = reasons.filter((reason) => reason.kind !== "exchange_rates");
+
+  if (displayReasons.length === 0) {
     return t("currency.usageModalEmpty", { code });
   }
 
-  const lines = reasons.map((reason) => {
+  const lines = displayReasons.map((reason) => {
     switch (reason.kind) {
       case "accounts":
         return t("currency.usageReasonAccounts", { count: reason.count });
       case "goals":
         return t("currency.usageReasonGoals", { count: reason.count });
-      case "exchange_rates":
-        return t("currency.usageReasonExchangeRates", { count: reason.count });
       case "default_currency":
         return t("currency.usageReasonDefault");
       default:

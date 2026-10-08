@@ -108,6 +108,7 @@ export const es = {
     sampleAmount: "Ejemplo",
     addCurrency: "Añadir moneda",
     usedChip: "En uso",
+    usedChipClickToView: "En uso — Pulsa para ver",
     usedLockedMessage:
       "Esta moneda ya está en uso. No se pueden cambiar los decimales ni los detalles.",
     usageChipAccessibility: "En uso, mostrar dónde se usa esta moneda",
