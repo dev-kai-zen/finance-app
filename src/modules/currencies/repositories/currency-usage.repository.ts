@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { count, eq, or } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   accounts,
@@ -7,6 +7,7 @@ import {
   settings,
 } from "@/infrastructure/database/schema";
 import { CURRENCY_PREFERENCE_KEYS } from "../constants/currency-preferences.constants";
+import type { CurrencyUsageReason } from "../types/currency.types";
 
 export function listUsedCurrencyCodes(context: DbContext = db): Set<string> {
   const used = new Set<string>();
@@ -56,4 +57,58 @@ export function isCurrencyInUse(
   context: DbContext = db,
 ): boolean {
   return listUsedCurrencyCodes(context).has(code);
+}
+
+export function getCurrencyUsageReasons(
+  code: string,
+  context: DbContext = db,
+): CurrencyUsageReason[] {
+  const normalized = code.trim().toUpperCase();
+  const reasons: CurrencyUsageReason[] = [];
+
+  const accountCountRow = context
+    .select({ total: count() })
+    .from(accounts)
+    .where(eq(accounts.currencyCode, normalized))
+    .get();
+  const accountCount = Number(accountCountRow?.total ?? 0);
+  if (accountCount > 0) {
+    reasons.push({ kind: "accounts", count: accountCount });
+  }
+
+  const goalCountRow = context
+    .select({ total: count() })
+    .from(goals)
+    .where(eq(goals.currencyCode, normalized))
+    .get();
+  const goalCount = Number(goalCountRow?.total ?? 0);
+  if (goalCount > 0) {
+    reasons.push({ kind: "goals", count: goalCount });
+  }
+
+  const rateCountRow = context
+    .select({ total: count() })
+    .from(exchangeRates)
+    .where(
+      or(
+        eq(exchangeRates.baseCurrency, normalized),
+        eq(exchangeRates.quoteCurrency, normalized),
+      ),
+    )
+    .get();
+  const rateCount = Number(rateCountRow?.total ?? 0);
+  if (rateCount > 0) {
+    reasons.push({ kind: "exchange_rates", count: rateCount });
+  }
+
+  const defaultRow = context
+    .select({ value: settings.value })
+    .from(settings)
+    .where(eq(settings.key, CURRENCY_PREFERENCE_KEYS.defaultCurrency))
+    .get();
+  if (defaultRow?.value === normalized) {
+    reasons.push({ kind: "default_currency", count: 1 });
+  }
+
+  return reasons;
 }

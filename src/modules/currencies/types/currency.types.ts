@@ -14,6 +14,17 @@ export interface CurrencyListItem extends Currency {
   isUsed: boolean;
 }
 
+export type CurrencyUsageReasonKind =
+  | "accounts"
+  | "goals"
+  | "exchange_rates"
+  | "default_currency";
+
+export interface CurrencyUsageReason {
+  kind: CurrencyUsageReasonKind;
+  count: number;
+}
+
 export interface CreateCurrencyInput {
   code: string;
   name: string;

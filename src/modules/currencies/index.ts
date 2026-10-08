@@ -27,7 +27,10 @@ export { createCurrency } from "./services/create-currency.service";
 export { updateCurrency } from "./services/update-currency.service";
 export { deleteCurrency } from "./services/delete-currency.service";
 export { listCurrenciesWithUsage } from "./services/list-currencies-with-usage.service";
-export { isCurrencyInUse } from "./repositories/currency-usage.repository";
+export {
+  getCurrencyUsageReasons,
+  isCurrencyInUse,
+} from "./repositories/currency-usage.repository";
 export { useCurrencies } from "./hooks/use-currencies";
 export { CurrencyCatalogModal } from "./components/currency-catalog-modal";
 export {

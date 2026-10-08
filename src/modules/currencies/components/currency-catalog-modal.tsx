@@ -12,6 +12,7 @@ import {
 import {
   ConfirmModal,
   FullScreenFormModal,
+  InfoModal,
   NotificationModal,
 } from "@/components";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
@@ -20,7 +21,9 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencies } from "../hooks/use-currencies";
 import { useCurrencyMutations } from "../hooks/use-currency-mutations";
+import { getCurrencyUsageReasons } from "../repositories/currency-usage.repository";
 import type { CurrencyListItem } from "../types/currency.types";
+import { formatCurrencyUsageMessage } from "../utils/format-currency-usage-message";
 
 type EditorValue = {
   code: string;
@@ -57,15 +60,29 @@ export function CurrencyCatalogModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [usageModalCode, setUsageModalCode] = useState<string | null>(null);
+
+  const usageModalMessage = useMemo(() => {
+    if (!usageModalCode) return "";
+    const reasons = getCurrencyUsageReasons(usageModalCode);
+    return formatCurrencyUsageMessage(usageModalCode, reasons, (key, params) =>
+      t(key as Parameters<typeof t>[0], params),
+    );
+  }, [usageModalCode, t]);
 
   useEffect(() => {
     if (!visible) {
       setSearchQuery("");
       setEditor(null);
       setConfirmDelete(false);
+      setUsageModalCode(null);
       mutations.clearError();
     }
   }, [visible]);
+
+  const openUsageDetails = (code: string) => {
+    setUsageModalCode(code);
+  };
 
   const normalizedSearch = searchQuery.trim().toLocaleLowerCase();
 
@@ -199,10 +216,24 @@ export function CurrencyCatalogModal({
           >
             {editorLocked ? (
               <View style={styles.usedBanner}>
-                <View style={styles.usedChip}>
-                  <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
-                </View>
+                <Pressable
+                  accessibilityLabel={t("currency.usageChipAccessibility")}
+                  accessibilityRole="button"
+                  onPress={() => openUsageDetails(editor.value.code)}
+                  style={({ pressed }) => [pressed && styles.pressed]}
+                >
+                  <View style={styles.usedChip}>
+                    <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
+                  </View>
+                </Pressable>
                 <Text style={styles.usedBannerText}>{t("currency.usedLockedMessage")}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => openUsageDetails(editor.value.code)}
+                  style={({ pressed }) => [styles.usageLink, pressed && styles.pressed]}
+                >
+                  <Text style={styles.usageLinkText}>{t("currency.usageModalLink")}</Text>
+                </Pressable>
               </View>
             ) : null}
 
@@ -338,9 +369,17 @@ export function CurrencyCatalogModal({
                           {currency.code} · {currency.name}
                         </Text>
                         {currency.isUsed ? (
-                          <View style={styles.usedChip}>
-                            <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
-                          </View>
+                          <Pressable
+                            accessibilityLabel={t("currency.usageChipAccessibility")}
+                            accessibilityRole="button"
+                            hitSlop={8}
+                            onPress={() => openUsageDetails(currency.code)}
+                            style={({ pressed }) => [pressed && styles.pressed]}
+                          >
+                            <View style={styles.usedChip}>
+                              <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
+                            </View>
+                          </Pressable>
                         ) : null}
                       </View>
                       <Text style={styles.meta}>
@@ -365,6 +404,13 @@ export function CurrencyCatalogModal({
         visible={confirmDelete}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={confirmRemove}
+      />
+
+      <InfoModal
+        message={usageModalMessage}
+        title={t("currency.usageModalTitle", { code: usageModalCode ?? "" })}
+        visible={usageModalCode !== null}
+        onClose={() => setUsageModalCode(null)}
       />
 
       <NotificationModal
@@ -489,6 +535,12 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
+    },
+    usageLink: { alignSelf: "flex-start" },
+    usageLinkText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     fieldGroup: { gap: theme.spacing.xs },
     fieldLabel: {
