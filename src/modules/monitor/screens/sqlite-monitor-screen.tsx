@@ -14,12 +14,13 @@ import { InfoModal, NotificationModal, PageContainer, PageHeader } from "@/compo
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { MonitorQueryResultGrid } from "../components/monitor-query-result-grid";
 import { useMonitor } from "../hooks/use-monitor";
-import type { MonitorTab, TableInfo } from "../types/monitor.types";
+import type { MonitorTab } from "../types/monitor.types";
 
 const QUERY_PRESETS = [
   { label: "Accounts", sql: "SELECT id, name, currency_code, opening_balance_minor_units, is_archived FROM accounts;" },
-  { label: "Transactions", sql: "SELECT id, type, amount_minor_units, account_id, category_id, occurred_at FROM transactions ORDER BY occurred_at DESC LIMIT 20;" },
+  { label: "Transactions", sql: "SELECT * FROM transactions ORDER BY occurred_at DESC LIMIT 50;" },
   { label: "Categories", sql: "SELECT id, name, type, hex_colors_id, icon, is_system FROM categories ORDER BY type, name;" },
   { label: "Account Types", sql: "SELECT id, name, account_group, hex_colors_id, icon_key FROM account_types;" },
   { label: "Settings", sql: "SELECT * FROM settings;" },
@@ -238,43 +239,20 @@ export function SqliteMonitorScreen() {
               <View style={styles.resultBox}>
                 <View style={styles.resultHeader}>
                   <Text style={styles.resultMetaText}>
-                    {queryResult.rowCount} rows returned in {queryResult.executionTimeMs}ms
+                    {queryResult.rowCount} rows · {queryResult.columns.length} columns ·{" "}
+                    {queryResult.executionTimeMs}ms
                   </Text>
+                  {queryResult.columns.length > 3 ? (
+                    <Text style={styles.resultHintText}>
+                      Scroll horizontally to see all columns.
+                    </Text>
+                  ) : null}
                 </View>
 
-                {queryResult.rows.length === 0 ? (
-                  <Text style={styles.emptyQueryText}>Query completed with 0 rows returned.</Text>
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-                    <View style={styles.tableGrid}>
-                      {/* Table Header Row */}
-                      <View style={styles.gridHeaderRow}>
-                        {queryResult.columns.map((col) => (
-                          <View key={col} style={styles.gridHeaderCell}>
-                            <Text numberOfLines={1} style={styles.gridHeaderCellText}>
-                              {col}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-
-                      {/* Table Data Rows */}
-                      {queryResult.rows.map((row, rIdx) => (
-                        <View key={rIdx} style={styles.gridDataRow}>
-                          {queryResult.columns.map((col) => (
-                            <View key={col} style={styles.gridDataCell}>
-                              <Text numberOfLines={2} style={styles.gridDataCellText}>
-                                {row[col] !== null && row[col] !== undefined
-                                  ? String(row[col])
-                                  : "NULL"}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      ))}
-                    </View>
-                  </ScrollView>
-                )}
+                <MonitorQueryResultGrid
+                  columns={queryResult.columns}
+                  rows={queryResult.rows}
+                />
               </View>
             )}
           </View>
@@ -380,43 +358,22 @@ export function SqliteMonitorScreen() {
               </Pressable>
             </View>
 
-            <ScrollView horizontal style={styles.modalTableScroll}>
-              <View>
-                {/* Table Header */}
-                <View style={styles.gridHeaderRow}>
-                  {tableData?.columns.map((col) => (
-                    <View key={col} style={styles.gridHeaderCell}>
-                      <Text numberOfLines={1} style={styles.gridHeaderCellText}>
-                        {col}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-
-                {/* Table Rows */}
-                <ScrollView style={{ maxHeight: 420 }}>
-                  {tableData?.rows.length === 0 ? (
-                    <View style={{ padding: 24, alignItems: "center" }}>
-                      <Text style={styles.emptyQueryText}>No records found in this table.</Text>
-                    </View>
-                  ) : (
-                    tableData?.rows.map((row, rIdx) => (
-                      <View key={rIdx} style={styles.gridDataRow}>
-                        {tableData.columns.map((col) => (
-                          <View key={col} style={styles.gridDataCell}>
-                            <Text numberOfLines={2} style={styles.gridDataCellText}>
-                              {row[col] !== null && row[col] !== undefined
-                                ? String(row[col])
-                                : "NULL"}
-                            </Text>
-                          </View>
-                        ))}
-                      </View>
-                    ))
-                  )}
-                </ScrollView>
-              </View>
-            </ScrollView>
+            <View style={styles.modalTableScroll}>
+              {tableData ? (
+                <>
+                  {tableData.columns.length > 3 ? (
+                    <Text style={styles.resultHintText}>
+                      Showing up to 50 rows · scroll horizontally for all{" "}
+                      {tableData.columns.length} columns.
+                    </Text>
+                  ) : null}
+                  <MonitorQueryResultGrid
+                    columns={tableData.columns}
+                    rows={tableData.rows}
+                  />
+                </>
+              ) : null}
+            </View>
           </View>
         </View>
       </Modal>
@@ -616,6 +573,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 12,
       fontWeight: "600",
+    },
+    resultHintText: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+      marginTop: 4,
     },
     emptyQueryText: {
       color: theme.colors.textSecondary,
