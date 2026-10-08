@@ -47,7 +47,8 @@ yarn-error.*
 android/
 /android
 
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .agents*
 
 .env
