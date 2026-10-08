@@ -209,10 +209,22 @@ export const permanentlyDeleteTransactionPreset = deferFunction(
       .permanentlyDeleteTransactionPreset,
 ) as typeof import("./services/permanently-delete-transaction-preset.service").permanentlyDeleteTransactionPreset;
 
+export const hasTransactionHistoryForAccount = deferFunction(
+  () =>
+    require("./services/is-account-in-use.service")
+      .hasTransactionHistoryForAccount,
+) as typeof import("./services/is-account-in-use.service").hasTransactionHistoryForAccount;
+
 export const isAccountInUseByTransactions = deferFunction(
   () =>
     require("./services/is-account-in-use.service").isAccountInUseByTransactions,
 ) as typeof import("./services/is-account-in-use.service").isAccountInUseByTransactions;
+
+export const getAccountIdsWithTransactionHistory = deferFunction(
+  () =>
+    require("./services/is-account-in-use.service")
+      .getAccountIdsWithTransactionHistory,
+) as typeof import("./services/is-account-in-use.service").getAccountIdsWithTransactionHistory;
 
 export const getAccountIdsInUseByTransactions = deferFunction(
   () =>

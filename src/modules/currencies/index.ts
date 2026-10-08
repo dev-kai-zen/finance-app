@@ -35,6 +35,7 @@ export {
 export { deleteExchangeRatesForCurrency } from "./repositories/exchange-rates.repository";
 export { useCurrencies } from "./hooks/use-currencies";
 export { CurrencyCatalogModal } from "./components/currency-catalog-modal";
+export { CurrencyPickerModal } from "./components/currency-picker-modal";
 export {
   convertAccountBalanceToBase,
   convertAccountsTotalToBase,

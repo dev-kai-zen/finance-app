@@ -20,12 +20,37 @@ import {
   supportsPockets,
 } from "@/modules/accounts/utils/pocket-eligibility";
 import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
+import { canChangeAccountCurrency } from "@/modules/accounts/services/can-change-account-currency.service";
+
+function normalizeCurrencyCode(code: string): string {
+  return code.trim().toUpperCase();
+}
 
 export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
-    const currencyCode = existing?.currencyCode ?? value.currencyCode ?? "PHP";
+    let currencyCode: string;
+    if (existing) {
+      const existingCurrency = normalizeCurrencyCode(existing.currencyCode);
+      if (value.currencyCode === undefined) {
+        currencyCode = existingCurrency;
+      } else {
+        const requestedCurrency = normalizeCurrencyCode(value.currencyCode);
+        if (requestedCurrency !== existingCurrency) {
+          if (!canChangeAccountCurrency(existing.id, tx)) {
+            throw new Error(
+              "Cannot change currency after transactions have been recorded for this account.",
+            );
+          }
+          currencyCode = requestedCurrency;
+        } else {
+          currencyCode = existingCurrency;
+        }
+      }
+    } else {
+      currencyCode = normalizeCurrencyCode(value.currencyCode ?? "PHP");
+    }
     const type = requireAccountType(value.accountTypeId, tx);
     const creditCardType = isCreditCardAccountType(type.id, type.name);
     if (creditCardType && !value.creditCardDetails) {
@@ -100,7 +125,14 @@ export function saveAccount(input: AccountInput, id?: string): string {
     };
     let accountId: string;
     if (existing) {
-      updateAccountRecord(existing.id, values, tx);
+      updateAccountRecord(
+        existing.id,
+        {
+          ...values,
+          currencyCode,
+        },
+        tx,
+      );
       accountId = existing.id;
     } else {
       accountId = newAccountRecordId(tx);

@@ -762,6 +762,7 @@ test("permanent delete is allowed for unused accounts and cleans up associated r
   const accounts = getAccountsWithBalances();
   const item = accounts.find((a) => a.id === accountId);
   assert.equal(item?.isDeletable, true);
+  assert.equal(item?.canChangeCurrency, true);
 
   deleteAccount(accountId);
   assert.equal(repo.findAccountById(accountId), null);
@@ -778,11 +779,29 @@ test("permanent delete is blocked for accounts with transaction history", () => 
   const accounts = getAccountsWithBalances();
   const item = accounts.find((a) => a.id === accountId);
   assert.equal(item?.isDeletable, false);
+  assert.equal(item?.canChangeCurrency, false);
 
   assert.throws(
     () => deleteAccount(accountId),
     /Cannot permanently delete an account that has transaction history/,
   );
+  assert.throws(
+    () =>
+      saveAccount(
+        { ...accountInput(undefined, "Used Account", "100.00"), currencyCode: "USD" },
+        accountId,
+      ),
+    /Cannot change currency after transactions/,
+  );
   assert.notEqual(repo.findAccountById(accountId), null);
+});
+
+test("account currency can be changed through save when there is no transaction history", () => {
+  const accountId = saveAccount(accountInput(undefined, "FX account", "100.00"));
+  saveAccount(
+    { ...accountInput(undefined, "FX account", "100.00"), currencyCode: "USD" },
+    accountId,
+  );
+  assert.equal(repo.findAccountById(accountId).currencyCode, "USD");
 });
 
