@@ -172,6 +172,8 @@ export function CurrencyCatalogModal({
     editor?.value.symbol.trim() &&
     parseExponent(editor.value.minorUnitExponent) !== null &&
     (editor.mode === "edit" || /^[A-Z0-9]{3,8}$/.test(editor.value.code.trim().toUpperCase()));
+  const canDeleteCurrency =
+    editor?.mode === "edit" && Boolean(editor.source) && !editor.source?.isLocked;
 
   const managerHeader = (
     <Pressable
@@ -198,8 +200,10 @@ export function CurrencyCatalogModal({
         saveDisabled={!canSave || mutations.pending}
         title={title}
         visible={visible}
+        deleteLabel={t("currency.deleteAction")}
         headerRight={editor ? undefined : managerHeader}
         onClose={requestBack}
+        onDelete={canDeleteCurrency ? () => setConfirmDelete(true) : undefined}
         onSave={editor && !editorLocked ? saveEditor : undefined}
       >
         {editor ? (
@@ -316,22 +320,6 @@ export function CurrencyCatalogModal({
 
             {!editorLocked && editor.mode === "edit" && !editor.source?.isCustom ? (
               <Text style={styles.fieldHint}>{t("currency.builtinEditHint")}</Text>
-            ) : null}
-
-            {editor.mode === "edit" && editor.source && !editor.source.isLocked ? (
-              <Pressable
-                accessibilityLabel={t("currency.deleteAction")}
-                accessibilityRole="button"
-                disabled={mutations.pending}
-                onPress={() => setConfirmDelete(true)}
-                style={({ pressed }) => [
-                  styles.deleteButton,
-                  pressed && styles.pressed,
-                  mutations.pending && styles.deleteButtonDisabled,
-                ]}
-              >
-                <Text style={styles.deleteButtonText}>{t("currency.deleteCurrency")}</Text>
-              </Pressable>
             ) : null}
           </ScrollView>
         ) : (
@@ -559,22 +547,6 @@ function createStyles(theme: AppTheme) {
     textInputDisabled: {
       backgroundColor: theme.colors.surfaceMuted,
       color: theme.colors.textMuted,
-    },
-    deleteButton: {
-      alignItems: "center",
-      backgroundColor: `${theme.colors.danger}12`,
-      borderColor: `${theme.colors.danger}40`,
-      borderCurve: "continuous",
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      marginTop: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-    },
-    deleteButtonDisabled: { opacity: 0.5 },
-    deleteButtonText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }
