@@ -39,13 +39,9 @@ export function AmountCalculatorField({
   };
 
   const absMinorUnits = Math.abs(amountMinorUnits);
-  const major = Math.floor(absMinorUnits / 100);
-  const minor = absMinorUnits % 100;
-  const displayAmount = showCurrencyPill
-    ? formatCurrency(absMinorUnits, currencyCode, false)
-        .replace(/^-?₱/, "")
-        .replace(/^-?/, "")
-    : `${major.toLocaleString("en-PH")}.${String(minor).padStart(2, "0")}`;
+  const displayAmount = formatCurrency(absMinorUnits, currencyCode, false, {
+    hideCurrency: true,
+  });
 
   const isTransfer = amountSign === "transfer";
   const signIsPositive = amountSign === "+";

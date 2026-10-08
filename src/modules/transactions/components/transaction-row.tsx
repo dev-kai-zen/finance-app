@@ -4,7 +4,8 @@ import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatCurrency } from "@/utils/currency";
 import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
 
@@ -88,6 +89,7 @@ export function TransactionRow({
   viewMode = "compact",
 }: TransactionRowProps) {
   const theme = useAppTheme();
+  const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
   const isCompact = viewMode === "compact";
 
@@ -103,7 +105,9 @@ export function TransactionRow({
   const displayAmountCents = isTransfer
     ? Math.abs(transaction.amountCents)
     : transaction.amountCents;
-  const amountColor = isTransfer
+  const amountColor = !preferences.colorAmounts
+    ? theme.colors.textPrimary
+    : isTransfer
     ? theme.colors.info
     : displayAmountCents < 0
       ? theme.colors.danger
@@ -126,12 +130,11 @@ export function TransactionRow({
         transaction.accountCurrency ?? "PHP",
         false,
       )
-    : formatPhpCurrency(displayAmountCents, {
-        showPositiveSign: false,
-        positiveColor: theme.colors.success,
-        negativeColor: theme.colors.danger,
-        zeroColor: theme.colors.textMuted,
-      }).formatted;
+    : formatCurrency(
+        displayAmountCents,
+        transaction.accountCurrency ?? "PHP",
+        false,
+      );
 
   const sourceBalance = formatCurrency(
     transaction.locationBalanceAfterMinorUnits ??

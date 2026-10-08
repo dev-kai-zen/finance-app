@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { CURRENCY_DECIMALS, CURRENCY_SYMBOLS } from "@/utils/currency";
 
 export interface AmountCalculatorModalProps {
   visible: boolean;
@@ -175,6 +176,8 @@ export function AmountCalculatorModal({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
+  const decimalPlaces = CURRENCY_DECIMALS[currencyCode] ?? 2;
+  const minorUnitDivisor = 10 ** decimalPlaces;
 
   const [expression, setExpression] = useState<string>("");
 
@@ -182,12 +185,14 @@ export function AmountCalculatorModal({
     if (visible) {
       Keyboard.dismiss();
       if (initialMinorUnits !== 0 && initialMinorUnits !== undefined) {
-        setExpression((initialMinorUnits / 100).toFixed(2));
+        setExpression(
+          (initialMinorUnits / minorUnitDivisor).toFixed(decimalPlaces),
+        );
       } else {
         setExpression("");
       }
     }
-  }, [visible, initialMinorUnits]);
+  }, [visible, initialMinorUnits, minorUnitDivisor, decimalPlaces]);
 
   const previewResult = evaluateExpression(expression);
 
@@ -216,7 +221,9 @@ export function AmountCalculatorModal({
     if (key === "=") {
       if (!expression || expression === "-") return;
       const res = evaluateExpression(expression);
-      setExpression(res % 1 === 0 ? res.toString() : res.toFixed(2));
+      setExpression(
+        res % 1 === 0 ? res.toString() : res.toFixed(decimalPlaces),
+      );
       return;
     }
 
@@ -258,6 +265,7 @@ export function AmountCalculatorModal({
 
     // Decimal point
     if (key === ".") {
+      if (decimalPlaces === 0) return;
       if (!expression || expression === "-") {
         setExpression((prev) => (prev === "-" ? "-0." : "0."));
         return;
@@ -281,13 +289,15 @@ export function AmountCalculatorModal({
 
   const handleConfirm = () => {
     const finalAmount = evaluateExpression(expression);
-    const minorUnits = Math.round(finalAmount * 100);
-    const formatted = (Math.abs(minorUnits) / 100).toFixed(2);
+    const minorUnits = Math.round(finalAmount * minorUnitDivisor);
+    const formatted = (Math.abs(minorUnits) / minorUnitDivisor).toFixed(
+      decimalPlaces,
+    );
     onConfirm(minorUnits, formatted);
     onClose();
   };
 
-  const displayCurrency = currencyCode === "PHP" ? "₱" : `${currencyCode} `;
+  const displayCurrency = CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
   const isMathExpr = isMathExpression(expression);
   const isNegative =
     (!isMathExpr && expression.startsWith("-")) ||
@@ -295,9 +305,11 @@ export function AmountCalculatorModal({
 
   let displayAmount: string;
   if (isMathExpr) {
-    displayAmount = formatWithCommas(Math.abs(previewResult).toFixed(2));
+    displayAmount = formatWithCommas(
+      Math.abs(previewResult).toFixed(decimalPlaces),
+    );
   } else if (!expression || expression === "-") {
-    displayAmount = "0.00";
+    displayAmount = decimalPlaces > 0 ? `0.${"0".repeat(decimalPlaces)}` : "0";
   } else {
     const unsigned = expression.startsWith("-")
       ? expression.slice(1)

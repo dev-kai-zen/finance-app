@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getCashFlowReport } from "../services/get-cash-flow-report.service";
 import type {
   CashFlowDateRange,
@@ -9,6 +10,7 @@ import { getCashFlowDateRange } from "../utils/cash-flow-dates";
 import { toDateKey } from "../utils/reports-dates";
 
 export function useCashFlowReport() {
+  const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<CashFlowPeriodPreset>("6m");
 
   const now = useMemo(() => new Date(), []);
@@ -29,7 +31,7 @@ export function useCashFlowReport() {
 
   const data: CashFlowReportData = useMemo(() => {
     return getCashFlowReport(range);
-  }, [range]);
+  }, [range, preferences.defaultCurrency]);
 
   return {
     preset,

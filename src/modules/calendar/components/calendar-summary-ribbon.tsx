@@ -10,6 +10,7 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type {
   CalendarSummaryMetrics,
@@ -29,6 +30,8 @@ export function CalendarSummaryRibbon({
 }: CalendarSummaryRibbonProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
 
   if (activeTab === "transactions") {
     const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
@@ -57,7 +60,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.totalInflowMinorUnits, "PHP", false)}
+            {formatCurrency(metrics.totalInflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -83,7 +86,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.totalOutflowMinorUnits, "PHP", false)}
+            {formatCurrency(metrics.totalOutflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -109,7 +112,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.netCashflowMinorUnits, "PHP", false)}
+            {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -147,7 +150,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(assets, "PHP", false)}
+            {formatCurrency(assets, currencyCode, false)}
           </Text>
         </View>
 
@@ -175,7 +178,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(liabilities, "PHP", false)}
+            {formatCurrency(liabilities, currencyCode, false)}
           </Text>
         </View>
 
@@ -201,7 +204,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(netWorth, "PHP", false)}
+            {formatCurrency(netWorth, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -222,7 +225,7 @@ export function CalendarSummaryRibbon({
               { color: theme.colors.warning ?? "#f59e0b" },
             ]}
           >
-            {formatCurrency(metrics.schedulesTotalDueMinorUnits, "PHP")}
+            {formatCurrency(metrics.schedulesTotalDueMinorUnits, currencyCode)}
           </Text>
         </View>
 
@@ -267,7 +270,7 @@ export function CalendarSummaryRibbon({
             },
           ]}
         >
-          {formatCurrency(metrics.netCashflowMinorUnits, "PHP", false)}
+          {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
         </Text>
       </View>
 
@@ -295,7 +298,7 @@ export function CalendarSummaryRibbon({
                 },
               ]}
             >
-              {formatCurrency(metrics.projectedMonthEndNetMinorUnits, "PHP", false)}
+              {formatCurrency(metrics.projectedMonthEndNetMinorUnits, currencyCode, false)}
             </Text>
           </View>
         </>

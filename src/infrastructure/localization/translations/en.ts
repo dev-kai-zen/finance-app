@@ -2,6 +2,7 @@ export const en = {
   common: {
     cancel: "Cancel",
     close: "Close",
+    ok: "OK",
     search: "Search",
   },
   navigation: {
@@ -22,6 +23,7 @@ export const en = {
     localBackup: "Local Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Language",
+    currencySetup: "Currency Setup",
     menu: "MENU",
     openMenu: "Open navigation menu",
     closeMenu: "Close navigation menu",
@@ -39,6 +41,10 @@ export const en = {
     languageTitle: "Language",
     languageSystemValue: "System default · %{language}",
     languageAccessibility: "Current language: %{language}. Tap to change.",
+    currencySection: "CURRENCY & NUMBERS",
+    currencySetup: "Currency Setup",
+    currencySetupDescription: "Currency, signs, decimals, and amount colors",
+    currencySetupAccessibility: "Configure currency and number formatting",
     defaultAccountsSection: "DEFAULT ACCOUNTS",
     expense: "Expense",
     income: "Income",
@@ -73,6 +79,29 @@ export const en = {
     resetData: "Reset Data",
     resetDataDescription:
       "Permanently erase all local app data and start over.",
+  },
+  currency: {
+    defaultCurrency: "Default currency",
+    displayCurrency: "Display currency",
+    displayCurrencyDescription: "Show the currency on amount values",
+    colorAmounts: "Color amount values",
+    colorAmountsDescription: "Color positive and negative amount values",
+    negativeNumber: "Negative Number",
+    decimalDigits: "Decimal Digits",
+    decimalFormat: "Decimal Format",
+    automaticFormat: "Automatic · Based on device region",
+    chooseCurrency: "Default Currency",
+    chooseCurrencyDescription:
+      "Choose the currency used for combined totals and new accounts.",
+    searchCurrencies: "Search by currency name or code",
+    noCurrenciesFound: "No currencies match your search.",
+    negativeNumberDescription: "Choose how negative amount values are displayed.",
+    decimalDigitsDescription: "Choose the number of decimal digits from 0 to 9.",
+    decimalFormatDescription:
+      "Choose the thousands and decimal separator format.",
+    helpTitle: "About Currency Setup",
+    helpMessage:
+      "The default currency is used for combined totals and new accounts. Existing accounts keep their saved currency. Display options never change stored financial values.",
   },
   language: {
     heading: "Language preference",

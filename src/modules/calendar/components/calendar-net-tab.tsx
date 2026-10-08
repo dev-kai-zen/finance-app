@@ -12,6 +12,7 @@ import {
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { CategoryExpenseBreakdown } from "../hooks/use-calendar-data";
 import type { CalendarSummaryMetrics } from "../types/calendar.types";
@@ -29,6 +30,8 @@ export function CalendarNetTab({
 }: CalendarNetTabProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
 
   const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
   const isOutflowPositive = metrics.totalOutflowMinorUnits >= 0;
@@ -80,7 +83,7 @@ export function CalendarNetTab({
               },
             ]}
           >
-            {formatCurrency(metrics.totalInflowMinorUnits, "PHP", false)}
+            {formatCurrency(metrics.totalInflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -117,7 +120,7 @@ export function CalendarNetTab({
               },
             ]}
           >
-            {formatCurrency(metrics.totalOutflowMinorUnits, "PHP", false)}
+            {formatCurrency(metrics.totalOutflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -168,7 +171,7 @@ export function CalendarNetTab({
             { color: isNetPositive ? theme.colors.success : theme.colors.danger },
           ]}
         >
-          {formatCurrency(metrics.netCashflowMinorUnits, "PHP", false)}
+          {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
         </Text>
 
         {/* Inflow vs Outflow Visual Bar */}
@@ -264,7 +267,7 @@ export function CalendarNetTab({
 
                 <View style={styles.categoryRight}>
                   <Text style={styles.categoryAmount}>
-                    {formatCurrency(cat.totalMinorUnits, "PHP")}
+                    {formatCurrency(cat.totalMinorUnits, currencyCode)}
                   </Text>
                   <Text style={styles.categoryPercent}>{cat.percentage}%</Text>
                 </View>
@@ -319,7 +322,7 @@ export function CalendarNetTab({
           >
             {formatCurrency(
               metrics.projectedMonthEndNetMinorUnits,
-              "PHP",
+              currencyCode,
               false,
             )}
           </Text>

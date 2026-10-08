@@ -22,6 +22,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
@@ -43,6 +44,7 @@ import {
   supportsPockets,
 } from "@/modules/accounts/utils/pocket-eligibility";
 import { applySignedAmount } from "@/utils/amount-sign";
+import { CURRENCY_DECIMALS } from "@/utils/currency";
 
 function parseAmountSign(openingAmount: string): "+" | "-" {
   return openingAmount.trim().startsWith("-") ? "-" : "+";
@@ -91,22 +93,32 @@ export function AccountFormModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const formCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
 
   const [value, setValue] = useState<AccountInput>(() => ({
     name: account?.name ?? "",
     note: account?.note ?? "",
     iconKey: account?.iconKey ?? null,
     accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
-    openingAmount: openingAmountInput(account?.openingBalanceMinorUnits ?? 0),
+    currencyCode: formCurrencyCode,
+    openingAmount: openingAmountInput(
+      account?.openingBalanceMinorUnits ?? 0,
+      formCurrencyCode,
+    ),
     openingDate: localDateInput(account?.openingBalanceAt),
     hideFromSelection: account?.hideFromSelection ?? false,
     hideFromReports: account?.hideFromReports ?? false,
     pocketEnabled: account?.pocketEnabled ?? false,
-    maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+    maintainingAmount: maintainingAmountInput(
+      account?.maintainingBalanceMinorUnits,
+      formCurrencyCode,
+    ),
     creditCardDetails: account?.creditCardDetails
       ? {
           creditLimit: creditLimitInput(
             account.creditCardDetails.creditLimitMinorUnits,
+            formCurrencyCode,
           ),
           statementDay: String(account.creditCardDetails.statementDay),
           paymentDueDay: String(account.creditCardDetails.paymentDueDay),
@@ -114,7 +126,12 @@ export function AccountFormModal({
       : undefined,
   }));
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
-    parseAmountSign(openingAmountInput(account?.openingBalanceMinorUnits ?? 0)),
+    parseAmountSign(
+      openingAmountInput(
+        account?.openingBalanceMinorUnits ?? 0,
+        formCurrencyCode,
+      ),
+    ),
   );
   const {
     defaultExpenseAccountId,
@@ -134,22 +151,30 @@ export function AccountFormModal({
       setIsDefaultExpense(false);
       setIsDefaultIncome(false);
     }
-    const openingAmount = openingAmountInput(account?.openingBalanceMinorUnits ?? 0);
+    const openingAmount = openingAmountInput(
+      account?.openingBalanceMinorUnits ?? 0,
+      formCurrencyCode,
+    );
     setValue({
       name: account?.name ?? "",
       note: account?.note ?? "",
       iconKey: account?.iconKey ?? null,
       accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
+      currencyCode: formCurrencyCode,
       openingAmount,
       openingDate: localDateInput(account?.openingBalanceAt),
       hideFromSelection: account?.hideFromSelection ?? false,
       hideFromReports: account?.hideFromReports ?? false,
       pocketEnabled: account?.pocketEnabled ?? false,
-      maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+      maintainingAmount: maintainingAmountInput(
+        account?.maintainingBalanceMinorUnits,
+        formCurrencyCode,
+      ),
       creditCardDetails: account?.creditCardDetails
         ? {
             creditLimit: creditLimitInput(
               account.creditCardDetails.creditLimitMinorUnits,
+              formCurrencyCode,
             ),
             statementDay: String(account.creditCardDetails.statementDay),
             paymentDueDay: String(account.creditCardDetails.paymentDueDay),
@@ -165,7 +190,7 @@ export function AccountFormModal({
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
     }
     setConfirmAction(null);
-  }, [visible, account, types]);
+  }, [visible, account, types, formCurrencyCode]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
   const [creditLimitCalculatorOpen, setCreditLimitCalculatorOpen] = useState(false);
@@ -176,9 +201,10 @@ export function AccountFormModal({
     "archive" | "restore" | "lock-balance" | "delete" | null
   >(null);
 
-  const foreign = !!account && account.currencyCode !== "PHP";
   const startingBalanceLocked = account?.startingBalanceLocked ?? false;
-  const openingBalanceReadOnly = pending || foreign || startingBalanceLocked;
+  const openingBalanceReadOnly = pending || startingBalanceLocked;
+  const currencyDecimals = CURRENCY_DECIMALS[formCurrencyCode] ?? 2;
+  const currencyDivisor = 10 ** currencyDecimals;
   const selectedType = types.find((t) => t.id === value.accountTypeId);
   const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
   const isCreditCardType = isCreditCardAccountType(
@@ -193,21 +219,21 @@ export function AccountFormModal({
 
   const amountMinorUnits = useMemo(() => {
     const stripped = stripAmountSign(value.openingAmount || "0");
-    const parsed = Math.round(parseFloat(stripped || "0") * 100);
+    const parsed = Math.round(parseFloat(stripped || "0") * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.openingAmount]);
+  }, [value.openingAmount, currencyDivisor]);
 
   const maintainingMinorUnits = useMemo(() => {
     const stripped = (value.maintainingAmount ?? "").trim() || "0";
-    const parsed = Math.round(parseFloat(stripped || "0") * 100);
+    const parsed = Math.round(parseFloat(stripped || "0") * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.maintainingAmount]);
+  }, [value.maintainingAmount, currencyDivisor]);
 
   const creditLimitMinorUnits = useMemo(() => {
     const input = value.creditCardDetails?.creditLimit.trim() || "0";
-    const parsed = Math.round(parseFloat(input) * 100);
+    const parsed = Math.round(parseFloat(input) * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.creditCardDetails?.creditLimit]);
+  }, [value.creditCardDetails?.creditLimit, currencyDivisor]);
 
   const typeColor = accountColor(
     theme,
@@ -432,7 +458,7 @@ export function AccountFormModal({
           <AmountCalculatorField
             amountMinorUnits={amountMinorUnits}
             amountSign={amountSign}
-            currencyCode={account?.currencyCode ?? "PHP"}
+            currencyCode={formCurrencyCode}
             disabled={openingBalanceReadOnly}
             label="Starting Balance"
             labelAccessory={
@@ -468,6 +494,7 @@ export function AccountFormModal({
 
           <AmountCalculatorField
             amountMinorUnits={maintainingMinorUnits}
+            currencyCode={formCurrencyCode}
             disabled={pending}
             label="Maintaining Balance"
             showCurrencyPill={false}
@@ -606,7 +633,7 @@ export function AccountFormModal({
               <Text style={styles.sectionTitle}>Credit Card Details</Text>
               <AmountCalculatorField
                 amountMinorUnits={creditLimitMinorUnits}
-                currencyCode={account?.currencyCode ?? "PHP"}
+                currencyCode={formCurrencyCode}
                 disabled={pending}
                 label="Credit Limit"
                 showSignToggle={false}
@@ -729,16 +756,17 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={formCurrencyCode}
         initialMinorUnits={amountMinorUnits}
         title="Starting Balance"
         visible={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(minorUnits, formatted) => {
-          const absDecimal = (Math.abs(minorUnits) / 100).toFixed(2);
           setValue((prev) => ({
             ...prev,
-            openingAmount: absDecimal || formatted,
+            openingAmount:
+              openingAmountInput(Math.abs(minorUnits), formCurrencyCode) ||
+              formatted,
           }));
           setCalculatorOpen(false);
         }}
@@ -746,7 +774,7 @@ export function AccountFormModal({
 
       <AmountCalculatorModal
         allowNegative={false}
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={formCurrencyCode}
         initialMinorUnits={creditLimitMinorUnits}
         title="Credit Limit"
         visible={creditLimitCalculatorOpen}
@@ -765,7 +793,7 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={formCurrencyCode}
         initialMinorUnits={maintainingMinorUnits}
         title="Maintaining Balance"
         visible={maintainingCalculatorOpen}

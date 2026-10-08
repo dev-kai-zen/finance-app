@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getCreditCardMonitoring } from "../services/get-credit-card-monitoring.service";
 import type { CreditCardMonitoringSummary } from "../types/credit-card.types";
 
@@ -10,6 +11,7 @@ const EMPTY_SUMMARY: CreditCardMonitoringSummary = {
 };
 
 export function useCreditCardMonitoring() {
+  const { preferences } = useCurrencyPreferences();
   const [data, setData] = useState(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function useCreditCardMonitoring() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [preferences.defaultCurrency]);
   useFocusEffect(useCallback(() => refresh(), [refresh]));
   return { ...data, loading, error, refresh };
 }

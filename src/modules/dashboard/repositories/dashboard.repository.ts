@@ -6,7 +6,10 @@ import {
   transactions,
 } from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
-import { getExchangeRateMap } from "@/modules/currencies";
+import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
 import {
   getAccountBalanceDeltasAtDates,
   getRecentTransactions,
@@ -48,6 +51,7 @@ export function getMonthlyCashflow(
   });
 
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
 
   const allTx = context
     .select({
@@ -76,8 +80,9 @@ export function getMonthlyCashflow(
     const convertedAmount = convertCurrencyMinorUnits(
       tx.amountCents,
       tx.currencyCode ?? DEFAULT_BASE_CURRENCY,
-      DEFAULT_BASE_CURRENCY,
+      homeCurrency,
       ratesMap,
+      DEFAULT_BASE_CURRENCY,
     );
     if (convertedAmount > 0) {
       totalInflow += convertedAmount;
@@ -111,6 +116,7 @@ export function getCategorySpendingBreakdown(
   const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
 
   const txRows = context
     .select({
@@ -165,8 +171,9 @@ export function getCategorySpendingBreakdown(
     const expenseMagnitude = convertCurrencyMinorUnits(
       Math.abs(tx.amountCents),
       currencyCode ?? DEFAULT_BASE_CURRENCY,
-      DEFAULT_BASE_CURRENCY,
+      homeCurrency,
       ratesMap,
+      DEFAULT_BASE_CURRENCY,
     );
     spendingByCategory[catId].total += expenseMagnitude;
     overallExpense += expenseMagnitude;
@@ -197,6 +204,7 @@ export function getDashboardSummary(
   );
 
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
 
   let totalAssets = 0;
   let totalLiabilities = 0;
@@ -205,8 +213,9 @@ export function getDashboardSummary(
     const convertedBalance = convertCurrencyMinorUnits(
       acc.currentBalanceMinorUnits,
       acc.currencyCode,
-      DEFAULT_BASE_CURRENCY,
+      homeCurrency,
       ratesMap,
+      DEFAULT_BASE_CURRENCY,
     );
     if (acc.accountType?.accountGroup === "liability") {
       totalLiabilities += convertedBalance;
@@ -263,6 +272,7 @@ export function getNetWorthHistory(
   targetDate: Date = new Date(),
 ): NetWorthHistory {
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const cutoffsByPeriod = Object.fromEntries(
     NET_WORTH_PERIODS.map((period) => [
       period,
@@ -298,6 +308,7 @@ export function getNetWorthHistory(
           deltasByCutoff.get(date.getTime()) ?? {},
           period,
           ratesMap,
+          homeCurrency,
         ),
       ),
     ]),
@@ -310,6 +321,7 @@ function calculateNetWorthPoint(
   transactionDeltas: Record<string, number>,
   period: NetWorthPeriod,
   ratesMap?: Map<string, number>,
+  homeCurrency: string = DEFAULT_BASE_CURRENCY,
 ): NetWorthHistoryPoint {
   let totalAssetsMinorUnits = 0;
   let totalLiabilitiesMinorUnits = 0;
@@ -329,8 +341,9 @@ function calculateNetWorthPoint(
     const convertedBalance = convertCurrencyMinorUnits(
       balance,
       account.currencyCode,
-      DEFAULT_BASE_CURRENCY,
+      homeCurrency,
       ratesMap,
+      DEFAULT_BASE_CURRENCY,
     );
     if (account.accountType?.accountGroup === "liability") {
       totalLiabilitiesMinorUnits += convertedBalance;

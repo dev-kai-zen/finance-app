@@ -6,11 +6,19 @@ import {
 } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import {
+  getExchangeRateMap,
+  useCurrencyPreferences,
+} from "@/modules/currencies";
+import {
   getCalendarScheduleOccurrences,
   useScheduledTransactions,
   type CalendarScheduleOccurrence,
 } from "@/modules/scheduled-transactions";
 import { useTransactions, type TransactionListItem } from "@/modules/transactions";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import type {
   CalendarDayCellData,
   CalendarMonth,
@@ -36,6 +44,7 @@ export interface CategoryExpenseBreakdown {
 
 export function useCalendarData() {
   const todayParts = useMemo(() => getTodayParts(), []);
+  const { preferences } = useCurrencyPreferences();
 
   const [activeMonth, setActiveMonth] = useState<CalendarMonth>({
     year: todayParts.year,
@@ -52,6 +61,29 @@ export function useCalendarData() {
     postOccurrence,
     skipOccurrence,
   } = useScheduledTransactions();
+
+  const exchangeRates = useMemo(() => {
+    try {
+      return getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+    } catch {
+      return new Map<string, number>();
+    }
+  }, [accounts]);
+  const accountCurrencyMap = useMemo(
+    () => new Map(accounts.map((account) => [account.id, account.currencyCode])),
+    [accounts],
+  );
+  const convertToDefaultCurrency = useCallback(
+    (minorUnits: number, currencyCode: string) =>
+      convertCurrencyMinorUnits(
+        minorUnits,
+        currencyCode,
+        preferences.defaultCurrency,
+        exchangeRates,
+        DEFAULT_BASE_CURRENCY,
+      ),
+    [exchangeRates, preferences.defaultCurrency],
+  );
 
   const refreshAll = useCallback(() => {
     refreshTransactions();
@@ -154,11 +186,15 @@ export function useCalendarData() {
 
       for (const tx of dayTxs) {
         if (tx.type === "transfer") continue;
+        const convertedAmount = convertToDefaultCurrency(
+          tx.amountCents,
+          tx.accountCurrency,
+        );
         if (tx.amountCents > 0 || tx.type === "income") {
-          totalIncomeMinorUnits += tx.amountCents;
+          totalIncomeMinorUnits += convertedAmount;
           incomeCount++;
         } else if (tx.amountCents < 0 || tx.type === "expense") {
-          totalExpenseMinorUnits += tx.amountCents;
+          totalExpenseMinorUnits += convertedAmount;
           expenseCount++;
         }
       }
@@ -192,6 +228,7 @@ export function useCalendarData() {
     selectedDay,
     transactionsByDateKey,
     schedulesByDateKey,
+    convertToDefaultCurrency,
   ]);
 
   // Summary Metrics for the current scope (selectedDay OR activeMonth)
@@ -201,10 +238,14 @@ export function useCalendarData() {
 
     for (const tx of scopedTransactions) {
       if (tx.type === "transfer") continue;
+      const convertedAmount = convertToDefaultCurrency(
+        tx.amountCents,
+        tx.accountCurrency,
+      );
       if (tx.amountCents > 0 || tx.type === "income") {
-        inflow += tx.amountCents;
+        inflow += convertedAmount;
       } else if (tx.amountCents < 0 || tx.type === "expense") {
-        outflow += tx.amountCents;
+        outflow += convertedAmount;
       }
     }
 
@@ -217,7 +258,10 @@ export function useCalendarData() {
 
     for (const occ of scopedSchedules) {
       if (occ.status === "due" || occ.status === "upcoming") {
-        schedulesTotalDue += occ.amountCents;
+        schedulesTotalDue += convertToDefaultCurrency(
+          occ.amountCents,
+          accountCurrencyMap.get(occ.accountId) ?? DEFAULT_BASE_CURRENCY,
+        );
         pendingCount++;
       } else if (occ.status === "posted") {
         postedCount++;
@@ -234,10 +278,14 @@ export function useCalendarData() {
 
     for (const occ of monthScheduleOccurrences) {
       if (occ.status === "due" || occ.status === "upcoming") {
+        const convertedAmount = convertToDefaultCurrency(
+          occ.amountCents,
+          accountCurrencyMap.get(occ.accountId) ?? DEFAULT_BASE_CURRENCY,
+        );
         if (occ.transactionType === "income") {
-          monthPendingInflows += occ.amountCents;
+          monthPendingInflows += convertedAmount;
         } else if (occ.transactionType === "expense") {
-          monthPendingOutflows += occ.amountCents;
+          monthPendingOutflows += convertedAmount;
         }
       }
     }
@@ -246,8 +294,12 @@ export function useCalendarData() {
     let monthActualOutflow = 0;
     for (const tx of activeMonthTransactions) {
       if (tx.type === "transfer") continue;
-      if (tx.amountCents > 0 || tx.type === "income") monthActualInflow += tx.amountCents;
-      if (tx.amountCents < 0 || tx.type === "expense") monthActualOutflow += tx.amountCents;
+      const convertedAmount = convertToDefaultCurrency(
+        tx.amountCents,
+        tx.accountCurrency,
+      );
+      if (tx.amountCents > 0 || tx.type === "income") monthActualInflow += convertedAmount;
+      if (tx.amountCents < 0 || tx.type === "expense") monthActualOutflow += convertedAmount;
     }
     const monthActualNet = monthActualInflow + monthActualOutflow;
     const projectedMonthEndNet =
@@ -307,6 +359,8 @@ export function useCalendarData() {
     activeMonth,
     accounts,
     pockets,
+    accountCurrencyMap,
+    convertToDefaultCurrency,
   ]);
 
   // Compute live Balance Sheet data for the balance sheet tab
@@ -337,7 +391,13 @@ export function useCalendarData() {
         netWorthMinorUnits: 0,
       };
     }
-  }, [balanceSheetCutoffDate, transactions, accounts, pockets]);
+  }, [
+    balanceSheetCutoffDate,
+    transactions,
+    accounts,
+    pockets,
+    preferences.defaultCurrency,
+  ]);
 
   // Top spending categories breakdown for current scope
   const categoryBreakdown = useMemo<CategoryExpenseBreakdown[]>(() => {
@@ -346,7 +406,9 @@ export function useCalendarData() {
 
     for (const tx of scopedTransactions) {
       if (tx.type === "expense" && tx.categoryId) {
-        const amt = Math.abs(tx.amountCents);
+        const amt = Math.abs(
+          convertToDefaultCurrency(tx.amountCents, tx.accountCurrency),
+        );
         const current = categoryTotals.get(tx.categoryId) ?? 0;
         categoryTotals.set(tx.categoryId, current + amt);
         totalExpenseInScope += amt;
@@ -375,7 +437,7 @@ export function useCalendarData() {
 
     result.sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
     return result;
-  }, [scopedTransactions, categories]);
+  }, [scopedTransactions, categories, convertToDefaultCurrency]);
 
   // Navigation handlers
   const goToPrevMonth = useCallback(() => {

@@ -7,6 +7,7 @@ export const fil = {
   common: {
     cancel: "Kanselahin",
     close: "Isara",
+    ok: "OK",
     search: "Maghanap",
   },
   navigation: {
@@ -27,6 +28,7 @@ export const fil = {
     localBackup: "Lokal na Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",
+    currencySetup: "Setup ng Currency",
     menu: "MENU",
     openMenu: "Buksan ang navigation menu",
     closeMenu: "Isara ang navigation menu",
@@ -46,6 +48,10 @@ export const fil = {
     languageSystemValue: "Default ng system · %{language}",
     languageAccessibility:
       "Kasalukuyang wika: %{language}. I-tap para palitan.",
+    currencySection: "CURRENCY AT MGA NUMERO",
+    currencySetup: "Setup ng Currency",
+    currencySetupDescription: "Currency, sign, decimal, at kulay ng halaga",
+    currencySetupAccessibility: "I-configure ang currency at format ng numero",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -84,6 +90,31 @@ export const fil = {
     resetData: "I-reset ang Data",
     resetDataDescription:
       "Permanenteng burahin ang lahat ng lokal na app data at magsimulang muli.",
+  },
+  currency: {
+    defaultCurrency: "Default na currency",
+    displayCurrency: "Ipakita ang currency",
+    displayCurrencyDescription: "Ipakita ang currency sa mga halaga",
+    colorAmounts: "Kulayan ang mga halaga",
+    colorAmountsDescription: "Kulayan ang positibo at negatibong halaga",
+    negativeNumber: "Negatibong Numero",
+    decimalDigits: "Mga Decimal Digit",
+    decimalFormat: "Format ng Decimal",
+    automaticFormat: "Awtomatiko · Batay sa rehiyon ng device",
+    chooseCurrency: "Default na Currency",
+    chooseCurrencyDescription:
+      "Piliin ang currency para sa pinagsamang total at mga bagong account.",
+    searchCurrencies: "Maghanap ayon sa pangalan o code ng currency",
+    noCurrenciesFound: "Walang currency na tumutugma sa iyong paghahanap.",
+    negativeNumberDescription:
+      "Piliin kung paano ipapakita ang mga negatibong halaga.",
+    decimalDigitsDescription:
+      "Piliin ang bilang ng decimal digit mula 0 hanggang 9.",
+    decimalFormatDescription:
+      "Piliin ang format ng thousands at decimal separator.",
+    helpTitle: "Tungkol sa Setup ng Currency",
+    helpMessage:
+      "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
   language: {
     heading: "Kagustuhan sa wika",

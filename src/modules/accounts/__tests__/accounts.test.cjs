@@ -357,13 +357,29 @@ test("type ordering stays within group", () => {
   assert.ok(types.listAccountTypes().findIndex((t) => t.id === second) < types.listAccountTypes().findIndex((t) => t.id === first));
   assert.deepEqual(types.findAccountTypeById(system.LIABILITY_OTHERS), originalLiability);
 });
-test("non-PHP data is preserved, read-only for opening edits, and excluded from PHP totals", () => {
+test("non-PHP data is editable with currency-aware minor units and converts into home totals", () => {
   const id = saveAccount(accountInput());
   repo.updateAccountRecord(id, { currencyCode: "USD" });
   saveAccount(accountInput(undefined, "Dollar account"), id);
   assert.equal(repo.findAccountById(id).currencyCode, "USD");
-  assert.throws(() => saveAccount(accountInput(undefined, "Dollar account", "2000"), id), /read-only/);
+  saveAccount(accountInput(undefined, "Dollar account", "2000"), id);
+  assert.equal(repo.findAccountById(id).openingBalanceMinorUnits, 200000);
   assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 0n, liabilities: 0n, excluded: 1 });
+  assert.deepEqual(openingSummary(repo.listAccounts(), "PHP"), {
+    assets: 11700000n,
+    liabilities: 0n,
+    excluded: 0,
+  });
+
+  const yenId = saveAccount({
+    ...accountInput(undefined, "Yen account", "1500"),
+    currencyCode: "JPY",
+  });
+  assert.equal(repo.findAccountById(yenId).openingBalanceMinorUnits, 1500);
+  assert.throws(
+    () => saveAccount(accountInput(undefined, "Yen account", "1500.50"), yenId),
+    /whole number/,
+  );
 });
 test("summary keeps liability signs, excludes archives, and supports totals above the safe integer limit", () => {
   saveAccount(accountInput(system.LIABILITY_OTHERS, "Debt", "-1000.50"));

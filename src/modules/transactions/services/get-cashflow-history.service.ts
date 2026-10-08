@@ -1,6 +1,11 @@
-import { and, gte, isNull, lte } from "drizzle-orm";
+import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import { accounts, transactions } from "@/infrastructure/database/schema";
+import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 
 export interface CashFlowPeriodPoint {
   periodKey: string; // e.g. "2026-10"
@@ -86,8 +91,10 @@ export function getCashFlowHistory(
       type: transactions.type,
       amountCents: transactions.amountCents,
       occurredAt: transactions.occurredAt,
+      currencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(
       and(
         isNull(transactions.deletedAt),
@@ -99,6 +106,8 @@ export function getCashFlowHistory(
 
   let overallInflow = 0;
   let overallOutflow = 0;
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
   for (const tx of txRows) {
     if (tx.type === "transfer") continue;
@@ -108,11 +117,18 @@ export function getCashFlowHistory(
     const slot = periodMap.get(key);
     if (!slot) continue;
 
-    if (tx.amountCents > 0) {
-      slot.inflowMinorUnits += tx.amountCents;
-      overallInflow += tx.amountCents;
-    } else if (tx.amountCents < 0) {
-      const outflow = Math.abs(tx.amountCents);
+    const convertedAmount = convertCurrencyMinorUnits(
+      tx.amountCents,
+      tx.currencyCode,
+      homeCurrency,
+      ratesMap,
+      DEFAULT_BASE_CURRENCY,
+    );
+    if (convertedAmount > 0) {
+      slot.inflowMinorUnits += convertedAmount;
+      overallInflow += convertedAmount;
+    } else if (convertedAmount < 0) {
+      const outflow = Math.abs(convertedAmount);
       slot.outflowMinorUnits += outflow;
       overallOutflow += outflow;
     }

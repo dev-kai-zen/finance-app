@@ -22,6 +22,8 @@ function getScreenTitle(pathname: string, t: Translate): string {
     return t("navigation.googleDriveBackup");
   if (pathname.startsWith("/local-backup"))
     return t("navigation.localBackup");
+  if (pathname.startsWith("/currency-setup"))
+    return t("navigation.currencySetup");
   if (pathname.startsWith("/language")) return t("navigation.language");
   if (pathname.startsWith("/accounts")) return t("navigation.accounts");
   if (pathname.startsWith("/transactions/scheduled"))
@@ -60,6 +62,7 @@ export function AppShell({ children, banner }: AppShellProps) {
 
   if (
     pathname.startsWith("/language") ||
+    pathname.startsWith("/currency-setup") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/transactions/scheduled")

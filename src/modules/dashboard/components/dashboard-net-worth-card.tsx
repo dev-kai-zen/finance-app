@@ -10,6 +10,7 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { NetWorthChart } from "@/modules/dashboard/components/net-worth-chart";
 import type {
   NetWorthHistory,
@@ -38,6 +39,7 @@ export function DashboardNetWorthCard({
 }: DashboardNetWorthCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
   const [valuesVisible, setValuesVisible] = useState(true);
@@ -98,7 +100,7 @@ export function DashboardNetWorthCard({
           selectable
           style={[
             styles.netWorthValue,
-            !isPositive && styles.netWorthValueNegative,
+            preferences.colorAmounts && !isPositive && styles.netWorthValueNegative,
           ]}
         >
           {valuesVisible
@@ -179,7 +181,10 @@ export function DashboardNetWorthCard({
             minimumFontScale={0.7}
             numberOfLines={1}
             selectable={valuesVisible}
-            style={[styles.breakdownValue, styles.assetValue]}
+            style={[
+              styles.breakdownValue,
+              preferences.colorAmounts && styles.assetValue,
+            ]}
           >
             {valuesVisible
               ? formatCurrency(totalAssetsMinorUnits, currencyCode)
@@ -197,7 +202,10 @@ export function DashboardNetWorthCard({
             minimumFontScale={0.7}
             numberOfLines={1}
             selectable={valuesVisible}
-            style={[styles.breakdownValue, styles.liabilityValue]}
+            style={[
+              styles.breakdownValue,
+              preferences.colorAmounts && styles.liabilityValue,
+            ]}
           >
             {valuesVisible
               ? formatCurrency(totalLiabilitiesMinorUnits, currencyCode)

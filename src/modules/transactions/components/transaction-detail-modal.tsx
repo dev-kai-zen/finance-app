@@ -14,7 +14,8 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
-import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 import { LabelBadge } from "@/modules/labels";
 import { useTransactionAttachments } from "../hooks/use-transaction-attachments";
@@ -43,6 +44,7 @@ export function TransactionDetailModal({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const [attachmentManagerOpen, setAttachmentManagerOpen] = useState(false);
@@ -66,20 +68,15 @@ export function TransactionDetailModal({
       ? transaction.amountCents
       : -Math.abs(transaction.amountCents);
 
-  const amountColor = isTransfer
+  const amountColor = !preferences.colorAmounts
+    ? theme.colors.textPrimary
+    : isTransfer
     ? theme.colors.info
     : displayAmountCents < 0
       ? theme.colors.danger
       : displayAmountCents > 0
         ? theme.colors.success
         : theme.colors.textMuted;
-
-  const phpResult = formatPhpCurrency(displayAmountCents, {
-    showPositiveSign: false,
-    positiveColor: theme.colors.success,
-    negativeColor: theme.colors.danger,
-    zeroColor: theme.colors.textMuted,
-  });
 
   const typeColor = isTransfer
     ? theme.colors.info
@@ -93,7 +90,11 @@ export function TransactionDetailModal({
         transaction.accountCurrency ?? "PHP",
         false,
       )
-    : phpResult.formatted;
+    : formatCurrency(
+        displayAmountCents,
+        transaction.accountCurrency ?? "PHP",
+        false,
+      );
 
   const formattedDate = transaction.occurredAt
     ? new Date(transaction.occurredAt).toLocaleDateString(undefined, {

@@ -8,6 +8,7 @@ import {
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type {
@@ -33,6 +34,8 @@ export function CategoryBreakdownTable({
   onSelectCategory,
 }: CategoryBreakdownTableProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
   if (categories.length === 0) {
@@ -63,7 +66,7 @@ export function CategoryBreakdownTable({
               accessibilityRole="button"
               accessibilityLabel={`${item.categoryName}, ${formatCurrency(
                 item.totalMinorUnits,
-                "PHP",
+                currencyCode,
               )}, ${item.percentage}% of total`}
               onPress={() => {
                 if (isSelected) {
@@ -105,7 +108,7 @@ export function CategoryBreakdownTable({
                     {item.categoryName}
                   </Text>
                   <Text style={styles.amountText}>
-                    {formatCurrency(item.totalMinorUnits, "PHP")}
+                    {formatCurrency(item.totalMinorUnits, currencyCode)}
                   </Text>
                 </View>
 
@@ -148,7 +151,7 @@ export function CategoryBreakdownTable({
           </Text>
         </View>
         <Text style={styles.footerTotalAmount}>
-          {formatCurrency(totalMinorUnits, "PHP")}
+          {formatCurrency(totalMinorUnits, currencyCode)}
         </Text>
       </View>
     </View>

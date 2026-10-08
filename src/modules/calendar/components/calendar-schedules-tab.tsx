@@ -164,7 +164,11 @@ export function CalendarSchedulesTab({
 
                   <View style={styles.rowRight}>
                     <Text style={[styles.amountText, { color: amountColor }]}>
-                      {formatCurrency(signedAmount, "PHP", false)}
+                      {formatCurrency(
+                        signedAmount,
+                        account?.currencyCode ?? "PHP",
+                        false,
+                      )}
                     </Text>
 
                     {/* Action buttons if due and actionable */}

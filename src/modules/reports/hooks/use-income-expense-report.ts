@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getIncomeExpenseReport } from "../services/get-income-expense-report.service";
 import type {
   IncomeExpenseMode,
@@ -9,6 +10,7 @@ import { getIncomeExpenseDateRange } from "../utils/income-expense-dates";
 import { toDateKey } from "../utils/reports-dates";
 
 export function useIncomeExpenseReport() {
+  const { preferences } = useCurrencyPreferences();
   const [mode, setMode] = useState<IncomeExpenseMode>("expense");
   const [preset, setPreset] = useState<IncomeExpensePeriodPreset>("this-month");
 
@@ -30,7 +32,7 @@ export function useIncomeExpenseReport() {
 
   const data: IncomeExpenseReportData = useMemo(() => {
     return getIncomeExpenseReport(mode, range);
-  }, [mode, range]);
+  }, [mode, range, preferences.defaultCurrency]);
 
   return {
     mode,

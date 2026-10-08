@@ -27,7 +27,7 @@ export function TransactionStatsCard({
       <View style={styles.statCard}>
         <Text style={styles.label}>TOTAL INFLOW</Text>
         <Text style={[styles.value, styles.positiveText]}>
-          +{formatCurrency(stats.totalInflowMinorUnits, currencyCode, true)}
+          {formatCurrency(stats.totalInflowMinorUnits, currencyCode, true)}
         </Text>
       </View>
 
@@ -35,7 +35,7 @@ export function TransactionStatsCard({
       <View style={styles.statCard}>
         <Text style={styles.label}>TOTAL OUTFLOW</Text>
         <Text style={[styles.value, styles.negativeText]}>
-          -{formatCurrency(stats.totalOutflowMinorUnits, currencyCode, true)}
+          {formatCurrency(-stats.totalOutflowMinorUnits, currencyCode, true)}
         </Text>
       </View>
 
@@ -43,7 +43,6 @@ export function TransactionStatsCard({
       <View style={styles.statCard}>
         <Text style={styles.label}>NET CASHFLOW</Text>
         <Text style={[styles.value, netColorStyle]}>
-          {stats.netCashflowMinorUnits >= 0 ? "+" : ""}
           {formatCurrency(stats.netCashflowMinorUnits, currencyCode, true)}
         </Text>
       </View>

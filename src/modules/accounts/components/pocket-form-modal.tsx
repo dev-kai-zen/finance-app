@@ -52,7 +52,12 @@ export function PocketFormModal({
   useEffect(() => {
     if (visible) {
       setName(pocket?.name ?? "");
-      setTargetAmount(maintainingAmountInput(pocket?.targetAmountMinorUnits));
+      setTargetAmount(
+        maintainingAmountInput(
+          pocket?.targetAmountMinorUnits,
+          account?.currencyCode ?? "PHP",
+        ),
+      );
       setConfirmArchive(false);
       setArchiveError(null);
       mutations.clearError();

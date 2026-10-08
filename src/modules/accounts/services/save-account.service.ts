@@ -25,6 +25,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
+    const currencyCode = existing?.currencyCode ?? value.currencyCode ?? "PHP";
     const type = requireAccountType(value.accountTypeId, tx);
     const creditCardType = isCreditCardAccountType(type.id, type.name);
     if (creditCardType && !value.creditCardDetails) {
@@ -34,6 +35,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
       ? {
           creditLimitMinorUnits: parseCreditLimit(
             value.creditCardDetails.creditLimit,
+            currencyCode,
           ),
           statementDay: parseBillingDay(
             value.creditCardDetails.statementDay,
@@ -58,7 +60,10 @@ export function saveAccount(input: AccountInput, id?: string): string {
         "Archive every active pocket before disabling pockets for this account.",
       );
     }
-    let openingBalanceMinorUnits = parseOpeningAmount(value.openingAmount);
+    let openingBalanceMinorUnits = parseOpeningAmount(
+      value.openingAmount,
+      currencyCode,
+    );
     let openingBalanceAt = existing && localDateInput(existing.openingBalanceAt) === value.openingDate
       ? existing.openingBalanceAt : parseOpeningDate(value.openingDate);
     if (existing?.startingBalanceLocked) {
@@ -71,12 +76,8 @@ export function saveAccount(input: AccountInput, id?: string): string {
       openingBalanceMinorUnits = existing.openingBalanceMinorUnits;
       openingBalanceAt = existing.openingBalanceAt;
     }
-    if (existing && existing.currencyCode !== "PHP" &&
-      (existing.openingBalanceMinorUnits !== openingBalanceMinorUnits || existing.openingBalanceAt.getTime() !== openingBalanceAt.getTime())) {
-      throw new Error("Opening balances for existing non-PHP accounts are read-only in this phase.");
-    }
     const maintainingBalanceMinorUnits = value.maintainingAmount?.trim()
-      ? parseMaintainingAmount(value.maintainingAmount)
+      ? parseMaintainingAmount(value.maintainingAmount, currencyCode)
       : null;
     const now = new Date();
     const sortOrder = existing && existing.accountTypeId === type.id ? existing.sortOrder
@@ -107,7 +108,7 @@ export function saveAccount(input: AccountInput, id?: string): string {
         {
           ...values,
           id: accountId,
-          currencyCode: value.currencyCode ?? "PHP",
+          currencyCode,
           startingBalanceLocked: false,
           createdAt: now,
         },

@@ -13,7 +13,8 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { NotificationModal } from "@/components/notification-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 
 export interface DeletedTransactionsModalProps {
@@ -39,6 +40,7 @@ export function DeletedTransactionsModal({
 }: DeletedTransactionsModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
+  const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
   const [pendingPermanentDelete, setPendingPermanentDelete] =
     useState<TransactionListItem | null>(null);
@@ -131,7 +133,9 @@ export function DeletedTransactionsModal({
             transactions.map((transaction) => {
               const isTransfer = transaction.type === "transfer";
               const isNegative = transaction.amountCents < 0;
-              const amountColor = isTransfer
+              const amountColor = !preferences.colorAmounts
+                ? theme.colors.textPrimary
+                : isTransfer
                 ? theme.colors.info
                 : isNegative
                   ? theme.colors.danger
@@ -141,9 +145,11 @@ export function DeletedTransactionsModal({
                     Math.abs(transaction.amountCents),
                     transaction.accountCurrency,
                   )
-                : formatPhpCurrency(transaction.amountCents, {
-                    showPositiveSign: false,
-                  }).formatted;
+                : formatCurrency(
+                    transaction.amountCents,
+                    transaction.accountCurrency,
+                    false,
+                  );
               const route = isTransfer
                 ? transaction.accountTypeName +
                   " > " +

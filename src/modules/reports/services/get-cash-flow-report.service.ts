@@ -1,4 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { getCurrencyPreferences } from "@/modules/currencies";
 import { getCashFlowHistory } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../constants/reports.constants";
@@ -19,20 +20,25 @@ export function getCashFlowReport(
     },
     context,
   );
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
 
   const periods: CashFlowRowItem[] = history.periods.map((p) => {
     let symbol: "▲" | "▼" | "" = "";
     let color: string = REPORT_COLORS.neutralMuted;
-    let formattedNet = formatCurrency(0, "PHP");
+    let formattedNet = formatCurrency(0, homeCurrency);
 
     if (p.netCashFlowMinorUnits > 0) {
       symbol = "▲";
       color = REPORT_COLORS.positiveGreen;
-      formattedNet = `+${formatCurrency(p.netCashFlowMinorUnits, "PHP")}`;
+      formattedNet = formatCurrency(
+        p.netCashFlowMinorUnits,
+        homeCurrency,
+        true,
+      );
     } else if (p.netCashFlowMinorUnits < 0) {
       symbol = "▼";
       color = REPORT_COLORS.negativeRed;
-      formattedNet = `-${formatCurrency(Math.abs(p.netCashFlowMinorUnits), "PHP")}`;
+      formattedNet = formatCurrency(p.netCashFlowMinorUnits, homeCurrency);
     }
 
     return {

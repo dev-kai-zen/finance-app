@@ -30,7 +30,7 @@ export function DashboardMonthlyCashflowCard({
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Total Inflow</Text>
           <Text style={[styles.statValue, styles.inflowText]}>
-            +{formatCurrency(cashflow.totalInflowMinorUnits, currencyCode, true)}
+            {formatCurrency(cashflow.totalInflowMinorUnits, currencyCode, true)}
           </Text>
         </View>
 
@@ -38,7 +38,7 @@ export function DashboardMonthlyCashflowCard({
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Total Outflow</Text>
           <Text style={[styles.statValue, styles.outflowText]}>
-            -{formatCurrency(cashflow.totalOutflowMinorUnits, currencyCode, true)}
+            {formatCurrency(-cashflow.totalOutflowMinorUnits, currencyCode, true)}
           </Text>
         </View>
 

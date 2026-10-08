@@ -1,14 +1,16 @@
 import { StyleSheet, Text, type TextProps, type TextStyle } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
-import { formatPhpCurrency } from "@/utils/currency";
+import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 
 export function AccountAmountText({
   amountMinorUnits,
+  currencyCode = "PHP",
   style,
   variant = "body",
   ...rest
 }: {
   amountMinorUnits: number;
+  currencyCode?: string;
   variant?: "body" | "title" | "hero";
   style?: TextStyle;
 } & Omit<TextProps, "children" | "style">) {
@@ -17,7 +19,11 @@ export function AccountAmountText({
     positiveColor: theme.colors.success,
     negativeColor: theme.colors.danger,
     zeroColor: theme.colors.textPrimary,
+    defaultColor: theme.colors.textPrimary,
   });
+  const formatted = currencyCode === "PHP"
+    ? result.formatted
+    : formatCurrency(amountMinorUnits, currencyCode);
 
   return (
     <Text
@@ -30,7 +36,7 @@ export function AccountAmountText({
         style,
       ]}
     >
-      {result.formatted}
+      {formatted}
     </Text>
   );
 }

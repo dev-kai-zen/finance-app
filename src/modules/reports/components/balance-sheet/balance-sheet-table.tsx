@@ -17,6 +17,7 @@ import {
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type {
   BalanceSheetComparisonData,
@@ -39,6 +40,8 @@ export function BalanceSheetTable({
   onToggleExpanded,
 }: BalanceSheetTableProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
 
@@ -101,12 +104,12 @@ export function BalanceSheetTable({
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
               <Text numberOfLines={1} style={styles.netWorthAmount}>
-                {formatCurrency(data.netWorth.prevMinorUnits, "PHP")}
+                {formatCurrency(data.netWorth.prevMinorUnits, currencyCode)}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
               <Text numberOfLines={1} style={styles.netWorthAmount}>
-                {formatCurrency(data.netWorth.currentMinorUnits, "PHP")}
+                {formatCurrency(data.netWorth.currentMinorUnits, currencyCode)}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
@@ -131,6 +134,8 @@ function GroupSection({
   onToggleExpanded: (key: string) => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const expanded = isExpanded(groupKey);
 
   return (
@@ -140,7 +145,7 @@ function GroupSection({
         accessibilityRole="button"
         accessibilityLabel={`${groupNode.title}, Total Current: ${formatCurrency(
           groupNode.variance.currentMinorUnits,
-          "PHP",
+          currencyCode,
         )}. Tap to ${expanded ? "collapse" : "expand"}.`}
         onPress={() => onToggleExpanded(groupKey)}
         style={({ pressed }) => [
@@ -160,12 +165,12 @@ function GroupSection({
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.groupNumericText}>
-            {formatCurrency(groupNode.variance.prevMinorUnits, "PHP")}
+            {formatCurrency(groupNode.variance.prevMinorUnits, currencyCode)}
           </Text>
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.groupNumericText}>
-            {formatCurrency(groupNode.variance.currentMinorUnits, "PHP")}
+            {formatCurrency(groupNode.variance.currentMinorUnits, currencyCode)}
           </Text>
         </View>
         <View style={styles.colNumeric}>
@@ -204,6 +209,8 @@ function AccountTypeSection({
   onToggleExpanded: (key: string) => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const typeKey = `type:${typeNode.id}`;
   const expanded = isExpanded(typeKey);
 
@@ -214,7 +221,7 @@ function AccountTypeSection({
         accessibilityRole="button"
         accessibilityLabel={`${typeNode.name}, Current: ${formatCurrency(
           typeNode.variance.currentMinorUnits,
-          "PHP",
+          currencyCode,
         )}. Tap to ${expanded ? "collapse" : "expand"}.`}
         onPress={() => onToggleExpanded(typeKey)}
         style={({ pressed }) => [
@@ -248,12 +255,12 @@ function AccountTypeSection({
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.typeNumericText}>
-            {formatCurrency(typeNode.variance.prevMinorUnits, "PHP")}
+            {formatCurrency(typeNode.variance.prevMinorUnits, currencyCode)}
           </Text>
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.typeNumericText}>
-            {formatCurrency(typeNode.variance.currentMinorUnits, "PHP")}
+            {formatCurrency(typeNode.variance.currentMinorUnits, currencyCode)}
           </Text>
         </View>
         <View style={styles.colNumeric}>

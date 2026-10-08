@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -17,7 +18,8 @@ export function AccountOpeningSummary({
   accounts: AccountListItem[];
 }) {
   const s = useThemeStyles(styles);
-  const summary = openingSummary(accounts);
+  const { preferences } = useCurrencyPreferences();
+  const summary = openingSummary(accounts, preferences.defaultCurrency);
   // Liabilities are stored as signed negative balances for easy summation: Assets + Liabilities
   const netWorth = summary.assets + summary.liabilities;
 
@@ -33,6 +35,7 @@ export function AccountOpeningSummary({
           <AccountAmountText
             accessibilityRole="header"
             amountMinorUnits={netWorthNumber}
+            currencyCode={preferences.defaultCurrency}
             variant="hero"
           />
         ) : (
@@ -46,6 +49,7 @@ export function AccountOpeningSummary({
           {assetsNumber !== null ? (
             <AccountAmountText
               amountMinorUnits={assetsNumber}
+              currencyCode={preferences.defaultCurrency}
               variant="title"
             />
           ) : (
@@ -62,6 +66,7 @@ export function AccountOpeningSummary({
           {liabilitiesNumber !== null ? (
             <AccountAmountText
               amountMinorUnits={liabilitiesNumber}
+              currencyCode={preferences.defaultCurrency}
               variant="title"
             />
           ) : (
@@ -74,8 +79,8 @@ export function AccountOpeningSummary({
 
       {summary.excluded > 0 ? (
         <Text style={s.excludedNote}>
-          {summary.excluded} account(s) excluded from PHP totals because of
-          another currency or data.
+          {summary.excluded} account(s) excluded because their balance data is
+          invalid.
         </Text>
       ) : null}
     </View>

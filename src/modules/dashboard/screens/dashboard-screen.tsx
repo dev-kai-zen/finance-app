@@ -11,6 +11,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import {
   TransactionFormModal,
@@ -26,6 +27,7 @@ export function DashboardScreen() {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
+  const { preferences: currencyPreferences } = useCurrencyPreferences();
 
   const {
     summary,
@@ -175,6 +177,7 @@ export function DashboardScreen() {
         ) : (
           <>
             <DashboardNetWorthCard
+              currencyCode={currencyPreferences.defaultCurrency}
               history={summary.netWorthHistory}
               monthlyChangePercentage={summary.netWorthChangePercentage}
               netWorthMinorUnits={netWorth}

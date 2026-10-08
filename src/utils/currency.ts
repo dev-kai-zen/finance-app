@@ -13,6 +13,7 @@ export interface FormatPhpOptions {
   positiveColor?: string;
   negativeColor?: string;
   zeroColor?: string;
+  defaultColor?: string;
 }
 
 export interface FormattedPhpCurrency {
@@ -33,6 +34,47 @@ export interface FormattedPhpCurrency {
 }
 
 export const DEFAULT_BASE_CURRENCY = "PHP";
+
+export type NegativeNumberFormat = "minus" | "parentheses";
+export type DecimalFormat =
+  | "automatic"
+  | "comma-dot"
+  | "dot-comma"
+  | "space-dot"
+  | "space-comma";
+
+export interface CurrencyPreferences {
+  defaultCurrency: string;
+  displayCurrency: boolean;
+  colorAmounts: boolean;
+  negativeFormat: NegativeNumberFormat;
+  decimalDigits: number;
+  decimalFormat: DecimalFormat;
+}
+
+export const DEFAULT_CURRENCY_PREFERENCES: CurrencyPreferences = {
+  defaultCurrency: DEFAULT_BASE_CURRENCY,
+  displayCurrency: true,
+  colorAmounts: true,
+  negativeFormat: "minus",
+  decimalDigits: 2,
+  decimalFormat: "automatic",
+};
+
+let activeCurrencyPreferences = DEFAULT_CURRENCY_PREFERENCES;
+let activeCurrencyLocale = "en-PH";
+
+export function setActiveCurrencyFormattingPreferences(
+  preferences: CurrencyPreferences,
+  locale?: string,
+): void {
+  activeCurrencyPreferences = { ...preferences };
+  if (locale) activeCurrencyLocale = locale;
+}
+
+export function getActiveCurrencyFormattingPreferences(): CurrencyPreferences {
+  return activeCurrencyPreferences;
+}
 
 /**
  * Currency display symbols mapped by ISO 4217 code.
@@ -133,25 +175,19 @@ export function formatPhpCurrency(
   const isZero = amountMinorUnits === 0;
   const isPositive = amountMinorUnits > 0;
 
-  const absMinorUnits = Math.abs(amountMinorUnits);
-  const major = Math.floor(absMinorUnits / 100);
-  const minor = absMinorUnits % 100;
-
-  const majorFormatted = major.toLocaleString("en-PH");
-  const minorFormatted = minor.toString().padStart(2, "0");
-  const baseNumber = `${majorFormatted}.${minorFormatted}`;
-
   const sign = isNegative ? "-" : options?.showPositiveSign && isPositive ? "+" : "";
 
   const positiveColor = options?.positiveColor ?? PHP_CURRENCY_COLORS.positive;
   const negativeColor = options?.negativeColor ?? PHP_CURRENCY_COLORS.negative;
   const zeroColor = options?.zeroColor ?? PHP_CURRENCY_COLORS.neutral;
 
-  const color = isPositive
-    ? positiveColor
-    : isNegative
-      ? negativeColor
-      : zeroColor;
+  const color = activeCurrencyPreferences.colorAmounts
+    ? isPositive
+      ? positiveColor
+      : isNegative
+        ? negativeColor
+        : zeroColor
+    : options?.defaultColor ?? zeroColor;
 
   const colorKey: "success" | "danger" | "neutral" = isPositive
     ? "success"
@@ -160,9 +196,18 @@ export function formatPhpCurrency(
       : "neutral";
 
   return {
-    formatted: `${sign}₱${baseNumber}`,
-    formattedWithSign: `${isNegative ? "-" : isPositive ? "+" : ""}₱${baseNumber}`,
-    amountText: `${sign}${baseNumber}`,
+    formatted: formatCurrency(
+      amountMinorUnits,
+      "PHP",
+      Boolean(options?.showPositiveSign),
+    ),
+    formattedWithSign: formatCurrency(amountMinorUnits, "PHP", true),
+    amountText: formatCurrency(
+      amountMinorUnits,
+      "PHP",
+      Boolean(options?.showPositiveSign),
+      { hideCurrency: true },
+    ),
     color,
     colorKey,
     isPositive,
@@ -174,6 +219,9 @@ export function formatPhpCurrency(
 
 export interface FormatCurrencyOptions {
   useCode?: boolean;
+  hideCurrency?: boolean;
+  preferences?: CurrencyPreferences;
+  locale?: string;
 }
 
 /**
@@ -191,30 +239,65 @@ export function formatCurrency(
   showSign: boolean = false,
   options?: FormatCurrencyOptions,
 ): string {
+  const preferences = options?.preferences ?? activeCurrencyPreferences;
+  const locale = options?.locale ?? activeCurrencyLocale;
   const isNegative = amountMinorUnits < 0;
   const absMinorUnits = Math.abs(amountMinorUnits);
-  const decimals = CURRENCY_DECIMALS[currencyCode] ?? 2;
-  const divisor = 10 ** decimals;
+  const sourceDecimals = CURRENCY_DECIMALS[currencyCode] ?? 2;
+  const divisor = 10 ** sourceDecimals;
+  const decimalDigits = Math.min(9, Math.max(0, preferences.decimalDigits));
+  const baseNumber = formatAbsoluteNumber(
+    absMinorUnits / divisor,
+    decimalDigits,
+    preferences.decimalFormat,
+    locale,
+  );
+  const showCurrency = preferences.displayCurrency && !options?.hideCurrency;
+  const symbol = !showCurrency
+    ? ""
+    : options?.useCode
+      ? `${currencyCode} `
+      : CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
+  const unsigned = `${symbol}${baseNumber}`;
 
-  const major = Math.floor(absMinorUnits / divisor);
-  const minor = decimals > 0 ? absMinorUnits % divisor : 0;
-
-  const majorFormatted = major.toLocaleString("en-PH");
-  const minorFormatted = decimals > 0 ? minor.toString().padStart(decimals, "0") : "";
-  const baseNumber = decimals > 0 ? `${majorFormatted}.${minorFormatted}` : majorFormatted;
-
-  const symbol = options?.useCode
-    ? `${currencyCode} `
-    : CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
-
-  let sign = "";
   if (isNegative) {
-    sign = "-";
-  } else if (showSign && amountMinorUnits > 0) {
-    sign = "+";
+    return preferences.negativeFormat === "parentheses"
+      ? `(${unsigned})`
+      : `-${unsigned}`;
+  }
+  return `${showSign && amountMinorUnits > 0 ? "+" : ""}${unsigned}`;
+}
+
+function formatAbsoluteNumber(
+  value: number,
+  decimalDigits: number,
+  decimalFormat: DecimalFormat,
+  locale: string,
+): string {
+  if (decimalFormat === "automatic") {
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: decimalDigits,
+      maximumFractionDigits: decimalDigits,
+      useGrouping: true,
+    }).format(value);
   }
 
-  return `${sign}${symbol}${baseNumber}`;
+  const [integerPart, fractionPart = ""] = value
+    .toFixed(decimalDigits)
+    .split(".");
+  const groupingSeparator = decimalFormat.startsWith("space")
+    ? " "
+    : decimalFormat === "dot-comma"
+      ? "."
+      : ",";
+  const decimalSeparator = decimalFormat.endsWith("comma") ? "," : ".";
+  const groupedInteger = integerPart.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    groupingSeparator,
+  );
+  return decimalDigits > 0
+    ? `${groupedInteger}${decimalSeparator}${fractionPart}`
+    : groupedInteger;
 }
 
 /**
