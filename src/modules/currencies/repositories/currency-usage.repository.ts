@@ -59,6 +59,21 @@ export function isCurrencyInUse(
   return listUsedCurrencyCodes(context).has(code);
 }
 
+/** Accounts, goals, or app default — not conversion-rate rows alone. */
+export function isCurrencyReferencedInLedger(
+  code: string,
+  context: DbContext = db,
+): boolean {
+  const normalized = code.trim().toUpperCase();
+  const reasons = getCurrencyUsageReasons(normalized, context);
+  return reasons.some(
+    (reason) =>
+      reason.kind === "accounts" ||
+      reason.kind === "goals" ||
+      reason.kind === "default_currency",
+  );
+}
+
 export function getCurrencyUsageReasons(
   code: string,
   context: DbContext = db,

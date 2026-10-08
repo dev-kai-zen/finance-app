@@ -3,7 +3,7 @@ import {
   getCurrencyByCode,
   updateCurrencyRecord,
 } from "../repositories/currencies.repository";
-import { isCurrencyInUse } from "../repositories/currency-usage.repository";
+import { isCurrencyReferencedInLedger } from "../repositories/currency-usage.repository";
 import type { Currency, UpdateCurrencyInput } from "../types/currency.types";
 import { refreshActiveCurrencyCatalog } from "./currency-catalog.service";
 
@@ -16,9 +16,9 @@ export function updateCurrency(
   if (!existing) {
     throw new Error(`Currency ${code} was not found.`);
   }
-  if (isCurrencyInUse(code, context)) {
+  if (isCurrencyReferencedInLedger(code, context)) {
     throw new Error(
-      "This currency is already in use and its decimal places cannot be changed.",
+      "This currency is used by accounts, goals, or as your default currency and cannot be changed.",
     );
   }
 

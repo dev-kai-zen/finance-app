@@ -161,10 +161,10 @@ export function CurrencyCatalogModal({
     if (ok) setEditor(null);
   };
 
-  const editorLocked = editor?.mode === "edit" && editor.source?.isUsed;
+  const editorLocked = editor?.mode === "edit" && editor.source?.isLocked;
   const canEditIdentity =
     editor?.mode === "create" ||
-    (editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isUsed);
+    (editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isLocked);
   const canEditExponent = !editorLocked;
   const canSave =
     !editorLocked &&
@@ -202,7 +202,7 @@ export function CurrencyCatalogModal({
         headerRight={editor ? undefined : managerHeader}
         onClose={requestBack}
         onDelete={
-          editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isUsed
+          editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isLocked
             ? () => setConfirmDelete(true)
             : undefined
         }

@@ -30,7 +30,9 @@ export { listCurrenciesWithUsage } from "./services/list-currencies-with-usage.s
 export {
   getCurrencyUsageReasons,
   isCurrencyInUse,
+  isCurrencyReferencedInLedger,
 } from "./repositories/currency-usage.repository";
+export { deleteExchangeRatesForCurrency } from "./repositories/exchange-rates.repository";
 export { useCurrencies } from "./hooks/use-currencies";
 export { CurrencyCatalogModal } from "./components/currency-catalog-modal";
 export {

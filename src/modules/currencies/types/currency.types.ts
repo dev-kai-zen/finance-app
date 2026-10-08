@@ -11,7 +11,10 @@ export interface Currency {
 }
 
 export interface CurrencyListItem extends Currency {
+  /** Shown when referenced anywhere (including conversion rates). */
   isUsed: boolean;
+  /** Locks edit/delete when referenced by accounts, goals, or default currency. */
+  isLocked: boolean;
 }
 
 export type CurrencyUsageReasonKind =

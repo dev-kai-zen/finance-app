@@ -3,7 +3,8 @@ import {
   deleteCurrencyByCode,
   getCurrencyByCode,
 } from "../repositories/currencies.repository";
-import { isCurrencyInUse } from "../repositories/currency-usage.repository";
+import { deleteExchangeRatesForCurrency } from "../repositories/exchange-rates.repository";
+import { isCurrencyReferencedInLedger } from "../repositories/currency-usage.repository";
 import { refreshActiveCurrencyCatalog } from "./currency-catalog.service";
 
 export function deleteCurrency(code: string, context: DbContext = db): void {
@@ -15,10 +16,16 @@ export function deleteCurrency(code: string, context: DbContext = db): void {
   if (!existing.isCustom) {
     throw new Error("Built-in currencies cannot be deleted.");
   }
-  if (isCurrencyInUse(normalized, context)) {
-    throw new Error("This currency is in use and cannot be deleted.");
+  if (isCurrencyReferencedInLedger(normalized, context)) {
+    throw new Error(
+      "This currency is used by accounts, goals, or as your default currency and cannot be deleted.",
+    );
   }
 
-  deleteCurrencyByCode(normalized, context);
+  context.transaction((tx) => {
+    deleteExchangeRatesForCurrency(normalized, tx);
+    deleteCurrencyByCode(normalized, tx);
+  });
+
   refreshActiveCurrencyCatalog(context);
 }

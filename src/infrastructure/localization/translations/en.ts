@@ -98,7 +98,7 @@ export const en = {
     addCurrency: "Add currency",
     usedChip: "Used",
     usedLockedMessage:
-      "This currency is already in use. Decimal places and details cannot be changed.",
+      "This currency is tied to accounts, goals, or your default currency. Decimal places and details cannot be changed.",
     usageChipAccessibility: "Used, show where this currency is referenced",
     usageModalLink: "See where it is used",
     usageModalTitle: "Where %{code} is used",
