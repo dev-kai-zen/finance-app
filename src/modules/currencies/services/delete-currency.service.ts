@@ -13,9 +13,6 @@ export function deleteCurrency(code: string, context: DbContext = db): void {
   if (!existing) {
     throw new Error(`Currency ${normalized} was not found.`);
   }
-  if (!existing.isCustom) {
-    throw new Error("Built-in currencies cannot be deleted.");
-  }
   if (isCurrencyReferencedInLedger(normalized, context)) {
     throw new Error(
       "This currency is used by accounts, goals, or as your default currency and cannot be deleted.",

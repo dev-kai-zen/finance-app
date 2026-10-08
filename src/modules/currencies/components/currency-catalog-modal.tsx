@@ -194,7 +194,7 @@ export function CurrencyCatalogModal({
   return (
     <>
       <FullScreenFormModal
-        deleteDisabled={mutations.pending || editorLocked || !editor?.source?.isCustom}
+        deleteDisabled={mutations.pending || editorLocked}
         pending={mutations.pending}
         saveDisabled={!canSave || mutations.pending}
         title={title}
@@ -202,7 +202,7 @@ export function CurrencyCatalogModal({
         headerRight={editor ? undefined : managerHeader}
         onClose={requestBack}
         onDelete={
-          editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isLocked
+          editor?.mode === "edit" && editor.source && !editor.source.isLocked
             ? () => setConfirmDelete(true)
             : undefined
         }
@@ -325,6 +325,22 @@ export function CurrencyCatalogModal({
 
             {!editorLocked && editor.mode === "edit" && !editor.source?.isCustom ? (
               <Text style={styles.fieldHint}>{t("currency.builtinEditHint")}</Text>
+            ) : null}
+
+            {editor.mode === "edit" && editor.source && !editor.source.isLocked ? (
+              <Pressable
+                accessibilityLabel={t("currency.deleteAction")}
+                accessibilityRole="button"
+                disabled={mutations.pending}
+                onPress={() => setConfirmDelete(true)}
+                style={({ pressed }) => [
+                  styles.deleteButton,
+                  pressed && styles.pressed,
+                  mutations.pending && styles.deleteButtonDisabled,
+                ]}
+              >
+                <Text style={styles.deleteButtonText}>{t("currency.deleteCurrency")}</Text>
+              </Pressable>
             ) : null}
           </ScrollView>
         ) : (
@@ -567,6 +583,22 @@ function createStyles(theme: AppTheme) {
     textInputDisabled: {
       backgroundColor: theme.colors.surfaceMuted,
       color: theme.colors.textMuted,
+    },
+    deleteButton: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}12`,
+      borderColor: `${theme.colors.danger}40`,
+      borderCurve: "continuous",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginTop: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+    },
+    deleteButtonDisabled: { opacity: 0.5 },
+    deleteButtonText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.base,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

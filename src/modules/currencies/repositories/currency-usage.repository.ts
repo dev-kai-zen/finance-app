@@ -52,11 +52,12 @@ export function listUsedCurrencyCodes(context: DbContext = db): Set<string> {
   return used;
 }
 
+/** Accounts, goals, or default — excludes conversion-rate rows alone. */
 export function isCurrencyInUse(
   code: string,
   context: DbContext = db,
 ): boolean {
-  return listUsedCurrencyCodes(context).has(code);
+  return isCurrencyReferencedInLedger(code, context);
 }
 
 /** Accounts, goals, or app default — not conversion-rate rows alone. */

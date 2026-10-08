@@ -129,7 +129,9 @@ export const fil = {
       "Built-in currency: puwede lang baguhin ang decimal places bago gamitin.",
     deleteTitle: "Burahin ang currency",
     deleteAction: "Burahin",
-    deleteConfirm: "Burahin ang %{code}? Hindi na ito maibabalik.",
+    deleteCurrency: "Burahin ang currency",
+    deleteConfirm:
+      "Burahin ang %{code}? Aalisin ang mga conversion rate para sa currency na ito. Hindi na ito maibabalik.",
     errorTitle: "Hindi ma-save",
     decimalFormat: "Format ng Decimal",
     automaticFormat: "Awtomatiko · Batay sa rehiyon ng device",

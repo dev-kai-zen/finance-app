@@ -129,7 +129,9 @@ export const es = {
       "Monedas integradas: solo puedes cambiar los decimales antes de usarlas.",
     deleteTitle: "Eliminar moneda",
     deleteAction: "Eliminar",
-    deleteConfirm: "¿Eliminar %{code}? No se puede deshacer.",
+    deleteCurrency: "Eliminar moneda",
+    deleteConfirm:
+      "¿Eliminar %{code}? Se quitarán los ajustes de tipo de cambio de esta moneda. No se puede deshacer.",
     errorTitle: "No se pudo guardar",
     decimalFormat: "Formato decimal",
     automaticFormat: "Automático · Según la región del dispositivo",

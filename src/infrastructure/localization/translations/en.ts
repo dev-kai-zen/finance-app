@@ -117,7 +117,9 @@ export const en = {
     builtinEditHint: "Built-in currencies: you can only change decimal places before use.",
     deleteTitle: "Delete currency",
     deleteAction: "Delete",
-    deleteConfirm: "Delete %{code}? This cannot be undone.",
+    deleteCurrency: "Delete currency",
+    deleteConfirm:
+      "Delete %{code}? Conversion rate settings for this currency will be removed. This cannot be undone.",
     errorTitle: "Could not save",
     decimalFormat: "Decimal Format",
     automaticFormat: "Automatic · Based on device region",
