@@ -1,4 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { requireAccount } from "@/modules/accounts";
 import {
   findTransactionById,
   updateTransactionRecord,
@@ -67,6 +68,7 @@ export function updateTransactionInContext(
         "Account, amount, and date cannot be changed after creating an installment plan.",
       );
     }
+    const account = requireAccount(input.accountId, context);
     if (input.pocketId) {
       requirePocketForAccount(input.pocketId, input.accountId, context, {
         allowArchived: existing.pocketId === input.pocketId,
@@ -80,6 +82,7 @@ export function updateTransactionInContext(
         categoryId: input.categoryId,
         pocketId: input.pocketId ?? null,
         type: input.type,
+        currencyCode: input.currencyCode ?? account.currencyCode,
         amountMinorUnits: input.amountMinorUnits,
         name: input.name?.trim() || null,
         note: input.note?.trim() || null,

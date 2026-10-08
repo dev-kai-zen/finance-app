@@ -16,6 +16,7 @@ export interface AmountCalculatorFieldProps {
   disabled?: boolean;
   showSignToggle?: boolean;
   showCurrencyPill?: boolean;
+  onPressCurrency?: () => void;
 }
 
 export function AmountCalculatorField({
@@ -29,6 +30,7 @@ export function AmountCalculatorField({
   disabled = false,
   showSignToggle = true,
   showCurrencyPill = true,
+  onPressCurrency,
 }: AmountCalculatorFieldProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -103,9 +105,25 @@ export function AmountCalculatorField({
         </View>
 
         {showCurrencyPill ? (
-          <View style={styles.currencyPill}>
-            <Text style={styles.currencyPillText}>{currencyCode}</Text>
-          </View>
+          onPressCurrency ? (
+            <Pressable
+              accessibilityLabel={`Currency ${currencyCode}. Tap to change.`}
+              accessibilityRole="button"
+              disabled={disabled}
+              onPress={onPressCurrency}
+              style={({ pressed }) => [
+                styles.currencyPill,
+                styles.currencyPillPressable,
+                pressed && styles.currencyPillPressed,
+              ]}
+            >
+              <Text style={styles.currencyPillText}>{currencyCode}</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.currencyPill}>
+              <Text style={styles.currencyPillText}>{currencyCode}</Text>
+            </View>
+          )
         ) : null}
       </View>
     </View>
@@ -190,6 +208,13 @@ function createStyles(theme: AppTheme) {
       height: 40,
       justifyContent: "center",
       width: 40,
+    },
+    currencyPillPressable: {
+      borderColor: theme.colors.primary,
+      borderWidth: 1,
+    },
+    currencyPillPressed: {
+      opacity: 0.88,
     },
     currencyPill: {
       alignItems: "center",

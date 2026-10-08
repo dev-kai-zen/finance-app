@@ -34,7 +34,14 @@ import { previewInstallmentPlan } from "@/modules/credit-cards";
 import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
-import { formatCurrency } from "@/utils/currency";
+import { getExchangeRateMap } from "@/modules/currencies";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+  formatCurrency,
+} from "@/utils/currency";
+import { TransactionCurrencyPickerModal } from "./transaction-currency-picker-modal";
+import { TransactionExchangeRateHint } from "./transaction-exchange-rate-hint";
 import {
   checkBudgetExceeded,
   BudgetLiveIndicator,
@@ -252,6 +259,8 @@ export function TransactionFormModal({
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [entryCurrencyCode, setEntryCurrencyCode] = useState("PHP");
+  const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
   const [dateTimePickerMode, setDateTimePickerMode] = useState<"date" | "time" | null>(null);
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
@@ -311,6 +320,7 @@ export function TransactionFormModal({
         const isNeg = initialTransaction.amountMinorUnits < 0;
         setAmountSign(isNeg ? "-" : "+");
         setAmountMinorUnits(Math.abs(initialTransaction.amountMinorUnits));
+        setEntryCurrencyCode(initialTransaction.currencyCode ?? "PHP");
         setSelectedAccountId(initialTransaction.accountId);
         setSelectedPocketId(initialTransaction.pocketId);
         setTransferToAccountId(
@@ -504,7 +514,13 @@ export function TransactionFormModal({
           )
           .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
       : transferToAccountBalance;
-  const currencyCode = selectedAccount?.currencyCode ?? "PHP";
+  const accountCurrencyCode = selectedAccount?.currencyCode ?? "PHP";
+  const entryCurrency = entryCurrencyCode.trim().toUpperCase();
+
+  useEffect(() => {
+    if (isEditing) return;
+    setEntryCurrencyCode(accountCurrencyCode);
+  }, [selectedAccountId, accountCurrencyCode, isEditing]);
   const canUseInstallments =
     mode === "expense" &&
     amountSign === "-" &&
@@ -639,7 +655,7 @@ export function TransactionFormModal({
           )
           .reduce((sum, pocket) => sum + pocket.currentBalanceMinorUnits, 0)
       : feeAccountBalance;
-  const feeAccountCurrency = feeAccount?.currencyCode ?? currencyCode;
+  const feeAccountCurrency = feeAccount?.currencyCode ?? accountCurrencyCode;
 
   const handleDateTimeConfirm = (selectedValue: Date) => {
     setOccurredAt((currentValue) =>
@@ -831,7 +847,7 @@ export function TransactionFormModal({
         const budgetCheck = checkBudgetExceeded({
           categoryId: selectedCategoryId,
           amountMinorUnits: Math.abs(amountMinorUnits),
-          expenseCurrencyCode: currencyCode,
+          expenseCurrencyCode: entryCurrency,
           occurredAt: transactionOccurredAt,
           excludeTransactionId:
             isEditing && initialTransaction ? initialTransaction.id : null,
@@ -850,12 +866,24 @@ export function TransactionFormModal({
       }
 
       setLocalError(null);
+      const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+      const storedAmount =
+        entryCurrency !== accountCurrencyCode.toUpperCase()
+          ? convertCurrencyMinorUnits(
+              signedAmount,
+              entryCurrency,
+              accountCurrencyCode,
+              ratesMap,
+              DEFAULT_BASE_CURRENCY,
+            )
+          : signedAmount;
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         pocketId: selectedPocketId,
         type: mode,
-        amountMinorUnits: signedAmount,
+        amountMinorUnits: storedAmount,
+        currencyCode: accountCurrencyCode,
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
@@ -1058,17 +1086,30 @@ export function TransactionFormModal({
               <AmountCalculatorField
                 amountMinorUnits={amountMinorUnits}
                 amountSign={mode === "transfer" ? "transfer" : amountSign}
-                currencyCode={currencyCode}
+                currencyCode={
+                  mode === "transfer" ? accountCurrencyCode : entryCurrency
+                }
                 disabled={pending}
                 label="Amount"
                 showSignToggle={true}
                 onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onPressCurrency={
+                  mode === "transfer" ? undefined : () => setIsCurrencyPickerOpen(true)
+                }
                 onToggleSign={
                   mode !== "transfer"
                     ? () => setAmountSign((prev) => (prev === "+" ? "-" : "+"))
                     : undefined
                 }
               />
+              {mode !== "transfer" && selectedAccount ? (
+                <TransactionExchangeRateHint
+                  accountCurrencyCode={accountCurrencyCode}
+                  amountMinorUnits={amountMinorUnits}
+                  amountSign={amountSign}
+                  entryCurrencyCode={entryCurrency}
+                />
+              ) : null}
             </View>
 
             {/* Account Selector */}
@@ -1396,7 +1437,7 @@ export function TransactionFormModal({
                   <BudgetLiveIndicator
                     amountMinorUnits={amountMinorUnits}
                     categoryId={selectedCategoryId}
-                    expenseCurrencyCode={currencyCode}
+                    expenseCurrencyCode={entryCurrency}
                     excludeTransactionId={
                       isEditing && initialTransaction ? initialTransaction.id : null
                     }
@@ -1574,7 +1615,7 @@ export function TransactionFormModal({
                           <Text style={styles.installmentMonthlyAmount}>
                             {formatCurrency(
                               installmentPreview.monthlyAmountMinorUnits,
-                              currencyCode,
+                              accountCurrencyCode,
                             )}{" "}
                             <Text style={styles.installmentMonthlySub}>
                               / month
@@ -1774,7 +1815,7 @@ export function TransactionFormModal({
 
       {/* Sub-Modals */}
       <AmountCalculatorModal
-        currencyCode={currencyCode}
+        currencyCode={mode === "transfer" ? accountCurrencyCode : entryCurrency}
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
@@ -1783,6 +1824,13 @@ export function TransactionFormModal({
         }}
         title={`Enter ${mode.toUpperCase()} Amount`}
         visible={isCalculatorOpen}
+      />
+
+      <TransactionCurrencyPickerModal
+        selectedCode={entryCurrency}
+        visible={isCurrencyPickerOpen}
+        onClose={() => setIsCurrencyPickerOpen(false)}
+        onSelect={(code) => setEntryCurrencyCode(code.trim().toUpperCase())}
       />
 
       <TransactionDateTimePickerModal

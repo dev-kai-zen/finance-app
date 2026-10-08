@@ -46,6 +46,7 @@ export function createTransactionInContext(
         pocketId: input.pocketId ?? null,
         transactionGroupId: null,
         type: input.type,
+        currencyCode: input.currencyCode ?? account.currencyCode,
         amountMinorUnits: input.amountMinorUnits,
         name: input.name?.trim() || null,
         note: input.note?.trim() || null,

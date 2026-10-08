@@ -104,6 +104,7 @@ export interface CreateTransactionInput {
   pocketId?: string | null;
   type: "income" | "expense";
   amountMinorUnits: number;
+  currencyCode?: string;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;

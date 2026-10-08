@@ -46,3 +46,4 @@ export {
   sumRowsByCurrencyToTarget,
   type CurrencyMinorUnitsBucket,
 } from "./services/aggregate-minor-units-by-currency.service";
+export { formatOneMajorUnitExchangeRate } from "./services/format-exchange-rate-display.service";
