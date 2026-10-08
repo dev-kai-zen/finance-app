@@ -1,4 +1,5 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { pockets } from "./pockets";
@@ -16,6 +17,7 @@ export const transactions = sqliteTable(
     }),
     transactionGroupId: text("transaction_group_id"),
     type: text("type").notNull(),
+    currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     amountMinorUnits: integer("amount_minor_units").notNull(),
     name: text("name"),
     note: text("note"),
@@ -40,5 +42,6 @@ export const transactions = sqliteTable(
     index("transactions_transaction_group_id_index").on(
       table.transactionGroupId,
     ),
+    index("transactions_currency_code_index").on(table.currencyCode),
   ],
 );

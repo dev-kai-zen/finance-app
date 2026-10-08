@@ -108,7 +108,7 @@ export const es = {
     sampleAmount: "Ejemplo",
     addCurrency: "Añadir moneda",
     usedChip: "En uso",
-    usedChipClickToView: "En uso — Pulsa para ver",
+    usageClickToView: "Pulsa para ver",
     usedLockedMessage:
       "Esta moneda ya está en uso. No se pueden cambiar los decimales ni los detalles.",
     usageChipAccessibility: "En uso, mostrar dónde se usa esta moneda",
@@ -118,6 +118,7 @@ export const es = {
     usageModalEmpty: "No se encontraron referencias activas para %{code}.",
     usageReasonAccounts: "%{count} cuenta(s)",
     usageReasonGoals: "%{count} meta(s)",
+    usageReasonTransactions: "%{count} transacción(es)",
     usageReasonExchangeRates: "Ajustes de tipos de cambio (%{count})",
     usageReasonDefault: "Tu moneda predeterminada para totales y cuentas nuevas",
     fieldCode: "Código de moneda",

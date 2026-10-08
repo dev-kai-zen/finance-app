@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import {
   accountTypes,
   accounts,
@@ -43,6 +44,7 @@ function mapRowToListItem(r: {
     pocketId: r.transaction.pocketId,
     transactionGroupId: r.transaction.transactionGroupId,
     type: r.transaction.type as Transaction["type"],
+    currencyCode: r.transaction.currencyCode,
     amountMinorUnits: r.transaction.amountMinorUnits,
     name: r.transaction.name,
     note: r.transaction.note,
@@ -481,12 +483,33 @@ export function listLedgerTransactionsForAccount(
     }));
 }
 
+function resolveTransactionCurrencyCode(
+  accountId: string,
+  explicitCode: string | undefined,
+  context: DbContext,
+): string {
+  if (explicitCode?.trim()) {
+    return explicitCode.trim().toUpperCase();
+  }
+  const accountRow = context
+    .select({ currencyCode: accounts.currencyCode })
+    .from(accounts)
+    .where(eq(accounts.id, accountId))
+    .get();
+  return accountRow?.currencyCode ?? DEFAULT_BASE_CURRENCY;
+}
+
 export function insertTransaction(
   data: NewTransaction,
   context: DbContext = db,
 ): Transaction {
   const now = new Date();
   const id = data.id ?? generateId(context);
+  const currencyCode = resolveTransactionCurrencyCode(
+    data.accountId,
+    data.currencyCode,
+    context,
+  );
 
   const record = {
     id,
@@ -495,6 +518,7 @@ export function insertTransaction(
     pocketId: data.pocketId ?? null,
     transactionGroupId: data.transactionGroupId ?? null,
     type: data.type,
+    currencyCode,
     amountMinorUnits: data.amountMinorUnits,
     name: data.name ?? null,
     note: data.note ?? null,
@@ -518,6 +542,7 @@ export function updateTransactionRecord(
       | "categoryId"
       | "pocketId"
       | "type"
+      | "currencyCode"
       | "amountMinorUnits"
       | "name"
       | "note"
@@ -526,12 +551,21 @@ export function updateTransactionRecord(
   >,
   context: DbContext = db,
 ): void {
+  const patch: typeof values & { updatedAt: Date; currencyCode?: string } = {
+    ...values,
+    updatedAt: new Date(),
+  };
+  if (values.accountId !== undefined && values.currencyCode === undefined) {
+    patch.currencyCode = resolveTransactionCurrencyCode(
+      values.accountId,
+      undefined,
+      context,
+    );
+  }
+
   context
     .update(transactions)
-    .set({
-      ...values,
-      updatedAt: new Date(),
-    })
+    .set(patch)
     .where(eq(transactions.id, id))
     .run();
 }

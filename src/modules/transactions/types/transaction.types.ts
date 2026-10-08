@@ -9,6 +9,7 @@ export interface Transaction {
   pocketId: string | null;
   transactionGroupId: string | null;
   type: TransactionType;
+  currencyCode: string;
   amountMinorUnits: number;
   name: string | null;
   note: string | null;
@@ -18,8 +19,12 @@ export interface Transaction {
   deletedAt: Date | null;
 }
 
-export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deletedAt"> & {
+export type NewTransaction = Omit<
+  Transaction,
+  "id" | "createdAt" | "updatedAt" | "deletedAt" | "currencyCode"
+> & {
   id?: string;
+  currencyCode?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;

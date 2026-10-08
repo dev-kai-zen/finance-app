@@ -20,6 +20,7 @@ export interface CurrencyListItem extends Currency {
 export type CurrencyUsageReasonKind =
   | "accounts"
   | "goals"
+  | "transactions"
   | "exchange_rates"
   | "default_currency";
 

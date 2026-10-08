@@ -22,6 +22,8 @@ export function formatCurrencyUsageMessage(
         return t("currency.usageReasonAccounts", { count: reason.count });
       case "goals":
         return t("currency.usageReasonGoals", { count: reason.count });
+      case "transactions":
+        return t("currency.usageReasonTransactions", { count: reason.count });
       case "default_currency":
         return t("currency.usageReasonDefault");
       default:

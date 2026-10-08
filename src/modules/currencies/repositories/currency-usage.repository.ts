@@ -5,6 +5,7 @@ import {
   exchangeRates,
   goals,
   settings,
+  transactions,
 } from "@/infrastructure/database/schema";
 import { CURRENCY_PREFERENCE_KEYS } from "../constants/currency-preferences.constants";
 import type { CurrencyUsageReason } from "../types/currency.types";
@@ -71,6 +72,7 @@ export function isCurrencyReferencedInLedger(
     (reason) =>
       reason.kind === "accounts" ||
       reason.kind === "goals" ||
+      reason.kind === "transactions" ||
       reason.kind === "default_currency",
   );
 }
@@ -100,6 +102,16 @@ export function getCurrencyUsageReasons(
   const goalCount = Number(goalCountRow?.total ?? 0);
   if (goalCount > 0) {
     reasons.push({ kind: "goals", count: goalCount });
+  }
+
+  const transactionCountRow = context
+    .select({ total: count() })
+    .from(transactions)
+    .where(eq(transactions.currencyCode, normalized))
+    .get();
+  const transactionCount = Number(transactionCountRow?.total ?? 0);
+  if (transactionCount > 0) {
+    reasons.push({ kind: "transactions", count: transactionCount });
   }
 
   const rateCountRow = context

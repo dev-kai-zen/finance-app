@@ -108,7 +108,7 @@ export const fil = {
     sampleAmount: "Halimbawa",
     addCurrency: "Magdagdag ng currency",
     usedChip: "Ginagamit",
-    usedChipClickToView: "Ginagamit — I-click para tingnan",
+    usageClickToView: "I-click para tingnan",
     usedLockedMessage:
       "Ginagamit na ang currency na ito. Hindi na maaaring baguhin ang decimal places o detalye.",
     usageChipAccessibility: "Ginagamit, ipakita kung saan ginagamit ang currency",
@@ -118,6 +118,7 @@ export const fil = {
     usageModalEmpty: "Walang nakitang aktibong reference para sa %{code}.",
     usageReasonAccounts: "%{count} account",
     usageReasonGoals: "%{count} goal",
+    usageReasonTransactions: "%{count} transaction",
     usageReasonExchangeRates: "Mga setting ng conversion rate (%{count})",
     usageReasonDefault: "Default currency mo para sa total at bagong account",
     fieldCode: "Currency code",

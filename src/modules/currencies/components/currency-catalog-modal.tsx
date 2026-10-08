@@ -155,7 +155,7 @@ export function CurrencyCatalogModal({
   };
 
   const confirmRemove = () => {
-    if (!editor?.source?.isCustom) return;
+    if (!editor?.source) return;
     const ok = mutations.remove(editor.source.code);
     setConfirmDelete(false);
     if (ok) setEditor(null);
@@ -194,18 +194,12 @@ export function CurrencyCatalogModal({
   return (
     <>
       <FullScreenFormModal
-        deleteDisabled={mutations.pending || editorLocked}
         pending={mutations.pending}
         saveDisabled={!canSave || mutations.pending}
         title={title}
         visible={visible}
         headerRight={editor ? undefined : managerHeader}
         onClose={requestBack}
-        onDelete={
-          editor?.mode === "edit" && editor.source && !editor.source.isLocked
-            ? () => setConfirmDelete(true)
-            : undefined
-        }
         onSave={editor && !editorLocked ? saveEditor : undefined}
       >
         {editor ? (
@@ -221,13 +215,15 @@ export function CurrencyCatalogModal({
                   accessibilityLabel={t("currency.usageChipAccessibility")}
                   accessibilityRole="button"
                   onPress={() => openUsageDetails(editor.value.code)}
-                  style={({ pressed }) => [pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.usedChipRow,
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <View style={styles.usedChip}>
-                    <Text style={styles.usedChipActionText}>
-                      {t("currency.usedChipClickToView")}
-                    </Text>
+                    <Text style={styles.usedChipText}>{t("currency.usedChip")}</Text>
                   </View>
+                  <Text style={styles.usedChipHint}>{t("currency.usageClickToView")}</Text>
                 </Pressable>
               </View>
             ) : null}
@@ -504,18 +500,31 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
     },
+    usedChipRow: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
+    },
     usedChip: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
+      backgroundColor: `${theme.colors.danger}10`,
+      borderColor: theme.colors.danger,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 2,
     },
-    usedChipActionText: {
+    usedChipText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      textTransform: "uppercase",
+    },
+    usedChipHint: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     usedSection: {
       gap: theme.spacing.sm,

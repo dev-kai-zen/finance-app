@@ -97,7 +97,7 @@ export const en = {
     sampleAmount: "Example",
     addCurrency: "Add currency",
     usedChip: "Used",
-    usedChipClickToView: "Used - Click to view",
+    usageClickToView: "Click to view",
     usedLockedMessage:
       "This currency is tied to accounts, goals, or your default currency. Decimal places and details cannot be changed.",
     usageChipAccessibility: "Used, show where this currency is referenced",
@@ -107,6 +107,7 @@ export const en = {
     usageModalEmpty: "No active references were found for %{code}.",
     usageReasonAccounts: "%{count} account(s)",
     usageReasonGoals: "%{count} goal(s)",
+    usageReasonTransactions: "%{count} transaction(s)",
     usageReasonExchangeRates: "Conversion rate settings (%{count})",
     usageReasonDefault: "Your default currency for totals and new accounts",
     fieldCode: "Currency code",
