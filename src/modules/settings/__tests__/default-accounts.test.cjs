@@ -302,7 +302,7 @@ test("reset data removes user records while preserving built-in catalog rows", a
     .run("reset-account", "reset-type", "Reset account", now, now, now);
   sqlite
     .prepare(
-      "INSERT INTO transactions (id, account_id, category_id, type, amount_cents, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'expense', -100, ?, ?, ?, ?)",
+      "INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'expense', -100, ?, ?, ?, ?)",
     )
     .run(
       "reset-transaction",

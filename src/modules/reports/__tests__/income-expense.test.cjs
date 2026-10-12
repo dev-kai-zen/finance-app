@@ -32,7 +32,7 @@ function aggregateCategoryBreakdown({
     const catName = cat ? cat.name : "Uncategorized";
     const catColor = cat ? cat.hexColorsId : null;
     const catIcon = cat ? cat.icon : (type === "income" ? "wallet" : "tag");
-    const amount = Math.abs(tx.amountCents);
+    const amount = Math.abs(tx.amountMinorUnits);
 
     const existing = map.get(catId);
     if (existing) {
@@ -85,17 +85,17 @@ test("Category breakdown aggregates expenses, calculates percentage, and sorts d
 
   const transactions = [
     // Oct 1: Dinner ₱1,500
-    { id: "tx-1", type: "expense", categoryId: "cat-dining", amountCents: -150000, occurredAt: "2026-10-01T19:00:00Z" },
+    { id: "tx-1", type: "expense", categoryId: "cat-dining", amountMinorUnits: -150000, occurredAt: "2026-10-01T19:00:00Z" },
     // Oct 2: Groceries ₱3,000
-    { id: "tx-2", type: "expense", categoryId: "cat-groceries", amountCents: -300000, occurredAt: "2026-10-02T10:00:00Z" },
+    { id: "tx-2", type: "expense", categoryId: "cat-groceries", amountMinorUnits: -300000, occurredAt: "2026-10-02T10:00:00Z" },
     // Oct 3: Lunch ₱500
-    { id: "tx-3", type: "expense", categoryId: "cat-dining", amountCents: -50000, occurredAt: "2026-10-03T12:00:00Z" },
+    { id: "tx-3", type: "expense", categoryId: "cat-dining", amountMinorUnits: -50000, occurredAt: "2026-10-03T12:00:00Z" },
     // Oct 4: Rent ₱10,000
-    { id: "tx-4", type: "expense", categoryId: "cat-rent", amountCents: -1000000, occurredAt: "2026-10-04T08:00:00Z" },
+    { id: "tx-4", type: "expense", categoryId: "cat-rent", amountMinorUnits: -1000000, occurredAt: "2026-10-04T08:00:00Z" },
     // Soft-deleted expense should be ignored
-    { id: "tx-5", type: "expense", categoryId: "cat-dining", amountCents: -50000, occurredAt: "2026-10-04T12:00:00Z", deletedAt: "2026-10-04T13:00:00Z" },
+    { id: "tx-5", type: "expense", categoryId: "cat-dining", amountMinorUnits: -50000, occurredAt: "2026-10-04T12:00:00Z", deletedAt: "2026-10-04T13:00:00Z" },
     // Income transaction should be ignored for expense breakdown
-    { id: "tx-6", type: "income", categoryId: "cat-dining", amountCents: 5000000, occurredAt: "2026-10-04T15:00:00Z" },
+    { id: "tx-6", type: "income", categoryId: "cat-dining", amountMinorUnits: 5000000, occurredAt: "2026-10-04T15:00:00Z" },
   ];
 
   const result = aggregateCategoryBreakdown({

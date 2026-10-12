@@ -143,14 +143,14 @@ export const BudgetCard = memo(function BudgetCard({
         <View style={styles.spentGroup}>
           <Text style={styles.metricLabel}>Spent</Text>
           <Text style={[styles.spentValue, { color: statusColor }]}>
-            {formatCurrency(spentCents, "PHP", false)}
+            {formatCurrency(spentCents, budget.currencyCode, false)}
           </Text>
         </View>
 
         <View style={styles.targetGroup}>
           <Text style={styles.metricLabel}>Budget</Text>
           <Text style={styles.targetValue}>
-            {formatCurrency(effectiveTargetCents, "PHP", false)}
+            {formatCurrency(effectiveTargetCents, budget.currencyCode, false)}
           </Text>
         </View>
 
@@ -168,7 +168,7 @@ export const BudgetCard = memo(function BudgetCard({
               },
             ]}
           >
-            {formatCurrency(Math.abs(remainingCents), "PHP", false)}
+            {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -180,7 +180,7 @@ export const BudgetCard = memo(function BudgetCard({
             <View style={styles.warningPill}>
               <AlertCircle color={theme.colors.danger} size={14} />
               <Text style={styles.warningPillText}>
-                Budget exceeded by {formatCurrency(Math.abs(remainingCents), "PHP", false)} ({percentage}%)
+                Budget exceeded by {formatCurrency(Math.abs(remainingCents), budget.currencyCode, false)} ({percentage}%)
               </Text>
             </View>
           ) : budget.allowRollover && rolloverCents !== 0 ? (
@@ -188,8 +188,8 @@ export const BudgetCard = memo(function BudgetCard({
               <RotateCw color={theme.colors.textSecondary} size={12} />
               <Text style={styles.rolloverPillText}>
                 {rolloverCents > 0
-                  ? `+${formatCurrency(rolloverCents, "PHP", false)} rolled over from last period`
-                  : `${formatCurrency(rolloverCents, "PHP", false)} deficit carried forward`}
+                  ? `+${formatCurrency(rolloverCents, budget.currencyCode, false)} rolled over from last period`
+                  : `${formatCurrency(rolloverCents, budget.currencyCode, false)} deficit carried forward`}
               </Text>
             </View>
           ) : null}

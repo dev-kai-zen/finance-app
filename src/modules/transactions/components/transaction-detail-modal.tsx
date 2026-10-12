@@ -14,8 +14,13 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
-import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatCurrency } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
+import {
+  formatCrossCurrencyTransferLabel,
+  formatTransactionExchangeLabel,
+} from "../utils/format-transaction-exchange-label";
 import { LabelBadge } from "@/modules/labels";
 import { useTransactionAttachments } from "../hooks/use-transaction-attachments";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
@@ -43,6 +48,7 @@ export function TransactionDetailModal({
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const [attachmentManagerOpen, setAttachmentManagerOpen] = useState(false);
@@ -61,25 +67,20 @@ export function TransactionDetailModal({
     isTransfer && transaction.accountId === transaction.transferAccountId;
 
   const displayAmountCents = isTransfer
-    ? Math.abs(transaction.amountCents)
+    ? Math.abs(transaction.amountMinorUnits)
     : isIncome
-      ? transaction.amountCents
-      : -Math.abs(transaction.amountCents);
+      ? transaction.amountMinorUnits
+      : -Math.abs(transaction.amountMinorUnits);
 
-  const amountColor = isTransfer
+  const amountColor = !preferences.colorAmounts
+    ? theme.colors.textPrimary
+    : isTransfer
     ? theme.colors.info
     : displayAmountCents < 0
       ? theme.colors.danger
       : displayAmountCents > 0
         ? theme.colors.success
         : theme.colors.textMuted;
-
-  const phpResult = formatPhpCurrency(displayAmountCents, {
-    showPositiveSign: false,
-    positiveColor: theme.colors.success,
-    negativeColor: theme.colors.danger,
-    zeroColor: theme.colors.textMuted,
-  });
 
   const typeColor = isTransfer
     ? theme.colors.info
@@ -89,11 +90,32 @@ export function TransactionDetailModal({
 
   const formattedAmount = isTransfer
     ? formatCurrency(
-        Math.abs(transaction.amountCents),
+        Math.abs(transaction.amountMinorUnits),
         transaction.accountCurrency ?? "PHP",
         false,
       )
-    : phpResult.formatted;
+    : formatCurrency(
+        displayAmountCents,
+        transaction.accountCurrency ?? "PHP",
+        false,
+      );
+
+  const exchangeLabel = isTransfer && transaction.transferAccountCurrency
+    ? formatCrossCurrencyTransferLabel({
+        sourceCurrency: transaction.accountCurrency,
+        destinationCurrency: transaction.transferAccountCurrency,
+        sourceAmountMinorUnitsAbs: Math.abs(transaction.amountMinorUnits),
+        destinationAmountMinorUnitsAbs:
+          transaction.transferDestinationAmountMinorUnits ??
+          Math.abs(transaction.amountMinorUnits),
+        exchangeRateScaled: transaction.transferExchangeRateScaled ?? null,
+      })
+    : formatTransactionExchangeLabel({
+        currencyCode: transaction.currencyCode,
+        accountCurrency: transaction.accountCurrency,
+        originalAmountMinorUnits: transaction.originalAmountMinorUnits,
+        exchangeRateScaled: transaction.exchangeRateScaled,
+      });
 
   const formattedDate = transaction.occurredAt
     ? new Date(transaction.occurredAt).toLocaleDateString(undefined, {
@@ -190,6 +212,12 @@ export function TransactionDetailModal({
               <Text style={[styles.amountText, { color: amountColor }]}>
                 {formattedAmount}
               </Text>
+
+              {exchangeLabel ? (
+                <Text numberOfLines={2} style={styles.exchangeLabelText}>
+                  {exchangeLabel}
+                </Text>
+              ) : null}
 
               <Text numberOfLines={2} style={styles.heroTitleText}>
                 {title}
@@ -506,6 +534,12 @@ function createStyles(theme: AppTheme) {
       fontWeight: "800",
       fontVariant: ["tabular-nums"],
       marginBottom: 6,
+    },
+    exchangeLabelText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.sm,
+      marginBottom: 6,
+      textAlign: "center",
     },
     heroTitleText: {
       color: theme.colors.textSecondary,

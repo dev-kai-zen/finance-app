@@ -28,9 +28,19 @@ interface ScheduledTemplateSnapshot {
   categoryId: string | null;
   toAccountId: string | null;
   toPocketId: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
   name: string | null;
   note: string | null;
+}
+
+function parseTemplateSnapshot(raw: string): ScheduledTemplateSnapshot {
+  const parsed = JSON.parse(raw) as ScheduledTemplateSnapshot & {
+    amountCents?: number;
+  };
+  return {
+    ...parsed,
+    amountMinorUnits: parsed.amountMinorUnits ?? parsed.amountCents ?? 0,
+  };
 }
 
 export interface DueScheduleProcessingResult {
@@ -143,7 +153,7 @@ function processNextOccurrence(
 
   if (!occurrence.skippedForWeekend && schedule.autoPost) {
     postSnapshot(
-      JSON.parse(created.templateSnapshot) as ScheduledTemplateSnapshot,
+      parseTemplateSnapshot(created.templateSnapshot),
       created.id,
       occurrence.effectiveAt ?? occurrence.nominalAt,
       now,
@@ -212,7 +222,7 @@ export function postScheduledOccurrence(
     }
 
     postSnapshot(
-      JSON.parse(occurrence.templateSnapshot) as ScheduledTemplateSnapshot,
+      parseTemplateSnapshot(occurrence.templateSnapshot),
       occurrence.id,
       occurrence.effectiveDueAt ?? occurrence.nominalDueAt,
       now,
@@ -271,7 +281,7 @@ function postSnapshot(
           toAccountId: snapshot.toAccountId!,
           fromPocketId: snapshot.pocketId,
           toPocketId: snapshot.toPocketId,
-          amountCents: snapshot.amountCents,
+          amountMinorUnits: snapshot.amountMinorUnits,
           name: snapshot.name,
           note: snapshot.note,
           occurredAt,
@@ -292,10 +302,10 @@ function postSnapshot(
         categoryId: snapshot.categoryId!,
         pocketId: snapshot.pocketId,
         type: snapshot.transactionType,
-        amountCents:
+        amountMinorUnits:
           snapshot.transactionType === "expense"
-            ? -snapshot.amountCents
-            : snapshot.amountCents,
+            ? -snapshot.amountMinorUnits
+            : snapshot.amountMinorUnits,
         name: snapshot.name,
         note: snapshot.note,
         occurredAt,
@@ -316,7 +326,7 @@ function snapshotSchedule(
     categoryId: schedule.categoryId,
     toAccountId: schedule.toAccountId,
     toPocketId: schedule.toPocketId,
-    amountCents: schedule.amountCents,
+    amountMinorUnits: schedule.amountMinorUnits,
     name: schedule.name,
     note: schedule.note,
   };

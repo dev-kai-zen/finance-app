@@ -198,13 +198,13 @@ const accountInput = (accountTypeId = system.ASSET_OTHERS, name = "Daily account
   }
   return value;
 };
-const pocketTransfer = (accountId, fromPocketId, toPocketId, amountCents) =>
+const pocketTransfer = (accountId, fromPocketId, toPocketId, amountMinorUnits) =>
   createTransfer({
     fromAccountId: accountId,
     toAccountId: accountId,
     fromPocketId,
     toPocketId,
-    amountCents,
+    amountMinorUnits,
     occurredAt: new Date("2026-09-13T12:00:00"),
   });
 beforeEach(() => { connect(); migrate(); });
@@ -357,13 +357,29 @@ test("type ordering stays within group", () => {
   assert.ok(types.listAccountTypes().findIndex((t) => t.id === second) < types.listAccountTypes().findIndex((t) => t.id === first));
   assert.deepEqual(types.findAccountTypeById(system.LIABILITY_OTHERS), originalLiability);
 });
-test("non-PHP data is preserved, read-only for opening edits, and excluded from PHP totals", () => {
+test("non-PHP data is editable with currency-aware minor units and converts into home totals", () => {
   const id = saveAccount(accountInput());
   repo.updateAccountRecord(id, { currencyCode: "USD" });
   saveAccount(accountInput(undefined, "Dollar account"), id);
   assert.equal(repo.findAccountById(id).currencyCode, "USD");
-  assert.throws(() => saveAccount(accountInput(undefined, "Dollar account", "2000"), id), /read-only/);
+  saveAccount(accountInput(undefined, "Dollar account", "2000"), id);
+  assert.equal(repo.findAccountById(id).openingBalanceMinorUnits, 200000);
   assert.deepEqual(openingSummary(repo.listAccounts()), { assets: 0n, liabilities: 0n, excluded: 1 });
+  assert.deepEqual(openingSummary(repo.listAccounts(), "PHP"), {
+    assets: 11700000n,
+    liabilities: 0n,
+    excluded: 0,
+  });
+
+  const yenId = saveAccount({
+    ...accountInput(undefined, "Yen account", "1500"),
+    currencyCode: "JPY",
+  });
+  assert.equal(repo.findAccountById(yenId).openingBalanceMinorUnits, 1500);
+  assert.throws(
+    () => saveAccount(accountInput(undefined, "Yen account", "1500.50"), yenId),
+    /whole number/,
+  );
 });
 test("summary keeps liability signs, excludes archives, and supports totals above the safe integer limit", () => {
   saveAccount(accountInput(system.LIABILITY_OTHERS, "Debt", "-1000.50"));
@@ -410,7 +426,7 @@ test("saved accounts survive closing and reopening a real database file", () => 
 });
 test("existing current-schema accounts and linked transactions remain unchanged on startup", () => {
   const id = saveAccount(accountInput());
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('txn', ?, 'expense', 500, 1, 1, 1)").run(id);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('txn', ?, 'expense', 500, 1, 1, 1)").run(id);
   const before = repo.findAccountById(id);
   migrate();
   assert.deepEqual(repo.findAccountById(id), before);
@@ -455,14 +471,14 @@ test("getAccountsWithBalances calculates live current balance reflecting income,
   const acc2 = saveAccount(accountInput(system.ASSET_OTHERS, "Savings", "500.00"));    // 50,000 cents
 
   // Add Income: 200.00 (20,000 cents) to Checking
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_inc', ?, 'income', 20000, 1, 1, 1)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_inc', ?, 'income', 20000, 1, 1, 1)").run(acc1);
 
   // Add Expense: 50.00 (5,000 cents) from Checking
-  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_exp', ?, 'expense', -5000, 2, 2, 2)").run(acc1);
 
   // Add Transfer: 100.00 (10,000 cents) from Checking to Savings
-  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
-  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_trf_out', ?, 'grp_trf', 'transfer', -10000, 3, 3, 3)").run(acc1);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, transaction_group_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_trf_in', ?, 'grp_trf', 'transfer', 10000, 3, 3, 3)").run(acc2);
 
   const accountsList = getAccountsWithBalances();
   const checking = accountsList.find((a) => a.id === acc1);
@@ -543,10 +559,10 @@ test("pocket transfers create two grouped transaction legs without changing the 
   assert.equal(pocket.currentBalanceMinorUnits, 30000);
   assert.equal(getAvailablePocketBalance(accountId, account.currentBalanceMinorUnits), 70050);
   const legs = sqlite.prepare(
-    "SELECT account_id, pocket_id, amount_cents FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents",
+    "SELECT account_id, pocket_id, amount_minor_units FROM transactions WHERE transaction_group_id = ? ORDER BY amount_minor_units",
   ).all(groupId);
   assert.deepEqual(
-    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_minor_units]),
     [
       [accountId, null, -30000],
       [accountId, pocketId, 30000],
@@ -561,7 +577,7 @@ test("pocket-assigned transactions change the pocket and account by the same amo
   });
   const pocketId = savePocket({ accountId, name: "Groceries", targetAmount: "" });
   pocketTransfer(accountId, null, pocketId, 40000);
-  sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
+  sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
 
   const account = getAccountsWithBalances().find((item) => item.id === accountId);
   const pocket = getPocketsWithBalances().find((item) => item.id === pocketId);
@@ -746,6 +762,7 @@ test("permanent delete is allowed for unused accounts and cleans up associated r
   const accounts = getAccountsWithBalances();
   const item = accounts.find((a) => a.id === accountId);
   assert.equal(item?.isDeletable, true);
+  assert.equal(item?.canChangeCurrency, true);
 
   deleteAccount(accountId);
   assert.equal(repo.findAccountById(accountId), null);
@@ -755,18 +772,36 @@ test("permanent delete is allowed for unused accounts and cleans up associated r
 test("permanent delete is blocked for accounts with transaction history", () => {
   const accountId = saveAccount(accountInput(undefined, "Used Account", "100.00"));
   sqlite.prepare(
-    "INSERT INTO transactions (id, account_id, type, amount_cents, occurred_at, created_at, updated_at) VALUES ('tx_test_1', ?, 'expense', 5000, 1000, 1000, 1000)"
+    "INSERT INTO transactions (id, account_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('tx_test_1', ?, 'expense', 5000, 1000, 1000, 1000)"
   ).run(accountId);
 
   assert.equal(canDeleteAccount(accountId), false);
   const accounts = getAccountsWithBalances();
   const item = accounts.find((a) => a.id === accountId);
   assert.equal(item?.isDeletable, false);
+  assert.equal(item?.canChangeCurrency, false);
 
   assert.throws(
     () => deleteAccount(accountId),
     /Cannot permanently delete an account that has transaction history/,
   );
+  assert.throws(
+    () =>
+      saveAccount(
+        { ...accountInput(undefined, "Used Account", "100.00"), currencyCode: "USD" },
+        accountId,
+      ),
+    /Cannot change currency after transactions/,
+  );
   assert.notEqual(repo.findAccountById(accountId), null);
+});
+
+test("account currency can be changed through save when there is no transaction history", () => {
+  const accountId = saveAccount(accountInput(undefined, "FX account", "100.00"));
+  saveAccount(
+    { ...accountInput(undefined, "FX account", "100.00"), currencyCode: "USD" },
+    accountId,
+  );
+  assert.equal(repo.findAccountById(accountId).currencyCode, "USD");
 });
 

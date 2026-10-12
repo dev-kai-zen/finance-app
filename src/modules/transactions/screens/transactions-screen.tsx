@@ -258,8 +258,8 @@ export function TransactionsScreen() {
     // 5. Sorting
     list.sort((a, b) => {
       if (filterState.sortBy === "amount") {
-        const valA = Math.abs(a.amountCents);
-        const valB = Math.abs(b.amountCents);
+        const valA = Math.abs(a.amountMinorUnits);
+        const valB = Math.abs(b.amountMinorUnits);
         return filterState.sortOrder === "asc" ? valA - valB : valB - valA;
       } else {
         const timeA = new Date(a.occurredAt ?? 0).getTime();

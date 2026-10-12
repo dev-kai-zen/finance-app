@@ -13,7 +13,7 @@ export interface CalendarScheduleOccurrence {
   scheduleId: string;
   scheduleName: string;
   transactionType: ScheduledTransactionType;
-  amountCents: number;
+  amountMinorUnits: number;
   nominalDueAt: Date;
   effectiveDueAt: Date;
   status: ScheduleOccurrenceStatus | "upcoming";
@@ -62,6 +62,8 @@ export function getCalendarScheduleOccurrences(options: {
       if (occTime >= startMs && occTime <= endMs) {
         let snapshotData: {
           name?: string | null;
+          amountMinorUnits?: number;
+          /** @deprecated Legacy snapshot key before amount_minor_units rename */
           amountCents?: number;
           transactionType?: ScheduledTransactionType;
           accountId?: string;
@@ -90,7 +92,10 @@ export function getCalendarScheduleOccurrences(options: {
               : `Scheduled ${schedule.transactionType}`),
           transactionType:
             snapshotData.transactionType || schedule.transactionType,
-          amountCents: snapshotData.amountCents ?? schedule.amountCents,
+          amountMinorUnits:
+            snapshotData.amountMinorUnits ??
+            snapshotData.amountCents ??
+            schedule.amountMinorUnits,
           nominalDueAt: occ.nominalDueAt,
           effectiveDueAt: occEffective,
           status: occ.status,
@@ -135,7 +140,7 @@ export function getCalendarScheduleOccurrences(options: {
                 ? "Scheduled Transfer"
                 : `Scheduled ${schedule.transactionType}`),
             transactionType: schedule.transactionType,
-            amountCents: schedule.amountCents,
+            amountMinorUnits: schedule.amountMinorUnits,
             nominalDueAt: calc.nominalAt,
             effectiveDueAt: effectiveDate,
             status: "upcoming",

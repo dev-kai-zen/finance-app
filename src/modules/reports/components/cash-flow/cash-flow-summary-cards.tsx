@@ -8,6 +8,7 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 
@@ -25,6 +26,8 @@ export function CashFlowSummaryCards({
   savingsRatePercentage,
 }: CashFlowSummaryCardsProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const isNetPositive = netCashFlowMinorUnits >= 0;
 
   return (
@@ -39,7 +42,7 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={[styles.cardValue, styles.inflowValue]}>
-            +{formatCurrency(totalInflowMinorUnits, "PHP")}
+            {formatCurrency(totalInflowMinorUnits, currencyCode, true)}
           </Text>
           <Text style={styles.cardSub}>Money in</Text>
         </View>
@@ -53,7 +56,7 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={[styles.cardValue, styles.outflowValue]}>
-            -{formatCurrency(totalOutflowMinorUnits, "PHP")}
+            {formatCurrency(-totalOutflowMinorUnits, currencyCode, true)}
           </Text>
           <Text style={styles.cardSub}>Money out</Text>
         </View>
@@ -77,8 +80,7 @@ export function CashFlowSummaryCards({
               },
             ]}
           >
-            {isNetPositive ? "+" : "-"}
-            {formatCurrency(Math.abs(netCashFlowMinorUnits), "PHP")}{" "}
+            {formatCurrency(netCashFlowMinorUnits, currencyCode, true)}{" "}
             {isNetPositive ? "▲" : "▼"}
           </Text>
           <Text style={styles.cardSub}>

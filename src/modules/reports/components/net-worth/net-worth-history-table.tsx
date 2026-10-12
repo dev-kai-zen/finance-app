@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { NetWorthPoint } from "../../types/net-worth-growth.types";
@@ -25,6 +26,8 @@ export function NetWorthHistoryTable({
   onSelectPointIndex,
 }: NetWorthHistoryTableProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
 
@@ -95,13 +98,13 @@ export function NetWorthHistoryTable({
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.assetAmount}>
-                    {formatCurrency(row.totalAssetsMinorUnits, "PHP")}
+                    {formatCurrency(row.totalAssetsMinorUnits, currencyCode)}
                   </Text>
                 </View>
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.debtAmount}>
-                    {formatCurrency(Math.abs(row.totalLiabilitiesMinorUnits), "PHP")}
+                    {formatCurrency(Math.abs(row.totalLiabilitiesMinorUnits), currencyCode)}
                   </Text>
                 </View>
 

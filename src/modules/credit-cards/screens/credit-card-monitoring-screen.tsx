@@ -9,6 +9,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
 import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
@@ -16,6 +17,7 @@ import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
 export function CreditCardMonitoringScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const data = useCreditCardMonitoring();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
@@ -45,14 +47,20 @@ export function CreditCardMonitoringScreen() {
             <View>
               <Text style={styles.summaryLabel}>DUE THIS MONTH</Text>
               <Text style={styles.summaryAmount}>
-                {formatCurrency(data.dueThisMonthMinorUnits, "PHP")}
+                {formatCurrency(
+                  data.dueThisMonthMinorUnits,
+                  preferences.defaultCurrency,
+                )}
               </Text>
             </View>
             {data.overdueMinorUnits > 0 ? (
               <View style={styles.overdue}>
                 <Text style={styles.overdueLabel}>PAST DUE</Text>
                 <Text style={styles.overdueAmount}>
-                  {formatCurrency(data.overdueMinorUnits, "PHP")}
+                  {formatCurrency(
+                    data.overdueMinorUnits,
+                    preferences.defaultCurrency,
+                  )}
                 </Text>
               </View>
             ) : null}

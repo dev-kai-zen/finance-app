@@ -28,11 +28,11 @@ function calculateBalanceSheet({
     if (new Date(tx.occurredAt).getTime() > cutoffTime) continue;
     if (tx.accountId) {
       accountDeltas[tx.accountId] =
-        (accountDeltas[tx.accountId] || 0) + tx.amountCents;
+        (accountDeltas[tx.accountId] || 0) + tx.amountMinorUnits;
     }
     if (tx.pocketId) {
       pocketDeltas[tx.pocketId] =
-        (pocketDeltas[tx.pocketId] || 0) + tx.amountCents;
+        (pocketDeltas[tx.pocketId] || 0) + tx.amountMinorUnits;
     }
   }
 
@@ -161,26 +161,26 @@ test("balance sheet calculates correct assets, liabilities, and pockets as of cu
     // Sept 15: Salary into BPI
     {
       accountId: "acc-1",
-      amountCents: 2000000, // +₱20,000
+      amountMinorUnits: 2000000, // +₱20,000
       occurredAt: "2026-09-15T10:00:00Z",
     },
     // Sept 15: Allocation to Emergency Fund pocket
     {
       accountId: "acc-1",
       pocketId: "pkt-1",
-      amountCents: 1500000, // +₱15,000 into pocket
+      amountMinorUnits: 1500000, // +₱15,000 into pocket
       occurredAt: "2026-09-15T11:00:00Z",
     },
     // Oct 2: Credit Card expense
     {
       accountId: "acc-3",
-      amountCents: -500000, // -₱5,000 debt
+      amountMinorUnits: -500000, // -₱5,000 debt
       occurredAt: "2026-10-02T14:00:00Z",
     },
     // Oct 10: Late October expense (should not be included when cutoff is Oct 5)
     {
       accountId: "acc-1",
-      amountCents: -300000, // -₱3,000
+      amountMinorUnits: -300000, // -₱3,000
       occurredAt: "2026-10-10T12:00:00Z",
     },
   ];
@@ -238,7 +238,7 @@ test("formatPhpNumber handles positive and negative amounts correctly", () => {
 
 test("inflow, outflow and net summation correctly preserves negative amounts for expenses and fees", () => {
   const transactions = [
-    { type: "expense", amountCents: -1000 }, // -₱10.00 bank transaction fee
+    { type: "expense", amountMinorUnits: -1000 }, // -₱10.00 bank transaction fee
   ];
 
   let inflow = 0;
@@ -246,10 +246,10 @@ test("inflow, outflow and net summation correctly preserves negative amounts for
 
   for (const tx of transactions) {
     if (tx.type === "transfer") continue;
-    if (tx.amountCents > 0 || tx.type === "income") {
-      inflow += tx.amountCents;
-    } else if (tx.amountCents < 0 || tx.type === "expense") {
-      outflow += tx.amountCents;
+    if (tx.amountMinorUnits > 0 || tx.type === "income") {
+      inflow += tx.amountMinorUnits;
+    } else if (tx.amountMinorUnits < 0 || tx.type === "expense") {
+      outflow += tx.amountMinorUnits;
     }
   }
 

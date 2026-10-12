@@ -42,11 +42,11 @@ function computeMonthlyCashFlow({ transactions, startDate, endDate }) {
     const slot = slotMap.get(key);
     if (!slot) continue;
 
-    if (tx.amountCents > 0) {
-      slot.inflowMinorUnits += tx.amountCents;
-      overallInflow += tx.amountCents;
-    } else if (tx.amountCents < 0) {
-      const outflow = Math.abs(tx.amountCents);
+    if (tx.amountMinorUnits > 0) {
+      slot.inflowMinorUnits += tx.amountMinorUnits;
+      overallInflow += tx.amountMinorUnits;
+    } else if (tx.amountMinorUnits < 0) {
+      const outflow = Math.abs(tx.amountMinorUnits);
       slot.outflowMinorUnits += outflow;
       overallOutflow += outflow;
     }
@@ -76,21 +76,21 @@ function computeMonthlyCashFlow({ transactions, startDate, endDate }) {
 test("Cash flow aggregates inflow, outflow, and savings rate across monthly periods", () => {
   const transactions = [
     // Aug: Salary ₱50,000, Expense ₱30,000 -> Net ₱20,000 (Savings rate 40%)
-    { type: "income", amountCents: 5000000, occurredAt: "2026-08-15T10:00:00Z" },
-    { type: "expense", amountCents: -3000000, occurredAt: "2026-08-20T12:00:00Z" },
+    { type: "income", amountMinorUnits: 5000000, occurredAt: "2026-08-15T10:00:00Z" },
+    { type: "expense", amountMinorUnits: -3000000, occurredAt: "2026-08-20T12:00:00Z" },
 
     // Sep: Salary ₱50,000, Expense ₱60,000 -> Net -₱10,000 (Savings rate -20%)
-    { type: "income", amountCents: 5000000, occurredAt: "2026-09-15T10:00:00Z" },
-    { type: "expense", amountCents: -6000000, occurredAt: "2026-09-22T14:00:00Z" },
+    { type: "income", amountMinorUnits: 5000000, occurredAt: "2026-09-15T10:00:00Z" },
+    { type: "expense", amountMinorUnits: -6000000, occurredAt: "2026-09-22T14:00:00Z" },
 
     // Oct: Freelance ₱20,000, Expense ₱10,000 -> Net ₱10,000 (Savings rate 50%)
-    { type: "income", amountCents: 2000000, occurredAt: "2026-10-02T09:00:00Z" },
-    { type: "expense", amountCents: -1000000, occurredAt: "2026-10-03T18:00:00Z" },
+    { type: "income", amountMinorUnits: 2000000, occurredAt: "2026-10-02T09:00:00Z" },
+    { type: "expense", amountMinorUnits: -1000000, occurredAt: "2026-10-03T18:00:00Z" },
 
     // Transfer should be excluded
-    { type: "transfer", amountCents: 10000000, occurredAt: "2026-10-03T20:00:00Z" },
+    { type: "transfer", amountMinorUnits: 10000000, occurredAt: "2026-10-03T20:00:00Z" },
     // Soft-deleted should be excluded
-    { type: "expense", amountCents: -5000000, occurredAt: "2026-10-03T21:00:00Z", deletedAt: "2026-10-03T22:00:00Z" },
+    { type: "expense", amountMinorUnits: -5000000, occurredAt: "2026-10-03T21:00:00Z", deletedAt: "2026-10-03T22:00:00Z" },
   ];
 
   const result = computeMonthlyCashFlow({

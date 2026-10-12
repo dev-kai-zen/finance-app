@@ -1,5 +1,8 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getAccountBalanceDeltas } from "@/modules/transactions";
+import {
+  getAccountBalanceDeltas,
+  getAccountIdsWithTransactionHistory,
+} from "@/modules/transactions";
 import { listAccounts } from "../repositories/accounts.repository";
 import type { AccountListItem } from "../types/account.types";
 import { getAccountIdsInUse } from "./can-delete-account.service";
@@ -17,6 +20,7 @@ export function getAccountsWithBalances(
   const accounts = listAccounts(context);
   const deltas = getAccountBalanceDeltas(context);
   const inUseAccountIds = getAccountIdsInUse(context);
+  const accountsWithTransactions = getAccountIdsWithTransactionHistory(context);
 
   return accounts.map((account) => {
     const delta = deltas[account.id] || 0;
@@ -24,6 +28,7 @@ export function getAccountsWithBalances(
       ...account,
       currentBalanceMinorUnits: account.openingBalanceMinorUnits + delta,
       isDeletable: !inUseAccountIds.has(account.id),
+      canChangeCurrency: !accountsWithTransactions.has(account.id),
     };
   });
 }

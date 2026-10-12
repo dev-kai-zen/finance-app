@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getDashboardSummary } from "../repositories/dashboard.repository";
 import type { DashboardSummary } from "../types/dashboard.types";
 
 export function useDashboard() {
+  const { preferences } = useCurrencyPreferences();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export function useDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [preferences.defaultCurrency]);
 
   useEffect(() => {
     refresh();

@@ -30,6 +30,7 @@ export function FormattedCurrency({
     positiveColor: theme.colors.success,
     negativeColor: theme.colors.danger,
     zeroColor: theme.colors.textMuted,
+    defaultColor: theme.colors.textPrimary,
   });
 
   return (

@@ -12,6 +12,7 @@ import type {
   TransactionAttachmentChanges,
   UpdateTransferInput,
 } from "../types/transaction.types";
+import { resolveTransferLegAmounts } from "./resolve-transfer-amounts.service";
 import {
   applyAttachmentChangesInContext,
   discardPreparedAttachmentChanges,
@@ -57,10 +58,10 @@ export function updateTransferInContext(
   ) {
     throw new Error("Choose different pockets when transferring within one account.");
   }
-  if (!input.amountCents || input.amountCents <= 0) {
+  if (!input.amountMinorUnits || input.amountMinorUnits <= 0) {
     throw new Error("Transfer amount must be greater than zero.");
   }
-  if (!Number.isInteger(input.amountCents)) {
+  if (!Number.isInteger(input.amountMinorUnits)) {
     throw new Error("Transfer amount must be an integer in minor units (centavos).");
   }
 
@@ -80,8 +81,8 @@ export function updateTransferInContext(
     throw new Error(`Destination account not found: ${input.toAccountId}`);
   }
 
-  const outLeg = transferLegs.find((leg) => leg.amountCents < 0) ?? transferLegs[0];
-  const inLeg = transferLegs.find((leg) => leg.amountCents > 0) ?? transferLegs[1];
+  const outLeg = transferLegs.find((leg) => leg.amountMinorUnits < 0) ?? transferLegs[0];
+  const inLeg = transferLegs.find((leg) => leg.amountMinorUnits > 0) ?? transferLegs[1];
   if (input.fromPocketId) {
     requirePocketForAccount(input.fromPocketId, fromAccount.id, context, {
       allowArchived: outLeg.pocketId === input.fromPocketId,
@@ -92,7 +93,12 @@ export function updateTransferInContext(
       allowArchived: inLeg.pocketId === input.toPocketId,
     });
   }
-  const amount = Math.abs(input.amountCents);
+  const resolved = resolveTransferLegAmounts({
+    fromCurrencyCode: fromAccount.currencyCode,
+    toCurrencyCode: toAccount.currencyCode,
+    sourceAmountMinorUnitsAbs: Math.abs(input.amountMinorUnits),
+    destinationAmountMinorUnitsAbs: input.destinationAmountMinorUnits,
+  });
   const occurredAt =
     input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
   const name = input.name?.trim() || null;
@@ -106,7 +112,10 @@ export function updateTransferInContext(
       ...sharedPatch,
       accountId: input.fromAccountId,
       pocketId: input.fromPocketId ?? null,
-      amountCents: -amount,
+      currencyCode: fromAccount.currencyCode,
+      amountMinorUnits: resolved.sourceOutMinorUnits,
+      originalAmountMinorUnits: null,
+      exchangeRateScaled: null,
     },
     context,
   );
@@ -117,21 +126,24 @@ export function updateTransferInContext(
       ...sharedPatch,
       accountId: input.toAccountId,
       pocketId: input.toPocketId ?? null,
-      amountCents: amount,
+      currencyCode: toAccount.currencyCode,
+      amountMinorUnits: resolved.destinationInMinorUnits,
+      originalAmountMinorUnits: null,
+      exchangeRateScaled: resolved.destinationExchangeRateScaled,
     },
     context,
   );
 
   const existingFeeLeg = legs.find((leg) => leg.type === "expense");
 
-  if (input.fee && input.fee.amountCents > 0) {
+  if (input.fee && input.fee.amountMinorUnits > 0) {
     if (!input.fee.accountId) {
       throw new Error("Fee account is required.");
     }
     if (!input.fee.categoryId) {
       throw new Error("Fee category is required.");
     }
-    if (!Number.isInteger(input.fee.amountCents)) {
+    if (!Number.isInteger(input.fee.amountMinorUnits)) {
       throw new Error("Fee amount must be an integer in minor units (centavos).");
     }
     const feeAccount = findAccountById(input.fee.accountId, context);
@@ -144,7 +156,7 @@ export function updateTransferInContext(
       });
     }
 
-    const feeAmount = Math.abs(input.fee.amountCents);
+    const feeAmount = Math.abs(input.fee.amountMinorUnits);
     const feeName = name ? `${name} Fee` : "Transfer Fee";
 
     if (existingFeeLeg) {
@@ -154,7 +166,7 @@ export function updateTransferInContext(
           accountId: input.fee.accountId,
           pocketId: input.fee.pocketId ?? null,
           categoryId: input.fee.categoryId,
-          amountCents: -feeAmount,
+          amountMinorUnits: -feeAmount,
           name: feeName,
           note,
           occurredAt,
@@ -170,7 +182,7 @@ export function updateTransferInContext(
           pocketId: input.fee.pocketId ?? null,
           transactionGroupId: input.transactionGroupId,
           type: "expense",
-          amountCents: -feeAmount,
+          amountMinorUnits: -feeAmount,
           name: feeName,
           note,
           occurredAt,

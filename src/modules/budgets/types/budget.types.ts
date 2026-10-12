@@ -17,7 +17,7 @@ export interface BudgetMonthlyTarget {
   budgetId: string;
   year: number;
   month: number; // 1 - 12
-  amountCents: number;
+  amountMinorUnits: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,7 +26,8 @@ export interface CategoryBudget {
   id: string;
   categoryId: string;
   isEnabled: boolean;
-  amountCents: number;
+  amountMinorUnits: number;
+  currencyCode: string;
   frequency: BudgetFrequency;
   startDate: Date;
   allowRollover: boolean;
@@ -40,14 +41,15 @@ export interface CategoryBudget {
 export interface MonthlyTargetInput {
   year: number;
   month: number;
-  amountCents: number;
+  amountMinorUnits: number;
 }
 
 export interface CategoryBudgetInput {
   id?: string;
   categoryId: string;
   isEnabled?: boolean;
-  amountCents: number;
+  amountMinorUnits: number;
+  currencyCode?: string;
   frequency: BudgetFrequency;
   startDate?: Date;
   allowRollover?: boolean;
@@ -76,6 +78,7 @@ export interface BudgetCheckResult {
   hasBudget: boolean;
   isEnabled: boolean;
   categoryName: string;
+  budgetCurrencyCode: string;
   frequency: BudgetFrequency;
   periodLabel: string;
   effectiveBudgetCents: number;

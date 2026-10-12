@@ -331,8 +331,8 @@ function resolveAttachmentOwnerTransactionId(
   }
   if (!transaction.transactionGroupId) return transaction.id;
   const legs = findTransactionsByGroupId(transaction.transactionGroupId, context);
-  const transferOutLeg = legs.find((leg) => leg.type === "transfer" && leg.amountCents < 0);
-  return (transferOutLeg ?? legs.find((leg) => leg.amountCents < 0) ?? legs[0] ?? transaction).id;
+  const transferOutLeg = legs.find((leg) => leg.type === "transfer" && leg.amountMinorUnits < 0);
+  return (transferOutLeg ?? legs.find((leg) => leg.amountMinorUnits < 0) ?? legs[0] ?? transaction).id;
 }
 
 function getErrorMessage(error: unknown): string {

@@ -86,7 +86,7 @@ test("labels: assigns multiple labels to a single transaction", () => {
   `);
 
   db.exec(`
-    INSERT INTO transactions (id, account_id, category_id, type, amount_cents, name, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
     VALUES ('tx_1', 'acc_1', 'cat_1', 'expense', -5000, 'Team Dinner', ${now}, ${now}, ${now});
   `);
 
@@ -115,7 +115,7 @@ test("labels: cascade deletes transaction_labels when transaction is deleted", (
   db.exec(`
     INSERT INTO labels (id, name, sort_order, is_archived, created_at, updated_at)
     VALUES ('lbl_1', 'trip', 1, 0, ${now}, ${now});
-    INSERT INTO transactions (id, account_id, category_id, type, amount_cents, name, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
     VALUES ('tx_1', 'acc_1', 'cat_1', 'expense', -5000, 'Flight', ${now}, ${now}, ${now});
     INSERT INTO transaction_labels (transaction_id, label_id, created_at)
     VALUES ('tx_1', 'lbl_1', ${now});
@@ -137,7 +137,7 @@ test("labels: calculates usage count properly and protects used labels", () => {
     INSERT INTO labels (id, name, sort_order, is_archived, created_at, updated_at)
     VALUES ('lbl_used', 'groceries', 1, 0, ${now}, ${now}),
            ('lbl_unused', 'unused', 2, 0, ${now}, ${now});
-    INSERT INTO transactions (id, account_id, category_id, type, amount_cents, name, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, name, occurred_at, created_at, updated_at)
     VALUES ('tx_1', 'acc_1', 'cat_1', 'expense', -2000, 'Supermarket', ${now}, ${now}, ${now});
     INSERT INTO transaction_labels (transaction_id, label_id, created_at)
     VALUES ('tx_1', 'lbl_used', ${now});

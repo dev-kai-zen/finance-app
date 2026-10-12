@@ -47,7 +47,7 @@ test("transactions: records expense and income transactions cleanly", () => {
   const now = Date.now();
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -59,12 +59,12 @@ test("transactions: records expense and income transactions cleanly", () => {
 
   const expense = txList.find((t) => t.id === "tx_1");
   assert.equal(expense.type, "expense");
-  assert.equal(expense.amount_cents, -150000);
+  assert.equal(expense.amount_minor_units, -150000);
   assert.equal(expense.category_id, "cat_groceries");
 
   const income = txList.find((t) => t.id === "tx_2");
   assert.equal(income.type, "income");
-  assert.equal(income.amount_cents, 5000000);
+  assert.equal(income.amount_minor_units, 5000000);
   assert.equal(income.category_id, "cat_salary");
 });
 
@@ -74,19 +74,19 @@ test("transactions: records transfer as two signed legs linked by transaction_gr
   const groupId = "grp_transfer_1";
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertStmt.run("tx_out", "acc_1", null, groupId, "transfer", -1000000, "Savings Allocation", now, now, now);
   insertStmt.run("tx_in", "acc_2", null, groupId, "transfer", 1000000, "Savings Allocation", now, now, now);
 
-  const legs = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents ASC").all(groupId);
+  const legs = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY amount_minor_units ASC").all(groupId);
   assert.equal(legs.length, 2);
   assert.equal(legs[0].account_id, "acc_1");
-  assert.equal(legs[0].amount_cents, -1000000);
+  assert.equal(legs[0].amount_minor_units, -1000000);
   assert.equal(legs[1].account_id, "acc_2");
-  assert.equal(legs[1].amount_cents, 1000000);
+  assert.equal(legs[1].amount_minor_units, 1000000);
 });
 
 test("transactions: migrates legacy pocket movements and enables pockets on their accounts", () => {
@@ -145,21 +145,21 @@ test("transactions: migrates legacy pocket movements and enables pockets on thei
   }
 
   const legs = db.prepare(`
-    SELECT account_id, pocket_id, amount_cents, transaction_group_id
+    SELECT account_id, pocket_id, amount_minor_units, transaction_group_id
     FROM transactions
     WHERE transaction_group_id = 'pocket-transfer:movement_legacy'
-    ORDER BY amount_cents
+    ORDER BY amount_minor_units
   `).all();
   assert.equal(legs.length, 2);
   assert.deepEqual(
-    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_minor_units]),
     [
       ["acc_pocket_migration", null, -25000],
       ["acc_pocket_migration", "pocket_legacy", 25000],
     ],
   );
   assert.equal(
-    db.prepare("SELECT SUM(amount_cents) AS total FROM transactions WHERE account_id = ?")
+    db.prepare("SELECT SUM(amount_minor_units) AS total FROM transactions WHERE account_id = ?")
       .get("acc_pocket_migration").total,
     0,
   );
@@ -180,7 +180,7 @@ test("transactions: aggregates inflow, outflow and net cashflow accurately", () 
   const now = Date.now();
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -189,14 +189,14 @@ test("transactions: aggregates inflow, outflow and net cashflow accurately", () 
   insertStmt.run("tx_out", "acc_1", null, "grp_xfer", "transfer", -1000000, "Transfer", now, now, now);
   insertStmt.run("tx_in", "acc_2", null, "grp_xfer", "transfer", 1000000, "Transfer", now, now, now);
 
-  const allTx = db.prepare("SELECT transaction_group_id, amount_cents FROM transactions").all();
+  const allTx = db.prepare("SELECT transaction_group_id, amount_minor_units FROM transactions").all();
   let totalInflow = 0;
   let totalOutflow = 0;
 
   for (const t of allTx) {
     if (t.transaction_group_id) continue;
-    if (t.amount_cents > 0) totalInflow += t.amount_cents;
-    if (t.amount_cents < 0) totalOutflow += Math.abs(t.amount_cents);
+    if (t.amount_minor_units > 0) totalInflow += t.amount_minor_units;
+    if (t.amount_minor_units < 0) totalOutflow += Math.abs(t.amount_minor_units);
   }
 
   assert.equal(totalInflow, 6000000);
@@ -210,12 +210,12 @@ test("transactions: deleting one transfer leg removes the whole group", () => {
   const groupId = "grp_delete";
 
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_out', 'acc_1', NULL, ?, 'transfer', -50000, 'Test delete', ?, ?, ?)
   `).run(groupId, now, now, now);
 
   db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES ('tx_in', 'acc_2', NULL, ?, 'transfer', 50000, 'Test delete', ?, ?, ?)
   `).run(groupId, now, now, now);
 
@@ -230,7 +230,7 @@ test("transactions: records transaction with name column and signed amount", () 
   const now = Date.now();
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, name, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, name, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -239,15 +239,15 @@ test("transactions: records transaction with name column and signed amount", () 
 
   const row1 = db.prepare("SELECT * FROM transactions WHERE id = 'tx_name_1'").get();
   assert.equal(row1.name, "SM Grocery Shopping");
-  assert.equal(row1.amount_cents, -150000);
+  assert.equal(row1.amount_minor_units, -150000);
   assert.equal(row1.type, "expense");
 
   const row2 = db.prepare("SELECT * FROM transactions WHERE id = 'tx_name_2'").get();
   assert.equal(row2.name, "September Payday");
-  assert.equal(row2.amount_cents, 5000000);
+  assert.equal(row2.amount_minor_units, 5000000);
   assert.equal(row2.type, "income");
 
-  const sumTx = db.prepare("SELECT SUM(amount_cents) as total FROM transactions WHERE account_id = 'acc_1'").get().total;
+  const sumTx = db.prepare("SELECT SUM(amount_minor_units) as total FROM transactions WHERE account_id = 'acc_1'").get().total;
   assert.equal(sumTx, 4850000);
   assert.equal(100000 + sumTx, 4950000);
 });
@@ -257,7 +257,7 @@ test("transaction attachments: supports an unbounded collection and cascades met
   const now = Date.now();
   db.prepare(`
     INSERT INTO transactions (
-      id, account_id, category_id, transaction_group_id, type, amount_cents,
+      id, account_id, category_id, transaction_group_id, type, amount_minor_units,
       name, occurred_at, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -322,7 +322,7 @@ test("transactions: records transfer with instant fee as grouped transactions", 
   `).run();
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -333,7 +333,7 @@ test("transactions: records transfer with instant fee as grouped transactions", 
   // Transfer fee
   insertStmt.run("tx_fee", "acc_1", "cat_fees", groupId, "expense", -1500, "Bank Transfer Fee", now, now, now);
 
-  const groupRows = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY amount_cents ASC").all(groupId);
+  const groupRows = db.prepare("SELECT * FROM transactions WHERE transaction_group_id = ? ORDER BY amount_minor_units ASC").all(groupId);
   assert.equal(groupRows.length, 3);
 
   const transferLegs = groupRows.filter((r) => r.type === "transfer");
@@ -344,7 +344,7 @@ test("transactions: records transfer with instant fee as grouped transactions", 
   assert.equal(feeLeg.id, "tx_fee");
   assert.equal(feeLeg.account_id, "acc_1");
   assert.equal(feeLeg.category_id, "cat_fees");
-  assert.equal(feeLeg.amount_cents, -1500);
+  assert.equal(feeLeg.amount_minor_units, -1500);
 
   // Group soft-delete cascades to fee
   db.prepare("UPDATE transactions SET deleted_at = ? WHERE transaction_group_id = ?").run(now, groupId);
@@ -368,7 +368,7 @@ test("transactions: calculates stats where transfer fee counts toward outflow", 
   `).run();
 
   const insertStmt = db.prepare(`
-    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_cents, note, occurred_at, created_at, updated_at)
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
@@ -389,10 +389,10 @@ test("transactions: calculates stats where transfer fee counts toward outflow", 
       if (tx.transaction_group_id) groupedTransferIds.add(tx.transaction_group_id);
       continue;
     }
-    if (tx.amount_cents > 0) {
-      totalInflow += tx.amount_cents;
-    } else if (tx.amount_cents < 0) {
-      totalOutflow += Math.abs(tx.amount_cents);
+    if (tx.amount_minor_units > 0) {
+      totalInflow += tx.amount_minor_units;
+    } else if (tx.amount_minor_units < 0) {
+      totalOutflow += Math.abs(tx.amount_minor_units);
     }
   }
 

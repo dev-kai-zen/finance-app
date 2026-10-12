@@ -119,8 +119,8 @@ export function CalendarSchedulesTab({
               const isIncome = item.transactionType === "income";
 
               const signedAmount = isExpense
-                ? -item.amountCents
-                : item.amountCents;
+                ? -item.amountMinorUnits
+                : item.amountMinorUnits;
 
               const amountColor = isIncome
                 ? theme.colors.success
@@ -164,7 +164,11 @@ export function CalendarSchedulesTab({
 
                   <View style={styles.rowRight}>
                     <Text style={[styles.amountText, { color: amountColor }]}>
-                      {formatCurrency(signedAmount, "PHP", false)}
+                      {formatCurrency(
+                        signedAmount,
+                        account?.currencyCode ?? "PHP",
+                        false,
+                      )}
                     </Text>
 
                     {/* Action buttons if due and actionable */}

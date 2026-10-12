@@ -11,12 +11,14 @@ import { formatCurrency } from "@/utils/currency";
 export interface RecentTransactionsCardProps {
   transactions: TransactionListItem[];
   onViewAll: () => void;
+  onPressTransaction?: (tx: TransactionListItem) => void;
   currencyCode?: string;
 }
 
 export function RecentTransactionsCard({
   transactions,
   onViewAll,
+  onPressTransaction,
   currencyCode = "PHP",
 }: RecentTransactionsCardProps) {
   const theme = useAppTheme();
@@ -82,15 +84,23 @@ export function RecentTransactionsCard({
                 ? `Transfer to ${tx.transferAccountName ?? "Account"}`
                 : tx.categoryName || "Transaction");
 
-            const isPositive = tx.amountCents > 0;
+            const isPositive = tx.amountMinorUnits > 0;
             const formattedAmount = isTransfer
-              ? formatCurrency(Math.abs(tx.amountCents), tx.accountCurrency ?? currencyCode, false)
-              : formatCurrency(tx.amountCents, tx.accountCurrency ?? currencyCode, true);
+              ? formatCurrency(Math.abs(tx.amountMinorUnits), tx.accountCurrency ?? currencyCode, false)
+              : formatCurrency(tx.amountMinorUnits, tx.accountCurrency ?? currencyCode, true);
 
             return (
-              <View
+              <Pressable
                 key={tx.id}
-                style={[styles.row, !isLast && styles.rowBorder]}
+                accessibilityLabel={`View transaction, ${title}`}
+                accessibilityRole="button"
+                disabled={!onPressTransaction}
+                onPress={() => onPressTransaction?.(tx)}
+                style={({ pressed }) => [
+                  styles.row,
+                  !isLast && styles.rowBorder,
+                  pressed && onPressTransaction ? styles.rowPressed : null,
+                ]}
               >
                 <View
                   style={[
@@ -132,7 +142,7 @@ export function RecentTransactionsCard({
                     </Text>
                   </View>
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -198,9 +208,13 @@ function createStyles(theme: AppTheme) {
     list: {},
     row: {
       alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
       gap: theme.spacing.md,
       paddingVertical: 10,
+    },
+    rowPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
     },
     rowBorder: {
       borderBottomColor: theme.colors.border,

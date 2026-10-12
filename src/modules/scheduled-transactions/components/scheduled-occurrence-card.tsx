@@ -41,8 +41,8 @@ export function ScheduledOccurrenceCard({
 
   const signedAmount =
     schedule.transactionType === "expense"
-      ? -schedule.amountCents
-      : schedule.amountCents;
+      ? -schedule.amountMinorUnits
+      : schedule.amountMinorUnits;
 
   const isFailed = occurrence.status === "failed";
   const dueDateTime = occurrence.effectiveDueAt ?? occurrence.nominalDueAt;

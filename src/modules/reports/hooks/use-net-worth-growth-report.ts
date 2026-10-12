@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getNetWorthGrowthReport } from "../services/get-net-worth-growth-report.service";
 import type {
   NetWorthGrowthDateRange,
@@ -9,6 +10,7 @@ import { getNetWorthDateRange } from "../utils/net-worth-dates";
 import { toDateKey } from "../utils/reports-dates";
 
 export function useNetWorthGrowthReport() {
+  const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<NetWorthGrowthPreset>("1y");
 
   const now = useMemo(() => new Date(), []);
@@ -29,7 +31,7 @@ export function useNetWorthGrowthReport() {
 
   const data: NetWorthGrowthReportData = useMemo(() => {
     return getNetWorthGrowthReport(range);
-  }, [range]);
+  }, [range, preferences.defaultCurrency]);
 
   return {
     preset,

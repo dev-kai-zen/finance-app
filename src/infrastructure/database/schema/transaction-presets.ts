@@ -1,5 +1,6 @@
 import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { pockets } from "./pockets";
@@ -27,7 +28,8 @@ export const transactionPresets = sqliteTable(
     toPocketId: text("to_pocket_id").references(() => pockets.id, {
       onDelete: "set null",
     }),
-    amountCents: integer("amount_cents"),
+    amountMinorUnits: integer("amount_minor_units"),
+    currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     note: text("note"),
     sortOrder: integer("sort_order").notNull().default(0),
     usageCount: integer("usage_count").notNull().default(0),
@@ -47,11 +49,11 @@ export const transactionPresets = sqliteTable(
     ),
     check(
       "transaction_presets_amount_check",
-      sql`${table.amountCents} is null or ${table.amountCents} != 0`,
+      sql`${table.amountMinorUnits} is null or ${table.amountMinorUnits} != 0`,
     ),
     check(
       "transaction_presets_transfer_amount_check",
-      sql`${table.type} != 'transfer' or ${table.amountCents} is null or ${table.amountCents} > 0`,
+      sql`${table.type} != 'transfer' or ${table.amountMinorUnits} is null or ${table.amountMinorUnits} > 0`,
     ),
     check(
       "transaction_presets_usage_count_check",

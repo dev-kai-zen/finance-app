@@ -7,6 +7,7 @@ export const es = {
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
+    ok: "Aceptar",
     search: "Buscar",
   },
   navigation: {
@@ -27,6 +28,7 @@ export const es = {
     localBackup: "Copia de seguridad local",
     googleDriveBackup: "Copia de seguridad de Google Drive",
     language: "Idioma",
+    currencySetup: "Configuración de moneda",
     menu: "MENÚ",
     openMenu: "Abrir menú de navegación",
     closeMenu: "Cerrar menú de navegación",
@@ -46,6 +48,10 @@ export const es = {
     languageSystemValue: "Predeterminado del sistema · %{language}",
     languageAccessibility:
       "Idioma actual: %{language}. Toca para cambiarlo.",
+    currencySection: "MONEDA Y NÚMEROS",
+    currencySetup: "Configuración de moneda",
+    currencySetupDescription: "Moneda, signos, decimales y colores de importes",
+    currencySetupAccessibility: "Configurar la moneda y el formato numérico",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",
@@ -84,6 +90,64 @@ export const es = {
     resetData: "Restablecer datos",
     resetDataDescription:
       "Borra permanentemente todos los datos locales y comienza de nuevo.",
+  },
+  currency: {
+    defaultCurrency: "Moneda predeterminada",
+    displayCurrency: "Mostrar moneda",
+    displayCurrencyDescription: "Mostrar la moneda en los importes",
+    colorAmounts: "Colorear importes",
+    colorAmountsDescription: "Colorear importes positivos y negativos",
+    negativeNumber: "Número negativo",
+    catalogTitle: "Monedas",
+    catalogRowLabel: "Monedas y decimales",
+    catalogRowValue: "%{count} monedas",
+    catalogDescription:
+      "Añade monedas personalizadas o ajusta los decimales antes de usarlas en cuentas, metas, tipos de cambio o como moneda predeterminada.",
+    decimalPlacesLabel: "%{count} decimales",
+    sampleAmount: "Ejemplo",
+    addCurrency: "Añadir moneda",
+    usedChip: "En uso",
+    usageClickToView: "Pulsa para ver",
+    usedLockedMessage:
+      "Esta moneda ya está en uso. No se pueden cambiar los decimales ni los detalles.",
+    usageChipAccessibility: "En uso, mostrar dónde se usa esta moneda",
+    usageModalLink: "Ver dónde se usa",
+    usageModalTitle: "Dónde se usa %{code}",
+    usageModalIntro: "%{code} aparece en los siguientes lugares:",
+    usageModalEmpty: "No se encontraron referencias activas para %{code}.",
+    usageReasonAccounts: "%{count} cuenta(s)",
+    usageReasonGoals: "%{count} meta(s)",
+    usageReasonTransactions: "%{count} transacción(es)",
+    usageReasonExchangeRates: "Ajustes de tipos de cambio (%{count})",
+    usageReasonDefault: "Tu moneda predeterminada para totales y cuentas nuevas",
+    fieldCode: "Código de moneda",
+    fieldName: "Nombre",
+    fieldNamePlaceholder: "Bitcoin",
+    fieldSymbol: "Símbolo",
+    fieldDecimalPlaces: "Decimales",
+    fieldDecimalPlacesHint: "Número entero de 0 a 18 (p. ej., 2 para céntimos, 0 para yen).",
+    builtinEditHint:
+      "Monedas integradas: solo puedes cambiar los decimales antes de usarlas.",
+    deleteTitle: "Eliminar moneda",
+    deleteAction: "Eliminar",
+    deleteCurrency: "Eliminar moneda",
+    deleteConfirm:
+      "¿Eliminar %{code}? Se quitarán los ajustes de tipo de cambio de esta moneda. No se puede deshacer.",
+    errorTitle: "No se pudo guardar",
+    decimalFormat: "Formato decimal",
+    automaticFormat: "Automático · Según la región del dispositivo",
+    chooseCurrency: "Moneda predeterminada",
+    chooseCurrencyDescription:
+      "Elige la moneda para los totales combinados y las cuentas nuevas.",
+    searchCurrencies: "Buscar por nombre o código de moneda",
+    noCurrenciesFound: "No hay monedas que coincidan con la búsqueda.",
+    negativeNumberDescription:
+      "Elige cómo se muestran los importes negativos.",
+    decimalFormatDescription:
+      "Elige el formato de los separadores de miles y decimales.",
+    helpTitle: "Acerca de la configuración de moneda",
+    helpMessage:
+      "La moneda predeterminada se usa en totales combinados y cuentas nuevas. Las cuentas existentes conservan su moneda. Las opciones de visualización no modifican los valores guardados.",
   },
   language: {
     heading: "Preferencia de idioma",

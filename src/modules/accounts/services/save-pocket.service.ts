@@ -42,7 +42,7 @@ export function savePocket(input: PocketInput, id?: string): string {
 
     const now = new Date();
     const targetAmountMinorUnits = value.targetAmount.trim()
-      ? parseMaintainingAmount(value.targetAmount)
+      ? parseMaintainingAmount(value.targetAmount, account.currencyCode)
       : null;
     if (existing) {
       updatePocketRecord(

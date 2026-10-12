@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -17,7 +18,6 @@ import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
 import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
 import {
   convertCurrencyMinorUnits,
-  DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
 
 export function AccountGroupSection({
@@ -46,6 +46,7 @@ export function AccountGroupSection({
   pockets: PocketListItem[];
 }) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const grouped = accounts.filter(
     (a) => a.accountType?.accountGroup === group,
   );
@@ -69,7 +70,7 @@ export function AccountGroupSection({
         const converted = convertCurrencyMinorUnits(
           raw,
           a.currencyCode,
-          DEFAULT_BASE_CURRENCY,
+          preferences.defaultCurrency,
         );
         return sum + BigInt(converted);
       },
@@ -149,7 +150,11 @@ export function AccountGroupSection({
           {isAsset ? "ASSETS" : "LIABILITIES"}
         </Text>
         {groupTotalNumber !== null ? (
-          <AccountAmountText amountMinorUnits={groupTotalNumber} variant="title" />
+          <AccountAmountText
+            amountMinorUnits={groupTotalNumber}
+            currencyCode={preferences.defaultCurrency}
+            variant="title"
+          />
         ) : (
           <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
         )}

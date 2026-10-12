@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { exchangeRates } from "@/infrastructure/database/schema";
 import {
@@ -77,6 +77,22 @@ export function upsertExchangeRate(
         updatedAt: now,
       },
     })
+    .run();
+}
+
+export function deleteExchangeRatesForCurrency(
+  currencyCode: string,
+  context: DbContext = db,
+): void {
+  const code = currencyCode.trim().toUpperCase();
+  context
+    .delete(exchangeRates)
+    .where(
+      or(
+        eq(exchangeRates.baseCurrency, code),
+        eq(exchangeRates.quoteCurrency, code),
+      ),
+    )
     .run();
 }
 

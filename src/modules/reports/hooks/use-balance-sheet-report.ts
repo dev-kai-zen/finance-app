@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { getBalanceSheetComparison } from "../services/get-balance-sheet-comparison.service";
 import type {
   BalanceSheetComparisonData,
@@ -12,6 +13,7 @@ import {
 } from "../utils/reports-dates";
 
 export function useBalanceSheetReport() {
+  const { preferences } = useCurrencyPreferences();
   const [preset, setPreset] = useState<ComparisonPreset>("prev-vs-today");
   const [hideZeroBalances, setHideZeroBalances] = useState<boolean>(true);
 
@@ -46,7 +48,7 @@ export function useBalanceSheetReport() {
   // Compute comparison data
   const data: BalanceSheetComparisonData = useMemo(() => {
     return getBalanceSheetComparison(range, { hideZeroBalances });
-  }, [range, hideZeroBalances]);
+  }, [range, hideZeroBalances, preferences.defaultCurrency]);
 
   // Initial expansion: Expand all (including pockets) by default
   useEffect(() => {

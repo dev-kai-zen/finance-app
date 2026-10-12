@@ -1,5 +1,8 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getExchangeRateMap } from "@/modules/currencies";
+import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
 import {
   getAccountBalanceDeltasAtDate,
   getPocketBalanceDeltasAtDate,
@@ -72,6 +75,7 @@ export function getBalanceSheet(
   const pocketDeltas = getPocketBalanceDeltasAtDate(cutoffDate, context);
 
   const cutoffTime = cutoffDate.getTime();
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
   // Index pockets by accountId
@@ -107,8 +111,9 @@ export function getBalanceSheet(
     const convertedBalance = convertCurrencyMinorUnits(
       balance,
       account.currencyCode,
-      DEFAULT_BASE_CURRENCY,
+      homeCurrency,
       ratesMap,
+      DEFAULT_BASE_CURRENCY,
     );
 
     const accountPockets = pocketsByAccountId.get(account.id) ?? [];

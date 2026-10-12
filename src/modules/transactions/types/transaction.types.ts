@@ -9,7 +9,10 @@ export interface Transaction {
   pocketId: string | null;
   transactionGroupId: string | null;
   type: TransactionType;
-  amountCents: number;
+  currencyCode: string;
+  amountMinorUnits: number;
+  originalAmountMinorUnits: number | null;
+  exchangeRateScaled: number | null;
   name: string | null;
   note: string | null;
   occurredAt: Date;
@@ -18,8 +21,20 @@ export interface Transaction {
   deletedAt: Date | null;
 }
 
-export type NewTransaction = Omit<Transaction, "id" | "createdAt" | "updatedAt" | "deletedAt"> & {
+export type NewTransaction = Omit<
+  Transaction,
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "deletedAt"
+  | "currencyCode"
+  | "originalAmountMinorUnits"
+  | "exchangeRateScaled"
+> & {
   id?: string;
+  currencyCode?: string;
+  originalAmountMinorUnits?: number | null;
+  exchangeRateScaled?: number | null;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -56,6 +71,8 @@ export interface TransactionListItem extends Transaction {
   transferFeePocketName?: string | null;
   transferFeeCategoryId?: string | null;
   transferFeeCategoryName?: string | null;
+  transferDestinationAmountMinorUnits?: number | null;
+  transferExchangeRateScaled?: number | null;
   labels?: LabelBadgeItem[];
 }
 
@@ -98,7 +115,15 @@ export interface CreateTransactionInput {
   categoryId: string;
   pocketId?: string | null;
   type: "income" | "expense";
-  amountCents: number;
+  /** Absolute typed amount in typed currency minor units (cross-currency) or signed account amount when same currency. */
+  amountMinorUnits: number;
+  currencyCode?: string;
+  /** Absolute typed minor units when currencies differ; omit when same as amountMinorUnits magnitude. */
+  typedAmountMinorUnitsAbs?: number;
+  /** Signed account-currency amount when user edited the account field. */
+  signedAccountAmountMinorUnits?: number;
+  exchangeRateScaled?: number | null;
+  exchangeLastEdited?: "typed" | "rate" | "account";
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
@@ -110,7 +135,7 @@ export interface CreateTransactionInput {
 }
 
 export interface TransferFeeInput {
-  amountCents: number;
+  amountMinorUnits: number;
   accountId: string;
   pocketId?: string | null;
   categoryId: string;
@@ -121,7 +146,10 @@ export interface CreateTransferInput {
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
+  /** Source amount in the source account currency (positive minor units). */
+  amountMinorUnits: number;
+  /** Destination amount in the destination account currency when currencies differ. */
+  destinationAmountMinorUnits?: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;
@@ -135,7 +163,8 @@ export interface UpdateTransferInput {
   toAccountId: string;
   fromPocketId?: string | null;
   toPocketId?: string | null;
-  amountCents: number;
+  amountMinorUnits: number;
+  destinationAmountMinorUnits?: number;
   name?: string | null;
   note?: string | null;
   occurredAt: Date;

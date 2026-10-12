@@ -13,7 +13,7 @@ export const transactionPresetInputSchema = z
     categoryId: z.string().nullable().optional(),
     toAccountId: z.string().nullable().optional(),
     toPocketId: z.string().nullable().optional(),
-    amountCents: z.number().int().nullable().optional(),
+    amountMinorUnits: z.number().int().nullable().optional(),
     note: z
       .string()
       .trim()
@@ -22,10 +22,10 @@ export const transactionPresetInputSchema = z
       .optional(),
   })
   .superRefine((value, context) => {
-    if (value.amountCents === 0) {
+    if (value.amountMinorUnits === 0) {
       context.addIssue({
         code: "custom",
-        path: ["amountCents"],
+        path: ["amountMinorUnits"],
         message: "A preset amount cannot be zero.",
       });
     }
@@ -38,10 +38,10 @@ export const transactionPresetInputSchema = z
           message: "Choose a destination account.",
         });
       }
-      if ((value.amountCents ?? 1) <= 0) {
+      if ((value.amountMinorUnits ?? 1) <= 0) {
         context.addIssue({
           code: "custom",
-          path: ["amountCents"],
+          path: ["amountMinorUnits"],
           message: "A transfer preset amount must be greater than zero.",
         });
       }

@@ -22,6 +22,11 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
+import {
+  CurrencyPickerModal,
+  useCurrencyPreferences,
+} from "@/modules/currencies";
+import { useCurrencies } from "@/modules/currencies/hooks/use-currencies";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
@@ -35,6 +40,9 @@ import {
   creditLimitInput,
   maintainingAmountInput,
   openingAmountInput,
+  parseCreditLimit,
+  parseMaintainingAmount,
+  parseOpeningAmount,
 } from "@/modules/accounts/utils/account-input";
 import { formatDisplayDate } from "@/modules/accounts/utils/format-display-date";
 import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-type-order";
@@ -43,6 +51,7 @@ import {
   supportsPockets,
 } from "@/modules/accounts/utils/pocket-eligibility";
 import { applySignedAmount } from "@/utils/amount-sign";
+import { getCurrencyMinorUnitExponent } from "@/utils/currency";
 
 function parseAmountSign(openingAmount: string): "+" | "-" {
   return openingAmount.trim().startsWith("-") ? "-" : "+";
@@ -91,22 +100,33 @@ export function AccountFormModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const { currencies: currencyCatalog } = useCurrencies();
+  const initialCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
 
   const [value, setValue] = useState<AccountInput>(() => ({
     name: account?.name ?? "",
     note: account?.note ?? "",
     iconKey: account?.iconKey ?? null,
     accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
-    openingAmount: openingAmountInput(account?.openingBalanceMinorUnits ?? 0),
+    currencyCode: initialCurrencyCode,
+    openingAmount: openingAmountInput(
+      account?.openingBalanceMinorUnits ?? 0,
+      initialCurrencyCode,
+    ),
     openingDate: localDateInput(account?.openingBalanceAt),
     hideFromSelection: account?.hideFromSelection ?? false,
     hideFromReports: account?.hideFromReports ?? false,
     pocketEnabled: account?.pocketEnabled ?? false,
-    maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+    maintainingAmount: maintainingAmountInput(
+      account?.maintainingBalanceMinorUnits,
+      initialCurrencyCode,
+    ),
     creditCardDetails: account?.creditCardDetails
       ? {
           creditLimit: creditLimitInput(
             account.creditCardDetails.creditLimitMinorUnits,
+            initialCurrencyCode,
           ),
           statementDay: String(account.creditCardDetails.statementDay),
           paymentDueDay: String(account.creditCardDetails.paymentDueDay),
@@ -114,7 +134,12 @@ export function AccountFormModal({
       : undefined,
   }));
   const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
-    parseAmountSign(openingAmountInput(account?.openingBalanceMinorUnits ?? 0)),
+    parseAmountSign(
+      openingAmountInput(
+        account?.openingBalanceMinorUnits ?? 0,
+        initialCurrencyCode,
+      ),
+    ),
   );
   const {
     defaultExpenseAccountId,
@@ -134,22 +159,31 @@ export function AccountFormModal({
       setIsDefaultExpense(false);
       setIsDefaultIncome(false);
     }
-    const openingAmount = openingAmountInput(account?.openingBalanceMinorUnits ?? 0);
+    const nextCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
+    const openingAmount = openingAmountInput(
+      account?.openingBalanceMinorUnits ?? 0,
+      nextCurrencyCode,
+    );
     setValue({
       name: account?.name ?? "",
       note: account?.note ?? "",
       iconKey: account?.iconKey ?? null,
       accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
+      currencyCode: nextCurrencyCode,
       openingAmount,
       openingDate: localDateInput(account?.openingBalanceAt),
       hideFromSelection: account?.hideFromSelection ?? false,
       hideFromReports: account?.hideFromReports ?? false,
       pocketEnabled: account?.pocketEnabled ?? false,
-      maintainingAmount: maintainingAmountInput(account?.maintainingBalanceMinorUnits),
+      maintainingAmount: maintainingAmountInput(
+        account?.maintainingBalanceMinorUnits,
+        nextCurrencyCode,
+      ),
       creditCardDetails: account?.creditCardDetails
         ? {
             creditLimit: creditLimitInput(
               account.creditCardDetails.creditLimitMinorUnits,
+              nextCurrencyCode,
             ),
             statementDay: String(account.creditCardDetails.statementDay),
             paymentDueDay: String(account.creditCardDetails.paymentDueDay),
@@ -165,8 +199,9 @@ export function AccountFormModal({
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
     }
     setConfirmAction(null);
-  }, [visible, account, types]);
+  }, [visible, account, types, preferences.defaultCurrency]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
   const [creditLimitCalculatorOpen, setCreditLimitCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -176,9 +211,15 @@ export function AccountFormModal({
     "archive" | "restore" | "lock-balance" | "delete" | null
   >(null);
 
-  const foreign = !!account && account.currencyCode !== "PHP";
   const startingBalanceLocked = account?.startingBalanceLocked ?? false;
-  const openingBalanceReadOnly = pending || foreign || startingBalanceLocked;
+  const openingBalanceReadOnly = pending || startingBalanceLocked;
+  const activeCurrencyCode = value.currencyCode ?? preferences.defaultCurrency;
+  const currencyDecimals = getCurrencyMinorUnitExponent(activeCurrencyCode);
+  const currencyDivisor = 10 ** currencyDecimals;
+  const currencyLocked = account ? account.canChangeCurrency !== true : false;
+  const selectedCurrencyMeta = currencyCatalog.find(
+    (item) => item.code.toUpperCase() === activeCurrencyCode.toUpperCase(),
+  );
   const selectedType = types.find((t) => t.id === value.accountTypeId);
   const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
   const isCreditCardType = isCreditCardAccountType(
@@ -193,21 +234,79 @@ export function AccountFormModal({
 
   const amountMinorUnits = useMemo(() => {
     const stripped = stripAmountSign(value.openingAmount || "0");
-    const parsed = Math.round(parseFloat(stripped || "0") * 100);
+    const parsed = Math.round(parseFloat(stripped || "0") * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.openingAmount]);
+  }, [value.openingAmount, currencyDivisor]);
 
   const maintainingMinorUnits = useMemo(() => {
     const stripped = (value.maintainingAmount ?? "").trim() || "0";
-    const parsed = Math.round(parseFloat(stripped || "0") * 100);
+    const parsed = Math.round(parseFloat(stripped || "0") * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.maintainingAmount]);
+  }, [value.maintainingAmount, currencyDivisor]);
 
   const creditLimitMinorUnits = useMemo(() => {
     const input = value.creditCardDetails?.creditLimit.trim() || "0";
-    const parsed = Math.round(parseFloat(input) * 100);
+    const parsed = Math.round(parseFloat(input) * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-  }, [value.creditCardDetails?.creditLimit]);
+  }, [value.creditCardDetails?.creditLimit, currencyDivisor]);
+
+  const handleCurrencySelect = (code: string) => {
+    const normalized = code.trim().toUpperCase();
+    setValue((prev) => {
+      const prevCode = prev.currencyCode ?? preferences.defaultCurrency;
+      if (normalized === prevCode.trim().toUpperCase()) {
+        return prev;
+      }
+
+      const strippedOpening = stripAmountSign(prev.openingAmount || "0");
+      const signedOpening =
+        amountSign === "-" &&
+        strippedOpening !== "0" &&
+        strippedOpening !== "0.00"
+          ? `-${strippedOpening}`
+          : strippedOpening;
+
+      let openingMinor = 0;
+      try {
+        openingMinor = parseOpeningAmount(signedOpening, prevCode);
+      } catch {
+        openingMinor = 0;
+      }
+
+      let maintainingMinor: number | null = null;
+      const maintainingRaw = (prev.maintainingAmount ?? "").trim();
+      if (maintainingRaw) {
+        try {
+          maintainingMinor = parseMaintainingAmount(maintainingRaw, prevCode);
+        } catch {
+          maintainingMinor = null;
+        }
+      }
+
+      let creditLimitMinor: number | null = null;
+      const creditLimitRaw = prev.creditCardDetails?.creditLimit.trim() ?? "";
+      if (creditLimitRaw) {
+        try {
+          creditLimitMinor = parseCreditLimit(creditLimitRaw, prevCode);
+        } catch {
+          creditLimitMinor = null;
+        }
+      }
+
+      return {
+        ...prev,
+        currencyCode: normalized,
+        openingAmount: openingAmountInput(openingMinor, normalized),
+        maintainingAmount: maintainingAmountInput(maintainingMinor, normalized),
+        creditCardDetails: prev.creditCardDetails
+          ? {
+              ...prev.creditCardDetails,
+              creditLimit: creditLimitInput(creditLimitMinor, normalized),
+            }
+          : undefined,
+      };
+    });
+  };
 
   const typeColor = accountColor(
     theme,
@@ -377,6 +476,40 @@ export function AccountFormModal({
             <ChevronRight color={theme.colors.textMuted} size={18} />
           </Pressable>
 
+          <Text style={styles.fieldLabel}>Currency</Text>
+          <Pressable
+            accessibilityLabel={`Account currency ${activeCurrencyCode}`}
+            accessibilityRole="button"
+            disabled={pending || currencyLocked}
+            onPress={() => setCurrencyPickerOpen(true)}
+            style={[
+              styles.selectorPill,
+              currencyLocked && styles.selectorPillDisabled,
+            ]}
+          >
+            <View style={styles.currencyBadge}>
+              <Text style={styles.currencyBadgeText}>
+                {selectedCurrencyMeta?.symbol.trim() || activeCurrencyCode}
+              </Text>
+            </View>
+            <View style={styles.currencyCopy}>
+              <Text numberOfLines={1} style={styles.selectorValue}>
+                {activeCurrencyCode}
+                {selectedCurrencyMeta ? ` · ${selectedCurrencyMeta.name}` : ""}
+              </Text>
+              {currencyLocked ? (
+                <Text style={styles.currencyHint}>
+                  Currency cannot be changed after transactions are recorded.
+                </Text>
+              ) : (
+                <Text style={styles.currencyHint}>Tap to choose another currency.</Text>
+              )}
+            </View>
+            {!currencyLocked ? (
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            ) : null}
+          </Pressable>
+
           <Text style={styles.fieldLabel}>Account Icon</Text>
           <Pressable
             accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
@@ -432,9 +565,14 @@ export function AccountFormModal({
           <AmountCalculatorField
             amountMinorUnits={amountMinorUnits}
             amountSign={amountSign}
-            currencyCode={account?.currencyCode ?? "PHP"}
+            currencyCode={activeCurrencyCode}
             disabled={openingBalanceReadOnly}
             label="Starting Balance"
+            onPressCurrency={
+              currencyLocked || openingBalanceReadOnly
+                ? undefined
+                : () => setCurrencyPickerOpen(true)
+            }
             labelAccessory={
               startingBalanceLocked ? (
                 <View style={styles.lockedBadge}>
@@ -468,9 +606,13 @@ export function AccountFormModal({
 
           <AmountCalculatorField
             amountMinorUnits={maintainingMinorUnits}
+            currencyCode={activeCurrencyCode}
             disabled={pending}
             label="Maintaining Balance"
-            showCurrencyPill={false}
+            showCurrencyPill={!currencyLocked}
+            onPressCurrency={
+              currencyLocked ? undefined : () => setCurrencyPickerOpen(true)
+            }
             showSignToggle={false}
             onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
           />
@@ -606,7 +748,7 @@ export function AccountFormModal({
               <Text style={styles.sectionTitle}>Credit Card Details</Text>
               <AmountCalculatorField
                 amountMinorUnits={creditLimitMinorUnits}
-                currencyCode={account?.currencyCode ?? "PHP"}
+                currencyCode={activeCurrencyCode}
                 disabled={pending}
                 label="Credit Limit"
                 showSignToggle={false}
@@ -729,16 +871,17 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={activeCurrencyCode}
         initialMinorUnits={amountMinorUnits}
         title="Starting Balance"
         visible={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(minorUnits, formatted) => {
-          const absDecimal = (Math.abs(minorUnits) / 100).toFixed(2);
           setValue((prev) => ({
             ...prev,
-            openingAmount: absDecimal || formatted,
+            openingAmount:
+              openingAmountInput(Math.abs(minorUnits), activeCurrencyCode) ||
+              formatted,
           }));
           setCalculatorOpen(false);
         }}
@@ -746,7 +889,7 @@ export function AccountFormModal({
 
       <AmountCalculatorModal
         allowNegative={false}
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={activeCurrencyCode}
         initialMinorUnits={creditLimitMinorUnits}
         title="Credit Limit"
         visible={creditLimitCalculatorOpen}
@@ -765,7 +908,7 @@ export function AccountFormModal({
       />
 
       <AmountCalculatorModal
-        currencyCode={account?.currencyCode ?? "PHP"}
+        currencyCode={activeCurrencyCode}
         initialMinorUnits={maintainingMinorUnits}
         title="Maintaining Balance"
         visible={maintainingCalculatorOpen}
@@ -833,6 +976,18 @@ export function AccountFormModal({
         visible={iconPickerOpen}
       />
 
+      <CurrencyPickerModal
+        selectedCode={activeCurrencyCode}
+        subtitle="Balances and limits use this currency for the account."
+        title="Account currency"
+        visible={currencyPickerOpen}
+        onClose={() => setCurrencyPickerOpen(false)}
+        onSelect={(code) => {
+          handleCurrencySelect(code);
+          setCurrencyPickerOpen(false);
+        }}
+      />
+
       <NotificationModal
         message={error ?? ""}
         onClose={onClearError}
@@ -888,6 +1043,34 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       minHeight: 48,
       paddingHorizontal: theme.spacing.lg,
+    },
+    selectorPillDisabled: {
+      opacity: 0.85,
+    },
+    currencyBadge: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 32,
+      minWidth: 44,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    currencyBadgeText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    currencyCopy: {
+      flex: 1,
+      gap: 2,
+      minWidth: 0,
+    },
+    currencyHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
     },
     selectorValue: {
       color: theme.colors.textPrimary,

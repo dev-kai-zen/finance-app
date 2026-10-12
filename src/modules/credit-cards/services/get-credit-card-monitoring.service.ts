@@ -1,5 +1,13 @@
 import { getAccountsWithBalances } from "@/modules/accounts";
+import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
 import { getAccountLedgerTransactions } from "@/modules/transactions";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import {
   listEntriesForStatements,
   listInstallmentPlansForAccount,
@@ -104,14 +112,14 @@ export function getCreditCardMonitoring(
       const unbilledItems = ledger
         .filter(
           (transaction) =>
-            transaction.amountCents < 0 &&
+            transaction.amountMinorUnits < 0 &&
             !planTransactionIds.has(transaction.id) &&
             !billedTransactionIds.has(transaction.id),
         )
         .map((transaction) => ({
           id: transaction.id,
           description: transaction.name ?? transaction.note ?? "Card purchase",
-          amountMinorUnits: Math.abs(transaction.amountCents),
+          amountMinorUnits: Math.abs(transaction.amountMinorUnits),
           occurredOn: toCalendarDate(transaction.occurredAt),
           detail: "One-time purchase",
         }));
@@ -150,7 +158,7 @@ export function getCreditCardMonitoring(
         0,
       );
       const unallocatedCredits = ledger
-        .filter((transaction) => transaction.amountCents > 0)
+        .filter((transaction) => transaction.amountMinorUnits > 0)
         .reduce((sum, transaction) => {
           const allocated = entries
             .filter(
@@ -159,7 +167,7 @@ export function getCreditCardMonitoring(
                 entry.amountMinorUnits < 0,
             )
             .reduce((eSum, entry) => eSum + Math.abs(entry.amountMinorUnits), 0);
-          return sum + Math.max(0, transaction.amountCents - allocated);
+          return sum + Math.max(0, transaction.amountMinorUnits - allocated);
         }, 0);
       const billed = calculateCreditCardBilled(statementSummaries);
       const unbilled = calculateCreditCardUnbilled(
@@ -196,15 +204,33 @@ export function getCreditCardMonitoring(
         statements: statementSummaries.reverse(),
       };
     });
+  const homeCurrency = getCurrencyPreferences().defaultCurrency;
+  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
 
   return {
     cards,
     dueThisMonthMinorUnits: cards.reduce(
-      (sum, card) => sum + card.dueThisMonthMinorUnits,
+      (sum, card) =>
+        sum +
+        convertCurrencyMinorUnits(
+          card.dueThisMonthMinorUnits,
+          card.currencyCode,
+          homeCurrency,
+          ratesMap,
+          DEFAULT_BASE_CURRENCY,
+        ),
       0,
     ),
     overdueMinorUnits: cards.reduce(
-      (sum, card) => sum + card.overdueMinorUnits,
+      (sum, card) =>
+        sum +
+        convertCurrencyMinorUnits(
+          card.overdueMinorUnits,
+          card.currencyCode,
+          homeCurrency,
+          ratesMap,
+          DEFAULT_BASE_CURRENCY,
+        ),
       0,
     ),
   };

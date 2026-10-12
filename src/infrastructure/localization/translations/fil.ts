@@ -7,6 +7,7 @@ export const fil = {
   common: {
     cancel: "Kanselahin",
     close: "Isara",
+    ok: "OK",
     search: "Maghanap",
   },
   navigation: {
@@ -27,6 +28,7 @@ export const fil = {
     localBackup: "Lokal na Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",
+    currencySetup: "Setup ng Currency",
     menu: "MENU",
     openMenu: "Buksan ang navigation menu",
     closeMenu: "Isara ang navigation menu",
@@ -46,6 +48,10 @@ export const fil = {
     languageSystemValue: "Default ng system · %{language}",
     languageAccessibility:
       "Kasalukuyang wika: %{language}. I-tap para palitan.",
+    currencySection: "CURRENCY AT MGA NUMERO",
+    currencySetup: "Setup ng Currency",
+    currencySetupDescription: "Currency, sign, decimal, at kulay ng halaga",
+    currencySetupAccessibility: "I-configure ang currency at format ng numero",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -84,6 +90,64 @@ export const fil = {
     resetData: "I-reset ang Data",
     resetDataDescription:
       "Permanenteng burahin ang lahat ng lokal na app data at magsimulang muli.",
+  },
+  currency: {
+    defaultCurrency: "Default na currency",
+    displayCurrency: "Ipakita ang currency",
+    displayCurrencyDescription: "Ipakita ang currency sa mga halaga",
+    colorAmounts: "Kulayan ang mga halaga",
+    colorAmountsDescription: "Kulayan ang positibo at negatibong halaga",
+    negativeNumber: "Negatibong Numero",
+    catalogTitle: "Mga Currency",
+    catalogRowLabel: "Mga currency at decimal place",
+    catalogRowValue: "%{count} na currency",
+    catalogDescription:
+      "Magdagdag ng custom currency o baguhin ang decimal places bago gamitin sa account, goal, rate, o bilang default currency.",
+    decimalPlacesLabel: "%{count} decimal place",
+    sampleAmount: "Halimbawa",
+    addCurrency: "Magdagdag ng currency",
+    usedChip: "Ginagamit",
+    usageClickToView: "I-click para tingnan",
+    usedLockedMessage:
+      "Ginagamit na ang currency na ito. Hindi na maaaring baguhin ang decimal places o detalye.",
+    usageChipAccessibility: "Ginagamit, ipakita kung saan ginagamit ang currency",
+    usageModalLink: "Tingnan kung saan ginagamit",
+    usageModalTitle: "Saan ginagamit ang %{code}",
+    usageModalIntro: "Ang %{code} ay nakaugnay sa mga sumusunod:",
+    usageModalEmpty: "Walang nakitang aktibong reference para sa %{code}.",
+    usageReasonAccounts: "%{count} account",
+    usageReasonGoals: "%{count} goal",
+    usageReasonTransactions: "%{count} transaction",
+    usageReasonExchangeRates: "Mga setting ng conversion rate (%{count})",
+    usageReasonDefault: "Default currency mo para sa total at bagong account",
+    fieldCode: "Currency code",
+    fieldName: "Pangalan",
+    fieldNamePlaceholder: "Bitcoin",
+    fieldSymbol: "Simbolo",
+    fieldDecimalPlaces: "Decimal places",
+    fieldDecimalPlacesHint: "Buong numero mula 0 hanggang 18 (hal. 2 para sa cents, 0 para sa yen).",
+    builtinEditHint:
+      "Built-in currency: puwede lang baguhin ang decimal places bago gamitin.",
+    deleteTitle: "Burahin ang currency",
+    deleteAction: "Burahin",
+    deleteCurrency: "Burahin ang currency",
+    deleteConfirm:
+      "Burahin ang %{code}? Aalisin ang mga conversion rate para sa currency na ito. Hindi na ito maibabalik.",
+    errorTitle: "Hindi ma-save",
+    decimalFormat: "Format ng Decimal",
+    automaticFormat: "Awtomatiko · Batay sa rehiyon ng device",
+    chooseCurrency: "Default na Currency",
+    chooseCurrencyDescription:
+      "Piliin ang currency para sa pinagsamang total at mga bagong account.",
+    searchCurrencies: "Maghanap ayon sa pangalan o code ng currency",
+    noCurrenciesFound: "Walang currency na tumutugma sa iyong paghahanap.",
+    negativeNumberDescription:
+      "Piliin kung paano ipapakita ang mga negatibong halaga.",
+    decimalFormatDescription:
+      "Piliin ang format ng thousands at decimal separator.",
+    helpTitle: "Tungkol sa Setup ng Currency",
+    helpMessage:
+      "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
   language: {
     heading: "Kagustuhan sa wika",

@@ -1,6 +1,9 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { getAccountsWithBalances } from "@/modules/accounts";
-import { getExchangeRateMap } from "@/modules/currencies";
+import {
+  getCurrencyPreferences,
+  getExchangeRateMap,
+} from "@/modules/currencies";
 import { getAccountBalanceDeltasAtDates } from "@/modules/transactions";
 import {
   convertCurrencyMinorUnits,
@@ -25,6 +28,7 @@ export function getNetWorthGrowthReport(
   );
 
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const cutoffDates = getHistoricalCutoffDates(range.startDate, range.endDate);
   const deltasAtCutoffs = getAccountBalanceDeltasAtDates(cutoffDates, context);
 
@@ -43,8 +47,9 @@ export function getNetWorthGrowthReport(
       const convertedBalance = convertCurrencyMinorUnits(
         balance,
         acc.currencyCode,
-        DEFAULT_BASE_CURRENCY,
+        homeCurrency,
         ratesMap,
+        DEFAULT_BASE_CURRENCY,
       );
 
       if (acc.accountType?.accountGroup === "liability") {
@@ -85,16 +90,16 @@ export function getNetWorthGrowthReport(
 
     let symbol: "▲" | "▼" | "" = "";
     let color: string = REPORT_COLORS.neutralMuted;
-    let formattedDiff = formatCurrency(0, "PHP");
+    let formattedDiff = formatCurrency(0, homeCurrency);
 
     if (diff > 0) {
       symbol = "▲";
       color = REPORT_COLORS.positiveGreen;
-      formattedDiff = `+${formatCurrency(diff, "PHP")}`;
+      formattedDiff = formatCurrency(diff, homeCurrency, true);
     } else if (diff < 0) {
       symbol = "▼";
       color = REPORT_COLORS.negativeRed;
-      formattedDiff = `-${formatCurrency(Math.abs(diff), "PHP")}`;
+      formattedDiff = formatCurrency(diff, homeCurrency);
     }
 
     points.push({
@@ -106,7 +111,7 @@ export function getNetWorthGrowthReport(
       diffFromPriorMinorUnits: diff,
       symbol,
       color,
-      formattedNetWorth: formatCurrency(pt.netWorth, "PHP"),
+      formattedNetWorth: formatCurrency(pt.netWorth, homeCurrency),
       formattedDiff,
     });
   }

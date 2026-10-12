@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatCurrency } from "@/utils/currency";
 import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
+import {
+  formatCrossCurrencyTransferLabel,
+  formatTransactionExchangeLabel,
+} from "../utils/format-transaction-exchange-label";
 
 export interface TransactionRowProps {
   transaction: TransactionListItem;
@@ -88,6 +93,7 @@ export function TransactionRow({
   viewMode = "compact",
 }: TransactionRowProps) {
   const theme = useAppTheme();
+  const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
   const isCompact = viewMode === "compact";
 
@@ -101,9 +107,11 @@ export function TransactionRow({
       ? theme.colors.success
       : theme.colors.danger;
   const displayAmountCents = isTransfer
-    ? Math.abs(transaction.amountCents)
-    : transaction.amountCents;
-  const amountColor = isTransfer
+    ? Math.abs(transaction.amountMinorUnits)
+    : transaction.amountMinorUnits;
+  const amountColor = !preferences.colorAmounts
+    ? theme.colors.textPrimary
+    : isTransfer
     ? theme.colors.info
     : displayAmountCents < 0
       ? theme.colors.danger
@@ -122,16 +130,35 @@ export function TransactionRow({
 
   const formattedAmount = isTransfer
     ? formatCurrency(
-        Math.abs(transaction.amountCents),
+        Math.abs(transaction.amountMinorUnits),
         transaction.accountCurrency ?? "PHP",
         false,
       )
-    : formatPhpCurrency(displayAmountCents, {
-        showPositiveSign: false,
-        positiveColor: theme.colors.success,
-        negativeColor: theme.colors.danger,
-        zeroColor: theme.colors.textMuted,
-      }).formatted;
+    : formatCurrency(
+        displayAmountCents,
+        transaction.accountCurrency ?? "PHP",
+        false,
+      );
+
+  const exchangeLabel = useMemo(() => {
+    if (isTransfer && transaction.transferAccountCurrency) {
+      return formatCrossCurrencyTransferLabel({
+        sourceCurrency: transaction.accountCurrency,
+        destinationCurrency: transaction.transferAccountCurrency,
+        sourceAmountMinorUnitsAbs: Math.abs(transaction.amountMinorUnits),
+        destinationAmountMinorUnitsAbs:
+          transaction.transferDestinationAmountMinorUnits ??
+          Math.abs(transaction.amountMinorUnits),
+        exchangeRateScaled: transaction.transferExchangeRateScaled ?? null,
+      });
+    }
+    return formatTransactionExchangeLabel({
+      currencyCode: transaction.currencyCode,
+      accountCurrency: transaction.accountCurrency,
+      originalAmountMinorUnits: transaction.originalAmountMinorUnits,
+      exchangeRateScaled: transaction.exchangeRateScaled,
+    });
+  }, [isTransfer, transaction]);
 
   const sourceBalance = formatCurrency(
     transaction.locationBalanceAfterMinorUnits ??
@@ -185,6 +212,11 @@ export function TransactionRow({
             <Text numberOfLines={1} style={styles.compactMetaText}>
               {compactMeta}
             </Text>
+            {exchangeLabel ? (
+              <Text numberOfLines={1} style={styles.exchangeMetaText}>
+                {exchangeLabel}
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.compactRightCol}>
@@ -313,6 +345,12 @@ export function TransactionRow({
         </>
       )}
 
+      {exchangeLabel && !isCompact ? (
+        <Text numberOfLines={2} style={styles.exchangeMetaText}>
+          {exchangeLabel}
+        </Text>
+      ) : null}
+
       {transaction.note && transaction.name ? (
         <Text numberOfLines={2} style={styles.txNoteText}>
           {transaction.note}
@@ -382,6 +420,10 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: 2,
+    },
+    exchangeMetaText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
     },
     compactMetaText: {
       color: theme.colors.textSecondary,

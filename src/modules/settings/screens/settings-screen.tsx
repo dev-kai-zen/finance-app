@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import {
   Archive,
   ChevronRight,
+  CircleDollarSign,
   Cloud,
   Languages,
   Trash2,
@@ -127,6 +128,36 @@ export function SettingsScreen() {
                   {t("settings.languageTitle")}
                 </Text>
                 <Text style={styles.settingDescription}>{languageValue}</Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            {t("settings.currencySection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.currencySetupAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.push("/currency-setup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <CircleDollarSign color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.currencySetup")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.currencySetupDescription")}
+                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>

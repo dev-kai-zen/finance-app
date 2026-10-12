@@ -13,6 +13,7 @@ export interface FormatPhpOptions {
   positiveColor?: string;
   negativeColor?: string;
   zeroColor?: string;
+  defaultColor?: string;
 }
 
 export interface FormattedPhpCurrency {
@@ -33,6 +34,65 @@ export interface FormattedPhpCurrency {
 }
 
 export const DEFAULT_BASE_CURRENCY = "PHP";
+
+/** Scale for transaction snapshot rates: 1 major typed unit = rate × this value account major units. */
+export const EXCHANGE_RATE_SNAPSHOT_SCALE = 100_000_000;
+
+export function minorUnitsPerMajorUnit(currencyCode: string): bigint {
+  const exponent = getCurrencyMinorUnitExponent(currencyCode);
+  return BigInt(10) ** BigInt(exponent);
+}
+
+export function normalizeExchangeRateScaled(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  const rounded = Math.round(parsed);
+  return rounded > 0 ? rounded : null;
+}
+
+export type NegativeNumberFormat = "minus" | "parentheses";
+export type DecimalFormat =
+  | "automatic"
+  | "comma-dot"
+  | "dot-comma"
+  | "space-dot"
+  | "space-comma";
+
+export interface CurrencyPreferences {
+  defaultCurrency: string;
+  displayCurrency: boolean;
+  colorAmounts: boolean;
+  negativeFormat: NegativeNumberFormat;
+  decimalFormat: DecimalFormat;
+}
+
+export const DEFAULT_CURRENCY_PREFERENCES: CurrencyPreferences = {
+  defaultCurrency: DEFAULT_BASE_CURRENCY,
+  displayCurrency: true,
+  colorAmounts: true,
+  negativeFormat: "minus",
+  decimalFormat: "automatic",
+};
+
+let activeCurrencyPreferences = DEFAULT_CURRENCY_PREFERENCES;
+let activeCurrencyLocale = "en-PH";
+
+export function setActiveCurrencyFormattingPreferences(
+  preferences: CurrencyPreferences,
+  locale?: string,
+): void {
+  activeCurrencyPreferences = { ...preferences };
+  if (locale) activeCurrencyLocale = locale;
+}
+
+export function getActiveCurrencyFormattingPreferences(): CurrencyPreferences {
+  return activeCurrencyPreferences;
+}
 
 /**
  * Currency display symbols mapped by ISO 4217 code.
@@ -89,6 +149,22 @@ export const CURRENCY_DECIMALS: Record<string, number> = {
   TWD: 2,
 };
 
+let activeMinorUnitExponents: Record<string, number> = { ...CURRENCY_DECIMALS };
+
+export function setActiveCurrencyMinorUnitExponents(
+  exponents: Record<string, number>,
+): void {
+  activeMinorUnitExponents = { ...exponents };
+}
+
+export function getCurrencyMinorUnitExponent(currencyCode: string): number {
+  return (
+    activeMinorUnitExponents[currencyCode] ??
+    CURRENCY_DECIMALS[currencyCode] ??
+    2
+  );
+}
+
 /**
  * Default offline exchange rates against base currency (PHP).
  * Scale is 10,000 basis points (1.0000x = 10,000 bps).
@@ -133,25 +209,19 @@ export function formatPhpCurrency(
   const isZero = amountMinorUnits === 0;
   const isPositive = amountMinorUnits > 0;
 
-  const absMinorUnits = Math.abs(amountMinorUnits);
-  const major = Math.floor(absMinorUnits / 100);
-  const minor = absMinorUnits % 100;
-
-  const majorFormatted = major.toLocaleString("en-PH");
-  const minorFormatted = minor.toString().padStart(2, "0");
-  const baseNumber = `${majorFormatted}.${minorFormatted}`;
-
   const sign = isNegative ? "-" : options?.showPositiveSign && isPositive ? "+" : "";
 
   const positiveColor = options?.positiveColor ?? PHP_CURRENCY_COLORS.positive;
   const negativeColor = options?.negativeColor ?? PHP_CURRENCY_COLORS.negative;
   const zeroColor = options?.zeroColor ?? PHP_CURRENCY_COLORS.neutral;
 
-  const color = isPositive
-    ? positiveColor
-    : isNegative
-      ? negativeColor
-      : zeroColor;
+  const color = activeCurrencyPreferences.colorAmounts
+    ? isPositive
+      ? positiveColor
+      : isNegative
+        ? negativeColor
+        : zeroColor
+    : options?.defaultColor ?? zeroColor;
 
   const colorKey: "success" | "danger" | "neutral" = isPositive
     ? "success"
@@ -160,9 +230,18 @@ export function formatPhpCurrency(
       : "neutral";
 
   return {
-    formatted: `${sign}₱${baseNumber}`,
-    formattedWithSign: `${isNegative ? "-" : isPositive ? "+" : ""}₱${baseNumber}`,
-    amountText: `${sign}${baseNumber}`,
+    formatted: formatCurrency(
+      amountMinorUnits,
+      "PHP",
+      Boolean(options?.showPositiveSign),
+    ),
+    formattedWithSign: formatCurrency(amountMinorUnits, "PHP", true),
+    amountText: formatCurrency(
+      amountMinorUnits,
+      "PHP",
+      Boolean(options?.showPositiveSign),
+      { hideCurrency: true },
+    ),
     color,
     colorKey,
     isPositive,
@@ -174,6 +253,9 @@ export function formatPhpCurrency(
 
 export interface FormatCurrencyOptions {
   useCode?: boolean;
+  hideCurrency?: boolean;
+  preferences?: CurrencyPreferences;
+  locale?: string;
 }
 
 /**
@@ -191,30 +273,65 @@ export function formatCurrency(
   showSign: boolean = false,
   options?: FormatCurrencyOptions,
 ): string {
+  const preferences = options?.preferences ?? activeCurrencyPreferences;
+  const locale = options?.locale ?? activeCurrencyLocale;
   const isNegative = amountMinorUnits < 0;
   const absMinorUnits = Math.abs(amountMinorUnits);
-  const decimals = CURRENCY_DECIMALS[currencyCode] ?? 2;
-  const divisor = 10 ** decimals;
+  const sourceDecimals = getCurrencyMinorUnitExponent(currencyCode);
+  const divisor = 10 ** sourceDecimals;
+  const decimalDigits = sourceDecimals;
+  const baseNumber = formatAbsoluteNumber(
+    absMinorUnits / divisor,
+    decimalDigits,
+    preferences.decimalFormat,
+    locale,
+  );
+  const showCurrency = preferences.displayCurrency && !options?.hideCurrency;
+  const symbol = !showCurrency
+    ? ""
+    : options?.useCode
+      ? `${currencyCode} `
+      : CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
+  const unsigned = `${symbol}${baseNumber}`;
 
-  const major = Math.floor(absMinorUnits / divisor);
-  const minor = decimals > 0 ? absMinorUnits % divisor : 0;
-
-  const majorFormatted = major.toLocaleString("en-PH");
-  const minorFormatted = decimals > 0 ? minor.toString().padStart(decimals, "0") : "";
-  const baseNumber = decimals > 0 ? `${majorFormatted}.${minorFormatted}` : majorFormatted;
-
-  const symbol = options?.useCode
-    ? `${currencyCode} `
-    : CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
-
-  let sign = "";
   if (isNegative) {
-    sign = "-";
-  } else if (showSign && amountMinorUnits > 0) {
-    sign = "+";
+    return preferences.negativeFormat === "parentheses"
+      ? `(${unsigned})`
+      : `-${unsigned}`;
+  }
+  return `${showSign && amountMinorUnits > 0 ? "+" : ""}${unsigned}`;
+}
+
+function formatAbsoluteNumber(
+  value: number,
+  decimalDigits: number,
+  decimalFormat: DecimalFormat,
+  locale: string,
+): string {
+  if (decimalFormat === "automatic") {
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: decimalDigits,
+      maximumFractionDigits: decimalDigits,
+      useGrouping: true,
+    }).format(value);
   }
 
-  return `${sign}${symbol}${baseNumber}`;
+  const [integerPart, fractionPart = ""] = value
+    .toFixed(decimalDigits)
+    .split(".");
+  const groupingSeparator = decimalFormat.startsWith("space")
+    ? " "
+    : decimalFormat === "dot-comma"
+      ? "."
+      : ",";
+  const decimalSeparator = decimalFormat.endsWith("comma") ? "," : ".";
+  const groupedInteger = integerPart.replace(
+    /\B(?=(\d{3})+(?!\d))/g,
+    groupingSeparator,
+  );
+  return decimalDigits > 0
+    ? `${groupedInteger}${decimalSeparator}${fractionPart}`
+    : groupedInteger;
 }
 
 /**
@@ -254,8 +371,8 @@ export function convertCurrencyMinorUnits(
   const fromRate = getRate(fromCurrency);
   const toRate = getRate(toCurrency);
 
-  const fromDecimals = CURRENCY_DECIMALS[fromCurrency] ?? 2;
-  const toDecimals = CURRENCY_DECIMALS[toCurrency] ?? 2;
+  const fromDecimals = getCurrencyMinorUnitExponent(fromCurrency);
+  const toDecimals = getCurrencyMinorUnitExponent(toCurrency);
   const decimalDiff = toDecimals - fromDecimals;
 
   let scaledAmount = BigInt(amountMinorUnits) * BigInt(fromRate);
@@ -274,4 +391,162 @@ export function convertCurrencyMinorUnits(
   const result = ((absScaled + (divisor / 2n)) / divisor) * sign;
 
   return Number(result);
+}
+
+/**
+ * Converts a typed amount to account minor units using a snapshot rate
+ * (1 typed major unit = exchangeRateScaled / EXCHANGE_RATE_SNAPSHOT_SCALE account major units).
+ */
+export function applyExchangeRate(
+  typedAmountMinorUnits: number,
+  exchangeRateScaled: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number {
+  if (!Number.isInteger(typedAmountMinorUnits)) {
+    throw new Error("Typed amount must be an integer in minor units.");
+  }
+  const normalizedRate = normalizeExchangeRateScaled(exchangeRateScaled);
+  if (normalizedRate === null) {
+    throw new Error("Exchange rate must be a positive integer at snapshot scale.");
+  }
+
+  const sign = typedAmountMinorUnits < 0 ? -1n : 1n;
+  const absTyped = BigInt(Math.abs(typedAmountMinorUnits));
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+
+  const numerator =
+    absTyped *
+    BigInt(normalizedRate) *
+    minorUnitsPerMajorUnit(accountCurrencyCode);
+  const denominator = minorUnitsPerMajorUnit(typedCurrencyCode) * scale;
+
+  const absResult = (numerator + denominator / 2n) / denominator;
+  const result = absResult * sign;
+  const asNumber = Number(result);
+  if (asNumber === 0) {
+    throw new Error("Converted account amount rounds to zero.");
+  }
+  return asNumber;
+}
+
+/** Like applyExchangeRate but returns null instead of throwing (for UI labels). */
+export function tryApplyExchangeRate(
+  typedAmountMinorUnits: number,
+  exchangeRateScaled: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number | null {
+  try {
+    return applyExchangeRate(
+      typedAmountMinorUnits,
+      exchangeRateScaled,
+      typedCurrencyCode,
+      accountCurrencyCode,
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Derives a snapshot rate from exact typed and account minor-unit amounts.
+ */
+export function deriveExchangeRate(
+  accountAmountMinorUnits: number,
+  typedAmountMinorUnits: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number {
+  const absAccount = Math.abs(accountAmountMinorUnits);
+  const absTyped = Math.abs(typedAmountMinorUnits);
+  if (!Number.isInteger(absAccount) || !Number.isInteger(absTyped) || absTyped === 0) {
+    throw new Error("Cannot derive exchange rate from invalid amounts.");
+  }
+  if (absAccount === 0) {
+    throw new Error("Account amount must be non-zero to derive an exchange rate.");
+  }
+
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+
+  const numerator =
+    BigInt(absAccount) *
+    minorUnitsPerMajorUnit(typedCurrencyCode) *
+    scale;
+  const denominator =
+    BigInt(absTyped) * minorUnitsPerMajorUnit(accountCurrencyCode);
+
+  const scaled = (numerator + denominator / 2n) / denominator;
+  const asNumber = Number(scaled);
+  if (!Number.isInteger(asNumber) || asNumber <= 0) {
+    throw new Error("Derived exchange rate is invalid.");
+  }
+  return asNumber;
+}
+
+/**
+ * Builds an 8-decimal snapshot rate for 1 typed major unit in account major units,
+ * using the current rate book (basis points against baseCurrency).
+ */
+export function snapshotExchangeRateFromBook(
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+  ratesMap?: Map<string, number> | Record<string, number>,
+  baseCurrency: string = DEFAULT_BASE_CURRENCY,
+): number {
+  const typed = typedCurrencyCode.trim().toUpperCase();
+  const account = accountCurrencyCode.trim().toUpperCase();
+  if (typed === account) {
+    throw new Error("Cannot snapshot rate for identical currencies.");
+  }
+
+  const oneTypedMajorMinor = 10 ** getCurrencyMinorUnitExponent(typed);
+  const accountMinorForOneTypedMajor = convertCurrencyMinorUnits(
+    oneTypedMajorMinor,
+    typed,
+    account,
+    ratesMap,
+    baseCurrency,
+  );
+  const accountExp = getCurrencyMinorUnitExponent(account);
+  const accountMajor =
+    accountMinorForOneTypedMajor / 10 ** accountExp;
+
+  const scaled = Math.round(accountMajor * EXCHANGE_RATE_SNAPSHOT_SCALE);
+  if (!Number.isFinite(scaled) || scaled <= 0) {
+    throw new Error(
+      `No exchange rate available for ${typed} to ${account}.`,
+    );
+  }
+  return scaled;
+}
+
+/** Formats a snapshot rate as a decimal string with up to 8 fractional digits (trailing zeros trimmed). */
+export function parseExchangeRateDecimalToScaled(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = /^(\d+)(?:\.(\d{0,8}))?$/.exec(trimmed);
+  if (!match) return null;
+  const whole = BigInt(match[1]);
+  const fractionRaw = (match[2] ?? "").padEnd(8, "0").slice(0, 8);
+  const fraction = BigInt(fractionRaw);
+  const scaled = whole * BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE) + fraction;
+  const asNumber = Number(scaled);
+  if (!Number.isInteger(asNumber) || asNumber <= 0) return null;
+  return asNumber;
+}
+
+export function formatSnapshotExchangeRateDecimal(
+  exchangeRateScaled: number,
+): string {
+  if (!Number.isInteger(exchangeRateScaled) || exchangeRateScaled <= 0) {
+    return "";
+  }
+  const whole = Math.floor(exchangeRateScaled / EXCHANGE_RATE_SNAPSHOT_SCALE);
+  const fraction = exchangeRateScaled % EXCHANGE_RATE_SNAPSHOT_SCALE;
+  const fractionText = fraction
+    .toString()
+    .padStart(8, "0")
+    .replace(/0+$/, "");
+  return fractionText.length > 0 ? `${whole}.${fractionText}` : `${whole}`;
 }

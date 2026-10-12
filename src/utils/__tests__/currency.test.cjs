@@ -298,6 +298,59 @@ test("currency: convertCurrencyMinorUnits handles JPY (0 decimal) conversion", (
   assert.equal(jpyUnits, 1000);
 });
 
+const EXCHANGE_RATE_SNAPSHOT_SCALE = 100_000_000;
+
+function applyExchangeRate(
+  typedAmountMinorUnits,
+  exchangeRateScaled,
+  typedCurrencyCode,
+  accountCurrencyCode,
+) {
+  const typedExp = CURRENCY_DECIMALS[typedCurrencyCode] ?? 2;
+  const accountExp = CURRENCY_DECIMALS[accountCurrencyCode] ?? 2;
+  const sign = typedAmountMinorUnits < 0 ? -1n : 1n;
+  const absTyped = BigInt(Math.abs(typedAmountMinorUnits));
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+  const numerator =
+    absTyped * BigInt(exchangeRateScaled) * BigInt(10 ** accountExp);
+  const denominator = BigInt(10 ** typedExp) * scale;
+  const absResult = (numerator + denominator / 2n) / denominator;
+  return Number(absResult * sign);
+}
+
+function deriveExchangeRate(
+  accountAmountMinorUnits,
+  typedAmountMinorUnits,
+  typedCurrencyCode,
+  accountCurrencyCode,
+) {
+  const absAccount = Math.abs(accountAmountMinorUnits);
+  const absTyped = Math.abs(typedAmountMinorUnits);
+  const typedExp = CURRENCY_DECIMALS[typedCurrencyCode] ?? 2;
+  const accountExp = CURRENCY_DECIMALS[accountCurrencyCode] ?? 2;
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+  const numerator =
+    BigInt(absAccount) * BigInt(10 ** typedExp) * scale;
+  const denominator = BigInt(absTyped) * BigInt(10 ** accountExp);
+  return Number((numerator + denominator / 2n) / denominator);
+}
+
+test("currency: applyExchangeRate converts USD typed amount to PHP account minor units", () => {
+  const rate = 6250000000; // 62.5 PHP per USD
+  assert.equal(applyExchangeRate(10000, rate, "USD", "PHP"), 625000);
+});
+
+test("currency: applyExchangeRate converts JPY to PHP with zero-decimal typed currency", () => {
+  const rate = 39000000; // 0.39 PHP per JPY
+  assert.equal(applyExchangeRate(100, rate, "JPY", "PHP"), 3900);
+});
+
+test("currency: deriveExchangeRate inverts exact account and typed amounts", () => {
+  const rate = deriveExchangeRate(625000, 10000, "USD", "PHP");
+  assert.equal(rate, 6250000000);
+  assert.equal(applyExchangeRate(10000, rate, "USD", "PHP"), 625000);
+});
+
 test("currency: convertCurrencyMinorUnits preserves negative amounts and zero", () => {
   const neg = convertCurrencyMinorUnits(-10000, "USD", "PHP");
   assert.equal(neg, -585000);

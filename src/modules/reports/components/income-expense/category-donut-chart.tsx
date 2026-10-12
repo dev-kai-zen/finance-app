@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G, Path } from "react-native-svg";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type {
@@ -45,6 +46,8 @@ export function CategoryDonutChart({
   onSelectCategory,
 }: CategoryDonutChartProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
   const selectedCategory = categories.find((c) => c.categoryId === selectedCategoryId);
@@ -146,7 +149,7 @@ export function CategoryDonutChart({
                 {selectedCategory.categoryName}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(selectedCategory.totalMinorUnits, "PHP")}
+                {formatCurrency(selectedCategory.totalMinorUnits, currencyCode)}
               </Text>
               <Text style={styles.centerMeta}>
                 {selectedCategory.percentage}% of total
@@ -158,7 +161,7 @@ export function CategoryDonutChart({
                 TOTAL {mode.toUpperCase()}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(totalMinorUnits, "PHP")}
+                {formatCurrency(totalMinorUnits, currencyCode)}
               </Text>
               <Text style={styles.centerMeta}>
                 {transactionCount} {transactionCount === 1 ? "transaction" : "transactions"}

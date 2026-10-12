@@ -102,10 +102,10 @@ export function QuickPresetSuggestions({
                 </Text>
               </View>
               <Text style={styles.amount}>
-                {preset.amountCents === null
+                {preset.amountMinorUnits === null
                   ? "Enter amount"
                   : formatCurrency(
-                      Math.abs(preset.amountCents),
+                      Math.abs(preset.amountMinorUnits),
                       account?.currencyCode ?? "PHP",
                     )}
               </Text>

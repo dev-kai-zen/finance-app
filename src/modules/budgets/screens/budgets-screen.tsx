@@ -22,6 +22,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { BudgetCard } from "../components/budget-card";
 import { BudgetFormModal } from "../components/budget-form-modal";
@@ -58,6 +59,7 @@ export function BudgetsScreen() {
   const [budgetToEdit, setBudgetToEdit] = useState<CategoryBudget | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
 
+  const { preferences } = useCurrencyPreferences();
   const {
     budgets,
     budgetStatuses,
@@ -194,14 +196,22 @@ export function BudgetsScreen() {
                       },
                     ]}
                   >
-                    {formatCurrency(summary.totalSpentCents, "PHP", false)}
+                    {formatCurrency(
+                      summary.totalSpentCents,
+                      preferences.defaultCurrency,
+                      false,
+                    )}
                   </Text>
                 </View>
                 <View style={styles.metricDivider} />
                 <View style={styles.metricItem}>
                   <Text style={styles.metricItemLabel}>Budgeted</Text>
                   <Text style={styles.metricItemValue}>
-                    {formatCurrency(summary.totalBudgetedCents, "PHP", false)}
+                    {formatCurrency(
+                      summary.totalBudgetedCents,
+                      preferences.defaultCurrency,
+                      false,
+                    )}
                   </Text>
                 </View>
                 <View style={styles.metricDivider} />

@@ -6,6 +6,7 @@ import {
   type BalanceSheetData,
   type BalanceSheetPocketItem,
 } from "@/modules/accounts";
+import { getCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../constants/reports.constants";
 import type {
@@ -49,7 +50,7 @@ export function calculateVariance({
         direction: "down",
         symbol: "▼",
         color: REPORT_COLORS.positiveGreen,
-        formattedDiff: `-${formatCurrency(absDiff, currencyCode)}`,
+        formattedDiff: formatCurrency(-absDiff, currencyCode),
       };
     } else if (debtDiff > 0) {
       // Debt increased: Unfavorable! (Red, Up arrow ▲, positive sign +)
@@ -61,7 +62,7 @@ export function calculateVariance({
         direction: "up",
         symbol: "▲",
         color: REPORT_COLORS.negativeRed,
-        formattedDiff: `+${formatCurrency(debtDiff, currencyCode)}`,
+        formattedDiff: formatCurrency(debtDiff, currencyCode, true),
       };
     } else {
       return {
@@ -89,7 +90,7 @@ export function calculateVariance({
       direction: "up",
       symbol: "▲",
       color: REPORT_COLORS.positiveGreen,
-      formattedDiff: `+${formatCurrency(diff, currencyCode)}`,
+      formattedDiff: formatCurrency(diff, currencyCode, true),
     };
   } else if (diff < 0) {
     // Asset decreased: Unfavorable! (Red, Down arrow ▼, negative sign -)
@@ -102,7 +103,7 @@ export function calculateVariance({
       direction: "down",
       symbol: "▼",
       color: REPORT_COLORS.negativeRed,
-      formattedDiff: `-${formatCurrency(absDiff, currencyCode)}`,
+      formattedDiff: formatCurrency(-absDiff, currencyCode),
     };
   } else {
     return {
@@ -127,6 +128,7 @@ export function getBalanceSheetComparison(
 ): BalanceSheetComparisonData {
   const context = options.context ?? db;
   const hideZeroBalances = options.hideZeroBalances ?? true;
+  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
 
   const prevSheet: BalanceSheetData = getBalanceSheet(range.prevDate, context);
   const currentSheet: BalanceSheetData = getBalanceSheet(
@@ -142,6 +144,7 @@ export function getBalanceSheetComparison(
     prevSheet.assets.totalMinorUnits,
     currentSheet.assets.totalMinorUnits,
     hideZeroBalances,
+    homeCurrency,
   );
 
   const liabilities = buildGroupComparison(
@@ -152,13 +155,14 @@ export function getBalanceSheetComparison(
     prevSheet.liabilities.totalMinorUnits,
     currentSheet.liabilities.totalMinorUnits,
     hideZeroBalances,
+    homeCurrency,
   );
 
   const netWorthVariance = calculateVariance({
     prevMinorUnits: prevSheet.netWorthMinorUnits,
     currentMinorUnits: currentSheet.netWorthMinorUnits,
     isLiability: false,
-    currencyCode: "PHP",
+    currencyCode: homeCurrency,
   });
 
   return {
@@ -182,6 +186,7 @@ function buildGroupComparison(
   prevTotal: number,
   currentTotal: number,
   hideZeroBalances: boolean,
+  homeCurrency: string,
 ): ReportGroupNode {
   const isLiability = group === "liability";
   const typeMap = new Map<
@@ -232,7 +237,7 @@ function buildGroupComparison(
       prevMinorUnits: prevTypeTotal,
       currentMinorUnits: currentTypeTotal,
       isLiability,
-      currencyCode: "PHP",
+      currencyCode: homeCurrency,
     });
 
     accountTypeNodes.push({
@@ -256,7 +261,7 @@ function buildGroupComparison(
     prevMinorUnits: prevTotal,
     currentMinorUnits: currentTotal,
     isLiability,
-    currencyCode: "PHP",
+    currencyCode: homeCurrency,
   });
 
   return {

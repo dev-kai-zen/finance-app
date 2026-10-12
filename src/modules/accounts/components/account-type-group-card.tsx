@@ -10,6 +10,7 @@ import { IconHelper } from "@/components/icon-helper";
 import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -18,7 +19,6 @@ import { accountColor } from "@/modules/accounts/constants/account-appearance.co
 import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
 import {
   convertCurrencyMinorUnits,
-  DEFAULT_BASE_CURRENCY,
   formatCurrency,
 } from "@/utils/currency";
 import { formatOpeningTotal } from "@/modules/accounts/utils/opening-summary";
@@ -59,6 +59,7 @@ export function AccountTypeGroupCard({
 }: AccountTypeGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
 
   const rawColor = accountType.color ?? accountType.hexColorsId ?? null;
   const primaryColor = accountColor(theme, rawColor);
@@ -81,7 +82,7 @@ export function AccountTypeGroupCard({
         const converted = convertCurrencyMinorUnits(
           raw,
           a.currencyCode,
-          DEFAULT_BASE_CURRENCY,
+          preferences.defaultCurrency,
         );
         return sum + BigInt(converted);
       },
@@ -143,7 +144,11 @@ export function AccountTypeGroupCard({
             </TouchableOpacity>
           ) : null}
           {groupTotalNumber !== null ? (
-            <AccountAmountText amountMinorUnits={groupTotalNumber} variant="body" />
+            <AccountAmountText
+              amountMinorUnits={groupTotalNumber}
+              currencyCode={preferences.defaultCurrency}
+              variant="body"
+            />
           ) : (
             <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
           )}
@@ -238,7 +243,11 @@ export function AccountTypeGroupCard({
                       />
                     </>
                   ) : (
-                    <AccountAmountText amountMinorUnits={balance} variant="body" />
+                    <AccountAmountText
+                      amountMinorUnits={balance}
+                      currencyCode={account.currencyCode}
+                      variant="body"
+                    />
                   )}
                   <ChevronRight color={theme.colors.textMuted} size={16} />
                 </View>
@@ -288,7 +297,11 @@ export function AccountTypeGroupCard({
                       <WalletCards color={theme.colors.textSecondary} size={17} />
                     </View>
                     <Text numberOfLines={1} style={styles.pocketName}>Available</Text>
-                    <AccountAmountText amountMinorUnits={available} variant="body" />
+                    <AccountAmountText
+                      amountMinorUnits={available}
+                      currencyCode={account.currencyCode}
+                      variant="body"
+                    />
                   </View>
 
                   {accountPockets.map((pocket) => (
@@ -308,6 +321,7 @@ export function AccountTypeGroupCard({
                       <Text numberOfLines={1} style={styles.pocketName}>{pocket.name}</Text>
                       <AccountAmountText
                         amountMinorUnits={pocket.currentBalanceMinorUnits}
+                        currencyCode={account.currencyCode}
                         variant="body"
                       />
                       <ChevronRight color={theme.colors.textMuted} size={15} />

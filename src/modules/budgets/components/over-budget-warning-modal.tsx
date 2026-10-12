@@ -93,21 +93,21 @@ export const OverBudgetWarningModal = memo(function OverBudgetWarningModal({
             <View style={styles.breakdownRow}>
               <Text style={styles.breakdownLabel}>Budget Limit</Text>
               <Text style={styles.breakdownValue}>
-                {formatCurrency(effectiveBudgetCents, "PHP", false)}
+                {formatCurrency(effectiveBudgetCents, result.budgetCurrencyCode || "PHP", false)}
               </Text>
             </View>
 
             <View style={styles.breakdownRow}>
               <Text style={styles.breakdownLabel}>Current Spending</Text>
               <Text style={styles.breakdownValue}>
-                {formatCurrency(currentSpentCents, "PHP", false)}
+                {formatCurrency(currentSpentCents, result.budgetCurrencyCode || "PHP", false)}
               </Text>
             </View>
 
             <View style={styles.breakdownRow}>
               <Text style={styles.breakdownLabel}>This Expense</Text>
               <Text style={[styles.breakdownValue, styles.expenseAmount]}>
-                +{formatCurrency(additionalExpenseCents, "PHP", false)}
+                +{formatCurrency(additionalExpenseCents, result.budgetCurrencyCode || "PHP", false)}
               </Text>
             </View>
 
@@ -116,14 +116,14 @@ export const OverBudgetWarningModal = memo(function OverBudgetWarningModal({
             <View style={styles.breakdownRow}>
               <Text style={styles.totalLabel}>New Total</Text>
               <Text style={styles.totalValue}>
-                {formatCurrency(newSpentCents, "PHP", false)}
+                {formatCurrency(newSpentCents, result.budgetCurrencyCode || "PHP", false)}
               </Text>
             </View>
 
             <View style={styles.exceededRow}>
               <Text style={styles.exceededLabel}>Over by</Text>
               <Text style={styles.exceededValue}>
-                {formatCurrency(exceededByCents, "PHP", false)} ({percentage}%)
+                {formatCurrency(exceededByCents, result.budgetCurrencyCode || "PHP", false)} ({percentage}%)
               </Text>
             </View>
           </View>

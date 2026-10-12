@@ -6,6 +6,33 @@ import type {
   TableDataResult,
   TableInfo,
 } from "../types/monitor.types";
+import { collectQueryResultColumns } from "../utils/collect-query-result-columns";
+
+function readSelectStatementColumnNames(sql: string): string[] {
+  const prepareSync = (
+    sqliteDatabase as {
+      prepareSync?: (query: string) => {
+        getColumnNames?: () => string[];
+        finalizeSync?: () => void;
+      };
+    }
+  ).prepareSync;
+
+  if (!prepareSync) {
+    return [];
+  }
+
+  try {
+    const statement = prepareSync(sql);
+    try {
+      return statement.getColumnNames?.() ?? [];
+    } finally {
+      statement.finalizeSync?.();
+    }
+  } catch {
+    return [];
+  }
+}
 
 export function getAllTables(): TableInfo[] {
   try {
@@ -62,10 +89,8 @@ export function getTableData(
       `SELECT * FROM "${tableName}" LIMIT ${limit} OFFSET ${offset};`,
     );
 
-    let columns: string[] = [];
-    if (rows.length > 0) {
-      columns = Object.keys(rows[0]);
-    } else {
+    let columns: string[] = collectQueryResultColumns(rows);
+    if (columns.length === 0) {
       const colInfo = sqliteDatabase.getAllSync<ColumnInfo>(
         `PRAGMA table_info("${tableName}");`,
       );
@@ -106,9 +131,13 @@ export function executeRawQuery(rawSql: string): QueryResult {
     upper.startsWith("PRAGMA") ||
     upper.startsWith("EXPLAIN")
   ) {
-    const rows = sqliteDatabase.getAllSync<any>(trimmed);
+    const rows = sqliteDatabase.getAllSync<Record<string, unknown>>(trimmed);
     const executionTimeMs = Date.now() - start;
-    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+    const columnsFromRows = collectQueryResultColumns(rows);
+    const columns =
+      columnsFromRows.length > 0
+        ? columnsFromRows
+        : readSelectStatementColumnNames(trimmed);
 
     return {
       columns,

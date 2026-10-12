@@ -8,6 +8,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { LocalizationProvider } from "@/infrastructure/localization";
+import { CurrencyPreferencesProvider } from "@/modules/currencies";
 import { HexColorsProvider } from "@/modules/hex-colors";
 import { LocalBackupProcessor } from "@/modules/local-backup";
 import {
@@ -27,6 +28,7 @@ function RootLayoutContent() {
   const pathname = usePathname();
   const usesNativeHeader =
     pathname.startsWith("/language") ||
+    pathname.startsWith("/currency-setup") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/transactions/scheduled");
@@ -39,29 +41,30 @@ function RootLayoutContent() {
       <KeyboardProvider>
         <DatabaseProvider>
           <LocalizationProvider>
-            <WorkspaceProvider>
-              <HexColorsProvider>
-                <SafeAreaView
-                  edges={usesNativeHeader ? [] : ["top"]}
-                  style={[
-                    styles.safeAreaBoundary,
-                    { backgroundColor: theme.colors.background },
-                  ]}
-                >
-                <OnboardingGate>
-                  <>
-                    <ScheduledTransactionsProcessor />
-                    <TransactionAttachmentsSyncProcessor />
-                    <LocalBackupProcessor />
-                    <AppShell banner={<SampleWorkspaceBanner />}>
-                      <Stack
-                        screenOptions={{
-                          contentStyle: {
-                            backgroundColor: theme.colors.background,
-                          },
-                          headerShown: false,
-                        }}
-                      >
+            <CurrencyPreferencesProvider>
+              <WorkspaceProvider>
+                <HexColorsProvider>
+                  <SafeAreaView
+                    edges={usesNativeHeader ? [] : ["top"]}
+                    style={[
+                      styles.safeAreaBoundary,
+                      { backgroundColor: theme.colors.background },
+                    ]}
+                  >
+                    <OnboardingGate>
+                      <>
+                        <ScheduledTransactionsProcessor />
+                        <TransactionAttachmentsSyncProcessor />
+                        <LocalBackupProcessor />
+                        <AppShell banner={<SampleWorkspaceBanner />}>
+                          <Stack
+                            screenOptions={{
+                              contentStyle: {
+                                backgroundColor: theme.colors.background,
+                              },
+                              headerShown: false,
+                            }}
+                          >
                         <Stack.Screen name="index" />
                         <Stack.Screen name="accounts" />
                         <Stack.Screen name="transactions" />
@@ -80,6 +83,21 @@ function RootLayoutContent() {
                             headerShown: true,
                             title: "Language",
                             headerBackTitle: "Language",
+                            headerBackButtonDisplayMode: "default",
+                            headerShadowVisible: true,
+                            headerStyle: {
+                              backgroundColor: theme.colors.background,
+                            },
+                            headerTintColor: theme.colors.textPrimary,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="currency-setup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: true,
+                            title: "Currency Setup",
+                            headerBackTitle: "Currency Setup",
                             headerBackButtonDisplayMode: "default",
                             headerShadowVisible: true,
                             headerStyle: {
@@ -119,13 +137,14 @@ function RootLayoutContent() {
                           }}
                         />
                         <Stack.Screen name="monitor" />
-                      </Stack>
-                    </AppShell>
-                  </>
-                </OnboardingGate>
-                </SafeAreaView>
-              </HexColorsProvider>
-            </WorkspaceProvider>
+                          </Stack>
+                        </AppShell>
+                      </>
+                    </OnboardingGate>
+                  </SafeAreaView>
+                </HexColorsProvider>
+              </WorkspaceProvider>
+            </CurrencyPreferencesProvider>
           </LocalizationProvider>
         </DatabaseProvider>
       </KeyboardProvider>

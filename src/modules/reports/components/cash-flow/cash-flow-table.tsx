@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { CashFlowRowItem } from "../../types/cash-flow.types";
@@ -34,6 +35,8 @@ export function CashFlowTable({
 }: CashFlowTableProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
 
@@ -84,10 +87,10 @@ export function CashFlowTable({
                 accessibilityRole="button"
                 accessibilityLabel={`${row.periodLabel}: Inflow ${formatCurrency(
                   row.inflowMinorUnits,
-                  "PHP",
+                  currencyCode,
                 )}, Outflow ${formatCurrency(
                   row.outflowMinorUnits,
-                  "PHP",
+                  currencyCode,
                 )}, Net ${row.formattedNet}`}
                 onPress={() => {
                   onSelectPeriod(isSelected ? null : row.periodKey);
@@ -106,13 +109,13 @@ export function CashFlowTable({
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.inflowAmount}>
-                    +{formatCurrency(row.inflowMinorUnits, "PHP")}
+                    {formatCurrency(row.inflowMinorUnits, currencyCode, true)}
                   </Text>
                 </View>
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.outflowAmount}>
-                    -{formatCurrency(row.outflowMinorUnits, "PHP")}
+                    {formatCurrency(-row.outflowMinorUnits, currencyCode, true)}
                   </Text>
                 </View>
 
@@ -167,12 +170,12 @@ export function CashFlowTable({
             </View>
             <View style={[styles.colNumeric, styles.footerCol]}>
               <Text numberOfLines={1} style={[styles.footerNumeric, styles.inflowAmount]}>
-                +{formatCurrency(totalInflowMinorUnits, "PHP")}
+                {formatCurrency(totalInflowMinorUnits, currencyCode, true)}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.footerCol]}>
               <Text numberOfLines={1} style={[styles.footerNumeric, styles.outflowAmount]}>
-                -{formatCurrency(totalOutflowMinorUnits, "PHP")}
+                {formatCurrency(-totalOutflowMinorUnits, currencyCode, true)}
               </Text>
             </View>
             <View style={[styles.colNet, styles.footerCol]}>
@@ -187,8 +190,7 @@ export function CashFlowTable({
                   },
                 ]}
               >
-                {isNetPositive ? "+" : "-"}
-                {formatCurrency(Math.abs(netCashFlowMinorUnits), "PHP")}{" "}
+                {formatCurrency(netCashFlowMinorUnits, currencyCode, true)}{" "}
                 {isNetPositive ? "▲" : "▼"}
               </Text>
             </View>

@@ -1,5 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { getCurrencyPreferences } from "@/modules/currencies";
 import {
   budgetMonthlyTargets,
   categoryBudgets,
@@ -25,7 +26,8 @@ function mapBudgetRow(
     id: row.id,
     categoryId: row.categoryId,
     isEnabled: Boolean(row.isEnabled),
-    amountCents: row.amountCents,
+    amountMinorUnits: row.amountMinorUnits,
+    currencyCode: row.currencyCode,
     frequency: row.frequency as any,
     startDate: row.startDate,
     allowRollover: Boolean(row.allowRollover),
@@ -38,7 +40,7 @@ function mapBudgetRow(
       budgetId: t.budgetId,
       year: t.year,
       month: t.month,
-      amountCents: t.amountCents,
+      amountMinorUnits: t.amountMinorUnits,
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
     })),
@@ -137,6 +139,10 @@ export function upsertCategoryBudgetInContext(
 
   const id = existing ? existing.id : input.id ?? generateBudgetId(context);
   const startDate = input.startDate ?? (existing ? existing.startDate : now);
+  const currencyCode =
+    input.currencyCode?.trim().toUpperCase() ??
+    existing?.currencyCode ??
+    getCurrencyPreferences(context).defaultCurrency;
 
   if (existing) {
     context
@@ -144,7 +150,8 @@ export function upsertCategoryBudgetInContext(
       .set({
         isEnabled:
           input.isEnabled !== undefined ? input.isEnabled : existing.isEnabled,
-        amountCents: input.amountCents,
+        amountMinorUnits: input.amountMinorUnits,
+        currencyCode,
         frequency: input.frequency,
         startDate,
         allowRollover:
@@ -167,7 +174,8 @@ export function upsertCategoryBudgetInContext(
         id,
         categoryId: input.categoryId,
         isEnabled: input.isEnabled ?? true,
-        amountCents: input.amountCents,
+        amountMinorUnits: input.amountMinorUnits,
+        currencyCode,
         frequency: input.frequency,
         startDate,
         allowRollover: input.allowRollover ?? false,
@@ -193,7 +201,7 @@ export function upsertCategoryBudgetInContext(
           budgetId: id,
           year: mt.year,
           month: mt.month,
-          amountCents: mt.amountCents,
+          amountMinorUnits: mt.amountMinorUnits,
           createdAt: now,
           updatedAt: now,
         })

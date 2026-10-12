@@ -20,6 +20,7 @@ import type {
   BalanceSheetAccountTypeGroup,
   BalanceSheetData,
 } from "@/modules/accounts";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { CalendarMonth } from "../types/calendar.types";
 import { MONTH_NAMES, formatFriendlyDate } from "../utils/calendar-dates";
@@ -37,6 +38,8 @@ export function CalendarBalanceSheetTab({
 }: CalendarBalanceSheetTabProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
+  const currencyCode = preferences.defaultCurrency;
 
   // Set of account IDs with expanded pockets
   const [expandedPockets, setExpandedPockets] = useState<Set<string>>(() => {
@@ -157,7 +160,7 @@ export function CalendarBalanceSheetTab({
             },
           ]}
         >
-          {formatCurrency(balanceSheet.netWorthMinorUnits, "PHP", false)}
+          {formatCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
         </Text>
 
         <View style={styles.netWorthDivider} />
@@ -175,7 +178,7 @@ export function CalendarBalanceSheetTab({
                 },
               ]}
             >
-              {formatCurrency(balanceSheet.assets.totalMinorUnits, "PHP", false)}
+              {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
             </Text>
           </View>
 
@@ -195,7 +198,7 @@ export function CalendarBalanceSheetTab({
             >
               {formatCurrency(
                 balanceSheet.liabilities.totalMinorUnits,
-                "PHP",
+                currencyCode,
                 false,
               )}
             </Text>
@@ -227,7 +230,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.assets.totalMinorUnits, "PHP", false)}
+            {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -244,6 +247,7 @@ export function CalendarBalanceSheetTab({
                 togglePockets,
                 theme,
                 styles,
+                currencyCode,
               ),
             )}
           </View>
@@ -276,7 +280,7 @@ export function CalendarBalanceSheetTab({
           >
             {formatCurrency(
               balanceSheet.liabilities.totalMinorUnits,
-              "PHP",
+              currencyCode,
               false,
             )}
           </Text>
@@ -295,6 +299,7 @@ export function CalendarBalanceSheetTab({
                 togglePockets,
                 theme,
                 styles,
+                currencyCode,
               ),
             )}
           </View>
@@ -315,7 +320,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.assets.totalMinorUnits, "PHP", false)}
+            {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
           </Text>
         </View>
         <View style={styles.summaryFooterRow}>
@@ -332,7 +337,7 @@ export function CalendarBalanceSheetTab({
           >
             {formatCurrency(
               balanceSheet.liabilities.totalMinorUnits,
-              "PHP",
+              currencyCode,
               false,
             )}
           </Text>
@@ -350,7 +355,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.netWorthMinorUnits, "PHP", false)}
+            {formatCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -364,6 +369,7 @@ function renderAccountTypeGroup(
   onTogglePockets: (accountId: string) => void,
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
+  currencyCode: string,
 ) {
   const isPositive = group.totalBalanceMinorUnits >= 0;
 
@@ -401,7 +407,7 @@ function renderAccountTypeGroup(
             { color: isPositive ? theme.colors.success : theme.colors.danger },
           ]}
         >
-          {formatCurrency(group.totalBalanceMinorUnits, "PHP", false)}
+          {formatCurrency(group.totalBalanceMinorUnits, currencyCode, false)}
         </Text>
       </View>
 

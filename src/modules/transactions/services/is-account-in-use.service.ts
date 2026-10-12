@@ -8,14 +8,27 @@ import {
   hasPresetsForAccount,
 } from "../repositories/transaction-presets.repository";
 
+export function hasTransactionHistoryForAccount(
+  accountId: string,
+  context: DbContext = db,
+): boolean {
+  return hasTransactionsForAccount(accountId, context);
+}
+
 export function isAccountInUseByTransactions(
   accountId: string,
   context: DbContext = db,
 ): boolean {
   return (
-    hasTransactionsForAccount(accountId, context) ||
+    hasTransactionHistoryForAccount(accountId, context) ||
     hasPresetsForAccount(accountId, context)
   );
+}
+
+export function getAccountIdsWithTransactionHistory(
+  context: DbContext = db,
+): Set<string> {
+  return getAccountIdsWithTransactions(context);
 }
 
 export function getAccountIdsInUseByTransactions(

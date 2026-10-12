@@ -1,7 +1,8 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
+  ConfirmModal,
   FloatingActionButton,
   PageContainer,
   PageErrorState,
@@ -11,11 +12,14 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import {
+  TransactionDetailModal,
   TransactionFormModal,
   useTransactionPresets,
   useTransactions,
+  type TransactionListItem,
   type TransactionType,
 } from "@/modules/transactions";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
@@ -26,6 +30,7 @@ export function DashboardScreen() {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
+  const { preferences: currencyPreferences } = useCurrencyPreferences();
 
   const {
     summary,
@@ -38,9 +43,13 @@ export function DashboardScreen() {
   const {
     recordTransaction,
     recordTransfer,
+    editTransaction,
+    editTransfer,
+    deleteTx,
     pendingAction,
     error: transactionError,
     clearError: clearTransactionError,
+    refresh: refreshTransactions,
   } = useTransactions();
   const {
     presets,
@@ -62,6 +71,12 @@ export function DashboardScreen() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
+  const [inspectedTransaction, setInspectedTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [prefilledTransaction, setPrefilledTransaction] =
+    useState<TransactionListItem | null>(null);
+  const [isEditingTransaction, setIsEditingTransaction] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,8 +123,50 @@ export function DashboardScreen() {
 
   const handleOpenTransactionModal = (mode: TransactionType) => {
     refreshAccounts();
+    setPrefilledTransaction(null);
+    setIsEditingTransaction(false);
     setModalMode(mode);
     setIsModalOpen(true);
+  };
+
+  const recentTx = summary?.recentTransactions ?? [];
+
+  useEffect(() => {
+    setInspectedTransaction((current) =>
+      current
+        ? recentTx.find((transaction) => transaction.id === current.id) ??
+          current
+        : null,
+    );
+  }, [recentTx]);
+
+  const handleDuplicateTransaction = (tx: TransactionListItem) => {
+    setInspectedTransaction(null);
+    setPrefilledTransaction(tx);
+    setIsEditingTransaction(false);
+    setIsModalOpen(true);
+  };
+
+  const handleEditTransaction = (tx: TransactionListItem) => {
+    setInspectedTransaction(null);
+    setPrefilledTransaction(tx);
+    setIsEditingTransaction(true);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTransaction = (id: string) => {
+    setPendingDeleteId(id);
+  };
+
+  const handleConfirmDeleteTransaction = async () => {
+    if (!pendingDeleteId) return;
+    setInspectedTransaction(null);
+    const deleted = await deleteTx(pendingDeleteId);
+    if (deleted) {
+      refreshAccounts();
+      refreshDashboard();
+      setPendingDeleteId(null);
+    }
   };
 
   const handleViewAllTransactions = () => {
@@ -147,7 +204,6 @@ export function DashboardScreen() {
   const netWorth = summary?.netWorthMinorUnits ?? 0;
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
-  const recentTx = summary?.recentTransactions ?? [];
 
   return (
     <PageContainer
@@ -175,6 +231,7 @@ export function DashboardScreen() {
         ) : (
           <>
             <DashboardNetWorthCard
+              currencyCode={currencyPreferences.defaultCurrency}
               history={summary.netWorthHistory}
               monthlyChangePercentage={summary.netWorthChangePercentage}
               netWorthMinorUnits={netWorth}
@@ -182,12 +239,26 @@ export function DashboardScreen() {
               totalLiabilitiesMinorUnits={liabilities}
             />
             <RecentTransactionsCard
+              onPressTransaction={(tx) => setInspectedTransaction(tx)}
               onViewAll={handleViewAllTransactions}
               transactions={recentTx}
             />
           </>
         )}
       </View>
+
+      <TransactionDetailModal
+        onAttachmentsChanged={() => {
+          void refreshTransactions();
+          refreshDashboard();
+        }}
+        onClose={() => setInspectedTransaction(null)}
+        onDelete={handleDeleteTransaction}
+        onDuplicate={handleDuplicateTransaction}
+        onEdit={handleEditTransaction}
+        transaction={inspectedTransaction}
+        visible={inspectedTransaction !== null}
+      />
 
       {/* Direct Transaction Modal */}
       <TransactionFormModal
@@ -199,9 +270,15 @@ export function DashboardScreen() {
         presetPending={presetPending}
         presetError={presetError}
         error={transactionError}
+        initialTransaction={prefilledTransaction}
+        isEditing={isEditingTransaction}
         onClearError={clearTransactionError}
         onClearPresetError={clearPresetError}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setPrefilledTransaction(null);
+          setIsEditingTransaction(false);
+        }}
         onSaveTransaction={handleSaveTx}
         onSaveTransfer={handleSaveTransfer}
         onSavePreset={savePreset}
@@ -213,8 +290,38 @@ export function DashboardScreen() {
         archivedPresets={archivedPresets}
         presetSortBy={presetSortBy}
         onChangePresetSortBy={setPresetSortBy}
+        onUpdateTransaction={async (id, input, attachmentChanges) => {
+          const success = await editTransaction(id, input, attachmentChanges);
+          if (success) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return success;
+        }}
+        onUpdateTransfer={async (input, attachmentChanges) => {
+          const success = await editTransfer(input, attachmentChanges);
+          if (success) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return success;
+        }}
         pending={pendingAction}
         visible={isModalOpen}
+      />
+
+      <ConfirmModal
+        cancelLabel="Keep"
+        confirmLabel="Delete"
+        message="This record will be moved to Trash. You can restore it later."
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          void handleConfirmDeleteTransaction();
+        }}
+        pending={pendingAction}
+        title="Delete transaction?"
+        variant="destructive"
+        visible={pendingDeleteId !== null}
       />
     </PageContainer>
   );
