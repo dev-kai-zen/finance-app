@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  Folder,
   Landmark,
   Layers3,
   Plus,
@@ -19,10 +20,12 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ConfirmModal, FullScreenFormModal, NotificationModal } from "@/components";
+import { ConfirmModal, FullScreenFormModal, IconHelper, NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
+import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
+import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
 import { useFundGroupMutations } from "@/modules/accounts/hooks/use-fund-group-mutations";
 import type {
   AccountListItem,
@@ -38,17 +41,6 @@ type EditorState = {
   id?: string;
   initial: FundGroupInput;
   value: FundGroupInput;
-};
-
-type Candidate = {
-  id: string;
-  kind: "account" | "pocket";
-  name: string;
-  detail: string;
-  parentAccountId: string | null;
-  currencyCode: string;
-  currentBalanceMinorUnits: number;
-  isArchived: boolean;
 };
 
 export function FundGroupsModal({
@@ -110,60 +102,113 @@ export function FundGroupsModal({
 
   const normalizedMemberSearch = memberSearchQuery.trim().toLocaleLowerCase();
 
-  const accountCandidates = useMemo<Candidate[]>(() => {
+  const filteredAccounts = useMemo(() => {
     if (!editor) return [];
-    const selected = new Set(editor.value.accountIds);
-    return accounts
-      .filter((account) => !account.isArchived || selected.has(account.id))
-      .filter((account) =>
-        !normalizedMemberSearch ||
-        account.name.toLocaleLowerCase().includes(normalizedMemberSearch) ||
-        account.accountType?.name.toLocaleLowerCase().includes(normalizedMemberSearch),
-      )
-      .map((account) => ({
-        id: account.id,
-        kind: "account" as const,
-        name: account.name,
-        detail: account.accountType?.name ?? "Account",
-        parentAccountId: null,
-        currencyCode: account.currencyCode,
-        currentBalanceMinorUnits: account.currentBalanceMinorUnits,
-        isArchived: account.isArchived,
-      }))
-      .sort((left, right) => left.name.localeCompare(right.name));
-  }, [accounts, editor, normalizedMemberSearch]);
+    const selectedAccountIds = new Set(editor.value.accountIds);
+    const selectedPocketIds = new Set(editor.value.pocketIds);
+    let list = accounts.filter(
+      (account) => !account.isArchived || selectedAccountIds.has(account.id),
+    );
+    if (!normalizedMemberSearch) return list;
 
-  const pocketCandidates = useMemo<Candidate[]>(() => {
-    if (!editor) return [];
-    const selected = new Set(editor.value.pocketIds);
-    return pockets
-      .flatMap<Candidate>((pocket) => {
-        const parent = accountById.get(pocket.accountId);
-        if (!parent) return [];
-        const archived = pocket.isArchived || parent.isArchived;
-        if (archived && !selected.has(pocket.id)) return [];
-        if (
-          normalizedMemberSearch &&
-          !pocket.name.toLocaleLowerCase().includes(normalizedMemberSearch) &&
-          !parent.name.toLocaleLowerCase().includes(normalizedMemberSearch)
-        ) {
-          return [];
-        }
-        return [{
-          id: pocket.id,
-          kind: "pocket",
-          name: pocket.name,
-          detail: parent.name,
-          parentAccountId: parent.id,
-          currencyCode: parent.currencyCode,
-          currentBalanceMinorUnits: pocket.currentBalanceMinorUnits,
-          isArchived: archived,
-        }];
-      })
-      .sort((left, right) =>
-        left.detail.localeCompare(right.detail) || left.name.localeCompare(right.name),
+    return list.filter(
+      (account) =>
+        account.name.toLocaleLowerCase().includes(normalizedMemberSearch) ||
+        account.accountType?.name.toLocaleLowerCase().includes(normalizedMemberSearch) ||
+        pockets.some((pocket) => {
+          if (pocket.accountId !== account.id) return false;
+          const archived = pocket.isArchived || account.isArchived;
+          if (archived && !selectedPocketIds.has(pocket.id)) return false;
+          return (
+            pocket.name.toLocaleLowerCase().includes(normalizedMemberSearch) ||
+            account.name.toLocaleLowerCase().includes(normalizedMemberSearch)
+          );
+        }),
+    );
+  }, [accounts, editor, normalizedMemberSearch, pockets]);
+
+  const groupedAccounts = useMemo(() => {
+    const groups: {
+      typeId: string;
+      typeName: string;
+      color: string;
+      iconKey: string;
+      accountGroup: string;
+      typeSortOrder: number;
+      accounts: AccountListItem[];
+    }[] = [];
+
+    const map = new Map<string, (typeof groups)[0]>();
+
+    for (const account of filteredAccounts) {
+      const typeId = account.accountType?.id ?? "others";
+      const typeName = account.accountType?.name ?? "Other Accounts";
+      const color = accountColor(
+        theme,
+        account.accountType?.color ?? account.accountType?.hexColorsId ?? null,
       );
-  }, [accountById, editor, normalizedMemberSearch, pockets]);
+      const iconKey = account.accountType?.iconKey ?? "wallet";
+      const accountGroup = account.accountType?.accountGroup ?? "other";
+      const typeSortOrder = account.accountType?.sortOrder ?? Number.MAX_SAFE_INTEGER;
+
+      let group = map.get(typeId);
+      if (!group) {
+        group = {
+          typeId,
+          typeName,
+          color,
+          iconKey,
+          accountGroup,
+          typeSortOrder,
+          accounts: [],
+        };
+        map.set(typeId, group);
+        groups.push(group);
+      }
+      group.accounts.push(account);
+    }
+
+    for (const group of groups) {
+      group.accounts.sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder ||
+          left.name.localeCompare(right.name) ||
+          left.id.localeCompare(right.id),
+      );
+    }
+
+    const groupOrder: Record<string, number> = {
+      asset: 0,
+      liability: 1,
+      other: 2,
+    };
+
+    return groups.sort(
+      (left, right) =>
+        (groupOrder[left.accountGroup] ?? groupOrder.other) -
+          (groupOrder[right.accountGroup] ?? groupOrder.other) ||
+        Number(isSystemOthersAccountTypeId(left.typeId)) -
+          Number(isSystemOthersAccountTypeId(right.typeId)) ||
+        left.typeSortOrder - right.typeSortOrder ||
+        left.typeName.localeCompare(right.typeName) ||
+        left.typeId.localeCompare(right.typeId),
+    );
+  }, [filteredAccounts, theme]);
+
+  const memberSelectionSummary = useMemo(() => {
+    if (!editor) return "";
+    const accountCount = editor.value.accountIds.length;
+    const pocketCount = editor.value.pocketIds.length;
+    const parts = [
+      accountCount > 0
+        ? `${accountCount} account${accountCount === 1 ? "" : "s"}`
+        : null,
+      pocketCount > 0
+        ? `${pocketCount} pocket${pocketCount === 1 ? "" : "s"}`
+        : null,
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(", ") : "None selected";
+  }, [editor]);
 
   const dirty = editor
     ? JSON.stringify(editor.initial) !== JSON.stringify(editor.value)
@@ -214,21 +259,39 @@ export function FundGroupsModal({
     mutations.clearError();
   };
 
-  const toggleMember = (candidate: Candidate) => {
+  const toggleAccountMember = (accountId: string) => {
     if (!editor || mutations.pending) return;
-    const assigned = assignedGroups.get(`${candidate.kind}:${candidate.id}`);
+    const assigned = assignedGroups.get(`account:${accountId}`);
     if (assigned && assigned.id !== editor.id) return;
     setEditor((current) => {
       if (!current) return current;
-      const key = candidate.kind === "account" ? "accountIds" : "pocketIds";
-      const selected = current.value[key].includes(candidate.id);
+      const selected = current.value.accountIds.includes(accountId);
       return {
         ...current,
         value: {
           ...current.value,
-          [key]: selected
-            ? current.value[key].filter((id) => id !== candidate.id)
-            : [...current.value[key], candidate.id],
+          accountIds: selected
+            ? current.value.accountIds.filter((id) => id !== accountId)
+            : [...current.value.accountIds, accountId],
+        },
+      };
+    });
+  };
+
+  const togglePocketMember = (pocketId: string) => {
+    if (!editor || mutations.pending) return;
+    const assigned = assignedGroups.get(`pocket:${pocketId}`);
+    if (assigned && assigned.id !== editor.id) return;
+    setEditor((current) => {
+      if (!current) return current;
+      const selected = current.value.pocketIds.includes(pocketId);
+      return {
+        ...current,
+        value: {
+          ...current.value,
+          pocketIds: selected
+            ? current.value.pocketIds.filter((id) => id !== pocketId)
+            : [...current.value.pocketIds, pocketId],
         },
       };
     });
@@ -275,105 +338,9 @@ export function FundGroupsModal({
     </Pressable>
   );
 
-  const renderCandidateSection = (
-    title: string,
-    candidatesForSection: Candidate[],
-    emptyMessage: string,
-  ) => {
-    if (!editor) return null;
-    return (
-      <View style={styles.selectionSection}>
-        <View style={styles.selectionHeader}>
-          <Text style={styles.fieldLabel}>{title}</Text>
-          <Text style={styles.selectionCount}>
-            {title === "Accounts"
-              ? editor.value.accountIds.length
-              : editor.value.pocketIds.length} selected
-          </Text>
-        </View>
-
-        {candidatesForSection.length === 0 ? (
-          <View style={styles.sectionEmptyCard}>
-            <Text style={styles.emptyText}>{emptyMessage}</Text>
-          </View>
-        ) : (
-          <View style={styles.candidateList}>
-            {candidatesForSection.map((candidate) => {
-              const selectedIds = candidate.kind === "account"
-                ? editor.value.accountIds
-                : editor.value.pocketIds;
-              const selected = selectedIds.includes(candidate.id);
-              const assigned = assignedGroups.get(`${candidate.kind}:${candidate.id}`);
-              const assignedElsewhere = !!assigned && assigned.id !== editor.id;
-              const selectedChildPocket = candidate.kind === "account"
-                ? pockets.find(
-                    (pocket) =>
-                      pocket.accountId === candidate.id &&
-                      editor.value.pocketIds.includes(pocket.id),
-                  )
-                : undefined;
-              const parentSelected =
-                candidate.kind === "pocket" &&
-                !!candidate.parentAccountId &&
-                editor.value.accountIds.includes(candidate.parentAccountId);
-              const conflictsWithSelection = !selected && (!!selectedChildPocket || parentSelected);
-              const unavailable = assignedElsewhere || conflictsWithSelection;
-              const unavailableReason = assignedElsewhere
-                ? `In ${assigned.name}`
-                : selectedChildPocket
-                  ? `Remove the ${selectedChildPocket.name} pocket first`
-                  : parentSelected
-                    ? `Remove the ${candidate.detail} account first`
-                    : null;
-
-              return (
-                <Pressable
-                  key={`${candidate.kind}:${candidate.id}`}
-                  accessibilityLabel={`${candidate.name}, ${formatCurrency(candidate.currentBalanceMinorUnits, candidate.currencyCode)}${unavailableReason ? `, ${unavailableReason}` : ""}`}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: selected, disabled: unavailable }}
-                  disabled={unavailable || mutations.pending}
-                  onPress={() => toggleMember(candidate)}
-                  style={({ pressed }) => [
-                    styles.candidateRow,
-                    selected && styles.candidateRowSelected,
-                    unavailable && styles.disabled,
-                    pressed && styles.rowPressed,
-                  ]}
-                >
-                  <View style={[styles.checkBox, selected && styles.checkBoxSelected]}>
-                    {selected ? <Check color={theme.colors.onPrimary} size={15} /> : null}
-                  </View>
-                  <View style={styles.candidateCopy}>
-                    <View style={styles.candidateTitleRow}>
-                      <Text numberOfLines={1} style={styles.candidateName}>
-                        {candidate.name}
-                      </Text>
-                      {candidate.isArchived ? (
-                        <View style={styles.archivedBadge}>
-                          <Archive color={theme.colors.textMuted} size={11} />
-                          <Text style={styles.archivedBadgeText}>Archived</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    <Text numberOfLines={1} style={styles.candidateDetail}>
-                      {unavailableReason ?? candidate.detail}
-                    </Text>
-                  </View>
-                  <Text style={styles.candidateAmount}>
-                    {formatCurrency(
-                      candidate.currentBalanceMinorUnits,
-                      candidate.currencyCode,
-                    )}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-      </View>
-    );
-  };
+  const memberPickerEmptyMessage = normalizedMemberSearch
+    ? `No accounts match “${memberSearchQuery.trim()}”.`
+    : "Create or restore an account first.";
 
   return (
     <>
@@ -417,32 +384,287 @@ export function FundGroupsModal({
 
             <View style={styles.ruleBanner}>
               <Text style={styles.ruleText}>
-                You can mix accounts and pockets. To prevent double-counting, an account
-                and one of its own pockets cannot be selected together.
+                An account and its own pockets cannot be selected together to prevent
+                double-counting.
               </Text>
             </View>
 
             <AccountSearchBox
               accessibilityLabel="Search Fund Group accounts and pockets"
               clearAccessibilityLabel="Clear Fund Group member search"
-              placeholder="Search accounts or pockets"
+              placeholder="Search account, pocket, or type..."
               value={memberSearchQuery}
               onChangeText={setMemberSearchQuery}
             />
 
-            {renderCandidateSection(
-              "Accounts",
-              accountCandidates,
-              normalizedMemberSearch
-                ? `No accounts match “${memberSearchQuery.trim()}”.`
-                : "Create or restore an account first.",
-            )}
-            {renderCandidateSection(
-              "Pockets",
-              pocketCandidates,
-              normalizedMemberSearch
-                ? `No pockets match “${memberSearchQuery.trim()}”.`
-                : "Enable pockets on an eligible account, then create a pocket.",
+            <View style={styles.selectionHeader}>
+              <Text style={styles.fieldLabel}>Accounts &amp; pockets</Text>
+              <Text style={styles.selectionCount}>{memberSelectionSummary}</Text>
+            </View>
+
+            {groupedAccounts.length === 0 ? (
+              <View style={styles.sectionEmptyCard}>
+                <Text style={styles.emptyText}>{memberPickerEmptyMessage}</Text>
+              </View>
+            ) : (
+              groupedAccounts.map((typeGroup) => (
+                <View key={typeGroup.typeId} style={styles.typeGroupContainer}>
+                  <View style={styles.typeGroupHeaderRow}>
+                    <View
+                      style={[styles.typeGroupDot, { backgroundColor: typeGroup.color }]}
+                    />
+                    <Text style={[styles.typeGroupTitle, { color: typeGroup.color }]}>
+                      {typeGroup.typeName.toUpperCase()}
+                    </Text>
+                    <Text style={styles.typeGroupCount}>
+                      ({typeGroup.accounts.length})
+                    </Text>
+                  </View>
+
+                  <View style={styles.typeGroupCards}>
+                    {typeGroup.accounts.map((account, index) => {
+                      const isAccountSelected = editor.value.accountIds.includes(account.id);
+                      const assignedAccount = assignedGroups.get(`account:${account.id}`);
+                      const accountAssignedElsewhere =
+                        !!assignedAccount && assignedAccount.id !== editor.id;
+
+                      const accountPockets = pockets.filter((pocket) => {
+                        if (pocket.accountId !== account.id) return false;
+                        const archived = pocket.isArchived || account.isArchived;
+                        return !archived || editor.value.pocketIds.includes(pocket.id);
+                      });
+
+                      const selectedChildPockets = accountPockets.filter((pocket) =>
+                        editor.value.pocketIds.includes(pocket.id),
+                      );
+                      const hasSelectedChildPockets = selectedChildPockets.length > 0;
+                      const isAccountConflictDisabled =
+                        !isAccountSelected && hasSelectedChildPockets;
+                      const isAccountDisabled =
+                        accountAssignedElsewhere || isAccountConflictDisabled;
+
+                      const formattedBalance = formatCurrency(
+                        account.currentBalanceMinorUnits,
+                        account.currencyCode,
+                      );
+
+                      let accountDetail = `${account.accountType?.accountGroup === "liability" ? "Liability" : "Asset"} | ${account.accountType?.name ?? "Account"}`;
+                      if (accountAssignedElsewhere) {
+                        accountDetail = `In ${assignedAccount.name}`;
+                      } else if (isAccountConflictDisabled) {
+                        accountDetail = "Selected pockets active";
+                      }
+
+                      return (
+                        <View key={account.id}>
+                          {index > 0 ? <View style={styles.cardDivider} /> : null}
+                          <Pressable
+                            accessibilityLabel={`${account.name}, ${formattedBalance}${accountAssignedElsewhere ? `, In ${assignedAccount.name}` : ""}`}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{
+                              checked: isAccountSelected,
+                              disabled: isAccountDisabled,
+                            }}
+                            disabled={isAccountDisabled || mutations.pending}
+                            onPress={() => toggleAccountMember(account.id)}
+                            style={({ pressed }) => [
+                              styles.accountItem,
+                              isAccountSelected && styles.accountItemSelected,
+                              isAccountDisabled && styles.memberItemDisabled,
+                              pressed && !isAccountDisabled && styles.rowPressed,
+                            ]}
+                          >
+                            <View style={styles.accountItemLeft}>
+                              <View
+                                style={[
+                                  styles.checkBox,
+                                  isAccountSelected && styles.checkBoxSelected,
+                                  isAccountDisabled && styles.checkBoxDisabled,
+                                ]}
+                              >
+                                {isAccountSelected ? (
+                                  <Check color={theme.colors.onPrimary} size={14} />
+                                ) : null}
+                              </View>
+                              <View
+                                style={[
+                                  styles.accountIconWrap,
+                                  {
+                                    backgroundColor: `${typeGroup.color}15`,
+                                    borderColor: `${typeGroup.color}30`,
+                                  },
+                                ]}
+                              >
+                                <IconHelper
+                                  color={typeGroup.color}
+                                  name={account.iconKey ?? typeGroup.iconKey}
+                                  size={18}
+                                />
+                              </View>
+                              <View style={styles.accountItemTextCol}>
+                                <View style={styles.accountTitleRow}>
+                                  <Text
+                                    numberOfLines={1}
+                                    style={[
+                                      styles.accountItemName,
+                                      isAccountSelected && styles.accountItemNameSelected,
+                                      isAccountDisabled && styles.textDisabled,
+                                    ]}
+                                  >
+                                    {account.name}
+                                  </Text>
+                                  {account.isArchived ? (
+                                    <View style={styles.archivedBadge}>
+                                      <Archive color={theme.colors.textMuted} size={11} />
+                                      <Text style={styles.archivedBadgeText}>Archived</Text>
+                                    </View>
+                                  ) : null}
+                                </View>
+                                <Text
+                                  numberOfLines={1}
+                                  style={[
+                                    styles.accountItemType,
+                                    isAccountConflictDisabled && styles.conflictText,
+                                    accountAssignedElsewhere && styles.conflictText,
+                                  ]}
+                                >
+                                  {accountDetail}
+                                </Text>
+                              </View>
+                            </View>
+                            <Text
+                              style={[
+                                styles.accountItemBalance,
+                                account.currentBalanceMinorUnits > 0 && styles.positiveBalance,
+                                account.currentBalanceMinorUnits < 0 && styles.negativeBalance,
+                                isAccountDisabled && styles.textDisabled,
+                              ]}
+                            >
+                              {formattedBalance}
+                            </Text>
+                          </Pressable>
+
+                          {accountPockets.length > 0 ? (
+                            <View style={styles.locationList}>
+                              {accountPockets.map((pocket) => {
+                                const isPocketSelected = editor.value.pocketIds.includes(
+                                  pocket.id,
+                                );
+                                const assignedPocket = assignedGroups.get(
+                                  `pocket:${pocket.id}`,
+                                );
+                                const pocketAssignedElsewhere =
+                                  !!assignedPocket && assignedPocket.id !== editor.id;
+                                const isPocketConflictDisabled =
+                                  !isPocketSelected && isAccountSelected;
+                                const isPocketDisabled =
+                                  pocketAssignedElsewhere || isPocketConflictDisabled;
+                                const pocketArchived =
+                                  pocket.isArchived || account.isArchived;
+                                const formattedPocketBalance = formatCurrency(
+                                  pocket.currentBalanceMinorUnits,
+                                  account.currencyCode,
+                                );
+
+                                return (
+                                  <Pressable
+                                    key={pocket.id}
+                                    accessibilityLabel={`${pocket.name}, ${formattedPocketBalance}${pocketAssignedElsewhere ? `, In ${assignedPocket.name}` : ""}`}
+                                    accessibilityRole="checkbox"
+                                    accessibilityState={{
+                                      checked: isPocketSelected,
+                                      disabled: isPocketDisabled,
+                                    }}
+                                    disabled={isPocketDisabled || mutations.pending}
+                                    onPress={() => togglePocketMember(pocket.id)}
+                                    style={({ pressed }) => [
+                                      styles.locationItem,
+                                      isPocketSelected && styles.accountItemSelected,
+                                      isPocketDisabled && styles.memberItemDisabled,
+                                      pressed && !isPocketDisabled && styles.rowPressed,
+                                    ]}
+                                  >
+                                    <View style={styles.locationItemLeft}>
+                                      <View style={styles.locationBranch} />
+                                      <View
+                                        style={[
+                                          styles.checkBox,
+                                          isPocketSelected && styles.checkBoxSelected,
+                                          isPocketDisabled && styles.checkBoxDisabled,
+                                        ]}
+                                      >
+                                        {isPocketSelected ? (
+                                          <Check color={theme.colors.onPrimary} size={14} />
+                                        ) : null}
+                                      </View>
+                                      <View style={styles.locationIconWrap}>
+                                        <Folder
+                                          color={
+                                            isPocketDisabled
+                                              ? theme.colors.textMuted
+                                              : theme.colors.info
+                                          }
+                                          size={16}
+                                        />
+                                      </View>
+                                      <View style={styles.locationTextCol}>
+                                        <View style={styles.accountTitleRow}>
+                                          <Text
+                                            numberOfLines={1}
+                                            style={[
+                                              styles.locationName,
+                                              isPocketSelected && styles.accountItemNameSelected,
+                                              isPocketDisabled && styles.textDisabled,
+                                            ]}
+                                          >
+                                            {pocket.name}
+                                          </Text>
+                                          {pocketArchived ? (
+                                            <View style={styles.archivedBadge}>
+                                              <Archive
+                                                color={theme.colors.textMuted}
+                                                size={11}
+                                              />
+                                              <Text style={styles.archivedBadgeText}>
+                                                Archived
+                                              </Text>
+                                            </View>
+                                          ) : null}
+                                        </View>
+                                        {pocketAssignedElsewhere ? (
+                                          <Text style={styles.conflictText}>
+                                            In {assignedPocket.name}
+                                          </Text>
+                                        ) : isPocketConflictDisabled ? (
+                                          <Text style={styles.pocketDisabledText}>
+                                            Included in {account.name}
+                                          </Text>
+                                        ) : null}
+                                      </View>
+                                    </View>
+                                    <Text
+                                      style={[
+                                        styles.locationBalance,
+                                        pocket.currentBalanceMinorUnits > 0 &&
+                                          styles.positiveBalance,
+                                        pocket.currentBalanceMinorUnits < 0 &&
+                                          styles.negativeBalance,
+                                        isPocketDisabled && styles.textDisabled,
+                                      ]}
+                                    >
+                                      {formattedPocketBalance}
+                                    </Text>
+                                  </Pressable>
+                                );
+                              })}
+                            </View>
+                          ) : null}
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))
             )}
           </ScrollView>
         ) : (
@@ -878,7 +1100,6 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       lineHeight: theme.typography.lineHeight.md,
     },
-    selectionSection: { gap: theme.spacing.sm },
     selectionHeader: {
       alignItems: "center",
       flexDirection: "row",
@@ -886,63 +1107,201 @@ function createStyles(theme: AppTheme) {
     },
     selectionCount: {
       color: theme.colors.primary,
+      flexShrink: 1,
       fontSize: theme.typography.fontSize.xs,
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    candidateList: {
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      overflow: "hidden",
+      marginLeft: theme.spacing.sm,
+      textAlign: "right",
     },
     sectionEmptyCard: {
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
       padding: theme.spacing.md,
     },
-    candidateRow: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      flexDirection: "row",
-      gap: theme.spacing.md,
-      minHeight: 68,
-      padding: theme.spacing.md,
+    typeGroupContainer: {
+      gap: theme.spacing.xs,
     },
-    candidateRowSelected: { backgroundColor: `${theme.colors.primary}0D` },
+    typeGroupHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+      paddingHorizontal: 4,
+    },
+    typeGroupDot: {
+      borderRadius: 3,
+      height: 6,
+      width: 6,
+    },
+    typeGroupTitle: {
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.5,
+    },
+    typeGroupCount: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+    },
+    typeGroupCards: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      overflow: "hidden",
+    },
+    accountItem: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 56,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    accountItemSelected: {
+      backgroundColor: `${theme.colors.primary}12`,
+    },
+    memberItemDisabled: {
+      backgroundColor: theme.colors.surfaceElevated,
+      opacity: 0.55,
+    },
+    cardDivider: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+      marginLeft: 56,
+    },
+    accountItemLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      marginRight: theme.spacing.sm,
+      minWidth: 0,
+    },
     checkBox: {
       alignItems: "center",
+      backgroundColor: theme.colors.surface,
       borderColor: theme.colors.borderStrong,
-      borderRadius: 6,
+      borderRadius: theme.borderRadius.small,
       borderWidth: 1.5,
-      height: 24,
+      height: 22,
       justifyContent: "center",
-      width: 24,
+      width: 22,
     },
     checkBoxSelected: {
       backgroundColor: theme.colors.primary,
       borderColor: theme.colors.primary,
     },
-    candidateCopy: { flex: 1, minWidth: 0 },
-    candidateTitleRow: {
+    checkBoxDisabled: {
+      backgroundColor: theme.colors.surfaceElevated,
+      borderColor: theme.colors.border,
+    },
+    accountIconWrap: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    accountItemTextCol: {
+      flex: 1,
+      minWidth: 0,
+    },
+    accountTitleRow: {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.xs,
     },
-    candidateName: {
+    accountItemName: {
       color: theme.colors.textPrimary,
       flexShrink: 1,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    candidateDetail: {
+    accountItemNameSelected: {
+      color: theme.colors.primary,
+    },
+    accountItemType: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      marginTop: 2,
+    },
+    conflictText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontStyle: "italic",
+      marginTop: 2,
+    },
+    textDisabled: {
+      color: theme.colors.textMuted,
+    },
+    accountItemBalance: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    positiveBalance: {
+      color: theme.colors.success,
+    },
+    negativeBalance: {
+      color: theme.colors.danger,
+    },
+    locationList: {
+      backgroundColor: theme.colors.background,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      paddingBottom: 4,
+      paddingLeft: theme.spacing.md,
+    },
+    locationItem: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 46,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 6,
+    },
+    locationItemLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minWidth: 0,
+    },
+    locationBranch: {
+      borderBottomColor: theme.colors.borderStrong,
+      borderBottomWidth: 1,
+      borderLeftColor: theme.colors.borderStrong,
+      borderLeftWidth: 1,
+      height: 22,
+      marginLeft: 10,
+      marginRight: -4,
+      width: 14,
+    },
+    locationIconWrap: {
+      alignItems: "center",
+      height: 28,
+      justifyContent: "center",
+      width: 28,
+    },
+    locationTextCol: {
+      flex: 1,
+      minWidth: 0,
+    },
+    locationName: {
+      color: theme.colors.textPrimary,
+      flexShrink: 1,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    pocketDisabledText: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
-      marginTop: 3,
+      fontStyle: "italic",
+      marginTop: 2,
     },
-    candidateAmount: {
+    locationBalance: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontVariant: ["tabular-nums"],
