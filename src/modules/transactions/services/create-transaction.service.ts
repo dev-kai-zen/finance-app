@@ -8,6 +8,7 @@ import {
 import { insertTransaction } from "../repositories/transactions.repository";
 import { assignTransactionLabels } from "@/modules/labels";
 import type { CreateTransactionInput, Transaction } from "../types/transaction.types";
+import { resolveTransactionExchangeSnapshot } from "./transaction-exchange-snapshot.service";
 
 export function createTransaction(input: CreateTransactionInput): Transaction {
   return db.transaction((tx) => createTransactionInContext(input, tx));
@@ -26,18 +27,23 @@ export function createTransactionInContext(
   if (input.type !== "income" && input.type !== "expense") {
     throw new Error("Transaction type must be income or expense.");
   }
-  if (!input.amountMinorUnits || input.amountMinorUnits === 0) {
-    throw new Error("Transaction amount cannot be zero.");
-  }
-  if (!Number.isInteger(input.amountMinorUnits)) {
-    throw new Error("Transaction amount must be an integer in minor units (centavos).");
-  }
-
     const account = requireAccount(input.accountId, context);
     requireCategory(input.categoryId, context);
     if (input.pocketId) {
       requirePocketForAccount(input.pocketId, account.id, context);
     }
+
+    const typedAbs =
+      input.typedAmountMinorUnitsAbs ?? Math.abs(input.amountMinorUnits);
+    const resolved = resolveTransactionExchangeSnapshot({
+      accountCurrencyCode: account.currencyCode,
+      typedCurrencyCode: input.currencyCode ?? account.currencyCode,
+      typedAmountMinorUnitsAbs: typedAbs,
+      signedAccountAmountMinorUnits: input.signedAccountAmountMinorUnits,
+      exchangeRateScaled: input.exchangeRateScaled,
+      lastEdited: input.exchangeLastEdited,
+      type: input.type,
+    });
 
     const transaction = insertTransaction(
       {
@@ -46,8 +52,10 @@ export function createTransactionInContext(
         pocketId: input.pocketId ?? null,
         transactionGroupId: null,
         type: input.type,
-        currencyCode: input.currencyCode ?? account.currencyCode,
-        amountMinorUnits: input.amountMinorUnits,
+        currencyCode: resolved.currencyCode,
+        amountMinorUnits: resolved.amountMinorUnits,
+        originalAmountMinorUnits: resolved.originalAmountMinorUnits,
+        exchangeRateScaled: resolved.exchangeRateScaled,
         name: input.name?.trim() || null,
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt),

@@ -38,6 +38,7 @@ import m0033 from './0033_add_currencies_and_rename_amount_minor_units.sql';
 import m0034 from './0034_add_currency_is_custom.sql';
 import m0035 from './0035_add_transactions_currency_code.sql';
 import m0036 from './0036_add_currency_code_budgets_schedules_presets.sql';
+import m0037 from './0037_add_transaction_exchange_snapshot.sql';
 
   export default {
     journal,
@@ -78,7 +79,8 @@ m0032,
 m0033,
 m0034,
 m0035,
-m0036
+m0036,
+m0037
     }
   }
   

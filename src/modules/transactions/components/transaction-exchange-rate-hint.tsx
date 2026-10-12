@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -18,11 +18,13 @@ export function TransactionExchangeRateHint({
   accountCurrencyCode,
   amountMinorUnits,
   amountSign,
+  onUseCurrentRate,
 }: {
   entryCurrencyCode: string;
   accountCurrencyCode: string;
   amountMinorUnits: number;
   amountSign: "+" | "-" | "transfer";
+  onUseCurrentRate?: () => void;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -71,6 +73,16 @@ export function TransactionExchangeRateHint({
         <Text style={styles.rate}>{rateLine}</Text>
         <Text style={styles.caption}>Current conversion rate setting</Text>
         {accountLine ? <Text style={styles.accountAmount}>{accountLine}</Text> : null}
+        {onUseCurrentRate ? (
+          <Pressable
+            accessibilityLabel="Use current conversion rate"
+            accessibilityRole="button"
+            onPress={onUseCurrentRate}
+            style={styles.useRateButton}
+          >
+            <Text style={styles.useRateText}>Use current rate</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -103,6 +115,14 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       marginTop: theme.spacing.xs,
+    },
+    useRateButton: {
+      marginTop: theme.spacing.xs,
+    },
+    useRateText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

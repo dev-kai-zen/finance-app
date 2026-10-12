@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 
@@ -8,6 +8,10 @@ import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
+import {
+  formatCrossCurrencyTransferLabel,
+  formatTransactionExchangeLabel,
+} from "../utils/format-transaction-exchange-label";
 
 export interface TransactionRowProps {
   transaction: TransactionListItem;
@@ -136,6 +140,26 @@ export function TransactionRow({
         false,
       );
 
+  const exchangeLabel = useMemo(() => {
+    if (isTransfer && transaction.transferAccountCurrency) {
+      return formatCrossCurrencyTransferLabel({
+        sourceCurrency: transaction.accountCurrency,
+        destinationCurrency: transaction.transferAccountCurrency,
+        sourceAmountMinorUnitsAbs: Math.abs(transaction.amountMinorUnits),
+        destinationAmountMinorUnitsAbs:
+          transaction.transferDestinationAmountMinorUnits ??
+          Math.abs(transaction.amountMinorUnits),
+        exchangeRateScaled: transaction.transferExchangeRateScaled ?? null,
+      });
+    }
+    return formatTransactionExchangeLabel({
+      currencyCode: transaction.currencyCode,
+      accountCurrency: transaction.accountCurrency,
+      originalAmountMinorUnits: transaction.originalAmountMinorUnits,
+      exchangeRateScaled: transaction.exchangeRateScaled,
+    });
+  }, [isTransfer, transaction]);
+
   const sourceBalance = formatCurrency(
     transaction.locationBalanceAfterMinorUnits ??
       transaction.accountBalanceAfterMinorUnits ??
@@ -188,6 +212,11 @@ export function TransactionRow({
             <Text numberOfLines={1} style={styles.compactMetaText}>
               {compactMeta}
             </Text>
+            {exchangeLabel ? (
+              <Text numberOfLines={1} style={styles.exchangeMetaText}>
+                {exchangeLabel}
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.compactRightCol}>
@@ -316,6 +345,12 @@ export function TransactionRow({
         </>
       )}
 
+      {exchangeLabel && !isCompact ? (
+        <Text numberOfLines={2} style={styles.exchangeMetaText}>
+          {exchangeLabel}
+        </Text>
+      ) : null}
+
       {transaction.note && transaction.name ? (
         <Text numberOfLines={2} style={styles.txNoteText}>
           {transaction.note}
@@ -385,6 +420,10 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       justifyContent: "center",
       paddingHorizontal: 2,
+    },
+    exchangeMetaText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
     },
     compactMetaText: {
       color: theme.colors.textSecondary,

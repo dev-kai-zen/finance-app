@@ -12,6 +12,7 @@ import type {
   TransactionAttachmentChanges,
   UpdateTransferInput,
 } from "../types/transaction.types";
+import { resolveTransferLegAmounts } from "./resolve-transfer-amounts.service";
 import {
   applyAttachmentChangesInContext,
   discardPreparedAttachmentChanges,
@@ -92,12 +93,12 @@ export function updateTransferInContext(
       allowArchived: inLeg.pocketId === input.toPocketId,
     });
   }
-  if (fromAccount.currencyCode !== toAccount.currencyCode) {
-    throw new Error(
-      "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
-    );
-  }
-  const amount = Math.abs(input.amountMinorUnits);
+  const resolved = resolveTransferLegAmounts({
+    fromCurrencyCode: fromAccount.currencyCode,
+    toCurrencyCode: toAccount.currencyCode,
+    sourceAmountMinorUnitsAbs: Math.abs(input.amountMinorUnits),
+    destinationAmountMinorUnitsAbs: input.destinationAmountMinorUnits,
+  });
   const occurredAt =
     input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
   const name = input.name?.trim() || null;
@@ -111,7 +112,10 @@ export function updateTransferInContext(
       ...sharedPatch,
       accountId: input.fromAccountId,
       pocketId: input.fromPocketId ?? null,
-      amountMinorUnits: -amount,
+      currencyCode: fromAccount.currencyCode,
+      amountMinorUnits: resolved.sourceOutMinorUnits,
+      originalAmountMinorUnits: null,
+      exchangeRateScaled: null,
     },
     context,
   );
@@ -122,7 +126,10 @@ export function updateTransferInContext(
       ...sharedPatch,
       accountId: input.toAccountId,
       pocketId: input.toPocketId ?? null,
-      amountMinorUnits: amount,
+      currencyCode: toAccount.currencyCode,
+      amountMinorUnits: resolved.destinationInMinorUnits,
+      originalAmountMinorUnits: null,
+      exchangeRateScaled: resolved.destinationExchangeRateScaled,
     },
     context,
   );

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { categories, transactions } from "@/infrastructure/database/schema";
+import { accounts, categories, transactions } from "@/infrastructure/database/schema";
 import { getAccountsWithBalances } from "@/modules/accounts";
 import {
   getCurrencyPreferences,
@@ -53,9 +53,10 @@ export function getMonthlyCashflow(
     .select({
       type: transactions.type,
       amountMinorUnits: transactions.amountMinorUnits,
-      currencyCode: transactions.currencyCode,
+      accountCurrencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(
       and(
         isNull(transactions.deletedAt),
@@ -74,7 +75,7 @@ export function getMonthlyCashflow(
     }
     const convertedAmount = convertCurrencyMinorUnits(
       tx.amountMinorUnits,
-      tx.currencyCode ?? DEFAULT_BASE_CURRENCY,
+      tx.accountCurrencyCode ?? DEFAULT_BASE_CURRENCY,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,
@@ -117,9 +118,10 @@ export function getCategorySpendingBreakdown(
     .select({
       transaction: transactions,
       category: categories,
-      currencyCode: transactions.currencyCode,
+      accountCurrencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(
@@ -143,7 +145,7 @@ export function getCategorySpendingBreakdown(
 
   let overallExpense = 0;
 
-  for (const { transaction: tx, category: cat, currencyCode } of txRows) {
+  for (const { transaction: tx, category: cat, accountCurrencyCode } of txRows) {
     const catId = cat?.id ?? "uncategorized";
     const catName = cat?.name ?? "Uncategorized";
     const catColor = cat?.hexColorsId
@@ -164,7 +166,7 @@ export function getCategorySpendingBreakdown(
 
     const expenseMagnitude = convertCurrencyMinorUnits(
       Math.abs(tx.amountMinorUnits),
-      currencyCode ?? DEFAULT_BASE_CURRENCY,
+      accountCurrencyCode ?? DEFAULT_BASE_CURRENCY,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,

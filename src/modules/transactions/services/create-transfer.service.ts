@@ -11,6 +11,7 @@ import type {
   Transaction,
   TransferResult,
 } from "../types/transaction.types";
+import { resolveTransferLegAmounts } from "./resolve-transfer-amounts.service";
 
 export function createTransfer(input: CreateTransferInput): TransferResult {
   return db.transaction((tx) => createTransferInContext(input, tx));
@@ -47,12 +48,6 @@ export function createTransferInContext(
   if (input.toPocketId) {
     requirePocketForAccount(input.toPocketId, toAccount.id, context);
   }
-  if (fromAccount.currencyCode !== toAccount.currencyCode) {
-    throw new Error(
-      "Cross-currency transfers are not supported yet. Choose accounts with the same currency.",
-    );
-  }
-
   if (input.fee && input.fee.amountMinorUnits > 0) {
     if (!input.fee.accountId) {
       throw new Error("Fee account is required.");
@@ -74,7 +69,12 @@ export function createTransferInContext(
     input.occurredAt instanceof Date ? input.occurredAt : new Date(input.occurredAt);
   const name = input.name?.trim() || null;
   const note = input.note?.trim() || null;
-  const amount = Math.abs(input.amountMinorUnits);
+  const resolved = resolveTransferLegAmounts({
+    fromCurrencyCode: fromAccount.currencyCode,
+    toCurrencyCode: toAccount.currencyCode,
+    sourceAmountMinorUnitsAbs: Math.abs(input.amountMinorUnits),
+    destinationAmountMinorUnitsAbs: input.destinationAmountMinorUnits,
+  });
 
   const outLeg = insertTransaction(
     {
@@ -83,7 +83,8 @@ export function createTransferInContext(
       pocketId: input.fromPocketId ?? null,
       transactionGroupId: groupId,
       type: "transfer",
-      amountMinorUnits: -amount,
+      currencyCode: fromAccount.currencyCode,
+      amountMinorUnits: resolved.sourceOutMinorUnits,
       name,
       note,
       occurredAt,
@@ -98,7 +99,9 @@ export function createTransferInContext(
       pocketId: input.toPocketId ?? null,
       transactionGroupId: groupId,
       type: "transfer",
-      amountMinorUnits: amount,
+      currencyCode: toAccount.currencyCode,
+      amountMinorUnits: resolved.destinationInMinorUnits,
+      exchangeRateScaled: resolved.destinationExchangeRateScaled,
       name,
       note,
       occurredAt,

@@ -1,6 +1,9 @@
 import { and, asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
+import {
+  DEFAULT_BASE_CURRENCY,
+  normalizeExchangeRateScaled,
+} from "@/utils/currency";
 import {
   accountTypes,
   accounts,
@@ -46,6 +49,10 @@ function mapRowToListItem(r: {
     type: r.transaction.type as Transaction["type"],
     currencyCode: r.transaction.currencyCode,
     amountMinorUnits: r.transaction.amountMinorUnits,
+    originalAmountMinorUnits: r.transaction.originalAmountMinorUnits ?? null,
+    exchangeRateScaled: normalizeExchangeRateScaled(
+      r.transaction.exchangeRateScaled,
+    ),
     name: r.transaction.name,
     note: r.transaction.note,
     occurredAt: r.transaction.occurredAt,
@@ -227,6 +234,10 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       transferFeePocketName: feeItem?.pocketName ?? null,
       transferFeeCategoryId: feeItem?.categoryId ?? null,
       transferFeeCategoryName: feeItem?.categoryName ?? null,
+      transferDestinationAmountMinorUnits: Math.abs(inLeg.amountMinorUnits),
+      transferExchangeRateScaled: normalizeExchangeRateScaled(
+        inLeg.exchangeRateScaled,
+      ),
       amountMinorUnits: Math.abs(outLeg.amountMinorUnits),
       attachmentCount: legs.reduce(
         (total, leg) => total + leg.attachmentCount,
@@ -520,6 +531,8 @@ export function insertTransaction(
     type: data.type,
     currencyCode,
     amountMinorUnits: data.amountMinorUnits,
+    originalAmountMinorUnits: data.originalAmountMinorUnits ?? null,
+    exchangeRateScaled: data.exchangeRateScaled ?? null,
     name: data.name ?? null,
     note: data.note ?? null,
     occurredAt: data.occurredAt,
@@ -544,6 +557,8 @@ export function updateTransactionRecord(
       | "type"
       | "currencyCode"
       | "amountMinorUnits"
+      | "originalAmountMinorUnits"
+      | "exchangeRateScaled"
       | "name"
       | "note"
       | "occurredAt"

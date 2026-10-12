@@ -36,9 +36,14 @@ import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { getExchangeRateMap } from "@/modules/currencies";
 import {
+  applyExchangeRate,
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
+  deriveExchangeRate,
   formatCurrency,
+  formatSnapshotExchangeRateDecimal,
+  parseExchangeRateDecimalToScaled,
+  snapshotExchangeRateFromBook,
 } from "@/utils/currency";
 import { TransactionCurrencyPickerModal } from "./transaction-currency-picker-modal";
 import { TransactionExchangeRateHint } from "./transaction-exchange-rate-hint";
@@ -260,6 +265,18 @@ export function TransactionFormModal({
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [entryCurrencyCode, setEntryCurrencyCode] = useState("PHP");
+  const [accountAmountMinorUnits, setAccountAmountMinorUnits] = useState(0);
+  const [transferDestinationAmountMinorUnits, setTransferDestinationAmountMinorUnits] =
+    useState(0);
+  const [exchangeRateScaled, setExchangeRateScaled] = useState<number | null>(
+    null,
+  );
+  const [exchangeRateText, setExchangeRateText] = useState("");
+  const [exchangeLastEdited, setExchangeLastEdited] = useState<
+    "typed" | "rate" | "account"
+  >("typed");
+  const [isAccountAmountCalculatorOpen, setIsAccountAmountCalculatorOpen] =
+    useState(false);
   const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
   const [dateTimePickerMode, setDateTimePickerMode] = useState<"date" | "time" | null>(null);
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
@@ -319,7 +336,31 @@ export function TransactionFormModal({
         setName(initialTransaction.name || "");
         const isNeg = initialTransaction.amountMinorUnits < 0;
         setAmountSign(isNeg ? "-" : "+");
-        setAmountMinorUnits(Math.abs(initialTransaction.amountMinorUnits));
+        if (
+          initialTransaction.originalAmountMinorUnits !== null &&
+          initialTransaction.originalAmountMinorUnits !== undefined
+        ) {
+          setAmountMinorUnits(initialTransaction.originalAmountMinorUnits);
+          setAccountAmountMinorUnits(
+            Math.abs(initialTransaction.amountMinorUnits),
+          );
+          setExchangeRateScaled(initialTransaction.exchangeRateScaled ?? null);
+          setExchangeRateText(
+            initialTransaction.exchangeRateScaled
+              ? formatSnapshotExchangeRateDecimal(
+                  initialTransaction.exchangeRateScaled,
+                )
+              : "",
+          );
+        } else {
+          setAmountMinorUnits(Math.abs(initialTransaction.amountMinorUnits));
+          setAccountAmountMinorUnits(
+            Math.abs(initialTransaction.amountMinorUnits),
+          );
+          setExchangeRateScaled(null);
+          setExchangeRateText("");
+        }
+        setExchangeLastEdited("typed");
         setEntryCurrencyCode(initialTransaction.currencyCode ?? "PHP");
         setSelectedAccountId(initialTransaction.accountId);
         setSelectedPocketId(initialTransaction.pocketId);
@@ -391,6 +432,11 @@ export function TransactionFormModal({
         setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
 
         setAmountMinorUnits(0);
+        setAccountAmountMinorUnits(0);
+        setTransferDestinationAmountMinorUnits(0);
+        setExchangeRateScaled(null);
+        setExchangeRateText("");
+        setExchangeLastEdited("typed");
         setOccurredAt(getCurrentTransactionDate());
         setNote("");
         setSelectedLabelIds([]);
@@ -516,11 +562,143 @@ export function TransactionFormModal({
       : transferToAccountBalance;
   const accountCurrencyCode = selectedAccount?.currencyCode ?? "PHP";
   const entryCurrency = entryCurrencyCode.trim().toUpperCase();
+  const transferToCurrencyCode = transferToAccount?.currencyCode ?? "PHP";
+  const isTransferCrossCurrency =
+    mode === "transfer" &&
+    accountCurrencyCode.trim().toUpperCase() !==
+      transferToCurrencyCode.trim().toUpperCase();
+  const isCrossCurrencyEntry =
+    mode !== "transfer" &&
+    entryCurrency !== accountCurrencyCode.trim().toUpperCase();
 
   useEffect(() => {
     if (isEditing) return;
     setEntryCurrencyCode(accountCurrencyCode);
   }, [selectedAccountId, accountCurrencyCode, isEditing]);
+
+  useEffect(() => {
+    if (!visible || !isTransferCrossCurrency || amountMinorUnits <= 0) {
+      return;
+    }
+    const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+    const suggested = Math.abs(
+      convertCurrencyMinorUnits(
+        amountMinorUnits,
+        accountCurrencyCode,
+        transferToCurrencyCode,
+        ratesMap,
+        DEFAULT_BASE_CURRENCY,
+      ),
+    );
+    setTransferDestinationAmountMinorUnits(suggested);
+  }, [
+    visible,
+    isTransferCrossCurrency,
+    amountMinorUnits,
+    accountCurrencyCode,
+    transferToCurrencyCode,
+  ]);
+
+  useEffect(() => {
+    if (!visible || mode === "transfer" || !isCrossCurrencyEntry) {
+      return;
+    }
+    if (exchangeLastEdited === "account") {
+      return;
+    }
+    if (amountMinorUnits <= 0) {
+      return;
+    }
+    const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+    let nextRate = exchangeRateScaled;
+    if (nextRate === null || nextRate <= 0) {
+      try {
+        nextRate = snapshotExchangeRateFromBook(
+          entryCurrency,
+          accountCurrencyCode,
+          ratesMap,
+          DEFAULT_BASE_CURRENCY,
+        );
+        setExchangeRateScaled(nextRate);
+        setExchangeRateText(formatSnapshotExchangeRateDecimal(nextRate));
+      } catch {
+        return;
+      }
+    }
+    const nextAccountAmount = applyExchangeRate(
+      amountMinorUnits,
+      nextRate,
+      entryCurrency,
+      accountCurrencyCode,
+    );
+    setAccountAmountMinorUnits(nextAccountAmount);
+  }, [
+    visible,
+    mode,
+    isCrossCurrencyEntry,
+    amountMinorUnits,
+    entryCurrency,
+    accountCurrencyCode,
+    exchangeLastEdited,
+    exchangeRateScaled,
+  ]);
+
+  const postedExpenseMinorUnitsAbs = useMemo(() => {
+    if (!isCrossCurrencyEntry) {
+      return Math.abs(amountMinorUnits);
+    }
+    if (exchangeLastEdited === "account" && accountAmountMinorUnits > 0) {
+      return accountAmountMinorUnits;
+    }
+    if (exchangeRateScaled && amountMinorUnits > 0) {
+      return applyExchangeRate(
+        amountMinorUnits,
+        exchangeRateScaled,
+        entryCurrency,
+        accountCurrencyCode,
+      );
+    }
+    return Math.abs(amountMinorUnits);
+  }, [
+    isCrossCurrencyEntry,
+    amountMinorUnits,
+    accountAmountMinorUnits,
+    exchangeLastEdited,
+    exchangeRateScaled,
+    entryCurrency,
+    accountCurrencyCode,
+  ]);
+
+  useEffect(() => {
+    if (!isCrossCurrencyEntry) {
+      return;
+    }
+    if (exchangeLastEdited !== "account" || amountMinorUnits <= 0) {
+      return;
+    }
+    if (accountAmountMinorUnits <= 0) {
+      return;
+    }
+    try {
+      const derived = deriveExchangeRate(
+        accountAmountMinorUnits,
+        amountMinorUnits,
+        entryCurrency,
+        accountCurrencyCode,
+      );
+      setExchangeRateScaled(derived);
+      setExchangeRateText(formatSnapshotExchangeRateDecimal(derived));
+    } catch {
+      // keep prior rate
+    }
+  }, [
+    isCrossCurrencyEntry,
+    exchangeLastEdited,
+    accountAmountMinorUnits,
+    amountMinorUnits,
+    entryCurrency,
+    accountCurrencyCode,
+  ]);
   const canUseInstallments =
     mode === "expense" &&
     amountSign === "-" &&
@@ -559,7 +737,9 @@ export function TransactionFormModal({
       return null;
     }
     return previewInstallmentPlan({
-      amountMinorUnits,
+      amountMinorUnits: isCrossCurrencyEntry
+        ? postedExpenseMinorUnitsAbs
+        : amountMinorUnits,
       termMonths: resolvedTermMonths,
       occurredAt: occurredAt ? new Date(occurredAt) : new Date(),
       statementDay: selectedAccount.creditCardDetails.statementDay,
@@ -572,6 +752,8 @@ export function TransactionFormModal({
     selectedAccount?.creditCardDetails,
     resolvedTermMonths,
     amountMinorUnits,
+    isCrossCurrencyEntry,
+    postedExpenseMinorUnitsAbs,
     occurredAt,
     resolvedDeferredMonths,
   ]);
@@ -783,6 +965,9 @@ export function TransactionFormModal({
         fromPocketId: selectedPocketId,
         toPocketId: transferToPocketId,
         amountMinorUnits: Math.abs(amountMinorUnits),
+        destinationAmountMinorUnits: isTransferCrossCurrency
+          ? transferDestinationAmountMinorUnits
+          : undefined,
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
@@ -846,8 +1031,8 @@ export function TransactionFormModal({
       ) {
         const budgetCheck = checkBudgetExceeded({
           categoryId: selectedCategoryId,
-          amountMinorUnits: Math.abs(amountMinorUnits),
-          expenseCurrencyCode: entryCurrency,
+          amountMinorUnits: postedExpenseMinorUnitsAbs,
+          expenseCurrencyCode: accountCurrencyCode,
           occurredAt: transactionOccurredAt,
           excludeTransactionId:
             isEditing && initialTransaction ? initialTransaction.id : null,
@@ -866,24 +1051,22 @@ export function TransactionFormModal({
       }
 
       setLocalError(null);
-      const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
-      const storedAmount =
-        entryCurrency !== accountCurrencyCode.toUpperCase()
-          ? convertCurrencyMinorUnits(
-              signedAmount,
-              entryCurrency,
-              accountCurrencyCode,
-              ratesMap,
-              DEFAULT_BASE_CURRENCY,
-            )
-          : signedAmount;
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         pocketId: selectedPocketId,
         type: mode,
-        amountMinorUnits: storedAmount,
-        currencyCode: accountCurrencyCode,
+        amountMinorUnits: Math.abs(amountMinorUnits),
+        typedAmountMinorUnitsAbs: Math.abs(amountMinorUnits),
+        currencyCode: entryCurrency,
+        signedAccountAmountMinorUnits:
+          isCrossCurrencyEntry && exchangeLastEdited === "account"
+            ? amountSign === "-"
+              ? -accountAmountMinorUnits
+              : accountAmountMinorUnits
+            : undefined,
+        exchangeRateScaled: isCrossCurrencyEntry ? exchangeRateScaled : null,
+        exchangeLastEdited: isCrossCurrencyEntry ? exchangeLastEdited : undefined,
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
@@ -1092,7 +1275,10 @@ export function TransactionFormModal({
                 disabled={pending}
                 label="Amount"
                 showSignToggle={true}
-                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onOpenCalculator={() => {
+                  setExchangeLastEdited("typed");
+                  setIsCalculatorOpen(true);
+                }}
                 onPressCurrency={
                   mode === "transfer" ? undefined : () => setIsCurrencyPickerOpen(true)
                 }
@@ -1108,7 +1294,68 @@ export function TransactionFormModal({
                   amountMinorUnits={amountMinorUnits}
                   amountSign={amountSign}
                   entryCurrencyCode={entryCurrency}
+                  onUseCurrentRate={
+                    isCrossCurrencyEntry
+                      ? () => {
+                          const ratesMap = getExchangeRateMap(
+                            DEFAULT_BASE_CURRENCY,
+                          );
+                          const nextRate = snapshotExchangeRateFromBook(
+                            entryCurrency,
+                            accountCurrencyCode,
+                            ratesMap,
+                            DEFAULT_BASE_CURRENCY,
+                          );
+                          setExchangeLastEdited("rate");
+                          setExchangeRateScaled(nextRate);
+                          setExchangeRateText(
+                            formatSnapshotExchangeRateDecimal(nextRate),
+                          );
+                        }
+                      : undefined
+                  }
                 />
+              ) : null}
+              {isCrossCurrencyEntry ? (
+                <View style={styles.crossCurrencyFields}>
+                  <Text style={styles.fieldLabel}>
+                    1 {entryCurrency} =
+                  </Text>
+                  <TextInput
+                    accessibilityLabel="Exchange rate"
+                    keyboardType="decimal-pad"
+                    onChangeText={(text) => {
+                      setExchangeRateText(text);
+                      const parsed = parseExchangeRateDecimalToScaled(text);
+                      if (parsed !== null) {
+                        setExchangeLastEdited("rate");
+                        setExchangeRateScaled(parsed);
+                      }
+                    }}
+                    placeholder="Rate"
+                    style={styles.rateInput}
+                    value={exchangeRateText}
+                  />
+                  <Text style={styles.fieldLabel}>{accountCurrencyCode}</Text>
+                  <Pressable
+                    accessibilityLabel={`Account amount ${formatCurrency(accountAmountMinorUnits, accountCurrencyCode)}`}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setExchangeLastEdited("account");
+                      setIsAccountAmountCalculatorOpen(true);
+                    }}
+                    style={styles.accountAmountChip}
+                  >
+                    <Text style={styles.accountAmountChipText}>
+                      Account:{" "}
+                      {formatCurrency(
+                        accountAmountMinorUnits,
+                        accountCurrencyCode,
+                        false,
+                      )}
+                    </Text>
+                  </Pressable>
+                </View>
               ) : null}
             </View>
 
@@ -1232,6 +1479,23 @@ export function TransactionFormModal({
                     <ChevronRight size={14} color={theme.colors.textSecondary} />
                   </View>
                   </Pressable>
+                  {isTransferCrossCurrency && transferToAccount ? (
+                    <Pressable
+                      accessibilityLabel={`Destination amount ${formatCurrency(transferDestinationAmountMinorUnits, transferToAccount.currencyCode)}`}
+                      accessibilityRole="button"
+                      onPress={() => setIsAccountAmountCalculatorOpen(true)}
+                      style={[styles.accountAmountChip, { marginTop: 8 }]}
+                    >
+                      <Text style={styles.accountAmountChipText}>
+                        Received:{" "}
+                        {formatCurrency(
+                          transferDestinationAmountMinorUnits,
+                          transferToAccount.currencyCode,
+                          false,
+                        )}
+                      </Text>
+                    </Pressable>
+                  ) : null}
                 </View>
                 <View style={styles.transferFeePanel}>
                   <View style={styles.transferFeeHeader}>
@@ -1435,9 +1699,9 @@ export function TransactionFormModal({
                 </Pressable>
                 {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
                   <BudgetLiveIndicator
-                    amountMinorUnits={amountMinorUnits}
+                    amountMinorUnits={postedExpenseMinorUnitsAbs}
                     categoryId={selectedCategoryId}
-                    expenseCurrencyCode={entryCurrency}
+                    expenseCurrencyCode={accountCurrencyCode}
                     excludeTransactionId={
                       isEditing && initialTransaction ? initialTransaction.id : null
                     }
@@ -1819,6 +2083,7 @@ export function TransactionFormModal({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
+          setExchangeLastEdited("typed");
           setAmountMinorUnits(Math.abs(minorUnits));
           setIsCalculatorOpen(false);
         }}
@@ -1826,11 +2091,45 @@ export function TransactionFormModal({
         visible={isCalculatorOpen}
       />
 
+      <AmountCalculatorModal
+        currencyCode={
+          mode === "transfer" && isTransferCrossCurrency
+            ? transferToCurrencyCode
+            : accountCurrencyCode
+        }
+        initialMinorUnits={
+          mode === "transfer" && isTransferCrossCurrency
+            ? transferDestinationAmountMinorUnits
+            : accountAmountMinorUnits
+        }
+        onClose={() => setIsAccountAmountCalculatorOpen(false)}
+        onConfirm={(minorUnits) => {
+          if (mode === "transfer" && isTransferCrossCurrency) {
+            setTransferDestinationAmountMinorUnits(Math.abs(minorUnits));
+          } else {
+            setExchangeLastEdited("account");
+            setAccountAmountMinorUnits(Math.abs(minorUnits));
+          }
+          setIsAccountAmountCalculatorOpen(false);
+        }}
+        title={
+          mode === "transfer" && isTransferCrossCurrency
+            ? `Enter received amount (${transferToCurrencyCode})`
+            : `Enter account amount (${accountCurrencyCode})`
+        }
+        visible={isAccountAmountCalculatorOpen}
+      />
+
       <TransactionCurrencyPickerModal
         selectedCode={entryCurrency}
         visible={isCurrencyPickerOpen}
         onClose={() => setIsCurrencyPickerOpen(false)}
-        onSelect={(code) => setEntryCurrencyCode(code.trim().toUpperCase())}
+        onSelect={(code) => {
+          setExchangeLastEdited("typed");
+          setExchangeRateScaled(null);
+          setExchangeRateText("");
+          setEntryCurrencyCode(code.trim().toUpperCase());
+        }}
       />
 
       <TransactionDateTimePickerModal
@@ -2091,6 +2390,36 @@ function createStyles(theme: AppTheme) {
     },
     inputGroup: {
       marginBottom: 16,
+    },
+    crossCurrencyFields: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.sm,
+    },
+    rateInput: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      minWidth: 88,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    accountAmountChip: {
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}33`,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    accountAmountChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
     },
     nameDateGroup: {
       marginBottom: 16,

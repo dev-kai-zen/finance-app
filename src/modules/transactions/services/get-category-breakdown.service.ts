@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { categories, transactions } from "@/infrastructure/database/schema";
+import { accounts, categories, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
@@ -40,9 +40,10 @@ export function getCategoryBreakdown(
     .select({
       transaction: transactions,
       category: categories,
-      currencyCode: transactions.currencyCode,
+      accountCurrencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(
@@ -70,14 +71,14 @@ export function getCategoryBreakdown(
   const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
-  for (const { transaction: tx, category: cat, currencyCode } of rows) {
+  for (const { transaction: tx, category: cat, accountCurrencyCode } of rows) {
     const catId = cat?.id ?? "uncategorized";
     const catName = cat?.name ?? "Uncategorized";
     const catColor = cat?.hexColorsId ?? null;
     const catIcon = cat?.icon ?? (query.type === "income" ? "wallet" : "tag");
     const amount = convertCurrencyMinorUnits(
       Math.abs(tx.amountMinorUnits),
-      currencyCode,
+      accountCurrencyCode,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,

@@ -9,6 +9,7 @@ import type {
   CreateTransactionInput,
   TransactionAttachmentChanges,
 } from "../types/transaction.types";
+import { resolveTransactionExchangeSnapshot } from "./transaction-exchange-snapshot.service";
 import { requirePocketForAccount } from "@/modules/accounts";
 import {
   getInstallmentPlanForTransaction,
@@ -49,26 +50,31 @@ export function updateTransactionInContext(
   if (!id) throw new Error("Transaction ID is required to update.");
   if (!input.accountId) throw new Error("Account is required.");
   if (!input.categoryId) throw new Error("Category is required.");
-  if (!input.amountMinorUnits || !Number.isInteger(input.amountMinorUnits)) {
-    throw new Error(
-      "Transaction amount must be a non-zero integer in minor units (centavos).",
-    );
-  }
-
     const existing = findTransactionById(id, context);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
+    const account = requireAccount(input.accountId, context);
+    const typedAbsForInstallment =
+      input.typedAmountMinorUnitsAbs ?? Math.abs(input.amountMinorUnits);
+    const resolvedForInstallmentCheck = resolveTransactionExchangeSnapshot({
+      accountCurrencyCode: account.currencyCode,
+      typedCurrencyCode: input.currencyCode ?? account.currencyCode,
+      typedAmountMinorUnitsAbs: typedAbsForInstallment,
+      signedAccountAmountMinorUnits: input.signedAccountAmountMinorUnits,
+      exchangeRateScaled: input.exchangeRateScaled,
+      lastEdited: input.exchangeLastEdited,
+      type: input.type,
+    });
     const installmentPlan = getInstallmentPlanForTransaction(id, context);
     if (
       installmentPlan &&
       (existing.accountId !== input.accountId ||
-        existing.amountMinorUnits !== input.amountMinorUnits ||
+        existing.amountMinorUnits !== resolvedForInstallmentCheck.amountMinorUnits ||
         existing.occurredAt.getTime() !== input.occurredAt.getTime())
     ) {
       throw new Error(
         "Account, amount, and date cannot be changed after creating an installment plan.",
       );
     }
-    const account = requireAccount(input.accountId, context);
     if (input.pocketId) {
       requirePocketForAccount(input.pocketId, input.accountId, context, {
         allowArchived: existing.pocketId === input.pocketId,
@@ -82,8 +88,10 @@ export function updateTransactionInContext(
         categoryId: input.categoryId,
         pocketId: input.pocketId ?? null,
         type: input.type,
-        currencyCode: input.currencyCode ?? account.currencyCode,
-        amountMinorUnits: input.amountMinorUnits,
+        currencyCode: resolvedForInstallmentCheck.currencyCode,
+        amountMinorUnits: resolvedForInstallmentCheck.amountMinorUnits,
+        originalAmountMinorUnits: resolvedForInstallmentCheck.originalAmountMinorUnits,
+        exchangeRateScaled: resolvedForInstallmentCheck.exchangeRateScaled,
         name: input.name?.trim() || null,
         note: input.note?.trim() || null,
         occurredAt: input.occurredAt,

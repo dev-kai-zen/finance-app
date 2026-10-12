@@ -1,6 +1,6 @@
 import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import { accounts, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
@@ -91,9 +91,10 @@ export function getCashFlowHistory(
       type: transactions.type,
       amountMinorUnits: transactions.amountMinorUnits,
       occurredAt: transactions.occurredAt,
-      currencyCode: transactions.currencyCode,
+      accountCurrencyCode: accounts.currencyCode,
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(
       and(
         isNull(transactions.deletedAt),
@@ -118,7 +119,7 @@ export function getCashFlowHistory(
 
     const convertedAmount = convertCurrencyMinorUnits(
       tx.amountMinorUnits,
-      tx.currencyCode,
+      tx.accountCurrencyCode,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,

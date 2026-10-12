@@ -35,6 +35,26 @@ export interface FormattedPhpCurrency {
 
 export const DEFAULT_BASE_CURRENCY = "PHP";
 
+/** Scale for transaction snapshot rates: 1 major typed unit = rate × this value account major units. */
+export const EXCHANGE_RATE_SNAPSHOT_SCALE = 100_000_000;
+
+export function minorUnitsPerMajorUnit(currencyCode: string): bigint {
+  const exponent = getCurrencyMinorUnitExponent(currencyCode);
+  return BigInt(10) ** BigInt(exponent);
+}
+
+export function normalizeExchangeRateScaled(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+  const rounded = Math.round(parsed);
+  return rounded > 0 ? rounded : null;
+}
+
 export type NegativeNumberFormat = "minus" | "parentheses";
 export type DecimalFormat =
   | "automatic"
@@ -373,4 +393,162 @@ export function convertCurrencyMinorUnits(
   const result = ((absScaled + (divisor / 2n)) / divisor) * sign;
 
   return Number(result);
+}
+
+/**
+ * Converts a typed amount to account minor units using a snapshot rate
+ * (1 typed major unit = exchangeRateScaled / EXCHANGE_RATE_SNAPSHOT_SCALE account major units).
+ */
+export function applyExchangeRate(
+  typedAmountMinorUnits: number,
+  exchangeRateScaled: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number {
+  if (!Number.isInteger(typedAmountMinorUnits)) {
+    throw new Error("Typed amount must be an integer in minor units.");
+  }
+  const normalizedRate = normalizeExchangeRateScaled(exchangeRateScaled);
+  if (normalizedRate === null) {
+    throw new Error("Exchange rate must be a positive integer at snapshot scale.");
+  }
+
+  const sign = typedAmountMinorUnits < 0 ? -1n : 1n;
+  const absTyped = BigInt(Math.abs(typedAmountMinorUnits));
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+
+  const numerator =
+    absTyped *
+    BigInt(normalizedRate) *
+    minorUnitsPerMajorUnit(accountCurrencyCode);
+  const denominator = minorUnitsPerMajorUnit(typedCurrencyCode) * scale;
+
+  const absResult = (numerator + denominator / 2n) / denominator;
+  const result = absResult * sign;
+  const asNumber = Number(result);
+  if (asNumber === 0) {
+    throw new Error("Converted account amount rounds to zero.");
+  }
+  return asNumber;
+}
+
+/** Like applyExchangeRate but returns null instead of throwing (for UI labels). */
+export function tryApplyExchangeRate(
+  typedAmountMinorUnits: number,
+  exchangeRateScaled: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number | null {
+  try {
+    return applyExchangeRate(
+      typedAmountMinorUnits,
+      exchangeRateScaled,
+      typedCurrencyCode,
+      accountCurrencyCode,
+    );
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Derives a snapshot rate from exact typed and account minor-unit amounts.
+ */
+export function deriveExchangeRate(
+  accountAmountMinorUnits: number,
+  typedAmountMinorUnits: number,
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+): number {
+  const absAccount = Math.abs(accountAmountMinorUnits);
+  const absTyped = Math.abs(typedAmountMinorUnits);
+  if (!Number.isInteger(absAccount) || !Number.isInteger(absTyped) || absTyped === 0) {
+    throw new Error("Cannot derive exchange rate from invalid amounts.");
+  }
+  if (absAccount === 0) {
+    throw new Error("Account amount must be non-zero to derive an exchange rate.");
+  }
+
+  const scale = BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE);
+
+  const numerator =
+    BigInt(absAccount) *
+    minorUnitsPerMajorUnit(typedCurrencyCode) *
+    scale;
+  const denominator =
+    BigInt(absTyped) * minorUnitsPerMajorUnit(accountCurrencyCode);
+
+  const scaled = (numerator + denominator / 2n) / denominator;
+  const asNumber = Number(scaled);
+  if (!Number.isInteger(asNumber) || asNumber <= 0) {
+    throw new Error("Derived exchange rate is invalid.");
+  }
+  return asNumber;
+}
+
+/**
+ * Builds an 8-decimal snapshot rate for 1 typed major unit in account major units,
+ * using the current rate book (basis points against baseCurrency).
+ */
+export function snapshotExchangeRateFromBook(
+  typedCurrencyCode: string,
+  accountCurrencyCode: string,
+  ratesMap?: Map<string, number> | Record<string, number>,
+  baseCurrency: string = DEFAULT_BASE_CURRENCY,
+): number {
+  const typed = typedCurrencyCode.trim().toUpperCase();
+  const account = accountCurrencyCode.trim().toUpperCase();
+  if (typed === account) {
+    throw new Error("Cannot snapshot rate for identical currencies.");
+  }
+
+  const oneTypedMajorMinor = 10 ** getCurrencyMinorUnitExponent(typed);
+  const accountMinorForOneTypedMajor = convertCurrencyMinorUnits(
+    oneTypedMajorMinor,
+    typed,
+    account,
+    ratesMap,
+    baseCurrency,
+  );
+  const accountExp = getCurrencyMinorUnitExponent(account);
+  const accountMajor =
+    accountMinorForOneTypedMajor / 10 ** accountExp;
+
+  const scaled = Math.round(accountMajor * EXCHANGE_RATE_SNAPSHOT_SCALE);
+  if (!Number.isFinite(scaled) || scaled <= 0) {
+    throw new Error(
+      `No exchange rate available for ${typed} to ${account}.`,
+    );
+  }
+  return scaled;
+}
+
+/** Formats a snapshot rate as a decimal string with up to 8 fractional digits (trailing zeros trimmed). */
+export function parseExchangeRateDecimalToScaled(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = /^(\d+)(?:\.(\d{0,8}))?$/.exec(trimmed);
+  if (!match) return null;
+  const whole = BigInt(match[1]);
+  const fractionRaw = (match[2] ?? "").padEnd(8, "0").slice(0, 8);
+  const fraction = BigInt(fractionRaw);
+  const scaled = whole * BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE) + fraction;
+  const asNumber = Number(scaled);
+  if (!Number.isInteger(asNumber) || asNumber <= 0) return null;
+  return asNumber;
+}
+
+export function formatSnapshotExchangeRateDecimal(
+  exchangeRateScaled: number,
+): string {
+  if (!Number.isInteger(exchangeRateScaled) || exchangeRateScaled <= 0) {
+    return "";
+  }
+  const whole = Math.floor(exchangeRateScaled / EXCHANGE_RATE_SNAPSHOT_SCALE);
+  const fraction = exchangeRateScaled % EXCHANGE_RATE_SNAPSHOT_SCALE;
+  const fractionText = fraction
+    .toString()
+    .padStart(8, "0")
+    .replace(/0+$/, "");
+  return fractionText.length > 0 ? `${whole}.${fractionText}` : `${whole}`;
 }

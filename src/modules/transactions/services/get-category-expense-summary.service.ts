@@ -1,6 +1,6 @@
 import { and, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import { accounts, transactions } from "@/infrastructure/database/schema";
 import {
   createCurrencyMinorUnitsBucket,
   addToCurrencyMinorUnitsBucket,
@@ -45,14 +45,15 @@ export function getCategoryExpenseTotal(
 
   const rows = context
     .select({
-      currencyCode: transactions.currencyCode,
+      currencyCode: accounts.currencyCode,
       total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as(
         "total",
       ),
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(and(...conditions))
-    .groupBy(transactions.currencyCode)
+    .groupBy(accounts.currencyCode)
     .all();
 
   const buckets = createCurrencyMinorUnitsBucket();
@@ -99,12 +100,13 @@ export function getCategoryExpenseTotalsGrouped(
   const rows = context
     .select({
       categoryId: transactions.categoryId,
-      currencyCode: transactions.currencyCode,
+      currencyCode: accounts.currencyCode,
       total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as(
         "total",
       ),
     })
     .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
     .where(
       and(
         isNull(transactions.deletedAt),
@@ -114,7 +116,7 @@ export function getCategoryExpenseTotalsGrouped(
         lte(transactions.occurredAt, query.endDate),
       ),
     )
-    .groupBy(transactions.categoryId, transactions.currencyCode)
+    .groupBy(transactions.categoryId, accounts.currencyCode)
     .all();
 
   const bucketsByCategory = new Map<string, ReturnType<typeof createCurrencyMinorUnitsBucket>>();

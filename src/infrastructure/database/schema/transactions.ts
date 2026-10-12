@@ -19,6 +19,8 @@ export const transactions = sqliteTable(
     type: text("type").notNull(),
     currencyCode: text("currency_code").notNull().default(DEFAULT_BASE_CURRENCY),
     amountMinorUnits: integer("amount_minor_units").notNull(),
+    originalAmountMinorUnits: integer("original_amount_minor_units"),
+    exchangeRateScaled: integer("exchange_rate_scaled"),
     name: text("name"),
     note: text("note"),
     occurredAt: integer("occurred_at", { mode: "timestamp_ms" }).notNull(),
