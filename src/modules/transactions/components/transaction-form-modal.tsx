@@ -30,7 +30,10 @@ import {
   CategoryPickerModal,
   type Category,
 } from "@/modules/categories";
-import { previewInstallmentPlan } from "@/modules/credit-cards";
+import {
+  previewInstallmentPlan,
+  useInstallmentPlanEditState,
+} from "@/modules/credit-cards";
 import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
@@ -86,6 +89,36 @@ function formatDateString(value: string | null): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+const INSTALLMENT_TERM_PRESETS = ["3", "6", "12", "24"] as const;
+
+function termMonthsToFormState(termMonths: number): {
+  option: "3" | "6" | "12" | "24" | "custom";
+  custom: string;
+} {
+  const preset = String(termMonths);
+  if ((INSTALLMENT_TERM_PRESETS as readonly string[]).includes(preset)) {
+    return {
+      option: preset as "3" | "6" | "12" | "24",
+      custom: "12",
+    };
+  }
+  return { option: "custom", custom: String(termMonths) };
+}
+
+function deferredMonthsToFormState(deferredMonths: number): {
+  option: "0" | "1" | "2" | "3" | "6" | "custom";
+  custom: string;
+} {
+  const preset = String(deferredMonths);
+  if (["0", "1", "2", "3", "6"].includes(preset)) {
+    return {
+      option: preset as "0" | "1" | "2" | "3" | "6",
+      custom: "3",
+    };
+  }
+  return { option: "custom", custom: String(deferredMonths) };
 }
 
 export interface TransactionFormModalProps {
@@ -296,6 +329,10 @@ export function TransactionFormModal({
     isEditing,
     transactionId: initialTransaction?.id,
   });
+  const installmentEditState = useInstallmentPlanEditState(
+    initialTransaction?.id,
+    visible && isEditing,
+  );
 
   const defaultFeeCategory = useMemo(() => {
     const allExpenseCategories = [];
@@ -471,6 +508,24 @@ export function TransactionFormModal({
     pockets,
     effectiveDefaultExpenseAccountId,
     effectiveDefaultExpensePocketId,
+  ]);
+
+  useEffect(() => {
+    if (!visible || !isEditing || !installmentEditState.plan) return;
+    const plan = installmentEditState.plan;
+    const term = termMonthsToFormState(plan.termMonths);
+    setInstallmentEnabled(true);
+    setInstallmentTermOption(term.option);
+    setCustomTermMonths(term.custom);
+    const deferral = deferredMonthsToFormState(plan.deferredMonths);
+    setInstallmentDeferral(deferral.option);
+    setCustomDeferralMonths(deferral.custom);
+  }, [
+    visible,
+    isEditing,
+    installmentEditState.plan?.id,
+    installmentEditState.plan?.termMonths,
+    installmentEditState.plan?.deferredMonths,
   ]);
 
   // When mode changes, switch default category, sign, and default account
@@ -699,11 +754,28 @@ export function TransactionFormModal({
     entryCurrency,
     accountCurrencyCode,
   ]);
-  const canUseInstallments =
+  const isCreditCardExpense =
     mode === "expense" &&
     amountSign === "-" &&
-    Boolean(selectedAccount?.creditCardDetails) &&
-    !isEditing;
+    Boolean(selectedAccount?.creditCardDetails);
+
+  const installmentFieldsLocked =
+    isEditing &&
+    Boolean(installmentEditState.plan) &&
+    !installmentEditState.canModifyInstallmentPlan;
+
+  const canConfigureInstallments =
+    isCreditCardExpense &&
+    (!isEditing ||
+      (installmentEditState.canModifyInstallmentPlan &&
+        !installmentEditState.hasChargeStatementEntry));
+
+  const showInstallmentSection =
+    isCreditCardExpense &&
+    (!isEditing ||
+      Boolean(installmentEditState.plan) ||
+      (installmentEditState.canModifyInstallmentPlan &&
+        !installmentEditState.hasChargeStatementEntry));
 
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
@@ -723,7 +795,7 @@ export function TransactionFormModal({
 
   const installmentPreview = useMemo(() => {
     if (
-      !canUseInstallments ||
+      !canConfigureInstallments ||
       !installmentEnabled ||
       !selectedAccount?.creditCardDetails
     ) {
@@ -747,7 +819,7 @@ export function TransactionFormModal({
       deferredMonths: resolvedDeferredMonths,
     });
   }, [
-    canUseInstallments,
+    canConfigureInstallments,
     installmentEnabled,
     selectedAccount?.creditCardDetails,
     resolvedTermMonths,
@@ -1001,7 +1073,7 @@ export function TransactionFormModal({
       const signedAmount =
         amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
 
-      if (canUseInstallments && installmentEnabled) {
+      if (canConfigureInstallments && installmentEnabled) {
         if (
           !Number.isInteger(resolvedTermMonths) ||
           resolvedTermMonths < 2 ||
@@ -1070,13 +1142,16 @@ export function TransactionFormModal({
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
-        installment:
-          canUseInstallments && installmentEnabled
+        installment: installmentFieldsLocked
+          ? undefined
+          : canConfigureInstallments && installmentEnabled
             ? {
                 termMonths: resolvedTermMonths,
                 deferredMonths: resolvedDeferredMonths,
               }
-            : null,
+            : canConfigureInstallments
+              ? null
+              : undefined,
         labelIds: selectedLabelIds.filter((id) => labels.some((lbl) => lbl.id === id)),
       };
       const success =
@@ -1711,18 +1786,20 @@ export function TransactionFormModal({
               </View>
             )}
 
-            {canUseInstallments ? (
+            {showInstallmentSection ? (
               <View style={styles.installmentPanel}>
                 <View style={styles.installmentHeader}>
                   <View style={styles.installmentHeaderText}>
                     <Text style={styles.installmentTitle}>Installment purchase</Text>
                     <Text style={styles.installmentDescription}>
-                      The full purchase uses your credit limit now; one portion is
-                      billed per statement.
+                      {installmentFieldsLocked
+                        ? `${installmentEditState.billedInstallmentCount} installment payment${installmentEditState.billedInstallmentCount === 1 ? "" : "s"} already on a statement. Terms cannot be changed.`
+                        : "The full purchase uses your credit limit now; one portion is billed per statement."}
                     </Text>
                   </View>
                   <Switch
                     accessibilityLabel="Installment purchase"
+                    disabled={installmentFieldsLocked || !canConfigureInstallments}
                     onValueChange={setInstallmentEnabled}
                     trackColor={{
                       false: theme.colors.borderStrong,
@@ -1747,6 +1824,7 @@ export function TransactionFormModal({
                           return (
                             <Pressable
                               key={opt.value}
+                              disabled={installmentFieldsLocked}
                               onPress={() =>
                                 setInstallmentTermOption(
                                   opt.value as
@@ -1760,12 +1838,14 @@ export function TransactionFormModal({
                               style={[
                                 styles.deferralChip,
                                 isSelected && styles.deferralChipActive,
+                                installmentFieldsLocked && styles.deferralChipDisabled,
                               ]}
                             >
                               <Text
                                 style={[
                                   styles.deferralChipText,
                                   isSelected && styles.deferralChipTextActive,
+                                  installmentFieldsLocked && styles.deferralChipTextDisabled,
                                 ]}
                               >
                                 {opt.label}
@@ -1781,6 +1861,7 @@ export function TransactionFormModal({
                           </Text>
                           <TextInput
                             accessibilityLabel="Custom installment term in months"
+                            editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={3}
                             onChangeText={(value) =>
@@ -1820,6 +1901,7 @@ export function TransactionFormModal({
                           return (
                             <Pressable
                               key={opt.value}
+                              disabled={installmentFieldsLocked}
                               onPress={() =>
                                 setInstallmentDeferral(
                                   opt.value as
@@ -1834,12 +1916,14 @@ export function TransactionFormModal({
                               style={[
                                 styles.deferralChip,
                                 isSelected && styles.deferralChipActive,
+                                installmentFieldsLocked && styles.deferralChipDisabled,
                               ]}
                             >
                               <Text
                                 style={[
                                   styles.deferralChipText,
                                   isSelected && styles.deferralChipTextActive,
+                                  installmentFieldsLocked && styles.deferralChipTextDisabled,
                                 ]}
                               >
                                 {opt.label}
@@ -1855,6 +1939,7 @@ export function TransactionFormModal({
                           </Text>
                           <TextInput
                             accessibilityLabel="Custom months deferred"
+                            editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={2}
                             onChangeText={(value) =>
@@ -2590,6 +2675,12 @@ function createStyles(theme: AppTheme) {
     deferralChipTextActive: {
       color: theme.colors.primary,
       fontWeight: "700",
+    },
+    deferralChipDisabled: {
+      opacity: 0.55,
+    },
+    deferralChipTextDisabled: {
+      color: theme.colors.textMuted,
     },
     customDeferralRow: {
       alignItems: "center",

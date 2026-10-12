@@ -12,7 +12,8 @@ import type {
 import { resolveTransactionExchangeSnapshot } from "./transaction-exchange-snapshot.service";
 import { requirePocketForAccount } from "@/modules/accounts";
 import {
-  getInstallmentPlanForTransaction,
+  applyTransactionInstallmentChanges,
+  getInstallmentPlanEditState,
   reconcileCreditCardBillingInContext,
 } from "@/modules/credit-cards";
 import {
@@ -64,15 +65,15 @@ export function updateTransactionInContext(
       lastEdited: input.exchangeLastEdited,
       type: input.type,
     });
-    const installmentPlan = getInstallmentPlanForTransaction(id, context);
+    const installmentEditState = getInstallmentPlanEditState(id, context);
     if (
-      installmentPlan &&
+      installmentEditState.billedInstallmentCount > 0 &&
       (existing.accountId !== input.accountId ||
         existing.amountMinorUnits !== resolvedForInstallmentCheck.amountMinorUnits ||
         existing.occurredAt.getTime() !== input.occurredAt.getTime())
     ) {
       throw new Error(
-        "Account, amount, and date cannot be changed after creating an installment plan.",
+        "Account, amount, and date cannot be changed after an installment has been billed on a statement.",
       );
     }
     if (input.pocketId) {
@@ -101,5 +102,10 @@ export function updateTransactionInContext(
     if (input.labelIds !== undefined) {
       assignTransactionLabels(id, input.labelIds, context);
     }
+    const updated = findTransactionById(id, context);
+    if (!updated) {
+      throw new Error(`Transaction with ID ${id} was not found after update.`);
+    }
+    applyTransactionInstallmentChanges(updated, input.installment, context);
     reconcileCreditCardBillingInContext(new Date(), context);
 }

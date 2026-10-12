@@ -130,7 +130,7 @@ export interface CreateTransactionInput {
   installment?: {
     termMonths: number;
     deferredMonths?: number;
-  } | null;
+  } | null | undefined;
   labelIds?: string[];
 }
 

@@ -42,6 +42,23 @@ export const getInstallmentPlanForTransaction = deferFunction(
       .getInstallmentPlanForTransaction,
 ) as typeof import("./services/get-installment-plan.service").getInstallmentPlanForTransaction;
 
+export const getInstallmentPlanEditState = deferFunction(
+  () =>
+    require("./services/get-installment-plan-edit-state.service")
+      .getInstallmentPlanEditState,
+) as typeof import("./services/get-installment-plan-edit-state.service").getInstallmentPlanEditState;
+
+export const applyTransactionInstallmentChanges = deferFunction(
+  () =>
+    require("./services/apply-transaction-installment-changes.service")
+      .applyTransactionInstallmentChanges,
+) as typeof import("./services/apply-transaction-installment-changes.service").applyTransactionInstallmentChanges;
+
+export const useInstallmentPlanEditState = deferFunction(
+  () =>
+    require("./hooks/use-installment-plan-edit-state").useInstallmentPlanEditState,
+) as typeof import("./hooks/use-installment-plan-edit-state").useInstallmentPlanEditState;
+
 export const previewInstallmentPlan = deferFunction(
   () =>
     require("./services/preview-installment-plan.service")
@@ -58,6 +75,7 @@ export type {
   CreditCardStatementEntry,
   CreditCardStatementSummary,
   InstallmentInput,
+  InstallmentPlanEditState,
 } from "./types/credit-card.types";
 export type { InstallmentPlanPreview } from "./services/preview-installment-plan.service";
 export {
