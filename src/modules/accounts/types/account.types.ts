@@ -23,6 +23,7 @@ export type NewPocket = InferInsertModel<typeof pockets>;
 
 export type PocketListItem = Pocket & {
   currentBalanceMinorUnits: number;
+  isDeletable?: boolean;
 };
 
 export type PocketInput = {

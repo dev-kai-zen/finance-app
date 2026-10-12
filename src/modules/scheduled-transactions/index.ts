@@ -44,6 +44,12 @@ export const getAccountIdsWithSchedules = deferFunction(
       .getAccountIdsWithSchedules,
 ) as typeof import("./services/manage-scheduled-transaction.service").getAccountIdsWithSchedules;
 
+export const getPocketIdsWithSchedules = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getPocketIdsWithSchedules,
+) as typeof import("./services/manage-scheduled-transaction.service").getPocketIdsWithSchedules;
+
 export const useScheduledTransactions = deferFunction(
   () => require("./hooks/use-scheduled-transactions").useScheduledTransactions,
 ) as typeof import("./hooks/use-scheduled-transactions").useScheduledTransactions;

@@ -4,6 +4,7 @@ import { saveAccount } from "@/modules/accounts/services/save-account.service";
 import { saveAccountType } from "@/modules/accounts/services/save-account-type.service";
 import { setAccountArchived } from "@/modules/accounts/services/archive-account.service";
 import { deleteAccount as deleteAccountService } from "@/modules/accounts/services/delete-account.service";
+import { deletePocket as deletePocketService } from "@/modules/accounts/services/delete-pocket.service";
 import { deleteAccountType } from "@/modules/accounts/services/delete-account-type.service";
 import {
   moveAccount,
@@ -45,6 +46,7 @@ export function useAccountMutations(onSuccess: () => void) {
     deleteAccount: (id: string) => run(() => deleteAccountService(id)),
     savePocket: (input: PocketInput, id?: string) => run(() => savePocket(input, id)),
     archivePocket: (id: string, archived: boolean) => run(() => setPocketArchived(id, archived)),
+    deletePocket: (id: string) => run(() => deletePocketService(id)),
     deleteType: (id: string) => run(() => deleteAccountType(id)),
     moveAccount: (id: string, direction: -1 | 1) => run(() => moveAccount(id, direction)),
     reorderAccounts: (orderedIds: string[]) => run(() => reorderAccountsList(orderedIds)),

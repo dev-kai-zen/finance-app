@@ -1,4 +1,5 @@
 import { db } from "@/infrastructure/database/client";
+import { findAccountById } from "@/modules/accounts/repositories/accounts.repository";
 import {
   findPocketById,
   updatePocketRecord,
@@ -16,6 +17,11 @@ export function setPocketArchived(id: string, isArchived: boolean): void {
         ?.currentBalanceMinorUnits ?? 0;
       if (balance !== 0) {
         throw new Error("Move the remaining pocket balance to Main before archiving it.");
+      }
+    } else {
+      const parent = findAccountById(existing.accountId, tx);
+      if (parent?.isArchived) {
+        throw new Error("Restore the parent account before restoring this pocket.");
       }
     }
     updatePocketRecord(id, { isArchived, updatedAt: new Date() }, tx);

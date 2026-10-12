@@ -232,6 +232,16 @@ export const getAccountIdsInUseByTransactions = deferFunction(
       .getAccountIdsInUseByTransactions,
 ) as typeof import("./services/is-account-in-use.service").getAccountIdsInUseByTransactions;
 
+export const isPocketInUseByTransactions = deferFunction(
+  () =>
+    require("./services/is-pocket-in-use.service").isPocketInUseByTransactions,
+) as typeof import("./services/is-pocket-in-use.service").isPocketInUseByTransactions;
+
+export const getPocketIdsInUseByTransactions = deferFunction(
+  () =>
+    require("./services/is-pocket-in-use.service").getPocketIdsInUseByTransactions,
+) as typeof import("./services/is-pocket-in-use.service").getPocketIdsInUseByTransactions;
+
 export type {
   Transaction,
   TransactionListItem,

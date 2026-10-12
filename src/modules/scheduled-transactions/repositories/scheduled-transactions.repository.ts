@@ -348,3 +348,41 @@ export function getAccountIdsWithSchedules(
   }
   return set;
 }
+
+export function hasSchedulesForPocket(
+  pocketId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactionSchedules.id })
+      .from(transactionSchedules)
+      .where(
+        or(
+          eq(transactionSchedules.pocketId, pocketId),
+          eq(transactionSchedules.toPocketId, pocketId),
+        ),
+      )
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getPocketIdsWithSchedules(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .select({
+      pocketId: transactionSchedules.pocketId,
+      toPocketId: transactionSchedules.toPocketId,
+    })
+    .from(transactionSchedules)
+    .all();
+
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.pocketId) set.add(row.pocketId);
+    if (row.toPocketId) set.add(row.toPocketId);
+  }
+  return set;
+}

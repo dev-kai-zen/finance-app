@@ -706,3 +706,32 @@ export function getAccountIdsWithTransactions(
     .all();
   return new Set(rows.map((r) => r.accountId));
 }
+
+export function hasTransactionsForPocket(
+  pocketId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactions.id })
+      .from(transactions)
+      .where(eq(transactions.pocketId, pocketId))
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getPocketIdsWithTransactions(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .selectDistinct({ pocketId: transactions.pocketId })
+    .from(transactions)
+    .where(isNotNull(transactions.pocketId))
+    .all();
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.pocketId) ids.add(row.pocketId);
+  }
+  return ids;
+}

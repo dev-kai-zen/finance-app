@@ -223,3 +223,41 @@ export function getAccountIdsWithPresets(
   }
   return set;
 }
+
+export function hasPresetsForPocket(
+  pocketId: string,
+  context: DbContext = db,
+): boolean {
+  return Boolean(
+    context
+      .select({ id: transactionPresets.id })
+      .from(transactionPresets)
+      .where(
+        or(
+          eq(transactionPresets.pocketId, pocketId),
+          eq(transactionPresets.toPocketId, pocketId),
+        ),
+      )
+      .limit(1)
+      .get(),
+  );
+}
+
+export function getPocketIdsWithPresets(
+  context: DbContext = db,
+): Set<string> {
+  const rows = context
+    .select({
+      pocketId: transactionPresets.pocketId,
+      toPocketId: transactionPresets.toPocketId,
+    })
+    .from(transactionPresets)
+    .all();
+
+  const set = new Set<string>();
+  for (const row of rows) {
+    if (row.pocketId) set.add(row.pocketId);
+    if (row.toPocketId) set.add(row.toPocketId);
+  }
+  return set;
+}

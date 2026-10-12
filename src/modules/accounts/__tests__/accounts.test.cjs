@@ -73,7 +73,9 @@ const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
 const { deleteAccount } = require("@/modules/accounts/services/delete-account.service");
+const { deletePocket } = require("@/modules/accounts/services/delete-pocket.service");
 const { canDeleteAccount } = require("@/modules/accounts/services/can-delete-account.service");
+const { canDeletePocket } = require("@/modules/accounts/services/can-delete-pocket.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
 const {
   moveAccount,
@@ -803,5 +805,55 @@ test("account currency can be changed through save when there is no transaction 
     accountId,
   );
   assert.equal(repo.findAccountById(accountId).currencyCode, "USD");
+});
+
+test("permanent pocket delete is allowed for unused archived pockets", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Pocket Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Spare", targetAmount: "" });
+  setPocketArchived(pocketId, true);
+
+  const item = getPocketsWithBalances().find((pocket) => pocket.id === pocketId);
+  assert.equal(item?.isDeletable, true);
+  assert.equal(canDeletePocket(pocketId), true);
+
+  deletePocket(pocketId);
+  assert.equal(pocketsRepo.findPocketById(pocketId), null);
+});
+
+test("permanent pocket delete is blocked when the pocket has transaction history", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Used Pocket Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Used", targetAmount: "" });
+  pocketTransfer(accountId, null, pocketId, 5000);
+  pocketTransfer(accountId, pocketId, null, 5000);
+  setPocketArchived(pocketId, true);
+
+  assert.equal(canDeletePocket(pocketId), false);
+  const item = getPocketsWithBalances().find((pocket) => pocket.id === pocketId);
+  assert.equal(item?.isDeletable, false);
+  assert.throws(
+    () => deletePocket(pocketId),
+    /Cannot permanently delete a pocket that has transaction history/,
+  );
+});
+
+test("pocket restore is blocked while the parent account is archived", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Archived Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Nested", targetAmount: "" });
+  setPocketArchived(pocketId, true);
+  setAccountArchived(accountId, true);
+
+  assert.throws(
+    () => setPocketArchived(pocketId, false),
+    /Restore the parent account before restoring this pocket/,
+  );
 });
 
