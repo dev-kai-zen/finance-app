@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CalendarClock, Layers3 } from "lucide-react-native";
 import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
@@ -114,6 +115,8 @@ export function CreditCardMonitoringCard({
   );
 }
 
+const ACTIVITY_PREVIEW_COUNT = 4;
+
 function ActivitySection({
   currencyCode,
   items,
@@ -123,11 +126,18 @@ function ActivitySection({
   items: CreditCardMonitoringItem["billedItems"];
   title: string;
 }) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const [expanded, setExpanded] = useState(false);
+  const hiddenCount = Math.max(0, items.length - ACTIVITY_PREVIEW_COUNT);
+  const visibleItems = expanded
+    ? items
+    : items.slice(0, ACTIVITY_PREVIEW_COUNT);
+
   return (
     <View style={styles.activitySection}>
       <Text style={styles.activityTitle}>{title}</Text>
-      {items.slice(0, 4).map((item) => (
+      {visibleItems.map((item) => (
         <View key={item.id} style={styles.activityRow}>
           <View style={styles.activityText}>
             <Text numberOfLines={1} style={styles.activityDescription}>
@@ -142,6 +152,17 @@ function ActivitySection({
           </Text>
         </View>
       ))}
+      {hiddenCount > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setExpanded((value) => !value)}
+          style={styles.activityToggle}
+        >
+          <Text style={[styles.activityToggleText, { color: theme.colors.primary }]}>
+            {expanded ? "Show less" : `Show ${hiddenCount} more`}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -274,6 +295,15 @@ function createStyles(theme: AppTheme) {
     },
     activityAmount: {
       color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    activityToggle: {
+      alignSelf: "flex-start",
+      marginTop: theme.spacing.xs,
+      paddingVertical: theme.spacing.xs,
+    },
+    activityToggleText: {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

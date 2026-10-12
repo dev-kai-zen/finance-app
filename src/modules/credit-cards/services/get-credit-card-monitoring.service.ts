@@ -27,6 +27,16 @@ import {
 } from "../utils/credit-card-computations";
 import { reconcileCreditCardBilling } from "./reconcile-credit-card-billing.service";
 
+function sortCreditCardActivityNewestFirst<
+  T extends { occurredOn: string; id: string },
+>(items: T[]): T[] {
+  return [...items].sort((left, right) => {
+    const byDate = right.occurredOn.localeCompare(left.occurredOn);
+    if (byDate !== 0) return byDate;
+    return right.id.localeCompare(left.id);
+  });
+}
+
 export function getCreditCardMonitoring(
   today = new Date(),
 ): CreditCardMonitoringSummary {
@@ -153,7 +163,10 @@ export function getCreditCardMonitoring(
           detail,
         });
       }
-      const unbilledGross = unbilledItems.reduce(
+      const sortedBilledItems = sortCreditCardActivityNewestFirst(billedItems);
+      const sortedUnbilledItems =
+        sortCreditCardActivityNewestFirst(unbilledItems);
+      const unbilledGross = sortedUnbilledItems.reduce(
         (sum, item) => sum + item.amountMinorUnits,
         0,
       );
@@ -171,7 +184,7 @@ export function getCreditCardMonitoring(
         }, 0);
       const billed = calculateCreditCardBilled(statementSummaries);
       const unbilled = calculateCreditCardUnbilled(
-        unbilledItems,
+        sortedUnbilledItems,
         unallocatedCredits,
       );
       const outstanding = calculateCreditCardOutstanding(billed, unbilled);
@@ -199,8 +212,8 @@ export function getCreditCardMonitoring(
         activeInstallmentCount: plans.filter(
           (plan) => plan.status === "active",
         ).length,
-        billedItems,
-        unbilledItems,
+        billedItems: sortedBilledItems,
+        unbilledItems: sortedUnbilledItems,
         statements: statementSummaries.reverse(),
       };
     });
