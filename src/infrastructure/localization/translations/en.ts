@@ -87,7 +87,6 @@ export const en = {
     colorAmounts: "Color amount values",
     colorAmountsDescription: "Color positive and negative amount values",
     negativeNumber: "Negative Number",
-    decimalDigits: "Decimal Digits",
     catalogTitle: "Currencies",
     catalogRowLabel: "Currencies & decimal places",
     catalogRowValue: "%{count} currencies",
@@ -131,7 +130,6 @@ export const en = {
     searchCurrencies: "Search by currency name or code",
     noCurrenciesFound: "No currencies match your search.",
     negativeNumberDescription: "Choose how negative amount values are displayed.",
-    decimalDigitsDescription: "Choose the number of decimal digits from 0 to 9.",
     decimalFormatDescription:
       "Choose the thousands and decimal separator format.",
     helpTitle: "About Currency Setup",

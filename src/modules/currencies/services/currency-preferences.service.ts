@@ -37,9 +37,6 @@ export function getCurrencyPreferences(
   const defaultCurrency = entries[CURRENCY_PREFERENCE_KEYS.defaultCurrency];
   const negativeFormat = entries[CURRENCY_PREFERENCE_KEYS.negativeFormat];
   const decimalFormat = entries[CURRENCY_PREFERENCE_KEYS.decimalFormat];
-  const decimalDigits = Number(
-    entries[CURRENCY_PREFERENCE_KEYS.decimalDigits],
-  );
 
   return {
     defaultCurrency: SUPPORTED_CURRENCY_CODES.includes(defaultCurrency)
@@ -58,10 +55,6 @@ export function getCurrencyPreferences(
     )
       ? (negativeFormat as NegativeNumberFormat)
       : DEFAULT_CURRENCY_PREFERENCES.negativeFormat,
-    decimalDigits:
-      Number.isInteger(decimalDigits) && decimalDigits >= 0 && decimalDigits <= 9
-        ? decimalDigits
-        : DEFAULT_CURRENCY_PREFERENCES.decimalDigits,
     decimalFormat: DECIMAL_FORMATS.includes(decimalFormat as DecimalFormat)
       ? (decimalFormat as DecimalFormat)
       : DEFAULT_CURRENCY_PREFERENCES.decimalFormat,
@@ -83,9 +76,6 @@ export function saveCurrencyPreferences(
         ),
         [CURRENCY_PREFERENCE_KEYS.colorAmounts]: String(validated.colorAmounts),
         [CURRENCY_PREFERENCE_KEYS.negativeFormat]: validated.negativeFormat,
-        [CURRENCY_PREFERENCE_KEYS.decimalDigits]: String(
-          validated.decimalDigits,
-        ),
         [CURRENCY_PREFERENCE_KEYS.decimalFormat]: validated.decimalFormat,
       },
       tx,
@@ -109,13 +99,6 @@ function validateCurrencyPreferences(
 ): CurrencyPreferences {
   if (!SUPPORTED_CURRENCY_CODES.includes(preferences.defaultCurrency)) {
     throw new Error("Choose a supported currency.");
-  }
-  if (
-    !Number.isInteger(preferences.decimalDigits) ||
-    preferences.decimalDigits < 0 ||
-    preferences.decimalDigits > 9
-  ) {
-    throw new Error("Decimal digits must be a whole number from 0 to 9.");
   }
   if (!NEGATIVE_FORMATS.includes(preferences.negativeFormat)) {
     throw new Error("Choose a supported negative number format.");

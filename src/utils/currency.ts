@@ -68,7 +68,6 @@ export interface CurrencyPreferences {
   displayCurrency: boolean;
   colorAmounts: boolean;
   negativeFormat: NegativeNumberFormat;
-  decimalDigits: number;
   decimalFormat: DecimalFormat;
 }
 
@@ -77,7 +76,6 @@ export const DEFAULT_CURRENCY_PREFERENCES: CurrencyPreferences = {
   displayCurrency: true,
   colorAmounts: true,
   negativeFormat: "minus",
-  decimalDigits: 2,
   decimalFormat: "automatic",
 };
 

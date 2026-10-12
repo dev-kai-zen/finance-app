@@ -5,7 +5,6 @@ export const CURRENCY_PREFERENCE_KEYS = {
   displayCurrency: "currency_display_symbol",
   colorAmounts: "currency_color_amounts",
   negativeFormat: "currency_negative_format",
-  decimalDigits: "currency_decimal_digits",
   decimalFormat: "currency_decimal_format",
 } as const;
 

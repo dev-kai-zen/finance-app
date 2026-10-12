@@ -98,7 +98,6 @@ export const es = {
     colorAmounts: "Colorear importes",
     colorAmountsDescription: "Colorear importes positivos y negativos",
     negativeNumber: "Número negativo",
-    decimalDigits: "Dígitos decimales",
     catalogTitle: "Monedas",
     catalogRowLabel: "Monedas y decimales",
     catalogRowValue: "%{count} monedas",
@@ -144,8 +143,6 @@ export const es = {
     noCurrenciesFound: "No hay monedas que coincidan con la búsqueda.",
     negativeNumberDescription:
       "Elige cómo se muestran los importes negativos.",
-    decimalDigitsDescription:
-      "Elige la cantidad de dígitos decimales de 0 a 9.",
     decimalFormatDescription:
       "Elige el formato de los separadores de miles y decimales.",
     helpTitle: "Acerca de la configuración de moneda",

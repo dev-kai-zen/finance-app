@@ -27,7 +27,6 @@ afterEach(() => {
 test("formatCurrency uses each currency standard decimal places", () => {
   currency.setActiveCurrencyFormattingPreferences({
     ...currency.DEFAULT_CURRENCY_PREFERENCES,
-    decimalDigits: 9,
     decimalFormat: "comma-dot",
   });
 
@@ -40,7 +39,6 @@ test("currency preferences control symbol, negative style, and separators", () =
     ...currency.DEFAULT_CURRENCY_PREFERENCES,
     displayCurrency: false,
     negativeFormat: "parentheses",
-    decimalDigits: 3,
     decimalFormat: "dot-comma",
   });
 

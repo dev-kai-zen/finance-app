@@ -98,7 +98,6 @@ export const fil = {
     colorAmounts: "Kulayan ang mga halaga",
     colorAmountsDescription: "Kulayan ang positibo at negatibong halaga",
     negativeNumber: "Negatibong Numero",
-    decimalDigits: "Mga Decimal Digit",
     catalogTitle: "Mga Currency",
     catalogRowLabel: "Mga currency at decimal place",
     catalogRowValue: "%{count} na currency",
@@ -144,8 +143,6 @@ export const fil = {
     noCurrenciesFound: "Walang currency na tumutugma sa iyong paghahanap.",
     negativeNumberDescription:
       "Piliin kung paano ipapakita ang mga negatibong halaga.",
-    decimalDigitsDescription:
-      "Piliin ang bilang ng decimal digit mula 0 hanggang 9.",
     decimalFormatDescription:
       "Piliin ang format ng thousands at decimal separator.",
     helpTitle: "Tungkol sa Setup ng Currency",
