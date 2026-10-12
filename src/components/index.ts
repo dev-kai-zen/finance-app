@@ -15,6 +15,7 @@ export * from "./icon-helper";
 export * from "./icon-picker-modal";
 export * from "./sortable-list-modal";
 export * from "./feature-not-implemented-modal";
+export * from "./themed-switch";
 export * from "./confirm-modal";
 export * from "./info-modal";
 export * from "./notification-modal";

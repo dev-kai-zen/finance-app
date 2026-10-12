@@ -449,6 +449,25 @@ test("saveAccount persists visibility flags and maintaining balance", () => {
   saveAccount({ ...accountInput(undefined, "Daily account"), maintainingAmount: "" }, id);
   assert.equal(repo.findAccountById(id).maintainingBalanceMinorUnits, null);
 });
+test("saveAccount ignores maintaining balance for liability accounts", () => {
+  const id = saveAccount({
+    ...accountInput(system.LIABILITY_OTHERS, "Card loan"),
+    maintainingAmount: "1500.00",
+  });
+  assert.equal(repo.findAccountById(id).maintainingBalanceMinorUnits, null);
+  const assetId = saveAccount({
+    ...accountInput(system.ASSET_OTHERS, "Checking"),
+    maintainingAmount: "500.00",
+  });
+  saveAccount(
+    {
+      ...accountInput(system.LIABILITY_OTHERS, "Checking"),
+      maintainingAmount: "900.00",
+    },
+    assetId,
+  );
+  assert.equal(repo.findAccountById(assetId).maintainingBalanceMinorUnits, null);
+});
 test("locked starting balance cannot be changed again", () => {
   const id = saveAccount(accountInput(undefined, "Locked account", "1000.00"));
   lockAccountStartingBalance(id);

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -18,6 +17,7 @@ import {
   IconPickerModal,
   KeyboardAwareForm,
   NotificationModal,
+  ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -26,7 +26,6 @@ import {
   CurrencyPickerModal,
   useCurrencyPreferences,
 } from "@/modules/currencies";
-import { useCurrencies } from "@/modules/currencies/hooks/use-currencies";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
@@ -101,7 +100,6 @@ export function AccountFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
-  const { currencies: currencyCatalog } = useCurrencies();
   const initialCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
 
   const [value, setValue] = useState<AccountInput>(() => ({
@@ -217,10 +215,8 @@ export function AccountFormModal({
   const currencyDecimals = getCurrencyMinorUnitExponent(activeCurrencyCode);
   const currencyDivisor = 10 ** currencyDecimals;
   const currencyLocked = account ? account.canChangeCurrency !== true : false;
-  const selectedCurrencyMeta = currencyCatalog.find(
-    (item) => item.code.toUpperCase() === activeCurrencyCode.toUpperCase(),
-  );
   const selectedType = types.find((t) => t.id === value.accountTypeId);
+  const isLiabilityAccount = selectedType?.accountGroup === "liability";
   const currentIconKey = value.iconKey || selectedType?.iconKey || "landmark";
   const isCreditCardType = isCreditCardAccountType(
     value.accountTypeId,
@@ -476,40 +472,6 @@ export function AccountFormModal({
             <ChevronRight color={theme.colors.textMuted} size={18} />
           </Pressable>
 
-          <Text style={styles.fieldLabel}>Currency</Text>
-          <Pressable
-            accessibilityLabel={`Account currency ${activeCurrencyCode}`}
-            accessibilityRole="button"
-            disabled={pending || currencyLocked}
-            onPress={() => setCurrencyPickerOpen(true)}
-            style={[
-              styles.selectorPill,
-              currencyLocked && styles.selectorPillDisabled,
-            ]}
-          >
-            <View style={styles.currencyBadge}>
-              <Text style={styles.currencyBadgeText}>
-                {selectedCurrencyMeta?.symbol.trim() || activeCurrencyCode}
-              </Text>
-            </View>
-            <View style={styles.currencyCopy}>
-              <Text numberOfLines={1} style={styles.selectorValue}>
-                {activeCurrencyCode}
-                {selectedCurrencyMeta ? ` · ${selectedCurrencyMeta.name}` : ""}
-              </Text>
-              {currencyLocked ? (
-                <Text style={styles.currencyHint}>
-                  Currency cannot be changed after transactions are recorded.
-                </Text>
-              ) : (
-                <Text style={styles.currencyHint}>Tap to choose another currency.</Text>
-              )}
-            </View>
-            {!currencyLocked ? (
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            ) : null}
-          </Pressable>
-
           <Text style={styles.fieldLabel}>Account Icon</Text>
           <Pressable
             accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
@@ -602,20 +564,28 @@ export function AccountFormModal({
             <Text style={styles.helperText}>
               Starting balance is locked and can no longer be changed.
             </Text>
-          ) : null}
+          ) : !currencyLocked ? (
+            <Text style={styles.helperText}>
+              Tap the currency code beside starting balance to change this account&apos;s
+              currency.
+            </Text>
+          ) : (
+            <Text style={styles.helperText}>
+              Currency cannot be changed after transactions are recorded.
+            </Text>
+          )}
 
-          <AmountCalculatorField
-            amountMinorUnits={maintainingMinorUnits}
-            currencyCode={activeCurrencyCode}
-            disabled={pending}
-            label="Maintaining Balance"
-            showCurrencyPill={!currencyLocked}
-            onPressCurrency={
-              currencyLocked ? undefined : () => setCurrencyPickerOpen(true)
-            }
-            showSignToggle={false}
-            onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
-          />
+          {!isLiabilityAccount ? (
+            <AmountCalculatorField
+              amountMinorUnits={maintainingMinorUnits}
+              currencyCode={activeCurrencyCode}
+              disabled={pending}
+              label="Maintaining Balance"
+              showCurrencyPill
+              showSignToggle={false}
+              onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
+            />
+          ) : null}
 
           {pocketEligible ? (
             <View style={styles.toggleRow}>
@@ -625,17 +595,12 @@ export function AccountFormModal({
                   Show Main and allow separate pocket balances for this account.
                 </Text>
               </View>
-              <Switch
+              <ThemedSwitch
                 accessibilityLabel="Enable pockets"
                 disabled={pending}
                 onValueChange={(pocketEnabled) =>
                   setValue((prev) => ({ ...prev, pocketEnabled }))
                 }
-                thumbColor={theme.colors.textInverse}
-                trackColor={{
-                  false: theme.colors.borderStrong,
-                  true: theme.colors.primary,
-                }}
                 value={value.pocketEnabled}
               />
             </View>
@@ -648,17 +613,12 @@ export function AccountFormModal({
                 Exclude this account from transaction account pickers.
               </Text>
             </View>
-            <Switch
+            <ThemedSwitch
               accessibilityLabel="Hide from selection"
               disabled={pending}
               onValueChange={(hideFromSelection) =>
                 setValue((prev) => ({ ...prev, hideFromSelection }))
               }
-              thumbColor={theme.colors.textInverse}
-              trackColor={{
-                false: theme.colors.borderStrong,
-                true: theme.colors.primary,
-              }}
               value={value.hideFromSelection}
             />
           </View>
@@ -670,17 +630,12 @@ export function AccountFormModal({
                 Exclude this account from net worth and opening totals.
               </Text>
             </View>
-            <Switch
+            <ThemedSwitch
               accessibilityLabel="Hide from reports"
               disabled={pending}
               onValueChange={(hideFromReports) =>
                 setValue((prev) => ({ ...prev, hideFromReports }))
               }
-              thumbColor={theme.colors.textInverse}
-              trackColor={{
-                false: theme.colors.borderStrong,
-                true: theme.colors.primary,
-              }}
               value={value.hideFromReports}
             />
           </View>
@@ -694,15 +649,10 @@ export function AccountFormModal({
                     Pre-select this account when recording expense transactions.
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
                   accessibilityLabel="Default for Expense"
                   disabled={pending}
                   onValueChange={setIsDefaultExpense}
-                  thumbColor={theme.colors.textInverse}
-                  trackColor={{
-                    false: theme.colors.borderStrong,
-                    true: theme.colors.primary,
-                  }}
                   value={isDefaultExpense}
                 />
               </View>
@@ -714,15 +664,10 @@ export function AccountFormModal({
                     Pre-select this account when recording income transactions.
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
                   accessibilityLabel="Default for Income"
                   disabled={pending}
                   onValueChange={setIsDefaultIncome}
-                  thumbColor={theme.colors.textInverse}
-                  trackColor={{
-                    false: theme.colors.borderStrong,
-                    true: theme.colors.primary,
-                  }}
                   value={isDefaultIncome}
                 />
               </View>
@@ -957,6 +902,8 @@ export function AccountFormModal({
             )
               ? prev.pocketEnabled
               : false,
+            maintainingAmount:
+              selectedType?.accountGroup === "liability" ? "" : prev.maintainingAmount,
           }));
           if (selectedType) {
             setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
@@ -1043,34 +990,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       minHeight: 48,
       paddingHorizontal: theme.spacing.lg,
-    },
-    selectorPillDisabled: {
-      opacity: 0.85,
-    },
-    currencyBadge: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
-      justifyContent: "center",
-      minHeight: 32,
-      minWidth: 44,
-      paddingHorizontal: theme.spacing.sm,
-    },
-    currencyBadgeText: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    currencyCopy: {
-      flex: 1,
-      gap: 2,
-      minWidth: 0,
-    },
-    currencyHint: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
     },
     selectorValue: {
       color: theme.colors.textPrimary,
