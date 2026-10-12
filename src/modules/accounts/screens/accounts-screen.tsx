@@ -59,6 +59,9 @@ export function AccountsScreen({
   });
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
+  const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
+    string | null
+  >(null);
   const [fundGroupsModalOpen, setFundGroupsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
@@ -357,12 +360,25 @@ export function AccountsScreen({
         accounts={archived}
         pockets={archivedPockets}
         pending={mutations.pending}
+        restorePocketError={archivedRestorePocketError}
         visible={archivedModalOpen}
-        onClose={() => setArchivedModalOpen(false)}
+        onClose={() => {
+          setArchivedModalOpen(false);
+          setArchivedRestorePocketError(null);
+        }}
+        onDismissRestorePocketError={() => setArchivedRestorePocketError(null)}
         onPermanentDeleteAccount={mutations.deleteAccount}
         onPermanentDeletePocket={mutations.deletePocket}
         onRestoreAccount={(accountId) => mutations.archiveAccount(accountId, false)}
-        onRestorePocket={(pocketId) => mutations.archivePocket(pocketId, false)}
+        onRestorePocket={async (pocketId) => {
+          setArchivedRestorePocketError(null);
+          mutations.clearError();
+          const restored = await mutations.archivePocket(pocketId, false);
+          if (!restored && mutations.error) {
+            setArchivedRestorePocketError(mutations.error);
+          }
+          return restored;
+        }}
         onSelectAccount={handleSelectArchivedAccount}
         onSelectPocket={handleSelectArchivedPocket}
       />

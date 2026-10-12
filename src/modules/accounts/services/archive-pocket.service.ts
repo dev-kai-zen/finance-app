@@ -5,7 +5,10 @@ import {
   updatePocketRecord,
 } from "@/modules/accounts/repositories/pockets.repository";
 import { getPocketsWithBalances } from "@/modules/accounts/services/get-pockets-with-balances.service";
-import { requirePocketForAccount } from "@/modules/accounts/services/pocket-rules";
+import {
+  getPocketRestoreBlockReason,
+  requirePocketForAccount,
+} from "@/modules/accounts/services/pocket-rules";
 
 export function setPocketArchived(id: string, isArchived: boolean): void {
   db.transaction((tx) => {
@@ -20,8 +23,9 @@ export function setPocketArchived(id: string, isArchived: boolean): void {
       }
     } else {
       const parent = findAccountById(existing.accountId, tx);
-      if (parent?.isArchived) {
-        throw new Error("Restore the parent account before restoring this pocket.");
+      const restoreBlockReason = getPocketRestoreBlockReason(parent);
+      if (restoreBlockReason) {
+        throw new Error(restoreBlockReason);
       }
     }
     updatePocketRecord(id, { isArchived, updatedAt: new Date() }, tx);

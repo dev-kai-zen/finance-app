@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Archive, Folder, Info, RotateCcw, Trash2 } from "lucide-react-native";
-import { ConfirmModal, FullScreenFormModal } from "@/components";
+import { ConfirmModal, FullScreenFormModal, NotificationModal } from "@/components";
+import { getPocketRestoreBlockReason } from "@/modules/accounts/services/pocket-rules";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountRow } from "@/modules/accounts/components/account-row";
@@ -23,6 +24,8 @@ export interface ArchivedAccountsModalProps {
   onPermanentDeleteAccount?: (accountId: string) => Promise<boolean>;
   onRestorePocket: (pocketId: string) => Promise<boolean>;
   onPermanentDeletePocket?: (pocketId: string) => Promise<boolean>;
+  restorePocketError?: string | null;
+  onDismissRestorePocketError?: () => void;
 }
 
 export function ArchivedAccountsModal({
@@ -38,6 +41,8 @@ export function ArchivedAccountsModal({
   onPermanentDeleteAccount,
   onRestorePocket,
   onPermanentDeletePocket,
+  restorePocketError = null,
+  onDismissRestorePocketError,
 }: ArchivedAccountsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -54,12 +59,31 @@ export function ArchivedAccountsModal({
   const [deletePocketTarget, setDeletePocketTarget] = useState<PocketListItem | null>(
     null,
   );
+  const [pocketRestoreNotice, setPocketRestoreNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
       setTab("accounts");
+      setPocketRestoreNotice(null);
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (restorePocketError) {
+      setPocketRestoreNotice(restorePocketError);
+    }
+  }, [restorePocketError]);
+
+  const requestRestorePocket = (pocket: PocketListItem) => {
+    const blockReason = getPocketRestoreBlockReason(
+      accountById.get(pocket.accountId),
+    );
+    if (blockReason) {
+      setPocketRestoreNotice(blockReason);
+      return;
+    }
+    setRestorePocketTarget(pocket);
+  };
 
   const infoText =
     tab === "accounts"
@@ -229,7 +253,7 @@ export function ArchivedAccountsModal({
                         accessibilityLabel={`Restore ${pocket.name}`}
                         accessibilityRole="button"
                         disabled={pending}
-                        onPress={() => setRestorePocketTarget(pocket)}
+                        onPress={() => requestRestorePocket(pocket)}
                         style={({ pressed }) => [
                           styles.restoreBtn,
                           pending && styles.actionBtnDisabled,
@@ -291,8 +315,23 @@ export function ArchivedAccountsModal({
         onConfirm={() => {
           if (!restorePocketTarget) return;
           void onRestorePocket(restorePocketTarget.id).then((restored) => {
-            if (restored) setRestorePocketTarget(null);
+            setRestorePocketTarget(null);
           });
+        }}
+      />
+
+      <NotificationModal
+        message={pocketRestoreNotice ?? ""}
+        title={
+          pocketRestoreNotice?.includes("Pockets aren't enabled")
+            ? "Turn on Pockets first"
+            : "Cannot restore pocket"
+        }
+        variant="warning"
+        visible={visible && pocketRestoreNotice !== null}
+        onClose={() => {
+          setPocketRestoreNotice(null);
+          onDismissRestorePocketError?.();
         }}
       />
 

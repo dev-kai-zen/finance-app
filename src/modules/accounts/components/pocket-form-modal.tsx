@@ -10,6 +10,7 @@ import { AccountField } from "@/modules/accounts/components/account-ui";
 import type { AppTheme } from "@/constants/theme";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type { AccountListItem, PocketListItem } from "@/modules/accounts/types/account.types";
+import { getPocketRestoreBlockReason } from "@/modules/accounts/services/pocket-rules";
 import { maintainingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
@@ -135,6 +136,14 @@ export function PocketFormModal({
 
   const requestArchive = () => {
     if (!pocket) return;
+    if (pocket.isArchived) {
+      const blockReason = getPocketRestoreBlockReason(account);
+      if (blockReason) {
+        setConfirmArchive(false);
+        setArchiveError(blockReason);
+        return;
+      }
+    }
     if (!pocket.isArchived && pocket.currentBalanceMinorUnits !== 0) {
       setConfirmArchive(false);
       setArchiveError(
@@ -280,7 +289,15 @@ export function PocketFormModal({
           setArchiveError(null);
           mutations.clearError();
         }}
-        title={archiveError ? "Pocket cannot be archived" : "Unable to save pocket"}
+        title={
+          archiveError
+            ? pocket?.isArchived
+              ? archiveError.includes("Pockets aren't enabled")
+                ? "Turn on Pockets first"
+                : "Cannot restore pocket"
+              : "Pocket cannot be archived"
+            : "Unable to save pocket"
+        }
         variant={archiveError ? "warning" : "error"}
         visible={visible && Boolean(archiveError ?? mutations.error)}
       />

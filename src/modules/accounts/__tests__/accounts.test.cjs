@@ -853,7 +853,27 @@ test("pocket restore is blocked while the parent account is archived", () => {
 
   assert.throws(
     () => setPocketArchived(pocketId, false),
-    /Restore the parent account before restoring this pocket/,
+    /Restore "Archived Parent" before restoring this pocket/,
+  );
+});
+
+test("pocket restore is blocked when pockets are disabled on the parent account", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "No Pockets Account", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Legacy", targetAmount: "" });
+  pocketTransfer(accountId, null, pocketId, 5000);
+  pocketTransfer(accountId, pocketId, null, 5000);
+  setPocketArchived(pocketId, true);
+  saveAccount(
+    { ...accountInput(undefined, "No Pockets Account", "100.00"), pocketEnabled: false },
+    accountId,
+  );
+
+  assert.throws(
+    () => setPocketArchived(pocketId, false),
+    /Pockets aren't enabled for "No Pockets Account"/,
   );
 });
 
