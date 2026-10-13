@@ -910,6 +910,14 @@ export function TransactionFormModal({
     );
   }, [appliedPresetId, name, presets]);
 
+  const canSaveAsQuickPreset = Boolean(name.trim()) && !pending;
+
+  useEffect(() => {
+    if (!name.trim()) {
+      setSaveAsQuickPreset(false);
+    }
+  }, [name]);
+
   const selectedCategory = useMemo(() => {
     for (const cat of categories) {
       if (cat.id === selectedCategoryId) return cat;
@@ -2236,17 +2244,26 @@ export function TransactionFormModal({
             </View>
 
             {!isEditing && !appliedPresetId ? (
-              <View style={styles.quickPresetSavePanel}>
+              <View
+                pointerEvents={canSaveAsQuickPreset ? "auto" : "none"}
+                style={[
+                  styles.quickPresetSavePanel,
+                  !canSaveAsQuickPreset && styles.quickPresetSavePanelDisabled,
+                ]}
+              >
                 <Host matchContents style={styles.quickPresetCheckbox}>
                   <Checkbox
-                    disabled={pending || !name.trim()}
+                    disabled={!canSaveAsQuickPreset}
                     label={
                       matchingPreset
                         ? "Update matching Quick Preset"
                         : "Save as a Quick Preset"
                     }
-                    onValueChange={setSaveAsQuickPreset}
-                    value={saveAsQuickPreset}
+                    onValueChange={(value) => {
+                      if (!canSaveAsQuickPreset) return;
+                      setSaveAsQuickPreset(value);
+                    }}
+                    value={saveAsQuickPreset && canSaveAsQuickPreset}
                   />
                 </Host>
                 <Text style={styles.quickPresetHelp}>
@@ -2254,9 +2271,9 @@ export function TransactionFormModal({
                     ? `Reuse this name by updating “${matchingPreset.transactionName}” with the current details.`
                     : name.trim()
                       ? "Reuse these details when you type this transaction name."
-                      : "Enter a transaction name to enable Quick Presets."}
+                      : "Enter a transaction name above to save as a Quick Preset."}
                 </Text>
-                {saveAsQuickPreset ? (
+                {saveAsQuickPreset && canSaveAsQuickPreset ? (
                   <Host matchContents style={styles.quickPresetCheckbox}>
                     <Checkbox
                       disabled={pending}
@@ -3142,6 +3159,9 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.xs,
       marginBottom: theme.spacing.md,
       padding: theme.spacing.md,
+    },
+    quickPresetSavePanelDisabled: {
+      opacity: 0.55,
     },
     quickPresetCheckbox: { alignSelf: "flex-start" },
     quickPresetHelp: {
