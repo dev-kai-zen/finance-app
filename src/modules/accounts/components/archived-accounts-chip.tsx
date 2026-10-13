@@ -14,7 +14,7 @@ export function ArchivedAccountsChip({ count, onPress }: ArchivedAccountsChipPro
 
   return (
     <Pressable
-        accessibilityLabel={`Archived accounts: ${count}. Tap to view.`}
+        accessibilityLabel={`Archived accounts and pockets: ${count}. Tap to view.`}
         accessibilityRole="button"
         onPress={onPress}
         style={({ pressed }) => [
@@ -23,7 +23,7 @@ export function ArchivedAccountsChip({ count, onPress }: ArchivedAccountsChipPro
         ]}
     >
         <Archive color={theme.colors.textSecondary} size={14} />
-        <Text style={styles.chipText}>Archived Accounts</Text>
+        <Text style={styles.chipText}>Archived</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{count}</Text>
         </View>

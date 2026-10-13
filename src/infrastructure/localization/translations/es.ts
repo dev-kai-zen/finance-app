@@ -90,6 +90,10 @@ export const es = {
     resetData: "Restablecer datos",
     resetDataDescription:
       "Borra permanentemente todos los datos locales y comienza de nuevo.",
+    aboutSection: "ACERCA DE",
+    whatsNew: "Novedades",
+    whatsNewDescription: "Consulta lo destacado de las últimas actualizaciones",
+    whatsNewAccessibility: "Abrir las notas de la versión",
   },
   currency: {
     defaultCurrency: "Moneda predeterminada",
@@ -171,6 +175,29 @@ export const es = {
     followDeviceDescription: "Paper en modo claro e Ink en modo oscuro.",
     palettes: "PALETAS",
     choices: "%{count} opciones",
+  },
+  whatsNew: {
+    heading: "Novedades",
+    continue: "Continuar",
+    dismissAccessibility: "Cerrar novedades",
+    versionLabel: "Versión %{version}",
+    empty: "Aún no hay notas de la versión para esta actualización.",
+    v100: {
+      title: "Te damos la bienvenida a Kaizen Finance",
+      item1:
+        "Gestiona cuentas, transacciones, presupuestos y metas con una base de datos local offline-first.",
+      item2:
+        "Haz copias de seguridad y restaura tus datos con archivos locales o sincronización con Google Drive.",
+      item3:
+        "Personaliza temas, idiomas y formato de moneda según cómo administras tu dinero.",
+    },
+    v100fixes: {
+      title: "Correcciones y mejoras",
+      item1:
+        "Se corrigió un error al editar una transacción programada que aún requiere atención (vencida o fallida).",
+      item2:
+        "Las ocurrencias programadas pendientes reflejan el importe, la cuenta y la categoría más recientes cuando editas la programación.",
+    },
   },
   resetData: {
     dismissAccessibility:

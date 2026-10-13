@@ -19,6 +19,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { formatCurrency } from "@/utils/currency";
@@ -32,8 +33,12 @@ import type {
 import { formatScheduleRecurrence } from "../utils/recurrence";
 import {
   DEFAULT_SCHEDULE_LIST_FILTERS,
+  filterSchedulesBySearch,
   filterSchedulesByStatus,
+  normalizeScheduleSearchQuery,
+  scheduleMatchesSearchQuery,
   type ScheduleListFilter,
+  type ScheduleListSearchContext,
 } from "../utils/schedule-list-filter";
 
 const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
@@ -80,10 +85,37 @@ export function ScheduledTransactionsScreen() {
   const [selectedFilters, setSelectedFilters] = useState<
     ReadonlySet<ScheduleListFilter>
   >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const visibleSchedules = useMemo(
+  const searchContext = useMemo((): ScheduleListSearchContext => {
+    const accountById = new Map(
+      accounts.map((account) => [account.id, account.name]),
+    );
+    const categoryById = new Map(
+      categories.map((category) => [category.id, category.name]),
+    );
+    return {
+      getAccountName: (accountId) => accountById.get(accountId),
+      getCategoryName: (categoryId) =>
+        categoryId ? categoryById.get(categoryId) : undefined,
+    };
+  }, [accounts, categories]);
+
+  const normalizedSearchQuery = normalizeScheduleSearchQuery(searchQuery);
+
+  const statusFilteredSchedules = useMemo(
     () => filterSchedulesByStatus(schedules, selectedFilters),
     [schedules, selectedFilters],
+  );
+
+  const visibleSchedules = useMemo(
+    () =>
+      filterSchedulesBySearch(
+        statusFilteredSchedules,
+        searchQuery,
+        searchContext,
+      ),
+    [statusFilteredSchedules, searchQuery, searchContext],
   );
 
   const scheduleById = useMemo(
@@ -95,11 +127,63 @@ export function ScheduledTransactionsScreen() {
       ),
     [schedules],
   );
-  const actionableOccurrences = occurrences.filter(
-    (occurrence) =>
-      scheduleById.has(occurrence.scheduleId) &&
-      (occurrence.status === "due" || occurrence.status === "failed"),
+  const actionableOccurrences = useMemo(
+    () =>
+      occurrences.filter((occurrence) => {
+        if (
+          !scheduleById.has(occurrence.scheduleId) ||
+          (occurrence.status !== "due" && occurrence.status !== "failed")
+        ) {
+          return false;
+        }
+        const schedule = scheduleById.get(occurrence.scheduleId);
+        if (!schedule) return false;
+        return scheduleMatchesSearchQuery(
+          schedule,
+          normalizedSearchQuery,
+          searchContext,
+        );
+      }),
+    [
+      occurrences,
+      scheduleById,
+      normalizedSearchQuery,
+      searchContext,
+    ],
   );
+
+  const emptyStateContent = useMemo(() => {
+    if (schedules.length === 0) {
+      return {
+        title: "No scheduled transactions",
+        description:
+          "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
+      };
+    }
+    if (statusFilteredSchedules.length === 0) {
+      return {
+        title: "No matching schedules",
+        description:
+          "No schedules match the selected status filters. Select another status to view them.",
+      };
+    }
+    if (normalizedSearchQuery) {
+      return {
+        title: "No matching schedules",
+        description:
+          "No schedules match your search. Try a different name, account, or category.",
+      };
+    }
+    return {
+      title: "No matching schedules",
+      description:
+        "No schedules match the selected status filters. Select another status to view them.",
+    };
+  }, [
+    schedules.length,
+    statusFilteredSchedules.length,
+    normalizedSearchQuery,
+  ]);
   const pendingDeleteHasHistory = Boolean(
     pendingDelete && scheduleIdsWithPostings.has(pendingDelete.id),
   );
@@ -146,6 +230,15 @@ export function ScheduledTransactionsScreen() {
             <Text style={styles.errorText}>{error}</Text>
           </View>
         ) : null}
+
+        <AccountSearchBox
+          accessibilityLabel="Search scheduled transactions"
+          clearAccessibilityLabel="Clear scheduled transaction search"
+          onChangeText={setSearchQuery}
+          placeholder="Search name, account, category..."
+          style={styles.searchBox}
+          value={searchQuery}
+        />
 
         {selectedFilters.has("active") && actionableOccurrences.length > 0 ? (
           <View style={styles.dueSection}>
@@ -205,17 +298,9 @@ export function ScheduledTransactionsScreen() {
           <PageLoadingState message="Loading schedules..." />
         ) : visibleSchedules.length === 0 ? (
           <PageEmptyState
-            description={
-              schedules.length > 0
-                ? "No schedules match the selected status filters. Select another status to view them."
-                : "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule."
-            }
+            description={emptyStateContent.description}
             icon={<CalendarClock color={theme.colors.primary} size={34} />}
-            title={
-              schedules.length > 0
-                ? "No matching schedules"
-                : "No scheduled transactions"
-            }
+            title={emptyStateContent.title}
           />
         ) : (
           visibleSchedules.map((schedule) => {
@@ -491,6 +576,9 @@ function createStyles(theme: AppTheme) {
     content: {
       gap: theme.spacing.md,
       paddingBottom: 80,
+    },
+    searchBox: {
+      marginBottom: theme.spacing.xs,
     },
     errorBanner: {
       backgroundColor: theme.colors.danger + "18",

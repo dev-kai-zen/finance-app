@@ -53,3 +53,7 @@ export function deletePocketsForAccount(
 ): void {
   context.delete(pockets).where(eq(pockets.accountId, accountId)).run();
 }
+
+export function deletePocketRecord(id: string, context: DbContext = db): void {
+  context.delete(pockets).where(eq(pockets.id, id)).run();
+}

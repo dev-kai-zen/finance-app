@@ -1,6 +1,11 @@
-import { and, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lte, ne, notExists, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, transactions } from "@/infrastructure/database/schema";
+import {
+  accounts,
+  transactionEntries,
+  transactions,
+} from "@/infrastructure/database/schema";
+import { listExpenseEntryTotalsByCategory } from "../repositories/transaction-entries.repository";
 import {
   createCurrencyMinorUnitsBucket,
   addToCurrencyMinorUnitsBucket,
@@ -37,6 +42,12 @@ export function getCategoryExpenseTotal(
     inArray(transactions.categoryId, query.categoryIds),
     gte(transactions.occurredAt, query.startDate),
     lte(transactions.occurredAt, query.endDate),
+    notExists(
+      context
+        .select({ id: transactionEntries.id })
+        .from(transactionEntries)
+        .where(eq(transactionEntries.transactionId, transactions.id)),
+    ),
   ];
 
   if (query.excludeTransactionId) {
@@ -58,6 +69,23 @@ export function getCategoryExpenseTotal(
 
   const buckets = createCurrencyMinorUnitsBucket();
   for (const row of rows) {
+    addToCurrencyMinorUnitsBucket(
+      buckets,
+      row.currencyCode,
+      Math.abs(Number(row.total) || 0),
+    );
+  }
+
+  const splitRows = listExpenseEntryTotalsByCategory(
+    {
+      categoryIds: query.categoryIds,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      excludeTransactionId: query.excludeTransactionId,
+    },
+    context,
+  );
+  for (const row of splitRows) {
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
@@ -114,15 +142,41 @@ export function getCategoryExpenseTotalsGrouped(
         inArray(transactions.categoryId, query.categoryIds),
         gte(transactions.occurredAt, query.startDate),
         lte(transactions.occurredAt, query.endDate),
+        notExists(
+          context
+            .select({ id: transactionEntries.id })
+            .from(transactionEntries)
+            .where(eq(transactionEntries.transactionId, transactions.id)),
+        ),
       ),
     )
     .groupBy(transactions.categoryId, accounts.currencyCode)
     .all();
 
+  const splitRows = listExpenseEntryTotalsByCategory(
+    {
+      categoryIds: query.categoryIds,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    },
+    context,
+  );
+
   const bucketsByCategory = new Map<string, ReturnType<typeof createCurrencyMinorUnitsBucket>>();
 
   for (const row of rows) {
     if (!row.categoryId) continue;
+    const buckets =
+      bucketsByCategory.get(row.categoryId) ?? createCurrencyMinorUnitsBucket();
+    addToCurrencyMinorUnitsBucket(
+      buckets,
+      row.currencyCode,
+      Math.abs(Number(row.total) || 0),
+    );
+    bucketsByCategory.set(row.categoryId, buckets);
+  }
+
+  for (const row of splitRows) {
     const buckets =
       bucketsByCategory.get(row.categoryId) ?? createCurrencyMinorUnitsBucket();
     addToCurrencyMinorUnitsBucket(

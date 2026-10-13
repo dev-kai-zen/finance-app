@@ -30,6 +30,8 @@ const ICON_ALIASES: Record<string, string> = {
   "help-circle": "CircleHelp",
   grid: "LayoutGrid",
   dashboard: "LayoutDashboard",
+  "building-2": "BuildingComplex",
+  "trash-2": "Trash",
 };
 
 function toPascalCase(str: string): string {

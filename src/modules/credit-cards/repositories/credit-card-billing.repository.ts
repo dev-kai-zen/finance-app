@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
@@ -189,4 +190,44 @@ export function listInstallmentsForPlans(
       asc(creditCardInstallments.installmentNumber),
     )
     .all();
+}
+
+export function deleteInstallmentsForPlan(
+  planId: string,
+  context: DbContext = db,
+): void {
+  context
+    .delete(creditCardInstallments)
+    .where(eq(creditCardInstallments.planId, planId))
+    .run();
+}
+
+export function deleteInstallmentPlanById(
+  planId: string,
+  context: DbContext = db,
+): void {
+  context
+    .delete(creditCardInstallmentPlans)
+    .where(eq(creditCardInstallmentPlans.id, planId))
+    .run();
+}
+
+export function updateInstallmentPlanRecord(
+  planId: string,
+  values: Pick<
+    InferInsertModel<typeof creditCardInstallmentPlans>,
+    | "accountId"
+    | "termMonths"
+    | "principalMinorUnits"
+    | "firstStatementOn"
+    | "deferredMonths"
+    | "updatedAt"
+  >,
+  context: DbContext = db,
+): void {
+  context
+    .update(creditCardInstallmentPlans)
+    .set(values)
+    .where(eq(creditCardInstallmentPlans.id, planId))
+    .run();
 }

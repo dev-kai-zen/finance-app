@@ -22,6 +22,13 @@ export interface InstallmentInput {
   deferredMonths?: number;
 }
 
+export interface InstallmentPlanEditState {
+  plan: CreditCardInstallmentPlan | null;
+  billedInstallmentCount: number;
+  canModifyInstallmentPlan: boolean;
+  hasChargeStatementEntry: boolean;
+}
+
 export interface CreditCardStatementSummary extends CreditCardStatement {
   remainingAmountMinorUnits: number;
   entries: CreditCardStatementEntry[];

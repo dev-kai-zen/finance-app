@@ -5,8 +5,10 @@ import {
   deleteUnprocessedScheduleOccurrences,
   findScheduledTransaction,
   getAccountIdsWithSchedules as repoGetAccountIdsWithSchedules,
+  getPocketIdsWithSchedules as repoGetPocketIdsWithSchedules,
   hasSchedulePostings,
   hasSchedulesForAccount as repoHasSchedulesForAccount,
+  hasSchedulesForPocket as repoHasSchedulesForPocket,
   listScheduleIdsWithPostings,
   updateScheduledTransactionRecord,
 } from "../repositories/scheduled-transactions.repository";
@@ -123,4 +125,17 @@ export function getAccountIdsWithSchedules(
   context: DbContext = db,
 ): Set<string> {
   return repoGetAccountIdsWithSchedules(context);
+}
+
+export function hasSchedulesForPocket(
+  pocketId: string,
+  context: DbContext = db,
+): boolean {
+  return repoHasSchedulesForPocket(pocketId, context);
+}
+
+export function getPocketIdsWithSchedules(
+  context: DbContext = db,
+): Set<string> {
+  return repoGetPocketIdsWithSchedules(context);
 }

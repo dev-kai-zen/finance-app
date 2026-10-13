@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Platform,
   Pressable,
   SectionList,
@@ -13,9 +14,11 @@ import {
   ArrowUp,
   CalendarClock,
   Download,
+  FolderDown,
   LayoutList,
   Rows3,
   Search,
+  Share2,
   SlidersHorizontal,
   Trash2,
   X,
@@ -23,8 +26,8 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  ActionBottomSheet,
   ConfirmModal,
-  FeatureNotImplementedModal,
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
@@ -46,6 +49,11 @@ import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
 import { useTransactionViewMode } from "../hooks/use-transaction-view-mode";
+import {
+  saveTransactionsCsvToDevice,
+  shareTransactionsCsv,
+  TransactionCsvExportCancelledError,
+} from "../services/export-transactions-csv.service";
 import type { TransactionListItem } from "../types/transaction.types";
 
 interface DateGroup {
@@ -169,12 +177,8 @@ export function TransactionsScreen() {
     [transactions, pendingDeleteId],
   );
 
-  // Unintegrated feature modal
-  const [featureModalVisible, setFeatureModalVisible] = useState(false);
-  const [unintegratedFeature, setUnintegratedFeature] = useState({
-    title: "",
-    description: "",
-  });
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -381,13 +385,55 @@ export function TransactionsScreen() {
     return `Move "${label}" to Trash? This record can be restored later.`;
   }, [pendingDeleteTransaction]);
 
-  const handleExportCsv = () => {
-    setUnintegratedFeature({
-      title: "Export to CSV",
-      description:
-        "CSV export functionality is under integration and will be available in the next release.",
+  const runCsvExport = (
+    action: (rows: readonly TransactionListItem[]) => Promise<void>,
+  ) => {
+    void (async () => {
+      try {
+        setExportingCsv(true);
+        await action(filteredTransactions);
+      } catch (error) {
+        if (error instanceof TransactionCsvExportCancelledError) {
+          return;
+        }
+        Alert.alert(
+          "Export failed",
+          error instanceof Error
+            ? error.message
+            : "Unable to export transactions.",
+        );
+      } finally {
+        setExportingCsv(false);
+      }
+    })();
+  };
+
+  const handleOpenExportCsv = () => {
+    if (filteredTransactions.length === 0) {
+      Alert.alert(
+        "Nothing to export",
+        "Adjust your filters or record transactions first.",
+      );
+      return;
+    }
+
+    setExportCsvSheetOpen(true);
+  };
+
+  const handleSaveCsvToDevice = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport(async (rows) => {
+      const { fileName } = await saveTransactionsCsvToDevice(rows);
+      Alert.alert(
+        "Saved to device",
+        `${fileName} was saved to the folder you selected.`,
+      );
     });
-    setFeatureModalVisible(true);
+  };
+
+  const handleShareCsv = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport((rows) => shareTransactionsCsv(rows));
   };
 
   const toggleSortOrder = () => {
@@ -582,8 +628,13 @@ export function TransactionsScreen() {
 
           <Pressable
             accessibilityLabel="Export CSV"
-            onPress={handleExportCsv}
-            style={styles.actionButton}
+            accessibilityState={{ disabled: exportingCsv || loading }}
+            disabled={exportingCsv || loading}
+            onPress={handleOpenExportCsv}
+            style={[
+              styles.actionButton,
+              (exportingCsv || loading) && styles.actionButtonDisabled,
+            ]}
           >
             <Download color={theme.colors.success} size={18} />
           </Pressable>
@@ -703,14 +754,6 @@ export function TransactionsScreen() {
         visible={isFilterModalOpen}
       />
 
-      {/* Feature Under Integration Modal */}
-      <FeatureNotImplementedModal
-        featureDescription={unintegratedFeature.description}
-        featureTitle={unintegratedFeature.title}
-        onClose={() => setFeatureModalVisible(false)}
-        visible={featureModalVisible}
-      />
-
       <ConfirmModal
         confirmLabel="Delete"
         message={deleteConfirmMessage}
@@ -744,6 +787,28 @@ export function TransactionsScreen() {
         pending={pendingAction}
         transactions={deletedTransactions}
         visible={isTrashModalOpen}
+      />
+
+      <ActionBottomSheet
+        items={[
+          {
+            id: "save-to-device",
+            label: "Save to device",
+            description: "Choose a folder in Files or Downloads",
+            icon: <FolderDown color={theme.colors.primary} size={22} />,
+            onPress: handleSaveCsvToDevice,
+          },
+          {
+            id: "share",
+            label: "Share",
+            description: "Send to another app or cloud storage",
+            icon: <Share2 color={theme.colors.success} size={22} />,
+            onPress: handleShareCsv,
+          },
+        ]}
+        onClose={() => setExportCsvSheetOpen(false)}
+        title="Export CSV"
+        visible={exportCsvSheetOpen}
       />
     </PageContainer>
   );
@@ -856,6 +921,9 @@ function createStyles(theme: AppTheme) {
     actionButtonActive: {
       backgroundColor: theme.colors.primary,
       borderColor: theme.colors.primary,
+    },
+    actionButtonDisabled: {
+      opacity: 0.55,
     },
     filterBadge: {
       backgroundColor: theme.colors.danger,

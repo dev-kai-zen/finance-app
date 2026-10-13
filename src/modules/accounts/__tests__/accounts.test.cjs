@@ -73,7 +73,9 @@ const { lockAccountStartingBalance } = require("@/modules/accounts/services/lock
 const { saveAccountType } = require("@/modules/accounts/services/save-account-type.service");
 const { setAccountArchived } = require("@/modules/accounts/services/archive-account.service");
 const { deleteAccount } = require("@/modules/accounts/services/delete-account.service");
+const { deletePocket } = require("@/modules/accounts/services/delete-pocket.service");
 const { canDeleteAccount } = require("@/modules/accounts/services/can-delete-account.service");
+const { canDeletePocket } = require("@/modules/accounts/services/can-delete-pocket.service");
 const { deleteAccountType } = require("@/modules/accounts/services/delete-account-type.service");
 const {
   moveAccount,
@@ -447,6 +449,25 @@ test("saveAccount persists visibility flags and maintaining balance", () => {
   saveAccount({ ...accountInput(undefined, "Daily account"), maintainingAmount: "" }, id);
   assert.equal(repo.findAccountById(id).maintainingBalanceMinorUnits, null);
 });
+test("saveAccount ignores maintaining balance for liability accounts", () => {
+  const id = saveAccount({
+    ...accountInput(system.LIABILITY_OTHERS, "Card loan"),
+    maintainingAmount: "1500.00",
+  });
+  assert.equal(repo.findAccountById(id).maintainingBalanceMinorUnits, null);
+  const assetId = saveAccount({
+    ...accountInput(system.ASSET_OTHERS, "Checking"),
+    maintainingAmount: "500.00",
+  });
+  saveAccount(
+    {
+      ...accountInput(system.LIABILITY_OTHERS, "Checking"),
+      maintainingAmount: "900.00",
+    },
+    assetId,
+  );
+  assert.equal(repo.findAccountById(assetId).maintainingBalanceMinorUnits, null);
+});
 test("locked starting balance cannot be changed again", () => {
   const id = saveAccount(accountInput(undefined, "Locked account", "1000.00"));
   lockAccountStartingBalance(id);
@@ -526,12 +547,23 @@ test("credit card details are required, validated, and removed when the type cha
     () => saveAccount({
       ...accountInput(system.LIABILITY_CREDIT_CARD),
       creditCardDetails: {
+        creditLimit: "",
+        statementDay: "15",
+        paymentDueDay: "5",
+      },
+    }),
+    /credit limit is required/i,
+  );
+  assert.throws(
+    () => saveAccount({
+      ...accountInput(system.LIABILITY_CREDIT_CARD),
+      creditCardDetails: {
         creditLimit: "-1",
         statementDay: "0",
         paymentDueDay: "32",
       },
     }),
-    /number|day/i,
+    /credit limit|day/i,
   );
 
   const id = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD));
@@ -803,5 +835,75 @@ test("account currency can be changed through save when there is no transaction 
     accountId,
   );
   assert.equal(repo.findAccountById(accountId).currencyCode, "USD");
+});
+
+test("permanent pocket delete is allowed for unused archived pockets", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Pocket Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Spare", targetAmount: "" });
+  setPocketArchived(pocketId, true);
+
+  const item = getPocketsWithBalances().find((pocket) => pocket.id === pocketId);
+  assert.equal(item?.isDeletable, true);
+  assert.equal(canDeletePocket(pocketId), true);
+
+  deletePocket(pocketId);
+  assert.equal(pocketsRepo.findPocketById(pocketId), null);
+});
+
+test("permanent pocket delete is blocked when the pocket has transaction history", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Used Pocket Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Used", targetAmount: "" });
+  pocketTransfer(accountId, null, pocketId, 5000);
+  pocketTransfer(accountId, pocketId, null, 5000);
+  setPocketArchived(pocketId, true);
+
+  assert.equal(canDeletePocket(pocketId), false);
+  const item = getPocketsWithBalances().find((pocket) => pocket.id === pocketId);
+  assert.equal(item?.isDeletable, false);
+  assert.throws(
+    () => deletePocket(pocketId),
+    /Cannot permanently delete a pocket that has transaction history/,
+  );
+});
+
+test("pocket restore is blocked while the parent account is archived", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "Archived Parent", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Nested", targetAmount: "" });
+  setPocketArchived(pocketId, true);
+  setAccountArchived(accountId, true);
+
+  assert.throws(
+    () => setPocketArchived(pocketId, false),
+    /Restore "Archived Parent" before restoring this pocket/,
+  );
+});
+
+test("pocket restore is blocked when pockets are disabled on the parent account", () => {
+  const accountId = saveAccount({
+    ...accountInput(undefined, "No Pockets Account", "100.00"),
+    pocketEnabled: true,
+  });
+  const pocketId = savePocket({ accountId, name: "Legacy", targetAmount: "" });
+  pocketTransfer(accountId, null, pocketId, 5000);
+  pocketTransfer(accountId, pocketId, null, 5000);
+  setPocketArchived(pocketId, true);
+  saveAccount(
+    { ...accountInput(undefined, "No Pockets Account", "100.00"), pocketEnabled: false },
+    accountId,
+  );
+
+  assert.throws(
+    () => setPocketArchived(pocketId, false),
+    /Pockets aren't enabled for "No Pockets Account"/,
+  );
 });
 

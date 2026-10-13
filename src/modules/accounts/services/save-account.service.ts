@@ -101,9 +101,12 @@ export function saveAccount(input: AccountInput, id?: string): string {
       openingBalanceMinorUnits = existing.openingBalanceMinorUnits;
       openingBalanceAt = existing.openingBalanceAt;
     }
-    const maintainingBalanceMinorUnits = value.maintainingAmount?.trim()
-      ? parseMaintainingAmount(value.maintainingAmount, currencyCode)
-      : null;
+    const maintainingBalanceMinorUnits =
+      type.accountGroup === "liability"
+        ? null
+        : value.maintainingAmount?.trim()
+          ? parseMaintainingAmount(value.maintainingAmount, currencyCode)
+          : null;
     const now = new Date();
     const sortOrder = existing && existing.accountTypeId === type.id ? existing.sortOrder
       : Math.max(-1, ...findAccountsByAccountTypeId(type.id, tx).map((a) => a.sortOrder)) + 1;

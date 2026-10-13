@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
@@ -28,7 +28,11 @@ import {
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
 import { useFundGroups } from "@/modules/accounts/hooks/use-fund-groups";
-import type { AccountListItem, AccountType } from "@/modules/accounts/types/account.types";
+import type {
+  AccountListItem,
+  AccountType,
+  PocketListItem,
+} from "@/modules/accounts/types/account.types";
 
 type Overlay =
   | { kind: "create" }
@@ -55,6 +59,9 @@ export function AccountsScreen({
   });
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
+  const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
+    string | null
+  >(null);
   const [fundGroupsModalOpen, setFundGroupsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
@@ -108,6 +115,12 @@ export function AccountsScreen({
       : undefined;
   const active = data.accounts.filter((a) => !a.isArchived);
   const archived = data.accounts.filter((a) => a.isArchived);
+  const archivedPockets = data.pockets.filter((pocket) => pocket.isArchived);
+  const accountById = useMemo(
+    () => new Map(data.accounts.map((account) => [account.id, account])),
+    [data.accounts],
+  );
+  const archivedCount = archived.length + archivedPockets.length;
   const normalizedSearchQuery = searchQuery.trim().toLocaleLowerCase();
   const filteredActive = normalizedSearchQuery
     ? active.filter((account) =>
@@ -131,6 +144,10 @@ export function AccountsScreen({
   const handleSelectArchivedAccount = (account: AccountListItem) => {
     setArchivedModalOpen(false);
     open({ kind: "edit", id: account.id });
+  };
+  const handleSelectArchivedPocket = (pocket: PocketListItem) => {
+    setArchivedModalOpen(false);
+    open({ kind: "pocket-form", accountId: pocket.accountId, pocketId: pocket.id });
   };
   const handleEditType = (type: AccountType) =>
     open({ kind: "edit-type", type });
@@ -174,7 +191,7 @@ export function AccountsScreen({
         <>
           <View style={managementActions}>
             <ArchivedAccountsChip
-              count={archived.length}
+              count={archivedCount}
               onPress={() => setArchivedModalOpen(true)}
             />
             <FundGroupsChip
@@ -339,13 +356,31 @@ export function AccountsScreen({
       />
 
       <ArchivedAccountsModal
+        accountById={accountById}
         accounts={archived}
+        pockets={archivedPockets}
         pending={mutations.pending}
+        restorePocketError={archivedRestorePocketError}
         visible={archivedModalOpen}
-        onClose={() => setArchivedModalOpen(false)}
-        onRestore={(accountId) => mutations.archiveAccount(accountId, false)}
-        onPermanentDelete={mutations.deleteAccount}
-        onSelect={handleSelectArchivedAccount}
+        onClose={() => {
+          setArchivedModalOpen(false);
+          setArchivedRestorePocketError(null);
+        }}
+        onDismissRestorePocketError={() => setArchivedRestorePocketError(null)}
+        onPermanentDeleteAccount={mutations.deleteAccount}
+        onPermanentDeletePocket={mutations.deletePocket}
+        onRestoreAccount={(accountId) => mutations.archiveAccount(accountId, false)}
+        onRestorePocket={async (pocketId) => {
+          setArchivedRestorePocketError(null);
+          mutations.clearError();
+          const restored = await mutations.archivePocket(pocketId, false);
+          if (!restored && mutations.error) {
+            setArchivedRestorePocketError(mutations.error);
+          }
+          return restored;
+        }}
+        onSelectAccount={handleSelectArchivedAccount}
+        onSelectPocket={handleSelectArchivedPocket}
       />
 
       <FundGroupsModal

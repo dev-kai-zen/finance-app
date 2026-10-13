@@ -462,5 +462,87 @@ test("credit cards: dedicated computation functions calculate billed, unbilled, 
   assert.equal(utilization, 40.497);
 });
 
+test("credit cards: billed installments are detected via statement entries", () => {
+  const { db, now } = setupTestDb();
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, is_system, created_at, updated_at)
+    VALUES ('cat_edit', 'Shopping', 'expense', 'bag', 0, ?, ?)
+  `).run(now, now);
+  db.prepare(`
+    INSERT INTO transactions (
+      id, account_id, category_id, type, amount_minor_units, name,
+      occurred_at, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "tx_edit",
+    "card_1",
+    "cat_edit",
+    "expense",
+    -600000,
+    "Chair",
+    now,
+    now,
+    now,
+  );
+  db.prepare(`
+    INSERT INTO credit_card_installment_plans (
+      id, account_id, purchase_transaction_id, term_months,
+      principal_minor_units, first_statement_on, deferred_months, status,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    "plan_edit",
+    "card_1",
+    "tx_edit",
+    6,
+    600000,
+    "2026-10-18",
+    0,
+    "active",
+    now,
+    now,
+  );
+  db.prepare(`
+    INSERT INTO credit_card_installments (
+      id, plan_id, installment_number, scheduled_statement_on,
+      principal_minor_units, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `).run("inst_edit_1", "plan_edit", 1, "2026-10-18", 100000, now);
+  db.prepare(`
+    INSERT INTO credit_card_installments (
+      id, plan_id, installment_number, scheduled_statement_on,
+      principal_minor_units, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `).run("inst_edit_2", "plan_edit", 2, "2026-11-18", 100000, now);
+  db.prepare(`
+    INSERT INTO credit_card_statements (
+      id, account_id, kind, cycle_start_on, cycle_end_on, statement_on,
+      due_on, issued_amount_minor_units, created_at, updated_at
+    ) VALUES (
+      'stmt_edit', 'card_1', 'billing_cycle', '2026-09-19', '2026-10-18',
+      '2026-10-18', '2026-11-08', 100000, ?, ?
+    )
+  `).run(now, now);
+  db.prepare(`
+    INSERT INTO credit_card_statement_entries (
+      id, statement_id, transaction_id, installment_id, entry_type,
+      amount_minor_units, description_snapshot, occurred_on_snapshot, created_at
+    ) VALUES (
+      'entry_edit_1', 'stmt_edit', 'tx_edit', 'inst_edit_1', 'installment',
+      100000, 'Chair — 1 of 6', '2026-10-18', ?
+    )
+  `).run(now);
+
+  const billedCount = db
+    .prepare(`
+      SELECT COUNT(*) AS count
+      FROM credit_card_installments i
+      INNER JOIN credit_card_statement_entries e ON e.installment_id = i.id
+      WHERE i.plan_id = ?
+    `)
+    .get("plan_edit").count;
+  assert.equal(billedCount, 1);
+});
+
 
 

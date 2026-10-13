@@ -10,6 +10,7 @@
     "babel-preset-expo": "~57.0.0",
     "drizzle-orm": "^0.45.2",
     "expo": "~57.0.25",
+    "expo-application": "~57.0.3",
     "expo-constants": "~57.0.18",
     "expo-crypto": "~57.0.3",
     "expo-document-picker": "~57.0.3",
@@ -58,7 +59,8 @@
     "android:aab:release": "set \"NODE_ENV=production\" && cd android && gradlew.bat bundleRelease",
     "db:generate": "drizzle-kit generate",
     "test": "node --test src/**/*.test.cjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "icons:generate": "node scripts/generate-lucide-icon-catalog.cjs"
   },
   "private": true
 }

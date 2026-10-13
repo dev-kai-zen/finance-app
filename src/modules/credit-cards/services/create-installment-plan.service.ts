@@ -11,6 +11,7 @@ import {
   addBillingMonths,
   statementDateForTransaction,
 } from "../utils/billing-dates";
+import { buildInstallmentScheduleRows } from "../utils/build-installment-schedule";
 
 export function createCreditCardInstallmentPlan(
   transaction: Transaction,
@@ -61,26 +62,15 @@ export function createCreditCardInstallmentPlan(
     context,
   );
 
-  const baseAmount = Math.floor(principal / input.termMonths);
-  let remainder = principal % input.termMonths;
   insertInstallments(
-    Array.from({ length: input.termMonths }, (_, index) => {
-      const extra = remainder > 0 ? 1 : 0;
-      remainder -= extra;
-      return {
-        id: newCreditCardBillingId(context),
-        planId,
-        installmentNumber: index + 1,
-        scheduledStatementOn: addBillingMonths(
-          firstStatementOn,
-          index,
-          details.statementDay,
-        ),
-        principalMinorUnits: baseAmount + extra,
-        interestMinorUnits: 0,
-        feeMinorUnits: 0,
-        createdAt: now,
-      };
+    buildInstallmentScheduleRows({
+      planId,
+      termMonths: input.termMonths,
+      principalMinorUnits: principal,
+      firstStatementOn,
+      statementDay: details.statementDay,
+      createdAt: now,
+      newInstallmentId: () => newCreditCardBillingId(context),
     }),
     context,
   );

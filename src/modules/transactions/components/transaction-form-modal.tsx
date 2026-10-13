@@ -30,7 +30,10 @@ import {
   CategoryPickerModal,
   type Category,
 } from "@/modules/categories";
-import { previewInstallmentPlan } from "@/modules/credit-cards";
+import {
+  previewInstallmentPlan,
+  useInstallmentPlanEditState,
+} from "@/modules/credit-cards";
 import { useDefaultAccounts } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
@@ -76,6 +79,11 @@ import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
 import { LabelPickerModal, useLabels } from "@/modules/labels";
+import {
+  createEmptySplitLine,
+  TransactionSplitEditor,
+  type SplitLineState,
+} from "./transaction-split-editor";
 
 function formatDateString(value: string | null): string {
   if (!value) return "None";
@@ -86,6 +94,36 @@ function formatDateString(value: string | null): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+const INSTALLMENT_TERM_PRESETS = ["3", "6", "12", "24"] as const;
+
+function termMonthsToFormState(termMonths: number): {
+  option: "3" | "6" | "12" | "24" | "custom";
+  custom: string;
+} {
+  const preset = String(termMonths);
+  if ((INSTALLMENT_TERM_PRESETS as readonly string[]).includes(preset)) {
+    return {
+      option: preset as "3" | "6" | "12" | "24",
+      custom: "12",
+    };
+  }
+  return { option: "custom", custom: String(termMonths) };
+}
+
+function deferredMonthsToFormState(deferredMonths: number): {
+  option: "0" | "1" | "2" | "3" | "6" | "custom";
+  custom: string;
+} {
+  const preset = String(deferredMonths);
+  if (["0", "1", "2", "3", "6"].includes(preset)) {
+    return {
+      option: preset as "0" | "1" | "2" | "3" | "6",
+      custom: "3",
+    };
+  }
+  return { option: "custom", custom: String(deferredMonths) };
 }
 
 export interface TransactionFormModalProps {
@@ -282,6 +320,14 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [splitCategoryPickerLineKey, setSplitCategoryPickerLineKey] = useState<
+    string | null
+  >(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitLines, setSplitLines] = useState<SplitLineState[]>(() => [
+    createEmptySplitLine("split-1"),
+    createEmptySplitLine("split-2"),
+  ]);
   const [isLabelPickerOpen, setIsLabelPickerOpen] = useState(false);
   const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
   const [isAttachmentManagerOpen, setIsAttachmentManagerOpen] = useState(false);
@@ -296,6 +342,10 @@ export function TransactionFormModal({
     isEditing,
     transactionId: initialTransaction?.id,
   });
+  const installmentEditState = useInstallmentPlanEditState(
+    initialTransaction?.id,
+    visible && isEditing,
+  );
 
   const defaultFeeCategory = useMemo(() => {
     const allExpenseCategories = [];
@@ -370,6 +420,33 @@ export function TransactionFormModal({
         );
         setTransferToPocketId(initialTransaction.transferPocketId);
         setSelectedCategoryId(initialTransaction.categoryId || "");
+        if (
+          initialTransaction.isSplit &&
+          initialTransaction.splitEntries &&
+          initialTransaction.splitEntries.length >= 2
+        ) {
+          setSplitEnabled(true);
+          setSplitLines(
+            initialTransaction.splitEntries.map((entry, index) => ({
+              key: entry.id || `split-${index}`,
+              categoryId: entry.categoryId,
+              amountMinorUnits: entry.amountMinorUnits,
+              note: entry.note ?? null,
+            })),
+          );
+        } else {
+          setSplitEnabled(false);
+          setSplitLines([
+            {
+              key: "split-1",
+              categoryId: initialTransaction.categoryId || "",
+              amountMinorUnits: Math.abs(initialTransaction.amountMinorUnits),
+              note: null,
+            },
+            createEmptySplitLine("split-2"),
+          ]);
+        }
+        setSplitCategoryPickerLineKey(null);
         setOccurredAt(
           initialTransaction.occurredAt
             ? new Date(initialTransaction.occurredAt)
@@ -430,6 +507,12 @@ export function TransactionFormModal({
 
         const defaultCategory = categories.find((c) => c.type === "expense");
         setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
+        setSplitEnabled(false);
+        setSplitLines([
+          createEmptySplitLine("split-1"),
+          createEmptySplitLine("split-2"),
+        ]);
+        setSplitCategoryPickerLineKey(null);
 
         setAmountMinorUnits(0);
         setAccountAmountMinorUnits(0);
@@ -471,6 +554,24 @@ export function TransactionFormModal({
     pockets,
     effectiveDefaultExpenseAccountId,
     effectiveDefaultExpensePocketId,
+  ]);
+
+  useEffect(() => {
+    if (!visible || !isEditing || !installmentEditState.plan) return;
+    const plan = installmentEditState.plan;
+    const term = termMonthsToFormState(plan.termMonths);
+    setInstallmentEnabled(true);
+    setInstallmentTermOption(term.option);
+    setCustomTermMonths(term.custom);
+    const deferral = deferredMonthsToFormState(plan.deferredMonths);
+    setInstallmentDeferral(deferral.option);
+    setCustomDeferralMonths(deferral.custom);
+  }, [
+    visible,
+    isEditing,
+    installmentEditState.plan?.id,
+    installmentEditState.plan?.termMonths,
+    installmentEditState.plan?.deferredMonths,
   ]);
 
   // When mode changes, switch default category, sign, and default account
@@ -527,6 +628,18 @@ export function TransactionFormModal({
   };
 
   const filteredCategories = categories.filter((c) => c.type === mode);
+  const flatCategoriesForSplit = useMemo(() => {
+    const list: Category[] = [];
+    for (const cat of categories) {
+      if (cat.type === mode) list.push(cat);
+      if (cat.subcategories) {
+        for (const sub of cat.subcategories) {
+          if (sub.type === mode) list.push(sub);
+        }
+      }
+    }
+    return list;
+  }, [categories, mode]);
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const transferToAccount = accounts.find((a) => a.id === transferToAccountId);
@@ -669,6 +782,16 @@ export function TransactionFormModal({
     accountCurrencyCode,
   ]);
 
+  const canUseSplit =
+    mode !== "transfer" && !installmentEnabled && !isCrossCurrencyEntry;
+  const splitTotalMinorUnits = postedExpenseMinorUnitsAbs;
+
+  useEffect(() => {
+    if (!canUseSplit && splitEnabled) {
+      setSplitEnabled(false);
+    }
+  }, [canUseSplit, splitEnabled]);
+
   useEffect(() => {
     if (!isCrossCurrencyEntry) {
       return;
@@ -699,11 +822,28 @@ export function TransactionFormModal({
     entryCurrency,
     accountCurrencyCode,
   ]);
-  const canUseInstallments =
+  const isCreditCardExpense =
     mode === "expense" &&
     amountSign === "-" &&
-    Boolean(selectedAccount?.creditCardDetails) &&
-    !isEditing;
+    Boolean(selectedAccount?.creditCardDetails);
+
+  const installmentFieldsLocked =
+    isEditing &&
+    Boolean(installmentEditState.plan) &&
+    !installmentEditState.canModifyInstallmentPlan;
+
+  const canConfigureInstallments =
+    isCreditCardExpense &&
+    (!isEditing ||
+      (installmentEditState.canModifyInstallmentPlan &&
+        !installmentEditState.hasChargeStatementEntry));
+
+  const showInstallmentSection =
+    isCreditCardExpense &&
+    (!isEditing ||
+      Boolean(installmentEditState.plan) ||
+      (installmentEditState.canModifyInstallmentPlan &&
+        !installmentEditState.hasChargeStatementEntry));
 
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
@@ -723,7 +863,7 @@ export function TransactionFormModal({
 
   const installmentPreview = useMemo(() => {
     if (
-      !canUseInstallments ||
+      !canConfigureInstallments ||
       !installmentEnabled ||
       !selectedAccount?.creditCardDetails
     ) {
@@ -747,7 +887,7 @@ export function TransactionFormModal({
       deferredMonths: resolvedDeferredMonths,
     });
   }, [
-    canUseInstallments,
+    canConfigureInstallments,
     installmentEnabled,
     selectedAccount?.creditCardDetails,
     resolvedTermMonths,
@@ -769,6 +909,14 @@ export function TransactionFormModal({
       ) ?? null
     );
   }, [appliedPresetId, name, presets]);
+
+  const canSaveAsQuickPreset = Boolean(name.trim()) && !pending;
+
+  useEffect(() => {
+    if (!name.trim()) {
+      setSaveAsQuickPreset(false);
+    }
+  }, [name]);
 
   const selectedCategory = useMemo(() => {
     for (const cat of categories) {
@@ -993,15 +1141,34 @@ export function TransactionFormModal({
         onClose();
       }
     } else {
-      if (!selectedCategoryId) {
+      const activeSplit = splitEnabled && canUseSplit;
+      if (!activeSplit && !selectedCategoryId) {
         setLocalError("Please select a category.");
         return;
+      }
+      if (activeSplit) {
+        if (splitLines.length < 2) {
+          setLocalError("Add at least two split lines.");
+          return;
+        }
+        if (splitLines.some((line) => !line.categoryId)) {
+          setLocalError("Each split line needs a category.");
+          return;
+        }
+        const assigned = splitLines.reduce(
+          (sum, line) => sum + line.amountMinorUnits,
+          0,
+        );
+        if (assigned !== splitTotalMinorUnits) {
+          setLocalError("Split line amounts must add up to the transaction total.");
+          return;
+        }
       }
 
       const signedAmount =
         amountSign === "-" ? -Math.abs(amountMinorUnits) : Math.abs(amountMinorUnits);
 
-      if (canUseInstallments && installmentEnabled) {
+      if (canConfigureInstallments && installmentEnabled) {
         if (
           !Number.isInteger(resolvedTermMonths) ||
           resolvedTermMonths < 2 ||
@@ -1026,34 +1193,53 @@ export function TransactionFormModal({
       if (
         !bypassBudgetCheck &&
         mode === "expense" &&
-        selectedCategoryId &&
         amountMinorUnits > 0
       ) {
-        const budgetCheck = checkBudgetExceeded({
-          categoryId: selectedCategoryId,
-          amountMinorUnits: postedExpenseMinorUnitsAbs,
-          expenseCurrencyCode: accountCurrencyCode,
-          occurredAt: transactionOccurredAt,
-          excludeTransactionId:
-            isEditing && initialTransaction ? initialTransaction.id : null,
-        });
-
-        if (
-          budgetCheck.hasBudget &&
-          budgetCheck.isEnabled &&
-          budgetCheck.exceeds &&
-          budgetCheck.notifyOnExceeded
-        ) {
-          setPendingBudgetWarning(budgetCheck);
-          setIsBudgetWarningOpen(true);
-          return;
+        const budgetLines = activeSplit
+          ? splitLines
+          : selectedCategoryId
+            ? [
+                {
+                  categoryId: selectedCategoryId,
+                  amountMinorUnits: postedExpenseMinorUnitsAbs,
+                },
+              ]
+            : [];
+        for (const line of budgetLines) {
+          const budgetCheck = checkBudgetExceeded({
+            categoryId: line.categoryId,
+            amountMinorUnits: line.amountMinorUnits,
+            expenseCurrencyCode: accountCurrencyCode,
+            occurredAt: transactionOccurredAt,
+            excludeTransactionId:
+              isEditing && initialTransaction ? initialTransaction.id : null,
+          });
+          if (
+            budgetCheck.hasBudget &&
+            budgetCheck.isEnabled &&
+            budgetCheck.exceeds &&
+            budgetCheck.notifyOnExceeded
+          ) {
+            setPendingBudgetWarning(budgetCheck);
+            setIsBudgetWarningOpen(true);
+            return;
+          }
         }
       }
 
       setLocalError(null);
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
-        categoryId: selectedCategoryId,
+        categoryId: activeSplit ? null : selectedCategoryId,
+        splitEntries: activeSplit
+          ? splitLines.map(({ categoryId, amountMinorUnits: lineAmount, note }) => ({
+              categoryId,
+              amountMinorUnits: lineAmount,
+              note,
+            }))
+          : isEditing
+            ? []
+            : undefined,
         pocketId: selectedPocketId,
         type: mode,
         amountMinorUnits: Math.abs(amountMinorUnits),
@@ -1070,13 +1256,16 @@ export function TransactionFormModal({
         name: name.trim() || null,
         note: note.trim() || null,
         occurredAt: transactionOccurredAt,
-        installment:
-          canUseInstallments && installmentEnabled
+        installment: installmentFieldsLocked
+          ? undefined
+          : canConfigureInstallments && installmentEnabled
             ? {
                 termMonths: resolvedTermMonths,
                 deferredMonths: resolvedDeferredMonths,
               }
-            : null,
+            : canConfigureInstallments
+              ? null
+              : undefined,
         labelIds: selectedLabelIds.filter((id) => labels.some((lbl) => lbl.id === id)),
       };
       const success =
@@ -1265,7 +1454,7 @@ export function TransactionFormModal({
               </Pressable>
             </View>
 
-            <View style={styles.inputGroup}>
+            <View style={[styles.inputGroup, styles.amountExchangeStack]}>
               <AmountCalculatorField
                 amountMinorUnits={amountMinorUnits}
                 amountSign={mode === "transfer" ? "transfer" : amountSign}
@@ -1647,7 +1836,40 @@ export function TransactionFormModal({
               </>
             ) : (
               /* If Expense / Income: Category Selector */
-              <View style={styles.inputGroup}>
+              <View style={[styles.inputGroup, styles.splitCategoryGroup]}>
+                {canUseSplit ? (
+                  <TransactionSplitEditor
+                    categories={flatCategoriesForSplit}
+                    currencyCode={accountCurrencyCode}
+                    disabled={pending}
+                    enabled={splitEnabled}
+                    lines={splitLines}
+                    onEnabledChange={(value) => {
+                      if (value) {
+                        setSplitLines([
+                          {
+                            key: "split-1",
+                            categoryId: selectedCategoryId,
+                            amountMinorUnits: splitTotalMinorUnits,
+                            note: null,
+                          },
+                          createEmptySplitLine("split-2"),
+                        ]);
+                      } else if (splitLines[0]?.categoryId) {
+                        setSelectedCategoryId(splitLines[0].categoryId);
+                      }
+                      setSplitEnabled(value);
+                    }}
+                    onLinesChange={setSplitLines}
+                    onPickCategory={(lineKey) => {
+                      setSplitCategoryPickerLineKey(lineKey);
+                      setIsCategoryPickerOpen(true);
+                    }}
+                    totalMinorUnits={splitTotalMinorUnits}
+                  />
+                ) : null}
+                {!splitEnabled ? (
+                <>
                 <Pressable
                   accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
                   accessibilityRole="button"
@@ -1708,21 +1930,25 @@ export function TransactionFormModal({
                     occurredAt={occurredAt}
                   />
                 ) : null}
+                </>
+                ) : null}
               </View>
             )}
 
-            {canUseInstallments ? (
+            {showInstallmentSection ? (
               <View style={styles.installmentPanel}>
                 <View style={styles.installmentHeader}>
                   <View style={styles.installmentHeaderText}>
                     <Text style={styles.installmentTitle}>Installment purchase</Text>
                     <Text style={styles.installmentDescription}>
-                      The full purchase uses your credit limit now; one portion is
-                      billed per statement.
+                      {installmentFieldsLocked
+                        ? `${installmentEditState.billedInstallmentCount} installment payment${installmentEditState.billedInstallmentCount === 1 ? "" : "s"} already on a statement. Terms cannot be changed.`
+                        : "The full purchase uses your credit limit now; one portion is billed per statement."}
                     </Text>
                   </View>
                   <Switch
                     accessibilityLabel="Installment purchase"
+                    disabled={installmentFieldsLocked || !canConfigureInstallments}
                     onValueChange={setInstallmentEnabled}
                     trackColor={{
                       false: theme.colors.borderStrong,
@@ -1747,6 +1973,7 @@ export function TransactionFormModal({
                           return (
                             <Pressable
                               key={opt.value}
+                              disabled={installmentFieldsLocked}
                               onPress={() =>
                                 setInstallmentTermOption(
                                   opt.value as
@@ -1760,12 +1987,14 @@ export function TransactionFormModal({
                               style={[
                                 styles.deferralChip,
                                 isSelected && styles.deferralChipActive,
+                                installmentFieldsLocked && styles.deferralChipDisabled,
                               ]}
                             >
                               <Text
                                 style={[
                                   styles.deferralChipText,
                                   isSelected && styles.deferralChipTextActive,
+                                  installmentFieldsLocked && styles.deferralChipTextDisabled,
                                 ]}
                               >
                                 {opt.label}
@@ -1781,6 +2010,7 @@ export function TransactionFormModal({
                           </Text>
                           <TextInput
                             accessibilityLabel="Custom installment term in months"
+                            editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={3}
                             onChangeText={(value) =>
@@ -1820,6 +2050,7 @@ export function TransactionFormModal({
                           return (
                             <Pressable
                               key={opt.value}
+                              disabled={installmentFieldsLocked}
                               onPress={() =>
                                 setInstallmentDeferral(
                                   opt.value as
@@ -1834,12 +2065,14 @@ export function TransactionFormModal({
                               style={[
                                 styles.deferralChip,
                                 isSelected && styles.deferralChipActive,
+                                installmentFieldsLocked && styles.deferralChipDisabled,
                               ]}
                             >
                               <Text
                                 style={[
                                   styles.deferralChipText,
                                   isSelected && styles.deferralChipTextActive,
+                                  installmentFieldsLocked && styles.deferralChipTextDisabled,
                                 ]}
                               >
                                 {opt.label}
@@ -1855,6 +2088,7 @@ export function TransactionFormModal({
                           </Text>
                           <TextInput
                             accessibilityLabel="Custom months deferred"
+                            editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={2}
                             onChangeText={(value) =>
@@ -2010,17 +2244,26 @@ export function TransactionFormModal({
             </View>
 
             {!isEditing && !appliedPresetId ? (
-              <View style={styles.quickPresetSavePanel}>
+              <View
+                pointerEvents={canSaveAsQuickPreset ? "auto" : "none"}
+                style={[
+                  styles.quickPresetSavePanel,
+                  !canSaveAsQuickPreset && styles.quickPresetSavePanelDisabled,
+                ]}
+              >
                 <Host matchContents style={styles.quickPresetCheckbox}>
                   <Checkbox
-                    disabled={pending || !name.trim()}
+                    disabled={!canSaveAsQuickPreset}
                     label={
                       matchingPreset
                         ? "Update matching Quick Preset"
                         : "Save as a Quick Preset"
                     }
-                    onValueChange={setSaveAsQuickPreset}
-                    value={saveAsQuickPreset}
+                    onValueChange={(value) => {
+                      if (!canSaveAsQuickPreset) return;
+                      setSaveAsQuickPreset(value);
+                    }}
+                    value={saveAsQuickPreset && canSaveAsQuickPreset}
                   />
                 </Host>
                 <Text style={styles.quickPresetHelp}>
@@ -2028,9 +2271,9 @@ export function TransactionFormModal({
                     ? `Reuse this name by updating “${matchingPreset.transactionName}” with the current details.`
                     : name.trim()
                       ? "Reuse these details when you type this transaction name."
-                      : "Enter a transaction name to enable Quick Presets."}
+                      : "Enter a transaction name above to save as a Quick Preset."}
                 </Text>
-                {saveAsQuickPreset ? (
+                {saveAsQuickPreset && canSaveAsQuickPreset ? (
                   <Host matchContents style={styles.quickPresetCheckbox}>
                     <Checkbox
                       disabled={pending}
@@ -2186,9 +2429,31 @@ export function TransactionFormModal({
 
       <CategoryPickerModal
         categories={categories}
-        onClose={() => setIsCategoryPickerOpen(false)}
-        onSelectCategory={(cat) => setSelectedCategoryId(cat.id)}
-        selectedCategoryId={selectedCategoryId}
+        onClose={() => {
+          setIsCategoryPickerOpen(false);
+          setSplitCategoryPickerLineKey(null);
+        }}
+        onSelectCategory={(cat) => {
+          if (splitCategoryPickerLineKey) {
+            setSplitLines((lines) =>
+              lines.map((line) =>
+                line.key === splitCategoryPickerLineKey
+                  ? { ...line, categoryId: cat.id }
+                  : line,
+              ),
+            );
+            setSplitCategoryPickerLineKey(null);
+          } else {
+            setSelectedCategoryId(cat.id);
+          }
+          setIsCategoryPickerOpen(false);
+        }}
+        selectedCategoryId={
+          splitCategoryPickerLineKey
+            ? splitLines.find((line) => line.key === splitCategoryPickerLineKey)
+                ?.categoryId ?? ""
+            : selectedCategoryId
+        }
         title={mode === "income" ? "Select Income Category" : "Select Expense Category"}
         type={mode === "income" ? "income" : "expense"}
         visible={isCategoryPickerOpen}
@@ -2391,12 +2656,17 @@ function createStyles(theme: AppTheme) {
     inputGroup: {
       marginBottom: 16,
     },
+    splitCategoryGroup: {
+      gap: theme.spacing.sm,
+    },
+    amountExchangeStack: {
+      gap: theme.spacing.sm,
+    },
     crossCurrencyFields: {
       alignItems: "center",
       flexDirection: "row",
       flexWrap: "wrap",
       gap: theme.spacing.xs,
-      marginTop: theme.spacing.sm,
     },
     rateInput: {
       backgroundColor: theme.colors.surfaceMuted,
@@ -2590,6 +2860,12 @@ function createStyles(theme: AppTheme) {
     deferralChipTextActive: {
       color: theme.colors.primary,
       fontWeight: "700",
+    },
+    deferralChipDisabled: {
+      opacity: 0.55,
+    },
+    deferralChipTextDisabled: {
+      color: theme.colors.textMuted,
     },
     customDeferralRow: {
       alignItems: "center",
@@ -2883,6 +3159,9 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.xs,
       marginBottom: theme.spacing.md,
       padding: theme.spacing.md,
+    },
+    quickPresetSavePanelDisabled: {
+      opacity: 0.55,
     },
     quickPresetCheckbox: { alignSelf: "flex-start" },
     quickPresetHelp: {
