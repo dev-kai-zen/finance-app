@@ -7,6 +7,7 @@ import {
 import {
   findScheduleOccurrence,
   findScheduleOccurrenceById,
+  findScheduleOccurrenceByNominalDueAt,
   findScheduledTransaction,
   insertScheduleOccurrence,
   insertSchedulePosting,
@@ -16,22 +17,14 @@ import {
 } from "../repositories/scheduled-transactions.repository";
 import type {
   CalculatedScheduleOccurrence,
+  ScheduleOccurrence,
   ScheduledTransaction,
-  ScheduledTransactionType,
 } from "../types/scheduled-transaction.types";
 import { calculateScheduleOccurrence } from "../utils/recurrence";
-
-interface ScheduledTemplateSnapshot {
-  transactionType: ScheduledTransactionType;
-  accountId: string;
-  pocketId: string | null;
-  categoryId: string | null;
-  toAccountId: string | null;
-  toPocketId: string | null;
-  amountMinorUnits: number;
-  name: string | null;
-  note: string | null;
-}
+import {
+  type ScheduledTemplateSnapshot,
+  serializeScheduleTemplateSnapshot,
+} from "../utils/schedule-template-snapshot";
 
 function parseTemplateSnapshot(raw: string): ScheduledTemplateSnapshot {
   const parsed = JSON.parse(raw) as ScheduledTemplateSnapshot & {
@@ -116,18 +109,14 @@ function processNextOccurrence(
     throw new Error("The next occurrence is not due yet.");
   }
 
-  const existing = findScheduleOccurrence(
+  const existing = resolveRecordedOccurrence(
     schedule.id,
-    occurrence.sequenceNumber,
+    occurrence,
     context,
   );
   if (existing) {
     advanceSchedule(schedule, occurrence.sequenceNumber + 1, now, context);
-    return existing.status === "posted"
-      ? "posted"
-      : existing.status === "due"
-        ? "due"
-        : "skipped";
+    return recordedOccurrenceProcessingStatus(existing);
   }
 
   const created = insertScheduleOccurrence(
@@ -136,7 +125,7 @@ function processNextOccurrence(
       sequenceNumber: occurrence.sequenceNumber,
       nominalDueAt: occurrence.nominalAt,
       effectiveDueAt: occurrence.effectiveAt,
-      templateSnapshot: JSON.stringify(snapshotSchedule(schedule)),
+      templateSnapshot: serializeScheduleTemplateSnapshot(schedule),
       status: occurrence.skippedForWeekend
         ? "skipped"
         : schedule.autoPost
@@ -183,9 +172,9 @@ function recordFailedOccurrence(
     );
     if (!calculated) return;
 
-    const existing = findScheduleOccurrence(
+    const existing = resolveRecordedOccurrence(
       schedule.id,
-      calculated.sequenceNumber,
+      calculated,
       tx,
     );
     if (!existing) {
@@ -195,7 +184,7 @@ function recordFailedOccurrence(
           sequenceNumber: calculated.sequenceNumber,
           nominalDueAt: calculated.nominalAt,
           effectiveDueAt: calculated.effectiveAt,
-          templateSnapshot: JSON.stringify(snapshotSchedule(schedule)),
+          templateSnapshot: serializeScheduleTemplateSnapshot(schedule),
           status: "failed",
           processedAt: now,
           errorMessage:
@@ -316,20 +305,33 @@ function postSnapshot(
   insertSchedulePosting(occurrenceId, result.id, now, context);
 }
 
-function snapshotSchedule(
-  schedule: ScheduledTransaction,
-): ScheduledTemplateSnapshot {
-  return {
-    transactionType: schedule.transactionType,
-    accountId: schedule.accountId,
-    pocketId: schedule.pocketId,
-    categoryId: schedule.categoryId,
-    toAccountId: schedule.toAccountId,
-    toPocketId: schedule.toPocketId,
-    amountMinorUnits: schedule.amountMinorUnits,
-    name: schedule.name,
-    note: schedule.note,
-  };
+function resolveRecordedOccurrence(
+  scheduleId: string,
+  occurrence: Pick<CalculatedScheduleOccurrence, "sequenceNumber" | "nominalAt">,
+  context: DbContext,
+): ScheduleOccurrence | null {
+  const bySequence = findScheduleOccurrence(
+    scheduleId,
+    occurrence.sequenceNumber,
+    context,
+  );
+  if (bySequence) return bySequence;
+
+  return findScheduleOccurrenceByNominalDueAt(
+    scheduleId,
+    occurrence.nominalAt,
+    context,
+  );
+}
+
+function recordedOccurrenceProcessingStatus(
+  occurrence: ScheduleOccurrence,
+): "posted" | "due" | "skipped" {
+  return occurrence.status === "posted"
+    ? "posted"
+    : occurrence.status === "due"
+      ? "due"
+      : "skipped";
 }
 
 function advanceSchedule(

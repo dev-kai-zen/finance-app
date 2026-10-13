@@ -192,6 +192,13 @@ export const fil = {
       item3:
         "I-customize ang tema, wika, at currency formatting ayon sa paraan mo ng pamamahala ng pera.",
     },
+    v100fixes: {
+      title: "Mga ayos at pagpapabuti",
+      item1:
+        "Inayos ang error kapag ine-edit ang naka-iskedyul na transaksyon na kailangan pa ng pansin (due o failed).",
+      item2:
+        "Ang mga pending na scheduled occurrence ay sumusunod na sa pinakabagong halaga, account, at kategorya pag na-edit mo ang iskedyul.",
+    },
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",

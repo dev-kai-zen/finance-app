@@ -7,6 +7,8 @@ import { requireCategory } from "@/modules/categories";
 import {
   findScheduledTransaction,
   insertScheduledTransaction,
+  listUnprocessedScheduleOccurrences,
+  updateScheduleOccurrenceRecord,
   updateScheduledTransactionRecord,
 } from "../repositories/scheduled-transactions.repository";
 import { scheduledTransactionInputSchema } from "../schemas/scheduled-transaction.schema";
@@ -15,6 +17,7 @@ import type {
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
 import { calculateScheduleOccurrence } from "../utils/recurrence";
+import { serializeScheduleTemplateSnapshot } from "../utils/schedule-template-snapshot";
 
 export function saveScheduledTransaction(
   input: SaveScheduledTransactionInput,
@@ -118,12 +121,58 @@ function saveScheduledTransactionInContext(
 
   if (existing) {
     updateScheduledTransactionRecord(existing.id, values, context);
-    return findScheduledTransaction(existing.id, context)!;
+    const saved = findScheduledTransaction(existing.id, context)!;
+    syncUnprocessedOccurrencesAfterSave(
+      saved,
+      {
+        ...input,
+        weekendPolicy,
+        anchorOccurrenceNumber: existing.anchorOccurrenceNumber,
+      },
+      now,
+      context,
+    );
+    return saved;
   }
 
   return insertScheduledTransaction(
     { ...values, createdAt: now },
     context,
   );
+}
+
+function syncUnprocessedOccurrencesAfterSave(
+  schedule: ScheduledTransaction,
+  recurrenceRule: SaveScheduledTransactionInput & {
+    weekendPolicy: NonNullable<SaveScheduledTransactionInput["weekendPolicy"]>;
+    anchorOccurrenceNumber: number;
+  },
+  now: Date,
+  context: DbContext,
+): void {
+  const templateSnapshot = serializeScheduleTemplateSnapshot(schedule);
+  for (const occurrence of listUnprocessedScheduleOccurrences(
+    schedule.id,
+    context,
+  )) {
+    const recalculated = calculateScheduleOccurrence(
+      recurrenceRule,
+      occurrence.sequenceNumber,
+    );
+    const updates: {
+      templateSnapshot: string;
+      updatedAt: Date;
+      effectiveDueAt?: Date | null;
+    } = { templateSnapshot, updatedAt: now };
+
+    if (
+      recalculated &&
+      recalculated.nominalAt.getTime() === occurrence.nominalDueAt.getTime()
+    ) {
+      updates.effectiveDueAt = recalculated.effectiveAt;
+    }
+
+    updateScheduleOccurrenceRecord(occurrence.id, updates, context);
+  }
 }
 

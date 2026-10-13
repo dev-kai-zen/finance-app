@@ -214,6 +214,46 @@ export function findScheduleOccurrence(
   return row ? mapOccurrence(row) : null;
 }
 
+export function findScheduleOccurrenceByNominalDueAt(
+  scheduleId: string,
+  nominalDueAt: Date,
+  context: DbContext = db,
+): ScheduleOccurrence | null {
+  const row = context
+    .select()
+    .from(transactionScheduleOccurrences)
+    .where(
+      and(
+        eq(transactionScheduleOccurrences.scheduleId, scheduleId),
+        eq(transactionScheduleOccurrences.nominalDueAt, nominalDueAt),
+      ),
+    )
+    .get();
+  return row ? mapOccurrence(row) : null;
+}
+
+export function listUnprocessedScheduleOccurrences(
+  scheduleId: string,
+  context: DbContext = db,
+): ScheduleOccurrence[] {
+  return context
+    .select()
+    .from(transactionScheduleOccurrences)
+    .where(
+      and(
+        eq(transactionScheduleOccurrences.scheduleId, scheduleId),
+        isNull(transactionScheduleOccurrences.processedAt),
+        or(
+          eq(transactionScheduleOccurrences.status, "due"),
+          eq(transactionScheduleOccurrences.status, "failed"),
+        ),
+      ),
+    )
+    .orderBy(asc(transactionScheduleOccurrences.sequenceNumber))
+    .all()
+    .map(mapOccurrence);
+}
+
 export function findScheduleOccurrenceById(
   id: string,
   context: DbContext = db,

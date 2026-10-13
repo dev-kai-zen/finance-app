@@ -177,6 +177,13 @@ export const en = {
       item3:
         "Customize themes, languages, and currency formatting to match how you manage money.",
     },
+    v100fixes: {
+      title: "Fixes & improvements",
+      item1:
+        "Fixed an error when editing a scheduled transaction that still needs attention (due or failed).",
+      item2:
+        "Pending scheduled occurrences now pick up your latest amount, account, and category when you edit the schedule.",
+    },
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",

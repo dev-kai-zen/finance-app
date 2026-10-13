@@ -11,4 +11,12 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       "whatsNew.v100.item3",
     ],
   },
+  {
+    version: "1.0.0",
+    titleKey: "whatsNew.v100fixes.title",
+    itemKeys: [
+      "whatsNew.v100fixes.item1",
+      "whatsNew.v100fixes.item2",
+    ],
+  },
 ];

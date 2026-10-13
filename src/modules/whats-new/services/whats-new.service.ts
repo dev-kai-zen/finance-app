@@ -23,7 +23,14 @@ export function markWhatsNewSeen(fingerprint = getAppFingerprint()): void {
 
 export function getLatestReleaseNotes(): ReleaseNoteBlock[] {
   if (RELEASE_NOTES.length === 0) return [];
-  return [RELEASE_NOTES[0]];
+  const currentMarketing = getMarketingVersionFromFingerprint(getAppFingerprint());
+  const blocksForVersion = RELEASE_NOTES.filter(
+    (block) => block.version === currentMarketing,
+  );
+  if (blocksForVersion.length > 0) {
+    return [blocksForVersion[blocksForVersion.length - 1]!];
+  }
+  return [RELEASE_NOTES[0]!];
 }
 
 export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {

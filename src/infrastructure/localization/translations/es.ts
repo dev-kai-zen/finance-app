@@ -191,6 +191,13 @@ export const es = {
       item3:
         "Personaliza temas, idiomas y formato de moneda según cómo administras tu dinero.",
     },
+    v100fixes: {
+      title: "Correcciones y mejoras",
+      item1:
+        "Se corrigió un error al editar una transacción programada que aún requiere atención (vencida o fallida).",
+      item2:
+        "Las ocurrencias programadas pendientes reflejan el importe, la cuenta y la categoría más recientes cuando editas la programación.",
+    },
   },
   resetData: {
     dismissAccessibility:
