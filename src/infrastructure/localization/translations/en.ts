@@ -79,6 +79,10 @@ export const en = {
     resetData: "Reset Data",
     resetDataDescription:
       "Permanently erase all local app data and start over.",
+    aboutSection: "ABOUT",
+    whatsNew: "What's New",
+    whatsNewDescription: "See highlights from the latest app updates",
+    whatsNewAccessibility: "Open what's new release notes",
   },
   currency: {
     defaultCurrency: "Default currency",
@@ -157,6 +161,22 @@ export const en = {
     followDeviceDescription: "Paper in light mode and Ink in dark mode.",
     palettes: "PALETTES",
     choices: "%{count} choices",
+  },
+  whatsNew: {
+    heading: "What's New",
+    continue: "Continue",
+    dismissAccessibility: "Dismiss what's new",
+    versionLabel: "Version %{version}",
+    empty: "Release notes for this version are not available yet.",
+    v100: {
+      title: "Welcome to Kaizen Finance",
+      item1:
+        "Track accounts, transactions, budgets, and goals with an offline-first local database.",
+      item2:
+        "Back up and restore your data with local archives or Google Drive sync.",
+      item3:
+        "Customize themes, languages, and currency formatting to match how you manage money.",
+    },
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",

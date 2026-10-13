@@ -7,6 +7,7 @@ import {
   CircleDollarSign,
   Cloud,
   Languages,
+  Sparkles,
   Trash2,
 } from "lucide-react-native";
 
@@ -18,6 +19,7 @@ import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
+import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
@@ -53,6 +55,7 @@ export function SettingsScreen() {
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const resetData = useResetData();
   const languageValue =
     preference === "system"
@@ -348,6 +351,34 @@ export function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("settings.aboutSection")}</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.whatsNewAccessibility")}
+              accessibilityRole="button"
+              onPress={() => setIsWhatsNewOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.backupIcon}>
+                <Sparkles color={theme.colors.primary} size={21} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.whatsNew")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.whatsNewDescription")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>
             {t("settings.dangerZone")}
           </Text>
@@ -378,6 +409,12 @@ export function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      <WhatsNewModal
+        blocks={getLatestReleaseNotes()}
+        visible={isWhatsNewOpen}
+        onClose={() => setIsWhatsNewOpen(false)}
+      />
 
       <ResetDataModal
         error={resetData.error}

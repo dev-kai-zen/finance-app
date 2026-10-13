@@ -18,6 +18,7 @@ import {
 } from "@/modules/onboarding";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
+import { WhatsNewGate } from "@/modules/whats-new";
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -52,7 +53,8 @@ function RootLayoutContent() {
                     ]}
                   >
                     <OnboardingGate>
-                      <>
+                      <WhatsNewGate>
+                        <>
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
@@ -139,7 +141,8 @@ function RootLayoutContent() {
                         <Stack.Screen name="monitor" />
                           </Stack>
                         </AppShell>
-                      </>
+                        </>
+                      </WhatsNewGate>
                     </OnboardingGate>
                   </SafeAreaView>
                 </HexColorsProvider>

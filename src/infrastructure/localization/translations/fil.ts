@@ -90,6 +90,10 @@ export const fil = {
     resetData: "I-reset ang Data",
     resetDataDescription:
       "Permanenteng burahin ang lahat ng lokal na app data at magsimulang muli.",
+    aboutSection: "TUNGKOL SA APP",
+    whatsNew: "Ano ang Bago",
+    whatsNewDescription: "Tingnan ang mga highlight mula sa pinakabagong update",
+    whatsNewAccessibility: "Buksan ang mga release note na ano ang bago",
   },
   currency: {
     defaultCurrency: "Default na currency",
@@ -172,6 +176,22 @@ export const fil = {
       "Paper sa light mode at Ink sa dark mode.",
     palettes: "MGA PALETTE",
     choices: "%{count} pagpipilian",
+  },
+  whatsNew: {
+    heading: "Ano ang Bago",
+    continue: "Magpatuloy",
+    dismissAccessibility: "Isara ang ano ang bago",
+    versionLabel: "Bersyon %{version}",
+    empty: "Wala pang release notes para sa bersyong ito.",
+    v100: {
+      title: "Maligayang pagdating sa Kaizen Finance",
+      item1:
+        "Subaybayan ang mga account, transaksyon, badyet, at layunin gamit ang offline-first na lokal na database.",
+      item2:
+        "I-back up at i-restore ang data mo gamit ang lokal na archive o Google Drive sync.",
+      item3:
+        "I-customize ang tema, wika, at currency formatting ayon sa paraan mo ng pamamahala ng pera.",
+    },
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
