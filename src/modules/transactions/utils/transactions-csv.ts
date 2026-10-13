@@ -167,5 +167,11 @@ export function buildTransactionsCsv(rows: readonly TransactionListItem[]): stri
 
 export function createTransactionsCsvFileName(now = new Date()): string {
   const pad = (part: number) => String(part).padStart(2, "0");
-  return `transactions-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+  const stamp = [
+    now.getFullYear(),
+    pad(now.getMonth() + 1),
+    pad(now.getDate()),
+    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`,
+  ].join("-");
+  return `transactions-${stamp}.csv`;
 }

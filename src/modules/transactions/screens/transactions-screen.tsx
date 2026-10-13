@@ -14,9 +14,11 @@ import {
   ArrowUp,
   CalendarClock,
   Download,
+  FolderDown,
   LayoutList,
   Rows3,
   Search,
+  Share2,
   SlidersHorizontal,
   Trash2,
   X,
@@ -24,6 +26,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  ActionBottomSheet,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
@@ -46,7 +49,11 @@ import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
 import { useTransactionViewMode } from "../hooks/use-transaction-view-mode";
-import { exportTransactionsCsv } from "../services/export-transactions-csv.service";
+import {
+  saveTransactionsCsvToDevice,
+  shareTransactionsCsv,
+  TransactionCsvExportCancelledError,
+} from "../services/export-transactions-csv.service";
 import type { TransactionListItem } from "../types/transaction.types";
 
 interface DateGroup {
@@ -171,6 +178,7 @@ export function TransactionsScreen() {
   );
 
   const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -377,20 +385,17 @@ export function TransactionsScreen() {
     return `Move "${label}" to Trash? This record can be restored later.`;
   }, [pendingDeleteTransaction]);
 
-  const handleExportCsv = () => {
-    if (filteredTransactions.length === 0) {
-      Alert.alert(
-        "Nothing to export",
-        "Adjust your filters or record transactions first.",
-      );
-      return;
-    }
-
+  const runCsvExport = (
+    action: (rows: readonly TransactionListItem[]) => Promise<void>,
+  ) => {
     void (async () => {
       try {
         setExportingCsv(true);
-        await exportTransactionsCsv(filteredTransactions);
+        await action(filteredTransactions);
       } catch (error) {
+        if (error instanceof TransactionCsvExportCancelledError) {
+          return;
+        }
         Alert.alert(
           "Export failed",
           error instanceof Error
@@ -401,6 +406,34 @@ export function TransactionsScreen() {
         setExportingCsv(false);
       }
     })();
+  };
+
+  const handleOpenExportCsv = () => {
+    if (filteredTransactions.length === 0) {
+      Alert.alert(
+        "Nothing to export",
+        "Adjust your filters or record transactions first.",
+      );
+      return;
+    }
+
+    setExportCsvSheetOpen(true);
+  };
+
+  const handleSaveCsvToDevice = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport(async (rows) => {
+      const { fileName } = await saveTransactionsCsvToDevice(rows);
+      Alert.alert(
+        "Saved to device",
+        `${fileName} was saved to the folder you selected.`,
+      );
+    });
+  };
+
+  const handleShareCsv = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport((rows) => shareTransactionsCsv(rows));
   };
 
   const toggleSortOrder = () => {
@@ -597,7 +630,7 @@ export function TransactionsScreen() {
             accessibilityLabel="Export CSV"
             accessibilityState={{ disabled: exportingCsv || loading }}
             disabled={exportingCsv || loading}
-            onPress={handleExportCsv}
+            onPress={handleOpenExportCsv}
             style={[
               styles.actionButton,
               (exportingCsv || loading) && styles.actionButtonDisabled,
@@ -754,6 +787,28 @@ export function TransactionsScreen() {
         pending={pendingAction}
         transactions={deletedTransactions}
         visible={isTrashModalOpen}
+      />
+
+      <ActionBottomSheet
+        items={[
+          {
+            id: "save-to-device",
+            label: "Save to device",
+            description: "Choose a folder in Files or Downloads",
+            icon: <FolderDown color={theme.colors.primary} size={22} />,
+            onPress: handleSaveCsvToDevice,
+          },
+          {
+            id: "share",
+            label: "Share",
+            description: "Send to another app or cloud storage",
+            icon: <Share2 color={theme.colors.success} size={22} />,
+            onPress: handleShareCsv,
+          },
+        ]}
+        onClose={() => setExportCsvSheetOpen(false)}
+        title="Export CSV"
+        visible={exportCsvSheetOpen}
       />
     </PageContainer>
   );
