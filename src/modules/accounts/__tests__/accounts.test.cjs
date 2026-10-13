@@ -547,12 +547,23 @@ test("credit card details are required, validated, and removed when the type cha
     () => saveAccount({
       ...accountInput(system.LIABILITY_CREDIT_CARD),
       creditCardDetails: {
+        creditLimit: "",
+        statementDay: "15",
+        paymentDueDay: "5",
+      },
+    }),
+    /credit limit is required/i,
+  );
+  assert.throws(
+    () => saveAccount({
+      ...accountInput(system.LIABILITY_CREDIT_CARD),
+      creditCardDetails: {
         creditLimit: "-1",
         statementDay: "0",
         paymentDueDay: "32",
       },
     }),
-    /number|day/i,
+    /credit limit|day/i,
   );
 
   const id = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD));

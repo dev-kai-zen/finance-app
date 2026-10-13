@@ -240,8 +240,10 @@ export function AccountFormModal({
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.maintainingAmount, currencyDivisor]);
 
+  const creditLimitUnset = !(value.creditCardDetails?.creditLimit.trim() ?? "");
   const creditLimitMinorUnits = useMemo(() => {
-    const input = value.creditCardDetails?.creditLimit.trim() || "0";
+    const input = value.creditCardDetails?.creditLimit.trim() ?? "";
+    if (!input) return 0;
     const parsed = Math.round(parseFloat(input) * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.creditCardDetails?.creditLimit, currencyDivisor]);
@@ -693,6 +695,7 @@ export function AccountFormModal({
               <Text style={styles.sectionTitle}>Credit Card Details</Text>
               <AmountCalculatorField
                 amountMinorUnits={creditLimitMinorUnits}
+                amountUnset={creditLimitUnset}
                 currencyCode={activeCurrencyCode}
                 disabled={pending}
                 label="Credit Limit"

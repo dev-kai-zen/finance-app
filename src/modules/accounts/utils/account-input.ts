@@ -92,7 +92,28 @@ export function parseCreditLimit(
   input: string,
   currencyCode: string = DEFAULT_BASE_CURRENCY,
 ): number {
-  return parseMaintainingAmount(input, currencyCode);
+  const value = input.trim();
+  if (!value) {
+    throw new Error("Credit limit is required.");
+  }
+  const decimalPlaces = currencyDecimalPlaces(currencyCode);
+  if (!amountPattern(decimalPlaces, false).test(value)) {
+    const example = decimalPlaces === 0
+      ? "1000"
+      : `1000.${"0".padEnd(decimalPlaces, "0")}`;
+    throw new Error(
+      decimalPlaces === 0
+        ? `Enter a whole number for the credit limit, e.g. ${example}.`
+        : `Enter the credit limit with at most ${decimalPlaces} decimal places, e.g. ${example}.`,
+    );
+  }
+  const [whole, fraction = ""] = value.split(".");
+  const divisor = BigInt(10 ** decimalPlaces);
+  const magnitude = BigInt(whole) * divisor + BigInt(fraction.padEnd(decimalPlaces, "0") || "0");
+  if (magnitude > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error("The credit limit is too large.");
+  }
+  return Number(magnitude);
 }
 
 export function creditLimitInput(

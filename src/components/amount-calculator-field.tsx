@@ -17,6 +17,9 @@ export interface AmountCalculatorFieldProps {
   showSignToggle?: boolean;
   showCurrencyPill?: boolean;
   onPressCurrency?: () => void;
+  /** When true, shows `unsetDisplayLabel` instead of a formatted zero amount. */
+  amountUnset?: boolean;
+  unsetDisplayLabel?: string;
 }
 
 export function AmountCalculatorField({
@@ -31,6 +34,8 @@ export function AmountCalculatorField({
   showSignToggle = true,
   showCurrencyPill = true,
   onPressCurrency,
+  amountUnset = false,
+  unsetDisplayLabel = "Required",
 }: AmountCalculatorFieldProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -41,9 +46,11 @@ export function AmountCalculatorField({
   };
 
   const absMinorUnits = Math.abs(amountMinorUnits);
-  const displayAmount = formatCurrency(absMinorUnits, currencyCode, false, {
-    hideCurrency: true,
-  });
+  const displayAmount = amountUnset
+    ? unsetDisplayLabel
+    : formatCurrency(absMinorUnits, currencyCode, false, {
+        hideCurrency: true,
+      });
 
   const isTransfer = amountSign === "transfer";
   const signIsPositive = amountSign === "+";
@@ -84,13 +91,21 @@ export function AmountCalculatorField({
           ) : null}
 
           <Pressable
-            accessibilityLabel={`Amount ${displayAmount}. Open calculator.`}
+            accessibilityLabel={
+              amountUnset
+                ? `${label} not set. Open calculator.`
+                : `Amount ${displayAmount}. Open calculator.`
+            }
             accessibilityRole="button"
             disabled={disabled}
             onPress={handleOpenCalculator}
             style={styles.amountTapArea}
           >
-            <Text style={styles.amountValue}>{displayAmount}</Text>
+            <Text
+              style={[styles.amountValue, amountUnset && styles.amountValueUnset]}
+            >
+              {displayAmount}
+            </Text>
           </Pressable>
 
           <Pressable
@@ -200,6 +215,12 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
       textAlign: "center",
+    },
+    amountValueUnset: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.md,
+      fontVariant: [],
+      fontWeight: theme.typography.fontWeight.medium,
     },
     calcCircle: {
       alignItems: "center",
