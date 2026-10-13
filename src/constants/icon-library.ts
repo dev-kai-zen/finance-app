@@ -30,7 +30,7 @@ export const ICON_CATEGORIES: IconCategory[] = [
   { id: 'symbols', label: 'Symbols & Shapes', icon: 'star' },
 ];
 
-export const ICON_LIBRARY: IconItem[] = [
+export const CURATED_ICON_LIBRARY: IconItem[] = [
   // ==========================================
   // 1. BUSINESS & ACCOUNTING (65+ icons)
   // ==========================================
@@ -179,7 +179,7 @@ export const ICON_LIBRARY: IconItem[] = [
   { name: 'salad', label: 'Organic Greens', category: 'nature', keywords: ['salad', 'lettuce', 'diet', 'organic', 'farm fresh'] },
   { name: 'bean', label: 'Beans & Coffee Crops', category: 'nature', keywords: ['coffee bean', 'legume', 'bean', 'crop', 'harvest'] },
   { name: 'nut', label: 'Nuts & Acorns', category: 'nature', keywords: ['nut', 'almond', 'walnut', 'seed', 'harvest'] },
-  { name: 'wheat', label: 'Wheat & Grain Harvest', category: 'nature', keywords: ['grain', 'wheat', 'cereal', 'harvest', 'agriculture'] },
+  { name: 'wheat', label: 'Wheat & Grain Harvest', category: 'nature', keywords: ['grain', 'wheat', 'cereal', 'harvest', 'agriculture', 'bread', 'flour', 'bakery'] },
   { name: 'sprout', label: 'Sprout & Seedling', category: 'nature', keywords: ['seedling', 'nursery', 'sprout', 'growth', 'germination'] },
   { name: 'leaf', label: 'Leaf / Eco Environment', category: 'nature', keywords: ['leaf', 'eco', 'green', 'sustainable', 'environment'] },
   { name: 'leafy-green', label: 'Leafy Botanicals', category: 'nature', keywords: ['cabbage', 'herb', 'spinach', 'produce'] },
@@ -288,14 +288,16 @@ export const ICON_LIBRARY: IconItem[] = [
   { name: 'pizza', label: 'Pizza & Fastfood', category: 'food', keywords: ['fastfood', 'snack', 'delivery', 'pizza'] },
   { name: 'beer', label: 'Pub & Craft Beer', category: 'food', keywords: ['brewery', 'pub', 'beer', 'bar'] },
   { name: 'wine', label: 'Wine Cellar & Lounge', category: 'food', keywords: ['cocktail', 'sommelier', 'wine', 'spirits'] },
-  { name: 'cake', label: 'Bakery & Celebrations', category: 'food', keywords: ['birthday cake', 'pastry', 'patisserie'] },
+  { name: 'cake', label: 'Bakery & Celebrations', category: 'food', keywords: ['birthday cake', 'pastry', 'patisserie', 'bakery', 'bread'] },
   { name: 'cake-slice', label: 'Dessert Slice', category: 'food', keywords: ['pie', 'dessert', 'cheesecake', 'sweet'] },
   { name: 'cookie', label: 'Snacks & Confectionery', category: 'food', keywords: ['cookies', 'biscuit', 'treat', 'snack'] },
   { name: 'candy', label: 'Candy & Sweets', category: 'food', keywords: ['sugar', 'candies', 'treats'] },
   { name: 'candy-cane', label: 'Seasonal Confections', category: 'food', keywords: ['holiday sweets', 'candy cane'] },
   { name: 'popcorn', label: 'Cinema Snacks', category: 'food', keywords: ['popcorn', 'theater snack', 'munchies'] },
-  { name: 'croissant', label: 'Pastry & Breakfast', category: 'food', keywords: ['croissant', 'danish', 'continental breakfast'] },
-  { name: 'sandwich', label: 'Sandwich & Deli', category: 'food', keywords: ['burger', 'sandwich', 'quick lunch', 'deli'] },
+  { name: 'croissant', label: 'Pastry & Breakfast', category: 'food', keywords: ['croissant', 'danish', 'continental breakfast', 'bread', 'bakery', 'panaderia'] },
+  { name: 'sandwich', label: 'Sandwich & Deli', category: 'food', keywords: ['burger', 'sandwich', 'quick lunch', 'deli', 'bread', 'bakery'] },
+  { name: 'donut', label: 'Donut & Pastry Shop', category: 'food', keywords: ['donut', 'doughnut', 'pastry', 'bakery', 'bread'] },
+  { name: 'slice', label: 'Pizza Slice & Quick Bites', category: 'food', keywords: ['slice', 'pizza', 'snack', 'fast food'] },
   { name: 'soup', label: 'Hot Noodles & Broth', category: 'food', keywords: ['ramen', 'noodles', 'soup', 'stew'] },
   { name: 'ice-cream-cone', label: 'Ice Cream', category: 'food', keywords: ['gelato', 'sorbet', 'ice cream'] },
   { name: 'ice-cream-bowl', label: 'Sundae Dessert', category: 'food', keywords: ['dessert bowl', 'sundae', 'parfait'] },
@@ -391,7 +393,6 @@ export const ICON_LIBRARY: IconItem[] = [
   { name: 'sailboat', label: 'Yacht Charter', category: 'travel', keywords: ['yacht', 'sailing', 'charter boat'] },
   { name: 'anchor', label: 'Harbor & Port Dues', category: 'travel', keywords: ['port fees', 'dockage', 'berth'] },
   { name: 'waves', label: 'Seaside & Waters', category: 'travel', keywords: ['ocean', 'marine', 'coastal'] },
-  { name: 'backpack', label: 'Field Backpack', category: 'travel', keywords: ['gear backpack', 'fieldwork'] },
 
   // ==========================================
   // 11. TECH & MEDIA (20+ icons)
@@ -436,9 +437,14 @@ export const ICON_LIBRARY: IconItem[] = [
   // ==========================================
   // 13. WORK & EDUCATION (15+ icons)
   // ==========================================
-  { name: 'book', label: 'Books & Reference Manuals', category: 'work', keywords: ['handbook', 'textbook', 'guides'] },
-  { name: 'book-open', label: 'Training Course', category: 'work', keywords: ['seminar course', 'workshops', 'training'] },
-  { name: 'library', label: 'Knowledge Repository', category: 'work', keywords: ['archive', 'library', 'research'] },
+  { name: 'school', label: 'School & Tuition', category: 'work', keywords: ['school', 'tuition', 'education', 'classroom', 'student', 'kids', 'university', 'college'] },
+  { name: 'notebook', label: 'Notebook & Notes', category: 'work', keywords: ['notebook', 'notes', 'school', 'study', 'class'] },
+  { name: 'notebook-pen', label: 'School Supplies', category: 'work', keywords: ['notebook', 'pen', 'school supplies', 'stationery', 'homework'] },
+  { name: 'pencil', label: 'Pencil & Writing', category: 'work', keywords: ['pencil', 'write', 'school', 'drawing', 'supplies'] },
+  { name: 'book', label: 'Books & Reference Manuals', category: 'work', keywords: ['handbook', 'textbook', 'guides', 'school', 'reading'] },
+  { name: 'book-open', label: 'Training Course', category: 'work', keywords: ['seminar course', 'workshops', 'training', 'school', 'learning'] },
+  { name: 'library', label: 'Knowledge Repository', category: 'work', keywords: ['archive', 'library', 'research', 'school', 'study'] },
+  { name: 'backpack', label: 'Student Backpack', category: 'work', keywords: ['backpack', 'school bag', 'student', 'class', 'gear backpack', 'fieldwork'] },
   { name: 'trophy', label: 'Sales Incentive Prize', category: 'work', keywords: ['bonus prize', 'top seller', 'award'] },
   { name: 'medal', label: 'Distinguished Service', category: 'work', keywords: ['merit', 'loyalty award', 'distinction'] },
   { name: 'mail', label: 'Courier & Correspondence', category: 'work', keywords: ['postal', 'formal letter', 'mail courier'] },
@@ -483,4 +489,7 @@ export const ICON_LIBRARY: IconItem[] = [
   { name: 'circle-dot', label: 'Target Centerpoint', category: 'symbols', keywords: ['bullet', 'focus point', 'center'] },
 ];
 
-export const ICON_NAMES = ICON_LIBRARY.map(i => i.name);
+/** Curated recommended set (same as {@link CURATED_ICON_LIBRARY}). */
+export const ICON_LIBRARY = CURATED_ICON_LIBRARY;
+
+export const ICON_NAMES = CURATED_ICON_LIBRARY.map((i) => i.name);

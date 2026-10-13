@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -15,11 +15,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { ICON_CATEGORIES, type IconItem } from "@/constants/icon-library";
 import {
-  ICON_CATEGORIES,
-  ICON_LIBRARY,
-  type IconItem,
-} from "@/constants/icon-library";
+  getIconPickerItems,
+  matchesIconSearch,
+  type IconPickerScope,
+} from "@/constants/icon-picker-catalog";
 import { IconHelper } from "./icon-helper";
 
 export interface IconPickerModalProps {
@@ -48,22 +49,34 @@ export function IconPickerModal({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [pickerScope, setPickerScope] = useState<IconPickerScope>("recommended");
+
+  useEffect(() => {
+    if (!visible) {
+      setSearchQuery("");
+      setSelectedCategory("all");
+      setPickerScope("recommended");
+    }
+  }, [visible]);
+
+  const catalogIcons = useMemo(
+    () => getIconPickerItems(pickerScope),
+    [pickerScope],
+  );
 
   const filteredIcons = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    return ICON_LIBRARY.filter((item) => {
-      // Category filter
-      if (selectedCategory !== "all" && item.category !== selectedCategory) {
+    const q = searchQuery.trim();
+    return catalogIcons.filter((item) => {
+      if (
+        pickerScope === "recommended" &&
+        selectedCategory !== "all" &&
+        item.category !== selectedCategory
+      ) {
         return false;
       }
-      // Search filter
-      if (!q) return true;
-      if (item.name.toLowerCase().includes(q)) return true;
-      if (item.label.toLowerCase().includes(q)) return true;
-      if (item.keywords.some((k) => k.toLowerCase().includes(q))) return true;
-      return false;
+      return matchesIconSearch(item, q);
     });
-  }, [searchQuery, selectedCategory]);
+  }, [catalogIcons, pickerScope, searchQuery, selectedCategory]);
 
   const handleSelect = (iconName: string) => {
     onSelectIcon(iconName);
@@ -134,7 +147,8 @@ export function IconPickerModal({
             <View>
               <Text style={styles.modalTitle}>{title}</Text>
               <Text style={styles.modalSubtitle}>
-                {filteredIcons.length} icons available
+                {filteredIcons.length} of {catalogIcons.length}{" "}
+                {pickerScope === "recommended" ? "recommended" : "Lucide"} icons
               </Text>
             </View>
             <Pressable
@@ -154,7 +168,11 @@ export function IconPickerModal({
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setSearchQuery}
-              placeholder="Search icons (e.g. food, car, card, rent)..."
+              placeholder={
+                pickerScope === "recommended"
+                  ? "Search icons (e.g. food, school, rent)..."
+                  : "Search all Lucide icons by name..."
+              }
               placeholderTextColor={theme.colors.textSecondary}
               style={styles.searchInput}
               value={searchQuery}
@@ -170,51 +188,117 @@ export function IconPickerModal({
             )}
           </View>
 
-          {/* Category Tabs */}
-          <View style={styles.categoryScrollContainer}>
-            <ScrollView
-              contentContainerStyle={styles.categoryScroll}
-              horizontal
-              showsHorizontalScrollIndicator={false}
+          <View style={styles.scopeRow}>
+            <Pressable
+              accessibilityLabel="Recommended icons"
+              accessibilityRole="button"
+              accessibilityState={{ selected: pickerScope === "recommended" }}
+              onPress={() => {
+                setPickerScope("recommended");
+                setSelectedCategory("all");
+              }}
+              style={[
+                styles.scopePill,
+                pickerScope === "recommended" && {
+                  backgroundColor: `${activeColor}22`,
+                  borderColor: activeColor,
+                },
+              ]}
             >
-              {ICON_CATEGORIES.map((cat) => {
-                const isCatSelected = selectedCategory === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    accessibilityLabel={cat.label}
-                    accessibilityRole="button"
-                    onPress={() => setSelectedCategory(cat.id)}
-                    style={[
-                      styles.categoryPill,
-                      isCatSelected && {
-                        backgroundColor: `${activeColor}22`,
-                        borderColor: activeColor,
-                      },
-                    ]}
-                  >
-                    <IconHelper
-                      color={isCatSelected ? activeColor : theme.colors.textSecondary}
-                      name={cat.icon}
-                      size={14}
-                    />
-                    <Text
-                      numberOfLines={1}
+              <Text
+                style={[
+                  styles.scopePillText,
+                  pickerScope === "recommended" && {
+                    color: activeColor,
+                    fontWeight: "700",
+                  },
+                ]}
+              >
+                Recommended
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="All Lucide icons"
+              accessibilityRole="button"
+              accessibilityState={{ selected: pickerScope === "all" }}
+              onPress={() => {
+                setPickerScope("all");
+                setSelectedCategory("all");
+              }}
+              style={[
+                styles.scopePill,
+                pickerScope === "all" && {
+                  backgroundColor: `${activeColor}22`,
+                  borderColor: activeColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.scopePillText,
+                  pickerScope === "all" && {
+                    color: activeColor,
+                    fontWeight: "700",
+                  },
+                ]}
+              >
+                All Lucide
+              </Text>
+            </Pressable>
+          </View>
+
+          {pickerScope === "recommended" ? (
+            <View style={styles.categoryScrollContainer}>
+              <ScrollView
+                contentContainerStyle={styles.categoryScroll}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {ICON_CATEGORIES.map((cat) => {
+                  const isCatSelected = selectedCategory === cat.id;
+                  return (
+                    <Pressable
+                      key={cat.id}
+                      accessibilityLabel={cat.label}
+                      accessibilityRole="button"
+                      onPress={() => setSelectedCategory(cat.id)}
                       style={[
-                        styles.categoryPillText,
+                        styles.categoryPill,
                         isCatSelected && {
-                          color: activeColor,
-                          fontWeight: "700",
+                          backgroundColor: `${activeColor}22`,
+                          borderColor: activeColor,
                         },
                       ]}
                     >
-                      {cat.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
+                      <IconHelper
+                        color={
+                          isCatSelected ? activeColor : theme.colors.textSecondary
+                        }
+                        name={cat.icon}
+                        size={14}
+                      />
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.categoryPillText,
+                          isCatSelected && {
+                            color: activeColor,
+                            fontWeight: "700",
+                          },
+                        ]}
+                      >
+                        {cat.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          ) : (
+            <Text style={styles.allLucideHint}>
+              Browse the full Lucide set. Use search for best results.
+            </Text>
+          )}
 
           {/* Icon Grid */}
           {filteredIcons.length === 0 ? (
@@ -222,6 +306,17 @@ export function IconPickerModal({
               <Text style={styles.emptyText}>
                 No icons matching "{searchQuery}"
               </Text>
+              {pickerScope === "recommended" && searchQuery.trim().length > 0 ? (
+                <Pressable
+                  accessibilityLabel="Search all Lucide icons"
+                  onPress={() => setPickerScope("all")}
+                  style={[styles.resetSearchBtn, { borderColor: activeColor }]}
+                >
+                  <Text style={[styles.resetSearchText, { color: activeColor }]}>
+                    Search all Lucide icons
+                  </Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 accessibilityLabel="Reset search and filters"
                 onPress={() => {
@@ -357,6 +452,33 @@ function createStyles(theme: AppTheme) {
     clearBtnText: {
       color: theme.colors.textSecondary,
       fontSize: 14,
+    },
+    scopeRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginHorizontal: theme.spacing.lg,
+      marginBottom: theme.spacing.sm,
+    },
+    scopePill: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flex: 1,
+      justifyContent: "center",
+      paddingVertical: 8,
+    },
+    scopePillText: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    allLucideHint: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      marginBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.lg,
     },
     categoryScrollContainer: {
       borderBottomColor: theme.colors.border,
