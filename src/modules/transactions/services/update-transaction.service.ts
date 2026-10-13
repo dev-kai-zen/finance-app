@@ -16,6 +16,8 @@ import {
   getInstallmentPlanEditState,
   reconcileCreditCardBillingInContext,
 } from "@/modules/credit-cards";
+import { requireCategory } from "@/modules/categories";
+import { syncTransactionSplitEntriesInContext } from "./sync-transaction-split-entries.service";
 import {
   applyAttachmentChangesInContext,
   discardPreparedAttachmentChanges,
@@ -50,7 +52,15 @@ export function updateTransactionInContext(
 ): void {
   if (!id) throw new Error("Transaction ID is required to update.");
   if (!input.accountId) throw new Error("Account is required.");
-  if (!input.categoryId) throw new Error("Category is required.");
+  const splitEntries = input.splitEntries;
+  const isSplitRequest =
+    splitEntries != null && splitEntries.length >= 2;
+  if (!isSplitRequest && !input.categoryId) {
+    throw new Error("Category is required.");
+  }
+  if (isSplitRequest && input.installment) {
+    throw new Error("Installment purchases cannot be split across categories.");
+  }
     const existing = findTransactionById(id, context);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
     const account = requireAccount(input.accountId, context);
@@ -82,11 +92,28 @@ export function updateTransactionInContext(
       });
     }
 
+    if (!isSplitRequest && input.categoryId) {
+      const category = requireCategory(input.categoryId, context);
+      if (category.type !== input.type) {
+        throw new Error(
+          `Category "${category.name}" does not match the transaction type.`,
+        );
+      }
+    }
+
+    const clearingSplit =
+      splitEntries != null && splitEntries.length === 0;
+    const parentCategoryId = isSplitRequest
+      ? null
+      : clearingSplit
+        ? (input.categoryId ?? null)
+        : (input.categoryId ?? existing.categoryId);
+
     updateTransactionRecord(
       id,
       {
         accountId: input.accountId,
-        categoryId: input.categoryId,
+        categoryId: parentCategoryId,
         pocketId: input.pocketId ?? null,
         type: input.type,
         currencyCode: resolvedForInstallmentCheck.currencyCode,
@@ -101,6 +128,15 @@ export function updateTransactionInContext(
     );
     if (input.labelIds !== undefined) {
       assignTransactionLabels(id, input.labelIds, context);
+    }
+    if (splitEntries !== undefined) {
+      syncTransactionSplitEntriesInContext(
+        id,
+        resolvedForInstallmentCheck.amountMinorUnits,
+        input.type,
+        splitEntries,
+        context,
+      );
     }
     const updated = findTransactionById(id, context);
     if (!updated) {

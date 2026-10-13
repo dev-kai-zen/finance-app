@@ -10,6 +10,7 @@ import {
   categories,
   pockets,
   transactionAttachments,
+  transactionEntries,
   transactions,
 } from "@/infrastructure/database/schema";
 import type {
@@ -20,6 +21,7 @@ import type {
   TransactionStats,
 } from "../types/transaction.types";
 import { getLabelsByTransactionIds, type LabelBadgeItem } from "@/modules/labels";
+import { applySplitListMetadata } from "../utils/apply-split-list-metadata";
 
 export function generateId(context: DbContext = db): string {
   return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
@@ -291,7 +293,16 @@ export function listTransactions(
     );
   }
   if (filter?.categoryId) {
-    conditions.push(eq(transactions.categoryId, filter.categoryId));
+    conditions.push(
+      or(
+        eq(transactions.categoryId, filter.categoryId),
+        sql`EXISTS (
+          SELECT 1 FROM ${transactionEntries} split_entry
+          WHERE split_entry.transaction_id = ${transactions.id}
+            AND split_entry.category_id = ${filter.categoryId}
+        )`,
+      ),
+    );
   }
   if (filter?.labelIds && filter.labelIds.length > 0) {
     conditions.push(
@@ -336,7 +347,7 @@ export function listTransactions(
       labelsByTransactionId,
     ),
   );
-  const grouped = groupTransferRows(mapped);
+  const grouped = applySplitListMetadata(groupTransferRows(mapped), context);
 
   grouped.sort((a, b) => {
     const timeA = new Date(a.occurredAt).getTime();
@@ -352,6 +363,12 @@ export function listTransactions(
         (tx.name && tx.name.toLowerCase().includes(q)) ||
         (tx.note && tx.note.toLowerCase().includes(q)) ||
         (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
+        (tx.splitEntries &&
+          tx.splitEntries.some(
+            (entry) =>
+              entry.categoryName &&
+              entry.categoryName.toLowerCase().includes(q),
+          )) ||
         (tx.pocketName && tx.pocketName.toLowerCase().includes(q)) ||
         (tx.transferPocketName && tx.transferPocketName.toLowerCase().includes(q)) ||
         (tx.labels && tx.labels.some((lbl) => lbl.name.toLowerCase().includes(q))) ||
@@ -409,16 +426,19 @@ export function listDeletedTransactions(
     rows.map((row) => row.transaction.id),
     context,
   );
-  return groupTransferRows(
-    rows.map((row) =>
-      mapRowToListItem(
-        row,
-        balanceAfterByTransactionId,
-        pocketBalanceAfterByTransactionId,
-        attachmentCountByTransactionId,
-        labelsByTransactionId,
+  return applySplitListMetadata(
+    groupTransferRows(
+      rows.map((row) =>
+        mapRowToListItem(
+          row,
+          balanceAfterByTransactionId,
+          pocketBalanceAfterByTransactionId,
+          attachmentCountByTransactionId,
+          labelsByTransactionId,
+        ),
       ),
     ),
+    context,
   );
 }
 

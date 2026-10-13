@@ -110,6 +110,20 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
   const labels =
     transaction.labels?.map((label) => label.name).join("; ") ?? "";
 
+  const categoryCell =
+    transaction.isSplit && transaction.splitEntries?.length
+      ? transaction.splitEntries
+          .map((entry) => {
+            const label = entry.categoryName ?? "Category";
+            const amount = formatMinorUnitsForCsv(
+              entry.amountMinorUnits,
+              amountCurrency,
+            );
+            return `${label} (${amount})`;
+          })
+          .join(" | ")
+      : (transaction.categoryName ?? "");
+
   const transferFee =
     transaction.transferFeeAmountMinorUnits != null
       ? formatMinorUnitsForCsv(
@@ -127,7 +141,7 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
     amountCurrency,
     transaction.accountName,
     transaction.pocketName ?? "",
-    transaction.categoryName ?? "",
+    categoryCell,
     labels,
     transaction.note?.trim() ?? "",
     transaction.transferAccountName ?? "",

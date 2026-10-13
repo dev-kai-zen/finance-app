@@ -296,6 +296,33 @@ export function TransactionDetailModal({
                   </View>
                 ) : null}
                 </>
+              ) : transaction.isSplit && transaction.splitEntries?.length ? (
+                <View style={[styles.detailRow, styles.detailRowBorder]}>
+                  <View style={styles.detailIconBadge}>
+                    <IconHelper
+                      color={categoryDisplayColor}
+                      name="split"
+                      size={16}
+                    />
+                  </View>
+                  <View style={styles.detailInfoCol}>
+                    <Text style={styles.detailLabel}>SPLIT CATEGORIES</Text>
+                    {transaction.splitEntries.map((entry) => (
+                      <View key={entry.id} style={styles.splitEntryRow}>
+                        <Text style={styles.detailValue}>
+                          {entry.categoryName ?? "Category"}
+                        </Text>
+                        <Text style={styles.detailMeta}>
+                          {formatCurrency(
+                            entry.amountMinorUnits,
+                            transaction.accountCurrency ?? "PHP",
+                            false,
+                          )}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
               ) : (
                 <View style={[styles.detailRow, styles.detailRowBorder]}>
                   <View style={styles.detailIconBadge}>
@@ -587,6 +614,13 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "600",
       marginTop: 2,
+    },
+    splitEntryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      marginTop: 8,
     },
     detailMeta: {
       color: theme.colors.info,

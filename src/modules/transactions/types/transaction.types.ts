@@ -2,6 +2,19 @@ import type { LabelBadgeItem } from "@/modules/labels";
 
 export type TransactionType = "income" | "expense" | "transfer";
 
+export interface TransactionSplitEntryInput {
+  categoryId: string;
+  amountMinorUnits: number;
+  note?: string | null;
+}
+
+export interface TransactionSplitEntryListItem extends TransactionSplitEntryInput {
+  id: string;
+  categoryName: string | null;
+  categoryIcon: string | null;
+  categoryColor: string | null;
+}
+
 export interface Transaction {
   id: string;
   accountId: string;
@@ -74,6 +87,8 @@ export interface TransactionListItem extends Transaction {
   transferDestinationAmountMinorUnits?: number | null;
   transferExchangeRateScaled?: number | null;
   labels?: LabelBadgeItem[];
+  isSplit?: boolean;
+  splitEntries?: TransactionSplitEntryListItem[];
 }
 
 export type TransactionAttachmentSyncStatus =
@@ -112,7 +127,10 @@ export interface TransactionAttachmentChanges {
 
 export interface CreateTransactionInput {
   accountId: string;
-  categoryId: string;
+  /** Required when `splitEntries` is empty or omitted. Null when split. */
+  categoryId?: string | null;
+  /** When set with at least two lines, parent category is cleared and amounts must sum to the total. */
+  splitEntries?: TransactionSplitEntryInput[] | null;
   pocketId?: string | null;
   type: "income" | "expense";
   /** Absolute typed amount in typed currency minor units (cross-currency) or signed account amount when same currency. */

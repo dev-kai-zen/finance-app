@@ -8,6 +8,7 @@ export * from "./hex-colors";
 export * from "./pockets";
 export * from "./settings";
 export * from "./transactions";
+export * from "./transaction-entries";
 export * from "./transaction-presets";
 export * from "./transaction-schedules";
 export * from "./transaction-attachments";

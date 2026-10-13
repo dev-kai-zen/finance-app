@@ -79,6 +79,11 @@ import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
 import { LabelPickerModal, useLabels } from "@/modules/labels";
+import {
+  createEmptySplitLine,
+  TransactionSplitEditor,
+  type SplitLineState,
+} from "./transaction-split-editor";
 
 function formatDateString(value: string | null): string {
   if (!value) return "None";
@@ -315,6 +320,14 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [splitCategoryPickerLineKey, setSplitCategoryPickerLineKey] = useState<
+    string | null
+  >(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [splitLines, setSplitLines] = useState<SplitLineState[]>(() => [
+    createEmptySplitLine("split-1"),
+    createEmptySplitLine("split-2"),
+  ]);
   const [isLabelPickerOpen, setIsLabelPickerOpen] = useState(false);
   const [isQuickPresetsOpen, setIsQuickPresetsOpen] = useState(false);
   const [isAttachmentManagerOpen, setIsAttachmentManagerOpen] = useState(false);
@@ -407,6 +420,33 @@ export function TransactionFormModal({
         );
         setTransferToPocketId(initialTransaction.transferPocketId);
         setSelectedCategoryId(initialTransaction.categoryId || "");
+        if (
+          initialTransaction.isSplit &&
+          initialTransaction.splitEntries &&
+          initialTransaction.splitEntries.length >= 2
+        ) {
+          setSplitEnabled(true);
+          setSplitLines(
+            initialTransaction.splitEntries.map((entry, index) => ({
+              key: entry.id || `split-${index}`,
+              categoryId: entry.categoryId,
+              amountMinorUnits: entry.amountMinorUnits,
+              note: entry.note ?? null,
+            })),
+          );
+        } else {
+          setSplitEnabled(false);
+          setSplitLines([
+            {
+              key: "split-1",
+              categoryId: initialTransaction.categoryId || "",
+              amountMinorUnits: Math.abs(initialTransaction.amountMinorUnits),
+              note: null,
+            },
+            createEmptySplitLine("split-2"),
+          ]);
+        }
+        setSplitCategoryPickerLineKey(null);
         setOccurredAt(
           initialTransaction.occurredAt
             ? new Date(initialTransaction.occurredAt)
@@ -467,6 +507,12 @@ export function TransactionFormModal({
 
         const defaultCategory = categories.find((c) => c.type === "expense");
         setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
+        setSplitEnabled(false);
+        setSplitLines([
+          createEmptySplitLine("split-1"),
+          createEmptySplitLine("split-2"),
+        ]);
+        setSplitCategoryPickerLineKey(null);
 
         setAmountMinorUnits(0);
         setAccountAmountMinorUnits(0);
@@ -582,6 +628,18 @@ export function TransactionFormModal({
   };
 
   const filteredCategories = categories.filter((c) => c.type === mode);
+  const flatCategoriesForSplit = useMemo(() => {
+    const list: Category[] = [];
+    for (const cat of categories) {
+      if (cat.type === mode) list.push(cat);
+      if (cat.subcategories) {
+        for (const sub of cat.subcategories) {
+          if (sub.type === mode) list.push(sub);
+        }
+      }
+    }
+    return list;
+  }, [categories, mode]);
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const transferToAccount = accounts.find((a) => a.id === transferToAccountId);
@@ -723,6 +781,16 @@ export function TransactionFormModal({
     entryCurrency,
     accountCurrencyCode,
   ]);
+
+  const canUseSplit =
+    mode !== "transfer" && !installmentEnabled && !isCrossCurrencyEntry;
+  const splitTotalMinorUnits = postedExpenseMinorUnitsAbs;
+
+  useEffect(() => {
+    if (!canUseSplit && splitEnabled) {
+      setSplitEnabled(false);
+    }
+  }, [canUseSplit, splitEnabled]);
 
   useEffect(() => {
     if (!isCrossCurrencyEntry) {
@@ -1065,9 +1133,28 @@ export function TransactionFormModal({
         onClose();
       }
     } else {
-      if (!selectedCategoryId) {
+      const activeSplit = splitEnabled && canUseSplit;
+      if (!activeSplit && !selectedCategoryId) {
         setLocalError("Please select a category.");
         return;
+      }
+      if (activeSplit) {
+        if (splitLines.length < 2) {
+          setLocalError("Add at least two split lines.");
+          return;
+        }
+        if (splitLines.some((line) => !line.categoryId)) {
+          setLocalError("Each split line needs a category.");
+          return;
+        }
+        const assigned = splitLines.reduce(
+          (sum, line) => sum + line.amountMinorUnits,
+          0,
+        );
+        if (assigned !== splitTotalMinorUnits) {
+          setLocalError("Split line amounts must add up to the transaction total.");
+          return;
+        }
       }
 
       const signedAmount =
@@ -1098,34 +1185,53 @@ export function TransactionFormModal({
       if (
         !bypassBudgetCheck &&
         mode === "expense" &&
-        selectedCategoryId &&
         amountMinorUnits > 0
       ) {
-        const budgetCheck = checkBudgetExceeded({
-          categoryId: selectedCategoryId,
-          amountMinorUnits: postedExpenseMinorUnitsAbs,
-          expenseCurrencyCode: accountCurrencyCode,
-          occurredAt: transactionOccurredAt,
-          excludeTransactionId:
-            isEditing && initialTransaction ? initialTransaction.id : null,
-        });
-
-        if (
-          budgetCheck.hasBudget &&
-          budgetCheck.isEnabled &&
-          budgetCheck.exceeds &&
-          budgetCheck.notifyOnExceeded
-        ) {
-          setPendingBudgetWarning(budgetCheck);
-          setIsBudgetWarningOpen(true);
-          return;
+        const budgetLines = activeSplit
+          ? splitLines
+          : selectedCategoryId
+            ? [
+                {
+                  categoryId: selectedCategoryId,
+                  amountMinorUnits: postedExpenseMinorUnitsAbs,
+                },
+              ]
+            : [];
+        for (const line of budgetLines) {
+          const budgetCheck = checkBudgetExceeded({
+            categoryId: line.categoryId,
+            amountMinorUnits: line.amountMinorUnits,
+            expenseCurrencyCode: accountCurrencyCode,
+            occurredAt: transactionOccurredAt,
+            excludeTransactionId:
+              isEditing && initialTransaction ? initialTransaction.id : null,
+          });
+          if (
+            budgetCheck.hasBudget &&
+            budgetCheck.isEnabled &&
+            budgetCheck.exceeds &&
+            budgetCheck.notifyOnExceeded
+          ) {
+            setPendingBudgetWarning(budgetCheck);
+            setIsBudgetWarningOpen(true);
+            return;
+          }
         }
       }
 
       setLocalError(null);
       const transactionInput: CreateTransactionInput = {
         accountId: selectedAccountId,
-        categoryId: selectedCategoryId,
+        categoryId: activeSplit ? null : selectedCategoryId,
+        splitEntries: activeSplit
+          ? splitLines.map(({ categoryId, amountMinorUnits: lineAmount, note }) => ({
+              categoryId,
+              amountMinorUnits: lineAmount,
+              note,
+            }))
+          : isEditing
+            ? []
+            : undefined,
         pocketId: selectedPocketId,
         type: mode,
         amountMinorUnits: Math.abs(amountMinorUnits),
@@ -1340,7 +1446,7 @@ export function TransactionFormModal({
               </Pressable>
             </View>
 
-            <View style={styles.inputGroup}>
+            <View style={[styles.inputGroup, styles.amountExchangeStack]}>
               <AmountCalculatorField
                 amountMinorUnits={amountMinorUnits}
                 amountSign={mode === "transfer" ? "transfer" : amountSign}
@@ -1722,7 +1828,40 @@ export function TransactionFormModal({
               </>
             ) : (
               /* If Expense / Income: Category Selector */
-              <View style={styles.inputGroup}>
+              <View style={[styles.inputGroup, styles.splitCategoryGroup]}>
+                {canUseSplit ? (
+                  <TransactionSplitEditor
+                    categories={flatCategoriesForSplit}
+                    currencyCode={accountCurrencyCode}
+                    disabled={pending}
+                    enabled={splitEnabled}
+                    lines={splitLines}
+                    onEnabledChange={(value) => {
+                      if (value) {
+                        setSplitLines([
+                          {
+                            key: "split-1",
+                            categoryId: selectedCategoryId,
+                            amountMinorUnits: splitTotalMinorUnits,
+                            note: null,
+                          },
+                          createEmptySplitLine("split-2"),
+                        ]);
+                      } else if (splitLines[0]?.categoryId) {
+                        setSelectedCategoryId(splitLines[0].categoryId);
+                      }
+                      setSplitEnabled(value);
+                    }}
+                    onLinesChange={setSplitLines}
+                    onPickCategory={(lineKey) => {
+                      setSplitCategoryPickerLineKey(lineKey);
+                      setIsCategoryPickerOpen(true);
+                    }}
+                    totalMinorUnits={splitTotalMinorUnits}
+                  />
+                ) : null}
+                {!splitEnabled ? (
+                <>
                 <Pressable
                   accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
                   accessibilityRole="button"
@@ -1782,6 +1921,8 @@ export function TransactionFormModal({
                     }
                     occurredAt={occurredAt}
                   />
+                ) : null}
+                </>
                 ) : null}
               </View>
             )}
@@ -2271,9 +2412,31 @@ export function TransactionFormModal({
 
       <CategoryPickerModal
         categories={categories}
-        onClose={() => setIsCategoryPickerOpen(false)}
-        onSelectCategory={(cat) => setSelectedCategoryId(cat.id)}
-        selectedCategoryId={selectedCategoryId}
+        onClose={() => {
+          setIsCategoryPickerOpen(false);
+          setSplitCategoryPickerLineKey(null);
+        }}
+        onSelectCategory={(cat) => {
+          if (splitCategoryPickerLineKey) {
+            setSplitLines((lines) =>
+              lines.map((line) =>
+                line.key === splitCategoryPickerLineKey
+                  ? { ...line, categoryId: cat.id }
+                  : line,
+              ),
+            );
+            setSplitCategoryPickerLineKey(null);
+          } else {
+            setSelectedCategoryId(cat.id);
+          }
+          setIsCategoryPickerOpen(false);
+        }}
+        selectedCategoryId={
+          splitCategoryPickerLineKey
+            ? splitLines.find((line) => line.key === splitCategoryPickerLineKey)
+                ?.categoryId ?? ""
+            : selectedCategoryId
+        }
         title={mode === "income" ? "Select Income Category" : "Select Expense Category"}
         type={mode === "income" ? "income" : "expense"}
         visible={isCategoryPickerOpen}
@@ -2476,12 +2639,17 @@ function createStyles(theme: AppTheme) {
     inputGroup: {
       marginBottom: 16,
     },
+    splitCategoryGroup: {
+      gap: theme.spacing.sm,
+    },
+    amountExchangeStack: {
+      gap: theme.spacing.sm,
+    },
     crossCurrencyFields: {
       alignItems: "center",
       flexDirection: "row",
       flexWrap: "wrap",
       gap: theme.spacing.xs,
-      marginTop: theme.spacing.sm,
     },
     rateInput: {
       backgroundColor: theme.colors.surfaceMuted,
