@@ -21,8 +21,10 @@ const {
   calculateScheduleOccurrence,
 } = require("../utils/recurrence.ts");
 const {
+  filterSchedulesBySearch,
   filterSchedulesByStatus,
   getScheduleListFilter,
+  scheduleMatchesSearchQuery,
 } = require("../utils/schedule-list-filter.ts");
 
 function rule(overrides = {}) {
@@ -149,6 +151,67 @@ test("scheduled transactions: status filters separate active, completed, and arc
       new Set(["completed", "archived"]),
     ).map((schedule) => schedule.id),
     ["completed", "archived"],
+  );
+});
+
+test("scheduled transactions: text search matches name, note, account, and category", () => {
+  const searchContext = {
+    getAccountName: (accountId) =>
+      ({ checking: "Checking", savings: "Savings" })[accountId],
+    getCategoryName: (categoryId) =>
+      categoryId === "rent" ? "Rent" : undefined,
+  };
+  const rentSchedule = {
+    id: "rent",
+    status: "active",
+    archivedAt: null,
+    name: "Monthly rent",
+    note: "Landlord payment",
+    accountId: "checking",
+    toAccountId: null,
+    categoryId: "rent",
+  };
+  const transferSchedule = {
+    id: "transfer",
+    status: "active",
+    archivedAt: null,
+    name: null,
+    note: null,
+    accountId: "checking",
+    toAccountId: "savings",
+    categoryId: null,
+  };
+  const schedules = [rentSchedule, transferSchedule];
+
+  assert.equal(
+    scheduleMatchesSearchQuery(rentSchedule, "landlord", searchContext),
+    true,
+  );
+  assert.equal(
+    scheduleMatchesSearchQuery(rentSchedule, "checking", searchContext),
+    true,
+  );
+  assert.equal(
+    scheduleMatchesSearchQuery(transferSchedule, "savings", searchContext),
+    true,
+  );
+  assert.equal(
+    scheduleMatchesSearchQuery(rentSchedule, "groceries", searchContext),
+    false,
+  );
+  assert.deepEqual(
+    filterSchedulesBySearch(schedules, "  SAVINGS  ", searchContext).map(
+      (schedule) => schedule.id,
+    ),
+    ["transfer"],
+  );
+  assert.deepEqual(
+    filterSchedulesByStatus(schedules, new Set(["active"]))
+      .filter((schedule) =>
+        scheduleMatchesSearchQuery(schedule, "rent", searchContext),
+      )
+      .map((schedule) => schedule.id),
+    ["rent"],
   );
 });
 
