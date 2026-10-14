@@ -87,6 +87,7 @@ export function CreditCardMonitoringCard({
         <ActivitySection
           currencyCode={card.currencyCode}
           items={card.unbilledItems}
+          showDateBelowAmount
           title="Unbilled activity"
         />
       ) : null}
@@ -120,10 +121,12 @@ const ACTIVITY_PREVIEW_COUNT = 4;
 function ActivitySection({
   currencyCode,
   items,
+  showDateBelowAmount = false,
   title,
 }: {
   currencyCode: string;
   items: CreditCardMonitoringItem["billedItems"];
+  showDateBelowAmount?: boolean;
   title: string;
 }) {
   const theme = useAppTheme();
@@ -144,12 +147,21 @@ function ActivitySection({
               {item.description}
             </Text>
             <Text numberOfLines={1} style={styles.activityDetail}>
-              {item.detail ?? item.occurredOn}
+              {showDateBelowAmount
+                ? item.detail
+                : (item.detail ?? item.occurredOn)}
             </Text>
           </View>
-          <Text style={styles.activityAmount}>
-            {formatCurrency(item.amountMinorUnits, currencyCode)}
-          </Text>
+          <View style={styles.activityAmountColumn}>
+            <Text style={styles.activityAmount}>
+              {formatCurrency(item.amountMinorUnits, currencyCode)}
+            </Text>
+            {showDateBelowAmount ? (
+              <Text style={styles.activityDate}>
+                {formatDate(item.occurredOn)}
+              </Text>
+            ) : null}
+          </View>
         </View>
       ))}
       {hiddenCount > 0 ? (
@@ -293,10 +305,19 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       marginTop: 1,
     },
+    activityAmountColumn: {
+      alignItems: "flex-end",
+      flexShrink: 0,
+    },
     activityAmount: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    activityDate: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      marginTop: 1,
     },
     activityToggle: {
       alignSelf: "flex-start",
