@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import {
   Modal,
@@ -28,6 +28,7 @@ import {
 } from "@/modules/accounts";
 import {
   CategoryPickerModal,
+  resolveDefaultTransactionCategoryId,
   type Category,
 } from "@/modules/categories";
 import {
@@ -78,7 +79,12 @@ import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
-import { LabelPickerModal, useLabels } from "@/modules/labels";
+import {
+  findLabelById,
+  LabelPickerModal,
+  useLabels,
+  type Label,
+} from "@/modules/labels";
 import {
   createEmptySplitLine,
   TransactionSplitEditor,
@@ -336,7 +342,25 @@ export function TransactionFormModal({
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
-  const { labels } = useLabels({ includeArchived: true });
+  const { labels, refresh: refreshLabels } = useLabels({ includeArchived: true });
+  const formInitSessionRef = useRef<string | null>(null);
+
+  const selectedLabelsForChips = useMemo(
+    () =>
+      selectedLabelIds
+        .map(
+          (id) =>
+            labels.find((label) => label.id === id) ?? findLabelById(id),
+        )
+        .filter((label): label is Label => label != null),
+    [labels, selectedLabelIds],
+  );
+
+  useEffect(() => {
+    if (visible) {
+      refreshLabels();
+    }
+  }, [refreshLabels, visible]);
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,
     isEditing,
@@ -380,8 +404,18 @@ export function TransactionFormModal({
 
 
   useEffect(() => {
-    if (visible) {
-      if (initialTransaction) {
+    if (!visible) {
+      formInitSessionRef.current = null;
+      return;
+    }
+
+    const sessionKey = initialTransaction?.id ?? "__create__";
+    if (formInitSessionRef.current === sessionKey) {
+      return;
+    }
+    formInitSessionRef.current = sessionKey;
+
+    if (initialTransaction) {
         setMode(initialTransaction.type);
         setName(initialTransaction.name || "");
         const isNeg = initialTransaction.amountMinorUnits < 0;
@@ -505,8 +539,9 @@ export function TransactionFormModal({
         setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
         setTransferToPocketId(null);
 
-        const defaultCategory = categories.find((c) => c.type === "expense");
-        setSelectedCategoryId(defaultCategory ? defaultCategory.id : (categories[0]?.id ?? ""));
+        setSelectedCategoryId(
+          resolveDefaultTransactionCategoryId(categories, "expense"),
+        );
         setSplitEnabled(false);
         setSplitLines([
           createEmptySplitLine("split-1"),
@@ -545,7 +580,6 @@ export function TransactionFormModal({
       setIsFeeCalculatorOpen(false);
       setIsFeeAccountPickerOpen(false);
       setIsFeeCategoryPickerOpen(false);
-    }
   }, [
     visible,
     initialTransaction,
@@ -554,7 +588,20 @@ export function TransactionFormModal({
     pockets,
     effectiveDefaultExpenseAccountId,
     effectiveDefaultExpensePocketId,
+    labels,
+    defaultFeeCategory,
   ]);
+
+  useEffect(() => {
+    if (!visible || !initialTransaction?.labels?.length) return;
+    setSelectedLabelIds((current) => {
+      if (current.length > 0) return current;
+      const ids = initialTransaction.labels!
+        .filter((label) => labels.some((item) => item.id === label.id))
+        .map((label) => label.id);
+      return ids.length > 0 ? ids : current;
+    });
+  }, [initialTransaction, labels, visible]);
 
   useEffect(() => {
     if (!visible || !isEditing || !installmentEditState.plan) return;
@@ -619,11 +666,10 @@ export function TransactionFormModal({
     } else {
       setAmountSign("+");
     }
-    if (newMode !== "transfer") {
-      const match = categories.find((c) => c.type === newMode);
-      if (match) {
-        setSelectedCategoryId(match.id);
-      }
+    if (newMode === "expense" || newMode === "income") {
+      setSelectedCategoryId(
+        resolveDefaultTransactionCategoryId(categories, newMode),
+      );
     }
   };
 
@@ -1386,6 +1432,32 @@ export function TransactionFormModal({
                     style={styles.nameInput}
                     value={name}
                   />
+                  <Pressable
+                    accessibilityLabel={
+                      attachmentDraft.totalCount > 0
+                        ? `View ${attachmentDraft.totalCount} attachments`
+                        : "Add attachment"
+                    }
+                    accessibilityRole="button"
+                    disabled={pending}
+                    hitSlop={4}
+                    onPress={() => setIsAttachmentManagerOpen(true)}
+                    style={({ pressed }) => [
+                      styles.nameAttachmentButton,
+                      pressed && !pending && styles.nameAttachmentButtonPressed,
+                    ]}
+                  >
+                    <View style={styles.nameAttachmentClipWrap}>
+                      <Paperclip color={theme.colors.primary} size={18} />
+                      {attachmentDraft.totalCount > 0 ? (
+                        <Text style={styles.nameAttachmentCount}>
+                          {attachmentDraft.totalCount > 99
+                            ? "99+"
+                            : attachmentDraft.totalCount}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
                 </View>
                 {!isEditing && !suggestionsSuppressed ? (
                   <QuickPresetSuggestions
@@ -1431,27 +1503,6 @@ export function TransactionFormModal({
                   </Text>
                 </Pressable>
               </View>
-              <Pressable
-                accessibilityLabel={
-                  attachmentDraft.totalCount > 0
-                    ? `View ${attachmentDraft.totalCount} attachments`
-                    : "Add attachment"
-                }
-                accessibilityRole="button"
-                disabled={pending}
-                onPress={() => setIsAttachmentManagerOpen(true)}
-                style={styles.attachmentSummary}
-              >
-                <Paperclip color={theme.colors.primary} size={16} />
-                <Text style={styles.attachmentSummaryText}>
-                  {attachmentDraft.totalCount > 0
-                    ? `Attachments (${attachmentDraft.totalCount})`
-                    : "Add attachment"}
-                </Text>
-                <Text style={styles.attachmentSummaryAction}>
-                  {attachmentDraft.totalCount > 0 ? "View all" : "Add"}
-                </Text>
-              </Pressable>
             </View>
 
             <View style={[styles.inputGroup, styles.amountExchangeStack]}>
@@ -2175,9 +2226,7 @@ export function TransactionFormModal({
                   </Pressable>
                 ) : (
                   <>
-                    {selectedLabelIds.map((id) => {
-                      const lbl = labels.find((l) => l.id === id);
-                      if (!lbl) return null;
+                    {selectedLabelsForChips.map((lbl) => {
                       const badgeColor = lbl.color || theme.colors.primary;
                       return (
                         <View
@@ -2204,7 +2253,7 @@ export function TransactionFormModal({
                             hitSlop={8}
                             onPress={() =>
                               setSelectedLabelIds((prev) =>
-                                prev.filter((item) => item !== id),
+                                prev.filter((item) => item !== lbl.id),
                               )
                             }
                             style={styles.removeLabelChipBtn}
@@ -2460,7 +2509,10 @@ export function TransactionFormModal({
       />
 
       <LabelPickerModal
-        onClose={() => setIsLabelPickerOpen(false)}
+        onClose={() => {
+          setIsLabelPickerOpen(false);
+          refreshLabels();
+        }}
         onSelectLabels={setSelectedLabelIds}
         selectedLabelIds={selectedLabelIds}
         visible={isLabelPickerOpen}
@@ -2707,29 +2759,31 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
     },
-    attachmentSummary: {
+    nameAttachmentButton: {
       alignItems: "center",
-      backgroundColor: `${theme.colors.primary}10`,
-      borderColor: `${theme.colors.primary}30`,
-      borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
+      borderLeftColor: theme.colors.border,
+      borderLeftWidth: StyleSheet.hairlineWidth,
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 44,
+      paddingHorizontal: theme.spacing.sm,
     },
-    attachmentSummaryText: {
-      color: theme.colors.textPrimary,
-      flex: 1,
-      fontSize: theme.typography.fontSize.sm,
-      fontVariant: ["tabular-nums"],
-      fontWeight: theme.typography.fontWeight.semibold,
+    nameAttachmentButtonPressed: {
+      opacity: 0.65,
     },
-    attachmentSummaryAction: {
+    nameAttachmentClipWrap: {
+      alignItems: "center",
+      justifyContent: "center",
+      position: "relative",
+    },
+    nameAttachmentCount: {
       color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.xs,
+      fontSize: 9,
+      fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.bold,
+      position: "absolute",
+      right: -8,
+      top: -5,
     },
     installmentPanel: {
       backgroundColor: theme.colors.surfaceMuted,

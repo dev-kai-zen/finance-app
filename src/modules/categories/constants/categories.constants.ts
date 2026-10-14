@@ -37,6 +37,12 @@ export const PROTECTED_CATEGORY_IDS = [
   "cat_inc_others",
 ] as const;
 
+/** Default category when recording income or expense transactions. */
+export const DEFAULT_OTHERS_CATEGORY_IDS: Record<"expense" | "income", string> = {
+  expense: "cat_exp_others",
+  income: "cat_inc_others",
+};
+
 export function isProtectedCategoryId(id: string): boolean {
   return (PROTECTED_CATEGORY_IDS as readonly string[]).includes(id);
 }

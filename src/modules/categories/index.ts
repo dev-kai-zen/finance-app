@@ -48,6 +48,8 @@ export const prepareWorkspaceCategories = deferFunction(
       .prepareWorkspaceCategories,
 ) as typeof import("./services/prepare-workspace-categories.service").prepareWorkspaceCategories;
 
+export { DEFAULT_OTHERS_CATEGORY_IDS } from "./constants/categories.constants";
+export { resolveDefaultTransactionCategoryId } from "./utils/resolve-default-transaction-category-id";
 export type { CategorySetup } from "./services/prepare-workspace-categories.service";
 export type {
   Category,
