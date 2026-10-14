@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Stack } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
 import { CircleHelp } from "lucide-react-native";
+import { stackChevronBackOptions } from "@/components";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { CurrencySetupScreen } from "@/modules/currencies";
@@ -15,7 +16,7 @@ export default function CurrencySetupRoute() {
     <>
       <Stack.Screen
         options={{
-          headerBackTitle: t("navigation.currencySetup"),
+          ...stackChevronBackOptions(t("common.goBack")),
           headerRight: () => (
             <Pressable
               accessibilityLabel={t("currency.helpTitle")}

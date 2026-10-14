@@ -7,6 +7,7 @@ export const fil = {
   common: {
     cancel: "Kanselahin",
     close: "Isara",
+    goBack: "Bumalik",
     ok: "OK",
     search: "Maghanap",
   },
@@ -154,7 +155,6 @@ export const fil = {
       "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
   language: {
-    backAccessibility: "Bumalik",
     helpTitle: "Tungkol sa Wika",
     helpMessage:
       "Piliin ang wikang gagamitin sa navigation at mga setting. Ang default ng system ay sumusunod sa wika ng device kapag may suportadong translation.",

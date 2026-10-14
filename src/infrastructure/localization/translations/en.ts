@@ -2,6 +2,7 @@ export const en = {
   common: {
     cancel: "Cancel",
     close: "Close",
+    goBack: "Go back",
     ok: "OK",
     search: "Search",
   },
@@ -141,7 +142,6 @@ export const en = {
       "The default currency is used for combined totals and new accounts. Existing accounts keep their saved currency. Display options never change stored financial values.",
   },
   language: {
-    backAccessibility: "Go back",
     helpTitle: "About Language",
     helpMessage:
       "Choose the language used for navigation and settings. System default follows your device language when a supported translation is available.",

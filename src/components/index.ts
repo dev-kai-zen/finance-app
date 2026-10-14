@@ -5,6 +5,7 @@ export * from "./page-header";
 export * from "./floating-action-button";
 export * from "./sync-status-chip";
 export * from "./sidebar";
+export * from "./stack-chevron-back-button";
 export * from "./amount-calculator-field";
 export * from "./amount-calculator-modal";
 export * from "./action-bottom-sheet";

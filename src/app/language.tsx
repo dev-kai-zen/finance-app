@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { Pressable, StyleSheet } from "react-native";
-import { ChevronLeft, CircleHelp } from "lucide-react-native";
+import { CircleHelp } from "lucide-react-native";
+import { stackChevronBackOptions } from "@/components";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { LanguageScreen } from "@/modules/localization";
@@ -15,21 +16,7 @@ export default function LanguageRoute() {
     <>
       <Stack.Screen
         options={{
-          headerBackVisible: false,
-          headerLeft: () => (
-            <Pressable
-              accessibilityLabel={t("language.backAccessibility")}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => router.back()}
-              style={({ pressed }) => [
-                styles.backButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <ChevronLeft color={theme.colors.textPrimary} size={28} />
-            </Pressable>
-          ),
+          ...stackChevronBackOptions(t("common.goBack")),
           headerRight: () => (
             <Pressable
               accessibilityLabel={t("language.helpTitle")}
@@ -57,12 +44,6 @@ export default function LanguageRoute() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignItems: "center",
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
   helpButton: {
     alignItems: "center",
     borderRadius: 20,

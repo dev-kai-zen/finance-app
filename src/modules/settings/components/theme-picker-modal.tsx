@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Check, Smartphone, X } from "lucide-react-native";
 import {
   Modal,
@@ -41,6 +42,16 @@ export function ThemePickerModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+
+  const paletteCardWidth = useMemo(() => {
+    const columns = 2;
+    const sheetMaxWidth = 920;
+    const layoutWidth = isWide ? Math.min(width, sheetMaxWidth) : width;
+    const horizontalPadding = theme.spacing.lg * 2;
+    const gap = theme.spacing.md;
+    const availableWidth = layoutWidth - horizontalPadding - gap * (columns - 1);
+    return availableWidth / columns;
+  }, [isWide, theme.spacing.lg, theme.spacing.md, width]);
 
   if (!visible) return null;
 
@@ -144,7 +155,7 @@ export function ThemePickerModal({
                   onPress={() => onSelectTheme(preset.id)}
                   preset={preset}
                   selected={!isFollowingSystem && preset.id === selectedThemeId}
-                  style={isWide ? styles.cardWide : undefined}
+                  style={{ width: paletteCardWidth }}
                 />
               ))}
             </View>
@@ -291,10 +302,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: theme.spacing.md,
-    },
-    cardWide: {
-      flexBasis: "48%",
-      flexGrow: 1,
+      width: "100%",
     },
     pressed: {
       opacity: 0.76,

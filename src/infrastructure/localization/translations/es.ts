@@ -7,6 +7,7 @@ export const es = {
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
+    goBack: "Volver",
     ok: "Aceptar",
     search: "Buscar",
   },
@@ -154,7 +155,6 @@ export const es = {
       "La moneda predeterminada se usa en totales combinados y cuentas nuevas. Las cuentas existentes conservan su moneda. Las opciones de visualización no modifican los valores guardados.",
   },
   language: {
-    backAccessibility: "Volver",
     helpTitle: "Acerca del idioma",
     helpMessage:
       "Elige el idioma para la navegación y la configuración. El predeterminado del sistema sigue el idioma del dispositivo cuando hay una traducción compatible.",

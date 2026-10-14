@@ -98,8 +98,7 @@ function RootLayoutContent() {
                             presentation: "fullScreenModal",
                             headerShown: true,
                             title: "Currency Setup",
-                            headerBackTitle: "Currency Setup",
-                            headerBackButtonDisplayMode: "default",
+                            headerBackVisible: false,
                             headerShadowVisible: true,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
@@ -113,8 +112,7 @@ function RootLayoutContent() {
                             presentation: "fullScreenModal",
                             headerShown: true,
                             title: "Local Backup",
-                            headerBackTitle: "Local Backup",
-                            headerBackButtonDisplayMode: "default",
+                            headerBackVisible: false,
                             headerShadowVisible: true,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
@@ -128,8 +126,7 @@ function RootLayoutContent() {
                             presentation: "fullScreenModal",
                             headerShown: true,
                             title: "Google Drive Backup",
-                            headerBackTitle: "Google Drive Backup",
-                            headerBackButtonDisplayMode: "default",
+                            headerBackVisible: false,
                             headerShadowVisible: true,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
