@@ -31,7 +31,7 @@ export interface SubcategoryModalProps {
   onClose: () => void;
   parentCategory: Category | null;
   subcategoryToEdit?: Category | null;
-  onSave: (input: CategoryInput, id?: string) => Promise<boolean>;
+  onSave: (input: CategoryInput, id?: string) => Promise<boolean | Category | null>;
   pending?: boolean;
   error?: string | null;
   onClearError: () => void;

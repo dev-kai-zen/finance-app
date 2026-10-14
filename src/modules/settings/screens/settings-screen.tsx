@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
+import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
@@ -24,6 +25,7 @@ import { ThemePickerModal } from "@/modules/settings/components/theme-picker-mod
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
+import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 
 export function SettingsScreen() {
@@ -57,6 +59,7 @@ export function SettingsScreen() {
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const resetData = useResetData();
+  const experience = useExperiencePreferences();
   const languageValue =
     preference === "system"
       ? t("settings.languageSystemValue", {
@@ -350,6 +353,47 @@ export function SettingsScreen() {
           </View>
         </View>
 
+        {experience.developerMode ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
+            <View style={styles.card}>
+              <View style={styles.toggleRow}>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>{t("settings.developerMode")}</Text>
+                  <Text style={styles.settingDescription}>
+                    {t("settings.developerModeDescription")}
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel={t("settings.developerMode")}
+                  onValueChange={(value) => experience.setDeveloperMode(value)}
+                  value={experience.developerMode}
+                />
+              </View>
+              <View style={styles.rowDivider} />
+              <Pressable
+                accessibilityLabel={t("settings.sqliteMonitor")}
+                accessibilityRole="button"
+                onPress={() => router.push("/monitor")}
+                style={({ pressed }) => [
+                  styles.settingRow,
+                  pressed && styles.settingRowPressed,
+                ]}
+              >
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.sqliteMonitor")}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {t("settings.sqliteMonitorDescription")}
+                  </Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t("settings.aboutSection")}</Text>
           <View style={styles.card}>
@@ -504,6 +548,21 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.8,
       paddingHorizontal: theme.spacing.xs,
+    },
+    sectionHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.xs,
+      paddingHorizontal: theme.spacing.xs,
+    },
+    toggleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      justifyContent: "space-between",
+      minHeight: 56,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
     },
     card: {
       backgroundColor: theme.colors.surface,

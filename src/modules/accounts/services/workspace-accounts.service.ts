@@ -102,6 +102,7 @@ export function createInitialAccount(
   input: InitialAccountInput,
   context: DbContext,
   now = new Date(),
+  currencyCode = "PHP",
 ): string {
   const name = input.name.trim();
   if (!name) throw new Error("Enter a name for your first account.");
@@ -121,21 +122,21 @@ export function createInitialAccount(
       name,
       note: null,
       iconKey: template.iconKey,
-      currencyCode: "PHP",
-      openingBalanceMinorUnits,
-      openingBalanceAt,
-      startingBalanceLocked: false,
-      hideFromSelection: false,
-      hideFromReports: false,
-      pocketEnabled: template.pocketEnabled,
-      maintainingBalanceMinorUnits: null,
-      isArchived: false,
-      sortOrder: 0,
-      createdAt: now,
-      updatedAt: now,
-    },
-    context,
-  );
+        currencyCode,
+        openingBalanceMinorUnits,
+        openingBalanceAt,
+        startingBalanceLocked: false,
+        hideFromSelection: false,
+        hideFromReports: false,
+        pocketEnabled: template.pocketEnabled,
+        maintainingBalanceMinorUnits: null,
+        isArchived: false,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
 
   return id;
 }

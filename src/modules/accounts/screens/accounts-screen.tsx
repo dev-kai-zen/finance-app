@@ -302,9 +302,11 @@ export function AccountsScreen({
 
       <AccountFormModal
         account={overlay?.kind === "edit" ? selected : undefined}
+        accounts={data.accounts}
         error={mutations.error}
         onClearError={mutations.clearError}
         pending={mutations.pending}
+        typeMutations={mutations}
         types={data.types}
         visible={
           overlay?.kind === "create" ||

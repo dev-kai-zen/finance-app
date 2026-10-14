@@ -26,10 +26,13 @@ import {
   CurrencyPickerModal,
   useCurrencyPreferences,
 } from "@/modules/currencies";
+import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
+import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
 import type {
+  AccountGroup,
   AccountListItem,
   AccountType,
 } from "@/modules/accounts/types/account.types";
@@ -83,6 +86,8 @@ export function AccountFormModal({
   onRestore,
   onPermanentDelete,
   onLockStartingBalance,
+  accounts = [],
+  typeMutations,
 }: {
   visible: boolean;
   account?: AccountListItem;
@@ -96,6 +101,8 @@ export function AccountFormModal({
   onRestore?: (accountId: string) => Promise<boolean>;
   onPermanentDelete?: (accountId: string) => Promise<boolean>;
   onLockStartingBalance?: (accountId: string) => Promise<boolean>;
+  accounts?: AccountListItem[];
+  typeMutations?: AccountMutations;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -204,6 +211,9 @@ export function AccountFormModal({
   const [creditLimitCalculatorOpen, setCreditLimitCalculatorOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [newTypeGroup, setNewTypeGroup] = useState<AccountGroup | null>(null);
+  const [reopenTypePickerAfterGroupForm, setReopenTypePickerAfterGroupForm] =
+    useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<
     "archive" | "restore" | "lock-balance" | "delete" | null
@@ -879,6 +889,15 @@ export function AccountFormModal({
 
       <AccountTypePickerModal
         existingTypeId={account?.accountTypeId}
+        onPressAddGroup={
+          typeMutations
+            ? (group) => {
+                setTypePickerOpen(false);
+                setReopenTypePickerAfterGroupForm(true);
+                setNewTypeGroup(group);
+              }
+            : undefined
+        }
         types={types}
         value={value.accountTypeId}
         visible={typePickerOpen}
@@ -913,6 +932,22 @@ export function AccountFormModal({
           }
         }}
       />
+
+      {typeMutations ? (
+        <AccountTypeFormModal
+          accounts={accounts}
+          initialGroup={newTypeGroup ?? "asset"}
+          mutations={typeMutations}
+          onClose={() => {
+            setNewTypeGroup(null);
+            if (reopenTypePickerAfterGroupForm) {
+              setReopenTypePickerAfterGroupForm(false);
+              setTypePickerOpen(true);
+            }
+          }}
+          visible={newTypeGroup !== null}
+        />
+      ) : null}
 
       <IconPickerModal
         onClose={() => setIconPickerOpen(false)}

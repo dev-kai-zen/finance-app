@@ -14,6 +14,9 @@ import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
+import { useExperiencePreferences } from "@/modules/settings";
+import { ExperiencePromptsCard } from "../components/experience-prompts-card";
+import { FirstExpenseHintCard } from "../components/first-expense-hint-card";
 import {
   TransactionDetailModal,
   TransactionFormModal,
@@ -31,6 +34,7 @@ export function DashboardScreen() {
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
+  const { homeMode, isPromptDismissed } = useExperiencePreferences();
 
   const {
     summary,
@@ -204,6 +208,17 @@ export function DashboardScreen() {
   const netWorth = summary?.netWorthMinorUnits ?? 0;
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
+  const activeAccounts = accounts.filter((account) => !account.isArchived);
+  const expenseTransactionCount = recentTx.filter(
+    (transaction) => transaction.type === "expense",
+  ).length;
+  const showFirstExpenseHint =
+    homeMode === "simple" &&
+    !isPromptDismissed("firstExpenseDismissed") &&
+    recentTx.length === 0;
+  const hasCreditCardAccount = activeAccounts.some(
+    (account) => account.creditCardDetails,
+  );
 
   return (
     <PageContainer
@@ -230,11 +245,19 @@ export function DashboardScreen() {
           )
         ) : (
           <>
+            <FirstExpenseHintCard visible={showFirstExpenseHint} onDismiss={() => {}} />
+            <ExperiencePromptsCard
+              activeAccountCount={activeAccounts.length}
+              expenseTransactionCount={expenseTransactionCount}
+              hasCreditCardAccount={hasCreditCardAccount}
+            />
             <DashboardNetWorthCard
               currencyCode={currencyPreferences.defaultCurrency}
               history={summary.netWorthHistory}
               monthlyChangePercentage={summary.netWorthChangePercentage}
+              monthlySpentMinorUnits={summary.monthlyCashflow.totalOutflowMinorUnits}
               netWorthMinorUnits={netWorth}
+              simpleHomeLabels={homeMode === "simple"}
               totalAssetsMinorUnits={assets}
               totalLiabilitiesMinorUnits={liabilities}
             />
@@ -306,6 +329,7 @@ export function DashboardScreen() {
           }
           return success;
         }}
+        onCategoriesChanged={() => void refreshCategories()}
         pending={pendingAction}
         visible={isModalOpen}
       />

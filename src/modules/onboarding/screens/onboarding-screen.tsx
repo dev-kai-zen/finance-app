@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   StyleSheet,
@@ -25,10 +24,27 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { GoogleDriveBackupPanel } from "@/modules/google-drive-backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
+import {
+  GuidedAccountStep,
+  GuidedCurrencyStep,
+  GuidedLanguageStep,
+  GuidedReadyStep,
+  GuidedWelcomeStep,
+  PrimaryButton,
+} from "@/modules/onboarding/components/guided-onboarding-steps";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import type { InitialAccountTemplate } from "@/modules/accounts";
+import { openingAmountInput } from "@/modules/accounts/utils/account-input";
+import { useLocalization } from "@/infrastructure/localization";
 
 type OnboardingStep =
   | "welcome"
+  | "language"
+  | "currency"
+  | "account"
+  | "ready"
+  | "fullSetup"
   | "manual"
   | "recommended"
   | "sample"
@@ -38,23 +54,59 @@ export function OnboardingScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
+  const { preferences: currencyPreferences } = useCurrencyPreferences();
+  const { t } = useLocalization();
   const [step, setStep] = useState<OnboardingStep>("welcome");
+  const [guidedCurrency, setGuidedCurrency] = useState(
+    currencyPreferences.defaultCurrency,
+  );
+  const [accountTemplate, setAccountTemplate] =
+    useState<InitialAccountTemplate>("cash");
+  const [accountName, setAccountName] = useState("");
+  const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
+
+  useEffect(() => {
+    setGuidedCurrency(currencyPreferences.defaultCurrency);
+  }, [currencyPreferences.defaultCurrency]);
+
+  const isGuidedFlexStep =
+    step === "welcome" ||
+    step === "language" ||
+    step === "currency" ||
+    step === "account" ||
+    step === "ready";
+
   const goBack = () => {
     workspace.clearError();
     if (workspace.personalSetupRequested && step === "welcome") {
       workspace.cancelPersonalSetup();
       return;
     }
+    if (step === "language") {
+      setStep("welcome");
+      return;
+    }
+    if (step === "currency") {
+      setStep("language");
+      return;
+    }
+    if (step === "account") {
+      setStep("currency");
+      return;
+    }
+    if (step === "ready") {
+      setStep("account");
+      return;
+    }
+    if (step === "fullSetup" || step === "manual" || step === "recommended" || step === "sample" || step === "restore") {
+      setStep(workspace.personalSetupRequested ? "welcome" : "welcome");
+      return;
+    }
     setStep("welcome");
   };
 
-  return (
-    <View style={styles.screen}>
-      <KeyboardAwareForm
-        contentContainerStyle={styles.scrollContent}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <View style={styles.container}>
+  const stepBody = (
+        <View style={[styles.container, isGuidedFlexStep && styles.guidedContainer]}>
           {step !== "welcome" || workspace.personalSetupRequested ? (
             <Pressable
               accessibilityLabel={
@@ -92,14 +144,130 @@ export function OnboardingScreen() {
           </View>
 
           {step === "welcome" ? (
-            <WelcomeStep
-              disabled={workspace.busy}
-              personalOnly={workspace.personalSetupRequested}
-              onChoose={(nextStep) => {
-                workspace.clearError();
-                setStep(nextStep);
-              }}
-            />
+            workspace.personalSetupRequested ? (
+              <WelcomeStep
+                disabled={workspace.busy}
+                personalOnly
+                onChoose={(nextStep) => {
+                  workspace.clearError();
+                  setStep(nextStep);
+                }}
+              />
+            ) : (
+              <View style={styles.guidedStepHost}>
+                <GuidedWelcomeStep
+                  disabled={workspace.busy}
+                  onFullSetup={() => {
+                    workspace.clearError();
+                    setStep("fullSetup");
+                  }}
+                  onGetStarted={() => {
+                    workspace.clearError();
+                    setStep("language");
+                  }}
+                  onRestore={() => {
+                    workspace.clearError();
+                    setStep("restore");
+                  }}
+                  onSample={() => {
+                    workspace.clearError();
+                    setStep("sample");
+                  }}
+                />
+              </View>
+            )
+          ) : null}
+
+          {step === "language" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedLanguageStep
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("currency");
+                }}
+              />
+            </View>
+          ) : null}
+
+          {step === "currency" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedCurrencyStep
+                onChange={setGuidedCurrency}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("account");
+                }}
+                selectedCode={guidedCurrency}
+              />
+            </View>
+          ) : null}
+
+          {step === "account" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedAccountStep
+                accountName={accountName}
+                busy={workspace.busy}
+                currencyCode={guidedCurrency}
+                onChangeName={setAccountName}
+                onChangeOpeningAmountMinor={setOpeningAmountMinor}
+                onChangeTemplate={setAccountTemplate}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("ready");
+                }}
+                openingAmountMinor={openingAmountMinor}
+                template={accountTemplate}
+              />
+            </View>
+          ) : null}
+
+          {step === "ready" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedReadyStep
+                accountName={accountName}
+                busy={workspace.busy}
+                currencyCode={guidedCurrency}
+                onFinish={() =>
+                  void workspace.completeGuidedSetup({
+                    currencyCode: guidedCurrency,
+                    account: {
+                      name: accountName,
+                      openingAmount: openingAmountInput(
+                        openingAmountMinor,
+                        guidedCurrency,
+                      ),
+                      template: accountTemplate,
+                    },
+                  })
+                }
+              />
+            </View>
+          ) : null}
+
+          {step === "fullSetup" ? (
+            <View style={styles.stepContent}>
+              <StepHeading
+                description={t("onboarding.fullSetupDescription")}
+                title={t("onboarding.fullSetupTitle")}
+              />
+              <View style={styles.optionList}>
+                <OnboardingOptionCard
+                  description={t("onboarding.manualSetupDescription")}
+                  disabled={workspace.busy}
+                  icon={<Wallet color={theme.colors.textSecondary} size={23} />}
+                  onPress={() => setStep("manual")}
+                  title={t("onboarding.manualSetupTitle")}
+                />
+                <OnboardingOptionCard
+                  badge={t("onboarding.recommendedBadge")}
+                  description={t("onboarding.recommendedSetupDescription")}
+                  disabled={workspace.busy}
+                  icon={<Sparkles color={theme.colors.primary} size={23} />}
+                  onPress={() => setStep("recommended")}
+                  title={t("onboarding.recommendedSetupTitle")}
+                />
+              </View>
+            </View>
           ) : null}
 
           {step === "manual" ? (
@@ -253,7 +421,22 @@ export function OnboardingScreen() {
             </View>
           ) : null}
         </View>
-      </KeyboardAwareForm>
+  );
+
+  return (
+    <View style={styles.screen}>
+      {isGuidedFlexStep ? (
+        <View style={[styles.guidedScreen, styles.scrollContent]}>
+          {stepBody}
+        </View>
+      ) : (
+        <KeyboardAwareForm
+          contentContainerStyle={styles.scrollContent}
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          {stepBody}
+        </KeyboardAwareForm>
+      )}
 
       <NotificationModal
         message={workspace.error ?? ""}
@@ -345,40 +528,6 @@ function StepHeading({ title, description }: { title: string; description: strin
   );
 }
 
-function PrimaryButton({
-  disabled,
-  label,
-  loading,
-  onPress,
-}: {
-  disabled: boolean;
-  label: string;
-  loading: boolean;
-  onPress: () => void;
-}) {
-  const theme = useAppTheme();
-  const styles = useThemeStyles(createStyles);
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.primaryButton,
-        pressed && styles.primaryButtonPressed,
-        disabled && styles.primaryButtonDisabled,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-      ) : null}
-      <Text style={styles.primaryButtonText}>{label}</Text>
-    </Pressable>
-  );
-}
-
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: {
@@ -391,10 +540,21 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.xxl,
     },
+    guidedStepHost: {
+      flex: 1,
+      minHeight: 0,
+      width: "100%",
+    },
     container: {
       gap: theme.spacing.xl,
       maxWidth: 720,
       width: "100%",
+    },
+    guidedScreen: {
+      flex: 1,
+    },
+    guidedContainer: {
+      flex: 1,
     },
     backButton: {
       alignItems: "center",

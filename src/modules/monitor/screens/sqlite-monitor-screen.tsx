@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRouter } from "expo-router";
 import {
   Modal,
   Platform,
@@ -10,7 +11,14 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { InfoModal, NotificationModal, PageContainer, PageHeader } from "@/components";
+import {
+  InfoModal,
+  NotificationModal,
+  PageContainer,
+  PageErrorState,
+  PageHeader,
+} from "@/components";
+import { useExperiencePreferences } from "@/modules/settings";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -28,6 +36,8 @@ const QUERY_PRESETS = [
 ];
 
 export function SqliteMonitorScreen() {
+  const router = useRouter();
+  const { developerMode } = useExperiencePreferences();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
@@ -86,6 +96,17 @@ export function SqliteMonitorScreen() {
       });
     }
   };
+
+  if (!developerMode) {
+    return (
+      <PageContainer>
+        <PageErrorState
+          message="SQLite Monitor is available when developer mode is enabled in Settings."
+          onRetry={() => router.replace("/settings")}
+        />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer

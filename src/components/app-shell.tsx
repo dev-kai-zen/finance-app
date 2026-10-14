@@ -45,9 +45,40 @@ function getScreenTitle(pathname: string, t: Translate): string {
 
 export interface AppShellProps extends PropsWithChildren {
   banner?: ReactNode;
+  hiddenNavHrefs?: string[];
+  onSettingsTitlePress?: () => void;
 }
 
-export function AppShell({ children, banner }: AppShellProps) {
+function ScreenTitle({
+  onPress,
+  style,
+  title,
+}: {
+  onPress?: () => void;
+  style: object;
+  title: string;
+}) {
+  if (!onPress) {
+    return <Text style={style}>{title}</Text>;
+  }
+  return (
+    <Pressable
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+    >
+      <Text style={style}>{title}</Text>
+    </Pressable>
+  );
+}
+
+export function AppShell({
+  children,
+  banner,
+  hiddenNavHrefs = [],
+  onSettingsTitlePress,
+}: AppShellProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -56,6 +87,9 @@ export function AppShell({ children, banner }: AppShellProps) {
   const pathname = usePathname();
   const { t } = useLocalization();
   const screenTitle = getScreenTitle(pathname, t);
+  const isSettingsScreen = pathname.startsWith("/settings");
+  const handleSettingsTitlePress =
+    isSettingsScreen && onSettingsTitlePress ? onSettingsTitlePress : undefined;
 
   const closeDrawer = () => setIsDrawerOpen(false);
   const openDrawer = () => setIsDrawerOpen(true);
@@ -75,14 +109,18 @@ export function AppShell({ children, banner }: AppShellProps) {
       <View style={styles.desktopLayout}>
         {/* Persistent Desktop/Tablet Sidebar */}
         <View style={styles.persistentSidebar}>
-          <Sidebar />
+          <Sidebar hiddenHrefs={hiddenNavHrefs} />
         </View>
 
         {/* Desktop Page Area */}
         <View style={styles.desktopPageArea}>
           <View style={styles.desktopTopBar}>
             <View style={styles.desktopTopBarBrand}>
-              <Text style={styles.desktopScreenTitle}>{screenTitle}</Text>
+              <ScreenTitle
+                onPress={handleSettingsTitlePress}
+                style={styles.desktopScreenTitle}
+                title={screenTitle}
+              />
             </View>
             <SyncStatusChip />
           </View>
@@ -117,7 +155,11 @@ export function AppShell({ children, banner }: AppShellProps) {
               </View>
             </Pressable>
 
-            <Text style={styles.topBarBrandText}>{screenTitle}</Text>
+            <ScreenTitle
+              onPress={handleSettingsTitlePress}
+              style={styles.topBarBrandText}
+              title={screenTitle}
+            />
           </View>
 
           <SyncStatusChip />
@@ -146,7 +188,7 @@ export function AppShell({ children, banner }: AppShellProps) {
               },
             ]}
           >
-            <Sidebar onNavigate={closeDrawer} />
+            <Sidebar hiddenHrefs={hiddenNavHrefs} onNavigate={closeDrawer} />
           </View>
         </View>
       )}

@@ -26,6 +26,9 @@ export interface CategoryPickerModalProps {
   onSelectCategory: (category: Category) => void;
   type?: CategoryType;
   title?: string;
+  enableQuickAdd?: boolean;
+  onRequestAddCategory?: (type: CategoryType) => void;
+  onRequestAddSubcategory?: (parent: Category, type: CategoryType) => void;
 }
 
 export function CategoryPickerModal({
@@ -36,11 +39,15 @@ export function CategoryPickerModal({
   onSelectCategory,
   type,
   title = "Select Category",
+  enableQuickAdd = false,
+  onRequestAddCategory,
+  onRequestAddSubcategory,
 }: CategoryPickerModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<CategoryType>(type ?? "expense");
+  const [subcategoryParentMode, setSubcategoryParentMode] = useState(false);
 
   // Synchronize internal type tab with prop if changed
   React.useEffect(() => {
@@ -121,8 +128,15 @@ export function CategoryPickerModal({
 
   const handleClose = () => {
     setSearchQuery("");
+    setSubcategoryParentMode(false);
     onClose();
   };
+
+  const effectiveType = type ?? selectedType;
+  const parentCategoriesForSubcategory = useMemo(
+    () => hierarchicalCategories.filter((cat) => cat.type === effectiveType),
+    [effectiveType, hierarchicalCategories],
+  );
 
   const resolveEntityColor = useResolveEntityColor();
   const getCategoryColor = (colorKey: string | null) => resolveEntityColor(colorKey);
@@ -373,6 +387,77 @@ export function CategoryPickerModal({
               })
             )}
           </ScrollView>
+
+          {enableQuickAdd && (onRequestAddCategory || onRequestAddSubcategory) ? (
+            <View style={styles.quickAddFooter}>
+              {subcategoryParentMode ? (
+                <>
+                  <View style={styles.quickAddHeaderRow}>
+                    <Text style={styles.quickAddTitle}>Choose parent category</Text>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      onPress={() => setSubcategoryParentMode(false)}
+                    >
+                      <Text style={styles.quickAddCancel}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    contentContainerStyle={styles.parentPickList}
+                    keyboardShouldPersistTaps="handled"
+                    style={styles.parentPickScroll}
+                  >
+                    {parentCategoriesForSubcategory.map((parent) => (
+                      <TouchableOpacity
+                        key={parent.id}
+                        accessibilityRole="button"
+                        onPress={() => {
+                          onRequestAddSubcategory?.(parent, effectiveType);
+                          setSubcategoryParentMode(false);
+                        }}
+                        style={styles.parentPickRow}
+                      >
+                        <Text style={styles.parentPickLabel}>{parent.name}</Text>
+                        <ChevronRight color={theme.colors.textMuted} size={16} />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              ) : (
+                <View style={styles.quickAddActions}>
+                  {onRequestAddCategory ? (
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      onPress={() => onRequestAddCategory(effectiveType)}
+                      style={styles.quickAddButton}
+                    >
+                      <Text style={styles.quickAddButtonText}>Add category</Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {onRequestAddSubcategory ? (
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      onPress={() => {
+                        if (parentCategoriesForSubcategory.length === 0) {
+                          return;
+                        }
+                        setSubcategoryParentMode(true);
+                      }}
+                      style={[
+                        styles.quickAddButton,
+                        styles.quickAddButtonSecondary,
+                        parentCategoriesForSubcategory.length === 0 &&
+                          styles.quickAddButtonDisabled,
+                      ]}
+                    >
+                      <Text style={styles.quickAddButtonTextSecondary}>
+                        Add subcategory
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -633,6 +718,82 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 13,
       textAlign: "center",
+    },
+    quickAddFooter: {
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      gap: theme.spacing.sm,
+      paddingBottom: theme.spacing.lg,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+    },
+    quickAddHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    quickAddTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    quickAddCancel: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    quickAddActions: {
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    quickAddButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.medium,
+      flex: 1,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+    },
+    quickAddButtonSecondary: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
+    },
+    quickAddButtonDisabled: {
+      opacity: 0.45,
+    },
+    quickAddButtonText: {
+      color: theme.colors.onPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    quickAddButtonTextSecondary: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    parentPickScroll: {
+      maxHeight: 160,
+    },
+    parentPickList: {
+      gap: theme.spacing.xs,
+    },
+    parentPickRow: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+    },
+    parentPickLabel: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
     },
   });
 }

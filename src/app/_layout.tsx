@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { AppShell } from "@/components/app-shell";
+import { ExperienceAppShell } from "@/components/experience-app-shell";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { LocalizationProvider } from "@/infrastructure/localization";
@@ -58,7 +58,7 @@ function RootLayoutContent() {
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
-                        <AppShell banner={<SampleWorkspaceBanner />}>
+                        <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
                           <Stack
                             screenOptions={{
                               contentStyle: {
@@ -136,7 +136,7 @@ function RootLayoutContent() {
                         />
                         <Stack.Screen name="monitor" />
                           </Stack>
-                        </AppShell>
+                        </ExperienceAppShell>
                         </>
                       </WhatsNewGate>
                     </OnboardingGate>

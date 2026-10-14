@@ -6,6 +6,7 @@ import type { TransactionType } from "../types/transaction.types";
 
 interface TransactionTypePickerProps {
   disabled?: boolean;
+  allowTransfer?: boolean;
   onChange: (value: TransactionType) => void;
   value: TransactionType;
 }
@@ -21,15 +22,19 @@ const TRANSACTION_TYPES: ReadonlyArray<{
 
 export function TransactionTypePicker({
   disabled = false,
+  allowTransfer = true,
   onChange,
   value,
 }: TransactionTypePickerProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const options = allowTransfer
+    ? TRANSACTION_TYPES
+    : TRANSACTION_TYPES.filter((option) => option.value !== "transfer");
 
   return (
     <View style={styles.tabBar}>
-      {TRANSACTION_TYPES.map((option) => {
+      {options.map((option) => {
         const active = value === option.value;
         const activeColor =
           option.value === "expense"

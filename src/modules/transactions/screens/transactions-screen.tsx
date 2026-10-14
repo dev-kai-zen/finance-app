@@ -144,7 +144,7 @@ export function TransactionsScreen() {
   } = useTransactionPresets();
 
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
-  const { categories } = useCategories();
+  const { categories, refresh: refreshCategories } = useCategories();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -731,6 +731,7 @@ export function TransactionsScreen() {
         onChangePresetSortBy={setPresetSortBy}
         onUpdateTransaction={handleUpdateTransaction}
         onUpdateTransfer={handleUpdateTransfer}
+        onCategoriesChanged={() => void refreshCategories()}
         pending={pendingAction}
         visible={isFormModalOpen}
       />

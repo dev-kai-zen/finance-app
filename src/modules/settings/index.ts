@@ -14,4 +14,36 @@ export { useDefaultAccounts } from "./hooks/use-default-accounts";
 export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
+  FORM_FIELD_SETTING_KEYS,
+  NAV_VISIBILITY_SETTING_KEYS,
+  NAV_HREF_BY_VISIBILITY_KEY,
+  PROMPT_SETTING_KEYS,
+  DEVELOPER_MODE_SETTING_KEY,
 } from "./constants/settings.constants";
+export type { NavVisibilityKey } from "./constants/settings.constants";
+export { useExperiencePreferences } from "./hooks/use-experience-preferences";
+export {
+  applyGuidedWorkspaceSimpleDefaults,
+  getDeveloperModeEnabled,
+  getHiddenNavHrefs,
+  getHomeExperienceMode,
+  getNavVisibilityPreferences,
+  getTransactionFormFieldPreferences,
+  isGuidedWorkspace,
+  isPromptDismissed,
+  isTransactionFormFieldEnabled,
+  isNavItemVisible,
+  setDeveloperModeEnabled,
+  setHomeExperienceMode,
+  setNavItemVisible,
+  setPromptDismissed,
+  setTransactionFormFieldEnabled,
+  setTransactionFormFieldPreferences,
+  subscribeToExperiencePreferences,
+} from "./services/experience-preferences.service";
+export type {
+  FormFieldPreferenceKey,
+  HomeExperienceMode,
+  NavVisibilityPreferences,
+  TransactionFormFieldPreferences,
+} from "./services/experience-preferences.service";

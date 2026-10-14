@@ -305,3 +305,41 @@ test("each recommended account template links to its matching account type", () 
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });
+
+test("guided setup creates one account, essentials categories, and simple preferences", async () => {
+  const state = await workspace.completeGuidedSetup({
+    currencyCode: "USD",
+    account: { name: "Wallet", openingAmount: "100", template: "cash" },
+  });
+
+  assert.equal(state.mode, "personal");
+  assert.equal(state.setupStrategy, "guided");
+  assert.equal(state.primaryCurrency, "USD");
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 1);
+  assert.equal(
+    sqlite.prepare("SELECT currency_code FROM accounts LIMIT 1").get().currency_code,
+    "USD",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'workspace.setupStrategy'").get().value,
+    "guided",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'form.transactionName'").get().value,
+    "false",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'experience.home'").get().value,
+    "simple",
+  );
+  assert.ok(
+    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count >= 5,
+  );
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("missing form field defaults to enabled for non-guided workspaces", async () => {
+  const experience = require("@/modules/settings/services/experience-preferences.service");
+  await workspace.completeRecommendedSetup();
+  assert.equal(experience.isTransactionFormFieldEnabled("note"), true);
+});
