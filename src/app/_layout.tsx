@@ -84,8 +84,7 @@ function RootLayoutContent() {
                             presentation: "fullScreenModal",
                             headerShown: true,
                             title: "Language",
-                            headerBackTitle: "Language",
-                            headerBackButtonDisplayMode: "default",
+                            headerBackVisible: false,
                             headerShadowVisible: true,
                             headerStyle: {
                               backgroundColor: theme.colors.background,

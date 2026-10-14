@@ -154,8 +154,10 @@ export const fil = {
       "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
   language: {
-    heading: "Kagustuhan sa wika",
-    description: "Piliin ang wikang gagamitin sa navigation at mga setting.",
+    backAccessibility: "Bumalik",
+    helpTitle: "Tungkol sa Wika",
+    helpMessage:
+      "Piliin ang wikang gagamitin sa navigation at mga setting. Ang default ng system ay sumusunod sa wika ng device kapag may suportadong translation.",
     searchPlaceholder: "Maghanap ng wika",
     searchAccessibility: "Maghanap ng wika",
     systemDefault: "Default ng system",

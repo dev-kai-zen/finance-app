@@ -63,8 +63,13 @@ export function GoalsScreen() {
     }
   };
 
+  const contentSpacing = useThemeStyles((theme) => ({
+    paddingTop: theme.spacing.lg,
+  }));
+
   return (
     <PageContainer
+      contentContainerStyle={contentSpacing}
       floatingAction={
         <FloatingActionButton
           accessibilityLabel="Add New Goal"

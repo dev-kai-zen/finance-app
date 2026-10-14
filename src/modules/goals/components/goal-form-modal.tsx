@@ -406,13 +406,18 @@ export function GoalFormModal({
             <Text style={styles.label}>Icon & Appearance</Text>
             <View style={styles.appearanceRow}>
               <Pressable
+                accessibilityLabel={`Current icon: ${iconKey || "target"}. Tap to change icon.`}
+                accessibilityRole="button"
                 onPress={() => setIsIconPickerOpen(true)}
                 style={styles.iconSelectButton}
               >
                 <View
                   style={[
                     styles.iconCircle,
-                    { backgroundColor: `${activeColorHex}22` },
+                    {
+                      backgroundColor: `${activeColorHex}22`,
+                      borderColor: `${activeColorHex}55`,
+                    },
                   ]}
                 >
                   <IconHelper
@@ -421,7 +426,24 @@ export function GoalFormModal({
                     size={24}
                   />
                 </View>
-                <Text style={styles.iconSelectText}>Change Icon</Text>
+                <View
+                  style={[
+                    styles.changeIconBadge,
+                    {
+                      backgroundColor: `${theme.colors.primary}15`,
+                      borderColor: `${theme.colors.primary}40`,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.iconSelectText,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    Change Icon
+                  </Text>
+                </View>
               </Pressable>
 
               <View style={styles.colorPaletteWrapper}>
@@ -725,7 +747,13 @@ function createStyles(theme: AppTheme) {
     },
     iconSelectButton: {
       alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
       gap: 6,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.sm,
     },
     iconCircle: {
       width: 52,
@@ -733,11 +761,17 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
       alignItems: "center",
       justifyContent: "center",
+      borderWidth: 1,
+    },
+    changeIconBadge: {
+      borderRadius: 999,
+      borderWidth: 1,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
     },
     iconSelectText: {
-      color: theme.colors.textSecondary,
       fontSize: 11,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     colorPaletteWrapper: {
       flex: 1,

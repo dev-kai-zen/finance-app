@@ -11,6 +11,7 @@ import {
 import { Check, Languages, Search, Smartphone } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { InfoModal } from "@/components";
 import { getResponsiveGutter, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -28,7 +29,13 @@ type LanguageListItem =
   | { kind: "system"; key: "system" }
   | { kind: "language"; key: string; language: SupportedLanguage };
 
-export function LanguageScreen() {
+export function LanguageScreen({
+  helpVisible,
+  onCloseHelp,
+}: {
+  helpVisible: boolean;
+  onCloseHelp: () => void;
+}) {
   const [query, setQuery] = useState("");
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -67,6 +74,12 @@ export function LanguageScreen() {
 
   return (
     <View style={styles.screen}>
+      <InfoModal
+        message={t("language.helpMessage")}
+        onClose={onCloseHelp}
+        title={t("language.helpTitle")}
+        visible={helpVisible}
+      />
       <FlatList
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -79,10 +92,6 @@ export function LanguageScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text accessibilityRole="header" style={styles.heading}>
-              {t("language.heading")}
-            </Text>
-            <Text style={styles.description}>{t("language.description")}</Text>
             <View style={styles.searchContainer}>
               <Search color={theme.colors.textMuted} size={20} />
               <TextInput
@@ -203,18 +212,7 @@ function createStyles(theme: AppTheme) {
       width: "100%",
     },
     header: {
-      gap: theme.spacing.xs,
       paddingBottom: theme.spacing.lg,
-    },
-    heading: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    description: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
     },
     searchContainer: {
       alignItems: "center",
@@ -225,7 +223,6 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.sm,
-      marginTop: theme.spacing.md,
       minHeight: 50,
       paddingHorizontal: theme.spacing.md,
     },

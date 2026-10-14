@@ -154,8 +154,10 @@ export const es = {
       "La moneda predeterminada se usa en totales combinados y cuentas nuevas. Las cuentas existentes conservan su moneda. Las opciones de visualización no modifican los valores guardados.",
   },
   language: {
-    heading: "Preferencia de idioma",
-    description: "Elige el idioma para la navegación y la configuración.",
+    backAccessibility: "Volver",
+    helpTitle: "Acerca del idioma",
+    helpMessage:
+      "Elige el idioma para la navegación y la configuración. El predeterminado del sistema sigue el idioma del dispositivo cuando hay una traducción compatible.",
     searchPlaceholder: "Buscar idiomas",
     searchAccessibility: "Buscar idiomas",
     systemDefault: "Predeterminado del sistema",

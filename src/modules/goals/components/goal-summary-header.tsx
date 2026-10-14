@@ -143,11 +143,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       borderColor: theme.colors.border,
       padding: theme.spacing.lg,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
+      ...theme.shadows.card,
     },
     heroTopRow: {
       flexDirection: "row",
@@ -161,7 +157,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.8,
       textTransform: "uppercase",
-      marginBottom: 2,
+      marginBottom: theme.spacing.xxs,
     },
     heroTargetAmount: {
       color: theme.colors.textPrimary,
@@ -171,10 +167,10 @@ function createStyles(theme: AppTheme) {
     percentageBadge: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 4,
+      gap: theme.spacing.xs,
       backgroundColor: `${theme.colors.primary}15`,
       paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 4,
+      paddingVertical: theme.spacing.xs,
       borderRadius: theme.borderRadius.round,
     },
     percentageText: {
@@ -183,7 +179,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
     },
     progressTrack: {
-      height: 10,
+      height: theme.spacing.sm,
       backgroundColor: theme.colors.surfaceElevated,
       borderRadius: theme.borderRadius.round,
       overflow: "hidden",
@@ -202,7 +198,7 @@ function createStyles(theme: AppTheme) {
     statLabel: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
-      marginBottom: 2,
+      marginBottom: theme.spacing.xxs,
     },
     statValueSaved: {
       color: theme.colors.success,
@@ -233,8 +229,8 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
     },
     miniIconWrapper: {
-      width: 32,
-      height: 32,
+      width: theme.spacing.xxl,
+      height: theme.spacing.xxl,
       borderRadius: theme.borderRadius.small,
       alignItems: "center",
       justifyContent: "center",
@@ -249,7 +245,7 @@ function createStyles(theme: AppTheme) {
     },
     miniLabel: {
       color: theme.colors.textSecondary,
-      fontSize: 11,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
     },
   });
