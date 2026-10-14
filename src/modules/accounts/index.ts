@@ -111,6 +111,7 @@ export type {
   InitialAccountTemplate,
   SampleAccountIds,
 } from "./services/workspace-accounts.service";
+export { RECOMMENDED_ACCOUNT_IDS } from "./services/workspace-accounts.service";
 export {
   SYSTEM_ACCOUNT_TYPE_IDS,
   FALLBACK_ACCOUNT_TYPE_BY_GROUP,

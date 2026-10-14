@@ -334,10 +334,10 @@ export function OnboardingScreen() {
               <View style={styles.samplePreview}>
                 <Sparkles color={theme.colors.primary} size={20} />
                 {[
-                  "Cash Wallet, Bank Account, Savings Account, and E-Wallet",
-                  "Complete income and expense category groups",
-                  "Recommended subcategories ready for transactions",
-                  "PHP as the primary currency with zero opening balances",
+                  "Cash, payroll bank, emergency savings (with a pocket), and e-wallet",
+                  "Everyday credit card and a personal loan liability",
+                  "Complete income and expense category groups with subcategories",
+                  "Realistic opening balances in PHP — no sample transaction history",
                 ].map((item) => (
                   <View key={item} style={styles.bulletRow}>
                     <Check color={theme.colors.success} size={18} />
@@ -377,7 +377,7 @@ export function OnboardingScreen() {
                 </View>
 
                 {[
-                  "6 accounts: cash, bank, savings, e-wallet, credit card, and an archived account",
+                  "8 accounts: assets, two extra liabilities, credit card, and one archived account",
                   "Savings pockets for an emergency fund and travel",
                   "Income, expenses, account transfers, pocket transfers, and a card payment",
                   "31 transaction records, including one item in Trash",
@@ -473,19 +473,19 @@ function WelcomeStep({
       />
       <View style={styles.optionList}>
         <OnboardingOptionCard
+          badge="Recommended"
+          description="Employee-friendly accounts, liabilities, and complete category presets with realistic opening balances."
+          disabled={disabled}
+          icon={<Sparkles color={theme.colors.primary} size={23} />}
+          onPress={() => onChoose("recommended")}
+          title="Use recommended setup"
+        />
+        <OnboardingOptionCard
           description="Define your own account types, accounts, category groups, and subcategories with a guided checklist."
           disabled={disabled}
           icon={<Wallet color={theme.colors.textSecondary} size={23} />}
           onPress={() => onChoose("manual")}
           title="Start from scratch"
-        />
-        <OnboardingOptionCard
-          badge="Recommended"
-          description="Start with ready-to-use accounts, standard account types, and complete category presets."
-          disabled={disabled}
-          icon={<Sparkles color={theme.colors.primary} size={23} />}
-          onPress={() => onChoose("recommended")}
-          title="Use recommended setup"
         />
         {!personalOnly ? (
           <>

@@ -5,6 +5,7 @@ import {
   createRecommendedAccounts,
   createSampleAccounts,
   hasAccountWorkspaceData,
+  RECOMMENDED_ACCOUNT_IDS,
   type InitialAccountInput,
 } from "@/modules/accounts";
 import {
@@ -125,6 +126,8 @@ export async function completeRecommendedSetup(): Promise<WorkspaceState> {
     clearSampleWorkspaceIfNeeded(tx);
     await prepareWorkspaceCategories("recommended", tx, now);
     createRecommendedAccounts(tx, now);
+    setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
+    setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     saveCompletedSettings("personal", "recommended", tx, now);
   });
 

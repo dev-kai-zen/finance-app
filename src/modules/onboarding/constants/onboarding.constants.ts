@@ -6,4 +6,4 @@ export const ONBOARDING_SETTING_KEYS = {
   primaryCurrency: "workspace.primaryCurrency",
 } as const;
 
-export const SAMPLE_DATA_VERSION = 1;
+export const SAMPLE_DATA_VERSION = 2;

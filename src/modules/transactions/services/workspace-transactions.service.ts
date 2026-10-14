@@ -203,7 +203,7 @@ export function createSampleTransactions(
     },
     {
       id: "fuel-previous",
-      accountId: accounts.wallet,
+      accountId: accounts.checking,
       categoryId: "cat_sub_transport_fuel",
       type: "expense",
       amountMinorUnits: -180_000,

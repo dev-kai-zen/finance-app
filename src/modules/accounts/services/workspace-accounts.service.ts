@@ -31,6 +31,8 @@ export interface SampleAccountIds {
   creditCard: string;
   ewallet: string;
   archived: string;
+  personalLoan: string;
+  installmentCredit: string;
   emergencyPocket: string;
   travelPocket: string;
 }
@@ -42,9 +44,21 @@ const SAMPLE_IDS: SampleAccountIds = {
   creditCard: "sample:account:credit-card",
   ewallet: "sample:account:ewallet",
   archived: "sample:account:archived",
+  personalLoan: "sample:account:personal-loan",
+  installmentCredit: "sample:account:installment-credit",
   emergencyPocket: "sample:pocket:emergency",
   travelPocket: "sample:pocket:travel",
 };
+
+const RECOMMENDED_ACCOUNT_IDS = {
+  cash: "recommended:account:cash",
+  bank: "recommended:account:bank",
+  savings: "recommended:account:savings",
+  ewallet: "recommended:account:ewallet",
+  creditCard: "recommended:account:credit-card",
+  personalLoan: "recommended:account:personal-loan",
+  emergencyPocket: "recommended:pocket:emergency",
+} as const;
 
 const RECOMMENDED_ACCOUNT_TYPES: Record<
   InitialAccountTemplate,
@@ -122,25 +136,26 @@ export function createInitialAccount(
       name,
       note: null,
       iconKey: template.iconKey,
-        currencyCode,
-        openingBalanceMinorUnits,
-        openingBalanceAt,
-        startingBalanceLocked: false,
-        hideFromSelection: false,
-        hideFromReports: false,
-        pocketEnabled: template.pocketEnabled,
-        maintainingBalanceMinorUnits: null,
-        isArchived: false,
-        sortOrder: 0,
-        createdAt: now,
-        updatedAt: now,
-      },
-      context,
-    );
+      currencyCode,
+      openingBalanceMinorUnits,
+      openingBalanceAt,
+      startingBalanceLocked: false,
+      hideFromSelection: false,
+      hideFromReports: false,
+      pocketEnabled: template.pocketEnabled,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
 
   return id;
 }
 
+/** Starter template for a typical employee: assets, liabilities, and full category presets (applied separately). */
 export function createRecommendedAccounts(
   context: DbContext,
   now = new Date(),
@@ -148,42 +163,63 @@ export function createRecommendedAccounts(
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
   const openingBalanceAt = new Date(now);
   openingBalanceAt.setHours(0, 0, 0, 0);
-  const recommendedAccounts: Array<{
+
+  const assetAccounts: Array<{
     id: string;
     name: string;
     template: InitialAccountTemplate;
+    openingBalanceMinorUnits: number;
+    maintainingBalanceMinorUnits?: number | null;
+    note?: string;
   }> = [
-    { id: "recommended:account:cash", name: "Cash Wallet", template: "cash" },
-    { id: "recommended:account:bank", name: "Bank Account", template: "bank" },
     {
-      id: "recommended:account:savings",
-      name: "Savings Account",
-      template: "savings",
+      id: RECOMMENDED_ACCOUNT_IDS.cash,
+      name: "Cash on Hand",
+      template: "cash",
+      openingBalanceMinorUnits: 500_000,
+      note: "Petty cash and everyday pocket money",
     },
     {
-      id: "recommended:account:ewallet",
+      id: RECOMMENDED_ACCOUNT_IDS.bank,
+      name: "Payroll Account",
+      template: "bank",
+      openingBalanceMinorUnits: 3_200_000,
+      maintainingBalanceMinorUnits: 500_000,
+      note: "Salary deposits and bill payments",
+    },
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.savings,
+      name: "Emergency Savings",
+      template: "savings",
+      openingBalanceMinorUnits: 12_000_000,
+      note: "Rainy-day fund with a dedicated pocket",
+    },
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.ewallet,
       name: "E-Wallet",
       template: "ewallet",
+      openingBalanceMinorUnits: 850_000,
+      note: "Mobile wallet for rides, delivery, and subscriptions",
     },
   ];
 
-  for (const account of recommendedAccounts) {
+  for (const account of assetAccounts) {
     const template = RECOMMENDED_ACCOUNT_TYPES[account.template];
     insertAccount(
       {
         id: account.id,
         accountTypeId: accountTypeIds[account.template],
         name: account.name,
-        note: null,
+        note: account.note ?? null,
         iconKey: template.iconKey,
         currencyCode: "PHP",
-        openingBalanceMinorUnits: 0,
+        openingBalanceMinorUnits: account.openingBalanceMinorUnits,
         openingBalanceAt,
         startingBalanceLocked: false,
         hideFromSelection: false,
         hideFromReports: false,
         pocketEnabled: template.pocketEnabled,
-        maintainingBalanceMinorUnits: null,
+        maintainingBalanceMinorUnits: account.maintainingBalanceMinorUnits ?? null,
         isArchived: false,
         sortOrder: 0,
         createdAt: now,
@@ -192,7 +228,79 @@ export function createRecommendedAccounts(
       context,
     );
   }
+
+  insertPocket(
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.emergencyPocket,
+      accountId: RECOMMENDED_ACCOUNT_IDS.savings,
+      name: "Emergency Fund",
+      targetAmountMinorUnits: 15_000_000,
+      isArchived: false,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
+
+  insertAccount(
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.creditCard,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_CREDIT_CARD,
+      name: "Everyday Credit Card",
+      note: "Track card spending and monthly payments",
+      iconKey: "credit-card",
+      currencyCode: "PHP",
+      openingBalanceMinorUnits: -850_000,
+      openingBalanceAt,
+      startingBalanceLocked: false,
+      hideFromSelection: false,
+      hideFromReports: false,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
+
+  upsertCreditCardDetails(
+    {
+      accountId: RECOMMENDED_ACCOUNT_IDS.creditCard,
+      creditLimitMinorUnits: 5_000_000,
+      statementDay: 15,
+      paymentDueDay: 5,
+    },
+    context,
+  );
+
+  insertAccount(
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.personalLoan,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
+      name: "Personal Loan",
+      note: "Example liability for installment debt",
+      iconKey: "landmark",
+      currencyCode: "PHP",
+      openingBalanceMinorUnits: -3_600_000,
+      openingBalanceAt,
+      startingBalanceLocked: false,
+      hideFromSelection: false,
+      hideFromReports: false,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 1,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
 }
+
+export { RECOMMENDED_ACCOUNT_IDS };
 
 function ensureRecommendedAccountTypes(
   context: DbContext,
@@ -292,7 +400,7 @@ export function createSampleAccounts(
       accountTypeId: "sample:type:cash",
       name: "Cash Wallet",
       iconKey: "wallet",
-      openingBalanceMinorUnits: 250_000,
+      openingBalanceMinorUnits: 600_000,
       pocketEnabled: false,
       maintainingBalanceMinorUnits: null,
       isArchived: false,
@@ -341,6 +449,28 @@ export function createSampleAccounts(
       maintainingBalanceMinorUnits: null,
       isArchived: false,
       sortOrder: 0,
+    },
+    {
+      id: SAMPLE_IDS.personalLoan,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
+      name: "Personal Loan",
+      iconKey: "landmark",
+      openingBalanceMinorUnits: -2_400_000,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 1,
+    },
+    {
+      id: SAMPLE_IDS.installmentCredit,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
+      name: "Laptop Installment",
+      iconKey: "laptop",
+      openingBalanceMinorUnits: -960_000,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 2,
     },
     {
       id: SAMPLE_IDS.archived,
