@@ -227,6 +227,9 @@ export const en = {
     restoreBackup: "Restore a backup",
     seeExample: "See an example workspace",
     setupMyself: "Set this up myself",
+    allSetupOptions: "See all onboarding options",
+    backToSample: "Back to sample",
+    backToSetupChoices: "Back to setup choices",
     languageTitle: "Choose your language",
     languageDescription: "You can change this anytime in Settings.",
     currencyTitle: "What money do you use?",
@@ -255,7 +258,7 @@ export const en = {
       "Create account types, accounts, and categories yourself.",
     recommendedSetupTitle: "Use recommended setup",
     recommendedSetupDescription:
-      "Ready-made accounts and categories to start recording quickly.",
+      "Ready-made accounts (zero balance), Loans and Credits types, and full category presets.",
     recommendedBadge: "Recommended",
   },
   transactionForm: {

@@ -55,10 +55,38 @@ const RECOMMENDED_ACCOUNT_IDS = {
   bank: "recommended:account:bank",
   savings: "recommended:account:savings",
   ewallet: "recommended:account:ewallet",
-  creditCard: "recommended:account:credit-card",
-  personalLoan: "recommended:account:personal-loan",
+  bdoLoan: "recommended:account:bdo",
+  workmateCredit: "recommended:account:workmate",
   emergencyPocket: "recommended:pocket:emergency",
 } as const;
+
+type RecommendedLiabilityTemplate = "loans" | "credits";
+
+const RECOMMENDED_LIABILITY_TYPES: Record<
+  RecommendedLiabilityTemplate,
+  {
+    id: string;
+    name: string;
+    iconKey: string;
+    hexColorsId: string;
+    sortOrder: number;
+  }
+> = {
+  loans: {
+    id: "recommended:type:loans",
+    name: "Loans",
+    iconKey: "landmark",
+    hexColorsId: "color_blue",
+    sortOrder: 0,
+  },
+  credits: {
+    id: "recommended:type:credits",
+    name: "Credits",
+    iconKey: "credit-card",
+    hexColorsId: "color_purple",
+    sortOrder: 1,
+  },
+};
 
 const RECOMMENDED_ACCOUNT_TYPES: Record<
   InitialAccountTemplate,
@@ -155,12 +183,13 @@ export function createInitialAccount(
   return id;
 }
 
-/** Starter template for a typical employee: assets, liabilities, and full category presets (applied separately). */
+/** Starter template: asset and liability account types with zero-balance accounts (categories applied separately). */
 export function createRecommendedAccounts(
   context: DbContext,
   now = new Date(),
 ): void {
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
+  const liabilityTypeIds = ensureRecommendedLiabilityAccountTypes(context, now);
   const openingBalanceAt = new Date(now);
   openingBalanceAt.setHours(0, 0, 0, 0);
 
@@ -168,37 +197,30 @@ export function createRecommendedAccounts(
     id: string;
     name: string;
     template: InitialAccountTemplate;
-    openingBalanceMinorUnits: number;
-    maintainingBalanceMinorUnits?: number | null;
     note?: string;
   }> = [
     {
       id: RECOMMENDED_ACCOUNT_IDS.cash,
       name: "Cash on Hand",
       template: "cash",
-      openingBalanceMinorUnits: 500_000,
       note: "Petty cash and everyday pocket money",
     },
     {
       id: RECOMMENDED_ACCOUNT_IDS.bank,
       name: "Payroll Account",
       template: "bank",
-      openingBalanceMinorUnits: 3_200_000,
-      maintainingBalanceMinorUnits: 500_000,
       note: "Salary deposits and bill payments",
     },
     {
       id: RECOMMENDED_ACCOUNT_IDS.savings,
       name: "Emergency Savings",
       template: "savings",
-      openingBalanceMinorUnits: 12_000_000,
       note: "Rainy-day fund with a dedicated pocket",
     },
     {
       id: RECOMMENDED_ACCOUNT_IDS.ewallet,
       name: "E-Wallet",
       template: "ewallet",
-      openingBalanceMinorUnits: 850_000,
       note: "Mobile wallet for rides, delivery, and subscriptions",
     },
   ];
@@ -213,13 +235,13 @@ export function createRecommendedAccounts(
         note: account.note ?? null,
         iconKey: template.iconKey,
         currencyCode: "PHP",
-        openingBalanceMinorUnits: account.openingBalanceMinorUnits,
+        openingBalanceMinorUnits: 0,
         openingBalanceAt,
         startingBalanceLocked: false,
         hideFromSelection: false,
         hideFromReports: false,
         pocketEnabled: template.pocketEnabled,
-        maintainingBalanceMinorUnits: account.maintainingBalanceMinorUnits ?? null,
+        maintainingBalanceMinorUnits: null,
         isArchived: false,
         sortOrder: 0,
         createdAt: now,
@@ -234,7 +256,7 @@ export function createRecommendedAccounts(
       id: RECOMMENDED_ACCOUNT_IDS.emergencyPocket,
       accountId: RECOMMENDED_ACCOUNT_IDS.savings,
       name: "Emergency Fund",
-      targetAmountMinorUnits: 15_000_000,
+      targetAmountMinorUnits: null,
       isArchived: false,
       sortOrder: 0,
       createdAt: now,
@@ -243,61 +265,54 @@ export function createRecommendedAccounts(
     context,
   );
 
-  insertAccount(
+  const liabilityAccounts: Array<{
+    id: string;
+    name: string;
+    template: RecommendedLiabilityTemplate;
+    note: string;
+    sortOrder: number;
+  }> = [
     {
-      id: RECOMMENDED_ACCOUNT_IDS.creditCard,
-      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_CREDIT_CARD,
-      name: "Everyday Credit Card",
-      note: "Track card spending and monthly payments",
-      iconKey: "credit-card",
-      currencyCode: "PHP",
-      openingBalanceMinorUnits: -850_000,
-      openingBalanceAt,
-      startingBalanceLocked: false,
-      hideFromSelection: false,
-      hideFromReports: false,
-      pocketEnabled: false,
-      maintainingBalanceMinorUnits: null,
-      isArchived: false,
+      id: RECOMMENDED_ACCOUNT_IDS.bdoLoan,
+      name: "BDO",
+      template: "loans",
+      note: "Example loan under the Loans account type",
       sortOrder: 0,
-      createdAt: now,
-      updatedAt: now,
     },
-    context,
-  );
-
-  upsertCreditCardDetails(
     {
-      accountId: RECOMMENDED_ACCOUNT_IDS.creditCard,
-      creditLimitMinorUnits: 5_000_000,
-      statementDay: 15,
-      paymentDueDay: 5,
+      id: RECOMMENDED_ACCOUNT_IDS.workmateCredit,
+      name: "Workmate",
+      template: "credits",
+      note: "Example store or company credit under the Credits account type",
+      sortOrder: 0,
     },
-    context,
-  );
+  ];
 
-  insertAccount(
-    {
-      id: RECOMMENDED_ACCOUNT_IDS.personalLoan,
-      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
-      name: "Personal Loan",
-      note: "Example liability for installment debt",
-      iconKey: "landmark",
-      currencyCode: "PHP",
-      openingBalanceMinorUnits: -3_600_000,
-      openingBalanceAt,
-      startingBalanceLocked: false,
-      hideFromSelection: false,
-      hideFromReports: false,
-      pocketEnabled: false,
-      maintainingBalanceMinorUnits: null,
-      isArchived: false,
-      sortOrder: 1,
-      createdAt: now,
-      updatedAt: now,
-    },
-    context,
-  );
+  for (const account of liabilityAccounts) {
+    const typeDefinition = RECOMMENDED_LIABILITY_TYPES[account.template];
+    insertAccount(
+      {
+        id: account.id,
+        accountTypeId: liabilityTypeIds[account.template],
+        name: account.name,
+        note: account.note,
+        iconKey: typeDefinition.iconKey,
+        currencyCode: "PHP",
+        openingBalanceMinorUnits: 0,
+        openingBalanceAt,
+        startingBalanceLocked: false,
+        hideFromSelection: false,
+        hideFromReports: false,
+        pocketEnabled: false,
+        maintainingBalanceMinorUnits: null,
+        isArchived: false,
+        sortOrder: account.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+  }
 }
 
 export { RECOMMENDED_ACCOUNT_IDS };
@@ -330,6 +345,49 @@ function ensureRecommendedAccountTypes(
         id: definition.id,
         name: definition.name,
         accountGroup: "asset",
+        iconKey: definition.iconKey,
+        hexColorsId: definition.hexColorsId,
+        isSystem: false,
+        sortOrder: definition.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+    ids[template] = definition.id;
+  }
+
+  return ids;
+}
+
+function ensureRecommendedLiabilityAccountTypes(
+  context: DbContext,
+  now: Date,
+): Record<RecommendedLiabilityTemplate, string> {
+  const existingTypes = listAccountTypes(context);
+  const ids = {} as Record<RecommendedLiabilityTemplate, string>;
+
+  for (const template of Object.keys(
+    RECOMMENDED_LIABILITY_TYPES,
+  ) as RecommendedLiabilityTemplate[]) {
+    const definition = RECOMMENDED_LIABILITY_TYPES[template];
+    const existing = existingTypes.find(
+      (type) =>
+        type.id === definition.id ||
+        (type.accountGroup === "liability" &&
+          type.name.trim().toLowerCase() === definition.name.toLowerCase()),
+    );
+
+    if (existing) {
+      ids[template] = existing.id;
+      continue;
+    }
+
+    insertAccountType(
+      {
+        id: definition.id,
+        name: definition.name,
+        accountGroup: "liability",
         iconKey: definition.iconKey,
         hexColorsId: definition.hexColorsId,
         isSystem: false,

@@ -263,7 +263,7 @@ test("recommended setup atomically replaces sample data with real starter data",
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
-    4,
+    6,
   );
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
@@ -271,7 +271,7 @@ test("recommended setup atomically replaces sample data with real starter data",
   );
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM accounts WHERE opening_balance_minor_units = 0").get().count,
-    0,
+    6,
   );
   assert.equal(
     sqlite.prepare(
@@ -290,13 +290,22 @@ test("recommended setup atomically replaces sample data with real starter data",
   assert.deepEqual(
     sqlite.prepare("SELECT name FROM accounts ORDER BY name").all().map(({ name }) => name),
     [
+      "BDO",
       "Cash on Hand",
       "E-Wallet",
       "Emergency Savings",
-      "Everyday Credit Card",
       "Payroll Account",
-      "Personal Loan",
+      "Workmate",
     ],
+  );
+  assert.deepEqual(
+    sqlite
+      .prepare(
+        "SELECT name FROM account_types WHERE account_group = 'liability' AND is_system = 0 ORDER BY name",
+      )
+      .all()
+      .map(({ name }) => name),
+    ["Credits", "Loans"],
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });

@@ -64,10 +64,17 @@ export function OnboardingScreen() {
     useState<InitialAccountTemplate>("cash");
   const [accountName, setAccountName] = useState("");
   const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
+  const [sampleExitHubOpen, setSampleExitHubOpen] = useState(false);
 
   useEffect(() => {
     setGuidedCurrency(currencyPreferences.defaultCurrency);
   }, [currencyPreferences.defaultCurrency]);
+
+  useEffect(() => {
+    if (!workspace.personalSetupRequested) {
+      setSampleExitHubOpen(false);
+    }
+  }, [workspace.personalSetupRequested]);
 
   const isGuidedFlexStep =
     step === "welcome" ||
@@ -78,6 +85,14 @@ export function OnboardingScreen() {
 
   const goBack = () => {
     workspace.clearError();
+    if (
+      workspace.personalSetupRequested &&
+      step === "welcome" &&
+      sampleExitHubOpen
+    ) {
+      setSampleExitHubOpen(false);
+      return;
+    }
     if (workspace.personalSetupRequested && step === "welcome") {
       workspace.cancelPersonalSetup();
       return;
@@ -111,7 +126,9 @@ export function OnboardingScreen() {
             <Pressable
               accessibilityLabel={
                 workspace.personalSetupRequested && step === "welcome"
-                  ? "Return to sample workspace"
+                  ? sampleExitHubOpen
+                    ? "Back to personal setup choices"
+                    : "Return to sample workspace"
                   : "Back to welcome choices"
               }
               accessibilityRole="button"
@@ -125,7 +142,9 @@ export function OnboardingScreen() {
               <ArrowLeft color={theme.colors.textSecondary} size={18} />
               <Text style={styles.backText}>
                 {workspace.personalSetupRequested && step === "welcome"
-                  ? "Back to sample"
+                  ? sampleExitHubOpen
+                    ? t("onboarding.backToSetupChoices")
+                    : t("onboarding.backToSample")
                   : "Back"}
               </Text>
             </Pressable>
@@ -145,14 +164,42 @@ export function OnboardingScreen() {
 
           {step === "welcome" ? (
             workspace.personalSetupRequested ? (
-              <WelcomeStep
-                disabled={workspace.busy}
-                personalOnly
-                onChoose={(nextStep) => {
-                  workspace.clearError();
-                  setStep(nextStep);
-                }}
-              />
+              sampleExitHubOpen ? (
+                <View style={styles.guidedStepHost}>
+                  <GuidedWelcomeStep
+                    disabled={workspace.busy}
+                    onFullSetup={() => {
+                      workspace.clearError();
+                      setStep("fullSetup");
+                    }}
+                    onGetStarted={() => {
+                      workspace.clearError();
+                      setStep("language");
+                    }}
+                    onRestore={() => {
+                      workspace.clearError();
+                      setStep("restore");
+                    }}
+                    onSample={() => {
+                      workspace.clearError();
+                      setStep("sample");
+                    }}
+                  />
+                </View>
+              ) : (
+                <WelcomeStep
+                  disabled={workspace.busy}
+                  personalOnly
+                  onBrowseAllSetupOptions={() => {
+                    workspace.clearError();
+                    setSampleExitHubOpen(true);
+                  }}
+                  onChoose={(nextStep) => {
+                    workspace.clearError();
+                    setStep(nextStep);
+                  }}
+                />
+              )
             ) : (
               <View style={styles.guidedStepHost}>
                 <GuidedWelcomeStep
@@ -252,19 +299,19 @@ export function OnboardingScreen() {
               />
               <View style={styles.optionList}>
                 <OnboardingOptionCard
-                  description={t("onboarding.manualSetupDescription")}
-                  disabled={workspace.busy}
-                  icon={<Wallet color={theme.colors.textSecondary} size={23} />}
-                  onPress={() => setStep("manual")}
-                  title={t("onboarding.manualSetupTitle")}
-                />
-                <OnboardingOptionCard
                   badge={t("onboarding.recommendedBadge")}
                   description={t("onboarding.recommendedSetupDescription")}
                   disabled={workspace.busy}
                   icon={<Sparkles color={theme.colors.primary} size={23} />}
                   onPress={() => setStep("recommended")}
                   title={t("onboarding.recommendedSetupTitle")}
+                />
+                <OnboardingOptionCard
+                  description={t("onboarding.manualSetupDescription")}
+                  disabled={workspace.busy}
+                  icon={<Wallet color={theme.colors.textSecondary} size={23} />}
+                  onPress={() => setStep("manual")}
+                  title={t("onboarding.manualSetupTitle")}
                 />
               </View>
             </View>
@@ -335,9 +382,9 @@ export function OnboardingScreen() {
                 <Sparkles color={theme.colors.primary} size={20} />
                 {[
                   "Cash, payroll bank, emergency savings (with a pocket), and e-wallet",
-                  "Everyday credit card and a personal loan liability",
+                  "Liabilities grouped as Loans (e.g. BDO) and Credits (e.g. Workmate)",
                   "Complete income and expense category groups with subcategories",
-                  "Realistic opening balances in PHP — no sample transaction history",
+                  "All accounts start at zero — add your own opening balances when ready",
                 ].map((item) => (
                   <View key={item} style={styles.bulletRow}>
                     <Check color={theme.colors.success} size={18} />
@@ -451,15 +498,18 @@ export function OnboardingScreen() {
 
 function WelcomeStep({
   disabled,
+  onBrowseAllSetupOptions,
   onChoose,
   personalOnly,
 }: {
   disabled: boolean;
+  onBrowseAllSetupOptions?: () => void;
   onChoose: (step: Exclude<OnboardingStep, "welcome">) => void;
   personalOnly: boolean;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   return (
     <View style={styles.stepContent}>
@@ -474,7 +524,7 @@ function WelcomeStep({
       <View style={styles.optionList}>
         <OnboardingOptionCard
           badge="Recommended"
-          description="Employee-friendly accounts, liabilities, and complete category presets with realistic opening balances."
+          description="Employee-friendly accounts, liability types (Loans, Credits), and complete category presets — all at zero balance."
           disabled={disabled}
           icon={<Sparkles color={theme.colors.primary} size={23} />}
           onPress={() => onChoose("recommended")}
@@ -506,6 +556,21 @@ function WelcomeStep({
           </>
         ) : null}
       </View>
+      {personalOnly && onBrowseAllSetupOptions ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={onBrowseAllSetupOptions}
+          style={({ pressed }) => [
+            styles.allSetupOptionsLink,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.allSetupOptionsLinkText}>
+            {t("onboarding.allSetupOptions")}
+          </Text>
+        </Pressable>
+      ) : null}
       <View style={styles.privacyRow}>
         <ShieldCheck color={theme.colors.textMuted} size={16} />
         <Text style={styles.privacyText}>
@@ -613,6 +678,18 @@ function createStyles(theme: AppTheme) {
     },
     optionList: {
       gap: theme.spacing.md,
+    },
+    allSetupOptionsLink: {
+      alignSelf: "center",
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.md,
+    },
+    allSetupOptionsLinkText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+      textAlign: "center",
     },
     privacyRow: {
       alignItems: "center",

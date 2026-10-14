@@ -340,7 +340,6 @@ export function CategoriesScreen({
             setReorderGroupsVisible(false);
             await reorderCategories(orderedIds);
           }}
-          showAlphabetizeAction={false}
           title={`Reorder ${selectedType === "expense" ? "Expense" : "Income"} Groups`}
           visible={reorderGroupsVisible}
         />
@@ -364,7 +363,6 @@ export function CategoriesScreen({
             setGroupForSubReorder(null);
             await reorderCategories(orderedIds);
           }}
-          showAlphabetizeAction={false}
           title={`Reorder ${groupForSubReorder.name} Subcategories`}
           visible={reorderSubsVisible}
         />
