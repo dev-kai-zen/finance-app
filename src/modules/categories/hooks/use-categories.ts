@@ -35,17 +35,17 @@ export function useCategories() {
   }, [refresh]);
 
   const save = useCallback(
-    async (input: CategoryInput, id?: string): Promise<boolean> => {
+    async (input: CategoryInput, id?: string): Promise<Category | null> => {
       try {
         setSaving(true);
         setError(null);
-        await saveCategoryService(input, id);
+        const saved = await saveCategoryService(input, id);
         await refresh();
-        return true;
+        return saved;
       } catch (err: any) {
         console.error("[useCategories] Save failed:", err);
         setError(err?.message ?? "Failed to save category.");
-        return false;
+        return null;
       } finally {
         setSaving(false);
       }

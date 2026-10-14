@@ -17,6 +17,7 @@ import type {
   NetWorthPeriod,
 } from "@/modules/dashboard/types/dashboard.types";
 import { formatCurrency } from "@/utils/currency";
+import { useLocalization } from "@/infrastructure/localization";
 
 const PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
 
@@ -27,6 +28,8 @@ export interface DashboardNetWorthCardProps {
   history: NetWorthHistory;
   monthlyChangePercentage: number | null;
   currencyCode?: string;
+  simpleHomeLabels?: boolean;
+  monthlySpentMinorUnits?: number;
 }
 
 export function DashboardNetWorthCard({
@@ -36,10 +39,13 @@ export function DashboardNetWorthCard({
   history,
   monthlyChangePercentage,
   currencyCode = "PHP",
+  simpleHomeLabels = false,
+  monthlySpentMinorUnits = 0,
 }: DashboardNetWorthCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { t } = useLocalization();
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
   const [valuesVisible, setValuesVisible] = useState(true);
@@ -52,7 +58,9 @@ export function DashboardNetWorthCard({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.titleGroup}>
-          <Text style={styles.label}>Net Worth</Text>
+          <Text style={styles.label}>
+            {simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
+          </Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
@@ -171,6 +179,31 @@ export function DashboardNetWorthCard({
       ) : null}
 
       <View style={styles.breakdownRow}>
+        {simpleHomeLabels ? (
+          <View style={[styles.breakdownCard, styles.assetCard, styles.breakdownCardFull]}>
+            <View style={styles.breakdownLabelRow}>
+              <View style={[styles.breakdownDot, styles.liabilityDot]} />
+              <Text style={styles.breakdownLabel}>
+                {t("dashboard.spentThisMonth")}
+              </Text>
+            </View>
+            <Text
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+              numberOfLines={1}
+              selectable={valuesVisible}
+              style={[
+                styles.breakdownValue,
+                preferences.colorAmounts && styles.liabilityValue,
+              ]}
+            >
+              {valuesVisible
+                ? formatCurrency(monthlySpentMinorUnits, currencyCode)
+                : privateValue}
+            </Text>
+          </View>
+        ) : (
+          <>
         <View style={[styles.breakdownCard, styles.assetCard]}>
           <View style={styles.breakdownLabelRow}>
             <View style={[styles.breakdownDot, styles.assetDot]} />
@@ -212,6 +245,8 @@ export function DashboardNetWorthCard({
               : privateValue}
           </Text>
         </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -335,6 +370,10 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.sm,
       marginTop: theme.spacing.md,
+    },
+    breakdownCardFull: {
+      flex: 1,
+      width: "100%",
     },
     breakdownCard: {
       backgroundColor: theme.colors.background,

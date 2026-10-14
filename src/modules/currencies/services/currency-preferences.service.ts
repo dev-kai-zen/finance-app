@@ -61,6 +61,23 @@ export function getCurrencyPreferences(
   };
 }
 
+export function saveDefaultCurrencyCode(
+  currencyCode: string,
+  context: DbContext = db,
+  now = new Date(),
+): void {
+  if (!SUPPORTED_CURRENCY_CODES.includes(currencyCode)) {
+    throw new Error("Choose a supported currency.");
+  }
+  saveCurrencyPreferenceEntries(
+    {
+      [CURRENCY_PREFERENCE_KEYS.defaultCurrency]: currencyCode,
+    },
+    context,
+    now,
+  );
+}
+
 export function saveCurrencyPreferences(
   preferences: CurrencyPreferences,
   context: DbContext = db,

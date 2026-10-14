@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Switch,
@@ -26,16 +27,19 @@ import {
   type AccountListItem,
   type PocketListItem,
 } from "@/modules/accounts";
+import { CategoryFormModal } from "@/modules/categories/components/category-form-modal";
 import {
   CategoryPickerModal,
   resolveDefaultTransactionCategoryId,
+  useCategories,
   type Category,
+  type CategoryType,
 } from "@/modules/categories";
 import {
   previewInstallmentPlan,
   useInstallmentPlanEditState,
 } from "@/modules/credit-cards";
-import { useDefaultAccounts } from "@/modules/settings";
+import { useDefaultAccounts, useExperiencePreferences } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { applySignedAmount } from "@/utils/amount-sign";
 import { getExchangeRateMap } from "@/modules/currencies";
@@ -90,6 +94,7 @@ import {
   TransactionSplitEditor,
   type SplitLineState,
 } from "./transaction-split-editor";
+import { TransactionFormFieldPreferencesModal } from "./transaction-form-field-preferences-modal";
 
 function formatDateString(value: string | null): string {
   if (!value) return "None";
@@ -183,6 +188,7 @@ export interface TransactionFormModalProps {
   defaultExpensePocketId?: string | null;
   defaultIncomeAccountId?: string | null;
   defaultIncomePocketId?: string | null;
+  onCategoriesChanged?: () => void | Promise<void>;
 }
 
 const SHORT_MONTHS = [
@@ -251,11 +257,26 @@ export function TransactionFormModal({
   defaultExpensePocketId: propsDefaultExpensePocketId,
   defaultIncomeAccountId: propsDefaultIncomeAccountId,
   defaultIncomePocketId: propsDefaultIncomePocketId,
+  onCategoriesChanged,
 }: TransactionFormModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const defaultAccounts = useDefaultAccounts();
+  const { formFields } = useExperiencePreferences();
+  const {
+    saveCategory: saveCategoryRecord,
+    saving: categorySaving,
+    error: categorySaveError,
+    clearError: clearCategorySaveError,
+  } = useCategories();
+  const [isFieldPreferencesOpen, setIsFieldPreferencesOpen] = useState(false);
+  const [categoryFormDraft, setCategoryFormDraft] = useState<{
+    applySelection: (categoryId: string) => void;
+    initialParentId: string | null;
+    initialType: CategoryType;
+    parentCategoryName?: string | null;
+  } | null>(null);
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined
       ? propsDefaultExpenseAccountId
@@ -326,6 +347,61 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [categoryFormReturnPicker, setCategoryFormReturnPicker] = useState<
+    "transaction" | "fee" | null
+  >(null);
+
+  const PICKER_DISMISS_MS = Platform.OS === "ios" ? 320 : 120;
+
+  const presentCategoryFormFromPicker = (
+    source: "transaction" | "fee",
+    present: () => void,
+  ) => {
+    setCategoryFormReturnPicker(source);
+    if (source === "transaction") {
+      setIsCategoryPickerOpen(false);
+    } else {
+      setIsFeeCategoryPickerOpen(false);
+    }
+    setTimeout(present, PICKER_DISMISS_MS);
+  };
+
+  const closeCategoryFormModal = () => {
+    const resumePicker = categoryFormReturnPicker;
+    setCategoryFormDraft(null);
+    setCategoryFormReturnPicker(null);
+    if (resumePicker === "transaction") {
+      setIsCategoryPickerOpen(true);
+    } else if (resumePicker === "fee") {
+      setIsFeeCategoryPickerOpen(true);
+    }
+  };
+
+  const openNewCategoryForm = (
+    categoryType: CategoryType,
+    applySelection: (categoryId: string) => void,
+  ) => {
+    clearCategorySaveError();
+    setCategoryFormDraft({
+      applySelection,
+      initialParentId: null,
+      initialType: categoryType,
+    });
+  };
+
+  const openNewSubcategoryForm = (
+    parent: Category,
+    categoryType: CategoryType,
+    applySelection: (categoryId: string) => void,
+  ) => {
+    clearCategorySaveError();
+    setCategoryFormDraft({
+      applySelection,
+      initialParentId: parent.id,
+      initialType: categoryType,
+      parentCategoryName: parent.name,
+    });
+  };
   const [splitCategoryPickerLineKey, setSplitCategoryPickerLineKey] = useState<
     string | null
   >(null);
@@ -891,6 +967,38 @@ export function TransactionFormModal({
       (installmentEditState.canModifyInstallmentPlan &&
         !installmentEditState.hasChargeStatementEntry));
 
+  const activeAccountCount = useMemo(
+    () => accounts.filter((account) => !account.isArchived).length,
+    [accounts],
+  );
+  const allowTransfer = activeAccountCount >= 2;
+
+  useEffect(() => {
+    if (!allowTransfer && mode === "transfer") {
+      setMode("expense");
+    }
+  }, [allowTransfer, mode]);
+
+  const showTransactionNameField =
+    formFields.transactionName ||
+    Boolean(name.trim()) ||
+    Boolean(isEditing && initialTransaction?.name?.trim());
+  const showAttachmentsField =
+    formFields.attachments || attachmentDraft.totalCount > 0;
+  const showLabelsField =
+    formFields.labels ||
+    selectedLabelIds.length > 0 ||
+    Boolean(isEditing && initialTransaction?.labels?.length);
+  const showNoteField =
+    formFields.note ||
+    Boolean(note.trim()) ||
+    Boolean(isEditing && initialTransaction?.note?.trim());
+  const showSplitField = formFields.split || splitEnabled;
+  const showQuickPresetsUi = formFields.quickPresets;
+  const showExactTimeField = formFields.exactTime;
+  const showInstallmentsUi =
+    (formFields.installments || installmentEnabled) && showInstallmentSection;
+
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
       const parsed = parseInt(customTermMonths, 10);
@@ -1388,7 +1496,7 @@ export function TransactionFormModal({
             </Pressable>
           </View>
 
-          {!isEditing ? (
+          {!isEditing && showQuickPresetsUi ? (
             <Pressable
               accessibilityLabel="Open Quick Presets"
               accessibilityRole="button"
@@ -1408,6 +1516,7 @@ export function TransactionFormModal({
 
           <View style={styles.typePickerSpacing}>
             <TransactionTypePicker
+              allowTransfer={allowTransfer}
               disabled={pending}
               onChange={handleModeChange}
               value={mode}
@@ -1419,57 +1528,91 @@ export function TransactionFormModal({
             style={styles.formScroll}
           >
             <View style={styles.nameDateGroup}>
-              <View style={styles.nameSuggestionAnchor}>
-                <View style={styles.nameInputContainer}>
-                  <TextInput
-                    maxLength={100}
-                    onChangeText={(value) => {
-                      setName(value);
-                      setSuggestionsSuppressed(false);
-                    }}
-                    placeholder="Name"
-                    placeholderTextColor={theme.colors.textSecondary}
-                    style={styles.nameInput}
-                    value={name}
-                  />
-                  <Pressable
-                    accessibilityLabel={
-                      attachmentDraft.totalCount > 0
-                        ? `View ${attachmentDraft.totalCount} attachments`
-                        : "Add attachment"
-                    }
-                    accessibilityRole="button"
-                    disabled={pending}
-                    hitSlop={4}
-                    onPress={() => setIsAttachmentManagerOpen(true)}
-                    style={({ pressed }) => [
-                      styles.nameAttachmentButton,
-                      pressed && !pending && styles.nameAttachmentButtonPressed,
-                    ]}
-                  >
-                    <View style={styles.nameAttachmentClipWrap}>
-                      <Paperclip color={theme.colors.primary} size={18} />
-                      {attachmentDraft.totalCount > 0 ? (
-                        <Text style={styles.nameAttachmentCount}>
-                          {attachmentDraft.totalCount > 99
-                            ? "99+"
-                            : attachmentDraft.totalCount}
-                        </Text>
+              {showTransactionNameField || showAttachmentsField ? (
+                <View style={styles.nameSuggestionAnchor}>
+                  {showTransactionNameField ? (
+                    <View style={styles.nameInputContainer}>
+                      <TextInput
+                        maxLength={100}
+                        onChangeText={(value) => {
+                          setName(value);
+                          setSuggestionsSuppressed(false);
+                        }}
+                        placeholder="Name"
+                        placeholderTextColor={theme.colors.textSecondary}
+                        style={[
+                          styles.nameInput,
+                          !showAttachmentsField && styles.nameInputWithoutAttachment,
+                        ]}
+                        value={name}
+                      />
+                      {showAttachmentsField ? (
+                        <Pressable
+                          accessibilityLabel={
+                            attachmentDraft.totalCount > 0
+                              ? `View ${attachmentDraft.totalCount} attachments`
+                              : "Add attachment"
+                          }
+                          accessibilityRole="button"
+                          disabled={pending}
+                          hitSlop={4}
+                          onPress={() => setIsAttachmentManagerOpen(true)}
+                          style={({ pressed }) => [
+                            styles.nameAttachmentButton,
+                            pressed && !pending && styles.nameAttachmentButtonPressed,
+                          ]}
+                        >
+                          <View style={styles.nameAttachmentClipWrap}>
+                            <Paperclip color={theme.colors.primary} size={18} />
+                            {attachmentDraft.totalCount > 0 ? (
+                              <Text style={styles.nameAttachmentCount}>
+                                {attachmentDraft.totalCount > 99
+                                  ? "99+"
+                                  : attachmentDraft.totalCount}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </Pressable>
                       ) : null}
                     </View>
-                  </Pressable>
+                  ) : showAttachmentsField ? (
+                    <Pressable
+                      accessibilityLabel={
+                        attachmentDraft.totalCount > 0
+                          ? `View ${attachmentDraft.totalCount} attachments`
+                          : "Add attachment"
+                      }
+                      accessibilityRole="button"
+                      disabled={pending}
+                      onPress={() => setIsAttachmentManagerOpen(true)}
+                      style={({ pressed }) => [
+                        styles.standaloneAttachmentButton,
+                        pressed && !pending && styles.nameAttachmentButtonPressed,
+                      ]}
+                    >
+                      <Paperclip color={theme.colors.primary} size={18} />
+                      <Text style={styles.standaloneAttachmentText}>
+                        {attachmentDraft.totalCount > 0
+                          ? `${attachmentDraft.totalCount} attachment${attachmentDraft.totalCount === 1 ? "" : "s"}`
+                          : "Add attachment"}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  {showTransactionNameField &&
+                  showQuickPresetsUi &&
+                  !isEditing &&
+                  !suggestionsSuppressed ? (
+                    <QuickPresetSuggestions
+                      accounts={accounts}
+                      categories={categories}
+                      onSelect={applyQuickPreset}
+                      pockets={pockets}
+                      presets={presets}
+                      value={name}
+                    />
+                  ) : null}
                 </View>
-                {!isEditing && !suggestionsSuppressed ? (
-                  <QuickPresetSuggestions
-                    accounts={accounts}
-                    categories={categories}
-                    onSelect={applyQuickPreset}
-                    pockets={pockets}
-                    presets={presets}
-                    value={name}
-                  />
-                ) : null}
-              </View>
+              ) : null}
               <View style={styles.dateTimeRow}>
                 <Pressable
                   accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
@@ -1479,29 +1622,34 @@ export function TransactionFormModal({
                   style={({ pressed }) => [
                     styles.dateTimeButton,
                     pressed && styles.dateTimeButtonPressed,
+                    !showExactTimeField && styles.dateTimeButtonFull,
                   ]}
                 >
                   <Text numberOfLines={1} style={styles.dateTimeText}>
                     {formatTransactionDate(occurredAt)}
                   </Text>
                 </Pressable>
-                <Text accessible={false} style={styles.dateTimeSeparator}>
-                  |
-                </Text>
-                <Pressable
-                  accessibilityLabel={`Transaction time ${formatTransactionTime(occurredAt)}. Tap to change.`}
-                  accessibilityRole="button"
-                  disabled={pending}
-                  onPress={() => setDateTimePickerMode("time")}
-                  style={({ pressed }) => [
-                    styles.dateTimeButton,
-                    pressed && styles.dateTimeButtonPressed,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.dateTimeText}>
-                    {formatTransactionTime(occurredAt)}
-                  </Text>
-                </Pressable>
+                {showExactTimeField ? (
+                  <>
+                    <Text accessible={false} style={styles.dateTimeSeparator}>
+                      |
+                    </Text>
+                    <Pressable
+                      accessibilityLabel={`Transaction time ${formatTransactionTime(occurredAt)}. Tap to change.`}
+                      accessibilityRole="button"
+                      disabled={pending}
+                      onPress={() => setDateTimePickerMode("time")}
+                      style={({ pressed }) => [
+                        styles.dateTimeButton,
+                        pressed && styles.dateTimeButtonPressed,
+                      ]}
+                    >
+                      <Text numberOfLines={1} style={styles.dateTimeText}>
+                        {formatTransactionTime(occurredAt)}
+                      </Text>
+                    </Pressable>
+                  </>
+                ) : null}
               </View>
             </View>
 
@@ -1888,7 +2036,7 @@ export function TransactionFormModal({
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={[styles.inputGroup, styles.splitCategoryGroup]}>
-                {canUseSplit ? (
+                {canUseSplit && showSplitField ? (
                   <TransactionSplitEditor
                     categories={flatCategoriesForSplit}
                     currencyCode={accountCurrencyCode}
@@ -1986,7 +2134,7 @@ export function TransactionFormModal({
               </View>
             )}
 
-            {showInstallmentSection ? (
+            {showInstallmentsUi ? (
               <View style={styles.installmentPanel}>
                 <View style={styles.installmentHeader}>
                   <View style={styles.installmentHeaderText}>
@@ -2211,7 +2359,7 @@ export function TransactionFormModal({
               </View>
             ) : null}
 
-            {/* Labels Input */}
+            {showLabelsField ? (
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>LABELS (OPTIONAL)</Text>
               <View style={styles.labelChipsRow}>
@@ -2276,8 +2424,9 @@ export function TransactionFormModal({
                 )}
               </View>
             </View>
+            ) : null}
 
-            {/* Note / Memo Input */}
+            {showNoteField ? (
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
               <TextInput
@@ -2291,8 +2440,9 @@ export function TransactionFormModal({
                 value={note}
               />
             </View>
+            ) : null}
 
-            {!isEditing && !appliedPresetId ? (
+            {!isEditing && !appliedPresetId && showQuickPresetsUi ? (
               <View
                 pointerEvents={canSaveAsQuickPreset ? "auto" : "none"}
                 style={[
@@ -2342,6 +2492,18 @@ export function TransactionFormModal({
               </View>
             ) : null}
           </KeyboardAwareForm>
+
+          <Pressable
+            accessibilityLabel="Customize fields"
+            accessibilityRole="button"
+            onPress={() => setIsFieldPreferencesOpen(true)}
+            style={({ pressed }) => [
+              styles.customizeFieldsButton,
+              pressed && styles.customizeFieldsButtonPressed,
+            ]}
+          >
+            <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
+          </Pressable>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>
@@ -2478,9 +2640,48 @@ export function TransactionFormModal({
 
       <CategoryPickerModal
         categories={categories}
+        enableQuickAdd
         onClose={() => {
           setIsCategoryPickerOpen(false);
           setSplitCategoryPickerLineKey(null);
+        }}
+        onRequestAddCategory={(categoryType) => {
+          presentCategoryFormFromPicker("transaction", () => {
+            openNewCategoryForm(categoryType, (categoryId) => {
+              if (splitCategoryPickerLineKey) {
+                setSplitLines((lines) =>
+                  lines.map((line) =>
+                    line.key === splitCategoryPickerLineKey
+                      ? { ...line, categoryId }
+                      : line,
+                  ),
+                );
+                setSplitCategoryPickerLineKey(null);
+              } else {
+                setSelectedCategoryId(categoryId);
+              }
+              setIsCategoryPickerOpen(false);
+            });
+          });
+        }}
+        onRequestAddSubcategory={(parent, categoryType) => {
+          presentCategoryFormFromPicker("transaction", () => {
+            openNewSubcategoryForm(parent, categoryType, (categoryId) => {
+              if (splitCategoryPickerLineKey) {
+                setSplitLines((lines) =>
+                  lines.map((line) =>
+                    line.key === splitCategoryPickerLineKey
+                      ? { ...line, categoryId }
+                      : line,
+                  ),
+                );
+                setSplitCategoryPickerLineKey(null);
+              } else {
+                setSelectedCategoryId(categoryId);
+              }
+              setIsCategoryPickerOpen(false);
+            });
+          });
         }}
         onSelectCategory={(cat) => {
           if (splitCategoryPickerLineKey) {
@@ -2553,12 +2754,56 @@ export function TransactionFormModal({
 
       <CategoryPickerModal
         categories={categories}
+        enableQuickAdd
         onClose={() => setIsFeeCategoryPickerOpen(false)}
+        onRequestAddCategory={(categoryType) => {
+          presentCategoryFormFromPicker("fee", () => {
+            openNewCategoryForm(categoryType, (categoryId) => {
+              setFeeCategoryId(categoryId);
+              setIsFeeCategoryPickerOpen(false);
+            });
+          });
+        }}
+        onRequestAddSubcategory={(parent, categoryType) => {
+          presentCategoryFormFromPicker("fee", () => {
+            openNewSubcategoryForm(parent, categoryType, (categoryId) => {
+              setFeeCategoryId(categoryId);
+              setIsFeeCategoryPickerOpen(false);
+            });
+          });
+        }}
         onSelectCategory={(cat) => setFeeCategoryId(cat.id)}
         selectedCategoryId={feeCategoryId || (defaultFeeCategory?.id ?? "")}
         title="Select Fee Category"
         type="expense"
         visible={isFeeCategoryPickerOpen}
+      />
+
+      <CategoryFormModal
+        key={
+          categoryFormDraft
+            ? `${categoryFormDraft.initialType}-${categoryFormDraft.initialParentId ?? "root"}`
+            : "category-form-closed"
+        }
+        error={categorySaveError}
+        initialParentId={categoryFormDraft?.initialParentId ?? null}
+        initialType={categoryFormDraft?.initialType ?? "expense"}
+        onClearError={clearCategorySaveError}
+        onClose={closeCategoryFormModal}
+        onSave={async (input, id) => {
+          const saved = await saveCategoryRecord(input, id);
+          if (!saved) {
+            return false;
+          }
+          await onCategoriesChanged?.();
+          setCategoryFormReturnPicker(null);
+          categoryFormDraft?.applySelection(saved.id);
+          setCategoryFormDraft(null);
+          return true;
+        }}
+        parentCategoryName={categoryFormDraft?.parentCategoryName ?? null}
+        pending={categorySaving}
+        visible={categoryFormDraft !== null}
       />
 
       <QuickPresetsModal
@@ -2612,6 +2857,11 @@ export function TransactionFormModal({
         pending={pending}
         result={pendingBudgetWarning}
         visible={isBudgetWarningOpen}
+      />
+
+      <TransactionFormFieldPreferencesModal
+        onClose={() => setIsFieldPreferencesOpen(false)}
+        visible={isFieldPreferencesOpen}
       />
     </>
   );
@@ -3300,6 +3550,42 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.primary,
       fontSize: 11,
       fontWeight: "600",
+    },
+    customizeFieldsButton: {
+      alignItems: "center",
+      alignSelf: "center",
+      minHeight: 36,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+    },
+    customizeFieldsButtonPressed: {
+      opacity: 0.7,
+    },
+    customizeFieldsButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    nameInputWithoutAttachment: {
+      flex: 1,
+    },
+    standaloneAttachmentButton: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+    },
+    standaloneAttachmentText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    dateTimeButtonFull: {
+      flex: 1,
     },
     footerRow: {
       flexDirection: "row",

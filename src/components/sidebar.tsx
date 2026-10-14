@@ -1,16 +1,17 @@
 import { usePathname, useRouter } from "expo-router";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
   useLocalization,
   type TranslationKey,
 } from "@/infrastructure/localization";
 
 import { IconHelper } from "./icon-helper";
+import { MoreFeaturesModal } from "./more-features-modal";
 
 interface NavItemConfig {
   href: string;
@@ -38,13 +39,19 @@ const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
 
 export interface SidebarProps {
   onNavigate?: () => void;
+  hiddenHrefs?: string[];
 }
 
-export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
+export const Sidebar = memo(function Sidebar({
+  onNavigate,
+  hiddenHrefs = [],
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
 
   const handlePress = (href: string) => {
     router.navigate(href as any);
@@ -59,6 +66,13 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
+
+  const hidden = new Set(hiddenHrefs);
+  const filterItems = (items: NavItemConfig[]) =>
+    items.filter((item) => !hidden.has(item.href));
+
+  const primaryItems = filterItems(PRIMARY_NAVIGATION_ITEMS);
+  const secondaryItems = filterItems(SECONDARY_NAVIGATION_ITEMS);
 
   return (
     <View style={styles.sidebar}>
@@ -84,7 +98,7 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
       <View style={styles.primaryNav}>
         <Text style={styles.sectionLabel}>{t("navigation.menu")}</Text>
         <View style={styles.navGroup}>
-          {PRIMARY_NAVIGATION_ITEMS.map((item) => {
+          {primaryItems.map((item) => {
             const active = isItemActive(item.href);
             return (
               <SidebarLink
@@ -99,22 +113,53 @@ export const Sidebar = memo(function Sidebar({ onNavigate }: SidebarProps) {
         </View>
       </View>
 
+      <MoreFeaturesModal
+        onClose={() => setMoreFeaturesOpen(false)}
+        visible={moreFeaturesOpen}
+      />
+
       {/* Footer / Secondary Navigation */}
       <View style={styles.secondaryNav}>
         <View style={styles.divider} />
         <View style={styles.navGroup}>
-          {SECONDARY_NAVIGATION_ITEMS.map((item) => {
-            const active = isItemActive(item.href);
-            return (
-              <SidebarLink
-                key={item.href}
-                active={active}
-                icon={item.icon}
-                label={t(item.labelKey)}
-                onPress={() => handlePress(item.href)}
-              />
-            );
-          })}
+          {secondaryItems
+            .filter((item) => item.href !== "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setMoreFeaturesOpen(true)}
+            style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
+          >
+            <View style={styles.iconContainer}>
+              <IconHelper color={theme.colors.textSecondary} name="layout-grid" size={18} />
+            </View>
+            <Text style={styles.linkText}>{t("navigation.moreFeatures")}</Text>
+          </Pressable>
+          {secondaryItems
+            .filter((item) => item.href === "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
         </View>
       </View>
     </View>

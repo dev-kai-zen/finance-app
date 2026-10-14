@@ -1,6 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, X } from "lucide-react-native";
+import { Check, Plus, X } from "lucide-react-native";
+import type { AccountGroup } from "@/modules/accounts/types/account.types";
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -13,6 +14,7 @@ export function AccountTypePickerModal({
   value,
   existingTypeId,
   onClose,
+  onPressAddGroup,
   onSelect,
 }: {
   visible: boolean;
@@ -21,6 +23,7 @@ export function AccountTypePickerModal({
   existingTypeId?: string;
   onClose: () => void;
   onSelect: (id: string) => void;
+  onPressAddGroup?: (group: AccountGroup) => void;
 }) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -74,6 +77,19 @@ export function AccountTypePickerModal({
                       </Pressable>
                     );
                   })}
+                  {onPressAddGroup ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => onPressAddGroup(group)}
+                      style={({ pressed }) => [
+                        styles.addGroupButton,
+                        pressed && styles.optionPressed,
+                      ]}
+                    >
+                      <Plus color={theme.colors.primary} size={18} />
+                      <Text style={styles.addGroupLabel}>Add new account group</Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               );
             })}
@@ -156,6 +172,24 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       flex: 1,
       fontSize: theme.typography.fontSize.md,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    addGroupButton: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderStyle: "dashed",
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "center",
+      marginTop: theme.spacing.xs,
+      minHeight: 48,
+      paddingHorizontal: theme.spacing.md,
+    },
+    addGroupLabel: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
   });

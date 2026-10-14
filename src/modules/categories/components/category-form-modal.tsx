@@ -24,7 +24,7 @@ import type { Category, CategoryInput, CategoryType } from "../types/category.ty
 export interface CategoryFormModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (input: CategoryInput, id?: string) => Promise<boolean>;
+  onSave: (input: CategoryInput, id?: string) => Promise<boolean | Category | null>;
   categoryToEdit?: Category | null;
   initialType?: CategoryType;
   initialParentId?: string | null;
@@ -182,7 +182,7 @@ export function CategoryFormModal({
                   <Text
                     style={[
                       styles.typeOptionText,
-                      type === "expense" && styles.typeOptionTextActive,
+                      type === "expense" && styles.typeOptionTextActiveColored,
                     ]}
                   >
                     Expense
@@ -203,7 +203,7 @@ export function CategoryFormModal({
                   <Text
                     style={[
                       styles.typeOptionText,
-                      type === "income" && styles.typeOptionTextActive,
+                      type === "income" && styles.typeOptionTextActiveColored,
                     ]}
                   >
                     Income
@@ -457,14 +457,10 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 8,
     },
     typeOptionActiveExpense: {
-      backgroundColor: theme.colors.surfaceElevated,
-      borderColor: theme.colors.borderStrong,
-      borderWidth: 1,
+      backgroundColor: theme.colors.danger,
     },
     typeOptionActiveIncome: {
-      backgroundColor: theme.colors.surfaceElevated,
-      borderColor: theme.colors.borderStrong,
-      borderWidth: 1,
+      backgroundColor: theme.colors.success,
     },
     typeOptionText: {
       color: theme.colors.textSecondary,
@@ -473,6 +469,10 @@ function createStyles(theme: AppTheme) {
     },
     typeOptionTextActive: {
       color: theme.colors.textPrimary,
+      fontWeight: "700",
+    },
+    typeOptionTextActiveColored: {
+      color: theme.colors.textInverse,
       fontWeight: "700",
     },
     textInput: {

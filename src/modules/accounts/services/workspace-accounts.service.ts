@@ -31,6 +31,8 @@ export interface SampleAccountIds {
   creditCard: string;
   ewallet: string;
   archived: string;
+  personalLoan: string;
+  installmentCredit: string;
   emergencyPocket: string;
   travelPocket: string;
 }
@@ -42,8 +44,48 @@ const SAMPLE_IDS: SampleAccountIds = {
   creditCard: "sample:account:credit-card",
   ewallet: "sample:account:ewallet",
   archived: "sample:account:archived",
+  personalLoan: "sample:account:personal-loan",
+  installmentCredit: "sample:account:installment-credit",
   emergencyPocket: "sample:pocket:emergency",
   travelPocket: "sample:pocket:travel",
+};
+
+const RECOMMENDED_ACCOUNT_IDS = {
+  cash: "recommended:account:cash",
+  bank: "recommended:account:bank",
+  savings: "recommended:account:savings",
+  ewallet: "recommended:account:ewallet",
+  bdoLoan: "recommended:account:bdo",
+  workmateCredit: "recommended:account:workmate",
+  emergencyPocket: "recommended:pocket:emergency",
+} as const;
+
+type RecommendedLiabilityTemplate = "loans" | "credits";
+
+const RECOMMENDED_LIABILITY_TYPES: Record<
+  RecommendedLiabilityTemplate,
+  {
+    id: string;
+    name: string;
+    iconKey: string;
+    hexColorsId: string;
+    sortOrder: number;
+  }
+> = {
+  loans: {
+    id: "recommended:type:loans",
+    name: "Loans",
+    iconKey: "landmark",
+    hexColorsId: "color_blue",
+    sortOrder: 0,
+  },
+  credits: {
+    id: "recommended:type:credits",
+    name: "Credits",
+    iconKey: "credit-card",
+    hexColorsId: "color_purple",
+    sortOrder: 1,
+  },
 };
 
 const RECOMMENDED_ACCOUNT_TYPES: Record<
@@ -102,6 +144,7 @@ export function createInitialAccount(
   input: InitialAccountInput,
   context: DbContext,
   now = new Date(),
+  currencyCode = "PHP",
 ): string {
   const name = input.name.trim();
   if (!name) throw new Error("Enter a name for your first account.");
@@ -121,7 +164,7 @@ export function createInitialAccount(
       name,
       note: null,
       iconKey: template.iconKey,
-      currencyCode: "PHP",
+      currencyCode,
       openingBalanceMinorUnits,
       openingBalanceAt,
       startingBalanceLocked: false,
@@ -140,40 +183,56 @@ export function createInitialAccount(
   return id;
 }
 
+/** Starter template: asset and liability account types with zero-balance accounts (categories applied separately). */
 export function createRecommendedAccounts(
   context: DbContext,
   now = new Date(),
 ): void {
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
+  const liabilityTypeIds = ensureRecommendedLiabilityAccountTypes(context, now);
   const openingBalanceAt = new Date(now);
   openingBalanceAt.setHours(0, 0, 0, 0);
-  const recommendedAccounts: Array<{
+
+  const assetAccounts: Array<{
     id: string;
     name: string;
     template: InitialAccountTemplate;
+    note?: string;
   }> = [
-    { id: "recommended:account:cash", name: "Cash Wallet", template: "cash" },
-    { id: "recommended:account:bank", name: "Bank Account", template: "bank" },
     {
-      id: "recommended:account:savings",
-      name: "Savings Account",
-      template: "savings",
+      id: RECOMMENDED_ACCOUNT_IDS.cash,
+      name: "Cash on Hand",
+      template: "cash",
+      note: "Petty cash and everyday pocket money",
     },
     {
-      id: "recommended:account:ewallet",
+      id: RECOMMENDED_ACCOUNT_IDS.bank,
+      name: "Payroll Account",
+      template: "bank",
+      note: "Salary deposits and bill payments",
+    },
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.savings,
+      name: "Emergency Savings",
+      template: "savings",
+      note: "Rainy-day fund with a dedicated pocket",
+    },
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.ewallet,
       name: "E-Wallet",
       template: "ewallet",
+      note: "Mobile wallet for rides, delivery, and subscriptions",
     },
   ];
 
-  for (const account of recommendedAccounts) {
+  for (const account of assetAccounts) {
     const template = RECOMMENDED_ACCOUNT_TYPES[account.template];
     insertAccount(
       {
         id: account.id,
         accountTypeId: accountTypeIds[account.template],
         name: account.name,
-        note: null,
+        note: account.note ?? null,
         iconKey: template.iconKey,
         currencyCode: "PHP",
         openingBalanceMinorUnits: 0,
@@ -191,7 +250,72 @@ export function createRecommendedAccounts(
       context,
     );
   }
+
+  insertPocket(
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.emergencyPocket,
+      accountId: RECOMMENDED_ACCOUNT_IDS.savings,
+      name: "Emergency Fund",
+      targetAmountMinorUnits: null,
+      isArchived: false,
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
+
+  const liabilityAccounts: Array<{
+    id: string;
+    name: string;
+    template: RecommendedLiabilityTemplate;
+    note: string;
+    sortOrder: number;
+  }> = [
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.bdoLoan,
+      name: "BDO",
+      template: "loans",
+      note: "Example loan under the Loans account type",
+      sortOrder: 0,
+    },
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.workmateCredit,
+      name: "Workmate",
+      template: "credits",
+      note: "Example store or company credit under the Credits account type",
+      sortOrder: 0,
+    },
+  ];
+
+  for (const account of liabilityAccounts) {
+    const typeDefinition = RECOMMENDED_LIABILITY_TYPES[account.template];
+    insertAccount(
+      {
+        id: account.id,
+        accountTypeId: liabilityTypeIds[account.template],
+        name: account.name,
+        note: account.note,
+        iconKey: typeDefinition.iconKey,
+        currencyCode: "PHP",
+        openingBalanceMinorUnits: 0,
+        openingBalanceAt,
+        startingBalanceLocked: false,
+        hideFromSelection: false,
+        hideFromReports: false,
+        pocketEnabled: false,
+        maintainingBalanceMinorUnits: null,
+        isArchived: false,
+        sortOrder: account.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+  }
 }
+
+export { RECOMMENDED_ACCOUNT_IDS };
 
 function ensureRecommendedAccountTypes(
   context: DbContext,
@@ -221,6 +345,49 @@ function ensureRecommendedAccountTypes(
         id: definition.id,
         name: definition.name,
         accountGroup: "asset",
+        iconKey: definition.iconKey,
+        hexColorsId: definition.hexColorsId,
+        isSystem: false,
+        sortOrder: definition.sortOrder,
+        createdAt: now,
+        updatedAt: now,
+      },
+      context,
+    );
+    ids[template] = definition.id;
+  }
+
+  return ids;
+}
+
+function ensureRecommendedLiabilityAccountTypes(
+  context: DbContext,
+  now: Date,
+): Record<RecommendedLiabilityTemplate, string> {
+  const existingTypes = listAccountTypes(context);
+  const ids = {} as Record<RecommendedLiabilityTemplate, string>;
+
+  for (const template of Object.keys(
+    RECOMMENDED_LIABILITY_TYPES,
+  ) as RecommendedLiabilityTemplate[]) {
+    const definition = RECOMMENDED_LIABILITY_TYPES[template];
+    const existing = existingTypes.find(
+      (type) =>
+        type.id === definition.id ||
+        (type.accountGroup === "liability" &&
+          type.name.trim().toLowerCase() === definition.name.toLowerCase()),
+    );
+
+    if (existing) {
+      ids[template] = existing.id;
+      continue;
+    }
+
+    insertAccountType(
+      {
+        id: definition.id,
+        name: definition.name,
+        accountGroup: "liability",
         iconKey: definition.iconKey,
         hexColorsId: definition.hexColorsId,
         isSystem: false,
@@ -291,7 +458,7 @@ export function createSampleAccounts(
       accountTypeId: "sample:type:cash",
       name: "Cash Wallet",
       iconKey: "wallet",
-      openingBalanceMinorUnits: 250_000,
+      openingBalanceMinorUnits: 600_000,
       pocketEnabled: false,
       maintainingBalanceMinorUnits: null,
       isArchived: false,
@@ -340,6 +507,28 @@ export function createSampleAccounts(
       maintainingBalanceMinorUnits: null,
       isArchived: false,
       sortOrder: 0,
+    },
+    {
+      id: SAMPLE_IDS.personalLoan,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
+      name: "Personal Loan",
+      iconKey: "landmark",
+      openingBalanceMinorUnits: -2_400_000,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 1,
+    },
+    {
+      id: SAMPLE_IDS.installmentCredit,
+      accountTypeId: SYSTEM_ACCOUNT_TYPE_IDS.LIABILITY_OTHERS,
+      name: "Laptop Installment",
+      iconKey: "laptop",
+      openingBalanceMinorUnits: -960_000,
+      pocketEnabled: false,
+      maintainingBalanceMinorUnits: null,
+      isArchived: false,
+      sortOrder: 2,
     },
     {
       id: SAMPLE_IDS.archived,

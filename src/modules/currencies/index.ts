@@ -10,6 +10,7 @@ export { useCurrencyPreferences } from "./hooks/use-currency-preferences";
 export {
   getCurrencyPreferences,
   saveCurrencyPreferences,
+  saveDefaultCurrencyCode,
   subscribeToCurrencyPreferences,
 } from "./services/currency-preferences.service";
 export {

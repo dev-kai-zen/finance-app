@@ -193,8 +193,9 @@ export function SortableListModal({
           style={styles.scrollArea}
         >
           <Text style={styles.instructionText}>
-            Press and hold a row, then drag it up or down. You can also use the
-            arrow buttons or Sort A-Z. Then tap the save icon.
+            {showAlphabetizeAction
+              ? "Press and hold a row, then drag it up or down. You can also use the arrow buttons or Sort A-Z. Then tap the save icon."
+              : "Press and hold a row, then drag it up or down. You can also use the arrow buttons. Then tap the save icon."}
           </Text>
 
           {showAlphabetizeAction && items.length > 1 ? (

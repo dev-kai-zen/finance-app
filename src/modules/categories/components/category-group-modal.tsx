@@ -30,7 +30,7 @@ import type { Category, CategoryInput, CategoryType } from "../types/category.ty
 export interface CategoryGroupModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (input: CategoryInput, id?: string) => Promise<boolean>;
+  onSave: (input: CategoryInput, id?: string) => Promise<boolean | Category | null>;
   categoryToEdit?: Category | null;
   initialType?: CategoryType;
   pending?: boolean;

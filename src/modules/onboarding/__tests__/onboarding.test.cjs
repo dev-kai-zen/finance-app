@@ -200,7 +200,7 @@ test("sample loading is coherent, idempotent, and relationally valid", async () 
   const state = await workspace.loadSampleWorkspace();
   assert.equal(state.mode, "sample");
   assert.equal(state.setupStrategy, null);
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 6);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 8);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM pockets").get().count, 2);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 31);
   assert.equal(
@@ -210,8 +210,25 @@ test("sample loading is coherent, idempotent, and relationally valid", async () 
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 
   await workspace.loadSampleWorkspace();
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 6);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 8);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 31);
+
+  const assetBalances = sqlite.prepare(`
+    SELECT accounts.name AS name,
+      accounts.opening_balance_minor_units + COALESCE((
+        SELECT SUM(amount_minor_units)
+        FROM transactions
+        WHERE transactions.account_id = accounts.id
+          AND transactions.deleted_at IS NULL
+      ), 0) AS balance
+    FROM accounts
+    JOIN account_types ON account_types.id = accounts.account_type_id
+    WHERE account_types.account_group = 'asset'
+      AND accounts.is_archived = 0
+  `).all();
+  for (const { name, balance } of assetBalances) {
+    assert.ok(balance >= 0, `${name} should not have a negative balance (${balance})`);
+  }
 });
 
 test("manual setup creates only protected fallbacks and no personal records", async () => {
@@ -241,11 +258,12 @@ test("recommended setup atomically replaces sample data with real starter data",
 
   assert.equal(state.mode, "personal");
   assert.equal(state.setupStrategy, "recommended");
-  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 4);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 6);
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM pockets").get().count, 1);
   assert.equal(sqlite.prepare("SELECT count(*) AS count FROM transactions").get().count, 0);
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM account_types WHERE is_system = 0").get().count,
-    4,
+    6,
   );
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
@@ -253,11 +271,41 @@ test("recommended setup atomically replaces sample data with real starter data",
   );
   assert.equal(
     sqlite.prepare("SELECT count(*) AS count FROM accounts WHERE opening_balance_minor_units = 0").get().count,
-    4,
+    6,
+  );
+  assert.equal(
+    sqlite.prepare(
+      "SELECT count(*) AS count FROM accounts JOIN account_types ON account_types.id = accounts.account_type_id WHERE account_types.account_group = 'liability'",
+    ).get().count,
+    2,
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'default_expense_account_id'").get().value,
+    "recommended:account:bank",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'default_income_account_id'").get().value,
+    "recommended:account:bank",
   );
   assert.deepEqual(
     sqlite.prepare("SELECT name FROM accounts ORDER BY name").all().map(({ name }) => name),
-    ["Bank Account", "Cash Wallet", "E-Wallet", "Savings Account"],
+    [
+      "BDO",
+      "Cash on Hand",
+      "E-Wallet",
+      "Emergency Savings",
+      "Payroll Account",
+      "Workmate",
+    ],
+  );
+  assert.deepEqual(
+    sqlite
+      .prepare(
+        "SELECT name FROM account_types WHERE account_group = 'liability' AND is_system = 0 ORDER BY name",
+      )
+      .all()
+      .map(({ name }) => name),
+    ["Credits", "Loans"],
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });
@@ -304,4 +352,42 @@ test("each recommended account template links to its matching account type", () 
     4,
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("guided setup creates one account, essentials categories, and simple preferences", async () => {
+  const state = await workspace.completeGuidedSetup({
+    currencyCode: "USD",
+    account: { name: "Wallet", openingAmount: "100", template: "cash" },
+  });
+
+  assert.equal(state.mode, "personal");
+  assert.equal(state.setupStrategy, "guided");
+  assert.equal(state.primaryCurrency, "USD");
+  assert.equal(sqlite.prepare("SELECT count(*) AS count FROM accounts").get().count, 1);
+  assert.equal(
+    sqlite.prepare("SELECT currency_code FROM accounts LIMIT 1").get().currency_code,
+    "USD",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'workspace.setupStrategy'").get().value,
+    "guided",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'form.transactionName'").get().value,
+    "false",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'experience.home'").get().value,
+    "simple",
+  );
+  assert.ok(
+    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count >= 5,
+  );
+  assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
+});
+
+test("missing form field defaults to enabled for non-guided workspaces", async () => {
+  const experience = require("@/modules/settings/services/experience-preferences.service");
+  await workspace.completeRecommendedSetup();
+  assert.equal(experience.isTransactionFormFieldEnabled("note"), true);
 });

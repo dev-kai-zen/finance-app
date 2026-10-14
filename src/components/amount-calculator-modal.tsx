@@ -385,12 +385,12 @@ export function AmountCalculatorModal({
             <View style={styles.keypadRow}>
               <KeypadButton
                 label="C"
-                variant="action"
+                variant="clear"
                 onPress={() => handleKeyPress("C")}
               />
               <KeypadButton
                 label="⌫"
-                variant="action"
+                variant="delete"
                 onPress={() => handleKeyPress("backspace")}
               />
               <KeypadButton
@@ -444,9 +444,9 @@ export function AmountCalculatorModal({
             {/* Row 5 */}
             <View style={styles.keypadRow}>
               <KeypadButton
-                label="±"
-                variant="action"
-                onPress={() => handleKeyPress("±")}
+                label="00"
+                variant="number"
+                onPress={() => handleKeyPress("00")}
               />
               <KeypadButton label="0" onPress={() => handleKeyPress("0")} />
               <KeypadButton label="." onPress={() => handleKeyPress(".")} />
@@ -470,7 +470,7 @@ function KeypadButton({
 }: {
   label: string;
   onPress: () => void;
-  variant?: "number" | "operator" | "action" | "primary";
+  variant?: "number" | "operator" | "action" | "primary" | "clear" | "delete";
 }) {
   const styles = useThemeStyles(createStyles);
 
@@ -482,6 +482,10 @@ function KeypadButton({
         return styles.btnOperator;
       case "action":
         return styles.btnAction;
+      case "clear":
+        return styles.btnClear;
+      case "delete":
+        return styles.btnDelete;
       default:
         return styles.btnNumber;
     }
@@ -495,13 +499,17 @@ function KeypadButton({
         return styles.btnOperatorText;
       case "action":
         return styles.btnActionText;
+      case "clear":
+        return styles.btnClearText;
+      case "delete":
+        return styles.btnDeleteText;
       default:
         return styles.btnNumberText;
     }
   };
 
   const getAccessibilityLabel = () => {
-    if (label === "±") return "Toggle positive or negative";
+    if (label === "00") return "Double zero";
     if (label === "C") return "Clear";
     if (label === "⌫") return "Backspace";
     if (label === "Done") return "Confirm amount";
@@ -661,6 +669,26 @@ function createStyles(theme: AppTheme) {
     btnActionText: {
       color: theme.colors.textSecondary,
       fontSize: 17,
+    },
+    btnClear: {
+      backgroundColor: `${theme.colors.info}18`,
+      borderColor: theme.colors.info,
+      borderWidth: 1,
+    },
+    btnClearText: {
+      color: theme.colors.info,
+      fontSize: 17,
+      fontWeight: "700",
+    },
+    btnDelete: {
+      backgroundColor: `${theme.colors.danger}18`,
+      borderColor: theme.colors.danger,
+      borderWidth: 1,
+    },
+    btnDeleteText: {
+      color: theme.colors.danger,
+      fontSize: 20,
+      fontWeight: "700",
     },
     btnOperator: {
       backgroundColor: theme.colors.surfaceMuted,

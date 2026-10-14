@@ -289,6 +289,7 @@ export function CalendarScreen() {
         presetPending={presetPending}
         presets={presets}
         presetsLoading={presetsLoading}
+        onCategoriesChanged={() => void refreshAll()}
         visible={formModalOpen}
       />
 

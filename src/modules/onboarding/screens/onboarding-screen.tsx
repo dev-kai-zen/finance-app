@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   StyleSheet,
@@ -25,10 +24,27 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { GoogleDriveBackupPanel } from "@/modules/google-drive-backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
+import {
+  GuidedAccountStep,
+  GuidedCurrencyStep,
+  GuidedLanguageStep,
+  GuidedReadyStep,
+  GuidedWelcomeStep,
+  PrimaryButton,
+} from "@/modules/onboarding/components/guided-onboarding-steps";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import type { InitialAccountTemplate } from "@/modules/accounts";
+import { openingAmountInput } from "@/modules/accounts/utils/account-input";
+import { useLocalization } from "@/infrastructure/localization";
 
 type OnboardingStep =
   | "welcome"
+  | "language"
+  | "currency"
+  | "account"
+  | "ready"
+  | "fullSetup"
   | "manual"
   | "recommended"
   | "sample"
@@ -38,28 +54,81 @@ export function OnboardingScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
+  const { preferences: currencyPreferences } = useCurrencyPreferences();
+  const { t } = useLocalization();
   const [step, setStep] = useState<OnboardingStep>("welcome");
+  const [guidedCurrency, setGuidedCurrency] = useState(
+    currencyPreferences.defaultCurrency,
+  );
+  const [accountTemplate, setAccountTemplate] =
+    useState<InitialAccountTemplate>("cash");
+  const [accountName, setAccountName] = useState("");
+  const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
+  const [sampleExitHubOpen, setSampleExitHubOpen] = useState(false);
+
+  useEffect(() => {
+    setGuidedCurrency(currencyPreferences.defaultCurrency);
+  }, [currencyPreferences.defaultCurrency]);
+
+  useEffect(() => {
+    if (!workspace.personalSetupRequested) {
+      setSampleExitHubOpen(false);
+    }
+  }, [workspace.personalSetupRequested]);
+
+  const isGuidedFlexStep =
+    step === "welcome" ||
+    step === "language" ||
+    step === "currency" ||
+    step === "account" ||
+    step === "ready";
+
   const goBack = () => {
     workspace.clearError();
+    if (
+      workspace.personalSetupRequested &&
+      step === "welcome" &&
+      sampleExitHubOpen
+    ) {
+      setSampleExitHubOpen(false);
+      return;
+    }
     if (workspace.personalSetupRequested && step === "welcome") {
       workspace.cancelPersonalSetup();
+      return;
+    }
+    if (step === "language") {
+      setStep("welcome");
+      return;
+    }
+    if (step === "currency") {
+      setStep("language");
+      return;
+    }
+    if (step === "account") {
+      setStep("currency");
+      return;
+    }
+    if (step === "ready") {
+      setStep("account");
+      return;
+    }
+    if (step === "fullSetup" || step === "manual" || step === "recommended" || step === "sample" || step === "restore") {
+      setStep(workspace.personalSetupRequested ? "welcome" : "welcome");
       return;
     }
     setStep("welcome");
   };
 
-  return (
-    <View style={styles.screen}>
-      <KeyboardAwareForm
-        contentContainerStyle={styles.scrollContent}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <View style={styles.container}>
+  const stepBody = (
+        <View style={[styles.container, isGuidedFlexStep && styles.guidedContainer]}>
           {step !== "welcome" || workspace.personalSetupRequested ? (
             <Pressable
               accessibilityLabel={
                 workspace.personalSetupRequested && step === "welcome"
-                  ? "Return to sample workspace"
+                  ? sampleExitHubOpen
+                    ? "Back to personal setup choices"
+                    : "Return to sample workspace"
                   : "Back to welcome choices"
               }
               accessibilityRole="button"
@@ -73,7 +142,9 @@ export function OnboardingScreen() {
               <ArrowLeft color={theme.colors.textSecondary} size={18} />
               <Text style={styles.backText}>
                 {workspace.personalSetupRequested && step === "welcome"
-                  ? "Back to sample"
+                  ? sampleExitHubOpen
+                    ? t("onboarding.backToSetupChoices")
+                    : t("onboarding.backToSample")
                   : "Back"}
               </Text>
             </Pressable>
@@ -92,14 +163,158 @@ export function OnboardingScreen() {
           </View>
 
           {step === "welcome" ? (
-            <WelcomeStep
-              disabled={workspace.busy}
-              personalOnly={workspace.personalSetupRequested}
-              onChoose={(nextStep) => {
-                workspace.clearError();
-                setStep(nextStep);
-              }}
-            />
+            workspace.personalSetupRequested ? (
+              sampleExitHubOpen ? (
+                <View style={styles.guidedStepHost}>
+                  <GuidedWelcomeStep
+                    disabled={workspace.busy}
+                    onFullSetup={() => {
+                      workspace.clearError();
+                      setStep("fullSetup");
+                    }}
+                    onGetStarted={() => {
+                      workspace.clearError();
+                      setStep("language");
+                    }}
+                    onRestore={() => {
+                      workspace.clearError();
+                      setStep("restore");
+                    }}
+                    onSample={() => {
+                      workspace.clearError();
+                      setStep("sample");
+                    }}
+                  />
+                </View>
+              ) : (
+                <WelcomeStep
+                  disabled={workspace.busy}
+                  personalOnly
+                  onBrowseAllSetupOptions={() => {
+                    workspace.clearError();
+                    setSampleExitHubOpen(true);
+                  }}
+                  onChoose={(nextStep) => {
+                    workspace.clearError();
+                    setStep(nextStep);
+                  }}
+                />
+              )
+            ) : (
+              <View style={styles.guidedStepHost}>
+                <GuidedWelcomeStep
+                  disabled={workspace.busy}
+                  onFullSetup={() => {
+                    workspace.clearError();
+                    setStep("fullSetup");
+                  }}
+                  onGetStarted={() => {
+                    workspace.clearError();
+                    setStep("language");
+                  }}
+                  onRestore={() => {
+                    workspace.clearError();
+                    setStep("restore");
+                  }}
+                  onSample={() => {
+                    workspace.clearError();
+                    setStep("sample");
+                  }}
+                />
+              </View>
+            )
+          ) : null}
+
+          {step === "language" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedLanguageStep
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("currency");
+                }}
+              />
+            </View>
+          ) : null}
+
+          {step === "currency" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedCurrencyStep
+                onChange={setGuidedCurrency}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("account");
+                }}
+                selectedCode={guidedCurrency}
+              />
+            </View>
+          ) : null}
+
+          {step === "account" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedAccountStep
+                accountName={accountName}
+                busy={workspace.busy}
+                currencyCode={guidedCurrency}
+                onChangeName={setAccountName}
+                onChangeOpeningAmountMinor={setOpeningAmountMinor}
+                onChangeTemplate={setAccountTemplate}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("ready");
+                }}
+                openingAmountMinor={openingAmountMinor}
+                template={accountTemplate}
+              />
+            </View>
+          ) : null}
+
+          {step === "ready" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedReadyStep
+                accountName={accountName}
+                busy={workspace.busy}
+                currencyCode={guidedCurrency}
+                onFinish={() =>
+                  void workspace.completeGuidedSetup({
+                    currencyCode: guidedCurrency,
+                    account: {
+                      name: accountName,
+                      openingAmount: openingAmountInput(
+                        openingAmountMinor,
+                        guidedCurrency,
+                      ),
+                      template: accountTemplate,
+                    },
+                  })
+                }
+              />
+            </View>
+          ) : null}
+
+          {step === "fullSetup" ? (
+            <View style={styles.stepContent}>
+              <StepHeading
+                description={t("onboarding.fullSetupDescription")}
+                title={t("onboarding.fullSetupTitle")}
+              />
+              <View style={styles.optionList}>
+                <OnboardingOptionCard
+                  badge={t("onboarding.recommendedBadge")}
+                  description={t("onboarding.recommendedSetupDescription")}
+                  disabled={workspace.busy}
+                  icon={<Sparkles color={theme.colors.primary} size={23} />}
+                  onPress={() => setStep("recommended")}
+                  title={t("onboarding.recommendedSetupTitle")}
+                />
+                <OnboardingOptionCard
+                  description={t("onboarding.manualSetupDescription")}
+                  disabled={workspace.busy}
+                  icon={<Wallet color={theme.colors.textSecondary} size={23} />}
+                  onPress={() => setStep("manual")}
+                  title={t("onboarding.manualSetupTitle")}
+                />
+              </View>
+            </View>
           ) : null}
 
           {step === "manual" ? (
@@ -166,10 +381,10 @@ export function OnboardingScreen() {
               <View style={styles.samplePreview}>
                 <Sparkles color={theme.colors.primary} size={20} />
                 {[
-                  "Cash Wallet, Bank Account, Savings Account, and E-Wallet",
-                  "Complete income and expense category groups",
-                  "Recommended subcategories ready for transactions",
-                  "PHP as the primary currency with zero opening balances",
+                  "Cash, payroll bank, emergency savings (with a pocket), and e-wallet",
+                  "Liabilities grouped as Loans (e.g. BDO) and Credits (e.g. Workmate)",
+                  "Complete income and expense category groups with subcategories",
+                  "All accounts start at zero — add your own opening balances when ready",
                 ].map((item) => (
                   <View key={item} style={styles.bulletRow}>
                     <Check color={theme.colors.success} size={18} />
@@ -209,7 +424,7 @@ export function OnboardingScreen() {
                 </View>
 
                 {[
-                  "6 accounts: cash, bank, savings, e-wallet, credit card, and an archived account",
+                  "8 accounts: assets, two extra liabilities, credit card, and one archived account",
                   "Savings pockets for an emergency fund and travel",
                   "Income, expenses, account transfers, pocket transfers, and a card payment",
                   "31 transaction records, including one item in Trash",
@@ -253,7 +468,22 @@ export function OnboardingScreen() {
             </View>
           ) : null}
         </View>
-      </KeyboardAwareForm>
+  );
+
+  return (
+    <View style={styles.screen}>
+      {isGuidedFlexStep ? (
+        <View style={[styles.guidedScreen, styles.scrollContent]}>
+          {stepBody}
+        </View>
+      ) : (
+        <KeyboardAwareForm
+          contentContainerStyle={styles.scrollContent}
+          contentInsetAdjustmentBehavior="automatic"
+        >
+          {stepBody}
+        </KeyboardAwareForm>
+      )}
 
       <NotificationModal
         message={workspace.error ?? ""}
@@ -268,15 +498,18 @@ export function OnboardingScreen() {
 
 function WelcomeStep({
   disabled,
+  onBrowseAllSetupOptions,
   onChoose,
   personalOnly,
 }: {
   disabled: boolean;
+  onBrowseAllSetupOptions?: () => void;
   onChoose: (step: Exclude<OnboardingStep, "welcome">) => void;
   personalOnly: boolean;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   return (
     <View style={styles.stepContent}>
@@ -290,19 +523,19 @@ function WelcomeStep({
       />
       <View style={styles.optionList}>
         <OnboardingOptionCard
+          badge="Recommended"
+          description="Employee-friendly accounts, liability types (Loans, Credits), and complete category presets — all at zero balance."
+          disabled={disabled}
+          icon={<Sparkles color={theme.colors.primary} size={23} />}
+          onPress={() => onChoose("recommended")}
+          title="Use recommended setup"
+        />
+        <OnboardingOptionCard
           description="Define your own account types, accounts, category groups, and subcategories with a guided checklist."
           disabled={disabled}
           icon={<Wallet color={theme.colors.textSecondary} size={23} />}
           onPress={() => onChoose("manual")}
           title="Start from scratch"
-        />
-        <OnboardingOptionCard
-          badge="Recommended"
-          description="Start with ready-to-use accounts, standard account types, and complete category presets."
-          disabled={disabled}
-          icon={<Sparkles color={theme.colors.primary} size={23} />}
-          onPress={() => onChoose("recommended")}
-          title="Use recommended setup"
         />
         {!personalOnly ? (
           <>
@@ -323,6 +556,21 @@ function WelcomeStep({
           </>
         ) : null}
       </View>
+      {personalOnly && onBrowseAllSetupOptions ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={onBrowseAllSetupOptions}
+          style={({ pressed }) => [
+            styles.allSetupOptionsLink,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <Text style={styles.allSetupOptionsLinkText}>
+            {t("onboarding.allSetupOptions")}
+          </Text>
+        </Pressable>
+      ) : null}
       <View style={styles.privacyRow}>
         <ShieldCheck color={theme.colors.textMuted} size={16} />
         <Text style={styles.privacyText}>
@@ -345,40 +593,6 @@ function StepHeading({ title, description }: { title: string; description: strin
   );
 }
 
-function PrimaryButton({
-  disabled,
-  label,
-  loading,
-  onPress,
-}: {
-  disabled: boolean;
-  label: string;
-  loading: boolean;
-  onPress: () => void;
-}) {
-  const theme = useAppTheme();
-  const styles = useThemeStyles(createStyles);
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ busy: loading, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.primaryButton,
-        pressed && styles.primaryButtonPressed,
-        disabled && styles.primaryButtonDisabled,
-      ]}
-    >
-      {loading ? (
-        <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-      ) : null}
-      <Text style={styles.primaryButtonText}>{label}</Text>
-    </Pressable>
-  );
-}
-
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screen: {
@@ -391,10 +605,21 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.xxl,
     },
+    guidedStepHost: {
+      flex: 1,
+      minHeight: 0,
+      width: "100%",
+    },
     container: {
       gap: theme.spacing.xl,
       maxWidth: 720,
       width: "100%",
+    },
+    guidedScreen: {
+      flex: 1,
+    },
+    guidedContainer: {
+      flex: 1,
     },
     backButton: {
       alignItems: "center",
@@ -453,6 +678,18 @@ function createStyles(theme: AppTheme) {
     },
     optionList: {
       gap: theme.spacing.md,
+    },
+    allSetupOptionsLink: {
+      alignSelf: "center",
+      minHeight: 44,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.md,
+    },
+    allSetupOptionsLinkText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+      textAlign: "center",
     },
     privacyRow: {
       alignItems: "center",
