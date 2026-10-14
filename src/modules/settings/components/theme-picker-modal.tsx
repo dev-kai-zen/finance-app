@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState } from "react";
 import { Check, Smartphone, X } from "lucide-react-native";
 import {
   Modal,
@@ -43,15 +43,12 @@ export function ThemePickerModal({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
-  const paletteCardWidth = useMemo(() => {
-    const columns = 2;
-    const sheetMaxWidth = 920;
-    const layoutWidth = isWide ? Math.min(width, sheetMaxWidth) : width;
-    const horizontalPadding = theme.spacing.lg * 2;
-    const gap = theme.spacing.md;
-    const availableWidth = layoutWidth - horizontalPadding - gap * (columns - 1);
-    return availableWidth / columns;
-  }, [isWide, theme.spacing.lg, theme.spacing.md, width]);
+  const [paletteGridWidth, setPaletteGridWidth] = useState(0);
+  const paletteGap = theme.spacing.md;
+  const paletteCardWidth =
+    paletteGridWidth > 0
+      ? (paletteGridWidth - paletteGap) / 2
+      : undefined;
 
   if (!visible) return null;
 
@@ -148,15 +145,29 @@ export function ThemePickerModal({
               </Text>
             </View>
 
-            <View style={styles.cards}>
+            <View
+              onLayout={(event) => {
+                setPaletteGridWidth(event.nativeEvent.layout.width);
+              }}
+              style={styles.cards}
+            >
               {themes.map((preset) => (
-                <ThemePresetCard
+                <View
                   key={preset.id}
-                  onPress={() => onSelectTheme(preset.id)}
-                  preset={preset}
-                  selected={!isFollowingSystem && preset.id === selectedThemeId}
-                  style={{ width: paletteCardWidth }}
-                />
+                  style={[
+                    styles.cardCell,
+                    paletteCardWidth != null
+                      ? { width: paletteCardWidth }
+                      : styles.cardCellFallback,
+                  ]}
+                >
+                  <ThemePresetCard
+                    onPress={() => onSelectTheme(preset.id)}
+                    preset={preset}
+                    selected={!isFollowingSystem && preset.id === selectedThemeId}
+                    style={styles.cardFill}
+                  />
+                </View>
               ))}
             </View>
           </ScrollView>
@@ -302,6 +313,18 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       flexWrap: "wrap",
       gap: theme.spacing.md,
+      width: "100%",
+    },
+    cardCell: {
+      flexGrow: 0,
+      flexShrink: 0,
+    },
+    cardCellFallback: {
+      flexBasis: "47%",
+      flexGrow: 1,
+      maxWidth: "47%",
+    },
+    cardFill: {
       width: "100%",
     },
     pressed: {

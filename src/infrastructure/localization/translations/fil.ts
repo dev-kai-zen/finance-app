@@ -154,6 +154,11 @@ export const fil = {
     helpMessage:
       "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
+  googleDriveBackup: {
+    helpTitle: "Tungkol sa Google Drive Backup",
+    helpMessage:
+      "Magtabi ng exported copy ng financial database sa Google Drive account mo at i-restore ito sa ibang device. Ikonekta ang account, gumawa ng backup kapag kailangan, at pumili ng naka-save na archive kapag magre-restore.",
+  },
   language: {
     helpTitle: "Tungkol sa Wika",
     helpMessage:

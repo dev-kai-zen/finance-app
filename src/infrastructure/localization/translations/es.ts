@@ -154,6 +154,11 @@ export const es = {
     helpMessage:
       "La moneda predeterminada se usa en totales combinados y cuentas nuevas. Las cuentas existentes conservan su moneda. Las opciones de visualización no modifican los valores guardados.",
   },
+  googleDriveBackup: {
+    helpTitle: "Acerca de la copia en Google Drive",
+    helpMessage:
+      "Guarda una copia exportada de tu base de datos financiera en Google Drive y restáurala en otro dispositivo. Conecta tu cuenta, crea copias cuando quieras y elige un archivo guardado al restaurar.",
+  },
   language: {
     helpTitle: "Acerca del idioma",
     helpMessage:

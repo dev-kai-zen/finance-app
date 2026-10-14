@@ -227,14 +227,13 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderCurve: "continuous",
       borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
+      borderWidth: 2,
       gap: theme.spacing.md,
       minHeight: 210,
       padding: theme.spacing.md,
     },
     cardSelected: {
       borderColor: theme.colors.primary,
-      borderWidth: 2,
       boxShadow: `0 0 0 2px ${theme.colors.focusRing}33`,
     },
     cardPressed: {
