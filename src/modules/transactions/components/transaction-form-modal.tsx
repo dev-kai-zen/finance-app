@@ -1496,6 +1496,18 @@ export function TransactionFormModal({
             </Pressable>
           </View>
 
+          <Pressable
+            accessibilityLabel="Customize fields"
+            accessibilityRole="button"
+            onPress={() => setIsFieldPreferencesOpen(true)}
+            style={({ pressed }) => [
+              styles.customizeFieldsButton,
+              pressed && styles.customizeFieldsButtonPressed,
+            ]}
+          >
+            <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
+          </Pressable>
+
           {!isEditing && showQuickPresetsUi ? (
             <Pressable
               accessibilityLabel="Open Quick Presets"
@@ -2492,18 +2504,6 @@ export function TransactionFormModal({
               </View>
             ) : null}
           </KeyboardAwareForm>
-
-          <Pressable
-            accessibilityLabel="Customize fields"
-            accessibilityRole="button"
-            onPress={() => setIsFieldPreferencesOpen(true)}
-            style={({ pressed }) => [
-              styles.customizeFieldsButton,
-              pressed && styles.customizeFieldsButtonPressed,
-            ]}
-          >
-            <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
-          </Pressable>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>
@@ -3554,6 +3554,7 @@ function createStyles(theme: AppTheme) {
     customizeFieldsButton: {
       alignItems: "center",
       alignSelf: "center",
+      marginBottom: theme.spacing.xs,
       minHeight: 36,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.xs,

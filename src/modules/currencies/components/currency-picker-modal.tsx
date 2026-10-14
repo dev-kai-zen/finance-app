@@ -7,6 +7,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -30,6 +32,7 @@ export function CurrencyPickerModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const insets = useSafeAreaInsets();
   const { currencies, loading } = useCurrencies();
   const [search, setSearch] = useState("");
 
@@ -47,9 +50,18 @@ export function CurrencyPickerModal({
 
   return (
     <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.overlay}
+      >
         <Pressable accessibilityLabel="Close" style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
+        <View
+          style={[
+            styles.sheet,
+            { paddingBottom: Math.max(insets.bottom, theme.spacing.xl) },
+          ]}
+        >
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <Pressable accessibilityRole="button" hitSlop={12} onPress={onClose}>
@@ -63,7 +75,11 @@ export function CurrencyPickerModal({
             value={search}
             onChangeText={setSearch}
           />
-          <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.list}
+            keyboardShouldPersistTaps="handled"
+            style={styles.listScroll}
+          >
             {loading ? (
               <Text style={styles.muted}>Loading…</Text>
             ) : filtered.length === 0 ? (
@@ -102,7 +118,7 @@ export function CurrencyPickerModal({
             )}
           </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -117,9 +133,13 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: theme.borderRadius.large,
       gap: theme.spacing.md,
       maxHeight: "78%",
-      paddingBottom: theme.spacing.xl,
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.lg,
+      width: "100%",
+    },
+    listScroll: {
+      flexGrow: 0,
+      flexShrink: 1,
     },
     header: {
       alignItems: "center",
