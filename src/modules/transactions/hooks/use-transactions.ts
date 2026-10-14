@@ -6,6 +6,7 @@ import {
 } from "../repositories/transactions.repository";
 import { recordTransaction as recordTransactionService } from "../services/record-transaction.service";
 import { removeTransaction } from "../services/delete-transaction.service";
+import { permanentlyDeleteAllDeletedTransactions } from "../services/permanently-delete-all-deleted-transactions.service";
 import { permanentlyDeleteTransaction } from "../services/permanently-delete-transaction.service";
 import { restoreTransaction } from "../services/restore-transaction.service";
 import { updateTransfer } from "../services/update-transfer.service";
@@ -168,6 +169,23 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     [refresh],
   );
 
+  const permanentlyDeleteAllTx = useCallback(async (): Promise<boolean> => {
+    try {
+      setPendingAction(true);
+      setError(null);
+      permanentlyDeleteAllDeletedTransactions();
+      refresh();
+      return true;
+    } catch (err: any) {
+      setError(
+        err?.message || "Failed to permanently delete all transactions.",
+      );
+      return false;
+    } finally {
+      setPendingAction(false);
+    }
+  }, [refresh]);
+
   const editTransfer = useCallback(
     async (
       input: UpdateTransferInput,
@@ -227,6 +245,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     deleteTx,
     restoreTx,
     permanentlyDeleteTx,
+    permanentlyDeleteAllTx,
     clearError,
     refresh,
   };

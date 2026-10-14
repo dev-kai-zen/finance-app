@@ -120,6 +120,7 @@ export function TransactionsScreen() {
     deleteTx,
     restoreTx,
     permanentlyDeleteTx,
+    permanentlyDeleteAllTx,
     editTransaction,
     editTransfer,
     refresh,
@@ -776,6 +777,11 @@ export function TransactionsScreen() {
         }}
         onPermanentlyDelete={async (id) => {
           const deleted = await permanentlyDeleteTx(id);
+          if (deleted) refreshAccounts();
+          return deleted;
+        }}
+        onPermanentlyDeleteAll={async () => {
+          const deleted = await permanentlyDeleteAllTx();
           if (deleted) refreshAccounts();
           return deleted;
         }}

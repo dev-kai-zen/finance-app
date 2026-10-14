@@ -490,6 +490,20 @@ export function findTransactionsByGroupId(
     }));
 }
 
+export function listDeletedTransactionRecords(
+  context: DbContext = db,
+): Transaction[] {
+  return context
+    .select()
+    .from(transactions)
+    .where(isNotNull(transactions.deletedAt))
+    .all()
+    .map((row) => ({
+      ...row,
+      type: row.type as Transaction["type"],
+    }));
+}
+
 export function listLedgerTransactionsForAccount(
   accountId: string,
   context: DbContext = db,

@@ -93,6 +93,12 @@ export const permanentlyDeleteTransaction = deferFunction(
       .permanentlyDeleteTransaction,
 ) as typeof import("./services/permanently-delete-transaction.service").permanentlyDeleteTransaction;
 
+export const permanentlyDeleteAllDeletedTransactions = deferFunction(
+  () =>
+    require("./services/permanently-delete-all-deleted-transactions.service")
+      .permanentlyDeleteAllDeletedTransactions,
+) as typeof import("./services/permanently-delete-all-deleted-transactions.service").permanentlyDeleteAllDeletedTransactions;
+
 export const restoreTransaction = deferFunction(
   () =>
     require("./services/restore-transaction.service").restoreTransaction,

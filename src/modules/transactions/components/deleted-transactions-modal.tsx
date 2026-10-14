@@ -25,6 +25,7 @@ export interface DeletedTransactionsModalProps {
   onClose: () => void;
   onClearError: () => void;
   onPermanentlyDelete: (id: string) => Promise<boolean>;
+  onPermanentlyDeleteAll: () => Promise<boolean>;
   onRestore: (id: string) => Promise<boolean | void> | void;
 }
 
@@ -36,6 +37,7 @@ export function DeletedTransactionsModal({
   onClose,
   onClearError,
   onPermanentlyDelete,
+  onPermanentlyDeleteAll,
   onRestore,
 }: DeletedTransactionsModalProps) {
   const insets = useSafeAreaInsets();
@@ -46,10 +48,12 @@ export function DeletedTransactionsModal({
     useState<TransactionListItem | null>(null);
   const [pendingRestore, setPendingRestore] =
     useState<TransactionListItem | null>(null);
+  const [pendingDeleteAll, setPendingDeleteAll] = useState(false);
 
   const handleClose = () => {
     setPendingPermanentDelete(null);
     setPendingRestore(null);
+    setPendingDeleteAll(false);
     onClose();
   };
 
@@ -68,6 +72,14 @@ export function DeletedTransactionsModal({
       await onRestore(pendingRestore.id);
     } finally {
       setPendingRestore(null);
+    }
+  };
+
+  const handleConfirmDeleteAll = async () => {
+    try {
+      await onPermanentlyDeleteAll();
+    } finally {
+      setPendingDeleteAll(false);
     }
   };
 
@@ -112,7 +124,19 @@ export function DeletedTransactionsModal({
                 {transactions.length === 1 ? "transaction" : "transactions"}
               </Text>
             </View>
-            <View style={styles.headerSpacer} />
+            {transactions.length > 0 ? (
+              <Pressable
+                accessibilityLabel="Delete all transactions in trash"
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={() => setPendingDeleteAll(true)}
+                style={[styles.deleteAllButton, pending && styles.disabled]}
+              >
+                <Text style={styles.deleteAllText}>Delete all</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.headerSpacer} />
+            )}
           </View>
 
           <ScrollView
@@ -253,6 +277,21 @@ export function DeletedTransactionsModal({
         visible={pendingPermanentDelete !== null}
       />
 
+      <ConfirmModal
+        confirmLabel="Delete all"
+        message={`Permanently delete all ${transactions.length} ${
+          transactions.length === 1 ? "transaction" : "transactions"
+        } in Trash? Transfer groups and their fees will be removed together. This cannot be undone.`}
+        onCancel={() => setPendingDeleteAll(false)}
+        onConfirm={() => {
+          void handleConfirmDeleteAll();
+        }}
+        pending={pending}
+        title="Delete all in Trash?"
+        variant="destructive"
+        visible={pendingDeleteAll}
+      />
+
       <NotificationModal
         message={error ?? ""}
         onClose={onClearError}
@@ -300,6 +339,19 @@ function createStyles(theme: AppTheme) {
     },
     headerSpacer: {
       width: 40,
+    },
+    deleteAllButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      maxWidth: 96,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.xs,
+    },
+    deleteAllText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+      textAlign: "right",
     },
     scrollContent: {
       gap: theme.spacing.md,
