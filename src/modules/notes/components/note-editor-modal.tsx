@@ -185,6 +185,21 @@ export function NoteEditorModal({
                 />
               </Pressable>
 
+              {note && onDelete ? (
+                <Pressable
+                  accessibilityLabel="Delete note"
+                  accessibilityRole="button"
+                  disabled={saving || picking}
+                  onPress={() => setDeleteConfirmOpen(true)}
+                  style={[
+                    styles.deleteHeaderButton,
+                    (saving || picking) && styles.disabledButton,
+                  ]}
+                >
+                  <Trash2 color={theme.colors.danger} size={18} />
+                </Pressable>
+              ) : null}
+
               {/* Save Button */}
               <Pressable
                 accessibilityLabel="Save note"
@@ -283,19 +298,6 @@ export function NoteEditorModal({
               onRemoveExisting={markExistingAttachmentForRemoval}
               picking={picking}
             />
-
-            {/* Delete note trigger if editing */}
-            {note && onDelete ? (
-              <Pressable
-                accessibilityLabel="Delete note"
-                accessibilityRole="button"
-                onPress={() => setDeleteConfirmOpen(true)}
-                style={styles.deleteButton}
-              >
-                <Trash2 color={theme.colors.danger} size={16} />
-                <Text style={styles.deleteButtonText}>Delete Note</Text>
-              </Pressable>
-            ) : null}
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
@@ -368,6 +370,16 @@ function createStyles(theme: AppTheme) {
     pinButtonActive: {
       backgroundColor: theme.colors.surfaceMuted,
     },
+    deleteHeaderButton: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}18`,
+      borderColor: `${theme.colors.danger}40`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
     saveButton: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
@@ -412,22 +424,6 @@ function createStyles(theme: AppTheme) {
       lineHeight: 24,
       minHeight: 180,
       paddingVertical: theme.spacing.xs,
-    },
-    deleteButton: {
-      alignItems: "center",
-      borderColor: theme.colors.danger,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.xs,
-      justifyContent: "center",
-      marginTop: theme.spacing.xl,
-      paddingVertical: theme.spacing.md,
-    },
-    deleteButtonText: {
-      color: theme.colors.danger,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }
