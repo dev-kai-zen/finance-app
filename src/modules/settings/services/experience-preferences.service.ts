@@ -264,6 +264,7 @@ export function applyGuidedWorkspaceSimpleDefaults(context: DbContext): void {
     },
     context,
   );
+  notifyListeners();
 }
 
 export function isPromptDismissed(

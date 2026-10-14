@@ -111,16 +111,6 @@ export const Sidebar = memo(function Sidebar({
             );
           })}
         </View>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => setMoreFeaturesOpen(true)}
-          style={({ pressed }) => [styles.moreFeaturesRow, pressed && styles.linkPressed]}
-        >
-          <View style={styles.iconContainer}>
-            <IconHelper color={theme.colors.textSecondary} name="layout-grid" size={18} />
-          </View>
-          <Text style={styles.moreFeaturesText}>{t("navigation.moreFeatures")}</Text>
-        </Pressable>
       </View>
 
       <MoreFeaturesModal
@@ -132,18 +122,44 @@ export const Sidebar = memo(function Sidebar({
       <View style={styles.secondaryNav}>
         <View style={styles.divider} />
         <View style={styles.navGroup}>
-          {secondaryItems.map((item) => {
-            const active = isItemActive(item.href);
-            return (
-              <SidebarLink
-                key={item.href}
-                active={active}
-                icon={item.icon}
-                label={t(item.labelKey)}
-                onPress={() => handlePress(item.href)}
-              />
-            );
-          })}
+          {secondaryItems
+            .filter((item) => item.href !== "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setMoreFeaturesOpen(true)}
+            style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
+          >
+            <View style={styles.iconContainer}>
+              <IconHelper color={theme.colors.textSecondary} name="layout-grid" size={18} />
+            </View>
+            <Text style={styles.linkText}>{t("navigation.moreFeatures")}</Text>
+          </Pressable>
+          {secondaryItems
+            .filter((item) => item.href === "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
         </View>
       </View>
     </View>
@@ -364,23 +380,6 @@ function createStyles(theme: AppTheme) {
     },
     activeLinkText: {
       color: theme.colors.primary,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    moreFeaturesRow: {
-      alignItems: "center",
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      flexDirection: "row",
-      marginHorizontal: theme.spacing.sm,
-      marginTop: theme.spacing.md,
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.sm,
-    },
-    moreFeaturesText: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     divider: {
