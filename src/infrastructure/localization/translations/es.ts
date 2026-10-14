@@ -81,6 +81,10 @@ export const es = {
     backupPaused: "Copia de seguridad en pausa",
     backupPausedDescription:
       "Los registros de ejemplo son temporales y no se suben a Google Drive. Inicia un espacio de trabajo personal para activar la copia de seguridad.",
+    experienceSection: "EXPERIENCIA",
+    simpleHomeLabels: "Etiquetas simples en el panel",
+    simpleHomeLabelsDescription:
+      "Usa textos amigables como “Money you have” y “Spent this month.” Los importes siguen siendo patrimonio neto y gasto del mes.",
     appearanceSection: "TEMAS Y COLORES PREDEFINIDOS",
     themeAccessibility: "Tema actual: %{theme}. Toca para cambiarlo.",
     followingAppearance: "Siguiendo la apariencia del dispositivo",

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import {
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Switch,
@@ -346,6 +347,35 @@ export function TransactionFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [categoryFormReturnPicker, setCategoryFormReturnPicker] = useState<
+    "transaction" | "fee" | null
+  >(null);
+
+  const PICKER_DISMISS_MS = Platform.OS === "ios" ? 320 : 120;
+
+  const presentCategoryFormFromPicker = (
+    source: "transaction" | "fee",
+    present: () => void,
+  ) => {
+    setCategoryFormReturnPicker(source);
+    if (source === "transaction") {
+      setIsCategoryPickerOpen(false);
+    } else {
+      setIsFeeCategoryPickerOpen(false);
+    }
+    setTimeout(present, PICKER_DISMISS_MS);
+  };
+
+  const closeCategoryFormModal = () => {
+    const resumePicker = categoryFormReturnPicker;
+    setCategoryFormDraft(null);
+    setCategoryFormReturnPicker(null);
+    if (resumePicker === "transaction") {
+      setIsCategoryPickerOpen(true);
+    } else if (resumePicker === "fee") {
+      setIsFeeCategoryPickerOpen(true);
+    }
+  };
 
   const openNewCategoryForm = (
     categoryType: CategoryType,
@@ -2616,37 +2646,41 @@ export function TransactionFormModal({
           setSplitCategoryPickerLineKey(null);
         }}
         onRequestAddCategory={(categoryType) => {
-          openNewCategoryForm(categoryType, (categoryId) => {
-            if (splitCategoryPickerLineKey) {
-              setSplitLines((lines) =>
-                lines.map((line) =>
-                  line.key === splitCategoryPickerLineKey
-                    ? { ...line, categoryId }
-                    : line,
-                ),
-              );
-              setSplitCategoryPickerLineKey(null);
-            } else {
-              setSelectedCategoryId(categoryId);
-            }
-            setIsCategoryPickerOpen(false);
+          presentCategoryFormFromPicker("transaction", () => {
+            openNewCategoryForm(categoryType, (categoryId) => {
+              if (splitCategoryPickerLineKey) {
+                setSplitLines((lines) =>
+                  lines.map((line) =>
+                    line.key === splitCategoryPickerLineKey
+                      ? { ...line, categoryId }
+                      : line,
+                  ),
+                );
+                setSplitCategoryPickerLineKey(null);
+              } else {
+                setSelectedCategoryId(categoryId);
+              }
+              setIsCategoryPickerOpen(false);
+            });
           });
         }}
         onRequestAddSubcategory={(parent, categoryType) => {
-          openNewSubcategoryForm(parent, categoryType, (categoryId) => {
-            if (splitCategoryPickerLineKey) {
-              setSplitLines((lines) =>
-                lines.map((line) =>
-                  line.key === splitCategoryPickerLineKey
-                    ? { ...line, categoryId }
-                    : line,
-                ),
-              );
-              setSplitCategoryPickerLineKey(null);
-            } else {
-              setSelectedCategoryId(categoryId);
-            }
-            setIsCategoryPickerOpen(false);
+          presentCategoryFormFromPicker("transaction", () => {
+            openNewSubcategoryForm(parent, categoryType, (categoryId) => {
+              if (splitCategoryPickerLineKey) {
+                setSplitLines((lines) =>
+                  lines.map((line) =>
+                    line.key === splitCategoryPickerLineKey
+                      ? { ...line, categoryId }
+                      : line,
+                  ),
+                );
+                setSplitCategoryPickerLineKey(null);
+              } else {
+                setSelectedCategoryId(categoryId);
+              }
+              setIsCategoryPickerOpen(false);
+            });
           });
         }}
         onSelectCategory={(cat) => {
@@ -2723,15 +2757,19 @@ export function TransactionFormModal({
         enableQuickAdd
         onClose={() => setIsFeeCategoryPickerOpen(false)}
         onRequestAddCategory={(categoryType) => {
-          openNewCategoryForm(categoryType, (categoryId) => {
-            setFeeCategoryId(categoryId);
-            setIsFeeCategoryPickerOpen(false);
+          presentCategoryFormFromPicker("fee", () => {
+            openNewCategoryForm(categoryType, (categoryId) => {
+              setFeeCategoryId(categoryId);
+              setIsFeeCategoryPickerOpen(false);
+            });
           });
         }}
         onRequestAddSubcategory={(parent, categoryType) => {
-          openNewSubcategoryForm(parent, categoryType, (categoryId) => {
-            setFeeCategoryId(categoryId);
-            setIsFeeCategoryPickerOpen(false);
+          presentCategoryFormFromPicker("fee", () => {
+            openNewSubcategoryForm(parent, categoryType, (categoryId) => {
+              setFeeCategoryId(categoryId);
+              setIsFeeCategoryPickerOpen(false);
+            });
           });
         }}
         onSelectCategory={(cat) => setFeeCategoryId(cat.id)}
@@ -2742,17 +2780,23 @@ export function TransactionFormModal({
       />
 
       <CategoryFormModal
+        key={
+          categoryFormDraft
+            ? `${categoryFormDraft.initialType}-${categoryFormDraft.initialParentId ?? "root"}`
+            : "category-form-closed"
+        }
         error={categorySaveError}
         initialParentId={categoryFormDraft?.initialParentId ?? null}
         initialType={categoryFormDraft?.initialType ?? "expense"}
         onClearError={clearCategorySaveError}
-        onClose={() => setCategoryFormDraft(null)}
+        onClose={closeCategoryFormModal}
         onSave={async (input, id) => {
           const saved = await saveCategoryRecord(input, id);
           if (!saved) {
             return false;
           }
           await onCategoriesChanged?.();
+          setCategoryFormReturnPicker(null);
           categoryFormDraft?.applySelection(saved.id);
           setCategoryFormDraft(null);
           return true;

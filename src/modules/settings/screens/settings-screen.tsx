@@ -324,6 +324,31 @@ export function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
+            {t("settings.experienceSection")}
+          </Text>
+          <View style={styles.card}>
+            <View style={styles.toggleRow}>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.simpleHomeLabels")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.simpleHomeLabelsDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.simpleHomeLabels")}
+                onValueChange={(enabled) =>
+                  experience.setHomeMode(enabled ? "simple" : "detailed")
+                }
+                value={experience.homeMode === "simple"}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
             {t("settings.sourceManagementSection")}
           </Text>
           <View style={styles.card}>

@@ -126,9 +126,19 @@ export function CategoryPickerModal({
     onClose();
   };
 
-  const handleClose = () => {
+  React.useEffect(() => {
+    if (!visible) {
+      setSubcategoryParentMode(false);
+      setSearchQuery("");
+    }
+  }, [visible]);
+
+  const dismissPicker = () => {
+    if (subcategoryParentMode) {
+      setSubcategoryParentMode(false);
+      return;
+    }
     setSearchQuery("");
-    setSubcategoryParentMode(false);
     onClose();
   };
 
@@ -146,13 +156,13 @@ export function CategoryPickerModal({
       animationType="slide"
       transparent
       visible={visible}
-      onRequestClose={handleClose}
+      onRequestClose={dismissPicker}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.backdrop}
       >
-        <Pressable style={styles.scrim} onPress={handleClose} />
+        <Pressable style={styles.scrim} onPress={dismissPicker} />
         <View style={styles.sheetContainer}>
           {/* Header */}
           <View style={styles.header}>
@@ -165,9 +175,13 @@ export function CategoryPickerModal({
               </Text>
             </View>
             <TouchableOpacity
-              onPress={handleClose}
+              onPress={dismissPicker}
               style={styles.closeBtn}
-              accessibilityLabel="Close category picker"
+              accessibilityLabel={
+                subcategoryParentMode
+                  ? "Back to category selection"
+                  : "Close category picker"
+              }
               accessibilityRole="button"
             >
               <X size={20} color={theme.colors.textSecondary} />
@@ -176,15 +190,6 @@ export function CategoryPickerModal({
 
           {subcategoryParentMode ? (
             <>
-              <View style={styles.parentModeToolbar}>
-                <Text style={styles.quickAddTitle}>Parent categories</Text>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => setSubcategoryParentMode(false)}
-                >
-                  <Text style={styles.quickAddCancel}>Back</Text>
-                </TouchableOpacity>
-              </View>
               <ScrollView
                 contentContainerStyle={styles.parentPickList}
                 keyboardShouldPersistTaps="handled"
@@ -796,13 +801,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
-    },
-    parentModeToolbar: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.lg,
-      paddingTop: theme.spacing.sm,
     },
     parentPickFullScroll: {
       flex: 1,

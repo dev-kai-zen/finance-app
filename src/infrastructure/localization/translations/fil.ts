@@ -80,6 +80,10 @@ export const fil = {
     backupPaused: "Naka-pause ang backup",
     backupPausedDescription:
       "Pansamantala ang mga sample record at hindi ina-upload sa Google Drive. Magsimula ng personal na workspace para paganahin ang backup.",
+    experienceSection: "KARANASAN",
+    simpleHomeLabels: "Simpleng label sa dashboard",
+    simpleHomeLabelsDescription:
+      "Gamitin ang friendly na wording tulad ng “Money you have” at “Spent this month.” Pareho pa rin ang net worth at monthly spending sa numbers.",
     appearanceSection: "TEMA AT MGA PRESET NG KULAY",
     themeAccessibility:
       "Kasalukuyang tema: %{theme}. I-tap para palitan.",

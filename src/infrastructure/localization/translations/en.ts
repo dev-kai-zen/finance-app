@@ -71,6 +71,10 @@ export const en = {
     backupPaused: "Backup paused",
     backupPausedDescription:
       "Sample records are temporary and are not uploaded to Google Drive. Start a personal workspace to enable backup.",
+    experienceSection: "EXPERIENCE",
+    simpleHomeLabels: "Simple dashboard labels",
+    simpleHomeLabelsDescription:
+      "Use friendly wording like “Money you have” and “Spent this month.” Amounts still reflect net worth and monthly spending.",
     appearanceSection: "THEME & COLOR PRESETS",
     themeAccessibility: "Current theme: %{theme}. Tap to change.",
     followingAppearance: "Following device appearance",
