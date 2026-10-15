@@ -13,7 +13,6 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
-  CircleHelp,
   Edit3,
   Plus,
   RotateCcw,
@@ -27,6 +26,7 @@ import {
   FullScreenFormModal,
   InfoModal,
   NotificationModal,
+  ScreenTitleWithHelp,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -316,24 +316,12 @@ export function QuickPresetsModal({
           </Pressable>
         }
         headerTitle={
-          <View style={styles.headerTitleContainer}>
-            <Text numberOfLines={1} style={styles.headerTitleText}>
-              Quick Presets
-            </Text>
-            <Pressable
-              accessibilityHint="Displays help for Quick Presets"
-              accessibilityLabel="Quick Presets help"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => setHelpVisible(true)}
-              style={({ pressed }) => [
-                styles.helpIconButton,
-                pressed && styles.helpIconButtonPressed,
-              ]}
-            >
-              <CircleHelp color={theme.colors.textSecondary} size={18} />
-            </Pressable>
-          </View>
+          <ScreenTitleWithHelp
+            accessibilityHint="Displays help for Quick Presets"
+            accessibilityLabel="Quick Presets help"
+            onPressHelp={() => setHelpVisible(true)}
+            title="Quick Presets"
+          />
         }
         title="Quick Presets"
         titleAlign="left"
@@ -829,24 +817,6 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
-    },
-    headerTitleContainer: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 6,
-    },
-    headerTitleText: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    helpIconButton: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 4,
-    },
-    helpIconButtonPressed: {
-      opacity: 0.6,
     },
     searchContainer: {
       alignItems: "center",

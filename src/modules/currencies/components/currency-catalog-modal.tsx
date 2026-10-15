@@ -1,4 +1,4 @@
-import { ChevronRight, CircleHelp, Coins, Plus } from "lucide-react-native";
+import { ChevronRight, Coins, Plus } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,6 +14,7 @@ import {
   FullScreenFormModal,
   InfoModal,
   NotificationModal,
+  ScreenTitleWithHelp,
 } from "@/components";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import type { AppTheme } from "@/constants/theme";
@@ -190,24 +191,12 @@ export function CurrencyCatalogModal({
   );
 
   const managerTitle = (
-    <View style={styles.headerTitleContainer}>
-      <Text numberOfLines={1} style={styles.headerTitleText}>
-        {t("currency.catalogTitle")}
-      </Text>
-      <Pressable
-        accessibilityHint={t("currency.catalogHelpHint")}
-        accessibilityLabel={t("currency.catalogHelpAccessibility")}
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => setHelpVisible(true)}
-        style={({ pressed }) => [
-          styles.helpIconButton,
-          pressed && styles.helpIconButtonPressed,
-        ]}
-      >
-        <CircleHelp color={theme.colors.textSecondary} size={18} />
-      </Pressable>
-    </View>
+    <ScreenTitleWithHelp
+      accessibilityHint={t("currency.catalogHelpHint")}
+      accessibilityLabel={t("currency.catalogHelpAccessibility")}
+      onPressHelp={() => setHelpVisible(true)}
+      title={t("currency.catalogTitle")}
+    />
   );
 
   const title = editor
@@ -452,24 +441,6 @@ function createStyles(theme: AppTheme) {
       height: 40,
       justifyContent: "center",
       width: 40,
-    },
-    headerTitleContainer: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 6,
-    },
-    headerTitleText: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    helpIconButton: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 4,
-    },
-    helpIconButtonPressed: {
-      opacity: 0.6,
     },
     infoBanner: {
       alignItems: "flex-start",

@@ -13,6 +13,7 @@ export * from "./full-screen-form-modal";
 export * from "./keyboard-aware-form";
 export * from "./date-picker-modal";
 export * from "./icon-helper";
+export * from "./screen-title-with-help";
 export * from "./icon-picker-modal";
 export * from "./sortable-list-modal";
 export * from "./feature-not-implemented-modal";

@@ -9,10 +9,7 @@ import { useFocusEffect } from "expo-router";
 
 import { ConfirmModal } from "@/components";
 import { FloatingActionButton } from "@/components/floating-action-button";
-import {
-  PageContainer,
-  PageEmptyState,
-} from "@/components/page-container";
+import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { PageHeader } from "@/components/page-header";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -127,12 +124,6 @@ export function NotesScreen() {
             onPress={handleOpenNewNote}
           />
         ) : undefined
-      }
-      header={
-        <PageHeader
-          subtitle="Keep financial goals, memos, strategies & receipt notes organized"
-          title="Notes"
-        />
       }
     >
       <View style={styles.container}>

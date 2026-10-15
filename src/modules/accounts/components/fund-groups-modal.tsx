@@ -4,7 +4,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
   ChevronUp,
   Folder,
   Landmark,
@@ -27,6 +26,7 @@ import {
   FullScreenFormModal,
   IconHelper,
   InfoModal,
+  ScreenTitleWithHelp,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -351,24 +351,12 @@ export function FundGroupsModal({
   );
 
   const managerTitle = (
-    <View style={styles.headerTitleContainer}>
-      <Text numberOfLines={1} style={styles.headerTitleText}>
-        Fund Groups
-      </Text>
-      <Pressable
-        accessibilityHint="Displays help for Fund Groups"
-        accessibilityLabel="Fund Groups help"
-        accessibilityRole="button"
-        hitSlop={8}
-        onPress={() => setHelpVisible(true)}
-        style={({ pressed }) => [
-          styles.helpIconButton,
-          pressed && styles.helpIconButtonPressed,
-        ]}
-      >
-        <CircleHelp color={theme.colors.textSecondary} size={18} />
-      </Pressable>
-    </View>
+    <ScreenTitleWithHelp
+      accessibilityHint="Displays help for Fund Groups"
+      accessibilityLabel="Fund Groups help"
+      onPressHelp={() => setHelpVisible(true)}
+      title="Fund Groups"
+    />
   );
 
   const memberPickerEmptyMessage = normalizedMemberSearch
@@ -936,24 +924,6 @@ function createStyles(theme: AppTheme) {
       width: 36,
     },
     disabled: { opacity: 0.5 },
-    headerTitleContainer: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 6,
-    },
-    headerTitleText: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    helpIconButton: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 4,
-    },
-    helpIconButtonPressed: {
-      opacity: 0.6,
-    },
     loading: { marginVertical: theme.spacing.xxxl },
     groupList: { gap: theme.spacing.sm },
     groupCard: {

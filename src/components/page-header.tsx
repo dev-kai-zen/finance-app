@@ -12,7 +12,7 @@ export interface PageHeaderAction {
 }
 
 export interface PageHeaderProps {
-  title: string;
+  title?: string;
   subtitle?: string;
   breadcrumb?: string;
   primaryAction?: PageHeaderAction;
@@ -40,13 +40,22 @@ export const PageHeader = memo(function PageHeader({
             {breadcrumb}
           </Text>
         ) : null}
-        <Text
-          style={[styles.title, !isDesktopLayout && styles.titleMobile]}
-          accessibilityRole="header"
-        >
-          {title}
-        </Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {title ? (
+          <Text
+            style={[styles.title, !isDesktopLayout && styles.titleMobile]}
+            accessibilityRole="header"
+          >
+            {title}
+          </Text>
+        ) : null}
+        {subtitle ? (
+          <Text
+            accessibilityRole={title ? undefined : "header"}
+            style={[styles.subtitle, !title && styles.subtitleOnly]}
+          >
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
 
       {hasActions && (
@@ -134,6 +143,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.regular,
       lineHeight: 20,
       marginTop: 4,
+    },
+    subtitleOnly: {
+      marginTop: 0,
     },
     actionsArea: {
       alignItems: "center",
