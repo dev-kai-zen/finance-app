@@ -14,6 +14,10 @@ export function saveGoal(
   existingId?: string | null,
   context: DbContext = db,
 ): Goal {
+  if (context === db) {
+    return db.transaction((tx) => saveGoal(input, existingId, tx));
+  }
+
   const validated = goalInputSchema.parse(input);
   const now = new Date();
 
