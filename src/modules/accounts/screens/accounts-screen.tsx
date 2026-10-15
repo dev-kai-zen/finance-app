@@ -8,7 +8,6 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
-import { AccountOpeningSummary } from "@/modules/accounts/components/account-opening-summary";
 import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
@@ -208,8 +207,6 @@ export function AccountsScreen({
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-
-          <AccountOpeningSummary accounts={data.accounts} />
 
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
