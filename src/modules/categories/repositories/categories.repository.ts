@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, ne, notInArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne, notInArray } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
 import { categories, hexColors, transactions } from "@/infrastructure/database/schema";
 import {
@@ -87,7 +87,13 @@ export async function listCategories(
   }
 
   parentCategories.sort(
-    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name),
+    (a, b) => {
+      const aIsOthers = isProtectedCategoryId(a.id);
+      const bIsOthers = isProtectedCategoryId(b.id);
+      if (aIsOthers && !bIsOthers) return 1;
+      if (!aIsOthers && bIsOthers) return -1;
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name);
+    },
   );
 
   return parentCategories;
@@ -252,6 +258,54 @@ export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void>
       .set({ isSystem: cat.isSystem })
       .where(and(eq(categories.id, cat.id), ne(categories.isSystem, cat.isSystem)));
   }
+
+  // Repair any custom groups created with sortOrder 0 so they sit at the end before "Others"
+  for (const type of ["expense", "income"] as const) {
+    const parentRows = await db
+      .select({
+        id: categories.id,
+        sortOrder: categories.sortOrder,
+        createdAt: categories.createdAt,
+      })
+      .from(categories)
+      .where(and(eq(categories.type, type), isNull(categories.parentId)));
+
+    const firstSeededId = type === "expense" ? "cat_exp_housing" : "cat_inc_salary";
+    const customZeroOrder = parentRows.filter(
+      (r) =>
+        !isProtectedCategoryId(r.id) &&
+        r.id !== firstSeededId &&
+        (r.sortOrder === 0 || r.sortOrder == null),
+    );
+
+    if (customZeroOrder.length > 0) {
+      const nonProtected = parentRows.filter(
+        (r) => !isProtectedCategoryId(r.id) && (r.sortOrder ?? 0) > 0,
+      );
+      let currentMax =
+        nonProtected.length > 0
+          ? Math.max(...nonProtected.map((r) => r.sortOrder ?? 0))
+          : 0;
+
+      customZeroOrder.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+      for (const customCat of customZeroOrder) {
+        currentMax += 1;
+        await db
+          .update(categories)
+          .set({ sortOrder: currentMax, updatedAt: now })
+          .where(eq(categories.id, customCat.id));
+      }
+
+      const others = parentRows.find((r) => isProtectedCategoryId(r.id));
+      if (others) {
+        await db
+          .update(categories)
+          .set({ sortOrder: currentMax + 1, updatedAt: now })
+          .where(eq(categories.id, others.id));
+      }
+    }
+  }
 }
 
 export function deleteNonSystemCategoryRecords(db: DbContext): void {
@@ -330,4 +384,49 @@ export async function reorderCategoriesInDb(
         .where(eq(categories.id, id));
     }
   });
+}
+
+export async function getNextCategorySortOrder(
+  db: DbContext,
+  type: CategoryType,
+  parentId?: string | null,
+): Promise<number> {
+  if (parentId) {
+    const rows = await db
+      .select({ sortOrder: categories.sortOrder })
+      .from(categories)
+      .where(eq(categories.parentId, parentId));
+
+    if (rows.length === 0) return 0;
+    const max = Math.max(...rows.map((r) => r.sortOrder ?? 0), -1);
+    return max + 1;
+  }
+
+  const rows = await db
+    .select({
+      id: categories.id,
+      sortOrder: categories.sortOrder,
+    })
+    .from(categories)
+    .where(and(eq(categories.type, type), isNull(categories.parentId)));
+
+  const othersCategory = rows.find((r) => isProtectedCategoryId(r.id));
+  const nonOtherRows = rows.filter((r) => !isProtectedCategoryId(r.id));
+
+  const maxNonOther =
+    nonOtherRows.length > 0
+      ? Math.max(...nonOtherRows.map((r) => r.sortOrder ?? 0), -1)
+      : -1;
+
+  const newGroupSortOrder = maxNonOther + 1;
+
+  if (othersCategory) {
+    const othersNewSortOrder = newGroupSortOrder + 1;
+    await db
+      .update(categories)
+      .set({ sortOrder: othersNewSortOrder, updatedAt: new Date() })
+      .where(eq(categories.id, othersCategory.id));
+  }
+
+  return newGroupSortOrder;
 }

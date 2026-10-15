@@ -175,6 +175,7 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "flex-start",
+      marginLeft: theme.spacing.xs,
     },
     title: {
       color: theme.colors.textPrimary,

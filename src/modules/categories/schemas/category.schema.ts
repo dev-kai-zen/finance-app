@@ -8,8 +8,10 @@ export const categoryInputSchema = z.object({
     .max(50, "Category name cannot exceed 50 characters"),
   type: z.enum(["income", "expense"]),
   color: z.string().optional(),
+  hexColorsId: z.string().nullable().optional(),
   icon: z.string().optional(),
   parentId: z.string().nullable().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export type CategoryInputSchema = z.infer<typeof categoryInputSchema>;
