@@ -4,6 +4,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -11,7 +12,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Paperclip, Plus, Sparkles, X } from "lucide-react-native";
+import {
+  ChevronRight,
+  Paperclip,
+  Plus,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -1496,35 +1504,48 @@ export function TransactionFormModal({
             </Pressable>
           </View>
 
-          <Pressable
-            accessibilityLabel="Customize fields"
-            accessibilityRole="button"
-            onPress={() => setIsFieldPreferencesOpen(true)}
-            style={({ pressed }) => [
-              styles.customizeFieldsButton,
-              pressed && styles.customizeFieldsButtonPressed,
-            ]}
+          <ScrollView
+            contentContainerStyle={styles.topActionsContent}
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+            style={styles.topActionsScroll}
           >
-            <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
-          </Pressable>
+            {!isEditing && showQuickPresetsUi ? (
+              <Pressable
+                accessibilityLabel="Open Quick Presets"
+                accessibilityRole="button"
+                disabled={pending || presetPending}
+                onPress={() => setIsQuickPresetsOpen(true)}
+                style={({ pressed }) => [
+                  styles.quickPresetsButton,
+                  pressed && styles.quickPresetsButtonPressed,
+                ]}
+              >
+                <Sparkles color={theme.colors.primary} size={16} />
+                <Text style={styles.quickPresetsButtonText}>Quick Presets</Text>
+                {presets.length > 0 ? (
+                  <View style={styles.quickPresetsCount}>
+                    <Text style={styles.quickPresetsCountText}>{presets.length}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            ) : null}
 
-          {!isEditing && showQuickPresetsUi ? (
             <Pressable
-              accessibilityLabel="Open Quick Presets"
+              accessibilityLabel="Customize fields"
               accessibilityRole="button"
-              disabled={pending || presetPending}
-              onPress={() => setIsQuickPresetsOpen(true)}
-              style={styles.quickPresetsButton}
+              disabled={pending}
+              onPress={() => setIsFieldPreferencesOpen(true)}
+              style={({ pressed }) => [
+                styles.customizeFieldsButton,
+                pressed && !pending && styles.customizeFieldsButtonPressed,
+              ]}
             >
-              <Sparkles color={theme.colors.primary} size={16} />
-              <Text style={styles.quickPresetsButtonText}>Quick Presets</Text>
-              {presets.length > 0 ? (
-                <View style={styles.quickPresetsCount}>
-                  <Text style={styles.quickPresetsCountText}>{presets.length}</Text>
-                </View>
-              ) : null}
+              <SlidersHorizontal color={theme.colors.primary} size={16} />
+              <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
             </Pressable>
-          ) : null}
+          </ScrollView>
 
           <View style={styles.typePickerSpacing}>
             <TransactionTypePicker
@@ -2048,6 +2069,70 @@ export function TransactionFormModal({
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={[styles.inputGroup, styles.splitCategoryGroup]}>
+                {!splitEnabled ? (
+                  <>
+                    <Pressable
+                      accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
+                      accessibilityRole="button"
+                      onPress={() => setIsCategoryPickerOpen(true)}
+                      style={styles.selectorCard}
+                    >
+                      <View style={styles.selectorLeft}>
+                        <View
+                          style={[
+                            styles.selectorIconWrap,
+                            {
+                              backgroundColor: `${selectedCategoryColor}18`,
+                              borderColor: `${selectedCategoryColor}35`,
+                            },
+                          ]}
+                        >
+                          <IconHelper
+                            name={selectedCategory?.icon ?? "tag"}
+                            size={18}
+                            color={selectedCategoryColor}
+                          />
+                        </View>
+                        <View style={styles.selectorTextCol}>
+                          <Text
+                            numberOfLines={1}
+                            style={
+                              selectedCategory
+                                ? styles.selectorValueText
+                                : styles.selectorPlaceholderText
+                            }
+                          >
+                            {selectedCategory?.name ?? "Select Category"}
+                          </Text>
+                          {selectedCategory && (
+                            <Text style={styles.selectorSubText}>
+                              {parentOfSelectedCategory
+                                ? `${parentOfSelectedCategory.name} > Subcategory`
+                                : mode === "expense"
+                                  ? "Expense Category"
+                                  : "Income Category"}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.selectorChangeBadge}>
+                        <Text style={styles.selectorChangeText}>Change</Text>
+                        <ChevronRight size={14} color={theme.colors.textSecondary} />
+                      </View>
+                    </Pressable>
+                    {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
+                      <BudgetLiveIndicator
+                        amountMinorUnits={postedExpenseMinorUnitsAbs}
+                        categoryId={selectedCategoryId}
+                        expenseCurrencyCode={accountCurrencyCode}
+                        excludeTransactionId={
+                          isEditing && initialTransaction ? initialTransaction.id : null
+                        }
+                        occurredAt={occurredAt}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
                 {canUseSplit && showSplitField ? (
                   <TransactionSplitEditor
                     categories={flatCategoriesForSplit}
@@ -2078,70 +2163,6 @@ export function TransactionFormModal({
                     }}
                     totalMinorUnits={splitTotalMinorUnits}
                   />
-                ) : null}
-                {!splitEnabled ? (
-                <>
-                <Pressable
-                  accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
-                  accessibilityRole="button"
-                  onPress={() => setIsCategoryPickerOpen(true)}
-                  style={styles.selectorCard}
-                >
-                  <View style={styles.selectorLeft}>
-                    <View
-                      style={[
-                        styles.selectorIconWrap,
-                        {
-                          backgroundColor: `${selectedCategoryColor}18`,
-                          borderColor: `${selectedCategoryColor}35`,
-                        },
-                      ]}
-                    >
-                      <IconHelper
-                        name={selectedCategory?.icon ?? "tag"}
-                        size={18}
-                        color={selectedCategoryColor}
-                      />
-                    </View>
-                    <View style={styles.selectorTextCol}>
-                      <Text
-                        numberOfLines={1}
-                        style={
-                          selectedCategory
-                            ? styles.selectorValueText
-                            : styles.selectorPlaceholderText
-                        }
-                      >
-                        {selectedCategory?.name ?? "Select Category"}
-                      </Text>
-                      {selectedCategory && (
-                        <Text style={styles.selectorSubText}>
-                          {parentOfSelectedCategory
-                            ? `${parentOfSelectedCategory.name} > Subcategory`
-                            : mode === "expense"
-                              ? "Expense Category"
-                              : "Income Category"}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={styles.selectorChangeBadge}>
-                    <Text style={styles.selectorChangeText}>Change</Text>
-                    <ChevronRight size={14} color={theme.colors.textSecondary} />
-                  </View>
-                </Pressable>
-                {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
-                  <BudgetLiveIndicator
-                    amountMinorUnits={postedExpenseMinorUnitsAbs}
-                    categoryId={selectedCategoryId}
-                    expenseCurrencyCode={accountCurrencyCode}
-                    excludeTransactionId={
-                      isEditing && initialTransaction ? initialTransaction.id : null
-                    }
-                    occurredAt={occurredAt}
-                  />
-                ) : null}
-                </>
                 ) : null}
               </View>
             )}
@@ -2899,18 +2920,28 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
       marginBottom: 14,
     },
+    topActionsScroll: {
+      flexGrow: 0,
+      marginBottom: theme.spacing.sm,
+    },
+    topActionsContent: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
     quickPresetsButton: {
       alignItems: "center",
-      alignSelf: "flex-start",
       backgroundColor: `${theme.colors.primary}12`,
       borderColor: `${theme.colors.primary}45`,
       borderRadius: 999,
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.sm,
       minHeight: 34,
       paddingHorizontal: theme.spacing.sm,
+    },
+    quickPresetsButtonPressed: {
+      opacity: 0.7,
     },
     quickPresetsButtonText: {
       color: theme.colors.primary,
@@ -3553,11 +3584,14 @@ function createStyles(theme: AppTheme) {
     },
     customizeFieldsButton: {
       alignItems: "center",
-      alignSelf: "center",
-      marginBottom: theme.spacing.xs,
-      minHeight: 36,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.xs,
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}45`,
+      borderRadius: 999,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 34,
+      paddingHorizontal: theme.spacing.sm,
     },
     customizeFieldsButtonPressed: {
       opacity: 0.7,
@@ -3565,7 +3599,7 @@ function createStyles(theme: AppTheme) {
     customizeFieldsButtonText: {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     nameInputWithoutAttachment: {
       flex: 1,

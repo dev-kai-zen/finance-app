@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
@@ -12,15 +13,19 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  CircleHelp,
   Edit3,
   Plus,
   RotateCcw,
+  Search,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react-native";
 import {
   ConfirmModal,
   FullScreenFormModal,
+  InfoModal,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -108,6 +113,8 @@ export function QuickPresetsModal({
   const [pendingArchive, setPendingArchive] = useState<TransactionPreset | null>(null);
   const [pendingRestore, setPendingRestore] = useState<TransactionPreset | null>(null);
   const [pendingPermanentDelete, setPendingPermanentDelete] = useState<TransactionPreset | null>(null);
+  const [helpVisible, setHelpVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const currentSortBy = sortBy ?? internalSortBy;
 
@@ -207,6 +214,8 @@ export function QuickPresetsModal({
     setPendingArchive(null);
     setPendingRestore(null);
     setPendingPermanentDelete(null);
+    setHelpVisible(false);
+    setSearchQuery("");
     onClose();
   };
 
@@ -255,6 +264,44 @@ export function QuickPresetsModal({
 
   const hasAnyPresets = activePresets.length > 0 || archivedList.length > 0;
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredActivePresets = useMemo(() => {
+    if (!normalizedQuery) return sortedActivePresets;
+    return sortedActivePresets.filter((preset) => {
+      if (preset.transactionName.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.type.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.note?.toLowerCase().includes(normalizedQuery)) return true;
+      const account = accounts.find((item) => item.id === preset.accountId);
+      if (account?.name.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.type === "transfer") {
+        const dest = accounts.find((item) => item.id === preset.toAccountId);
+        if (dest?.name.toLowerCase().includes(normalizedQuery)) return true;
+      }
+      const cat = categoryList.find((item) => item.id === preset.categoryId);
+      if (cat?.name.toLowerCase().includes(normalizedQuery)) return true;
+      return false;
+    });
+  }, [sortedActivePresets, normalizedQuery, accounts, categoryList]);
+
+  const filteredArchivedPresets = useMemo(() => {
+    if (!normalizedQuery) return sortedArchivedPresets;
+    return sortedArchivedPresets.filter((preset) => {
+      if (preset.transactionName.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.type.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.note?.toLowerCase().includes(normalizedQuery)) return true;
+      const account = accounts.find((item) => item.id === preset.accountId);
+      if (account?.name.toLowerCase().includes(normalizedQuery)) return true;
+      if (preset.type === "transfer") {
+        const dest = accounts.find((item) => item.id === preset.toAccountId);
+        if (dest?.name.toLowerCase().includes(normalizedQuery)) return true;
+      }
+      const cat = categoryList.find((item) => item.id === preset.categoryId);
+      if (cat?.name.toLowerCase().includes(normalizedQuery)) return true;
+      return false;
+    });
+  }, [sortedArchivedPresets, normalizedQuery, accounts, categoryList]);
+
   return (
     <>
       <FullScreenFormModal
@@ -268,18 +315,67 @@ export function QuickPresetsModal({
             <Plus color={theme.colors.onPrimary} size={20} />
           </Pressable>
         }
+        headerTitle={
+          <View style={styles.headerTitleContainer}>
+            <Text numberOfLines={1} style={styles.headerTitleText}>
+              Quick Presets
+            </Text>
+            <Pressable
+              accessibilityHint="Displays help for Quick Presets"
+              accessibilityLabel="Quick Presets help"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setHelpVisible(true)}
+              style={({ pressed }) => [
+                styles.helpIconButton,
+                pressed && styles.helpIconButtonPressed,
+              ]}
+            >
+              <CircleHelp color={theme.colors.textSecondary} size={18} />
+            </Pressable>
+          </View>
+        }
         title="Quick Presets"
+        titleAlign="left"
         visible={visible}
         onClose={closeManager}
       >
         <ScrollView
           contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.description}>
-            Tap a preset to fill the transaction form. You can review every field
-            before saving the transaction.
-          </Text>
+          {/* Search Box */}
+          {hasAnyPresets && (
+            <View style={styles.searchContainer}>
+              <Search color={theme.colors.textMuted} size={18} />
+              <TextInput
+                accessibilityLabel="Search quick presets"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={setSearchQuery}
+                placeholder="Search presets..."
+                placeholderTextColor={theme.colors.textMuted}
+                returnKeyType="search"
+                style={styles.searchInput}
+                value={searchQuery}
+              />
+              {searchQuery.length > 0 ? (
+                <Pressable
+                  accessibilityLabel="Clear search"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setSearchQuery("")}
+                  style={({ pressed }) => [
+                    styles.searchClearBtn,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <X color={theme.colors.textSecondary} size={16} />
+                </Pressable>
+              ) : null}
+            </View>
+          )}
 
           {/* Controls Bar: Sort by selection & Show archived checkbox */}
           {hasAnyPresets && (
@@ -382,28 +478,32 @@ export function QuickPresetsModal({
               {showArchived && (
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>
-                    Active Presets ({sortedActivePresets.length})
+                    Active Presets ({filteredActivePresets.length})
                   </Text>
                 </View>
               )}
 
-              {sortedActivePresets.length === 0 ? (
+              {filteredActivePresets.length === 0 ? (
                 <View style={styles.emptySectionContainer}>
                   <Text style={styles.emptySectionTitle}>
-                    {archivedList.length > 0
-                      ? "All presets are archived"
-                      : "No active presets"}
+                    {normalizedQuery
+                      ? "No presets found"
+                      : archivedList.length > 0
+                        ? "All presets are archived"
+                        : "No active presets"}
                   </Text>
                   <Text style={styles.emptySectionText}>
-                    {archivedList.length > 0
-                      ? showArchived
-                        ? "You can restore them from the archived list below."
-                        : "Turn on \"Show archived\" above to view or restore them."
-                      : "Tap \"+\" to create a new preset."}
+                    {normalizedQuery
+                      ? `No active presets match "${searchQuery.trim()}".`
+                      : archivedList.length > 0
+                        ? showArchived
+                          ? "You can restore them from the archived list below."
+                          : "Turn on \"Show archived\" above to view or restore them."
+                        : "Tap \"+\" to create a new preset."}
                   </Text>
                 </View>
               ) : (
-                sortedActivePresets.map((preset, index) => {
+                filteredActivePresets.map((preset, index) => {
                   const unavailableReason = availability(preset);
                   const account = accounts.find(
                     (item) => item.id === preset.accountId,
@@ -478,7 +578,7 @@ export function QuickPresetsModal({
                         >
                           <Archive color={theme.colors.textSecondary} size={17} />
                         </Pressable>
-                        {currentSortBy === "sort_order" && (
+                        {currentSortBy === "sort_order" && !normalizedQuery && (
                           <>
                             <Pressable
                               accessibilityLabel={`Move ${preset.transactionName} up`}
@@ -497,12 +597,13 @@ export function QuickPresetsModal({
                             <Pressable
                               accessibilityLabel={`Move ${preset.transactionName} down`}
                               disabled={
-                                pending || index === sortedActivePresets.length - 1
+                                pending ||
+                                index === filteredActivePresets.length - 1
                               }
                               onPress={() => void movePreset(index, 1)}
                               style={[
                                 styles.orderButton,
-                                index === sortedActivePresets.length - 1 &&
+                                index === filteredActivePresets.length - 1 &&
                                   styles.disabled,
                               ]}
                             >
@@ -524,18 +625,20 @@ export function QuickPresetsModal({
                 <View style={styles.archivedSection}>
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>
-                      Archived Presets ({sortedArchivedPresets.length})
+                      Archived Presets ({filteredArchivedPresets.length})
                     </Text>
                   </View>
 
-                  {sortedArchivedPresets.length === 0 ? (
+                  {filteredArchivedPresets.length === 0 ? (
                     <View style={styles.emptySectionContainer}>
                       <Text style={styles.emptySectionText}>
-                        No archived presets
+                        {normalizedQuery
+                          ? `No archived presets match "${searchQuery.trim()}".`
+                          : "No archived presets"}
                       </Text>
                     </View>
                   ) : (
-                    sortedArchivedPresets.map((preset) => {
+                    filteredArchivedPresets.map((preset) => {
                       const account = accounts.find(
                         (item) => item.id === preset.accountId,
                       );
@@ -701,6 +804,13 @@ export function QuickPresetsModal({
         variant="error"
         visible={visible && editingPreset === undefined && Boolean(error)}
       />
+
+      <InfoModal
+        message="Tap a preset to fill the transaction form. You can review every field before saving the transaction."
+        onClose={() => setHelpVisible(false)}
+        title="Quick Presets"
+        visible={helpVisible}
+      />
     </>
   );
 }
@@ -720,11 +830,52 @@ function createStyles(theme: AppTheme) {
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
     },
-    description: {
-      color: theme.colors.textSecondary,
+    headerTitleContainer: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    headerTitleText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    helpIconButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 4,
+    },
+    helpIconButtonPressed: {
+      opacity: 0.6,
+    },
+    searchContainer: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.md,
+    },
+    searchInput: {
+      color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
-      marginBottom: theme.spacing.xs,
+      minHeight: 42,
+      paddingVertical: theme.spacing.xs,
+    },
+    searchClearBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 24,
+      justifyContent: "center",
+      width: 24,
+    },
+    pressed: {
+      opacity: 0.65,
     },
     controlsContainer: {
       backgroundColor: theme.colors.surfaceMuted,
