@@ -1,4 +1,5 @@
 import {
+  AlertCircle,
   Archive,
   Check,
   ChevronDown,
@@ -20,7 +21,13 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ConfirmModal, FullScreenFormModal, IconHelper, NotificationModal } from "@/components";
+import {
+  ConfirmModal,
+  FullScreenFormModal,
+  IconHelper,
+  InfoModal,
+  NotificationModal,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
@@ -71,6 +78,7 @@ export function FundGroupsModal({
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [ruleInfoVisible, setRuleInfoVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -78,6 +86,7 @@ export function FundGroupsModal({
       setConfirmAction(null);
       setMemberSearchQuery("");
       setExpandedGroupIds(new Set());
+      setRuleInfoVisible(false);
       mutations.clearError();
     }
   }, [visible]);
@@ -382,13 +391,6 @@ export function FundGroupsModal({
               />
             </View>
 
-            <View style={styles.ruleBanner}>
-              <Text style={styles.ruleText}>
-                An account and its own pockets cannot be selected together to prevent
-                double-counting.
-              </Text>
-            </View>
-
             <AccountSearchBox
               accessibilityLabel="Search Fund Group accounts and pockets"
               clearAccessibilityLabel="Clear Fund Group member search"
@@ -398,7 +400,22 @@ export function FundGroupsModal({
             />
 
             <View style={styles.selectionHeader}>
-              <Text style={styles.fieldLabel}>Accounts &amp; pockets</Text>
+              <View style={styles.selectionTitleRow}>
+                <Text style={styles.fieldLabel}>Accounts &amp; pockets</Text>
+                <Pressable
+                  accessibilityHint="Displays the rule for selecting accounts and pockets"
+                  accessibilityLabel="Selection rule information"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setRuleInfoVisible(true)}
+                  style={({ pressed }) => [
+                    styles.infoIconButton,
+                    pressed && styles.infoIconButtonPressed,
+                  ]}
+                >
+                  <AlertCircle color={theme.colors.textSecondary} size={15} />
+                </Pressable>
+              </View>
               <Text style={styles.selectionCount}>{memberSelectionSummary}</Text>
             </View>
 
@@ -854,6 +871,14 @@ export function FundGroupsModal({
         onConfirm={confirm}
       />
 
+      <InfoModal
+        buttonLabel="OK"
+        message="An account and its own pockets cannot be selected together to prevent double counting."
+        onClose={() => setRuleInfoVisible(false)}
+        title="Double Counting"
+        visible={ruleInfoVisible}
+      />
+
       <NotificationModal
         message={mutations.error ?? ""}
         onClose={mutations.clearError}
@@ -1088,22 +1113,23 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
-    ruleBanner: {
-      backgroundColor: `${theme.colors.warning}10`,
-      borderColor: `${theme.colors.warning}35`,
-      borderRadius: theme.borderRadius.medium,
-      borderWidth: 1,
-      padding: theme.spacing.md,
-    },
-    ruleText: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      lineHeight: theme.typography.lineHeight.md,
-    },
     selectionHeader: {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
+    },
+    selectionTitleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    infoIconButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 2,
+    },
+    infoIconButtonPressed: {
+      opacity: 0.6,
     },
     selectionCount: {
       color: theme.colors.primary,
