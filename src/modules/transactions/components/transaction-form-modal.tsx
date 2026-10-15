@@ -20,6 +20,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -144,6 +145,9 @@ function deferredMonthsToFormState(deferredMonths: number): {
   }
   return { option: "custom", custom: String(deferredMonths) };
 }
+
+const KEYBOARD_OFFSET_NORMAL = 88;
+const KEYBOARD_OFFSET_DESCRIPTION = 180;
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -426,6 +430,21 @@ export function TransactionFormModal({
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
+  const [focusedFieldType, setFocusedFieldType] = useState<
+    "normal" | "description" | null
+  >(null);
+
+  const keyboardBottomOffset =
+    focusedFieldType === "description"
+      ? KEYBOARD_OFFSET_DESCRIPTION
+      : KEYBOARD_OFFSET_NORMAL;
+
+  useEffect(() => {
+    if (!visible) {
+      setFocusedFieldType(null);
+    }
+  }, [visible]);
+
   const { labels, refresh: refreshLabels } = useLabels({ includeArchived: true });
   const formInitSessionRef = useRef<string | null>(null);
 
@@ -1557,6 +1576,7 @@ export function TransactionFormModal({
           </View>
 
           <KeyboardAwareForm
+            bottomOffset={keyboardBottomOffset}
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -1567,10 +1587,12 @@ export function TransactionFormModal({
                     <View style={styles.nameInputContainer}>
                       <TextInput
                         maxLength={100}
+                        onBlur={() => setFocusedFieldType(null)}
                         onChangeText={(value) => {
                           setName(value);
                           setSuggestionsSuppressed(false);
                         }}
+                        onFocus={() => setFocusedFieldType("normal")}
                         placeholder="Name"
                         placeholderTextColor={theme.colors.textSecondary}
                         style={[
@@ -1745,6 +1767,7 @@ export function TransactionFormModal({
                   <TextInput
                     accessibilityLabel="Exchange rate"
                     keyboardType="decimal-pad"
+                    onBlur={() => setFocusedFieldType(null)}
                     onChangeText={(text) => {
                       setExchangeRateText(text);
                       const parsed = parseExchangeRateDecimalToScaled(text);
@@ -1753,6 +1776,7 @@ export function TransactionFormModal({
                         setExchangeRateScaled(parsed);
                       }
                     }}
+                    onFocus={() => setFocusedFieldType("normal")}
                     placeholder="Rate"
                     style={styles.rateInput}
                     value={exchangeRateText}
@@ -2245,9 +2269,11 @@ export function TransactionFormModal({
                             editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={3}
+                            onBlur={() => setFocusedFieldType(null)}
                             onChangeText={(value) =>
                               setCustomTermMonths(value.replace(/\D/g, ""))
                             }
+                            onFocus={() => setFocusedFieldType("normal")}
                             placeholder="12"
                             placeholderTextColor={theme.colors.textMuted}
                             style={styles.customDeferralInput}
@@ -2323,9 +2349,11 @@ export function TransactionFormModal({
                             editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={2}
+                            onBlur={() => setFocusedFieldType(null)}
                             onChangeText={(value) =>
                               setCustomDeferralMonths(value.replace(/\D/g, ""))
                             }
+                            onFocus={() => setFocusedFieldType("normal")}
                             placeholder="3"
                             placeholderTextColor={theme.colors.textMuted}
                             style={styles.customDeferralInput}
@@ -2465,7 +2493,9 @@ export function TransactionFormModal({
               <TextInput
                 maxLength={200}
                 multiline
+                onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setNote}
+                onFocus={() => setFocusedFieldType("description")}
                 placeholder="e.g. Grocery run at SM, Grab to airport..."
                 placeholderTextColor={theme.colors.textSecondary}
                 style={styles.noteInput}
@@ -2527,28 +2557,36 @@ export function TransactionFormModal({
           </KeyboardAwareForm>
 
           {/* Action Buttons */}
-          <View style={styles.footerRow}>
-            <Pressable
-              accessibilityLabel="Cancel"
-              accessibilityRole="button"
-              onPress={onClose}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
+          <KeyboardStickyView
+            offset={{
+              closed: 0,
+              opened: Math.max(insets.bottom, 20),
+            }}
+            style={styles.stickyFooter}
+          >
+            <View style={styles.footerRow}>
+              <Pressable
+                accessibilityLabel="Cancel"
+                accessibilityRole="button"
+                onPress={onClose}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
 
-            <Pressable
-              accessibilityLabel={pending ? "Saving..." : "Save Record"}
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={() => handleSave(false)}
-              style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
-            >
-              <Text style={styles.saveBtnText}>
-                {pending ? "Saving..." : "Save Record"}
-              </Text>
-            </Pressable>
-          </View>
+              <Pressable
+                accessibilityLabel={pending ? "Saving..." : "Save Record"}
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={() => handleSave(false)}
+                style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
+              >
+                <Text style={styles.saveBtnText}>
+                  {pending ? "Saving..." : "Save Record"}
+                </Text>
+              </Pressable>
+            </View>
+          </KeyboardStickyView>
         </View>
       </View>
 
@@ -3622,10 +3660,18 @@ function createStyles(theme: AppTheme) {
     dateTimeButtonFull: {
       flex: 1,
     },
+    stickyFooter: {
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      marginHorizontal: -20,
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 6,
+    },
     footerRow: {
       flexDirection: "row",
       gap: 10,
-      paddingTop: 8,
     },
     cancelBtn: {
       alignItems: "center",
