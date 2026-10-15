@@ -15,7 +15,7 @@ import {
   FullScreenFormModal,
   IconHelper,
   IconPickerModal,
-  KeyboardAwareForm,
+  KeyboardAwareFormPreset,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -24,9 +24,6 @@ import { useHexColors, type HexColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalInput, GoalWithProgress } from "../types/goal.types";
 import { GoalAccountPickerModal } from "./goal-account-picker-modal";
-
-const KEYBOARD_OFFSET_NORMAL = 24;
-const KEYBOARD_OFFSET_DESCRIPTION = 160;
 
 export interface GoalFormModalProps {
   visible: boolean;
@@ -77,11 +74,6 @@ export function GoalFormModal({
   const [focusedFieldType, setFocusedFieldType] = useState<
     "normal" | "description" | null
   >(null);
-
-  const keyboardBottomOffset =
-    focusedFieldType === "description"
-      ? KEYBOARD_OFFSET_DESCRIPTION
-      : KEYBOARD_OFFSET_NORMAL;
 
   // Sub-modals
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -221,16 +213,12 @@ export function GoalFormModal({
         titleAlign="left"
         visible={visible}
       >
-        <KeyboardAwareForm
-          bottomOffset={keyboardBottomOffset}
-          contentContainerStyle={[
-            styles.scrollContent,
-            focusedFieldType === "description" && styles.scrollContentNoteFocused,
-          ]}
-          extraKeyboardSpace={
-            focusedFieldType === "description" ? 80 : 0
-          }
+        <KeyboardAwareFormPreset
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          multilineContentContainerStyle={styles.scrollContentNoteFocused}
+          multilineFocused={focusedFieldType === "description"}
+          preset="fullScreenForm"
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
@@ -486,7 +474,7 @@ export function GoalFormModal({
               value={note}
             />
           </View>
-        </KeyboardAwareForm>
+        </KeyboardAwareFormPreset>
       </FullScreenFormModal>
 
       <AmountCalculatorModal

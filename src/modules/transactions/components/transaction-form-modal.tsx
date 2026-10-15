@@ -25,7 +25,7 @@ import {
   AmountCalculatorField,
   AmountCalculatorModal,
   IconHelper,
-  KeyboardAwareForm,
+  KeyboardAwareFormPreset,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -145,10 +145,6 @@ function deferredMonthsToFormState(deferredMonths: number): {
   }
   return { option: "custom", custom: String(deferredMonths) };
 }
-
-const KEYBOARD_OFFSET_NORMAL = 88;
-const KEYBOARD_OFFSET_DESCRIPTION = 300;
-const KEYBOARD_EXTRA_SPACE_DESCRIPTION = 100;
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -434,11 +430,6 @@ export function TransactionFormModal({
   const [focusedFieldType, setFocusedFieldType] = useState<
     "normal" | "description" | null
   >(null);
-
-  const keyboardBottomOffset =
-    focusedFieldType === "description"
-      ? KEYBOARD_OFFSET_DESCRIPTION
-      : KEYBOARD_OFFSET_NORMAL;
 
   useEffect(() => {
     if (!visible) {
@@ -1576,18 +1567,10 @@ export function TransactionFormModal({
             />
           </View>
 
-          <KeyboardAwareForm
-            bottomOffset={keyboardBottomOffset}
-            contentContainerStyle={[
-              styles.formScrollContent,
-              focusedFieldType === "description" &&
-                styles.formScrollContentNoteFocused,
-            ]}
-            extraKeyboardSpace={
-              focusedFieldType === "description"
-                ? KEYBOARD_EXTRA_SPACE_DESCRIPTION
-                : 0
-            }
+          <KeyboardAwareFormPreset
+            contentContainerStyle={styles.formScrollContent}
+            multilineFocused={focusedFieldType === "description"}
+            preset="transactionSheet"
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -2565,7 +2548,7 @@ export function TransactionFormModal({
                 </Text>
               </View>
             ) : null}
-          </KeyboardAwareForm>
+          </KeyboardAwareFormPreset>
 
           {/* Action Buttons */}
           <KeyboardStickyView
@@ -3037,9 +3020,6 @@ function createStyles(theme: AppTheme) {
     },
     formScrollContent: {
       paddingBottom: theme.spacing.md,
-    },
-    formScrollContentNoteFocused: {
-      paddingBottom: 180,
     },
     inputGroup: {
       marginBottom: 16,
