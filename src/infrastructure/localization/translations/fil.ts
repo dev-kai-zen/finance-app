@@ -48,6 +48,12 @@ export const fil = {
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
   settings: {
+    generalSection: "PANGKALAHATAN",
+    themeTitle: "Tema",
+    defaultAccountExpenseLabel: "Default na Account (Gastos)",
+    defaultAccountIncomeLabel: "Default na Account (Kita)",
+    resetDataAccessibility:
+      "I-reset ang lahat ng app data. I-tap para magpatuloy.",
     languageSection: "WIKA",
     languageTitle: "Wika",
     languageSystemValue: "Default ng system · %{language}",
@@ -80,10 +86,6 @@ export const fil = {
     backupPaused: "Naka-pause ang backup",
     backupPausedDescription:
       "Pansamantala ang mga sample record at hindi ina-upload sa Google Drive. Magsimula ng personal na workspace para paganahin ang backup.",
-    experienceSection: "KARANASAN",
-    simpleHomeLabels: "Simpleng label sa dashboard",
-    simpleHomeLabelsDescription:
-      "Gamitin ang friendly na wording tulad ng “Money you have” at “Spent this month.” Pareho pa rin ang net worth at monthly spending sa numbers.",
     appearanceSection: "TEMA AT MGA PRESET NG KULAY",
     themeAccessibility:
       "Kasalukuyang tema: %{theme}. I-tap para palitan.",
@@ -130,8 +132,12 @@ export const fil = {
     catalogTitle: "Mga Currency",
     catalogRowLabel: "Mga currency at decimal place",
     catalogRowValue: "%{count} na currency",
-    catalogDescription:
-      "Magdagdag ng custom currency o baguhin ang decimal places bago gamitin sa account, goal, rate, o bilang default currency.",
+    catalogDescription: "Magdagdag ng custom currency o ayusin ang decimal places.",
+    catalogHelpTitle: "Tungkol sa mga currency",
+    catalogHelpMessage:
+      "Magdagdag ng custom currency o baguhin ang decimal places bago gamitin sa account, goal, rate, o bilang default currency. Pananatilihin ng built-in currencies ang code at pangalan; maaaring baguhin ang decimal places bago pa gamitin.",
+    catalogHelpAccessibility: "Tulong sa mga currency",
+    catalogHelpHint: "Ipinapakita ang tulong sa pamamahala ng currency",
     decimalPlacesLabel: "%{count} decimal place",
     sampleAmount: "Halimbawa",
     addCurrency: "Magdagdag ng currency",
@@ -297,6 +303,14 @@ export const fil = {
     },
   },
   dashboard: {
+    displayModeAccessibility: "Pumili ng istilo ng dashboard",
+    displayModeTitle: "Dashboard display",
+    displayModeSimple: "Simple",
+    displayModeSimpleDescription:
+      "Friendly na label tulad ng “Perang meron ka” at “Ginastos ngayong buwan.” Pareho pa rin ang net worth at monthly spending sa numbers.",
+    displayModeDetailed: "Detalyado",
+    displayModeDetailedDescription:
+      "Karaniwang finance label na may net worth, total assets, at liabilities.",
     moneyYouHave: "Perang meron ka",
     spentThisMonth: "Ginastos ngayong buwan",
     firstExpenseHint: "I-tap ang + para i-record ang unang gastos.",

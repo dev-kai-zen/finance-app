@@ -247,7 +247,7 @@ export function CategoriesScreen({
             )}
 
             <Pressable
-              accessibilityLabel={`New ${selectedType === "expense" ? "expense" : "income"} category group`}
+              accessibilityLabel={`New ${selectedType === "expense" ? "expense" : "income"} category`}
               accessibilityRole="button"
               onPress={handleCreateGroup}
               style={({ pressed }) => [
@@ -257,7 +257,7 @@ export function CategoriesScreen({
               ]}
             >
               <IconHelper color={activeColor} name="plus" size={15} />
-              <Text style={[styles.headerActionBtnText, { color: activeColor }]}>New Group</Text>
+              <Text style={[styles.headerActionBtnText, { color: activeColor }]}>New Category</Text>
             </Pressable>
           </View>
         </View>
@@ -341,6 +341,7 @@ export function CategoriesScreen({
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${selectedType === "expense" ? "Expense" : "Income"} Groups`}
+          titleAlign="left"
           visible={reorderGroupsVisible}
         />
       )}
@@ -364,6 +365,7 @@ export function CategoriesScreen({
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${groupForSubReorder.name} Subcategories`}
+          titleAlign="left"
           visible={reorderSubsVisible}
         />
       )}

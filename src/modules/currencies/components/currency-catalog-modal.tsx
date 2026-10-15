@@ -1,4 +1,4 @@
-import { ChevronRight, Coins, Plus } from "lucide-react-native";
+import { ChevronRight, CircleHelp, Coins, Plus } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -61,6 +61,7 @@ export function CurrencyCatalogModal({
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [usageModalCode, setUsageModalCode] = useState<string | null>(null);
+  const [helpVisible, setHelpVisible] = useState(false);
 
   const usageModalMessage = useMemo(() => {
     if (!usageModalCode) return "";
@@ -76,6 +77,7 @@ export function CurrencyCatalogModal({
       setEditor(null);
       setConfirmDelete(false);
       setUsageModalCode(null);
+      setHelpVisible(false);
       mutations.clearError();
     }
   }, [visible]);
@@ -187,6 +189,27 @@ export function CurrencyCatalogModal({
     </Pressable>
   );
 
+  const managerTitle = (
+    <View style={styles.headerTitleContainer}>
+      <Text numberOfLines={1} style={styles.headerTitleText}>
+        {t("currency.catalogTitle")}
+      </Text>
+      <Pressable
+        accessibilityHint={t("currency.catalogHelpHint")}
+        accessibilityLabel={t("currency.catalogHelpAccessibility")}
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={() => setHelpVisible(true)}
+        style={({ pressed }) => [
+          styles.helpIconButton,
+          pressed && styles.helpIconButtonPressed,
+        ]}
+      >
+        <CircleHelp color={theme.colors.textSecondary} size={18} />
+      </Pressable>
+    </View>
+  );
+
   const title = editor
     ? editor.mode === "create"
       ? t("currency.addCurrency")
@@ -199,9 +222,11 @@ export function CurrencyCatalogModal({
         pending={mutations.pending}
         saveDisabled={!canSave || mutations.pending}
         title={title}
+        titleAlign="left"
         visible={visible}
         deleteLabel={t("currency.deleteAction")}
         headerRight={editor ? undefined : managerHeader}
+        headerTitle={editor ? undefined : managerTitle}
         onClose={requestBack}
         onDelete={canDeleteCurrency ? () => setConfirmDelete(true) : undefined}
         onSave={editor && !editorLocked ? saveEditor : undefined}
@@ -387,6 +412,13 @@ export function CurrencyCatalogModal({
       />
 
       <InfoModal
+        message={t("currency.catalogHelpMessage")}
+        title={t("currency.catalogHelpTitle")}
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
+      />
+
+      <InfoModal
         message={usageModalMessage}
         title={t("currency.usageModalTitle", { code: usageModalCode ?? "" })}
         visible={usageModalCode !== null}
@@ -420,6 +452,24 @@ function createStyles(theme: AppTheme) {
       height: 40,
       justifyContent: "center",
       width: 40,
+    },
+    headerTitleContainer: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    headerTitleText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    helpIconButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 4,
+    },
+    helpIconButtonPressed: {
+      opacity: 0.6,
     },
     infoBanner: {
       alignItems: "flex-start",

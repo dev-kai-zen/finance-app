@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, Pin, Trash2, X } from "lucide-react-native";
+import { Check, ChevronLeft, Pin, Trash2 } from "lucide-react-native";
 
 import { ConfirmModal, NotificationModal } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -149,18 +149,20 @@ export function NoteEditorModal({
           {/* Header */}
           <View style={styles.header}>
             <Pressable
-              accessibilityLabel="Cancel editing"
+              accessibilityLabel="Go back"
               accessibilityRole="button"
               hitSlop={8}
               onPress={onClose}
               style={styles.headerButton}
             >
-              <X color={theme.colors.textPrimary} size={22} />
+              <ChevronLeft color={theme.colors.textPrimary} size={24} />
             </Pressable>
 
-            <Text style={styles.headerTitle}>
-              {note ? "Edit Note" : "New Note"}
-            </Text>
+            <View style={styles.titleCol}>
+              <Text numberOfLines={1} style={styles.headerTitle}>
+                {note ? "Edit Note" : "New Note"}
+              </Text>
+            </View>
 
             <View style={styles.headerRight}>
               {/* Pin Toggle */}
@@ -340,20 +342,29 @@ function createStyles(theme: AppTheme) {
       borderBottomColor: theme.colors.border,
       borderBottomWidth: 1,
       flexDirection: "row",
-      justifyContent: "space-between",
+      gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
     },
     headerButton: {
       alignItems: "center",
-      height: 36,
+      height: 40,
       justifyContent: "center",
-      width: 36,
+      width: 40,
+    },
+    titleCol: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      marginLeft: theme.spacing.xs,
+      minWidth: 0,
     },
     headerTitle: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.md,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+      textAlign: "left",
     },
     headerRight: {
       alignItems: "center",

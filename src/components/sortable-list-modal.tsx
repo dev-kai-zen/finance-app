@@ -65,7 +65,7 @@ export function SortableListModal({
   visible,
   onClose,
   title,
-  titleAlign,
+  titleAlign = "left",
   items: initialItems,
   onSave,
   showAlphabetizeAction = true,

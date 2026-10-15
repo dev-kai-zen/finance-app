@@ -1,30 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   Calendar,
   ChevronRight,
   Landmark,
   Plus,
-  Trash2,
   WalletCards,
   X,
 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
-  AppButton,
   DatePickerModal,
+  FullScreenFormModal,
   IconHelper,
   IconPickerModal,
+  KeyboardAwareForm,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -33,6 +24,9 @@ import { useHexColors, type HexColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalInput, GoalWithProgress } from "../types/goal.types";
 import { GoalAccountPickerModal } from "./goal-account-picker-modal";
+
+const KEYBOARD_OFFSET_NORMAL = 24;
+const KEYBOARD_OFFSET_DESCRIPTION = 160;
 
 export interface GoalFormModalProps {
   visible: boolean;
@@ -62,7 +56,6 @@ export function GoalFormModal({
   onSave,
   initialGoal = null,
 }: GoalFormModalProps) {
-  const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -81,6 +74,14 @@ export function GoalFormModal({
   const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [focusedFieldType, setFocusedFieldType] = useState<
+    "normal" | "description" | null
+  >(null);
+
+  const keyboardBottomOffset =
+    focusedFieldType === "description"
+      ? KEYBOARD_OFFSET_DESCRIPTION
+      : KEYBOARD_OFFSET_NORMAL;
 
   // Sub-modals
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -124,6 +125,7 @@ export function GoalFormModal({
         setHexColorsId("color_blue");
       }
       setErrorMessage(null);
+      setFocusedFieldType(null);
     }
   }, [visible, initialGoal]);
 
@@ -195,8 +197,10 @@ export function GoalFormModal({
         status: initialGoal?.status || "in_progress",
       };
 
-      await onSave(input, initialGoal?.id ?? null);
-      onClose();
+      const saved = await onSave(input, initialGoal?.id ?? null);
+      if (saved) {
+        onClose();
+      }
     } catch (err: any) {
       setErrorMessage(err?.message || "Failed to save goal.");
     } finally {
@@ -205,37 +209,30 @@ export function GoalFormModal({
   };
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent={false}
-      visible={visible}
-    >
-      <View
-        style={[
-          styles.container,
-          { paddingTop: insets.top, paddingBottom: insets.bottom },
-        ]}
+    <>
+      <FullScreenFormModal
+        onClose={onClose}
+        onSave={() => {
+          void handleSubmit();
+        }}
+        pending={submitting}
+        saveLabel={initialGoal ? "Update goal" : "Create goal"}
+        title={initialGoal ? "Edit Goal" : "New Savings Goal"}
+        titleAlign="left"
+        visible={visible}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Close"
-            hitSlop={8}
-            onPress={onClose}
-            style={styles.closeButton}
-          >
-            <X color={theme.colors.textPrimary} size={22} />
-          </Pressable>
-          <Text style={styles.headerTitle}>
-            {initialGoal ? "Edit Goal" : "New Savings Goal"}
-          </Text>
-          <View style={{ width: 32 }} />
-        </View>
-
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
+        <KeyboardAwareForm
+          bottomOffset={keyboardBottomOffset}
+          contentContainerStyle={[
+            styles.scrollContent,
+            focusedFieldType === "description" && styles.scrollContentNoteFocused,
+          ]}
+          extraKeyboardSpace={
+            focusedFieldType === "description" ? 80 : 0
+          }
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
         >
           {errorMessage && (
             <View style={styles.errorBanner}>
@@ -247,7 +244,9 @@ export function GoalFormModal({
           <View style={styles.section}>
             <Text style={styles.label}>Goal Title</Text>
             <TextInput
+              onBlur={() => setFocusedFieldType(null)}
               onChangeText={setName}
+              onFocus={() => setFocusedFieldType("normal")}
               placeholder="e.g. Emergency Fund, Japan Trip, New Laptop"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.input}
@@ -478,28 +477,19 @@ export function GoalFormModal({
             <TextInput
               multiline
               numberOfLines={3}
+              onBlur={() => setFocusedFieldType(null)}
               onChangeText={setNote}
+              onFocus={() => setFocusedFieldType("description")}
               placeholder="Why this goal matters, milestones, or reminders..."
               placeholderTextColor={theme.colors.textMuted}
               style={[styles.input, styles.textArea]}
               value={note}
             />
           </View>
-        </ScrollView>
+        </KeyboardAwareForm>
+      </FullScreenFormModal>
 
-        {/* Footer Actions */}
-        <View style={styles.footer}>
-          <AppButton
-            disabled={submitting}
-            label={initialGoal ? "Update Goal" : "Create Goal"}
-            loading={submitting}
-            onPress={handleSubmit}
-            variant="primary"
-          />
-        </View>
-
-        {/* Sub-modals */}
-        <AmountCalculatorModal
+      <AmountCalculatorModal
           currencyCode={currencyCode}
           initialMinorUnits={targetAmountMinorUnits}
           onClose={() => setIsCalculatorOpen(false)}
@@ -545,38 +535,22 @@ export function GoalFormModal({
           selectedIcon={iconKey}
           visible={isIconPickerOpen}
         />
-      </View>
-    </Modal>
+    </>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    container: {
+    scrollView: {
       flex: 1,
-      backgroundColor: theme.colors.background,
-    },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
-    },
-    headerTitle: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
     },
     scrollContent: {
-      padding: theme.spacing.lg,
       gap: theme.spacing.lg,
+      padding: theme.spacing.lg,
+      paddingBottom: theme.spacing.xxl,
+    },
+    scrollContentNoteFocused: {
+      paddingBottom: 160,
     },
     errorBanner: {
       backgroundColor: `${theme.colors.danger}15`,
@@ -807,12 +781,6 @@ function createStyles(theme: AppTheme) {
       color: "#FFFFFF",
       fontSize: 12,
       fontWeight: "bold",
-    },
-    footer: {
-      padding: theme.spacing.lg,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
     },
   });
 }

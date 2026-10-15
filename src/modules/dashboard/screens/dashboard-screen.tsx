@@ -34,7 +34,7 @@ export function DashboardScreen() {
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
-  const { homeMode, isPromptDismissed } = useExperiencePreferences();
+  const { homeMode, isPromptDismissed, setHomeMode } = useExperiencePreferences();
 
   const {
     summary,
@@ -254,10 +254,11 @@ export function DashboardScreen() {
             <DashboardNetWorthCard
               currencyCode={currencyPreferences.defaultCurrency}
               history={summary.netWorthHistory}
+              homeMode={homeMode}
               monthlyChangePercentage={summary.netWorthChangePercentage}
               monthlySpentMinorUnits={summary.monthlyCashflow.totalOutflowMinorUnits}
               netWorthMinorUnits={netWorth}
-              simpleHomeLabels={homeMode === "simple"}
+              onHomeModeChange={setHomeMode}
               totalAssetsMinorUnits={assets}
               totalLiabilitiesMinorUnits={liabilities}
             />

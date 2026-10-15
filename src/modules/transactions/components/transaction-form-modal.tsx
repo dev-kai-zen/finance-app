@@ -147,7 +147,8 @@ function deferredMonthsToFormState(deferredMonths: number): {
 }
 
 const KEYBOARD_OFFSET_NORMAL = 88;
-const KEYBOARD_OFFSET_DESCRIPTION = 180;
+const KEYBOARD_OFFSET_DESCRIPTION = 300;
+const KEYBOARD_EXTRA_SPACE_DESCRIPTION = 100;
 
 export interface TransactionFormModalProps {
   visible: boolean;
@@ -1577,6 +1578,16 @@ export function TransactionFormModal({
 
           <KeyboardAwareForm
             bottomOffset={keyboardBottomOffset}
+            contentContainerStyle={[
+              styles.formScrollContent,
+              focusedFieldType === "description" &&
+                styles.formScrollContentNoteFocused,
+            ]}
+            extraKeyboardSpace={
+              focusedFieldType === "description"
+                ? KEYBOARD_EXTRA_SPACE_DESCRIPTION
+                : 0
+            }
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -3023,6 +3034,12 @@ function createStyles(theme: AppTheme) {
     },
     formScroll: {
       flex: 1,
+    },
+    formScrollContent: {
+      paddingBottom: theme.spacing.md,
+    },
+    formScrollContentNoteFocused: {
+      paddingBottom: 180,
     },
     inputGroup: {
       marginBottom: 16,

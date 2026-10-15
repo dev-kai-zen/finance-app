@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
@@ -141,7 +142,11 @@ export function CategoryGroupModal({
       transparent
       visible={visible}
     >
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.modalOverlay}
+      >
         <Pressable
           accessibilityLabel="Dismiss category group modal"
           accessibilityRole="button"
@@ -159,7 +164,7 @@ export function CategoryGroupModal({
           {/* Header */}
           <View style={styles.headerRow}>
             <Text style={styles.modalTitle}>
-              {categoryToEdit ? "Edit Category Group" : "New Category Group"}
+              {categoryToEdit ? "Edit Category" : "New Category"}
             </Text>
             <Pressable
               accessibilityLabel="Close category group modal"
@@ -223,7 +228,7 @@ export function CategoryGroupModal({
 
             {/* Name Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>GROUP NAME</Text>
+              <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
               <TextInput
                 maxLength={50}
                 onChangeText={setName}
@@ -356,7 +361,7 @@ export function CategoryGroupModal({
             </Pressable>
 
             <Pressable
-              accessibilityLabel={categoryToEdit ? "Update Group" : "Create Group"}
+              accessibilityLabel={categoryToEdit ? "Update Category" : "Create Category"}
               accessibilityRole="button"
               disabled={pending}
               onPress={handleSave}
@@ -366,13 +371,13 @@ export function CategoryGroupModal({
                 {pending
                   ? "Saving..."
                   : categoryToEdit
-                    ? "Update Group"
-                    : "Create Group"}
+                    ? "Update Category"
+                    : "Create Category"}
               </Text>
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <IconPickerModal
         onClose={() => setIsIconPickerOpen(false)}
@@ -426,7 +431,9 @@ function createStyles(theme: AppTheme) {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       borderWidth: 1,
-      maxHeight: "90%",
+      flexDirection: "column",
+      height: "75%",
+      maxHeight: "75%",
       paddingHorizontal: 20,
       paddingTop: 16,
       width: "100%",
@@ -463,7 +470,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: "bold",
     },
     scrollBody: {
+      flex: 1,
       marginBottom: 16,
+      minHeight: 0,
     },
     inputGroup: {
       marginBottom: 16,

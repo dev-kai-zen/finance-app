@@ -148,7 +148,7 @@ export function IconPickerModal({
               <Text style={styles.modalTitle}>{title}</Text>
               <Text style={styles.modalSubtitle}>
                 {filteredIcons.length} of {catalogIcons.length}{" "}
-                {pickerScope === "recommended" ? "recommended" : "Lucide"} icons
+                {pickerScope === "recommended" ? "recommended " : ""}icons
               </Text>
             </View>
             <Pressable
@@ -171,7 +171,7 @@ export function IconPickerModal({
               placeholder={
                 pickerScope === "recommended"
                   ? "Search icons (e.g. food, school, rent)..."
-                  : "Search all Lucide icons by name..."
+                  : "Search all icons by name..."
               }
               placeholderTextColor={theme.colors.textSecondary}
               style={styles.searchInput}
@@ -218,7 +218,7 @@ export function IconPickerModal({
               </Text>
             </Pressable>
             <Pressable
-              accessibilityLabel="All Lucide icons"
+              accessibilityLabel="All icons"
               accessibilityRole="button"
               accessibilityState={{ selected: pickerScope === "all" }}
               onPress={() => {
@@ -242,7 +242,7 @@ export function IconPickerModal({
                   },
                 ]}
               >
-                All Lucide
+                All icons
               </Text>
             </Pressable>
           </View>
@@ -295,8 +295,8 @@ export function IconPickerModal({
               </ScrollView>
             </View>
           ) : (
-            <Text style={styles.allLucideHint}>
-              Browse the full Lucide set. Use search for best results.
+            <Text style={styles.allIconsHint}>
+              Browse the full icon library. Use search for best results.
             </Text>
           )}
 
@@ -308,12 +308,12 @@ export function IconPickerModal({
               </Text>
               {pickerScope === "recommended" && searchQuery.trim().length > 0 ? (
                 <Pressable
-                  accessibilityLabel="Search all Lucide icons"
+                  accessibilityLabel="Search all icons"
                   onPress={() => setPickerScope("all")}
                   style={[styles.resetSearchBtn, { borderColor: activeColor }]}
                 >
                   <Text style={[styles.resetSearchText, { color: activeColor }]}>
-                    Search all Lucide icons
+                    Search all icons
                   </Text>
                 </Pressable>
               ) : null}
@@ -474,7 +474,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "600",
     },
-    allLucideHint: {
+    allIconsHint: {
       color: theme.colors.textSecondary,
       fontSize: 12,
       marginBottom: theme.spacing.sm,

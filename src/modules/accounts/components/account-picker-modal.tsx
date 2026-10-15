@@ -53,7 +53,7 @@ export interface AccountPickerModalProps {
   onSetDefaultIncome?: (accountId: string | null, pocketId: string | null) => void;
 }
 
-export function AccountPickerModal({
+function AccountPickerModalContent({
   visible,
   onClose,
   accounts,
@@ -875,6 +875,11 @@ export function AccountPickerModal({
       </KeyboardAvoidingView>
     </Modal>
   );
+}
+
+export function AccountPickerModal(props: AccountPickerModalProps) {
+  if (!props.visible) return null;
+  return <AccountPickerModalContent {...props} />;
 }
 
 function createStyles(theme: AppTheme) {

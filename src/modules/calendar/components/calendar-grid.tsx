@@ -46,16 +46,6 @@ export function CalendarGrid({
       <View style={styles.grid}>
         {cells.map((cell) => {
           const isSelected = cell.dateKey === selectedDay;
-          const badgeStyle = isSelected
-            ? styles.selectedBadge
-            : cell.isToday
-              ? styles.todayBadge
-              : null;
-          const dayNumberStyle = isSelected
-            ? styles.selectedDayText
-            : cell.isToday
-              ? styles.todayText
-              : null;
 
           return (
             <Pressable
@@ -69,14 +59,24 @@ export function CalendarGrid({
                 pressed && styles.cellPressed,
               ]}
             >
-              <View style={[styles.dayBadge, badgeStyle]}>
+              <View
+                style={[
+                  styles.dayBadge,
+                  isSelected
+                    ? styles.selectedBadge
+                    : cell.isToday
+                      ? styles.todayBadge
+                      : styles.neutralBadge,
+                ]}
+              >
                 <Text
                   style={[
                     styles.dayText,
                     !isSelected &&
                       !cell.isCurrentMonth &&
                       styles.otherMonthText,
-                    dayNumberStyle,
+                    !isSelected && cell.isToday && styles.todayText,
+                    isSelected && styles.selectedDayText,
                   ]}
                 >
                   {cell.dayNumber}
@@ -85,7 +85,7 @@ export function CalendarGrid({
 
               {/* Activity Indicators (Dots) */}
               <View style={styles.dotContainer}>
-                {renderDots(cell, activeTab, isSelected, theme, styles)}
+                {renderDots(cell, activeTab, theme, styles)}
               </View>
             </Pressable>
           );
@@ -98,7 +98,6 @@ export function CalendarGrid({
 function renderDots(
   cell: CalendarDayCellData,
   activeTab: CalendarTab,
-  isSelected: boolean,
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
 ) {
@@ -108,22 +107,12 @@ function renderDots(
       <View style={styles.dotRow}>
         {cell.hasIncome && (
           <View
-            style={[
-              styles.dot,
-              { backgroundColor: isSelected ? "#fff" : theme.colors.success },
-            ]}
+            style={[styles.dot, { backgroundColor: theme.colors.success }]}
           />
         )}
         {cell.hasExpense && (
           <View
-            style={[
-              styles.dot,
-              {
-                backgroundColor: isSelected
-                  ? "rgba(255,255,255,0.7)"
-                  : theme.colors.danger,
-              },
-            ]}
+            style={[styles.dot, { backgroundColor: theme.colors.danger }]}
           />
         )}
       </View>
@@ -141,7 +130,7 @@ function renderDots(
           style={[
             styles.dot,
             styles.scheduleDot,
-            { backgroundColor: isSelected ? "#fff" : dotColor },
+            { backgroundColor: dotColor },
           ]}
         />
       </View>
@@ -160,12 +149,7 @@ function renderDots(
 
   return (
     <View style={styles.dotRow}>
-      <View
-        style={[
-          styles.dot,
-          { backgroundColor: isSelected ? "#fff" : dotColor },
-        ]}
-      />
+      <View style={[styles.dot, { backgroundColor: dotColor }]} />
     </View>
   );
 }
@@ -229,11 +213,20 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       overflow: "hidden",
     },
+    neutralBadge: {
+      backgroundColor: "transparent",
+      borderWidth: 0,
+      borderColor: "transparent",
+      shadowOpacity: 0,
+      elevation: 0,
+    },
     todayBadge: {
       backgroundColor: theme.colors.primary + "18",
       borderWidth: 1.5,
       borderColor: theme.colors.primary,
       borderRadius: 16,
+      shadowOpacity: 0,
+      elevation: 0,
     },
     selectedBadge: {
       backgroundColor: theme.colors.primary,
