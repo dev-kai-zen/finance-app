@@ -46,6 +46,16 @@ export function CalendarGrid({
       <View style={styles.grid}>
         {cells.map((cell) => {
           const isSelected = cell.dateKey === selectedDay;
+          const badgeStyle = isSelected
+            ? styles.selectedBadge
+            : cell.isToday
+              ? styles.todayBadge
+              : null;
+          const dayNumberStyle = isSelected
+            ? styles.selectedDayText
+            : cell.isToday
+              ? styles.todayText
+              : null;
 
           return (
             <Pressable
@@ -59,19 +69,14 @@ export function CalendarGrid({
                 pressed && styles.cellPressed,
               ]}
             >
-              <View
-                style={[
-                  styles.dayBadge,
-                  cell.isToday && !isSelected && styles.todayBadge,
-                  isSelected && styles.selectedBadge,
-                ]}
-              >
+              <View style={[styles.dayBadge, badgeStyle]}>
                 <Text
                   style={[
                     styles.dayText,
-                    !cell.isCurrentMonth && styles.otherMonthText,
-                    cell.isToday && !isSelected && styles.todayText,
-                    isSelected && styles.selectedDayText,
+                    !isSelected &&
+                      !cell.isCurrentMonth &&
+                      styles.otherMonthText,
+                    dayNumberStyle,
                   ]}
                 >
                   {cell.dayNumber}
@@ -225,12 +230,15 @@ function createStyles(theme: AppTheme) {
       overflow: "hidden",
     },
     todayBadge: {
+      backgroundColor: theme.colors.primary + "18",
       borderWidth: 1.5,
       borderColor: theme.colors.primary,
       borderRadius: 16,
     },
     selectedBadge: {
       backgroundColor: theme.colors.primary,
+      borderWidth: 0,
+      borderColor: "transparent",
       borderRadius: 16,
       overflow: "hidden",
       shadowColor: theme.colors.primary,
@@ -253,7 +261,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     selectedDayText: {
-      color: "#ffffff",
+      color: theme.colors.onPrimary,
       fontWeight: "700",
     },
     dotContainer: {
