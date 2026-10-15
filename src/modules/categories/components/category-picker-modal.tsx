@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import {
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Check, ChevronRight, Search, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -159,7 +159,8 @@ export function CategoryPickerModal({
       onRequestClose={dismissPicker}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        automaticOffset
+        behavior="height"
         style={styles.backdrop}
       >
         <Pressable style={styles.scrim} onPress={dismissPicker} />
