@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  CircleHelp,
   ChevronUp,
   Folder,
   Landmark,
@@ -79,6 +80,7 @@ export function FundGroupsModal({
     () => new Set(),
   );
   const [ruleInfoVisible, setRuleInfoVisible] = useState(false);
+  const [helpVisible, setHelpVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -87,6 +89,7 @@ export function FundGroupsModal({
       setMemberSearchQuery("");
       setExpandedGroupIds(new Set());
       setRuleInfoVisible(false);
+      setHelpVisible(false);
       mutations.clearError();
     }
   }, [visible]);
@@ -347,6 +350,27 @@ export function FundGroupsModal({
     </Pressable>
   );
 
+  const managerTitle = (
+    <View style={styles.headerTitleContainer}>
+      <Text numberOfLines={1} style={styles.headerTitleText}>
+        Fund Groups
+      </Text>
+      <Pressable
+        accessibilityHint="Displays help for Fund Groups"
+        accessibilityLabel="Fund Groups help"
+        accessibilityRole="button"
+        hitSlop={8}
+        onPress={() => setHelpVisible(true)}
+        style={({ pressed }) => [
+          styles.helpIconButton,
+          pressed && styles.helpIconButtonPressed,
+        ]}
+      >
+        <CircleHelp color={theme.colors.textSecondary} size={18} />
+      </Pressable>
+    </View>
+  );
+
   const memberPickerEmptyMessage = normalizedMemberSearch
     ? `No accounts match “${memberSearchQuery.trim()}”.`
     : "Create or restore an account first.";
@@ -361,8 +385,10 @@ export function FundGroupsModal({
           editor.value.accountIds.length + editor.value.pocketIds.length === 0
         }
         title={editor ? (editor.id ? "Edit Fund Group" : "New Fund Group") : "Fund Groups"}
+        titleAlign="left"
         visible={visible}
         headerRight={editor ? undefined : managerHeader}
+        headerTitle={editor ? undefined : managerTitle}
         onClose={requestBack}
         onDelete={editor?.id ? () => setConfirmAction("delete") : undefined}
         onSave={editor ? save : undefined}
@@ -689,14 +715,6 @@ export function FundGroupsModal({
             contentContainerStyle={styles.managerContent}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.infoBanner}>
-              <Layers3 color={theme.colors.primary} size={20} />
-              <Text style={styles.infoText}>
-                Combine related accounts and pockets into named groups without moving money.
-                Each item can belong to one Fund Group.
-              </Text>
-            </View>
-
             {loading ? (
               <ActivityIndicator
                 accessibilityLabel="Loading Fund Groups"
@@ -879,6 +897,13 @@ export function FundGroupsModal({
         visible={ruleInfoVisible}
       />
 
+      <InfoModal
+        message="Combine related accounts and pockets into named groups without moving money. Each item can belong to one Fund Group."
+        onClose={() => setHelpVisible(false)}
+        title="Fund Groups"
+        visible={helpVisible}
+      />
+
       <NotificationModal
         message={mutations.error ?? ""}
         onClose={mutations.clearError}
@@ -911,21 +936,23 @@ function createStyles(theme: AppTheme) {
       width: 36,
     },
     disabled: { opacity: 0.5 },
-    infoBanner: {
-      alignItems: "flex-start",
-      backgroundColor: `${theme.colors.primary}10`,
-      borderColor: `${theme.colors.primary}35`,
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
+    headerTitleContainer: {
+      alignItems: "center",
       flexDirection: "row",
-      gap: theme.spacing.md,
-      padding: theme.spacing.md,
+      gap: 6,
     },
-    infoText: {
-      color: theme.colors.textSecondary,
-      flex: 1,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
+    headerTitleText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    helpIconButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 4,
+    },
+    helpIconButtonPressed: {
+      opacity: 0.6,
     },
     loading: { marginVertical: theme.spacing.xxxl },
     groupList: { gap: theme.spacing.sm },
