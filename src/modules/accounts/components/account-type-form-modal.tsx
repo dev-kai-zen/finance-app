@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Check, Plus } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -78,10 +72,14 @@ export function AccountTypeFormModal({
     if (visible) {
       if (type) {
         setName(type.name);
-        setAccountGroup(type.accountGroup === "liability" ? "liability" : "asset");
+        setAccountGroup(
+          type.accountGroup === "liability" ? "liability" : "asset",
+        );
         setIconKey(type.iconKey ?? "landmark");
         const match = hexColorsList.find(
-          (c) => c.id === type.hexColorsId || c.hex.toUpperCase() === (type.color ?? "").toUpperCase(),
+          (c) =>
+            c.id === type.hexColorsId ||
+            c.hex.toUpperCase() === (type.color ?? "").toUpperCase(),
         );
         setHexColorsId(match?.id ?? type.hexColorsId ?? "color_blue");
       } else {
@@ -172,11 +170,10 @@ export function AccountTypeFormModal({
         onSave={handleSave}
         pending={mutations.pending}
         title={isEditing ? "Edit Account Group" : "New Account Group"}
+        titleAlign="left"
         visible={visible}
       >
-        <KeyboardAwareForm
-          contentContainerStyle={styles.formContent}
-        >
+        <KeyboardAwareForm contentContainerStyle={styles.formContent}>
           {/* Group Name Field */}
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>GROUP NAME</Text>
@@ -197,7 +194,8 @@ export function AccountTypeFormModal({
             />
             {isProtected ? (
               <Text style={styles.helperText}>
-                This system group name is protected. You can customize its appearance below.
+                This system group name is protected. You can customize its
+                appearance below.
               </Text>
             ) : null}
           </View>
@@ -234,14 +232,16 @@ export function AccountTypeFormModal({
                 onPress={() => handleAccountGroupChange("liability")}
                 style={[
                   styles.segmentOption,
-                  accountGroup === "liability" && styles.segmentOptionActiveLiability,
+                  accountGroup === "liability" &&
+                    styles.segmentOptionActiveLiability,
                   isProtected && styles.segmentOptionDisabled,
                 ]}
               >
                 <Text
                   style={[
                     styles.segmentText,
-                    accountGroup === "liability" && styles.segmentTextActiveOnColor,
+                    accountGroup === "liability" &&
+                      styles.segmentTextActiveOnColor,
                   ]}
                 >
                   Liability
@@ -275,11 +275,17 @@ export function AccountTypeFormModal({
                     },
                   ]}
                 >
-                  <IconHelper color={currentColorHex} name={iconKey} size={22} />
+                  <IconHelper
+                    color={currentColorHex}
+                    name={iconKey}
+                    size={22}
+                  />
                 </View>
                 <View style={styles.iconInfo}>
                   <Text style={styles.iconNameText}>{iconKey}</Text>
-                  <Text style={styles.iconSubtext}>Tap to choose from icon library</Text>
+                  <Text style={styles.iconSubtext}>
+                    Tap to choose from icon library
+                  </Text>
                 </View>
               </View>
 
@@ -347,7 +353,11 @@ export function AccountTypeFormModal({
                   pressed && styles.addColorSwatchPressed,
                 ]}
               >
-                <Plus color={theme.colors.primary} size={22} strokeWidth={2.5} />
+                <Plus
+                  color={theme.colors.primary}
+                  size={22}
+                  strokeWidth={2.5}
+                />
               </Pressable>
             </View>
           </View>
@@ -358,8 +368,10 @@ export function AccountTypeFormModal({
               <Text style={styles.infoBoxTitle}>Group Details</Text>
               <Text style={styles.infoBoxText}>
                 {linkedAccountsCount}{" "}
-                {linkedAccountsCount === 1 ? "account belongs" : "accounts belong"} to
-                this group.
+                {linkedAccountsCount === 1
+                  ? "account belongs"
+                  : "accounts belong"}{" "}
+                to this group.
               </Text>
             </View>
           ) : null}
@@ -406,7 +418,11 @@ export function AccountTypeFormModal({
           setLocalError(null);
           mutations.clearError();
         }}
-        title={localError ? "Check account group details" : "Unable to save account group"}
+        title={
+          localError
+            ? "Check account group details"
+            : "Unable to save account group"
+        }
         variant={localError ? "warning" : "error"}
         visible={visible && !isColorFormOpen && Boolean(displayError)}
       />

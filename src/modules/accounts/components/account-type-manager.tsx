@@ -122,6 +122,7 @@ export function AccountTypeManager({
       <FullScreenFormModal
         pending={mutations.pending}
         title="Account Group Setup"
+        titleAlign="left"
         visible
         onClose={onClose}
       >
@@ -249,6 +250,7 @@ export function AccountTypeManager({
           await mutations.reorderAccountTypes(orderedIds);
         }}
         title={`Reorder ${group === "asset" ? "Asset" : "Liability"} Groups`}
+        titleAlign="left"
         visible={reorderVisible}
       />
 
