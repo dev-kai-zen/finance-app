@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { resolveAccountLocation } from "@/modules/accounts";
 import {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -34,10 +35,39 @@ export function useDefaultAccounts() {
     return subscribeToDefaultAccounts(refresh);
   }, [refresh]);
 
+  const [displayRevision, setDisplayRevision] = useState(0);
+
   useFocusEffect(
     useCallback(() => {
       refresh();
+      setDisplayRevision((value) => value + 1);
     }, [refresh]),
+  );
+
+  const expenseLocation = useMemo(
+    () =>
+      resolveAccountLocation(
+        defaults.defaultExpenseAccountId,
+        defaults.defaultExpensePocketId,
+      ),
+    [
+      defaults.defaultExpenseAccountId,
+      defaults.defaultExpensePocketId,
+      displayRevision,
+    ],
+  );
+
+  const incomeLocation = useMemo(
+    () =>
+      resolveAccountLocation(
+        defaults.defaultIncomeAccountId,
+        defaults.defaultIncomePocketId,
+      ),
+    [
+      defaults.defaultIncomeAccountId,
+      defaults.defaultIncomePocketId,
+      displayRevision,
+    ],
   );
 
   const setExpenseAccount = useCallback(
@@ -69,6 +99,8 @@ export function useDefaultAccounts() {
     defaultExpensePocketId: defaults.defaultExpensePocketId,
     defaultIncomeAccountId: defaults.defaultIncomeAccountId,
     defaultIncomePocketId: defaults.defaultIncomePocketId,
+    expenseLocation,
+    incomeLocation,
     setExpenseAccount,
     setIncomeAccount,
     refresh,

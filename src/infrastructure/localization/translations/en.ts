@@ -42,6 +42,11 @@ export const en = {
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
   settings: {
+    generalSection: "GENERAL",
+    themeTitle: "Theme",
+    defaultAccountExpenseLabel: "Default Account (Expense)",
+    defaultAccountIncomeLabel: "Default Account (Income)",
+    resetDataAccessibility: "Reset all app data. Tap to continue.",
     languageSection: "LANGUAGE",
     languageTitle: "Language",
     languageSystemValue: "System default · %{language}",
@@ -71,10 +76,6 @@ export const en = {
     backupPaused: "Backup paused",
     backupPausedDescription:
       "Sample records are temporary and are not uploaded to Google Drive. Start a personal workspace to enable backup.",
-    experienceSection: "EXPERIENCE",
-    simpleHomeLabels: "Simple dashboard labels",
-    simpleHomeLabelsDescription:
-      "Use friendly wording like “Money you have” and “Spent this month.” Amounts still reflect net worth and monthly spending.",
     appearanceSection: "THEME & COLOR PRESETS",
     themeAccessibility: "Current theme: %{theme}. Tap to change.",
     followingAppearance: "Following device appearance",
@@ -119,8 +120,12 @@ export const en = {
     catalogTitle: "Currencies",
     catalogRowLabel: "Currencies & decimal places",
     catalogRowValue: "%{count} currencies",
-    catalogDescription:
-      "Add custom currencies or adjust decimal places before a currency is used in accounts, goals, rates, or as your default currency.",
+    catalogDescription: "Add custom currencies or adjust decimal places.",
+    catalogHelpTitle: "About currencies",
+    catalogHelpMessage:
+      "Add custom currencies or adjust decimal places before a currency is used in accounts, goals, rates, or as your default currency. Built-in currencies keep their code and name; decimal places can change only before use.",
+    catalogHelpAccessibility: "Currencies help",
+    catalogHelpHint: "Displays help for managing currencies",
     decimalPlacesLabel: "%{count} decimal places",
     sampleAmount: "Example",
     addCurrency: "Add currency",
@@ -282,6 +287,14 @@ export const en = {
     },
   },
   dashboard: {
+    displayModeAccessibility: "Choose dashboard display style",
+    displayModeTitle: "Dashboard display",
+    displayModeSimple: "Simple",
+    displayModeSimpleDescription:
+      "Friendly labels like “Money you have” and “Spent this month.” Amounts still reflect net worth and monthly spending.",
+    displayModeDetailed: "Detailed",
+    displayModeDetailedDescription:
+      "Standard finance labels with net worth, total assets, and liabilities.",
     moneyYouHave: "Money you have",
     spentThisMonth: "Spent this month",
     firstExpenseHint: "Tap + to record your first expense.",

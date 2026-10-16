@@ -48,6 +48,12 @@ export const es = {
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
   settings: {
+    generalSection: "GENERAL",
+    themeTitle: "Tema",
+    defaultAccountExpenseLabel: "Cuenta predeterminada (Gastos)",
+    defaultAccountIncomeLabel: "Cuenta predeterminada (Ingresos)",
+    resetDataAccessibility:
+      "Restablecer todos los datos de la app. Toca para continuar.",
     languageSection: "IDIOMA",
     languageTitle: "Idioma",
     languageSystemValue: "Predeterminado del sistema · %{language}",
@@ -81,10 +87,6 @@ export const es = {
     backupPaused: "Copia de seguridad en pausa",
     backupPausedDescription:
       "Los registros de ejemplo son temporales y no se suben a Google Drive. Inicia un espacio de trabajo personal para activar la copia de seguridad.",
-    experienceSection: "EXPERIENCIA",
-    simpleHomeLabels: "Etiquetas simples en el panel",
-    simpleHomeLabelsDescription:
-      "Usa textos amigables como “Money you have” y “Spent this month.” Los importes siguen siendo patrimonio neto y gasto del mes.",
     appearanceSection: "TEMAS Y COLORES PREDEFINIDOS",
     themeAccessibility: "Tema actual: %{theme}. Toca para cambiarlo.",
     followingAppearance: "Siguiendo la apariencia del dispositivo",
@@ -130,8 +132,12 @@ export const es = {
     catalogTitle: "Monedas",
     catalogRowLabel: "Monedas y decimales",
     catalogRowValue: "%{count} monedas",
-    catalogDescription:
-      "Añade monedas personalizadas o ajusta los decimales antes de usarlas en cuentas, metas, tipos de cambio o como moneda predeterminada.",
+    catalogDescription: "Añade monedas personalizadas o ajusta los decimales.",
+    catalogHelpTitle: "Acerca de las monedas",
+    catalogHelpMessage:
+      "Añade monedas personalizadas o ajusta los decimales antes de usarlas en cuentas, metas, tipos de cambio o como moneda predeterminada. Las monedas integradas conservan código y nombre; los decimales solo pueden cambiarse antes del uso.",
+    catalogHelpAccessibility: "Ayuda de monedas",
+    catalogHelpHint: "Muestra ayuda para gestionar monedas",
     decimalPlacesLabel: "%{count} decimales",
     sampleAmount: "Ejemplo",
     addCurrency: "Añadir moneda",
@@ -296,6 +302,14 @@ export const es = {
     },
   },
   dashboard: {
+    displayModeAccessibility: "Elegir estilo del panel",
+    displayModeTitle: "Vista del panel",
+    displayModeSimple: "Simple",
+    displayModeSimpleDescription:
+      "Etiquetas amigables como “Dinero que tienes” y “Gastado este mes.” Los importes siguen siendo patrimonio neto y gasto mensual.",
+    displayModeDetailed: "Detallada",
+    displayModeDetailedDescription:
+      "Etiquetas financieras estándar con patrimonio neto, activos totales y pasivos.",
     moneyYouHave: "Dinero que tienes",
     spentThisMonth: "Gastado este mes",
     firstExpenseHint: "Toca + para registrar tu primer gasto.",

@@ -4,6 +4,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -11,12 +12,20 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Paperclip, Plus, Sparkles, X } from "lucide-react-native";
+import {
+  ChevronRight,
+  Paperclip,
+  Plus,
+  SlidersHorizontal,
+  Sparkles,
+  X,
+} from "lucide-react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
   IconHelper,
-  KeyboardAwareForm,
+  KeyboardAwareFormPreset,
   NotificationModal,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -418,6 +427,16 @@ export function TransactionFormModal({
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
+  const [focusedFieldType, setFocusedFieldType] = useState<
+    "normal" | "description" | null
+  >(null);
+
+  useEffect(() => {
+    if (!visible) {
+      setFocusedFieldType(null);
+    }
+  }, [visible]);
+
   const { labels, refresh: refreshLabels } = useLabels({ includeArchived: true });
   const formInitSessionRef = useRef<string | null>(null);
 
@@ -1496,35 +1515,48 @@ export function TransactionFormModal({
             </Pressable>
           </View>
 
-          <Pressable
-            accessibilityLabel="Customize fields"
-            accessibilityRole="button"
-            onPress={() => setIsFieldPreferencesOpen(true)}
-            style={({ pressed }) => [
-              styles.customizeFieldsButton,
-              pressed && styles.customizeFieldsButtonPressed,
-            ]}
+          <ScrollView
+            contentContainerStyle={styles.topActionsContent}
+            horizontal
+            keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+            style={styles.topActionsScroll}
           >
-            <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
-          </Pressable>
+            {!isEditing && showQuickPresetsUi ? (
+              <Pressable
+                accessibilityLabel="Open Quick Presets"
+                accessibilityRole="button"
+                disabled={pending || presetPending}
+                onPress={() => setIsQuickPresetsOpen(true)}
+                style={({ pressed }) => [
+                  styles.quickPresetsButton,
+                  pressed && styles.quickPresetsButtonPressed,
+                ]}
+              >
+                <Sparkles color={theme.colors.primary} size={16} />
+                <Text style={styles.quickPresetsButtonText}>Quick Presets</Text>
+                {presets.length > 0 ? (
+                  <View style={styles.quickPresetsCount}>
+                    <Text style={styles.quickPresetsCountText}>{presets.length}</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+            ) : null}
 
-          {!isEditing && showQuickPresetsUi ? (
             <Pressable
-              accessibilityLabel="Open Quick Presets"
+              accessibilityLabel="Customize fields"
               accessibilityRole="button"
-              disabled={pending || presetPending}
-              onPress={() => setIsQuickPresetsOpen(true)}
-              style={styles.quickPresetsButton}
+              disabled={pending}
+              onPress={() => setIsFieldPreferencesOpen(true)}
+              style={({ pressed }) => [
+                styles.customizeFieldsButton,
+                pressed && !pending && styles.customizeFieldsButtonPressed,
+              ]}
             >
-              <Sparkles color={theme.colors.primary} size={16} />
-              <Text style={styles.quickPresetsButtonText}>Quick Presets</Text>
-              {presets.length > 0 ? (
-                <View style={styles.quickPresetsCount}>
-                  <Text style={styles.quickPresetsCountText}>{presets.length}</Text>
-                </View>
-              ) : null}
+              <SlidersHorizontal color={theme.colors.primary} size={16} />
+              <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
             </Pressable>
-          ) : null}
+          </ScrollView>
 
           <View style={styles.typePickerSpacing}>
             <TransactionTypePicker
@@ -1535,7 +1567,10 @@ export function TransactionFormModal({
             />
           </View>
 
-          <KeyboardAwareForm
+          <KeyboardAwareFormPreset
+            contentContainerStyle={styles.formScrollContent}
+            multilineFocused={focusedFieldType === "description"}
+            preset="transactionSheet"
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -1546,10 +1581,12 @@ export function TransactionFormModal({
                     <View style={styles.nameInputContainer}>
                       <TextInput
                         maxLength={100}
+                        onBlur={() => setFocusedFieldType(null)}
                         onChangeText={(value) => {
                           setName(value);
                           setSuggestionsSuppressed(false);
                         }}
+                        onFocus={() => setFocusedFieldType("normal")}
                         placeholder="Name"
                         placeholderTextColor={theme.colors.textSecondary}
                         style={[
@@ -1724,6 +1761,7 @@ export function TransactionFormModal({
                   <TextInput
                     accessibilityLabel="Exchange rate"
                     keyboardType="decimal-pad"
+                    onBlur={() => setFocusedFieldType(null)}
                     onChangeText={(text) => {
                       setExchangeRateText(text);
                       const parsed = parseExchangeRateDecimalToScaled(text);
@@ -1732,6 +1770,7 @@ export function TransactionFormModal({
                         setExchangeRateScaled(parsed);
                       }
                     }}
+                    onFocus={() => setFocusedFieldType("normal")}
                     placeholder="Rate"
                     style={styles.rateInput}
                     value={exchangeRateText}
@@ -2048,6 +2087,70 @@ export function TransactionFormModal({
             ) : (
               /* If Expense / Income: Category Selector */
               <View style={[styles.inputGroup, styles.splitCategoryGroup]}>
+                {!splitEnabled ? (
+                  <>
+                    <Pressable
+                      accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
+                      accessibilityRole="button"
+                      onPress={() => setIsCategoryPickerOpen(true)}
+                      style={styles.selectorCard}
+                    >
+                      <View style={styles.selectorLeft}>
+                        <View
+                          style={[
+                            styles.selectorIconWrap,
+                            {
+                              backgroundColor: `${selectedCategoryColor}18`,
+                              borderColor: `${selectedCategoryColor}35`,
+                            },
+                          ]}
+                        >
+                          <IconHelper
+                            name={selectedCategory?.icon ?? "tag"}
+                            size={18}
+                            color={selectedCategoryColor}
+                          />
+                        </View>
+                        <View style={styles.selectorTextCol}>
+                          <Text
+                            numberOfLines={1}
+                            style={
+                              selectedCategory
+                                ? styles.selectorValueText
+                                : styles.selectorPlaceholderText
+                            }
+                          >
+                            {selectedCategory?.name ?? "Select Category"}
+                          </Text>
+                          {selectedCategory && (
+                            <Text style={styles.selectorSubText}>
+                              {parentOfSelectedCategory
+                                ? `${parentOfSelectedCategory.name} > Subcategory`
+                                : mode === "expense"
+                                  ? "Expense Category"
+                                  : "Income Category"}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.selectorChangeBadge}>
+                        <Text style={styles.selectorChangeText}>Change</Text>
+                        <ChevronRight size={14} color={theme.colors.textSecondary} />
+                      </View>
+                    </Pressable>
+                    {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
+                      <BudgetLiveIndicator
+                        amountMinorUnits={postedExpenseMinorUnitsAbs}
+                        categoryId={selectedCategoryId}
+                        expenseCurrencyCode={accountCurrencyCode}
+                        excludeTransactionId={
+                          isEditing && initialTransaction ? initialTransaction.id : null
+                        }
+                        occurredAt={occurredAt}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
                 {canUseSplit && showSplitField ? (
                   <TransactionSplitEditor
                     categories={flatCategoriesForSplit}
@@ -2078,70 +2181,6 @@ export function TransactionFormModal({
                     }}
                     totalMinorUnits={splitTotalMinorUnits}
                   />
-                ) : null}
-                {!splitEnabled ? (
-                <>
-                <Pressable
-                  accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
-                  accessibilityRole="button"
-                  onPress={() => setIsCategoryPickerOpen(true)}
-                  style={styles.selectorCard}
-                >
-                  <View style={styles.selectorLeft}>
-                    <View
-                      style={[
-                        styles.selectorIconWrap,
-                        {
-                          backgroundColor: `${selectedCategoryColor}18`,
-                          borderColor: `${selectedCategoryColor}35`,
-                        },
-                      ]}
-                    >
-                      <IconHelper
-                        name={selectedCategory?.icon ?? "tag"}
-                        size={18}
-                        color={selectedCategoryColor}
-                      />
-                    </View>
-                    <View style={styles.selectorTextCol}>
-                      <Text
-                        numberOfLines={1}
-                        style={
-                          selectedCategory
-                            ? styles.selectorValueText
-                            : styles.selectorPlaceholderText
-                        }
-                      >
-                        {selectedCategory?.name ?? "Select Category"}
-                      </Text>
-                      {selectedCategory && (
-                        <Text style={styles.selectorSubText}>
-                          {parentOfSelectedCategory
-                            ? `${parentOfSelectedCategory.name} > Subcategory`
-                            : mode === "expense"
-                              ? "Expense Category"
-                              : "Income Category"}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  <View style={styles.selectorChangeBadge}>
-                    <Text style={styles.selectorChangeText}>Change</Text>
-                    <ChevronRight size={14} color={theme.colors.textSecondary} />
-                  </View>
-                </Pressable>
-                {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
-                  <BudgetLiveIndicator
-                    amountMinorUnits={postedExpenseMinorUnitsAbs}
-                    categoryId={selectedCategoryId}
-                    expenseCurrencyCode={accountCurrencyCode}
-                    excludeTransactionId={
-                      isEditing && initialTransaction ? initialTransaction.id : null
-                    }
-                    occurredAt={occurredAt}
-                  />
-                ) : null}
-                </>
                 ) : null}
               </View>
             )}
@@ -2224,9 +2263,11 @@ export function TransactionFormModal({
                             editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={3}
+                            onBlur={() => setFocusedFieldType(null)}
                             onChangeText={(value) =>
                               setCustomTermMonths(value.replace(/\D/g, ""))
                             }
+                            onFocus={() => setFocusedFieldType("normal")}
                             placeholder="12"
                             placeholderTextColor={theme.colors.textMuted}
                             style={styles.customDeferralInput}
@@ -2302,9 +2343,11 @@ export function TransactionFormModal({
                             editable={!installmentFieldsLocked}
                             keyboardType="number-pad"
                             maxLength={2}
+                            onBlur={() => setFocusedFieldType(null)}
                             onChangeText={(value) =>
                               setCustomDeferralMonths(value.replace(/\D/g, ""))
                             }
+                            onFocus={() => setFocusedFieldType("normal")}
                             placeholder="3"
                             placeholderTextColor={theme.colors.textMuted}
                             style={styles.customDeferralInput}
@@ -2444,7 +2487,9 @@ export function TransactionFormModal({
               <TextInput
                 maxLength={200}
                 multiline
+                onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setNote}
+                onFocus={() => setFocusedFieldType("description")}
                 placeholder="e.g. Grocery run at SM, Grab to airport..."
                 placeholderTextColor={theme.colors.textSecondary}
                 style={styles.noteInput}
@@ -2503,31 +2548,39 @@ export function TransactionFormModal({
                 </Text>
               </View>
             ) : null}
-          </KeyboardAwareForm>
+          </KeyboardAwareFormPreset>
 
           {/* Action Buttons */}
-          <View style={styles.footerRow}>
-            <Pressable
-              accessibilityLabel="Cancel"
-              accessibilityRole="button"
-              onPress={onClose}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
+          <KeyboardStickyView
+            offset={{
+              closed: 0,
+              opened: Math.max(insets.bottom, 20),
+            }}
+            style={styles.stickyFooter}
+          >
+            <View style={styles.footerRow}>
+              <Pressable
+                accessibilityLabel="Cancel"
+                accessibilityRole="button"
+                onPress={onClose}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
 
-            <Pressable
-              accessibilityLabel={pending ? "Saving..." : "Save Record"}
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={() => handleSave(false)}
-              style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
-            >
-              <Text style={styles.saveBtnText}>
-                {pending ? "Saving..." : "Save Record"}
-              </Text>
-            </Pressable>
-          </View>
+              <Pressable
+                accessibilityLabel={pending ? "Saving..." : "Save Record"}
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={() => handleSave(false)}
+                style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
+              >
+                <Text style={styles.saveBtnText}>
+                  {pending ? "Saving..." : "Save Record"}
+                </Text>
+              </Pressable>
+            </View>
+          </KeyboardStickyView>
         </View>
       </View>
 
@@ -2899,18 +2952,28 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
       marginBottom: 14,
     },
+    topActionsScroll: {
+      flexGrow: 0,
+      marginBottom: theme.spacing.sm,
+    },
+    topActionsContent: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
     quickPresetsButton: {
       alignItems: "center",
-      alignSelf: "flex-start",
       backgroundColor: `${theme.colors.primary}12`,
       borderColor: `${theme.colors.primary}45`,
       borderRadius: 999,
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.sm,
       minHeight: 34,
       paddingHorizontal: theme.spacing.sm,
+    },
+    quickPresetsButtonPressed: {
+      opacity: 0.7,
     },
     quickPresetsButtonText: {
       color: theme.colors.primary,
@@ -2954,6 +3017,9 @@ function createStyles(theme: AppTheme) {
     },
     formScroll: {
       flex: 1,
+    },
+    formScrollContent: {
+      paddingBottom: theme.spacing.md,
     },
     inputGroup: {
       marginBottom: 16,
@@ -3553,11 +3619,14 @@ function createStyles(theme: AppTheme) {
     },
     customizeFieldsButton: {
       alignItems: "center",
-      alignSelf: "center",
-      marginBottom: theme.spacing.xs,
-      minHeight: 36,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.xs,
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}45`,
+      borderRadius: 999,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 34,
+      paddingHorizontal: theme.spacing.sm,
     },
     customizeFieldsButtonPressed: {
       opacity: 0.7,
@@ -3565,7 +3634,7 @@ function createStyles(theme: AppTheme) {
     customizeFieldsButtonText: {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     nameInputWithoutAttachment: {
       flex: 1,
@@ -3588,10 +3657,18 @@ function createStyles(theme: AppTheme) {
     dateTimeButtonFull: {
       flex: 1,
     },
+    stickyFooter: {
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      marginHorizontal: -20,
+      paddingHorizontal: 20,
+      paddingTop: 8,
+      paddingBottom: 6,
+    },
     footerRow: {
       flexDirection: "row",
       gap: 10,
-      paddingTop: 8,
     },
     cancelBtn: {
       alignItems: "center",

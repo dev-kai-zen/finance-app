@@ -25,6 +25,8 @@ export interface FullScreenFormModalProps extends PropsWithChildren {
   deleteDisabled?: boolean;
   pending?: boolean;
   headerRight?: ReactNode;
+  headerTitle?: ReactNode;
+  titleAlign?: "center" | "left";
 }
 
 export function FullScreenFormModal({
@@ -40,6 +42,8 @@ export function FullScreenFormModal({
   deleteDisabled = false,
   pending = false,
   headerRight,
+  headerTitle,
+  titleAlign = "center",
   children,
 }: FullScreenFormModalProps) {
   const insets = useSafeAreaInsets();
@@ -112,10 +116,23 @@ export function FullScreenFormModal({
             <ChevronLeft color={theme.colors.textPrimary} size={24} />
           </Pressable>
 
-          <View style={styles.titleCol}>
-            <Text numberOfLines={1} style={styles.title}>
-              {title}
-            </Text>
+          <View
+            style={[
+              styles.titleCol,
+              titleAlign === "left" && styles.titleColLeft,
+            ]}
+          >
+            {headerTitle ?? (
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.title,
+                  titleAlign === "left" && styles.titleLeft,
+                ]}
+              >
+                {title}
+              </Text>
+            )}
           </View>
 
           {headerRight ?? defaultHeaderRight}
@@ -154,11 +171,20 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       minWidth: 0,
     },
+    titleColLeft: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "flex-start",
+      marginLeft: theme.spacing.xs,
+    },
     title: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "center",
+    },
+    titleLeft: {
+      textAlign: "left",
     },
     headerActions: {
       alignItems: "center",

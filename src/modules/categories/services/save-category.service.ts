@@ -3,6 +3,7 @@ import { categoryInputSchema } from "../schemas/category.schema";
 import {
   getCategoryById,
   getCategoryByNameAndType,
+  getNextCategorySortOrder,
   insertCategory,
   updateCategory,
 } from "../repositories/categories.repository";
@@ -50,9 +51,19 @@ export async function saveCategory(
 
   // Create new category
   const newId = generateId();
+  let sortOrder = parsed.sortOrder;
+  if (sortOrder === undefined) {
+    sortOrder = await getNextCategorySortOrder(
+      client,
+      parsed.type,
+      parsed.parentId ?? null,
+    );
+  }
+
   return insertCategory(client, {
     ...parsed,
     id: newId,
+    sortOrder,
     isSystem: false,
   });
 }

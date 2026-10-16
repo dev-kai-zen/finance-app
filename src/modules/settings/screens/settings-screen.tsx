@@ -2,21 +2,25 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
-  Archive,
+  ArrowDownLeft,
+  ArrowUpRight,
   ChevronRight,
   CircleDollarSign,
   Cloud,
+  Database,
+  HardDrive,
+  Info,
   Languages,
+  Palette,
+  Pipette,
   Sparkles,
+  Terminal,
   Trash2,
 } from "lucide-react-native";
-
-import { AppButton } from "@/components/app-button";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
-import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
@@ -24,6 +28,7 @@ import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
+import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components/settings-default-account-picker-modal";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
@@ -42,12 +47,13 @@ export function SettingsScreen() {
   const { activeLanguage, preference, t } = useLocalization();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
-  const { accounts, pockets } = useAccounts();
   const {
     defaultExpenseAccountId,
     defaultExpensePocketId,
     defaultIncomeAccountId,
     defaultIncomePocketId,
+    expenseLocation,
+    incomeLocation,
     setExpenseAccount,
     setIncomeAccount,
   } = useDefaultAccounts();
@@ -67,54 +73,64 @@ export function SettingsScreen() {
         })
       : activeLanguage.nativeName;
 
-  const expenseAccount = accounts.find(
-    (a) => a.id === defaultExpenseAccountId && !a.isArchived,
-  );
-  const expensePocket =
-    expenseAccount && defaultExpensePocketId
-      ? pockets.find(
-          (p) =>
-            p.id === defaultExpensePocketId &&
-            p.accountId === expenseAccount.id &&
-            !p.isArchived,
-        )
-      : null;
-  const expenseAccountName = expenseAccount
-    ? expensePocket
-      ? `${expenseAccount.name} · ${expensePocket.name}`
-      : expenseAccount.pocketEnabled
-        ? `${expenseAccount.name} · ${t("settings.availablePocket")}`
-        : expenseAccount.name
-    : t("settings.defaultAccountNone");
+  const formatDefaultAccountName = (
+    location: typeof expenseLocation,
+  ): string => {
+    if (!location) return t("settings.defaultAccountNone");
+    const { account, pocket } = location;
+    if (pocket) {
+      return `${account.name} · ${pocket.name}`;
+    }
+    if (account.pocketEnabled) {
+      return `${account.name} · ${t("settings.availablePocket")}`;
+    }
+    return account.name;
+  };
 
-  const incomeAccount = accounts.find(
-    (a) => a.id === defaultIncomeAccountId && !a.isArchived,
-  );
-  const incomePocket =
-    incomeAccount && defaultIncomePocketId
-      ? pockets.find(
-          (p) =>
-            p.id === defaultIncomePocketId &&
-            p.accountId === incomeAccount.id &&
-            !p.isArchived,
-        )
-      : null;
-  const incomeAccountName = incomeAccount
-    ? incomePocket
-      ? `${incomeAccount.name} · ${incomePocket.name}`
-      : incomeAccount.pocketEnabled
-        ? `${incomeAccount.name} · ${t("settings.availablePocket")}`
-        : incomeAccount.name
-    : t("settings.defaultAccountNone");
+  const expenseAccountName = formatDefaultAccountName(expenseLocation);
+  const incomeAccountName = formatDefaultAccountName(incomeLocation);
+  const themeValue = isFollowingSystem
+    ? t("settings.followingAppearance")
+    : `${theme.name} · ${t("settings.paletteSaved", {
+        mode: t(theme.mode === "light" ? "settings.light" : "settings.dark"),
+      })}`;
 
   return (
     <PageContainer>
       <View style={styles.container}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>
-            {t("settings.languageSection")}
+            {t("settings.generalSection")}
           </Text>
           <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.themeAccessibility", {
+                theme: theme.name,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsThemePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Palette color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.themeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>{themeValue}</Text>
+              </View>
+              <View style={styles.rowAccessory}>
+                <ThemeSwatchPreview preset={theme} />
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
             <Pressable
               accessibilityLabel={t("settings.languageAccessibility", {
                 language: languageValue,
@@ -126,8 +142,8 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.backupIcon}>
-                <Languages color={theme.colors.primary} size={21} />
+              <View style={styles.iconContainer}>
+                <Languages color={theme.colors.info} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -137,14 +153,9 @@ export function SettingsScreen() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.currencySection")}
-          </Text>
-          <View style={styles.card}>
+            <View style={styles.rowDivider} />
+
             <Pressable
               accessibilityLabel={t("settings.currencySetupAccessibility")}
               accessibilityRole="button"
@@ -154,27 +165,19 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.backupIcon}>
-                <CircleDollarSign color={theme.colors.primary} size={21} />
+              <View style={styles.iconContainer}>
+                <CircleDollarSign color={theme.colors.success} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.currencySetup")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.currencySetupDescription")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.defaultAccountsSection")}
-          </Text>
-          <View style={styles.card}>
+            <View style={styles.rowDivider} />
+
             <Pressable
               accessibilityLabel={t("settings.defaultExpenseAccessibility", {
                 account: expenseAccountName,
@@ -186,8 +189,13 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <ArrowUpRight color={theme.colors.danger} size={20} />
+              </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>{t("settings.expense")}</Text>
+                <Text style={styles.settingLabel}>
+                  {t("settings.defaultAccountExpenseLabel")}
+                </Text>
                 <Text style={styles.settingDescription}>
                   {expenseAccountName}
                 </Text>
@@ -208,20 +216,22 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <ArrowDownLeft color={theme.colors.success} size={20} />
+              </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>{t("settings.income")}</Text>
+                <Text style={styles.settingLabel}>
+                  {t("settings.defaultAccountIncomeLabel")}
+                </Text>
                 <Text style={styles.settingDescription}>
                   {incomeAccountName}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("settings.backupSection")}</Text>
-          <View style={styles.card}>
+            <View style={styles.rowDivider} />
+
             <Pressable
               accessibilityLabel={t("settings.localBackupAccessibility")}
               accessibilityRole="button"
@@ -231,15 +241,12 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.backupIcon}>
-                <Archive color={theme.colors.primary} size={21} />
+              <View style={styles.iconContainer}>
+                <HardDrive color={theme.colors.textSecondary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("navigation.localBackup")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.localBackupDescription")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -256,15 +263,66 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.backupIcon}>
-                <Cloud color={theme.colors.primary} size={21} />
+              <View style={styles.iconContainer}>
+                <Cloud color={theme.colors.info} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.googleDrive")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.googleDriveDescription")}
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.hexColorsAccessibility", {
+                count: colors.length,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsHexColorsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Pipette color={theme.colors.accent} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.hexColors")}
+                </Text>
+              </View>
+              <View style={styles.rowAccessory}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{colors.length}</Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.resetDataAccessibility")}
+              accessibilityRole="button"
+              onPress={() => {
+                resetData.clearError();
+                setIsResetDataOpen(true);
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={[styles.iconContainer, styles.dangerIconContainer]}>
+                <Trash2 color={theme.colors.danger} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={[styles.settingLabel, styles.dangerLabel]}>
+                  {t("settings.resetData")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -273,6 +331,9 @@ export function SettingsScreen() {
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
               <View style={styles.settingRow}>
+                <View style={styles.iconContainer}>
+                  <Info color={theme.colors.textMuted} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.backupPaused")}
@@ -286,103 +347,14 @@ export function SettingsScreen() {
           ) : null}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.appearanceSection")}
-          </Text>
-          <View style={styles.card}>
-            <Pressable
-              accessibilityLabel={t("settings.themeAccessibility", {
-                theme: theme.name,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsThemePickerOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <ThemeSwatchPreview preset={theme} />
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>{theme.name}</Text>
-                <Text style={styles.settingDescription}>
-                  {isFollowingSystem
-                    ? t("settings.followingAppearance")
-                    : t("settings.paletteSaved", {
-                        mode: t(
-                          theme.mode === "light"
-                            ? "settings.light"
-                            : "settings.dark",
-                        ),
-                      })}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.experienceSection")}
-          </Text>
-          <View style={styles.card}>
-            <View style={styles.toggleRow}>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.simpleHomeLabels")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.simpleHomeLabelsDescription")}
-                </Text>
-              </View>
-              <ThemedSwitch
-                accessibilityLabel={t("settings.simpleHomeLabels")}
-                onValueChange={(enabled) =>
-                  experience.setHomeMode(enabled ? "simple" : "detailed")
-                }
-                value={experience.homeMode === "simple"}
-              />
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.sourceManagementSection")}
-          </Text>
-          <View style={styles.card}>
-            <Pressable
-              accessibilityLabel={t("settings.hexColorsAccessibility", {
-                count: colors.length,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsHexColorsOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.hexColors")}
-                </Text>
-              </View>
-              <View style={styles.rowAccessory}>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>{colors.length}</Text>
-                </View>
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </View>
-            </Pressable>
-          </View>
-        </View>
-
         {experience.developerMode ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
             <View style={styles.card}>
               <View style={styles.toggleRow}>
+                <View style={styles.iconContainer}>
+                  <Terminal color={theme.colors.textSecondary} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>{t("settings.developerMode")}</Text>
                   <Text style={styles.settingDescription}>
@@ -405,6 +377,9 @@ export function SettingsScreen() {
                   pressed && styles.settingRowPressed,
                 ]}
               >
+                <View style={styles.iconContainer}>
+                  <Database color={theme.colors.info} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.sqliteMonitor")}
@@ -431,50 +406,16 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <View style={styles.backupIcon}>
-                <Sparkles color={theme.colors.primary} size={21} />
+              <View style={styles.iconContainer}>
+                <Sparkles color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.whatsNew")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.whatsNewDescription")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, styles.dangerSectionTitle]}>
-            {t("settings.dangerZone")}
-          </Text>
-          <View style={[styles.card, styles.dangerCard]}>
-            <View style={styles.resetContent}>
-              <View style={styles.resetHeading}>
-                <View style={styles.resetIcon}>
-                  <Trash2 color={theme.colors.danger} size={20} />
-                </View>
-                <View style={styles.settingCopy}>
-                  <Text style={styles.settingLabel}>
-                    {t("settings.resetData")}
-                  </Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.resetDataDescription")}
-                  </Text>
-                </View>
-              </View>
-              <AppButton
-                label={t("settings.resetData")}
-                onPress={() => {
-                  resetData.clearError();
-                  setIsResetDataOpen(true);
-                }}
-                variant="destructive"
-              />
-            </View>
           </View>
         </View>
       </View>
@@ -515,45 +456,33 @@ export function SettingsScreen() {
         onClose={() => setIsHexColorsOpen(false)}
       />
 
-      <AccountPickerModal
-        accounts={accounts}
-        allowNone
-        noneLabel={t("settings.defaultAccountPickerNone")}
-        onClose={() => setIsExpensePickerOpen(false)}
-        onSelectLocation={(account, pocketId) => {
-          setExpenseAccount(account.id, pocketId);
-          setIsExpensePickerOpen(false);
-        }}
-        onSelectNone={() => {
-          setExpenseAccount(null, null);
-          setIsExpensePickerOpen(false);
-        }}
-        pockets={pockets}
-        selectedAccountId={defaultExpenseAccountId}
-        selectedPocketId={defaultExpensePocketId}
-        title={t("settings.defaultExpenseTitle")}
-        visible={isExpensePickerOpen}
-      />
+      {isExpensePickerOpen ? (
+        <SettingsDefaultAccountPickerModal
+          allowNoneLabel={t("settings.defaultAccountPickerNone")}
+          onClose={() => setIsExpensePickerOpen(false)}
+          onSelect={(accountId, pocketId) => {
+            setExpenseAccount(accountId, pocketId);
+            setIsExpensePickerOpen(false);
+          }}
+          selectedAccountId={defaultExpenseAccountId}
+          selectedPocketId={defaultExpensePocketId}
+          title={t("settings.defaultExpenseTitle")}
+        />
+      ) : null}
 
-      <AccountPickerModal
-        accounts={accounts}
-        allowNone
-        noneLabel={t("settings.defaultAccountPickerNone")}
-        onClose={() => setIsIncomePickerOpen(false)}
-        onSelectLocation={(account, pocketId) => {
-          setIncomeAccount(account.id, pocketId);
-          setIsIncomePickerOpen(false);
-        }}
-        onSelectNone={() => {
-          setIncomeAccount(null, null);
-          setIsIncomePickerOpen(false);
-        }}
-        pockets={pockets}
-        selectedAccountId={defaultIncomeAccountId}
-        selectedPocketId={defaultIncomePocketId}
-        title={t("settings.defaultIncomeTitle")}
-        visible={isIncomePickerOpen}
-      />
+      {isIncomePickerOpen ? (
+        <SettingsDefaultAccountPickerModal
+          allowNoneLabel={t("settings.defaultAccountPickerNone")}
+          onClose={() => setIsIncomePickerOpen(false)}
+          onSelect={(accountId, pocketId) => {
+            setIncomeAccount(accountId, pocketId);
+            setIsIncomePickerOpen(false);
+          }}
+          selectedAccountId={defaultIncomeAccountId}
+          selectedPocketId={defaultIncomePocketId}
+          title={t("settings.defaultIncomeTitle")}
+        />
+      ) : null}
     </PageContainer>
   );
 }
@@ -608,22 +537,25 @@ function createStyles(theme: AppTheme) {
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
     },
+    iconContainer: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
+    dangerIconContainer: {
+      backgroundColor: `${theme.colors.danger}18`,
+    },
     rowDivider: {
       backgroundColor: theme.colors.border,
       height: 1,
-      marginLeft: theme.spacing.lg,
+      marginLeft: theme.spacing.lg + 40 + theme.spacing.md,
     },
     settingCopy: {
       flex: 1,
       gap: 2,
-    },
-    backupIcon: {
-      alignItems: "center",
-      backgroundColor: `${theme.colors.primary}14`,
-      borderRadius: theme.borderRadius.round,
-      height: 40,
-      justifyContent: "center",
-      width: 40,
     },
     settingLabel: {
       color: theme.colors.textPrimary,
@@ -653,28 +585,8 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
       textAlign: "center",
     },
-    dangerSectionTitle: {
+    dangerLabel: {
       color: theme.colors.danger,
-    },
-    dangerCard: {
-      borderColor: `${theme.colors.danger}50`,
-    },
-    resetContent: {
-      gap: theme.spacing.md,
-      padding: theme.spacing.lg,
-    },
-    resetHeading: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.md,
-    },
-    resetIcon: {
-      alignItems: "center",
-      backgroundColor: `${theme.colors.danger}18`,
-      borderRadius: theme.borderRadius.round,
-      height: 40,
-      justifyContent: "center",
-      width: 40,
     },
   });
 }

@@ -14,6 +14,7 @@ import {
   FullScreenFormModal,
   InfoModal,
   NotificationModal,
+  ScreenTitleWithHelp,
 } from "@/components";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import type { AppTheme } from "@/constants/theme";
@@ -61,6 +62,7 @@ export function CurrencyCatalogModal({
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [usageModalCode, setUsageModalCode] = useState<string | null>(null);
+  const [helpVisible, setHelpVisible] = useState(false);
 
   const usageModalMessage = useMemo(() => {
     if (!usageModalCode) return "";
@@ -76,6 +78,7 @@ export function CurrencyCatalogModal({
       setEditor(null);
       setConfirmDelete(false);
       setUsageModalCode(null);
+      setHelpVisible(false);
       mutations.clearError();
     }
   }, [visible]);
@@ -187,6 +190,15 @@ export function CurrencyCatalogModal({
     </Pressable>
   );
 
+  const managerTitle = (
+    <ScreenTitleWithHelp
+      accessibilityHint={t("currency.catalogHelpHint")}
+      accessibilityLabel={t("currency.catalogHelpAccessibility")}
+      onPressHelp={() => setHelpVisible(true)}
+      title={t("currency.catalogTitle")}
+    />
+  );
+
   const title = editor
     ? editor.mode === "create"
       ? t("currency.addCurrency")
@@ -199,9 +211,11 @@ export function CurrencyCatalogModal({
         pending={mutations.pending}
         saveDisabled={!canSave || mutations.pending}
         title={title}
+        titleAlign="left"
         visible={visible}
         deleteLabel={t("currency.deleteAction")}
         headerRight={editor ? undefined : managerHeader}
+        headerTitle={editor ? undefined : managerTitle}
         onClose={requestBack}
         onDelete={canDeleteCurrency ? () => setConfirmDelete(true) : undefined}
         onSave={editor && !editorLocked ? saveEditor : undefined}
@@ -384,6 +398,13 @@ export function CurrencyCatalogModal({
         visible={confirmDelete}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={confirmRemove}
+      />
+
+      <InfoModal
+        message={t("currency.catalogHelpMessage")}
+        title={t("currency.catalogHelpTitle")}
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
       />
 
       <InfoModal

@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -116,7 +117,11 @@ export function CategoryFormModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.modalOverlay}
+      >
         <Pressable
           accessibilityLabel="Dismiss category form"
           accessibilityRole="button"
@@ -324,7 +329,7 @@ export function CategoryFormModal({
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <IconPickerModal
         onClose={() => setIsIconPickerOpen(false)}
@@ -369,6 +374,8 @@ function createStyles(theme: AppTheme) {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       borderWidth: 1,
+      flexDirection: "column",
+      flexShrink: 1,
       maxHeight: "90%",
       paddingHorizontal: 20,
       paddingTop: 16,
@@ -429,7 +436,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     scrollBody: {
+      flex: 1,
       marginBottom: 16,
+      minHeight: 0,
     },
     inputGroup: {
       marginBottom: 16,

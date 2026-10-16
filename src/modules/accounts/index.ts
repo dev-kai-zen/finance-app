@@ -14,6 +14,11 @@ export const findAccountById = deferFunction(
   () => require("./repositories/accounts.repository").findAccountById,
 ) as typeof import("./repositories/accounts.repository").findAccountById;
 
+export const resolveAccountLocation = deferFunction(
+  () =>
+    require("./services/resolve-account-location.service").resolveAccountLocation,
+) as typeof import("./services/resolve-account-location.service").resolveAccountLocation;
+
 export const useAccounts = deferFunction(
   () => require("./hooks/use-accounts").useAccounts,
 ) as typeof import("./hooks/use-accounts").useAccounts;
@@ -130,6 +135,7 @@ export type {
   PocketListItem,
 } from "./types/account.types";
 export type { AccountPickerModalProps } from "./components/account-picker-modal";
+export type { ResolvedAccountLocation } from "./services/resolve-account-location.service";
 export type {
   FundGroup,
   FundGroupInput,

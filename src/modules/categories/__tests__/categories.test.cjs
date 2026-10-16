@@ -179,5 +179,36 @@ test("categories: alphabetical sorting orders categories by name and persists so
   assert.equal(persisted[1].id, "c_m");
   assert.equal(persisted[2].id, "c_z");
 });
+test("categories: new group is placed after existing user categories and before Others", () => {
+  const db = setupTestDb();
+  const now = Date.now();
 
+  const insertStmt = db.prepare(
+    "INSERT INTO categories (id, name, type, sort_order, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  );
 
+  insertStmt.run("cat_1", "Category 1", "expense", 0, 0, now, now);
+  insertStmt.run("cat_2", "Category 2", "expense", 1, 0, now, now);
+  insertStmt.run("cat_exp_others", "Other Expenses", "expense", 2, 1, now, now);
+
+  const parentRows = db.prepare(
+    "SELECT id, sort_order FROM categories WHERE type = 'expense' AND parent_id IS NULL"
+  ).all();
+
+  const othersCategory = parentRows.find((r) => r.id === "cat_exp_others");
+  const nonOtherRows = parentRows.filter((r) => r.id !== "cat_exp_others");
+  const maxNonOther = nonOtherRows.length > 0 ? Math.max(...nonOtherRows.map((r) => r.sort_order ?? 0)) : -1;
+  const newSortOrder = maxNonOther + 1;
+
+  if (othersCategory) {
+    db.prepare("UPDATE categories SET sort_order = ? WHERE id = ?").run(newSortOrder + 1, othersCategory.id);
+  }
+
+  insertStmt.run("cat_new", "New Group", "expense", newSortOrder, 0, now, now);
+
+  const results = db.prepare("SELECT id, name, sort_order FROM categories WHERE type = 'expense' ORDER BY sort_order ASC").all();
+  assert.equal(results[0].id, "cat_1");
+  assert.equal(results[1].id, "cat_2");
+  assert.equal(results[2].id, "cat_new");
+  assert.equal(results[3].id, "cat_exp_others");
+});

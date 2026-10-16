@@ -55,6 +55,7 @@ export interface SortableListModalProps {
   visible: boolean;
   onClose: () => void;
   title: string;
+  titleAlign?: "center" | "left";
   items: SortableItem[];
   onSave: (orderedIds: string[]) => Promise<void> | void;
   showAlphabetizeAction?: boolean;
@@ -64,6 +65,7 @@ export function SortableListModal({
   visible,
   onClose,
   title,
+  titleAlign = "left",
   items: initialItems,
   onSave,
   showAlphabetizeAction = true,
@@ -179,6 +181,7 @@ export function SortableListModal({
       pending={saving}
       saveLabel="Save order"
       title={title}
+      titleAlign={titleAlign}
       visible={visible}
       onClose={onClose}
       onSave={() => {

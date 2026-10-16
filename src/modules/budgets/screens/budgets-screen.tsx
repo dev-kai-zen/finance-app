@@ -95,21 +95,28 @@ export function BudgetsScreen() {
 
   const handleDeleteFromForm = async (id: string): Promise<boolean> => {
     setBudgetToDelete(id);
-    return true;
+    return false;
   };
 
   const handleConfirmDelete = async () => {
     if (budgetToDelete) {
       await deleteBudget(budgetToDelete);
       setBudgetToDelete(null);
+      setIsFormOpen(false);
+      setBudgetToEdit(null);
     }
   };
 
   const overallClampedProgress = Math.min(summary.overallPercentage, 100);
   const isOverallExceeded = summary.totalSpentCents > summary.totalBudgetedCents;
 
+  const contentSpacing = useThemeStyles((theme) => ({
+    paddingTop: theme.spacing.lg,
+  }));
+
   return (
     <PageContainer
+      contentContainerStyle={contentSpacing}
       floatingAction={
         budgets.length > 0 ? (
           <FloatingActionButton

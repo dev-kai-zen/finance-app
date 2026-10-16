@@ -83,48 +83,48 @@ export function GoalSummaryHeader({
       {/* Quick Stat Counter Cards */}
       <View style={styles.statsRow}>
         <View style={styles.statMiniCard}>
-          <View
-            style={[
-              styles.miniIconWrapper,
-              { backgroundColor: `${theme.colors.primary}18` },
-            ]}
-          >
-            <Target color={theme.colors.primary} size={18} />
-          </View>
-          <View style={styles.miniTextWrapper}>
+          <View style={styles.miniTopRow}>
+            <View
+              style={[
+                styles.miniIconWrapper,
+                { backgroundColor: `${theme.colors.primary}18` },
+              ]}
+            >
+              <Target color={theme.colors.primary} size={18} />
+            </View>
             <Text style={styles.miniCount}>{activeGoalsCount}</Text>
-            <Text style={styles.miniLabel}>In Progress</Text>
           </View>
+          <Text style={styles.miniLabel}>In Progress</Text>
         </View>
 
         <View style={styles.statMiniCard}>
-          <View
-            style={[
-              styles.miniIconWrapper,
-              { backgroundColor: `${theme.colors.success}18` },
-            ]}
-          >
-            <CheckCircle2 color={theme.colors.success} size={18} />
-          </View>
-          <View style={styles.miniTextWrapper}>
+          <View style={styles.miniTopRow}>
+            <View
+              style={[
+                styles.miniIconWrapper,
+                { backgroundColor: `${theme.colors.success}18` },
+              ]}
+            >
+              <CheckCircle2 color={theme.colors.success} size={18} />
+            </View>
             <Text style={styles.miniCount}>{completedGoalsCount}</Text>
-            <Text style={styles.miniLabel}>Completed</Text>
           </View>
+          <Text style={styles.miniLabel}>Completed</Text>
         </View>
 
         <View style={styles.statMiniCard}>
-          <View
-            style={[
-              styles.miniIconWrapper,
-              { backgroundColor: `${theme.colors.textSecondary}18` },
-            ]}
-          >
-            <TrendingUp color={theme.colors.textSecondary} size={18} />
-          </View>
-          <View style={styles.miniTextWrapper}>
+          <View style={styles.miniTopRow}>
+            <View
+              style={[
+                styles.miniIconWrapper,
+                { backgroundColor: `${theme.colors.textSecondary}18` },
+              ]}
+            >
+              <TrendingUp color={theme.colors.textSecondary} size={18} />
+            </View>
             <Text style={styles.miniCount}>{totalGoalsCount}</Text>
-            <Text style={styles.miniLabel}>Total Goals</Text>
           </View>
+          <Text style={styles.miniLabel}>Total Goals</Text>
         </View>
       </View>
     </View>
@@ -219,27 +219,29 @@ function createStyles(theme: AppTheme) {
     },
     statMiniCard: {
       flex: 1,
+      alignItems: "stretch",
       backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      gap: theme.spacing.xs,
       padding: theme.spacing.sm,
-      flexDirection: "row",
+    },
+    miniTopRow: {
       alignItems: "center",
+      flexDirection: "row",
       gap: theme.spacing.sm,
     },
     miniIconWrapper: {
-      width: theme.spacing.xxl,
-      height: theme.spacing.xxl,
-      borderRadius: theme.borderRadius.small,
       alignItems: "center",
+      borderRadius: theme.borderRadius.small,
+      height: theme.spacing.xxl,
       justifyContent: "center",
-    },
-    miniTextWrapper: {
-      flex: 1,
+      width: theme.spacing.xxl,
     },
     miniCount: {
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
     },

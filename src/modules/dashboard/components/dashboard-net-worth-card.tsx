@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ChevronDown,
   ChevronUp,
   Eye,
   EyeOff,
+  LayoutGrid,
+  Settings2,
+  Sparkles,
   TrendingDown,
   TrendingUp,
 } from "lucide-react-native";
+import { ActionBottomSheet } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { NetWorthChart } from "@/modules/dashboard/components/net-worth-chart";
 import type {
   NetWorthHistory,
   NetWorthPeriod,
 } from "@/modules/dashboard/types/dashboard.types";
+import type { HomeExperienceMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
-import { useLocalization } from "@/infrastructure/localization";
 
 const PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
 
@@ -28,7 +33,8 @@ export interface DashboardNetWorthCardProps {
   history: NetWorthHistory;
   monthlyChangePercentage: number | null;
   currencyCode?: string;
-  simpleHomeLabels?: boolean;
+  homeMode?: HomeExperienceMode;
+  onHomeModeChange?: (mode: HomeExperienceMode) => void;
   monthlySpentMinorUnits?: number;
 }
 
@@ -39,20 +45,49 @@ export function DashboardNetWorthCard({
   history,
   monthlyChangePercentage,
   currencyCode = "PHP",
-  simpleHomeLabels = false,
+  homeMode = "detailed",
+  onHomeModeChange,
   monthlySpentMinorUnits = 0,
 }: DashboardNetWorthCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { t } = useLocalization();
+  const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
   const [valuesVisible, setValuesVisible] = useState(true);
   const [chartVisible, setChartVisible] = useState(true);
+  const [displayModeSheetVisible, setDisplayModeSheetVisible] = useState(false);
   const trendIsPositive = (monthlyChangePercentage ?? 0) >= 0;
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
   const privateValue = "••••••";
+
+  const displayModeItems = useMemo(
+    () => [
+      {
+        id: "simple",
+        label: t("dashboard.displayModeSimple"),
+        description: t("dashboard.displayModeSimpleDescription"),
+        icon: (
+          <Sparkles color={theme.colors.primary} size={20} />
+        ),
+        selected: homeMode === "simple",
+        onPress: () => onHomeModeChange?.("simple"),
+      },
+      {
+        id: "detailed",
+        label: t("dashboard.displayModeDetailed"),
+        description: t("dashboard.displayModeDetailedDescription"),
+        icon: (
+          <LayoutGrid color={theme.colors.textSecondary} size={20} />
+        ),
+        selected: homeMode === "detailed",
+        onPress: () => onHomeModeChange?.("detailed"),
+      },
+    ],
+    [homeMode, onHomeModeChange, t, theme.colors.primary, theme.colors.textSecondary],
+  );
 
   return (
     <View style={styles.card}>
@@ -81,6 +116,20 @@ export function DashboardNetWorthCard({
               <ChevronDown color={theme.colors.textSecondary} size={20} />
             )}
           </Pressable>
+          {onHomeModeChange ? (
+            <Pressable
+              accessibilityLabel={t("dashboard.displayModeAccessibility")}
+              accessibilityRole="button"
+              hitSlop={5}
+              onPress={() => setDisplayModeSheetVisible(true)}
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Settings2 color={theme.colors.textSecondary} size={20} />
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
             accessibilityRole="button"
@@ -248,6 +297,15 @@ export function DashboardNetWorthCard({
           </>
         )}
       </View>
+
+      {onHomeModeChange ? (
+        <ActionBottomSheet
+          items={displayModeItems}
+          onClose={() => setDisplayModeSheetVisible(false)}
+          title={t("dashboard.displayModeTitle")}
+          visible={displayModeSheetVisible}
+        />
+      ) : null}
     </View>
   );
 }

@@ -95,6 +95,7 @@ export function ArchivedAccountsModal({
       <FullScreenFormModal
         pending={pending}
         title="Archived"
+        titleAlign="left"
         visible={visible}
         onClose={onClose}
       >

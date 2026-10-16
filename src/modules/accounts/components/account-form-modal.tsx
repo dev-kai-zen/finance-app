@@ -421,6 +421,7 @@ export function AccountFormModal({
         deleteLabel={deleteLabel}
         pending={pending}
         title={account ? "Edit Account" : "New Account"}
+        titleAlign="left"
         visible={visible}
         onClose={onClose}
         onDelete={

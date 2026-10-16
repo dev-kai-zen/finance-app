@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,17 +7,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   AlertTriangle,
   ChevronRight,
   RotateCw,
-  X,
 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
-  AppButton,
+  FullScreenFormModal,
   IconHelper,
   NotificationModal,
 } from "@/components";
@@ -79,7 +76,6 @@ export function BudgetFormModal({
   existingBudgets = [],
   pending = false,
 }: BudgetFormModalProps) {
-  const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
@@ -187,12 +183,9 @@ export function BudgetFormModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!initialBudget || !onDelete) return;
-    const success = await onDelete(initialBudget.id);
-    if (success) {
-      onClose();
-    }
+    void onDelete(initialBudget.id);
   };
 
   const categoryColor = selectedCategory
@@ -203,49 +196,25 @@ export function BudgetFormModal({
 
   return (
     <>
-      <Modal
-        animationType="slide"
-        onRequestClose={onClose}
-        transparent
+      <FullScreenFormModal
+        deleteLabel="Remove budget"
+        pending={pending}
+        saveLabel="Save budget"
+        title={
+          initialBudget ? "Edit Category Budget" : "New Category Budget"
+        }
+        titleAlign="left"
         visible={visible}
+        onClose={onClose}
+        onDelete={initialBudget && onDelete ? handleDelete : undefined}
+        onSave={() => void handleSave()}
       >
-        <View style={styles.overlay}>
-          <Pressable
-            accessibilityLabel="Close budget form"
-            accessibilityRole="button"
-            onPress={onClose}
-            style={styles.backdrop}
-          />
-
-          <View
-            style={[
-              styles.sheet,
-              {
-                paddingBottom: Math.max(insets.bottom, 20),
-                paddingTop: Math.max(insets.top, 16),
-              },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.modalTitle}>
-                {initialBudget ? "Edit Category Budget" : "New Category Budget"}
-              </Text>
-              <Pressable
-                accessibilityLabel="Close"
-                accessibilityRole="button"
-                onPress={onClose}
-                style={styles.closeButton}
-              >
-                <X color={theme.colors.textPrimary} size={20} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.scrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+        >
               {/* Category Picker Selector */}
               <View style={styles.section}>
                 <Text style={styles.fieldLabel}>CATEGORY</Text>
@@ -470,31 +439,8 @@ export function BudgetFormModal({
                   value={notifyOnExceeded}
                 />
               </View>
-
-              {/* Action Buttons */}
-              <View style={styles.actionsContainer}>
-                <AppButton
-                  label="Save Budget"
-                  loading={pending}
-                  onPress={handleSave}
-                  variant="primary"
-                />
-
-                {initialBudget && onDelete && (
-                  <View style={styles.deleteWrap}>
-                    <AppButton
-                      disabled={pending}
-                      label="Remove Budget"
-                      onPress={handleDelete}
-                      variant="destructive"
-                    />
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+        </ScrollView>
+      </FullScreenFormModal>
 
       {/* Category Picker Submodal */}
       <CategoryPickerModal
@@ -533,39 +479,12 @@ export function BudgetFormModal({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    overlay: {
-      backgroundColor: "rgba(0,0,0,0.5)",
+    scrollView: {
       flex: 1,
-      justifyContent: "flex-end",
-    },
-    backdrop: {
-      ...StyleSheet.absoluteFill,
-    },
-    sheet: {
-      backgroundColor: theme.colors.background,
-      borderTopLeftRadius: theme.borderRadius.large,
-      borderTopRightRadius: theme.borderRadius.large,
-      maxHeight: "92%",
-    },
-    header: {
-      alignItems: "center",
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: 1,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.md,
-    },
-    modalTitle: {
-      color: theme.colors.textPrimary,
-      fontSize: 18,
-      fontWeight: "700",
-    },
-    closeButton: {
-      padding: theme.spacing.xs,
     },
     scrollContent: {
       padding: theme.spacing.lg,
+      paddingBottom: theme.spacing.xxl,
     },
     section: {
       marginBottom: theme.spacing.lg,
@@ -712,13 +631,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 12,
       marginTop: 6,
-    },
-    actionsContainer: {
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.lg,
-    },
-    deleteWrap: {
-      marginTop: theme.spacing.xs,
     },
   });
 }

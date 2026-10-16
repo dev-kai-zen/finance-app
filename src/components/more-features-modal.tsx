@@ -2,6 +2,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 
+import { IconHelper } from "@/components/icon-helper";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -14,14 +15,18 @@ import {
   type NavVisibilityKey,
 } from "@/modules/settings";
 
-const MORE_FEATURE_ROWS: Array<{ key: NavVisibilityKey; labelKey: string }> = [
-  { key: "calendar", labelKey: "settings.navCalendar" },
-  { key: "creditCards", labelKey: "settings.navCreditCards" },
-  { key: "categories", labelKey: "settings.navCategories" },
-  { key: "budgets", labelKey: "settings.navBudgets" },
-  { key: "goals", labelKey: "settings.navGoals" },
-  { key: "reports", labelKey: "settings.navReports" },
-  { key: "notes", labelKey: "settings.navNotes" },
+const MORE_FEATURE_ROWS: Array<{
+  key: NavVisibilityKey;
+  labelKey: string;
+  icon: string;
+}> = [
+  { key: "calendar", labelKey: "settings.navCalendar", icon: "calendar" },
+  { key: "creditCards", labelKey: "settings.navCreditCards", icon: "credit-card" },
+  { key: "categories", labelKey: "settings.navCategories", icon: "layers" },
+  { key: "budgets", labelKey: "settings.navBudgets", icon: "pie-chart" },
+  { key: "goals", labelKey: "settings.navGoals", icon: "target" },
+  { key: "reports", labelKey: "settings.navReports", icon: "file-text" },
+  { key: "notes", labelKey: "settings.navNotes", icon: "notebook-pen" },
 ];
 
 export function MoreFeaturesModal({
@@ -59,16 +64,38 @@ export function MoreFeaturesModal({
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-            {MORE_FEATURE_ROWS.map((row) => (
-              <View key={row.key} style={styles.row}>
-                <Text style={styles.rowLabel}>{t(row.labelKey as never)}</Text>
-                <ThemedSwitch
-                  accessibilityLabel={t(row.labelKey as never)}
-                  onValueChange={(value) => experience.setNavVisible(row.key, value)}
-                  value={experience.navVisibility[row.key]}
-                />
-              </View>
-            ))}
+            {MORE_FEATURE_ROWS.map((row) => {
+              const isVisible = experience.navVisibility[row.key];
+              return (
+                <View key={row.key} style={styles.row}>
+                  <Pressable
+                    accessibilityLabel={t(row.labelKey as never)}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: isVisible }}
+                    onPress={() => experience.setNavVisible(row.key, !isVisible)}
+                    style={styles.rowContent}
+                  >
+                    <View style={styles.iconContainer}>
+                      <IconHelper
+                        color={
+                          isVisible
+                            ? theme.colors.primary
+                            : theme.colors.textSecondary
+                        }
+                        name={row.icon}
+                        size={20}
+                      />
+                    </View>
+                    <Text style={styles.rowLabel}>{t(row.labelKey as never)}</Text>
+                  </Pressable>
+                  <ThemedSwitch
+                    accessibilityLabel={t(row.labelKey as never)}
+                    onValueChange={(value) => experience.setNavVisible(row.key, value)}
+                    value={isVisible}
+                  />
+                </View>
+              );
+            })}
           </ScrollView>
           {isGuidedWorkspace() ? (
             <Pressable
@@ -124,6 +151,18 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
       minHeight: 52,
       paddingVertical: theme.spacing.sm,
+    },
+    rowContent: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      marginRight: theme.spacing.sm,
+    },
+    iconContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      width: 24,
     },
     rowLabel: {
       color: theme.colors.textPrimary,

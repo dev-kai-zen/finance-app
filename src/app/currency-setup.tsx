@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { Stack } from "expo-router";
-import { Pressable, StyleSheet } from "react-native";
-import { CircleHelp } from "lucide-react-native";
-import { stackChevronBackOptions } from "@/components";
-import { useAppTheme } from "@/hooks/use-app-theme";
+import { ScreenTitleWithHelp, stackChevronBackOptions } from "@/components";
 import { useLocalization } from "@/infrastructure/localization";
 import { CurrencySetupScreen } from "@/modules/currencies";
 
 export default function CurrencySetupRoute() {
-  const theme = useAppTheme();
   const { t } = useLocalization();
   const [helpVisible, setHelpVisible] = useState(false);
 
@@ -17,22 +13,15 @@ export default function CurrencySetupRoute() {
       <Stack.Screen
         options={{
           ...stackChevronBackOptions(t("common.goBack")),
-          headerRight: () => (
-            <Pressable
+          headerTitle: () => (
+            <ScreenTitleWithHelp
+              accessibilityHint={t("currency.helpTitle")}
               accessibilityLabel={t("currency.helpTitle")}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() => setHelpVisible(true)}
-              style={({ pressed }) => [
-                styles.helpButton,
-                { backgroundColor: theme.colors.surfaceMuted },
-                pressed && styles.pressed,
-              ]}
-            >
-              <CircleHelp color={theme.colors.textPrimary} size={25} />
-            </Pressable>
+              onPressHelp={() => setHelpVisible(true)}
+              title={t("navigation.currencySetup")}
+            />
           ),
-          title: t("navigation.currencySetup"),
+          headerTitleAlign: "left",
         }}
       />
       <CurrencySetupScreen
@@ -42,16 +31,3 @@ export default function CurrencySetupRoute() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  helpButton: {
-    alignItems: "center",
-    borderRadius: 20,
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});

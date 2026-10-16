@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
@@ -145,7 +146,11 @@ export function SubcategoryModal({
       transparent
       visible={visible}
     >
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.modalOverlay}
+      >
         <Pressable
           accessibilityLabel="Dismiss subcategory modal"
           accessibilityRole="button"
@@ -382,7 +387,7 @@ export function SubcategoryModal({
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <IconPickerModal
         onClose={() => setIsIconPickerOpen(false)}
@@ -434,7 +439,9 @@ function createStyles(theme: AppTheme) {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       borderWidth: 1,
-      maxHeight: "90%",
+      flexDirection: "column",
+      height: "75%",
+      maxHeight: "75%",
       paddingHorizontal: 20,
       paddingTop: 16,
       width: "100%",
@@ -516,7 +523,9 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     scrollBody: {
+      flex: 1,
       marginBottom: 16,
+      minHeight: 0,
     },
     inputGroup: {
       marginBottom: 16,
