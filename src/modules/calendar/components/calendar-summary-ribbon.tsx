@@ -53,7 +53,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isInflowPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -79,7 +79,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isOutflowPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -105,7 +105,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isNetPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -143,7 +143,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isAssetsPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -171,7 +171,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isLiabilitiesPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -197,7 +197,7 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              {
+              preferences.colorAmounts && {
                 color: isNetWorthPositive
                   ? theme.colors.success
                   : theme.colors.danger,
@@ -222,7 +222,9 @@ export function CalendarSummaryRibbon({
           <Text
             style={[
               styles.metricValue,
-              { color: theme.colors.warning ?? "#f59e0b" },
+              preferences.colorAmounts && {
+                color: theme.colors.warning ?? "#f59e0b",
+              },
             ]}
           >
             {formatCurrency(metrics.schedulesTotalDueMinorUnits, currencyCode)}
@@ -263,7 +265,7 @@ export function CalendarSummaryRibbon({
         <Text
           style={[
             styles.metricValue,
-            {
+            preferences.colorAmounts && {
               color: isNetPositive
                 ? theme.colors.success
                 : theme.colors.danger,
@@ -291,7 +293,7 @@ export function CalendarSummaryRibbon({
             <Text
               style={[
                 styles.metricValue,
-                {
+                preferences.colorAmounts && {
                   color: isProjectedPositive
                     ? theme.colors.success
                     : theme.colors.danger,

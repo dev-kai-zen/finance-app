@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { MonthlyCashflow } from "../types/dashboard.types";
 
@@ -15,6 +16,7 @@ export function DashboardMonthlyCashflowCard({
   currencyCode = "PHP",
 }: DashboardMonthlyCashflowCardProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
 
   const isNetPositive = cashflow.netSavingsMinorUnits >= 0;
 
@@ -29,7 +31,12 @@ export function DashboardMonthlyCashflowCard({
         {/* Inflow */}
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Total Inflow</Text>
-          <Text style={[styles.statValue, styles.inflowText]}>
+          <Text
+            style={[
+              styles.statValue,
+              preferences.colorAmounts && styles.inflowText,
+            ]}
+          >
             {formatCurrency(cashflow.totalInflowMinorUnits, currencyCode, true)}
           </Text>
         </View>
@@ -37,7 +44,12 @@ export function DashboardMonthlyCashflowCard({
         {/* Outflow */}
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Total Outflow</Text>
-          <Text style={[styles.statValue, styles.outflowText]}>
+          <Text
+            style={[
+              styles.statValue,
+              preferences.colorAmounts && styles.outflowText,
+            ]}
+          >
             {formatCurrency(-cashflow.totalOutflowMinorUnits, currencyCode, true)}
           </Text>
         </View>
@@ -48,7 +60,8 @@ export function DashboardMonthlyCashflowCard({
           <Text
             style={[
               styles.statValue,
-              isNetPositive ? styles.inflowText : styles.outflowText,
+              preferences.colorAmounts &&
+                (isNetPositive ? styles.inflowText : styles.outflowText),
             ]}
           >
             {isNetPositive ? "+" : ""}

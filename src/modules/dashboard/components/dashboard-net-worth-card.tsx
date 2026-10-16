@@ -157,7 +157,10 @@ export function DashboardNetWorthCard({
           selectable
           style={[
             styles.netWorthValue,
-            preferences.colorAmounts && !isPositive && styles.netWorthValueNegative,
+            preferences.colorAmounts &&
+              (isPositive
+                ? styles.netWorthValuePositive
+                : styles.netWorthValueNegative),
           ]}
         >
           {valuesVisible
@@ -256,7 +259,7 @@ export function DashboardNetWorthCard({
         <View style={[styles.breakdownCard, styles.assetCard]}>
           <View style={styles.breakdownLabelRow}>
             <View style={[styles.breakdownDot, styles.assetDot]} />
-            <Text style={styles.breakdownLabel}>Total assets</Text>
+            <Text style={styles.breakdownLabel}>Assets</Text>
           </View>
           <Text
             adjustsFontSizeToFit
@@ -361,13 +364,16 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.md,
     },
     netWorthValue: {
-      color: theme.colors.success,
+      color: theme.colors.textPrimary,
       flex: 1,
       fontSize: theme.typography.fontSize.title,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],
       letterSpacing: -0.5,
       minWidth: 0,
+    },
+    netWorthValuePositive: {
+      color: theme.colors.success,
     },
     netWorthValueNegative: {
       color: theme.colors.danger,
@@ -470,6 +476,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     breakdownValue: {
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.md,
       fontWeight: theme.typography.fontWeight.bold,
       fontVariant: ["tabular-nums"],

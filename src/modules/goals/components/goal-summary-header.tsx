@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { CheckCircle2, Target, TrendingUp } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalSummaryStats } from "../types/goal.types";
 
@@ -17,6 +18,7 @@ export function GoalSummaryHeader({
 }: GoalSummaryHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
 
   const {
     totalTargetMinorUnits,
@@ -67,7 +69,14 @@ export function GoalSummaryHeader({
         <View style={styles.heroBottomRow}>
           <View>
             <Text style={styles.statLabel}>Saved so far</Text>
-            <Text style={styles.statValueSaved}>
+            <Text
+              style={[
+                styles.statValueSaved,
+                !preferences.colorAmounts && {
+                  color: theme.colors.textPrimary,
+                },
+              ]}
+            >
               {formatCurrency(totalSavedMinorUnits, currencyCode)}
             </Text>
           </View>

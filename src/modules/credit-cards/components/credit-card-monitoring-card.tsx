@@ -4,6 +4,7 @@ import { CalendarClock, Layers3 } from "lucide-react-native";
 import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { CreditCardMonitoringItem } from "../types/credit-card.types";
 
@@ -24,6 +25,7 @@ export function CreditCardMonitoringCard({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -57,7 +59,12 @@ export function CreditCardMonitoringCard({
           <Text style={styles.detailLabel}>Next due</Text>
           <Text style={styles.detailValue}>{formatDate(card.nextDueOn)}</Text>
         </View>
-        <Text style={styles.dueAmount}>
+        <Text
+          style={[
+            styles.dueAmount,
+            !preferences.colorAmounts && { color: theme.colors.textPrimary },
+          ]}
+        >
           {formatCurrency(card.dueThisMonthMinorUnits, card.currencyCode)}
         </Text>
       </View>
@@ -70,7 +77,12 @@ export function CreditCardMonitoringCard({
             {card.activeInstallmentCount}
           </Text>
         </View>
-        <Text style={styles.available}>
+        <Text
+          style={[
+            styles.available,
+            !preferences.colorAmounts && { color: theme.colors.textSecondary },
+          ]}
+        >
           {formatCurrency(card.availableCreditMinorUnits, card.currencyCode)} available
         </Text>
       </View>

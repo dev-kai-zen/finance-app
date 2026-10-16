@@ -1,7 +1,10 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getCurrencyByCode, insertCurrency } from "../repositories/currencies.repository";
+import { insertCurrency } from "../repositories/currencies.repository";
 import type { CreateCurrencyInput, Currency } from "../types/currency.types";
-import { refreshActiveCurrencyCatalog } from "./currency-catalog.service";
+import {
+  isCurrencyCodeInUse,
+  refreshActiveCurrencyCatalog,
+} from "./currency-catalog.service";
 
 const CODE_PATTERN = /^[A-Z0-9]{3,8}$/;
 
@@ -14,7 +17,7 @@ export function createCurrency(
   const symbol = input.symbol.trim();
 
   if (!CODE_PATTERN.test(code)) {
-    throw new Error("Currency code must be 3–8 letters or numbers (e.g. BTC, USDT).");
+    throw new Error("Currency code must be 3–8 letters or numbers (e.g. CAD, AUD, KWD).");
   }
   if (!name) {
     throw new Error("Currency name is required.");
@@ -25,12 +28,12 @@ export function createCurrency(
   if (
     !Number.isInteger(input.minorUnitExponent) ||
     input.minorUnitExponent < 0 ||
-    input.minorUnitExponent > 18
+    input.minorUnitExponent > 3
   ) {
-    throw new Error("Decimal places must be a whole number from 0 to 18.");
+    throw new Error("Decimal places must be a whole number from 0 to 3.");
   }
 
-  if (getCurrencyByCode(code, context)) {
+  if (isCurrencyCodeInUse(code, [], context)) {
     throw new Error(`Currency ${code} already exists.`);
   }
 

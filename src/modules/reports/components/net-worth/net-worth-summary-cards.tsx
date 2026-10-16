@@ -72,7 +72,7 @@ export function NetWorthSummaryCards({
             numberOfLines={1}
             style={[
               styles.cardValue,
-              {
+              preferences.colorAmounts && {
                 color: isGrowthPositive
                   ? REPORT_COLORS.positiveGreen
                   : REPORT_COLORS.negativeRed,

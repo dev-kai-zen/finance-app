@@ -1,4 +1,4 @@
-import { ChevronRight, Coins, Plus } from "lucide-react-native";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,6 +23,7 @@ import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencies } from "../hooks/use-currencies";
 import { useCurrencyMutations } from "../hooks/use-currency-mutations";
 import { getCurrencyUsageReasons } from "../repositories/currency-usage.repository";
+import { isCurrencyCodeInUse } from "../services/currency-catalog.service";
 import type { CurrencyListItem } from "../types/currency.types";
 import { formatCurrencyUsageMessage } from "../utils/format-currency-usage-message";
 
@@ -63,6 +64,7 @@ export function CurrencyCatalogModal({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [usageModalCode, setUsageModalCode] = useState<string | null>(null);
   const [helpVisible, setHelpVisible] = useState(false);
+  const [isCodeAlreadyUsed, setIsCodeAlreadyUsed] = useState(false);
 
   const usageModalMessage = useMemo(() => {
     if (!usageModalCode) return "";
@@ -79,6 +81,7 @@ export function CurrencyCatalogModal({
       setConfirmDelete(false);
       setUsageModalCode(null);
       setHelpVisible(false);
+      setIsCodeAlreadyUsed(false);
       mutations.clearError();
     }
   }, [visible]);
@@ -101,11 +104,13 @@ export function CurrencyCatalogModal({
 
   const openCreate = () => {
     mutations.clearError();
+    setIsCodeAlreadyUsed(false);
     setEditor({ mode: "create", source: null, value: emptyEditor() });
   };
 
   const openEdit = (currency: CurrencyListItem) => {
     mutations.clearError();
+    setIsCodeAlreadyUsed(false);
     setEditor({
       mode: "edit",
       source: currency,
@@ -119,6 +124,7 @@ export function CurrencyCatalogModal({
   };
 
   const requestBack = () => {
+    setIsCodeAlreadyUsed(false);
     if (editor) {
       setEditor(null);
       return;
@@ -126,11 +132,33 @@ export function CurrencyCatalogModal({
     onClose();
   };
 
+  const editorCode = editor?.value.code ?? "";
+  const editorMode = editor?.mode;
+
+  useEffect(() => {
+    if (editorMode !== "create") {
+      setIsCodeAlreadyUsed(false);
+      return;
+    }
+
+    const code = editorCode.trim().toUpperCase();
+    if (!code) {
+      setIsCodeAlreadyUsed(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsCodeAlreadyUsed(isCurrencyCodeInUse(code, currencies));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [editorCode, editorMode, currencies]);
+
   const parseExponent = (raw: string): number | null => {
     const trimmed = raw.trim();
-    if (!/^\d{1,2}$/.test(trimmed)) return null;
+    if (!/^[0-3]$/.test(trimmed)) return null;
     const value = Number(trimmed);
-    if (!Number.isInteger(value) || value < 0 || value > 18) return null;
+    if (!Number.isInteger(value) || value < 0 || value > 3) return null;
     return value;
   };
 
@@ -138,6 +166,11 @@ export function CurrencyCatalogModal({
     if (!editor) return;
     const exponent = parseExponent(editor.value.minorUnitExponent);
     if (exponent === null) return;
+
+    if (editor.mode === "create" && isCurrencyCodeInUse(editor.value.code, currencies)) {
+      setIsCodeAlreadyUsed(true);
+      return;
+    }
 
     const ok =
       editor.mode === "create"
@@ -165,16 +198,23 @@ export function CurrencyCatalogModal({
   };
 
   const editorLocked = editor?.mode === "edit" && editor.source?.isLocked;
+  const canEditCode = editor?.mode === "create" && !mutations.pending;
   const canEditIdentity =
     editor?.mode === "create" ||
     (editor?.mode === "edit" && editor.source?.isCustom && !editor.source.isLocked);
   const canEditExponent = !editorLocked;
+
+  const trimmedEditorCode = editor?.value.code.trim().toUpperCase() ?? "";
+
   const canSave =
     !editorLocked &&
-    editor?.value.name.trim() &&
-    editor?.value.symbol.trim() &&
-    parseExponent(editor.value.minorUnitExponent) !== null &&
-    (editor.mode === "edit" || /^[A-Z0-9]{3,8}$/.test(editor.value.code.trim().toUpperCase()));
+    !isCodeAlreadyUsed &&
+    Boolean(editor?.value.name.trim()) &&
+    Boolean(editor?.value.symbol.trim()) &&
+    parseExponent(editor?.value.minorUnitExponent ?? "") !== null &&
+    (editor?.mode === "edit" ||
+      (/^[A-Z0-9]{3,8}$/.test(trimmedEditorCode) &&
+        !isCurrencyCodeInUse(trimmedEditorCode, currencies)));
   const canDeleteCurrency =
     editor?.mode === "edit" && Boolean(editor.source) && !editor.source?.isLocked;
 
@@ -251,11 +291,15 @@ export function CurrencyCatalogModal({
               <TextInput
                 accessibilityLabel={t("currency.fieldCode")}
                 autoCapitalize="characters"
-                editable={canEditIdentity && !mutations.pending}
+                editable={canEditCode}
                 maxLength={8}
-                placeholder="BTC"
+                placeholder="CAD"
                 placeholderTextColor={theme.colors.textMuted}
-                style={[styles.textInput, !canEditIdentity && styles.textInputDisabled]}
+                style={[
+                  styles.textInput,
+                  !canEditCode && styles.textInputDisabled,
+                  isCodeAlreadyUsed && styles.textInputError,
+                ]}
                 value={editor.value.code}
                 onChangeText={(code) =>
                   setEditor((current) =>
@@ -268,6 +312,9 @@ export function CurrencyCatalogModal({
                   )
                 }
               />
+              {isCodeAlreadyUsed ? (
+                <Text style={styles.fieldError}>{t("currency.codeAlreadyInUse")}</Text>
+              ) : null}
             </View>
 
             <View style={styles.fieldGroup}>
@@ -296,7 +343,7 @@ export function CurrencyCatalogModal({
                 accessibilityLabel={t("currency.fieldSymbol")}
                 editable={canEditIdentity && !mutations.pending}
                 maxLength={12}
-                placeholder="₿"
+                placeholder="CA$"
                 placeholderTextColor={theme.colors.textMuted}
                 style={[styles.textInput, !canEditIdentity && styles.textInputDisabled]}
                 value={editor.value.symbol}
@@ -316,18 +363,19 @@ export function CurrencyCatalogModal({
                 accessibilityLabel={t("currency.fieldDecimalPlaces")}
                 editable={canEditExponent && !mutations.pending}
                 keyboardType="number-pad"
-                maxLength={2}
+                maxLength={1}
                 placeholder="2"
                 placeholderTextColor={theme.colors.textMuted}
                 style={[styles.textInput, !canEditExponent && styles.textInputDisabled]}
                 value={editor.value.minorUnitExponent}
-                onChangeText={(minorUnitExponent) =>
+                onChangeText={(minorUnitExponent) => {
+                  const cleaned = minorUnitExponent.replace(/[^0-3]/g, "").slice(0, 1);
                   setEditor((current) =>
                     current
-                      ? { ...current, value: { ...current.value, minorUnitExponent } }
+                      ? { ...current, value: { ...current.value, minorUnitExponent: cleaned } }
                       : current,
-                  )
-                }
+                  );
+                }}
               />
               <Text style={styles.fieldHint}>{t("currency.fieldDecimalPlacesHint")}</Text>
             </View>
@@ -342,11 +390,6 @@ export function CurrencyCatalogModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.infoBanner}>
-              <Coins color={theme.colors.primary} size={20} />
-              <Text style={styles.infoText}>{t("currency.catalogDescription")}</Text>
-            </View>
-
             <AccountSearchBox
               accessibilityLabel={t("currency.searchCurrencies")}
               clearAccessibilityLabel={t("common.cancel")}
@@ -441,23 +484,6 @@ function createStyles(theme: AppTheme) {
       height: 40,
       justifyContent: "center",
       width: 40,
-    },
-    infoBanner: {
-      alignItems: "flex-start",
-      backgroundColor: `${theme.colors.primary}12`,
-      borderColor: `${theme.colors.primary}33`,
-      borderCurve: "continuous",
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      padding: theme.spacing.md,
-    },
-    infoText: {
-      color: theme.colors.textSecondary,
-      flex: 1,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
     },
     loader: { marginTop: theme.spacing.xl },
     empty: {
@@ -568,6 +594,13 @@ function createStyles(theme: AppTheme) {
     textInputDisabled: {
       backgroundColor: theme.colors.surfaceMuted,
       color: theme.colors.textMuted,
+    },
+    textInputError: {
+      borderColor: theme.colors.danger,
+    },
+    fieldError: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
     },
   });
 }

@@ -150,7 +150,7 @@ export function createInitialAccount(
   if (!name) throw new Error("Enter a name for your first account.");
   if (name.length > 100) throw new Error("Use at most 100 characters for the account name.");
 
-  const openingBalanceMinorUnits = parseOpeningAmount(input.openingAmount);
+  const openingBalanceMinorUnits = parseOpeningAmount(input.openingAmount, currencyCode);
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
   const template = RECOMMENDED_ACCOUNT_TYPES[input.template];
   const id = newAccountRecordId(context);

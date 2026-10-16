@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Check, X } from "lucide-react-native";
 import { KeyboardAwareForm } from "@/components/keyboard-aware-form";
 import { NotificationModal } from "@/components/notification-modal";
@@ -130,7 +131,11 @@ export function HexColorFormModal({
   return (
     <>
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.overlay}
+      >
         <Pressable
           accessibilityLabel="Dismiss form"
           onPress={() => {
@@ -247,7 +252,7 @@ export function HexColorFormModal({
             </Pressable>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
 
     <NotificationModal
@@ -277,6 +282,9 @@ function createStyles(theme: AppTheme) {
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       borderWidth: 1,
+      flexDirection: "column",
+      flexShrink: 1,
+      maxHeight: "90%",
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
       width: "100%",
@@ -309,6 +317,7 @@ function createStyles(theme: AppTheme) {
       width: 32,
     },
     formScroll: {
+      flexShrink: 1,
       maxHeight: 380,
     },
     previewContainer: {

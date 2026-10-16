@@ -64,6 +64,11 @@ function stripAmountSign(openingAmount: string): string {
   return trimmed.startsWith("-") ? trimmed.slice(1) : trimmed;
 }
 
+function isZeroAmountString(amount: string): boolean {
+  const stripped = amount.trim().replace(/^-/, "");
+  return /^0(\.0+)?$/.test(stripped);
+}
+
 function getDefaultAssetAccountTypeId(types: AccountType[]): string {
   return (
     types
@@ -268,9 +273,7 @@ export function AccountFormModal({
 
       const strippedOpening = stripAmountSign(prev.openingAmount || "0");
       const signedOpening =
-        amountSign === "-" &&
-        strippedOpening !== "0" &&
-        strippedOpening !== "0.00"
+        amountSign === "-" && !isZeroAmountString(strippedOpening)
           ? `-${strippedOpening}`
           : strippedOpening;
 
@@ -360,7 +363,7 @@ export function AccountFormModal({
   const handleSave = () => {
     const stripped = stripAmountSign(value.openingAmount || "0");
     const signedAmount =
-      amountSign === "-" && stripped !== "0" && stripped !== "0.00"
+      amountSign === "-" && !isZeroAmountString(stripped)
         ? `-${stripped}`
         : stripped;
     void onSave(

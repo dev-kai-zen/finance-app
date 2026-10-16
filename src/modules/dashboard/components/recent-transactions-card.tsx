@@ -5,6 +5,7 @@ import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import type { TransactionListItem } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
 
@@ -24,6 +25,7 @@ export function RecentTransactionsCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
+  const { preferences } = useCurrencyPreferences();
 
   return (
     <View style={styles.card}>
@@ -125,7 +127,12 @@ export function RecentTransactionsCard({
                       numberOfLines={1}
                       style={[
                         styles.amountText,
-                        isTransfer ? styles.transferText : isPositive ? styles.incomeText : null,
+                        preferences.colorAmounts &&
+                          (isTransfer
+                            ? styles.transferText
+                            : isPositive
+                              ? styles.incomeText
+                              : styles.expenseText),
                       ]}
                     >
                       {formattedAmount}
@@ -266,13 +273,16 @@ function createStyles(theme: AppTheme) {
       textAlign: "right",
     },
     amountText: {
-      color: theme.colors.danger,
+      color: theme.colors.textPrimary,
       flexShrink: 1,
       fontSize: 14,
       fontWeight: "700",
       fontVariant: ["tabular-nums"],
       maxWidth: "48%",
       textAlign: "right",
+    },
+    expenseText: {
+      color: theme.colors.danger,
     },
     incomeText: {
       color: theme.colors.success,

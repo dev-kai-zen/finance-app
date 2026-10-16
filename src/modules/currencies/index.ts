@@ -24,6 +24,10 @@ export {
   getCurrencyByCode,
 } from "./repositories/currencies.repository";
 export { seedCurrenciesIfEmpty } from "./services/seed-currencies.service";
+export {
+  refreshActiveCurrencyCatalog,
+  isCurrencyCodeInUse,
+} from "./services/currency-catalog.service";
 export { createCurrency } from "./services/create-currency.service";
 export { updateCurrency } from "./services/update-currency.service";
 export { deleteCurrency } from "./services/delete-currency.service";

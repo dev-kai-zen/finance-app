@@ -63,3 +63,31 @@ test("currencies: upsert exchange rate updates existing rate on conflict", () =>
 
   assert.equal(row.rate_basis_points, 600000, "USD rate updated to 60.00 PHP");
 });
+
+test("currencies: seed currencies inserts all default currencies and enforces unique code", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+
+  const standardCurrencies = [
+    "AED", "AUD", "CAD", "CHF", "CNY", "EUR", "GBP", "HKD", "IDR", "INR",
+    "JPY", "KRW", "MYR", "NZD", "PHP", "SAR", "SGD", "THB", "TWD", "USD", "VND",
+  ];
+
+  const insertStmt = db.prepare(`
+    INSERT INTO currencies (code, name, symbol, minor_unit_exponent, sort_order, is_active, is_custom, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, 1, 0, ?, ?);
+  `);
+
+  for (const code of standardCurrencies) {
+    insertStmt.run(code, code, `${code} `, 2, 0, now, now);
+  }
+
+  const count = db.prepare("SELECT COUNT(*) AS total FROM currencies;").get();
+  assert.equal(count.total, 21, "Must have 21 currencies inserted");
+
+  // Attempting to insert duplicate code throws constraint error
+  assert.throws(() => {
+    insertStmt.run("USD", "US Dollar Duplicate", "$", 2, 0, now, now);
+  }, /UNIQUE constraint failed|PRIMARY KEY/);
+});
+

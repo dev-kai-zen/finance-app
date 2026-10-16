@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 import type { TransactionStats } from "../types/transaction.types";
 
@@ -15,6 +16,7 @@ export function TransactionStatsCard({
   currencyCode = "PHP",
 }: TransactionStatsCardProps) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
 
   const netColorStyle =
     stats.netCashflowMinorUnits >= 0
@@ -26,7 +28,12 @@ export function TransactionStatsCard({
       {/* Inflow Card */}
       <View style={styles.statCard}>
         <Text style={styles.label}>TOTAL INFLOW</Text>
-        <Text style={[styles.value, styles.positiveText]}>
+        <Text
+          style={[
+            styles.value,
+            preferences.colorAmounts && styles.positiveText,
+          ]}
+        >
           {formatCurrency(stats.totalInflowMinorUnits, currencyCode, true)}
         </Text>
       </View>
@@ -34,7 +41,12 @@ export function TransactionStatsCard({
       {/* Outflow Card */}
       <View style={styles.statCard}>
         <Text style={styles.label}>TOTAL OUTFLOW</Text>
-        <Text style={[styles.value, styles.negativeText]}>
+        <Text
+          style={[
+            styles.value,
+            preferences.colorAmounts && styles.negativeText,
+          ]}
+        >
           {formatCurrency(-stats.totalOutflowMinorUnits, currencyCode, true)}
         </Text>
       </View>
@@ -42,7 +54,12 @@ export function TransactionStatsCard({
       {/* Net Cashflow Card */}
       <View style={styles.statCard}>
         <Text style={styles.label}>NET CASHFLOW</Text>
-        <Text style={[styles.value, netColorStyle]}>
+        <Text
+          style={[
+            styles.value,
+            preferences.colorAmounts && netColorStyle,
+          ]}
+        >
           {formatCurrency(stats.netCashflowMinorUnits, currencyCode, true)}
         </Text>
       </View>

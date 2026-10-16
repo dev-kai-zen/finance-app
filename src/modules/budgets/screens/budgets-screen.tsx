@@ -197,9 +197,10 @@ export function BudgetsScreen() {
                     style={[
                       styles.metricItemValue,
                       {
-                        color: isOverallExceeded
-                          ? theme.colors.danger
-                          : theme.colors.textPrimary,
+                        color:
+                          preferences.colorAmounts && isOverallExceeded
+                            ? theme.colors.danger
+                            : theme.colors.textPrimary,
                       },
                     ]}
                   >
@@ -230,15 +231,17 @@ export function BudgetsScreen() {
                     style={[
                       styles.metricItemValue,
                       {
-                        color: isOverallExceeded
-                          ? theme.colors.danger
-                          : theme.colors.success,
+                        color: preferences.colorAmounts
+                          ? isOverallExceeded
+                            ? theme.colors.danger
+                            : theme.colors.success
+                          : theme.colors.textPrimary,
                       },
                     ]}
                   >
                     {formatCurrency(
                       Math.abs(summary.totalRemainingCents),
-                      "PHP",
+                      preferences.defaultCurrency,
                       false,
                     )}
                   </Text>
