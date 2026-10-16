@@ -407,5 +407,34 @@ export const fil = {
     enterCurrentPassword: "Mangyaring ilagay ang iyong kasalukuyang password.",
     passwordMinLength: "Dapat hindi bababa sa 4 na character ang password.",
     passwordsDoNotMatch: "Hindi tugma ang mga password.",
+    forgotPassword: "Nakalimutan ang password?",
+    forgotPasswordTitle: "Nakalimutan ang Password?",
+    forgotPasswordSubtitle:
+      "Pumili kung paano mo gustong ma-recover ang access sa Kaizen Finance.",
+    biometricResetTitle: "I-reset gamit ang %{biometric}",
+    biometricResetDesc:
+      "I-scan ang iyong %{biometric} para magtakda ng bagong password nang hindi inilalagay ang kasalukuyan.",
+    verifyBiometricToReset: "I-verify ang %{biometric} para Mag-reset",
+    biometricVerifiedBadge: "Na-verify ang %{biometric}",
+    verifyWithBiometricToChange:
+      "Nakalimutan ang kasalukuyan? I-verify gamit ang %{biometric}",
+    verifyWithBiometricToRemove:
+      "Nakalimutan ang password? Alisin gamit ang %{biometric}",
+    emergencyResetSectionTitle: "EMERGENCY RECOVERY",
+    emergencyResetTitle: "Emergency Reset ng App Data",
+    emergencyResetDesc:
+      "Ang Kaizen Finance ay 100% offline-first. Ligtas na nakaimbak ang credentials sa device na ito nang walang cloud recovery o email reset.",
+    emergencyResetWarning:
+      "Permanenteng buburahin nito ang lahat ng account, transaksyon, budget, tala, at local settings, at aalisin ang lock.",
+    emergencyResetButton: "I-reset ang App Data...",
+    emergencyResetConfirmTitle: "I-reset ang Lahat ng Data?",
+    emergencyResetConfirmDesc:
+      "Permanenteng buburahin nito ang lahat ng iyong financial data at aalisin ang lock ng app. Hindi na ito maibabalik.",
+    emergencyResetInstruction: "I-type ang KAIZEN para kumpirmahin ang pag-reset",
+    emergencyResetAction: "Burahin Lahat at I-unlock",
+    resetSuccessfulUnlocking: "Matagumpay na na-update ang password. Nag-a-unlock...",
+    setNewPasswordTitle: "Magtakda ng Bagong Password",
+    setNewPasswordDesc: "Ilagay at kumpirmahin ang iyong bagong password ng app.",
+    saveAndUnlockButton: "I-save at I-unlock",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

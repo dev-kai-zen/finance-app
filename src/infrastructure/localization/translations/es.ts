@@ -407,5 +407,34 @@ export const es = {
     enterCurrentPassword: "Por favor ingresa tu contraseña actual.",
     passwordMinLength: "La contraseña debe tener al menos 4 caracteres.",
     passwordsDoNotMatch: "Las contraseñas no coinciden.",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    forgotPasswordTitle: "¿Olvidaste tu contraseña?",
+    forgotPasswordSubtitle:
+      "Elige cómo deseas recuperar el acceso a Kaizen Finance.",
+    biometricResetTitle: "Restablecer con %{biometric}",
+    biometricResetDesc:
+      "Escanea tu %{biometric} para crear una nueva contraseña sin ingresar la actual.",
+    verifyBiometricToReset: "Verificar %{biometric} para restablecer",
+    biometricVerifiedBadge: "%{biometric} verificada",
+    verifyWithBiometricToChange:
+      "¿Olvidaste la actual? Verifica con %{biometric}",
+    verifyWithBiometricToRemove:
+      "¿Olvidaste tu contraseña? Eliminar con %{biometric}",
+    emergencyResetSectionTitle: "RECUPERACIÓN DE EMERGENCIA",
+    emergencyResetTitle: "Restablecimiento de emergencia",
+    emergencyResetDesc:
+      "Kaizen Finance funciona 100% sin conexión. Las credenciales se guardan en este dispositivo sin recuperación por correo o nube.",
+    emergencyResetWarning:
+      "Esto eliminará permanentemente todas las cuentas, transacciones, presupuestos, notas y ajustes locales, y quitará el bloqueo.",
+    emergencyResetButton: "Restablecer datos de la app...",
+    emergencyResetConfirmTitle: "¿Restablecer todos los datos?",
+    emergencyResetConfirmDesc:
+      "Esto eliminará permanentemente todos tus datos financieros y quitará el bloqueo. Esta acción no se puede deshacer.",
+    emergencyResetInstruction: "Escribe KAIZEN para confirmar el restablecimiento",
+    emergencyResetAction: "Borrar todo y desbloquear",
+    resetSuccessfulUnlocking: "Contraseña actualizada. Desbloqueando...",
+    setNewPasswordTitle: "Nueva contraseña",
+    setNewPasswordDesc: "Ingresa y confirma tu nueva contraseña.",
+    saveAndUnlockButton: "Guardar y desbloquear",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

@@ -15,6 +15,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAppLock } from "../hooks/use-app-lock";
+import { ForgotPasswordModal } from "./forgot-password-modal";
 
 export function LockScreen() {
   const insets = useSafeAreaInsets();
@@ -33,6 +34,7 @@ export function LockScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
 
   const resolveBiometricErrorMessage = (
     errorCode?: string,
@@ -240,9 +242,37 @@ export function LockScreen() {
                 </Text>
               )}
             </Pressable>
+
+            <Pressable
+              accessibilityLabel={t("security.forgotPassword")}
+              accessibilityRole="button"
+              onPress={() => {
+                setErrorMessage(null);
+                setForgotPasswordVisible(true);
+              }}
+              style={({ pressed }) => [
+                styles.forgotPasswordButton,
+                pressed && styles.forgotPasswordButtonPressed,
+              ]}
+            >
+              <Text style={styles.forgotPasswordText}>
+                {t("security.forgotPassword")}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <ForgotPasswordModal
+        biometricLabel={biometrics.biometricLabel}
+        canUseBiometrics={canUseBiometrics}
+        onClose={() => setForgotPasswordVisible(false)}
+        onUnlockSuccess={() => {
+          setPassword("");
+          setErrorMessage(null);
+        }}
+        visible={forgotPasswordVisible}
+      />
     </View>
   );
 }
@@ -362,6 +392,20 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.background,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    forgotPasswordButton: {
+      alignItems: "center",
+      alignSelf: "center",
+      marginTop: theme.spacing.xs,
+      padding: theme.spacing.xs,
+    },
+    forgotPasswordButtonPressed: {
+      opacity: 0.7,
+    },
+    forgotPasswordText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

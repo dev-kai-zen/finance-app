@@ -10,11 +10,12 @@ import {
   View,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { Eye, EyeOff, Lock, X } from "lucide-react-native";
+import { CheckCircle2, Eye, EyeOff, Fingerprint, Lock, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { authenticateWithBiometrics } from "../services/biometrics.service";
 
 export type PasswordModalMode = "set" | "change" | "remove";
 
@@ -23,10 +24,13 @@ export interface PasswordFormModalProps {
   mode: PasswordModalMode;
   busy: boolean;
   error?: string | null;
+  biometricsAvailable?: boolean;
+  biometricLabel?: string;
   onClose: () => void;
   onSubmit: (data: {
     currentPassword?: string;
     newPassword?: string;
+    biometricsVerified?: boolean;
   }) => Promise<boolean>;
 }
 
@@ -35,6 +39,8 @@ export function PasswordFormModal({
   mode,
   busy,
   error: externalError,
+  biometricsAvailable = false,
+  biometricLabel,
   onClose,
   onSubmit,
 }: PasswordFormModalProps) {
@@ -42,7 +48,6 @@ export function PasswordFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -50,6 +55,8 @@ export function PasswordFormModal({
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [biometricsVerified, setBiometricsVerified] = useState(false);
+  const [verifyingBiometrics, setVerifyingBiometrics] = useState(false);
 
   if (!visible) return null;
 
@@ -58,11 +65,36 @@ export function PasswordFormModal({
     setNewPassword("");
     setConfirmPassword("");
     setLocalError(null);
+    setBiometricsVerified(false);
+    setVerifyingBiometrics(false);
   };
 
   const handleClose = () => {
     resetFields();
     onClose();
+  };
+
+  const handleVerifyBiometrics = async () => {
+    setLocalError(null);
+    setVerifyingBiometrics(true);
+    try {
+      const label = biometricLabel || t("security.defaultBiometricLabel");
+      const result = await authenticateWithBiometrics(
+        t("security.verifyBiometricToReset", { biometric: label }),
+      );
+      if (result.success) {
+        setBiometricsVerified(true);
+        setCurrentPassword("");
+      } else {
+        setLocalError(
+          result.error ?? t("security.biometricFailedFallback"),
+        );
+      }
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : "Biometric error");
+    } finally {
+      setVerifyingBiometrics(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -78,7 +110,7 @@ export function PasswordFormModal({
       return;
     }
 
-    if (mode === "change" && !currentPassword) {
+    if (mode === "change" && !currentPassword && !biometricsVerified) {
       setLocalError(t("security.enterCurrentPassword"));
       return;
     }
@@ -94,8 +126,10 @@ export function PasswordFormModal({
     }
 
     const success = await onSubmit({
-      currentPassword: mode === "change" ? currentPassword : undefined,
+      currentPassword:
+        mode === "change" && !biometricsVerified ? currentPassword : undefined,
       newPassword,
+      biometricsVerified: mode === "change" ? biometricsVerified : undefined,
     });
 
     if (success) {
@@ -175,31 +209,155 @@ export function PasswordFormModal({
                 <Text style={styles.fieldLabel}>
                   {t("security.currentPasswordLabel")}
                 </Text>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    onChangeText={(text) => {
-                      setCurrentPassword(text);
-                      setLocalError(null);
-                    }}
-                    placeholder={t("security.currentPasswordPlaceholder")}
-                    placeholderTextColor={theme.colors.textMuted}
-                    secureTextEntry={!showCurrent}
-                    style={styles.input}
-                    value={currentPassword}
-                  />
-                  <Pressable
-                    onPress={() => setShowCurrent(!showCurrent)}
-                    style={styles.eyeButton}
-                  >
-                    {showCurrent ? (
-                      <EyeOff color={theme.colors.textMuted} size={18} />
-                    ) : (
-                      <Eye color={theme.colors.textMuted} size={18} />
-                    )}
-                  </Pressable>
-                </View>
+
+                {mode === "change" && biometricsVerified ? (
+                  <View style={styles.biometricVerifiedChip}>
+                    <CheckCircle2 color={theme.colors.success} size={16} />
+                    <Text style={styles.biometricVerifiedChipText}>
+                      {t("security.biometricVerifiedBadge", {
+                        biometric:
+                          biometricLabel || t("security.defaultBiometricLabel"),
+                      })}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        onChangeText={(text) => {
+                          setCurrentPassword(text);
+                          setLocalError(null);
+                        }}
+                        placeholder={t("security.currentPasswordPlaceholder")}
+                        placeholderTextColor={theme.colors.textMuted}
+                        secureTextEntry={!showCurrent}
+                        style={styles.input}
+                        value={currentPassword}
+                      />
+                      <Pressable
+                        onPress={() => setShowCurrent(!showCurrent)}
+                        style={styles.eyeButton}
+                      >
+                        {showCurrent ? (
+                          <EyeOff color={theme.colors.textMuted} size={18} />
+                        ) : (
+                          <Eye color={theme.colors.textMuted} size={18} />
+                        )}
+                      </Pressable>
+                    </View>
+
+                    {biometricsAvailable && mode === "change" ? (
+                      <Pressable
+                        accessibilityLabel={t(
+                          "security.verifyWithBiometricToChange",
+                          {
+                            biometric:
+                              biometricLabel ||
+                              t("security.defaultBiometricLabel"),
+                          },
+                        )}
+                        accessibilityRole="button"
+                        disabled={busy || verifyingBiometrics}
+                        onPress={handleVerifyBiometrics}
+                        style={({ pressed }) => [
+                          styles.biometricVerifyButton,
+                          pressed && styles.biometricVerifyButtonPressed,
+                        ]}
+                      >
+                        {verifyingBiometrics ? (
+                          <ActivityIndicator
+                            color={theme.colors.primary}
+                            size="small"
+                          />
+                        ) : (
+                          <Fingerprint
+                            color={theme.colors.primary}
+                            size={16}
+                          />
+                        )}
+                        <Text style={styles.biometricVerifyButtonText}>
+                          {t("security.verifyWithBiometricToChange", {
+                            biometric:
+                              biometricLabel ||
+                              t("security.defaultBiometricLabel"),
+                          })}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+
+                    {biometricsAvailable && mode === "remove" ? (
+                      <Pressable
+                        accessibilityLabel={t(
+                          "security.verifyWithBiometricToRemove",
+                          {
+                            biometric:
+                              biometricLabel ||
+                              t("security.defaultBiometricLabel"),
+                          },
+                        )}
+                        accessibilityRole="button"
+                        disabled={busy || verifyingBiometrics}
+                        onPress={async () => {
+                          setLocalError(null);
+                          setVerifyingBiometrics(true);
+                          try {
+                            const label =
+                              biometricLabel ||
+                              t("security.defaultBiometricLabel");
+                            const result = await authenticateWithBiometrics(
+                              t("security.verifyBiometricToReset", {
+                                biometric: label,
+                              }),
+                            );
+                            if (result.success) {
+                              const success = await onSubmit({
+                                biometricsVerified: true,
+                              });
+                              if (success) handleClose();
+                            } else {
+                              setLocalError(
+                                result.error ??
+                                  t("security.biometricFailedFallback"),
+                              );
+                            }
+                          } finally {
+                            setVerifyingBiometrics(false);
+                          }
+                        }}
+                        style={({ pressed }) => [
+                          styles.biometricVerifyButton,
+                          pressed && styles.biometricVerifyButtonPressed,
+                        ]}
+                      >
+                        {verifyingBiometrics ? (
+                          <ActivityIndicator
+                            color={theme.colors.danger}
+                            size="small"
+                          />
+                        ) : (
+                          <Fingerprint
+                            color={theme.colors.danger}
+                            size={16}
+                          />
+                        )}
+                        <Text
+                          style={[
+                            styles.biometricVerifyButtonText,
+                            { color: theme.colors.danger },
+                          ]}
+                        >
+                          {t("security.verifyWithBiometricToRemove", {
+                            biometric:
+                              biometricLabel ||
+                              t("security.defaultBiometricLabel"),
+                          })}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </>
+                )}
               </View>
             ) : null}
 
@@ -411,6 +569,41 @@ function createStyles(theme: AppTheme) {
     },
     eyeButton: {
       padding: theme.spacing.xs,
+    },
+    biometricVerifyButton: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.xs,
+      marginTop: 2,
+    },
+    biometricVerifyButtonPressed: {
+      opacity: 0.7,
+    },
+    biometricVerifyButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    biometricVerifiedChip: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: `${theme.colors.success}18`,
+      borderColor: `${theme.colors.success}40`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      marginTop: 2,
+    },
+    biometricVerifiedChipText: {
+      color: theme.colors.success,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     errorText: {
       color: theme.colors.danger,

@@ -382,6 +382,34 @@ export const en = {
     enterCurrentPassword: "Enter your current password.",
     passwordMinLength: "Password must be at least 4 characters.",
     passwordsDoNotMatch: "Passwords do not match.",
+    forgotPassword: "Forgot password?",
+    forgotPasswordTitle: "Forgot Password?",
+    forgotPasswordSubtitle:
+      "Choose how you want to recover access to Kaizen Finance.",
+    biometricResetTitle: "Reset with %{biometric}",
+    biometricResetDesc:
+      "Scan your %{biometric} to set a new password without entering your current one.",
+    verifyBiometricToReset: "Verify %{biometric} to Reset",
+    biometricVerifiedBadge: "%{biometric} verified",
+    verifyWithBiometricToChange:
+      "Forgot current password? Verify with %{biometric}",
+    verifyWithBiometricToRemove: "Forgot password? Remove with %{biometric}",
+    emergencyResetSectionTitle: "EMERGENCY RECOVERY",
+    emergencyResetTitle: "Emergency Reset App Data",
+    emergencyResetDesc:
+      "Kaizen Finance is 100% offline-first. Credentials are stored securely on this device without cloud recovery or email reset.",
+    emergencyResetWarning:
+      "This permanently deletes all accounts, transactions, budgets, notes, and local settings, and removes the password lock.",
+    emergencyResetButton: "Reset App Data...",
+    emergencyResetConfirmTitle: "Emergency Reset All Data?",
+    emergencyResetConfirmDesc:
+      "This will permanently delete all your financial data and remove the app lock. This action cannot be undone.",
+    emergencyResetInstruction: "Type KAIZEN to confirm reset",
+    emergencyResetAction: "Erase All Data & Unlock",
+    resetSuccessfulUnlocking: "Password updated successfully. Unlocking...",
+    setNewPasswordTitle: "Set New Password",
+    setNewPasswordDesc: "Enter and confirm your new app password.",
+    saveAndUnlockButton: "Save & Unlock",
   },
 } as const;
 

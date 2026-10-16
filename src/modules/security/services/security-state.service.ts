@@ -69,13 +69,14 @@ export async function verifyCurrentPassword(
 export async function setPassword(
   newPassword: string,
   currentPassword?: string,
+  options?: { skipCurrentPasswordVerification?: boolean },
 ): Promise<{ success: boolean; error?: string }> {
   if (!newPassword || newPassword.trim().length === 0) {
     return { success: false, error: "Password cannot be empty." };
   }
 
   const existingHash = await getSecureItem(SECURE_STORAGE_KEYS.PASSWORD_HASH);
-  if (existingHash) {
+  if (existingHash && !options?.skipCurrentPasswordVerification) {
     if (!currentPassword) {
       return {
         success: false,
@@ -170,4 +171,86 @@ export async function setBiometricsEnabled(
 
   await setSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED, "true");
   return { success: true };
+}
+
+/**
+ * Resets the password using biometric authentication instead of current password.
+ */
+export async function resetPasswordWithBiometrics(
+  newPassword: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (!newPassword || newPassword.trim().length === 0) {
+    return { success: false, error: "Password cannot be empty." };
+  }
+
+  const config = await getSecurityConfig();
+  if (!config.isBiometricsEnabled) {
+    return {
+      success: false,
+      error: "Biometric unlock is not enabled.",
+    };
+  }
+
+  const auth = await authenticateWithBiometrics(
+    "Verify fingerprint to reset password",
+  );
+
+  if (!auth.success) {
+    return {
+      success: false,
+      error: auth.error ?? "Biometric authentication failed.",
+    };
+  }
+
+  return setPassword(newPassword, undefined, {
+    skipCurrentPasswordVerification: true,
+  });
+}
+
+/**
+ * Removes the configured password using biometric authentication instead of current password.
+ */
+export async function removePasswordWithBiometrics(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const config = await getSecurityConfig();
+  if (!config.isBiometricsEnabled) {
+    return {
+      success: false,
+      error: "Biometric unlock is not enabled.",
+    };
+  }
+
+  const auth = await authenticateWithBiometrics(
+    "Verify fingerprint to remove password",
+  );
+
+  if (!auth.success) {
+    return {
+      success: false,
+      error: auth.error ?? "Biometric authentication failed.",
+    };
+  }
+
+  await Promise.all([
+    deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_HASH),
+    deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_SALT),
+    deleteSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED),
+  ]);
+
+  return { success: true };
+}
+
+/**
+ * Clears all security credentials (password hash, salt, biometrics preference, auto-lock timeout)
+ * from secure storage. Used during emergency reset.
+ */
+export async function clearAllSecurityCredentials(): Promise<void> {
+  await Promise.all([
+    deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_HASH),
+    deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_SALT),
+    deleteSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED),
+    deleteSecureItem(SECURE_STORAGE_KEYS.AUTO_LOCK_TIMEOUT_MS),
+  ]);
 }

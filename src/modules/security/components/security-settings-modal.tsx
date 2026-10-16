@@ -49,6 +49,7 @@ export function SecuritySettingsModal({
     clearError,
     savePassword,
     deletePassword,
+    deletePasswordViaBiometrics,
     toggleBiometrics,
   } = useSecuritySettings();
 
@@ -67,12 +68,24 @@ export function SecuritySettingsModal({
   const handlePasswordSubmit = async (data: {
     currentPassword?: string;
     newPassword?: string;
+    biometricsVerified?: boolean;
   }) => {
-    if (passwordModalMode === "remove" && data.currentPassword) {
-      return await deletePassword(data.currentPassword);
+    if (passwordModalMode === "remove") {
+      if (data.biometricsVerified) {
+        return await deletePasswordViaBiometrics();
+      }
+      if (data.currentPassword) {
+        return await deletePassword(data.currentPassword);
+      }
     }
     if (data.newPassword) {
-      return await savePassword(data.newPassword, data.currentPassword);
+      return await savePassword(
+        data.newPassword,
+        data.currentPassword,
+        data.biometricsVerified
+          ? { skipCurrentPasswordVerification: true }
+          : undefined,
+      );
     }
     return false;
   };
@@ -346,6 +359,12 @@ export function SecuritySettingsModal({
       </Modal>
 
       <PasswordFormModal
+        biometricLabel={biometrics.biometricLabel}
+        biometricsAvailable={
+          config.isBiometricsEnabled &&
+          biometrics.hasHardware &&
+          biometrics.isEnrolled
+        }
         busy={busy}
         error={error}
         mode={passwordModalMode}

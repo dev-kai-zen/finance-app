@@ -4,6 +4,8 @@ import { getBiometricCapabilities } from "../services/biometrics.service";
 import {
   getSecurityConfig,
   removePassword,
+  removePasswordWithBiometrics,
+  resetPasswordWithBiometrics,
   setBiometricsEnabled,
   setPassword,
 } from "../services/security-state.service";
@@ -48,13 +50,43 @@ export function useSecuritySettings() {
   }, [refresh]);
 
   const savePassword = useCallback(
-    async (newPassword: string, currentPassword?: string) => {
+    async (
+      newPassword: string,
+      currentPassword?: string,
+      options?: { skipCurrentPasswordVerification?: boolean },
+    ) => {
       setBusy(true);
       setError(null);
       try {
-        const result = await setPassword(newPassword, currentPassword);
+        const result = await setPassword(
+          newPassword,
+          currentPassword,
+          options,
+        );
         if (!result.success) {
           setError(result.error ?? "Failed to save password.");
+          return false;
+        }
+        await refresh();
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unexpected error.");
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [refresh],
+  );
+
+  const resetPasswordViaBiometrics = useCallback(
+    async (newPassword: string) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const result = await resetPasswordWithBiometrics(newPassword);
+        if (!result.success) {
+          setError(result.error ?? "Failed to reset password.");
           return false;
         }
         await refresh();
@@ -92,6 +124,26 @@ export function useSecuritySettings() {
     [refresh],
   );
 
+  const deletePasswordViaBiometrics = useCallback(async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await removePasswordWithBiometrics();
+      if (!result.success) {
+        setError(result.error ?? "Failed to remove password.");
+        return false;
+      }
+      appLockLifecycle.unlock();
+      await refresh();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unexpected error.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [refresh]);
+
   const toggleBiometrics = useCallback(
     async (enable: boolean) => {
       setBusy(true);
@@ -123,7 +175,9 @@ export function useSecuritySettings() {
     clearError: () => setError(null),
     refresh,
     savePassword,
+    resetPasswordViaBiometrics,
     deletePassword,
+    deletePasswordViaBiometrics,
     toggleBiometrics,
   };
 }

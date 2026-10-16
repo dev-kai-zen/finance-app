@@ -47,3 +47,4 @@ export type {
   NavVisibilityPreferences,
   TransactionFormFieldPreferences,
 } from "./services/experience-preferences.service";
+export { resetAppData } from "./services/reset-app-data.service";

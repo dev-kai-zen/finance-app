@@ -102,6 +102,9 @@ const {
   verifyCurrentPassword,
   removePassword,
   setBiometricsEnabled,
+  resetPasswordWithBiometrics,
+  removePasswordWithBiometrics,
+  clearAllSecurityCredentials,
 } = require("../services/security-state.service");
 const { appLockLifecycle } = require("../services/app-lock-lifecycle.service");
 
@@ -211,4 +214,62 @@ test("security: appLockLifecycle manages lock state and subscription", async () 
   assert.equal(latestLocked, false);
 
   unsubscribe();
+});
+
+test("security (Option 1): resetPasswordWithBiometrics resets password without current password when biometric succeeds", async () => {
+  await setPassword("oldPassword123");
+  await setBiometricsEnabled(true);
+
+  // Biometric reset should succeed without requiring old password
+  mockBiometricPromptSuccess = true;
+  const resetRes = await resetPasswordWithBiometrics("newPassword999");
+  assert.equal(resetRes.success, true);
+
+  // Verify new password is active and old password fails
+  const newCheck = await verifyCurrentPassword("newPassword999");
+  assert.equal(newCheck.success, true);
+
+  const oldCheck = await verifyCurrentPassword("oldPassword123");
+  assert.equal(oldCheck.success, false);
+});
+
+test("security (Option 1): resetPasswordWithBiometrics fails if biometric prompt is cancelled or rejected", async () => {
+  await setPassword("existingPass");
+  await setBiometricsEnabled(true);
+
+  mockBiometricPromptSuccess = false;
+  const resetRes = await resetPasswordWithBiometrics("anotherPass");
+  assert.equal(resetRes.success, false);
+
+  // Original password remains untouched
+  const check = await verifyCurrentPassword("existingPass");
+  assert.equal(check.success, true);
+});
+
+test("security (Option 1): removePasswordWithBiometrics removes password with biometric verification", async () => {
+  await setPassword("tempPass");
+  await setBiometricsEnabled(true);
+
+  mockBiometricPromptSuccess = true;
+  const removeRes = await removePasswordWithBiometrics();
+  assert.equal(removeRes.success, true);
+
+  const config = await getSecurityConfig();
+  assert.equal(config.isPasswordSet, false);
+  assert.equal(config.isBiometricsEnabled, false);
+});
+
+test("security (Option 3): clearAllSecurityCredentials wipes all security keys from storage", async () => {
+  await setPassword("secret123");
+  await setBiometricsEnabled(true);
+
+  let config = await getSecurityConfig();
+  assert.equal(config.isPasswordSet, true);
+  assert.equal(config.isBiometricsEnabled, true);
+
+  await clearAllSecurityCredentials();
+
+  config = await getSecurityConfig();
+  assert.equal(config.isPasswordSet, false);
+  assert.equal(config.isBiometricsEnabled, false);
 });
