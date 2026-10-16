@@ -6,6 +6,7 @@ import { useThemeStyles } from "@/hooks/use-app-theme";
 import { BalanceSheetReport } from "../components/balance-sheet/balance-sheet-report";
 import { CashFlowReport } from "../components/cash-flow/cash-flow-report";
 import { IncomeExpenseReport } from "../components/income-expense/income-expense-report";
+import { LabelsSummaryReport } from "../components/labels-summary/labels-summary-report";
 import { NetWorthGrowthReport } from "../components/net-worth/net-worth-growth-report";
 import { ReportsTabBar } from "../components/reports-tab-bar";
 import type { ReportTabKey } from "../types/reports.types";
@@ -39,6 +40,10 @@ export function ReportsScreen() {
 
         {activeTab === "net-worth" ? (
           <NetWorthGrowthReport />
+        ) : null}
+
+        {activeTab === "labels-summary" ? (
+          <LabelsSummaryReport />
         ) : null}
       </View>
     </PageContainer>

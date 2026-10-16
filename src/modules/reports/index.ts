@@ -24,6 +24,11 @@ export const useNetWorthGrowthReport = deferFunction(
     require("./hooks/use-net-worth-growth-report").useNetWorthGrowthReport,
 ) as typeof import("./hooks/use-net-worth-growth-report").useNetWorthGrowthReport;
 
+export const useLabelsSummaryReport = deferFunction(
+  () =>
+    require("./hooks/use-labels-summary-report").useLabelsSummaryReport,
+) as typeof import("./hooks/use-labels-summary-report").useLabelsSummaryReport;
+
 // Services
 export const getBalanceSheetComparison = deferFunction(
   () =>
@@ -42,6 +47,12 @@ export const getIncomeExpenseReport = deferFunction(
       .getIncomeExpenseReport,
 ) as typeof import("./services/get-income-expense-report.service").getIncomeExpenseReport;
 
+export const getLabelsSummaryReport = deferFunction(
+  () =>
+    require("./services/get-labels-summary-report.service")
+      .getLabelsSummaryReport,
+) as typeof import("./services/get-labels-summary-report.service").getLabelsSummaryReport;
+
 export const getCashFlowReport = deferFunction(
   () => require("./services/get-cash-flow-report.service").getCashFlowReport,
 ) as typeof import("./services/get-cash-flow-report.service").getCashFlowReport;
@@ -57,4 +68,5 @@ export * from "./types/reports.types";
 export * from "./types/income-expense.types";
 export * from "./types/cash-flow.types";
 export * from "./types/net-worth-growth.types";
+export * from "./types/labels-summary.types";
 export * from "./constants/reports.constants";

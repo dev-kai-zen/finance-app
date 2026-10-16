@@ -2,7 +2,8 @@ export type ReportTabKey =
   | "balance-sheet"
   | "income-expense"
   | "cash-flow"
-  | "net-worth";
+  | "net-worth"
+  | "labels-summary";
 
 export interface ReportTabItem {
   key: ReportTabKey;

@@ -170,6 +170,11 @@ export const getCategoryBreakdown = deferFunction(
     require("./services/get-category-breakdown.service").getCategoryBreakdown,
 ) as typeof import("./services/get-category-breakdown.service").getCategoryBreakdown;
 
+export const getLabelBreakdown = deferFunction(
+  () =>
+    require("./services/get-label-breakdown.service").getLabelBreakdown,
+) as typeof import("./services/get-label-breakdown.service").getLabelBreakdown;
+
 export const getCashFlowHistory = deferFunction(
   () =>
     require("./services/get-cashflow-history.service").getCashFlowHistory,
@@ -276,6 +281,11 @@ export type {
   CategoryBreakdownQuery,
   CategoryBreakdownResult,
 } from "./services/get-category-breakdown.service";
+export type {
+  LabelBreakdownItem,
+  LabelBreakdownQuery,
+  LabelBreakdownResult,
+} from "./services/get-label-breakdown.service";
 export type {
   CashFlowHistoryQuery,
   CashFlowHistoryResult,
