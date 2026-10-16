@@ -24,6 +24,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components/icon-helper";
 import { formatCurrency } from "@/utils/currency";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { accountColor } from "../constants/account-appearance.constants";
 import { isSystemOthersAccountTypeId } from "../constants/account-types.constants";
 import type {
@@ -76,6 +77,7 @@ function AccountPickerModalContent({
 }: AccountPickerModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredAccounts = useMemo(() => {
@@ -491,8 +493,8 @@ function AccountPickerModalContent({
                                 <Text
                                   style={[
                                     styles.accountItemBalance,
-                                    balance > 0 && styles.positiveBalance,
-                                    balance < 0 && styles.negativeBalance,
+                                    preferences.colorAmounts && balance > 0 && styles.positiveBalance,
+                                    preferences.colorAmounts && balance < 0 && styles.negativeBalance,
                                   ]}
                                 >
                                   {formattedBalance}
@@ -580,8 +582,8 @@ function AccountPickerModalContent({
                                         <Text
                                           style={[
                                             styles.locationBalance,
-                                            location.balance > 0 && styles.positiveBalance,
-                                            location.balance < 0 && styles.negativeBalance,
+                                            preferences.colorAmounts && location.balance > 0 && styles.positiveBalance,
+                                            preferences.colorAmounts && location.balance < 0 && styles.negativeBalance,
                                           ]}
                                         >
                                           {locationBalance}
@@ -679,8 +681,8 @@ function AccountPickerModalContent({
                               <Text
                                 style={[
                                   styles.accountItemBalance,
-                                  balance > 0 && styles.positiveBalance,
-                                  balance < 0 && styles.negativeBalance,
+                                  preferences.colorAmounts && balance > 0 && styles.positiveBalance,
+                                  preferences.colorAmounts && balance < 0 && styles.negativeBalance,
                                 ]}
                               >
                                 {formattedBalance}

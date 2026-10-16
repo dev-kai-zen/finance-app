@@ -154,9 +154,11 @@ export function CalendarBalanceSheetTab({
           style={[
             styles.netWorthAmount,
             {
-              color: isNetWorthPositive
-                ? theme.colors.success
-                : theme.colors.danger,
+              color: preferences.colorAmounts
+                ? isNetWorthPositive
+                  ? theme.colors.success
+                  : theme.colors.danger
+                : theme.colors.textPrimary,
             },
           ]}
         >
@@ -172,9 +174,11 @@ export function CalendarBalanceSheetTab({
               style={[
                 styles.subItemValue,
                 {
-                  color: isAssetsPositive
-                    ? theme.colors.success
-                    : theme.colors.danger,
+                  color: preferences.colorAmounts
+                    ? isAssetsPositive
+                      ? theme.colors.success
+                      : theme.colors.danger
+                    : theme.colors.textPrimary,
                 },
               ]}
             >
@@ -190,9 +194,11 @@ export function CalendarBalanceSheetTab({
               style={[
                 styles.subItemValue,
                 {
-                  color: isLiabilitiesPositive
-                    ? theme.colors.success
-                    : theme.colors.danger,
+                  color: preferences.colorAmounts
+                    ? isLiabilitiesPositive
+                      ? theme.colors.success
+                      : theme.colors.danger
+                    : theme.colors.textPrimary,
                 },
               ]}
             >
@@ -224,9 +230,11 @@ export function CalendarBalanceSheetTab({
             style={[
               styles.sectionTotalAmount,
               {
-                color: isAssetsPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isAssetsPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -248,6 +256,7 @@ export function CalendarBalanceSheetTab({
                 theme,
                 styles,
                 currencyCode,
+                preferences.colorAmounts,
               ),
             )}
           </View>
@@ -272,9 +281,11 @@ export function CalendarBalanceSheetTab({
             style={[
               styles.sectionTotalAmount,
               {
-                color: isLiabilitiesPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isLiabilitiesPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -300,6 +311,7 @@ export function CalendarBalanceSheetTab({
                 theme,
                 styles,
                 currencyCode,
+                preferences.colorAmounts,
               ),
             )}
           </View>
@@ -314,9 +326,11 @@ export function CalendarBalanceSheetTab({
             style={[
               styles.summaryFooterValue,
               {
-                color: isAssetsPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isAssetsPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -329,9 +343,11 @@ export function CalendarBalanceSheetTab({
             style={[
               styles.summaryFooterValue,
               {
-                color: isLiabilitiesPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isLiabilitiesPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -349,9 +365,11 @@ export function CalendarBalanceSheetTab({
             style={[
               styles.summaryFooterTotalValue,
               {
-                color: isNetWorthPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isNetWorthPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -370,6 +388,7 @@ function renderAccountTypeGroup(
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
   currencyCode: string,
+  colorAmounts: boolean,
 ) {
   const isPositive = group.totalBalanceMinorUnits >= 0;
 
@@ -404,7 +423,13 @@ function renderAccountTypeGroup(
         <Text
           style={[
             styles.typeTotalText,
-            { color: isPositive ? theme.colors.success : theme.colors.danger },
+            {
+              color: colorAmounts
+                ? isPositive
+                  ? theme.colors.success
+                  : theme.colors.danger
+                : theme.colors.textPrimary,
+            },
           ]}
         >
           {formatCurrency(group.totalBalanceMinorUnits, currencyCode, false)}
@@ -420,6 +445,7 @@ function renderAccountTypeGroup(
             () => onTogglePockets(account.id),
             theme,
             styles,
+            colorAmounts,
           ),
         )}
       </View>
@@ -433,6 +459,7 @@ function renderAccountItem(
   onTogglePockets: () => void,
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
+  colorAmounts: boolean,
 ) {
   const isPositive = account.balanceMinorUnits >= 0;
   const hasPockets = account.pockets.length > 0;
@@ -479,7 +506,13 @@ function renderAccountItem(
         <Text
           style={[
             styles.accountBalance,
-            { color: isPositive ? theme.colors.success : theme.colors.danger },
+            {
+              color: colorAmounts
+                ? isPositive
+                  ? theme.colors.success
+                  : theme.colors.danger
+                : theme.colors.textPrimary,
+            },
           ]}
         >
           {formatCurrency(account.balanceMinorUnits, account.currencyCode, false)}
@@ -503,10 +536,11 @@ function renderAccountItem(
               style={[
                 styles.pocketBalance,
                 {
-                  color:
-                    account.availableMinorUnits >= 0
+                  color: colorAmounts
+                    ? account.availableMinorUnits >= 0
                       ? theme.colors.success
-                      : theme.colors.danger,
+                      : theme.colors.danger
+                    : theme.colors.textPrimary,
                 },
               ]}
             >
@@ -535,9 +569,11 @@ function renderAccountItem(
                   style={[
                     styles.pocketBalance,
                     {
-                      color: isPocketPositive
-                        ? theme.colors.success
-                        : theme.colors.danger,
+                      color: colorAmounts
+                        ? isPocketPositive
+                          ? theme.colors.success
+                          : theme.colors.danger
+                        : theme.colors.textPrimary,
                     },
                   ]}
                 >

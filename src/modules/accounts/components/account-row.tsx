@@ -5,6 +5,7 @@ import { formatCurrency } from "@/utils/currency";
 import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import { localDateInput } from "@/modules/accounts/utils/account-input";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useDefaultAccounts } from "@/modules/settings";
 
 export function AccountRow({
@@ -15,6 +16,7 @@ export function AccountRow({
   onPress: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const { defaultExpenseAccountId, defaultIncomeAccountId } = useDefaultAccounts();
   const isLiability = account.accountType?.accountGroup === "liability";
   const isDefaultExpense = !account.isArchived && defaultExpenseAccountId === account.id;
@@ -74,7 +76,9 @@ export function AccountRow({
         <Text
           style={[
             styles.amountText,
-            isLiability && styles.liabilityAmountText,
+            isLiability &&
+              preferences.colorAmounts &&
+              styles.liabilityAmountText,
             account.isArchived && styles.archivedAmountText,
           ]}
         >

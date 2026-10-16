@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { Host, Switch } from "@expo/ui";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,7 +22,12 @@ import {
   X,
 } from "lucide-react-native";
 
-import { AppButton, ConfirmModal, NotificationModal } from "@/components";
+import {
+  AppButton,
+  ConfirmModal,
+  NotificationModal,
+  ThemedSwitch,
+} from "@/components";
 import { PageContainer } from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -176,23 +180,17 @@ export function LocalBackupScreen() {
                 Runs when the app becomes active and a backup is due.
               </Text>
             </View>
-            <Host
+            <ThemedSwitch
               accessibilityLabel="Automatic backups"
-              colorScheme={theme.mode}
-              matchContents
-              seedColor={theme.colors.primary}
-            >
-              <Switch
-                disabled={!personalWorkspace || busy}
-                onValueChange={(enabled) =>
-                  void backup.updateAutomaticConfig({
-                    ...backup.config,
-                    enabled,
-                  })
-                }
-                value={backup.config.enabled}
-              />
-            </Host>
+              disabled={!personalWorkspace || busy}
+              onValueChange={(enabled) =>
+                void backup.updateAutomaticConfig({
+                  ...backup.config,
+                  enabled,
+                })
+              }
+              value={backup.config.enabled}
+            />
           </View>
 
           {backup.config.enabled ? (

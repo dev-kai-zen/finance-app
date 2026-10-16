@@ -108,13 +108,29 @@ export function CashFlowTable({
                 </View>
 
                 <View style={styles.colNumeric}>
-                  <Text numberOfLines={1} style={styles.inflowAmount}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.inflowAmount,
+                      !preferences.colorAmounts && {
+                        color: theme.colors.textPrimary,
+                      },
+                    ]}
+                  >
                     {formatCurrency(row.inflowMinorUnits, currencyCode, true)}
                   </Text>
                 </View>
 
                 <View style={styles.colNumeric}>
-                  <Text numberOfLines={1} style={styles.outflowAmount}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.outflowAmount,
+                      !preferences.colorAmounts && {
+                        color: theme.colors.textPrimary,
+                      },
+                    ]}
+                  >
                     {formatCurrency(-row.outflowMinorUnits, currencyCode, true)}
                   </Text>
                 </View>
@@ -122,7 +138,14 @@ export function CashFlowTable({
                 <View style={styles.colNet}>
                   <Text
                     numberOfLines={1}
-                    style={[styles.netAmount, { color: row.color }]}
+                    style={[
+                      styles.netAmount,
+                      {
+                        color: preferences.colorAmounts
+                          ? row.color
+                          : theme.colors.textPrimary,
+                      },
+                    ]}
                   >
                     {row.formattedNet} {row.symbol}
                   </Text>
@@ -169,12 +192,30 @@ export function CashFlowTable({
               <Text style={styles.footerTitle}>TOTAL</Text>
             </View>
             <View style={[styles.colNumeric, styles.footerCol]}>
-              <Text numberOfLines={1} style={[styles.footerNumeric, styles.inflowAmount]}>
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.footerNumeric,
+                  styles.inflowAmount,
+                  !preferences.colorAmounts && {
+                    color: theme.colors.textPrimary,
+                  },
+                ]}
+              >
                 {formatCurrency(totalInflowMinorUnits, currencyCode, true)}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.footerCol]}>
-              <Text numberOfLines={1} style={[styles.footerNumeric, styles.outflowAmount]}>
+              <Text
+                numberOfLines={1}
+                style={[
+                  styles.footerNumeric,
+                  styles.outflowAmount,
+                  !preferences.colorAmounts && {
+                    color: theme.colors.textPrimary,
+                  },
+                ]}
+              >
                 {formatCurrency(-totalOutflowMinorUnits, currencyCode, true)}
               </Text>
             </View>
@@ -184,9 +225,11 @@ export function CashFlowTable({
                 style={[
                   styles.footerNumeric,
                   {
-                    color: isNetPositive
-                      ? REPORT_COLORS.positiveGreen
-                      : REPORT_COLORS.negativeRed,
+                    color: preferences.colorAmounts
+                      ? isNetPositive
+                        ? REPORT_COLORS.positiveGreen
+                        : REPORT_COLORS.negativeRed
+                      : theme.colors.textPrimary,
                   },
                 ]}
               >

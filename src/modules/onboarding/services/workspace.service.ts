@@ -94,7 +94,7 @@ export async function completeGuidedSetup(
 
   await db.transaction(async (tx) => {
     clearSampleWorkspaceIfNeeded(tx);
-    await prepareWorkspaceCategories("essentials", tx, now);
+    await prepareWorkspaceCategories("recommended", tx, now);
     accountId = createInitialAccount(
       input.account,
       tx,

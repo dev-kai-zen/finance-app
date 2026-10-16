@@ -156,11 +156,12 @@ export const es = {
     usageReasonExchangeRates: "Ajustes de tipos de cambio (%{count})",
     usageReasonDefault: "Tu moneda predeterminada para totales y cuentas nuevas",
     fieldCode: "Código de moneda",
+    codeAlreadyInUse: "Este código de moneda ya está en uso.",
     fieldName: "Nombre",
-    fieldNamePlaceholder: "Bitcoin",
+    fieldNamePlaceholder: "Dólar canadiense",
     fieldSymbol: "Símbolo",
     fieldDecimalPlaces: "Decimales",
-    fieldDecimalPlacesHint: "Número entero de 0 a 18 (p. ej., 2 para céntimos, 0 para yen).",
+    fieldDecimalPlacesHint: "Número entero de 0 a 3 (p. ej., 2 para céntimos, 0 para yen, 3 para dinar).",
     builtinEditHint:
       "Monedas integradas: solo puedes cambiar los decimales antes de usarlas.",
     deleteTitle: "Eliminar moneda",
@@ -254,6 +255,8 @@ export const es = {
     languageDescription: "Puedes cambiarlo cuando quieras en Ajustes.",
     currencyTitle: "¿Qué moneda usas?",
     currencyDescription: "La usaremos para tu primera cuenta y los importes.",
+    currencyHint:
+      "¿No encuentras tu moneda? Puedes agregarla más tarde en Ajustes.",
     accountTitle: "Tu primera cuenta",
     accountDescription: "¿Dónde sueles guardar el dinero que gastas?",
     accountTypeLabel: "TIPO DE CUENTA",

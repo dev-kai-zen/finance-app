@@ -77,9 +77,11 @@ export function CalendarNetTab({
             style={[
               styles.statCardValue,
               {
-                color: isInflowPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isInflowPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -114,9 +116,11 @@ export function CalendarNetTab({
             style={[
               styles.statCardValue,
               {
-                color: isOutflowPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isOutflowPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >
@@ -168,7 +172,13 @@ export function CalendarNetTab({
         <Text
           style={[
             styles.netTotalAmount,
-            { color: isNetPositive ? theme.colors.success : theme.colors.danger },
+            {
+              color: preferences.colorAmounts
+                ? isNetPositive
+                  ? theme.colors.success
+                  : theme.colors.danger
+                : theme.colors.textPrimary,
+            },
           ]}
         >
           {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
@@ -314,9 +324,11 @@ export function CalendarNetTab({
             style={[
               styles.netTotalAmount,
               {
-                color: isProjectedPositive
-                  ? theme.colors.success
-                  : theme.colors.danger,
+                color: preferences.colorAmounts
+                  ? isProjectedPositive
+                    ? theme.colors.success
+                    : theme.colors.danger
+                  : theme.colors.textPrimary,
               },
             ]}
           >

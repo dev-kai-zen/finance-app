@@ -16,43 +16,68 @@ const checkedString = (parse: (value: string) => unknown) => z.string().superRef
   }
 });
 const creditCardDetailsInputSchema = z.object({
-  creditLimit: checkedString(parseCreditLimit),
+  creditLimit: z.string(),
   statementDay: checkedString((value) => parseBillingDay(value, "Statement day")),
   paymentDueDay: checkedString((value) =>
     parseBillingDay(value, "Payment due day"),
   ),
 });
 
-export const accountInputSchema = z.object({
-  name,
-  currencyCode: z.string().trim().min(1).optional(),
-  note: z
-    .string()
-    .max(1000, "Use at most 1000 characters for the note.")
-    .optional(),
-  iconKey: z.string().optional().nullable(),
-  accountTypeId: z.string().min(1, "Choose an account type."),
-  openingAmount: checkedString(parseOpeningAmount),
-  openingDate: checkedString(parseOpeningDate),
-  hideFromSelection: z.boolean().default(false),
-  hideFromReports: z.boolean().default(false),
-  pocketEnabled: z.boolean().default(false),
-  maintainingAmount: z
-    .string()
-    .optional()
-    .superRefine((value, ctx) => {
-      if (value === undefined || value.trim() === "") return;
+export const accountInputSchema = z
+  .object({
+    name,
+    currencyCode: z.string().trim().min(1).optional(),
+    note: z
+      .string()
+      .max(1000, "Use at most 1000 characters for the note.")
+      .optional(),
+    iconKey: z.string().optional().nullable(),
+    accountTypeId: z.string().min(1, "Choose an account type."),
+    openingAmount: z.string(),
+    openingDate: checkedString(parseOpeningDate),
+    hideFromSelection: z.boolean().default(false),
+    hideFromReports: z.boolean().default(false),
+    pocketEnabled: z.boolean().default(false),
+    maintainingAmount: z.string().optional(),
+    creditCardDetails: creditCardDetailsInputSchema.optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const currency = data.currencyCode?.trim() || undefined;
+    try {
+      parseOpeningAmount(data.openingAmount, currency);
+    } catch (error) {
+      ctx.addIssue({
+        path: ["openingAmount"],
+        code: "custom",
+        message: error instanceof Error ? error.message : "Invalid value.",
+      });
+    }
+    if (data.maintainingAmount !== undefined && data.maintainingAmount.trim() !== "") {
       try {
-        parseMaintainingAmount(value);
+        parseMaintainingAmount(data.maintainingAmount, currency);
       } catch (error) {
         ctx.addIssue({
+          path: ["maintainingAmount"],
           code: "custom",
           message: error instanceof Error ? error.message : "Invalid value.",
         });
       }
-    }),
-  creditCardDetails: creditCardDetailsInputSchema.optional().nullable(),
-});
+    }
+    if (
+      data.creditCardDetails?.creditLimit !== undefined &&
+      data.creditCardDetails.creditLimit.trim() !== ""
+    ) {
+      try {
+        parseCreditLimit(data.creditCardDetails.creditLimit, currency);
+      } catch (error) {
+        ctx.addIssue({
+          path: ["creditCardDetails", "creditLimit"],
+          code: "custom",
+          message: error instanceof Error ? error.message : "Invalid value.",
+        });
+      }
+    }
+  });
 export const accountTypeInputSchema = z.object({
   name,
   accountGroup: accountGroupSchema,

@@ -5,6 +5,7 @@ export const REPORT_TABS: ReportTabItem[] = [
   { key: "income-expense", label: "Income & Expense", isAvailable: true },
   { key: "cash-flow", label: "Cash Flow", isAvailable: true },
   { key: "net-worth", label: "Net Worth Growth", isAvailable: true },
+  { key: "labels-summary", label: "Labels Summary", isAvailable: true },
 ];
 
 export interface PresetOption {

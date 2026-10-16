@@ -20,6 +20,11 @@ export const CategoryPickerModal = deferComponent(
   "CategoryPickerModal",
 ) as typeof import("./components/category-picker-modal").CategoryPickerModal;
 
+export const CategoryFormModal = deferComponent(
+  () => require("./components/category-form-modal").CategoryFormModal,
+  "CategoryFormModal",
+) as typeof import("./components/category-form-modal").CategoryFormModal;
+
 export const useCategories = deferFunction(
   () => require("./hooks/use-categories").useCategories,
 ) as typeof import("./hooks/use-categories").useCategories;

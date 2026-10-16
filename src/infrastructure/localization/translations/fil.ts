@@ -156,11 +156,12 @@ export const fil = {
     usageReasonExchangeRates: "Mga setting ng conversion rate (%{count})",
     usageReasonDefault: "Default currency mo para sa total at bagong account",
     fieldCode: "Currency code",
+    codeAlreadyInUse: "Ginagamit na ang currency code na ito.",
     fieldName: "Pangalan",
-    fieldNamePlaceholder: "Bitcoin",
+    fieldNamePlaceholder: "Canadian Dollar",
     fieldSymbol: "Simbolo",
     fieldDecimalPlaces: "Decimal places",
-    fieldDecimalPlacesHint: "Buong numero mula 0 hanggang 18 (hal. 2 para sa cents, 0 para sa yen).",
+    fieldDecimalPlacesHint: "Buong numero mula 0 hanggang 3 (hal. 2 para sa cents, 0 para sa yen, 3 para sa dinar).",
     builtinEditHint:
       "Built-in currency: puwede lang baguhin ang decimal places bago gamitin.",
     deleteTitle: "Burahin ang currency",
@@ -255,6 +256,8 @@ export const fil = {
     languageDescription: "Maaari mong palitan ito anumang oras sa Settings.",
     currencyTitle: "Anong pera ang ginagamit mo?",
     currencyDescription: "Gagamitin ito sa unang account at mga halaga.",
+    currencyHint:
+      "Hindi mahanap ang iyong pera? Maaari mo itong idagdag mamaya sa Settings.",
     accountTitle: "Unang account mo",
     accountDescription: "Saan mo karaniwang iniingatan ang pera na ginagastos?",
     accountTypeLabel: "URI NG ACCOUNT",

@@ -43,6 +43,7 @@ import type {
   FundGroupInput,
   FundGroupListItem,
 } from "@/modules/accounts/types/fund-group.types";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
 
 type EditorState = {
@@ -72,6 +73,7 @@ export function FundGroupsModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const mutations = useFundGroupMutations(onRefresh);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmAction, setConfirmAction] = useState<"discard" | "delete" | null>(null);
@@ -566,8 +568,12 @@ export function FundGroupsModal({
                             <Text
                               style={[
                                 styles.accountItemBalance,
-                                account.currentBalanceMinorUnits > 0 && styles.positiveBalance,
-                                account.currentBalanceMinorUnits < 0 && styles.negativeBalance,
+                                preferences.colorAmounts &&
+                                  account.currentBalanceMinorUnits > 0 &&
+                                  styles.positiveBalance,
+                                preferences.colorAmounts &&
+                                  account.currentBalanceMinorUnits < 0 &&
+                                  styles.negativeBalance,
                                 isAccountDisabled && styles.textDisabled,
                               ]}
                             >
@@ -676,9 +682,11 @@ export function FundGroupsModal({
                                     <Text
                                       style={[
                                         styles.locationBalance,
-                                        pocket.currentBalanceMinorUnits > 0 &&
+                                        preferences.colorAmounts &&
+                                          pocket.currentBalanceMinorUnits > 0 &&
                                           styles.positiveBalance,
-                                        pocket.currentBalanceMinorUnits < 0 &&
+                                        preferences.colorAmounts &&
+                                          pocket.currentBalanceMinorUnits < 0 &&
                                           styles.negativeBalance,
                                         isPocketDisabled && styles.textDisabled,
                                       ]}

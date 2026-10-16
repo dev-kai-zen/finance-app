@@ -10,6 +10,19 @@ export const AccountPickerModal = deferComponent(
   "AccountPickerModal",
 ) as typeof import("./components/account-picker-modal").AccountPickerModal;
 
+export const MaintainingBalanceWarningModal = deferComponent(
+  () =>
+    require("./components/maintaining-balance-warning-modal")
+      .MaintainingBalanceWarningModal,
+  "MaintainingBalanceWarningModal",
+) as typeof import("./components/maintaining-balance-warning-modal").MaintainingBalanceWarningModal;
+
+export const checkMaintainingBalance = deferFunction(
+  () =>
+    require("./services/check-maintaining-balance.service")
+      .checkMaintainingBalance,
+) as typeof import("./services/check-maintaining-balance.service").checkMaintainingBalance;
+
 export const findAccountById = deferFunction(
   () => require("./repositories/accounts.repository").findAccountById,
 ) as typeof import("./repositories/accounts.repository").findAccountById;
@@ -150,3 +163,7 @@ export type {
   BalanceSheetAccountItem,
   BalanceSheetPocketItem,
 } from "./services/get-balance-sheet.service";
+export type {
+  CheckMaintainingBalanceInput,
+  MaintainingBalanceCheckResult,
+} from "./services/check-maintaining-balance.service";

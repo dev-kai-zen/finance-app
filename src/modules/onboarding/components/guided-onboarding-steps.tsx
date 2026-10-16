@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Check } from "lucide-react-native";
+import { AlertCircle, Check } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
@@ -167,7 +167,10 @@ export function GuidedCurrencyStep({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-  const codes = useMemo(() => SUPPORTED_CURRENCY_CODES, []);
+  const codes = useMemo(() => {
+    const nonPhpCodes = SUPPORTED_CURRENCY_CODES.filter((code) => code !== "PHP");
+    return ["PHP", ...nonPhpCodes];
+  }, []);
 
   return (
     <OnboardingStepShell
@@ -206,6 +209,10 @@ export function GuidedCurrencyStep({
             </Pressable>
           );
         })}
+      </View>
+      <View style={styles.infoCard}>
+        <AlertCircle color={theme.colors.info} size={18} />
+        <Text style={styles.infoText}>{t("onboarding.currencyHint")}</Text>
       </View>
     </OnboardingStepShell>
   );
@@ -489,6 +496,23 @@ function createStyles(theme: AppTheme) {
     helperText: {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
+    },
+    infoCard: {
+      alignItems: "flex-start",
+      backgroundColor: `${theme.colors.info}10`,
+      borderColor: `${theme.colors.info}35`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      marginTop: theme.spacing.sm,
+      padding: theme.spacing.md,
+    },
+    infoText: {
+      color: theme.colors.textSecondary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.sm,
     },
     summaryCard: {
       backgroundColor: theme.colors.surface,

@@ -4,6 +4,7 @@ import { AlertCircle, AlertTriangle, RotateCw } from "lucide-react-native";
 import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { BudgetStatus } from "../types/budget.types";
@@ -32,6 +33,7 @@ export const BudgetCard = memo(function BudgetCard({
 }: BudgetCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const resolveEntityColor = useResolveEntityColor();
 
   const {
@@ -142,7 +144,16 @@ export const BudgetCard = memo(function BudgetCard({
       <View style={styles.metricsRow}>
         <View style={styles.spentGroup}>
           <Text style={styles.metricLabel}>Spent</Text>
-          <Text style={[styles.spentValue, { color: statusColor }]}>
+          <Text
+            style={[
+              styles.spentValue,
+              {
+                color: preferences.colorAmounts
+                  ? statusColor
+                  : theme.colors.textPrimary,
+              },
+            ]}
+          >
             {formatCurrency(spentCents, budget.currencyCode, false)}
           </Text>
         </View>
@@ -162,9 +173,10 @@ export const BudgetCard = memo(function BudgetCard({
             style={[
               styles.remainingValue,
               {
-                color: isExceeded
-                  ? theme.colors.danger
-                  : theme.colors.textPrimary,
+                color:
+                  isExceeded && preferences.colorAmounts
+                    ? theme.colors.danger
+                    : theme.colors.textPrimary,
               },
             ]}
           >

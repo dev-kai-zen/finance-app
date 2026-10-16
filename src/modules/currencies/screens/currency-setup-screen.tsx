@@ -1,5 +1,4 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Host, Switch } from "@expo/ui";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   BadgeDollarSign,
@@ -9,7 +8,7 @@ import {
   Minus,
   Palette,
 } from "lucide-react-native";
-import { InfoModal, PageContainer } from "@/components";
+import { InfoModal, PageContainer, ThemedSwitch } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -93,14 +92,12 @@ export function CurrencySetupScreen({
           label={t("currency.displayCurrency")}
           description={t("currency.displayCurrencyDescription")}
           accessory={
-            <Host matchContents>
-              <Switch
-                value={preferences.displayCurrency}
-                onValueChange={(displayCurrency) =>
-                  updatePreferences({ displayCurrency })
-                }
-              />
-            </Host>
+            <ThemedSwitch
+              value={preferences.displayCurrency}
+              onValueChange={(displayCurrency) =>
+                updatePreferences({ displayCurrency })
+              }
+            />
           }
         />
         <Divider />
@@ -109,14 +106,12 @@ export function CurrencySetupScreen({
           label={t("currency.colorAmounts")}
           description={t("currency.colorAmountsDescription")}
           accessory={
-            <Host matchContents>
-              <Switch
-                value={preferences.colorAmounts}
-                onValueChange={(colorAmounts) =>
-                  updatePreferences({ colorAmounts })
-                }
-              />
-            </Host>
+            <ThemedSwitch
+              value={preferences.colorAmounts}
+              onValueChange={(colorAmounts) =>
+                updatePreferences({ colorAmounts })
+              }
+            />
           }
         />
         <Divider />

@@ -46,7 +46,12 @@ export function CreditCardMonitoringScreen() {
           <View style={styles.summary}>
             <View>
               <Text style={styles.summaryLabel}>DUE THIS MONTH</Text>
-              <Text style={styles.summaryAmount}>
+              <Text
+                style={[
+                  styles.summaryAmount,
+                  !preferences.colorAmounts && { color: theme.colors.textPrimary },
+                ]}
+              >
                 {formatCurrency(
                   data.dueThisMonthMinorUnits,
                   preferences.defaultCurrency,
@@ -56,7 +61,12 @@ export function CreditCardMonitoringScreen() {
             {data.overdueMinorUnits > 0 ? (
               <View style={styles.overdue}>
                 <Text style={styles.overdueLabel}>PAST DUE</Text>
-                <Text style={styles.overdueAmount}>
+                <Text
+                  style={[
+                    styles.overdueAmount,
+                    !preferences.colorAmounts && { color: theme.colors.textPrimary },
+                  ]}
+                >
                   {formatCurrency(
                     data.overdueMinorUnits,
                     preferences.defaultCurrency,

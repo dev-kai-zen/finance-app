@@ -38,9 +38,9 @@ export function updateCurrency(
   if (
     !Number.isInteger(minorUnitExponent) ||
     minorUnitExponent < 0 ||
-    minorUnitExponent > 18
+    minorUnitExponent > 3
   ) {
-    throw new Error("Decimal places must be a whole number from 0 to 18.");
+    throw new Error("Decimal places must be a whole number from 0 to 3.");
   }
 
   if (!existing.isCustom && (name !== existing.name || symbol !== existing.symbol)) {

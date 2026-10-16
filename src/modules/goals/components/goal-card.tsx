@@ -17,6 +17,7 @@ import {
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalStatus, GoalWithProgress } from "../types/goal.types";
@@ -38,6 +39,7 @@ export const GoalCard = memo(function GoalCard({
 }: GoalCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { preferences } = useCurrencyPreferences();
   const resolveEntityColor = useResolveEntityColor();
 
   const entityColor =
@@ -174,7 +176,8 @@ export const GoalCard = memo(function GoalCard({
             <Text
               style={[
                 styles.savedAmount,
-                isCompleted && { color: theme.colors.success },
+                isCompleted &&
+                  preferences.colorAmounts && { color: theme.colors.success },
               ]}
             >
               {formatCurrency(goal.currentAmountMinorUnits, goal.currencyCode)}
