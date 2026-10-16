@@ -354,8 +354,9 @@ export const en = {
     biometricSection: "BIOMETRIC UNLOCK",
     biometricTitle: "%{biometric} Unlock",
     defaultBiometricLabel: "Biometrics",
+    setupPasswordToActivate: "Set up Password to activate",
     biometricRequiresPassword:
-      "Set an app password first to enable %{biometric} unlock",
+      "Biometric unlock requires an app password to be set first.",
     biometricNoHardware: "Biometric sensor is not available on this device",
     biometricNotEnrolled: "No fingerprints enrolled. Register in device settings",
     biometricDescription: "Unlock faster using your %{biometric}",

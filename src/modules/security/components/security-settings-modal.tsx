@@ -98,9 +98,7 @@ export function SecuritySettingsModal({
       return t("security.biometricNotEnrolled");
     }
     if (!config.isPasswordSet) {
-      return t("security.biometricRequiresPassword", {
-        biometric: label,
-      });
+      return t("security.biometricRequiresPassword");
     }
     return t("security.biometricDescription", {
       biometric: label,
@@ -261,19 +259,59 @@ export function SecuritySettingsModal({
                 <Text style={styles.sectionTitle}>
                   {t("security.biometricSection")}
                 </Text>
-                <View style={styles.card}>
+                <View
+                  style={[
+                    styles.card,
+                    !config.isPasswordSet && styles.cardDisabled,
+                  ]}
+                >
                   <View style={styles.row}>
-                    <View style={styles.rowIconContainer}>
-                      <Fingerprint color={theme.colors.info} size={20} />
+                    <View
+                      style={[
+                        styles.rowIconContainer,
+                        !config.isPasswordSet && styles.rowIconContainerDisabled,
+                      ]}
+                    >
+                      <Fingerprint
+                        color={
+                          !config.isPasswordSet
+                            ? theme.colors.textMuted
+                            : theme.colors.info
+                        }
+                        size={20}
+                      />
                     </View>
                     <View style={styles.rowCopy}>
-                      <Text style={styles.rowTitle}>
+                      <Text
+                        style={[
+                          styles.rowTitle,
+                          !config.isPasswordSet && styles.rowTitleDisabled,
+                        ]}
+                      >
                         {t("security.biometricTitle", {
                           biometric:
                             biometrics.biometricLabel ||
                             t("security.defaultBiometricLabel"),
                         })}
                       </Text>
+                      {!config.isPasswordSet ? (
+                        <Pressable
+                          accessibilityLabel={t(
+                            "security.setupPasswordToActivate",
+                          )}
+                          accessibilityRole="button"
+                          onPress={() => openPasswordModal("set")}
+                          style={({ pressed }) => [
+                            styles.setupPasswordChip,
+                            pressed && styles.setupPasswordChipPressed,
+                          ]}
+                        >
+                          <Lock color={theme.colors.warning} size={11} />
+                          <Text style={styles.setupPasswordChipText}>
+                            {t("security.setupPasswordToActivate")}
+                          </Text>
+                        </Pressable>
+                      ) : null}
                       <Text style={styles.rowSubtitle}>
                         {getBiometricSubtitle()}
                       </Text>
@@ -284,7 +322,10 @@ export function SecuritySettingsModal({
                           biometrics.biometricLabel ||
                           t("security.defaultBiometricLabel"),
                       })}
-                      disabled={!isBiometricEligible && !config.isBiometricsEnabled}
+                      disabled={
+                        !config.isPasswordSet ||
+                        (!isBiometricEligible && !config.isBiometricsEnabled)
+                      }
                       onValueChange={handleToggleBiometrics}
                       value={config.isBiometricsEnabled}
                     />
@@ -396,6 +437,9 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
     },
+    cardDisabled: {
+      opacity: 0.85,
+    },
     row: {
       alignItems: "center",
       flexDirection: "row",
@@ -410,6 +454,12 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 38,
     },
+    rowIconContainerDisabled: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
+      opacity: 0.7,
+    },
     rowCopy: {
       flex: 1,
       gap: 2,
@@ -417,6 +467,31 @@ function createStyles(theme: AppTheme) {
     rowTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    rowTitleDisabled: {
+      color: theme.colors.textSecondary,
+    },
+    setupPasswordChip: {
+      alignSelf: "flex-start",
+      alignItems: "center",
+      backgroundColor: `${theme.colors.warning}18`,
+      borderColor: `${theme.colors.warning}40`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      marginTop: 2,
+      marginBottom: 3,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 3,
+    },
+    setupPasswordChipPressed: {
+      opacity: 0.7,
+    },
+    setupPasswordChipText: {
+      color: theme.colors.warning,
+      fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     rowSubtitle: {

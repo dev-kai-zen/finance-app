@@ -375,8 +375,9 @@ export const fil = {
     biometricSection: "BIOMETRIC UNLOCK",
     biometricTitle: "%{biometric} Unlock",
     defaultBiometricLabel: "Biometrics",
+    setupPasswordToActivate: "Mag-set ng Password para i-activate",
     biometricRequiresPassword:
-      "Mag-set muna ng password ng app para paganahin ang %{biometric} unlock",
+      "Kailangan munang mag-set ng password para sa biometric unlock.",
     biometricNoHardware:
       "Walang biometric sensor sa device na ito",
     biometricNotEnrolled:

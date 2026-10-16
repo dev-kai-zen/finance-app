@@ -375,8 +375,9 @@ export const es = {
     biometricSection: "DESBLOQUEO BIOMÉTRICO",
     biometricTitle: "Desbloqueo con %{biometric}",
     defaultBiometricLabel: "Biometría",
+    setupPasswordToActivate: "Configura contraseña para activar",
     biometricRequiresPassword:
-      "Crea una contraseña de la app primero para activar el desbloqueo con %{biometric}",
+      "El desbloqueo biométrico requiere crear una contraseña primero.",
     biometricNoHardware:
       "El sensor biométrico no está disponible en este dispositivo",
     biometricNotEnrolled:
