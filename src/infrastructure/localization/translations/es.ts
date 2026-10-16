@@ -44,8 +44,26 @@ export const es = {
   },
   sync: {
     localOnly: "Solo local",
+    syncing: "Sincronizando...",
+    synced: "Sincronizado",
+    waitingNetwork: "Esperando Wi-Fi",
+    failed: "Error al sincronizar",
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
+  },
+  quickSync: {
+    title: "Sincronización Rápida",
+    description: "Guarda automáticamente tus cambios en Google Drive",
+    networkLabel: "Sincronizar mediante",
+    wifiOnly: "Solo Wi-Fi",
+    wifiOnlyDescription: "Solo sincronizar al conectarse a Wi-Fi",
+    anyNetwork: "Wi-Fi y Datos móviles",
+    anyNetworkDescription: "Sincronizar por Wi-Fi o datos móviles",
+    statusLabel: "Estado",
+    lastSynced: "Última sincronización: %{time}",
+    neverSynced: "Nunca sincronizado",
+    syncNow: "Sincronizar ahora",
+    syncingNow: "Sincronizando...",
   },
   settings: {
     generalSection: "GENERAL",

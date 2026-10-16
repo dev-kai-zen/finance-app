@@ -24,6 +24,7 @@ import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
+import { QuickSyncCard } from "./quick-sync-card";
 
 export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
@@ -226,6 +227,8 @@ export function GoogleDriveBackupPanel() {
             </View>
           ) : null}
         </View>
+
+        {backup.user ? <QuickSyncCard /> : null}
 
         {backup.user ? (
           <AppButton
