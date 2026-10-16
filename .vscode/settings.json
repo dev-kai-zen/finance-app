@@ -4,5 +4,6 @@
       "fileMatch": ["package.json"],
       "url": "./schemas/package.schema.json"
     }
-  ]
+  ],
+  "cSpell.words": ["Pressable"]
 }

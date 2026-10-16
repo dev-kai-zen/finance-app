@@ -1,7 +1,22 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight } from "lucide-react-native";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  ChevronRight,
+  CircleDollarSign,
+  Cloud,
+  Database,
+  HardDrive,
+  Info,
+  Languages,
+  Palette,
+  Pipette,
+  Sparkles,
+  Terminal,
+  Trash2,
+} from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
@@ -99,14 +114,19 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
-              <ThemeSwatchPreview preset={theme} />
+              <View style={styles.iconContainer}>
+                <Palette color={theme.colors.primary} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.themeTitle")}
                 </Text>
                 <Text style={styles.settingDescription}>{themeValue}</Text>
               </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
+              <View style={styles.rowAccessory}>
+                <ThemeSwatchPreview preset={theme} />
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
             </Pressable>
 
             <View style={styles.rowDivider} />
@@ -122,6 +142,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <Languages color={theme.colors.info} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.languageTitle")}
@@ -142,6 +165,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <CircleDollarSign color={theme.colors.success} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.currencySetup")}
@@ -163,6 +189,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <ArrowUpRight color={theme.colors.danger} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.defaultAccountExpenseLabel")}
@@ -187,6 +216,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <ArrowDownLeft color={theme.colors.success} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.defaultAccountIncomeLabel")}
@@ -209,6 +241,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <HardDrive color={theme.colors.textSecondary} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("navigation.localBackup")}
@@ -228,6 +263,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <Cloud color={theme.colors.info} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.googleDrive")}
@@ -249,6 +287,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <Pipette color={theme.colors.accent} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.hexColors")}
@@ -276,6 +317,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={[styles.iconContainer, styles.dangerIconContainer]}>
+                <Trash2 color={theme.colors.danger} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={[styles.settingLabel, styles.dangerLabel]}>
                   {t("settings.resetData")}
@@ -287,6 +331,9 @@ export function SettingsScreen() {
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
               <View style={styles.settingRow}>
+                <View style={styles.iconContainer}>
+                  <Info color={theme.colors.textMuted} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.backupPaused")}
@@ -305,6 +352,9 @@ export function SettingsScreen() {
             <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
             <View style={styles.card}>
               <View style={styles.toggleRow}>
+                <View style={styles.iconContainer}>
+                  <Terminal color={theme.colors.textSecondary} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>{t("settings.developerMode")}</Text>
                   <Text style={styles.settingDescription}>
@@ -327,6 +377,9 @@ export function SettingsScreen() {
                   pressed && styles.settingRowPressed,
                 ]}
               >
+                <View style={styles.iconContainer}>
+                  <Database color={theme.colors.info} size={20} />
+                </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.sqliteMonitor")}
@@ -353,6 +406,9 @@ export function SettingsScreen() {
                 pressed && styles.settingRowPressed,
               ]}
             >
+              <View style={styles.iconContainer}>
+                <Sparkles color={theme.colors.primary} size={20} />
+              </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.whatsNew")}
@@ -481,10 +537,21 @@ function createStyles(theme: AppTheme) {
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
     },
+    iconContainer: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
+    dangerIconContainer: {
+      backgroundColor: `${theme.colors.danger}18`,
+    },
     rowDivider: {
       backgroundColor: theme.colors.border,
       height: 1,
-      marginLeft: theme.spacing.lg,
+      marginLeft: theme.spacing.lg + 40 + theme.spacing.md,
     },
     settingCopy: {
       flex: 1,
