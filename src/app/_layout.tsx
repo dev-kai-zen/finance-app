@@ -17,6 +17,7 @@ import {
   WorkspaceProvider,
 } from "@/modules/onboarding";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
+import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 import { WhatsNewGate } from "@/modules/whats-new";
 
@@ -52,7 +53,8 @@ function RootLayoutContent() {
                       { backgroundColor: theme.colors.background },
                     ]}
                   >
-                    <OnboardingGate>
+                    <AppLockGate>
+                      <OnboardingGate>
                       <WhatsNewGate>
                         <>
                         <ScheduledTransactionsProcessor />
@@ -140,7 +142,8 @@ function RootLayoutContent() {
                         </>
                       </WhatsNewGate>
                     </OnboardingGate>
-                  </SafeAreaView>
+                  </AppLockGate>
+                </SafeAreaView>
                 </HexColorsProvider>
               </WorkspaceProvider>
             </CurrencyPreferencesProvider>

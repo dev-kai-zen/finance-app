@@ -13,6 +13,7 @@ import {
   Languages,
   Palette,
   Pipette,
+  ShieldCheck,
   Sparkles,
   Terminal,
   Trash2,
@@ -22,6 +23,7 @@ import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
+import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
 import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
@@ -64,6 +66,8 @@ export function SettingsScreen() {
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
   const languageValue =
@@ -347,6 +351,36 @@ export function SettingsScreen() {
           ) : null}
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("settings.securitySection")}</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.securityMenuAccessibility")}
+              accessibilityRole="button"
+              onPress={() => setIsSecurityOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <ShieldCheck color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.securityMenuTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {security.config.isPasswordSet
+                    ? t("settings.securityMenuSubtitleConfigured")
+                    : t("settings.securityMenuSubtitleNotConfigured")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
         {experience.developerMode ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
@@ -483,6 +517,14 @@ export function SettingsScreen() {
           title={t("settings.defaultIncomeTitle")}
         />
       ) : null}
+
+      <SecuritySettingsModal
+        onClose={() => {
+          setIsSecurityOpen(false);
+          void security.refresh();
+        }}
+        visible={isSecurityOpen}
+      />
     </PageContainer>
   );
 }
