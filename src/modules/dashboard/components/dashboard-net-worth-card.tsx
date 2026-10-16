@@ -6,7 +6,7 @@ import {
   Eye,
   EyeOff,
   LayoutGrid,
-  Network,
+  Settings2,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -127,7 +127,7 @@ export function DashboardNetWorthCard({
                 pressed && styles.buttonPressed,
               ]}
             >
-              <Network color={theme.colors.textSecondary} size={20} />
+              <Settings2 color={theme.colors.textSecondary} size={20} />
             </Pressable>
           ) : null}
           <Pressable
