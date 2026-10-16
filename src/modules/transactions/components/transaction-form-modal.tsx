@@ -33,7 +33,10 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
   AccountPickerModal,
   accountColor,
+  checkMaintainingBalance,
+  MaintainingBalanceWarningModal,
   type AccountListItem,
+  type MaintainingBalanceCheckResult,
   type PocketListItem,
 } from "@/modules/accounts";
 import { CategoryFormModal } from "@/modules/categories/components/category-form-modal";
@@ -45,8 +48,11 @@ import {
   type CategoryType,
 } from "@/modules/categories";
 import {
+  checkCreditLimitExceeded,
+  CreditLimitWarningModal,
   previewInstallmentPlan,
   useInstallmentPlanEditState,
+  type CreditLimitCheckResult,
 } from "@/modules/credit-cards";
 import { useDefaultAccounts, useExperiencePreferences } from "@/modules/settings";
 import { useResolveEntityColor } from "@/modules/hex-colors";
@@ -427,6 +433,14 @@ export function TransactionFormModal({
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
+  const [pendingCreditLimitWarning, setPendingCreditLimitWarning] =
+    useState<CreditLimitCheckResult | null>(null);
+  const [isCreditLimitWarningOpen, setIsCreditLimitWarningOpen] =
+    useState(false);
+  const [pendingMaintainingWarning, setPendingMaintainingWarning] =
+    useState<MaintainingBalanceCheckResult | null>(null);
+  const [isMaintainingWarningOpen, setIsMaintainingWarningOpen] =
+    useState(false);
   const [focusedFieldType, setFocusedFieldType] = useState<
     "normal" | "description" | null
   >(null);
@@ -1211,7 +1225,27 @@ export function TransactionFormModal({
     setLocalError(null);
   };
 
-  const handleSave = async (bypassBudgetCheck: boolean = false) => {
+  const handleSave = async (
+    bypassInput:
+      | boolean
+      | {
+          bypassBudget?: boolean;
+          bypassCreditLimit?: boolean;
+          bypassMaintainingBalance?: boolean;
+        } = false,
+  ) => {
+    const bypassBudgetCheck =
+      typeof bypassInput === "boolean"
+        ? bypassInput
+        : Boolean(bypassInput?.bypassBudget);
+    const bypassCreditLimitCheck =
+      typeof bypassInput === "boolean"
+        ? bypassInput
+        : Boolean(bypassInput?.bypassCreditLimit);
+    const bypassMaintainingBalanceCheck =
+      typeof bypassInput === "boolean"
+        ? bypassInput
+        : Boolean(bypassInput?.bypassMaintainingBalance);
     if (amountMinorUnits <= 0) {
       setLocalError("Please enter an amount greater than zero.");
       return;
@@ -1363,39 +1397,73 @@ export function TransactionFormModal({
         }
       }
 
-      if (
-        !bypassBudgetCheck &&
-        mode === "expense" &&
-        amountMinorUnits > 0
-      ) {
-        const budgetLines = activeSplit
-          ? splitLines
-          : selectedCategoryId
-            ? [
-                {
-                  categoryId: selectedCategoryId,
-                  amountMinorUnits: postedExpenseMinorUnitsAbs,
-                },
-              ]
-            : [];
-        for (const line of budgetLines) {
-          const budgetCheck = checkBudgetExceeded({
-            categoryId: line.categoryId,
-            amountMinorUnits: line.amountMinorUnits,
-            expenseCurrencyCode: accountCurrencyCode,
+      if (mode === "expense" && amountMinorUnits > 0) {
+        if (!bypassCreditLimitCheck && selectedAccount?.creditCardDetails) {
+          const creditCheck = checkCreditLimitExceeded({
+            accountId: selectedAccountId,
+            expenseAmountMinorUnits: postedExpenseMinorUnitsAbs,
+            excludeTransactionId:
+              isEditing && initialTransaction ? initialTransaction.id : null,
             occurredAt: transactionOccurredAt,
+          });
+          if (creditCheck.hasCreditCard && creditCheck.exceeds) {
+            setPendingCreditLimitWarning(creditCheck);
+            setIsCreditLimitWarningOpen(true);
+            return;
+          }
+        }
+
+        if (
+          !bypassMaintainingBalanceCheck &&
+          selectedAccount?.maintainingBalanceMinorUnits != null &&
+          selectedAccount.maintainingBalanceMinorUnits > 0
+        ) {
+          const maintainingCheck = checkMaintainingBalance({
+            accountId: selectedAccountId,
+            expenseAmountMinorUnits: postedExpenseMinorUnitsAbs,
             excludeTransactionId:
               isEditing && initialTransaction ? initialTransaction.id : null,
           });
           if (
-            budgetCheck.hasBudget &&
-            budgetCheck.isEnabled &&
-            budgetCheck.exceeds &&
-            budgetCheck.notifyOnExceeded
+            maintainingCheck.hasMaintainingBalance &&
+            maintainingCheck.isUnderMaintaining
           ) {
-            setPendingBudgetWarning(budgetCheck);
-            setIsBudgetWarningOpen(true);
+            setPendingMaintainingWarning(maintainingCheck);
+            setIsMaintainingWarningOpen(true);
             return;
+          }
+        }
+
+        if (!bypassBudgetCheck) {
+          const budgetLines = activeSplit
+            ? splitLines
+            : selectedCategoryId
+              ? [
+                  {
+                    categoryId: selectedCategoryId,
+                    amountMinorUnits: postedExpenseMinorUnitsAbs,
+                  },
+                ]
+              : [];
+          for (const line of budgetLines) {
+            const budgetCheck = checkBudgetExceeded({
+              categoryId: line.categoryId,
+              amountMinorUnits: line.amountMinorUnits,
+              expenseCurrencyCode: accountCurrencyCode,
+              occurredAt: transactionOccurredAt,
+              excludeTransactionId:
+                isEditing && initialTransaction ? initialTransaction.id : null,
+            });
+            if (
+              budgetCheck.hasBudget &&
+              budgetCheck.isEnabled &&
+              budgetCheck.exceeds &&
+              budgetCheck.notifyOnExceeded
+            ) {
+              setPendingBudgetWarning(budgetCheck);
+              setIsBudgetWarningOpen(true);
+              return;
+            }
           }
         }
       }
@@ -1460,9 +1528,34 @@ export function TransactionFormModal({
     }
   };
 
+  const handleProceedCreditLimit = async () => {
+    setIsCreditLimitWarningOpen(false);
+    await handleSave({ bypassCreditLimit: true });
+  };
+
+  const handleCancelCreditLimit = () => {
+    setIsCreditLimitWarningOpen(false);
+  };
+
+  const handleProceedMaintaining = async () => {
+    setIsMaintainingWarningOpen(false);
+    await handleSave({
+      bypassCreditLimit: true,
+      bypassMaintainingBalance: true,
+    });
+  };
+
+  const handleCancelMaintaining = () => {
+    setIsMaintainingWarningOpen(false);
+  };
+
   const handleProceedOverBudget = async () => {
     setIsBudgetWarningOpen(false);
-    await handleSave(true);
+    await handleSave({
+      bypassCreditLimit: true,
+      bypassMaintainingBalance: true,
+      bypassBudget: true,
+    });
   };
 
   const handleCancelOverBudget = () => {
@@ -2902,6 +2995,22 @@ export function TransactionFormModal({
         title={localError ? "Check transaction details" : "Unable to save transaction"}
         variant={localError ? "warning" : "error"}
         visible={visible && Boolean(displayError)}
+      />
+
+      <CreditLimitWarningModal
+        onCancel={handleCancelCreditLimit}
+        onProceed={handleProceedCreditLimit}
+        pending={pending}
+        result={pendingCreditLimitWarning}
+        visible={isCreditLimitWarningOpen}
+      />
+
+      <MaintainingBalanceWarningModal
+        onCancel={handleCancelMaintaining}
+        onProceed={handleProceedMaintaining}
+        pending={pending}
+        result={pendingMaintainingWarning}
+        visible={isMaintainingWarningOpen}
       />
 
       <OverBudgetWarningModal

@@ -65,6 +65,18 @@ export const previewInstallmentPlan = deferFunction(
       .previewInstallmentPlan,
 ) as typeof import("./services/preview-installment-plan.service").previewInstallmentPlan;
 
+export const CreditLimitWarningModal = deferComponent(
+  () =>
+    require("./components/credit-limit-warning-modal").CreditLimitWarningModal,
+  "CreditLimitWarningModal",
+) as typeof import("./components/credit-limit-warning-modal").CreditLimitWarningModal;
+
+export const checkCreditLimitExceeded = deferFunction(
+  () =>
+    require("./services/check-credit-limit-exceeded.service")
+      .checkCreditLimitExceeded,
+) as typeof import("./services/check-credit-limit-exceeded.service").checkCreditLimitExceeded;
+
 export type {
   CreditCardInstallment,
   CreditCardInstallmentPlan,
@@ -78,6 +90,10 @@ export type {
   InstallmentPlanEditState,
 } from "./types/credit-card.types";
 export type { InstallmentPlanPreview } from "./services/preview-installment-plan.service";
+export type {
+  CheckCreditLimitInput,
+  CreditLimitCheckResult,
+} from "./services/check-credit-limit-exceeded.service";
 export {
   calculateCreditCardAvailableLimit,
   calculateCreditCardBilled,
