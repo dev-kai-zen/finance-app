@@ -22,3 +22,10 @@ export interface SetPasswordInput {
   newPassword: string;
   currentPassword?: string;
 }
+
+export interface BiometricAuthResult {
+  success: boolean;
+  errorCode?: string;
+  error?: string;
+}
+

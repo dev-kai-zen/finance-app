@@ -374,13 +374,20 @@ export const es = {
     removePasswordButton: "Eliminar",
     biometricSection: "DESBLOQUEO BIOMÉTRICO",
     biometricTitle: "Desbloqueo con %{biometric}",
+    defaultBiometricLabel: "Biometría",
     biometricRequiresPassword:
-      "Configura una contraseña primero para activar %{biometric}",
+      "Crea una contraseña de la app primero para activar el desbloqueo con %{biometric}",
     biometricNoHardware:
       "El sensor biométrico no está disponible en este dispositivo",
     biometricNotEnrolled:
       "No hay huellas registradas. Regístralas en los ajustes del dispositivo",
     biometricDescription: "Desbloquea más rápido usando tu %{biometric}",
+    biometricCancelledFallback:
+      "Escaneo biométrico cancelado. Por favor ingresa tu contraseña para desbloquear.",
+    biometricLockoutFallback:
+      "Demasiados intentos biométricos. Por favor ingresa tu contraseña para desbloquear.",
+    biometricFailedFallback:
+      "La verificación biométrica falló. Inténtalo de nuevo o ingresa tu contraseña.",
     securityNote:
       "Tus credenciales están cifradas en este dispositivo. Cuando está activado, la aplicación se bloquea automáticamente al minimizarla.",
     setPasswordTitle: "Crear contraseña de la app",

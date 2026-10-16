@@ -88,17 +88,22 @@ export function SecuritySettingsModal({
     biometrics.isEnrolled;
 
   const getBiometricSubtitle = () => {
-    if (!config.isPasswordSet) {
-      return t("security.biometricRequiresPassword");
-    }
+    const label =
+      biometrics.biometricLabel || t("security.defaultBiometricLabel");
+
     if (!biometrics.hasHardware) {
       return t("security.biometricNoHardware");
     }
     if (!biometrics.isEnrolled) {
       return t("security.biometricNotEnrolled");
     }
+    if (!config.isPasswordSet) {
+      return t("security.biometricRequiresPassword", {
+        biometric: label,
+      });
+    }
     return t("security.biometricDescription", {
-      biometric: biometrics.biometricLabel,
+      biometric: label,
     });
   };
 
@@ -264,7 +269,9 @@ export function SecuritySettingsModal({
                     <View style={styles.rowCopy}>
                       <Text style={styles.rowTitle}>
                         {t("security.biometricTitle", {
-                          biometric: biometrics.biometricLabel,
+                          biometric:
+                            biometrics.biometricLabel ||
+                            t("security.defaultBiometricLabel"),
                         })}
                       </Text>
                       <Text style={styles.rowSubtitle}>
@@ -273,7 +280,9 @@ export function SecuritySettingsModal({
                     </View>
                     <ThemedSwitch
                       accessibilityLabel={t("security.biometricTitle", {
-                        biometric: biometrics.biometricLabel,
+                        biometric:
+                          biometrics.biometricLabel ||
+                          t("security.defaultBiometricLabel"),
                       })}
                       disabled={!isBiometricEligible && !config.isBiometricsEnabled}
                       onValueChange={handleToggleBiometrics}
@@ -310,7 +319,7 @@ export function SecuritySettingsModal({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "flex-end",
     },

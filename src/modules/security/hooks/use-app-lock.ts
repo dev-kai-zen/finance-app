@@ -104,7 +104,7 @@ export function useAppLock() {
       return { success: true };
     }
 
-    return { success: false, error: auth.error };
+    return { success: false, errorCode: auth.errorCode, error: auth.error };
   }, [config.isBiometricsEnabled, biometrics.hasHardware, biometrics.isEnrolled]);
 
   const lockNow = useCallback(() => {

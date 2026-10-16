@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Eye, EyeOff, Lock, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
@@ -123,17 +124,21 @@ export function PasswordFormModal({
       transparent
       visible={visible}
     >
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        automaticOffset
+        behavior="height"
+        style={styles.keyboardAvoid}
+      >
         <Pressable
           accessibilityLabel={t("common.close")}
           accessibilityRole="button"
           onPress={handleClose}
-          style={styles.backdrop}
+          style={styles.scrim}
         />
         <View
           style={[
-            styles.modalCard,
-            { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+            styles.sheetContainer,
+            { paddingBottom: Math.max(insets.bottom, theme.spacing.md) },
           ]}
         >
           <View style={styles.header}>
@@ -156,6 +161,8 @@ export function PasswordFormModal({
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollList}
           >
             {mode === "remove" ? (
               <Text style={styles.description}>
@@ -265,78 +272,83 @@ export function PasswordFormModal({
             {displayError ? (
               <Text style={styles.errorText}>{displayError}</Text>
             ) : null}
-
-            <View style={styles.actions}>
-              <Pressable
-                accessibilityLabel={t("common.cancel")}
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={handleClose}
-                style={({ pressed }) => [
-                  styles.cancelButton,
-                  pressed && styles.cancelButtonPressed,
-                ]}
-              >
-                <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
-              </Pressable>
-
-              <Pressable
-                accessibilityLabel={buttonLabels[mode]}
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={handleSubmit}
-                style={({ pressed }) => [
-                  styles.submitButton,
-                  mode === "remove" && styles.removeButton,
-                  pressed && styles.submitButtonPressed,
-                  busy && styles.submitButtonDisabled,
-                ]}
-              >
-                {busy ? (
-                  <ActivityIndicator
-                    color={theme.colors.background}
-                    size="small"
-                  />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    {buttonLabels[mode]}
-                  </Text>
-                )}
-              </Pressable>
-            </View>
           </ScrollView>
+
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityLabel={t("common.cancel")}
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={handleClose}
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+              ]}
+            >
+              <Text style={styles.cancelButtonText}>{t("common.cancel")}</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel={buttonLabels[mode]}
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={handleSubmit}
+              style={({ pressed }) => [
+                styles.submitButton,
+                mode === "remove" && styles.removeButton,
+                pressed && styles.submitButtonPressed,
+                busy && styles.submitButtonDisabled,
+              ]}
+            >
+              {busy ? (
+                <ActivityIndicator
+                  color={theme.colors.background}
+                  size="small"
+                />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {buttonLabels[mode]}
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    overlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    keyboardAvoid: {
       flex: 1,
       justifyContent: "flex-end",
     },
-    backdrop: {
+    scrim: {
+      backgroundColor: theme.colors.overlay,
       ...StyleSheet.absoluteFill,
     },
-    modalCard: {
+    sheetContainer: {
       backgroundColor: theme.colors.surface,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      maxHeight: "85%",
-      paddingTop: theme.spacing.lg,
+      borderColor: theme.colors.border,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      borderTopWidth: 1,
+      flexDirection: "column",
+      height: "75%",
+      maxHeight: "75%",
       paddingHorizontal: theme.spacing.lg,
-      ...theme.shadows.card,
+      paddingTop: theme.spacing.lg,
+      width: "100%",
+      ...theme.shadows.modal,
     },
     header: {
       alignItems: "center",
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
       paddingBottom: theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
     },
     headerTitleRow: {
       alignItems: "center",
@@ -359,9 +371,12 @@ function createStyles(theme: AppTheme) {
     closeButton: {
       padding: theme.spacing.xs,
     },
+    scrollList: {
+      flex: 1,
+    },
     scrollContent: {
-      paddingVertical: theme.spacing.lg,
       gap: theme.spacing.lg,
+      paddingVertical: theme.spacing.lg,
     },
     description: {
       color: theme.colors.textSecondary,
@@ -375,8 +390,8 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
-      textTransform: "uppercase",
       letterSpacing: 0.5,
+      textTransform: "uppercase",
     },
     inputContainer: {
       alignItems: "center",
@@ -402,9 +417,12 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
     },
     actions: {
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.md,
-      marginTop: theme.spacing.sm,
+      paddingTop: theme.spacing.md,
     },
     cancelButton: {
       alignItems: "center",

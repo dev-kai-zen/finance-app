@@ -1,6 +1,7 @@
 import * as LocalAuthentication from "expo-local-authentication";
 import { Platform } from "react-native";
 import type {
+  BiometricAuthResult,
   BiometricAuthType,
   BiometricCapabilities,
 } from "../types/security.types";
@@ -80,9 +81,13 @@ export async function getBiometricCapabilities(): Promise<BiometricCapabilities>
 export async function authenticateWithBiometrics(
   promptMessage = "Unlock Kaizen Finance",
   fallbackLabel = "Use Password",
-): Promise<{ success: boolean; error?: string }> {
+): Promise<BiometricAuthResult> {
   if (Platform.OS === "web") {
-    return { success: false, error: "Biometrics not supported on web" };
+    return {
+      success: false,
+      errorCode: "not_available",
+      error: "Biometrics not supported on web",
+    };
   }
 
   try {
@@ -99,11 +104,13 @@ export async function authenticateWithBiometrics(
 
     return {
       success: false,
+      errorCode: result.error,
       error: result.error || "Authentication cancelled",
     };
   } catch (error) {
     return {
       success: false,
+      errorCode: "unknown",
       error: error instanceof Error ? error.message : "Authentication failed",
     };
   }

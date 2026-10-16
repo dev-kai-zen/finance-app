@@ -374,13 +374,20 @@ export const fil = {
     removePasswordButton: "Alisin",
     biometricSection: "BIOMETRIC UNLOCK",
     biometricTitle: "%{biometric} Unlock",
+    defaultBiometricLabel: "Biometrics",
     biometricRequiresPassword:
-      "Mag-set muna ng password para paganahin ang %{biometric}",
+      "Mag-set muna ng password ng app para paganahin ang %{biometric} unlock",
     biometricNoHardware:
       "Walang biometric sensor sa device na ito",
     biometricNotEnrolled:
       "Walang nakarehistrong fingerprint. Magrehistro sa settings ng device",
     biometricDescription: "Mas mabilis na mag-unlock gamit ang iyong %{biometric}",
+    biometricCancelledFallback:
+      "Kinansela ang biometric scan. Mangyaring ilagay ang iyong password para i-unlock.",
+    biometricLockoutFallback:
+      "Masyadong maraming biometric attempt. Mangyaring ilagay ang iyong password para i-unlock.",
+    biometricFailedFallback:
+      "Nabigo ang biometric verification. Pakisubukang muli o ilagay ang iyong password.",
     securityNote:
       "Naka-encrypt ang iyong mga kredensyal sa device na ito. Kapag naka-on, awtomatikong magla-lock ang app kapag na-minimize.",
     setPasswordTitle: "Mag-set ng Password ng App",

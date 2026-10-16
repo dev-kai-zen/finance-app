@@ -34,17 +34,44 @@ export function LockScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const resolveBiometricErrorMessage = (
+    errorCode?: string,
+    rawError?: string,
+  ): string => {
+    const code = (errorCode || rawError || "").toLowerCase();
+    if (
+      code === "user_cancel" ||
+      code === "user_fallback" ||
+      code === "system_cancel" ||
+      code === "app_cancel" ||
+      code === "cancel" ||
+      code.includes("cancel") ||
+      code.includes("fallback")
+    ) {
+      return t("security.biometricCancelledFallback");
+    }
+    if (code === "lockout" || code.includes("lockout")) {
+      return t("security.biometricLockoutFallback");
+    }
+    return t("security.biometricFailedFallback");
+  };
+
   // Automatically trigger biometric unlock when lock screen appears
   useEffect(() => {
     let active = true;
 
     async function promptBiometrics() {
-      if (config.isBiometricsEnabled && biometrics.hasHardware && biometrics.isEnrolled) {
+      if (
+        config.isBiometricsEnabled &&
+        biometrics.hasHardware &&
+        biometrics.isEnrolled
+      ) {
         const result = await unlockWithBiometrics();
         if (!active) return;
-        if (!result.success && result.error && result.error !== "Authentication cancelled") {
-          // If biometric failed with a real error, show feedback
-          setErrorMessage(result.error);
+        if (!result.success) {
+          setErrorMessage(
+            resolveBiometricErrorMessage(result.errorCode, result.error),
+          );
         }
       }
     }
@@ -58,7 +85,12 @@ export function LockScreen() {
       active = false;
       clearTimeout(timer);
     };
-  }, [config.isBiometricsEnabled, biometrics.hasHardware, biometrics.isEnrolled, unlockWithBiometrics]);
+  }, [
+    config.isBiometricsEnabled,
+    biometrics.hasHardware,
+    biometrics.isEnrolled,
+    unlockWithBiometrics,
+  ]);
 
   const handlePasswordSubmit = async () => {
     if (!password) {
@@ -82,8 +114,10 @@ export function LockScreen() {
   const handleBiometricPress = async () => {
     setErrorMessage(null);
     const result = await unlockWithBiometrics();
-    if (!result.success && result.error && result.error !== "Authentication cancelled") {
-      setErrorMessage(result.error);
+    if (!result.success) {
+      setErrorMessage(
+        resolveBiometricErrorMessage(result.errorCode, result.error),
+      );
     }
   };
 

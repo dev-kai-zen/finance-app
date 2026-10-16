@@ -353,10 +353,18 @@ export const en = {
     removePasswordButton: "Remove",
     biometricSection: "BIOMETRIC UNLOCK",
     biometricTitle: "%{biometric} Unlock",
-    biometricRequiresPassword: "Set a password first to enable %{biometric}",
+    defaultBiometricLabel: "Biometrics",
+    biometricRequiresPassword:
+      "Set an app password first to enable %{biometric} unlock",
     biometricNoHardware: "Biometric sensor is not available on this device",
     biometricNotEnrolled: "No fingerprints enrolled. Register in device settings",
     biometricDescription: "Unlock faster using your %{biometric}",
+    biometricCancelledFallback:
+      "Biometric scan cancelled. Please enter your password to unlock.",
+    biometricLockoutFallback:
+      "Too many biometric attempts. Please enter your password to unlock.",
+    biometricFailedFallback:
+      "Biometric verification failed. Please try again or enter your password.",
     securityNote: "Your credentials are encrypted on this device. When enabled, the app locks automatically when you minimize or leave the app.",
     setPasswordTitle: "Set App Password",
     changePasswordTitle: "Change App Password",
