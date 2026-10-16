@@ -255,6 +255,8 @@ export const es = {
     languageDescription: "Puedes cambiarlo cuando quieras en Ajustes.",
     currencyTitle: "¿Qué moneda usas?",
     currencyDescription: "La usaremos para tu primera cuenta y los importes.",
+    currencyHint:
+      "¿No encuentras tu moneda? Puedes agregarla más tarde en Ajustes.",
     accountTitle: "Tu primera cuenta",
     accountDescription: "¿Dónde sueles guardar el dinero que gastas?",
     accountTypeLabel: "TIPO DE CUENTA",

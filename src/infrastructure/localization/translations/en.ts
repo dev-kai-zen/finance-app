@@ -240,6 +240,7 @@ export const en = {
     languageDescription: "You can change this anytime in Settings.",
     currencyTitle: "What money do you use?",
     currencyDescription: "We use this for your first account and amounts.",
+    currencyHint: "Didn't find your currency? You can add it later in Settings.",
     accountTitle: "Your first account",
     accountDescription: "Where do you usually keep money you spend?",
     accountTypeLabel: "ACCOUNT TYPE",

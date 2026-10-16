@@ -354,7 +354,7 @@ test("each recommended account template links to its matching account type", () 
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });
 
-test("guided setup creates one account, essentials categories, and simple preferences", async () => {
+test("guided setup creates one account, all category presets, and simple preferences", async () => {
   const state = await workspace.completeGuidedSetup({
     currencyCode: "USD",
     account: { name: "Wallet", openingAmount: "100", template: "cash" },
@@ -380,8 +380,9 @@ test("guided setup creates one account, essentials categories, and simple prefer
     sqlite.prepare("SELECT value FROM settings WHERE key = 'experience.home'").get().value,
     "simple",
   );
-  assert.ok(
-    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count >= 5,
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
+    DEFAULT_SEED_CATEGORIES.length,
   );
   assert.deepEqual(sqlite.prepare("PRAGMA foreign_key_check").all(), []);
 });

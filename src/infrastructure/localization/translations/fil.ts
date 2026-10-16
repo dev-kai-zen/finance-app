@@ -256,6 +256,8 @@ export const fil = {
     languageDescription: "Maaari mong palitan ito anumang oras sa Settings.",
     currencyTitle: "Anong pera ang ginagamit mo?",
     currencyDescription: "Gagamitin ito sa unang account at mga halaga.",
+    currencyHint:
+      "Hindi mahanap ang iyong pera? Maaari mo itong idagdag mamaya sa Settings.",
     accountTitle: "Unang account mo",
     accountDescription: "Saan mo karaniwang iniingatan ang pera na ginagastos?",
     accountTypeLabel: "URI NG ACCOUNT",
