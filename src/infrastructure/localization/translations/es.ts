@@ -97,6 +97,12 @@ export const es = {
     hexColors: "Colores hexadecimales",
     hexColorsAccessibility:
       "Administrar colores hexadecimales. Hay %{count} colores disponibles.",
+    securitySection: "SEGURIDAD Y PRIVACIDAD",
+    securityMenuTitle: "Contraseña y huella digital",
+    securityMenuSubtitleConfigured: "Protegida · Contraseña activa",
+    securityMenuSubtitleNotConfigured: "No configurada · Toca para configurar",
+    securityMenuAccessibility:
+      "Abrir ajustes de seguridad. Configurar contraseña y desbloqueo biométrico.",
     dangerZone: "ZONA DE PELIGRO",
     resetData: "Restablecer datos",
     resetDataDescription:
@@ -342,5 +348,93 @@ export const es = {
     confirmationAccessibility:
       "Escribe KAIZEN para confirmar el restablecimiento de todos los datos",
     deleteAll: "Eliminar todos los datos",
+  },
+  security: {
+    menuTitle: "Contraseña y huella digital",
+    appLockedTitle: "Kaizen Finance",
+    enterPasswordToUnlock: "Ingresa tu contraseña para desbloquear la aplicación",
+    enterPasswordOrBiometrics:
+      "Usa %{biometric} o ingresa tu contraseña para desbloquear",
+    unlockWithBiometric: "Desbloquear con %{biometric}",
+    tapToScan: "Toca para escanear %{biometric}",
+    passwordPlaceholder: "Ingresa contraseña",
+    hidePassword: "Ocultar contraseña",
+    showPassword: "Ver contraseña",
+    unlockButton: "Desbloquear",
+    enterPassword: "Por favor ingresa tu contraseña.",
+    incorrectPassword: "Contraseña incorrecta. Inténtalo de nuevo.",
+    passwordSection: "CONTRASEÑA",
+    appPassword: "Contraseña de la aplicación",
+    passwordIsConfigured: "Configurada · Protege el acceso a la app",
+    passwordNotConfigured: "No configurada · La app está desbloqueada",
+    badgeActive: "ACTIVO",
+    badgeOff: "DESACTIVADO",
+    setPasswordButton: "Crear contraseña",
+    changePasswordButton: "Cambiar",
+    removePasswordButton: "Eliminar",
+    biometricSection: "DESBLOQUEO BIOMÉTRICO",
+    biometricTitle: "Desbloqueo con %{biometric}",
+    defaultBiometricLabel: "Biometría",
+    setupPasswordToActivate: "Configura contraseña para activar",
+    biometricRequiresPassword:
+      "El desbloqueo biométrico requiere crear una contraseña primero.",
+    biometricNoHardware:
+      "El sensor biométrico no está disponible en este dispositivo",
+    biometricNotEnrolled:
+      "No hay huellas registradas. Regístralas en los ajustes del dispositivo",
+    biometricDescription: "Desbloquea más rápido usando tu %{biometric}",
+    biometricCancelledFallback:
+      "Escaneo biométrico cancelado. Por favor ingresa tu contraseña para desbloquear.",
+    biometricLockoutFallback:
+      "Demasiados intentos biométricos. Por favor ingresa tu contraseña para desbloquear.",
+    biometricFailedFallback:
+      "La verificación biométrica falló. Inténtalo de nuevo o ingresa tu contraseña.",
+    securityNote:
+      "Tus credenciales están cifradas en este dispositivo. Cuando está activado, la aplicación se bloquea automáticamente al minimizarla.",
+    setPasswordTitle: "Crear contraseña de la app",
+    changePasswordTitle: "Cambiar contraseña de la app",
+    removePasswordTitle: "Eliminar contraseña de la app",
+    savePasswordButton: "Guardar contraseña",
+    updatePasswordButton: "Actualizar contraseña",
+    removePasswordWarning:
+      "Eliminar tu contraseña también desactivará el desbloqueo por huella digital. La app ya no se bloqueará al abrirla.",
+    currentPasswordLabel: "Contraseña actual",
+    currentPasswordPlaceholder: "Ingresa contraseña actual",
+    newPasswordLabel: "Nueva contraseña",
+    newPasswordPlaceholder: "Ingresa nueva contraseña (mín. 4 caracteres)",
+    confirmPasswordLabel: "Confirmar contraseña",
+    confirmPasswordPlaceholder: "Vuelve a ingresar la nueva contraseña",
+    enterCurrentPassword: "Por favor ingresa tu contraseña actual.",
+    passwordMinLength: "La contraseña debe tener al menos 4 caracteres.",
+    passwordsDoNotMatch: "Las contraseñas no coinciden.",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    forgotPasswordTitle: "¿Olvidaste tu contraseña?",
+    forgotPasswordSubtitle:
+      "Elige cómo deseas recuperar el acceso a Kaizen Finance.",
+    biometricResetTitle: "Restablecer con %{biometric}",
+    biometricResetDesc:
+      "Escanea tu %{biometric} para crear una nueva contraseña sin ingresar la actual.",
+    verifyBiometricToReset: "Verificar %{biometric} para restablecer",
+    biometricVerifiedBadge: "%{biometric} verificada",
+    verifyWithBiometricToChange:
+      "¿Olvidaste la actual? Verifica con %{biometric}",
+    verifyWithBiometricToRemove:
+      "¿Olvidaste tu contraseña? Eliminar con %{biometric}",
+    emergencyResetSectionTitle: "RECUPERACIÓN DE EMERGENCIA",
+    emergencyResetTitle: "Restablecimiento de emergencia",
+    emergencyResetDesc:
+      "Kaizen Finance funciona 100% sin conexión. Las credenciales se guardan en este dispositivo sin recuperación por correo o nube.",
+    emergencyResetWarning:
+      "Esto eliminará permanentemente todas las cuentas, transacciones, presupuestos, notas y ajustes locales, y quitará el bloqueo.",
+    emergencyResetButton: "Restablecer datos de la app...",
+    emergencyResetConfirmTitle: "¿Restablecer todos los datos?",
+    emergencyResetConfirmDesc:
+      "Esto eliminará permanentemente todos tus datos financieros y quitará el bloqueo. Esta acción no se puede deshacer.",
+    emergencyResetInstruction: "Escribe KAIZEN para confirmar el restablecimiento",
+    emergencyResetAction: "Borrar todo y desbloquear",
+    resetSuccessfulUnlocking: "Contraseña actualizada. Desbloqueando...",
+    setNewPasswordTitle: "Nueva contraseña",
+    setNewPasswordDesc: "Ingresa y confirma tu nueva contraseña.",
+    saveAndUnlockButton: "Guardar y desbloquear",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

@@ -85,6 +85,12 @@ export const en = {
     sourceManagementSection: "SOURCE MANAGEMENT",
     hexColors: "Hex Colors",
     hexColorsAccessibility: "Manage hex colors. %{count} colors available.",
+    securitySection: "SECURITY & PRIVACY",
+    securityMenuTitle: "Password & Fingerprint",
+    securityMenuSubtitleConfigured: "Protected · Password active",
+    securityMenuSubtitleNotConfigured: "Not set · Tap to set up",
+    securityMenuAccessibility:
+      "Open security settings. Configure password and biometric unlock.",
     dangerZone: "DANGER ZONE",
     resetData: "Reset Data",
     resetDataDescription:
@@ -149,8 +155,10 @@ export const en = {
     fieldNamePlaceholder: "Canadian Dollar",
     fieldSymbol: "Symbol",
     fieldDecimalPlaces: "Decimal places",
-    fieldDecimalPlacesHint: "Whole number from 0 to 3 (e.g. 2 for cents, 0 for yen, 3 for dinar).",
-    builtinEditHint: "Built-in currencies: you can only change decimal places before use.",
+    fieldDecimalPlacesHint:
+      "Whole number from 0 to 3 (e.g. 2 for cents, 0 for yen, 3 for dinar).",
+    builtinEditHint:
+      "Built-in currencies: you can only change decimal places before use.",
     deleteTitle: "Delete currency",
     deleteAction: "Delete",
     deleteCurrency: "Delete currency",
@@ -164,7 +172,8 @@ export const en = {
       "Choose the currency used for combined totals and new accounts.",
     searchCurrencies: "Search by currency name or code",
     noCurrenciesFound: "No currencies match your search.",
-    negativeNumberDescription: "Choose how negative amount values are displayed.",
+    negativeNumberDescription:
+      "Choose how negative amount values are displayed.",
     decimalFormatDescription:
       "Choose the thousands and decimal separator format.",
     helpTitle: "About Currency Setup",
@@ -240,7 +249,8 @@ export const en = {
     languageDescription: "You can change this anytime in Settings.",
     currencyTitle: "What money do you use?",
     currencyDescription: "We use this for your first account and amounts.",
-    currencyHint: "Didn't find your currency? You can add it later in Settings.",
+    currencyHint:
+      "Didn't find your currency? You can add it later in Settings.",
     accountTitle: "Your first account",
     accountDescription: "Where do you usually keep money you spend?",
     accountTypeLabel: "ACCOUNT TYPE",
@@ -319,10 +329,97 @@ export const en = {
     title: "Reset all data?",
     message:
       "This permanently deletes your accounts, transactions, budgets, goals, notes, settings, attachments, and app-managed local backups from this device.",
-    externalNote: "Exported files and Google Drive backups will not be deleted.",
+    externalNote:
+      "Exported files and Google Drive backups will not be deleted.",
     confirmationInstruction: "Type KAIZEN to confirm",
     confirmationAccessibility: "Type KAIZEN to confirm resetting all data",
     deleteAll: "Delete all data",
+  },
+  security: {
+    menuTitle: "Password & Fingerprint",
+    appLockedTitle: "Kaizen Finance",
+    enterPasswordToUnlock: "Enter your password to unlock the app",
+    enterPasswordOrBiometrics:
+      "Use %{biometric} or enter your password to unlock",
+    unlockWithBiometric: "Unlock with %{biometric}",
+    tapToScan: "Tap to scan %{biometric}",
+    passwordPlaceholder: "Enter password",
+    hidePassword: "Hide password",
+    showPassword: "Show password",
+    unlockButton: "Unlock",
+    enterPassword: "Enter your password.",
+    incorrectPassword: "Incorrect password. Please try again.",
+    passwordSection: "PASSWORD",
+    appPassword: "App Password",
+    passwordIsConfigured: "Configured · Protects app access",
+    passwordNotConfigured: "Not set · App is currently unlocked",
+    badgeActive: "SET",
+    badgeOff: "OFF",
+    setPasswordButton: "Set Password",
+    changePasswordButton: "Change",
+    removePasswordButton: "Remove",
+    biometricSection: "BIOMETRIC UNLOCK",
+    biometricTitle: "%{biometric} Unlock",
+    defaultBiometricLabel: "Biometrics",
+    setupPasswordToActivate: "Set up Password to activate",
+    biometricRequiresPassword:
+      "Biometric unlock requires an app password to be set first.",
+    biometricNoHardware: "Biometric sensor is not available on this device",
+    biometricNotEnrolled:
+      "No fingerprints enrolled. Register in device settings",
+    biometricDescription: "Unlock faster using your %{biometric}",
+    biometricCancelledFallback:
+      "Biometric scan cancelled. Please enter your password to unlock.",
+    biometricLockoutFallback:
+      "Too many biometric attempts. Please enter your password to unlock.",
+    biometricFailedFallback:
+      "Biometric verification failed. Please try again or enter your password.",
+    securityNote:
+      "Your credentials are encrypted on this device. When enabled, the app locks automatically when you minimize or leave the app.",
+    setPasswordTitle: "Set App Password",
+    changePasswordTitle: "Change App Password",
+    removePasswordTitle: "Remove App Password",
+    savePasswordButton: "Save Password",
+    updatePasswordButton: "Update Password",
+    removePasswordWarning:
+      "Removing your password will also disable fingerprint unlock. The app will no longer be locked on startup.",
+    currentPasswordLabel: "Current Password",
+    currentPasswordPlaceholder: "Enter current password",
+    newPasswordLabel: "New Password",
+    newPasswordPlaceholder: "Enter new password (min. 4 characters)",
+    confirmPasswordLabel: "Confirm Password",
+    confirmPasswordPlaceholder: "Re-enter new password",
+    enterCurrentPassword: "Enter your current password.",
+    passwordMinLength: "Password must be at least 4 characters.",
+    passwordsDoNotMatch: "Passwords do not match.",
+    forgotPassword: "Forgot password?",
+    forgotPasswordTitle: "Forgot Password?",
+    forgotPasswordSubtitle:
+      "Choose how you want to recover access to Kaizen Finance.",
+    biometricResetTitle: "Reset with %{biometric}",
+    biometricResetDesc:
+      "Scan your %{biometric} to set a new password without entering your current one.",
+    verifyBiometricToReset: "Verify %{biometric} to Reset",
+    biometricVerifiedBadge: "%{biometric} verified",
+    verifyWithBiometricToChange:
+      "Forgot current password? Verify with %{biometric}",
+    verifyWithBiometricToRemove: "Forgot password? Remove with %{biometric}",
+    emergencyResetSectionTitle: "EMERGENCY RECOVERY",
+    emergencyResetTitle: "Emergency Reset App Data",
+    emergencyResetDesc:
+      "Kaizen Finance is 100% offline-first. Credentials are stored securely on this device without cloud recovery or email reset.",
+    emergencyResetWarning:
+      "This permanently deletes all accounts, transactions, budgets, notes, and local settings, and removes the password lock.",
+    emergencyResetButton: "Reset App Data",
+    emergencyResetConfirmTitle: "Emergency Reset All Data?",
+    emergencyResetConfirmDesc:
+      "This will permanently delete all your financial data and remove the app lock. This action cannot be undone.",
+    emergencyResetInstruction: "Type KAIZEN to confirm reset",
+    emergencyResetAction: "Erase All Data & Unlock",
+    resetSuccessfulUnlocking: "Password updated successfully. Unlocking...",
+    setNewPasswordTitle: "Set New Password",
+    setNewPasswordDesc: "Enter and confirm your new app password.",
+    saveAndUnlockButton: "Save & Unlock",
   },
 } as const;
 

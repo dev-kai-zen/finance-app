@@ -69,7 +69,14 @@
             ]
           }
         }
-      ]
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Kaizen Finance to use Face ID to unlock your account."
+        }
+      ],
+      "expo-secure-store"
     ]
   }
 }

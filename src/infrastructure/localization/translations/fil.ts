@@ -97,6 +97,12 @@ export const fil = {
     hexColors: "Mga Hex Color",
     hexColorsAccessibility:
       "Pamahalaan ang mga hex color. %{count} kulay ang available.",
+    securitySection: "SEGURIDAD AT PRIVACY",
+    securityMenuTitle: "Password at Fingerprint",
+    securityMenuSubtitleConfigured: "Protektado · Aktibo ang password",
+    securityMenuSubtitleNotConfigured: "Hindi pa naka-set · I-tap para i-set up",
+    securityMenuAccessibility:
+      "Buksan ang mga setting ng seguridad. I-configure ang password at biometric unlock.",
     dangerZone: "DELIKADONG ZONE",
     resetData: "I-reset ang Data",
     resetDataDescription:
@@ -342,5 +348,93 @@ export const fil = {
     confirmationAccessibility:
       "I-type ang KAIZEN para kumpirmahin ang pag-reset ng lahat ng data",
     deleteAll: "Burahin ang lahat ng data",
+  },
+  security: {
+    menuTitle: "Password at Fingerprint",
+    appLockedTitle: "Kaizen Finance",
+    enterPasswordToUnlock: "Ilagay ang iyong password para i-unlock ang app",
+    enterPasswordOrBiometrics:
+      "Gamitin ang %{biometric} o ilagay ang iyong password para i-unlock",
+    unlockWithBiometric: "I-unlock gamit ang %{biometric}",
+    tapToScan: "I-tap para i-scan ang %{biometric}",
+    passwordPlaceholder: "Ilagay ang password",
+    hidePassword: "Itago ang password",
+    showPassword: "Ipakita ang password",
+    unlockButton: "I-unlock",
+    enterPassword: "Mangyaring ilagay ang iyong password.",
+    incorrectPassword: "Maling password. Pakisubukang muli.",
+    passwordSection: "PASSWORD",
+    appPassword: "Password ng App",
+    passwordIsConfigured: "Naka-configure · Pinoprotektahan ang app",
+    passwordNotConfigured: "Hindi naka-set · Naka-unlock ang app",
+    badgeActive: "NAKA-SET",
+    badgeOff: "WALA",
+    setPasswordButton: "Mag-set ng Password",
+    changePasswordButton: "Palitan",
+    removePasswordButton: "Alisin",
+    biometricSection: "BIOMETRIC UNLOCK",
+    biometricTitle: "%{biometric} Unlock",
+    defaultBiometricLabel: "Biometrics",
+    setupPasswordToActivate: "Mag-set ng Password para i-activate",
+    biometricRequiresPassword:
+      "Kailangan munang mag-set ng password para sa biometric unlock.",
+    biometricNoHardware:
+      "Walang biometric sensor sa device na ito",
+    biometricNotEnrolled:
+      "Walang nakarehistrong fingerprint. Magrehistro sa settings ng device",
+    biometricDescription: "Mas mabilis na mag-unlock gamit ang iyong %{biometric}",
+    biometricCancelledFallback:
+      "Kinansela ang biometric scan. Mangyaring ilagay ang iyong password para i-unlock.",
+    biometricLockoutFallback:
+      "Masyadong maraming biometric attempt. Mangyaring ilagay ang iyong password para i-unlock.",
+    biometricFailedFallback:
+      "Nabigo ang biometric verification. Pakisubukang muli o ilagay ang iyong password.",
+    securityNote:
+      "Naka-encrypt ang iyong mga kredensyal sa device na ito. Kapag naka-on, awtomatikong magla-lock ang app kapag na-minimize.",
+    setPasswordTitle: "Mag-set ng Password ng App",
+    changePasswordTitle: "Palitan ang Password ng App",
+    removePasswordTitle: "Alisin ang Password ng App",
+    savePasswordButton: "I-save ang Password",
+    updatePasswordButton: "I-update ang Password",
+    removePasswordWarning:
+      "Ang pag-alis ng password ay magdi-disable din ng fingerprint unlock. Hindi na magla-lock ang app sa pagsisimula.",
+    currentPasswordLabel: "Kasalukuyang Password",
+    currentPasswordPlaceholder: "Ilagay ang kasalukuyang password",
+    newPasswordLabel: "Bagong Password",
+    newPasswordPlaceholder: "Ilagay ang bagong password (min. 4 na character)",
+    confirmPasswordLabel: "Kumpirmahin ang Password",
+    confirmPasswordPlaceholder: "Ilagay muli ang bagong password",
+    enterCurrentPassword: "Mangyaring ilagay ang iyong kasalukuyang password.",
+    passwordMinLength: "Dapat hindi bababa sa 4 na character ang password.",
+    passwordsDoNotMatch: "Hindi tugma ang mga password.",
+    forgotPassword: "Nakalimutan ang password?",
+    forgotPasswordTitle: "Nakalimutan ang Password?",
+    forgotPasswordSubtitle:
+      "Pumili kung paano mo gustong ma-recover ang access sa Kaizen Finance.",
+    biometricResetTitle: "I-reset gamit ang %{biometric}",
+    biometricResetDesc:
+      "I-scan ang iyong %{biometric} para magtakda ng bagong password nang hindi inilalagay ang kasalukuyan.",
+    verifyBiometricToReset: "I-verify ang %{biometric} para Mag-reset",
+    biometricVerifiedBadge: "Na-verify ang %{biometric}",
+    verifyWithBiometricToChange:
+      "Nakalimutan ang kasalukuyan? I-verify gamit ang %{biometric}",
+    verifyWithBiometricToRemove:
+      "Nakalimutan ang password? Alisin gamit ang %{biometric}",
+    emergencyResetSectionTitle: "EMERGENCY RECOVERY",
+    emergencyResetTitle: "Emergency Reset ng App Data",
+    emergencyResetDesc:
+      "Ang Kaizen Finance ay 100% offline-first. Ligtas na nakaimbak ang credentials sa device na ito nang walang cloud recovery o email reset.",
+    emergencyResetWarning:
+      "Permanenteng buburahin nito ang lahat ng account, transaksyon, budget, tala, at local settings, at aalisin ang lock.",
+    emergencyResetButton: "I-reset ang App Data...",
+    emergencyResetConfirmTitle: "I-reset ang Lahat ng Data?",
+    emergencyResetConfirmDesc:
+      "Permanenteng buburahin nito ang lahat ng iyong financial data at aalisin ang lock ng app. Hindi na ito maibabalik.",
+    emergencyResetInstruction: "I-type ang KAIZEN para kumpirmahin ang pag-reset",
+    emergencyResetAction: "Burahin Lahat at I-unlock",
+    resetSuccessfulUnlocking: "Matagumpay na na-update ang password. Nag-a-unlock...",
+    setNewPasswordTitle: "Magtakda ng Bagong Password",
+    setNewPasswordDesc: "Ilagay at kumpirmahin ang iyong bagong password ng app.",
+    saveAndUnlockButton: "I-save at I-unlock",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;
