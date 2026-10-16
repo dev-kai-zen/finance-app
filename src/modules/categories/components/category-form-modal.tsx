@@ -317,14 +317,32 @@ export function CategoryFormModal({
             </Pressable>
 
             <Pressable
-              accessibilityLabel={pending ? "Saving..." : "Save Category"}
+              accessibilityLabel={
+                pending
+                  ? "Saving..."
+                  : isSubcategory
+                    ? categoryToEdit
+                      ? "Update Subcategory"
+                      : "Create Subcategory"
+                    : categoryToEdit
+                      ? "Update Category"
+                      : "Create Category"
+              }
               accessibilityRole="button"
               disabled={pending}
               onPress={handleSave}
               style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
             >
               <Text style={styles.saveBtnText}>
-                {pending ? "Saving..." : "Save Category"}
+                {pending
+                  ? "Saving..."
+                  : isSubcategory
+                    ? categoryToEdit
+                      ? "Update Subcategory"
+                      : "Create Subcategory"
+                    : categoryToEdit
+                      ? "Update Category"
+                      : "Create Category"}
               </Text>
             </Pressable>
           </View>
@@ -375,8 +393,8 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: 24,
       borderWidth: 1,
       flexDirection: "column",
-      flexShrink: 1,
-      maxHeight: "90%",
+      height: "75%",
+      maxHeight: "75%",
       paddingHorizontal: 20,
       paddingTop: 16,
       width: "100%",
@@ -387,7 +405,7 @@ function createStyles(theme: AppTheme) {
       borderRadius: 24,
       marginBottom: "auto",
       marginTop: "auto",
-      maxWidth: 460,
+      maxWidth: 480,
     },
     headerRow: {
       alignItems: "center",

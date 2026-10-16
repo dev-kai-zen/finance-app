@@ -39,8 +39,8 @@ import {
   type MaintainingBalanceCheckResult,
   type PocketListItem,
 } from "@/modules/accounts";
-import { CategoryFormModal } from "@/modules/categories/components/category-form-modal";
 import {
+  CategoryFormModal,
   CategoryPickerModal,
   resolveDefaultTransactionCategoryId,
   useCategories,
