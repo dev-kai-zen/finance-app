@@ -83,6 +83,25 @@
           "icon": "./assets/finance-app-logo.png",
           "color": "#11231E"
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "QuickExpenseWidget",
+              "label": "Quick Expense",
+              "minWidth": "140dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 1,
+              "description": "Quickly record an expense transaction in Kaizen Finance",
+              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
       ]
     ]
   }

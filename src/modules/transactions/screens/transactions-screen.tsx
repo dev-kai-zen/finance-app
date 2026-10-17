@@ -112,11 +112,15 @@ function initialFilterState(accountId?: string): TransactionFilterState {
   };
 }
 
+export interface TransactionsScreenProps {
+  initialAccountId?: string;
+  initialAction?: string;
+}
+
 export function TransactionsScreen({
   initialAccountId,
-}: {
-  initialAccountId?: string;
-} = {}) {
+  initialAction,
+}: TransactionsScreenProps = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -183,6 +187,14 @@ export function TransactionsScreen({
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      setIsEditingTransaction(false);
+      setPrefilledTransaction(null);
+      setIsFormModalOpen(true);
+    }
+  }, [initialAction]);
 
   useEffect(() => {
     setInspectedTransaction((current) =>
