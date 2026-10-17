@@ -23,6 +23,7 @@ import { AppButton, ModalScreenHeader, ThemedSwitch } from "@/components";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { TransactionDateTimePickerModal } from "@/modules/transactions";
 import { ReminderLeadDaysSelector } from "../components/reminder-lead-days-selector";
 import { useNotificationPermission } from "../hooks/use-notification-permission";
@@ -38,6 +39,7 @@ type ActivePickerTarget =
 export function ReminderSettingsScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { hasPermission, openSettings, requestPermission } =
     useNotificationPermission();
   const { settings, toggleLeadDay, updateSetting } = useNotificationSettings();
@@ -110,7 +112,10 @@ export function ReminderSettingsScreen() {
 
   return (
     <View style={styles.screenWrapper}>
-      <ModalScreenHeader title="Reminder Settings" />
+      <ModalScreenHeader
+        backAccessibilityLabel={t("common.goBack")}
+        title={t("settings.remindersTitle", { defaultValue: "Reminder Settings" })}
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
