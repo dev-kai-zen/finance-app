@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { PageContainer } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -20,53 +20,26 @@ export function ReportsScreen() {
       scrollable={true}
       contentContainerStyle={styles.pageContent}
     >
-      <View style={styles.card}>
-        <ReportsTabBar
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-        />
+      <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-        {activeTab === "balance-sheet" ? (
-          <BalanceSheetReport />
-        ) : null}
+      {activeTab === "balance-sheet" ? <BalanceSheetReport /> : null}
 
-        {activeTab === "income-expense" ? (
-          <IncomeExpenseReport />
-        ) : null}
+      {activeTab === "income-expense" ? <IncomeExpenseReport /> : null}
 
-        {activeTab === "cash-flow" ? (
-          <CashFlowReport />
-        ) : null}
+      {activeTab === "cash-flow" ? <CashFlowReport /> : null}
 
-        {activeTab === "net-worth" ? (
-          <NetWorthGrowthReport />
-        ) : null}
+      {activeTab === "net-worth" ? <NetWorthGrowthReport /> : null}
 
-        {activeTab === "labels-summary" ? (
-          <LabelsSummaryReport />
-        ) : null}
-      </View>
+      {activeTab === "labels-summary" ? <LabelsSummaryReport /> : null}
     </PageContainer>
   );
 }
 
-function createStyles(theme: AppTheme) {
+function createStyles(_theme: AppTheme) {
   return StyleSheet.create({
     pageContent: {
       paddingTop: 8,
       paddingBottom: 32,
-    },
-    card: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: 14,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      overflow: "hidden",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 6,
-      elevation: 2,
     },
   });
 }
