@@ -502,9 +502,12 @@ export function TransactionsScreen({
             />
             <TextInput
               accessibilityLabel="Search transactions"
+              multiline={false}
+              numberOfLines={1}
               onChangeText={setSearchQuery}
-              placeholder="Search description, payee, notes..."
+              placeholder="Search transactions..."
               placeholderTextColor={theme.colors.textMuted}
+              returnKeyType="search"
               style={styles.searchInput}
               value={searchQuery}
             />
@@ -871,7 +874,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flex: 1,
       flexDirection: "row",
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: LAYOUT_DIMENSIONS.minTouchTarget,
       paddingHorizontal: theme.spacing.md,
       ...theme.shadows.card,
     },
@@ -882,7 +885,9 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       flex: 1,
       fontSize: theme.typography.fontSize.sm,
-      paddingVertical: theme.spacing.sm,
+      includeFontPadding: false,
+      paddingVertical: theme.spacing.xs,
+      textAlignVertical: "center",
     },
     clearButton: {
       padding: theme.spacing.xs,

@@ -38,7 +38,7 @@ export function ReportsScreen() {
 function createStyles(_theme: AppTheme) {
   return StyleSheet.create({
     pageContent: {
-      paddingTop: 8,
+      paddingHorizontal: 0,
       paddingBottom: 32,
     },
   });
