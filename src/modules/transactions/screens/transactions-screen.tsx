@@ -102,7 +102,21 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
   return { key, label };
 }
 
-export function TransactionsScreen() {
+function initialFilterState(accountId?: string): TransactionFilterState {
+  if (!accountId) {
+    return DEFAULT_TRANSACTION_FILTERS;
+  }
+  return {
+    ...DEFAULT_TRANSACTION_FILTERS,
+    accountIds: [accountId],
+  };
+}
+
+export function TransactionsScreen({
+  initialAccountId,
+}: {
+  initialAccountId?: string;
+} = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -148,10 +162,16 @@ export function TransactionsScreen() {
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterState, setFilterState] = useState<TransactionFilterState>(
-    DEFAULT_TRANSACTION_FILTERS,
+  const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
+    initialFilterState(initialAccountId),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
+
+  useEffect(() => {
+    if (initialAccountId) {
+      setFilterState(initialFilterState(initialAccountId));
+    }
+  }, [initialAccountId]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);

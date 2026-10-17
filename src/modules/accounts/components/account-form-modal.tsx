@@ -6,7 +6,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { ChevronRight, Lock, Trash2 } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { ChevronRight, LayoutList, Lock, Trash2 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -26,6 +27,7 @@ import {
   CurrencyPickerModal,
   useCurrencyPreferences,
 } from "@/modules/currencies";
+import { AccountAmountText } from "@/modules/accounts/components/account-amount-text";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
@@ -110,6 +112,7 @@ export function AccountFormModal({
   typeMutations?: AccountMutations;
 }) {
   const theme = useAppTheme();
+  const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const initialCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
@@ -415,6 +418,17 @@ export function AccountFormModal({
         setConfirmAction("archive");
       }
     }
+  };
+
+  const handleViewTransactions = () => {
+    if (!account) {
+      return;
+    }
+    onClose();
+    router.push({
+      pathname: "/transactions",
+      params: { accountId: account.id },
+    });
   };
 
   return (
@@ -774,6 +788,30 @@ export function AccountFormModal({
                 For months with fewer days, billing dates use the last day of
                 the month.
               </Text>
+            </View>
+          ) : null}
+
+          {account ? (
+            <View style={styles.balanceFooter}>
+              <Text style={styles.fieldLabel}>Latest Balance</Text>
+              <AccountAmountText
+                amountMinorUnits={account.currentBalanceMinorUnits}
+                currencyCode={account.currencyCode}
+                variant="title"
+              />
+              <Pressable
+                accessibilityLabel={`List of transactions for ${account.name}`}
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={handleViewTransactions}
+                style={({ pressed }) => [
+                  styles.transactionsChip,
+                  pressed && styles.transactionsChipPressed,
+                ]}
+              >
+                <LayoutList color={theme.colors.textSecondary} size={14} />
+                <Text style={styles.transactionsChipText}>List of Transactions</Text>
+              </Pressable>
             </View>
           ) : null}
 
@@ -1173,6 +1211,37 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: 12,
       fontWeight: "600",
+    },
+    balanceFooter: {
+      alignItems: "flex-start",
+      borderColor: theme.colors.border,
+      borderTopWidth: 1,
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.lg,
+      paddingTop: theme.spacing.lg,
+    },
+    transactionsChip: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 32,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 6,
+    },
+    transactionsChipPressed: {
+      backgroundColor: theme.colors.surfaceElevated,
+      borderColor: theme.colors.borderStrong,
+    },
+    transactionsChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.2,
     },
     archivedDeleteContainer: {
       alignItems: "center",
