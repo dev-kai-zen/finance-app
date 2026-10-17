@@ -22,6 +22,12 @@ import {
   triggerTransactionAttachmentSync,
 } from "./transaction-attachments.service";
 
+import {
+  checkAndNotifyBudgetThreshold,
+  checkAndNotifyCreditLimit,
+  checkAndNotifyGoalMilestones,
+} from "@/modules/notifications";
+
 export type RecordTransactionCommand =
   | {
       kind: "transaction";
@@ -59,6 +65,21 @@ export async function recordTransaction(
     });
     finalizeRemovedAttachmentFiles(committed.removed);
     triggerTransactionAttachmentSync();
+
+    if (command.kind === "transaction") {
+      const tx = committed.result as Transaction;
+      if (tx.categoryId) {
+        void checkAndNotifyBudgetThreshold({
+          categoryId: tx.categoryId,
+          occurredAt: tx.occurredAt,
+        });
+      }
+      if (tx.accountId) {
+        void checkAndNotifyCreditLimit(tx.accountId);
+      }
+      void checkAndNotifyGoalMilestones();
+    }
+
     return committed.result;
   } catch (error) {
     await discardPreparedAttachmentChanges(prepared);

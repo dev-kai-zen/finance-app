@@ -76,7 +76,14 @@
           "faceIDPermission": "Allow Kaizen Finance to use Face ID to unlock your account."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/finance-app-logo.png",
+          "color": "#11231E"
+        }
+      ]
     ]
   }
 }

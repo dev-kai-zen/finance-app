@@ -16,6 +16,7 @@ import {
   SampleWorkspaceBanner,
   WorkspaceProvider,
 } from "@/modules/onboarding";
+import { NotificationsReminderProcessor } from "@/modules/notifications";
 import { QuickSyncProcessor } from "@/modules/google-drive-backup";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { AppLockGate } from "@/modules/security";
@@ -34,6 +35,7 @@ function RootLayoutContent() {
     pathname.startsWith("/currency-setup") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
+    pathname.startsWith("/reminder-settings") ||
     pathname.startsWith("/transactions/scheduled");
 
   return (
@@ -62,6 +64,7 @@ function RootLayoutContent() {
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
                         <QuickSyncProcessor />
+                        <NotificationsReminderProcessor />
                         <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
                           <Stack
                             screenOptions={{
@@ -105,6 +108,13 @@ function RootLayoutContent() {
                         />
                         <Stack.Screen
                           name="google-drive-backup"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: false,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="reminder-settings"
                           options={{
                             presentation: "fullScreenModal",
                             headerShown: false,

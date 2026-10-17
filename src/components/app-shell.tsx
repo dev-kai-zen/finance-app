@@ -25,6 +25,8 @@ function getScreenTitle(pathname: string, t: Translate): string {
   if (pathname.startsWith("/currency-setup"))
     return t("navigation.currencySetup");
   if (pathname.startsWith("/language")) return t("navigation.language");
+  if (pathname.startsWith("/reminder-settings"))
+    return t("settings.remindersTitle", { defaultValue: "Reminders" });
   if (pathname.startsWith("/accounts")) return t("navigation.accounts");
   if (pathname.startsWith("/transactions/scheduled"))
     return t("navigation.scheduledTransactions");
@@ -99,6 +101,7 @@ export function AppShell({
     pathname.startsWith("/currency-setup") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
+    pathname.startsWith("/reminder-settings") ||
     pathname.startsWith("/transactions/scheduled")
   ) {
     return <View style={styles.fullScreenModal}>{children}</View>;

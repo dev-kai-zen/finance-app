@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Bell,
   ChevronRight,
   CircleDollarSign,
   Cloud,
@@ -175,6 +176,35 @@ export function SettingsScreen() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.currencySetup")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.remindersAccessibility", {
+                defaultValue: "Configure reminder settings",
+              })}
+              accessibilityRole="button"
+              onPress={() => router.push("/reminder-settings")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Bell color={theme.colors.accent} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.remindersTitle", { defaultValue: "Reminders" })}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.remindersDescription", {
+                    defaultValue: "Daily logging and due bill reminders",
+                  })}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
