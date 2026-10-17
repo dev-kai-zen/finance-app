@@ -89,7 +89,7 @@ function RootLayoutContent() {
                             headerShown: true,
                             title: "Language",
                             headerBackVisible: false,
-                            headerShadowVisible: true,
+                            headerShadowVisible: false,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
                             },
@@ -103,7 +103,7 @@ function RootLayoutContent() {
                             headerShown: true,
                             title: "Currency Setup",
                             headerBackVisible: false,
-                            headerShadowVisible: true,
+                            headerShadowVisible: false,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
                             },
@@ -117,7 +117,7 @@ function RootLayoutContent() {
                             headerShown: true,
                             title: "Local Backup",
                             headerBackVisible: false,
-                            headerShadowVisible: true,
+                            headerShadowVisible: false,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
                             },
@@ -131,7 +131,7 @@ function RootLayoutContent() {
                             headerShown: true,
                             title: "Google Drive Backup",
                             headerBackVisible: false,
-                            headerShadowVisible: true,
+                            headerShadowVisible: false,
                             headerStyle: {
                               backgroundColor: theme.colors.background,
                             },

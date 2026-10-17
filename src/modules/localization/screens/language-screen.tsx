@@ -74,6 +74,7 @@ export function LanguageScreen({
 
   return (
     <View style={styles.screen}>
+      <View style={styles.headerLine} />
       <InfoModal
         message={t("language.helpMessage")}
         onClose={onCloseHelp}
@@ -203,6 +204,11 @@ function createStyles(theme: AppTheme) {
     screen: {
       backgroundColor: theme.colors.background,
       flex: 1,
+    },
+    headerLine: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+      width: "100%",
     },
     content: {
       alignSelf: "center",

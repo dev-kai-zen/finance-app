@@ -104,7 +104,9 @@ export function LocalBackupScreen() {
   };
 
   return (
-    <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
+    <View style={styles.container}>
+      <View style={styles.headerLine} />
+      <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryIcon}>
           <Archive color={theme.colors.primary} size={26} />
@@ -415,6 +417,7 @@ export function LocalBackupScreen() {
         visible={Boolean(backup.notice)}
       />
     </PageContainer>
+    </View>
   );
 }
 
@@ -556,6 +559,15 @@ function formatFileSize(bytes: number): string {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
+    headerLine: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+      width: "100%",
+    },
     page: {
       gap: theme.spacing.xl,
       paddingTop: theme.spacing.lg,

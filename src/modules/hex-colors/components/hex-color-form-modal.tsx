@@ -299,9 +299,12 @@ function createStyles(theme: AppTheme) {
     },
     headerRow: {
       alignItems: "center",
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
       marginBottom: theme.spacing.md,
+      paddingBottom: theme.spacing.md,
     },
     modalTitle: {
       color: theme.colors.textPrimary,

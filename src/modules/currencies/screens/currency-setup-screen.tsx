@@ -78,7 +78,9 @@ export function CurrencySetupScreen({
   };
 
   return (
-    <PageContainer contentContainerStyle={styles.page}>
+    <View style={styles.container}>
+      <View style={styles.headerLine} />
+      <PageContainer contentContainerStyle={styles.page}>
       <View style={styles.card}>
         <SettingRow
           icon={<BadgeDollarSign color={theme.colors.primary} size={24} />}
@@ -192,6 +194,7 @@ export function CurrencySetupScreen({
       />
 
     </PageContainer>
+    </View>
   );
 }
 
@@ -244,6 +247,15 @@ function Divider() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
+    headerLine: {
+      backgroundColor: theme.colors.border,
+      height: 1,
+      width: "100%",
+    },
     page: { gap: theme.spacing.md, paddingTop: theme.spacing.md },
     card: {
       backgroundColor: theme.colors.surface,
