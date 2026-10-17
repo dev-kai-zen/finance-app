@@ -32,6 +32,15 @@ export function subscribeToNotificationResponses(
           case "scheduled-transactions":
             onNavigate("/calendar");
             break;
+          case "reports":
+            onNavigate("/reports");
+            break;
+          case "budgets":
+            onNavigate("/budgets");
+            break;
+          case "goals":
+            onNavigate("/goals");
+            break;
           default:
             break;
         }

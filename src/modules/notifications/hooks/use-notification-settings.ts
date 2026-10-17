@@ -27,8 +27,12 @@ export function useNotificationSettings() {
       // If turning on a reminder, ensure permissions are requested
       if (
         (key === "dailyReminderEnabled" ||
+          key === "monthlySummaryReminderEnabled" ||
           key === "creditCardsReminderEnabled" ||
-          key === "scheduledTransactionsReminderEnabled") &&
+          key === "creditLimitAlertsEnabled" ||
+          key === "scheduledTransactionsReminderEnabled" ||
+          key === "budgetThresholdAlertsEnabled" ||
+          key === "savingsGoalAlertsEnabled") &&
         value === true
       ) {
         const hasPermission = await checkNotificationPermissions();

@@ -29,6 +29,33 @@ export const sendTestNotification = deferFunction(
   () => require("./services/send-test-notification.service").sendTestNotification,
 ) as typeof import("./services/send-test-notification.service").sendTestNotification;
 
+export const checkAndNotifyBudgetThreshold = deferFunction(
+  () =>
+    require("./services/check-instant-alerts.service")
+      .checkAndNotifyBudgetThreshold,
+) as typeof import("./services/check-instant-alerts.service").checkAndNotifyBudgetThreshold;
+
+export const checkAndNotifyCreditLimit = deferFunction(
+  () =>
+    require("./services/check-instant-alerts.service").checkAndNotifyCreditLimit,
+) as typeof import("./services/check-instant-alerts.service").checkAndNotifyCreditLimit;
+
+export const checkAndNotifyGoalMilestones = deferFunction(
+  () =>
+    require("./services/check-instant-alerts.service")
+      .checkAndNotifyGoalMilestones,
+) as typeof import("./services/check-instant-alerts.service").checkAndNotifyGoalMilestones;
+
+export const scheduleMonthlySummary = deferFunction(
+  () =>
+    require("./services/schedule-monthly-summary.service").scheduleMonthlySummary,
+) as typeof import("./services/schedule-monthly-summary.service").scheduleMonthlySummary;
+
+export const scheduleGoalReminders = deferFunction(
+  () =>
+    require("./services/schedule-goal-reminders.service").scheduleGoalReminders,
+) as typeof import("./services/schedule-goal-reminders.service").scheduleGoalReminders;
+
 export const getReminderSettings = deferFunction(
   () =>
     require("./repositories/reminder-settings.repository").getReminderSettings,

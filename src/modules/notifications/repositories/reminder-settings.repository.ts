@@ -43,6 +43,13 @@ export function getReminderSettings(context: DbContext = db): ReminderSettings {
     dailyReminderTime:
       map.get(REMINDER_SETTINGS_KEYS.DAILY_TIME) ||
       DEFAULT_REMINDER_SETTINGS.dailyReminderTime,
+    monthlySummaryReminderEnabled: parseBoolean(
+      map.get(REMINDER_SETTINGS_KEYS.MONTHLY_SUMMARY_ENABLED),
+      DEFAULT_REMINDER_SETTINGS.monthlySummaryReminderEnabled,
+    ),
+    monthlySummaryReminderTime:
+      map.get(REMINDER_SETTINGS_KEYS.MONTHLY_SUMMARY_TIME) ||
+      DEFAULT_REMINDER_SETTINGS.monthlySummaryReminderTime,
     creditCardsReminderEnabled: parseBoolean(
       map.get(REMINDER_SETTINGS_KEYS.CREDIT_CARDS_ENABLED),
       DEFAULT_REMINDER_SETTINGS.creditCardsReminderEnabled,
@@ -54,6 +61,10 @@ export function getReminderSettings(context: DbContext = db): ReminderSettings {
       map.get(REMINDER_SETTINGS_KEYS.CREDIT_CARDS_LEAD_DAYS),
       DEFAULT_REMINDER_SETTINGS.creditCardsLeadDays,
     ),
+    creditLimitAlertsEnabled: parseBoolean(
+      map.get(REMINDER_SETTINGS_KEYS.CREDIT_LIMIT_ENABLED),
+      DEFAULT_REMINDER_SETTINGS.creditLimitAlertsEnabled,
+    ),
     scheduledTransactionsReminderEnabled: parseBoolean(
       map.get(REMINDER_SETTINGS_KEYS.SCHEDULED_TRANSACTIONS_ENABLED),
       DEFAULT_REMINDER_SETTINGS.scheduledTransactionsReminderEnabled,
@@ -64,6 +75,14 @@ export function getReminderSettings(context: DbContext = db): ReminderSettings {
     scheduledTransactionsLeadDays: parseJsonArray(
       map.get(REMINDER_SETTINGS_KEYS.SCHEDULED_TRANSACTIONS_LEAD_DAYS),
       DEFAULT_REMINDER_SETTINGS.scheduledTransactionsLeadDays,
+    ),
+    budgetThresholdAlertsEnabled: parseBoolean(
+      map.get(REMINDER_SETTINGS_KEYS.BUDGET_THRESHOLD_ENABLED),
+      DEFAULT_REMINDER_SETTINGS.budgetThresholdAlertsEnabled,
+    ),
+    savingsGoalAlertsEnabled: parseBoolean(
+      map.get(REMINDER_SETTINGS_KEYS.SAVINGS_GOALS_ENABLED),
+      DEFAULT_REMINDER_SETTINGS.savingsGoalAlertsEnabled,
     ),
   };
 }
@@ -87,6 +106,18 @@ export function saveReminderSettings(
       updated.dailyReminderTime,
     ]);
   }
+  if (updated.monthlySummaryReminderEnabled !== undefined) {
+    entries.push([
+      REMINDER_SETTINGS_KEYS.MONTHLY_SUMMARY_ENABLED,
+      String(updated.monthlySummaryReminderEnabled),
+    ]);
+  }
+  if (updated.monthlySummaryReminderTime !== undefined) {
+    entries.push([
+      REMINDER_SETTINGS_KEYS.MONTHLY_SUMMARY_TIME,
+      updated.monthlySummaryReminderTime,
+    ]);
+  }
   if (updated.creditCardsReminderEnabled !== undefined) {
     entries.push([
       REMINDER_SETTINGS_KEYS.CREDIT_CARDS_ENABLED,
@@ -105,6 +136,12 @@ export function saveReminderSettings(
       JSON.stringify(updated.creditCardsLeadDays),
     ]);
   }
+  if (updated.creditLimitAlertsEnabled !== undefined) {
+    entries.push([
+      REMINDER_SETTINGS_KEYS.CREDIT_LIMIT_ENABLED,
+      String(updated.creditLimitAlertsEnabled),
+    ]);
+  }
   if (updated.scheduledTransactionsReminderEnabled !== undefined) {
     entries.push([
       REMINDER_SETTINGS_KEYS.SCHEDULED_TRANSACTIONS_ENABLED,
@@ -121,6 +158,18 @@ export function saveReminderSettings(
     entries.push([
       REMINDER_SETTINGS_KEYS.SCHEDULED_TRANSACTIONS_LEAD_DAYS,
       JSON.stringify(updated.scheduledTransactionsLeadDays),
+    ]);
+  }
+  if (updated.budgetThresholdAlertsEnabled !== undefined) {
+    entries.push([
+      REMINDER_SETTINGS_KEYS.BUDGET_THRESHOLD_ENABLED,
+      String(updated.budgetThresholdAlertsEnabled),
+    ]);
+  }
+  if (updated.savingsGoalAlertsEnabled !== undefined) {
+    entries.push([
+      REMINDER_SETTINGS_KEYS.SAVINGS_GOALS_ENABLED,
+      String(updated.savingsGoalAlertsEnabled),
     ]);
   }
 

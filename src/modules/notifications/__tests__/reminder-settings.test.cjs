@@ -134,12 +134,17 @@ test("reminder settings: persists and retrieves custom reminder settings and lea
     {
       dailyReminderEnabled: true,
       dailyReminderTime: "21:30",
+      monthlySummaryReminderEnabled: false,
+      monthlySummaryReminderTime: "11:00",
       creditCardsReminderEnabled: true,
       creditCardsReminderTime: "10:00",
       creditCardsLeadDays: [0, 2, 5],
+      creditLimitAlertsEnabled: false,
       scheduledTransactionsReminderEnabled: true,
       scheduledTransactionsReminderTime: "08:15",
       scheduledTransactionsLeadDays: [1, 3, 7],
+      budgetThresholdAlertsEnabled: false,
+      savingsGoalAlertsEnabled: true,
     },
     database,
   );
@@ -147,10 +152,15 @@ test("reminder settings: persists and retrieves custom reminder settings and lea
   const updated = getReminderSettings(database);
   assert.equal(updated.dailyReminderEnabled, true);
   assert.equal(updated.dailyReminderTime, "21:30");
+  assert.equal(updated.monthlySummaryReminderEnabled, false);
+  assert.equal(updated.monthlySummaryReminderTime, "11:00");
   assert.equal(updated.creditCardsReminderEnabled, true);
   assert.equal(updated.creditCardsReminderTime, "10:00");
   assert.deepEqual(updated.creditCardsLeadDays, [0, 2, 5]);
+  assert.equal(updated.creditLimitAlertsEnabled, false);
   assert.equal(updated.scheduledTransactionsReminderEnabled, true);
   assert.equal(updated.scheduledTransactionsReminderTime, "08:15");
   assert.deepEqual(updated.scheduledTransactionsLeadDays, [1, 3, 7]);
+  assert.equal(updated.budgetThresholdAlertsEnabled, false);
+  assert.equal(updated.savingsGoalAlertsEnabled, true);
 });

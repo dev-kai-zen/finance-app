@@ -10,13 +10,17 @@ import {
 } from "react-native";
 import {
   AlertTriangle,
+  BarChart3,
   Bell,
   CalendarClock,
   ChevronRight,
   Clock,
   CreditCard,
+  PieChart,
   Send,
+  ShieldAlert,
   Sparkles,
+  Target,
 } from "lucide-react-native";
 
 import { AppButton, ModalScreenHeader, ThemedSwitch } from "@/components";
@@ -32,6 +36,7 @@ import { sendTestNotification } from "../services/send-test-notification.service
 
 type ActivePickerTarget =
   | "dailyReminderTime"
+  | "monthlySummaryReminderTime"
   | "creditCardsReminderTime"
   | "scheduledTransactionsReminderTime"
   | null;
@@ -62,6 +67,8 @@ export function ReminderSettingsScreen() {
     let timeStr = "09:00";
     if (target === "dailyReminderTime") {
       timeStr = settings.dailyReminderTime;
+    } else if (target === "monthlySummaryReminderTime") {
+      timeStr = settings.monthlySummaryReminderTime;
     } else if (target === "creditCardsReminderTime") {
       timeStr = settings.creditCardsReminderTime;
     } else if (target === "scheduledTransactionsReminderTime") {
@@ -78,7 +85,7 @@ export function ReminderSettingsScreen() {
     const m = date.getMinutes().toString().padStart(2, "0");
     const timeStr = `${h}:${m}`;
 
-    updateSetting(activePicker, timeStr);
+    void updateSetting(activePicker, timeStr);
     setActivePicker(null);
   };
 
@@ -155,10 +162,11 @@ export function ReminderSettingsScreen() {
             </View>
           ) : null}
 
-          {/* Section: Daily Reminders */}
+          {/* Section: Periodic Reminders */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Daily Reminders</Text>
+            <Text style={styles.sectionTitle}>Periodic Reminders</Text>
             <View style={styles.card}>
+              {/* Daily Reminder */}
               <View style={styles.row}>
                 <View style={[styles.iconContainer, styles.dailyIconContainer]}>
                   <Bell color={theme.colors.primary} size={20} />
@@ -194,7 +202,7 @@ export function ReminderSettingsScreen() {
                       <Clock color={theme.colors.textSecondary} size={18} />
                     </View>
                     <View style={styles.settingCopy}>
-                      <Text style={styles.rowTitle}>Reminder Time</Text>
+                      <Text style={styles.rowTitle}>Daily Reminder Time</Text>
                       <Text style={styles.rowSubtitle}>
                         When to send the daily notification
                       </Text>
@@ -208,12 +216,71 @@ export function ReminderSettingsScreen() {
                   </Pressable>
                 </>
               ) : null}
+
+              <View style={styles.rowDivider} />
+
+              {/* Monthly Financial Summary */}
+              <View style={styles.row}>
+                <View
+                  style={[styles.iconContainer, styles.monthlyIconContainer]}
+                >
+                  <BarChart3 color={theme.colors.accent} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.rowTitle}>Monthly Financial Summary</Text>
+                  <Text style={styles.rowSubtitle}>
+                    Overview of savings and spending on the 1st of every month
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Enable monthly financial summary reminder"
+                  onValueChange={(val) => {
+                    void updateSetting("monthlySummaryReminderEnabled", val);
+                  }}
+                  value={settings.monthlySummaryReminderEnabled}
+                />
+              </View>
+
+              {settings.monthlySummaryReminderEnabled ? (
+                <>
+                  <View style={styles.divider} />
+                  <Pressable
+                    accessibilityLabel={`Monthly summary time: ${formatTimeDisplay(settings.monthlySummaryReminderTime)}`}
+                    accessibilityRole="button"
+                    onPress={() =>
+                      setActivePicker("monthlySummaryReminderTime")
+                    }
+                    style={({ pressed }) => [
+                      styles.selectableRow,
+                      pressed && styles.selectableRowPressed,
+                    ]}
+                  >
+                    <View style={styles.iconContainer}>
+                      <Clock color={theme.colors.textSecondary} size={18} />
+                    </View>
+                    <View style={styles.settingCopy}>
+                      <Text style={styles.rowTitle}>Monthly Review Time</Text>
+                      <Text style={styles.rowSubtitle}>
+                        Delivered on the 1st of each month
+                      </Text>
+                    </View>
+                    <View style={styles.timeBadge}>
+                      <Text style={styles.timeBadgeText}>
+                        {formatTimeDisplay(
+                          settings.monthlySummaryReminderTime,
+                        )}
+                      </Text>
+                      <ChevronRight color={theme.colors.textMuted} size={18} />
+                    </View>
+                  </Pressable>
+                </>
+              ) : null}
             </View>
           </View>
 
-          {/* Section: Credit Card Bills */}
+          {/* Section: Credit Card Bills & Limits */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Credit Card Bills</Text>
+            <Text style={styles.sectionTitle}>Credit Card Bills & Limits</Text>
             <View style={styles.card}>
               <View style={styles.row}>
                 <View style={[styles.iconContainer, styles.ccIconContainer]}>
@@ -273,6 +340,29 @@ export function ReminderSettingsScreen() {
                   </View>
                 </>
               ) : null}
+
+              <View style={styles.rowDivider} />
+
+              {/* Credit Limit Alert */}
+              <View style={styles.row}>
+                <View style={[styles.iconContainer, styles.alertIconContainer]}>
+                  <ShieldAlert color={theme.colors.warning} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.rowTitle}>Credit Limit Warnings</Text>
+                  <Text style={styles.rowSubtitle}>
+                    Alert when card utilization crosses 80% or approaches the
+                    credit limit
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Enable credit limit warnings"
+                  onValueChange={(val) => {
+                    void updateSetting("creditLimitAlertsEnabled", val);
+                  }}
+                  value={settings.creditLimitAlertsEnabled}
+                />
+              </View>
             </View>
           </View>
 
@@ -346,6 +436,60 @@ export function ReminderSettingsScreen() {
                   </View>
                 </>
               ) : null}
+            </View>
+          </View>
+
+          {/* Section: Budgets & Goals Alerts */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Budgets & Goals Alerts</Text>
+            <View style={styles.card}>
+              {/* Budget Threshold Warnings */}
+              <View style={styles.row}>
+                <View style={[styles.iconContainer, styles.budgetIconContainer]}>
+                  <PieChart color={theme.colors.danger} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.rowTitle}>
+                    Budget Threshold Warnings
+                  </Text>
+                  <Text style={styles.rowSubtitle}>
+                    Instant alerts when spending reaches 80% or 100% of a
+                    category's monthly budget
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Enable budget threshold warnings"
+                  onValueChange={(val) => {
+                    void updateSetting("budgetThresholdAlertsEnabled", val);
+                  }}
+                  value={settings.budgetThresholdAlertsEnabled}
+                />
+              </View>
+
+              <View style={styles.rowDivider} />
+
+              {/* Savings Goal Alerts */}
+              <View style={styles.row}>
+                <View style={[styles.iconContainer, styles.goalIconContainer]}>
+                  <Target color={theme.colors.primary} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.rowTitle}>
+                    Savings Goals & Deadlines
+                  </Text>
+                  <Text style={styles.rowSubtitle}>
+                    Alerts 7 days before target deadlines and notifications when
+                    reaching milestones (50%, 75%, 100%)
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Enable savings goals alerts"
+                  onValueChange={(val) => {
+                    void updateSetting("savingsGoalAlertsEnabled", val);
+                  }}
+                  value={settings.savingsGoalAlertsEnabled}
+                />
+              </View>
             </View>
           </View>
 
@@ -477,16 +621,32 @@ function createStyles(theme: AppTheme) {
     dailyIconContainer: {
       backgroundColor: `${theme.colors.primary}1A`,
     },
+    monthlyIconContainer: {
+      backgroundColor: `${theme.colors.accent}1A`,
+    },
     ccIconContainer: {
       backgroundColor: `${theme.colors.info}1A`,
     },
+    alertIconContainer: {
+      backgroundColor: `${theme.colors.warning}1A`,
+    },
     schedTxIconContainer: {
       backgroundColor: `${theme.colors.success}1A`,
+    },
+    budgetIconContainer: {
+      backgroundColor: `${theme.colors.danger}1A`,
+    },
+    goalIconContainer: {
+      backgroundColor: `${theme.colors.primary}1A`,
     },
     divider: {
       backgroundColor: theme.colors.border,
       height: 1,
       marginLeft: 66,
+    },
+    rowDivider: {
+      backgroundColor: theme.colors.border,
+      height: 1,
     },
     timeBadge: {
       alignItems: "center",
