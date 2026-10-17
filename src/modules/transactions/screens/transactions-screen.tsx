@@ -102,7 +102,21 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
   return { key, label };
 }
 
-export function TransactionsScreen() {
+function initialFilterState(accountId?: string): TransactionFilterState {
+  if (!accountId) {
+    return DEFAULT_TRANSACTION_FILTERS;
+  }
+  return {
+    ...DEFAULT_TRANSACTION_FILTERS,
+    accountIds: [accountId],
+  };
+}
+
+export function TransactionsScreen({
+  initialAccountId,
+}: {
+  initialAccountId?: string;
+} = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -148,10 +162,16 @@ export function TransactionsScreen() {
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterState, setFilterState] = useState<TransactionFilterState>(
-    DEFAULT_TRANSACTION_FILTERS,
+  const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
+    initialFilterState(initialAccountId),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
+
+  useEffect(() => {
+    if (initialAccountId) {
+      setFilterState(initialFilterState(initialAccountId));
+    }
+  }, [initialAccountId]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -482,9 +502,12 @@ export function TransactionsScreen() {
             />
             <TextInput
               accessibilityLabel="Search transactions"
+              multiline={false}
+              numberOfLines={1}
               onChangeText={setSearchQuery}
-              placeholder="Search description, payee, notes..."
+              placeholder="Search transactions..."
               placeholderTextColor={theme.colors.textMuted}
+              returnKeyType="search"
               style={styles.searchInput}
               value={searchQuery}
             />
@@ -851,7 +874,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flex: 1,
       flexDirection: "row",
-      minHeight: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: LAYOUT_DIMENSIONS.minTouchTarget,
       paddingHorizontal: theme.spacing.md,
       ...theme.shadows.card,
     },
@@ -862,7 +885,9 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       flex: 1,
       fontSize: theme.typography.fontSize.sm,
-      paddingVertical: theme.spacing.sm,
+      includeFontPadding: false,
+      paddingVertical: theme.spacing.xs,
+      textAlignVertical: "center",
     },
     clearButton: {
       padding: theme.spacing.xs,

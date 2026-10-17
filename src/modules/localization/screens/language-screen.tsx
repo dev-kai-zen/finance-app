@@ -11,7 +11,7 @@ import {
 import { Check, Languages, Search, Smartphone } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { InfoModal } from "@/components";
+import { InfoModal, ModalScreenHeader } from "@/components";
 import { getResponsiveGutter, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -33,9 +33,10 @@ export function LanguageScreen({
   helpVisible,
   onCloseHelp,
 }: {
-  helpVisible: boolean;
-  onCloseHelp: () => void;
-}) {
+  helpVisible?: boolean;
+  onCloseHelp?: () => void;
+} = {}) {
+  const [internalHelpVisible, setInternalHelpVisible] = useState(false);
   const [query, setQuery] = useState("");
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -48,6 +49,9 @@ export function LanguageScreen({
     t,
   } = useLocalization();
   const horizontalPadding = getResponsiveGutter(width, theme.spacing);
+
+  const isHelpVisible = helpVisible ?? internalHelpVisible;
+  const handleCloseHelp = onCloseHelp ?? (() => setInternalHelpVisible(false));
 
   const data = useMemo<LanguageListItem[]>(() => {
     const languages = filterLanguages(SUPPORTED_LANGUAGES, query).map(
@@ -74,11 +78,18 @@ export function LanguageScreen({
 
   return (
     <View style={styles.screen}>
+      <ModalScreenHeader
+        backAccessibilityLabel={t("common.goBack")}
+        helpAccessibilityHint={t("language.helpTitle")}
+        helpAccessibilityLabel={t("language.helpTitle")}
+        onPressHelp={() => setInternalHelpVisible(true)}
+        title={t("navigation.language")}
+      />
       <InfoModal
         message={t("language.helpMessage")}
-        onClose={onCloseHelp}
+        onClose={handleCloseHelp}
         title={t("language.helpTitle")}
-        visible={helpVisible}
+        visible={isHelpVisible}
       />
       <FlatList
         ListEmptyComponent={

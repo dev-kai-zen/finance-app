@@ -26,4 +26,5 @@ export * from "./notification-modal";
 export * from "./formatted-currency";
 export * from "./credit-utilization-ring";
 export * from "./calendar-picker";
+export * from "./modal-screen-header";
 export * from "./theme/app-theme-provider";

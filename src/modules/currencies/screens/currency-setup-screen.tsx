@@ -8,7 +8,7 @@ import {
   Minus,
   Palette,
 } from "lucide-react-native";
-import { InfoModal, PageContainer, ThemedSwitch } from "@/components";
+import { InfoModal, ModalScreenHeader, PageContainer, ThemedSwitch } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -33,17 +33,21 @@ export function CurrencySetupScreen({
   helpVisible,
   onCloseHelp,
 }: {
-  helpVisible: boolean;
-  onCloseHelp: () => void;
-}) {
+  helpVisible?: boolean;
+  onCloseHelp?: () => void;
+} = {}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { preferences, updatePreferences } = useCurrencyPreferences();
   const { currencies } = useCurrencies();
+  const [internalHelpVisible, setInternalHelpVisible] = useState(false);
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [catalogVisible, setCatalogVisible] = useState(false);
   const [draft, setDraft] = useState<CurrencyPreferences>(preferences);
+
+  const isHelpVisible = helpVisible ?? internalHelpVisible;
+  const handleCloseHelp = onCloseHelp ?? (() => setInternalHelpVisible(false));
 
   const currencyOptions = useMemo(
     () =>
@@ -78,7 +82,15 @@ export function CurrencySetupScreen({
   };
 
   return (
-    <PageContainer contentContainerStyle={styles.page}>
+    <View style={styles.container}>
+      <ModalScreenHeader
+        backAccessibilityLabel={t("common.goBack")}
+        helpAccessibilityHint={t("currency.helpTitle")}
+        helpAccessibilityLabel={t("currency.helpTitle")}
+        onPressHelp={() => setInternalHelpVisible(true)}
+        title={t("navigation.currencySetup")}
+      />
+      <PageContainer contentContainerStyle={styles.page}>
       <View style={styles.card}>
         <SettingRow
           icon={<BadgeDollarSign color={theme.colors.primary} size={24} />}
@@ -186,12 +198,13 @@ export function CurrencySetupScreen({
 
       <InfoModal
         message={t("currency.helpMessage")}
-        onClose={onCloseHelp}
+        onClose={handleCloseHelp}
         title={t("currency.helpTitle")}
-        visible={helpVisible}
+        visible={isHelpVisible}
       />
 
     </PageContainer>
+    </View>
   );
 }
 
@@ -244,6 +257,10 @@ function Divider() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    container: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
     page: { gap: theme.spacing.md, paddingTop: theme.spacing.md },
     card: {
       backgroundColor: theme.colors.surface,

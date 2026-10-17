@@ -730,6 +730,33 @@ export function TransactionFormModal({
     installmentEditState.plan?.deferredMonths,
   ]);
 
+  useEffect(() => {
+    if (!visible || mode !== "transfer" || feeAccountManuallyChanged) {
+      return;
+    }
+    setFeeAccountId(selectedAccountId);
+    setFeePocketId(selectedPocketId);
+  }, [
+    visible,
+    mode,
+    selectedAccountId,
+    selectedPocketId,
+    feeAccountManuallyChanged,
+  ]);
+
+  const handleFeeEnabledChange = (enabled: boolean) => {
+    setFeeEnabled(enabled);
+    if (
+      enabled &&
+      mode === "transfer" &&
+      !feeAccountManuallyChanged &&
+      selectedAccountId
+    ) {
+      setFeeAccountId(selectedAccountId);
+      setFeePocketId(selectedPocketId);
+    }
+  };
+
   // When mode changes, switch default category, sign, and default account
   const handleModeChange = (newMode: TransactionType) => {
     setMode(newMode);
@@ -1203,6 +1230,11 @@ export function TransactionFormModal({
     setSelectedCategoryId(preset.categoryId ?? "");
     setTransferToAccountId(preset.toAccountId ?? "");
     setTransferToPocketId(preset.toPocketId);
+    if (preset.type === "transfer") {
+      setFeeAccountId(preset.accountId);
+      setFeePocketId(preset.pocketId);
+      setFeeAccountManuallyChanged(false);
+    }
     setAmountMinorUnits(Math.abs(preset.amountMinorUnits ?? 0));
     setAmountSign(
       preset.type === "expense"
@@ -2039,7 +2071,7 @@ export function TransactionFormModal({
                     </View>
                     <Switch
                       accessibilityLabel="Add transfer fee"
-                      onValueChange={setFeeEnabled}
+                      onValueChange={handleFeeEnabledChange}
                       trackColor={{
                         false: theme.colors.borderStrong,
                         true: theme.colors.primary,

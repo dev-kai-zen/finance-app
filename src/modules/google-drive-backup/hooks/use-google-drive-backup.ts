@@ -30,6 +30,9 @@ export function useGoogleDriveBackup() {
     return message ? { variant: "success", message } : null;
   });
   const configurationError = getGoogleDriveConfigurationError();
+  const [isBootstrapping, setIsBootstrapping] = useState(
+    () => configurationError === null,
+  );
 
   const run = useCallback(
     async <T,>(
@@ -60,6 +63,7 @@ export function useGoogleDriveBackup() {
 
     if (configurationError) {
       setOperation("idle");
+      setIsBootstrapping(false);
       return () => {
         active = false;
       };
@@ -82,7 +86,10 @@ export function useGoogleDriveBackup() {
         }
       })
       .finally(() => {
-        if (active) setOperation("idle");
+        if (active) {
+          setOperation("idle");
+          setIsBootstrapping(false);
+        }
       });
 
     return () => {
@@ -144,6 +151,7 @@ export function useGoogleDriveBackup() {
     backups,
     configurationError,
     folderUrl,
+    isBootstrapping,
     notice,
     operation,
     user,

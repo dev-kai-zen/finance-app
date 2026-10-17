@@ -86,56 +86,28 @@ function RootLayoutContent() {
                           name="language"
                           options={{
                             presentation: "fullScreenModal",
-                            headerShown: true,
-                            title: "Language",
-                            headerBackVisible: false,
-                            headerShadowVisible: true,
-                            headerStyle: {
-                              backgroundColor: theme.colors.background,
-                            },
-                            headerTintColor: theme.colors.textPrimary,
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen
                           name="currency-setup"
                           options={{
                             presentation: "fullScreenModal",
-                            headerShown: true,
-                            title: "Currency Setup",
-                            headerBackVisible: false,
-                            headerShadowVisible: true,
-                            headerStyle: {
-                              backgroundColor: theme.colors.background,
-                            },
-                            headerTintColor: theme.colors.textPrimary,
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen
                           name="local-backup"
                           options={{
                             presentation: "fullScreenModal",
-                            headerShown: true,
-                            title: "Local Backup",
-                            headerBackVisible: false,
-                            headerShadowVisible: true,
-                            headerStyle: {
-                              backgroundColor: theme.colors.background,
-                            },
-                            headerTintColor: theme.colors.textPrimary,
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen
                           name="google-drive-backup"
                           options={{
                             presentation: "fullScreenModal",
-                            headerShown: true,
-                            title: "Google Drive Backup",
-                            headerBackVisible: false,
-                            headerShadowVisible: true,
-                            headerStyle: {
-                              backgroundColor: theme.colors.background,
-                            },
-                            headerTintColor: theme.colors.textPrimary,
+                            headerShown: false,
                           }}
                         />
                         <Stack.Screen name="monitor" />

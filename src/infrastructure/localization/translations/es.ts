@@ -213,6 +213,8 @@ export const es = {
     helpTitle: "Acerca de la copia en Google Drive",
     helpMessage:
       "Guarda una copia exportada de tu base de datos financiera en Google Drive y restáurala en otro dispositivo. Conecta tu cuenta, crea copias cuando quieras y elige un archivo guardado al restaurar.",
+    loading: "Cargando copia de Google Drive...",
+    loadingBackups: "Cargando copias de seguridad...",
   },
   language: {
     helpTitle: "Acerca del idioma",
