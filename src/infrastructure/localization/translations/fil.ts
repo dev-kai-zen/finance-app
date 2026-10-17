@@ -213,6 +213,8 @@ export const fil = {
     helpTitle: "Tungkol sa Google Drive Backup",
     helpMessage:
       "Magtabi ng exported copy ng financial database sa Google Drive account mo at i-restore ito sa ibang device. Ikonekta ang account, gumawa ng backup kapag kailangan, at pumili ng naka-save na archive kapag magre-restore.",
+    loading: "Nilo-load ang Google Drive backup...",
+    loadingBackups: "Nilo-load ang mga backup...",
   },
   language: {
     helpTitle: "Tungkol sa Wika",

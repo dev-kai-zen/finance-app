@@ -17,9 +17,15 @@ import {
   ShieldAlert,
 } from "lucide-react-native";
 
-import { AppButton, ConfirmModal, NotificationModal } from "@/components";
+import {
+  AppButton,
+  ConfirmModal,
+  NotificationModal,
+  PageLoadingState,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
@@ -29,6 +35,7 @@ import { QuickSyncCard } from "./quick-sync-card";
 export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const backup = useGoogleDriveBackup();
   const [passphraseMode, setPassphraseMode] = useState<
     "create" | "restore" | null
@@ -45,7 +52,7 @@ export function GoogleDriveBackupPanel() {
       case "connecting":
         return "Connecting to Google...";
       case "loading":
-        return "Loading backups...";
+        return t("googleDriveBackup.loadingBackups");
       case "creating":
         return "Creating and uploading...";
       case "restoring":
@@ -55,7 +62,7 @@ export function GoogleDriveBackupPanel() {
       default:
         return null;
     }
-  }, [backup.operation]);
+  }, [backup.operation, t]);
 
   const beginRestore = (file: BackupFile) => {
     setRestoreModalVisible(false);
@@ -99,8 +106,18 @@ export function GoogleDriveBackupPanel() {
     }
   };
 
+  const showBootstrapLoading =
+    backup.isBootstrapping && !backup.configurationError;
+
   return (
     <>
+      {showBootstrapLoading ? (
+        <View style={styles.container}>
+          <View style={[styles.card, styles.loadingCard]}>
+            <PageLoadingState message={t("googleDriveBackup.loading")} />
+          </View>
+        </View>
+      ) : (
       <View style={styles.container}>
         <View style={styles.card}>
           <View style={styles.statusRow}>
@@ -220,7 +237,7 @@ export function GoogleDriveBackupPanel() {
             </>
           )}
 
-          {operationLabel && backup.operation !== "loading" ? (
+          {operationLabel ? (
             <View style={styles.operationRow}>
               <ActivityIndicator color={theme.colors.primary} size="small" />
               <Text style={styles.description}>{operationLabel}</Text>
@@ -240,6 +257,7 @@ export function GoogleDriveBackupPanel() {
           />
         ) : null}
       </View>
+      )}
 
       <RestoreBackupModal
         backups={backup.backups}
@@ -326,6 +344,9 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
+    },
+    loadingCard: {
+      minHeight: 180,
     },
     statusRow: {
       alignItems: "center",

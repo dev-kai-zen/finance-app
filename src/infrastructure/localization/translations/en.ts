@@ -202,6 +202,8 @@ export const en = {
     helpTitle: "About Google Drive Backup",
     helpMessage:
       "Keep an exported copy of your financial database in your Google Drive account and restore it on another device. Connect your account, create backups on demand, and choose a saved archive when restoring.",
+    loading: "Loading Google Drive backup...",
+    loadingBackups: "Loading backups...",
   },
   language: {
     helpTitle: "About Language",
