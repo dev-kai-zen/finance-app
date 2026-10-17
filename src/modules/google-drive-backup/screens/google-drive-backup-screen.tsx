@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { InfoModal, PageContainer } from "@/components";
+import { InfoModal, ModalScreenHeader, PageContainer } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -9,21 +10,31 @@ export function GoogleDriveBackupScreen({
   helpVisible,
   onCloseHelp,
 }: {
-  helpVisible: boolean;
-  onCloseHelp: () => void;
-}) {
+  helpVisible?: boolean;
+  onCloseHelp?: () => void;
+} = {}) {
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [internalHelpVisible, setInternalHelpVisible] = useState(false);
+
+  const isHelpVisible = helpVisible ?? internalHelpVisible;
+  const handleCloseHelp = onCloseHelp ?? (() => setInternalHelpVisible(false));
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerLine} />
+      <ModalScreenHeader
+        backAccessibilityLabel={t("common.goBack")}
+        helpAccessibilityHint={t("googleDriveBackup.helpTitle")}
+        helpAccessibilityLabel={t("googleDriveBackup.helpTitle")}
+        onPressHelp={() => setInternalHelpVisible(true)}
+        title={t("navigation.googleDriveBackup")}
+      />
       <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
         <InfoModal
           message={t("googleDriveBackup.helpMessage")}
-          onClose={onCloseHelp}
+          onClose={handleCloseHelp}
           title={t("googleDriveBackup.helpTitle")}
-          visible={helpVisible}
+          visible={isHelpVisible}
         />
         <GoogleDriveBackupPanel />
       </PageContainer>
@@ -36,11 +47,6 @@ function createStyles(theme: AppTheme) {
     container: {
       backgroundColor: theme.colors.background,
       flex: 1,
-    },
-    headerLine: {
-      backgroundColor: theme.colors.border,
-      height: 1,
-      width: "100%",
     },
     page: {
       gap: theme.spacing.xl,

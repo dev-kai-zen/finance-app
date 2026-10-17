@@ -25,6 +25,7 @@ import {
 import {
   AppButton,
   ConfirmModal,
+  ModalScreenHeader,
   NotificationModal,
   ThemedSwitch,
 } from "@/components";
@@ -32,6 +33,7 @@ import { PageContainer } from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { BackupPassphraseModal } from "@/modules/local-backup/components/backup-passphrase-modal";
 import { useLocalBackup } from "@/modules/local-backup/hooks/use-local-backup";
 import type {
@@ -47,6 +49,7 @@ export function LocalBackupScreen() {
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const workspace = useWorkspace();
   const backup = useLocalBackup();
   const [passphraseMode, setPassphraseMode] = useState<
@@ -105,7 +108,10 @@ export function LocalBackupScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerLine} />
+      <ModalScreenHeader
+        backAccessibilityLabel={t("common.goBack")}
+        title={t("navigation.localBackup")}
+      />
       <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryIcon}>
@@ -562,11 +568,6 @@ function createStyles(theme: AppTheme) {
     container: {
       backgroundColor: theme.colors.background,
       flex: 1,
-    },
-    headerLine: {
-      backgroundColor: theme.colors.border,
-      height: 1,
-      width: "100%",
     },
     page: {
       gap: theme.spacing.xl,
