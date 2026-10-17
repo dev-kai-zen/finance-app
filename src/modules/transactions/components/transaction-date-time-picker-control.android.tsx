@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react";
 import { Host } from "@expo/ui";
 import {
   DateTimePicker,
@@ -15,6 +16,41 @@ export function TransactionDateTimePickerControl({
   value,
 }: TransactionDateTimePickerControlProps) {
   const theme = useAppTheme();
+
+  // Jetpack Compose DateTimePicker internally uses `remember(initialDate, props.is24Hour)`.
+  // If `initialDate` updates on every tick while the user interacts with the time picker,
+  // Compose invalidates and re-instantiates `TimePickerState`.
+  // Because a newly instantiated `TimePickerState` defaults its selection mode to Hour,
+  // any minute selection immediately causes the clock dial to snap back to the Hour dial.
+  // We keep `initialDate` stable for updates emitted by the picker itself, only refreshing
+  // it when an external `value` is passed in.
+  const lastEmittedTimestampRef = useRef<number | null>(null);
+  const lastEmittedHourRef = useRef<number | null>(null);
+  const lastEmittedMinuteRef = useRef<number | null>(null);
+  const initialDateIsoRef = useRef<string>(value.toISOString());
+  const lastModeRef = useRef(mode);
+
+  const isInternalUpdate =
+    lastEmittedTimestampRef.current !== null &&
+    (value.getTime() === lastEmittedTimestampRef.current ||
+      (value.getHours() === lastEmittedHourRef.current &&
+        value.getMinutes() === lastEmittedMinuteRef.current)) &&
+    lastModeRef.current === mode;
+
+  if (!isInternalUpdate) {
+    initialDateIsoRef.current = value.toISOString();
+    lastModeRef.current = mode;
+  }
+
+  const handleDateSelected = useCallback(
+    (selectedDate: Date) => {
+      lastEmittedTimestampRef.current = selectedDate.getTime();
+      lastEmittedHourRef.current = selectedDate.getHours();
+      lastEmittedMinuteRef.current = selectedDate.getMinutes();
+      onValueChange(selectedDate);
+    },
+    [onValueChange],
+  );
 
   const dateColors: DatePickerElementColors = {
     containerColor: theme.colors.surface,
@@ -71,9 +107,9 @@ export function TransactionDateTimePickerControl({
         color={theme.colors.primary}
         displayedComponents={mode === "date" ? "date" : "hourAndMinute"}
         elementColors={mode === "date" ? dateColors : timeColors}
-        initialDate={value.toISOString()}
+        initialDate={initialDateIsoRef.current}
         is24Hour={false}
-        onDateSelected={onValueChange}
+        onDateSelected={handleDateSelected}
         showVariantToggle={false}
         variant={mode === "date" ? "picker" : "input"}
       />
