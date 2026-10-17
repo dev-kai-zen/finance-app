@@ -16,6 +16,7 @@ import {
   SampleWorkspaceBanner,
   WorkspaceProvider,
 } from "@/modules/onboarding";
+import { QuickSyncProcessor } from "@/modules/google-drive-backup";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
@@ -60,6 +61,7 @@ function RootLayoutContent() {
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
+                        <QuickSyncProcessor />
                         <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
                           <Stack
                             screenOptions={{

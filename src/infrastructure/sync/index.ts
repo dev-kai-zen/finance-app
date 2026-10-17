@@ -6,6 +6,9 @@ export {
   prepareGoogleDriveBackupCatalog,
   uploadGoogleDriveAttachmentFile,
   uploadGoogleDriveBackupFile,
+  uploadOrUpdateGoogleDriveQuickSyncBackup,
+  QUICK_SYNC_BACKUP_NAME,
+  QUICK_SYNC_PROPERTY,
 } from "./adapters/google-drive-backup.adapter";
 export type {
   GoogleDriveAttachmentFile,
@@ -24,3 +27,25 @@ export type {
   SyncOperation,
   SyncOperationKind,
 } from "./queue/sync-operations.repository";
+export {
+  getQuickSyncConfig,
+  saveQuickSyncConfig,
+  subscribeToQuickSyncSettings,
+  QUICK_SYNC_ENABLED_KEY,
+  QUICK_SYNC_NETWORK_KEY,
+  QUICK_SYNC_LAST_SYNCED_AT_KEY,
+  QUICK_SYNC_FILE_ID_KEY,
+  QUICK_SYNC_SETTINGS_KEYS,
+} from "./quick-sync-settings.repository";
+export {
+  getQuickSyncState,
+  subscribeToQuickSync,
+  setQuickSyncRuntimeStatus,
+  useQuickSyncStatus,
+} from "./quick-sync-state";
+export type {
+  QuickSyncConfig,
+  QuickSyncNetworkPreference,
+  QuickSyncState,
+  QuickSyncStatus,
+} from "./types";

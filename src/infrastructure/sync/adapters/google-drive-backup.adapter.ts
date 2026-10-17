@@ -21,6 +21,8 @@ const NOTE_ATTACHMENT_FILE_KIND = "note-attachment";
 const BACKUP_PROTECTION_PROPERTY = "backupProtection";
 const LEGACY_FILE_ID_PROPERTY = "legacyFileId";
 const ORIGINAL_CREATED_AT_PROPERTY = "originalCreatedAt";
+export const QUICK_SYNC_BACKUP_NAME = "kaizen-finance-quick-sync.kfb";
+export const QUICK_SYNC_PROPERTY = "isQuickSync";
 
 export type GoogleDriveBackupLocation = "visible" | "legacy-hidden";
 
@@ -175,6 +177,7 @@ async function uploadBackupToFolder(
   name: string,
   legacyFileId?: string,
   passwordProtected = true,
+  extraProperties?: Record<string, string>,
 ): Promise<DriveFileResponse> {
   if (bytes.byteLength > MAX_MULTIPART_BYTES) {
     throw new Error(
@@ -192,6 +195,7 @@ async function uploadBackupToFolder(
       [ORIGINAL_CREATED_AT_PROPERTY]: originalCreatedAt,
       [BACKUP_PROTECTION_PROPERTY]: passwordProtected ? "password" : "none",
       ...(legacyFileId ? { [LEGACY_FILE_ID_PROPERTY]: legacyFileId } : {}),
+      ...(extraProperties ?? {}),
     },
   });
   const prefix = encoder.encode(
@@ -217,6 +221,116 @@ async function uploadBackupToFolder(
   const file = (await response.json()) as DriveFileResponse;
 
   return { ...file, size: file.size ?? String(bytes.byteLength) };
+}
+
+async function updateBackupFile(
+  accessToken: string,
+  fileId: string,
+  bytes: Uint8Array,
+  originalCreatedAt: string,
+  name: string,
+  extraProperties?: Record<string, string>,
+): Promise<DriveFileResponse> {
+  if (bytes.byteLength > MAX_MULTIPART_BYTES) {
+    throw new Error(
+      "This backup is larger than 5 MB. Resumable uploads are not available in Phase 1.",
+    );
+  }
+
+  const boundary = `kaizen-finance-${Date.now()}`;
+  const encoder = new TextEncoder();
+  const metadata = JSON.stringify({
+    name,
+    appProperties: {
+      [APP_PROPERTY_KIND]: BACKUP_FILE_KIND,
+      [ORIGINAL_CREATED_AT_PROPERTY]: originalCreatedAt,
+      [BACKUP_PROTECTION_PROPERTY]: "none",
+      ...(extraProperties ?? {}),
+    },
+  });
+  const prefix = encoder.encode(
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+      `--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`,
+  );
+  const suffix = encoder.encode(`\r\n--${boundary}--\r\n`);
+  const body = joinBytes(prefix, bytes, suffix);
+  const fields = encodeURIComponent(
+    "id,name,createdTime,modifiedTime,size,appProperties",
+  );
+  const response = await driveFetch(
+    `${DRIVE_UPLOAD_URL}/${encodeURIComponent(fileId)}?uploadType=multipart&fields=${fields}`,
+    accessToken,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body: body as BodyInit,
+    },
+  );
+  const file = (await response.json()) as DriveFileResponse;
+
+  return { ...file, size: file.size ?? String(bytes.byteLength) };
+}
+
+export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
+  accessToken: string,
+  bytes: Uint8Array,
+  existingFileId?: string | null,
+): Promise<GoogleDriveBackupFile> {
+  const backupFolder = await ensureBackupFolder(accessToken);
+  const now = new Date();
+  const originalCreatedAt = now.toISOString();
+
+  if (existingFileId) {
+    try {
+      const updated = await updateBackupFile(
+        accessToken,
+        existingFileId,
+        bytes,
+        originalCreatedAt,
+        QUICK_SYNC_BACKUP_NAME,
+        { [QUICK_SYNC_PROPERTY]: "true" },
+      );
+      return toVisibleBackupFile(updated);
+    } catch (error) {
+      if (!(error instanceof GoogleDriveApiError && error.status === 404)) {
+        throw error;
+      }
+    }
+  }
+
+  const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
+  const quickSyncFile = existingFiles.find(
+    (file) =>
+      file.name === QUICK_SYNC_BACKUP_NAME ||
+      file.appProperties?.[QUICK_SYNC_PROPERTY] === "true",
+  );
+
+  if (quickSyncFile) {
+    const updated = await updateBackupFile(
+      accessToken,
+      quickSyncFile.id,
+      bytes,
+      originalCreatedAt,
+      QUICK_SYNC_BACKUP_NAME,
+      { [QUICK_SYNC_PROPERTY]: "true" },
+    );
+    return toVisibleBackupFile(updated);
+  }
+
+  const created = await uploadBackupToFolder(
+    accessToken,
+    bytes,
+    backupFolder.id,
+    originalCreatedAt,
+    QUICK_SYNC_BACKUP_NAME,
+    undefined,
+    false,
+    { [QUICK_SYNC_PROPERTY]: "true" },
+  );
+
+  return toVisibleBackupFile(created);
 }
 
 export async function downloadGoogleDriveBackupFile(

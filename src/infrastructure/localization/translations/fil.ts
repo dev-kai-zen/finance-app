@@ -44,8 +44,26 @@ export const fil = {
   },
   sync: {
     localOnly: "Lokal lamang",
+    syncing: "Nagsi-sync...",
+    synced: "Na-sync na",
+    waitingNetwork: "Naghihintay ng Wi-Fi",
+    failed: "Nabigo ang pag-sync",
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
+  },
+  quickSync: {
+    title: "Quick Sync",
+    description: "Awtomatikong i-backup ang iyong mga pagbabago sa Google Drive",
+    networkLabel: "I-sync sa pamamagitan ng",
+    wifiOnly: "Wi-Fi lamang",
+    wifiOnlyDescription: "I-sync lamang kapag nakakonekta sa Wi-Fi",
+    anyNetwork: "Wi-Fi at Mobile data",
+    anyNetworkDescription: "I-sync sa Wi-Fi o mobile data",
+    statusLabel: "Status",
+    lastSynced: "Huling na-sync: %{time}",
+    neverSynced: "Hindi pa na-sync",
+    syncNow: "I-sync ngayon",
+    syncingNow: "Nagsi-sync...",
   },
   settings: {
     generalSection: "PANGKALAHATAN",
