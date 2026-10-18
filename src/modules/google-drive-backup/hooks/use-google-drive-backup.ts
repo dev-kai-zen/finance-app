@@ -168,6 +168,9 @@ export function useGoogleDriveBackup() {
         await restoreGoogleDriveBackup(fileId, passphrase);
         return true;
       });
+      if (completed) {
+        publishRestoreSuccessNotice(setNotice);
+      }
       return completed === true;
     },
     [run],
@@ -178,6 +181,9 @@ export function useGoogleDriveBackup() {
       await restoreQuickSyncBackup();
       return true;
     });
+    if (completed) {
+      publishRestoreSuccessNotice(setNotice);
+    }
     return completed === true;
   }, [run]);
 
@@ -197,6 +203,15 @@ export function useGoogleDriveBackup() {
     restoreBackup,
     restoreQuickSync,
   };
+}
+
+function publishRestoreSuccessNotice(
+  setNotice: (notice: BackupNotice | null) => void,
+): void {
+  const message = consumeRestoreNotice();
+  if (message) {
+    setNotice({ variant: "success", message });
+  }
 }
 
 function applyCatalog(
