@@ -222,6 +222,11 @@ export const en = {
     noResultsTitle: "No languages found",
     noResultsDescription: "Try another language name or locale code.",
   },
+  scheduledTransactions: {
+    helpTitle: "About Scheduled Transactions",
+    helpMessage:
+      "Set up recurring income, expenses, or transfers. Choose whether each occurrence posts automatically or waits for your confirmation. Due or failed items appear under Needs attention; you can pause, end, or archive schedules without removing transactions already posted.",
+  },
   themePicker: {
     closeAccessibility: "Close theme picker",
     title: "Choose appearance",

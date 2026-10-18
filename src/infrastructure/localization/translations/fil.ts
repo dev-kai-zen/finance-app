@@ -233,6 +233,11 @@ export const fil = {
     noResultsTitle: "Walang nahanap na wika",
     noResultsDescription: "Subukan ang ibang pangalan ng wika o locale code.",
   },
+  scheduledTransactions: {
+    helpTitle: "Tungkol sa Naka-iskedyul na mga Transaksyon",
+    helpMessage:
+      "Mag-set up ng umuulit na kita, gastos, o transfer. Piliin kung awtomatikong i-po-post ang bawat occurrence o hihintayin ang iyong kumpirmasyon. Ang due o failed na item ay lalabas sa Needs attention; maaari mong i-pause, tapusin, o i-archive ang mga iskedyul nang hindi tinatanggal ang mga transaksyong na-post na.",
+  },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
     title: "Pumili ng hitsura",
