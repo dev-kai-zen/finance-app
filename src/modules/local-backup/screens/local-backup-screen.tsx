@@ -170,10 +170,6 @@ export function LocalBackupScreen() {
           style={styles.restoreButton}
           variant="secondary"
         />
-        <Text selectable style={styles.sectionHelp}>
-          Backups contain the SQLite financial database and in-database settings.
-          Receipt and note attachment files are not included yet.
-        </Text>
       </Section>
 
       <Section title="AUTOMATIC BACKUPS">
