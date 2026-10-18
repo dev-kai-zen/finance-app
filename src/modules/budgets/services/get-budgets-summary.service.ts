@@ -34,11 +34,17 @@ export function getBudgetsSummary(
     };
   }
 
-  const allCategories = listCategoriesSync(context, { flat: true });
+  const hierarchicalCategories = listCategoriesSync(context);
   const flatCategoriesMap = new Map<string, Category>();
-  for (const c of allCategories) {
-    flatCategoriesMap.set(c.id, c);
+  function traverse(cats: Category[]) {
+    for (const cat of cats) {
+      flatCategoriesMap.set(cat.id, cat);
+      if (cat.subcategories) {
+        traverse(cat.subcategories);
+      }
+    }
   }
+  traverse(hierarchicalCategories);
 
   const activeBudgetCategoryIds = new Set(
     budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),

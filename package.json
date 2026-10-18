@@ -2,7 +2,7 @@
   "$schema": "./schemas/package.schema.json",
   "name": "finance-app",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "dependencies": {
     "@expo/ui": "~57.0.21",
     "@noble/hashes": "^2.4.0",

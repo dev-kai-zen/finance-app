@@ -300,3 +300,24 @@ test("widgets: components contain expected labels and actions", () => {
   assert.match(budgetCode, /text="Budget"/);
   assert.match(budgetCode, /text="Spent"/);
 });
+
+test("widgets: package.json points to root index.js and registers headless tasks", () => {
+  const pkgJsonPath = path.resolve(__dirname, "../../../../package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
+  assert.equal(pkg.main, "index.js", "package.json main must point to index.js for headless execution");
+
+  const indexPath = path.resolve(__dirname, "../../../../index.js");
+  assert.ok(fs.existsSync(indexPath), "Root index.js must exist");
+
+  const indexContent = fs.readFileSync(indexPath, "utf8");
+  assert.match(indexContent, /import\s+['"]expo-router\/entry['"]/);
+  assert.match(indexContent, /registerWidgets\(\)/);
+});
+
+test("widgets: sync processor listens to category_budgets and transaction_entries", () => {
+  const processorPath = path.resolve(__dirname, "../components/widget-sync-processor.tsx");
+  const processorContent = fs.readFileSync(processorPath, "utf8");
+  assert.match(processorContent, /"category_budgets"/);
+  assert.match(processorContent, /"transaction_entries"/);
+});
+

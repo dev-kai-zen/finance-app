@@ -25,28 +25,11 @@ export { DEFAULT_WIDGET_SNAPSHOT };
 
 /**
  * Retrieves the current financial snapshot for widgets.
- * Reads the cached snapshot from SQLite settings. If absent, computes and saves a fresh snapshot.
- * Safe against cold starts: falls back to DEFAULT_WIDGET_SNAPSHOT if DB is inaccessible.
+ * Computes live totals from SQLite, updates the settings cache, and returns the fresh snapshot.
+ * Safe against cold starts: falls back to cached snapshot or DEFAULT_WIDGET_SNAPSHOT if DB is busy.
  */
 export function getFinancialSnapshot(context: DbContext = db): FinancialWidgetSnapshot {
-  try {
-    const row = context
-      .select({ value: settings.value })
-      .from(settings)
-      .where(eq(settings.key, WIDGET_SNAPSHOT_SETTINGS_KEY))
-      .get();
-
-    if (row?.value) {
-      const parsed = JSON.parse(row.value) as FinancialWidgetSnapshot;
-      if (parsed && typeof parsed.netWorthFormatted === "string") {
-        return parsed;
-      }
-    }
-
-    return computeAndSaveFinancialSnapshot(context);
-  } catch {
-    return DEFAULT_WIDGET_SNAPSHOT;
-  }
+  return computeAndSaveFinancialSnapshot(context);
 }
 
 /**
@@ -128,6 +111,23 @@ export function computeAndSaveFinancialSnapshot(
 
     return snapshot;
   } catch {
+    try {
+      const row = context
+        .select({ value: settings.value })
+        .from(settings)
+        .where(eq(settings.key, WIDGET_SNAPSHOT_SETTINGS_KEY))
+        .get();
+
+      if (row?.value) {
+        const parsed = JSON.parse(row.value) as FinancialWidgetSnapshot;
+        if (parsed && typeof parsed.netWorthFormatted === "string") {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignored if settings table is inaccessible
+    }
+
     return DEFAULT_WIDGET_SNAPSHOT;
   }
 }

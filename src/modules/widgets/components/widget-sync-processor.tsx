@@ -3,7 +3,15 @@ import { Platform } from "react-native";
 import { addDatabaseChangeListener } from "expo-sqlite";
 import { updateDataWidgets } from "../services/widget-snapshot.service";
 
-const SYNCED_TABLES = new Set(["transactions", "accounts", "settings", "categories", "currency_exchange_rates"]);
+const SYNCED_TABLES = new Set([
+  "transactions",
+  "transaction_entries",
+  "accounts",
+  "settings",
+  "categories",
+  "category_budgets",
+  "currency_exchange_rates",
+]);
 
 /**
  * Headless processor that listens for local database mutations and keeps
