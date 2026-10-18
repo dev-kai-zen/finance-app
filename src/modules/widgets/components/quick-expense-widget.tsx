@@ -38,39 +38,23 @@ export function QuickExpenseWidget() {
 
       <FlexWidget
         style={{
-          flexDirection: "row",
+          backgroundColor: WIDGET_THEME.expenseAccent,
+          borderRadius: 6,
+          paddingHorizontal: 6,
+          paddingVertical: 2,
           alignItems: "center",
           justifyContent: "center",
           marginTop: 6,
         }}
       >
         <TextWidget
-          text="Quick "
+          text="Expense"
           style={{
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: "bold",
-            color: WIDGET_THEME.textPrimary,
+            color: "#FFFFFF",
           }}
         />
-        <FlexWidget
-          style={{
-            backgroundColor: WIDGET_THEME.expenseAccent,
-            borderRadius: 6,
-            paddingHorizontal: 5,
-            paddingVertical: 2,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <TextWidget
-            text="Expense"
-            style={{
-              fontSize: 10,
-              fontWeight: "bold",
-              color: "#FFFFFF",
-            }}
-          />
-        </FlexWidget>
       </FlexWidget>
     </FlexWidget>
   );

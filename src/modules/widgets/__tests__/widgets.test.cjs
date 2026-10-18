@@ -69,3 +69,12 @@ test("widgets: android widgetprovider xml has 1x1 cell size and resizeMode none"
   assert.match(xml, /android:resizeMode="none"/);
 });
 
+test("widgets: QuickExpenseWidget component displays 'Expense' text without 'Quick'", () => {
+  const widgetCode = fs.readFileSync(
+    path.resolve(__dirname, "../components/quick-expense-widget.tsx"),
+    "utf8",
+  );
+  assert.match(widgetCode, /text="Expense"/);
+  assert.doesNotMatch(widgetCode, /text="Quick "/);
+});
+

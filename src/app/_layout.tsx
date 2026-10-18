@@ -127,6 +127,7 @@ function RootLayoutContent() {
                           name="transactions/scheduled"
                           options={{
                             presentation: "fullScreenModal",
+                            animation: "fade",
                             headerShown: false,
                           }}
                         />
