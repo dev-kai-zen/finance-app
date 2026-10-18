@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Switch, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import {
   ConfirmModal,
   FullScreenFormModal,
   KeyboardAwareForm,
   NotificationModal,
+  ThemedSwitch,
 } from "@/components";
 import { AccountField } from "@/modules/accounts/components/account-ui";
 import type { AppTheme } from "@/constants/theme";
@@ -228,15 +229,10 @@ export function PocketFormModal({
                     Pre-select this pocket when recording expense transactions.
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
                   accessibilityLabel="Default for Expense"
                   disabled={mutations.pending}
                   onValueChange={setIsDefaultExpense}
-                  thumbColor={theme.colors.textInverse}
-                  trackColor={{
-                    false: theme.colors.borderStrong,
-                    true: theme.colors.primary,
-                  }}
                   value={isDefaultExpense}
                 />
               </View>
@@ -248,15 +244,10 @@ export function PocketFormModal({
                     Pre-select this pocket when recording income transactions.
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
                   accessibilityLabel="Default for Income"
                   disabled={mutations.pending}
                   onValueChange={setIsDefaultIncome}
-                  thumbColor={theme.colors.textInverse}
-                  trackColor={{
-                    false: theme.colors.borderStrong,
-                    true: theme.colors.primary,
-                  }}
                   value={isDefaultIncome}
                 />
               </View>

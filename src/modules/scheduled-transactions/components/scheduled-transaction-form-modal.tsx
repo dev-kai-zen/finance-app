@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 
 import {
@@ -8,6 +8,7 @@ import {
   FullScreenFormModal,
   IconHelper,
   KeyboardAwareForm,
+  ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -664,13 +665,9 @@ export function ScheduledTransactionFormModal({
                       Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.
                     </Text>
                   </View>
-                  <Switch
+                  <ThemedSwitch
                     accessibilityLabel="If date falls on a weekend"
                     onValueChange={setWeekendAdjust}
-                    trackColor={{
-                      false: theme.colors.borderStrong,
-                      true: theme.colors.primary,
-                    }}
                     value={weekendAdjust}
                   />
                 </View>
@@ -712,12 +709,9 @@ export function ScheduledTransactionFormModal({
                 as a due item for your confirmation.
               </Text>
             </View>
-            <Switch
+            <ThemedSwitch
+              accessibilityLabel="Automatically enter transaction"
               onValueChange={setAutoPost}
-              trackColor={{
-                false: theme.colors.borderStrong,
-                true: theme.colors.primary,
-              }}
               value={autoPost}
             />
           </View>

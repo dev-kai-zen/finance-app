@@ -1,7 +1,12 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight, Plus, Trash2 } from "lucide-react-native";
-import { AmountCalculatorField, AmountCalculatorModal, IconHelper } from "@/components";
+import {
+  AmountCalculatorField,
+  AmountCalculatorModal,
+  IconHelper,
+  ThemedSwitch,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { Category } from "@/modules/categories";
@@ -93,14 +98,10 @@ export function TransactionSplitEditor({
             Assign parts of this total to different categories.
           </Text>
         </View>
-        <Switch
+        <ThemedSwitch
           accessibilityLabel="Split by category"
           disabled={disabled}
           onValueChange={onEnabledChange}
-          trackColor={{
-            false: theme.colors.borderStrong,
-            true: theme.colors.primary,
-          }}
           value={enabled}
         />
       </View>
