@@ -375,7 +375,7 @@ export const en = {
     message:
       "This permanently deletes your accounts, transactions, budgets, goals, notes, settings, attachments, and app-managed local backups from this device.",
     externalNote:
-      "Exported files and Google Drive backups will not be deleted.",
+      "Files already saved in Google Drive are not deleted. This device disconnects from Google Drive and clears Quick Sync settings.",
     confirmationInstruction: "Type KAIZEN to confirm",
     confirmationAccessibility: "Type KAIZEN to confirm resetting all data",
     deleteAll: "Delete all data",

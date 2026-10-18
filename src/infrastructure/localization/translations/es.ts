@@ -388,7 +388,7 @@ export const es = {
     message:
       "Esto elimina permanentemente de este dispositivo tus cuentas, transacciones, presupuestos, objetivos, notas, configuraciones, archivos adjuntos y copias locales administradas por la aplicación.",
     externalNote:
-      "Los archivos exportados y las copias de Google Drive no se eliminarán.",
+      "Los archivos ya guardados en Google Drive no se eliminan. Este dispositivo se desconecta de Google Drive y borra la configuración de Quick Sync.",
     confirmationInstruction: "Escribe KAIZEN para confirmar",
     confirmationAccessibility:
       "Escribe KAIZEN para confirmar el restablecimiento de todos los datos",

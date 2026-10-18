@@ -2,12 +2,15 @@ import {
   announceDatabaseReplacement,
   db,
 } from "@/infrastructure/database";
+import { resetGoogleDriveConnectionForAppReset } from "@/modules/google-drive-backup";
 import { clearLocalBackupStorage } from "@/modules/local-backup";
 import { clearNoteAttachmentStorage } from "@/modules/notes";
 import { clearTransactionAttachmentStorage } from "@/modules/transactions";
 import { deleteAllUserData } from "../repositories/reset-data.repository";
 
 export async function resetAppData(): Promise<void> {
+  await resetGoogleDriveConnectionForAppReset();
+
   await db.transaction(async (tx) => {
     deleteAllUserData(tx);
   });

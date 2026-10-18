@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
+
 import type {
   BackupCatalog,
   BackupFile,
@@ -58,6 +60,29 @@ export function useGoogleDriveBackup() {
     const result = await run("loading", listGoogleDriveBackups);
     if (result) applyCatalog(result, setBackups, setFolderUrl, setNotice);
   }, [run]);
+
+  useEffect(() => {
+    return subscribeToDatabaseReplacement(() => {
+      if (configurationError) return;
+
+      void restoreGoogleDriveSession()
+        .then(async (restoredUser) => {
+          setUser(restoredUser);
+          if (!restoredUser) {
+            setBackups([]);
+            setFolderUrl(null);
+            return;
+          }
+          const catalog = await listGoogleDriveBackups();
+          applyCatalog(catalog, setBackups, setFolderUrl, setNotice);
+        })
+        .catch(() => {
+          setUser(null);
+          setBackups([]);
+          setFolderUrl(null);
+        });
+    });
+  }, [configurationError]);
 
   useEffect(() => {
     let active = true;

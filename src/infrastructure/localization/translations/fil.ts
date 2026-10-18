@@ -388,7 +388,7 @@ export const fil = {
     message:
       "Permanenteng buburahin nito ang iyong mga account, transaksyon, badyet, layunin, tala, setting, attachment, at mga lokal na backup na pinamamahalaan ng app mula sa device na ito.",
     externalNote:
-      "Hindi mabubura ang mga na-export na file at Google Drive backup.",
+      "Hindi mabubura ang mga file sa Google Drive. Idi-disconnect ng device na ito ang Google Drive at i-clear ang Quick Sync settings.",
     confirmationInstruction: "I-type ang KAIZEN para kumpirmahin",
     confirmationAccessibility:
       "I-type ang KAIZEN para kumpirmahin ang pag-reset ng lahat ng data",

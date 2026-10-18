@@ -8,3 +8,4 @@ export {
   setQuickSyncNetworkPreference,
 } from "./services/quick-sync.service";
 export { withGoogleDriveAccessToken } from "./services/google-drive-auth.service";
+export { resetGoogleDriveConnectionForAppReset } from "./services/reset-google-drive-for-app-reset.service";
