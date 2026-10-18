@@ -11,13 +11,18 @@ import { QuickIncomeWidget } from "../components/quick-income-widget";
 import { QuickTransferWidget } from "../components/quick-transfer-widget";
 import { DualActionWidget } from "../components/dual-action-widget";
 import { TripleActionWidget } from "../components/triple-action-widget";
+import { MonthlyCashflowWidget } from "../components/monthly-cashflow-widget";
+import { NetWorthWidget } from "../components/net-worth-widget";
 import {
   DUAL_ACTION_WIDGET_NAME,
+  MONTHLY_CASHFLOW_WIDGET_NAME,
+  NET_WORTH_WIDGET_NAME,
   QUICK_EXPENSE_WIDGET_NAME,
   QUICK_INCOME_WIDGET_NAME,
   QUICK_TRANSFER_WIDGET_NAME,
   TRIPLE_ACTION_WIDGET_NAME,
 } from "../constants/widget.constants";
+import { getFinancialSnapshot } from "./widget-snapshot.service";
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
   const { widgetAction, widgetInfo, renderWidget } = props;
@@ -39,6 +44,16 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
         case TRIPLE_ACTION_WIDGET_NAME:
           renderWidget(<TripleActionWidget />);
           break;
+        case MONTHLY_CASHFLOW_WIDGET_NAME: {
+          const snapshot = getFinancialSnapshot();
+          renderWidget(<MonthlyCashflowWidget snapshot={snapshot} />);
+          break;
+        }
+        case NET_WORTH_WIDGET_NAME: {
+          const snapshot = getFinancialSnapshot();
+          renderWidget(<NetWorthWidget snapshot={snapshot} />);
+          break;
+        }
         case QUICK_EXPENSE_WIDGET_NAME:
         default:
           renderWidget(<QuickExpenseWidget />);
@@ -48,6 +63,7 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
     case "WIDGET_DELETED":
       // No cleanup required for stateless launcher widgets
       break;
+
     case "WIDGET_CLICK":
       break;
     default:
@@ -204,4 +220,57 @@ export async function updateAllActionWidgets(): Promise<void> {
     updateTripleActionWidgets(),
   ]);
 }
+
+/**
+ * Prompts the Android home screen launcher to pin the Monthly Cashflow widget (4x2).
+ */
+export async function pinMonthlyCashflowWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: MONTHLY_CASHFLOW_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Net Worth Glance widget (4x2).
+ */
+export async function pinNetWorthWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: NET_WORTH_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Requests an immediate re-render of any existing Monthly Cashflow widgets on the home screen.
+ */
+export async function updateMonthlyCashflowWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    const snapshot = getFinancialSnapshot();
+    await requestWidgetUpdate({
+      widgetName: MONTHLY_CASHFLOW_WIDGET_NAME,
+      renderWidget: () => <MonthlyCashflowWidget snapshot={snapshot} />,
+    });
+  } catch {}
+}
+
+/**
+ * Requests an immediate re-render of any existing Net Worth widgets on the home screen.
+ */
+export async function updateNetWorthWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    const snapshot = getFinancialSnapshot();
+    await requestWidgetUpdate({
+      widgetName: NET_WORTH_WIDGET_NAME,
+      renderWidget: () => <NetWorthWidget snapshot={snapshot} />,
+    });
+  } catch {}
+}
+
 

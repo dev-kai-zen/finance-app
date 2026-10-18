@@ -1,4 +1,10 @@
-export { DashboardScreen } from "./screens/dashboard-screen";
+import { deferComponent } from "@/utils/deferred-module";
+
+export const DashboardScreen = deferComponent(
+  () => require("./screens/dashboard-screen").DashboardScreen,
+  "DashboardScreen",
+) as typeof import("./screens/dashboard-screen").DashboardScreen;
+
 export { useDashboard } from "./hooks/use-dashboard";
 export {
   getDashboardSummary,

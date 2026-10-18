@@ -22,9 +22,10 @@ import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions
 import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 import { WhatsNewGate } from "@/modules/whats-new";
-import { registerWidgets } from "@/modules/widgets";
+import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
 
 registerWidgets();
+
 
 LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
@@ -68,6 +69,8 @@ function RootLayoutContent() {
                         <LocalBackupProcessor />
                         <QuickSyncProcessor />
                         <NotificationsReminderProcessor />
+                        <WidgetSyncProcessor />
+
                         <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
                           <Stack
                             screenOptions={{
