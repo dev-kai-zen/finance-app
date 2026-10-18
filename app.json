@@ -108,7 +108,7 @@
               "targetCellWidth": 1,
               "targetCellHeight": 1,
               "description": "Quickly record an income transaction in Kaizen Finance",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/quick-income-widget-preview.png",
               "resizeMode": "none",
               "updatePeriodMillis": 0
             },
@@ -120,7 +120,7 @@
               "targetCellWidth": 1,
               "targetCellHeight": 1,
               "description": "Quickly record a transfer transaction in Kaizen Finance",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/quick-transfer-widget-preview.png",
               "resizeMode": "none",
               "updatePeriodMillis": 0
             },
@@ -132,7 +132,7 @@
               "targetCellWidth": 2,
               "targetCellHeight": 1,
               "description": "Quick action buttons to record Expense or Income",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/dual-action-widget-preview.png",
               "resizeMode": "horizontal",
               "updatePeriodMillis": 0
             },
@@ -145,7 +145,7 @@
               "targetCellHeight": 1,
               "maxResizeWidth": "320dp",
               "description": "Quick action bar for Expense, Income, and Transfer",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/triple-action-widget-preview.png",
               "resizeMode": "horizontal",
               "updatePeriodMillis": 0
             },
@@ -157,7 +157,7 @@
               "targetCellWidth": 4,
               "targetCellHeight": 2,
               "description": "Track monthly income, expenses, and net cashflow at a glance",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/monthly-cashflow-widget-preview.png",
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
             },
@@ -169,7 +169,7 @@
               "targetCellWidth": 4,
               "targetCellHeight": 2,
               "description": "Glance at your total net worth and asset breakdown",
-              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "previewImage": "./assets/net-worth-widget-preview.png",
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
             }

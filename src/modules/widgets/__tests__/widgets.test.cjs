@@ -203,6 +203,11 @@ test("widgets: app.json configures all Phase 1 and Phase 2 widgets properly", ()
   assert.equal(netWorth.targetCellWidth, 4);
   assert.equal(netWorth.targetCellHeight, 2);
   assert.equal(netWorth.updatePeriodMillis, 1800000);
+
+  for (const w of widgets) {
+    const previewPath = path.resolve(__dirname, "../../../../", w.previewImage);
+    assert.ok(fs.existsSync(previewPath), `Preview image ${w.previewImage} must exist for ${w.name}`);
+  }
 });
 
 test("widgets: android widgetprovider xml files exist and match configuration", () => {
@@ -269,12 +274,12 @@ test("widgets: components contain expected labels and actions", () => {
   assert.match(tripleCode, /text="Transfer"/);
 
   const cashflowCode = fs.readFileSync(path.join(compDir, "monthly-cashflow-widget.tsx"), "utf8");
-  assert.match(cashflowCode, /text="Cashflow"/);
+  assert.match(cashflowCode, /text="Cash Flow"/);
   assert.match(cashflowCode, /text="Income"/);
   assert.match(cashflowCode, /text="Expense"/);
 
   const netWorthCode = fs.readFileSync(path.join(compDir, "net-worth-widget.tsx"), "utf8");
   assert.match(netWorthCode, /text="Net Worth"/);
-  assert.match(netWorthCode, /text=\{`Assets:/);
-  assert.match(netWorthCode, /text=\{`Debts:/);
+  assert.match(netWorthCode, /text="Assets"/);
+  assert.match(netWorthCode, /text="Liabilities"/);
 });

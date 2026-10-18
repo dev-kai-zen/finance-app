@@ -1,7 +1,6 @@
 import React from "react";
 import {
   FlexWidget,
-  ImageWidget,
   TextWidget,
 } from "react-native-android-widget";
 import {
@@ -38,24 +37,26 @@ export function NetWorthWidget({ snapshot }: NetWorthWidgetProps) {
       ? WIDGET_THEME.expenseAccent
       : WIDGET_THEME.textSecondary;
 
+  const trendBg = isNegativeChange ? "#EF444420" : "#10B98120";
+
   return (
     <FlexWidget
       style={{
         height: "match_parent",
         width: "match_parent",
-        backgroundColor: WIDGET_THEME.background,
+        backgroundColor: WIDGET_THEME.surface,
         borderRadius: 24,
         borderColor: WIDGET_THEME.border,
         borderWidth: 1,
-        padding: 12,
+        padding: 14,
         flexDirection: "column",
         justifyContent: "space-between",
       }}
       clickAction="OPEN_URI"
       clickActionData={{ uri: DASHBOARD_DEEP_LINK }}
-      accessibilityLabel={`Net Worth: ${netWorth}. Assets: ${assets}, Debts: ${liabilities}`}
+      accessibilityLabel={`Net Worth: ${netWorth}. Assets: ${assets}, Liabilities: ${liabilities}`}
     >
-      {/* Header Row */}
+      {/* Header: Clean title matching collapsed dashboard card */}
       <FlexWidget
         style={{
           flexDirection: "row",
@@ -64,56 +65,22 @@ export function NetWorthWidget({ snapshot }: NetWorthWidgetProps) {
           width: "match_parent",
         }}
       >
-        <FlexWidget
+        <TextWidget
+          text="Net Worth"
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            fontSize: 14,
+            fontWeight: "bold",
+            color: WIDGET_THEME.textPrimary,
           }}
-        >
-          <ImageWidget
-            image={require("../../../../assets/finance-app-logo.png")}
-            imageWidth={20}
-            imageHeight={20}
-            radius={5}
-          />
-          <TextWidget
-            text="Net Worth"
-            style={{
-              fontSize: 12,
-              fontWeight: "bold",
-              color: WIDGET_THEME.textSecondary,
-              marginLeft: 6,
-            }}
-          />
-        </FlexWidget>
-
-        {/* Trend / Status Badge */}
-        <FlexWidget
-          style={{
-            backgroundColor: WIDGET_THEME.surface,
-            borderRadius: 8,
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderColor: WIDGET_THEME.border,
-            borderWidth: 1,
-          }}
-        >
-          <TextWidget
-            text={trendText}
-            style={{
-              fontSize: 10,
-              fontWeight: "bold",
-              color: trendColor,
-            }}
-          />
-        </FlexWidget>
+        />
       </FlexWidget>
 
-      {/* Main Net Worth Display */}
+      {/* Summary Row: Net Worth Amount + Trend Pill */}
       <FlexWidget
         style={{
-          flexDirection: "column",
-          justifyContent: "center",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
           width: "match_parent",
           marginVertical: 4,
         }}
@@ -126,51 +93,130 @@ export function NetWorthWidget({ snapshot }: NetWorthWidgetProps) {
             color: "#FFFFFF",
           }}
         />
+
+        <FlexWidget
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: trendBg,
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+          }}
+        >
+          <TextWidget
+            text={trendText}
+            style={{
+              fontSize: 11,
+              fontWeight: "bold",
+              color: trendColor,
+            }}
+          />
+        </FlexWidget>
       </FlexWidget>
 
-      {/* Breakdown Row: Assets vs Liabilities */}
+      {/* Breakdown Row: Dual side-by-side Assets and Liabilities Cards */}
       <FlexWidget
         style={{
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           width: "match_parent",
-          backgroundColor: WIDGET_THEME.surface,
-          borderRadius: 10,
-          borderColor: WIDGET_THEME.border,
-          borderWidth: 1,
-          paddingHorizontal: 10,
-          paddingVertical: 6,
         }}
       >
+        {/* Assets Card */}
         <FlexWidget
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flex: 1,
+            backgroundColor: WIDGET_THEME.background,
+            borderRadius: 10,
+            borderLeftWidth: 3,
+            borderLeftColor: WIDGET_THEME.incomeAccent,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginRight: 4,
+            flexDirection: "column",
           }}
         >
-          <TextWidget
-            text={`Assets: ${assets}`}
+          <FlexWidget
             style={{
-              fontSize: 11,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <FlexWidget
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: WIDGET_THEME.incomeAccent,
+                marginRight: 5,
+              }}
+            />
+            <TextWidget
+              text="Assets"
+              style={{
+                fontSize: 11,
+                fontWeight: "bold",
+                color: WIDGET_THEME.textSecondary,
+              }}
+            />
+          </FlexWidget>
+          <TextWidget
+            text={assets}
+            style={{
+              fontSize: 13,
               fontWeight: "bold",
-              color: WIDGET_THEME.textPrimary,
+              color: WIDGET_THEME.incomeAccent,
+              marginTop: 3,
             }}
           />
         </FlexWidget>
 
+        {/* Liabilities Card */}
         <FlexWidget
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flex: 1,
+            backgroundColor: WIDGET_THEME.background,
+            borderRadius: 10,
+            borderLeftWidth: 3,
+            borderLeftColor: WIDGET_THEME.expenseAccent,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginLeft: 4,
+            flexDirection: "column",
           }}
         >
-          <TextWidget
-            text={`Debts: ${liabilities}`}
+          <FlexWidget
             style={{
-              fontSize: 11,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <FlexWidget
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: WIDGET_THEME.expenseAccent,
+                marginRight: 5,
+              }}
+            />
+            <TextWidget
+              text="Liabilities"
+              style={{
+                fontSize: 11,
+                fontWeight: "bold",
+                color: WIDGET_THEME.textSecondary,
+              }}
+            />
+          </FlexWidget>
+          <TextWidget
+            text={liabilities}
+            style={{
+              fontSize: 13,
               fontWeight: "bold",
               color: WIDGET_THEME.expenseAccent,
+              marginTop: 3,
             }}
           />
         </FlexWidget>

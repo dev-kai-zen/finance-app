@@ -1,13 +1,10 @@
 import React from "react";
 import {
   FlexWidget,
-  ImageWidget,
   TextWidget,
 } from "react-native-android-widget";
 import {
   DASHBOARD_DEEP_LINK,
-  QUICK_EXPENSE_DEEP_LINK,
-  QUICK_INCOME_DEEP_LINK,
   WIDGET_THEME,
 } from "../constants/widget.constants";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
@@ -21,27 +18,29 @@ export function MonthlyCashflowWidget({ snapshot }: MonthlyCashflowWidgetProps) 
   const inflow = snapshot?.inflowFormatted ?? "₱0.00";
   const outflow = snapshot?.outflowFormatted ?? "₱0.00";
   const net = snapshot?.netSavingsFormatted ?? "₱0.00";
+  const savingsRate = snapshot?.savingsRatePercentage ?? 0;
   const isNetPositive = (snapshot?.netSavingsMinorUnits ?? 0) >= 0;
   const netColor = isNetPositive ? WIDGET_THEME.incomeAccent : WIDGET_THEME.expenseAccent;
+  const netBg = isNetPositive ? "#10B98120" : "#EF444420";
 
   return (
     <FlexWidget
       style={{
         height: "match_parent",
         width: "match_parent",
-        backgroundColor: WIDGET_THEME.background,
+        backgroundColor: WIDGET_THEME.surface,
         borderRadius: 24,
         borderColor: WIDGET_THEME.border,
         borderWidth: 1,
-        padding: 12,
+        padding: 14,
         flexDirection: "column",
         justifyContent: "space-between",
       }}
       clickAction="OPEN_URI"
       clickActionData={{ uri: DASHBOARD_DEEP_LINK }}
-      accessibilityLabel={`Monthly Cashflow for ${month}: Inflow ${inflow}, Outflow ${outflow}, Net ${net}`}
+      accessibilityLabel={`Cash Flow: Net ${net}. Income: ${inflow}, Expense: ${outflow}`}
     >
-      {/* Header Row */}
+      {/* Header: Title and Month label */}
       <FlexWidget
         style={{
           flexDirection: "row",
@@ -50,51 +49,26 @@ export function MonthlyCashflowWidget({ snapshot }: MonthlyCashflowWidgetProps) 
           width: "match_parent",
         }}
       >
-        <FlexWidget
+        <TextWidget
+          text="Cash Flow"
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            fontSize: 14,
+            fontWeight: "bold",
+            color: WIDGET_THEME.textPrimary,
           }}
-        >
-          <ImageWidget
-            image={require("../../../../assets/finance-app-logo.png")}
-            imageWidth={20}
-            imageHeight={20}
-            radius={5}
-          />
-          <TextWidget
-            text={month}
-            style={{
-              fontSize: 12,
-              fontWeight: "bold",
-              color: WIDGET_THEME.textSecondary,
-              marginLeft: 6,
-            }}
-          />
-        </FlexWidget>
+        />
 
-        <FlexWidget
+        <TextWidget
+          text={month}
           style={{
-            backgroundColor: WIDGET_THEME.surface,
-            borderRadius: 8,
-            paddingHorizontal: 8,
-            paddingVertical: 2,
-            borderColor: WIDGET_THEME.border,
-            borderWidth: 1,
+            fontSize: 11,
+            fontWeight: "bold",
+            color: WIDGET_THEME.textSecondary,
           }}
-        >
-          <TextWidget
-            text="Cashflow"
-            style={{
-              fontSize: 10,
-              fontWeight: "bold",
-              color: WIDGET_THEME.textPrimary,
-            }}
-          />
-        </FlexWidget>
+        />
       </FlexWidget>
 
-      {/* Middle Stats Columns */}
+      {/* Summary Row: Net Savings Amount + Savings Rate Pill */}
       <FlexWidget
         style={{
           flexDirection: "row",
@@ -104,90 +78,27 @@ export function MonthlyCashflowWidget({ snapshot }: MonthlyCashflowWidgetProps) 
           marginVertical: 4,
         }}
       >
-        {/* Inflow Card */}
-        <FlexWidget
+        <TextWidget
+          text={net}
           style={{
-            flex: 1,
-            backgroundColor: WIDGET_THEME.surface,
-            borderRadius: 12,
-            borderColor: WIDGET_THEME.border,
-            borderWidth: 1,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            marginRight: 4,
-            flexDirection: "column",
+            fontSize: 22,
+            fontWeight: "bold",
+            color: "#FFFFFF",
           }}
-        >
-          <TextWidget
-            text="Income"
-            style={{
-              fontSize: 10,
-              color: WIDGET_THEME.incomeAccent,
-              fontWeight: "bold",
-            }}
-          />
-          <TextWidget
-            text={inflow}
-            style={{
-              fontSize: 13,
-              fontWeight: "bold",
-              color: "#FFFFFF",
-              marginTop: 2,
-            }}
-          />
-        </FlexWidget>
+        />
 
-        {/* Outflow Card */}
-        <FlexWidget
-          style={{
-            flex: 1,
-            backgroundColor: WIDGET_THEME.surface,
-            borderRadius: 12,
-            borderColor: WIDGET_THEME.border,
-            borderWidth: 1,
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            marginLeft: 4,
-            flexDirection: "column",
-          }}
-        >
-          <TextWidget
-            text="Expense"
-            style={{
-              fontSize: 10,
-              color: WIDGET_THEME.expenseAccent,
-              fontWeight: "bold",
-            }}
-          />
-          <TextWidget
-            text={outflow}
-            style={{
-              fontSize: 13,
-              fontWeight: "bold",
-              color: "#FFFFFF",
-              marginTop: 2,
-            }}
-          />
-        </FlexWidget>
-      </FlexWidget>
-
-      {/* Bottom Summary & Quick Buttons */}
-      <FlexWidget
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          width: "match_parent",
-        }}
-      >
         <FlexWidget
           style={{
             flexDirection: "row",
             alignItems: "center",
+            backgroundColor: netBg,
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
           }}
         >
           <TextWidget
-            text={`Net: ${net}`}
+            text={`${savingsRate}% Saved`}
             style={{
               fontSize: 11,
               fontWeight: "bold",
@@ -195,60 +106,112 @@ export function MonthlyCashflowWidget({ snapshot }: MonthlyCashflowWidgetProps) 
             }}
           />
         </FlexWidget>
+      </FlexWidget>
 
-        {/* Mini 1-tap capture buttons */}
+      {/* Breakdown Row: Dual side-by-side Income and Expense Cards */}
+      <FlexWidget
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          width: "match_parent",
+        }}
+      >
+        {/* Income Card */}
         <FlexWidget
           style={{
-            flexDirection: "row",
-            alignItems: "center",
+            flex: 1,
+            backgroundColor: WIDGET_THEME.background,
+            borderRadius: 10,
+            borderLeftWidth: 3,
+            borderLeftColor: WIDGET_THEME.incomeAccent,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginRight: 4,
+            flexDirection: "column",
           }}
         >
           <FlexWidget
             style={{
-              backgroundColor: WIDGET_THEME.incomeAccent,
-              borderRadius: 8,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              marginRight: 4,
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
             }}
-            clickAction="OPEN_URI"
-            clickActionData={{ uri: QUICK_INCOME_DEEP_LINK }}
-            accessibilityLabel="Record new income"
           >
-            <TextWidget
-              text="+ Income"
+            <FlexWidget
               style={{
-                fontSize: 10,
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: WIDGET_THEME.incomeAccent,
+                marginRight: 5,
+              }}
+            />
+            <TextWidget
+              text="Income"
+              style={{
+                fontSize: 11,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: WIDGET_THEME.textSecondary,
               }}
             />
           </FlexWidget>
+          <TextWidget
+            text={inflow}
+            style={{
+              fontSize: 13,
+              fontWeight: "bold",
+              color: WIDGET_THEME.incomeAccent,
+              marginTop: 3,
+            }}
+          />
+        </FlexWidget>
 
+        {/* Expense Card */}
+        <FlexWidget
+          style={{
+            flex: 1,
+            backgroundColor: WIDGET_THEME.background,
+            borderRadius: 10,
+            borderLeftWidth: 3,
+            borderLeftColor: WIDGET_THEME.expenseAccent,
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            marginLeft: 4,
+            flexDirection: "column",
+          }}
+        >
           <FlexWidget
             style={{
-              backgroundColor: WIDGET_THEME.expenseAccent,
-              borderRadius: 8,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
             }}
-            clickAction="OPEN_URI"
-            clickActionData={{ uri: QUICK_EXPENSE_DEEP_LINK }}
-            accessibilityLabel="Record new expense"
           >
-            <TextWidget
-              text="− Expense"
+            <FlexWidget
               style={{
-                fontSize: 10,
+                width: 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: WIDGET_THEME.expenseAccent,
+                marginRight: 5,
+              }}
+            />
+            <TextWidget
+              text="Expense"
+              style={{
+                fontSize: 11,
                 fontWeight: "bold",
-                color: "#FFFFFF",
+                color: WIDGET_THEME.textSecondary,
               }}
             />
           </FlexWidget>
+          <TextWidget
+            text={outflow}
+            style={{
+              fontSize: 13,
+              fontWeight: "bold",
+              color: WIDGET_THEME.expenseAccent,
+              marginTop: 3,
+            }}
+          />
         </FlexWidget>
       </FlexWidget>
     </FlexWidget>
