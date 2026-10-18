@@ -5,17 +5,20 @@ import { requestWidgetUpdate } from "react-native-android-widget";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { settings } from "@/infrastructure/database/schema";
 import { getDashboardSummary, getMonthlyCashflow } from "@/modules/dashboard";
+import { getBudgetsSummary } from "@/modules/budgets";
 import { getCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency, DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
 import {
   DEFAULT_WIDGET_SNAPSHOT,
+  MONTHLY_BUDGET_WIDGET_NAME,
   MONTHLY_CASHFLOW_WIDGET_NAME,
   NET_WORTH_WIDGET_NAME,
   WIDGET_SNAPSHOT_SETTINGS_KEY,
 } from "../constants/widget.constants";
 import { MonthlyCashflowWidget } from "../components/monthly-cashflow-widget";
 import { NetWorthWidget } from "../components/net-worth-widget";
+import { MonthlyBudgetWidget } from "../components/monthly-budget-widget";
 
 export { DEFAULT_WIDGET_SNAPSHOT };
 
@@ -65,6 +68,15 @@ export function computeAndSaveFinancialSnapshot(
     const totalAssets = summary.totalAssetsMinorUnits;
     const totalLiabilities = Math.abs(summary.totalLiabilitiesMinorUnits);
 
+    const budgetSummary = getBudgetsSummary(new Date(), context);
+    const hasActiveBudgets = budgetSummary.activeCount > 0;
+    const isBudgetExceeded =
+      budgetSummary.exceededCount > 0 || budgetSummary.totalRemainingCents < 0;
+    const budgetTotal = budgetSummary.totalBudgetedCents;
+    const budgetSpent = budgetSummary.totalSpentCents;
+    const budgetRemaining = Math.abs(budgetSummary.totalRemainingCents);
+    const budgetPercentage = budgetSummary.overallPercentage;
+
     const snapshot: FinancialWidgetSnapshot = {
       monthLabel: cashflow.monthLabel ?? "This Month",
       inflowMinorUnits: inflow,
@@ -81,6 +93,15 @@ export function computeAndSaveFinancialSnapshot(
       totalLiabilitiesMinorUnits: totalLiabilities,
       totalLiabilitiesFormatted: formatCurrency(totalLiabilities, homeCurrency, false),
       netWorthChangePercentage: summary.netWorthChangePercentage,
+      budgetTotalMinorUnits: budgetTotal,
+      budgetTotalFormatted: formatCurrency(budgetTotal, homeCurrency, false),
+      budgetSpentMinorUnits: budgetSpent,
+      budgetSpentFormatted: formatCurrency(budgetSpent, homeCurrency, false),
+      budgetRemainingMinorUnits: budgetRemaining,
+      budgetRemainingFormatted: formatCurrency(budgetRemaining, homeCurrency, false),
+      budgetPercentage,
+      hasActiveBudgets,
+      isBudgetExceeded,
       currencyCode: homeCurrency,
       updatedAt: Date.now(),
     };
@@ -129,6 +150,10 @@ export async function updateDataWidgets(): Promise<void> {
       requestWidgetUpdate({
         widgetName: NET_WORTH_WIDGET_NAME,
         renderWidget: () => <NetWorthWidget snapshot={snapshot} />,
+      }),
+      requestWidgetUpdate({
+        widgetName: MONTHLY_BUDGET_WIDGET_NAME,
+        renderWidget: () => <MonthlyBudgetWidget snapshot={snapshot} />,
       }),
     ]);
   } catch {

@@ -13,8 +13,10 @@ import { DualActionWidget } from "../components/dual-action-widget";
 import { TripleActionWidget } from "../components/triple-action-widget";
 import { MonthlyCashflowWidget } from "../components/monthly-cashflow-widget";
 import { NetWorthWidget } from "../components/net-worth-widget";
+import { MonthlyBudgetWidget } from "../components/monthly-budget-widget";
 import {
   DUAL_ACTION_WIDGET_NAME,
+  MONTHLY_BUDGET_WIDGET_NAME,
   MONTHLY_CASHFLOW_WIDGET_NAME,
   NET_WORTH_WIDGET_NAME,
   QUICK_EXPENSE_WIDGET_NAME,
@@ -52,6 +54,11 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
         case NET_WORTH_WIDGET_NAME: {
           const snapshot = getFinancialSnapshot();
           renderWidget(<NetWorthWidget snapshot={snapshot} />);
+          break;
+        }
+        case MONTHLY_BUDGET_WIDGET_NAME: {
+          const snapshot = getFinancialSnapshot();
+          renderWidget(<MonthlyBudgetWidget snapshot={snapshot} />);
           break;
         }
         case QUICK_EXPENSE_WIDGET_NAME:
@@ -269,6 +276,32 @@ export async function updateNetWorthWidgets(): Promise<void> {
     await requestWidgetUpdate({
       widgetName: NET_WORTH_WIDGET_NAME,
       renderWidget: () => <NetWorthWidget snapshot={snapshot} />,
+    });
+  } catch {}
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Monthly Budget Progress widget (4x2).
+ */
+export async function pinMonthlyBudgetWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: MONTHLY_BUDGET_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Requests an immediate re-render of any existing Monthly Budget widgets on the home screen.
+ */
+export async function updateMonthlyBudgetWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    const snapshot = getFinancialSnapshot();
+    await requestWidgetUpdate({
+      widgetName: MONTHLY_BUDGET_WIDGET_NAME,
+      renderWidget: () => <MonthlyBudgetWidget snapshot={snapshot} />,
     });
   } catch {}
 }

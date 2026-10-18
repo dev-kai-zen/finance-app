@@ -5,6 +5,7 @@ export const DUAL_ACTION_WIDGET_NAME = "DualActionWidget";
 export const TRIPLE_ACTION_WIDGET_NAME = "TripleActionWidget";
 export const MONTHLY_CASHFLOW_WIDGET_NAME = "MonthlyCashflowWidget";
 export const NET_WORTH_WIDGET_NAME = "NetWorthWidget";
+export const MONTHLY_BUDGET_WIDGET_NAME = "MonthlyBudgetWidget";
 
 export const QUICK_EXPENSE_DEEP_LINK =
   "finance-app://transactions?action=new&type=expense&source=widget";
@@ -13,6 +14,7 @@ export const QUICK_INCOME_DEEP_LINK =
 export const QUICK_TRANSFER_DEEP_LINK =
   "finance-app://transactions?action=new&type=transfer&source=widget";
 export const DASHBOARD_DEEP_LINK = "finance-app://";
+export const BUDGETS_DEEP_LINK = "finance-app://budgets";
 
 export const WIDGET_SNAPSHOT_SETTINGS_KEY = "widget_financial_snapshot";
 
@@ -32,6 +34,15 @@ export const DEFAULT_WIDGET_SNAPSHOT = {
   totalLiabilitiesMinorUnits: 0,
   totalLiabilitiesFormatted: "₱0.00",
   netWorthChangePercentage: null,
+  budgetTotalMinorUnits: 0,
+  budgetTotalFormatted: "₱0.00",
+  budgetSpentMinorUnits: 0,
+  budgetSpentFormatted: "₱0.00",
+  budgetRemainingMinorUnits: 0,
+  budgetRemainingFormatted: "₱0.00",
+  budgetPercentage: 0,
+  hasActiveBudgets: false,
+  isBudgetExceeded: false,
   currencyCode: "PHP",
   updatedAt: 0,
 } as const;

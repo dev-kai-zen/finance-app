@@ -20,19 +20,12 @@ import { toggleCategoryBudget as toggleCategoryBudgetService } from "../services
 import type {
   BudgetFrequency,
   BudgetStatus,
+  BudgetsSummary,
   CategoryBudget,
   CategoryBudgetInput,
 } from "../types/budget.types";
 
-export interface BudgetsSummary {
-  totalBudgetedCents: number;
-  totalSpentCents: number;
-  totalRemainingCents: number;
-  overallPercentage: number;
-  activeCount: number;
-  exceededCount: number;
-  nearLimitCount: number;
-}
+export type { BudgetsSummary };
 
 export function useBudgets(referenceDate: Date = new Date()) {
   const { categories, loading: categoriesLoading } = useCategories();

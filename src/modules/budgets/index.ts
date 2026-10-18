@@ -58,6 +58,10 @@ export const deleteCategoryBudget = deferFunction(
     require("./services/delete-category-budget.service").deleteCategoryBudget,
 ) as typeof import("./services/delete-category-budget.service").deleteCategoryBudget;
 
+export const getBudgetsSummary = deferFunction(
+  () => require("./services/get-budgets-summary.service").getBudgetsSummary,
+) as typeof import("./services/get-budgets-summary.service").getBudgetsSummary;
+
 // Types
 export type {
   BudgetFrequency,
@@ -68,5 +72,6 @@ export type {
   MonthlyTargetInput,
   BudgetStatus,
   BudgetCheckResult,
+  BudgetsSummary,
 } from "./types/budget.types";
 export type { CheckBudgetExceededInput } from "./services/check-budget-exceeded.service";

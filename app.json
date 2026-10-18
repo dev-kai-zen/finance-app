@@ -172,6 +172,18 @@
               "previewImage": "./assets/net-worth-widget-preview.png",
               "resizeMode": "horizontal|vertical",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "MonthlyBudgetWidget",
+              "label": "Monthly Budget Progress",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "description": "Track overall monthly budget progress and spending limit",
+              "previewImage": "./assets/monthly-budget-widget-preview.png",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
             }
           ]
         }

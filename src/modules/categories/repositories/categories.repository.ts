@@ -99,6 +99,60 @@ export async function listCategories(
   return parentCategories;
 }
 
+export function listCategoriesSync(
+  db: DbContext,
+  options?: { flat?: boolean },
+): Category[] {
+  const rows = db
+    .select({
+      category: categories,
+      hexColor: hexColors,
+    })
+    .from(categories)
+    .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
+    .orderBy(categories.type, asc(categories.sortOrder), categories.name)
+    .all();
+
+  const allCategories: Category[] = rows.map(({ category, hexColor }) =>
+    mapCategory(category, hexColor),
+  );
+
+  if (options?.flat) {
+    return allCategories;
+  }
+
+  const parentCategories: Category[] = [];
+  const subcategoryMap = new Map<string, Category[]>();
+
+  for (const cat of allCategories) {
+    if (cat.parentId) {
+      const list = subcategoryMap.get(cat.parentId) || [];
+      list.push(cat);
+      subcategoryMap.set(cat.parentId, list);
+    } else {
+      parentCategories.push(cat);
+    }
+  }
+
+  for (const parent of parentCategories) {
+    const subs = subcategoryMap.get(parent.id) || [];
+    subs.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name));
+    parent.subcategories = subs;
+  }
+
+  parentCategories.sort(
+    (a, b) => {
+      const aIsOthers = isProtectedCategoryId(a.id);
+      const bIsOthers = isProtectedCategoryId(b.id);
+      if (aIsOthers && !bIsOthers) return 1;
+      if (!aIsOthers && bIsOthers) return -1;
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.name.localeCompare(b.name);
+    },
+  );
+
+  return parentCategories;
+}
+
 export function findCategoryById(
   id: string,
   context: DbContext,

@@ -27,6 +27,15 @@ export interface FinancialWidgetSnapshot {
   totalLiabilitiesMinorUnits: number;
   totalLiabilitiesFormatted: string;
   netWorthChangePercentage: number | null;
+  budgetTotalMinorUnits: number;
+  budgetTotalFormatted: string;
+  budgetSpentMinorUnits: number;
+  budgetSpentFormatted: string;
+  budgetRemainingMinorUnits: number;
+  budgetRemainingFormatted: string;
+  budgetPercentage: number;
+  hasActiveBudgets: boolean;
+  isBudgetExceeded: boolean;
   currencyCode: string;
   updatedAt: number;
 }

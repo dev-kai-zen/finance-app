@@ -92,10 +92,12 @@ const {
   TRIPLE_ACTION_WIDGET_NAME,
   MONTHLY_CASHFLOW_WIDGET_NAME,
   NET_WORTH_WIDGET_NAME,
+  MONTHLY_BUDGET_WIDGET_NAME,
   QUICK_EXPENSE_DEEP_LINK,
   QUICK_INCOME_DEEP_LINK,
   QUICK_TRANSFER_DEEP_LINK,
   DASHBOARD_DEEP_LINK,
+  BUDGETS_DEEP_LINK,
   WIDGET_SNAPSHOT_SETTINGS_KEY,
   DEFAULT_WIDGET_SNAPSHOT,
   WIDGET_THEME,
@@ -110,6 +112,7 @@ test("widgets: constants define expected provider names and deep link URIs", () 
   assert.equal(TRIPLE_ACTION_WIDGET_NAME, "TripleActionWidget");
   assert.equal(MONTHLY_CASHFLOW_WIDGET_NAME, "MonthlyCashflowWidget");
   assert.equal(NET_WORTH_WIDGET_NAME, "NetWorthWidget");
+  assert.equal(MONTHLY_BUDGET_WIDGET_NAME, "MonthlyBudgetWidget");
 
   assert.equal(
     QUICK_EXPENSE_DEEP_LINK,
@@ -124,6 +127,7 @@ test("widgets: constants define expected provider names and deep link URIs", () 
     "finance-app://transactions?action=new&type=transfer&source=widget",
   );
   assert.equal(DASHBOARD_DEEP_LINK, "finance-app://");
+  assert.equal(BUDGETS_DEEP_LINK, "finance-app://budgets");
   assert.equal(WIDGET_SNAPSHOT_SETTINGS_KEY, "widget_financial_snapshot");
 
   assert.equal(WIDGET_THEME.background, "#11231E");
@@ -204,6 +208,12 @@ test("widgets: app.json configures all Phase 1 and Phase 2 widgets properly", ()
   assert.equal(netWorth.targetCellHeight, 2);
   assert.equal(netWorth.updatePeriodMillis, 1800000);
 
+  const budgetWidget = widgets.find((w) => w.name === MONTHLY_BUDGET_WIDGET_NAME);
+  assert.ok(budgetWidget, "MonthlyBudgetWidget must be registered");
+  assert.equal(budgetWidget.targetCellWidth, 4);
+  assert.equal(budgetWidget.targetCellHeight, 2);
+  assert.equal(budgetWidget.updatePeriodMillis, 1800000);
+
   for (const w of widgets) {
     const previewPath = path.resolve(__dirname, "../../../../", w.previewImage);
     assert.ok(fs.existsSync(previewPath), `Preview image ${w.previewImage} must exist for ${w.name}`);
@@ -221,6 +231,7 @@ test("widgets: android widgetprovider xml files exist and match configuration", 
     { file: "widgetprovider_tripleactionwidget.xml", width: "3", height: "1" },
     { file: "widgetprovider_monthlycashflowwidget.xml", width: "4", height: "2" },
     { file: "widgetprovider_networthwidget.xml", width: "4", height: "2" },
+    { file: "widgetprovider_monthlybudgetwidget.xml", width: "4", height: "2" },
   ];
 
   for (const { file, width, height } of files) {
@@ -244,6 +255,7 @@ test("widgets: Java provider classes exist for all widgets", () => {
     "TripleActionWidget.java",
     "MonthlyCashflowWidget.java",
     "NetWorthWidget.java",
+    "MonthlyBudgetWidget.java",
   ];
 
   for (const cls of classes) {
@@ -282,4 +294,9 @@ test("widgets: components contain expected labels and actions", () => {
   assert.match(netWorthCode, /text="Net Worth"/);
   assert.match(netWorthCode, /text="Assets"/);
   assert.match(netWorthCode, /text="Liabilities"/);
+
+  const budgetCode = fs.readFileSync(path.join(compDir, "monthly-budget-widget.tsx"), "utf8");
+  assert.match(budgetCode, /text="Monthly Budget"/);
+  assert.match(budgetCode, /text="Budget"/);
+  assert.match(budgetCode, /text="Spent"/);
 });
