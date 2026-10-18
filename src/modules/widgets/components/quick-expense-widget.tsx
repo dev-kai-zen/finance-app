@@ -1,5 +1,9 @@
 import React from "react";
-import { FlexWidget, TextWidget } from "react-native-android-widget";
+import {
+  FlexWidget,
+  ImageWidget,
+  TextWidget,
+} from "react-native-android-widget";
 import {
   QUICK_EXPENSE_DEEP_LINK,
   WIDGET_THEME,
@@ -13,11 +17,11 @@ export function QuickExpenseWidget() {
         width: "match_parent",
         backgroundColor: WIDGET_THEME.background,
         borderRadius: 20,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        flexDirection: "row",
+        paddingHorizontal: 6,
+        paddingVertical: 8,
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "center",
         borderColor: WIDGET_THEME.border,
         borderWidth: 1,
       }}
@@ -25,79 +29,48 @@ export function QuickExpenseWidget() {
       clickActionData={{ uri: QUICK_EXPENSE_DEEP_LINK }}
       accessibilityLabel="Kaizen Quick Expense: Tap to record a new expense"
     >
+      <ImageWidget
+        image={require("../../../../assets/finance-app-logo.png")}
+        imageWidth={40}
+        imageHeight={40}
+        radius={10}
+      />
+
       <FlexWidget
         style={{
           flexDirection: "row",
           alignItems: "center",
-        }}
-      >
-        <FlexWidget
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 19,
-            backgroundColor: WIDGET_THEME.expenseBadgeBg,
-            borderColor: WIDGET_THEME.expenseBadgeBorder,
-            borderWidth: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 12,
-          }}
-        >
-          <TextWidget
-            text="−"
-            style={{
-              fontSize: 22,
-              fontWeight: "bold",
-              color: WIDGET_THEME.expenseAccent,
-              textAlign: "center",
-            }}
-          />
-        </FlexWidget>
-
-        <FlexWidget
-          style={{
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <TextWidget
-            text="Quick Expense"
-            style={{
-              fontSize: 15,
-              fontWeight: "bold",
-              color: WIDGET_THEME.textPrimary,
-            }}
-          />
-          <TextWidget
-            text="Kaizen Finance"
-            style={{
-              fontSize: 11,
-              color: WIDGET_THEME.textSecondary,
-              marginTop: 2,
-            }}
-          />
-        </FlexWidget>
-      </FlexWidget>
-
-      <FlexWidget
-        style={{
-          backgroundColor: WIDGET_THEME.expenseAccent,
-          borderRadius: 14,
-          paddingHorizontal: 12,
-          paddingVertical: 6,
-          alignItems: "center",
           justifyContent: "center",
+          marginTop: 6,
         }}
       >
         <TextWidget
-          text="+ Expense"
+          text="Quick "
           style={{
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: "bold",
-            color: "#FFFFFF",
+            color: WIDGET_THEME.textPrimary,
           }}
         />
+        <FlexWidget
+          style={{
+            backgroundColor: WIDGET_THEME.expenseAccent,
+            borderRadius: 6,
+            paddingHorizontal: 5,
+            paddingVertical: 2,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <TextWidget
+            text="Expense"
+            style={{
+              fontSize: 10,
+              fontWeight: "bold",
+              color: "#FFFFFF",
+            }}
+          />
+        </FlexWidget>
       </FlexWidget>
     </FlexWidget>
   );

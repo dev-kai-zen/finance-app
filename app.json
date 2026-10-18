@@ -91,9 +91,9 @@
             {
               "name": "QuickExpenseWidget",
               "label": "Quick Expense",
-              "minWidth": "140dp",
+              "minWidth": "60dp",
               "minHeight": "60dp",
-              "targetCellWidth": 2,
+              "targetCellWidth": 1,
               "targetCellHeight": 1,
               "description": "Quickly record an expense transaction in Kaizen Finance",
               "previewImage": "./assets/quick-expense-widget-preview.png",

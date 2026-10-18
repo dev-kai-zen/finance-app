@@ -42,3 +42,18 @@ test("widgets: deep link parses properly into transaction form actions", () => {
   assert.equal(url.searchParams.get("type"), "expense");
   assert.equal(url.searchParams.get("source"), "widget");
 });
+
+test("widgets: app.json configures QuickExpenseWidget as a 1x1 widget tile", () => {
+  const appJsonPath = path.resolve(__dirname, "../../../../app.json");
+  const appConfig = JSON.parse(fs.readFileSync(appJsonPath, "utf8"));
+  const widgetPlugin = appConfig.expo.plugins.find(
+    (p) => Array.isArray(p) && p[0] === "react-native-android-widget",
+  );
+  assert.ok(widgetPlugin, "react-native-android-widget plugin must be configured");
+  const widgets = widgetPlugin[1].widgets;
+  const quickExpense = widgets.find((w) => w.name === QUICK_EXPENSE_WIDGET_NAME);
+  assert.ok(quickExpense, "QuickExpenseWidget must be registered");
+  assert.equal(quickExpense.targetCellWidth, 1);
+  assert.equal(quickExpense.targetCellHeight, 1);
+});
+

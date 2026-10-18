@@ -199,6 +199,7 @@ export interface TransactionFormModalProps {
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
   isEditing?: boolean;
+  initialType?: TransactionType;
   defaultExpenseAccountId?: string | null;
   defaultExpensePocketId?: string | null;
   defaultIncomeAccountId?: string | null;
@@ -268,6 +269,7 @@ export function TransactionFormModal({
   error = null,
   initialTransaction = null,
   isEditing = false,
+  initialType,
   defaultExpenseAccountId: propsDefaultExpenseAccountId,
   defaultExpensePocketId: propsDefaultExpensePocketId,
   defaultIncomeAccountId: propsDefaultIncomeAccountId,
@@ -518,7 +520,7 @@ export function TransactionFormModal({
       return;
     }
 
-    const sessionKey = initialTransaction?.id ?? "__create__";
+    const sessionKey = initialTransaction?.id ?? `__create__${initialType ?? "expense"}`;
     if (formInitSessionRef.current === sessionKey) {
       return;
     }
@@ -625,31 +627,43 @@ export function TransactionFormModal({
             : [],
         );
       } else {
-        setMode("expense");
+        const createMode = initialType ?? "expense";
+        setMode(createMode);
         setName("");
-        setAmountSign("-");
-        const defaultExpenseAccount = accounts.find(
-          (a) => a.id === effectiveDefaultExpenseAccountId && !a.isArchived,
+        setAmountSign(createMode === "income" ? "+" : "-");
+        const targetDefaultAccountId =
+          createMode === "income"
+            ? effectiveDefaultIncomeAccountId
+            : effectiveDefaultExpenseAccountId;
+        const defaultAccount = accounts.find(
+          (a) => a.id === targetDefaultAccountId && !a.isArchived,
         );
-        const firstAccount = defaultExpenseAccount
-          ? defaultExpenseAccount.id
+        const firstAccount = defaultAccount
+          ? defaultAccount.id
           : (accounts.length > 0 ? accounts[0].id : "");
         setSelectedAccountId(firstAccount);
-        const defaultExpensePocket =
-          defaultExpenseAccount && effectiveDefaultExpensePocketId
+        const targetDefaultPocketId =
+          createMode === "income"
+            ? effectiveDefaultIncomePocketId
+            : effectiveDefaultExpensePocketId;
+        const defaultPocket =
+          defaultAccount && targetDefaultPocketId
             ? pockets.find(
                 (p) =>
-                  p.id === effectiveDefaultExpensePocketId &&
-                  p.accountId === defaultExpenseAccount.id &&
+                  p.id === targetDefaultPocketId &&
+                  p.accountId === defaultAccount.id &&
                   !p.isArchived,
               )
             : null;
-        setSelectedPocketId(defaultExpensePocket ? defaultExpensePocket.id : null);
+        setSelectedPocketId(defaultPocket ? defaultPocket.id : null);
         setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
         setTransferToPocketId(null);
 
         setSelectedCategoryId(
-          resolveDefaultTransactionCategoryId(categories, "expense"),
+          resolveDefaultTransactionCategoryId(
+            categories,
+            createMode === "transfer" ? "expense" : createMode,
+          ),
         );
         setSplitEnabled(false);
         setSplitLines([
@@ -692,13 +706,73 @@ export function TransactionFormModal({
   }, [
     visible,
     initialTransaction,
+    initialType,
     accounts,
     categories,
     pockets,
     effectiveDefaultExpenseAccountId,
     effectiveDefaultExpensePocketId,
+    effectiveDefaultIncomeAccountId,
+    effectiveDefaultIncomePocketId,
     labels,
     defaultFeeCategory,
+  ]);
+
+  // When accounts, categories, or default settings finish loading asynchronously from SQLite,
+  // backfill default account and category if still unselected in create mode
+  useEffect(() => {
+    if (!visible || initialTransaction || isEditing) {
+      return;
+    }
+
+    if (!selectedAccountId && accounts.length > 0) {
+      const targetDefaultAccountId =
+        mode === "income"
+          ? effectiveDefaultIncomeAccountId
+          : effectiveDefaultExpenseAccountId;
+      const defaultAccount = accounts.find(
+        (a) => a.id === targetDefaultAccountId && !a.isArchived,
+      );
+      const chosenAccountId = defaultAccount ? defaultAccount.id : accounts[0].id;
+      setSelectedAccountId(chosenAccountId);
+
+      const targetDefaultPocketId =
+        mode === "income"
+          ? effectiveDefaultIncomePocketId
+          : effectiveDefaultExpensePocketId;
+      if (defaultAccount && targetDefaultPocketId) {
+        const defaultPocket = pockets.find(
+          (p) =>
+            p.id === targetDefaultPocketId &&
+            p.accountId === defaultAccount.id &&
+            !p.isArchived,
+        );
+        if (defaultPocket) {
+          setSelectedPocketId(defaultPocket.id);
+        }
+      }
+    }
+
+    if (!selectedCategoryId && categories.length > 0 && mode !== "transfer") {
+      const defaultCategory = resolveDefaultTransactionCategoryId(categories, mode);
+      if (defaultCategory) {
+        setSelectedCategoryId(defaultCategory);
+      }
+    }
+  }, [
+    visible,
+    initialTransaction,
+    isEditing,
+    selectedAccountId,
+    selectedCategoryId,
+    accounts,
+    categories,
+    pockets,
+    mode,
+    effectiveDefaultExpenseAccountId,
+    effectiveDefaultExpensePocketId,
+    effectiveDefaultIncomeAccountId,
+    effectiveDefaultIncomePocketId,
   ]);
 
   useEffect(() => {

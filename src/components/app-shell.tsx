@@ -96,18 +96,22 @@ export function AppShell({
   const closeDrawer = () => setIsDrawerOpen(false);
   const openDrawer = () => setIsDrawerOpen(true);
 
-  if (
+  const isFullScreenModal =
     pathname.startsWith("/language") ||
     pathname.startsWith("/currency-setup") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||
-    pathname.startsWith("/transactions/scheduled")
-  ) {
-    return <View style={styles.fullScreenModal}>{children}</View>;
-  }
+    pathname.startsWith("/transactions/scheduled");
 
   if (isDesktop) {
+    if (isFullScreenModal) {
+      return (
+        <View style={styles.desktopLayout}>
+          <View style={styles.fullScreenModal}>{children}</View>
+        </View>
+      );
+    }
     return (
       <View style={styles.desktopLayout}>
         {/* Persistent Desktop/Tablet Sidebar */}
@@ -137,45 +141,51 @@ export function AppShell({
   // Mobile / Narrow Tablet Layout (<768px)
   return (
     <View style={styles.mobileLayout}>
-      {/* Mobile Top Bar */}
-      <View style={styles.topBar}>
-        <View style={styles.topBarInner}>
-          <View style={styles.topLeftGroup}>
-            <Pressable
-              accessibilityLabel={t("navigation.openMenu")}
-              accessibilityRole="button"
-              onPress={openDrawer}
-              style={({ pressed }) => [
-                styles.menuButton,
-                pressed && styles.menuButtonPressed,
-              ]}
-            >
-              {/* 3-line hamburger icon */}
-              <View style={styles.hamburgerIcon}>
-                <View style={styles.hamburgerLine} />
-                <View style={styles.hamburgerLine} />
-                <View style={styles.hamburgerLine} />
-              </View>
-            </Pressable>
+      {!isFullScreenModal && (
+        <>
+          {/* Mobile Top Bar */}
+          <View style={styles.topBar}>
+            <View style={styles.topBarInner}>
+              <View style={styles.topLeftGroup}>
+                <Pressable
+                  accessibilityLabel={t("navigation.openMenu")}
+                  accessibilityRole="button"
+                  onPress={openDrawer}
+                  style={({ pressed }) => [
+                    styles.menuButton,
+                    pressed && styles.menuButtonPressed,
+                  ]}
+                >
+                  {/* 3-line hamburger icon */}
+                  <View style={styles.hamburgerIcon}>
+                    <View style={styles.hamburgerLine} />
+                    <View style={styles.hamburgerLine} />
+                    <View style={styles.hamburgerLine} />
+                  </View>
+                </Pressable>
 
-            <ScreenTitle
-              onPress={handleSettingsTitlePress}
-              style={styles.topBarBrandText}
-              title={screenTitle}
-            />
+                <ScreenTitle
+                  onPress={handleSettingsTitlePress}
+                  style={styles.topBarBrandText}
+                  title={screenTitle}
+                />
+              </View>
+
+              <SyncStatusChip />
+            </View>
           </View>
 
-          <SyncStatusChip />
-        </View>
-      </View>
-
-      {banner}
+          {banner}
+        </>
+      )}
 
       {/* Main Content Area */}
-      <View style={styles.mobileContent}>{children}</View>
+      <View style={isFullScreenModal ? styles.fullScreenModal : styles.mobileContent}>
+        {children}
+      </View>
 
       {/* Mobile Drawer Overlay */}
-      {isDrawerOpen && (
+      {!isFullScreenModal && isDrawerOpen && (
         <View style={styles.drawerLayer}>
           <Pressable
             accessibilityLabel={t("navigation.closeMenu")}
