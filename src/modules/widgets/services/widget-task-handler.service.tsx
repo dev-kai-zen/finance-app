@@ -7,19 +7,46 @@ import {
   type WidgetTaskHandlerProps,
 } from "react-native-android-widget";
 import { QuickExpenseWidget } from "../components/quick-expense-widget";
-import { QUICK_EXPENSE_WIDGET_NAME } from "../constants/widget.constants";
+import { QuickIncomeWidget } from "../components/quick-income-widget";
+import { QuickTransferWidget } from "../components/quick-transfer-widget";
+import { DualActionWidget } from "../components/dual-action-widget";
+import { TripleActionWidget } from "../components/triple-action-widget";
+import {
+  DUAL_ACTION_WIDGET_NAME,
+  QUICK_EXPENSE_WIDGET_NAME,
+  QUICK_INCOME_WIDGET_NAME,
+  QUICK_TRANSFER_WIDGET_NAME,
+  TRIPLE_ACTION_WIDGET_NAME,
+} from "../constants/widget.constants";
 
 export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<void> {
-  const { widgetAction, renderWidget } = props;
+  const { widgetAction, widgetInfo, renderWidget } = props;
 
   switch (widgetAction) {
     case "WIDGET_ADDED":
     case "WIDGET_UPDATE":
     case "WIDGET_RESIZED":
-      renderWidget(<QuickExpenseWidget />);
+      switch (widgetInfo?.widgetName) {
+        case QUICK_INCOME_WIDGET_NAME:
+          renderWidget(<QuickIncomeWidget />);
+          break;
+        case QUICK_TRANSFER_WIDGET_NAME:
+          renderWidget(<QuickTransferWidget />);
+          break;
+        case DUAL_ACTION_WIDGET_NAME:
+          renderWidget(<DualActionWidget />);
+          break;
+        case TRIPLE_ACTION_WIDGET_NAME:
+          renderWidget(<TripleActionWidget />);
+          break;
+        case QUICK_EXPENSE_WIDGET_NAME:
+        default:
+          renderWidget(<QuickExpenseWidget />);
+          break;
+      }
       break;
     case "WIDGET_DELETED":
-      // No cleanup required for stateless launcher widget
+      // No cleanup required for stateless launcher widgets
       break;
     case "WIDGET_CLICK":
       break;
@@ -41,15 +68,60 @@ export function registerWidgets(): void {
 }
 
 /**
- * Prompts the Android home screen launcher to pin the Quick Expense widget.
+ * Prompts the Android home screen launcher to pin the Quick Expense widget (1x1).
  */
 export async function pinQuickExpenseWidget(): Promise<boolean> {
-  if (Platform.OS !== "android") {
-    return false;
-  }
-
+  if (Platform.OS !== "android") return false;
   try {
     return await requestPinWidget({ widgetName: QUICK_EXPENSE_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Quick Income widget (1x1).
+ */
+export async function pinQuickIncomeWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: QUICK_INCOME_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Quick Transfer widget (1x1).
+ */
+export async function pinQuickTransferWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: QUICK_TRANSFER_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Expense | Income Dual Action widget (2x1).
+ */
+export async function pinDualActionWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: DUAL_ACTION_WIDGET_NAME });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Prompts the Android home screen launcher to pin the Expense | Income | Transfer Triple Action widget (3x1 / 4x1).
+ */
+export async function pinTripleActionWidget(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+  try {
+    return await requestPinWidget({ widgetName: TRIPLE_ACTION_WIDGET_NAME });
   } catch {
     return false;
   }
@@ -59,16 +131,77 @@ export async function pinQuickExpenseWidget(): Promise<boolean> {
  * Requests an immediate re-render of any existing Quick Expense widgets on the home screen.
  */
 export async function updateQuickExpenseWidgets(): Promise<void> {
-  if (Platform.OS !== "android") {
-    return;
-  }
-
+  if (Platform.OS !== "android") return;
   try {
     await requestWidgetUpdate({
       widgetName: QUICK_EXPENSE_WIDGET_NAME,
       renderWidget: () => <QuickExpenseWidget />,
     });
-  } catch {
-    // Gracefully handle case where widget is not installed
-  }
+  } catch {}
 }
+
+/**
+ * Requests an immediate re-render of any existing Quick Income widgets on the home screen.
+ */
+export async function updateQuickIncomeWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    await requestWidgetUpdate({
+      widgetName: QUICK_INCOME_WIDGET_NAME,
+      renderWidget: () => <QuickIncomeWidget />,
+    });
+  } catch {}
+}
+
+/**
+ * Requests an immediate re-render of any existing Quick Transfer widgets on the home screen.
+ */
+export async function updateQuickTransferWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    await requestWidgetUpdate({
+      widgetName: QUICK_TRANSFER_WIDGET_NAME,
+      renderWidget: () => <QuickTransferWidget />,
+    });
+  } catch {}
+}
+
+/**
+ * Requests an immediate re-render of any existing Dual Action widgets on the home screen.
+ */
+export async function updateDualActionWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    await requestWidgetUpdate({
+      widgetName: DUAL_ACTION_WIDGET_NAME,
+      renderWidget: () => <DualActionWidget />,
+    });
+  } catch {}
+}
+
+/**
+ * Requests an immediate re-render of any existing Triple Action widgets on the home screen.
+ */
+export async function updateTripleActionWidgets(): Promise<void> {
+  if (Platform.OS !== "android") return;
+  try {
+    await requestWidgetUpdate({
+      widgetName: TRIPLE_ACTION_WIDGET_NAME,
+      renderWidget: () => <TripleActionWidget />,
+    });
+  } catch {}
+}
+
+/**
+ * Updates all registered launcher widgets.
+ */
+export async function updateAllActionWidgets(): Promise<void> {
+  await Promise.allSettled([
+    updateQuickExpenseWidgets(),
+    updateQuickIncomeWidgets(),
+    updateQuickTransferWidgets(),
+    updateDualActionWidgets(),
+    updateTripleActionWidgets(),
+  ]);
+}
+

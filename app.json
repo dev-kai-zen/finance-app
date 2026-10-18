@@ -99,6 +99,55 @@
               "previewImage": "./assets/quick-expense-widget-preview.png",
               "resizeMode": "none",
               "updatePeriodMillis": 0
+            },
+            {
+              "name": "QuickIncomeWidget",
+              "label": "Quick Income",
+              "minWidth": "60dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 1,
+              "targetCellHeight": 1,
+              "description": "Quickly record an income transaction in Kaizen Finance",
+              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "resizeMode": "none",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "QuickTransferWidget",
+              "label": "Quick Transfer",
+              "minWidth": "60dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 1,
+              "targetCellHeight": 1,
+              "description": "Quickly record a transfer transaction in Kaizen Finance",
+              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "resizeMode": "none",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "DualActionWidget",
+              "label": "Expense & Income",
+              "minWidth": "130dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 1,
+              "description": "Quick action buttons to record Expense or Income",
+              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "TripleActionWidget",
+              "label": "Expense, Income & Transfer",
+              "minWidth": "180dp",
+              "minHeight": "60dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 1,
+              "maxResizeWidth": "320dp",
+              "description": "Quick action bar for Expense, Income, and Transfer",
+              "previewImage": "./assets/quick-expense-widget-preview.png",
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 0
             }
           ]
         }
