@@ -2,6 +2,7 @@ import {
   announceDatabaseReplacement,
   replaceDatabaseFromSnapshot,
 } from "@/infrastructure/database";
+import { finalizeRestoredWorkspace } from "@/modules/onboarding";
 import { readLocalBackupFile } from "@/modules/local-backup/repositories/local-backup-files.repository";
 import { readDatabaseBackup } from "@/modules/local-backup/utils/backup-format";
 import { createLocalBackup } from "./create-local-backup.service";
@@ -17,6 +18,7 @@ export async function restoreLocalBackup(
 
   await createLocalBackup(null, "safety");
   await replaceDatabaseFromSnapshot(backup.database);
+  finalizeRestoredWorkspace();
 
   restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully. A pre-restore safety copy was saved.`;
   setTimeout(announceDatabaseReplacement, 0);

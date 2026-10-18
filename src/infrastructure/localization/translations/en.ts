@@ -214,6 +214,16 @@ export const en = {
       "Keep an exported copy of your financial database in your Google Drive account and restore it on another device. Connect your account, create backups on demand, and choose a saved archive when restoring.",
     loading: "Loading Google Drive backup...",
     loadingBackups: "Loading backups...",
+    onboardingQuickSyncPromptTitle: "Quick Sync backup found",
+    onboardingQuickSyncPromptMessage:
+      "We found an automatic Quick Sync file on your Google Drive. Restore it for the latest data, or choose a full encrypted backup instead.",
+    restoreQuickSyncTitle: "Restore Quick Sync",
+    restoreQuickSyncDescription: "Latest auto-sync from %{date}",
+    restoreQuickSyncAction: "Restore Quick Sync",
+    restoreQuickSyncUseFullBackup: "Choose full backup",
+    restoreQuickSyncConfirmTitle: "Restore Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "This replaces all local data with your Quick Sync file and turns Quick Sync back on for this device.",
   },
   language: {
     helpTitle: "About Language",

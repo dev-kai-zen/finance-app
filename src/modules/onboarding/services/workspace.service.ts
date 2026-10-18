@@ -43,7 +43,30 @@ import type {
 } from "@/modules/onboarding/types/onboarding.types";
 
 export function initializeWorkspaceState(): WorkspaceState {
-  const values = getOnboardingSettings();
+  return readWorkspaceStateFromDatabase();
+}
+
+/**
+ * After a backup restore replaces the local database, align onboarding workspace
+ * state with the restored data so the app exits Get Started when appropriate.
+ */
+export function finalizeRestoredWorkspace(context: DbContext = db): WorkspaceState {
+  const state = readWorkspaceStateFromDatabase(context);
+  if (state.status === "completed") {
+    return state;
+  }
+
+  if (hasAccountWorkspaceData(context)) {
+    const currency = getCurrencyPreferences(context).defaultCurrency ?? "PHP";
+    saveCompletedSettings("personal", null, context, new Date(), currency);
+    return completedState("personal", null, currency);
+  }
+
+  return state;
+}
+
+function readWorkspaceStateFromDatabase(context: DbContext = db): WorkspaceState {
+  const values = getOnboardingSettings(context);
   const status = values[ONBOARDING_SETTING_KEYS.status];
   const mode = values[ONBOARDING_SETTING_KEYS.workspaceMode];
 
@@ -56,8 +79,8 @@ export function initializeWorkspaceState(): WorkspaceState {
   }
 
   // Databases created before onboarding existed must remain immediately usable.
-  if (hasAccountWorkspaceData()) {
-    saveCompletedSettings("personal", null);
+  if (hasAccountWorkspaceData(context)) {
+    saveCompletedSettings("personal", null, context);
     return completedState("personal", null);
   }
 

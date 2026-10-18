@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as Linking from "expo-linking";
 import {
   ActivityIndicator,
@@ -15,7 +15,10 @@ import {
   FolderOpen,
   LogOut,
   ShieldAlert,
+  Zap,
 } from "lucide-react-native";
+import { resolveGoogleDriveQuickSyncBackupFile } from "@/infrastructure/sync";
+import { withGoogleDriveAccessToken } from "@/modules/google-drive-backup/services/google-drive-auth.service";
 
 import {
   AppButton,
@@ -32,7 +35,11 @@ import type { BackupFile } from "@/modules/google-drive-backup/types/google-driv
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
 import { QuickSyncCard } from "./quick-sync-card";
 
-export function GoogleDriveBackupPanel() {
+export function GoogleDriveBackupPanel({
+  onboardingRestore = false,
+}: {
+  onboardingRestore?: boolean;
+} = {}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
@@ -45,7 +52,40 @@ export function GoogleDriveBackupPanel() {
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
   const [restoreModalVisible, setRestoreModalVisible] = useState(false);
   const [linkingError, setLinkingError] = useState<string | null>(null);
+  const [quickSyncBackup, setQuickSyncBackup] = useState<BackupFile | null>(
+    null,
+  );
+  const [quickSyncPromptVisible, setQuickSyncPromptVisible] = useState(false);
+  const [confirmQuickSyncRestore, setConfirmQuickSyncRestore] = useState(false);
+  const quickSyncPromptShownRef = useRef(false);
   const busy = backup.operation !== "idle";
+
+  useEffect(() => {
+    if (!onboardingRestore || !backup.user) {
+      setQuickSyncBackup(null);
+      return;
+    }
+
+    let active = true;
+    void withGoogleDriveAccessToken(async (accessToken) =>
+      resolveGoogleDriveQuickSyncBackupFile(accessToken),
+    )
+      .then((file) => {
+        if (!active) return;
+        setQuickSyncBackup(file);
+        if (file && !quickSyncPromptShownRef.current) {
+          quickSyncPromptShownRef.current = true;
+          setQuickSyncPromptVisible(true);
+        }
+      })
+      .catch(() => {
+        if (active) setQuickSyncBackup(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [backup.user, onboardingRestore]);
 
   const operationLabel = useMemo(() => {
     switch (backup.operation) {
@@ -148,6 +188,36 @@ export function GoogleDriveBackupPanel() {
             </View>
           ) : backup.user ? (
             <>
+              {onboardingRestore && quickSyncBackup ? (
+                <>
+                  <View style={styles.divider} />
+                  <Pressable
+                    accessibilityLabel={t("googleDriveBackup.restoreQuickSyncAction")}
+                    accessibilityRole="button"
+                    disabled={busy}
+                    onPress={() => setConfirmQuickSyncRestore(true)}
+                    style={({ pressed }) => [
+                      styles.actionRow,
+                      styles.quickSyncActionRow,
+                      pressed && styles.pressed,
+                      busy && styles.disabled,
+                    ]}
+                  >
+                    <Zap color={theme.colors.primary} size={20} />
+                    <View style={styles.copy}>
+                      <Text style={styles.actionTitle}>
+                        {t("googleDriveBackup.restoreQuickSyncTitle")}
+                      </Text>
+                      <Text style={styles.description}>
+                        {t("googleDriveBackup.restoreQuickSyncDescription", {
+                          date: formatBackupDate(quickSyncBackup.modifiedTime),
+                        })}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <View style={styles.insetDivider} />
+                </>
+              ) : null}
               <View style={styles.divider} />
               <Pressable
                 accessibilityLabel="Create backup"
@@ -288,6 +358,37 @@ export function GoogleDriveBackupPanel() {
         visible={confirmRestore}
       />
 
+      <ConfirmModal
+        cancelLabel={t("googleDriveBackup.restoreQuickSyncUseFullBackup")}
+        confirmLabel={t("googleDriveBackup.restoreQuickSyncAction")}
+        message={t("googleDriveBackup.onboardingQuickSyncPromptMessage")}
+        onCancel={() => {
+          setQuickSyncPromptVisible(false);
+          if (backup.user) openRestoreModal();
+        }}
+        onConfirm={() => {
+          setQuickSyncPromptVisible(false);
+          setConfirmQuickSyncRestore(true);
+        }}
+        title={t("googleDriveBackup.onboardingQuickSyncPromptTitle")}
+        variant="restore"
+        visible={quickSyncPromptVisible}
+      />
+
+      <ConfirmModal
+        confirmLabel={t("googleDriveBackup.restoreQuickSyncAction")}
+        message={t("googleDriveBackup.restoreQuickSyncConfirmMessage")}
+        onCancel={() => setConfirmQuickSyncRestore(false)}
+        onConfirm={() => {
+          setConfirmQuickSyncRestore(false);
+          void backup.restoreQuickSync();
+        }}
+        pending={backup.operation === "restoring"}
+        title={t("googleDriveBackup.restoreQuickSyncConfirmTitle")}
+        variant="restore"
+        visible={confirmQuickSyncRestore}
+      />
+
       <BackupPassphraseModal
         mode={passphraseMode ?? "create"}
         onCancel={() => {
@@ -330,6 +431,16 @@ export function GoogleDriveBackupPanel() {
       />
     </>
   );
+}
+
+function formatBackupDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function createStyles(theme: AppTheme) {
@@ -398,6 +509,9 @@ function createStyles(theme: AppTheme) {
       minHeight: 62,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
+    },
+    quickSyncActionRow: {
+      backgroundColor: `${theme.colors.primary}08`,
     },
     pressed: {
       backgroundColor: theme.colors.surfaceMuted,

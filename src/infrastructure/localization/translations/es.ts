@@ -225,6 +225,16 @@ export const es = {
       "Guarda una copia exportada de tu base de datos financiera en Google Drive y restáurala en otro dispositivo. Conecta tu cuenta, crea copias cuando quieras y elige un archivo guardado al restaurar.",
     loading: "Cargando copia de Google Drive...",
     loadingBackups: "Cargando copias de seguridad...",
+    onboardingQuickSyncPromptTitle: "Copia Quick Sync encontrada",
+    onboardingQuickSyncPromptMessage:
+      "Encontramos un archivo Quick Sync automático en Google Drive. Restáuralo para obtener los datos más recientes, o elige una copia cifrada completa.",
+    restoreQuickSyncTitle: "Restaurar Quick Sync",
+    restoreQuickSyncDescription: "Última sincronización automática del %{date}",
+    restoreQuickSyncAction: "Restaurar Quick Sync",
+    restoreQuickSyncUseFullBackup: "Elegir copia completa",
+    restoreQuickSyncConfirmTitle: "¿Restaurar Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "Esto reemplaza todos los datos locales con tu archivo Quick Sync y vuelve a activar Quick Sync en este dispositivo.",
   },
   language: {
     helpTitle: "Acerca del idioma",

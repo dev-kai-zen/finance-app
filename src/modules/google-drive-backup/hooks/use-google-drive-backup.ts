@@ -18,6 +18,7 @@ import { listGoogleDriveBackups } from "@/modules/google-drive-backup/services/l
 import {
   consumeRestoreNotice,
   restoreGoogleDriveBackup,
+  restoreQuickSyncBackup,
 } from "@/modules/google-drive-backup/services/restore-google-drive-backup.service";
 
 export function useGoogleDriveBackup() {
@@ -147,6 +148,14 @@ export function useGoogleDriveBackup() {
     [run],
   );
 
+  const restoreQuickSync = useCallback(async (): Promise<boolean> => {
+    const completed = await run("restoring", async () => {
+      await restoreQuickSyncBackup();
+      return true;
+    });
+    return completed === true;
+  }, [run]);
+
   return {
     backups,
     configurationError,
@@ -161,6 +170,7 @@ export function useGoogleDriveBackup() {
     disconnect,
     refresh,
     restoreBackup,
+    restoreQuickSync,
   };
 }
 

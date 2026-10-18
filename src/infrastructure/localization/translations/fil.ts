@@ -225,6 +225,16 @@ export const fil = {
       "Magtabi ng exported copy ng financial database sa Google Drive account mo at i-restore ito sa ibang device. Ikonekta ang account, gumawa ng backup kapag kailangan, at pumili ng naka-save na archive kapag magre-restore.",
     loading: "Nilo-load ang Google Drive backup...",
     loadingBackups: "Nilo-load ang mga backup...",
+    onboardingQuickSyncPromptTitle: "May Quick Sync backup",
+    onboardingQuickSyncPromptMessage:
+      "May awtomatikong Quick Sync file sa Google Drive. I-restore ito para sa pinakabagong data, o pumili ng full encrypted backup.",
+    restoreQuickSyncTitle: "I-restore ang Quick Sync",
+    restoreQuickSyncDescription: "Pinakabagong auto-sync noong %{date}",
+    restoreQuickSyncAction: "I-restore ang Quick Sync",
+    restoreQuickSyncUseFullBackup: "Pumili ng full backup",
+    restoreQuickSyncConfirmTitle: "I-restore ang Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "Pinapalitan nito ang lahat ng lokal na data ng Quick Sync file at ibinabalik ang Quick Sync sa device na ito.",
   },
   language: {
     helpTitle: "Tungkol sa Wika",
