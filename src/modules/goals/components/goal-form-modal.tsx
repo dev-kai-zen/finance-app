@@ -13,8 +13,10 @@ import {
   AmountCalculatorModal,
   DatePickerModal,
   FullScreenFormModal,
+  HelpIconButton,
   IconHelper,
   IconPickerModal,
+  InfoModal,
   KeyboardAwareFormPreset,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -80,6 +82,9 @@ export function GoalFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [helpTopic, setHelpTopic] = useState<
+    "linkedFunds" | "targetDeadline" | null
+  >(null);
 
   useEffect(() => {
     if (visible) {
@@ -118,6 +123,7 @@ export function GoalFormModal({
       }
       setErrorMessage(null);
       setFocusedFieldType(null);
+      setHelpTopic(null);
     }
   }, [visible, initialGoal]);
 
@@ -255,10 +261,14 @@ export function GoalFormModal({
 
           {/* Linked Accounts & Pockets */}
           <View style={styles.section}>
-            <Text style={styles.label}>Linked Accounts & Pockets</Text>
-            <Text style={styles.helperText}>
-              Link accounts and/or pockets. Their combined live balances track progress towards this goal.
-            </Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Linked Accounts & Pockets</Text>
+              <HelpIconButton
+                accessibilityHint="Shows how linked accounts and pockets work"
+                accessibilityLabel="Linked accounts and pockets help"
+                onPress={() => setHelpTopic("linkedFunds")}
+              />
+            </View>
 
             {/* Selected Accounts & Pockets List / Chips */}
             {selectedAccounts.length > 0 || selectedPockets.length > 0 ? (
@@ -358,10 +368,14 @@ export function GoalFormModal({
 
           {/* Target Completion Date */}
           <View style={styles.section}>
-            <Text style={styles.label}>Target Date (Deadline)</Text>
-            <Text style={styles.helperText}>
-              Used to calculate required monthly savings pace.
-            </Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Target Date (Deadline)</Text>
+              <HelpIconButton
+                accessibilityHint="Shows how the target deadline is used"
+                accessibilityLabel="Target deadline help"
+                onPress={() => setHelpTopic("targetDeadline")}
+              />
+            </View>
             <View style={styles.datePickerRow}>
               <Pressable
                 onPress={() => setIsDatePickerOpen(true)}
@@ -523,6 +537,25 @@ export function GoalFormModal({
           selectedIcon={iconKey}
           visible={isIconPickerOpen}
         />
+
+        <InfoModal
+          message={
+            helpTopic === "linkedFunds"
+              ? "Link accounts and/or pockets. Their combined live balances track progress towards this goal."
+              : helpTopic === "targetDeadline"
+                ? "Used to calculate required monthly savings pace."
+                : ""
+          }
+          onClose={() => setHelpTopic(null)}
+          title={
+            helpTopic === "linkedFunds"
+              ? "Linked Accounts & Pockets"
+              : helpTopic === "targetDeadline"
+                ? "Target Date (Deadline)"
+                : ""
+          }
+          visible={helpTopic !== null}
+        />
     </>
   );
 }
@@ -560,10 +593,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
-    helperText: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      marginBottom: 4,
+    labelRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
     },
     input: {
       backgroundColor: theme.colors.surface,
