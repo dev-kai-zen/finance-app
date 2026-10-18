@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Host } from "@expo/ui";
 import {
   DateTimePicker,
@@ -15,6 +16,8 @@ export function TransactionDateTimePickerControl({
   value,
 }: TransactionDateTimePickerControlProps) {
   const theme = useAppTheme();
+  // `initialDate` is mount-only in Expo UI; updating it while typing resets time input focus.
+  const initialDateIso = useRef(value.toISOString());
 
   const dateColors: DatePickerElementColors = {
     containerColor: theme.colors.surface,
@@ -71,7 +74,7 @@ export function TransactionDateTimePickerControl({
         color={theme.colors.primary}
         displayedComponents={mode === "date" ? "date" : "hourAndMinute"}
         elementColors={mode === "date" ? dateColors : timeColors}
-        initialDate={value.toISOString()}
+        initialDate={initialDateIso.current}
         is24Hour={false}
         onDateSelected={onValueChange}
         showVariantToggle={false}
