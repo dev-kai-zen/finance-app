@@ -20,16 +20,24 @@ export function AppLockGate({ children }: PropsWithChildren) {
     );
   }
 
-  // Intercept with LockScreen if locked
-  if (isLocked) {
-    return <LockScreen />;
-  }
-
-  return <>{children}</>;
+  return (
+    <View style={styles.container}>
+      {children}
+      {isLocked && (
+        <View style={[StyleSheet.absoluteFill, styles.overlay]}>
+          <LockScreen />
+        </View>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  overlay: {
+    zIndex: 99999,
+    elevation: 99999,
   },
 });

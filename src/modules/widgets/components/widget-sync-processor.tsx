@@ -1,0 +1,54 @@
+import { useEffect, useRef } from "react";
+import { Platform } from "react-native";
+import { addDatabaseChangeListener } from "expo-sqlite";
+import { updateDataWidgets } from "../services/widget-snapshot.service";
+
+const SYNCED_TABLES = new Set([
+  "transactions",
+  "transaction_entries",
+  "accounts",
+  "settings",
+  "categories",
+  "category_budgets",
+  "currency_exchange_rates",
+]);
+
+/**
+ * Headless processor that listens for local database mutations and keeps
+ * the Android home screen financial widgets (Cashflow & Net Worth) in sync.
+ */
+export function WidgetSyncProcessor(): null {
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") {
+      return;
+    }
+
+    // Trigger an initial refresh on app startup
+    void updateDataWidgets();
+
+    const subscription = addDatabaseChangeListener((event) => {
+      if (!SYNCED_TABLES.has(event.tableName)) {
+        return;
+      }
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      debounceTimerRef.current = setTimeout(() => {
+        void updateDataWidgets();
+      }, 1000);
+    });
+
+    return () => {
+      subscription.remove();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  return null;
+}

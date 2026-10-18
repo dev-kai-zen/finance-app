@@ -291,3 +291,4 @@ export type {
   CashFlowHistoryResult,
   CashFlowPeriodPoint,
 } from "./services/get-cashflow-history.service";
+export type { TransactionsScreenProps } from "./screens/transactions-screen";

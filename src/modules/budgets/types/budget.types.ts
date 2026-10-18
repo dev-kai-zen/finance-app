@@ -38,6 +38,16 @@ export interface CategoryBudget {
   monthlyTargets?: BudgetMonthlyTarget[];
 }
 
+export interface BudgetsSummary {
+  totalBudgetedCents: number;
+  totalSpentCents: number;
+  totalRemainingCents: number;
+  overallPercentage: number;
+  activeCount: number;
+  exceededCount: number;
+  nearLimitCount: number;
+}
+
 export interface MonthlyTargetInput {
   year: number;
   month: number;

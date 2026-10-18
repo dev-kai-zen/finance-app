@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -54,7 +54,10 @@ import {
   shareTransactionsCsv,
   TransactionCsvExportCancelledError,
 } from "../services/export-transactions-csv.service";
-import type { TransactionListItem } from "../types/transaction.types";
+import type {
+  TransactionListItem,
+  TransactionType,
+} from "../types/transaction.types";
 
 interface DateGroup {
   key: string;
@@ -112,11 +115,17 @@ function initialFilterState(accountId?: string): TransactionFilterState {
   };
 }
 
+export interface TransactionsScreenProps {
+  initialAccountId?: string;
+  initialAction?: string;
+  initialType?: string;
+}
+
 export function TransactionsScreen({
   initialAccountId,
-}: {
-  initialAccountId?: string;
-} = {}) {
+  initialAction,
+  initialType,
+}: TransactionsScreenProps = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -175,6 +184,9 @@ export function TransactionsScreen({
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [formInitialType, setFormInitialType] = useState<
+    TransactionType | undefined
+  >(undefined);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -183,6 +195,33 @@ export function TransactionsScreen({
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const handledActionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      const actionKey = `${initialAction}-${initialType ?? "expense"}`;
+      if (handledActionRef.current !== actionKey) {
+        handledActionRef.current = actionKey;
+        setIsEditingTransaction(false);
+        setPrefilledTransaction(null);
+        setFormInitialType(
+          initialType === "income"
+            ? "income"
+            : initialType === "transfer"
+              ? "transfer"
+              : "expense",
+        );
+        setIsFormModalOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
+    } else {
+      handledActionRef.current = null;
+    }
+  }, [initialAction, initialType, router]);
 
   useEffect(() => {
     setInspectedTransaction((current) =>
@@ -740,7 +779,14 @@ export function TransactionsScreen({
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
+          setFormInitialType(undefined);
+          router.setParams({
+            action: undefined,
+            type: undefined,
+            source: undefined,
+          });
         }}
+        initialType={formInitialType}
         onSaveTransaction={handleRecordTransaction}
         onSaveTransfer={handleRecordTransfer}
         onSavePreset={savePreset}

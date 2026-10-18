@@ -70,6 +70,29 @@ export async function listCategoryBudgets(
   );
 }
 
+export function listCategoryBudgetsSync(
+  context: DbContext = db,
+): CategoryBudget[] {
+  const budgetRows = context.select().from(categoryBudgets).all();
+  if (!budgetRows.length) return [];
+
+  const targetRows = context.select().from(budgetMonthlyTargets).all();
+  const targetsByBudgetId = new Map<
+    string,
+    Array<typeof budgetMonthlyTargets.$inferSelect>
+  >();
+
+  for (const t of targetRows) {
+    const list = targetsByBudgetId.get(t.budgetId) || [];
+    list.push(t);
+    targetsByBudgetId.set(t.budgetId, list);
+  }
+
+  return budgetRows.map((b) =>
+    mapBudgetRow(b, targetsByBudgetId.get(b.id) || []),
+  );
+}
+
 export function findCategoryBudgetByCategoryId(
   categoryId: string,
   context: DbContext = db,
