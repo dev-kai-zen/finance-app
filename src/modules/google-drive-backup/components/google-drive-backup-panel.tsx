@@ -33,17 +33,15 @@ import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
+import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
 
-export function GoogleDriveBackupPanel({
-  onboardingRestore = false,
-}: {
-  onboardingRestore?: boolean;
-} = {}) {
+export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const backup = useGoogleDriveBackup();
+  const quickSync = useQuickSync();
   const [passphraseMode, setPassphraseMode] = useState<
     "create" | "restore" | null
   >(null);
@@ -61,7 +59,7 @@ export function GoogleDriveBackupPanel({
   const busy = backup.operation !== "idle";
 
   useEffect(() => {
-    if (!onboardingRestore || !backup.user) {
+    if (!backup.user) {
       setQuickSyncBackup(null);
       return;
     }
@@ -73,10 +71,16 @@ export function GoogleDriveBackupPanel({
       .then((file) => {
         if (!active) return;
         setQuickSyncBackup(file);
-        if (file && !quickSyncPromptShownRef.current) {
-          quickSyncPromptShownRef.current = true;
-          setQuickSyncPromptVisible(true);
-        }
+        if (!file || quickSyncPromptShownRef.current) return;
+
+        const alreadyUsingRemoteQuickSync =
+          quickSync.enabled &&
+          quickSync.fileId === file.id &&
+          Boolean(quickSync.lastSyncedAt);
+        if (alreadyUsingRemoteQuickSync) return;
+
+        quickSyncPromptShownRef.current = true;
+        setQuickSyncPromptVisible(true);
       })
       .catch(() => {
         if (active) setQuickSyncBackup(null);
@@ -85,7 +89,12 @@ export function GoogleDriveBackupPanel({
     return () => {
       active = false;
     };
-  }, [backup.user, onboardingRestore]);
+  }, [
+    backup.user,
+    quickSync.enabled,
+    quickSync.fileId,
+    quickSync.lastSyncedAt,
+  ]);
 
   const operationLabel = useMemo(() => {
     switch (backup.operation) {
@@ -188,7 +197,7 @@ export function GoogleDriveBackupPanel({
             </View>
           ) : backup.user ? (
             <>
-              {onboardingRestore && quickSyncBackup ? (
+              {quickSyncBackup ? (
                 <>
                   <View style={styles.divider} />
                   <Pressable
