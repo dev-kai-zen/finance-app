@@ -97,7 +97,7 @@
               "targetCellHeight": 1,
               "description": "Quickly record an expense transaction in Kaizen Finance",
               "previewImage": "./assets/quick-expense-widget-preview.png",
-              "resizeMode": "horizontal|vertical",
+              "resizeMode": "none",
               "updatePeriodMillis": 0
             }
           ]

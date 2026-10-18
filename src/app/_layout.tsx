@@ -123,6 +123,13 @@ function RootLayoutContent() {
                             headerShown: false,
                           }}
                         />
+                        <Stack.Screen
+                          name="transactions/scheduled"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: false,
+                          }}
+                        />
                         <Stack.Screen name="monitor" />
                           </Stack>
                         </ExperienceAppShell>

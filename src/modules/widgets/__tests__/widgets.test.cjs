@@ -55,5 +55,17 @@ test("widgets: app.json configures QuickExpenseWidget as a 1x1 widget tile", () 
   assert.ok(quickExpense, "QuickExpenseWidget must be registered");
   assert.equal(quickExpense.targetCellWidth, 1);
   assert.equal(quickExpense.targetCellHeight, 1);
+  assert.equal(quickExpense.resizeMode, "none");
+});
+
+test("widgets: android widgetprovider xml has 1x1 cell size and resizeMode none", () => {
+  const xmlPath = path.resolve(
+    __dirname,
+    "../../../../android/app/src/main/res/xml/widgetprovider_quickexpensewidget.xml",
+  );
+  const xml = fs.readFileSync(xmlPath, "utf8");
+  assert.match(xml, /android:targetCellWidth="1"/);
+  assert.match(xml, /android:targetCellHeight="1"/);
+  assert.match(xml, /android:resizeMode="none"/);
 });
 
