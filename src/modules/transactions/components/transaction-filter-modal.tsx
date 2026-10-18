@@ -9,19 +9,31 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronDown, ChevronUp } from "lucide-react-native";
+import { Calendar, Check, ChevronDown, ChevronUp } from "lucide-react-native";
+import { DatePickerModal } from "@/components/date-picker-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountListItem } from "@/modules/accounts";
 import { LabelBadge, useLabels } from "@/modules/labels";
 import type { TransactionType } from "../types/transaction.types";
+import {
+  formatTransactionFilterDate,
+  todayLocalDateKey,
+} from "../utils/transaction-date-filter";
 
-export type DatePreset = "all" | "this_month" | "last_month" | "this_year";
+export type DatePreset =
+  | "all"
+  | "this_month"
+  | "last_month"
+  | "this_year"
+  | "custom";
 
 export interface TransactionFilterState {
   type: TransactionType | "all";
   datePreset: DatePreset;
+  customDateFrom: string | null;
+  customDateTo: string | null;
   accountIds: string[];
   labelIds?: string[];
   sortBy: "date" | "amount";
@@ -31,6 +43,8 @@ export interface TransactionFilterState {
 export const DEFAULT_TRANSACTION_FILTERS: TransactionFilterState = {
   type: "all",
   datePreset: "all",
+  customDateFrom: null,
+  customDateTo: null,
   accountIds: [],
   labelIds: [],
   sortBy: "date",
@@ -57,6 +71,7 @@ const DATE_OPTIONS: { key: DatePreset; label: string }[] = [
   { key: "this_month", label: "This Month" },
   { key: "last_month", label: "Last Month" },
   { key: "this_year", label: "This Year" },
+  { key: "custom", label: "Custom Dates" },
 ];
 
 export function TransactionFilterModal({
@@ -74,6 +89,9 @@ export function TransactionFilterModal({
 
   const [localFilters, setLocalFilters] = useState<TransactionFilterState>(filters);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [customDatePickerTarget, setCustomDatePickerTarget] = useState<
+    "from" | "to" | null
+  >(null);
   const { activeLabels } = useLabels({ includeArchived: false });
 
   // Sync with prop when opened
@@ -81,8 +99,23 @@ export function TransactionFilterModal({
     if (visible) {
       setLocalFilters(filters);
       setAccountDropdownOpen(false);
+      setCustomDatePickerTarget(null);
     }
   }, [visible, filters]);
+
+  const selectDatePreset = (key: DatePreset) => {
+    if (key === "custom") {
+      const today = todayLocalDateKey();
+      setLocalFilters((prev) => ({
+        ...prev,
+        datePreset: key,
+        customDateFrom: prev.customDateFrom ?? today,
+        customDateTo: prev.customDateTo ?? today,
+      }));
+      return;
+    }
+    setLocalFilters((prev) => ({ ...prev, datePreset: key }));
+  };
 
   const handleReset = () => {
     setLocalFilters(DEFAULT_TRANSACTION_FILTERS);
@@ -200,9 +233,7 @@ export function TransactionFilterModal({
                       key={opt.key}
                       accessibilityLabel={`Date ${opt.label}`}
                       accessibilityRole="button"
-                      onPress={() =>
-                        setLocalFilters((prev) => ({ ...prev, datePreset: opt.key }))
-                      }
+                      onPress={() => selectDatePreset(opt.key)}
                       style={[styles.pill, active && styles.pillActive]}
                     >
                       <Text
@@ -214,6 +245,41 @@ export function TransactionFilterModal({
                   );
                 })}
               </View>
+              {localFilters.datePreset === "custom" &&
+              localFilters.customDateFrom &&
+              localFilters.customDateTo ? (
+                <View style={styles.customDateBox}>
+                  <Text style={styles.customDateHint}>
+                    Pick one day or a range (inclusive).
+                  </Text>
+                  <View style={styles.customDateRow}>
+                    <Pressable
+                      accessibilityLabel="Select start date"
+                      accessibilityRole="button"
+                      onPress={() => setCustomDatePickerTarget("from")}
+                      style={styles.dateChip}
+                    >
+                      <Calendar color={theme.colors.primary} size={15} />
+                      <Text style={styles.dateChipText}>
+                        From{" "}
+                        {formatTransactionFilterDate(localFilters.customDateFrom)}
+                      </Text>
+                    </Pressable>
+                    <Text style={styles.customDateSeparator}>to</Text>
+                    <Pressable
+                      accessibilityLabel="Select end date"
+                      accessibilityRole="button"
+                      onPress={() => setCustomDatePickerTarget("to")}
+                      style={styles.dateChip}
+                    >
+                      <Calendar color={theme.colors.primary} size={15} />
+                      <Text style={styles.dateChipText}>
+                        To {formatTransactionFilterDate(localFilters.customDateTo)}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : null}
             </View>
 
             {/* Account Filter */}
@@ -363,6 +429,31 @@ export function TransactionFilterModal({
           </View>
         </View>
       </View>
+
+      <DatePickerModal
+        onClose={() => setCustomDatePickerTarget(null)}
+        onSelectDate={(dateKey) => {
+          setLocalFilters((prev) => ({
+            ...prev,
+            customDateFrom:
+              customDatePickerTarget === "from" ? dateKey : prev.customDateFrom,
+            customDateTo:
+              customDatePickerTarget === "to" ? dateKey : prev.customDateTo,
+          }));
+          setCustomDatePickerTarget(null);
+        }}
+        selectedDate={
+          customDatePickerTarget === "from"
+            ? (localFilters.customDateFrom ?? todayLocalDateKey())
+            : customDatePickerTarget === "to"
+              ? (localFilters.customDateTo ?? todayLocalDateKey())
+              : undefined
+        }
+        title={
+          customDatePickerTarget === "from" ? "Select Start Date" : "Select End Date"
+        }
+        visible={customDatePickerTarget !== null}
+      />
     </Modal>
   );
 }
@@ -486,6 +577,45 @@ function createStyles(theme: AppTheme) {
     pillTextActive: {
       color: theme.colors.primary,
       fontWeight: "700",
+    },
+    customDateBox: {
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.sm,
+    },
+    customDateHint: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+    },
+    customDateRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
+    },
+    customDateSeparator: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    dateChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexDirection: "row",
+      flex: 1,
+      gap: 6,
+      minHeight: 40,
+      minWidth: 140,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+    },
+    dateChipText: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     accountDropdownTrigger: {
       alignItems: "center",

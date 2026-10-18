@@ -42,6 +42,7 @@ import {
   TransactionFilterModal,
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
+import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
@@ -313,6 +314,12 @@ export function TransactionsScreen({
           }
           case "this_year":
             return d.getFullYear() === now.getFullYear();
+          case "custom": {
+            const from = filterState.customDateFrom;
+            const to = filterState.customDateTo;
+            if (!from || !to) return false;
+            return isLocalDateKeyInRange(tx.occurredAt, from, to);
+          }
           default:
             return true;
         }
