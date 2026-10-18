@@ -2,7 +2,12 @@ import {
   announceDatabaseReplacement,
   replaceDatabaseFromSnapshot,
 } from "@/infrastructure/database";
-import { downloadGoogleDriveBackupFile } from "@/infrastructure/sync";
+import {
+  downloadGoogleDriveBackupFile,
+  getQuickSyncConfig,
+  resolveGoogleDriveQuickSyncBackupFile,
+  saveQuickSyncConfig,
+} from "@/infrastructure/sync";
 import { readDatabaseBackup } from "@/modules/local-backup";
 import { withGoogleDriveAccessToken } from "./google-drive-auth.service";
 
@@ -19,6 +24,31 @@ export async function restoreGoogleDriveBackup(
   await replaceDatabaseFromSnapshot(backup.database);
 
   restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully.`;
+  setTimeout(announceDatabaseReplacement, 0);
+}
+
+export async function restoreQuickSyncBackup(): Promise<void> {
+  const config = getQuickSyncConfig();
+  const archive = await withGoogleDriveAccessToken(async (accessToken) => {
+    let fileId = config.fileId;
+    if (!fileId) {
+      const quickSyncFile = await resolveGoogleDriveQuickSyncBackupFile(
+        accessToken,
+      );
+      if (!quickSyncFile) {
+        throw new Error("No Quick Sync backup found on Google Drive.");
+      }
+      fileId = quickSyncFile.id;
+      saveQuickSyncConfig({ fileId });
+    }
+    return downloadGoogleDriveBackupFile(accessToken, fileId);
+  });
+
+  const backup = await readDatabaseBackup(archive, null);
+  await replaceDatabaseFromSnapshot(backup.database);
+
+  const restoredAt = backup.createdAt.toLocaleString();
+  restoreNotice = `Quick Sync backup from ${restoredAt} restored successfully.`;
   setTimeout(announceDatabaseReplacement, 0);
 }
 

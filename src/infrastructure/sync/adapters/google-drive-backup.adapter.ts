@@ -333,6 +333,20 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   return toVisibleBackupFile(created);
 }
 
+export async function resolveGoogleDriveQuickSyncBackupFile(
+  accessToken: string,
+): Promise<GoogleDriveBackupFile | null> {
+  const backupFolder = await ensureBackupFolder(accessToken);
+  const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
+  const quickSyncFile = existingFiles.find(
+    (file) =>
+      file.name === QUICK_SYNC_BACKUP_NAME ||
+      file.appProperties?.[QUICK_SYNC_PROPERTY] === "true",
+  );
+
+  return quickSyncFile ? toVisibleBackupFile(quickSyncFile) : null;
+}
+
 export async function downloadGoogleDriveBackupFile(
   accessToken: string,
   fileId: string,

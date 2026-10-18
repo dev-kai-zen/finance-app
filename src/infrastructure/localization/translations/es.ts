@@ -64,6 +64,13 @@ export const es = {
     neverSynced: "Nunca sincronizado",
     syncNow: "Sincronizar ahora",
     syncingNow: "Sincronizando...",
+    restore: "Restaurar",
+    restoring: "Restaurando...",
+    restoreFailed: "No se pudo restaurar la copia de Quick Sync.",
+    restoreConfirmTitle: "¿Restaurar Quick Sync?",
+    restoreConfirmMessage:
+      "Esto reemplaza todos los datos locales con el archivo Quick Sync más reciente de Google Drive. Se guarda una copia de seguridad en memoria y se restaura automáticamente si falla la validación.",
+    restoreConfirmAction: "Restaurar",
   },
   settings: {
     generalSection: "GENERAL",

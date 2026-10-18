@@ -64,6 +64,13 @@ export const fil = {
     neverSynced: "Hindi pa na-sync",
     syncNow: "I-sync ngayon",
     syncingNow: "Nagsi-sync...",
+    restore: "I-restore",
+    restoring: "Nire-restore...",
+    restoreFailed: "Hindi ma-restore ang Quick Sync backup.",
+    restoreConfirmTitle: "I-restore ang Quick Sync?",
+    restoreConfirmMessage:
+      "Pinapalitan nito ang lahat ng lokal na data ng pinakabagong Quick Sync file mula sa Google Drive. May safety copy sa memory at awtomatikong ibabalik kung mabigo ang validation.",
+    restoreConfirmAction: "I-restore",
   },
   settings: {
     generalSection: "PANGKALAHATAN",

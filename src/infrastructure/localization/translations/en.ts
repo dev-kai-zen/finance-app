@@ -58,6 +58,13 @@ export const en = {
     neverSynced: "Never synced",
     syncNow: "Sync now",
     syncingNow: "Syncing...",
+    restore: "Restore",
+    restoring: "Restoring...",
+    restoreFailed: "Could not restore the Quick Sync backup.",
+    restoreConfirmTitle: "Restore Quick Sync?",
+    restoreConfirmMessage:
+      "This replaces all local data with the latest Quick Sync file from Google Drive. A safety copy is kept in memory and restored automatically if validation fails.",
+    restoreConfirmAction: "Restore",
   },
   settings: {
     generalSection: "GENERAL",

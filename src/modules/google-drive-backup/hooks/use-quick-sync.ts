@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { restoreQuickSyncBackup } from "../services/restore-google-drive-backup.service";
 import {
   getQuickSyncState,
   setQuickSyncEnabled,
@@ -23,5 +24,6 @@ export function useQuickSync() {
     setEnabled: setQuickSyncEnabled,
     setNetworkPreference: setQuickSyncNetworkPreference,
     triggerSync: () => triggerQuickSync({ immediate: true }),
+    restoreFromQuickSync: () => restoreQuickSyncBackup(),
   };
 }
