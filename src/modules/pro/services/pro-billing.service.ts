@@ -124,13 +124,19 @@ function hasProEntitlement(customerInfo: CustomerInfo): boolean {
 export async function purchaseLifetimePackage(): Promise<ProPurchaseResult> {
   const configured = await initializeRevenueCat();
   if (!configured) {
-    // Sandbox / Mock Mode when RevenueCat is not yet configured with an API key
+    // Sandbox / Mock Mode is ONLY permitted in development
     if (typeof __DEV__ !== "undefined" && __DEV__) {
       console.log(
         "[ProBilling] Sandbox mode purchase: simulating successful Lifetime Pro purchase.",
       );
+      return { success: true, isPro: true };
     }
-    return { success: true, isPro: true };
+    return {
+      success: false,
+      userCancelled: false,
+      error:
+        "Store billing is unavailable. Please verify Google Play Services and internet connectivity.",
+    };
   }
 
   try {
@@ -178,10 +184,17 @@ export async function purchaseLifetimePackage(): Promise<ProPurchaseResult> {
 export async function restorePurchasesFromStore(): Promise<ProRestoreResult> {
   const configured = await initializeRevenueCat();
   if (!configured) {
+    if (typeof __DEV__ !== "undefined" && __DEV__) {
+      return {
+        success: true,
+        isPro: false,
+        restored: false,
+      };
+    }
     return {
-      success: true,
-      isPro: false,
-      restored: false,
+      success: false,
+      error:
+        "Store billing is unavailable. Please verify Google Play Services and internet connectivity.",
     };
   }
 

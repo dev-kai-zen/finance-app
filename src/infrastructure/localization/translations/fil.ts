@@ -504,7 +504,7 @@ export const fil = {
     restoreSuccessMsg: "Matagumpay na naibalik ang iyong Lifetime Pro status!",
     restoreNotFoundTitle: "Walang Nakitang Pagbili",
     restoreNotFoundMsg:
-      "Walang nakitang aktibong Lifetime Pro purchase para sa Google account na ito.",
+      "Walang nakitang aktibong Lifetime Pro purchase para sa account na kasalukuyang aktibo sa iyong Google Play Store.\n\nTip: Ang mga binili ay nakatali sa iyong Google Play Store account. Kung ibang account ang ginamit mo sa pagbili, buksan ang Google Play Store app, magpalit ng account sa profile icon sa itaas, at subukan muli.",
     restoreErrorTitle: "Nabigo ang Pag-restore",
     restoreErrorMsg: "Hindi maibalik ang mga binili ngayon. Pakisubukan muli mamaya.",
     purchaseSuccessTitle: "Maligayang Pagdating sa Pro!",

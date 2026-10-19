@@ -488,7 +488,7 @@ export const en = {
     restoreSuccessMsg: "Your Lifetime Pro status has been successfully restored!",
     restoreNotFoundTitle: "No Purchases Found",
     restoreNotFoundMsg:
-      "We couldn't find an active Lifetime Pro purchase for this Google account.",
+      "We couldn't find an active Lifetime Pro purchase for the account currently active in your Google Play Store.\n\nTip: Purchases are linked to your Google Play Store account. If you purchased using another account, open Google Play Store, switch accounts at the top-right profile icon, and try restoring again.",
     restoreErrorTitle: "Restore Failed",
     restoreErrorMsg: "Unable to restore purchases at this time. Please try again later.",
     purchaseSuccessTitle: "Welcome to Pro!",
