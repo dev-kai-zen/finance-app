@@ -1,7 +1,7 @@
 import { memo } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AlertCircle, AlertTriangle, RotateCw } from "lucide-react-native";
-import { IconHelper } from "@/components";
+import { IconHelper, ThemedSwitch } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -108,18 +108,9 @@ export const BudgetCard = memo(function BudgetCard({
         </View>
 
         <View style={styles.toggleContainer}>
-          <Switch
+          <ThemedSwitch
             accessibilityLabel={`Toggle ${category.name} budget`}
             onValueChange={onToggle}
-            thumbColor={
-              budget.isEnabled
-                ? theme.colors.onPrimary
-                : theme.colors.textSecondary
-            }
-            trackColor={{
-              false: theme.colors.border,
-              true: theme.colors.primary,
-            }}
             value={budget.isEnabled}
           />
         </View>

@@ -4,14 +4,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { Check, Plus, X } from "lucide-react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { ConfirmModal } from "@/components/confirm-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -45,9 +43,7 @@ export function LabelFormModal({
 
   const [name, setName] = useState("");
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [isArchived, setIsArchived] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
-  const [pendingArchiveToggle, setPendingArchiveToggle] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,20 +51,11 @@ export function LabelFormModal({
     if (visible) {
       setName(label?.name ?? "");
       setSelectedColor(label?.color ?? null);
-      setIsArchived(label?.isArchived ?? false);
       setError(null);
       setIsColorFormOpen(false);
-      setPendingArchiveToggle(null);
       refreshHexColors();
     }
   }, [visible, label, refreshHexColors]);
-
-  const handleConfirmArchiveToggle = () => {
-    if (pendingArchiveToggle !== null) {
-      setIsArchived(pendingArchiveToggle);
-    }
-    setPendingArchiveToggle(null);
-  };
 
   const handleSaveCustomColor = async (colorInput: HexColorInput): Promise<boolean> => {
     const created = await addColor(colorInput);
@@ -93,7 +80,6 @@ export function LabelFormModal({
       await onSave({
         name: trimmed,
         color: selectedColor,
-        isArchived,
       });
       onClose();
     } catch (e) {
@@ -235,26 +221,6 @@ export function LabelFormModal({
               </View>
             </View>
 
-            {/* Archive switch (edit mode only) */}
-            {label && (
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextContainer}>
-                  <Text style={styles.switchLabel}>Archive Label</Text>
-                  <Text style={styles.switchSublabel}>
-                    Hide from picker while keeping history intact
-                  </Text>
-                </View>
-                <Switch
-                  value={isArchived}
-                  onValueChange={(nextVal) => setPendingArchiveToggle(nextVal)}
-                  trackColor={{
-                    false: theme.colors.surfaceMuted,
-                    true: theme.colors.primary,
-                  }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-            )}
           </ScrollView>
 
           {/* Footer */}
@@ -288,28 +254,6 @@ export function LabelFormModal({
         onClose={() => setIsColorFormOpen(false)}
         onSave={handleSaveCustomColor}
         visible={isColorFormOpen}
-      />
-
-      <ConfirmModal
-        visible={pendingArchiveToggle === true}
-        title="Archive Label?"
-        message={`Are you sure you want to archive #${name.trim() || label?.name}? It will be hidden from the label picker, but existing transactions will keep this label.`}
-        confirmLabel="Archive"
-        cancelLabel="Cancel"
-        variant="destructive"
-        onConfirm={handleConfirmArchiveToggle}
-        onCancel={() => setPendingArchiveToggle(null)}
-      />
-
-      <ConfirmModal
-        visible={pendingArchiveToggle === false}
-        title="Unarchive Label?"
-        message={`Are you sure you want to unarchive #${name.trim() || label?.name}? It will appear in the label picker again.`}
-        confirmLabel="Unarchive"
-        cancelLabel="Cancel"
-        variant="restore"
-        onConfirm={handleConfirmArchiveToggle}
-        onCancel={() => setPendingArchiveToggle(null)}
       />
     </Modal>
   );
@@ -480,26 +424,6 @@ function createStyles(theme: AppTheme) {
     addColorSwatchPressed: {
       opacity: 0.65,
       transform: [{ scale: 0.95 }],
-    },
-    switchRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingTop: theme.spacing.xs,
-    },
-    switchTextContainer: {
-      flex: 1,
-      marginRight: theme.spacing.md,
-    },
-    switchLabel: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.base,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    switchSublabel: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      marginTop: 2,
     },
     footer: {
       borderTopColor: theme.colors.border,

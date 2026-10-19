@@ -1,9 +1,11 @@
 import * as React from "react";
 
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
 import {
   completeGuidedSetup as completeGuidedSetupService,
   completeManualSetup as completeManualSetupService,
   completeRecommendedSetup as completeRecommendedSetupService,
+  finalizeRestoredWorkspace,
   initializeWorkspaceState,
   loadSampleWorkspace as loadSampleWorkspaceService,
   type GuidedWorkspaceInput,
@@ -34,6 +36,14 @@ export function WorkspaceProvider({ children }: React.PropsWithChildren) {
   const [error, setError] = React.useState<string | null>(null);
   const [personalSetupRequested, setPersonalSetupRequested] =
     React.useState(false);
+
+  React.useEffect(() => {
+    return subscribeToDatabaseReplacement(() => {
+      setState(finalizeRestoredWorkspace());
+      setPersonalSetupRequested(false);
+      setError(null);
+    });
+  }, []);
 
   const run = React.useCallback(
     async (operation: () => Promise<WorkspaceState>): Promise<boolean> => {

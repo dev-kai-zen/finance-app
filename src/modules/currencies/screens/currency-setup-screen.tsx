@@ -49,14 +49,17 @@ export function CurrencySetupScreen({
   const isHelpVisible = helpVisible ?? internalHelpVisible;
   const handleCloseHelp = onCloseHelp ?? (() => setInternalHelpVisible(false));
 
-  const currencyOptions = useMemo(
-    () =>
-      SUPPORTED_CURRENCY_CODES.map((code) => ({
-        label: `${code} · ${CURRENCY_NAMES[code] ?? code}`,
-        value: code,
-      })),
-    [],
-  );
+  const currencyOptions = useMemo(() => {
+    const selected = preferences.defaultCurrency;
+    const codes = SUPPORTED_CURRENCY_CODES.filter((code) => code !== selected);
+    if (SUPPORTED_CURRENCY_CODES.includes(selected)) {
+      codes.unshift(selected);
+    }
+    return codes.map((code) => ({
+      label: `${code} · ${CURRENCY_NAMES[code] ?? code}`,
+      value: code,
+    }));
+  }, [preferences.defaultCurrency]);
   const negativeOptions = [
     { label: "-100", value: "minus" as NegativeNumberFormat },
     { label: "(100)", value: "parentheses" as NegativeNumberFormat },

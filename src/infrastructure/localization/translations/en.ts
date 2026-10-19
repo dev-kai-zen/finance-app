@@ -58,6 +58,13 @@ export const en = {
     neverSynced: "Never synced",
     syncNow: "Sync now",
     syncingNow: "Syncing...",
+    restore: "Restore",
+    restoring: "Restoring...",
+    restoreFailed: "Could not restore the Quick Sync backup.",
+    restoreConfirmTitle: "Restore Quick Sync?",
+    restoreConfirmMessage:
+      "This replaces all local data with the latest Quick Sync file from Google Drive. A safety copy is kept in memory and restored automatically if validation fails.",
+    restoreConfirmAction: "Restore",
   },
   settings: {
     generalSection: "GENERAL",
@@ -207,6 +214,16 @@ export const en = {
       "Keep an exported copy of your financial database in your Google Drive account and restore it on another device. Connect your account, create backups on demand, and choose a saved archive when restoring.",
     loading: "Loading Google Drive backup...",
     loadingBackups: "Loading backups...",
+    onboardingQuickSyncPromptTitle: "Quick Sync backup found",
+    onboardingQuickSyncPromptMessage:
+      "We found an automatic Quick Sync file on your Google Drive. Restore it for the latest data, or choose a full encrypted backup instead.",
+    restoreQuickSyncTitle: "Restore Quick Sync",
+    restoreQuickSyncDescription: "Latest auto-sync from %{date}",
+    restoreQuickSyncAction: "Restore Quick Sync",
+    restoreQuickSyncUseFullBackup: "Choose full backup",
+    restoreQuickSyncConfirmTitle: "Restore Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "This replaces all local data with your Quick Sync file and turns Quick Sync back on for this device.",
   },
   language: {
     helpTitle: "About Language",
@@ -221,6 +238,11 @@ export const en = {
     moreComingSoon: "More languages coming soon.",
     noResultsTitle: "No languages found",
     noResultsDescription: "Try another language name or locale code.",
+  },
+  scheduledTransactions: {
+    helpTitle: "About Scheduled Transactions",
+    helpMessage:
+      "Set up recurring income, expenses, or transfers. Choose whether each occurrence posts automatically or waits for your confirmation. Due or failed items appear under Needs attention; you can pause, end, or archive schedules without removing transactions already posted.",
   },
   themePicker: {
     closeAccessibility: "Close theme picker",
@@ -353,7 +375,7 @@ export const en = {
     message:
       "This permanently deletes your accounts, transactions, budgets, goals, notes, settings, attachments, and app-managed local backups from this device.",
     externalNote:
-      "Exported files and Google Drive backups will not be deleted.",
+      "Files already saved in Google Drive are not deleted. This device disconnects from Google Drive and clears Quick Sync settings.",
     confirmationInstruction: "Type KAIZEN to confirm",
     confirmationAccessibility: "Type KAIZEN to confirm resetting all data",
     deleteAll: "Delete all data",

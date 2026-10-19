@@ -6,7 +6,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -27,6 +26,7 @@ import {
   IconHelper,
   KeyboardAwareFormPreset,
   NotificationModal,
+  ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -2143,13 +2143,9 @@ export function TransactionFormModal({
                         Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges)
                       </Text>
                     </View>
-                    <Switch
+                    <ThemedSwitch
                       accessibilityLabel="Add transfer fee"
                       onValueChange={handleFeeEnabledChange}
-                      trackColor={{
-                        false: theme.colors.borderStrong,
-                        true: theme.colors.primary,
-                      }}
                       value={feeEnabled}
                     />
                   </View>
@@ -2395,14 +2391,10 @@ export function TransactionFormModal({
                         : "The full purchase uses your credit limit now; one portion is billed per statement."}
                     </Text>
                   </View>
-                  <Switch
+                  <ThemedSwitch
                     accessibilityLabel="Installment purchase"
                     disabled={installmentFieldsLocked || !canConfigureInstallments}
                     onValueChange={setInstallmentEnabled}
-                    trackColor={{
-                      false: theme.colors.borderStrong,
-                      true: theme.colors.primary,
-                    }}
                     value={installmentEnabled}
                   />
                 </View>

@@ -7,6 +7,7 @@ export {
   uploadGoogleDriveAttachmentFile,
   uploadGoogleDriveBackupFile,
   uploadOrUpdateGoogleDriveQuickSyncBackup,
+  resolveGoogleDriveQuickSyncBackupFile,
   QUICK_SYNC_BACKUP_NAME,
   QUICK_SYNC_PROPERTY,
 } from "./adapters/google-drive-backup.adapter";

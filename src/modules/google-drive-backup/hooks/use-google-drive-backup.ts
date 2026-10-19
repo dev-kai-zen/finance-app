@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
+
 import type {
   BackupCatalog,
   BackupFile,
@@ -18,6 +20,7 @@ import { listGoogleDriveBackups } from "@/modules/google-drive-backup/services/l
 import {
   consumeRestoreNotice,
   restoreGoogleDriveBackup,
+  restoreQuickSyncBackup,
 } from "@/modules/google-drive-backup/services/restore-google-drive-backup.service";
 
 export function useGoogleDriveBackup() {
@@ -57,6 +60,29 @@ export function useGoogleDriveBackup() {
     const result = await run("loading", listGoogleDriveBackups);
     if (result) applyCatalog(result, setBackups, setFolderUrl, setNotice);
   }, [run]);
+
+  useEffect(() => {
+    return subscribeToDatabaseReplacement(() => {
+      if (configurationError) return;
+
+      void restoreGoogleDriveSession()
+        .then(async (restoredUser) => {
+          setUser(restoredUser);
+          if (!restoredUser) {
+            setBackups([]);
+            setFolderUrl(null);
+            return;
+          }
+          const catalog = await listGoogleDriveBackups();
+          applyCatalog(catalog, setBackups, setFolderUrl, setNotice);
+        })
+        .catch(() => {
+          setUser(null);
+          setBackups([]);
+          setFolderUrl(null);
+        });
+    });
+  }, [configurationError]);
 
   useEffect(() => {
     let active = true;
@@ -142,10 +168,24 @@ export function useGoogleDriveBackup() {
         await restoreGoogleDriveBackup(fileId, passphrase);
         return true;
       });
+      if (completed) {
+        publishRestoreSuccessNotice(setNotice);
+      }
       return completed === true;
     },
     [run],
   );
+
+  const restoreQuickSync = useCallback(async (): Promise<boolean> => {
+    const completed = await run("restoring", async () => {
+      await restoreQuickSyncBackup();
+      return true;
+    });
+    if (completed) {
+      publishRestoreSuccessNotice(setNotice);
+    }
+    return completed === true;
+  }, [run]);
 
   return {
     backups,
@@ -161,7 +201,17 @@ export function useGoogleDriveBackup() {
     disconnect,
     refresh,
     restoreBackup,
+    restoreQuickSync,
   };
+}
+
+function publishRestoreSuccessNotice(
+  setNotice: (notice: BackupNotice | null) => void,
+): void {
+  const message = consumeRestoreNotice();
+  if (message) {
+    setNotice({ variant: "success", message });
+  }
 }
 
 function applyCatalog(

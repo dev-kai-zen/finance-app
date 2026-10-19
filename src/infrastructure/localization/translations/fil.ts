@@ -64,6 +64,13 @@ export const fil = {
     neverSynced: "Hindi pa na-sync",
     syncNow: "I-sync ngayon",
     syncingNow: "Nagsi-sync...",
+    restore: "I-restore",
+    restoring: "Nire-restore...",
+    restoreFailed: "Hindi ma-restore ang Quick Sync backup.",
+    restoreConfirmTitle: "I-restore ang Quick Sync?",
+    restoreConfirmMessage:
+      "Pinapalitan nito ang lahat ng lokal na data ng pinakabagong Quick Sync file mula sa Google Drive. May safety copy sa memory at awtomatikong ibabalik kung mabigo ang validation.",
+    restoreConfirmAction: "I-restore",
   },
   settings: {
     generalSection: "PANGKALAHATAN",
@@ -218,6 +225,16 @@ export const fil = {
       "Magtabi ng exported copy ng financial database sa Google Drive account mo at i-restore ito sa ibang device. Ikonekta ang account, gumawa ng backup kapag kailangan, at pumili ng naka-save na archive kapag magre-restore.",
     loading: "Nilo-load ang Google Drive backup...",
     loadingBackups: "Nilo-load ang mga backup...",
+    onboardingQuickSyncPromptTitle: "May Quick Sync backup",
+    onboardingQuickSyncPromptMessage:
+      "May awtomatikong Quick Sync file sa Google Drive. I-restore ito para sa pinakabagong data, o pumili ng full encrypted backup.",
+    restoreQuickSyncTitle: "I-restore ang Quick Sync",
+    restoreQuickSyncDescription: "Pinakabagong auto-sync noong %{date}",
+    restoreQuickSyncAction: "I-restore ang Quick Sync",
+    restoreQuickSyncUseFullBackup: "Pumili ng full backup",
+    restoreQuickSyncConfirmTitle: "I-restore ang Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "Pinapalitan nito ang lahat ng lokal na data ng Quick Sync file at ibinabalik ang Quick Sync sa device na ito.",
   },
   language: {
     helpTitle: "Tungkol sa Wika",
@@ -232,6 +249,11 @@ export const fil = {
     moreComingSoon: "Mas marami pang wika ang paparating.",
     noResultsTitle: "Walang nahanap na wika",
     noResultsDescription: "Subukan ang ibang pangalan ng wika o locale code.",
+  },
+  scheduledTransactions: {
+    helpTitle: "Tungkol sa Naka-iskedyul na mga Transaksyon",
+    helpMessage:
+      "Mag-set up ng umuulit na kita, gastos, o transfer. Piliin kung awtomatikong i-po-post ang bawat occurrence o hihintayin ang iyong kumpirmasyon. Ang due o failed na item ay lalabas sa Needs attention; maaari mong i-pause, tapusin, o i-archive ang mga iskedyul nang hindi tinatanggal ang mga transaksyong na-post na.",
   },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
@@ -366,7 +388,7 @@ export const fil = {
     message:
       "Permanenteng buburahin nito ang iyong mga account, transaksyon, badyet, layunin, tala, setting, attachment, at mga lokal na backup na pinamamahalaan ng app mula sa device na ito.",
     externalNote:
-      "Hindi mabubura ang mga na-export na file at Google Drive backup.",
+      "Hindi mabubura ang mga file sa Google Drive. Idi-disconnect ng device na ito ang Google Drive at i-clear ang Quick Sync settings.",
     confirmationInstruction: "I-type ang KAIZEN para kumpirmahin",
     confirmationAccessibility:
       "I-type ang KAIZEN para kumpirmahin ang pag-reset ng lahat ng data",

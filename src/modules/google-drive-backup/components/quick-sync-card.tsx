@@ -9,12 +9,13 @@ import {
 import {
   CheckCircle2,
   RefreshCw,
+  RotateCcw,
   Smartphone,
   Wifi,
   Zap,
 } from "lucide-react-native";
 
-import { AppButton } from "@/components";
+import { AppButton, ConfirmModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -28,7 +29,11 @@ export function QuickSyncCard() {
   const { t } = useLocalization();
   const quickSync = useQuickSync();
   const [syncingManual, setSyncingManual] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreConfirmVisible, setRestoreConfirmVisible] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
 
+  const isBusy = quickSync.status === "syncing" || syncingManual || restoring;
   const isSyncing = quickSync.status === "syncing" || syncingManual;
 
   const handleToggle = (value: boolean) => {
@@ -41,12 +46,29 @@ export function QuickSyncCard() {
   };
 
   const handleManualSync = async () => {
-    if (isSyncing) return;
+    if (isBusy) return;
     setSyncingManual(true);
+    setRestoreError(null);
     try {
       await quickSync.triggerSync();
     } finally {
       setSyncingManual(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (isBusy) return;
+    setRestoring(true);
+    setRestoreError(null);
+    try {
+      await quickSync.restoreFromQuickSync();
+      setRestoreConfirmVisible(false);
+    } catch (error) {
+      setRestoreError(
+        error instanceof Error ? error.message : t("quickSync.restoreFailed"),
+      );
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -179,28 +201,65 @@ export function QuickSyncCard() {
                   {quickSync.lastError}
                 </Text>
               ) : null}
+              {restoreError ? (
+                <Text style={styles.errorText} numberOfLines={2}>
+                  {restoreError}
+                </Text>
+              ) : null}
             </View>
 
-            <AppButton
-              disabled={isSyncing}
-              label={isSyncing ? t("quickSync.syncingNow") : t("quickSync.syncNow")}
-              leading={
-                <RefreshCw
-                  color={
-                    isSyncing
-                      ? theme.colors.textMuted
-                      : theme.colors.primary
-                  }
-                  size={16}
-                />
-              }
-              onPress={() => void handleManualSync()}
-              size="small"
-              variant="secondary"
-            />
+            <View style={styles.actionButtons}>
+              <AppButton
+                disabled={isBusy}
+                label={
+                  restoring ? t("quickSync.restoring") : t("quickSync.restore")
+                }
+                leading={
+                  <RotateCcw
+                    color={
+                      isBusy ? theme.colors.textMuted : theme.colors.primary
+                    }
+                    size={16}
+                  />
+                }
+                onPress={() => setRestoreConfirmVisible(true)}
+                size="small"
+                style={styles.actionButton}
+                variant="secondary"
+              />
+              <AppButton
+                disabled={isBusy}
+                label={isSyncing ? t("quickSync.syncingNow") : t("quickSync.syncNow")}
+                leading={
+                  <RefreshCw
+                    color={
+                      isSyncing ? theme.colors.textMuted : theme.colors.primary
+                    }
+                    size={16}
+                  />
+                }
+                onPress={() => void handleManualSync()}
+                size="small"
+                style={styles.actionButton}
+                variant="secondary"
+              />
+            </View>
           </View>
         </>
       ) : null}
+
+      <ConfirmModal
+        confirmLabel={t("quickSync.restoreConfirmAction")}
+        message={t("quickSync.restoreConfirmMessage")}
+        onCancel={() => {
+          if (!restoring) setRestoreConfirmVisible(false);
+        }}
+        onConfirm={() => void handleRestore()}
+        pending={restoring}
+        title={t("quickSync.restoreConfirmTitle")}
+        variant="restore"
+        visible={restoreConfirmVisible}
+      />
     </View>
   );
 }
@@ -296,10 +355,17 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     statusRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
+      alignItems: "flex-start",
+      flexDirection: "column",
       gap: theme.spacing.md,
+    },
+    actionButtons: {
+      alignSelf: "stretch",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    actionButton: {
+      flex: 1,
     },
     statusInfo: {
       flex: 1,

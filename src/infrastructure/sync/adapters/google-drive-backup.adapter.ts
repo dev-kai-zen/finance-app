@@ -118,6 +118,7 @@ export async function prepareGoogleDriveBackupCatalog(
     .filter((file) => !migratedLegacyIds.has(file.id))
     .map((file) => toBackupFile(file, "legacy-hidden"));
   const files = [...visibleFiles.map(toVisibleBackupFile), ...unmigratedLegacyFiles]
+    .filter((file) => !isQuickSyncBackupFile(file))
     .sort(
       (left, right) =>
         Date.parse(right.createdTime) - Date.parse(left.createdTime),
@@ -331,6 +332,20 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   );
 
   return toVisibleBackupFile(created);
+}
+
+export async function resolveGoogleDriveQuickSyncBackupFile(
+  accessToken: string,
+): Promise<GoogleDriveBackupFile | null> {
+  const backupFolder = await ensureBackupFolder(accessToken);
+  const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
+  const quickSyncFile = existingFiles.find(
+    (file) =>
+      file.name === QUICK_SYNC_BACKUP_NAME ||
+      file.appProperties?.[QUICK_SYNC_PROPERTY] === "true",
+  );
+
+  return quickSyncFile ? toVisibleBackupFile(quickSyncFile) : null;
 }
 
 export async function downloadGoogleDriveBackupFile(
@@ -632,6 +647,16 @@ async function createDriveMetadataFile(
     },
   );
   return (await response.json()) as DriveFileResponse;
+}
+
+function isQuickSyncBackupFile(file: {
+  name: string;
+  appProperties?: Record<string, string>;
+}): boolean {
+  return (
+    file.name === QUICK_SYNC_BACKUP_NAME ||
+    file.appProperties?.[QUICK_SYNC_PROPERTY] === "true"
+  );
 }
 
 function toVisibleBackupFile(file: DriveFileResponse): GoogleDriveBackupFile {

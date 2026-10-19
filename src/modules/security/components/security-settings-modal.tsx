@@ -12,7 +12,6 @@ import {
   Fingerprint,
   Info,
   KeyRound,
-  Lock,
   ShieldCheck,
   X,
 } from "lucide-react-native";
@@ -56,11 +55,16 @@ export function SecuritySettingsModal({
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordModalMode, setPasswordModalMode] =
     useState<PasswordModalMode>("set");
+  const [pendingBiometricEnable, setPendingBiometricEnable] = useState(false);
 
   if (!visible) return null;
 
-  const openPasswordModal = (mode: PasswordModalMode) => {
+  const openPasswordModal = (
+    mode: PasswordModalMode,
+    options?: { enableBiometricsAfter?: boolean },
+  ) => {
     clearError();
+    setPendingBiometricEnable(options?.enableBiometricsAfter ?? false);
     setPasswordModalMode(mode);
     setPasswordModalVisible(true);
   };
@@ -79,19 +83,28 @@ export function SecuritySettingsModal({
       }
     }
     if (data.newPassword) {
-      return await savePassword(
+      const saved = await savePassword(
         data.newPassword,
         data.currentPassword,
         data.biometricsVerified
           ? { skipCurrentPasswordVerification: true }
           : undefined,
       );
+      if (saved && passwordModalMode === "set" && pendingBiometricEnable) {
+        setPendingBiometricEnable(false);
+        await toggleBiometrics(true);
+      }
+      return saved;
     }
     return false;
   };
 
   const handleToggleBiometrics = async (value: boolean) => {
     clearError();
+    if (value && !config.isPasswordSet) {
+      openPasswordModal("set", { enableBiometricsAfter: true });
+      return;
+    }
     await toggleBiometrics(value);
   };
 
@@ -272,59 +285,19 @@ export function SecuritySettingsModal({
                 <Text style={styles.sectionTitle}>
                   {t("security.biometricSection")}
                 </Text>
-                <View
-                  style={[
-                    styles.card,
-                    !config.isPasswordSet && styles.cardDisabled,
-                  ]}
-                >
+                <View style={styles.card}>
                   <View style={styles.row}>
-                    <View
-                      style={[
-                        styles.rowIconContainer,
-                        !config.isPasswordSet && styles.rowIconContainerDisabled,
-                      ]}
-                    >
-                      <Fingerprint
-                        color={
-                          !config.isPasswordSet
-                            ? theme.colors.textMuted
-                            : theme.colors.info
-                        }
-                        size={20}
-                      />
+                    <View style={styles.rowIconContainer}>
+                      <Fingerprint color={theme.colors.info} size={20} />
                     </View>
                     <View style={styles.rowCopy}>
-                      <Text
-                        style={[
-                          styles.rowTitle,
-                          !config.isPasswordSet && styles.rowTitleDisabled,
-                        ]}
-                      >
+                      <Text style={styles.rowTitle}>
                         {t("security.biometricTitle", {
                           biometric:
                             biometrics.biometricLabel ||
                             t("security.defaultBiometricLabel"),
                         })}
                       </Text>
-                      {!config.isPasswordSet ? (
-                        <Pressable
-                          accessibilityLabel={t(
-                            "security.setupPasswordToActivate",
-                          )}
-                          accessibilityRole="button"
-                          onPress={() => openPasswordModal("set")}
-                          style={({ pressed }) => [
-                            styles.setupPasswordChip,
-                            pressed && styles.setupPasswordChipPressed,
-                          ]}
-                        >
-                          <Lock color={theme.colors.warning} size={11} />
-                          <Text style={styles.setupPasswordChipText}>
-                            {t("security.setupPasswordToActivate")}
-                          </Text>
-                        </Pressable>
-                      ) : null}
                       <Text style={styles.rowSubtitle}>
                         {getBiometricSubtitle()}
                       </Text>
@@ -336,10 +309,12 @@ export function SecuritySettingsModal({
                           t("security.defaultBiometricLabel"),
                       })}
                       disabled={
-                        !config.isPasswordSet ||
-                        (!isBiometricEligible && !config.isBiometricsEnabled)
+                        busy ||
+                        (config.isPasswordSet &&
+                          !isBiometricEligible &&
+                          !config.isBiometricsEnabled)
                       }
-                      onValueChange={handleToggleBiometrics}
+                      onValueChange={(value) => void handleToggleBiometrics(value)}
                       value={config.isBiometricsEnabled}
                     />
                   </View>
@@ -368,7 +343,10 @@ export function SecuritySettingsModal({
         busy={busy}
         error={error}
         mode={passwordModalMode}
-        onClose={() => setPasswordModalVisible(false)}
+        onClose={() => {
+          setPasswordModalVisible(false);
+          setPendingBiometricEnable(false);
+        }}
         onSubmit={handlePasswordSubmit}
         visible={passwordModalVisible}
       />
@@ -456,9 +434,6 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
     },
-    cardDisabled: {
-      opacity: 0.85,
-    },
     row: {
       alignItems: "center",
       flexDirection: "row",
@@ -473,12 +448,6 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 38,
     },
-    rowIconContainerDisabled: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderWidth: 1,
-      opacity: 0.7,
-    },
     rowCopy: {
       flex: 1,
       gap: 2,
@@ -486,31 +455,6 @@ function createStyles(theme: AppTheme) {
     rowTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-    },
-    rowTitleDisabled: {
-      color: theme.colors.textSecondary,
-    },
-    setupPasswordChip: {
-      alignSelf: "flex-start",
-      alignItems: "center",
-      backgroundColor: `${theme.colors.warning}18`,
-      borderColor: `${theme.colors.warning}40`,
-      borderRadius: theme.borderRadius.round,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 5,
-      marginTop: 2,
-      marginBottom: 3,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 3,
-    },
-    setupPasswordChipPressed: {
-      opacity: 0.7,
-    },
-    setupPasswordChipText: {
-      color: theme.colors.warning,
-      fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     rowSubtitle: {

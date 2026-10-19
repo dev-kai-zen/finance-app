@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -41,9 +41,18 @@ export function TransactionDateTimePickerModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [draft, setDraft] = useState(value);
+  const [timePickerSessionKey, setTimePickerSessionKey] = useState<number | null>(
+    null,
+  );
 
-  useEffect(() => {
-    if (visible) setDraft(value);
+  useLayoutEffect(() => {
+    if (visible) {
+      setDraft(value);
+      setTimePickerSessionKey(Date.now());
+      return;
+    }
+
+    setTimePickerSessionKey(null);
   }, [value, visible]);
 
   if (!visible) return null;
@@ -85,14 +94,15 @@ export function TransactionDateTimePickerModal({
               style={styles.datePicker}
               value={draft}
             />
-          ) : (
+          ) : timePickerSessionKey != null ? (
             <TransactionDateTimePickerControl
+              key={timePickerSessionKey}
               mode={mode}
               onValueChange={setDraft}
               style={styles.timePicker}
               value={draft}
             />
-          )}
+          ) : null}
 
           <Pressable
             accessibilityLabel={`Use selected transaction ${mode}`}

@@ -214,8 +214,13 @@ export function ScheduledTransactionsScreen() {
     });
   };
 
+  const contentSpacing = useThemeStyles((theme) => ({
+    paddingTop: theme.spacing.lg,
+  }));
+
   return (
     <PageContainer
+      contentContainerStyle={contentSpacing}
       floatingAction={
         <FloatingActionButton
           accessibilityLabel="Create scheduled transaction"

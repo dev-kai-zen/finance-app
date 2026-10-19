@@ -267,50 +267,6 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
-              accessibilityLabel={t("settings.localBackupAccessibility")}
-              accessibilityRole="button"
-              onPress={() => router.push("/local-backup")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <HardDrive color={theme.colors.textSecondary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("navigation.localBackup")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              accessibilityLabel={t("settings.googleDriveAccessibility")}
-              accessibilityRole="button"
-              onPress={() => router.push("/google-drive-backup")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Cloud color={theme.colors.info} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.googleDrive")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
               accessibilityLabel={t("settings.hexColorsAccessibility", {
                 count: colors.length,
               })}
@@ -357,6 +313,53 @@ export function SettingsScreen() {
               <View style={styles.settingCopy}>
                 <Text style={[styles.settingLabel, styles.dangerLabel]}>
                   {t("settings.resetData")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("settings.backupSection")}</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.localBackupAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.push("/local-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <HardDrive color={theme.colors.textSecondary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("navigation.localBackup")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.googleDriveAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.push("/google-drive-backup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Cloud color={theme.colors.info} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.googleDrive")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AlertTriangle,
   ChevronRight,
@@ -18,6 +11,7 @@ import {
   FullScreenFormModal,
   IconHelper,
   NotificationModal,
+  ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -266,17 +260,10 @@ export function BudgetFormModal({
                     Track expenses and evaluate spending limits
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
+                  accessibilityLabel="Enable Budget"
+                  disabled={pending}
                   onValueChange={setIsEnabled}
-                  thumbColor={
-                    isEnabled
-                      ? theme.colors.onPrimary
-                      : theme.colors.textSecondary
-                  }
-                  trackColor={{
-                    false: theme.colors.border,
-                    true: theme.colors.primary,
-                  }}
                   value={isEnabled}
                 />
               </View>
@@ -356,17 +343,10 @@ export function BudgetFormModal({
                     next
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
+                  accessibilityLabel="Rollover Budget"
+                  disabled={pending}
                   onValueChange={setAllowRollover}
-                  thumbColor={
-                    allowRollover
-                      ? theme.colors.onPrimary
-                      : theme.colors.textSecondary
-                  }
-                  trackColor={{
-                    false: theme.colors.border,
-                    true: theme.colors.primary,
-                  }}
                   value={allowRollover}
                 />
               </View>
@@ -425,17 +405,10 @@ export function BudgetFormModal({
                     Prompt a confirmation when an expense exceeds this budget
                   </Text>
                 </View>
-                <Switch
+                <ThemedSwitch
+                  accessibilityLabel="Over-Budget Alert"
+                  disabled={pending}
                   onValueChange={setNotifyOnExceeded}
-                  thumbColor={
-                    notifyOnExceeded
-                      ? theme.colors.onPrimary
-                      : theme.colors.textSecondary
-                  }
-                  trackColor={{
-                    false: theme.colors.border,
-                    true: theme.colors.primary,
-                  }}
                   value={notifyOnExceeded}
                 />
               </View>

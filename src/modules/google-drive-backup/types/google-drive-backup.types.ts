@@ -47,5 +47,6 @@ export interface QuickSyncState {
   status: QuickSyncStatus;
   networkPreference: QuickSyncNetworkPreference;
   lastSyncedAt: string | null;
+  fileId: string | null;
   lastError: string | null;
 }

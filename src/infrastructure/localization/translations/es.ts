@@ -64,6 +64,13 @@ export const es = {
     neverSynced: "Nunca sincronizado",
     syncNow: "Sincronizar ahora",
     syncingNow: "Sincronizando...",
+    restore: "Restaurar",
+    restoring: "Restaurando...",
+    restoreFailed: "No se pudo restaurar la copia de Quick Sync.",
+    restoreConfirmTitle: "¿Restaurar Quick Sync?",
+    restoreConfirmMessage:
+      "Esto reemplaza todos los datos locales con el archivo Quick Sync más reciente de Google Drive. Se guarda una copia de seguridad en memoria y se restaura automáticamente si falla la validación.",
+    restoreConfirmAction: "Restaurar",
   },
   settings: {
     generalSection: "GENERAL",
@@ -218,6 +225,16 @@ export const es = {
       "Guarda una copia exportada de tu base de datos financiera en Google Drive y restáurala en otro dispositivo. Conecta tu cuenta, crea copias cuando quieras y elige un archivo guardado al restaurar.",
     loading: "Cargando copia de Google Drive...",
     loadingBackups: "Cargando copias de seguridad...",
+    onboardingQuickSyncPromptTitle: "Copia Quick Sync encontrada",
+    onboardingQuickSyncPromptMessage:
+      "Encontramos un archivo Quick Sync automático en Google Drive. Restáuralo para obtener los datos más recientes, o elige una copia cifrada completa.",
+    restoreQuickSyncTitle: "Restaurar Quick Sync",
+    restoreQuickSyncDescription: "Última sincronización automática del %{date}",
+    restoreQuickSyncAction: "Restaurar Quick Sync",
+    restoreQuickSyncUseFullBackup: "Elegir copia completa",
+    restoreQuickSyncConfirmTitle: "¿Restaurar Quick Sync?",
+    restoreQuickSyncConfirmMessage:
+      "Esto reemplaza todos los datos locales con tu archivo Quick Sync y vuelve a activar Quick Sync en este dispositivo.",
   },
   language: {
     helpTitle: "Acerca del idioma",
@@ -232,6 +249,11 @@ export const es = {
     moreComingSoon: "Próximamente habrá más idiomas.",
     noResultsTitle: "No se encontraron idiomas",
     noResultsDescription: "Prueba otro nombre de idioma o código regional.",
+  },
+  scheduledTransactions: {
+    helpTitle: "Acerca de las transacciones programadas",
+    helpMessage:
+      "Configura ingresos, gastos o transferencias recurrentes. Elige si cada ocurrencia se registra automáticamente o espera tu confirmación. Los elementos vencidos o fallidos aparecen en Necesita atención; puedes pausar, finalizar o archivar programaciones sin eliminar las transacciones ya registradas.",
   },
   themePicker: {
     closeAccessibility: "Cerrar selector de tema",
@@ -366,7 +388,7 @@ export const es = {
     message:
       "Esto elimina permanentemente de este dispositivo tus cuentas, transacciones, presupuestos, objetivos, notas, configuraciones, archivos adjuntos y copias locales administradas por la aplicación.",
     externalNote:
-      "Los archivos exportados y las copias de Google Drive no se eliminarán.",
+      "Los archivos ya guardados en Google Drive no se eliminan. Este dispositivo se desconecta de Google Drive y borra la configuración de Quick Sync.",
     confirmationInstruction: "Escribe KAIZEN para confirmar",
     confirmationAccessibility:
       "Escribe KAIZEN para confirmar el restablecimiento de todos los datos",
