@@ -12,6 +12,7 @@ import {
 
 import { IconHelper } from "./icon-helper";
 import { MoreFeaturesModal } from "./more-features-modal";
+import { ProBadge, ProSidebarCard, useProStatus } from "@/modules/pro";
 
 interface NavItemConfig {
   href: string;
@@ -51,6 +52,7 @@ export const Sidebar = memo(function Sidebar({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPro } = useProStatus();
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
 
   const handlePress = (href: string) => {
@@ -100,10 +102,12 @@ export const Sidebar = memo(function Sidebar({
         <View style={styles.navGroup}>
           {primaryItems.map((item) => {
             const active = isItemActive(item.href);
+            const isReportsItem = item.href === "/reports";
             return (
               <SidebarLink
                 key={item.href}
                 active={active}
+                badge={isReportsItem && !isPro ? <ProBadge /> : undefined}
                 icon={item.icon}
                 label={t(item.labelKey)}
                 onPress={() => handlePress(item.href)}
@@ -117,6 +121,9 @@ export const Sidebar = memo(function Sidebar({
         onClose={() => setMoreFeaturesOpen(false)}
         visible={moreFeaturesOpen}
       />
+
+      {/* Pro Version Status / Banner Card */}
+      <ProSidebarCard />
 
       {/* Footer / Secondary Navigation */}
       <View style={styles.secondaryNav}>
@@ -171,9 +178,10 @@ interface SidebarLinkProps {
   icon: NavItemConfig["icon"];
   active: boolean;
   onPress: () => void;
+  badge?: React.ReactNode;
 }
 
-function SidebarLink({ label, icon, active, onPress }: SidebarLinkProps) {
+function SidebarLink({ label, icon, active, onPress, badge }: SidebarLinkProps) {
   const styles = useThemeStyles(createStyles);
 
   return (
@@ -194,6 +202,7 @@ function SidebarLink({ label, icon, active, onPress }: SidebarLinkProps) {
       <Text style={[styles.linkText, active && styles.activeLinkText]}>
         {label}
       </Text>
+      {badge ? <View style={styles.badgeContainer}>{badge}</View> : null}
     </Pressable>
   );
 }
@@ -381,6 +390,9 @@ function createStyles(theme: AppTheme) {
     activeLinkText: {
       color: theme.colors.primary,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    badgeContainer: {
+      marginLeft: "auto",
     },
     divider: {
       backgroundColor: theme.colors.border,

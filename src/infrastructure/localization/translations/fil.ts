@@ -482,4 +482,38 @@ export const fil = {
     setNewPasswordDesc: "Ilagay at kumpirmahin ang iyong bagong password ng app.",
     saveAndUnlockButton: "I-save at I-unlock",
   },
+  pro: {
+    badge: "PRO",
+    lifetime: "Panghabambuhay",
+    oneTimeOffer: "Minsang Alok",
+    unlockPro: "I-unlock ang Pro",
+    proActive: "Aktibo ang Pro (Lifetime)",
+    allFeaturesUnlocked: "Lahat ng features bukas · Walang ads",
+    sidebarTitle: "Finance Pro · Lifetime",
+    sidebarSubtitle: "Walang Ads · Advanced Reports",
+    sidebarUnlockBtn: "Mag-upgrade sa Pro",
+    paywallTitle: "Mag-upgrade sa Kaizen Pro",
+    paywallSubtitle:
+      "Hawakan nang buo ang iyong pananalapi gamit ang panghabambuhay na access sa advanced analytics at ad-free na karanasan.",
+    paywallLifetimeBadge: "ISANG BESES NA BAYAD · HABAMBUHAY NA ACCESS",
+    paywallUpgradeBtn: "I-unlock ang Pro (%{price})",
+    paywallProcessing: "Pinoproseso...",
+    restorePurchases: "Ibalik ang mga Binili (Restore)",
+    restoring: "Ibinabalik...",
+    restoreSuccessTitle: "Naibalik ang mga Binili",
+    restoreSuccessMsg: "Matagumpay na naibalik ang iyong Lifetime Pro status!",
+    restoreNotFoundTitle: "Walang Nakitang Pagbili",
+    restoreNotFoundMsg:
+      "Walang nakitang aktibong Lifetime Pro purchase para sa Google account na ito.",
+    restoreErrorTitle: "Nabigo ang Pag-restore",
+    restoreErrorMsg: "Hindi maibalik ang mga binili ngayon. Pakisubukan muli mamaya.",
+    purchaseSuccessTitle: "Maligayang Pagdating sa Pro!",
+    purchaseSuccessMsg: "Salamat sa pagsuporta sa Kaizen Finance! Lahat ng Pro features ay bukas na.",
+    disclaimer:
+      "Ang bayad ay sisingilin sa iyong Google Play account sa pagkumpirma ng pagbili. Ito ay isang beses na pagbili na walang paulit-ulit na bayarin.",
+    reportsLockedTitle: "Mga Ulat at Financial Analytics",
+    reportsLockedSubtitle:
+      "Buksan ang mga graph ng Cash Flow, Balance Sheet, Net Worth Growth, at breakdown ng gastusin gamit ang Kaizen Pro.",
+    reportsLockedCta: "I-unlock ang Habambuhay na Access",
+  },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

@@ -466,6 +466,40 @@ export const en = {
     setNewPasswordDesc: "Enter and confirm your new app password.",
     saveAndUnlockButton: "Save & Unlock",
   },
+  pro: {
+    badge: "PRO",
+    lifetime: "Lifetime",
+    oneTimeOffer: "One-Time Offer",
+    unlockPro: "Unlock Pro",
+    proActive: "Lifetime Pro Active",
+    allFeaturesUnlocked: "All features unlocked · Ad-free",
+    sidebarTitle: "Finance Pro · Lifetime",
+    sidebarSubtitle: "No Ads · Advanced Reports",
+    sidebarUnlockBtn: "Upgrade to Pro",
+    paywallTitle: "Upgrade to Kaizen Pro",
+    paywallSubtitle:
+      "Take full control of your finances with lifetime access to advanced analytics and an ad-free experience.",
+    paywallLifetimeBadge: "ONE-TIME PURCHASE · LIFETIME ACCESS",
+    paywallUpgradeBtn: "Unlock Lifetime Pro (%{price})",
+    paywallProcessing: "Processing...",
+    restorePurchases: "Restore Purchases",
+    restoring: "Restoring...",
+    restoreSuccessTitle: "Purchases Restored",
+    restoreSuccessMsg: "Your Lifetime Pro status has been successfully restored!",
+    restoreNotFoundTitle: "No Purchases Found",
+    restoreNotFoundMsg:
+      "We couldn't find an active Lifetime Pro purchase for this Google account.",
+    restoreErrorTitle: "Restore Failed",
+    restoreErrorMsg: "Unable to restore purchases at this time. Please try again later.",
+    purchaseSuccessTitle: "Welcome to Pro!",
+    purchaseSuccessMsg: "Thank you for supporting Kaizen Finance! All Pro features are now unlocked.",
+    disclaimer:
+      "Payment will be charged to your Google Play account at confirmation of purchase. This is a one-time non-consumable purchase with no recurring fees.",
+    reportsLockedTitle: "Reports & Financial Analytics",
+    reportsLockedSubtitle:
+      "Unlock Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns with Kaizen Pro.",
+    reportsLockedCta: "Unlock Lifetime Access",
+  },
 } as const;
 
 export type TranslationCatalog = typeof en;

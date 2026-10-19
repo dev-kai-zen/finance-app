@@ -3,6 +3,7 @@ import { StyleSheet } from "react-native";
 import { PageContainer } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { ProGate } from "@/modules/pro";
 import { BalanceSheetReport } from "../components/balance-sheet/balance-sheet-report";
 import { CashFlowReport } from "../components/cash-flow/cash-flow-report";
 import { IncomeExpenseReport } from "../components/income-expense/income-expense-report";
@@ -20,17 +21,19 @@ export function ReportsScreen() {
       scrollable={true}
       contentContainerStyle={styles.pageContent}
     >
-      <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
+      <ProGate>
+        <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
 
-      {activeTab === "balance-sheet" ? <BalanceSheetReport /> : null}
+        {activeTab === "balance-sheet" ? <BalanceSheetReport /> : null}
 
-      {activeTab === "income-expense" ? <IncomeExpenseReport /> : null}
+        {activeTab === "income-expense" ? <IncomeExpenseReport /> : null}
 
-      {activeTab === "cash-flow" ? <CashFlowReport /> : null}
+        {activeTab === "cash-flow" ? <CashFlowReport /> : null}
 
-      {activeTab === "net-worth" ? <NetWorthGrowthReport /> : null}
+        {activeTab === "net-worth" ? <NetWorthGrowthReport /> : null}
 
-      {activeTab === "labels-summary" ? <LabelsSummaryReport /> : null}
+        {activeTab === "labels-summary" ? <LabelsSummaryReport /> : null}
+      </ProGate>
     </PageContainer>
   );
 }

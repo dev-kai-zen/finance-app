@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ArrowDownLeft,
@@ -8,12 +8,14 @@ import {
   ChevronRight,
   CircleDollarSign,
   Cloud,
+  Crown,
   Database,
   HardDrive,
   Info,
   Languages,
   Palette,
   Pipette,
+  RotateCcw,
   ShieldCheck,
   Sparkles,
   Terminal,
@@ -23,6 +25,7 @@ import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
+import { ProPaywallModal, useProStatus } from "@/modules/pro";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
@@ -68,6 +71,15 @@ export function SettingsScreen() {
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const {
+    isPro,
+    isDevSimulated,
+    toggleDevSimulation,
+    resetProStatus,
+    restorePurchases,
+    isRestoring,
+  } = useProStatus();
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
@@ -414,6 +426,80 @@ export function SettingsScreen() {
           </View>
         </View>
 
+        {/* Kaizen Pro Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t("pro.paywallTitle")}</Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setIsPaywallOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Crown color="#D97706" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {isPro ? t("pro.proActive") : t("pro.sidebarTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {isPro
+                    ? t("pro.allFeaturesUnlocked")
+                    : t("pro.sidebarSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityRole="button"
+              disabled={isRestoring}
+              onPress={async () => {
+                const res = await restorePurchases();
+                if (res.success && res.restored) {
+                  Alert.alert(
+                    t("pro.restoreSuccessTitle"),
+                    t("pro.restoreSuccessMsg"),
+                  );
+                } else if (res.success && !res.restored) {
+                  Alert.alert(
+                    t("pro.restoreNotFoundTitle"),
+                    t("pro.restoreNotFoundMsg"),
+                  );
+                } else if (!res.success && res.error) {
+                  Alert.alert(t("pro.restoreErrorTitle"), res.error);
+                }
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Sparkles color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("pro.restorePurchases")}
+                </Text>
+              </View>
+              {isRestoring ? (
+                <ActivityIndicator
+                  color={theme.colors.textSecondary}
+                  size="small"
+                />
+              ) : (
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              )}
+            </Pressable>
+          </View>
+        </View>
+
         {experience.developerMode ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
@@ -434,6 +520,51 @@ export function SettingsScreen() {
                   value={experience.developerMode}
                 />
               </View>
+              <View style={styles.rowDivider} />
+              <View style={styles.toggleRow}>
+                <View style={styles.iconContainer}>
+                  <Crown color="#D97706" size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Simulate Pro Version</Text>
+                  <Text style={styles.settingDescription}>
+                    Test Free vs Pro features locally without real Play store purchases
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Simulate Pro Version"
+                  onValueChange={(value) => toggleDevSimulation(value)}
+                  value={isDevSimulated}
+                />
+              </View>
+              <View style={styles.rowDivider} />
+              <Pressable
+                accessibilityLabel="Reset Pro Status (Dev)"
+                accessibilityRole="button"
+                onPress={() => {
+                  void resetProStatus().then(() => {
+                    Alert.alert(
+                      "Pro Status Reset",
+                      "Pro status has been cleared back to the Free tier for testing.",
+                    );
+                  });
+                }}
+                style={({ pressed }) => [
+                  styles.settingRow,
+                  pressed && styles.settingRowPressed,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <RotateCcw color={theme.colors.warning} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Reset Pro Status (Dev)</Text>
+                  <Text style={styles.settingDescription}>
+                    Clear cached purchase and return to Free tier to retest the buy button
+                  </Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </Pressable>
               <View style={styles.rowDivider} />
               <Pressable
                 accessibilityLabel={t("settings.sqliteMonitor")}
@@ -557,6 +688,11 @@ export function SettingsScreen() {
           void security.refresh();
         }}
         visible={isSecurityOpen}
+      />
+
+      <ProPaywallModal
+        onClose={() => setIsPaywallOpen(false)}
+        visible={isPaywallOpen}
       />
     </PageContainer>
   );
