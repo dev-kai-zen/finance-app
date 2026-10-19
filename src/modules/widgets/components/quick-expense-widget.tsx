@@ -30,7 +30,7 @@ export function QuickExpenseWidget() {
       accessibilityLabel="Kaizen Quick Expense: Tap to record a new expense"
     >
       <ImageWidget
-        image={require("../../../../assets/finance-app-logo.png")}
+        image={require("../../../../assets/kaizen-finance-app-logo.png")}
         imageWidth={40}
         imageHeight={40}
         radius={10}
