@@ -19,6 +19,9 @@
         "backgroundColor": "#11231E",
         "foregroundImage": "./assets/kaizen-finance-app-logo.png"
       },
+      "permissions": [
+        "com.android.vending.BILLING"
+      ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
       "versionCode": 1
