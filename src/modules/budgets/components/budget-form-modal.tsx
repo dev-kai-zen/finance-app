@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AlertTriangle,
@@ -124,6 +124,19 @@ export function BudgetFormModal({
     null,
   );
 
+  const frequencyScrollRef = useRef<ScrollView>(null);
+
+  const frequencyOptions = useMemo(() => {
+    const selected = FREQUENCY_OPTIONS.find((opt) => opt.key === frequency);
+    const rest = FREQUENCY_OPTIONS.filter((opt) => opt.key !== frequency);
+    return selected ? [selected, ...rest] : FREQUENCY_OPTIONS;
+  }, [frequency]);
+
+  const handleSelectFrequency = (nextFrequency: BudgetFrequency) => {
+    setFrequency(nextFrequency);
+    frequencyScrollRef.current?.scrollTo({ x: 0, animated: true });
+  };
+
   useEffect(() => {
     if (initialBudget) {
       setCategoryId(initialBudget.categoryId);
@@ -158,6 +171,12 @@ export function BudgetFormModal({
     }
     setErrorNotification(null);
   }, [initialBudget, categories, existingBudgets, visible]);
+
+  useEffect(() => {
+    if (visible) {
+      frequencyScrollRef.current?.scrollTo({ x: 0, animated: false });
+    }
+  }, [visible]);
 
   const selectedCategory = useMemo(() => {
     function findCat(cats: Category[]): Category | null {
@@ -318,17 +337,18 @@ export function BudgetFormModal({
               <View style={styles.section}>
                 <Text style={styles.fieldLabel}>FREQUENCY</Text>
                 <ScrollView
+                  ref={frequencyScrollRef}
                   contentContainerStyle={styles.frequencyRow}
                   horizontal
                   showsHorizontalScrollIndicator={false}
                 >
-                  {FREQUENCY_OPTIONS.map((opt) => {
+                  {frequencyOptions.map((opt) => {
                     const isSelected = frequency === opt.key;
                     return (
                       <Pressable
                         key={opt.key}
                         accessibilityRole="button"
-                        onPress={() => setFrequency(opt.key)}
+                        onPress={() => handleSelectFrequency(opt.key)}
                         style={[
                           styles.frequencyChip,
                           isSelected && styles.frequencyChipSelected,
