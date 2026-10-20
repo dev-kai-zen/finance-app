@@ -108,67 +108,54 @@ To install it on a USB-connected device:
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 6. Set up signing once for a release APK or bundle
+## 6. Configure signing for a release APK or Play Store bundle
 
-Both release artifacts require an upload keystore. Create it once on a secure machine, keep a protected backup outside the repository, and reuse the same keystore for every update to the same Google Play app.
+> [!CAUTION]
+> **Do NOT run `keytool -genkeypair` on a new computer.**  
+> Google Play has already registered your upload key with fingerprint `SHA1: 96:24:CF:31:2A:3F:DB:CC:50:C9:DE:59:50:68:B5:05:48:46:A7:13`.  
+> Copy your backed-up `upload-keystore.jks` file to `android/app/upload-keystore.jks`. Refer to [KEYSTORE_SETUP_GUIDE.md](file:///c:/expo-app/finance-app/personal-guide/KEYSTORE_SETUP_GUIDE.md) for full details.
 
-```powershell
-keytool -genkeypair -v -storetype PKCS12 -keystore android/app/upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000
-```
+1. **Copy the keystore file:**
+   Place your backed-up `upload-keystore.jks` into `android/app/upload-keystore.jks`.
 
-Create `android/keystore.properties` with the values chosen above:
+2. **Add credentials to Gradle:**
+   Add to `android/gradle.properties` (or `~/.gradle/gradle.properties`):
+   ```properties
+   MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks
+   MYAPP_UPLOAD_KEY_ALIAS=upload
+   MYAPP_UPLOAD_STORE_PASSWORD=YOUR_KEYSTORE_PASSWORD
+   MYAPP_UPLOAD_KEY_PASSWORD=YOUR_KEYSTORE_PASSWORD
+   ```
 
-```powershell
-@'
-storeFile=upload-keystore.jks
-storePassword=<your-keystore-password>
-keyAlias=upload
-keyPassword=<your-key-password>
-'@ | Set-Content android/keystore.properties
-```
-
-The keystore and `keystore.properties` are private. Do not commit, email, or paste either into chat. This repository ignores `.jks` files and `android/keystore.properties`.
-
-### Make the generated Gradle project use the private signing file
-
-`android/` is generated and ignored, so a fresh prebuild produces Expo's default Gradle file without this app's local release-signing customization. Before running either release command, update `android/app/build.gradle` as follows:
-
-1. Immediately after `def projectRoot = ...`, add:
-
-```groovy
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-def isReleaseBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains("release") }
-```
-
-2. In the existing `signingConfigs` block, add this `release` configuration after `debug`:
-
-```groovy
-release {
-    if (keystorePropertiesFile.exists()) {
-        storeFile file(keystoreProperties['storeFile'])
-        storePassword keystoreProperties['storePassword']
-        keyAlias keystoreProperties['keyAlias']
-        keyPassword keystoreProperties['keyPassword']
-    }
-}
-```
-
-3. In `buildTypes { release { ... } }`, replace Expo's default `signingConfig signingConfigs.debug` line with:
-
-```groovy
-if (!keystorePropertiesFile.exists() && isReleaseBuild) {
-    throw new GradleException("Missing android/keystore.properties. Follow NEW-DEVICE-SETUP.md before building a release.")
-}
-if (keystorePropertiesFile.exists()) {
-    signingConfig signingConfigs.release
-}
-```
-
-This is the signing configuration currently used on the original development machine. Reapply it whenever a fresh or clean prebuild recreates `android/app/build.gradle`.
+3. **Configure `android/app/build.gradle`:**
+   Ensure `signingConfigs.release` is defined and used by `buildTypes.release`:
+   ```groovy
+       signingConfigs {
+           debug {
+               storeFile file('debug.keystore')
+               storePassword 'android'
+               keyAlias 'androiddebugkey'
+               keyPassword 'android'
+           }
+           release {
+               if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                   storeFile file(MYAPP_UPLOAD_STORE_FILE)
+                   storePassword MYAPP_UPLOAD_STORE_PASSWORD
+                   keyAlias MYAPP_UPLOAD_KEY_ALIAS
+                   keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+               }
+           }
+       }
+       buildTypes {
+           debug {
+               signingConfig signingConfigs.debug
+           }
+           release {
+               signingConfig (project.hasProperty('MYAPP_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug)
+               ...
+           }
+       }
+   ```
 
 ## 7. Build the signed release APK
 

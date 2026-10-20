@@ -1,8 +1,8 @@
 import type { ComparisonPreset, ReportTabItem } from "../types/reports.types";
 
 export const REPORT_TABS: ReportTabItem[] = [
-  { key: "balance-sheet", label: "Balance Sheet", isAvailable: true },
   { key: "income-expense", label: "Income & Expense", isAvailable: true },
+  { key: "balance-sheet", label: "Balance Sheet", isAvailable: true },
   { key: "cash-flow", label: "Cash Flow", isAvailable: true },
   { key: "net-worth", label: "Net Worth Growth", isAvailable: true },
   { key: "labels-summary", label: "Labels Summary", isAvailable: true },

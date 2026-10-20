@@ -1,4 +1,4 @@
-import { Check } from "lucide-react-native";
+import { Check, Crown } from "lucide-react-native";
 import {
   Pressable,
   StyleSheet,
@@ -16,6 +16,7 @@ export interface ThemePresetCardProps {
   selected: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+  isProLocked?: boolean;
 }
 
 export function ThemePresetCard({
@@ -23,6 +24,7 @@ export function ThemePresetCard({
   selected,
   onPress,
   style,
+  isProLocked,
 }: ThemePresetCardProps) {
   const activeTheme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -41,9 +43,17 @@ export function ThemePresetCard({
       ]}
     >
       <View style={styles.titleRow}>
-        <Text numberOfLines={1} style={styles.name}>
-          {preset.name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text numberOfLines={1} style={styles.name}>
+            {preset.name}
+          </Text>
+          {isProLocked ? (
+            <View style={styles.proChip}>
+              <Crown color="#D97706" size={10} />
+              <Text style={styles.proChipText}>PRO</Text>
+            </View>
+          ) : null}
+        </View>
 
         <View
           style={[
@@ -246,11 +256,33 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       justifyContent: "space-between",
     },
+    nameRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      flex: 1,
+    },
     name: {
       color: theme.colors.textPrimary,
-      flex: 1,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
     selection: {
       alignItems: "center",

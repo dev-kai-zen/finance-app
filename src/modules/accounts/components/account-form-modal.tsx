@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight, LayoutList, Lock, Trash2 } from "lucide-react-native";
+import { ChevronRight, Crown, LayoutList, Lock, Trash2 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -33,6 +33,7 @@ import { AccountTypePickerModal } from "@/modules/accounts/components/account-ty
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import type {
   AccountGroup,
   AccountListItem,
@@ -115,6 +116,8 @@ export function AccountFormModal({
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
   const initialCurrencyCode = account?.currencyCode ?? preferences.defaultCurrency;
 
   const [value, setValue] = useState<AccountInput>(() => ({
@@ -326,6 +329,40 @@ export function AccountFormModal({
     theme,
     selectedType?.color ?? selectedType?.hexColorsId ?? null,
   );
+
+  const handleToggleHideFromSelection = (nextVal: boolean) => {
+    if (nextVal && !isPro) {
+      guardAction(
+        () => {
+          setValue((prev) => ({ ...prev, hideFromSelection: true }));
+        },
+        {
+          featureTitle: "Hide from Selection",
+          featureDescription:
+            "Hide secondary, savings, or confidential accounts from everyday transaction pickers with Kaizen Pro.",
+        },
+      );
+      return;
+    }
+    setValue((prev) => ({ ...prev, hideFromSelection: nextVal }));
+  };
+
+  const handleToggleHideFromReports = (nextVal: boolean) => {
+    if (nextVal && !isPro) {
+      guardAction(
+        () => {
+          setValue((prev) => ({ ...prev, hideFromReports: true }));
+        },
+        {
+          featureTitle: "Hide from Reports",
+          featureDescription:
+            "Exclude escrow, security deposit, or tracked external accounts from net worth and analytics totals with Kaizen Pro.",
+        },
+      );
+      return;
+    }
+    setValue((prev) => ({ ...prev, hideFromReports: nextVal }));
+  };
 
   const handleConfirmAction = () => {
     if (!account) return;
@@ -638,7 +675,15 @@ export function AccountFormModal({
 
           <View style={styles.toggleRow}>
             <View style={styles.toggleCopy}>
-              <Text style={styles.toggleLabel}>Hide from selection</Text>
+              <View style={styles.toggleLabelRow}>
+                <Text style={styles.toggleLabel}>Hide from selection</Text>
+                {!isPro && (
+                  <View style={styles.proChip}>
+                    <Crown color="#D97706" size={10} />
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.toggleHint}>
                 Exclude this account from transaction account pickers.
               </Text>
@@ -646,16 +691,22 @@ export function AccountFormModal({
             <ThemedSwitch
               accessibilityLabel="Hide from selection"
               disabled={pending}
-              onValueChange={(hideFromSelection) =>
-                setValue((prev) => ({ ...prev, hideFromSelection }))
-              }
+              onValueChange={handleToggleHideFromSelection}
               value={value.hideFromSelection}
             />
           </View>
 
           <View style={styles.toggleRow}>
             <View style={styles.toggleCopy}>
-              <Text style={styles.toggleLabel}>Hide from reports</Text>
+              <View style={styles.toggleLabelRow}>
+                <Text style={styles.toggleLabel}>Hide from reports</Text>
+                {!isPro && (
+                  <View style={styles.proChip}>
+                    <Crown color="#D97706" size={10} />
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.toggleHint}>
                 Exclude this account from net worth and opening totals.
               </Text>
@@ -663,9 +714,7 @@ export function AccountFormModal({
             <ThemedSwitch
               accessibilityLabel="Hide from reports"
               disabled={pending}
-              onValueChange={(hideFromReports) =>
-                setValue((prev) => ({ ...prev, hideFromReports }))
-              }
+              onValueChange={handleToggleHideFromReports}
               value={value.hideFromReports}
             />
           </View>
@@ -1022,6 +1071,13 @@ export function AccountFormModal({
         variant="error"
         visible={visible && Boolean(error)}
       />
+
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
+        onClose={closePaywall}
+        visible={paywallVisible}
+      />
     </>
   );
 }
@@ -1266,6 +1322,28 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    toggleLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
   });
 }

@@ -30,7 +30,7 @@ export function QuickIncomeWidget() {
       accessibilityLabel="Kaizen Quick Income: Tap to record a new income"
     >
       <ImageWidget
-        image={require("../../../../assets/finance-app-logo.png")}
+        image={require("../../../../assets/kaizen-finance-app-logo.png")}
         imageWidth={40}
         imageHeight={40}
         radius={10}

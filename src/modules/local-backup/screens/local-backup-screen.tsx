@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Archive,
   CalendarClock,
+  Crown,
   Download,
   FileArchive,
   RotateCcw,
@@ -42,6 +43,7 @@ import type {
   LocalRestoreCandidate,
 } from "@/modules/local-backup/types/backup.types";
 import { useWorkspace } from "@/modules/onboarding";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 
 export function LocalBackupScreen() {
   const { width } = useWindowDimensions();
@@ -52,6 +54,8 @@ export function LocalBackupScreen() {
   const { t } = useLocalization();
   const workspace = useWorkspace();
   const backup = useLocalBackup();
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
   const [passphraseMode, setPassphraseMode] = useState<
     "create" | "restore" | null
   >(null);
@@ -99,6 +103,10 @@ export function LocalBackupScreen() {
   };
 
   const updateFrequency = (frequency: AutomaticBackupFrequency) => {
+    if (!isPro) {
+      setProModalVisible(true);
+      return;
+    }
     if (frequency === backup.config.frequency) return;
     void backup.updateAutomaticConfig({
       enabled: backup.config.enabled,
@@ -174,12 +182,27 @@ export function LocalBackupScreen() {
 
       <Section title="AUTOMATIC BACKUPS">
         <View style={styles.card}>
-          <View style={styles.settingRow}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={isPro}
+            onPress={() => {
+              if (!isPro) setProModalVisible(true);
+            }}
+            style={styles.settingRow}
+          >
             <View style={styles.rowIcon}>
               <CalendarClock color={theme.colors.primary} size={21} />
             </View>
             <View style={styles.rowCopy}>
-              <Text style={styles.rowTitle}>Back up automatically</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.rowTitle}>Back up automatically</Text>
+                {!isPro && (
+                  <View style={styles.proChip}>
+                    <Crown color="#D97706" size={8} />
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                )}
+              </View>
               <Text selectable style={styles.rowDescription}>
                 Runs when the app becomes active and a backup is due.
               </Text>
@@ -187,17 +210,21 @@ export function LocalBackupScreen() {
             <ThemedSwitch
               accessibilityLabel="Automatic backups"
               disabled={!personalWorkspace || busy}
-              onValueChange={(enabled) =>
+              onValueChange={(enabled) => {
+                if (enabled && !isPro) {
+                  setProModalVisible(true);
+                  return;
+                }
                 void backup.updateAutomaticConfig({
                   ...backup.config,
                   enabled,
-                })
-              }
-              value={backup.config.enabled}
+                });
+              }}
+              value={Boolean(isPro && backup.config.enabled)}
             />
-          </View>
+          </Pressable>
 
-          {backup.config.enabled ? (
+          {isPro && backup.config.enabled ? (
             <>
               <View style={styles.divider} />
               <View style={styles.frequencyRow}>
@@ -417,6 +444,13 @@ export function LocalBackupScreen() {
         }
         variant={backup.notice?.variant ?? "error"}
         visible={Boolean(backup.notice)}
+      />
+
+      <ProFeatureModal
+        featureDescription="Automatically create secure, scheduled local backup copies every day or week whenever the app is active with Kaizen Pro."
+        featureTitle="Automatic Local Backups"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
       />
     </PageContainer>
     </View>
@@ -893,6 +927,28 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
   });
 }

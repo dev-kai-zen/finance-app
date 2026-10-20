@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import {
   CheckCircle2,
+  Crown,
   RefreshCw,
   RotateCcw,
   Smartphone,
@@ -21,12 +22,15 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { QuickSyncNetworkPreference } from "@/infrastructure/sync";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 
 export function QuickSyncCard() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
   const quickSync = useQuickSync();
   const [syncingManual, setSyncingManual] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -37,6 +41,10 @@ export function QuickSyncCard() {
   const isSyncing = quickSync.status === "syncing" || syncingManual;
 
   const handleToggle = (value: boolean) => {
+    if (value && !isPro) {
+      setProModalVisible(true);
+      return;
+    }
     void quickSync.setEnabled(value);
   };
 
@@ -83,7 +91,15 @@ export function QuickSyncCard() {
           <Zap color={theme.colors.primary} size={20} />
         </View>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>{t("quickSync.title")}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{t("quickSync.title")}</Text>
+            {!isPro && (
+              <View style={styles.proChip}>
+                <Crown color="#D97706" size={8} />
+                <Text style={styles.proChipText}>PRO</Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.description}>{t("quickSync.description")}</Text>
         </View>
         <ThemedSwitch
@@ -260,6 +276,13 @@ export function QuickSyncCard() {
         variant="restore"
         visible={restoreConfirmVisible}
       />
+
+      <ProFeatureModal
+        featureDescription="Automatically keep your financial records, accounts, and transactions backed up to Google Drive in real time with Kaizen Pro."
+        featureTitle="Automatic Cloud Quick Sync"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
+      />
     </View>
   );
 }
@@ -298,6 +321,28 @@ function createStyles(theme: AppTheme) {
     headerCopy: {
       flex: 1,
       gap: 2,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
     title: {
       color: theme.colors.textPrimary,

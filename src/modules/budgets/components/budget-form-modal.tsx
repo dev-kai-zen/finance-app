@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AlertTriangle,
   ChevronRight,
+  Crown,
   RotateCw,
 } from "lucide-react-native";
 import {
@@ -18,6 +19,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { CategoryPickerModal, type Category } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import type {
   BudgetFrequency,
   BudgetRolloverMode,
@@ -74,6 +76,8 @@ export function BudgetFormModal({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const [categoryId, setCategoryId] = useState<string>("");
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -82,10 +86,36 @@ export function BudgetFormModal({
   const [allowRollover, setAllowRollover] = useState<boolean>(false);
   const [rolloverMode, setRolloverMode] =
     useState<BudgetRolloverMode>("positive_only");
-  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(true);
+  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(false);
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(
     [],
   );
+
+  const handleToggleRollover = (val: boolean) => {
+    if (val && !isPro) {
+      guardAction(() => {
+        setAllowRollover(true);
+      }, {
+        featureTitle: "Rollover Budget",
+        featureDescription: "Automatically carry unspent budget surplus or deficit from previous periods into your next budget cycle with Kaizen Pro.",
+      });
+      return;
+    }
+    setAllowRollover(val);
+  };
+
+  const handleToggleNotifyOnExceeded = (val: boolean) => {
+    if (val && !isPro) {
+      guardAction(() => {
+        setNotifyOnExceeded(true);
+      }, {
+        featureTitle: "Over-Budget Alerts",
+        featureDescription: "Receive instant alerts and confirmation prompts whenever a transaction exceeds your set category threshold with Kaizen Pro.",
+      });
+      return;
+    }
+    setNotifyOnExceeded(val);
+  };
 
   // Sub-modals
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
@@ -123,7 +153,7 @@ export function BudgetFormModal({
       setFrequency("monthly");
       setAllowRollover(false);
       setRolloverMode("positive_only");
-      setNotifyOnExceeded(true);
+      setNotifyOnExceeded(false);
       setMonthlyTargets([]);
     }
     setErrorNotification(null);
@@ -337,6 +367,12 @@ export function BudgetFormModal({
                   <View style={styles.labelWithIcon}>
                     <RotateCw color={theme.colors.primary} size={16} />
                     <Text style={styles.switchTitle}>Rollover Budget</Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.switchDescription}>
                     Unspent budget from the previous period carries over to the
@@ -346,7 +382,7 @@ export function BudgetFormModal({
                 <ThemedSwitch
                   accessibilityLabel="Rollover Budget"
                   disabled={pending}
-                  onValueChange={setAllowRollover}
+                  onValueChange={handleToggleRollover}
                   value={allowRollover}
                 />
               </View>
@@ -400,6 +436,12 @@ export function BudgetFormModal({
                   <View style={styles.labelWithIcon}>
                     <AlertTriangle color={theme.colors.warning} size={16} />
                     <Text style={styles.switchTitle}>Over-Budget Alert</Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.switchDescription}>
                     Prompt a confirmation when an expense exceeds this budget
@@ -408,7 +450,7 @@ export function BudgetFormModal({
                 <ThemedSwitch
                   accessibilityLabel="Over-Budget Alert"
                   disabled={pending}
-                  onValueChange={setNotifyOnExceeded}
+                  onValueChange={handleToggleNotifyOnExceeded}
                   value={notifyOnExceeded}
                 />
               </View>
@@ -446,12 +488,36 @@ export function BudgetFormModal({
         variant="error"
         visible={Boolean(errorNotification)}
       />
+
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
+        onClose={closePaywall}
+        visible={paywallVisible}
+      />
     </>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
+    },
     scrollView: {
       flex: 1,
     },

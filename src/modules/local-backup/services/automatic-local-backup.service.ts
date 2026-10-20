@@ -5,6 +5,7 @@ import {
 } from "@/modules/local-backup/repositories/local-backup-files.repository";
 import { getAutomaticBackupConfig } from "@/modules/local-backup/repositories/local-backup-settings.repository";
 import { isAutomaticBackupDue } from "@/modules/local-backup/utils/automatic-backup-schedule";
+import { getCurrentProStatus } from "@/modules/pro";
 import { createLocalBackup } from "./create-local-backup.service";
 
 const AUTOMATIC_BACKUP_RETENTION = 7;
@@ -21,6 +22,9 @@ export function runAutomaticLocalBackupIfDue(): Promise<LocalBackupFile | null> 
 }
 
 async function performAutomaticBackup(): Promise<LocalBackupFile | null> {
+  const isPro = getCurrentProStatus().isPro;
+  if (!isPro) return null;
+
   const config = getAutomaticBackupConfig();
   if (!config.enabled) return null;
 

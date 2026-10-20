@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
 import { CreditCard } from "lucide-react-native";
 import {
   PageContainer,
@@ -10,16 +11,39 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
 import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
 
 export function CreditCardMonitoringScreen() {
+  const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
   const data = useCreditCardMonitoring();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isPro) {
+        setProModalVisible(true);
+      }
+    }, [isPro]),
+  );
+
+  const handleClose = () => {
+    setProModalVisible(false);
+    if (!isPro) {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/");
+      }
+    }
+  };
 
   const activeAccountId =
     data.cards.find((c) => c.accountId === selectedAccountId)?.accountId ??
@@ -145,6 +169,13 @@ export function CreditCardMonitoringScreen() {
           ) : null}
         </>
       )}
+
+      <ProFeatureModal
+        featureDescription="Track multi-card billing cycles, statement cutoffs, payment due dates, 0% installment payoffs, and credit limit utilization in real time with Kaizen Pro."
+        featureTitle="Credit Card Monitoring"
+        onClose={handleClose}
+        visible={proModalVisible}
+      />
     </PageContainer>
   );
 }

@@ -482,4 +482,38 @@ export const es = {
     setNewPasswordDesc: "Ingresa y confirma tu nueva contraseña.",
     saveAndUnlockButton: "Guardar y desbloquear",
   },
+  pro: {
+    badge: "PRO",
+    lifetime: "De por vida",
+    oneTimeOffer: "Oferta Única",
+    unlockPro: "Desbloquear Pro",
+    proActive: "Pro De Por Vida Activo",
+    allFeaturesUnlocked: "Todas las funciones activas · Sin anuncios",
+    sidebarTitle: "Finanzas Pro · De Por Vida",
+    sidebarSubtitle: "Sin Anuncios · Reportes Avanzados",
+    sidebarUnlockBtn: "Mejorar a Pro",
+    paywallTitle: "Mejora a Kaizen Pro",
+    paywallSubtitle:
+      "Toma el control total de tus finanzas con acceso de por vida a análisis avanzados y una experiencia sin anuncios.",
+    paywallLifetimeBadge: "PAGO ÚNICO · ACCESO DE POR VIDA",
+    paywallUpgradeBtn: "Desbloquear Pro De Por Vida (%{price})",
+    paywallProcessing: "Procesando...",
+    restorePurchases: "Restaurar Compras",
+    restoring: "Restaurando...",
+    restoreSuccessTitle: "Compras Restauradas",
+    restoreSuccessMsg: "¡Tu estado Pro de por vida ha sido restaurado exitosamente!",
+    restoreNotFoundTitle: "Sin Compras Encontradas",
+    restoreNotFoundMsg:
+      "No encontramos una compra activa de Lifetime Pro para la cuenta actualmente activa en tu Google Play Store.\n\nConsejo: Las compras se vinculan a tu cuenta de Google Play Store. Si compraste con otra cuenta, abre la app de Google Play Store, cambia de cuenta en el icono de perfil y vuelve a intentar restaurar.",
+    restoreErrorTitle: "Fallo al Restaurar",
+    restoreErrorMsg: "No se pudieron restaurar las compras. Por favor intenta de nuevo.",
+    purchaseSuccessTitle: "¡Bienvenido a Pro!",
+    purchaseSuccessMsg: "¡Gracias por apoyar a Kaizen Finance! Todas las funciones Pro ya están desbloqueadas.",
+    disclaimer:
+      "El pago se cargará a tu cuenta de Google Play al confirmar la compra. Esta es una compra única no consumible sin tarifas recurrentes.",
+    reportsLockedTitle: "Reportes y Análisis Financiero",
+    reportsLockedSubtitle:
+      "Desbloquea tendencias de flujo de caja, balance general, crecimiento de patrimonio neto y análisis de gastos con Kaizen Pro.",
+    reportsLockedCta: "Desbloquear Acceso De Por Vida",
+  },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

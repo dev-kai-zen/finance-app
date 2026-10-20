@@ -14,6 +14,7 @@ import {
   useTransactions,
   type TransactionListItem,
 } from "@/modules/transactions";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
 import { CalendarMonthHeader } from "../components/calendar-month-header";
@@ -24,11 +25,14 @@ import { CalendarSummaryRibbon } from "../components/calendar-summary-ribbon";
 import { CalendarTabsHeader } from "../components/calendar-tabs-header";
 import { CalendarTransactionsTab } from "../components/calendar-transactions-tab";
 import { useCalendarData } from "../hooks/use-calendar-data";
+import type { CalendarTab } from "../types/calendar.types";
 
 export function CalendarScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const {
     activeMonth,
@@ -135,6 +139,35 @@ export function CalendarScreen() {
     refreshAll();
   };
 
+  const handleSelectTab = (tab: CalendarTab) => {
+    if ((tab === "net" || tab === "balance_sheet") && !isPro) {
+      const meta =
+        tab === "net"
+          ? {
+              title: "Net Earnings Calendar",
+              description:
+                "Visualize daily income vs expense variance, cash flow spikes, and net balance trajectories across your calendar with Kaizen Pro.",
+            }
+          : {
+              title: "Balance Sheet Projections",
+              description:
+                "Track daily asset, liability, and equity trends directly on your calendar timeline with Kaizen Pro.",
+            };
+
+      guardAction(
+        () => {
+          setActiveTab(tab);
+        },
+        {
+          featureTitle: meta.title,
+          featureDescription: meta.description,
+        },
+      );
+      return;
+    }
+    setActiveTab(tab);
+  };
+
   const balanceSheetAccountCount =
     balanceSheetData.assets.accountTypes.reduce(
       (sum, g) => sum + g.accounts.length,
@@ -192,7 +225,8 @@ export function CalendarScreen() {
         {/* 5. Segmented Tabs Header */}
         <CalendarTabsHeader
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          isPro={isPro}
+          onSelectTab={handleSelectTab}
           scheduleCount={scopedSchedules.length}
           transactionCount={scopedTransactions.length}
         />
@@ -328,6 +362,13 @@ export function CalendarScreen() {
         title="Skip Scheduled Occurrence"
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
+      />
+
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </PageContainer>
   );

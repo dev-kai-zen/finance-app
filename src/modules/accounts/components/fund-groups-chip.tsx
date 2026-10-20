@@ -1,7 +1,8 @@
-import { Layers3 } from "lucide-react-native";
+import { Crown, Layers3 } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useProStatus } from "@/modules/pro";
 
 export function FundGroupsChip({
   count,
@@ -12,6 +13,7 @@ export function FundGroupsChip({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPro } = useProStatus();
 
   return (
     <Pressable
@@ -22,9 +24,16 @@ export function FundGroupsChip({
     >
       <Layers3 color={theme.colors.textSecondary} size={14} />
       <Text style={styles.chipText}>Fund Groups</Text>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{count}</Text>
-      </View>
+      {!isPro ? (
+        <View style={styles.proChip}>
+          <Crown color="#D97706" size={10} />
+          <Text style={styles.proChipText}>PRO</Text>
+        </View>
+      ) : (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{count}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -67,6 +76,23 @@ function createStyles(theme: AppTheme) {
       fontSize: 11,
       fontVariant: ["tabular-nums"],
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
   });
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Crown } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { CalendarTab } from "../types/calendar.types";
@@ -9,6 +10,7 @@ export interface CalendarTabsHeaderProps {
   transactionCount: number;
   scheduleCount: number;
   onSelectTab: (tab: CalendarTab) => void;
+  isPro?: boolean;
 }
 
 export function CalendarTabsHeader({
@@ -16,6 +18,7 @@ export function CalendarTabsHeader({
   transactionCount,
   scheduleCount,
   onSelectTab,
+  isPro = true,
 }: CalendarTabsHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -124,6 +127,12 @@ export function CalendarTabsHeader({
           >
             Net Earnings
           </Text>
+          {!isPro && (
+            <View style={styles.proChip}>
+              <Crown color="#D97706" size={8} />
+              <Text style={styles.proChipText}>PRO</Text>
+            </View>
+          )}
         </Pressable>
 
         <Pressable
@@ -144,6 +153,12 @@ export function CalendarTabsHeader({
           >
             Balance Sheet
           </Text>
+          {!isPro && (
+            <View style={styles.proChip}>
+              <Crown color="#D97706" size={8} />
+              <Text style={styles.proChipText}>PRO</Text>
+            </View>
+          )}
         </Pressable>
       </ScrollView>
     </View>
@@ -208,6 +223,23 @@ function createStyles(theme: AppTheme) {
     },
     activeBadgeText: {
       color: "#ffffff",
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
   });
 }

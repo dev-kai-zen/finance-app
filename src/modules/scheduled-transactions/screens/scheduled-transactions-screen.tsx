@@ -22,6 +22,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
@@ -71,6 +72,7 @@ export function ScheduledTransactionsScreen() {
     skipOccurrence,
     scheduleIdsWithPostings,
   } = useScheduledTransactions();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [formVisible, setFormVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] =
     useState<ScheduledTransaction | null>(null);
@@ -118,14 +120,17 @@ export function ScheduledTransactionsScreen() {
     [statusFilteredSchedules, searchQuery, searchContext],
   );
 
+  const activeSchedules = useMemo(
+    () => schedules.filter((schedule) => schedule.archivedAt === null),
+    [schedules],
+  );
+
   const scheduleById = useMemo(
     () =>
       new Map(
-        schedules
-          .filter((schedule) => schedule.archivedAt === null)
-          .map((schedule) => [schedule.id, schedule]),
+        activeSchedules.map((schedule) => [schedule.id, schedule]),
       ),
-    [schedules],
+    [activeSchedules],
   );
   const actionableOccurrences = useMemo(
     () =>
@@ -189,6 +194,16 @@ export function ScheduledTransactionsScreen() {
   );
 
   const openNew = () => {
+    if (activeSchedules.length >= PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS) {
+      guardAction(() => {
+        setEditingSchedule(null);
+        setFormVisible(true);
+      }, {
+        featureTitle: "Scheduled Transactions Limit",
+        featureDescription: "The free tier includes 1 active scheduled transaction. Upgrade to Kaizen Pro for unlimited recurring transactions, automatic background posting, and recurrence analytics.",
+      });
+      return;
+    }
     setEditingSchedule(null);
     setFormVisible(true);
   };
@@ -504,8 +519,24 @@ export function ScheduledTransactionsScreen() {
         message="This schedule will return to the schedules list. Its completed status and transaction history will remain unchanged."
         onCancel={() => setPendingRestore(null)}
         onConfirm={() => {
-          if (pendingRestore && restore(pendingRestore.id)) {
-            setPendingRestore(null);
+          if (pendingRestore) {
+            if (
+              activeSchedules.length >=
+              PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
+            ) {
+              const toRestore = pendingRestore;
+              setPendingRestore(null);
+              guardAction(() => {
+                restore(toRestore.id);
+              }, {
+                featureTitle: "Scheduled Transactions Limit",
+                featureDescription: "Restoring this schedule would exceed the free tier limit of 1 scheduled transaction. Upgrade to Kaizen Pro for unlimited schedules.",
+              });
+              return;
+            }
+            if (restore(pendingRestore.id)) {
+              setPendingRestore(null);
+            }
           }
         }}
         pending={pending}
@@ -571,6 +602,13 @@ export function ScheduledTransactionsScreen() {
         title="Permanently delete schedule?"
         variant="destructive"
         visible={pendingPermanentDelete !== null}
+      />
+
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </PageContainer>
   );

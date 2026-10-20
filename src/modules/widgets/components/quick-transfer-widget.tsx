@@ -30,7 +30,7 @@ export function QuickTransferWidget() {
       accessibilityLabel="Kaizen Quick Transfer: Tap to record a new transfer"
     >
       <ImageWidget
-        image={require("../../../../assets/finance-app-logo.png")}
+        image={require("../../../../assets/kaizen-finance-app-logo.png")}
         imageWidth={40}
         imageHeight={40}
         radius={10}

@@ -5,7 +5,7 @@
     "scheme": "finance-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/finance-app-logo.png",
+    "icon": "./assets/kaizen-finance-app-logo.png",
     "userInterfaceStyle": "automatic",
     "androidStatusBar": {
       "barStyle": "light-content",
@@ -17,14 +17,17 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#11231E",
-        "foregroundImage": "./assets/finance-app-logo.png"
+        "foregroundImage": "./assets/kaizen-finance-app-logo.png"
       },
+      "permissions": [
+        "com.android.vending.BILLING"
+      ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 1
+      "versionCode": 2
     },
     "web": {
-      "favicon": "./assets/finance-app-logo.png"
+      "favicon": "./assets/kaizen-finance-app-logo.png"
     },
     "plugins": [
       "expo-router",
@@ -48,7 +51,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/finance-app-logo.png",
+          "image": "./assets/kaizen-finance-app-logo.png",
           "resizeMode": "contain",
           "backgroundColor": "#11231E"
         }
@@ -80,7 +83,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/finance-app-logo.png",
+          "icon": "./assets/kaizen-finance-app-logo.png",
           "color": "#11231E"
         }
       ],
