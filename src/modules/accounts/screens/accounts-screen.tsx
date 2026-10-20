@@ -32,6 +32,7 @@ import type {
   AccountType,
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
+import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
 
 type Overlay =
   | { kind: "create" }
@@ -51,6 +52,7 @@ export function AccountsScreen({
   const data = useAccounts();
   const fundGroups = useFundGroups();
   const mutations = useAccountMutations(data.refresh);
+  const { guardAction, paywallVisible, closePaywall } = useProGuard();
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (initialView === "types") return { kind: "types" };
     if (initialView === "account") return { kind: "create" };
@@ -141,15 +143,45 @@ export function AccountsScreen({
     });
   };
   const handleSelectArchivedAccount = (account: AccountListItem) => {
+    if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
+      guardAction(() => {
+        setArchivedModalOpen(false);
+        open({ kind: "edit", id: account.id });
+      });
+      return;
+    }
     setArchivedModalOpen(false);
     open({ kind: "edit", id: account.id });
   };
   const handleSelectArchivedPocket = (pocket: PocketListItem) => {
+    const accountPockets = data.pockets.filter(
+      (p) => p.accountId === pocket.accountId && !p.isArchived,
+    );
+    if (accountPockets.length >= PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT) {
+      guardAction(() => {
+        setArchivedModalOpen(false);
+        open({ kind: "pocket-form", accountId: pocket.accountId, pocketId: pocket.id });
+      });
+      return;
+    }
     setArchivedModalOpen(false);
     open({ kind: "pocket-form", accountId: pocket.accountId, pocketId: pocket.id });
   };
   const handleEditType = (type: AccountType) =>
     open({ kind: "edit-type", type });
+
+  const handleOpenCreatePocket = (account: AccountListItem) => {
+    const accountPockets = data.pockets.filter(
+      (p) => p.accountId === account.id && !p.isArchived,
+    );
+    if (accountPockets.length >= PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT) {
+      guardAction(() => {
+        open({ kind: "pocket-form", accountId: account.id });
+      });
+      return;
+    }
+    open({ kind: "pocket-form", accountId: account.id });
+  };
 
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
@@ -196,8 +228,10 @@ export function AccountsScreen({
             <FundGroupsChip
               count={fundGroups.groups.length}
               onPress={() => {
-                fundGroups.refresh();
-                setFundGroupsModalOpen(true);
+                guardAction(() => {
+                  fundGroups.refresh();
+                  setFundGroupsModalOpen(true);
+                });
               }}
             />
           </View>
@@ -220,9 +254,7 @@ export function AccountsScreen({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
-                  onAddPocket={(account) =>
-                    open({ kind: "pocket-form", accountId: account.id })
-                  }
+                  onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({
                       kind: "pocket-form",
@@ -246,9 +278,7 @@ export function AccountsScreen({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
-                  onAddPocket={(account) =>
-                    open({ kind: "pocket-form", accountId: account.id })
-                  }
+                  onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({
                       kind: "pocket-form",
@@ -292,7 +322,15 @@ export function AccountsScreen({
 
       <AccountsFabSheet
         visible={fabSheetOpen}
-        onAddAccount={() => open({ kind: "create" })}
+        onAddAccount={() => {
+          if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
+            guardAction(() => {
+              open({ kind: "create" });
+            });
+            return;
+          }
+          open({ kind: "create" });
+        }}
         onClose={() => setFabSheetOpen(false)}
         onManageTypes={() => open({ kind: "types" })}
       />
@@ -399,6 +437,11 @@ export function AccountsScreen({
         title="Unable to update accounts"
         variant="error"
         visible={!overlay && Boolean(mutations.error)}
+      />
+
+      <ProPaywallModal
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </PageContainer>
   );

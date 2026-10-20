@@ -14,6 +14,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
 import { GoalCard } from "../components/goal-card";
 import { GoalFormModal } from "../components/goal-form-modal";
 import { GoalSummaryHeader } from "../components/goal-summary-header";
@@ -41,12 +42,20 @@ export function GoalsScreen() {
     deleteGoal,
     toggleStatus,
   } = useGoals();
+  const { guardAction, paywallVisible, closePaywall } = useProGuard();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
 
   const handleOpenCreate = () => {
+    if (goals.length >= PRO_LIMITS.FREE_MAX_GOALS) {
+      guardAction(() => {
+        setGoalToEdit(null);
+        setIsFormOpen(true);
+      });
+      return;
+    }
     setGoalToEdit(null);
     setIsFormOpen(true);
   };
@@ -189,6 +198,11 @@ export function GoalsScreen() {
         title="Delete Savings Goal"
         variant="destructive"
         visible={Boolean(goalToDelete)}
+      />
+
+      <ProPaywallModal
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </PageContainer>
   );

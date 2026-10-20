@@ -13,7 +13,7 @@ export {
   setDevSimulationMode,
   subscribeToProStatus,
 } from "./services/pro-status.service";
-export { PRO_CONSTANTS, PRO_FEATURES } from "./constants/pro.constants";
+export { PRO_CONSTANTS, PRO_FEATURES, PRO_LIMITS } from "./constants/pro.constants";
 export type {
   ProEntitlementState,
   ProPackageInfo,

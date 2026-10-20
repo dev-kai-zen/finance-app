@@ -103,7 +103,7 @@ require.extensions[".ts"] = function (module, filename) {
 const proRepo = require("../repositories/pro-storage.repository");
 const proService = require("../services/pro-status.service");
 const proBilling = require("../services/pro-billing.service");
-const { PRO_CONSTANTS } = require("../constants/pro.constants");
+const { PRO_CONSTANTS, PRO_LIMITS } = require("../constants/pro.constants");
 
 beforeEach(() => {
   secureStorageMock.clear();
@@ -186,5 +186,14 @@ test("pro service: simulates purchase in sandbox mode when no remote key is set"
   await proService.resetProStatusForTesting();
   const resetStatus = proService.getCurrentProStatus();
   assert.equal(resetStatus.isPro, false);
+});
+
+test("pro constants: defines agreed Phase 2 freemium limits", () => {
+  assert.equal(PRO_LIMITS.FREE_MAX_ACCOUNTS, 3);
+  assert.equal(PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT, 3);
+  assert.equal(PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS, 3);
+  assert.equal(PRO_LIMITS.FREE_MAX_GOALS, 1);
+  assert.equal(PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS, 1);
+  assert.equal(PRO_LIMITS.FREE_MAX_NOTES, 1);
 });
 

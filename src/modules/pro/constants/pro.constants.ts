@@ -8,6 +8,15 @@ export const PRO_CONSTANTS = {
     "Unlock all advanced financial reports, charts, and enjoy an ad-free experience forever with a one-time payment.",
 } as const;
 
+export const PRO_LIMITS = {
+  FREE_MAX_ACCOUNTS: 3,
+  FREE_MAX_POCKETS_PER_ACCOUNT: 3,
+  FREE_MAX_CATEGORY_BUDGETS: 3,
+  FREE_MAX_GOALS: 1,
+  FREE_MAX_SCHEDULED_TRANSACTIONS: 1,
+  FREE_MAX_NOTES: 1,
+} as const;
+
 export const PRO_SECURE_KEYS = {
   IS_PRO: "kaizen_pro_is_unlocked_v1",
   UNLOCKED_AT: "kaizen_pro_unlocked_at_v1",

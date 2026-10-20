@@ -13,6 +13,7 @@ import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
 import { NoteCardTile } from "../components/note-card-tile";
 import { NoteEditorModal } from "../components/note-editor-modal";
 import { NoteSortFilterBar } from "../components/note-sort-filter-bar";
@@ -40,6 +41,7 @@ export function NotesScreen() {
     deleteNote,
     refresh,
   } = useNotes();
+  const { guardAction, paywallVisible, closePaywall } = useProGuard();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -53,6 +55,13 @@ export function NotesScreen() {
   );
 
   const handleOpenNewNote = () => {
+    if (notes.length >= PRO_LIMITS.FREE_MAX_NOTES) {
+      guardAction(() => {
+        setSelectedNote(null);
+        setEditorVisible(true);
+      });
+      return;
+    }
     setSelectedNote(null);
     setEditorVisible(true);
   };
@@ -207,6 +216,11 @@ export function NotesScreen() {
         title="Delete Note"
         variant="destructive"
         visible={Boolean(noteToDelete)}
+      />
+
+      <ProPaywallModal
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </PageContainer>
   );
