@@ -23,8 +23,10 @@ import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 import { WhatsNewGate } from "@/modules/whats-new";
 import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
+import { initializeAdsSdk } from "@/modules/ads";
 
 registerWidgets();
+void initializeAdsSdk();
 
 
 LogBox.ignoreLogs([

@@ -17,6 +17,7 @@ import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import { useExperiencePreferences } from "@/modules/settings";
 import { ExperiencePromptsCard } from "../components/experience-prompts-card";
 import { FirstExpenseHintCard } from "../components/first-expense-hint-card";
+import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
@@ -262,6 +263,7 @@ export function DashboardScreen() {
               totalAssetsMinorUnits={assets}
               totalLiabilitiesMinorUnits={liabilities}
             />
+            <AdBanner placement="dashboard" variant="card" />
             <RecentTransactionsCard
               onPressTransaction={(tx) => setInspectedTransaction(tx)}
               onViewAll={handleViewAllTransactions}

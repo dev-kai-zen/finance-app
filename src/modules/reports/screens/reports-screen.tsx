@@ -4,6 +4,7 @@ import { PageContainer } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { ProGate } from "@/modules/pro";
+import { AdBanner } from "@/modules/ads";
 import { BalanceSheetReport } from "../components/balance-sheet/balance-sheet-report";
 import { CashFlowReport } from "../components/cash-flow/cash-flow-report";
 import { IncomeExpenseReport } from "../components/income-expense/income-expense-report";
@@ -66,6 +67,12 @@ export function ReportsScreen() {
           <LabelsSummaryReport />
         </ProGate>
       ) : null}
+
+      <AdBanner
+        placement="reports"
+        variant="card"
+        style={{ marginHorizontal: 16, marginTop: 16 }}
+      />
     </PageContainer>
   );
 }

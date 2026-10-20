@@ -36,6 +36,7 @@ import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
+import { AdBanner } from "@/modules/ads";
 import { useCategories } from "@/modules/categories";
 import {
   DEFAULT_TRANSACTION_FILTERS,
@@ -765,6 +766,15 @@ export function TransactionsScreen({
           stickySectionHeadersEnabled={false}
           style={styles.sectionList}
           windowSize={7}
+          ListFooterComponent={
+            sections.length > 0 ? (
+              <AdBanner
+                placement="transactions"
+                variant="plain"
+                style={{ marginTop: theme.spacing.sm, marginBottom: theme.spacing.md }}
+              />
+            ) : null
+          }
         />
       </View>
 
