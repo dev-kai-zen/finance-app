@@ -19,17 +19,17 @@ export const REMINDER_SETTINGS_KEYS = {
 export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   dailyReminderEnabled: false,
   dailyReminderTime: "20:00",
-  monthlySummaryReminderEnabled: true,
+  monthlySummaryReminderEnabled: false,
   monthlySummaryReminderTime: "10:00",
   creditCardsReminderEnabled: false,
   creditCardsReminderTime: "09:00",
   creditCardsLeadDays: [0, 1, 3],
-  creditLimitAlertsEnabled: true,
+  creditLimitAlertsEnabled: false,
   scheduledTransactionsReminderEnabled: false,
   scheduledTransactionsReminderTime: "09:00",
   scheduledTransactionsLeadDays: [0, 1],
-  budgetThresholdAlertsEnabled: true,
-  savingsGoalAlertsEnabled: true,
+  budgetThresholdAlertsEnabled: false,
+  savingsGoalAlertsEnabled: false,
 };
 
 export const AVAILABLE_LEAD_DAYS = [0, 1, 2, 3, 4, 5, 6, 7] as const;
