@@ -149,53 +149,6 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
-              accessibilityLabel={t("settings.languageAccessibility", {
-                language: languageValue,
-              })}
-              accessibilityRole="button"
-              onPress={() => router.push("/language")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Languages color={theme.colors.info} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.languageTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>{languageValue}</Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              accessibilityLabel={t("settings.currencySetupAccessibility")}
-              accessibilityRole="button"
-              onPress={() => router.push("/currency-setup")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <CircleDollarSign color={theme.colors.success} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.currencySetup")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
               accessibilityLabel={t("settings.remindersAccessibility", {
                 defaultValue: "Configure reminder settings",
               })}
@@ -325,6 +278,61 @@ export function SettingsScreen() {
               <View style={styles.settingCopy}>
                 <Text style={[styles.settingLabel, styles.dangerLabel]}>
                   {t("settings.resetData")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            {t("settings.localizationSection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.languageAccessibility", {
+                language: languageValue,
+              })}
+              accessibilityRole="button"
+              onPress={() => router.push("/language")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Languages color={theme.colors.info} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.languageTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>{languageValue}</Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.currencySetupAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.push("/currency-setup")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <CircleDollarSign color={theme.colors.success} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.currencySetup")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.currencySetupDescription")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

@@ -75,6 +75,7 @@ export const es = {
   },
   settings: {
     generalSection: "GENERAL",
+    localizationSection: "LOCALIZACIÓN",
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Cuenta predeterminada (Gastos)",
     defaultAccountIncomeLabel: "Cuenta predeterminada (Ingresos)",

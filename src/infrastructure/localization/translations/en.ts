@@ -69,6 +69,7 @@ export const en = {
   },
   settings: {
     generalSection: "GENERAL",
+    localizationSection: "LOCALIZATION",
     themeTitle: "Theme",
     defaultAccountExpenseLabel: "Default Account (Expense)",
     defaultAccountIncomeLabel: "Default Account (Income)",

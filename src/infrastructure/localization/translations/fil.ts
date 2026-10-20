@@ -75,6 +75,7 @@ export const fil = {
   },
   settings: {
     generalSection: "PANGKALAHATAN",
+    localizationSection: "LOKALISASYON",
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Default na Account (Gastos)",
     defaultAccountIncomeLabel: "Default na Account (Kita)",
