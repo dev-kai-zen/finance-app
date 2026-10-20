@@ -37,6 +37,7 @@ export const es = {
     moreFeaturesDescription:
       "Mostrar u ocultar elementos opcionales del menú. Puedes cambiarlos cuando quieras.",
     resetSimpleMenu: "Restablecer menú simple",
+    scrollDown: "Desplazar hacia abajo para ver más elementos",
   },
   brand: {
     tagline: "Mejora financiera continua",
@@ -74,6 +75,7 @@ export const es = {
   },
   settings: {
     generalSection: "GENERAL",
+    localizationSection: "LOCALIZACIÓN",
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Cuenta predeterminada (Gastos)",
     defaultAccountIncomeLabel: "Cuenta predeterminada (Ingresos)",

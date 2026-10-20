@@ -35,6 +35,7 @@ import {
   transactions,
 } from "@/infrastructure/database/schema";
 
+/** Table names catalog: `@/infrastructure/database/user-data-tables`. */
 export function deleteAllUserData(context: DbContext): void {
   context.delete(syncOperations).run();
 

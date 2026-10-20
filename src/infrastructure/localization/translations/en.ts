@@ -32,6 +32,7 @@ export const en = {
     moreFeaturesDescription:
       "Show or hide optional menu items. You can change these anytime.",
     resetSimpleMenu: "Reset to simple menu",
+    scrollDown: "Scroll down for more items",
   },
   brand: {
     tagline: "Continuous financial improvement",
@@ -68,6 +69,7 @@ export const en = {
   },
   settings: {
     generalSection: "GENERAL",
+    localizationSection: "LOCALIZATION",
     themeTitle: "Theme",
     defaultAccountExpenseLabel: "Default Account (Expense)",
     defaultAccountIncomeLabel: "Default Account (Income)",
