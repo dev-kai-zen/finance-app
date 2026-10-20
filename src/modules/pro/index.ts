@@ -1,6 +1,7 @@
 export { ProBadge } from "./components/pro-badge";
 export { ProSidebarCard } from "./components/pro-sidebar-card";
 export { ProGate } from "./components/pro-gate";
+export { ProFeatureModal } from "./components/pro-feature-modal";
 export { ProPaywallModal } from "./screens/pro-paywall-modal";
 export { useProStatus } from "./hooks/use-pro-status";
 export { useProGuard, type ProGuardOptions } from "./hooks/use-pro-guard";

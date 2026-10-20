@@ -23,7 +23,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
-import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { BudgetCard } from "../components/budget-card";
 import { BudgetFormModal } from "../components/budget-form-modal";
@@ -59,7 +59,7 @@ export function BudgetsScreen() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [budgetToEdit, setBudgetToEdit] = useState<CategoryBudget | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
-  const { guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const { preferences } = useCurrencyPreferences();
   const {
@@ -86,6 +86,9 @@ export function BudgetsScreen() {
       guardAction(() => {
         setBudgetToEdit(null);
         setIsFormOpen(true);
+      }, {
+        featureTitle: "Category Budget Limit",
+        featureDescription: "The free tier includes up to 3 category budgets. Upgrade to Kaizen Pro to create unlimited category limits with smart rollover and period breakdowns.",
       });
       return;
     }
@@ -348,7 +351,9 @@ export function BudgetsScreen() {
         visible={Boolean(error)}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />

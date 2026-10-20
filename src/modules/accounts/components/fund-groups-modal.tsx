@@ -44,6 +44,7 @@ import type {
   FundGroupListItem,
 } from "@/modules/accounts/types/fund-group.types";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 
 type EditorState = {
@@ -74,6 +75,7 @@ export function FundGroupsModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPro } = useProStatus();
   const mutations = useFundGroupMutations(onRefresh);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [confirmAction, setConfirmAction] = useState<"discard" | "delete" | null>(null);
@@ -83,6 +85,7 @@ export function FundGroupsModal({
   );
   const [ruleInfoVisible, setRuleInfoVisible] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
+  const [proModalVisible, setProModalVisible] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -229,6 +232,10 @@ export function FundGroupsModal({
     : false;
 
   const openCreate = () => {
+    if (!isPro) {
+      setProModalVisible(true);
+      return;
+    }
     const value: FundGroupInput = {
       name: "",
       accountIds: [],
@@ -906,6 +913,13 @@ export function FundGroupsModal({
         title="Unable to update Fund Group"
         variant="error"
         visible={visible && Boolean(mutations.error)}
+      />
+
+      <ProFeatureModal
+        featureDescription="Organize multiple accounts and sub-pockets into custom business, personal, or project portfolios with combined balances and dedicated reporting with Kaizen Pro."
+        featureTitle="Fund Groups"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
       />
     </>
   );

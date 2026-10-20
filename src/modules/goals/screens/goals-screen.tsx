@@ -14,7 +14,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { GoalCard } from "../components/goal-card";
 import { GoalFormModal } from "../components/goal-form-modal";
 import { GoalSummaryHeader } from "../components/goal-summary-header";
@@ -42,7 +42,7 @@ export function GoalsScreen() {
     deleteGoal,
     toggleStatus,
   } = useGoals();
-  const { guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
@@ -53,6 +53,9 @@ export function GoalsScreen() {
       guardAction(() => {
         setGoalToEdit(null);
         setIsFormOpen(true);
+      }, {
+        featureTitle: "Savings Goal Limit",
+        featureDescription: "The free tier includes 1 active savings goal. Upgrade to Kaizen Pro to set unlimited goals, track multi-account targets, and project completion dates.",
       });
       return;
     }
@@ -200,7 +203,9 @@ export function GoalsScreen() {
         visible={Boolean(goalToDelete)}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />

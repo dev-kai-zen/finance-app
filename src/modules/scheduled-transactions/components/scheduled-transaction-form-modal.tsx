@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, Crown } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
@@ -23,6 +23,7 @@ import {
   type Category,
 } from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useDefaultAccounts } from "@/modules/settings";
 import {
   TransactionDateTimePickerModal,
@@ -117,6 +118,7 @@ export function ScheduledTransactionFormModal({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const defaultAccounts = useDefaultAccounts();
+  const { isPro, guardAction, paywallVisible, closePaywall } = useProGuard();
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined
@@ -233,6 +235,19 @@ export function ScheduledTransactionFormModal({
     pockets,
     visible,
   ]);
+
+  const handleToggleAutoPost = (val: boolean) => {
+    if (val && !isPro) {
+      guardAction(() => {
+        setAutoPost(true);
+      }, {
+        featureTitle: "Automatic Schedule Posting",
+        featureDescription: "Automatically execute recurring income, bills, and transfers on their due dates in the background without requiring manual confirmation with Kaizen Pro.",
+      });
+      return;
+    }
+    setAutoPost(val);
+  };
 
   const selectedAccount = accounts.find((item) => item.id === accountId);
   const selectedPocket = pockets.find((item) => item.id === pocketId);
@@ -701,9 +716,17 @@ export function ScheduledTransactionFormModal({
 
           <View style={styles.autoPostCard}>
             <View style={styles.autoPostText}>
-              <Text style={styles.autoPostTitle}>
-                Automatically enter transaction
-              </Text>
+              <View style={styles.autoPostTitleRow}>
+                <Text style={styles.autoPostTitle}>
+                  Automatically enter transaction
+                </Text>
+                {!isPro && (
+                  <View style={styles.proChip}>
+                    <Crown color="#D97706" size={10} />
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.autoPostDescription}>
                 Posts when the app processes the due date. Otherwise it appears
                 as a due item for your confirmation.
@@ -711,7 +734,7 @@ export function ScheduledTransactionFormModal({
             </View>
             <ThemedSwitch
               accessibilityLabel="Automatically enter transaction"
-              onValueChange={setAutoPost}
+              onValueChange={handleToggleAutoPost}
               value={autoPost}
             />
           </View>
@@ -788,6 +811,13 @@ export function ScheduledTransactionFormModal({
         }
         value={pickerValue}
         visible={dateTimePicker !== null}
+      />
+
+      <ProFeatureModal
+        featureDescription="Automatically execute recurring income, bills, and transfers on their due dates in the background without requiring manual confirmation with Kaizen Pro."
+        featureTitle="Automatic Schedule Posting"
+        onClose={closePaywall}
+        visible={paywallVisible}
       />
     </>
   );
@@ -1173,6 +1203,28 @@ function createStyles(theme: AppTheme) {
     },
     autoPostText: {
       flex: 1,
+    },
+    autoPostTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
     autoPostTitle: {
       color: theme.colors.textPrimary,

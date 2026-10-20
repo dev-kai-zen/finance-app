@@ -19,7 +19,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { CategoryPickerModal, type Category } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
-import { ProPaywallModal, useProGuard } from "@/modules/pro";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import type {
   BudgetFrequency,
   BudgetRolloverMode,
@@ -76,7 +76,8 @@ export function BudgetFormModal({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
-  const { isPro, guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const [categoryId, setCategoryId] = useState<string>("");
   const [isEnabled, setIsEnabled] = useState<boolean>(true);
@@ -85,7 +86,7 @@ export function BudgetFormModal({
   const [allowRollover, setAllowRollover] = useState<boolean>(false);
   const [rolloverMode, setRolloverMode] =
     useState<BudgetRolloverMode>("positive_only");
-  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(true);
+  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(false);
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(
     [],
   );
@@ -94,6 +95,9 @@ export function BudgetFormModal({
     if (val && !isPro) {
       guardAction(() => {
         setAllowRollover(true);
+      }, {
+        featureTitle: "Rollover Budget",
+        featureDescription: "Automatically carry unspent budget surplus or deficit from previous periods into your next budget cycle with Kaizen Pro.",
       });
       return;
     }
@@ -104,6 +108,9 @@ export function BudgetFormModal({
     if (val && !isPro) {
       guardAction(() => {
         setNotifyOnExceeded(true);
+      }, {
+        featureTitle: "Over-Budget Alerts",
+        featureDescription: "Receive instant alerts and confirmation prompts whenever a transaction exceeds your set category threshold with Kaizen Pro.",
       });
       return;
     }
@@ -146,7 +153,7 @@ export function BudgetFormModal({
       setFrequency("monthly");
       setAllowRollover(false);
       setRolloverMode("positive_only");
-      setNotifyOnExceeded(true);
+      setNotifyOnExceeded(false);
       setMonthlyTargets([]);
     }
     setErrorNotification(null);
@@ -482,7 +489,9 @@ export function BudgetFormModal({
         visible={Boolean(errorNotification)}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />

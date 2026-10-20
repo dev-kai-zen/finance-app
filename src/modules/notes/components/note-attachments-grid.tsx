@@ -8,9 +8,9 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
-import { Camera, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
-
+import { Camera, Crown, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
 import { ActionBottomSheet } from "@/components";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
 import type { NoteAttachment, NoteAttachmentDraft } from "../types/note.types";
@@ -37,8 +37,10 @@ export function NoteAttachmentsGrid({
 }: NoteAttachmentsGridProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPro } = useProStatus();
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [proModalVisible, setProModalVisible] = useState(false);
   const [activeViewer, setActiveViewer] = useState<{
     uri: string;
     name: string;
@@ -47,11 +49,25 @@ export function NoteAttachmentsGrid({
 
   const totalCount = existingAttachments.length + drafts.length;
 
+  const handleOpenPickSheet = () => {
+    if (!isPro) {
+      setProModalVisible(true);
+      return;
+    }
+    setSheetOpen(true);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={styles.label}>Photos & Attachments</Text>
+          {!isPro && (
+            <View style={styles.proChip}>
+              <Crown color="#D97706" size={10} />
+              <Text style={styles.proChipText}>PRO</Text>
+            </View>
+          )}
           {totalCount > 0 ? (
             <View style={styles.countBadge}>
               <Text style={styles.countText}>{totalCount}</Text>
@@ -63,7 +79,7 @@ export function NoteAttachmentsGrid({
           accessibilityLabel="Add photos"
           accessibilityRole="button"
           disabled={picking}
-          onPress={() => setSheetOpen(true)}
+          onPress={handleOpenPickSheet}
           style={styles.addButton}
         >
           {picking ? (
@@ -81,7 +97,7 @@ export function NoteAttachmentsGrid({
         <Pressable
           accessibilityLabel="Add attachment photo"
           accessibilityRole="button"
-          onPress={() => setSheetOpen(true)}
+          onPress={handleOpenPickSheet}
           style={styles.emptyContainer}
         >
           <ImageIcon color={theme.colors.textMuted} size={28} />
@@ -200,6 +216,13 @@ export function NoteAttachmentsGrid({
         onDelete={activeViewer?.onDelete}
         visible={Boolean(activeViewer)}
       />
+
+      <ProFeatureModal
+        featureDescription="Attach photos, receipts, invoices, and documents directly to your financial notes with Kaizen Pro."
+        featureTitle="Note Attachments"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
+      />
     </View>
   );
 }
@@ -219,6 +242,23 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.xs,
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
     label: {
       color: theme.colors.textSecondary,

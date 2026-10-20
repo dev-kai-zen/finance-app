@@ -22,7 +22,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
-import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
@@ -72,7 +72,7 @@ export function ScheduledTransactionsScreen() {
     skipOccurrence,
     scheduleIdsWithPostings,
   } = useScheduledTransactions();
-  const { guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [formVisible, setFormVisible] = useState(false);
   const [editingSchedule, setEditingSchedule] =
     useState<ScheduledTransaction | null>(null);
@@ -198,6 +198,9 @@ export function ScheduledTransactionsScreen() {
       guardAction(() => {
         setEditingSchedule(null);
         setFormVisible(true);
+      }, {
+        featureTitle: "Scheduled Transactions Limit",
+        featureDescription: "The free tier includes 1 active scheduled transaction. Upgrade to Kaizen Pro for unlimited recurring transactions, automatic background posting, and recurrence analytics.",
       });
       return;
     }
@@ -525,6 +528,9 @@ export function ScheduledTransactionsScreen() {
               setPendingRestore(null);
               guardAction(() => {
                 restore(toRestore.id);
+              }, {
+                featureTitle: "Scheduled Transactions Limit",
+                featureDescription: "Restoring this schedule would exceed the free tier limit of 1 scheduled transaction. Upgrade to Kaizen Pro for unlimited schedules.",
               });
               return;
             }
@@ -598,7 +604,9 @@ export function ScheduledTransactionsScreen() {
         visible={pendingPermanentDelete !== null}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />

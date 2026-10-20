@@ -32,7 +32,7 @@ import type {
   AccountType,
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
-import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 
 type Overlay =
   | { kind: "create" }
@@ -52,7 +52,7 @@ export function AccountsScreen({
   const data = useAccounts();
   const fundGroups = useFundGroups();
   const mutations = useAccountMutations(data.refresh);
-  const { guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (initialView === "types") return { kind: "types" };
     if (initialView === "account") return { kind: "create" };
@@ -177,6 +177,9 @@ export function AccountsScreen({
     if (accountPockets.length >= PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT) {
       guardAction(() => {
         open({ kind: "pocket-form", accountId: account.id });
+      }, {
+        featureTitle: "Pocket Limit Reached",
+        featureDescription: "The free tier includes up to 3 pockets per account. Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.",
       });
       return;
     }
@@ -228,10 +231,8 @@ export function AccountsScreen({
             <FundGroupsChip
               count={fundGroups.groups.length}
               onPress={() => {
-                guardAction(() => {
-                  fundGroups.refresh();
-                  setFundGroupsModalOpen(true);
-                });
+                fundGroups.refresh();
+                setFundGroupsModalOpen(true);
               }}
             />
           </View>
@@ -326,6 +327,9 @@ export function AccountsScreen({
           if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
             guardAction(() => {
               open({ kind: "create" });
+            }, {
+              featureTitle: "Account Limit Reached",
+              featureDescription: "The free tier includes up to 3 active accounts. Upgrade to Kaizen Pro for unlimited accounts, custom icons, sub-pockets, and comprehensive portfolio tracking.",
             });
             return;
           }
@@ -406,8 +410,32 @@ export function AccountsScreen({
         onDismissRestorePocketError={() => setArchivedRestorePocketError(null)}
         onPermanentDeleteAccount={mutations.deleteAccount}
         onPermanentDeletePocket={mutations.deletePocket}
-        onRestoreAccount={(accountId) => mutations.archiveAccount(accountId, false)}
+        onRestoreAccount={async (accountId) => {
+          if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
+            setArchivedModalOpen(false);
+            guardAction(() => {}, {
+              featureTitle: "Account Limit Reached",
+              featureDescription: "Restoring this account would exceed the free tier limit of 3 accounts. Upgrade to Kaizen Pro for unlimited accounts.",
+            });
+            return false;
+          }
+          return mutations.archiveAccount(accountId, false);
+        }}
         onRestorePocket={async (pocketId) => {
+          const pocket = archivedPockets.find((p) => p.id === pocketId);
+          if (pocket) {
+            const accountPockets = data.pockets.filter(
+              (p) => p.accountId === pocket.accountId && !p.isArchived,
+            );
+            if (accountPockets.length >= PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT) {
+              setArchivedModalOpen(false);
+              guardAction(() => {}, {
+                featureTitle: "Pocket Limit Reached",
+                featureDescription: "Restoring this pocket would exceed the free tier limit of 3 pockets for this account. Upgrade to Kaizen Pro for unlimited pockets.",
+              });
+              return false;
+            }
+          }
           setArchivedRestorePocketError(null);
           mutations.clearError();
           const restored = await mutations.archivePocket(pocketId, false);
@@ -439,7 +467,9 @@ export function AccountsScreen({
         visible={!overlay && Boolean(mutations.error)}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />

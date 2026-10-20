@@ -13,7 +13,7 @@ import { PageContainer, PageEmptyState } from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { PRO_LIMITS, ProPaywallModal, useProGuard } from "@/modules/pro";
+import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { NoteCardTile } from "../components/note-card-tile";
 import { NoteEditorModal } from "../components/note-editor-modal";
 import { NoteSortFilterBar } from "../components/note-sort-filter-bar";
@@ -41,7 +41,7 @@ export function NotesScreen() {
     deleteNote,
     refresh,
   } = useNotes();
-  const { guardAction, paywallVisible, closePaywall } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -59,6 +59,9 @@ export function NotesScreen() {
       guardAction(() => {
         setSelectedNote(null);
         setEditorVisible(true);
+      }, {
+        featureTitle: "Note Limit Reached",
+        featureDescription: "The free tier includes 1 active note. Upgrade to Kaizen Pro for unlimited notes, document and receipt attachments, custom color tagging, and pinned financial checklists.",
       });
       return;
     }
@@ -218,7 +221,9 @@ export function NotesScreen() {
         visible={Boolean(noteToDelete)}
       />
 
-      <ProPaywallModal
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
       />
