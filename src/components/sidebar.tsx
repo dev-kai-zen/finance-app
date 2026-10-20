@@ -13,7 +13,7 @@ import {
 
 import { IconHelper } from "./icon-helper";
 import { MoreFeaturesModal } from "./more-features-modal";
-import { ProBadge, ProPaywallModal, useProStatus } from "@/modules/pro";
+import { ProPaywallModal, useProStatus } from "@/modules/pro";
 
 interface NavItemConfig {
   href: string;
@@ -122,12 +122,10 @@ export const Sidebar = memo(function Sidebar({
           <View style={styles.navGroup}>
             {primaryItems.map((item) => {
               const active = isItemActive(item.href);
-              const isReportsItem = item.href === "/reports";
               return (
                 <SidebarLink
                   key={item.href}
                   active={active}
-                  badge={isReportsItem && !isPro ? <ProBadge /> : undefined}
                   icon={item.icon}
                   label={t(item.labelKey)}
                   onPress={() => handlePress(item.href)}
@@ -136,53 +134,55 @@ export const Sidebar = memo(function Sidebar({
             })}
           </View>
         </View>
+      </ScrollView>
 
-        {/* Secondary Navigation */}
-        <View style={styles.secondaryNav}>
-          <View style={styles.divider} />
-          <View style={styles.navGroup}>
-            {secondaryItems
-              .filter((item) => item.href !== "/settings")
-              .map((item) => {
-                const active = isItemActive(item.href);
-                return (
-                  <SidebarLink
-                    key={item.href}
-                    active={active}
-                    icon={item.icon}
-                    label={t(item.labelKey)}
-                    onPress={() => handlePress(item.href)}
-                  />
-                );
-              })}
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setMoreFeaturesOpen(true)}
-              style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
-            >
-              <View style={styles.iconContainer}>
-                <IconHelper color={theme.colors.textSecondary} name="layout-grid" size={18} />
-              </View>
-              <Text style={styles.linkText}>{t("navigation.moreFeatures")}</Text>
-            </Pressable>
-            {secondaryItems
-              .filter((item) => item.href === "/settings")
-              .map((item) => {
-                const active = isItemActive(item.href);
-                return (
-                  <SidebarLink
-                    key={item.href}
-                    active={active}
-                    icon={item.icon}
-                    label={t(item.labelKey)}
-                    onPress={() => handlePress(item.href)}
-                  />
-                );
-              })}
+      {/* Secondary Navigation (Fixed at bottom) */}
+      <View style={styles.secondaryNav}>
+        <View style={styles.divider} />
+        <View style={styles.navGroup}>
+          {secondaryItems
+            .filter((item) => item.href !== "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setMoreFeaturesOpen(true)}
+            style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
+          >
+            <View style={styles.iconContainer}>
+              <IconHelper color={theme.colors.textSecondary} name="layout-grid" size={18} />
+            </View>
+            <Text style={styles.linkText}>{t("navigation.moreFeatures")}</Text>
+          </Pressable>
+          {secondaryItems
+            .filter((item) => item.href === "/settings")
+            .map((item) => {
+              const active = isItemActive(item.href);
+              return (
+                <SidebarLink
+                  key={item.href}
+                  active={active}
+                  icon={item.icon}
+                  label={t(item.labelKey)}
+                  onPress={() => handlePress(item.href)}
+                />
+              );
+            })}
 
-            {/* Below Settings: Kaizen Pro item */}
+          {/* Below Settings: Kaizen Pro item (shown only in Free tier) */}
+          {!isPro ? (
             <Pressable
-              accessibilityLabel={isPro ? t("pro.proActive") : t("pro.sidebarTitle")}
+              accessibilityLabel={t("pro.sidebarTitle")}
               accessibilityRole="button"
               onPress={() => setPaywallOpen(true)}
               style={({ pressed }) => [
@@ -191,27 +191,20 @@ export const Sidebar = memo(function Sidebar({
               ]}
             >
               <View style={styles.iconContainer}>
-                <Crown color={isPro ? theme.colors.success : "#D97706"} size={18} />
+                <Crown color="#D97706" size={18} />
               </View>
-              <Text style={[styles.linkText, !isPro && styles.proLinkText]}>
-                {isPro ? t("pro.proActive") : t("pro.sidebarTitle")}
+              <Text style={[styles.linkText, styles.proLinkText]}>
+                {t("pro.sidebarTitle")}
               </Text>
               <View style={styles.badgeContainer}>
-                {isPro ? (
-                  <View style={styles.sidebarActiveBadge}>
-                    <Text style={styles.sidebarActiveBadgeText}>ACTIVE</Text>
-                  </View>
-                ) : (
-                  <View style={styles.sidebarUpgradeBadge}>
-                    <Crown color="#D97706" size={10} />
-                    <Text style={styles.sidebarUpgradeBadgeText}>PRO</Text>
-                  </View>
-                )}
+                <View style={styles.sidebarUpgradeBadge}>
+                  <Text style={styles.sidebarUpgradeBadgeText}>Activate</Text>
+                </View>
               </View>
             </Pressable>
-          </View>
+          ) : null}
         </View>
-      </ScrollView>
+      </View>
 
       <MoreFeaturesModal
         onClose={() => setMoreFeaturesOpen(false)}
@@ -439,8 +432,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     navScrollContent: {
-      flexGrow: 1,
-      justifyContent: "space-between",
+      paddingBottom: theme.spacing.sm,
     },
     sectionLabel: {
       color: theme.colors.textMuted,
@@ -488,11 +480,10 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     sidebarUpgradeBadge: {
-      flexDirection: "row",
       alignItems: "center",
-      gap: 3,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
+      justifyContent: "center",
+      paddingHorizontal: 8,
+      paddingVertical: 3,
       borderRadius: theme.borderRadius.round,
       backgroundColor: "rgba(217, 119, 6, 0.15)",
       borderWidth: StyleSheet.hairlineWidth,
@@ -502,21 +493,7 @@ function createStyles(theme: AppTheme) {
       color: "#D97706",
       fontSize: 10,
       fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.5,
-    },
-    sidebarActiveBadge: {
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-      borderRadius: theme.borderRadius.round,
-      backgroundColor: "rgba(16, 185, 129, 0.15)",
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: "rgba(16, 185, 129, 0.3)",
-    },
-    sidebarActiveBadgeText: {
-      color: theme.colors.success,
-      fontSize: 10,
-      fontWeight: theme.typography.fontWeight.bold,
-      letterSpacing: 0.5,
+      letterSpacing: 0.4,
     },
     activeLinkText: {
       color: theme.colors.primary,

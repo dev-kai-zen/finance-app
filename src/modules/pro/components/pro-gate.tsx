@@ -92,7 +92,7 @@ export function ProGate({
         </View>
 
         <BlurView
-          intensity={75}
+          intensity={90}
           tint={theme.mode === "dark" ? "dark" : "light"}
           style={styles.blurOverlay}
         >
