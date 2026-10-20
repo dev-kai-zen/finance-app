@@ -37,6 +37,7 @@ export const fil = {
     moreFeaturesDescription:
       "Ipakita o itago ang opsyonal na menu items. Puwede mong baguhin ang mga ito anumang oras.",
     resetSimpleMenu: "Ibalik sa simpleng menu",
+    scrollDown: "Mag-scroll pababa para sa higit pang mga item",
   },
   brand: {
     tagline: "Patuloy na pagpapabuti ng pananalapi",

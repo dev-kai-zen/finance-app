@@ -1,7 +1,19 @@
 import { usePathname, useRouter } from "expo-router";
-import { memo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Crown } from "lucide-react-native";
+import { memo, useCallback, useRef, useState } from "react";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import type {
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+} from "react-native";
+import { ChevronDown, Crown } from "lucide-react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -56,6 +68,59 @@ export const Sidebar = memo(function Sidebar({
   const { isPro } = useProStatus();
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollLayoutRef = useRef({ visibleHeight: 0, contentHeight: 0, scrollY: 0 });
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  const checkCanScrollDown = useCallback(
+    (scrollY: number, visibleHeight: number, contentHeight: number) => {
+      if (visibleHeight <= 0 || contentHeight <= 0) return;
+      const hasMore = contentHeight - visibleHeight - scrollY > 15;
+      setCanScrollDown((prev) => (prev !== hasMore ? hasMore : prev));
+    },
+    [],
+  );
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const scrollY = event.nativeEvent.contentOffset.y;
+      scrollLayoutRef.current.scrollY = scrollY;
+      const { visibleHeight, contentHeight } = scrollLayoutRef.current;
+      checkCanScrollDown(scrollY, visibleHeight, contentHeight);
+    },
+    [checkCanScrollDown],
+  );
+
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const visibleHeight = event.nativeEvent.layout.height;
+      scrollLayoutRef.current.visibleHeight = visibleHeight;
+      const { scrollY, contentHeight } = scrollLayoutRef.current;
+      checkCanScrollDown(scrollY, visibleHeight, contentHeight);
+    },
+    [checkCanScrollDown],
+  );
+
+  const handleContentSizeChange = useCallback(
+    (_: number, contentHeight: number) => {
+      scrollLayoutRef.current.contentHeight = contentHeight;
+      const { scrollY, visibleHeight } = scrollLayoutRef.current;
+      checkCanScrollDown(scrollY, visibleHeight, contentHeight);
+    },
+    [checkCanScrollDown],
+  );
+
+  const handleScrollDownPress = useCallback(() => {
+    const { scrollY, visibleHeight, contentHeight } = scrollLayoutRef.current;
+    const targetY = Math.min(
+      scrollY + 140,
+      Math.max(0, contentHeight - visibleHeight),
+    );
+    scrollViewRef.current?.scrollTo({
+      y: targetY,
+      animated: true,
+    });
+  }, []);
 
   const handlePress = (href: string) => {
     router.navigate(href as any);
@@ -111,30 +176,55 @@ export const Sidebar = memo(function Sidebar({
       </View>
 
       {/* Scrollable Navigation Body */}
-      <ScrollView
-        contentContainerStyle={styles.navScrollContent}
-        showsVerticalScrollIndicator={false}
-        style={styles.navScroll}
-      >
-        {/* Primary Navigation */}
-        <View style={styles.primaryNav}>
-          <Text style={styles.sectionLabel}>{t("navigation.menu")}</Text>
-          <View style={styles.navGroup}>
-            {primaryItems.map((item) => {
-              const active = isItemActive(item.href);
-              return (
-                <SidebarLink
-                  key={item.href}
-                  active={active}
-                  icon={item.icon}
-                  label={t(item.labelKey)}
-                  onPress={() => handlePress(item.href)}
-                />
-              );
-            })}
+      <View style={styles.scrollWrapper}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.navScrollContent}
+          onContentSizeChange={handleContentSizeChange}
+          onLayout={handleLayout}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          style={styles.navScroll}
+        >
+          {/* Primary Navigation */}
+          <View style={styles.primaryNav}>
+            <Text style={styles.sectionLabel}>{t("navigation.menu")}</Text>
+            <View style={styles.navGroup}>
+              {primaryItems.map((item) => {
+                const active = isItemActive(item.href);
+                return (
+                  <SidebarLink
+                    key={item.href}
+                    active={active}
+                    icon={item.icon}
+                    label={t(item.labelKey)}
+                    onPress={() => handlePress(item.href)}
+                  />
+                );
+              })}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+
+        {/* Scroll Down Indicator */}
+        {canScrollDown ? (
+          <View pointerEvents="box-none" style={styles.scrollIndicatorContainer}>
+            <Pressable
+              accessibilityLabel={t("navigation.scrollDown")}
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+              onPress={handleScrollDownPress}
+              style={({ pressed }) => [
+                styles.scrollIndicatorButton,
+                pressed && styles.scrollIndicatorButtonPressed,
+              ]}
+            >
+              <ChevronDown color={theme.colors.textSecondary} size={16} />
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
 
       {/* Secondary Navigation (Fixed at bottom) */}
       <View style={styles.secondaryNav}>
@@ -428,11 +518,40 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
       lineHeight: 16,
     },
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     navScroll: {
       flex: 1,
     },
     navScrollContent: {
-      paddingBottom: theme.spacing.sm,
+      paddingBottom: theme.spacing.md,
+    },
+    scrollIndicatorContainer: {
+      alignItems: "center",
+      bottom: 2,
+      justifyContent: "center",
+      left: 0,
+      pointerEvents: "box-none",
+      position: "absolute",
+      right: 0,
+      zIndex: 10,
+    },
+    scrollIndicatorButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: 15,
+      borderWidth: 1,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
+      ...theme.shadows.card,
+    },
+    scrollIndicatorButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      transform: [{ scale: 0.92 }],
     },
     sectionLabel: {
       color: theme.colors.textMuted,

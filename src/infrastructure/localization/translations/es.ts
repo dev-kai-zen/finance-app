@@ -37,6 +37,7 @@ export const es = {
     moreFeaturesDescription:
       "Mostrar u ocultar elementos opcionales del menú. Puedes cambiarlos cuando quieras.",
     resetSimpleMenu: "Restablecer menú simple",
+    scrollDown: "Desplazar hacia abajo para ver más elementos",
   },
   brand: {
     tagline: "Mejora financiera continua",

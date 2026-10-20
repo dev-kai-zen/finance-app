@@ -32,6 +32,7 @@ export const en = {
     moreFeaturesDescription:
       "Show or hide optional menu items. You can change these anytime.",
     resetSimpleMenu: "Reset to simple menu",
+    scrollDown: "Scroll down for more items",
   },
   brand: {
     tagline: "Continuous financial improvement",
