@@ -11,6 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Crown } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -21,6 +22,7 @@ import {
   matchesIconSearch,
   type IconPickerScope,
 } from "@/constants/icon-picker-catalog";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { IconHelper } from "./icon-helper";
 
 export interface IconPickerModalProps {
@@ -46,6 +48,8 @@ export function IconPickerModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const activeColor = themeColor ?? theme.colors.primary;
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -222,6 +226,10 @@ export function IconPickerModal({
               accessibilityRole="button"
               accessibilityState={{ selected: pickerScope === "all" }}
               onPress={() => {
+                if (!isPro) {
+                  setProModalVisible(true);
+                  return;
+                }
                 setPickerScope("all");
                 setSelectedCategory("all");
               }}
@@ -244,6 +252,12 @@ export function IconPickerModal({
               >
                 All icons
               </Text>
+              {!isPro && (
+                <View style={styles.proChip}>
+                  <Crown color="#D97706" size={8} />
+                  <Text style={styles.proChipText}>PRO</Text>
+                </View>
+              )}
             </Pressable>
           </View>
 
@@ -309,7 +323,13 @@ export function IconPickerModal({
               {pickerScope === "recommended" && searchQuery.trim().length > 0 ? (
                 <Pressable
                   accessibilityLabel="Search all icons"
-                  onPress={() => setPickerScope("all")}
+                  onPress={() => {
+                    if (!isPro) {
+                      setProModalVisible(true);
+                      return;
+                    }
+                    setPickerScope("all");
+                  }}
                   style={[styles.resetSearchBtn, { borderColor: activeColor }]}
                 >
                   <Text style={[styles.resetSearchText, { color: activeColor }]}>
@@ -358,6 +378,13 @@ export function IconPickerModal({
           </View>
         </View>
       </View>
+
+      <ProFeatureModal
+        featureDescription="Unlock 200+ specialized icons from the expanded Lucide icon library to personalize your accounts, categories, and financial goals with Kaizen Pro."
+        featureTitle="Expanded Icon Library"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
+      />
     </Modal>
   );
 }
@@ -466,8 +493,27 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
       flex: 1,
+      flexDirection: "row",
+      gap: 6,
       justifyContent: "center",
       paddingVertical: 8,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
     scopePillText: {
       color: theme.colors.textSecondary,

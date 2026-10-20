@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { CreditCard } from "lucide-react-native";
+import { useFocusEffect } from "expo-router";
+import { CreditCard, Crown } from "lucide-react-native";
 import {
   PageContainer,
   PageEmptyState,
@@ -10,6 +11,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
 import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
@@ -18,8 +20,18 @@ export function CreditCardMonitoringScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
   const data = useCreditCardMonitoring();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isPro) {
+        setProModalVisible(true);
+      }
+    }, [isPro]),
+  );
 
   const activeAccountId =
     data.cards.find((c) => c.accountId === selectedAccountId)?.accountId ??
@@ -31,6 +43,33 @@ export function CreditCardMonitoringScreen() {
 
   return (
     <PageContainer contentContainerStyle={styles.content}>
+      {!isPro && (
+        <Pressable
+          accessibilityLabel="Kaizen Pro feature. Tap to learn more."
+          accessibilityRole="button"
+          onPress={() => setProModalVisible(true)}
+          style={({ pressed }) => [
+            styles.proBanner,
+            pressed && styles.proBannerPressed,
+          ]}
+        >
+          <View style={styles.proBannerLeft}>
+            <View style={styles.proBadge}>
+              <Crown color="#D97706" size={14} />
+            </View>
+            <View style={styles.proBannerCopy}>
+              <Text style={styles.proBannerTitle}>Kaizen Pro Feature</Text>
+              <Text style={styles.proBannerSubtitle}>
+                Credit Card billing cycles, payoffs & limit tracking
+              </Text>
+            </View>
+          </View>
+          <View style={styles.proLearnMoreBadge}>
+            <Text style={styles.proLearnMoreText}>Learn More</Text>
+          </View>
+        </Pressable>
+      )}
+
       {data.loading ? (
         <PageLoadingState message="Preparing credit-card billing..." />
       ) : data.error ? (
@@ -145,6 +184,13 @@ export function CreditCardMonitoringScreen() {
           ) : null}
         </>
       )}
+
+      <ProFeatureModal
+        featureDescription="Track multi-card billing cycles, statement cutoffs, payment due dates, 0% installment payoffs, and credit limit utilization in real time with Kaizen Pro."
+        featureTitle="Credit Card Monitoring"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
+      />
     </PageContainer>
   );
 }
@@ -152,6 +198,59 @@ export function CreditCardMonitoringScreen() {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     content: { paddingTop: theme.spacing.lg },
+    proBanner: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.08)",
+      borderColor: "rgba(217, 119, 6, 0.3)",
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm + 2,
+    },
+    proBannerPressed: {
+      backgroundColor: "rgba(217, 119, 6, 0.14)",
+    },
+    proBannerLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    proBadge: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderRadius: theme.borderRadius.round,
+      height: 28,
+      justifyContent: "center",
+      width: 28,
+    },
+    proBannerCopy: {
+      flex: 1,
+    },
+    proBannerTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    proBannerSubtitle: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      marginTop: 1,
+    },
+    proLearnMoreBadge: {
+      backgroundColor: "#D97706",
+      borderRadius: theme.borderRadius.round,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    proLearnMoreText: {
+      color: "#FFFFFF",
+      fontSize: 11,
+      fontWeight: "700",
+    },
     summary: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceElevated,
