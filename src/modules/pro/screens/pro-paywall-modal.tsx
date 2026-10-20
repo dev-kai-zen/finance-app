@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Sparkles, X, Check, ShieldCheck, Crown } from "lucide-react-native";
+import { BlurView } from "expo-blur";
 
 import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
@@ -85,6 +86,11 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
       visible={visible}
     >
       <View style={styles.overlay}>
+        <BlurView
+          intensity={45}
+          tint={theme.mode === "dark" ? "dark" : "default"}
+          style={StyleSheet.absoluteFill}
+        />
         <Pressable
           accessibilityLabel={t("common.close")}
           onPress={onClose}
@@ -228,7 +234,7 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlay: {
-      backgroundColor: "rgba(0, 0, 0, 0.55)",
+      backgroundColor: "rgba(0, 0, 0, 0.35)",
       flex: 1,
       justifyContent: "flex-end",
     },

@@ -5,6 +5,8 @@ const Module = require("node:module");
 const ts = require("typescript");
 const fs = require("node:fs");
 
+global.__DEV__ = true;
+
 const root = path.resolve(__dirname, "../../..");
 const originalResolve = Module._resolveFilename;
 const originalLoad = Module._load;

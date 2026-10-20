@@ -6,8 +6,10 @@ import {
   Text,
   View,
 } from "react-native";
+import { Crown } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useProStatus } from "@/modules/pro";
 import { REPORT_TABS } from "../constants/reports.constants";
 import type { ReportTabKey } from "../types/reports.types";
 
@@ -18,6 +20,7 @@ interface ReportsTabBarProps {
 
 export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
   const styles = useThemeStyles(createStyles);
+  const { isPro } = useProStatus();
 
   return (
     <View style={styles.container}>
@@ -28,6 +31,10 @@ export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
       >
         {REPORT_TABS.map((tab) => {
           const isActive = tab.key === activeTab;
+          const isProTab = tab.key !== "income-expense";
+          const showProBadge = !isPro && isProTab;
+          const badgeText = showProBadge ? "PRO" : tab.badge;
+
           return (
             <Pressable
               key={tab.key}
@@ -54,7 +61,12 @@ export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
               >
                 {tab.label}
               </Text>
-              {tab.badge ? (
+              {showProBadge ? (
+                <View style={styles.proChip}>
+                  <Crown color="#D97706" size={10} />
+                  <Text style={styles.proChipText}>PRO</Text>
+                </View>
+              ) : tab.badge ? (
                 <View style={styles.badgeContainer}>
                   <Text style={styles.badgeText}>{tab.badge}</Text>
                 </View>
@@ -127,6 +139,23 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
       color: theme.colors.textMuted,
       textTransform: "uppercase",
+    },
+    proChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 4,
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.4)",
+    },
+    proChipText: {
+      fontSize: 9,
+      fontWeight: "800",
+      color: "#D97706",
+      letterSpacing: 0.4,
     },
   });
 }

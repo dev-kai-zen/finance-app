@@ -15,6 +15,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { ProPaywallModal, useProStatus } from "@/modules/pro";
 import { useHexColors } from "../hooks/use-hex-colors";
 import type { HexColor, HexColorInput } from "../types/hex-color.types";
 import { HexColorFormModal } from "./hex-color-form-modal";
@@ -30,15 +31,21 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPro } = useProStatus();
 
   const { colors, loading, error, clearError, addColor, editColor, removeColor } = useHexColors();
 
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<HexColor | null>(null);
   const [deletingColor, setDeletingColor] = useState<HexColor | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const handleOpenCreate = () => {
+    if (!isPro) {
+      setPaywallOpen(true);
+      return;
+    }
     setEditingColor(null);
     setIsFormOpen(true);
     setActionError(null);
@@ -115,6 +122,11 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
               >
                 <Plus color={theme.colors.onPrimary} size={16} />
                 <Text style={styles.addBtnText}>Add Custom Color</Text>
+                {!isPro ? (
+                  <View style={styles.proChip}>
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                ) : null}
               </Pressable>
             </View>
 
@@ -216,6 +228,11 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
         variant="error"
         visible={visible && Boolean(actionError ?? error)}
       />
+
+      <ProPaywallModal
+        onClose={() => setPaywallOpen(false)}
+        visible={paywallOpen}
+      />
     </>
   );
 }
@@ -296,6 +313,21 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    proChip: {
+      backgroundColor: "rgba(217, 119, 6, 0.25)",
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: "rgba(217, 119, 6, 0.6)",
+      marginLeft: 4,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
     colorsList: {
       maxHeight: 460,

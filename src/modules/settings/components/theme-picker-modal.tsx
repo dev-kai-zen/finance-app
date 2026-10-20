@@ -15,6 +15,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { ProPaywallModal, useProStatus } from "@/modules/pro";
 import { ThemePresetCard } from "@/modules/settings/components/theme-preset-card";
 
 export interface ThemePickerModalProps {
@@ -42,13 +43,25 @@ export function ThemePickerModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPro } = useProStatus();
 
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [paletteGridWidth, setPaletteGridWidth] = useState(0);
   const paletteGap = theme.spacing.md;
   const paletteCardWidth =
     paletteGridWidth > 0
       ? (paletteGridWidth - paletteGap) / 2
       : undefined;
+
+  const isFreeTheme = (id: string) => id === "paper" || id === "ink";
+
+  const handleSelectTheme = (themeId: string) => {
+    if (!isPro && !isFreeTheme(themeId)) {
+      setPaywallOpen(true);
+      return;
+    }
+    onSelectTheme(themeId);
+  };
 
   if (!visible) return null;
 
@@ -162,7 +175,8 @@ export function ThemePickerModal({
                   ]}
                 >
                   <ThemePresetCard
-                    onPress={() => onSelectTheme(preset.id)}
+                    isProLocked={!isPro && !isFreeTheme(preset.id)}
+                    onPress={() => handleSelectTheme(preset.id)}
                     preset={preset}
                     selected={!isFollowingSystem && preset.id === selectedThemeId}
                     style={styles.cardFill}
@@ -173,6 +187,11 @@ export function ThemePickerModal({
           </ScrollView>
         </View>
       </View>
+
+      <ProPaywallModal
+        onClose={() => setPaywallOpen(false)}
+        visible={paywallOpen}
+      />
     </Modal>
   );
 }
