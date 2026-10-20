@@ -370,9 +370,17 @@ export function SettingsScreen() {
                 <Cloud color={theme.colors.info} size={20} />
               </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.googleDrive")}
-                </Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.googleDrive")}
+                  </Text>
+                  {!isPro && (
+                    <View style={styles.proChip}>
+                      <Crown color="#D97706" size={8} />
+                      <Text style={styles.proChipText}>PRO</Text>
+                    </View>
+                  )}
+                </View>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -412,9 +420,17 @@ export function SettingsScreen() {
                 <ShieldCheck color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.securityMenuTitle")}
-                </Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.securityMenuTitle")}
+                  </Text>
+                  {!isPro && (
+                    <View style={styles.proChip}>
+                      <Crown color="#D97706" size={8} />
+                      <Text style={styles.proChipText}>PRO</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.settingDescription}>
                   {security.config.isPasswordSet
                     ? t("settings.securityMenuSubtitleConfigured")
@@ -798,6 +814,28 @@ function createStyles(theme: AppTheme) {
     },
     dangerLabel: {
       color: theme.colors.danger,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
     },
   });
 }

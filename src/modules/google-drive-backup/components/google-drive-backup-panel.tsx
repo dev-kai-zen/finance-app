@@ -12,6 +12,7 @@ import {
   Cloud,
   CloudDownload,
   CloudUpload,
+  Crown,
   FolderOpen,
   LogOut,
   ShieldAlert,
@@ -33,6 +34,7 @@ import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
 
@@ -40,6 +42,8 @@ export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
   const backup = useGoogleDriveBackup();
   const quickSync = useQuickSync();
   const [passphraseMode, setPassphraseMode] = useState<
@@ -174,7 +178,15 @@ export function GoogleDriveBackupPanel() {
               <Cloud color={theme.colors.primary} size={22} />
             </View>
             <View style={styles.copy}>
-              <Text style={styles.title}>Google Drive</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.title}>Google Drive</Text>
+                {!isPro && (
+                  <View style={styles.proChip}>
+                    <Crown color="#D97706" size={8} />
+                    <Text style={styles.proChipText}>PRO</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.description} selectable>
                 {backup.configurationError
                   ? "Setup required"
@@ -297,7 +309,13 @@ export function GoogleDriveBackupPanel() {
                 accessibilityLabel="Connect to Google Drive"
                 accessibilityRole="button"
                 disabled={busy}
-                onPress={backup.connect}
+                onPress={() => {
+                  if (!isPro) {
+                    setProModalVisible(true);
+                    return;
+                  }
+                  backup.connect();
+                }}
                 style={({ pressed }) => [
                   styles.connectButton,
                   pressed && styles.connectButtonPressed,
@@ -312,6 +330,12 @@ export function GoogleDriveBackupPanel() {
                 <Text style={styles.connectButtonText}>
                   Connect to Google Drive
                 </Text>
+                {!isPro && (
+                  <View style={styles.buttonProBadge}>
+                    <Crown color="#D97706" size={10} />
+                    <Text style={styles.buttonProBadgeText}>PRO</Text>
+                  </View>
+                )}
               </Pressable>
             </>
           )}
@@ -437,6 +461,13 @@ export function GoogleDriveBackupPanel() {
         title="Unable to open Google Drive"
         variant="error"
         visible={Boolean(linkingError)}
+      />
+
+      <ProFeatureModal
+        featureDescription="Securely back up your entire encrypted financial database directly to your personal Google Drive account and restore across devices with Kaizen Pro."
+        featureTitle="Google Drive Cloud Backup"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
       />
     </>
   );
@@ -569,6 +600,44 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
+    },
+    buttonProBadge: {
+      alignItems: "center",
+      backgroundColor: "#FFFFFF",
+      borderRadius: 4,
+      flexDirection: "row",
+      gap: 3,
+      marginLeft: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    buttonProBadgeText: {
+      color: "#D97706",
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.4,
     },
   });
 }

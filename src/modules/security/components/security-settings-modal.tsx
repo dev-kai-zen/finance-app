@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import {
   ChevronRight,
+  Crown,
   Fingerprint,
   Info,
   KeyRound,
@@ -20,6 +21,7 @@ import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useSecuritySettings } from "../hooks/use-security-settings";
 import {
   PasswordFormModal,
@@ -52,6 +54,13 @@ export function SecuritySettingsModal({
     toggleBiometrics,
   } = useSecuritySettings();
 
+  const { isPro } = useProStatus();
+  const [proModalVisible, setProModalVisible] = useState(false);
+  const [proMeta, setProMeta] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [passwordModalMode, setPasswordModalMode] =
     useState<PasswordModalMode>("set");
@@ -63,6 +72,15 @@ export function SecuritySettingsModal({
     mode: PasswordModalMode,
     options?: { enableBiometricsAfter?: boolean },
   ) => {
+    if (mode === "set" && !isPro) {
+      setProMeta({
+        title: "App Password & Master Lock",
+        description:
+          "Protect your financial data, accounts, and transactions with a secure master app password with Kaizen Pro.",
+      });
+      setProModalVisible(true);
+      return;
+    }
     clearError();
     setPendingBiometricEnable(options?.enableBiometricsAfter ?? false);
     setPasswordModalMode(mode);
@@ -101,6 +119,15 @@ export function SecuritySettingsModal({
 
   const handleToggleBiometrics = async (value: boolean) => {
     clearError();
+    if (value && !isPro) {
+      setProMeta({
+        title: "Biometric Authentication",
+        description:
+          "Instantly unlock Kaizen Finance with your fingerprint or Face ID with Kaizen Pro.",
+      });
+      setProModalVisible(true);
+      return;
+    }
     if (value && !config.isPasswordSet) {
       openPasswordModal("set", { enableBiometricsAfter: true });
       return;
@@ -192,9 +219,17 @@ export function SecuritySettingsModal({
                       <KeyRound color={theme.colors.primary} size={20} />
                     </View>
                     <View style={styles.rowCopy}>
-                      <Text style={styles.rowTitle}>
-                        {t("security.appPassword")}
-                      </Text>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.rowTitle}>
+                          {t("security.appPassword")}
+                        </Text>
+                        {!isPro && (
+                          <View style={styles.proChip}>
+                            <Crown color="#D97706" size={8} />
+                            <Text style={styles.proChipText}>PRO</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.rowSubtitle}>
                         {config.isPasswordSet
                           ? t("security.passwordIsConfigured")
@@ -274,6 +309,12 @@ export function SecuritySettingsModal({
                         <Text style={styles.actionBtnPrimaryText}>
                           {t("security.setPasswordButton")}
                         </Text>
+                        {!isPro && (
+                          <View style={styles.buttonProBadge}>
+                            <Crown color="#D97706" size={10} />
+                            <Text style={styles.buttonProBadgeText}>PRO</Text>
+                          </View>
+                        )}
                       </Pressable>
                     )}
                   </View>
@@ -291,13 +332,21 @@ export function SecuritySettingsModal({
                       <Fingerprint color={theme.colors.info} size={20} />
                     </View>
                     <View style={styles.rowCopy}>
-                      <Text style={styles.rowTitle}>
-                        {t("security.biometricTitle", {
-                          biometric:
-                            biometrics.biometricLabel ||
-                            t("security.defaultBiometricLabel"),
-                        })}
-                      </Text>
+                      <View style={styles.titleRow}>
+                        <Text style={styles.rowTitle}>
+                          {t("security.biometricTitle", {
+                            biometric:
+                              biometrics.biometricLabel ||
+                              t("security.defaultBiometricLabel"),
+                          })}
+                        </Text>
+                        {!isPro && (
+                          <View style={styles.proChip}>
+                            <Crown color="#D97706" size={8} />
+                            <Text style={styles.proChipText}>PRO</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.rowSubtitle}>
                         {getBiometricSubtitle()}
                       </Text>
@@ -349,6 +398,16 @@ export function SecuritySettingsModal({
         }}
         onSubmit={handlePasswordSubmit}
         visible={passwordModalVisible}
+      />
+
+      <ProFeatureModal
+        featureDescription={
+          proMeta?.description ??
+          "Unlock enhanced privacy and security features with Kaizen Pro."
+        }
+        featureTitle={proMeta?.title ?? "Security & Privacy"}
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
       />
     </>
   );
@@ -526,6 +585,8 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.medium,
       flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
       height: 40,
       justifyContent: "center",
     },
@@ -533,6 +594,44 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.background,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 8,
+      fontWeight: "800",
+      letterSpacing: 0.3,
+    },
+    buttonProBadge: {
+      alignItems: "center",
+      backgroundColor: "#FFFFFF",
+      borderRadius: 4,
+      flexDirection: "row",
+      gap: 3,
+      marginLeft: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    buttonProBadgeText: {
+      color: "#D97706",
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.4,
     },
     infoBox: {
       alignItems: "flex-start",
