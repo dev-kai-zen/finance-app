@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Clock,
   CreditCard,
+  Crown,
   PieChart,
   Send,
   ShieldAlert,
@@ -28,11 +29,13 @@ import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import { TransactionDateTimePickerModal } from "@/modules/transactions";
 import { ReminderLeadDaysSelector } from "../components/reminder-lead-days-selector";
 import { useNotificationPermission } from "../hooks/use-notification-permission";
 import { useNotificationSettings } from "../hooks/use-notification-settings";
 import { sendTestNotification } from "../services/send-test-notification.service";
+import type { ReminderSettings } from "../types/notification.types";
 
 type ActivePickerTarget =
   | "dailyReminderTime"
@@ -48,9 +51,32 @@ export function ReminderSettingsScreen() {
   const { hasPermission, openSettings, requestPermission } =
     useNotificationPermission();
   const { settings, toggleLeadDay, updateSetting } = useNotificationSettings();
+  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const [activePicker, setActivePicker] = useState<ActivePickerTarget>(null);
   const [isSendingTest, setIsSendingTest] = useState(false);
+
+  const handleToggleProSetting = (
+    key: keyof ReminderSettings,
+    val: boolean,
+    title: string,
+    description: string,
+  ) => {
+    if (val && !isPro) {
+      guardAction(
+        () => {
+          void updateSetting(key, true);
+        },
+        {
+          featureTitle: title,
+          featureDescription: description,
+        },
+      );
+      return;
+    }
+    void updateSetting(key, val);
+  };
 
   const formatTimeDisplay = (timeStr: string): string => {
     const parts = timeStr.split(":");
@@ -227,7 +253,15 @@ export function ReminderSettingsScreen() {
                   <BarChart3 color={theme.colors.accent} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>Monthly Financial Summary</Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>Monthly Financial Summary</Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Overview of savings and spending on the 1st of every month
                   </Text>
@@ -235,7 +269,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable monthly financial summary reminder"
                   onValueChange={(val) => {
-                    void updateSetting("monthlySummaryReminderEnabled", val);
+                    handleToggleProSetting(
+                      "monthlySummaryReminderEnabled",
+                      val,
+                      "Monthly Financial Summary",
+                      "Receive comprehensive spending insights, savings summaries, and net worth reports on the 1st of every month with Kaizen Pro.",
+                    );
                   }}
                   value={settings.monthlySummaryReminderEnabled}
                 />
@@ -287,7 +326,15 @@ export function ReminderSettingsScreen() {
                   <CreditCard color={theme.colors.info} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>Due Credit Card Bills</Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>Due Credit Card Bills</Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Reminders before statement payment due dates
                   </Text>
@@ -295,7 +342,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable due credit card bills reminder"
                   onValueChange={(val) => {
-                    void updateSetting("creditCardsReminderEnabled", val);
+                    handleToggleProSetting(
+                      "creditCardsReminderEnabled",
+                      val,
+                      "Due Credit Card Bills",
+                      "Never miss a credit card bill with customizable advance reminder alerts tailored to your billing cycle in Kaizen Pro.",
+                    );
                   }}
                   value={settings.creditCardsReminderEnabled}
                 />
@@ -349,7 +401,15 @@ export function ReminderSettingsScreen() {
                   <ShieldAlert color={theme.colors.warning} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>Credit Limit Warnings</Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>Credit Limit Warnings</Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Alert when card utilization crosses 80% or approaches the
                     credit limit
@@ -358,7 +418,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable credit limit warnings"
                   onValueChange={(val) => {
-                    void updateSetting("creditLimitAlertsEnabled", val);
+                    handleToggleProSetting(
+                      "creditLimitAlertsEnabled",
+                      val,
+                      "Credit Limit Warnings",
+                      "Get real-time protective alerts when credit card balances cross 80% or approach card spending limits in Kaizen Pro.",
+                    );
                   }}
                   value={settings.creditLimitAlertsEnabled}
                 />
@@ -377,9 +442,17 @@ export function ReminderSettingsScreen() {
                   <CalendarClock color={theme.colors.success} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>
-                    Due Scheduled Transactions
-                  </Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>
+                      Due Scheduled Transactions
+                    </Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Reminders before recurring payments and transfers are due
                   </Text>
@@ -387,7 +460,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable due scheduled transactions reminder"
                   onValueChange={(val) => {
-                    void updateSetting("scheduledTransactionsReminderEnabled", val);
+                    handleToggleProSetting(
+                      "scheduledTransactionsReminderEnabled",
+                      val,
+                      "Due Scheduled Transactions",
+                      "Stay on top of upcoming recurring bills, subscriptions, and scheduled transfers with proactive reminders in Kaizen Pro.",
+                    );
                   }}
                   value={settings.scheduledTransactionsReminderEnabled}
                 />
@@ -449,9 +527,17 @@ export function ReminderSettingsScreen() {
                   <PieChart color={theme.colors.danger} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>
-                    Budget Threshold Warnings
-                  </Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>
+                      Budget Threshold Warnings
+                    </Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Instant alerts when spending reaches 80% or 100% of a
                     category's monthly budget
@@ -460,7 +546,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable budget threshold warnings"
                   onValueChange={(val) => {
-                    void updateSetting("budgetThresholdAlertsEnabled", val);
+                    handleToggleProSetting(
+                      "budgetThresholdAlertsEnabled",
+                      val,
+                      "Budget Threshold Warnings",
+                      "Receive instant notifications when spending reaches 80% or 100% of your category budgets with Kaizen Pro.",
+                    );
                   }}
                   value={settings.budgetThresholdAlertsEnabled}
                 />
@@ -474,9 +565,17 @@ export function ReminderSettingsScreen() {
                   <Target color={theme.colors.primary} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
-                  <Text style={styles.rowTitle}>
-                    Savings Goals & Deadlines
-                  </Text>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.rowTitle}>
+                      Savings Goals & Deadlines
+                    </Text>
+                    {!isPro && (
+                      <View style={styles.proChip}>
+                        <Crown color="#D97706" size={10} />
+                        <Text style={styles.proChipText}>PRO</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.rowSubtitle}>
                     Alerts 7 days before target deadlines and notifications when
                     reaching milestones (50%, 75%, 100%)
@@ -485,7 +584,12 @@ export function ReminderSettingsScreen() {
                 <ThemedSwitch
                   accessibilityLabel="Enable savings goals alerts"
                   onValueChange={(val) => {
-                    void updateSetting("savingsGoalAlertsEnabled", val);
+                    handleToggleProSetting(
+                      "savingsGoalAlertsEnabled",
+                      val,
+                      "Savings Goals & Deadlines",
+                      "Stay motivated with advance notifications before target deadlines and milestone alerts as you save with Kaizen Pro.",
+                    );
                   }}
                   value={settings.savingsGoalAlertsEnabled}
                 />
@@ -542,6 +646,13 @@ export function ReminderSettingsScreen() {
           visible={Boolean(activePicker)}
         />
       ) : null}
+
+      <ProFeatureModal
+        featureDescription={guardMeta?.featureDescription}
+        featureTitle={guardMeta?.featureTitle}
+        onClose={closePaywall}
+        visible={paywallVisible}
+      />
     </View>
   );
 }
@@ -599,6 +710,28 @@ function createStyles(theme: AppTheme) {
     settingCopy: {
       flex: 1,
       gap: 3,
+    },
+    titleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    proChip: {
+      alignItems: "center",
+      backgroundColor: "rgba(217, 119, 6, 0.15)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderRadius: 4,
+      borderWidth: StyleSheet.hairlineWidth,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+    },
+    proChipText: {
+      color: "#D97706",
+      fontSize: 9,
+      fontWeight: "800",
+      letterSpacing: 0.4,
     },
     rowTitle: {
       color: theme.colors.textPrimary,
