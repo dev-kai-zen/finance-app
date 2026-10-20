@@ -4,6 +4,7 @@ import NetInfo from "@react-native-community/netinfo";
 import * as SQLite from "expo-sqlite";
 
 import { sqliteDatabase } from "@/infrastructure/database/client";
+import { USER_DATA_TABLE_NAME_SET } from "@/infrastructure/database/user-data-tables";
 import type { DatabaseChangeEvent } from "expo-sqlite";
 
 import {
@@ -12,41 +13,6 @@ import {
 } from "../repositories/quick-sync-settings.repository";
 import { triggerQuickSync } from "../services/quick-sync.service";
 
-const WATCHED_TABLES = new Set([
-  "accounts",
-  "account_types",
-  "category_budgets",
-  "budget_monthly_targets",
-  "categories",
-  "credit_card_details",
-  "credit_card_installment_plans",
-  "credit_card_installments",
-  "credit_card_statement_entries",
-  "credit_card_statements",
-  "currencies",
-  "exchange_rates",
-  "fund_groups",
-  "fund_group_accounts",
-  "fund_group_pockets",
-  "goal_accounts",
-  "goal_pockets",
-  "goals",
-  "hex_colors",
-  "labels",
-  "notes",
-  "note_attachments",
-  "pockets",
-  "settings",
-  "transactions",
-  "transaction_attachments",
-  "transaction_entries",
-  "transaction_labels",
-  "transaction_presets",
-  "transaction_schedules",
-  "transaction_schedule_occurrences",
-  "transaction_schedule_postings",
-]);
-
 const QUICK_SYNC_SETTINGS_KEY_SET = new Set<string>(QUICK_SYNC_SETTINGS_KEYS);
 
 const DEBOUNCE_DELAY_MS = 3000;
@@ -54,7 +20,7 @@ const DEBOUNCE_DELAY_MS = 3000;
 function shouldQueueQuickSyncForDatabaseChange(
   event: DatabaseChangeEvent,
 ): boolean {
-  if (!WATCHED_TABLES.has(event.tableName)) {
+  if (!USER_DATA_TABLE_NAME_SET.has(event.tableName)) {
     return false;
   }
 

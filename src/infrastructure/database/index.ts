@@ -8,4 +8,10 @@ export {
   subscribeToDatabaseReplacement,
 } from './database-replacement';
 export { createDatabaseSnapshot, replaceDatabaseFromSnapshot } from './snapshot';
+export {
+  APP_RESET_USER_DATA_TABLE_NAMES,
+  QUICK_SYNC_WATCHED_TABLE_NAMES,
+  USER_DATA_TABLE_NAME_SET,
+  USER_DATA_TABLE_NAMES,
+} from './user-data-tables';
 export * from './schema';

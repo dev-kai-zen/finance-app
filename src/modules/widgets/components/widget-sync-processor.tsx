@@ -3,6 +3,7 @@ import { Platform } from "react-native";
 import { addDatabaseChangeListener } from "expo-sqlite";
 import { updateDataWidgets } from "../services/widget-snapshot.service";
 
+/** Subset of `USER_DATA_TABLE_NAMES` in `@/infrastructure/database/user-data-tables`. */
 const SYNCED_TABLES = new Set([
   "transactions",
   "transaction_entries",
@@ -10,7 +11,7 @@ const SYNCED_TABLES = new Set([
   "settings",
   "categories",
   "category_budgets",
-  "currency_exchange_rates",
+  "exchange_rates",
 ]);
 
 /**
