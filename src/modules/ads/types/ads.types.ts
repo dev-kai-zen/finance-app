@@ -5,6 +5,8 @@ export type AdBannerPlacement =
   | "transactions"
   | "reports"
   | "budgets"
+  | "accounts"
+  | "settings"
   | "global";
 
 export type AdBannerVariant = "card" | "plain";

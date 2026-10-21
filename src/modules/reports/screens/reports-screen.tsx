@@ -25,7 +25,14 @@ export function ReportsScreen() {
       <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
 
       {activeTab === "income-expense" ? (
-        <IncomeExpenseReport />
+        <>
+          <IncomeExpenseReport />
+          <AdBanner
+            placement="reports"
+            variant="card"
+            style={{ marginHorizontal: 16, marginTop: 16 }}
+          />
+        </>
       ) : null}
 
       {activeTab === "balance-sheet" ? (
@@ -67,12 +74,6 @@ export function ReportsScreen() {
           <LabelsSummaryReport />
         </ProGate>
       ) : null}
-
-      <AdBanner
-        placement="reports"
-        variant="card"
-        style={{ marginHorizontal: 16, marginTop: 16 }}
-      />
     </PageContainer>
   );
 }

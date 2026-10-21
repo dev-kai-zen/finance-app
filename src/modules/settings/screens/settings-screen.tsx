@@ -26,7 +26,7 @@ import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
-import { useAdsDevMode } from "@/modules/ads";
+import { AdBanner, useAdsDevMode } from "@/modules/ads";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
@@ -286,6 +286,12 @@ export function SettingsScreen() {
             </Pressable>
           </View>
         </View>
+
+        <AdBanner
+          placement="settings"
+          variant="card"
+          style={{ marginBottom: theme.spacing.lg }}
+        />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>

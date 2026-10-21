@@ -715,24 +715,31 @@ export function TransactionsScreen({
         <SectionList
           ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
-            <PageEmptyState
-              actionLabel={
-                activeFilterCount > 0 || searchQuery.length > 0
-                  ? "Clear Filters"
-                  : "+ Record First Transaction"
-              }
-              description={
-                activeFilterCount > 0 || searchQuery.length > 0
-                  ? "No transaction records match your search or filter criteria."
-                  : "Your transaction history is empty. Start recording your expenses, income, or transfers."
-              }
-              onAction={
-                activeFilterCount > 0 || searchQuery.length > 0
-                  ? handleClearFilters
-                  : handleOpenNewTransaction
-              }
-              title="No Transactions Found"
-            />
+            <View>
+              <PageEmptyState
+                actionLabel={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? "Clear Filters"
+                    : "+ Record First Transaction"
+                }
+                description={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? "No transaction records match your search or filter criteria."
+                    : "Your transaction history is empty. Start recording your expenses, income, or transfers."
+                }
+                onAction={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? handleClearFilters
+                    : handleOpenNewTransaction
+                }
+                title="No Transactions Found"
+              />
+              <AdBanner
+                placement="transactions"
+                variant="card"
+                style={{ marginTop: theme.spacing.md }}
+              />
+            </View>
           }
           contentContainerStyle={[
             styles.listContentContainer,
@@ -742,15 +749,29 @@ export function TransactionsScreen({
           keyExtractor={(item) => item.id}
           maxToRenderPerBatch={15}
           removeClippedSubviews={Platform.OS !== "web"}
-          renderItem={({ item }) => (
-            <TransactionRow
-              key={item.id}
-              onDelete={handleDelete}
-              onPress={(item) => setInspectedTransaction(item)}
-              transaction={item}
-              viewMode={viewMode}
-            />
-          )}
+          renderItem={({ item }) => {
+            const isThirdTransaction =
+              filteredTransactions.length >= 4 &&
+              filteredTransactions[2]?.id === item.id;
+
+            return (
+              <View key={item.id}>
+                <TransactionRow
+                  onDelete={handleDelete}
+                  onPress={(item) => setInspectedTransaction(item)}
+                  transaction={item}
+                  viewMode={viewMode}
+                />
+                {isThirdTransaction ? (
+                  <AdBanner
+                    placement="transactions"
+                    variant="card"
+                    style={{ marginVertical: theme.spacing.sm }}
+                  />
+                ) : null}
+              </View>
+            );
+          }}
           renderSectionHeader={({ section }) => (
             <View style={styles.dateGroupHeader}>
               <Text style={styles.dateGroupTitle}>{section.title}</Text>
@@ -767,10 +788,10 @@ export function TransactionsScreen({
           style={styles.sectionList}
           windowSize={7}
           ListFooterComponent={
-            sections.length > 0 ? (
+            filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
               <AdBanner
                 placement="transactions"
-                variant="plain"
+                variant="card"
                 style={{ marginTop: theme.spacing.sm, marginBottom: theme.spacing.md }}
               />
             ) : null
