@@ -5,16 +5,16 @@ export const PRO_CONSTANTS = {
   FALLBACK_PRICE: "$9.99",
   FALLBACK_TITLE: "Lifetime Pro Access",
   FALLBACK_DESCRIPTION:
-    "Unlock all advanced financial reports, charts, and enjoy an ad-free experience forever with a one-time payment.",
+    "Unlock unlimited accounts, budgets & goals, automatic Google Drive cloud backup, advanced analytics, and enjoy an ad-free experience forever with a one-time payment.",
 } as const;
 
 export const PRO_LIMITS = {
-  FREE_MAX_ACCOUNTS: 3,
+  FREE_MAX_ACCOUNTS: 5,
   FREE_MAX_POCKETS_PER_ACCOUNT: 3,
-  FREE_MAX_CATEGORY_BUDGETS: 3,
-  FREE_MAX_GOALS: 1,
-  FREE_MAX_SCHEDULED_TRANSACTIONS: 1,
-  FREE_MAX_NOTES: 1,
+  FREE_MAX_CATEGORY_BUDGETS: 6,
+  FREE_MAX_GOALS: 3,
+  FREE_MAX_SCHEDULED_TRANSACTIONS: 5,
+  FREE_MAX_NOTES: 5,
 } as const;
 
 export const PRO_SECURE_KEYS = {
@@ -25,7 +25,14 @@ export const PRO_SECURE_KEYS = {
 } as const;
 
 export interface ProFeatureItem {
-  icon: "file-text" | "shield-check" | "sparkles" | "cloud-off";
+  icon:
+    | "file-text"
+    | "shield-check"
+    | "sparkles"
+    | "cloud-off"
+    | "cloud"
+    | "infinity"
+    | "lock";
   titleKey: string;
   defaultTitle: string;
   descKey: string;
@@ -33,14 +40,6 @@ export interface ProFeatureItem {
 }
 
 export const PRO_FEATURES: ProFeatureItem[] = [
-  {
-    icon: "file-text",
-    titleKey: "pro.features.reports.title",
-    defaultTitle: "Comprehensive Financial Reports",
-    descKey: "pro.features.reports.desc",
-    defaultDesc:
-      "Full access to Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns.",
-  },
   {
     icon: "shield-check",
     titleKey: "pro.features.noAds.title",
@@ -56,6 +55,30 @@ export const PRO_FEATURES: ProFeatureItem[] = [
     descKey: "pro.features.lifetime.desc",
     defaultDesc:
       "No recurring monthly or annual subscriptions. One-time payment tied permanently to your Google account.",
+  },
+  {
+    icon: "cloud",
+    titleKey: "pro.features.backup.title",
+    defaultTitle: "Google Drive Cloud Backup & Sync",
+    descKey: "pro.features.backup.desc",
+    defaultDesc:
+      "Automated cloud backup and quick sync keeps your entire financial history safe and restored anytime.",
+  },
+  {
+    icon: "infinity",
+    titleKey: "pro.features.unlimited.title",
+    defaultTitle: "Unlimited Accounts & Planning",
+    descKey: "pro.features.unlimited.desc",
+    defaultDesc:
+      "Create unlimited accounts, sub-pockets, category budgets, recurring bills, and savings goals without limits.",
+  },
+  {
+    icon: "file-text",
+    titleKey: "pro.features.reports.title",
+    defaultTitle: "Comprehensive Financial Reports",
+    descKey: "pro.features.reports.desc",
+    defaultDesc:
+      "Full access to Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns.",
   },
   {
     icon: "cloud-off",

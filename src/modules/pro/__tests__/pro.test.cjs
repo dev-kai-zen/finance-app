@@ -188,12 +188,12 @@ test("pro service: simulates purchase in sandbox mode when no remote key is set"
   assert.equal(resetStatus.isPro, false);
 });
 
-test("pro constants: defines agreed Phase 2 freemium limits", () => {
-  assert.equal(PRO_LIMITS.FREE_MAX_ACCOUNTS, 3);
+test("pro constants: defines agreed freemium limits", () => {
+  assert.equal(PRO_LIMITS.FREE_MAX_ACCOUNTS, 5);
   assert.equal(PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT, 3);
-  assert.equal(PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS, 3);
-  assert.equal(PRO_LIMITS.FREE_MAX_GOALS, 1);
-  assert.equal(PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS, 1);
-  assert.equal(PRO_LIMITS.FREE_MAX_NOTES, 1);
+  assert.equal(PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS, 6);
+  assert.equal(PRO_LIMITS.FREE_MAX_GOALS, 3);
+  assert.equal(PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS, 5);
+  assert.equal(PRO_LIMITS.FREE_MAX_NOTES, 5);
 });
 

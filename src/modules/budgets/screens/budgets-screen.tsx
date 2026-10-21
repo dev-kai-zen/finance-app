@@ -88,7 +88,7 @@ export function BudgetsScreen() {
         setIsFormOpen(true);
       }, {
         featureTitle: "Category Budget Limit",
-        featureDescription: "The free tier includes up to 3 category budgets. Upgrade to Kaizen Pro to create unlimited category limits with smart rollover and period breakdowns.",
+        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS} category budgets. Upgrade to Kaizen Pro to create unlimited category limits with smart rollover and period breakdowns.`,
       });
       return;
     }
