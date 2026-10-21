@@ -20,7 +20,8 @@
         "foregroundImage": "./assets/kaizen-finance-app-logo.png"
       },
       "permissions": [
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "com.google.android.gms.permission.AD_ID"
       ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",

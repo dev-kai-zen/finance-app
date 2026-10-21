@@ -33,6 +33,7 @@ import type {
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
+import { AdBanner } from "@/modules/ads";
 
 type Overlay =
   | { kind: "create" }
@@ -268,6 +269,12 @@ export function AccountsScreen({
                   onTogglePockets={togglePockets}
                 />
               ) : null}
+
+              <AdBanner
+                placement="accounts"
+                variant="card"
+                style={{ marginVertical: theme.spacing.sm }}
+              />
 
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "liability",
