@@ -241,7 +241,7 @@ export function GoalFormModal({
               onBlur={() => setFocusedFieldType(null)}
               onChangeText={setName}
               onFocus={() => setFocusedFieldType("normal")}
-              placeholder="e.g. Emergency Fund, Japan Trip, New Laptop"
+              placeholder="e.g. Emergency Fund, Japan Trip"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.input}
               value={name}
