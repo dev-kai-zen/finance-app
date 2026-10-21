@@ -14,7 +14,7 @@ import {
   useTransactions,
   type TransactionListItem,
 } from "@/modules/transactions";
-import { ProFeatureModal, useProGuard } from "@/modules/pro";
+import { ProGate, useProStatus } from "@/modules/pro";
 import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
 import { CalendarMonthHeader } from "../components/calendar-month-header";
@@ -31,8 +31,7 @@ export function CalendarScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
-    useProGuard();
+  const { isPro } = useProStatus();
 
   const {
     activeMonth,
@@ -140,31 +139,6 @@ export function CalendarScreen() {
   };
 
   const handleSelectTab = (tab: CalendarTab) => {
-    if ((tab === "net" || tab === "balance_sheet") && !isPro) {
-      const meta =
-        tab === "net"
-          ? {
-              title: "Net Earnings Calendar",
-              description:
-                "Visualize daily income vs expense variance, cash flow spikes, and net balance trajectories across your calendar with Kaizen Pro.",
-            }
-          : {
-              title: "Balance Sheet Projections",
-              description:
-                "Track daily asset, liability, and equity trends directly on your calendar timeline with Kaizen Pro.",
-            };
-
-      guardAction(
-        () => {
-          setActiveTab(tab);
-        },
-        {
-          featureTitle: meta.title,
-          featureDescription: meta.description,
-        },
-      );
-      return;
-    }
     setActiveTab(tab);
   };
 
@@ -254,19 +228,31 @@ export function CalendarScreen() {
         )}
 
         {activeTab === "net" && (
-          <CalendarNetTab
-            categoryBreakdown={categoryBreakdown}
-            isMonthScope={selectedDay === null}
-            metrics={summaryMetrics}
-          />
+          <ProGate
+            featureDescription="Visualize daily income vs expense variance, cash flow spikes, and net balance trajectories across your calendar with Kaizen Pro."
+            featureTitle="Net Earnings Calendar"
+            mode="blur"
+          >
+            <CalendarNetTab
+              categoryBreakdown={categoryBreakdown}
+              isMonthScope={selectedDay === null}
+              metrics={summaryMetrics}
+            />
+          </ProGate>
         )}
 
         {activeTab === "balance_sheet" && (
-          <CalendarBalanceSheetTab
-            activeMonth={activeMonth}
-            balanceSheet={balanceSheetData}
-            selectedDay={selectedDay}
-          />
+          <ProGate
+            featureDescription="Track daily asset, liability, and equity trends directly on your calendar timeline with Kaizen Pro."
+            featureTitle="Balance Sheet Projections"
+            mode="blur"
+          >
+            <CalendarBalanceSheetTab
+              activeMonth={activeMonth}
+              balanceSheet={balanceSheetData}
+              selectedDay={selectedDay}
+            />
+          </ProGate>
         )}
       </View>
 
@@ -364,12 +350,6 @@ export function CalendarScreen() {
         visible={pendingSkipScheduleId !== null}
       />
 
-      <ProFeatureModal
-        featureDescription={guardMeta?.featureDescription}
-        featureTitle={guardMeta?.featureTitle}
-        onClose={closePaywall}
-        visible={paywallVisible}
-      />
     </PageContainer>
   );
 }
