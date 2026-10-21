@@ -26,6 +26,7 @@ import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
+import { useAdsDevMode } from "@/modules/ads";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
@@ -80,6 +81,7 @@ export function SettingsScreen() {
     restorePurchases,
     isRestoring,
   } = useProStatus();
+  const { isForceTestAds, toggleForceTestAds } = useAdsDevMode();
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
@@ -559,6 +561,23 @@ export function SettingsScreen() {
                   accessibilityLabel="Simulate Pro Version"
                   onValueChange={(value) => toggleDevSimulation(value)}
                   value={isDevSimulated}
+                />
+              </View>
+              <View style={styles.rowDivider} />
+              <View style={styles.toggleRow}>
+                <View style={styles.iconContainer}>
+                  <Sparkles color="#3B82F6" size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>Force Google Test Ads</Text>
+                  <Text style={styles.settingDescription}>
+                    Use official Google sample banner ad units to safely verify banner display
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Force Google Test Ads"
+                  onValueChange={(value) => void toggleForceTestAds(value)}
+                  value={isForceTestAds}
                 />
               </View>
               <View style={styles.rowDivider} />

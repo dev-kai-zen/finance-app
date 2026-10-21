@@ -5,6 +5,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useProStatus } from "@/modules/pro";
 import { getBannerAdUnitId } from "../constants/ads.constants";
+import { useAdsDevMode } from "../hooks/use-ads-dev-mode";
 import type { AdBannerProps } from "../types/ads.types";
 
 export function AdBanner({
@@ -15,6 +16,7 @@ export function AdBanner({
   onAdFailedToLoad,
 }: AdBannerProps) {
   const { isPro } = useProStatus();
+  const { isForceTestAds } = useAdsDevMode();
   const styles = useThemeStyles(createStyles);
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -34,7 +36,7 @@ export function AdBanner({
     return null;
   }
 
-  const adUnitId = getBannerAdUnitId(placement);
+  const adUnitId = getBannerAdUnitId(placement, isForceTestAds);
 
   const bannerContent = (
     <View style={styles.adWrapper}>

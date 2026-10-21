@@ -15,9 +15,12 @@ export const ADMOB_TEST_UNIT_IDS = {
  * If running in development (__DEV__) or if production credentials are not configured,
  * it safely falls back to Google's official TestIds.BANNER to prevent crashes or self-click bans.
  */
-export function getBannerAdUnitId(placement: AdBannerPlacement = "dashboard"): string {
-  // In development, always use Google's official test ad unit
-  if (__DEV__) {
+export function getBannerAdUnitId(
+  placement: AdBannerPlacement = "dashboard",
+  forceTest: boolean = false,
+): string {
+  // In development or when forceTest is enabled, always use Google's official test ad unit
+  if (forceTest || __DEV__) {
     return TestIds.BANNER;
   }
 

@@ -22,6 +22,7 @@ export async function initializeAdsSdk(): Promise<void> {
       maxAdContentRating: MaxAdContentRating.G,
       tagForChildDirectedTreatment: false,
       tagForUnderAgeOfConsent: false,
+      testDeviceIdentifiers: ["EMULATOR"],
     });
 
     await mobileAds().initialize();
