@@ -67,6 +67,7 @@ export const PROMPT_SETTING_KEYS = {
   budgetsWalkthroughDismissed: "prompt.budgetsWalkthroughDismissed",
   goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
   notesWalkthroughDismissed: "prompt.notesWalkthroughDismissed",
+  settingsWalkthroughDismissed: "prompt.settingsWalkthroughDismissed",
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
   firstGoalCelebrated: "prompt.firstGoalCelebrated",

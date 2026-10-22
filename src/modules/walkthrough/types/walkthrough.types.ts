@@ -48,7 +48,22 @@ export type WalkthroughTargetId =
   | "notesViewMode"
   | "notesSortFilter"
   | "notesFirstItem"
-  | "notesFab";
+  | "notesFab"
+  | "settingsLanguage"
+  | "settingsCurrency"
+  | "settingsNickname"
+  | "settingsTheme"
+  | "settingsReminders"
+  | "settingsDefaultExpense"
+  | "settingsDefaultIncome"
+  | "settingsHexColors"
+  | "settingsResetData"
+  | "settingsLocalBackup"
+  | "settingsGoogleDrive"
+  | "settingsSecurity"
+  | "settingsPro"
+  | "settingsRestorePurchases"
+  | "settingsWhatsNew";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

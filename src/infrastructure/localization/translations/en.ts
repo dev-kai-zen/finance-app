@@ -619,6 +619,53 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
   },
+  settingsWalkthrough: {
+    stepLanguageTitle: "Language Preference",
+    stepLanguageDesc:
+      "Switch between English, Spanish, and Filipino, or automatically match your device system default.",
+    stepCurrencyTitle: "Currency Setup",
+    stepCurrencyDesc:
+      "Configure your primary reporting currency, secondary currencies, and custom exchange rates.",
+    stepNicknameTitle: "User Nickname",
+    stepNicknameDesc:
+      "Personalize your dashboard greeting with a custom display name or nickname.",
+    stepThemeTitle: "Theme & Palette",
+    stepThemeDesc:
+      "Choose from modern light, dark, and vibrant OLED color themes, or match your system appearance.",
+    stepRemindersTitle: "Notification Reminders",
+    stepRemindersDesc:
+      "Set daily expense tracking alarms and reminders for upcoming bills to never miss a payment.",
+    stepDefaultExpenseTitle: "Default Expense Account",
+    stepDefaultExpenseDesc:
+      "Set the preselected account and pocket automatically used when logging new expenses.",
+    stepDefaultIncomeTitle: "Default Income Account",
+    stepDefaultIncomeDesc:
+      "Choose the default destination account for newly recorded salary or revenue entries.",
+    stepHexColorsTitle: "Hex Color Palette",
+    stepHexColorsDesc:
+      "Manage and create custom hex colors to personalize your categories, accounts, and tags.",
+    stepResetDataTitle: "Reset All Data",
+    stepResetDataDesc:
+      "Permanently erase all local transactions, accounts, and settings to start with a fresh slate.",
+    stepLocalBackupTitle: "Local Device Backup",
+    stepLocalBackupDesc:
+      "Export and import encrypted full SQLite database backups directly to your device storage.",
+    stepGoogleDriveTitle: "Google Drive Cloud Backup",
+    stepGoogleDriveDesc:
+      "Safely sync your financial data to your private Google Drive for automated multi-device cloud backups.",
+    stepSecurityTitle: "Password & Fingerprint",
+    stepSecurityDesc:
+      "Protect your sensitive financial records with biometric fingerprint unlock or a secure PIN.",
+    stepProTitle: "Finance Pro - Lifetime",
+    stepProDesc:
+      "Unlock unlimited accounts, cloud backup, attachments, receipt scanning, and smart budget rollover.",
+    stepRestorePurchasesTitle: "Restore Purchases",
+    stepRestorePurchasesDesc:
+      "Restore your active Pro license if reinstalling or moving your workspace to a new device.",
+    stepWhatsNewTitle: "What's New",
+    stepWhatsNewDesc:
+      "Check out the latest features, release notes, bug fixes, and improvements in this version.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

@@ -41,6 +41,10 @@ export { NotesWalkthroughOverlay } from "./notes/notes-walkthrough-overlay";
 export { useNotesWalkthrough } from "./notes/use-notes-walkthrough";
 export { getNotesWalkthroughSteps } from "./notes/notes-walkthrough-steps";
 
+export { SettingsWalkthroughOverlay } from "./settings/settings-walkthrough-overlay";
+export { useSettingsWalkthrough } from "./settings/use-settings-walkthrough";
+export { SETTINGS_WALKTHROUGH_STEPS } from "./settings/settings-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

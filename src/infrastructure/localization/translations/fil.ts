@@ -632,6 +632,53 @@ export const fil = {
     stepFabDesc:
       "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
   },
+  settingsWalkthrough: {
+    stepLanguageTitle: "Kagustuhan sa Wika",
+    stepLanguageDesc:
+      "Lumipat sa pagitan ng Ingles, Espanyol, at Filipino, o awtomatikong itugma sa default ng iyong device.",
+    stepCurrencyTitle: "Setup ng Salapi",
+    stepCurrencyDesc:
+      "I-configure ang iyong pangunahing pera, pangalawang pera, at sariling exchange rates.",
+    stepNicknameTitle: "Palayaw ng Gumagamit",
+    stepNicknameDesc:
+      "I-personalize ang pagbati sa dashboard gamit ang iyong sariling pangalan o palayaw.",
+    stepThemeTitle: "Tema at Palette",
+    stepThemeDesc:
+      "Pumili mula sa mga light, dark, at OLED themes, o itugma sa hitsura ng iyong system.",
+    stepRemindersTitle: "Mga Paalala at Notipikasyon",
+    stepRemindersDesc:
+      "Magtakda ng pang-araw-araw na paalala sa pagtatala ng gastos at bayarin sa takdang petsa.",
+    stepDefaultExpenseTitle: "Default na Account para sa Gastos",
+    stepDefaultExpenseDesc:
+      "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",
+    stepDefaultIncomeTitle: "Default na Account para sa Kita",
+    stepDefaultIncomeDesc:
+      "Piliin ang default na patutunguhang account para sa suweldo o iba pang kita.",
+    stepHexColorsTitle: "Hex Color Palette",
+    stepHexColorsDesc:
+      "Pamahalaan at gumawa ng sariling hex colors para sa iyong mga kategorya, account, at tag.",
+    stepResetDataTitle: "I-reset ang Lahat ng Data",
+    stepResetDataDesc:
+      "Permanenteng burahin ang lahat ng lokal na transaksyon, account, at setting para magsimula muli.",
+    stepLocalBackupTitle: "Lokal na Backup ng Device",
+    stepLocalBackupDesc:
+      "Mag-export at mag-import ng buong SQLite database backup direkta sa storage ng iyong device.",
+    stepGoogleDriveTitle: "Google Drive Cloud Backup",
+    stepGoogleDriveDesc:
+      "Ligtas na i-sync ang iyong data sa Google Drive para sa awtomatikong cloud backup.",
+    stepSecurityTitle: "Password at Fingerprint",
+    stepSecurityDesc:
+      "Protektahan ang iyong data sa pananalapi gamit ang biometric fingerprint o secure na PIN.",
+    stepProTitle: "Finance Pro - Habambuhay",
+    stepProDesc:
+      "I-unlock ang walang limitasyong mga account, cloud backup, attachment, at advanced na budget.",
+    stepRestorePurchasesTitle: "Ibalik ang mga Binili",
+    stepRestorePurchasesDesc:
+      "Ibalik ang iyong Pro license kapag nag-reinstall o naglipat ng workspace sa bagong device.",
+    stepWhatsNewTitle: "Mga Bagong Tampok",
+    stepWhatsNewDesc:
+      "Tingnan ang pinakabagong mga tampok, release notes, pag-aayos, at mga pagpapabuti.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

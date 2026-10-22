@@ -631,6 +631,53 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
   },
+  settingsWalkthrough: {
+    stepLanguageTitle: "Preferencia de idioma",
+    stepLanguageDesc:
+      "Cambia entre inglés, español y filipino, o usa automáticamente el idioma predeterminado del sistema.",
+    stepCurrencyTitle: "Configuración de moneda",
+    stepCurrencyDesc:
+      "Configura tu moneda principal de informes, monedas secundarias y tipos de cambio personalizados.",
+    stepNicknameTitle: "Apodo de usuario",
+    stepNicknameDesc:
+      "Personaliza el saludo de tu panel con un nombre o apodo personalizado.",
+    stepThemeTitle: "Tema y paleta",
+    stepThemeDesc:
+      "Elige entre temas modernos claros, oscuros y OLED vibrantes, o sigue el aspecto del sistema.",
+    stepRemindersTitle: "Recordatorios y notificaciones",
+    stepRemindersDesc:
+      "Configura alarmas diarias de gastos y avisos de facturas para no olvidar ningún pago.",
+    stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
+    stepDefaultExpenseDesc:
+      "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",
+    stepDefaultIncomeTitle: "Cuenta de ingresos predeterminada",
+    stepDefaultIncomeDesc:
+      "Elige la cuenta de destino predeterminada para nuevos ingresos o nóminas.",
+    stepHexColorsTitle: "Paleta de colores hexadecimales",
+    stepHexColorsDesc:
+      "Administra y crea colores hexadecimales para personalizar categorías, cuentas y etiquetas.",
+    stepResetDataTitle: "Restablecer todos los datos",
+    stepResetDataDesc:
+      "Borra permanentemente todas las transacciones, cuentas y configuraciones para reiniciar.",
+    stepLocalBackupTitle: "Copia de seguridad local",
+    stepLocalBackupDesc:
+      "Exporta e importa copias de seguridad de la base de datos SQLite en tu dispositivo.",
+    stepGoogleDriveTitle: "Copia en Google Drive",
+    stepGoogleDriveDesc:
+      "Sincroniza tus datos de forma segura en Google Drive para copias automáticas en la nube.",
+    stepSecurityTitle: "Contraseña y huella dactilar",
+    stepSecurityDesc:
+      "Protege tus registros financieros con desbloqueo por huella biométrica o PIN seguro.",
+    stepProTitle: "Finance Pro - De por vida",
+    stepProDesc:
+      "Desbloquea cuentas ilimitadas, copia en la nube, adjuntos, recibos y rollover de presupuestos.",
+    stepRestorePurchasesTitle: "Restaurar compras",
+    stepRestorePurchasesDesc:
+      "Restaura tu licencia Pro activa si reinstalas la app o cambias de dispositivo.",
+    stepWhatsNewTitle: "Novedades",
+    stepWhatsNewDesc:
+      "Consulta las últimas funciones, notas de versión, correcciones de errores y mejoras.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",
