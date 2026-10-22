@@ -7,11 +7,12 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AlertCircle, Check } from "lucide-react-native";
+import { AlertCircle, Check, Clock, Sparkles } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
+  ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -97,31 +98,89 @@ export function GuidedWelcomeStep({
   );
 }
 
+export function GuidedNicknameStep({
+  nickname,
+  onChangeNickname,
+  onContinue,
+  disabled,
+}: {
+  nickname: string;
+  onChangeNickname: (name: string) => void;
+  onContinue: () => void;
+  disabled: boolean;
+}) {
+  const theme = useAppTheme();
+  const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+
+  return (
+    <OnboardingStepShell
+      description={t("onboarding.nicknameDescription")}
+      footer={
+        <PrimaryButton
+          disabled={disabled || !nickname.trim()}
+          label={t("onboarding.continue")}
+          loading={false}
+          onPress={onContinue}
+        />
+      }
+      progressIndex={guidedProgress.nickname}
+      progressTotal={guidedTotal}
+      title={t("onboarding.nicknameTitle")}
+    >
+      <Text style={styles.fieldLabel}>{t("onboarding.nicknameLabel")}</Text>
+      <TextInput
+        autoCapitalize="words"
+        autoCorrect={false}
+        maxLength={40}
+        onChangeText={onChangeNickname}
+        placeholder={t("onboarding.nicknamePlaceholder")}
+        placeholderTextColor={theme.colors.textMuted}
+        style={styles.textInput}
+        value={nickname}
+      />
+      <Text style={styles.helperText}>{t("onboarding.nicknameHint")}</Text>
+    </OnboardingStepShell>
+  );
+}
+
 export function GuidedLanguageStep({
+  nickname,
   onContinue,
 }: {
+  nickname?: string;
   onContinue: () => void;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preference, setLanguagePreference, t } = useLocalization();
 
-  const select = (next: LanguagePreference) => {
-    setLanguagePreference(next);
-    onContinue();
-  };
+  const title = nickname?.trim()
+    ? t("onboarding.languageTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.languageTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.languageDescriptionAssisted")
+    : t("onboarding.languageDescription");
 
   return (
     <OnboardingStepShell
-      description={t("onboarding.languageDescription")}
+      description={description}
+      footer={
+        <PrimaryButton
+          disabled={false}
+          label={t("onboarding.continue")}
+          loading={false}
+          onPress={onContinue}
+        />
+      }
       progressIndex={guidedProgress.language}
       progressTotal={guidedTotal}
-      title={t("onboarding.languageTitle")}
+      title={title}
     >
       <View style={styles.optionList}>
         <Pressable
           accessibilityRole="button"
-          onPress={() => select("system")}
+          onPress={() => setLanguagePreference("system")}
           style={({ pressed }) => [
             styles.choiceRow,
             preference === "system" && styles.choiceRowActive,
@@ -137,7 +196,7 @@ export function GuidedLanguageStep({
           <Pressable
             key={language.code}
             accessibilityRole="button"
-            onPress={() => select(language.code)}
+            onPress={() => setLanguagePreference(language.code)}
             style={({ pressed }) => [
               styles.choiceRow,
               preference === language.code && styles.choiceRowActive,
@@ -156,10 +215,12 @@ export function GuidedLanguageStep({
 }
 
 export function GuidedCurrencyStep({
+  nickname,
   selectedCode,
   onChange,
   onContinue,
 }: {
+  nickname?: string;
   selectedCode: string;
   onChange: (code: string) => void;
   onContinue: () => void;
@@ -172,9 +233,16 @@ export function GuidedCurrencyStep({
     return ["PHP", ...nonPhpCodes];
   }, []);
 
+  const title = nickname?.trim()
+    ? t("onboarding.currencyTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.currencyTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.currencyDescriptionAssisted")
+    : t("onboarding.currencyDescription");
+
   return (
     <OnboardingStepShell
-      description={t("onboarding.currencyDescription")}
+      description={description}
       footer={
         <PrimaryButton
           disabled={false}
@@ -185,7 +253,7 @@ export function GuidedCurrencyStep({
       }
       progressIndex={guidedProgress.currency}
       progressTotal={guidedTotal}
-      title={t("onboarding.currencyTitle")}
+      title={title}
     >
       <View style={styles.optionList}>
         {codes.map((code) => {
@@ -219,6 +287,7 @@ export function GuidedCurrencyStep({
 }
 
 export function GuidedAccountStep({
+  nickname,
   accountName,
   currencyCode,
   openingAmountMinor,
@@ -229,6 +298,7 @@ export function GuidedAccountStep({
   onContinue,
   busy,
 }: {
+  nickname?: string;
   accountName: string;
   currencyCode: string;
   openingAmountMinor: number;
@@ -244,9 +314,16 @@ export function GuidedAccountStep({
   const { t } = useLocalization();
   const [calculatorOpen, setCalculatorOpen] = useState(false);
 
+  const title = nickname?.trim()
+    ? t("onboarding.accountTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.accountTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.accountDescriptionAssisted")
+    : t("onboarding.accountDescription");
+
   return (
     <OnboardingStepShell
-      description={t("onboarding.accountDescription")}
+      description={description}
       footer={
         <PrimaryButton
           disabled={busy || !accountName.trim()}
@@ -257,8 +334,20 @@ export function GuidedAccountStep({
       }
       progressIndex={guidedProgress.account}
       progressTotal={guidedTotal}
-      title={t("onboarding.accountTitle")}
+      title={title}
     >
+      {/* 1. Account Name First */}
+      <Text style={styles.fieldLabel}>{t("onboarding.accountNameLabel")}</Text>
+      <TextInput
+        maxLength={100}
+        onChangeText={onChangeName}
+        placeholder={t("onboarding.accountNamePlaceholder")}
+        placeholderTextColor={theme.colors.textMuted}
+        style={styles.textInput}
+        value={accountName}
+      />
+
+      {/* 2. Account Type Second */}
       <Text style={styles.fieldLabel}>{t("onboarding.accountTypeLabel")}</Text>
       <View style={styles.chipRow}>
         {ACCOUNT_TEMPLATES.map((item) => {
@@ -282,15 +371,8 @@ export function GuidedAccountStep({
           );
         })}
       </View>
-      <Text style={styles.fieldLabel}>{t("onboarding.accountNameLabel")}</Text>
-      <TextInput
-        maxLength={100}
-        onChangeText={onChangeName}
-        placeholder={t("onboarding.accountNamePlaceholder")}
-        placeholderTextColor={theme.colors.textMuted}
-        style={styles.textInput}
-        value={accountName}
-      />
+
+      {/* 3. How Much is in now? Third */}
       <AmountCalculatorField
         amountMinorUnits={openingAmountMinor}
         currencyCode={currencyCode}
@@ -315,23 +397,122 @@ export function GuidedAccountStep({
   );
 }
 
+export function GuidedNotificationsStep({
+  nickname,
+  dailyReminderEnabled,
+  onToggleDailyReminder,
+  onContinue,
+  busy = false,
+}: {
+  nickname?: string;
+  dailyReminderEnabled: boolean;
+  onToggleDailyReminder: (val: boolean) => void;
+  onContinue: () => void;
+  busy?: boolean;
+}) {
+  const theme = useAppTheme();
+  const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+
+  const title = nickname?.trim()
+    ? t("onboarding.notificationsTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.notificationsTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.notificationsDescriptionAssisted")
+    : t("onboarding.notificationsDescription");
+
+  return (
+    <OnboardingStepShell
+      description={description}
+      footer={
+        <PrimaryButton
+          disabled={busy}
+          label={t("onboarding.continue")}
+          loading={busy}
+          onPress={onContinue}
+        />
+      }
+      progressIndex={guidedProgress.notifications}
+      progressTotal={guidedTotal}
+      title={title}
+    >
+      <View style={styles.toggleCardList}>
+
+        <Pressable
+          accessibilityLabel={t("onboarding.dailyReminderTitle")}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: dailyReminderEnabled, disabled: busy }}
+          disabled={busy}
+          onPress={() => onToggleDailyReminder(!dailyReminderEnabled)}
+          style={({ pressed }) => [
+            styles.toggleCard,
+            dailyReminderEnabled && styles.toggleCardActive,
+            pressed && styles.choiceRowPressed,
+          ]}
+        >
+          <View style={styles.toggleCardIconContainer}>
+            <Clock
+              color={
+                dailyReminderEnabled
+                  ? theme.colors.primary
+                  : theme.colors.textSecondary
+              }
+              size={20}
+            />
+          </View>
+          <View style={styles.toggleCardContent}>
+            <Text style={styles.toggleCardTitle}>
+              {t("onboarding.dailyReminderTitle")}
+            </Text>
+            <Text style={styles.toggleCardDescription}>
+              {t("onboarding.dailyReminderDesc")}
+            </Text>
+          </View>
+          <ThemedSwitch
+            accessibilityLabel={t("onboarding.dailyReminderTitle")}
+            disabled={busy}
+            onValueChange={onToggleDailyReminder}
+            value={dailyReminderEnabled}
+          />
+        </Pressable>
+
+        <View style={styles.infoCard}>
+          <Sparkles color={theme.colors.info} size={18} />
+          <Text style={styles.infoText}>{t("onboarding.notificationsTip")}</Text>
+        </View>
+      </View>
+    </OnboardingStepShell>
+  );
+}
+
 export function GuidedReadyStep({
+  nickname,
   accountName,
   currencyCode,
+  dailyReminderEnabled,
   busy,
   onFinish,
 }: {
+  nickname?: string;
   accountName: string;
   currencyCode: string;
+  dailyReminderEnabled?: boolean;
   busy: boolean;
   onFinish: () => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
+  const title = nickname?.trim()
+    ? t("onboarding.readyTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.readyTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.readyDescriptionAssisted")
+    : t("onboarding.readyDescription");
+
   return (
     <OnboardingStepShell
-      description={t("onboarding.readyDescription")}
+      description={description}
       footer={
         <PrimaryButton
           disabled={busy}
@@ -342,19 +523,30 @@ export function GuidedReadyStep({
       }
       progressIndex={guidedProgress.ready}
       progressTotal={guidedTotal}
-      title={t("onboarding.readyTitle")}
+      title={title}
     >
       <View style={styles.summaryCard}>
+        {nickname?.trim() ? (
+          <Text style={styles.summaryLine}>
+            {t("onboarding.readyNickname", { name: nickname.trim() })}
+          </Text>
+        ) : null}
         <Text style={styles.summaryLine}>
           {t("onboarding.readyCurrency", { currency: currencyCode })}
         </Text>
         <Text style={styles.summaryLine}>
           {t("onboarding.readyAccount", { name: accountName.trim() })}
         </Text>
+        {dailyReminderEnabled ? (
+          <Text style={styles.summaryLine}>
+            {t("onboarding.readyDailyReminder")}
+          </Text>
+        ) : null}
       </View>
     </OnboardingStepShell>
   );
 }
+
 
 function QuietLink({
   disabled,
@@ -525,6 +717,47 @@ function createStyles(theme: AppTheme) {
     summaryLine: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
+    },
+    toggleCardList: {
+      gap: theme.spacing.md,
+    },
+    toggleCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      minHeight: 64,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+    },
+    toggleCardActive: {
+      borderColor: `${theme.colors.primary}55`,
+      backgroundColor: `${theme.colors.primary}08`,
+    },
+    toggleCardIconContainer: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}14`,
+      borderRadius: theme.borderRadius.round,
+      height: 40,
+      justifyContent: "center",
+      width: 40,
+    },
+    toggleCardContent: {
+      flex: 1,
+      gap: 2,
+    },
+    toggleCardTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.base,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    toggleCardDescription: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.sm,
     },
     primaryButton: {
       alignItems: "center",

@@ -392,3 +392,14 @@ test("missing form field defaults to enabled for non-guided workspaces", async (
   await workspace.completeRecommendedSetup();
   assert.equal(experience.isTransactionFormFieldEnabled("note"), true);
 });
+
+test("guided setup saves user nickname when provided", async () => {
+  await workspace.completeGuidedSetup({
+    currencyCode: "PHP",
+    account: { name: "Cash", openingAmount: "50", template: "cash" },
+    nickname: "Alex",
+  });
+
+  const row = sqlite.prepare("SELECT value FROM settings WHERE key = 'user_nickname'").get();
+  assert.equal(row.value, "Alex");
+});

@@ -63,3 +63,5 @@ export const PROMPT_SETTING_KEYS = {
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";
 export const GUIDED_SETUP_STRATEGY = "guided";
+
+export const USER_NICKNAME_SETTING_KEY = "user_nickname";

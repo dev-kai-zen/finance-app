@@ -18,3 +18,4 @@ export type {
   CategorySpendingItem,
   AccountWithBalance,
 } from "./types/dashboard.types";
+export { DashboardGreetingCard } from "./components/dashboard-greeting-card";

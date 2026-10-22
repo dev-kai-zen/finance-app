@@ -17,6 +17,7 @@ import {
   Pipette,
   RotateCcw,
   ShieldCheck,
+  Smile,
   Sparkles,
   Terminal,
   Trash2,
@@ -36,9 +37,11 @@ import { ThemePickerModal } from "@/modules/settings/components/theme-picker-mod
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components/settings-default-account-picker-modal";
+import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-modal";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
+import { useUserNickname } from "../hooks/use-user-nickname";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -65,6 +68,8 @@ export function SettingsScreen() {
     setIncomeAccount,
   } = useDefaultAccounts();
 
+  const { nickname, setNickname } = useUserNickname();
+  const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
@@ -183,6 +188,31 @@ export function SettingsScreen() {
             {t("settings.generalSection")}
           </Text>
           <View style={styles.card}>
+            <Pressable
+              accessibilityLabel={t("settings.nicknameTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsNicknameModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Smile color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.nicknameTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {nickname?.trim() || t("settings.nicknameNotSet")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
             <Pressable
               accessibilityLabel={t("settings.themeAccessibility", {
                 theme: theme.name,
@@ -742,6 +772,13 @@ export function SettingsScreen() {
       <ProPaywallModal
         onClose={() => setIsPaywallOpen(false)}
         visible={isPaywallOpen}
+      />
+
+      <EditNicknameModal
+        currentNickname={nickname}
+        onCancel={() => setIsNicknameModalOpen(false)}
+        onSave={setNickname}
+        visible={isNicknameModalOpen}
       />
     </PageContainer>
   );
