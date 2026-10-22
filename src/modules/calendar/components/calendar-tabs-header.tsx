@@ -11,6 +11,10 @@ export interface CalendarTabsHeaderProps {
   scheduleCount: number;
   onSelectTab: (tab: CalendarTab) => void;
   isPro?: boolean;
+  transactionsRef?: React.Ref<View>;
+  schedulesRef?: React.Ref<View>;
+  netRef?: React.Ref<View>;
+  balanceSheetRef?: React.Ref<View>;
 }
 
 export function CalendarTabsHeader({
@@ -19,6 +23,10 @@ export function CalendarTabsHeader({
   scheduleCount,
   onSelectTab,
   isPro = true,
+  transactionsRef,
+  schedulesRef,
+  netRef,
+  balanceSheetRef,
 }: CalendarTabsHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -39,7 +47,9 @@ export function CalendarTabsHeader({
           accessibilityLabel="Transactions tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "transactions" }}
+          collapsable={false}
           onPress={() => onSelectTab("transactions")}
+          ref={transactionsRef}
           style={[
             styles.tab,
             activeTab === "transactions" && styles.activeTab,
@@ -76,7 +86,9 @@ export function CalendarTabsHeader({
           accessibilityLabel="Schedules tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "schedules" }}
+          collapsable={false}
           onPress={() => onSelectTab("schedules")}
+          ref={schedulesRef}
           style={[
             styles.tab,
             activeTab === "schedules" && styles.activeTab,
@@ -113,7 +125,9 @@ export function CalendarTabsHeader({
           accessibilityLabel="Net Earnings tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "net" }}
+          collapsable={false}
           onPress={() => onSelectTab("net")}
+          ref={netRef}
           style={[
             styles.tab,
             activeTab === "net" && styles.activeTab,
@@ -139,7 +153,9 @@ export function CalendarTabsHeader({
           accessibilityLabel="Balance Sheet tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "balance_sheet" }}
+          collapsable={false}
           onPress={() => onSelectTab("balance_sheet")}
+          ref={balanceSheetRef}
           style={[
             styles.tab,
             activeTab === "balance_sheet" && styles.activeTab,

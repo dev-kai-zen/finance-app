@@ -22,7 +22,12 @@ export type WalkthroughTargetId =
   | "txScheduled"
   | "txTrash"
   | "txExport"
-  | "txFab";
+  | "txFab"
+  | "calArrows"
+  | "calTransactionsTab"
+  | "calSchedulesTab"
+  | "calNetTab"
+  | "calBalanceSheetTab";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

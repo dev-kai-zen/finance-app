@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -15,6 +15,14 @@ import {
   type TransactionListItem,
 } from "@/modules/transactions";
 import { ProGate, useProStatus } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  CalendarWalkthroughOverlay,
+  DraggableTourChip,
+  useCalendarWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+} from "@/modules/walkthrough";
 import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
 import { CalendarMonthHeader } from "../components/calendar-month-header";
@@ -28,6 +36,14 @@ import { useCalendarData } from "../hooks/use-calendar-data";
 import type { CalendarTab } from "../types/calendar.types";
 
 export function CalendarScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <CalendarScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CalendarScreenContent() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -102,6 +118,28 @@ export function CalendarScreen() {
     string | null
   >(null);
 
+  // Walkthrough targets & coordination
+  const navControlsRef = useWalkthroughTarget("calArrows");
+  const transactionsTabRef = useWalkthroughTarget("calTransactionsTab");
+  const schedulesTabRef = useWalkthroughTarget("calSchedulesTab");
+  const netTabRef = useWalkthroughTarget("calNetTab");
+  const balanceSheetTabRef = useWalkthroughTarget("calBalanceSheetTab");
+
+  const walkthrough = useCalendarWalkthrough({
+    onTabChange: setActiveTab,
+  });
+
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    if (!isPromptDismissed("calendarWalkthroughDismissed")) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+
   // Handlers for transactions
   const handleEditTransaction = (tx: TransactionListItem) => {
     setInspectedTransaction(null);
@@ -162,11 +200,19 @@ export function CalendarScreen() {
           : scopedTransactions.length;
 
   return (
-    <PageContainer>
+    <PageContainer
+      floatingAction={
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+      }
+    >
       <View style={styles.content}>
         {/* 1. Month Navigation Header */}
         <CalendarMonthHeader
           activeMonth={activeMonth}
+          navControlsRef={navControlsRef}
           onNextMonth={goToNextMonth}
           onPrevMonth={goToPrevMonth}
           onToday={goToToday}
@@ -199,10 +245,14 @@ export function CalendarScreen() {
         {/* 5. Segmented Tabs Header */}
         <CalendarTabsHeader
           activeTab={activeTab}
+          balanceSheetRef={balanceSheetTabRef}
           isPro={isPro}
+          netRef={netTabRef}
           onSelectTab={handleSelectTab}
           scheduleCount={scopedSchedules.length}
+          schedulesRef={schedulesTabRef}
           transactionCount={scopedTransactions.length}
+          transactionsRef={transactionsTabRef}
         />
 
         {/* 6. Active Tab Content */}
@@ -348,6 +398,18 @@ export function CalendarScreen() {
         title="Skip Scheduled Occurrence"
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
+      />
+
+      {/* Calendar Walkthrough Overlay */}
+      <CalendarWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
 
     </PageContainer>

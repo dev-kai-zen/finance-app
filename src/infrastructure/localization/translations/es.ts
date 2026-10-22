@@ -529,6 +529,23 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",
   },
+  calendarWalkthrough: {
+    stepArrowsTitle: "Navegación del calendario",
+    stepArrowsDesc:
+      "Usa las flechas de navegación para desplazarte entre meses anteriores y futuros, o volver al día de hoy.",
+    stepTransactionsTitle: "Pestaña Transacciones",
+    stepTransactionsDesc:
+      "Revisa todos los ingresos, gastos y transferencias registrados para el día seleccionado o el mes completo.",
+    stepSchedulesTitle: "Pestaña Programados",
+    stepSchedulesDesc:
+      "Supervisa pagos recurrentes, facturas programadas y próximos vencimientos directamente en el calendario.",
+    stepNetTitle: "Pestaña Ganancias netas",
+    stepNetDesc:
+      "Analiza la diferencia entre ingresos y gastos, tendencias de flujo de caja y trayectoria neta.",
+    stepBalanceSheetTitle: "Pestaña Balance general",
+    stepBalanceSheetDesc:
+      "Monitorea activos, pasivos y patrimonio neto proyectados a lo largo de tu calendario en un solo vistazo.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",

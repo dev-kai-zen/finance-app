@@ -530,6 +530,23 @@ export const fil = {
     stepFabDesc:
       "I-tap ang (+) button anumang oras para magtala ng bagong gastos, kita, o transfer. Handa ka na!",
   },
+  calendarWalkthrough: {
+    stepArrowsTitle: "Paglipat ng Buwan sa Kalendaryo",
+    stepArrowsDesc:
+      "Gamitin ang mga arrow upang magpalipat-lipat sa mga nakaraan at darating na buwan, o bumalik agad sa araw na ito.",
+    stepTransactionsTitle: "Tab ng mga Transaksyon",
+    stepTransactionsDesc:
+      "Suriin ang lahat ng naitalang kita, gastos, at paglilipat para sa napiling araw o sa buong buwan.",
+    stepSchedulesTitle: "Tab ng mga Naka-iskedyul",
+    stepSchedulesDesc:
+      "Tingnan at pamahalaan ang mga naka-iskedyul na bayarin, paulit-ulit na paglilipat, at darating na gastusin sa kalendaryo.",
+    stepNetTitle: "Tab ng Netong Kita",
+    stepNetDesc:
+      "Suriin ang pagkakaiba ng kita at gastos, direksyon ng cash flow, at kabuuang tubo sa bawat araw.",
+    stepBalanceSheetTitle: "Tab ng Balance Sheet",
+    stepBalanceSheetDesc:
+      "Subaybayan ang iyong mga ari-arian, utang, at kabuuang equity sa timeline ng kalendaryo.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

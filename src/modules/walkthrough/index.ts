@@ -19,9 +19,14 @@ export { TransactionsWalkthroughOverlay } from "./transactions/transactions-walk
 export { useTransactionsWalkthrough } from "./transactions/use-transactions-walkthrough";
 export { TRANSACTIONS_WALKTHROUGH_STEPS } from "./transactions/transactions-walkthrough-steps";
 
+export { CalendarWalkthroughOverlay } from "./calendar/calendar-walkthrough-overlay";
+export { useCalendarWalkthrough } from "./calendar/use-calendar-walkthrough";
+export { CALENDAR_WALKTHROUGH_STEPS } from "./calendar/calendar-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,
   WalkthroughStepId,
   WalkthroughTargetId,
 } from "./types/walkthrough.types";
+

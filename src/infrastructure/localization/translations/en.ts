@@ -517,6 +517,23 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to log a new expense, income, or transfer between accounts. You're ready to go!",
   },
+  calendarWalkthrough: {
+    stepArrowsTitle: "Calendar Navigation",
+    stepArrowsDesc:
+      "Use the month navigation arrows to browse backward and forward across months, or jump straight back to today.",
+    stepTransactionsTitle: "Transactions Tab",
+    stepTransactionsDesc:
+      "Review all recorded income, expense, and transfer transactions for the selected day or the full month.",
+    stepSchedulesTitle: "Schedules Tab",
+    stepSchedulesDesc:
+      "View and manage scheduled bills, recurring transfers, and upcoming occurrences directly on the calendar timeline.",
+    stepNetTitle: "Net Earnings Tab",
+    stepNetDesc:
+      "Analyze daily income vs expense variance, cash flow trends, and net earnings trajectories.",
+    stepBalanceSheetTitle: "Balance Sheet Tab",
+    stepBalanceSheetDesc:
+      "Track your assets, liabilities, and projected equity across the calendar at a single glance.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",
