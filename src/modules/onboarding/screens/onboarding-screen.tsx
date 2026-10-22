@@ -28,10 +28,16 @@ import {
   GuidedAccountStep,
   GuidedCurrencyStep,
   GuidedLanguageStep,
+  GuidedNicknameStep,
+  GuidedNotificationsStep,
   GuidedReadyStep,
   GuidedWelcomeStep,
   PrimaryButton,
 } from "@/modules/onboarding/components/guided-onboarding-steps";
+import {
+  useNotificationPermission,
+  useNotificationSettings,
+} from "@/modules/notifications";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import type { InitialAccountTemplate } from "@/modules/accounts";
@@ -40,9 +46,11 @@ import { useLocalization } from "@/infrastructure/localization";
 
 type OnboardingStep =
   | "welcome"
+  | "nickname"
   | "language"
   | "currency"
   | "account"
+  | "notifications"
   | "ready"
   | "fullSetup"
   | "manual"
@@ -56,7 +64,10 @@ export function OnboardingScreen() {
   const workspace = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const { t } = useLocalization();
+  const { hasPermission, requestPermission } = useNotificationPermission();
+  const { settings, updateSetting } = useNotificationSettings();
   const [step, setStep] = useState<OnboardingStep>("welcome");
+  const [nickname, setNickname] = useState("");
   const [guidedCurrency, setGuidedCurrency] = useState(
     currencyPreferences.defaultCurrency,
   );
@@ -65,10 +76,54 @@ export function OnboardingScreen() {
   const [accountName, setAccountName] = useState("");
   const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
   const [sampleExitHubOpen, setSampleExitHubOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(false);
 
   useEffect(() => {
     setGuidedCurrency(currencyPreferences.defaultCurrency);
   }, [currencyPreferences.defaultCurrency]);
+
+  useEffect(() => {
+    if (hasPermission === true) {
+      setNotificationsEnabled(true);
+    }
+  }, [hasPermission]);
+
+  useEffect(() => {
+    setDailyReminderEnabled(settings.dailyReminderEnabled);
+  }, [settings.dailyReminderEnabled]);
+
+  const handleToggleNotifications = async (val: boolean) => {
+    if (val) {
+      const granted = await requestPermission();
+      if (granted) {
+        setNotificationsEnabled(true);
+      } else {
+        setNotificationsEnabled(false);
+      }
+    } else {
+      setNotificationsEnabled(false);
+      if (dailyReminderEnabled) {
+        setDailyReminderEnabled(false);
+        void updateSetting("dailyReminderEnabled", false);
+      }
+    }
+  };
+
+  const handleToggleDailyReminder = async (val: boolean) => {
+    if (val) {
+      const success = await updateSetting("dailyReminderEnabled", true);
+      if (success) {
+        setDailyReminderEnabled(true);
+        setNotificationsEnabled(true);
+      } else {
+        setDailyReminderEnabled(false);
+      }
+    } else {
+      setDailyReminderEnabled(false);
+      void updateSetting("dailyReminderEnabled", false);
+    }
+  };
 
   useEffect(() => {
     if (!workspace.personalSetupRequested) {
@@ -78,9 +133,11 @@ export function OnboardingScreen() {
 
   const isGuidedFlexStep =
     step === "welcome" ||
+    step === "nickname" ||
     step === "language" ||
     step === "currency" ||
     step === "account" ||
+    step === "notifications" ||
     step === "ready";
 
   const goBack = () => {
@@ -97,8 +154,12 @@ export function OnboardingScreen() {
       workspace.cancelPersonalSetup();
       return;
     }
-    if (step === "language") {
+    if (step === "nickname") {
       setStep("welcome");
+      return;
+    }
+    if (step === "language") {
+      setStep("nickname");
       return;
     }
     if (step === "currency") {
@@ -109,8 +170,12 @@ export function OnboardingScreen() {
       setStep("currency");
       return;
     }
-    if (step === "ready") {
+    if (step === "notifications") {
       setStep("account");
+      return;
+    }
+    if (step === "ready") {
+      setStep("notifications");
       return;
     }
     if (step === "fullSetup" || step === "manual" || step === "recommended" || step === "sample" || step === "restore") {
@@ -174,7 +239,7 @@ export function OnboardingScreen() {
                     }}
                     onGetStarted={() => {
                       workspace.clearError();
-                      setStep("language");
+                      setStep("nickname");
                     }}
                     onRestore={() => {
                       workspace.clearError();
@@ -210,7 +275,7 @@ export function OnboardingScreen() {
                   }}
                   onGetStarted={() => {
                     workspace.clearError();
-                    setStep("language");
+                    setStep("nickname");
                   }}
                   onRestore={() => {
                     workspace.clearError();
@@ -225,9 +290,24 @@ export function OnboardingScreen() {
             )
           ) : null}
 
+          {step === "nickname" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedNicknameStep
+                disabled={workspace.busy}
+                nickname={nickname}
+                onChangeNickname={setNickname}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("language");
+                }}
+              />
+            </View>
+          ) : null}
+
           {step === "language" ? (
             <View style={styles.guidedStepHost}>
               <GuidedLanguageStep
+                nickname={nickname}
                 onContinue={() => {
                   workspace.clearError();
                   setStep("currency");
@@ -239,6 +319,7 @@ export function OnboardingScreen() {
           {step === "currency" ? (
             <View style={styles.guidedStepHost}>
               <GuidedCurrencyStep
+                nickname={nickname}
                 onChange={setGuidedCurrency}
                 onContinue={() => {
                   workspace.clearError();
@@ -255,15 +336,33 @@ export function OnboardingScreen() {
                 accountName={accountName}
                 busy={workspace.busy}
                 currencyCode={guidedCurrency}
+                nickname={nickname}
                 onChangeName={setAccountName}
                 onChangeOpeningAmountMinor={setOpeningAmountMinor}
                 onChangeTemplate={setAccountTemplate}
                 onContinue={() => {
                   workspace.clearError();
-                  setStep("ready");
+                  setStep("notifications");
                 }}
                 openingAmountMinor={openingAmountMinor}
                 template={accountTemplate}
+              />
+            </View>
+          ) : null}
+
+          {step === "notifications" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedNotificationsStep
+                busy={workspace.busy}
+                dailyReminderEnabled={dailyReminderEnabled}
+                nickname={nickname}
+                notificationsEnabled={notificationsEnabled}
+                onContinue={() => {
+                  workspace.clearError();
+                  setStep("ready");
+                }}
+                onToggleDailyReminder={handleToggleDailyReminder}
+                onToggleNotifications={handleToggleNotifications}
               />
             </View>
           ) : null}
@@ -274,9 +373,12 @@ export function OnboardingScreen() {
                 accountName={accountName}
                 busy={workspace.busy}
                 currencyCode={guidedCurrency}
+                dailyReminderEnabled={dailyReminderEnabled}
+                nickname={nickname}
                 onFinish={() =>
                   void workspace.completeGuidedSetup({
                     currencyCode: guidedCurrency,
+                    nickname,
                     account: {
                       name: accountName,
                       openingAmount: openingAmountInput(

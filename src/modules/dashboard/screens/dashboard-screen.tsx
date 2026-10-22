@@ -14,7 +14,8 @@ import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
-import { useExperiencePreferences } from "@/modules/settings";
+import { useExperiencePreferences, useUserNickname } from "@/modules/settings";
+import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
 import { ExperiencePromptsCard } from "../components/experience-prompts-card";
 import { FirstExpenseHintCard } from "../components/first-expense-hint-card";
 import { AdBanner } from "@/modules/ads";
@@ -36,6 +37,7 @@ export function DashboardScreen() {
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const { homeMode, isPromptDismissed, setHomeMode } = useExperiencePreferences();
+  const { nickname } = useUserNickname();
 
   const {
     summary,
@@ -252,6 +254,8 @@ export function DashboardScreen() {
               expenseTransactionCount={expenseTransactionCount}
               hasCreditCardAccount={hasCreditCardAccount}
             />
+            <DashboardGreetingCard nickname={nickname} />
+            <AdBanner placement="dashboard" variant="card" />
             <DashboardNetWorthCard
               currencyCode={currencyPreferences.defaultCurrency}
               history={summary.netWorthHistory}
@@ -263,7 +267,6 @@ export function DashboardScreen() {
               totalAssetsMinorUnits={assets}
               totalLiabilitiesMinorUnits={liabilities}
             />
-            <AdBanner placement="dashboard" variant="card" />
             <RecentTransactionsCard
               onPressTransaction={(tx) => setInspectedTransaction(tx)}
               onViewAll={handleViewAllTransactions}

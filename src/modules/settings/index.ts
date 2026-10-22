@@ -19,8 +19,15 @@ export {
   NAV_HREF_BY_VISIBILITY_KEY,
   PROMPT_SETTING_KEYS,
   DEVELOPER_MODE_SETTING_KEY,
+  USER_NICKNAME_SETTING_KEY,
 } from "./constants/settings.constants";
 export type { NavVisibilityKey } from "./constants/settings.constants";
+export {
+  getUserNickname,
+  setUserNickname,
+  subscribeToUserNickname,
+} from "./services/user-profile.service";
+export { useUserNickname } from "./hooks/use-user-nickname";
 export { useExperiencePreferences } from "./hooks/use-experience-preferences";
 export {
   applyGuidedWorkspaceSimpleDefaults,

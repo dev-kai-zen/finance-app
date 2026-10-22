@@ -18,6 +18,7 @@ import {
   setDefaultExpenseAccount,
   setDefaultIncomeAccount,
 } from "@/modules/settings/services/default-accounts.service";
+import { setUserNickname } from "@/modules/settings/services/user-profile.service";
 import {
   clearCustomWorkspaceCategories,
   prepareWorkspaceCategories,
@@ -107,6 +108,7 @@ export async function completeManualSetup(): Promise<WorkspaceState> {
 export interface GuidedWorkspaceInput {
   currencyCode: string;
   account: InitialAccountInput;
+  nickname?: string;
 }
 
 export async function completeGuidedSetup(
@@ -128,6 +130,9 @@ export async function completeGuidedSetup(
     applyGuidedWorkspaceSimpleDefaults(tx);
     setDefaultExpenseAccount(accountId, null, tx);
     setDefaultIncomeAccount(accountId, null, tx);
+    if (input.nickname && input.nickname.trim()) {
+      setUserNickname(input.nickname.trim(), tx, now);
+    }
     saveCompletedSettings(
       "personal",
       "guided",
