@@ -32,6 +32,11 @@ export { BudgetsWalkthroughOverlay } from "./budgets/budgets-walkthrough-overlay
 export { useBudgetsWalkthrough } from "./budgets/use-budgets-walkthrough";
 export { getBudgetsWalkthroughSteps } from "./budgets/budgets-walkthrough-steps";
 
+export { GoalCongratulationsModal } from "./goals/goal-congratulations-modal";
+export { GoalsWalkthroughOverlay } from "./goals/goals-walkthrough-overlay";
+export { useGoalsWalkthrough } from "./goals/use-goals-walkthrough";
+export { getGoalsWalkthroughSteps } from "./goals/goals-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

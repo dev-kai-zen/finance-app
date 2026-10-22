@@ -590,6 +590,27 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para fijar nuevos límites por categoría y alcanzar tus metas financieras.",
   },
+  goalCongratulations: {
+    title: "¡Primer objetivo creado!",
+    subtitle: "Meta fijada para el éxito",
+    message:
+      "¡Felicitaciones por fijar tu primera meta de ahorro! Monitorea tu progreso, vincula cuentas y mantén la motivación para forjar tu futuro financiero.",
+    button: "Explorar recorrido de objetivos",
+  },
+  goalsWalkthrough: {
+    stepTotalTargetTitle: "Meta total y progreso",
+    stepTotalTargetDesc:
+      "Supervisa tu meta de ahorro consolidada, fondos acumulados, porcentaje de avance y el monto restante en todos tus objetivos activos.",
+    stepStatusFiltersTitle: "Filtros por estado",
+    stepStatusFiltersDesc:
+      "Filtra fácilmente entre Todos los objetivos, metas En progreso y logros Completados con contadores en tiempo real.",
+    stepFirstItemMarkCompleteTitle: "Marcar como completado",
+    stepFirstItemMarkCompleteDesc:
+      "Celebra alcanzar tu meta marcándola como completada, o reábrela en cualquier momento si deseas seguir ahorrando.",
+    stepFabTitle: "Agregar nuevo objetivo",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",

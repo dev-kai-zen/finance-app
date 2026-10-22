@@ -65,8 +65,10 @@ export const PROMPT_SETTING_KEYS = {
   calendarWalkthroughDismissed: "prompt.calendarWalkthroughDismissed",
   categoriesWalkthroughDismissed: "prompt.categoriesWalkthroughDismissed",
   budgetsWalkthroughDismissed: "prompt.budgetsWalkthroughDismissed",
+  goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
+  firstGoalCelebrated: "prompt.firstGoalCelebrated",
 } as const;
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";

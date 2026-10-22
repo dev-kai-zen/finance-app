@@ -578,6 +578,27 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to set up additional category limits and stay on top of your financial goals.",
   },
+  goalCongratulations: {
+    title: "First Goal Created!",
+    subtitle: "Target Set for Success",
+    message:
+      "Congratulations on setting your first savings goal! Track your progress, link accounts, and stay motivated as you build your financial future.",
+    button: "Explore Goals Tour",
+  },
+  goalsWalkthrough: {
+    stepTotalTargetTitle: "Total Target & Progress",
+    stepTotalTargetDesc:
+      "Monitor your combined savings target, total accumulated funds, percentage progress, and remaining shortfall across all active goals.",
+    stepStatusFiltersTitle: "Goal Status Filters",
+    stepStatusFiltersDesc:
+      "Easily filter between All Goals, active In Progress targets, and Completed milestones with live counter badges.",
+    stepFirstItemMarkCompleteTitle: "Mark as Completed",
+    stepFirstItemMarkCompleteDesc:
+      "Celebrate reaching your target by marking the goal as completed, or reopen it anytime if you want to keep saving.",
+    stepFabTitle: "Add New Goal",
+    stepFabDesc:
+      "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

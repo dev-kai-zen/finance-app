@@ -38,7 +38,11 @@ export type WalkthroughTargetId =
   | "budgetTotalActiveCard"
   | "budgetFrequencyTabs"
   | "budgetFirstItemToggle"
-  | "budgetFab";
+  | "budgetFab"
+  | "goalTotalTargetCard"
+  | "goalStatusFilters"
+  | "goalFirstItemMarkComplete"
+  | "goalFab";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

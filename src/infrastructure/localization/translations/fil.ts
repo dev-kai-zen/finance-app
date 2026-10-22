@@ -591,6 +591,27 @@ export const fil = {
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng karagdagang limitasyon at maabot ang iyong mga layunin.",
   },
+  goalCongratulations: {
+    title: "Unang Layunin Nalikha!",
+    subtitle: "Target Patungo sa Tagumpay",
+    message:
+      "Binabati kita sa paglikha ng iyong unang layunin sa pag-iipon! Subaybayan ang iyong progreso, ikonekta ang mga account, at magpatuloy para sa iyong magandang kinabukasan.",
+    button: "Galugarin ang Tour ng mga Layunin",
+  },
+  goalsWalkthrough: {
+    stepTotalTargetTitle: "Kabuuang Target at Progreso",
+    stepTotalTargetDesc:
+      "Subaybayan ang iyong kabuuang target sa pag-iipon, naipong pondo, porsyento ng progreso, at natitirang kulang sa lahat ng aktibong layunin.",
+    stepStatusFiltersTitle: "Mga Filter ng Katayuan",
+    stepStatusFiltersDesc:
+      "Madaling mag-filter sa pagitan ng Lahat ng Layunin, Kasalukuyang Isinasagawa, at Nakumpleto gamit ang mga live counter badge.",
+    stepFirstItemMarkCompleteTitle: "Markahan bilang Nakumpleto",
+    stepFirstItemMarkCompleteDesc:
+      "Ipagdiwang ang pag-abot sa iyong target sa pamamagitan ng pagmamarka dito bilang nakumpleto, o muling buksan ito kailanman.",
+    stepFabTitle: "Magdagdag ng Bagong Layunin",
+    stepFabDesc:
+      "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",
