@@ -200,7 +200,7 @@ export function ScheduledTransactionsScreen() {
         setFormVisible(true);
       }, {
         featureTitle: "Scheduled Transactions Limit",
-        featureDescription: "The free tier includes 1 active scheduled transaction. Upgrade to Kaizen Pro for unlimited recurring transactions, automatic background posting, and recurrence analytics.",
+        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS} active scheduled transactions. Upgrade to Kaizen Pro for unlimited recurring transactions, automatic background posting, and recurrence analytics.`,
       });
       return;
     }
@@ -530,7 +530,7 @@ export function ScheduledTransactionsScreen() {
                 restore(toRestore.id);
               }, {
                 featureTitle: "Scheduled Transactions Limit",
-                featureDescription: "Restoring this schedule would exceed the free tier limit of 1 scheduled transaction. Upgrade to Kaizen Pro for unlimited schedules.",
+                featureDescription: `Restoring this schedule would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS} scheduled transactions. Upgrade to Kaizen Pro for unlimited schedules.`,
               });
               return;
             }

@@ -55,7 +55,7 @@ export function GoalsScreen() {
         setIsFormOpen(true);
       }, {
         featureTitle: "Savings Goal Limit",
-        featureDescription: "The free tier includes 1 active savings goal. Upgrade to Kaizen Pro to set unlimited goals, track multi-account targets, and project completion dates.",
+        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_GOALS} active savings goals. Upgrade to Kaizen Pro to set unlimited goals, track multi-account targets, and project completion dates.`,
       });
       return;
     }

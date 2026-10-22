@@ -180,7 +180,7 @@ export function AccountsScreen({
         open({ kind: "pocket-form", accountId: account.id });
       }, {
         featureTitle: "Pocket Limit Reached",
-        featureDescription: "The free tier includes up to 3 pockets per account. Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.",
+        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT} pockets per account. Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.`,
       });
       return;
     }
@@ -336,7 +336,7 @@ export function AccountsScreen({
               open({ kind: "create" });
             }, {
               featureTitle: "Account Limit Reached",
-              featureDescription: "The free tier includes up to 3 active accounts. Upgrade to Kaizen Pro for unlimited accounts, custom icons, sub-pockets, and comprehensive portfolio tracking.",
+              featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_ACCOUNTS} active accounts. Upgrade to Kaizen Pro for unlimited accounts, custom icons, sub-pockets, and comprehensive portfolio tracking.`,
             });
             return;
           }
@@ -422,7 +422,7 @@ export function AccountsScreen({
             setArchivedModalOpen(false);
             guardAction(() => {}, {
               featureTitle: "Account Limit Reached",
-              featureDescription: "Restoring this account would exceed the free tier limit of 3 accounts. Upgrade to Kaizen Pro for unlimited accounts.",
+              featureDescription: `Restoring this account would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_ACCOUNTS} accounts. Upgrade to Kaizen Pro for unlimited accounts.`,
             });
             return false;
           }
@@ -438,7 +438,7 @@ export function AccountsScreen({
               setArchivedModalOpen(false);
               guardAction(() => {}, {
                 featureTitle: "Pocket Limit Reached",
-                featureDescription: "Restoring this pocket would exceed the free tier limit of 3 pockets for this account. Upgrade to Kaizen Pro for unlimited pockets.",
+                featureDescription: `Restoring this pocket would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT} pockets for this account. Upgrade to Kaizen Pro for unlimited pockets.`,
               });
               return false;
             }

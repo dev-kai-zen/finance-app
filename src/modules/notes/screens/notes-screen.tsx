@@ -61,7 +61,7 @@ export function NotesScreen() {
         setEditorVisible(true);
       }, {
         featureTitle: "Note Limit Reached",
-        featureDescription: "The free tier includes 1 active note. Upgrade to Kaizen Pro for unlimited notes, document and receipt attachments, custom color tagging, and pinned financial checklists.",
+        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_NOTES} active notes. Upgrade to Kaizen Pro for unlimited notes, document and receipt attachments, custom color tagging, and pinned financial checklists.`,
       });
       return;
     }

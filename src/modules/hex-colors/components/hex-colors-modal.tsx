@@ -15,7 +15,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { ProPaywallModal, useProStatus } from "@/modules/pro";
+import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useHexColors } from "../hooks/use-hex-colors";
 import type { HexColor, HexColorInput } from "../types/hex-color.types";
 import { HexColorFormModal } from "./hex-color-form-modal";
@@ -35,7 +35,7 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
 
   const { colors, loading, error, clearError, addColor, editColor, removeColor } = useHexColors();
 
-  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [proModalVisible, setProModalVisible] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<HexColor | null>(null);
   const [deletingColor, setDeletingColor] = useState<HexColor | null>(null);
@@ -43,7 +43,7 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
 
   const handleOpenCreate = () => {
     if (!isPro) {
-      setPaywallOpen(true);
+      setProModalVisible(true);
       return;
     }
     setEditingColor(null);
@@ -229,9 +229,11 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
         visible={visible && Boolean(actionError ?? error)}
       />
 
-      <ProPaywallModal
-        onClose={() => setPaywallOpen(false)}
-        visible={paywallOpen}
+      <ProFeatureModal
+        featureDescription="Create custom hex color palettes to personalize accounts, categories, and tags across your finances with Kaizen Pro."
+        featureTitle="Custom Hex Colors"
+        onClose={() => setProModalVisible(false)}
+        visible={proModalVisible}
       />
     </>
   );
