@@ -599,6 +599,26 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
   },
+  notesWalkthrough: {
+    stepEmptyCreateTitle: "Create Your First Note",
+    stepEmptyCreateDesc:
+      "Tap here to start capturing your thoughts, financial checklists, memos, and receipt photos.",
+    stepSearchTitle: "Search Notes",
+    stepSearchDesc:
+      "Quickly find any note by searching through titles, checklist items, or memo content.",
+    stepViewModeTitle: "Display Mode",
+    stepViewModeDesc:
+      "Toggle between square tiles for a visual gallery or a compact list view.",
+    stepSortFilterTitle: "Modified & Sort Filter",
+    stepSortFilterDesc:
+      "Sort your notes by last modified date (newest or oldest) or alphabetically by title.",
+    stepFirstItemTitle: "Note Preview & Gestures",
+    stepFirstItemDesc:
+      "Tap any note to view or edit details. When the display mode is list, you can swipe it to the left to show the delete button.",
+    stepFabTitle: "Add New Note",
+    stepFabDesc:
+      "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

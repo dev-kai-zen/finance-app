@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -14,6 +14,14 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  DraggableTourChip,
+  NotesWalkthroughOverlay,
+  useNotesWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+} from "@/modules/walkthrough";
 import { NoteCardTile } from "../components/note-card-tile";
 import { NoteEditorModal } from "../components/note-editor-modal";
 import { NoteSortFilterBar } from "../components/note-sort-filter-bar";
@@ -22,6 +30,14 @@ import { useNotes } from "../hooks/use-notes";
 import type { Note, NoteAttachmentDraft } from "../types/note.types";
 
 export function NotesScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <NotesScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function NotesScreenContent() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -47,6 +63,27 @@ export function NotesScreen() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Walkthrough targets & coordination
+  const emptyCreateRef = useWalkthroughTarget("notesEmptyCreateButton");
+  const searchRef = useWalkthroughTarget("notesSearch");
+  const viewModeRef = useWalkthroughTarget("notesViewMode");
+  const sortFilterRef = useWalkthroughTarget("notesSortFilter");
+  const firstNoteRef = useWalkthroughTarget("notesFirstItem");
+  const fabRef = useWalkthroughTarget("notesFab");
+
+  const hasNotes = notes.length > 0;
+  const walkthrough = useNotesWalkthrough({ hasNotes });
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    if (!loading && !isPromptDismissed("notesWalkthroughDismissed")) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   useFocusEffect(
     useCallback(() => {
@@ -134,12 +171,24 @@ export function NotesScreen() {
     <PageContainer
       contentContainerStyle={contentSpacing}
       floatingAction={
-        notes.length > 0 ? (
-          <FloatingActionButton
-            accessibilityLabel="Add new note"
-            onPress={handleOpenNewNote}
+        <>
+          {notes.length > 0 ? (
+            <FloatingActionButton
+              accessibilityLabel="Add new note"
+              fabRef={fabRef}
+              onPress={handleOpenNewNote}
+            />
+          ) : null}
+          <DraggableTourChip
+            onPress={() => {
+              if (search.length > 0) {
+                setSearch("");
+              }
+              walkthrough.startWalkthrough();
+            }}
+            visible={!walkthrough.isWalkthroughActive}
           />
-        ) : undefined
+        </>
       }
     >
       <View style={styles.container}>
@@ -151,6 +200,7 @@ export function NotesScreen() {
           /* Empty state when user hasn't created any notes yet */
           <PageEmptyState
             actionLabel="+ Create First Note"
+            actionRef={emptyCreateRef}
             description="Capture your financial goals, checklists, memos, and receipt photos."
             onAction={handleOpenNewNote}
             title="No Notes Yet"
@@ -163,8 +213,11 @@ export function NotesScreen() {
               onSortByChange={setSortBy}
               onViewModeChange={setViewMode}
               search={search}
+              searchRef={searchRef}
               sortBy={sortBy}
+              sortFilterRef={sortFilterRef}
               viewMode={viewMode}
+              viewModeRef={viewModeRef}
             />
 
             {hasNoNotes && isSearchActive ? (
@@ -178,8 +231,13 @@ export function NotesScreen() {
             ) : viewMode === "tiles" ? (
               /* Square Tiles View (2 Columns) */
               <View style={styles.tilesGrid}>
-                {notes.map((item) => (
-                  <View key={item.id} style={styles.tileCol}>
+                {notes.map((item, index) => (
+                  <View
+                    key={item.id}
+                    collapsable={false}
+                    ref={index === 0 ? firstNoteRef : undefined}
+                    style={styles.tileCol}
+                  >
                     <NoteCardTile note={item} onPress={handleSelectNote} />
                   </View>
                 ))}
@@ -187,13 +245,18 @@ export function NotesScreen() {
             ) : (
               /* Table / Rows View with swipe-to-delete */
               <View style={styles.tableList}>
-                {notes.map((item) => (
-                  <NoteTableRow
+                {notes.map((item, index) => (
+                  <View
                     key={item.id}
-                    note={item}
-                    onDelete={handleConfirmDeleteFromRow}
-                    onPress={handleSelectNote}
-                  />
+                    collapsable={false}
+                    ref={index === 0 ? firstNoteRef : undefined}
+                  >
+                    <NoteTableRow
+                      note={item}
+                      onDelete={handleConfirmDeleteFromRow}
+                      onPress={handleSelectNote}
+                    />
+                  </View>
                 ))}
               </View>
             )}
@@ -226,6 +289,26 @@ export function NotesScreen() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      {/* Notes Walkthrough Overlay */}
+      <NotesWalkthroughOverlay
+        onEmptyCreatePress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenNewNote();
+        }}
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenNewNote();
+        }}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </PageContainer>
   );

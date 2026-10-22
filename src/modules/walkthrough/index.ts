@@ -37,6 +37,10 @@ export { GoalsWalkthroughOverlay } from "./goals/goals-walkthrough-overlay";
 export { useGoalsWalkthrough } from "./goals/use-goals-walkthrough";
 export { getGoalsWalkthroughSteps } from "./goals/goals-walkthrough-steps";
 
+export { NotesWalkthroughOverlay } from "./notes/notes-walkthrough-overlay";
+export { useNotesWalkthrough } from "./notes/use-notes-walkthrough";
+export { getNotesWalkthroughSteps } from "./notes/notes-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

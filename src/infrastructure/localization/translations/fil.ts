@@ -612,6 +612,26 @@ export const fil = {
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
   },
+  notesWalkthrough: {
+    stepEmptyCreateTitle: "Gumawa ng Unang Tala",
+    stepEmptyCreateDesc:
+      "Pindutin dito upang simulan ang pagtatala ng iyong mga saloobin, financial checklist, memo, at mga larawan ng resibo.",
+    stepSearchTitle: "Maghanap ng mga Tala",
+    stepSearchDesc:
+      "Mabilis na maghanap ng anumang tala sa pamamagitan ng paghahanap sa mga pamagat, checklist, o nilalaman.",
+    stepViewModeTitle: "Mode ng Display",
+    stepViewModeDesc:
+      "Lumipat sa pagitan ng square tiles para sa visual na gallery o isang compact na listahan.",
+    stepSortFilterTitle: "Filter sa Pagbabago at Pag-ayos",
+    stepSortFilterDesc:
+      "Isaayos ang iyong mga tala ayon sa huling petsa ng pagbabago (pinakabago o pinakaluma) o ayon sa alpabeto ayon sa pamagat.",
+    stepFirstItemTitle: "Preview ng Tala at mga Galaw",
+    stepFirstItemDesc:
+      "Pindutin ang anumang tala upang tingnan o i-edit ang mga detalye. Kapag ang display mode ay listahan, maaari mo itong i-swipe pakaliwa upang lumabas ang delete button.",
+    stepFabTitle: "Magdagdag ng Bagong Tala",
+    stepFabDesc:
+      "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

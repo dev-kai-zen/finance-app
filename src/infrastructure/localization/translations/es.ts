@@ -611,6 +611,26 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
   },
+  notesWalkthrough: {
+    stepEmptyCreateTitle: "Crea tu primera nota",
+    stepEmptyCreateDesc:
+      "Toca aquí para comenzar a capturar tus pensamientos, listas de verificación financieras, notas y fotos de recibos.",
+    stepSearchTitle: "Buscar notas",
+    stepSearchDesc:
+      "Encuentra rápidamente cualquier nota buscando en títulos, listas de verificación o notas.",
+    stepViewModeTitle: "Modo de visualización",
+    stepViewModeDesc:
+      "Alterna entre mosaicos cuadrados para una galería visual o una vista de lista compacta.",
+    stepSortFilterTitle: "Filtro de modificación y orden",
+    stepSortFilterDesc:
+      "Ordena tus notas por fecha de última modificación (más reciente o más antigua) o alfabéticamente por título.",
+    stepFirstItemTitle: "Vista previa y gestos de notas",
+    stepFirstItemDesc:
+      "Toca cualquier nota para ver o editar detalles. Cuando el modo de visualización sea lista, puedes deslizar hacia la izquierda para mostrar el botón de eliminar.",
+    stepFabTitle: "Agregar nueva nota",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",

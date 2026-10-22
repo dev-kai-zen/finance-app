@@ -42,7 +42,13 @@ export type WalkthroughTargetId =
   | "goalTotalTargetCard"
   | "goalStatusFilters"
   | "goalFirstItemMarkComplete"
-  | "goalFab";
+  | "goalFab"
+  | "notesEmptyCreateButton"
+  | "notesSearch"
+  | "notesViewMode"
+  | "notesSortFilter"
+  | "notesFirstItem"
+  | "notesFab";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

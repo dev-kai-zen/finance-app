@@ -1,0 +1,107 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  getNotesWalkthroughSteps,
+  type GetNotesWalkthroughStepsOptions,
+} from "./notes-walkthrough-steps";
+import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
+import { useWalkthroughRegistry } from "../components/walkthrough-target";
+
+export function useNotesWalkthrough(options: GetNotesWalkthroughStepsOptions) {
+  const { hasNotes } = options;
+  const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
+  const { measureTarget } = useWalkthroughRegistry();
+
+  const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [activeTargetLayout, setActiveTargetLayout] =
+    useState<LayoutRect | null>(null);
+
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const steps = useMemo(
+    () => getNotesWalkthroughSteps({ hasNotes }),
+    [hasNotes],
+  );
+
+  const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
+
+  const updateMeasurement = useCallback(
+    (step: WalkthroughStep) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+
+      timerRef.current = setTimeout(async () => {
+        const layout = await measureTarget(step.targetId);
+        setActiveTargetLayout(layout);
+      }, 100);
+    },
+    [measureTarget],
+  );
+
+  const startWalkthrough = useCallback(() => {
+    setActiveStepIndex(0);
+    setIsWalkthroughActive(true);
+    if (steps[0]) {
+      updateMeasurement(steps[0]);
+    }
+  }, [steps, updateMeasurement]);
+
+  const skipWalkthrough = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsWalkthroughActive(false);
+    setActiveTargetLayout(null);
+    dismissPrompt("notesWalkthroughDismissed");
+  }, [dismissPrompt]);
+
+  const completeWalkthrough = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setIsWalkthroughActive(false);
+    setActiveTargetLayout(null);
+    dismissPrompt("notesWalkthroughDismissed");
+  }, [dismissPrompt]);
+
+  const nextStep = useCallback(() => {
+    if (activeStepIndex >= steps.length - 1) {
+      completeWalkthrough();
+      return;
+    }
+    const nextIdx = activeStepIndex + 1;
+    setActiveStepIndex(nextIdx);
+    const nextStepObj = steps[nextIdx];
+    if (nextStepObj) {
+      updateMeasurement(nextStepObj);
+    }
+  }, [activeStepIndex, completeWalkthrough, steps, updateMeasurement]);
+
+  const prevStep = useCallback(() => {
+    if (activeStepIndex <= 0) return;
+    const prevIdx = activeStepIndex - 1;
+    setActiveStepIndex(prevIdx);
+    const prevStepObj = steps[prevIdx];
+    if (prevStepObj) {
+      updateMeasurement(prevStepObj);
+    }
+  }, [activeStepIndex, steps, updateMeasurement]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return {
+    isWalkthroughActive,
+    activeStepIndex,
+    totalSteps: steps.length,
+    currentStep,
+    activeTargetLayout,
+    isCompleted: isPromptDismissed("notesWalkthroughDismissed"),
+    startWalkthrough,
+    skipWalkthrough,
+    completeWalkthrough,
+    nextStep,
+    prevStep,
+  };
+}
