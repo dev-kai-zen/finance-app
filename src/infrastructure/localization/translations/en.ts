@@ -423,6 +423,38 @@ export const en = {
       "Turn on credit cards and installments for card purchases.",
     promptCreditCardsAction: "Turn on",
     promptDismiss: "Not now",
+    walkthroughChip: "Tour",
+    walkthroughSkip: "Skip",
+    walkthroughNext: "Next",
+    walkthroughBack: "Back",
+    walkthroughStartTx: "Tap + below to start",
+    walkthroughStepCount: "Step %{current} of %{total}",
+    stepNetWorthTitle: "Net Worth Overview",
+    stepNetWorthDesc:
+      "This card gives you a complete financial snapshot—calculating your total net worth (assets minus liabilities) and tracking your balance history.",
+    stepCollapseTitle: "Collapse Chart",
+    stepCollapseDesc:
+      "Tap this chevron anytime to collapse or expand the net worth history chart, giving you a compact view.",
+    stepSettingsTitle: "Display Settings",
+    stepSettingsDesc:
+      "Customize how your dashboard looks. Tap Next to see how you can switch between Simple and Detailed display modes.",
+    stepSettingsModalTitle: "Display Mode Options",
+    stepSettingsModalDesc:
+      "In Simple mode, friendly labels focus on cash and current spending. In Detailed mode, you see full assets and liabilities. Switch anytime!",
+    stepEyeTitle: "Privacy Masking",
+    stepEyeDesc:
+      "Tap the eye icon to quickly hide or reveal your balance amounts (••••••), ideal for using the app in public.",
+    stepRecentTxTitle: "Recent Transactions",
+    stepRecentTxDesc:
+      "Your latest spending, income, and transfers appear here. Tap any item to inspect its details, attachments, or edit.",
+    stepFabTitle: "Record Your First Transaction",
+    stepFabDesc:
+      "Tap the (+) button right here to add your very first transaction and start tracking your finances!",
+    congratulationsTitle: "🎉 Congratulations!",
+    congratulationsSubtitle: "First Transaction Recorded!",
+    congratulationsMessage:
+      "You've taken the first step in mastering your money. Every transaction you record brings you closer to your financial goals.",
+    congratulationsButton: "Explore Dashboard",
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",

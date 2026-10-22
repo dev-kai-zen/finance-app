@@ -24,6 +24,7 @@ export interface PageContainerProps extends PropsWithChildren {
   contentContainerStyle?: ViewStyle;
   maxWidth?: number;
   scrollable?: boolean;
+  scrollRef?: React.RefObject<ScrollView | null>;
 }
 
 export function PageContainer({
@@ -33,6 +34,7 @@ export function PageContainer({
   contentContainerStyle,
   maxWidth = LAYOUT_DIMENSIONS.maxContentWidth,
   scrollable = true,
+  scrollRef,
 }: PageContainerProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -72,6 +74,7 @@ export function PageContainer({
   return (
     <View style={styles.outerWrapper}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator

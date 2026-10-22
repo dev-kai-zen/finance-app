@@ -1,6 +1,7 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Sparkles } from "lucide-react-native";
 import {
   ConfirmModal,
   FloatingActionButton,
@@ -9,7 +10,8 @@ import {
   PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -17,7 +19,6 @@ import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import { useExperiencePreferences, useUserNickname } from "@/modules/settings";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
 import { ExperiencePromptsCard } from "../components/experience-prompts-card";
-import { FirstExpenseHintCard } from "../components/first-expense-hint-card";
 import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
@@ -29,14 +30,36 @@ import {
 } from "@/modules/transactions";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
+import {
+  WalkthroughRegistryProvider,
+  useWalkthroughRegistry,
+  DashboardWalkthroughOverlay,
+  DashboardCongratulationsModal,
+  useDashboardWalkthrough,
+} from "@/modules/walkthrough";
 import { useDashboard } from "../hooks/use-dashboard";
 
 export function DashboardScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <DashboardScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function DashboardScreenContent() {
   const router = useRouter();
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
-  const { homeMode, isPromptDismissed, setHomeMode } = useExperiencePreferences();
+  const {
+    homeMode,
+    isPromptDismissed,
+    setHomeMode,
+    dismissPrompt,
+  } = useExperiencePreferences();
   const { nickname } = useUserNickname();
 
   const {
@@ -84,6 +107,46 @@ export function DashboardScreen() {
     useState<TransactionListItem | null>(null);
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const fabRef = useRef<View>(null);
+  const { registerTarget } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    if (targetId === "recentTxCard") {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    } else if (
+      targetId === "netWorthCard" ||
+      targetId === "collapseIcon" ||
+      targetId === "settingsIcon" ||
+      targetId === "eyeIcon"
+    ) {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, []);
+
+  const walkthrough = useDashboardWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    registerTarget("fabButton", fabRef);
+    return () => registerTarget("fabButton", null);
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (
+      summary &&
+      !loading &&
+      !isPromptDismissed("dashboardWalkthroughDismissed")
+    ) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [summary, loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   useFocusEffect(
     useCallback(() => {
@@ -185,11 +248,18 @@ export function DashboardScreen() {
     preset?: Parameters<typeof recordTransaction>[1],
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
+    const isFirstEverTransaction = recentTx.length === 0;
     const success = await recordTransaction(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      if (
+        isFirstEverTransaction &&
+        !isPromptDismissed("firstTransactionCelebrated")
+      ) {
+        setShowCongratulationsModal(true);
+      }
     }
     return success;
   };
@@ -199,11 +269,18 @@ export function DashboardScreen() {
     preset?: Parameters<typeof recordTransfer>[1],
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
+    const isFirstEverTransaction = recentTx.length === 0;
     const success = await recordTransfer(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      if (
+        isFirstEverTransaction &&
+        !isPromptDismissed("firstTransactionCelebrated")
+      ) {
+        setShowCongratulationsModal(true);
+      }
     }
     return success;
   };
@@ -215,20 +292,23 @@ export function DashboardScreen() {
   const expenseTransactionCount = recentTx.filter(
     (transaction) => transaction.type === "expense",
   ).length;
-  const showFirstExpenseHint =
-    homeMode === "simple" &&
-    !isPromptDismissed("firstExpenseDismissed") &&
-    recentTx.length === 0;
   const hasCreditCardAccount = activeAccounts.some(
     (account) => account.creditCardDetails,
   );
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       floatingAction={
         <FloatingActionButton
           accessibilityLabel="Record new transaction"
-          onPress={() => handleOpenTransactionModal("expense")}
+          fabRef={fabRef}
+          onPress={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            handleOpenTransactionModal("expense");
+          }}
         />
       }
     >
@@ -248,7 +328,23 @@ export function DashboardScreen() {
           )
         ) : (
           <>
-            <FirstExpenseHintCard visible={showFirstExpenseHint} onDismiss={() => {}} />
+            <View style={styles.topTourRow}>
+              <Pressable
+                accessibilityLabel={t("dashboard.walkthroughChip")}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={walkthrough.startWalkthrough}
+                style={({ pressed }) => [
+                  styles.tourChip,
+                  pressed && styles.tourChipPressed,
+                ]}
+              >
+                <Sparkles color={theme.colors.primary} size={14} />
+                <Text style={styles.tourChipText}>
+                  {t("dashboard.walkthroughChip")}
+                </Text>
+              </Pressable>
+            </View>
             <ExperiencePromptsCard
               activeAccountCount={activeAccounts.length}
               expenseTransactionCount={expenseTransactionCount}
@@ -353,6 +449,29 @@ export function DashboardScreen() {
         variant="destructive"
         visible={pendingDeleteId !== null}
       />
+
+      <DashboardWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenTransactionModal("expense");
+        }}
+      />
+
+      <DashboardCongratulationsModal
+        visible={showCongratulationsModal}
+        onClose={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
+      />
     </PageContainer>
   );
 }
@@ -362,7 +481,32 @@ function createStyles(theme: AppTheme) {
     container: {
       gap: theme.spacing.lg,
       paddingBottom: 80,
-      paddingTop: theme.spacing.lg,
+      paddingTop: theme.spacing.xs,
+    },
+    topTourRow: {
+      alignItems: "flex-end",
+      marginBottom: -theme.spacing.sm,
+    },
+    tourChip: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderColor: `${theme.colors.primary}35`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 5,
+    },
+    tourChipPressed: {
+      opacity: 0.75,
+      backgroundColor: `${theme.colors.primary}22`,
+    },
+    tourChipText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.2,
     },
   });
 }

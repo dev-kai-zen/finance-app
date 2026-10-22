@@ -436,6 +436,38 @@ export const fil = {
       "I-on ang credit cards at installments para sa mga card purchase.",
     promptCreditCardsAction: "I-on",
     promptDismiss: "Hindi muna",
+    walkthroughChip: "Tour",
+    walkthroughSkip: "Laktawan",
+    walkthroughNext: "Susunod",
+    walkthroughBack: "Bumalik",
+    walkthroughStartTx: "I-tap ang + sa ibaba para magsimula",
+    walkthroughStepCount: "Hakbang %{current} ng %{total}",
+    stepNetWorthTitle: "Kabuuang Net Worth",
+    stepNetWorthDesc:
+      "Ipinapakita rito ang iyong kabuuang financial snapshot—kinakalkula ang net worth (assets bawas liabilities) at ang history ng balance.",
+    stepCollapseTitle: "I-collapse ang Chart",
+    stepCollapseDesc:
+      "I-tap ang chevron na ito anumang oras para itago o ilabas ang chart at makatipid sa espasyo.",
+    stepSettingsTitle: "Display Settings",
+    stepSettingsDesc:
+      "I-customize ang itsura ng dashboard. I-tap ang Susunod para makita kung paano lumipat sa Simple at Detalyadong mode.",
+    stepSettingsModalTitle: "Mga Opsyon sa Display",
+    stepSettingsModalDesc:
+      "Sa Simple mode, madaling basahin ang pera at gastusin. Sa Detalyado, buo ang assets at liabilities. Malilipat mo ito anumang oras!",
+    stepEyeTitle: "Itago ang Halaga",
+    stepEyeDesc:
+      "I-tap ang mata para itago o ipakita ang iyong mga halaga (••••••) kapag may ibang kasama o nasa publiko.",
+    stepRecentTxTitle: "Kamakailang Transaksyon",
+    stepRecentTxDesc:
+      "Lalabas dito ang iyong mga bagong gastos, kita, at transfers. I-tap ang alinman para tingnan ang detalye o i-edit.",
+    stepFabTitle: "I-record ang Unang Transaksyon",
+    stepFabDesc:
+      "I-tap ang (+) button dito para ilagay ang iyong pinakaunang transaksyon at simulan ang pagsubaybay!",
+    congratulationsTitle: "🎉 Maligayang Bati!",
+    congratulationsSubtitle: "Naitala ang Unang Transaksyon!",
+    congratulationsMessage:
+      "Nagawa mo ang unang hakbang sa pamamahala ng iyong pera. Bawat transaksyon ay maglalapit sa iyo sa iyong mga financial goals.",
+    congratulationsButton: "Tingnan ang Dashboard",
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",

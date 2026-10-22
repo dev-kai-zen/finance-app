@@ -59,6 +59,8 @@ export const PROMPT_SETTING_KEYS = {
   quickPresetsOfferDismissed: "prompt.quickPresetsOfferDismissed",
   transfersOfferDismissed: "prompt.transfersOfferDismissed",
   creditCardsOfferDismissed: "prompt.creditCardsOfferDismissed",
+  dashboardWalkthroughDismissed: "prompt.dashboardWalkthroughDismissed",
+  firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
 } as const;
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";

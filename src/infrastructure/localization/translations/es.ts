@@ -435,6 +435,38 @@ export const es = {
       "Activa tarjetas y plazos para compras con tarjeta.",
     promptCreditCardsAction: "Activar",
     promptDismiss: "Ahora no",
+    walkthroughChip: "Guía",
+    walkthroughSkip: "Omitir",
+    walkthroughNext: "Siguiente",
+    walkthroughBack: "Atrás",
+    walkthroughStartTx: "Toca + para empezar",
+    walkthroughStepCount: "Paso %{current} de %{total}",
+    stepNetWorthTitle: "Patrimonio neto",
+    stepNetWorthDesc:
+      "Esta tarjeta te muestra un resumen financiero completo: calcula tu patrimonio neto total (activos menos pasivos) y el historial de balance.",
+    stepCollapseTitle: "Plegar gráfico",
+    stepCollapseDesc:
+      "Toca este icono para plegar o desplegar el gráfico de patrimonio neto y ahorrar espacio.",
+    stepSettingsTitle: "Configuración de vista",
+    stepSettingsDesc:
+      "Personaliza el estilo de tu panel. Toca Siguiente para ver cómo cambiar entre las vistas Simple y Detallada.",
+    stepSettingsModalTitle: "Opciones de visualización",
+    stepSettingsModalDesc:
+      "En el modo Simple, verás etiquetas claras sobre dinero y gasto. En el modo Detallado, activos y pasivos completos. ¡Cambia cuando quieras!",
+    stepEyeTitle: "Ocultar saldos",
+    stepEyeDesc:
+      "Toca el ojo para ocultar o mostrar los importes (••••••) cuando uses la app en lugares públicos.",
+    stepRecentTxTitle: "Transacciones recientes",
+    stepRecentTxDesc:
+      "Tus gastos, ingresos y transferencias más recientes aparecen aquí. Toca cualquiera para ver detalles o editar.",
+    stepFabTitle: "Registra tu primera transacción",
+    stepFabDesc:
+      "¡Toca el botón (+) aquí para añadir tu primera transacción y empezar a controlar tu dinero!",
+    congratulationsTitle: "🎉 ¡Felicitaciones!",
+    congratulationsSubtitle: "¡Primera transacción registrada!",
+    congratulationsMessage:
+      "Has dado el primer paso para dominar tus finanzas. Cada registro te acerca más a tus objetivos.",
+    congratulationsButton: "Explorar panel",
   },
   resetData: {
     dismissAccessibility:
