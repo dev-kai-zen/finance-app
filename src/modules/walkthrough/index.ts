@@ -4,6 +4,7 @@ export {
   useWalkthroughRegistry,
   useWalkthroughTarget,
 } from "./components/walkthrough-target";
+export { DraggableTourChip } from "./components/draggable-tour-chip";
 
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";
 export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulations-modal";

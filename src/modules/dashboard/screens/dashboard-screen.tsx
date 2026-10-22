@@ -1,7 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Sparkles } from "lucide-react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import {
   ConfirmModal,
   FloatingActionButton,
@@ -10,8 +9,7 @@ import {
   PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
-import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { useLocalization } from "@/infrastructure/localization";
+import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -35,6 +33,7 @@ import {
   useWalkthroughRegistry,
   DashboardWalkthroughOverlay,
   DashboardCongratulationsModal,
+  DraggableTourChip,
   useDashboardWalkthrough,
 } from "@/modules/walkthrough";
 import { useDashboard } from "../hooks/use-dashboard";
@@ -49,9 +48,7 @@ export function DashboardScreen() {
 
 function DashboardScreenContent() {
   const router = useRouter();
-  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { t } = useLocalization();
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const {
@@ -300,16 +297,22 @@ function DashboardScreenContent() {
     <PageContainer
       scrollRef={scrollRef}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Record new transaction"
-          fabRef={fabRef}
-          onPress={() => {
-            if (walkthrough.isWalkthroughActive) {
-              walkthrough.completeWalkthrough();
-            }
-            handleOpenTransactionModal("expense");
-          }}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Record new transaction"
+            fabRef={fabRef}
+            onPress={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              handleOpenTransactionModal("expense");
+            }}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
     >
       <View style={styles.container}>
@@ -328,23 +331,6 @@ function DashboardScreenContent() {
           )
         ) : (
           <>
-            <View style={styles.topTourRow}>
-              <Pressable
-                accessibilityLabel={t("dashboard.walkthroughChip")}
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={walkthrough.startWalkthrough}
-                style={({ pressed }) => [
-                  styles.tourChip,
-                  pressed && styles.tourChipPressed,
-                ]}
-              >
-                <Sparkles color={theme.colors.primary} size={14} />
-                <Text style={styles.tourChipText}>
-                  {t("dashboard.walkthroughChip")}
-                </Text>
-              </Pressable>
-            </View>
             <ExperiencePromptsCard
               activeAccountCount={activeAccounts.length}
               expenseTransactionCount={expenseTransactionCount}
@@ -481,32 +467,7 @@ function createStyles(theme: AppTheme) {
     container: {
       gap: theme.spacing.lg,
       paddingBottom: 80,
-      paddingTop: theme.spacing.xs,
-    },
-    topTourRow: {
-      alignItems: "flex-end",
-      marginBottom: -theme.spacing.sm,
-    },
-    tourChip: {
-      alignItems: "center",
-      backgroundColor: `${theme.colors.primary}12`,
-      borderColor: `${theme.colors.primary}35`,
-      borderRadius: theme.borderRadius.round,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 5,
-      paddingHorizontal: theme.spacing.md,
-      paddingVertical: 5,
-    },
-    tourChipPressed: {
-      opacity: 0.75,
-      backgroundColor: `${theme.colors.primary}22`,
-    },
-    tourChipText: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.semibold,
-      letterSpacing: 0.2,
+      paddingTop: theme.spacing.lg,
     },
   });
 }
