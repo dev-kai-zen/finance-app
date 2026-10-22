@@ -11,6 +11,10 @@ export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulat
 export { useDashboardWalkthrough } from "./dashboard/use-dashboard-walkthrough";
 export { DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard/dashboard-walkthrough-steps";
 
+export { AccountsWalkthroughOverlay } from "./accounts/accounts-walkthrough-overlay";
+export { useAccountsWalkthrough } from "./accounts/use-accounts-walkthrough";
+export { ACCOUNTS_WALKTHROUGH_STEPS } from "./accounts/accounts-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

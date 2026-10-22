@@ -5,7 +5,14 @@ export type WalkthroughTargetId =
   | "settingsDemonstration"
   | "eyeIcon"
   | "recentTxCard"
-  | "fabButton";
+  | "fabButton"
+  | "archivedChip"
+  | "fundGroupsChip"
+  | "searchBox"
+  | "assetsSection"
+  | "liabilitiesSection"
+  | "accountsFab"
+  | "accountsSheetDemonstration";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

@@ -1,11 +1,20 @@
-import { useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, ScrollView, View } from "react-native";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  useWalkthroughRegistry,
+  DraggableTourChip,
+  AccountsWalkthroughOverlay,
+  useAccountsWalkthrough,
+} from "@/modules/walkthrough";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
 import { AccountRow } from "@/modules/accounts/components/account-row";
@@ -43,7 +52,17 @@ type Overlay =
   | { kind: "edit-type"; type: AccountType }
   | null;
 
-export function AccountsScreen({
+export function AccountsScreen(props: {
+  initialView?: "types" | "account";
+}) {
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountsScreenContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountsScreenContent({
   initialView,
 }: {
   initialView?: "types" | "account";
@@ -69,6 +88,37 @@ export function AccountsScreen({
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
     () => new Set(),
   );
+
+  const scrollRef = useRef<ScrollView>(null);
+  const fabRef = useRef<View>(null);
+  const { registerTarget } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    registerTarget("accountsFab", fabRef);
+    return () => registerTarget("accountsFab", null);
+  }, [registerTarget]);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    if (targetId === "liabilitiesSection" || targetId === "accountsFab") {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    } else {
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+    }
+  }, []);
+
+  const walkthrough = useAccountsWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (!data.loading && !isPromptDismissed("accountsWalkthroughDismissed")) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [data.loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -203,11 +253,24 @@ export function AccountsScreen({
   return (
     <PageContainer
       contentContainerStyle={contentSpacing}
+      scrollRef={scrollRef}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Open accounts menu"
-          onPress={() => setFabSheetOpen(true)}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Open accounts menu"
+            fabRef={fabRef}
+            onPress={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setFabSheetOpen(true);
+            }}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
     >
       <AccountError message={data.error} />
@@ -225,49 +288,57 @@ export function AccountsScreen({
       ) : (
         <>
           <View style={managementActions}>
-            <ArchivedAccountsChip
-              count={archivedCount}
-              onPress={() => setArchivedModalOpen(true)}
-            />
-            <FundGroupsChip
-              count={fundGroups.groups.length}
-              onPress={() => {
-                fundGroups.refresh();
-                setFundGroupsModalOpen(true);
-              }}
-            />
+            <WalkthroughTarget id="archivedChip">
+              <ArchivedAccountsChip
+                count={archivedCount}
+                onPress={() => setArchivedModalOpen(true)}
+              />
+            </WalkthroughTarget>
+            <WalkthroughTarget id="fundGroupsChip">
+              <FundGroupsChip
+                count={fundGroups.groups.length}
+                onPress={() => {
+                  fundGroups.refresh();
+                  setFundGroupsModalOpen(true);
+                }}
+              />
+            </WalkthroughTarget>
           </View>
 
-          <AccountSearchBox
-            style={searchSpacing}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          <WalkthroughTarget id="searchBox">
+            <AccountSearchBox
+              style={searchSpacing}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </WalkthroughTarget>
 
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "asset",
               ) || !normalizedSearchQuery ? (
-                <AccountGroupSection
-                  accounts={filteredActive}
-                  group="asset"
-                  pockets={data.pockets}
-                  types={data.types}
-                  onEditType={handleEditType}
-                  expandedPocketAccountIds={expandedPocketAccountIds}
-                  onAddPocket={handleOpenCreatePocket}
-                  onEditPocket={(pocket) =>
-                    open({
-                      kind: "pocket-form",
-                      accountId: pocket.accountId,
-                      pocketId: pocket.id,
-                    })
-                  }
-                  onSelect={select}
-                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
-                  onTogglePockets={togglePockets}
-                />
+                <WalkthroughTarget id="assetsSection">
+                  <AccountGroupSection
+                    accounts={filteredActive}
+                    group="asset"
+                    pockets={data.pockets}
+                    types={data.types}
+                    onEditType={handleEditType}
+                    expandedPocketAccountIds={expandedPocketAccountIds}
+                    onAddPocket={handleOpenCreatePocket}
+                    onEditPocket={(pocket) =>
+                      open({
+                        kind: "pocket-form",
+                        accountId: pocket.accountId,
+                        pocketId: pocket.id,
+                      })
+                    }
+                    onSelect={select}
+                    onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                    onTogglePockets={togglePockets}
+                  />
+                </WalkthroughTarget>
               ) : null}
 
               <AdBanner
@@ -279,25 +350,27 @@ export function AccountsScreen({
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "liability",
               ) || !normalizedSearchQuery ? (
-                <AccountGroupSection
-                  accounts={filteredActive}
-                  group="liability"
-                  pockets={data.pockets}
-                  types={data.types}
-                  onEditType={handleEditType}
-                  expandedPocketAccountIds={expandedPocketAccountIds}
-                  onAddPocket={handleOpenCreatePocket}
-                  onEditPocket={(pocket) =>
-                    open({
-                      kind: "pocket-form",
-                      accountId: pocket.accountId,
-                      pocketId: pocket.id,
-                    })
-                  }
-                  onSelect={select}
-                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
-                  onTogglePockets={togglePockets}
-                />
+                <WalkthroughTarget id="liabilitiesSection">
+                  <AccountGroupSection
+                    accounts={filteredActive}
+                    group="liability"
+                    pockets={data.pockets}
+                    types={data.types}
+                    onEditType={handleEditType}
+                    expandedPocketAccountIds={expandedPocketAccountIds}
+                    onAddPocket={handleOpenCreatePocket}
+                    onEditPocket={(pocket) =>
+                      open({
+                        kind: "pocket-form",
+                        accountId: pocket.accountId,
+                        pocketId: pocket.id,
+                      })
+                    }
+                    onSelect={select}
+                    onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                    onTogglePockets={togglePockets}
+                  />
+                </WalkthroughTarget>
               ) : null}
             </>
           ) : (
@@ -479,6 +552,20 @@ export function AccountsScreen({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <AccountsWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        onFabPress={() => {
+          walkthrough.nextStep();
+        }}
       />
     </PageContainer>
   );

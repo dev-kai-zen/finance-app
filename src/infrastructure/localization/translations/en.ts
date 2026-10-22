@@ -456,6 +456,35 @@ export const en = {
       "You've taken the first step in mastering your money. Every transaction you record brings you closer to your financial goals.",
     congratulationsButton: "Explore Dashboard",
   },
+  accountsWalkthrough: {
+    stepArchivedTitle: "Archived Accounts",
+    stepArchivedDesc:
+      "Access all your archived accounts and sub-pockets safely stored away. You can view their history and restore them anytime.",
+    stepFundGroupsTitle: "Fund Groups",
+    stepFundGroupsDesc:
+      "Organize multiple accounts into custom groups (such as Savings, Operations, or Emergency Funds) to monitor combined totals.",
+    stepSearchTitle: "Search Accounts",
+    stepSearchDesc:
+      "Instantly filter your accounts by name across both assets and liabilities.",
+    stepAssetsTitle: "Assets Overview",
+    stepAssetsDesc:
+      "View your positive accounts—such as bank accounts, cash, investments, and sub-pockets—along with your total asset valuation.",
+    stepLiabilitiesTitle: "Liabilities Overview",
+    stepLiabilitiesDesc:
+      "Track all credit cards, loans, and payable debts so you always know your outstanding obligations.",
+    stepFabTitle: "Accounts Menu",
+    stepFabDesc:
+      "Tap the (+) action button to open the accounts menu where you can create new accounts or set up custom account types.",
+    stepSheetTitle: "Account Actions",
+    stepSheetDesc:
+      "Quickly choose whether to create a new individual account or customize your account categories and grouping structure.",
+    actionAddAccount: "Add New Account",
+    actionAddAccountDesc:
+      "Create bank, cash, wallet, or investment accounts with starting balances.",
+    actionManageTypes: "Account Group Setup",
+    actionManageTypesDesc:
+      "Define and manage custom account types and groups to tailor your tracking.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

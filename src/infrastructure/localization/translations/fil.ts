@@ -469,6 +469,35 @@ export const fil = {
       "Nagawa mo ang unang hakbang sa pamamahala ng iyong pera. Bawat transaksyon ay maglalapit sa iyo sa iyong mga financial goals.",
     congratulationsButton: "Tingnan ang Dashboard",
   },
+  accountsWalkthrough: {
+    stepArchivedTitle: "Mga Naka-archive na Account",
+    stepArchivedDesc:
+      "Tingnan ang lahat ng naka-archive na account at pockets. Ligtas itong nakatago at maaaring ibalik anumang oras.",
+    stepFundGroupsTitle: "Mga Grupo ng Pondo",
+    stepFundGroupsDesc:
+      "Pagsama-samahin ang mga account sa custom na grupo (gaya ng Emergency Fund, Negosyo, o Ipon) para masubaybayan ang kabuuang balanse.",
+    stepSearchTitle: "Maghanap ng Account",
+    stepSearchDesc:
+      "Mabilis na maghanap at mag-filter ng account gamit ang pangalan.",
+    stepAssetsTitle: "Pangkalahatang-ideya ng Assets",
+    stepAssetsDesc:
+      "Tingnan ang iyong mga positibong account—tulad ng bangko, cash, e-wallets, at pockets—kasama ang kabuuang halaga.",
+    stepLiabilitiesTitle: "Pangkalahatang-ideya ng Liabilities",
+    stepLiabilitiesDesc:
+      "Subaybayan ang mga utang, credit card, at bayarin para malinaw ang iyong mga obligasyon.",
+    stepFabTitle: "Menu ng mga Account",
+    stepFabDesc:
+      "I-tap ang (+) action button para magbukas ng menu kung saan makakapagdagdag ng bagong account o makakapag-ayos ng mga uri nito.",
+    stepSheetTitle: "Aksyon para sa Account",
+    stepSheetDesc:
+      "Pumili kung magdadagdag ng bagong account o mag-aayos ng mga grupo at kategorya. I-tap ang Tapos para matapos ang tour!",
+    actionAddAccount: "Magdagdag ng Bagong Account",
+    actionAddAccountDesc:
+      "Gumawa ng bagong account sa bangko, cash, wallet, o puhunan na may panimulang balanse.",
+    actionManageTypes: "Pag-setup ng Grupo ng Account",
+    actionManageTypesDesc:
+      "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

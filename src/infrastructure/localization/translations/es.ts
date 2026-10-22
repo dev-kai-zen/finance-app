@@ -468,6 +468,35 @@ export const es = {
       "Has dado el primer paso para dominar tus finanzas. Cada registro te acerca más a tus objetivos.",
     congratulationsButton: "Explorar panel",
   },
+  accountsWalkthrough: {
+    stepArchivedTitle: "Cuentas archivadas",
+    stepArchivedDesc:
+      "Accede a todas tus cuentas y bolsillos archivados guardados de forma segura. Puedes ver su historial o restaurarlos en cualquier momento.",
+    stepFundGroupsTitle: "Grupos de fondos",
+    stepFundGroupsDesc:
+      "Organiza múltiples cuentas en grupos personalizados (como Fondo de emergencia, Ahorros u Operaciones) para monitorear totales combinados.",
+    stepSearchTitle: "Buscar cuentas",
+    stepSearchDesc:
+      "Filtra rápidamente tus cuentas por nombre en activos y pasivos.",
+    stepAssetsTitle: "Resumen de activos",
+    stepAssetsDesc:
+      "Consulta tus cuentas positivas (bancos, efectivo, inversiones y bolsillos) junto con su saldo total.",
+    stepLiabilitiesTitle: "Resumen de pasivos",
+    stepLiabilitiesDesc:
+      "Lleva el control de tarjetas de crédito, préstamos y deudas pendientes para conocer tus obligaciones.",
+    stepFabTitle: "Menú de cuentas",
+    stepFabDesc:
+      "Toca el botón (+) para abrir el menú de cuentas donde puedes crear nuevas cuentas o configurar tipos y grupos.",
+    stepSheetTitle: "Acciones de cuentas",
+    stepSheetDesc:
+      "Elige si deseas crear una nueva cuenta o configurar tus grupos y categorías de cuentas. ¡Toca Finalizar para completar la guía!",
+    actionAddAccount: "Agregar nueva cuenta",
+    actionAddAccountDesc:
+      "Crea cuentas de banco, efectivo, billetera o inversiones con saldo inicial.",
+    actionManageTypes: "Configuración de grupos",
+    actionManageTypesDesc:
+      "Define y administra tipos y grupos personalizados de cuentas.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",
