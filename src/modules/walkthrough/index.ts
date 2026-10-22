@@ -27,6 +27,11 @@ export { CategoriesWalkthroughOverlay } from "./categories/categories-walkthroug
 export { useCategoriesWalkthrough } from "./categories/use-categories-walkthrough";
 export { getCategoriesWalkthroughSteps } from "./categories/categories-walkthrough-steps";
 
+export { BudgetCongratulationsModal } from "./budgets/budget-congratulations-modal";
+export { BudgetsWalkthroughOverlay } from "./budgets/budgets-walkthrough-overlay";
+export { useBudgetsWalkthrough } from "./budgets/use-budgets-walkthrough";
+export { getBudgetsWalkthroughSteps } from "./budgets/budgets-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

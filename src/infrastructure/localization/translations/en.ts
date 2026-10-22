@@ -554,6 +554,30 @@ export const en = {
     stepAddSubDesc:
       "Add granular subcategories under this group for detailed spending and income tracking.",
   },
+  budgetCongratulations: {
+    title: "First Budget Created!",
+    subtitle: "Smart Spending Management",
+    message:
+      "You've successfully created your first category budget! Track spending limits, avoid overages, and monitor rollover balances with confidence.",
+    button: "Explore Budget Features",
+  },
+  budgetsWalkthrough: {
+    stepEmptyCreateTitle: "Set Your First Budget",
+    stepEmptyCreateDesc:
+      "Tap here to configure spending limits for any category with daily, weekly, monthly, or custom rollover periods.",
+    stepTotalActiveTitle: "Total Active Budget",
+    stepTotalActiveDesc:
+      "Track your combined budgeted limits, real-time spending progress, remaining buffer, and over-budget alerts in one glance.",
+    stepFrequencyTabsTitle: "Frequency Filter",
+    stepFrequencyTabsDesc:
+      "Quickly filter your category budgets by period — daily, weekly, monthly, quarterly, or yearly.",
+    stepFirstItemToggleTitle: "Enable & Disable Budgets",
+    stepFirstItemToggleDesc:
+      "Toggle any budget on or off at will without losing your past transactions or configuration.",
+    stepFabTitle: "Create Category Budget",
+    stepFabDesc:
+      "Tap the (+) button anytime to set up additional category limits and stay on top of your financial goals.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

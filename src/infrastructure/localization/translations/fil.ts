@@ -567,6 +567,30 @@ export const fil = {
     stepAddSubDesc:
       "Magdagdag ng detalyadong subcategory sa ilalim ng grupong ito para sa mas masusing pagsubaybay.",
   },
+  budgetCongratulations: {
+    title: "Unang Badyet Nilikha Na!",
+    subtitle: "Matalinong Pamamahala ng Gastos",
+    message:
+      "Matagumpay mong naitakda ang iyong unang badyet sa kategorya! Subaybayan ang mga limitasyon, iwasan ang labis na paggastos, at subaybayan ang mga balanse nang may kumpiyansa.",
+    button: "I-explore ang mga Badyet",
+  },
+  budgetsWalkthrough: {
+    stepEmptyCreateTitle: "Itakda ang Iyong Unang Badyet",
+    stepEmptyCreateDesc:
+      "I-tap dito upang magtakda ng limitasyon sa paggastos para sa anumang kategorya araw-araw, lingguhan, o buwanan.",
+    stepTotalActiveTitle: "Kabuuang Aktibong Badyet",
+    stepTotalActiveDesc:
+      "Subaybayan ang iyong pinagsama-samang limitasyon, pag-unlad ng paggastos, natitirang pondo, at mga babala sa isang sulyap.",
+    stepFrequencyTabsTitle: "Salain ayon sa Dalas",
+    stepFrequencyTabsDesc:
+      "Mabilis na salain ang iyong mga badyet ayon sa panahon — araw-araw, lingguhan, buwanan, o taunan.",
+    stepFirstItemToggleTitle: "I-enable o I-disable ang Badyet",
+    stepFirstItemToggleDesc:
+      "I-on o i-off ang anumang badyet kailanman nang hindi nabubura ang iyong mga nakaraang transaksyon o setting.",
+    stepFabTitle: "Gumawa ng Badyet sa Kategorya",
+    stepFabDesc:
+      "I-tap ang (+) button anumang oras upang magtakda ng karagdagang limitasyon at maabot ang iyong mga layunin.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

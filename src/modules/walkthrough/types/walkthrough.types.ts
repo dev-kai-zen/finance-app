@@ -33,7 +33,12 @@ export type WalkthroughTargetId =
   | "catPresetsIcon"
   | "catNewCategory"
   | "catFirstGroupReorderSub"
-  | "catFirstGroupAddSub";
+  | "catFirstGroupAddSub"
+  | "budgetEmptyCreateButton"
+  | "budgetTotalActiveCard"
+  | "budgetFrequencyTabs"
+  | "budgetFirstItemToggle"
+  | "budgetFab";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

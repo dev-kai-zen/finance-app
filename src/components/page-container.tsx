@@ -93,6 +93,7 @@ export interface PageEmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   icon?: ReactNode;
+  actionRef?: React.Ref<View>;
 }
 
 export function PageEmptyState({
@@ -101,6 +102,7 @@ export function PageEmptyState({
   actionLabel,
   onAction,
   icon,
+  actionRef,
 }: PageEmptyStateProps) {
   const styles = useThemeStyles(createEmptyStyles);
 
@@ -112,11 +114,12 @@ export function PageEmptyState({
         <Text style={styles.emptyDescription}>{description}</Text>
       ) : null}
       {actionLabel && onAction ? (
-        <AppButton
-          label={actionLabel}
-          onPress={onAction}
-          style={styles.emptyAction}
-        />
+        <View collapsable={false} ref={actionRef} style={styles.emptyAction}>
+          <AppButton
+            label={actionLabel}
+            onPress={onAction}
+          />
+        </View>
       ) : null}
     </View>
   );

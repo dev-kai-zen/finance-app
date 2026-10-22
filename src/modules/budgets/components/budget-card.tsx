@@ -13,6 +13,7 @@ export interface BudgetCardProps {
   status: BudgetStatus;
   onPress: () => void;
   onToggle: (isEnabled: boolean) => void;
+  toggleRef?: React.Ref<View>;
 }
 
 const FREQUENCY_LABELS: Record<string, string> = {
@@ -30,6 +31,7 @@ export const BudgetCard = memo(function BudgetCard({
   status,
   onPress,
   onToggle,
+  toggleRef,
 }: BudgetCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -107,7 +109,11 @@ export const BudgetCard = memo(function BudgetCard({
           </View>
         </View>
 
-        <View style={styles.toggleContainer}>
+        <View
+          collapsable={false}
+          ref={toggleRef}
+          style={styles.toggleContainer}
+        >
           <ThemedSwitch
             accessibilityLabel={`Toggle ${category.name} budget`}
             onValueChange={onToggle}

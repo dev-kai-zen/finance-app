@@ -566,6 +566,30 @@ export const es = {
     stepAddSubDesc:
       "Agrega subcategorías detalladas dentro de este grupo para un control financiero más minucioso.",
   },
+  budgetCongratulations: {
+    title: "¡Primer presupuesto creado!",
+    subtitle: "Gestión inteligente del gasto",
+    message:
+      "¡Has creado con éxito tu primer presupuesto por categoría! Controla límites de gasto, evita excesos y supervisa saldos transferibles con confianza.",
+    button: "Explorar funciones de presupuesto",
+  },
+  budgetsWalkthrough: {
+    stepEmptyCreateTitle: "Configura tu primer presupuesto",
+    stepEmptyCreateDesc:
+      "Toca aquí para establecer límites de gasto para cualquier categoría con periodos diarios, semanales, mensuales o acumulativos.",
+    stepTotalActiveTitle: "Presupuesto activo total",
+    stepTotalActiveDesc:
+      "Monitorea tus límites totales presupuestados, el avance del gasto en tiempo real, el saldo restante y alertas de exceso de un vistazo.",
+    stepFrequencyTabsTitle: "Filtro de frecuencia",
+    stepFrequencyTabsDesc:
+      "Filtra rápidamente tus presupuestos por periodo: diario, semanal, mensual, trimestral o anual.",
+    stepFirstItemToggleTitle: "Activar o desactivar presupuestos",
+    stepFirstItemToggleDesc:
+      "Activa o desactiva cualquier presupuesto a voluntad sin perder tus transacciones previas ni la configuración.",
+    stepFabTitle: "Crear presupuesto por categoría",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para fijar nuevos límites por categoría y alcanzar tus metas financieras.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",
