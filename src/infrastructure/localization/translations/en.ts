@@ -21,6 +21,7 @@ export const en = {
     notes: "Notes",
     sqliteMonitor: "SQLite Monitor",
     settings: "Settings",
+    sendFeedback: "Send Feedback",
     localBackup: "Local Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Language",

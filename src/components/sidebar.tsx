@@ -13,7 +13,7 @@ import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
-import { ChevronDown, Crown } from "lucide-react-native";
+import { ChevronDown, Crown, Mail } from "lucide-react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -26,6 +26,7 @@ import {
 import { IconHelper } from "./icon-helper";
 import { MoreFeaturesModal } from "./more-features-modal";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
+import { sendFeedback } from "@/utils/send-feedback";
 
 interface NavItemConfig {
   href: string;
@@ -128,6 +129,13 @@ export const Sidebar = memo(function Sidebar({
       onNavigate();
     }
   };
+
+  const handleFeedbackPress = useCallback(() => {
+    if (onNavigate) {
+      onNavigate();
+    }
+    void sendFeedback();
+  }, [onNavigate]);
 
   const isItemActive = (href: string) => {
     if (href === "/") {
@@ -244,6 +252,31 @@ export const Sidebar = memo(function Sidebar({
                 />
               );
             })}
+          {/* Finance Pro item (shown only in Free tier, above More Features) */}
+          {!isPro ? (
+            <Pressable
+              accessibilityLabel={t("pro.sidebarTitle")}
+              accessibilityRole="button"
+              onPress={() => setPaywallOpen(true)}
+              style={({ pressed }) => [
+                styles.link,
+                pressed && styles.linkPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Crown color="#D97706" size={18} />
+              </View>
+              <Text style={[styles.linkText, styles.proLinkText]}>
+                {t("pro.sidebarTitle")}
+              </Text>
+              <View style={styles.badgeContainer}>
+                <View style={styles.sidebarUpgradeBadge}>
+                  <Text style={styles.sidebarUpgradeBadgeText}>Activate</Text>
+                </View>
+              </View>
+            </Pressable>
+          ) : null}
+
           <Pressable
             accessibilityRole="button"
             onPress={() => setMoreFeaturesOpen(true)}
@@ -269,30 +302,23 @@ export const Sidebar = memo(function Sidebar({
               );
             })}
 
-          {/* Below Settings: Kaizen Pro item (shown only in Free tier) */}
-          {!isPro ? (
-            <Pressable
-              accessibilityLabel={t("pro.sidebarTitle")}
-              accessibilityRole="button"
-              onPress={() => setPaywallOpen(true)}
-              style={({ pressed }) => [
-                styles.link,
-                pressed && styles.linkPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Crown color="#D97706" size={18} />
-              </View>
-              <Text style={[styles.linkText, styles.proLinkText]}>
-                {t("pro.sidebarTitle")}
-              </Text>
-              <View style={styles.badgeContainer}>
-                <View style={styles.sidebarUpgradeBadge}>
-                  <Text style={styles.sidebarUpgradeBadgeText}>Activate</Text>
-                </View>
-              </View>
-            </Pressable>
-          ) : null}
+          {/* Send Feedback item */}
+          <Pressable
+            accessibilityLabel={t("navigation.sendFeedback")}
+            accessibilityRole="button"
+            onPress={handleFeedbackPress}
+            style={({ pressed }) => [
+              styles.link,
+              pressed && styles.linkPressed,
+            ]}
+          >
+            <View style={styles.iconContainer}>
+              <Mail color={theme.colors.textSecondary} size={18} />
+            </View>
+            <Text style={styles.linkText}>
+              {t("navigation.sendFeedback")}
+            </Text>
+          </Pressable>
         </View>
       </View>
 

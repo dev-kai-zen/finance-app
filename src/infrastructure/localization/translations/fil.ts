@@ -26,6 +26,7 @@ export const fil = {
     notes: "Mga Tala",
     sqliteMonitor: "SQLite Monitor",
     settings: "Mga Setting",
+    sendFeedback: "Magpadala ng Feedback",
     localBackup: "Lokal na Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",

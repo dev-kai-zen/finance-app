@@ -26,6 +26,7 @@ export const es = {
     notes: "Notas",
     sqliteMonitor: "Monitor de SQLite",
     settings: "Configuración",
+    sendFeedback: "Enviar comentarios",
     localBackup: "Copia de seguridad local",
     googleDriveBackup: "Copia de seguridad de Google Drive",
     language: "Idioma",
