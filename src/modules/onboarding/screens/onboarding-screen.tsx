@@ -34,10 +34,7 @@ import {
   GuidedWelcomeStep,
   PrimaryButton,
 } from "@/modules/onboarding/components/guided-onboarding-steps";
-import {
-  useNotificationPermission,
-  useNotificationSettings,
-} from "@/modules/notifications";
+import { useNotificationSettings } from "@/modules/notifications";
 import { useWorkspace } from "@/modules/onboarding/providers/workspace-provider";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import type { InitialAccountTemplate } from "@/modules/accounts";
@@ -64,7 +61,6 @@ export function OnboardingScreen() {
   const workspace = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const { t } = useLocalization();
-  const { hasPermission, requestPermission } = useNotificationPermission();
   const { settings, updateSetting } = useNotificationSettings();
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [nickname, setNickname] = useState("");
@@ -76,7 +72,6 @@ export function OnboardingScreen() {
   const [accountName, setAccountName] = useState("");
   const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
   const [sampleExitHubOpen, setSampleExitHubOpen] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(false);
 
   useEffect(() => {
@@ -84,41 +79,13 @@ export function OnboardingScreen() {
   }, [currencyPreferences.defaultCurrency]);
 
   useEffect(() => {
-    if (hasPermission === true) {
-      setNotificationsEnabled(true);
-    }
-  }, [hasPermission]);
-
-  useEffect(() => {
     setDailyReminderEnabled(settings.dailyReminderEnabled);
   }, [settings.dailyReminderEnabled]);
-
-  const handleToggleNotifications = async (val: boolean) => {
-    if (val) {
-      const granted = await requestPermission();
-      if (granted) {
-        setNotificationsEnabled(true);
-      } else {
-        setNotificationsEnabled(false);
-      }
-    } else {
-      setNotificationsEnabled(false);
-      if (dailyReminderEnabled) {
-        setDailyReminderEnabled(false);
-        void updateSetting("dailyReminderEnabled", false);
-      }
-    }
-  };
 
   const handleToggleDailyReminder = async (val: boolean) => {
     if (val) {
       const success = await updateSetting("dailyReminderEnabled", true);
-      if (success) {
-        setDailyReminderEnabled(true);
-        setNotificationsEnabled(true);
-      } else {
-        setDailyReminderEnabled(false);
-      }
+      setDailyReminderEnabled(Boolean(success));
     } else {
       setDailyReminderEnabled(false);
       void updateSetting("dailyReminderEnabled", false);
@@ -356,13 +323,11 @@ export function OnboardingScreen() {
                 busy={workspace.busy}
                 dailyReminderEnabled={dailyReminderEnabled}
                 nickname={nickname}
-                notificationsEnabled={notificationsEnabled}
                 onContinue={() => {
                   workspace.clearError();
                   setStep("ready");
                 }}
                 onToggleDailyReminder={handleToggleDailyReminder}
-                onToggleNotifications={handleToggleNotifications}
               />
             </View>
           ) : null}

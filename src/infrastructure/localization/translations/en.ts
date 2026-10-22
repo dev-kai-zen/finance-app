@@ -336,9 +336,9 @@ export const en = {
     notificationsTitle: "Stay on track",
     notificationsTitleAssisted: "Stay consistent, %{name}!",
     notificationsDescription:
-      "Turn on notifications and daily reminders to stay in control of your daily spending.",
+      "Turn on a daily reminder to stay in control of your daily spending.",
     notificationsDescriptionAssisted:
-      "Turn on notifications and daily reminders to build a steady habit of tracking expenses.",
+      "Turn on a daily reminder to build a steady habit of tracking expenses.",
     notificationsPermissionTitle: "Push Notifications",
     notificationsPermissionDesc:
       "Receive reminders, alerts, and important updates.",

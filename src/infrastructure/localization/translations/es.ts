@@ -348,9 +348,9 @@ export const es = {
     notificationsTitle: "Mantén el ritmo",
     notificationsTitleAssisted: "¡Mantén la constancia, %{name}!",
     notificationsDescription:
-      "Activa las notificaciones y los recordatorios diarios para tener el control de tus gastos.",
+      "Activa el recordatorio diario para tener el control de tus gastos.",
     notificationsDescriptionAssisted:
-      "Activa las notificaciones y los recordatorios diarios para crear el hábito de registrar tus gastos.",
+      "Activa el recordatorio diario para crear el hábito de registrar tus gastos.",
     notificationsPermissionTitle: "Notificaciones push",
     notificationsPermissionDesc:
       "Recibe recordatorios, alertas y novedades importantes.",

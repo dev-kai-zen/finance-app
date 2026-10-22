@@ -349,9 +349,9 @@ export const fil = {
     notificationsTitle: "Manatiling organisado",
     notificationsTitleAssisted: "Maging konsistent, %{name}!",
     notificationsDescription:
-      "I-on ang notifications at araw-araw na paalala upang manatiling kontrolado ang iyong mga gastusin.",
+      "I-on ang araw-araw na paalala upang manatiling kontrolado ang iyong mga gastusin.",
     notificationsDescriptionAssisted:
-      "I-on ang notifications at araw-araw na paalala upang bumuo ng magandang gawi sa pagtatala ng gastos.",
+      "I-on ang araw-araw na paalala upang bumuo ng magandang gawi sa pagtatala ng gastos.",
     notificationsPermissionTitle: "Push Notifications",
     notificationsPermissionDesc:
       "Makatanggap ng mga paalala, alerto, at mahahalagang update.",

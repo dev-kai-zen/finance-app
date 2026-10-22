@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AlertCircle, Bell, Check, Clock, Sparkles } from "lucide-react-native";
+import { AlertCircle, Check, Clock, Sparkles } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
@@ -399,17 +399,13 @@ export function GuidedAccountStep({
 
 export function GuidedNotificationsStep({
   nickname,
-  notificationsEnabled,
   dailyReminderEnabled,
-  onToggleNotifications,
   onToggleDailyReminder,
   onContinue,
   busy = false,
 }: {
   nickname?: string;
-  notificationsEnabled: boolean;
   dailyReminderEnabled: boolean;
-  onToggleNotifications: (val: boolean) => void;
   onToggleDailyReminder: (val: boolean) => void;
   onContinue: () => void;
   busy?: boolean;
@@ -441,43 +437,6 @@ export function GuidedNotificationsStep({
       title={title}
     >
       <View style={styles.toggleCardList}>
-        <Pressable
-          accessibilityLabel={t("onboarding.notificationsPermissionTitle")}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: notificationsEnabled, disabled: busy }}
-          disabled={busy}
-          onPress={() => onToggleNotifications(!notificationsEnabled)}
-          style={({ pressed }) => [
-            styles.toggleCard,
-            notificationsEnabled && styles.toggleCardActive,
-            pressed && styles.choiceRowPressed,
-          ]}
-        >
-          <View style={styles.toggleCardIconContainer}>
-            <Bell
-              color={
-                notificationsEnabled
-                  ? theme.colors.primary
-                  : theme.colors.textSecondary
-              }
-              size={20}
-            />
-          </View>
-          <View style={styles.toggleCardContent}>
-            <Text style={styles.toggleCardTitle}>
-              {t("onboarding.notificationsPermissionTitle")}
-            </Text>
-            <Text style={styles.toggleCardDescription}>
-              {t("onboarding.notificationsPermissionDesc")}
-            </Text>
-          </View>
-          <ThemedSwitch
-            accessibilityLabel={t("onboarding.notificationsPermissionTitle")}
-            disabled={busy}
-            onValueChange={onToggleNotifications}
-            value={notificationsEnabled}
-          />
-        </Pressable>
 
         <Pressable
           accessibilityLabel={t("onboarding.dailyReminderTitle")}
