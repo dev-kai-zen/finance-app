@@ -35,6 +35,15 @@ import {
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  useWalkthroughRegistry,
+  DraggableTourChip,
+  TransactionsWalkthroughOverlay,
+  useTransactionsWalkthrough,
+} from "@/modules/walkthrough";
 import { useAccounts } from "@/modules/accounts";
 import { AdBanner } from "@/modules/ads";
 import { useCategories } from "@/modules/categories";
@@ -123,7 +132,15 @@ export interface TransactionsScreenProps {
   initialType?: string;
 }
 
-export function TransactionsScreen({
+export function TransactionsScreen(props: TransactionsScreenProps = {}) {
+  return (
+    <WalkthroughRegistryProvider>
+      <TransactionsScreenContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function TransactionsScreenContent({
   initialAccountId,
   initialAction,
   initialType,
@@ -177,6 +194,26 @@ export function TransactionsScreen({
     initialFilterState(initialAccountId),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
+
+  const fabRef = useRef<View>(null);
+  const { registerTarget } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    registerTarget("txFab", fabRef);
+    return () => registerTarget("txFab", null);
+  }, [registerTarget]);
+
+  const walkthrough = useTransactionsWalkthrough();
+
+  useEffect(() => {
+    if (!loading && !isPromptDismissed("transactionsWalkthroughDismissed")) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   useEffect(() => {
     if (initialAccountId) {
@@ -531,17 +568,29 @@ export function TransactionsScreen({
     <PageContainer
       contentContainerStyle={styles.pageContent}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Record new transaction"
-          onPress={handleOpenNewTransaction}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Record new transaction"
+            fabRef={fabRef}
+            onPress={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              handleOpenNewTransaction();
+            }}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
       scrollable={false}
     >
       <View style={styles.container}>
         {/* Search & Actions Header (Kaizen SearchScreen Design) */}
         <View style={styles.searchRow}>
-          <View style={styles.searchInputContainer}>
+          <WalkthroughTarget id="txSearch" style={styles.searchInputContainer}>
             <Search
               color={theme.colors.textMuted}
               size={18}
@@ -567,40 +616,42 @@ export function TransactionsScreen({
                 <X color={theme.colors.textMuted} size={16} />
               </Pressable>
             )}
-          </View>
+          </WalkthroughTarget>
 
           {/* Filter Trigger Button */}
-          <Pressable
-            accessibilityLabel={`Filters, ${activeFilterCount} active`}
-            onPress={() => setIsFilterModalOpen(true)}
-            style={[
-              styles.actionButton,
-              styles.filterActionButton,
-              activeFilterCount > 0 && styles.actionButtonActive,
-            ]}
-          >
-            <SlidersHorizontal
-              color={
-                activeFilterCount > 0
-                  ? theme.colors.onPrimary
-                  : theme.colors.textSecondary
-              }
-              size={18}
-            />
-            <Text
+          <WalkthroughTarget id="txFilter">
+            <Pressable
+              accessibilityLabel={`Filters, ${activeFilterCount} active`}
+              onPress={() => setIsFilterModalOpen(true)}
               style={[
-                styles.filterButtonText,
-                activeFilterCount > 0 && styles.filterButtonTextActive,
+                styles.actionButton,
+                styles.filterActionButton,
+                activeFilterCount > 0 && styles.actionButtonActive,
               ]}
             >
-              Filter
-            </Text>
-            {activeFilterCount > 0 && (
-              <View style={styles.filterBadge}>
-                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-              </View>
-            )}
-          </Pressable>
+              <SlidersHorizontal
+                color={
+                  activeFilterCount > 0
+                    ? theme.colors.onPrimary
+                    : theme.colors.textSecondary
+                }
+                size={18}
+              />
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  activeFilterCount > 0 && styles.filterButtonTextActive,
+                ]}
+              >
+                Filter
+              </Text>
+              {activeFilterCount > 0 && (
+                <View style={styles.filterBadge}>
+                  <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                </View>
+              )}
+            </Pressable>
+          </WalkthroughTarget>
 
         </View>
 
@@ -616,99 +667,113 @@ export function TransactionsScreen({
 
           <View style={styles.sortActionsRow}>
             {/* Sort Field Chips */}
-            <Pressable
-              accessibilityLabel="Sort by date"
-              onPress={() =>
-                setFilterState((prev) => ({ ...prev, sortBy: "date" }))
-              }
-              style={[styles.sortPill, filterState.sortBy === "date" && styles.sortPillActive]}
-            >
-              <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
-            </Pressable>
+            <WalkthroughTarget id="txSortDate">
+              <Pressable
+                accessibilityLabel="Sort by date"
+                onPress={() =>
+                  setFilterState((prev) => ({ ...prev, sortBy: "date" }))
+                }
+                style={[styles.sortPill, filterState.sortBy === "date" && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
+              </Pressable>
+            </WalkthroughTarget>
 
-            <Pressable
-              accessibilityLabel="Sort by amount"
-              onPress={() =>
-                setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
-              }
-              style={[styles.sortPill, filterState.sortBy === "amount" && styles.sortPillActive]}
-            >
-              <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
-            </Pressable>
+            <WalkthroughTarget id="txSortAmount">
+              <Pressable
+                accessibilityLabel="Sort by amount"
+                onPress={() =>
+                  setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
+                }
+                style={[styles.sortPill, filterState.sortBy === "amount" && styles.sortPillActive]}
+              >
+                <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
+              </Pressable>
+            </WalkthroughTarget>
 
             {/* Sort Order Toggle */}
-            <Pressable
-              accessibilityLabel={`Sort order ${filterState.sortOrder}`}
-              onPress={toggleSortOrder}
-              style={styles.sortOrderButton}
-            >
-              {filterState.sortOrder === "asc" ? (
-                <ArrowUp color={theme.colors.success} size={16} />
-              ) : (
-                <ArrowDown color={theme.colors.success} size={16} />
-              )}
-            </Pressable>
+            <WalkthroughTarget id="txSortOrder">
+              <Pressable
+                accessibilityLabel={`Sort order ${filterState.sortOrder}`}
+                onPress={toggleSortOrder}
+                style={styles.sortOrderButton}
+              >
+                {filterState.sortOrder === "asc" ? (
+                  <ArrowUp color={theme.colors.success} size={16} />
+                ) : (
+                  <ArrowDown color={theme.colors.success} size={16} />
+                )}
+              </Pressable>
+            </WalkthroughTarget>
 
             {/* View Mode Toggle */}
-            <Pressable
-              accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
-              accessibilityRole="button"
-              onPress={() =>
-                setViewMode(viewMode === "compact" ? "detailed" : "compact")
-              }
-              style={[
-                styles.sortOrderButton,
-                viewMode === "compact" && styles.viewModeButtonActive,
-              ]}
-            >
-              {viewMode === "compact" ? (
-                <Rows3 color={theme.colors.success} size={16} />
-              ) : (
-                <LayoutList color={theme.colors.textSecondary} size={16} />
-              )}
-            </Pressable>
+            <WalkthroughTarget id="txViewMode">
+              <Pressable
+                accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
+                accessibilityRole="button"
+                onPress={() =>
+                  setViewMode(viewMode === "compact" ? "detailed" : "compact")
+                }
+                style={[
+                  styles.sortOrderButton,
+                  viewMode === "compact" && styles.viewModeButtonActive,
+                ]}
+              >
+                {viewMode === "compact" ? (
+                  <Rows3 color={theme.colors.success} size={16} />
+                ) : (
+                  <LayoutList color={theme.colors.textSecondary} size={16} />
+                )}
+              </Pressable>
+            </WalkthroughTarget>
           </View>
         </View>
 
         {/* Secondary transaction actions */}
         <View style={styles.secondaryActionsRow}>
-          <Pressable
-            accessibilityLabel="Open scheduled transactions"
-            accessibilityRole="button"
-            onPress={() =>
-              router.push("/transactions/scheduled")
-            }
-            style={styles.schedulesButton}
-          >
-            <CalendarClock color={theme.colors.primary} size={17} />
-            <Text style={styles.schedulesButtonText}>Scheduled</Text>
-          </Pressable>
+          <WalkthroughTarget id="txScheduled">
+            <Pressable
+              accessibilityLabel="Open scheduled transactions"
+              accessibilityRole="button"
+              onPress={() =>
+                router.push("/transactions/scheduled")
+              }
+              style={styles.schedulesButton}
+            >
+              <CalendarClock color={theme.colors.primary} size={17} />
+              <Text style={styles.schedulesButtonText}>Scheduled</Text>
+            </Pressable>
+          </WalkthroughTarget>
 
-          <Pressable
-            accessibilityLabel="Open transaction trash"
-            accessibilityRole="button"
-            onPress={() => {
-              clearError();
-              setIsTrashModalOpen(true);
-            }}
-            style={styles.trashButton}
-          >
-            <Trash2 color={theme.colors.danger} size={17} />
-            <Text style={styles.trashButtonText}>Trash</Text>
-          </Pressable>
+          <WalkthroughTarget id="txTrash">
+            <Pressable
+              accessibilityLabel="Open transaction trash"
+              accessibilityRole="button"
+              onPress={() => {
+                clearError();
+                setIsTrashModalOpen(true);
+              }}
+              style={styles.trashButton}
+            >
+              <Trash2 color={theme.colors.danger} size={17} />
+              <Text style={styles.trashButtonText}>Trash</Text>
+            </Pressable>
+          </WalkthroughTarget>
 
-          <Pressable
-            accessibilityLabel="Export CSV"
-            accessibilityState={{ disabled: exportingCsv || loading }}
-            disabled={exportingCsv || loading}
-            onPress={handleOpenExportCsv}
-            style={[
-              styles.actionButton,
-              (exportingCsv || loading) && styles.actionButtonDisabled,
-            ]}
-          >
-            <Download color={theme.colors.success} size={18} />
-          </Pressable>
+          <WalkthroughTarget id="txExport">
+            <Pressable
+              accessibilityLabel="Export CSV"
+              accessibilityState={{ disabled: exportingCsv || loading }}
+              disabled={exportingCsv || loading}
+              onPress={handleOpenExportCsv}
+              style={[
+                styles.actionButton,
+                (exportingCsv || loading) && styles.actionButtonDisabled,
+              ]}
+            >
+              <Download color={theme.colors.success} size={18} />
+            </Pressable>
+          </WalkthroughTarget>
         </View>
 
         {/* Transactions Feed Grouped By Date */}
@@ -923,6 +988,21 @@ export function TransactionsScreen({
         onClose={() => setExportCsvSheetOpen(false)}
         title="Export CSV"
         visible={exportCsvSheetOpen}
+      />
+
+      <TransactionsWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenNewTransaction();
+        }}
       />
     </PageContainer>
   );

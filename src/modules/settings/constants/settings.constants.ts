@@ -61,6 +61,7 @@ export const PROMPT_SETTING_KEYS = {
   creditCardsOfferDismissed: "prompt.creditCardsOfferDismissed",
   dashboardWalkthroughDismissed: "prompt.dashboardWalkthroughDismissed",
   accountsWalkthroughDismissed: "prompt.accountsWalkthroughDismissed",
+  transactionsWalkthroughDismissed: "prompt.transactionsWalkthroughDismissed",
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
 } as const;
 

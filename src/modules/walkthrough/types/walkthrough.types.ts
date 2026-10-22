@@ -12,7 +12,17 @@ export type WalkthroughTargetId =
   | "assetsSection"
   | "liabilitiesSection"
   | "accountsFab"
-  | "accountsSheetDemonstration";
+  | "accountsSheetDemonstration"
+  | "txSearch"
+  | "txFilter"
+  | "txSortDate"
+  | "txSortAmount"
+  | "txSortOrder"
+  | "txViewMode"
+  | "txScheduled"
+  | "txTrash"
+  | "txExport"
+  | "txFab";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

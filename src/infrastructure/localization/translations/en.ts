@@ -485,6 +485,38 @@ export const en = {
     actionManageTypesDesc:
       "Define and manage custom account types and groups to tailor your tracking.",
   },
+  transactionsWalkthrough: {
+    stepSearchTitle: "Search Transactions",
+    stepSearchDesc:
+      "Quickly find transactions by note, payee, category, account, or amount in real time.",
+    stepFilterTitle: "Filter Transactions",
+    stepFilterDesc:
+      "Open advanced filters to narrow down transactions by date range, account, category, type (income, expense, transfer), or tags.",
+    stepSortDateTitle: "Sort by Date",
+    stepSortDateDesc:
+      "Sort your transaction history chronologically by transaction date.",
+    stepSortAmountTitle: "Sort by Amount",
+    stepSortAmountDesc:
+      "Order transactions by monetary value to immediately highlight your largest or smallest transactions.",
+    stepSortOrderTitle: "Sort Order",
+    stepSortOrderDesc:
+      "Toggle between descending (newest/highest first) and ascending (oldest/lowest first) sorting order.",
+    stepViewModeTitle: "Detail & Simple View Mode",
+    stepViewModeDesc:
+      "Switch between Compact mode for high-density browsing and Detailed mode with notes, tags, and account details.",
+    stepScheduledTitle: "Scheduled Transactions",
+    stepScheduledDesc:
+      "Access upcoming, recurring, and automated scheduled transactions to stay on top of recurring bills.",
+    stepTrashTitle: "Transaction Trash",
+    stepTrashDesc:
+      "Safely review deleted transactions. You can restore accidentally removed records or empty trash permanently.",
+    stepExportTitle: "Export CSV",
+    stepExportDesc:
+      "Export your filtered transaction history as a clean CSV spreadsheet to share, analyze, or back up.",
+    stepFabTitle: "Record Transaction",
+    stepFabDesc:
+      "Tap the (+) button anytime to log a new expense, income, or transfer between accounts. You're ready to go!",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

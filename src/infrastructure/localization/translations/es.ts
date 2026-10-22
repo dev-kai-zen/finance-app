@@ -497,6 +497,38 @@ export const es = {
     actionManageTypesDesc:
       "Define y administra tipos y grupos personalizados de cuentas.",
   },
+  transactionsWalkthrough: {
+    stepSearchTitle: "Buscar transacciones",
+    stepSearchDesc:
+      "Encuentra rápidamente transacciones por nota, beneficiario, categoría, cuenta o monto en tiempo real.",
+    stepFilterTitle: "Filtrar transacciones",
+    stepFilterDesc:
+      "Abre los filtros avanzados para acotar por rango de fechas, cuenta, categoría, tipo o etiquetas.",
+    stepSortDateTitle: "Ordenar por fecha",
+    stepSortDateDesc:
+      "Ordena tu historial cronológicamente por la fecha de transacción.",
+    stepSortAmountTitle: "Ordenar por monto",
+    stepSortAmountDesc:
+      "Ordena las transacciones por valor monetario para identificar rápidamente tus gastos más altos o más bajos.",
+    stepSortOrderTitle: "Sentido de ordenación",
+    stepSortOrderDesc:
+      "Alterna entre orden descendente (más recientes/altos primero) y ascendente (más antiguos/bajos primero).",
+    stepViewModeTitle: "Modo detallado y simple",
+    stepViewModeDesc:
+      "Alterna entre el modo Compacto para visualización densa y el modo Detallado con notas, etiquetas y cuentas.",
+    stepScheduledTitle: "Transacciones programadas",
+    stepScheduledDesc:
+      "Accede a transacciones futuras y recurrentes automatizadas para mantener al día tus pagos pendientes.",
+    stepTrashTitle: "Papelera de transacciones",
+    stepTrashDesc:
+      "Revisa de forma segura las transacciones eliminadas. Puedes restaurar registros o vaciar la papelera de forma permanente.",
+    stepExportTitle: "Exportar CSV",
+    stepExportDesc:
+      "Exporta tu historial filtrado a una hoja de cálculo CSV para compartir, respaldar o analizar.",
+    stepFabTitle: "Registrar transacción",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",

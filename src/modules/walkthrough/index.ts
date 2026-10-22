@@ -15,6 +15,10 @@ export { AccountsWalkthroughOverlay } from "./accounts/accounts-walkthrough-over
 export { useAccountsWalkthrough } from "./accounts/use-accounts-walkthrough";
 export { ACCOUNTS_WALKTHROUGH_STEPS } from "./accounts/accounts-walkthrough-steps";
 
+export { TransactionsWalkthroughOverlay } from "./transactions/transactions-walkthrough-overlay";
+export { useTransactionsWalkthrough } from "./transactions/use-transactions-walkthrough";
+export { TRANSACTIONS_WALKTHROUGH_STEPS } from "./transactions/transactions-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

@@ -498,6 +498,38 @@ export const fil = {
     actionManageTypesDesc:
       "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
   },
+  transactionsWalkthrough: {
+    stepSearchTitle: "Maghanap ng Transaksyon",
+    stepSearchDesc:
+      "Mabilis na maghanap ng transaksyon gamit ang tala, tatanggap, kategorya, account, o halaga.",
+    stepFilterTitle: "I-filter ang mga Transaksyon",
+    stepFilterDesc:
+      "Buksan ang mga advanced filter para limitahan ayon sa petsa, account, kategorya, uri, o tags.",
+    stepSortDateTitle: "I-sort ayon sa Petsa",
+    stepSortDateDesc:
+      "Iayos ang iyong kasaysayan ng transaksyon ayon sa petsa ng transaksyon.",
+    stepSortAmountTitle: "I-sort ayon sa Halaga",
+    stepSortAmountDesc:
+      "Ayusin ang mga tala ayon sa halaga ng pera para agad makita ang pinakamalaki o pinakamaliit na gastusin.",
+    stepSortOrderTitle: "Direksyon ng Pag-sort",
+    stepSortOrderDesc:
+      "Magpalit sa pagitan ng pababa (pinakabago/pinakamalaki muna) at pataas (pinakaluma/pinakamaliit muna).",
+    stepViewModeTitle: "Detalyado at Simpleng View",
+    stepViewModeDesc:
+      "Magpalit sa pagitan ng Compact mode para sa siksik na listahan at Detalyadong mode para sa buong detalye.",
+    stepScheduledTitle: "Naka-iskedyul na Transaksyon",
+    stepScheduledDesc:
+      "Tingnan ang paparating at paulit-ulit na mga transaksyon para manatiling updated sa mga bayarin.",
+    stepTrashTitle: "Basurahan ng Transaksyon",
+    stepTrashDesc:
+      "Ligtas na suriin ang mga tinanggal na transaksyon. Maaari mong ibalik ang mga aksidenteng nabura o tuluyang linisin ang basurahan.",
+    stepExportTitle: "I-export sa CSV",
+    stepExportDesc:
+      "I-export ang iyong kasaysayan bilang malinis na CSV spreadsheet para maibahagi o mai-save sa iyong device.",
+    stepFabTitle: "Magtala ng Transaksyon",
+    stepFabDesc:
+      "I-tap ang (+) button anumang oras para magtala ng bagong gastos, kita, o transfer. Handa ka na!",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",
