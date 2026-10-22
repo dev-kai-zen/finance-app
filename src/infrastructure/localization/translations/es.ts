@@ -546,6 +546,26 @@ export const es = {
     stepBalanceSheetDesc:
       "Monitorea activos, pasivos y patrimonio neto proyectados a lo largo de tu calendario en un solo vistazo.",
   },
+  categoriesWalkthrough: {
+    stepTypeToggleTitle: "Gastos e Ingresos",
+    stepTypeToggleDesc:
+      "Alterna entre categorías de gastos y fuentes de ingresos para organizar y personalizar tus flujos de efectivo.",
+    stepReorderGroupsTitle: "Reordenar categorías",
+    stepReorderGroupsDesc:
+      "Reorganiza los grupos de categorías en tu orden preferido para selectores e informes.",
+    stepPresetsIconTitle: "Preajustes de categorías",
+    stepPresetsIconDesc:
+      "Carga rápidamente paquetes iniciales de categorías seleccionadas o administra los preajustes integrados.",
+    stepNewCategoryTitle: "Nueva categoría",
+    stepNewCategoryDesc:
+      "Crea un grupo de categorías personalizado con colores, íconos y clasificación a tu medida.",
+    stepReorderSubTitle: "Reordenar subcategorías",
+    stepReorderSubDesc:
+      "Organiza y jerarquiza subcategorías dentro de este grupo para un etiquetado más ágil.",
+    stepAddSubTitle: "Agregar subcategoría",
+    stepAddSubDesc:
+      "Agrega subcategorías detalladas dentro de este grupo para un control financiero más minucioso.",
+  },
   resetData: {
     dismissAccessibility:
       "Cerrar confirmación de restablecimiento de datos",

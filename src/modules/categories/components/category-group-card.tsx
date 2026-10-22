@@ -17,6 +17,8 @@ export interface CategoryGroupCardProps {
   onDeleteGroup: () => void;
   onEditSubcategory: (sub: Category) => void;
   onDeleteSubcategory: (sub: Category) => void;
+  reorderSubRef?: React.Ref<View>;
+  addSubRef?: React.Ref<View>;
 }
 
 export function CategoryGroupCard({
@@ -30,6 +32,8 @@ export function CategoryGroupCard({
   onDeleteGroup,
   onEditSubcategory,
   onDeleteSubcategory,
+  reorderSubRef,
+  addSubRef,
 }: CategoryGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -96,7 +100,9 @@ export function CategoryGroupCard({
             <Pressable
               accessibilityLabel={`Reorder subcategories in ${group.name}`}
               accessibilityRole="button"
+              collapsable={false}
               onPress={onReorderSubcategories}
+              ref={reorderSubRef}
               style={({ pressed }) => [
                 styles.tintedAction,
                 {
@@ -113,7 +119,9 @@ export function CategoryGroupCard({
           <Pressable
             accessibilityLabel={`Add subcategory to ${group.name}`}
             accessibilityRole="button"
+            collapsable={false}
             onPress={onAddSubcategory}
+            ref={addSubRef}
             style={({ pressed }) => [
               styles.tintedAction,
               {

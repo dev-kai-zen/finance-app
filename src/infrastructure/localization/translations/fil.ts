@@ -547,6 +547,26 @@ export const fil = {
     stepBalanceSheetDesc:
       "Subaybayan ang iyong mga ari-arian, utang, at kabuuang equity sa timeline ng kalendaryo.",
   },
+  categoriesWalkthrough: {
+    stepTypeToggleTitle: "Mga Gastos at Kita",
+    stepTypeToggleDesc:
+      "Magpalipat-lipat sa mga kategorya ng gastos at kita upang maisaayos at ma-customize ang iyong cash flow.",
+    stepReorderGroupsTitle: "Ayusin ang Pagkakasunod-sunod",
+    stepReorderGroupsDesc:
+      "Muling ayusin ang mga grupo ng kategorya sa iyong nais na pagkakasunod-sunod sa buong app.",
+    stepPresetsIconTitle: "Mga Preset ng Kategorya",
+    stepPresetsIconDesc:
+      "Mabilis na mag-load ng mga handang bundle ng kategorya o pamahalaan ang mga built-in na preset.",
+    stepNewCategoryTitle: "Bagong Kategorya",
+    stepNewCategoryDesc:
+      "Gumawa ng sariling grupo ng kategorya na may napiling kulay, icon, at uri.",
+    stepReorderSubTitle: "Ayusin ang mga Subcategory",
+    stepReorderSubDesc:
+      "Isaayos ang pagkakasunod-sunod ng mga subcategory sa grupong ito para sa mas mabilis na pagtatala.",
+    stepAddSubTitle: "Magdagdag ng Subcategory",
+    stepAddSubDesc:
+      "Magdagdag ng detalyadong subcategory sa ilalim ng grupong ito para sa mas masusing pagsubaybay.",
+  },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
     title: "I-reset ang lahat ng data?",

@@ -534,6 +534,26 @@ export const en = {
     stepBalanceSheetDesc:
       "Track your assets, liabilities, and projected equity across the calendar at a single glance.",
   },
+  categoriesWalkthrough: {
+    stepTypeToggleTitle: "Expenses & Income",
+    stepTypeToggleDesc:
+      "Toggle between Expense categories and Income streams to organize and customize your cash flows.",
+    stepReorderGroupsTitle: "Reorder Categories",
+    stepReorderGroupsDesc:
+      "Rearrange category groups into your preferred sequence across entry pickers and reports.",
+    stepPresetsIconTitle: "Category Presets",
+    stepPresetsIconDesc:
+      "Quickly load curated starter category bundles or manage built-in presets.",
+    stepNewCategoryTitle: "New Category",
+    stepNewCategoryDesc:
+      "Create a custom category group with tailored colors, icons, and classification.",
+    stepReorderSubTitle: "Reorder Subcategories",
+    stepReorderSubDesc:
+      "Organize and rank nested subcategories within this group for quicker transaction tagging.",
+    stepAddSubTitle: "Add Subcategory",
+    stepAddSubDesc:
+      "Add granular subcategories under this group for detailed spending and income tracking.",
+  },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
     title: "Reset all data?",

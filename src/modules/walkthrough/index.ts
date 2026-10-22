@@ -23,6 +23,10 @@ export { CalendarWalkthroughOverlay } from "./calendar/calendar-walkthrough-over
 export { useCalendarWalkthrough } from "./calendar/use-calendar-walkthrough";
 export { CALENDAR_WALKTHROUGH_STEPS } from "./calendar/calendar-walkthrough-steps";
 
+export { CategoriesWalkthroughOverlay } from "./categories/categories-walkthrough-overlay";
+export { useCategoriesWalkthrough } from "./categories/use-categories-walkthrough";
+export { getCategoriesWalkthroughSteps } from "./categories/categories-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

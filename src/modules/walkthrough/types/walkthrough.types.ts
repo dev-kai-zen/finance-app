@@ -27,7 +27,13 @@ export type WalkthroughTargetId =
   | "calTransactionsTab"
   | "calSchedulesTab"
   | "calNetTab"
-  | "calBalanceSheetTab";
+  | "calBalanceSheetTab"
+  | "catTypeToggle"
+  | "catReorderGroups"
+  | "catPresetsIcon"
+  | "catNewCategory"
+  | "catFirstGroupReorderSub"
+  | "catFirstGroupAddSub";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 
