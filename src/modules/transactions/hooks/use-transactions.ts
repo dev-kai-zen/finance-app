@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   calculateTransactionStats,
   listTransactions,
@@ -60,6 +61,12 @@ export function useTransactions(initialFilter?: TransactionFilter) {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   const clearError = useCallback(() => {
     setError(null);
