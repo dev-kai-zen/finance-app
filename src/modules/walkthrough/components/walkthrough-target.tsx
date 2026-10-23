@@ -40,28 +40,33 @@ export function WalkthroughRegistryProvider({ children }: PropsWithChildren) {
   const measureTarget = useCallback(
     (id: WalkthroughTargetId): Promise<LayoutRect | null> => {
       return new Promise((resolve) => {
-        const targetRef = targetsRef.current[id];
-        if (!targetRef?.current) {
-          resolve(null);
-          return;
-        }
+        let attempts = 0;
+        const maxAttempts = 6;
 
-        targetRef.current.measureInWindow((x, y, width, height) => {
-          if (width > 0 && height > 0) {
-            resolve({ x, y, width, height });
-          } else {
-            // Re-attempt after short layout delay
-            setTimeout(() => {
-              targetRef.current?.measureInWindow((rx, ry, rwidth, rheight) => {
-                if (rwidth > 0 && rheight > 0) {
-                  resolve({ x: rx, y: ry, width: rwidth, height: rheight });
-                } else {
-                  resolve(null);
-                }
-              });
-            }, 80);
+        const tryMeasure = () => {
+          attempts++;
+          const targetRef = targetsRef.current[id];
+          if (!targetRef?.current) {
+            if (attempts < maxAttempts) {
+              setTimeout(tryMeasure, 80);
+            } else {
+              resolve(null);
+            }
+            return;
           }
-        });
+
+          targetRef.current.measureInWindow((x, y, width, height) => {
+            if (width > 0 && height > 0) {
+              resolve({ x, y, width, height });
+            } else if (attempts < maxAttempts) {
+              setTimeout(tryMeasure, 80);
+            } else {
+              resolve(null);
+            }
+          });
+        };
+
+        tryMeasure();
       });
     },
     [],

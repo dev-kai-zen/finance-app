@@ -22,6 +22,7 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const steps = useMemo(
     () => getBudgetsWalkthroughSteps({ hasBudgets }),
@@ -35,14 +36,27 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+      }
 
       onScrollToTarget?.(step.targetId);
 
-      // Wait 350ms for native animated scroll to settle before measuring
+      // 1. Initial measurement
       timerRef.current = setTimeout(async () => {
         const layout = await measureTarget(step.targetId);
-        setActiveTargetLayout(layout);
+        if (layout) {
+          setActiveTargetLayout(layout);
+        }
       }, 350);
+
+      // 2. Settle measurement after full scroll/animation completes
+      settleTimerRef.current = setTimeout(async () => {
+        const layout = await measureTarget(step.targetId);
+        if (layout) {
+          setActiveTargetLayout(layout);
+        }
+      }, 700);
     },
     [measureTarget, onScrollToTarget],
   );
@@ -57,6 +71,7 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
 
   const skipWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("budgetsWalkthroughDismissed");
@@ -64,6 +79,7 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
 
   const completeWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("budgetsWalkthroughDismissed");
@@ -95,6 +111,7 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     };
   }, []);
 
