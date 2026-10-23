@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AppState } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import {
@@ -7,11 +7,13 @@ import {
 } from "expo-sqlite";
 
 import { QUICK_SYNC_WATCHED_TABLE_NAME_SET } from "@/infrastructure/database/user-data-tables";
+import {
+  flushDebouncedQuickSync,
+  queueDebouncedQuickSync,
+} from "@/infrastructure/sync";
 
 import { getQuickSyncConfig } from "../repositories/quick-sync-settings.repository";
 import { triggerQuickSync } from "../services/quick-sync.service";
-
-const DEBOUNCE_DELAY_MS = 3000;
 
 function shouldQueueQuickSyncForDatabaseChange(
   event: DatabaseChangeEvent,
@@ -20,47 +22,13 @@ function shouldQueueQuickSyncForDatabaseChange(
 }
 
 export function QuickSyncProcessor() {
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
-    const runDebouncedSyncIfDue = () => {
-      const config = getQuickSyncConfig();
-      if (!config.enabled) {
-        return;
-      }
-
-      void triggerQuickSync().catch(() => {
-        // Errors are broadcast through QuickSyncState
-      });
-    };
-
-    const queueDebouncedSync = () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-
-      debounceTimerRef.current = setTimeout(() => {
-        debounceTimerRef.current = null;
-        runDebouncedSyncIfDue();
-      }, DEBOUNCE_DELAY_MS);
-    };
-
-    const flushPendingSyncImmediately = () => {
-      if (!debounceTimerRef.current) {
-        return;
-      }
-
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-      runDebouncedSyncIfDue();
-    };
-
     const dbSubscription = addDatabaseChangeListener((event) => {
       if (!shouldQueueQuickSyncForDatabaseChange(event)) {
         return;
       }
 
-      queueDebouncedSync();
+      queueDebouncedQuickSync();
     });
 
     const netInfoSubscription = NetInfo.addEventListener((netState) => {
@@ -82,7 +50,7 @@ export function QuickSyncProcessor() {
       "change",
       (nextState) => {
         if (nextState === "background" || nextState === "inactive") {
-          flushPendingSyncImmediately();
+          flushDebouncedQuickSync();
         } else if (nextState === "active") {
           const config = getQuickSyncConfig();
           if (config.enabled) {
@@ -93,9 +61,6 @@ export function QuickSyncProcessor() {
     );
 
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
       dbSubscription.remove();
       netInfoSubscription();
       appStateSubscription.remove();

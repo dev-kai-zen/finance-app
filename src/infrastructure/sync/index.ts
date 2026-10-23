@@ -39,6 +39,14 @@ export {
   QUICK_SYNC_SETTINGS_KEYS,
 } from "./quick-sync-settings.repository";
 export {
+  flushDebouncedQuickSync,
+  queueDebouncedQuickSync,
+  QUICK_SYNC_DEBOUNCE_MS,
+  registerQuickSyncDebouncedExecutor,
+  resetQuickSyncDebounceForTests,
+  WIDGET_SNAPSHOT_SETTINGS_KEY,
+} from "./quick-sync-debounce";
+export {
   getQuickSyncState,
   subscribeToQuickSync,
   setQuickSyncRuntimeStatus,

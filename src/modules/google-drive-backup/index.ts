@@ -5,6 +5,7 @@ export { GoogleDriveScheduledBackupProcessor } from "./components/google-drive-s
 export { useQuickSync } from "./hooks/use-quick-sync";
 export {
   triggerQuickSync,
+  queueQuickSyncForPreferenceChange,
   setQuickSyncEnabled,
   setQuickSyncNetworkPreference,
 } from "./services/quick-sync.service";

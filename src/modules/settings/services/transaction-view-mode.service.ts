@@ -2,8 +2,8 @@ import type { DbContext } from "@/infrastructure/database/client";
 import { TRANSACTION_VIEW_MODE_SETTING_KEY } from "../constants/settings.constants";
 import {
   getSettingByKey,
-  saveSettingsEntries,
 } from "../repositories/settings.repository";
+import { persistSettingsEntries } from "./persist-settings.service";
 
 export type TransactionViewMode = "compact" | "detailed";
 
@@ -22,7 +22,7 @@ export function setTransactionViewMode(
   viewMode: TransactionViewMode,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     { [TRANSACTION_VIEW_MODE_SETTING_KEY]: viewMode },
     context,
   );

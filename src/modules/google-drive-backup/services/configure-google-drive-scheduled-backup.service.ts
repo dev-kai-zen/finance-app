@@ -1,3 +1,4 @@
+import { queueDebouncedQuickSync } from "@/infrastructure/sync";
 import type { GoogleDriveScheduledBackupConfig } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { getCurrentProStatus } from "@/modules/pro";
 import { saveGoogleDriveScheduledBackupConfig } from "../repositories/google-drive-scheduled-backup-settings.repository";
@@ -9,6 +10,7 @@ export async function configureGoogleDriveScheduledBackup(
   const isPro = getCurrentProStatus().isPro;
   const effectiveConfig = !isPro ? { ...config, enabled: false } : config;
   saveGoogleDriveScheduledBackupConfig(effectiveConfig);
+  queueDebouncedQuickSync();
   if (effectiveConfig.enabled) {
     await runGoogleDriveScheduledBackupIfDue();
   }
