@@ -35,7 +35,9 @@ import {
   DashboardCongratulationsModal,
   DraggableTourChip,
   useDashboardWalkthrough,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
 } from "@/modules/walkthrough";
+import type { WalkthroughTargetId } from "@/modules/walkthrough";
 import { useDashboard } from "../hooks/use-dashboard";
 
 export function DashboardScreen() {
@@ -107,21 +109,33 @@ function DashboardScreenContent() {
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
   const fabRef = useRef<View>(null);
-  const { registerTarget } = useWalkthroughRegistry();
+  const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    if (targetId === "recentTxCard") {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    } else if (
-      targetId === "netWorthCard" ||
-      targetId === "collapseIcon" ||
-      targetId === "settingsIcon" ||
-      targetId === "eyeIcon"
-    ) {
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "fabButton") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useDashboardWalkthrough({
     onScrollToTarget: handleScrollToTarget,
@@ -295,6 +309,7 @@ function DashboardScreenContent() {
 
   return (
     <PageContainer
+      scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       floatingAction={
         <>

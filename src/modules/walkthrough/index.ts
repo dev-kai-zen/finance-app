@@ -4,6 +4,10 @@ export {
   useWalkthroughRegistry,
   useWalkthroughTarget,
 } from "./components/walkthrough-target";
+export {
+  isWalkthroughTargetVisible,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+} from "./utils/walkthrough-viewport";
 export { DraggableTourChip } from "./components/draggable-tour-chip";
 
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";

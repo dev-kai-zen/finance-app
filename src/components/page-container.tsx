@@ -25,6 +25,7 @@ export interface PageContainerProps extends PropsWithChildren {
   maxWidth?: number;
   scrollable?: boolean;
   scrollRef?: React.RefObject<ScrollView | null>;
+  scrollContentRef?: React.RefObject<View | null>;
 }
 
 export function PageContainer({
@@ -35,6 +36,7 @@ export function PageContainer({
   maxWidth = LAYOUT_DIMENSIONS.maxContentWidth,
   scrollable = true,
   scrollRef,
+  scrollContentRef,
 }: PageContainerProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -50,6 +52,8 @@ export function PageContainer({
 
   const innerContent = (
     <View
+      ref={scrollContentRef}
+      collapsable={false}
       style={[
         styles.innerConstrained,
         { maxWidth },

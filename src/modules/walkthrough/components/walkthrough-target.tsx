@@ -16,6 +16,10 @@ interface WalkthroughRegistryContextValue {
     ref: React.RefObject<View | null> | null,
   ) => void;
   measureTarget: (id: WalkthroughTargetId) => Promise<LayoutRect | null>;
+  measureTargetInAncestor: (
+    id: WalkthroughTargetId,
+    ancestorRef: React.RefObject<View | null>,
+  ) => Promise<LayoutRect | null>;
 }
 
 export const WalkthroughRegistryContext =
@@ -72,9 +76,57 @@ export function WalkthroughRegistryProvider({ children }: PropsWithChildren) {
     [],
   );
 
+  const measureTargetInAncestor = useCallback(
+    (
+      id: WalkthroughTargetId,
+      ancestorRef: React.RefObject<View | null>,
+    ): Promise<LayoutRect | null> => {
+      return new Promise((resolve) => {
+        let attempts = 0;
+        const maxAttempts = 6;
+
+        const tryMeasure = () => {
+          attempts++;
+          const targetRef = targetsRef.current[id];
+          if (!targetRef?.current || !ancestorRef.current) {
+            if (attempts < maxAttempts) {
+              setTimeout(tryMeasure, 80);
+            } else {
+              resolve(null);
+            }
+            return;
+          }
+
+          targetRef.current.measureLayout(
+            ancestorRef.current,
+            (x, y, width, height) => {
+              if (width > 0 && height > 0) {
+                resolve({ x, y, width, height });
+              } else if (attempts < maxAttempts) {
+                setTimeout(tryMeasure, 80);
+              } else {
+                resolve(null);
+              }
+            },
+            () => {
+              if (attempts < maxAttempts) {
+                setTimeout(tryMeasure, 80);
+              } else {
+                resolve(null);
+              }
+            },
+          );
+        };
+
+        tryMeasure();
+      });
+    },
+    [],
+  );
+
   return (
     <WalkthroughRegistryContext.Provider
-      value={{ registerTarget, measureTarget }}
+      value={{ registerTarget, measureTarget, measureTargetInAncestor }}
     >
       {children}
     </WalkthroughRegistryContext.Provider>
