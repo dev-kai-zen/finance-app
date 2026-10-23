@@ -20,8 +20,11 @@ import {
   CalendarWalkthroughOverlay,
   DraggableTourChip,
   useCalendarWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
   WalkthroughRegistryProvider,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
@@ -30,7 +33,10 @@ import { CalendarNetTab } from "../components/calendar-net-tab";
 import { CalendarSchedulesTab } from "../components/calendar-schedules-tab";
 import { CalendarScopeBadge } from "../components/calendar-scope-badge";
 import { CalendarSummaryRibbon } from "../components/calendar-summary-ribbon";
-import { CalendarTabsHeader } from "../components/calendar-tabs-header";
+import {
+  CalendarTabsHeader,
+  type CalendarTabsHeaderHandle,
+} from "../components/calendar-tabs-header";
 import { CalendarTransactionsTab } from "../components/calendar-transactions-tab";
 import { useCalendarData } from "../hooks/use-calendar-data";
 import type { CalendarTab } from "../types/calendar.types";
@@ -126,12 +132,48 @@ function CalendarScreenContent() {
   const balanceSheetTabRef = useWalkthroughTarget("calBalanceSheetTab");
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const tabsHeaderRef = useRef<CalendarTabsHeaderHandle>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handlePrepareTabTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "calTransactionsTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("transactions");
+      } else if (targetId === "calSchedulesTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("schedules");
+      } else if (targetId === "calNetTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("net");
+      } else if (targetId === "calBalanceSheetTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("balance_sheet");
+      }
+    },
+    [],
+  );
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useCalendarWalkthrough({
+    onPrepareTabTarget: handlePrepareTabTarget,
     onTabChange: setActiveTab,
     onScrollToTarget: handleScrollToTarget,
   });
@@ -139,12 +181,17 @@ function CalendarScreenContent() {
   const { isPromptDismissed } = useExperiencePreferences();
 
   useEffect(() => {
-    if (!isPromptDismissed("calendarWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("calendarWalkthroughDismissed")
+    ) {
+      return;
     }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
   }, [isPromptDismissed, walkthrough.startWalkthrough]);
 
   // Handlers for transactions
@@ -208,6 +255,7 @@ function CalendarScreenContent() {
 
   return (
     <PageContainer
+      scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       floatingAction={
         <DraggableTourChip
@@ -252,6 +300,7 @@ function CalendarScreenContent() {
 
         {/* 5. Segmented Tabs Header */}
         <CalendarTabsHeader
+          ref={tabsHeaderRef}
           activeTab={activeTab}
           balanceSheetRef={balanceSheetTabRef}
           isPro={isPro}

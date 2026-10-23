@@ -1,4 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
 import {
   type LayoutChangeEvent,
   Pressable,
@@ -24,17 +30,27 @@ export interface CalendarTabsHeaderProps {
   balanceSheetRef?: React.Ref<View>;
 }
 
-export function CalendarTabsHeader({
-  activeTab,
-  transactionCount,
-  scheduleCount,
-  onSelectTab,
-  isPro = true,
-  transactionsRef,
-  schedulesRef,
-  netRef,
-  balanceSheetRef,
-}: CalendarTabsHeaderProps) {
+export interface CalendarTabsHeaderHandle {
+  scrollTabIntoView: (tab: CalendarTab) => void;
+}
+
+export const CalendarTabsHeader = forwardRef<
+  CalendarTabsHeaderHandle,
+  CalendarTabsHeaderProps
+>(function CalendarTabsHeader(
+  {
+    activeTab,
+    transactionCount,
+    scheduleCount,
+    onSelectTab,
+    isPro = true,
+    transactionsRef,
+    schedulesRef,
+    netRef,
+    balanceSheetRef,
+  },
+  ref,
+) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -56,33 +72,31 @@ export function CalendarTabsHeader({
     }
   };
 
-  const handleContentSizeChange = () => {
-    const layout = tabLayouts.current[activeTab];
+  const scrollTabIntoView = useCallback((tab: CalendarTab) => {
+    const layout = tabLayouts.current[tab];
     if (layout) {
       scrollViewRef.current?.scrollTo({
         x: Math.max(0, layout.x - 16),
         animated: true,
       });
-    } else if (activeTab === "balance_sheet") {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      return;
     }
+    if (tab === "balance_sheet") {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    } else if (tab === "transactions") {
+      scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+    }
+  }, []);
+
+  useImperativeHandle(ref, () => ({ scrollTabIntoView }), [scrollTabIntoView]);
+
+  const handleContentSizeChange = () => {
+    scrollTabIntoView(activeTab);
   };
 
   useEffect(() => {
-    const layout = tabLayouts.current[activeTab];
-    if (layout) {
-      scrollViewRef.current?.scrollTo({
-        x: Math.max(0, layout.x - 16),
-        animated: true,
-      });
-    } else {
-      if (activeTab === "balance_sheet") {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      } else if (activeTab === "transactions") {
-        scrollViewRef.current?.scrollTo({ x: 0, animated: true });
-      }
-    }
-  }, [activeTab]);
+    scrollTabIntoView(activeTab);
+  }, [activeTab, scrollTabIntoView]);
 
   return (
     <View style={styles.container}>
@@ -233,7 +247,7 @@ export function CalendarTabsHeader({
       </ScrollView>
     </View>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
