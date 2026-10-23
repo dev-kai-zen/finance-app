@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   X,
 } from "lucide-react-native";
 
@@ -251,18 +250,11 @@ export function AccountTypeFormWalkthroughOverlay({
                   pressed && styles.nextBtnPressed,
                 ]}
               >
-                {isLastStep ? (
-                  <>
-                    <Sparkles color="#FFFFFF" size={15} />
-                    <Text style={styles.nextBtnText}>Finish</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.nextBtnText}>
-                      {t("dashboard.walkthroughNext")}
-                    </Text>
-                    <ChevronRight color="#FFFFFF" size={16} />
-                  </>
+                <Text style={styles.nextBtnText}>
+                  {isLastStep ? "Finish" : t("dashboard.walkthroughNext")}
+                </Text>
+                {isLastStep ? null : (
+                  <ChevronRight color={theme.colors.textPrimary} size={16} />
                 )}
               </Pressable>
             </View>
@@ -330,7 +322,7 @@ function createStyles(theme: AppTheme) {
       letterSpacing: -0.2,
     },
     cardDesc: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm * 1.15,
     },
@@ -365,7 +357,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: "#FFFFFF",
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

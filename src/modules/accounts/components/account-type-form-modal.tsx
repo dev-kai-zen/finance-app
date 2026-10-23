@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Check, Plus } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -11,13 +18,16 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   DraggableTourChip,
   AccountTypeFormWalkthroughOverlay,
   useAccountTypeFormWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { ACCOUNT_DEFAULT_COLOR_IDS } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
@@ -61,8 +71,56 @@ function AccountTypeFormModalContent({
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const walkthrough = useAccountTypeFormWalkthrough();
+  const { isPromptDismissed } = useExperiencePreferences();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const nameRef = useWalkthroughTarget("accountTypeFormName");
+  const classificationRef = useWalkthroughTarget("accountTypeFormClassification");
+  const iconRef = useWalkthroughTarget("accountTypeFormIcon");
+  const colorRef = useWalkthroughTarget("accountTypeFormColor");
+  const customColorRef = useWalkthroughTarget("accountTypeFormCustomColor");
   const saveTargetRef = useWalkthroughTarget("accountTypeFormSave");
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "accountTypeFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useAccountTypeFormWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("accountTypeFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
   const {
     colors: hexColorsList,
     refresh: refreshHexColors,
@@ -197,12 +255,13 @@ function AccountTypeFormModalContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <KeyboardAwareForm contentContainerStyle={styles.formContent}>
+        <KeyboardAwareForm ref={scrollRef}>
+          <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           {/* Group Name Field */}
-          <WalkthroughTarget id="accountTypeFormName">
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>GROUP NAME</Text>
               <TextInput
+                ref={nameRef as never}
                 editable={!mutations.pending && !isProtected}
                 maxLength={60}
                 onChangeText={(text) => {
@@ -224,13 +283,15 @@ function AccountTypeFormModalContent({
                 </Text>
               ) : null}
             </View>
-          </WalkthroughTarget>
 
           {/* Group Classification: Asset vs Liability */}
-          <WalkthroughTarget id="accountTypeFormClassification">
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CLASSIFICATION</Text>
-              <View style={styles.segmentContainer}>
+              <View
+                ref={classificationRef}
+                collapsable={false}
+                style={styles.segmentContainer}
+              >
                 <Pressable
                   accessibilityLabel="Set as Asset"
                   accessibilityRole="button"
@@ -281,13 +342,13 @@ function AccountTypeFormModalContent({
                 </Text>
               ) : null}
             </View>
-          </WalkthroughTarget>
 
           {/* Icon Selector */}
-          <WalkthroughTarget id="accountTypeFormIcon">
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>ICON</Text>
               <Pressable
+                ref={iconRef as never}
+                collapsable={false}
                 accessibilityLabel={`Current icon: ${iconKey}. Tap to change icon.`}
                 accessibilityRole="button"
                 disabled={mutations.pending}
@@ -338,13 +399,15 @@ function AccountTypeFormModalContent({
                 </View>
               </Pressable>
             </View>
-          </WalkthroughTarget>
 
           {/* Theme Color Selector */}
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>THEME COLOR</Text>
-            <WalkthroughTarget id="accountTypeFormColor">
-              <View style={styles.colorPalette}>
+              <View
+                ref={colorRef}
+                collapsable={false}
+                style={styles.colorPalette}
+              >
                 {hexColorsList.map((c) => {
                   const isSelected = hexColorsId === c.id;
 
@@ -373,8 +436,9 @@ function AccountTypeFormModalContent({
                     </Pressable>
                   );
                 })}
-                <WalkthroughTarget id="accountTypeFormCustomColor">
                   <Pressable
+                    ref={customColorRef as never}
+                    collapsable={false}
                     accessibilityLabel="Add custom color"
                     accessibilityRole="button"
                     disabled={mutations.pending}
@@ -391,9 +455,7 @@ function AccountTypeFormModalContent({
                       strokeWidth={2.5}
                     />
                   </Pressable>
-                </WalkthroughTarget>
               </View>
-            </WalkthroughTarget>
           </View>
 
           {/* Linked accounts count info */}
@@ -409,6 +471,7 @@ function AccountTypeFormModalContent({
               </Text>
             </View>
           ) : null}
+          </View>
         </KeyboardAwareForm>
         <AccountTypeFormWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}

@@ -77,25 +77,25 @@ export function FullScreenFormModal({
           </Pressable>
         ) : null}
         {onSave ? (
-          <View ref={saveButtonRef}>
-            <Pressable
-              accessibilityLabel={saveLabel}
-              accessibilityRole="button"
-              disabled={pending || saveDisabled}
-              onPress={onSave}
-              style={[
-                styles.iconBtn,
-                styles.saveBtn,
-                (pending || saveDisabled) && styles.iconBtnDisabled,
-              ]}
-            >
-              {pending ? (
-                <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-              ) : (
-                <Save color={theme.colors.onPrimary} size={18} />
-              )}
-            </Pressable>
-          </View>
+          <Pressable
+            ref={saveButtonRef as never}
+            collapsable={false}
+            accessibilityLabel={saveLabel}
+            accessibilityRole="button"
+            disabled={pending || saveDisabled}
+            onPress={onSave}
+            style={[
+              styles.iconBtn,
+              styles.saveBtn,
+              (pending || saveDisabled) && styles.iconBtnDisabled,
+            ]}
+          >
+            {pending ? (
+              <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+            ) : (
+              <Save color={theme.colors.onPrimary} size={18} />
+            )}
+          </Pressable>
         ) : null}
       </View>
     ) : (
