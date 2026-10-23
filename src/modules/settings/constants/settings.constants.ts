@@ -87,6 +87,7 @@ export const PROMPT_SETTING_KEYS = {
     "prompt.scheduledTransactionFormWalkthroughDismissed",
   budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
   goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
+  developerMessageSeen: "prompt.developerMessageSeen",
 } as const;
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";

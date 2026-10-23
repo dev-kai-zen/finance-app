@@ -187,6 +187,7 @@ export function createInitialAccount(
 export function createRecommendedAccounts(
   context: DbContext,
   now = new Date(),
+  currencyCode = "PHP",
 ): void {
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
   const liabilityTypeIds = ensureRecommendedLiabilityAccountTypes(context, now);
@@ -234,7 +235,7 @@ export function createRecommendedAccounts(
         name: account.name,
         note: account.note ?? null,
         iconKey: template.iconKey,
-        currencyCode: "PHP",
+        currencyCode,
         openingBalanceMinorUnits: 0,
         openingBalanceAt,
         startingBalanceLocked: false,
@@ -297,7 +298,7 @@ export function createRecommendedAccounts(
         name: account.name,
         note: account.note,
         iconKey: typeDefinition.iconKey,
-        currencyCode: "PHP",
+        currencyCode,
         openingBalanceMinorUnits: 0,
         openingBalanceAt,
         startingBalanceLocked: false,

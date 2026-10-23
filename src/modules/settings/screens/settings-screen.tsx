@@ -11,6 +11,7 @@ import {
   Crown,
   Database,
   HardDrive,
+  Heart,
   Info,
   Languages,
   Palette,
@@ -33,6 +34,7 @@ import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
 import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
+import { DeveloperMessageModal } from "@/modules/developer-message";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
@@ -93,6 +95,7 @@ function SettingsScreenContent() {
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+  const [isDeveloperMessageOpen, setIsDeveloperMessageOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const {
@@ -912,6 +915,31 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.developerMessageAccessibility")}
+              accessibilityRole="button"
+              onPress={() => setIsDeveloperMessageOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Heart color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.developerMessage")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.developerMessageSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -932,6 +960,13 @@ function SettingsScreenContent() {
         blocks={getLatestReleaseNotes()}
         visible={isWhatsNewOpen}
         onClose={() => setIsWhatsNewOpen(false)}
+      />
+
+      <DeveloperMessageModal
+        isPro={isPro}
+        onClose={() => setIsDeveloperMessageOpen(false)}
+        onOpenPro={() => setIsPaywallOpen(true)}
+        visible={isDeveloperMessageOpen}
       />
 
       <ResetDataModal

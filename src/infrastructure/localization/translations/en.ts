@@ -151,6 +151,10 @@ export const en = {
     whatsNew: "What's New",
     whatsNewDescription: "See highlights from the latest app updates",
     whatsNewAccessibility: "Open what's new release notes",
+    developerMessage: "Developer Message & Goal",
+    developerMessageSubtitle:
+      "A note from Kaizen Dev on our mission and financial literacy",
+    developerMessageAccessibility: "Read message and goal from the developer",
     developerModeEnabledTitle: "Developer mode on",
     developerModeEnabledMessage: "SQLite Monitor is now available in the menu.",
     developerSection: "DEVELOPER",
@@ -300,6 +304,29 @@ export const en = {
         "Pending scheduled occurrences now pick up your latest amount, account, and category when you edit the schedule.",
     },
   },
+  developerMessage: {
+    badge: "DEVELOPER'S NOTE & MISSION",
+    title: "A Note from Kaizen Dev",
+    subtitle: "The heart and goal behind this application",
+    missionTitle: "The Mission: Financial Literacy for Everyone",
+    missionBody:
+      "When I created this app, my core goal as a developer was simple: to help everyone become financially literate. Financial freedom doesn't require complex Wall Street strategies—it begins right here, by learning to mindfully monitor your cashflow. Understanding every inflow and outflow is the foundation of lasting confidence.",
+    kaizenTitle: "The Power of Small Improvements",
+    kaizenBody:
+      "In Japanese, 'Kaizen' (改善) means continuous improvement. You don't have to change everything overnight. Just tracking one expense a day and checking in on your balance builds a steady habit that transforms your financial life over time.",
+    supportTitle: "Independent & Built for You",
+    supportBody:
+      "Kaizen Finance is crafted independently as a private, offline-first app—no data harvesting, no intrusive bloat. If this app brings value to your journey, upgrading to Kaizen Pro directly funds my ongoing development and keeps this project thriving.",
+    feedbackTitle: "Your Voice Matters",
+    feedbackBody:
+      "Every feature and detail is shaped by real user experiences. Feel free to share your thoughts, report issues, or suggest new ideas. I'd love to hear from you.",
+    signaturePre: "Rooting for your financial peace,",
+    signatureName: "Kaizen Dev",
+    signatureTitle: "Solo Creator of Kaizen Finance",
+    actionBegin: "Let's Begin",
+    actionFeedback: "Send Feedback",
+    actionSupport: "Support via Pro",
+  },
   onboarding: {
     welcomeTitle: "Welcome to Kaizen Finance",
     welcomeDescription:
@@ -368,9 +395,29 @@ export const en = {
     readyNickname: "Nickname: %{name}",
     readyCurrency: "Currency: %{currency}",
     readyAccount: "Account: %{name}",
+    readyAccountRecommended:
+      "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
+    readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
     finishSetup: "Go to Home",
     continue: "Continue",
+    accountSetupChoiceTitle: "How would you like to set up accounts?",
+    accountSetupChoiceTitleAssisted:
+      "How would you like to set up your accounts, %{name}?",
+    accountSetupChoiceDescription:
+      "Choose whether to create your first account, use recommended starter presets, or start from scratch.",
+    accountSetupChoiceDescriptionAssisted:
+      "Choose whether to set up your primary account, use ready-to-go starter presets, or start with a clean slate.",
+    accountChoiceSingleTitle: "Create my first account",
+    accountChoiceSingleDesc:
+      "Set up your primary account with your own custom name, type, and opening balance.",
+    accountChoiceRecommendedTitle: "Use recommended accounts",
+    accountChoiceRecommendedDesc:
+      "Ready-to-use accounts (Cash, Bank, Savings, E-Wallet) and full category presets.",
+    accountChoiceRecommendedBadge: "Recommended",
+    accountChoiceManualTitle: "Start from scratch",
+    accountChoiceManualDesc:
+      "Start with an empty workspace. You'll add your accounts and categories manually later.",
     fullSetupTitle: "Set up your workspace",
     fullSetupDescription: "Choose how much structure you want on day one.",
     manualSetupTitle: "Start from scratch",

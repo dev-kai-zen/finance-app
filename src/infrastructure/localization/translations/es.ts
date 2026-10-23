@@ -163,6 +163,10 @@ export const es = {
     whatsNew: "Novedades",
     whatsNewDescription: "Consulta lo destacado de las últimas actualizaciones",
     whatsNewAccessibility: "Abrir las notas de la versión",
+    developerMessage: "Mensaje y meta del desarrollador",
+    developerMessageSubtitle:
+      "Una carta de Kaizen Dev sobre nuestra misión y educación financiera",
+    developerMessageAccessibility: "Leer mensaje y meta del desarrollador",
     developerModeEnabledTitle: "Modo desarrollador activado",
     developerModeEnabledMessage: "SQLite Monitor ya está en el menú.",
     developerSection: "DESARROLLADOR",
@@ -312,6 +316,29 @@ export const es = {
         "Las ocurrencias programadas pendientes reflejan el importe, la cuenta y la categoría más recientes cuando editas la programación.",
     },
   },
+  developerMessage: {
+    badge: "NOTA Y MISIÓN DEL DESARROLLADOR",
+    title: "Una carta de Kaizen Dev",
+    subtitle: "El corazón y propósito detrás de esta aplicación",
+    missionTitle: "La misión: Educación financiera para todos",
+    missionBody:
+      "Al crear esta aplicación, mi objetivo fundamental fue claro: ayudar a todas las personas a alcanzar la educación financiera. La libertad económica no requiere fórmulas complejas; comienza aquí, aprendiendo a monitorear conscientemente tu flujo de dinero. Saber de dónde viene y a dónde va cada centavo es la base de la tranquilidad.",
+    kaizenTitle: "El poder de los pequeños pasos",
+    kaizenBody:
+      "En japonés, 'Kaizen' (改善) significa mejora continua. No necesitas cambiar todo de la noche a la mañana. Dedicar un par de minutos al día a registrar tus gastos genera un hábito que transformará tu futuro.",
+    supportTitle: "Desarrollo independiente y privado",
+    supportBody:
+      "Desarrollo Kaizen Finance de forma independiente, respetando tu privacidad y funcionando sin conexión, sin vender tus datos. Si la aplicación te resulta útil, adquirir Kaizen Pro apoya directamente mi trabajo para seguir mejorándola.",
+    feedbackTitle: "Tu opinión cuenta",
+    feedbackBody:
+      "Esta herramienta está hecha para ti. Si tienes sugerencias, comentarios o ideas de nuevas funciones, no dudes en escribirme. Me encantará leerte.",
+    signaturePre: "Deseándote el mayor de los éxitos,",
+    signatureName: "Kaizen Dev",
+    signatureTitle: "Creador independiente de Kaizen Finance",
+    actionBegin: "Comencemos",
+    actionFeedback: "Enviar comentarios",
+    actionSupport: "Apoyar con Pro",
+  },
   onboarding: {
     welcomeTitle: "Bienvenido a Kaizen Finance",
     welcomeDescription:
@@ -380,9 +407,29 @@ export const es = {
     readyNickname: "Apodo: %{name}",
     readyCurrency: "Moneda: %{currency}",
     readyAccount: "Cuenta: %{name}",
+    readyAccountRecommended:
+      "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
+    readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
     finishSetup: "Ir a Inicio",
     continue: "Continuar",
+    accountSetupChoiceTitle: "¿Cómo te gustaría configurar tus cuentas?",
+    accountSetupChoiceTitleAssisted:
+      "¿Cómo te gustaría configurar tus cuentas, %{name}?",
+    accountSetupChoiceDescription:
+      "Elige si deseas crear tu primera cuenta, usar ajustes iniciales recomendados o empezar desde cero.",
+    accountSetupChoiceDescriptionAssisted:
+      "Elige si deseas crear tu cuenta principal, usar ajustes recomendados o empezar desde cero.",
+    accountChoiceSingleTitle: "Crear mi primera cuenta",
+    accountChoiceSingleDesc:
+      "Configura tu cuenta principal con nombre, tipo y saldo inicial personalizados.",
+    accountChoiceRecommendedTitle: "Usar cuentas recomendadas",
+    accountChoiceRecommendedDesc:
+      "Cuentas listas para usar (Efectivo, Banco, Ahorros, Billetera) y categorías completas.",
+    accountChoiceRecommendedBadge: "Recomendado",
+    accountChoiceManualTitle: "Empezar desde cero",
+    accountChoiceManualDesc:
+      "Comienza con un espacio vacío. Añadirás tus cuentas y categorías manualmente.",
     fullSetupTitle: "Configura tu espacio",
     fullSetupDescription: "Elige cuánta estructura quieres el primer día.",
     manualSetupTitle: "Empezar desde cero",

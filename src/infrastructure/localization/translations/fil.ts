@@ -163,6 +163,10 @@ export const fil = {
     whatsNew: "Ano ang Bago",
     whatsNewDescription: "Tingnan ang mga highlight mula sa pinakabagong update",
     whatsNewAccessibility: "Buksan ang mga release note na ano ang bago",
+    developerMessage: "Mensahe at Layunin ng Developer",
+    developerMessageSubtitle:
+      "Liham mula kay Kaizen Dev tungkol sa aming misyon at financial literacy",
+    developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
     developerModeEnabledTitle: "Naka-on ang developer mode",
     developerModeEnabledMessage: "Available na ang SQLite Monitor sa menu.",
     developerSection: "DEVELOPER",
@@ -313,6 +317,29 @@ export const fil = {
         "Ang mga pending na scheduled occurrence ay sumusunod na sa pinakabagong halaga, account, at kategorya pag na-edit mo ang iskedyul.",
     },
   },
+  developerMessage: {
+    badge: "MENSAHE AT MISYON NG DEVELOPER",
+    title: "Mensahe mula kay Kaizen Dev",
+    subtitle: "Ang layunin at puso sa likod ng application na ito",
+    missionTitle: "Ang Misyon: Financial Literacy para sa Lahat",
+    missionBody:
+      "Nang binuo ko ang app na ito, iisa lang ang aking mithiin: tulungan ang bawat isa na maging maalam sa pananalapi (financially literate). Ang kalayaan sa pera ay hindi nagsisimula sa kumplikadong pamumuhunan; nagsisimula ito sa pagkatutong magmonitor ng sariling cashflow. Kapag alam mo kung saan nanggagaling at saan napupunta ang iyong pera, nagkakaroon ka ng kapayapaan at kontrol.",
+    kaizenTitle: "Ang Bunga ng Unti-unting Pag-unlad",
+    kaizenBody:
+      "Sa wikang Hapon, ang 'Kaizen' (改善) ay nangangahulugang tuluy-tuloy na pagpapabuti. Hindi mo kailangang baguhin ang lahat sa isang iglap. Ang pagtatala ng kahit isang gastos bawat araw ay lumilikha ng pangmatagalang gawi tungo sa tagumpay.",
+    supportTitle: "Independiyenteng Gawa para sa Iyo",
+    supportBody:
+      "Binuo ko ang Kaizen Finance nang mag-isa bilang isang ligtas, offline-first na kasama—walang pagbenta ng datos at walang abala. Kung nakatutulong ito sa iyong buhay, ang pagbili ng Kaizen Pro ay direktang sumusuporta sa akin upang patuloy na mapaganda ang app.",
+    feedbackTitle: "Mahalaga ang Iyong Boses",
+    feedbackBody:
+      "Ang app na ito ay para sa iyo. Huwag mag-atubiling magpadala ng feedback, mga mungkahi, o karanasan. Sabik akong marinig ang iyong kwento.",
+    signaturePre: "Kasama mo sa iyong pag-unlad,",
+    signatureName: "Kaizen Dev",
+    signatureTitle: "Solo Creator ng Kaizen Finance",
+    actionBegin: "Simulan Natin",
+    actionFeedback: "Magpadala ng Feedback",
+    actionSupport: "Suportahan gamit ang Pro",
+  },
   onboarding: {
     welcomeTitle: "Maligayang pagdating sa Kaizen Finance",
     welcomeDescription:
@@ -381,9 +408,30 @@ export const fil = {
     readyNickname: "Palayaw: %{name}",
     readyCurrency: "Currency: %{currency}",
     readyAccount: "Account: %{name}",
+    readyAccountRecommended:
+      "Mga Account: Inirekumendang starter pack (Cash, Bangko, Ipon, E-Wallet)",
+    readyAccountManual:
+      "Mga Account: Magsimula mula sa simula (walang panimulang account)",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
     finishSetup: "Pumunta sa Home",
     continue: "Magpatuloy",
+    accountSetupChoiceTitle: "Paano mo gustong i-setup ang iyong mga account?",
+    accountSetupChoiceTitleAssisted:
+      "Paano mo gustong i-setup ang iyong mga account, %{name}?",
+    accountSetupChoiceDescription:
+      "Piliin kung gagawa ng iyong unang account, gagamit ng inirekumendang starter presets, o magsisimula mula sa simula.",
+    accountSetupChoiceDescriptionAssisted:
+      "Piliin kung gagawa ng iyong unang account, gagamit ng inirekumendang starter presets, o magsisimula mula sa simula.",
+    accountChoiceSingleTitle: "Gawin ang aking unang account",
+    accountChoiceSingleDesc:
+      "I-setup ang iyong pangunahing account gamit ang sariling pangalan, uri, at panimulang balanse.",
+    accountChoiceRecommendedTitle: "Gamitin ang inirekumendang mga account",
+    accountChoiceRecommendedDesc:
+      "Handang gamiting mga account (Cash, Bangko, Ipon, E-Wallet) at kumpletong kategorya.",
+    accountChoiceRecommendedBadge: "Inirerekomenda",
+    accountChoiceManualTitle: "Magsimula mula sa simula",
+    accountChoiceManualDesc:
+      "Magsimula nang walang laman. Ikaw ang magdadagdag ng mga account at kategorya mamaya.",
     fullSetupTitle: "I-setup ang workspace",
     fullSetupDescription: "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",
     manualSetupTitle: "Magsimula from scratch",
