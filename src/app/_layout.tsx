@@ -17,7 +17,10 @@ import {
   WorkspaceProvider,
 } from "@/modules/onboarding";
 import { NotificationsReminderProcessor } from "@/modules/notifications";
-import { QuickSyncProcessor } from "@/modules/google-drive-backup";
+import {
+  GoogleDriveScheduledBackupProcessor,
+  QuickSyncProcessor,
+} from "@/modules/google-drive-backup";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
@@ -69,6 +72,7 @@ function RootLayoutContent() {
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
+                        <GoogleDriveScheduledBackupProcessor />
                         <QuickSyncProcessor />
                         <NotificationsReminderProcessor />
                         <WidgetSyncProcessor />

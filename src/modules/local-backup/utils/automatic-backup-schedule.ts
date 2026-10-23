@@ -1,13 +1,13 @@
-import type { AutomaticBackupFrequency } from "@/modules/local-backup/types/backup.types";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import type { AutomaticBackupConfig } from "@/modules/local-backup/types/backup.types";
+import { isScheduledBackupDue } from "@/utils/backup-schedule";
 
 export function isAutomaticBackupDue(
   latestBackupAt: Date | null,
-  frequency: AutomaticBackupFrequency,
+  config: Pick<
+    AutomaticBackupConfig,
+    "frequency" | "timeOfDay" | "weekday" | "dayOfMonth"
+  >,
   now = new Date(),
 ): boolean {
-  if (!latestBackupAt) return true;
-  const interval = frequency === "weekly" ? 7 * DAY_MS : DAY_MS;
-  return now.getTime() - latestBackupAt.getTime() >= interval;
+  return isScheduledBackupDue(latestBackupAt, config, now);
 }

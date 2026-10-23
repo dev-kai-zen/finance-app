@@ -16,11 +16,15 @@ export interface LocalBackupFile {
   valid: boolean;
 }
 
-export type AutomaticBackupFrequency = "daily" | "weekly";
+import type {
+  BackupScheduleFields,
+  BackupScheduleFrequency,
+} from "@/utils/backup-schedule";
 
-export interface AutomaticBackupConfig {
+export type AutomaticBackupFrequency = BackupScheduleFrequency;
+
+export interface AutomaticBackupConfig extends BackupScheduleFields {
   enabled: boolean;
-  frequency: AutomaticBackupFrequency;
 }
 
 export type LocalBackupOperation =

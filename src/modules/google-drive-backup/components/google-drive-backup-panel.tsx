@@ -37,6 +37,7 @@ import { RestoreBackupModal } from "@/modules/google-drive-backup/components/res
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
+import { ScheduledBackupCard } from "./scheduled-backup-card";
 
 export function GoogleDriveBackupPanel() {
   const theme = useAppTheme();
@@ -347,6 +348,8 @@ export function GoogleDriveBackupPanel() {
             </View>
           ) : null}
         </View>
+
+        {backup.user ? <ScheduledBackupCard /> : null}
 
         {backup.user ? <QuickSyncCard /> : null}
 

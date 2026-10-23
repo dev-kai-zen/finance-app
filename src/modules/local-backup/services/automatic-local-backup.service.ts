@@ -34,7 +34,7 @@ async function performAutomaticBackup(): Promise<LocalBackupFile | null> {
   );
   if (
     latestAutomatic &&
-    !isAutomaticBackupDue(latestAutomatic.createdAt, config.frequency)
+    !isAutomaticBackupDue(latestAutomatic.createdAt, config)
   ) {
     return null;
   }

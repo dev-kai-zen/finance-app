@@ -47,9 +47,19 @@ export const en = {
     failed: "Sync failed",
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
+  scheduledBackup: {
+    title: "Scheduled backup",
+    description:
+      "Upload a full unprotected backup on a daily, weekly, or monthly schedule when you open the app.",
+    lastRun: "Last scheduled backup: %{time}",
+    neverRun: "Never",
+    proTitle: "Scheduled Google Drive Backups",
+    proDescription:
+      "Automatically upload full backup archives to Google Drive on your chosen schedule with Kaizen Pro.",
+  },
   quickSync: {
     title: "Quick Sync",
-    description: "Automatically backup your changes to Google Drive",
+    description: "Sync changes to Google Drive when your data changes",
     networkLabel: "Sync over",
     wifiOnly: "Wi-Fi only",
     wifiOnlyDescription: "Only sync when connected to Wi-Fi",

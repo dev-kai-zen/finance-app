@@ -25,6 +25,7 @@ import {
 
 import {
   AppButton,
+  BackupScheduleOptions,
   ConfirmModal,
   ModalScreenHeader,
   NotificationModal,
@@ -38,7 +39,7 @@ import { useLocalization } from "@/infrastructure/localization";
 import { BackupPassphraseModal } from "@/modules/local-backup/components/backup-passphrase-modal";
 import { useLocalBackup } from "@/modules/local-backup/hooks/use-local-backup";
 import type {
-  AutomaticBackupFrequency,
+  AutomaticBackupConfig,
   LocalBackupFile,
   LocalRestoreCandidate,
 } from "@/modules/local-backup/types/backup.types";
@@ -102,15 +103,16 @@ export function LocalBackupScreen() {
     void backup.restoreBackup(restoreCandidate, null);
   };
 
-  const updateFrequency = (frequency: AutomaticBackupFrequency) => {
+  const updateAutomaticSchedule = (
+    patch: Partial<AutomaticBackupConfig>,
+  ) => {
     if (!isPro) {
       setProModalVisible(true);
       return;
     }
-    if (frequency === backup.config.frequency) return;
     void backup.updateAutomaticConfig({
-      enabled: backup.config.enabled,
-      frequency,
+      ...backup.config,
+      ...patch,
     });
   };
 
@@ -204,7 +206,7 @@ export function LocalBackupScreen() {
                 )}
               </View>
               <Text selectable style={styles.rowDescription}>
-                Runs when the app becomes active and a backup is due.
+                Runs when you open the app after your scheduled backup time.
               </Text>
             </View>
             <ThemedSwitch
@@ -215,50 +217,18 @@ export function LocalBackupScreen() {
                   setProModalVisible(true);
                   return;
                 }
-                void backup.updateAutomaticConfig({
-                  ...backup.config,
-                  enabled,
-                });
+                updateAutomaticSchedule({ enabled });
               }}
               value={Boolean(isPro && backup.config.enabled)}
             />
           </Pressable>
 
           {isPro && backup.config.enabled ? (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.frequencyRow}>
-                <Text style={styles.frequencyLabel}>Frequency</Text>
-                <View style={styles.frequencyOptions}>
-                  {(["daily", "weekly"] as const).map((frequency) => {
-                    const selected = backup.config.frequency === frequency;
-                    return (
-                      <Pressable
-                        key={frequency}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected }}
-                        disabled={busy}
-                        onPress={() => updateFrequency(frequency)}
-                        style={({ pressed }) => [
-                          styles.frequencyOption,
-                          selected && styles.frequencyOptionSelected,
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.frequencyOptionText,
-                            selected && styles.frequencyOptionTextSelected,
-                          ]}
-                        >
-                          {frequency === "daily" ? "Daily" : "Weekly"}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            </>
+            <BackupScheduleOptions
+              disabled={busy}
+              onChange={(schedule) => updateAutomaticSchedule(schedule)}
+              schedule={backup.config}
+            />
           ) : null}
         </View>
         <Text selectable style={styles.sectionHelp}>
@@ -447,7 +417,7 @@ export function LocalBackupScreen() {
       />
 
       <ProFeatureModal
-        featureDescription="Automatically create secure, scheduled local backup copies every day or week whenever the app is active with Kaizen Pro."
+        featureDescription="Automatically create secure, scheduled local backup copies on a daily, weekly, or monthly schedule whenever the app is active with Kaizen Pro."
         featureTitle="Automatic Local Backups"
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}

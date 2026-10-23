@@ -53,9 +53,19 @@ export const es = {
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
+  scheduledBackup: {
+    title: "Copia programada",
+    description:
+      "Sube una copia completa sin contraseña a diario, semanal o mensualmente al abrir la app.",
+    lastRun: "Última copia programada: %{time}",
+    neverRun: "Nunca",
+    proTitle: "Copias programadas en Google Drive",
+    proDescription:
+      "Sube automáticamente copias completas a Google Drive según tu horario con Kaizen Pro.",
+  },
   quickSync: {
     title: "Sincronización Rápida",
-    description: "Guarda automáticamente tus cambios en Google Drive",
+    description: "Sincroniza cambios con Google Drive cuando cambian tus datos",
     networkLabel: "Sincronizar mediante",
     wifiOnly: "Solo Wi-Fi",
     wifiOnlyDescription: "Solo sincronizar al conectarse a Wi-Fi",

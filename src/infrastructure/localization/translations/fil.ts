@@ -53,9 +53,19 @@ export const fil = {
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
+  scheduledBackup: {
+    title: "Naka-iskedyul na backup",
+    description:
+      "Mag-upload ng buong backup na walang password araw-araw, linggu-linggo, o buwan-buwan kapag binuksan mo ang app.",
+    lastRun: "Huling naka-iskedyul na backup: %{time}",
+    neverRun: "Hindi pa",
+    proTitle: "Naka-iskedyul na Google Drive Backup",
+    proDescription:
+      "Awtomatikong mag-upload ng buong backup sa Google Drive ayon sa iyong iskedyul gamit ang Kaizen Pro.",
+  },
   quickSync: {
     title: "Quick Sync",
-    description: "Awtomatikong i-backup ang iyong mga pagbabago sa Google Drive",
+    description: "I-sync ang mga pagbabago sa Google Drive kapag nagbago ang data mo",
     networkLabel: "I-sync sa pamamagitan ng",
     wifiOnly: "Wi-Fi lamang",
     wifiOnlyDescription: "I-sync lamang kapag nakakonekta sa Wi-Fi",
