@@ -28,6 +28,13 @@ import {
   NotificationModal,
   ThemedSwitch,
 } from "@/components";
+import {
+  DraggableTourChip,
+  TransactionFormWalkthroughOverlay,
+  useTransactionFormWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+} from "@/modules/walkthrough";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -240,7 +247,7 @@ function formatTransactionTime(value: Date): string {
   });
 }
 
-export function TransactionFormModal({
+function TransactionFormModalInner({
   visible,
   onClose,
   onSaveTransaction,
@@ -1133,6 +1140,78 @@ export function TransactionFormModal({
   const showInstallmentsUi =
     (formFields.installments || installmentEnabled) && showInstallmentSection;
 
+  const closeRef = useWalkthroughTarget("txFormClose");
+  const presetsRef = useWalkthroughTarget("txFormPresets");
+  const customizeRef = useWalkthroughTarget("txFormCustomize");
+  const typePickerRef = useWalkthroughTarget("txFormTypePicker");
+  const nameRef = useWalkthroughTarget("txFormName");
+  const attachmentRef = useWalkthroughTarget("txFormAttachment");
+  const dateRef = useWalkthroughTarget("txFormDate");
+  const timeRef = useWalkthroughTarget("txFormTime");
+  const amountRef = useWalkthroughTarget("txFormAmount");
+  const currencyRef = useWalkthroughTarget("txFormCurrency");
+  const accountRef = useWalkthroughTarget("txFormAccount");
+  const categoryRef = useWalkthroughTarget("txFormCategory");
+  const splitRef = useWalkthroughTarget("txFormSplit");
+  const labelsRef = useWalkthroughTarget("txFormLabels");
+  const noteRef = useWalkthroughTarget("txFormNote");
+  const cancelRef = useWalkthroughTarget("txFormCancel");
+  const saveRef = useWalkthroughTarget("txFormSave");
+
+  const formScrollRef = useRef<any>(null);
+
+  const walkthrough = useTransactionFormWalkthrough({
+    options: {
+      showPresets: !isEditing && showQuickPresetsUi,
+      showCustomize: true,
+      showName: showTransactionNameField,
+      showAttachment: showAttachmentsField,
+      showTime: showExactTimeField,
+      isTransfer: mode === "transfer",
+      showSplit: canUseSplit && showSplitField,
+      showLabels: showLabelsField,
+      showNote: showNoteField,
+    },
+    onScrollToTarget: (targetId) => {
+      switch (targetId) {
+        case "txFormPresets":
+        case "txFormCustomize":
+        case "txFormTypePicker":
+        case "txFormName":
+        case "txFormAttachment":
+        case "txFormDate":
+        case "txFormTime":
+          formScrollRef.current?.scrollTo?.({ y: 0, animated: true });
+          break;
+        case "txFormAmount":
+        case "txFormCurrency":
+          formScrollRef.current?.scrollTo?.({ y: 60, animated: true });
+          break;
+        case "txFormAccount":
+          formScrollRef.current?.scrollTo?.({ y: 150, animated: true });
+          break;
+        case "txFormCategory":
+          formScrollRef.current?.scrollTo?.({ y: 220, animated: true });
+          break;
+        case "txFormSplit":
+          formScrollRef.current?.scrollTo?.({ y: 300, animated: true });
+          break;
+        case "txFormLabels":
+          formScrollRef.current?.scrollTo?.({ y: 380, animated: true });
+          break;
+        case "txFormNote":
+          formScrollRef.current?.scrollTo?.({ y: 460, animated: true });
+          break;
+        case "txFormCancel":
+        case "txFormSave":
+          formScrollRef.current?.scrollToEnd?.({ animated: true });
+          break;
+        default:
+          break;
+      }
+    },
+  });
+
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
       const parsed = parseInt(customTermMonths, 10);
@@ -1705,6 +1784,7 @@ export function TransactionFormModal({
               {isEditing ? "Edit Transaction" : "Record Transaction"}
             </Text>
             <Pressable
+              ref={closeRef}
               accessibilityLabel="Close form"
               accessibilityRole="button"
               onPress={onClose}
@@ -1723,6 +1803,7 @@ export function TransactionFormModal({
           >
             {!isEditing && showQuickPresetsUi ? (
               <Pressable
+                ref={presetsRef}
                 accessibilityLabel="Open Quick Presets"
                 accessibilityRole="button"
                 disabled={pending || presetPending}
@@ -1743,6 +1824,7 @@ export function TransactionFormModal({
             ) : null}
 
             <Pressable
+              ref={customizeRef}
               accessibilityLabel="Customize fields"
               accessibilityRole="button"
               disabled={pending}
@@ -1757,7 +1839,7 @@ export function TransactionFormModal({
             </Pressable>
           </ScrollView>
 
-          <View style={styles.typePickerSpacing}>
+          <View ref={typePickerRef} style={styles.typePickerSpacing}>
             <TransactionTypePicker
               allowTransfer={allowTransfer}
               disabled={pending}
@@ -1767,6 +1849,7 @@ export function TransactionFormModal({
           </View>
 
           <KeyboardAwareFormPreset
+            ref={formScrollRef}
             contentContainerStyle={styles.formScrollContent}
             multilineFocused={focusedFieldType === "description"}
             preset="transactionSheet"
@@ -1777,7 +1860,7 @@ export function TransactionFormModal({
               {showTransactionNameField || showAttachmentsField ? (
                 <View style={styles.nameSuggestionAnchor}>
                   {showTransactionNameField ? (
-                    <View style={styles.nameInputContainer}>
+                    <View ref={nameRef} style={styles.nameInputContainer}>
                       <TextInput
                         maxLength={100}
                         onBlur={() => setFocusedFieldType(null)}
@@ -1796,6 +1879,7 @@ export function TransactionFormModal({
                       />
                       {showAttachmentsField ? (
                         <Pressable
+                          ref={attachmentRef}
                           accessibilityLabel={
                             attachmentDraft.totalCount > 0
                               ? `View ${attachmentDraft.totalCount} attachments`
@@ -1825,6 +1909,7 @@ export function TransactionFormModal({
                     </View>
                   ) : showAttachmentsField ? (
                     <Pressable
+                      ref={attachmentRef}
                       accessibilityLabel={
                         attachmentDraft.totalCount > 0
                           ? `View ${attachmentDraft.totalCount} attachments`
@@ -1863,6 +1948,7 @@ export function TransactionFormModal({
               ) : null}
               <View style={styles.dateTimeRow}>
                 <Pressable
+                  ref={dateRef}
                   accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
                   accessibilityRole="button"
                   disabled={pending}
@@ -1883,6 +1969,7 @@ export function TransactionFormModal({
                       |
                     </Text>
                     <Pressable
+                      ref={timeRef}
                       accessibilityLabel={`Transaction time ${formatTransactionTime(occurredAt)}. Tap to change.`}
                       accessibilityRole="button"
                       disabled={pending}
@@ -1903,6 +1990,8 @@ export function TransactionFormModal({
 
             <View style={[styles.inputGroup, styles.amountExchangeStack]}>
               <AmountCalculatorField
+                amountInputRef={amountRef}
+                currencyRef={currencyRef}
                 amountMinorUnits={amountMinorUnits}
                 amountSign={mode === "transfer" ? "transfer" : amountSign}
                 currencyCode={
@@ -2003,6 +2092,7 @@ export function TransactionFormModal({
                 <Text style={styles.fieldLabel}>TRANSFER FROM</Text>
               ) : null}
               <Pressable
+                ref={accountRef}
                 accessibilityLabel={`Account location ${selectedAccount?.name ?? "none selected"}${selectedPocket ? `, ${selectedPocket.name}` : ""}. Tap to choose.`}
                 accessibilityRole="button"
                 onPress={() => setIsAccountPickerOpen(true)}
@@ -2285,6 +2375,7 @@ export function TransactionFormModal({
                 {!splitEnabled ? (
                   <>
                     <Pressable
+                      ref={categoryRef}
                       accessibilityLabel={`Category ${selectedCategory?.name ?? "none selected"}. Tap to choose category.`}
                       accessibilityRole="button"
                       onPress={() => setIsCategoryPickerOpen(true)}
@@ -2347,35 +2438,37 @@ export function TransactionFormModal({
                   </>
                 ) : null}
                 {canUseSplit && showSplitField ? (
-                  <TransactionSplitEditor
-                    categories={flatCategoriesForSplit}
-                    currencyCode={accountCurrencyCode}
-                    disabled={pending}
-                    enabled={splitEnabled}
-                    lines={splitLines}
-                    onEnabledChange={(value) => {
-                      if (value) {
-                        setSplitLines([
-                          {
-                            key: "split-1",
-                            categoryId: selectedCategoryId,
-                            amountMinorUnits: splitTotalMinorUnits,
-                            note: null,
-                          },
-                          createEmptySplitLine("split-2"),
-                        ]);
-                      } else if (splitLines[0]?.categoryId) {
-                        setSelectedCategoryId(splitLines[0].categoryId);
-                      }
-                      setSplitEnabled(value);
-                    }}
-                    onLinesChange={setSplitLines}
-                    onPickCategory={(lineKey) => {
-                      setSplitCategoryPickerLineKey(lineKey);
-                      setIsCategoryPickerOpen(true);
-                    }}
-                    totalMinorUnits={splitTotalMinorUnits}
-                  />
+                  <View ref={splitRef}>
+                    <TransactionSplitEditor
+                      categories={flatCategoriesForSplit}
+                      currencyCode={accountCurrencyCode}
+                      disabled={pending}
+                      enabled={splitEnabled}
+                      lines={splitLines}
+                      onEnabledChange={(value) => {
+                        if (value) {
+                          setSplitLines([
+                            {
+                              key: "split-1",
+                              categoryId: selectedCategoryId,
+                              amountMinorUnits: splitTotalMinorUnits,
+                              note: null,
+                            },
+                            createEmptySplitLine("split-2"),
+                          ]);
+                        } else if (splitLines[0]?.categoryId) {
+                          setSelectedCategoryId(splitLines[0].categoryId);
+                        }
+                        setSplitEnabled(value);
+                      }}
+                      onLinesChange={setSplitLines}
+                      onPickCategory={(lineKey) => {
+                        setSplitCategoryPickerLineKey(lineKey);
+                        setIsCategoryPickerOpen(true);
+                      }}
+                      totalMinorUnits={splitTotalMinorUnits}
+                    />
+                  </View>
                 ) : null}
               </View>
             )}
@@ -2606,7 +2699,7 @@ export function TransactionFormModal({
             ) : null}
 
             {showLabelsField ? (
-            <View style={styles.inputGroup}>
+            <View ref={labelsRef} style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>LABELS (OPTIONAL)</Text>
               <View style={styles.labelChipsRow}>
                 {selectedLabelIds.length === 0 ? (
@@ -2673,7 +2766,7 @@ export function TransactionFormModal({
             ) : null}
 
             {showNoteField ? (
-            <View style={styles.inputGroup}>
+            <View ref={noteRef} style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
               <TextInput
                 maxLength={200}
@@ -2751,6 +2844,7 @@ export function TransactionFormModal({
           >
             <View style={styles.footerRow}>
               <Pressable
+                ref={cancelRef}
                 accessibilityLabel="Cancel"
                 accessibilityRole="button"
                 onPress={onClose}
@@ -2760,6 +2854,7 @@ export function TransactionFormModal({
               </Pressable>
 
               <Pressable
+                ref={saveRef}
                 accessibilityLabel={pending ? "Saving..." : "Save Record"}
                 accessibilityRole="button"
                 disabled={pending}
@@ -2772,6 +2867,22 @@ export function TransactionFormModal({
               </Pressable>
             </View>
           </KeyboardStickyView>
+
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+
+          <TransactionFormWalkthroughOverlay
+            onNext={walkthrough.nextStep}
+            onPrev={walkthrough.prevStep}
+            onSkip={walkthrough.skipWalkthrough}
+            step={walkthrough.currentStep}
+            stepIndex={walkthrough.activeStepIndex}
+            targetLayout={walkthrough.activeTargetLayout}
+            totalSteps={walkthrough.totalSteps}
+            visible={walkthrough.isWalkthroughActive}
+          />
         </View>
       </View>
 
@@ -3124,6 +3235,15 @@ export function TransactionFormModal({
         visible={isFieldPreferencesOpen}
       />
     </>
+  );
+}
+
+export function TransactionFormModal(props: TransactionFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <TransactionFormModalInner {...props} />
+    </WalkthroughRegistryProvider>
   );
 }
 

@@ -1,5 +1,6 @@
-import type { PropsWithChildren } from "react";
+import { forwardRef, type PropsWithChildren } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
+import type { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 import {
   KeyboardAwareForm,
@@ -22,14 +23,20 @@ export interface KeyboardAwareFormPresetProps
   multilineContentContainerStyle?: StyleProp<ViewStyle>;
 }
 
-export function KeyboardAwareFormPreset({
-  preset,
-  multilineFocused = false,
-  contentContainerStyle,
-  multilineContentContainerStyle,
-  children,
-  ...scrollViewProps
-}: KeyboardAwareFormPresetProps) {
+export const KeyboardAwareFormPreset = forwardRef<
+  React.ComponentRef<typeof KeyboardAwareScrollView>,
+  KeyboardAwareFormPresetProps
+>(function KeyboardAwareFormPreset(
+  {
+    preset,
+    multilineFocused = false,
+    contentContainerStyle,
+    multilineContentContainerStyle,
+    children,
+    ...scrollViewProps
+  },
+  ref,
+) {
   const { bottomOffset, extraKeyboardSpace, contentPaddingBottomMultiline } =
     resolveKeyboardFormScrollProps(preset, multilineFocused);
 
@@ -42,6 +49,7 @@ export function KeyboardAwareFormPreset({
 
   return (
     <KeyboardAwareForm
+      ref={ref}
       bottomOffset={bottomOffset}
       contentContainerStyle={[contentContainerStyle, resolvedMultilineStyle]}
       extraKeyboardSpace={extraKeyboardSpace}
@@ -50,4 +58,5 @@ export function KeyboardAwareFormPreset({
       {children}
     </KeyboardAwareForm>
   );
-}
+});
+

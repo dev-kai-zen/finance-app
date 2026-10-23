@@ -23,6 +23,9 @@ export interface ScheduledOccurrenceCardProps {
   onSkip: (occurrenceId: string) => void;
   onEdit?: (schedule: ScheduledTransaction) => void;
   pending?: boolean;
+  cardRef?: React.Ref<View>;
+  skipRef?: React.Ref<View>;
+  postRef?: React.Ref<View>;
 }
 
 export function ScheduledOccurrenceCard({
@@ -35,6 +38,9 @@ export function ScheduledOccurrenceCard({
   onSkip,
   onEdit,
   pending = false,
+  cardRef,
+  skipRef,
+  postRef,
 }: ScheduledOccurrenceCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -48,7 +54,7 @@ export function ScheduledOccurrenceCard({
   const dueDateTime = occurrence.effectiveDueAt ?? occurrence.nominalDueAt;
 
   return (
-    <View style={[styles.card, isFailed && styles.cardFailed]}>
+    <View ref={cardRef} style={[styles.card, isFailed && styles.cardFailed]}>
       <View style={styles.cardHeader}>
         <View style={styles.cardMain}>
           <View style={styles.titleRow}>
@@ -133,32 +139,36 @@ export function ScheduledOccurrenceCard({
         ) : null}
 
         <View style={styles.rightActions}>
-          <AppButton
-            accessibilityLabel="Skip occurrence"
-            disabled={pending}
-            label="Skip"
-            leading={
-              <FastForward color={theme.colors.textSecondary} size={15} />
-            }
-            onPress={() => onSkip(occurrence.id)}
-            size="small"
-            variant="secondary"
-          />
-          <AppButton
-            accessibilityLabel={isFailed ? "Retry action" : "Post action"}
-            disabled={pending}
-            label={isFailed ? "Retry Action" : "Post Action"}
-            leading={
-              isFailed ? (
-                <RotateCcw color={theme.colors.onPrimary} size={15} />
-              ) : (
-                <Check color={theme.colors.onPrimary} size={15} />
-              )
-            }
-            onPress={() => onPost(occurrence)}
-            size="small"
-            variant="primary"
-          />
+          <View ref={skipRef}>
+            <AppButton
+              accessibilityLabel="Skip occurrence"
+              disabled={pending}
+              label="Skip"
+              leading={
+                <FastForward color={theme.colors.textSecondary} size={15} />
+              }
+              onPress={() => onSkip(occurrence.id)}
+              size="small"
+              variant="secondary"
+            />
+          </View>
+          <View ref={postRef}>
+            <AppButton
+              accessibilityLabel={isFailed ? "Retry action" : "Post action"}
+              disabled={pending}
+              label={isFailed ? "Retry Action" : "Post Action"}
+              leading={
+                isFailed ? (
+                  <RotateCcw color={theme.colors.onPrimary} size={15} />
+                ) : (
+                  <Check color={theme.colors.onPrimary} size={15} />
+                )
+              }
+              onPress={() => onPost(occurrence)}
+              size="small"
+              variant="primary"
+            />
+          </View>
         </View>
       </View>
     </View>

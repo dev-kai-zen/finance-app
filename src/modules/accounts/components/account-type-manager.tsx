@@ -11,6 +11,13 @@ import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import {
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  DraggableTourChip,
+  AccountGroupSetupWalkthroughOverlay,
+  useAccountGroupSetupWalkthrough,
+} from "@/modules/walkthrough";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
@@ -22,21 +29,33 @@ import type {
 } from "@/modules/accounts/types/account.types";
 import { isProtectedAccountType } from "@/modules/accounts/utils/account-type-protection";
 
-export function AccountTypeManager({
-  visible,
-  types,
-  accounts,
-  mutations,
-  onClose,
-}: {
+export type AccountTypeManagerProps = {
   visible: boolean;
   types: AccountType[];
   accounts: AccountListItem[];
   mutations: AccountMutations;
   onClose: () => void;
-}) {
+};
+
+export function AccountTypeManager(props: AccountTypeManagerProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountTypeManagerContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountTypeManagerContent({
+  visible,
+  types,
+  accounts,
+  mutations,
+  onClose,
+}: AccountTypeManagerProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = useAccountGroupSetupWalkthrough();
   const [group, setGroup] = useState<AccountGroup>("asset");
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
@@ -126,33 +145,40 @@ export function AccountTypeManager({
         visible
         onClose={onClose}
       >
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
         <ScrollView contentContainerStyle={styles.formContent}>
-          <View style={styles.segmentRow}>
-            {(["asset", "liability"] as const).map((item) => (
-              <Pressable
-                key={item}
-                disabled={mutations.pending}
-                onPress={() => setGroup(item)}
-                style={[
-                  styles.segment,
-                  group === item &&
-                    (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
-                ]}
-              >
-                <Text
+          <WalkthroughTarget id="accountGroupPicker">
+            <View style={styles.segmentRow}>
+              {(["asset", "liability"] as const).map((item) => (
+                <Pressable
+                  key={item}
+                  disabled={mutations.pending}
+                  onPress={() => setGroup(item)}
                   style={[
-                    styles.segmentText,
-                    group === item && styles.segmentTextActive,
+                    styles.segment,
+                    group === item &&
+                      (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
                   ]}
                 >
-                  {item === "asset" ? "Assets" : "Liabilities"}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      group === item && styles.segmentTextActive,
+                    ]}
+                  >
+                    {item === "asset" ? "Assets" : "Liabilities"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </WalkthroughTarget>
 
           <View style={styles.toolbar}>
             {reorderableTypes.length > 1 ? (
+              <WalkthroughTarget id="accountGroupReorder">
                 <Pressable
                   accessibilityLabel="Reorder account groups"
                   accessibilityRole="button"
@@ -167,26 +193,29 @@ export function AccountTypeManager({
                   <IconHelper color={activeColor} name="arrow-up-down" size={15} />
                   <Text style={[styles.toolbarChipText, { color: activeColor }]}>Reorder</Text>
                 </Pressable>
+              </WalkthroughTarget>
             ) : null}
 
-            <Pressable
-              accessibilityLabel="New Account Group"
-              accessibilityRole="button"
-              disabled={mutations.pending}
-              onPress={() => {
-                mutations.clearError();
-                setEditor({});
-              }}
-              style={({ pressed }) => [
-                styles.toolbarChip,
-                styles.toolbarChipPrimary,
-                { borderColor: activeColor },
-                pressed && styles.toolbarChipPressed,
-              ]}
-            >
-              <IconHelper color={activeColor} name="plus" size={15} />
-              <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
-            </Pressable>
+            <WalkthroughTarget id="accountGroupNew">
+              <Pressable
+                accessibilityLabel="New Account Group"
+                accessibilityRole="button"
+                disabled={mutations.pending}
+                onPress={() => {
+                  mutations.clearError();
+                  setEditor({});
+                }}
+                style={({ pressed }) => [
+                  styles.toolbarChip,
+                  styles.toolbarChipPrimary,
+                  { borderColor: activeColor },
+                  pressed && styles.toolbarChipPressed,
+                ]}
+              >
+                <IconHelper color={activeColor} name="plus" size={15} />
+                <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
+              </Pressable>
+            </WalkthroughTarget>
           </View>
 
           {visibleTypes.length === 0 ? (
@@ -236,6 +265,16 @@ export function AccountTypeManager({
             })
           )}
         </ScrollView>
+        <AccountGroupSetupWalkthroughOverlay
+          visible={walkthrough.isWalkthroughActive}
+          stepIndex={walkthrough.activeStepIndex}
+          totalSteps={walkthrough.totalSteps}
+          step={walkthrough.currentStep}
+          targetLayout={walkthrough.activeTargetLayout}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+        />
       </FullScreenFormModal>
 
       <SortableListModal

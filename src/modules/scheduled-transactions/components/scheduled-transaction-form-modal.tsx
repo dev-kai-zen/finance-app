@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { ChevronRight, Crown } from "lucide-react-native";
 
 import {
@@ -29,6 +36,13 @@ import {
   TransactionDateTimePickerModal,
   TransactionTypePicker,
 } from "@/modules/transactions";
+import {
+  DraggableTourChip,
+  ScheduleFormWalkthroughOverlay,
+  useScheduleFormWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+} from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type {
   SaveScheduledTransactionInput,
@@ -99,7 +113,18 @@ function repeatUnit(frequency: ScheduleFrequency): string {
   return "year(s)";
 }
 
-export function ScheduledTransactionFormModal({
+export function ScheduledTransactionFormModal(
+  props: ScheduledTransactionFormModalProps,
+) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <ScheduledTransactionFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function ScheduledTransactionFormModalContent({
   visible,
   initialSchedule,
   accounts,
@@ -119,6 +144,23 @@ export function ScheduledTransactionFormModal({
   const resolveEntityColor = useResolveEntityColor();
   const defaultAccounts = useDefaultAccounts();
   const { isPro, guardAction, paywallVisible, closePaywall } = useProGuard();
+
+  const typeRef = useWalkthroughTarget("scheduleFormType");
+  const nameRef = useWalkthroughTarget("scheduleFormName");
+  const amountRef = useWalkthroughTarget("scheduleFormAmount");
+  const accountRef = useWalkthroughTarget("scheduleFormAccount");
+  const categoryRef = useWalkthroughTarget("scheduleFormCategory");
+  const noteRef = useWalkthroughTarget("scheduleFormNote");
+  const recurrenceRef = useWalkthroughTarget("scheduleFormRecurrence");
+  const startDateRef = useWalkthroughTarget("scheduleFormStartDate");
+  const frequencyRef = useWalkthroughTarget("scheduleFormFrequency");
+  const repeatRef = useWalkthroughTarget("scheduleFormRepeat");
+  const endsRef = useWalkthroughTarget("scheduleFormEnds");
+  const weekendRef = useWalkthroughTarget("scheduleFormWeekend");
+  const autoEnterRef = useWalkthroughTarget("scheduleFormAutoEnter");
+  const saveRef = useWalkthroughTarget("scheduleFormSave");
+
+  const formScrollRef = useRef<ScrollView | null>(null);
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined
@@ -398,6 +440,45 @@ export function ScheduledTransactionFormModal({
     if (success) onClose();
   };
 
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    if (
+      targetId === "scheduleFormSave" ||
+      targetId === "scheduleFormType" ||
+      targetId === "scheduleFormName" ||
+      targetId === "scheduleFormAmount"
+    ) {
+      formScrollRef.current?.scrollTo({ y: 0, animated: true });
+    } else if (
+      targetId === "scheduleFormAccount" ||
+      targetId === "scheduleFormCategory" ||
+      targetId === "scheduleFormNote"
+    ) {
+      formScrollRef.current?.scrollTo({ y: 180, animated: true });
+    } else if (
+      targetId === "scheduleFormRecurrence" ||
+      targetId === "scheduleFormStartDate" ||
+      targetId === "scheduleFormFrequency"
+    ) {
+      formScrollRef.current?.scrollTo({ y: 360, animated: true });
+    } else if (
+      targetId === "scheduleFormRepeat" ||
+      targetId === "scheduleFormEnds" ||
+      targetId === "scheduleFormWeekend"
+    ) {
+      formScrollRef.current?.scrollTo({ y: 560, animated: true });
+    } else if (targetId === "scheduleFormAutoEnter") {
+      formScrollRef.current?.scrollToEnd({ animated: true });
+    }
+  }, []);
+
+  const walkthrough = useScheduleFormWalkthrough({
+    options: {
+      frequency,
+      isTransfer: transactionType === "transfer",
+    },
+    onScrollToTarget: handleScrollToTarget,
+  });
+
   const pickerValue =
     dateTimePicker === "end-date"
       ? dateFromKey(endsOn, startsAt)
@@ -409,11 +490,15 @@ export function ScheduledTransactionFormModal({
         onClose={onClose}
         onSave={handleSave}
         pending={pending}
+        saveButtonRef={saveRef}
         saveLabel="Save schedule"
         title={initialSchedule ? "Edit Schedule" : "New Schedule"}
         visible={visible}
       >
-        <KeyboardAwareForm contentContainerStyle={styles.formContent}>
+        <KeyboardAwareForm
+          contentContainerStyle={styles.formContent}
+          ref={formScrollRef}
+        >
           {localError || error ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorText}>{localError ?? error}</Text>
@@ -421,13 +506,15 @@ export function ScheduledTransactionFormModal({
           ) : null}
 
           <Section title="TRANSACTION">
-            <TransactionTypePicker
-              disabled={pending}
-              onChange={chooseType}
-              value={transactionType}
-            />
+            <View collapsable={false} ref={typeRef}>
+              <TransactionTypePicker
+                disabled={pending}
+                onChange={chooseType}
+                value={transactionType}
+              />
+            </View>
 
-            <View>
+            <View collapsable={false} ref={nameRef}>
               <Text style={styles.fieldLabel}>TRANSACTION NAME</Text>
               <TextInput
                 maxLength={100}
@@ -439,22 +526,24 @@ export function ScheduledTransactionFormModal({
               />
             </View>
 
-            <AmountCalculatorField
-              amountMinorUnits={amountMinorUnits}
-              amountSign={
-                transactionType === "transfer"
-                  ? "transfer"
-                  : transactionType === "expense"
-                    ? "-"
-                    : "+"
-              }
-              currencyCode={currencyCode}
-              label="Amount"
-              onOpenCalculator={() => setCalculatorOpen(true)}
-              showSignToggle={false}
-            />
+            <View collapsable={false} ref={amountRef}>
+              <AmountCalculatorField
+                amountMinorUnits={amountMinorUnits}
+                amountSign={
+                  transactionType === "transfer"
+                    ? "transfer"
+                    : transactionType === "expense"
+                      ? "-"
+                      : "+"
+                }
+                currencyCode={currencyCode}
+                label="Amount"
+                onOpenCalculator={() => setCalculatorOpen(true)}
+                showSignToggle={false}
+              />
+            </View>
 
-            <View>
+            <View collapsable={false} ref={accountRef}>
               {transactionType === "transfer" ? (
                 <Text style={styles.fieldLabel}>TRANSFER FROM</Text>
               ) : null}
@@ -472,7 +561,7 @@ export function ScheduledTransactionFormModal({
             </View>
 
             {transactionType === "transfer" ? (
-              <View>
+              <View collapsable={false} ref={categoryRef}>
                 <Text style={styles.fieldLabel}>TRANSFER TO</Text>
                 <LocationSelector
                   account={destinationAccount}
@@ -483,55 +572,57 @@ export function ScheduledTransactionFormModal({
                 />
               </View>
             ) : (
-              <Pressable
-                accessibilityLabel="Select category"
-                accessibilityRole="button"
-                onPress={() => setCategoryPickerOpen(true)}
-                style={styles.selectorCard}
-              >
-                <View style={styles.selectorLeft}>
-                  <View
-                    style={[
-                      styles.selectorIconWrap,
-                      {
-                        backgroundColor: `${selectedCategoryColor}18`,
-                        borderColor: `${selectedCategoryColor}35`,
-                      },
-                    ]}
-                  >
-                    <IconHelper
-                      color={selectedCategoryColor}
-                      name={selectedCategory?.icon ?? "tag"}
-                      size={18}
-                    />
-                  </View>
-                  <View style={styles.selectorTextCol}>
-                    <Text
-                      numberOfLines={1}
-                      style={
-                        selectedCategory
-                          ? styles.selectorValueText
-                          : styles.selectorPlaceholderText
-                      }
+              <View collapsable={false} ref={categoryRef}>
+                <Pressable
+                  accessibilityLabel="Select category"
+                  accessibilityRole="button"
+                  onPress={() => setCategoryPickerOpen(true)}
+                  style={styles.selectorCard}
+                >
+                  <View style={styles.selectorLeft}>
+                    <View
+                      style={[
+                        styles.selectorIconWrap,
+                        {
+                          backgroundColor: `${selectedCategoryColor}18`,
+                          borderColor: `${selectedCategoryColor}35`,
+                        },
+                      ]}
                     >
-                      {selectedCategory?.name ?? "Select Category"}
-                    </Text>
-                    {selectedCategory ? (
-                      <Text style={styles.selectorSubText}>
-                        {parentCategory
-                          ? `${parentCategory.name} > Subcategory`
-                          : transactionType === "income"
-                            ? "Income Category"
-                            : "Expense Category"}
+                      <IconHelper
+                        color={selectedCategoryColor}
+                        name={selectedCategory?.icon ?? "tag"}
+                        size={18}
+                      />
+                    </View>
+                    <View style={styles.selectorTextCol}>
+                      <Text
+                        numberOfLines={1}
+                        style={
+                          selectedCategory
+                            ? styles.selectorValueText
+                            : styles.selectorPlaceholderText
+                        }
+                      >
+                        {selectedCategory?.name ?? "Select Category"}
                       </Text>
-                    ) : null}
+                      {selectedCategory ? (
+                        <Text style={styles.selectorSubText}>
+                          {parentCategory
+                            ? `${parentCategory.name} > Subcategory`
+                            : transactionType === "income"
+                              ? "Income Category"
+                              : "Expense Category"}
+                        </Text>
+                      ) : null}
+                    </View>
                   </View>
-                </View>
-                <ChangeBadge />
-              </Pressable>
+                  <ChangeBadge />
+                </Pressable>
+              </View>
             )}
 
-            <View>
+            <View collapsable={false} ref={noteRef}>
               <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
               <TextInput
                 maxLength={200}
@@ -546,175 +637,183 @@ export function ScheduledTransactionFormModal({
             </View>
           </Section>
 
-          <Section title="RECURRENCE">
-            <View>
-              <Text style={styles.fieldLabel}>STARTING ON</Text>
-              <View style={styles.dateTimeRow}>
-                <Pressable
-                  accessibilityLabel={`Starting date ${formatDate(startsAt)}`}
-                  accessibilityRole="button"
-                  onPress={() => setDateTimePicker("start-date")}
-                  style={({ pressed }) => [
-                    styles.dateTimeButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.dateTimeText}>{formatDate(startsAt)}</Text>
-                </Pressable>
-                <Text style={styles.dateTimeSeparator}>|</Text>
-                <Pressable
-                  accessibilityLabel={`Starting time ${formatTime(startsAt)}`}
-                  accessibilityRole="button"
-                  onPress={() => setDateTimePicker("start-time")}
-                  style={({ pressed }) => [
-                    styles.dateTimeButton,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={styles.dateTimeText}>{formatTime(startsAt)}</Text>
-                </Pressable>
-              </View>
-            </View>
-
-            <ChoiceRow wrap>
-              {(["once", "daily", "weekly", "monthly", "yearly"] as const).map(
-                (value) => (
-                  <ChoiceChip
-                    key={value}
-                    active={frequency === value}
-                    label={
-                      value === "once"
-                        ? "Once"
-                        : value === "yearly"
-                          ? "Yearly"
-                          : `${value[0].toUpperCase()}${value.slice(1)}`
-                    }
-                    onPress={() => setFrequency(value)}
-                  />
-                ),
-              )}
-            </ChoiceRow>
-
-            {frequency !== "once" ? (
-              <View>
-                <Text style={styles.fieldLabel}>REPEAT</Text>
-                <View style={styles.inlineField}>
-                  <Text style={styles.fieldText}>Every</Text>
-                  <TextInput
-                    accessibilityLabel="Repeat interval"
-                    keyboardType="number-pad"
-                    maxLength={3}
-                    onChangeText={(value) =>
-                      setIntervalText(value.replace(/\D/g, ""))
-                    }
-                    style={styles.numberInput}
-                    value={intervalText}
-                  />
-                  <Text style={styles.fieldText}>{repeatUnit(frequency)}</Text>
+          <View collapsable={false} ref={recurrenceRef}>
+            <Section title="RECURRENCE">
+              <View collapsable={false} ref={startDateRef}>
+                <Text style={styles.fieldLabel}>STARTING ON</Text>
+                <View style={styles.dateTimeRow}>
+                  <Pressable
+                    accessibilityLabel={`Starting date ${formatDate(startsAt)}`}
+                    accessibilityRole="button"
+                    onPress={() => setDateTimePicker("start-date")}
+                    style={({ pressed }) => [
+                      styles.dateTimeButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.dateTimeText}>{formatDate(startsAt)}</Text>
+                  </Pressable>
+                  <Text style={styles.dateTimeSeparator}>|</Text>
+                  <Pressable
+                    accessibilityLabel={`Starting time ${formatTime(startsAt)}`}
+                    accessibilityRole="button"
+                    onPress={() => setDateTimePicker("start-time")}
+                    style={({ pressed }) => [
+                      styles.dateTimeButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.dateTimeText}>{formatTime(startsAt)}</Text>
+                  </Pressable>
                 </View>
               </View>
-            ) : null}
-          </Section>
 
-          {frequency !== "once" ? (
-            <>
-              <Section title="ENDS">
+              <View collapsable={false} ref={frequencyRef}>
                 <ChoiceRow wrap>
-                  {(["never", "after_count", "on_date"] as const).map(
+                  {(["once", "daily", "weekly", "monthly", "yearly"] as const).map(
                     (value) => (
                       <ChoiceChip
                         key={value}
-                        active={endMode === value}
+                        active={frequency === value}
                         label={
-                          value === "never"
-                            ? "Never"
-                            : value === "after_count"
-                              ? "After Count"
-                              : "On Date"
+                          value === "once"
+                            ? "Once"
+                            : value === "yearly"
+                              ? "Yearly"
+                              : `${value[0].toUpperCase()}${value.slice(1)}`
                         }
-                        onPress={() => setEndMode(value)}
+                        onPress={() => setFrequency(value)}
                       />
                     ),
                   )}
                 </ChoiceRow>
-                {endMode === "after_count" ? (
+              </View>
+
+              {frequency !== "once" ? (
+                <View collapsable={false} ref={repeatRef}>
+                  <Text style={styles.fieldLabel}>REPEAT</Text>
                   <View style={styles.inlineField}>
-                    <Text style={styles.fieldText}>After</Text>
+                    <Text style={styles.fieldText}>Every</Text>
                     <TextInput
-                      accessibilityLabel="Number of occurrences"
+                      accessibilityLabel="Repeat interval"
                       keyboardType="number-pad"
-                      maxLength={5}
+                      maxLength={3}
                       onChangeText={(value) =>
-                        setMaxOccurrencesText(value.replace(/\D/g, ""))
+                        setIntervalText(value.replace(/\D/g, ""))
                       }
                       style={styles.numberInput}
-                      value={maxOccurrencesText}
+                      value={intervalText}
                     />
-                    <Text style={styles.fieldText}>occurrences</Text>
+                    <Text style={styles.fieldText}>{repeatUnit(frequency)}</Text>
                   </View>
-                ) : null}
-                {endMode === "on_date" ? (
-                  <Pressable
-                    accessibilityLabel={`End date ${formatDate(
-                      dateFromKey(endsOn, startsAt),
-                    )}`}
-                    accessibilityRole="button"
-                    onPress={() => setDateTimePicker("end-date")}
-                    style={styles.endDateButton}
-                  >
-                    <Text style={styles.dateTimeText}>
-                      {formatDate(dateFromKey(endsOn, startsAt))}
-                    </Text>
-                    <ChevronRight color={theme.colors.textSecondary} size={18} />
-                  </Pressable>
-                ) : null}
-              </Section>
-
-              <Section title="WEEKENDS">
-                <View style={styles.toggleCard}>
-                  <View style={styles.toggleText}>
-                    <Text style={styles.toggleTitle}>
-                      If date falls on a weekend
-                    </Text>
-                    <Text style={styles.toggleDescription}>
-                      Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.
-                    </Text>
-                  </View>
-                  <ThemedSwitch
-                    accessibilityLabel="If date falls on a weekend"
-                    onValueChange={setWeekendAdjust}
-                    value={weekendAdjust}
-                  />
                 </View>
+              ) : null}
+            </Section>
+          </View>
 
-                {weekendAdjust ? (
-                  <View style={styles.weekendOptionsContainer}>
-                    <Text style={styles.fieldLabel}>
-                      ADJUSTMENT ACTION
-                    </Text>
-                    <ChoiceRow wrap>
-                      {(
-                        [
-                          ["next_weekday", "Move next weekday"],
-                          ["previous_weekday", "Move previous weekday"],
-                          ["skip", "Skip"],
-                        ] as const
-                      ).map(([value, label]) => (
+          {frequency !== "once" ? (
+            <>
+              <View collapsable={false} ref={endsRef}>
+                <Section title="ENDS">
+                  <ChoiceRow wrap>
+                    {(["never", "after_count", "on_date"] as const).map(
+                      (value) => (
                         <ChoiceChip
                           key={value}
-                          active={weekendPolicy === value}
-                          label={label}
-                          onPress={() => setWeekendPolicy(value)}
+                          active={endMode === value}
+                          label={
+                            value === "never"
+                              ? "Never"
+                              : value === "after_count"
+                                ? "After Count"
+                                : "On Date"
+                          }
+                          onPress={() => setEndMode(value)}
                         />
-                      ))}
-                    </ChoiceRow>
+                      ),
+                    )}
+                  </ChoiceRow>
+                  {endMode === "after_count" ? (
+                    <View style={styles.inlineField}>
+                      <Text style={styles.fieldText}>After</Text>
+                      <TextInput
+                        accessibilityLabel="Number of occurrences"
+                        keyboardType="number-pad"
+                        maxLength={5}
+                        onChangeText={(value) =>
+                          setMaxOccurrencesText(value.replace(/\D/g, ""))
+                        }
+                        style={styles.numberInput}
+                        value={maxOccurrencesText}
+                      />
+                      <Text style={styles.fieldText}>occurrences</Text>
+                    </View>
+                  ) : null}
+                  {endMode === "on_date" ? (
+                    <Pressable
+                      accessibilityLabel={`End date ${formatDate(
+                        dateFromKey(endsOn, startsAt),
+                      )}`}
+                      accessibilityRole="button"
+                      onPress={() => setDateTimePicker("end-date")}
+                      style={styles.endDateButton}
+                    >
+                      <Text style={styles.dateTimeText}>
+                        {formatDate(dateFromKey(endsOn, startsAt))}
+                      </Text>
+                      <ChevronRight color={theme.colors.textSecondary} size={18} />
+                    </Pressable>
+                  ) : null}
+                </Section>
+              </View>
+
+              <View collapsable={false} ref={weekendRef}>
+                <Section title="WEEKENDS">
+                  <View style={styles.toggleCard}>
+                    <View style={styles.toggleText}>
+                      <Text style={styles.toggleTitle}>
+                        If date falls on a weekend
+                      </Text>
+                      <Text style={styles.toggleDescription}>
+                        Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.
+                      </Text>
+                    </View>
+                    <ThemedSwitch
+                      accessibilityLabel="If date falls on a weekend"
+                      onValueChange={setWeekendAdjust}
+                      value={weekendAdjust}
+                    />
                   </View>
-                ) : null}
-              </Section>
+
+                  {weekendAdjust ? (
+                    <View style={styles.weekendOptionsContainer}>
+                      <Text style={styles.fieldLabel}>
+                        ADJUSTMENT ACTION
+                      </Text>
+                      <ChoiceRow wrap>
+                        {(
+                          [
+                            ["next_weekday", "Move next weekday"],
+                            ["previous_weekday", "Move previous weekday"],
+                            ["skip", "Skip"],
+                          ] as const
+                        ).map(([value, label]) => (
+                          <ChoiceChip
+                            key={value}
+                            active={weekendPolicy === value}
+                            label={label}
+                            onPress={() => setWeekendPolicy(value)}
+                          />
+                        ))}
+                      </ChoiceRow>
+                    </View>
+                  ) : null}
+                </Section>
+              </View>
             </>
           ) : null}
 
-          <View style={styles.autoPostCard}>
+          <View collapsable={false} ref={autoEnterRef} style={styles.autoPostCard}>
             <View style={styles.autoPostText}>
               <View style={styles.autoPostTitleRow}>
                 <Text style={styles.autoPostTitle}>
@@ -739,6 +838,22 @@ export function ScheduledTransactionFormModal({
             />
           </View>
         </KeyboardAwareForm>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <ScheduleFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       <AmountCalculatorModal

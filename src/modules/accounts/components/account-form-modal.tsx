@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
+  type ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -27,6 +28,14 @@ import {
   CurrencyPickerModal,
   useCurrencyPreferences,
 } from "@/modules/currencies";
+import {
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  DraggableTourChip,
+  AccountFormWalkthroughOverlay,
+  useAccountFormWalkthrough,
+  useWalkthroughTarget,
+} from "@/modules/walkthrough";
 import { AccountAmountText } from "@/modules/accounts/components/account-amount-text";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { AccountTypePickerModal } from "@/modules/accounts/components/account-type-picker-modal";
@@ -81,22 +90,7 @@ function getDefaultAssetAccountTypeId(types: AccountType[]): string {
   );
 }
 
-export function AccountFormModal({
-  visible,
-  account,
-  types,
-  pending,
-  error,
-  onClose,
-  onClearError,
-  onSave,
-  onDelete,
-  onRestore,
-  onPermanentDelete,
-  onLockStartingBalance,
-  accounts = [],
-  typeMutations,
-}: {
+export type AccountFormModalProps = {
   visible: boolean;
   account?: AccountListItem;
   types: AccountType[];
@@ -111,7 +105,33 @@ export function AccountFormModal({
   onLockStartingBalance?: (accountId: string) => Promise<boolean>;
   accounts?: AccountListItem[];
   typeMutations?: AccountMutations;
-}) {
+};
+
+export function AccountFormModal(props: AccountFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountFormModalContent({
+  visible,
+  account,
+  types,
+  pending,
+  error,
+  onClose,
+  onClearError,
+  onSave,
+  onDelete,
+  onRestore,
+  onPermanentDelete,
+  onLockStartingBalance,
+  accounts = [],
+  typeMutations,
+}: AccountFormModalProps) {
   const theme = useAppTheme();
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
@@ -268,6 +288,48 @@ export function AccountFormModal({
     const parsed = Math.round(parseFloat(input) * currencyDivisor);
     return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
   }, [value.creditCardDetails?.creditLimit, currencyDivisor]);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const startingBalanceRef = useWalkthroughTarget("accountFormStartingBalance");
+  const currencyPillRef = useWalkthroughTarget("accountFormCurrency");
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    switch (targetId) {
+      case "accountFormName":
+      case "accountFormNote":
+      case "accountFormType":
+        scrollRef.current?.scrollTo({ y: 0, animated: true });
+        break;
+      case "accountFormIcon":
+        scrollRef.current?.scrollTo({ y: 60, animated: true });
+        break;
+      case "accountFormStartingBalance":
+      case "accountFormCurrency":
+        scrollRef.current?.scrollTo({ y: 160, animated: true });
+        break;
+      case "accountFormMaintainingBalance":
+        scrollRef.current?.scrollTo({ y: 280, animated: true });
+        break;
+      case "accountFormEnablePockets":
+        scrollRef.current?.scrollTo({ y: 360, animated: true });
+        break;
+      case "accountFormHideSelection":
+        scrollRef.current?.scrollTo({ y: 440, animated: true });
+        break;
+      case "accountFormHideReports":
+        scrollRef.current?.scrollTo({ y: 520, animated: true });
+        break;
+      case "accountFormOpeningDate":
+        scrollRef.current?.scrollTo({ y: 640, animated: true });
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  const walkthrough = useAccountFormWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
 
   const handleCurrencySelect = (code: string) => {
     const normalized = code.trim().toUpperCase();
@@ -491,110 +553,125 @@ export function AccountFormModal({
         }
         onSave={handleSave}
       >
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
         <KeyboardAwareForm
+          ref={scrollRef}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.fieldLabel}>Account Name</Text>
-          <TextInput
-            editable={!pending}
-            maxLength={100}
-            placeholder="Account Name"
-            placeholderTextColor={theme.colors.textMuted}
-            style={styles.textInput}
-            value={value.name}
-            onChangeText={(name) => setValue((prev) => ({ ...prev, name }))}
-          />
+          <WalkthroughTarget id="accountFormName">
+            <Text style={styles.fieldLabel}>Account Name</Text>
+            <TextInput
+              editable={!pending}
+              maxLength={100}
+              placeholder="Account Name"
+              placeholderTextColor={theme.colors.textMuted}
+              style={styles.textInput}
+              value={value.name}
+              onChangeText={(name) => setValue((prev) => ({ ...prev, name }))}
+            />
+          </WalkthroughTarget>
 
-          <Text style={styles.fieldLabel}>Note</Text>
-          <TextInput
-            editable={!pending}
-            maxLength={1000}
-            multiline
-            placeholder="Note"
-            placeholderTextColor={theme.colors.textMuted}
-            style={[styles.textInput, styles.textArea]}
-            value={value.note ?? ""}
-            onChangeText={(note) => setValue((prev) => ({ ...prev, note }))}
-          />
+          <WalkthroughTarget id="accountFormNote">
+            <Text style={styles.fieldLabel}>Note</Text>
+            <TextInput
+              editable={!pending}
+              maxLength={1000}
+              multiline
+              placeholder="Note"
+              placeholderTextColor={theme.colors.textMuted}
+              style={[styles.textInput, styles.textArea]}
+              value={value.note ?? ""}
+              onChangeText={(note) => setValue((prev) => ({ ...prev, note }))}
+            />
+          </WalkthroughTarget>
 
-          <Text style={styles.fieldLabel}>Account Type</Text>
-          <Pressable
-            accessibilityLabel="Choose account type"
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={() => setTypePickerOpen(true)}
-            style={styles.selectorPill}
-          >
-            <View style={[styles.typeIcon, { backgroundColor: `${typeColor}20` }]}>
-              <IconHelper
-                color={typeColor}
-                name={selectedType?.iconKey ?? "landmark"}
-                size={18}
-              />
-            </View>
-            <Text numberOfLines={1} style={styles.selectorValue}>
-              {selectedType?.name ?? "Select type"}
-            </Text>
-            <ChevronRight color={theme.colors.textMuted} size={18} />
-          </Pressable>
+          <WalkthroughTarget id="accountFormType">
+            <Text style={styles.fieldLabel}>Account Type</Text>
+            <Pressable
+              accessibilityLabel="Choose account type"
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={() => setTypePickerOpen(true)}
+              style={styles.selectorPill}
+            >
+              <View style={[styles.typeIcon, { backgroundColor: `${typeColor}20` }]}>
+                <IconHelper
+                  color={typeColor}
+                  name={selectedType?.iconKey ?? "landmark"}
+                  size={18}
+                />
+              </View>
+              <Text numberOfLines={1} style={styles.selectorValue}>
+                {selectedType?.name ?? "Select type"}
+              </Text>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </WalkthroughTarget>
 
-          <Text style={styles.fieldLabel}>Account Icon</Text>
-          <Pressable
-            accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={() => setIconPickerOpen(true)}
-            style={styles.iconCard}
-          >
-            <View style={styles.iconCardLeft}>
+          <WalkthroughTarget id="accountFormIcon">
+            <Text style={styles.fieldLabel}>Account Icon</Text>
+            <Pressable
+              accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={() => setIconPickerOpen(true)}
+              style={styles.iconCard}
+            >
+              <View style={styles.iconCardLeft}>
+                <View
+                  style={[
+                    styles.iconBadge,
+                    {
+                      backgroundColor: `${typeColor}20`,
+                      borderColor: `${typeColor}50`,
+                    },
+                  ]}
+                >
+                  <IconHelper color={typeColor} name={currentIconKey} size={22} />
+                </View>
+                <View style={styles.iconInfo}>
+                  <Text numberOfLines={1} style={styles.iconNameText}>
+                    {currentIconKey}
+                  </Text>
+                  <Text numberOfLines={2} style={styles.iconSubtext}>
+                    {value.iconKey
+                      ? "Custom icon selected · Tap to change"
+                      : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
+                  </Text>
+                </View>
+              </View>
+
               <View
                 style={[
-                  styles.iconBadge,
+                  styles.changeBadge,
                   {
-                    backgroundColor: `${typeColor}20`,
-                    borderColor: `${typeColor}50`,
+                    backgroundColor: `${theme.colors.primary}15`,
+                    borderColor: `${theme.colors.primary}40`,
                   },
                 ]}
               >
-                <IconHelper color={typeColor} name={currentIconKey} size={22} />
-              </View>
-              <View style={styles.iconInfo}>
-                <Text numberOfLines={1} style={styles.iconNameText}>
-                  {currentIconKey}
-                </Text>
-                <Text numberOfLines={2} style={styles.iconSubtext}>
-                  {value.iconKey
-                    ? "Custom icon selected · Tap to change"
-                    : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
+                <Text
+                  style={[
+                    styles.changeBadgeText,
+                    { color: theme.colors.primary },
+                  ]}
+                >
+                  Change Icon
                 </Text>
               </View>
-            </View>
-
-            <View
-              style={[
-                styles.changeBadge,
-                {
-                  backgroundColor: `${theme.colors.primary}15`,
-                  borderColor: `${theme.colors.primary}40`,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.changeBadgeText,
-                  { color: theme.colors.primary },
-                ]}
-              >
-                Change Icon
-              </Text>
-            </View>
-          </Pressable>
+            </Pressable>
+          </WalkthroughTarget>
 
           <AmountCalculatorField
+            amountInputRef={startingBalanceRef}
             amountMinorUnits={amountMinorUnits}
             amountSign={amountSign}
             currencyCode={activeCurrencyCode}
+            currencyRef={currencyPillRef}
             disabled={openingBalanceReadOnly}
             label="Starting Balance"
             onPressCurrency={
@@ -643,81 +720,89 @@ export function AccountFormModal({
           )}
 
           {!isLiabilityAccount ? (
-            <AmountCalculatorField
-              amountMinorUnits={maintainingMinorUnits}
-              currencyCode={activeCurrencyCode}
-              disabled={pending}
-              label="Maintaining Balance"
-              showCurrencyPill
-              showSignToggle={false}
-              onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
-            />
+            <WalkthroughTarget id="accountFormMaintainingBalance">
+              <AmountCalculatorField
+                amountMinorUnits={maintainingMinorUnits}
+                currencyCode={activeCurrencyCode}
+                disabled={pending}
+                label="Maintaining Balance"
+                showCurrencyPill
+                showSignToggle={false}
+                onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
+              />
+            </WalkthroughTarget>
           ) : null}
 
           {pocketEligible ? (
+            <WalkthroughTarget id="accountFormEnablePockets">
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleCopy}>
+                  <Text style={styles.toggleLabel}>Enable pockets</Text>
+                  <Text style={styles.toggleHint}>
+                    Show Main and allow separate pocket balances for this account.
+                  </Text>
+                </View>
+                <ThemedSwitch
+                  accessibilityLabel="Enable pockets"
+                  disabled={pending}
+                  onValueChange={(pocketEnabled) =>
+                    setValue((prev) => ({ ...prev, pocketEnabled }))
+                  }
+                  value={value.pocketEnabled}
+                />
+              </View>
+            </WalkthroughTarget>
+          ) : null}
+
+          <WalkthroughTarget id="accountFormHideSelection">
             <View style={styles.toggleRow}>
               <View style={styles.toggleCopy}>
-                <Text style={styles.toggleLabel}>Enable pockets</Text>
+                <View style={styles.toggleLabelRow}>
+                  <Text style={styles.toggleLabel}>Hide from selection</Text>
+                  {!isPro && (
+                    <View style={styles.proChip}>
+                      <Crown color="#D97706" size={10} />
+                      <Text style={styles.proChipText}>PRO</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.toggleHint}>
-                  Show Main and allow separate pocket balances for this account.
+                  Exclude this account from transaction account pickers.
                 </Text>
               </View>
               <ThemedSwitch
-                accessibilityLabel="Enable pockets"
+                accessibilityLabel="Hide from selection"
                 disabled={pending}
-                onValueChange={(pocketEnabled) =>
-                  setValue((prev) => ({ ...prev, pocketEnabled }))
-                }
-                value={value.pocketEnabled}
+                onValueChange={handleToggleHideFromSelection}
+                value={value.hideFromSelection}
               />
             </View>
-          ) : null}
+          </WalkthroughTarget>
 
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleCopy}>
-              <View style={styles.toggleLabelRow}>
-                <Text style={styles.toggleLabel}>Hide from selection</Text>
-                {!isPro && (
-                  <View style={styles.proChip}>
-                    <Crown color="#D97706" size={10} />
-                    <Text style={styles.proChipText}>PRO</Text>
-                  </View>
-                )}
+          <WalkthroughTarget id="accountFormHideReports">
+            <View style={styles.toggleRow}>
+              <View style={styles.toggleCopy}>
+                <View style={styles.toggleLabelRow}>
+                  <Text style={styles.toggleLabel}>Hide from reports</Text>
+                  {!isPro && (
+                    <View style={styles.proChip}>
+                      <Crown color="#D97706" size={10} />
+                      <Text style={styles.proChipText}>PRO</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.toggleHint}>
+                  Exclude this account from net worth and opening totals.
+                </Text>
               </View>
-              <Text style={styles.toggleHint}>
-                Exclude this account from transaction account pickers.
-              </Text>
+              <ThemedSwitch
+                accessibilityLabel="Hide from reports"
+                disabled={pending}
+                onValueChange={handleToggleHideFromReports}
+                value={value.hideFromReports}
+              />
             </View>
-            <ThemedSwitch
-              accessibilityLabel="Hide from selection"
-              disabled={pending}
-              onValueChange={handleToggleHideFromSelection}
-              value={value.hideFromSelection}
-            />
-          </View>
-
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleCopy}>
-              <View style={styles.toggleLabelRow}>
-                <Text style={styles.toggleLabel}>Hide from reports</Text>
-                {!isPro && (
-                  <View style={styles.proChip}>
-                    <Crown color="#D97706" size={10} />
-                    <Text style={styles.proChipText}>PRO</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.toggleHint}>
-                Exclude this account from net worth and opening totals.
-              </Text>
-            </View>
-            <ThemedSwitch
-              accessibilityLabel="Hide from reports"
-              disabled={pending}
-              onValueChange={handleToggleHideFromReports}
-              value={value.hideFromReports}
-            />
-          </View>
+          </WalkthroughTarget>
 
           {account && !account.isArchived ? (
             <>
@@ -753,19 +838,21 @@ export function AccountFormModal({
             </>
           ) : null}
 
-          <Text style={styles.fieldLabel}>Opening Date</Text>
-          <Pressable
-            accessibilityLabel="Choose opening date"
-            accessibilityRole="button"
-            disabled={openingBalanceReadOnly}
-            onPress={() => setDatePickerOpen(true)}
-            style={styles.selectorPill}
-          >
-            <Text style={styles.selectorValue}>
-              {formatDisplayDate(value.openingDate)}
-            </Text>
-            <ChevronRight color={theme.colors.textMuted} size={18} />
-          </Pressable>
+          <WalkthroughTarget id="accountFormOpeningDate">
+            <Text style={styles.fieldLabel}>Opening Date</Text>
+            <Pressable
+              accessibilityLabel="Choose opening date"
+              accessibilityRole="button"
+              disabled={openingBalanceReadOnly}
+              onPress={() => setDatePickerOpen(true)}
+              style={styles.selectorPill}
+            >
+              <Text style={styles.selectorValue}>
+                {formatDisplayDate(value.openingDate)}
+              </Text>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </WalkthroughTarget>
 
           {isCreditCardType ? (
             <View style={styles.creditCardSection}>
@@ -882,6 +969,16 @@ export function AccountFormModal({
             </View>
           ) : null}
         </KeyboardAwareForm>
+        <AccountFormWalkthroughOverlay
+          visible={walkthrough.isWalkthroughActive}
+          stepIndex={walkthrough.activeStepIndex}
+          totalSteps={walkthrough.totalSteps}
+          step={walkthrough.currentStep}
+          targetLayout={walkthrough.activeTargetLayout}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+        />
       </FullScreenFormModal>
 
       <ConfirmModal

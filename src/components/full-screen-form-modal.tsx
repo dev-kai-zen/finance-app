@@ -27,6 +27,8 @@ export interface FullScreenFormModalProps extends PropsWithChildren {
   headerRight?: ReactNode;
   headerTitle?: ReactNode;
   titleAlign?: "center" | "left";
+  saveButtonRef?: React.Ref<View>;
+  backButtonRef?: React.Ref<View>;
 }
 
 export function FullScreenFormModal({
@@ -44,6 +46,8 @@ export function FullScreenFormModal({
   headerRight,
   headerTitle,
   titleAlign = "center",
+  saveButtonRef,
+  backButtonRef,
   children,
 }: FullScreenFormModalProps) {
   const insets = useSafeAreaInsets();
@@ -73,23 +77,25 @@ export function FullScreenFormModal({
           </Pressable>
         ) : null}
         {onSave ? (
-          <Pressable
-            accessibilityLabel={saveLabel}
-            accessibilityRole="button"
-            disabled={pending || saveDisabled}
-            onPress={onSave}
-            style={[
-              styles.iconBtn,
-              styles.saveBtn,
-              (pending || saveDisabled) && styles.iconBtnDisabled,
-            ]}
-          >
-            {pending ? (
-              <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-            ) : (
-              <Save color={theme.colors.onPrimary} size={18} />
-            )}
-          </Pressable>
+          <View ref={saveButtonRef}>
+            <Pressable
+              accessibilityLabel={saveLabel}
+              accessibilityRole="button"
+              disabled={pending || saveDisabled}
+              onPress={onSave}
+              style={[
+                styles.iconBtn,
+                styles.saveBtn,
+                (pending || saveDisabled) && styles.iconBtnDisabled,
+              ]}
+            >
+              {pending ? (
+                <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+              ) : (
+                <Save color={theme.colors.onPrimary} size={18} />
+              )}
+            </Pressable>
+          </View>
         ) : null}
       </View>
     ) : (
@@ -106,15 +112,17 @@ export function FullScreenFormModal({
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={onClose}
-            style={styles.backBtn}
-          >
-            <ChevronLeft color={theme.colors.textPrimary} size={24} />
-          </Pressable>
+          <View ref={backButtonRef}>
+            <Pressable
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={onClose}
+              style={styles.backBtn}
+            >
+              <ChevronLeft color={theme.colors.textPrimary} size={24} />
+            </Pressable>
+          </View>
 
           <View
             style={[

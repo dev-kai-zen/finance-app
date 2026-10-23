@@ -485,6 +485,271 @@ export const en = {
     actionManageTypesDesc:
       "Define and manage custom account types and groups to tailor your tracking.",
   },
+  accountFormWalkthrough: {
+    stepNameTitle: "Account Name",
+    stepNameDesc:
+      "Give your account a clear, recognizable name such as Checking, Primary Savings, or Cash Wallet.",
+    stepNoteTitle: "Note & Details",
+    stepNoteDesc:
+      "Add optional context, account numbers, or reminders for this account.",
+    stepTypeTitle: "Account Type & Group",
+    stepTypeDesc:
+      "Choose whether this account is an Asset (bank, cash, investment) or Liability (credit card, loan).",
+    stepIconTitle: "Account Icon",
+    stepIconDesc:
+      "Pick a custom icon from the icon library or use the default icon of the selected account group.",
+    stepStartingBalanceTitle: "Starting Balance",
+    stepStartingBalanceDesc:
+      "Set the initial balance of your account on its opening date. Tap to open the calculator.",
+    stepCurrencyTitle: "Currency Picker",
+    stepCurrencyDesc:
+      "Select the currency for this account. Note that currency can only be customized before transactions are recorded.",
+    stepMaintainingBalanceTitle: "Maintaining Balance",
+    stepMaintainingBalanceDesc:
+      "Keep track of minimum balance requirements to avoid bank fees or penalty alerts.",
+    stepEnablePocketsTitle: "Enable Virtual Pockets",
+    stepEnablePocketsDesc:
+      "Ideal if you use a single bank account for multiple purposes! For example, if your checking account holds funds for Daily Expenses, an Emergency Fund, and Savings, enabling pockets lets you partition and track those distinct balances separately without needing multiple bank accounts.",
+    stepHideSelectionTitle: "Hide from Selection",
+    stepHideSelectionDesc:
+      "Hide secondary or confidential accounts from daily transaction pickers to keep your lists clean.",
+    stepHideReportsTitle: "Hide from Reports",
+    stepHideReportsDesc:
+      "Exclude tracked external balances, security deposits, or escrow funds from net worth calculations and summary charts.",
+    stepOpeningDateTitle: "Opening Date",
+    stepOpeningDateDesc:
+      "Specify when this account started. Starting balances and calculations will be tracked from this date onward.",
+  },
+  accountGroupSetupWalkthrough: {
+    stepClassificationPickerTitle: "Asset & Liability Switcher",
+    stepClassificationPickerDesc:
+      "Switch between Assets (what you own, like cash and investments) and Liabilities (what you owe, like credit cards and loans).",
+    stepReorderTitle: "Reorder Groups",
+    stepReorderDesc:
+      "Customize the order of your account groups to prioritize the ones you view most frequently.",
+    stepNewGroupTitle: "New Account Group",
+    stepNewGroupDesc:
+      "Create a custom account group tailored to your lifestyle, such as Digital Wallets or Side Hustles.",
+  },
+  accountTypeFormWalkthrough: {
+    stepNameTitle: "Group Name",
+    stepNameDesc:
+      "Name this account group, such as High-Yield Savings, Business Accounts, or Crypto Wallets.",
+    stepClassificationTitle: "Classification",
+    stepClassificationDesc:
+      "Designate this group as an Asset (positive wealth) or Liability (debt and obligations).",
+    stepIconTitle: "Group Icon",
+    stepIconDesc:
+      "Choose an icon representing this group across your accounts and reports.",
+    stepColorTitle: "Theme Color",
+    stepColorDesc:
+      "Select a distinct theme color to visually separate and identify this group throughout the app.",
+    stepCustomColorTitle: "Add Custom Color",
+    stepCustomColorDesc:
+      "Create and save your own hex color palette to personalize your finances.",
+    stepSaveTitle: "Save Account Group",
+    stepSaveDesc:
+      "Tap the save checkmark to store your account group and start adding accounts to it.",
+  },
+  transactionFormWalkthrough: {
+    stepPresetsTitle: "Quick Presets",
+    stepPresetsDesc:
+      "One-tap templates for your recurring transactions. Quickly autofill names, accounts, amounts, and categories.",
+    stepCustomizeTitle: "Customize Fields",
+    stepCustomizeDesc:
+      "Choose which fields to show or hide on the transaction form to streamline your recording experience.",
+    stepTypePickerTitle: "Transaction Type",
+    stepTypePickerDesc:
+      "Toggle between Expense, Income, or Transfer depending on how your funds are moving.",
+    stepNameTitle: "Transaction Name",
+    stepNameDesc:
+      "Enter payee or title for this entry (e.g. Grocery store, Salary, Coffee shop).",
+    stepAttachmentTitle: "Receipt & Attachment",
+    stepAttachmentDesc:
+      "Attach photos, receipts, invoices, or warranty slips directly to this transaction record.",
+    stepDateTitle: "Transaction Date",
+    stepDateDesc:
+      "Set the calendar date when the transaction took place.",
+    stepTimeTitle: "Exact Time",
+    stepTimeDesc:
+      "Log the exact hour and minute for precise chronological sequencing.",
+    stepAmountTitle: "Amount",
+    stepAmountDesc:
+      "Tap to open the calculator keypad and compute or enter your transaction amount.",
+    stepCurrencyTitle: "Currency Picker",
+    stepCurrencyDesc:
+      "Switch entry currency when spending foreign currencies while traveling or shopping abroad.",
+    stepAccountTitle: "Account & Pocket",
+    stepAccountDesc:
+      "Select the paying or receiving account and optional virtual pocket for this transaction.",
+    stepCategoryTitle: "Category",
+    stepCategoryDesc:
+      "Categorize your transaction to track where your money goes in reports and budgets.",
+    stepSplitTitle: "Split by Category",
+    stepSplitDesc:
+      "Split a single receipt or bill across multiple categories with custom amounts.",
+    stepLabelsTitle: "Labels & Tags",
+    stepLabelsDesc:
+      "Add custom tags (#vacation, #tax-deductible, #project) for cross-category tracking.",
+    stepNoteTitle: "Note & Memo",
+    stepNoteDesc:
+      "Add optional notes, memo reminders, or contextual details for future reference.",
+    stepCancelTitle: "Cancel",
+    stepCancelDesc:
+      "Discard your current changes and close the form without saving.",
+    stepSaveTitle: "Save Record",
+    stepSaveDesc:
+      "Save your transaction immediately to your local ledger.",
+    stepCloseTitle: "Close Form",
+    stepCloseDesc:
+      "Dismiss this entry modal when you are done or want to exit.",
+  },
+  scheduledTransactionsWalkthrough: {
+    stepSearchTitle: "Search Schedules",
+    stepSearchDesc:
+      "Find scheduled transactions by title, category, or associated account.",
+    stepFilterTitle: "Filter by Status",
+    stepFilterDesc:
+      "Filter between Active, Completed, and Archived schedules.",
+    stepFabTitle: "New Schedule",
+    stepFabDesc:
+      "Tap the + button to create a new recurring income, expense, or transfer.",
+    stepFirstItemTitle: "Scheduled Transaction",
+    stepFirstItemDesc:
+      "View recurrence schedule, accounts involved, and next upcoming execution date. Tap to edit or manage.",
+    stepDueCardTitle: "Due Schedule",
+    stepDueCardDesc:
+      "Scheduled transactions that reached their due date appear here for your review and execution.",
+    stepDueSkipTitle: "Skip Occurrence",
+    stepDueSkipDesc:
+      "Skip this single occurrence without posting a transaction and advance to the next recurring cycle.",
+    stepDuePostTitle: "Post Action",
+    stepDuePostDesc:
+      "Confirm and post this scheduled occurrence into your transactions immediately.",
+  },
+  scheduleCongratulations: {
+    title: "First Schedule Created! 🎉",
+    subtitle: "Automate your recurring finances",
+    message:
+      "Your recurring transaction is set up. Kaizen can alert you when it's due or automatically post it for you.",
+    button: "Explore Schedules Tour",
+  },
+  scheduleFormWalkthrough: {
+    stepTypeTitle: "Transaction Type",
+    stepTypeDesc:
+      "Choose whether this recurring entry is an Expense, Income, or Transfer.",
+    stepNameTitle: "Transaction Name",
+    stepNameDesc:
+      "Give this schedule a meaningful name, such as Monthly Rent, Net Pay, or Internet Subscription.",
+    stepAmountTitle: "Amount",
+    stepAmountDesc:
+      "Enter the recurring amount for each occurrence using the calculator.",
+    stepAccountTitle: "Account Location",
+    stepAccountDesc:
+      "Select which account and pocket the funds will be deducted from or deposited into.",
+    stepCategoryTitle: "Category",
+    stepCategoryDesc:
+      "Assign a category for this recurring transaction to monitor recurring budgets.",
+    stepNoteTitle: "Note & Memo",
+    stepNoteDesc:
+      "Optional memo or notes attached to each recurring transaction created.",
+    stepRecurrenceTitle: "Recurrence",
+    stepRecurrenceDesc:
+      "Configure how frequently this transaction recurs over time.",
+    stepStartingOnTitle: "Starting On",
+    stepStartingOnDesc:
+      "Select the date and time when the first occurrence should trigger.",
+    stepFrequencyTitle: "Frequency",
+    stepFrequencyDesc:
+      "Choose recurrence intervals: Once, Daily, Weekly, Monthly, or Yearly.",
+    stepRepeatTitle: "Repeat Interval",
+    stepRepeatDesc:
+      "Define interval cadence (e.g., repeat every 2 weeks or every 3 months).",
+    stepEndsTitle: "End Condition",
+    stepEndsDesc:
+      "Specify when this schedule ends: Never, after a set number of occurrences, or on a specific date.",
+    stepWeekendTitle: "Weekend Adjustment",
+    stepWeekendDesc:
+      "Automatically adjust dates if the due date falls on a weekend (move to next weekday, previous weekday, or skip).",
+    stepAutoEnterTitle: "Automatically Enter Transaction",
+    stepAutoEnterDesc:
+      "When enabled, transactions post automatically in the background on their due date without manual confirmation.",
+    stepSaveTitle: "Save Schedule",
+    stepSaveDesc:
+      "Tap to save and activate your recurring scheduled transaction.",
+  },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Group Type",
+    stepGroupTypeDesc:
+      "Choose whether this category tracks Expenses (spending) or Income (earnings).",
+    stepNameTitle: "Category Name",
+    stepNameDesc:
+      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
+    stepIconTitle: "Category Icon",
+    stepIconDesc:
+      "Pick an intuitive icon to visually represent this category across transactions and reports.",
+    stepColorTitle: "Theme Color",
+    stepColorDesc:
+      "Choose a distinctive accent color for charts, badges, and quick identification.",
+    stepCustomColorTitle: "Add Custom Color",
+    stepCustomColorDesc:
+      "Pick or enter any custom hex color code to perfectly personalize your categories.",
+    stepCancelTitle: "Cancel",
+    stepCancelDesc:
+      "Discard changes and return without creating a category.",
+    stepSaveTitle: "Create Category",
+    stepSaveDesc:
+      "Save and activate your new category to use in transactions and budgets.",
+  },
+  budgetFormWalkthrough: {
+    stepCategoryTitle: "Category Selection",
+    stepCategoryDesc:
+      "Select which category this budget applies to (e.g. Groceries, Entertainment, Dining).",
+    stepEnableBudgetTitle: "Enable Budget",
+    stepEnableBudgetDesc:
+      "Turn this budget limit on or off without deleting your configuration.",
+    stepAmountTitle: "Budget Amount",
+    stepAmountDesc:
+      "Enter your target spending limit for the period using the calculator.",
+    stepFrequencyTitle: "Budget Frequency",
+    stepFrequencyDesc:
+      "Choose how often the budget period resets: Daily, Weekly, Monthly, Quarterly, or Yearly.",
+    stepRolloverTitle: "Rollover Budget",
+    stepRolloverDesc:
+      "Carry over unspent funds or budget deficits into the next period automatically.",
+    stepOverBudgetAlertTitle: "Over-Budget Alert",
+    stepOverBudgetAlertDesc:
+      "Receive an alert when spending reaches or exceeds this budget limit.",
+    stepSaveTitle: "Save Budget",
+    stepSaveDesc:
+      "Tap to save and activate your category spending limit.",
+  },
+  goalFormWalkthrough: {
+    stepTitleTitle: "Goal Title",
+    stepTitleDesc:
+      "Give your savings goal a name, like Emergency Fund, Dream Vacation, or New Car.",
+    stepTargetAmountTitle: "Target Amount",
+    stepTargetAmountDesc:
+      "Set the total amount you want to save for this financial milestone.",
+    stepLinkedAccountsTitle: "Linked Accounts & Pockets",
+    stepLinkedAccountsDesc:
+      "Select which accounts and virtual pockets hold the funds contributing toward this goal.",
+    stepTargetDateTitle: "Target Date",
+    stepTargetDateDesc:
+      "Set an optional completion deadline to track daily or monthly required savings.",
+    stepIconTitle: "Goal Icon",
+    stepIconDesc:
+      "Choose a motivating icon to visually represent your target.",
+    stepAccentColorTitle: "Accent Color",
+    stepAccentColorDesc:
+      "Select a theme color for the progress bar and goal cards.",
+    stepNotesTitle: "Notes & Motivation",
+    stepNotesDesc:
+      "Add reminders, notes, or motivation why this milestone matters to you.",
+    stepSaveTitle: "Save Goal",
+    stepSaveDesc:
+      "Tap the save checkmark to store your goal and begin tracking progress.",
+  },
   transactionsWalkthrough: {
     stepSearchTitle: "Search Transactions",
     stepSearchDesc:

@@ -498,6 +498,271 @@ export const fil = {
     actionManageTypesDesc:
       "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
   },
+  accountFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Account",
+    stepNameDesc:
+      "Magbigay ng malinaw na pangalan tulad ng Checking, Pangunahing Ipon, o Cash Wallet.",
+    stepNoteTitle: "Tala at Karagdagang Detalye",
+    stepNoteDesc:
+      "Magdagdag ng opsyonal na konteksto, account number, o paalala para sa account na ito.",
+    stepTypeTitle: "Uri at Grupo ng Account",
+    stepTypeDesc:
+      "Pumili kung ito ay Asset (bangko, pera, puhunan) o Liability (credit card, utang).",
+    stepIconTitle: "Icon ng Account",
+    stepIconDesc:
+      "Pumili ng custom icon o gamitin ang default icon ng napiling grupo.",
+    stepStartingBalanceTitle: "Panimulang Balanse",
+    stepStartingBalanceDesc:
+      "Itakda ang simulaing balanse sa araw ng pagbukas. I-tap upang buksan ang calculator.",
+    stepCurrencyTitle: "Tagapili ng Currency",
+    stepCurrencyDesc:
+      "Pumili ng currency para sa account bago magsimulang magtala ng mga transaksyon.",
+    stepMaintainingBalanceTitle: "Maintaining Balance",
+    stepMaintainingBalanceDesc:
+      "Subaybayan ang minimum na balanse upang makaiwas sa bayarin sa bangko.",
+    stepEnablePocketsTitle: "Paganahin ang mga Pocket",
+    stepEnablePocketsDesc:
+      "Tamang-tama kung mayroon kang isang bank account na pinaghahatian! Halimbawa, kung ang iyong checking account ay may nakalaan para sa Gastusin, Emergency Fund, at Ipon, pinapahintulutan ka ng pockets na ihiwalay at subaybayan ang mga balanseng ito sa loob lamang ng isang account.",
+    stepHideSelectionTitle: "Itago sa Pagpipilian",
+    stepHideSelectionDesc:
+      "Itago ang mga pansamantalang account sa araw-araw na listahan ng pagpipilian ng transaksyon.",
+    stepHideReportsTitle: "Itago sa mga Ulat",
+    stepHideReportsDesc:
+      "Ihiwalay ang mga panlabas na pondo o deposito mula sa kabuuang net worth at mga ulat.",
+    stepOpeningDateTitle: "Petsa ng Pagbukas",
+    stepOpeningDateDesc:
+      "Tukuyin kung kailan nagsimula ang account para sa tamang pagsubaybay sa kasaysayan.",
+  },
+  accountGroupSetupWalkthrough: {
+    stepClassificationPickerTitle: "Piliin ang Assets o Liabilities",
+    stepClassificationPickerDesc:
+      "Lumipat sa pagitan ng Assets (mga pag-aari) at Liabilities (mga utang).",
+    stepReorderTitle: "Ayusin ang Pagkakasunod-sunod",
+    stepReorderDesc:
+      "Baguhin ang ayos ng mga grupo ng account ayon sa madalas mong tinitingnan.",
+    stepNewGroupTitle: "Bagong Grupo ng Account",
+    stepNewGroupDesc:
+      "Gumawa ng sariling grupo tulad ng E-Wallets o mga Raket/Negosyo.",
+  },
+  accountTypeFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Grupo",
+    stepNameDesc:
+      "Pangalanan ang grupong ito, tulad ng High-Yield Savings o Negosyo.",
+    stepClassificationTitle: "Klasipikasyon",
+    stepClassificationDesc:
+      "Itakda bilang Asset (positibong yaman) o Liability (utang o bayarin).",
+    stepIconTitle: "Icon ng Grupo",
+    stepIconDesc:
+      "Pumili ng icon na kumakatawan sa grupong ito sa iyong mga account at ulat.",
+    stepColorTitle: "Kulay ng Tema",
+    stepColorDesc:
+      "Pumili ng natatanging kulay para madaling makilala ang grupong ito.",
+    stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
+    stepCustomColorDesc:
+      "Gumawa at mag-save ng sarili mong hex color palette.",
+    stepSaveTitle: "I-save ang Grupo ng Account",
+    stepSaveDesc:
+      "I-tap ang checkmark upang i-save ang bagong grupo ng account.",
+  },
+  transactionFormWalkthrough: {
+    stepPresetsTitle: "Quick Presets",
+    stepPresetsDesc:
+      "Isang tapik na template para sa mga madalas na transaksyon. Agad na pupunan ang pangalan, account, halaga, at kategorya.",
+    stepCustomizeTitle: "I-customize ang mga Field",
+    stepCustomizeDesc:
+      "Pumili kung aling mga field ang ipapakita o itatago sa form upang mapabilis ang iyong pagtatala.",
+    stepTypePickerTitle: "Uri ng Transaksyon",
+    stepTypePickerDesc:
+      "Pumili sa pagitan ng Gastos, Kita, o Paglipat (Transfer) depende sa daloy ng pera.",
+    stepNameTitle: "Pangalan ng Transaksyon",
+    stepNameDesc:
+      "Ilagay ang tindahan, pinagbayaran, o pamagat (hal. Supermarket, Sahod, Kape).",
+    stepAttachmentTitle: "Resibo at Kalakip",
+    stepAttachmentDesc:
+      "Maglakip ng larawan ng resibo, resibo sa pagbili, o garantiya nang direkta sa transaksyong ito.",
+    stepDateTitle: "Petsa ng Transaksyon",
+    stepDateDesc:
+      "Itakda ang petsa sa kalendaryo kung kailan naganap ang transaksyon.",
+    stepTimeTitle: "Eksaktong Oras",
+    stepTimeDesc:
+      "Itala ang eksaktong oras at minuto para sa tumpak na pagkakasunod-sunod ng mga tala.",
+    stepAmountTitle: "Halaga",
+    stepAmountDesc:
+      "I-tap upang buksan ang calculator keypad at kuwentahin o ilagay ang halaga ng transaksyon.",
+    stepCurrencyTitle: "Tagapili ng Currency",
+    stepCurrencyDesc:
+      "Magpalit ng currency kapag gumagastos ng banyagang salapi sa paglalakbay o pamimili.",
+    stepAccountTitle: "Account at Pocket",
+    stepAccountDesc:
+      "Piliin ang pinanggalingan o patutunguhang account at opsyonal na virtual pocket.",
+    stepCategoryTitle: "Kategorya",
+    stepCategoryDesc:
+      "Ikategorya ang iyong transaksyon upang masubaybayan kung saan napupunta ang iyong pera.",
+    stepSplitTitle: "Hatiin ayon sa Kategorya",
+    stepSplitDesc:
+      "Paghahati-hatiin ang isang resibo o bayarin sa iba't ibang kategorya na may sariling halaga.",
+    stepLabelsTitle: "Mga Label at Tag",
+    stepLabelsDesc:
+      "Magdagdag ng mga tag (#bakasyon, #tax-deductible, #proyekto) para sa pagsubaybay.",
+    stepNoteTitle: "Tala at Memo",
+    stepNoteDesc:
+      "Magdagdag ng opsyonal na tala, paalala, o konteksto para sa hinaharap na sanggunian.",
+    stepCancelTitle: "Kanselahin",
+    stepCancelDesc:
+      "Ibasura ang kasalukuyang mga pagbabago at isara ang form nang hindi nagse-save.",
+    stepSaveTitle: "I-save ang Tala",
+    stepSaveDesc:
+      "I-save agad ang iyong transaksyon sa iyong lokal na talaan.",
+    stepCloseTitle: "Isara ang Form",
+    stepCloseDesc:
+      "Isara ang modal na ito kapag tapos ka na o nais mong lumabas.",
+  },
+  scheduledTransactionsWalkthrough: {
+    stepSearchTitle: "Maghanap ng Iskedyul",
+    stepSearchDesc:
+      "Maghanap ng mga naka-iskedyul na transaksyon gamit ang pangalan, kategorya, o account.",
+    stepFilterTitle: "I-filter ayon sa Katayuan",
+    stepFilterDesc:
+      "Pumili sa pagitan ng Aktibo, Nakumpleto, at Naka-archive na mga iskedyul.",
+    stepFabTitle: "Bagong Iskedyul",
+    stepFabDesc:
+      "I-tap ang (+) button upang gumawa ng bagong paulit-ulit na gastos, kita, o transfer.",
+    stepFirstItemTitle: "Naka-iskedyul na Transaksyon",
+    stepFirstItemDesc:
+      "Tingnan ang dalas ng pag-ulit, mga sangkot na account, at susunod na petsa ng transaksyon.",
+    stepDueCardTitle: "Iskedyul na Dapat Bayaran",
+    stepDueCardDesc:
+      "Ang mga transaksyong sumapit na sa takdang araw ay lalabas dito para sa iyong kumpirmasyon.",
+    stepDueSkipTitle: "Laktawan ang Siklo",
+    stepDueSkipDesc:
+      "Laktawan ang nag-iisang pagkakataong ito nang hindi nagtatala at pumunta sa susunod na petsa.",
+    stepDuePostTitle: "Aksyon na I-post",
+    stepDuePostDesc:
+      "Kumpirmahin at itala agad ang iskedyul na ito sa iyong mga transaksyon.",
+  },
+  scheduleCongratulations: {
+    title: "Unang Iskedyul ay Nalikha! 🎉",
+    subtitle: "Gawing kusa ang iyong paulit-ulit na pananalapi",
+    message:
+      "Naka-setup na ang iyong paulit-ulit na transaksyon. Maaari kang paalalahanan ng Kaizen kapag dapat nang bayaran o awtomatikong itala ito.",
+    button: "Galugarin ang Tour ng Iskedyul",
+  },
+  scheduleFormWalkthrough: {
+    stepTypeTitle: "Uri ng Transaksyon",
+    stepTypeDesc:
+      "Pumili kung ito ay paulit-ulit na Gastos, Kita, o Paglipat (Transfer).",
+    stepNameTitle: "Pangalan ng Transaksyon",
+    stepNameDesc:
+      "Magbigay ng makabuluhang pangalan, tulad ng Buwanang Renta, Sahod, o Internet Subscription.",
+    stepAmountTitle: "Halaga",
+    stepAmountDesc:
+      "Ilagay ang halaga para sa bawat pag-ulit gamit ang calculator.",
+    stepAccountTitle: "Lokasyon ng Account",
+    stepAccountDesc:
+      "Piliin ang account at pocket kung saan ibabawas o ilalagay ang pera.",
+    stepCategoryTitle: "Kategorya",
+    stepCategoryDesc:
+      "Magtalaga ng kategorya upang masubaybayan ang iyong paulit-ulit na badyet.",
+    stepNoteTitle: "Tala at Memo",
+    stepNoteDesc:
+      "Opsyonal na tala o paalala na nakakabit sa bawat malilikhang transaksyon.",
+    stepRecurrenceTitle: "Pag-ulit (Recurrence)",
+    stepRecurrenceDesc:
+      "Itakda kung gaano kadalas uulitin ang transaksyong ito.",
+    stepStartingOnTitle: "Magsisimula sa",
+    stepStartingOnDesc:
+      "Piliin ang petsa at oras kung kailan dapat magsimula ang unang pagkakataon.",
+    stepFrequencyTitle: "Dalas ng Pag-ulit",
+    stepFrequencyDesc:
+      "Pumili ng agwat: Isang Beses, Araw-araw, Lingguhan, Buwanan, o Taunan.",
+    stepRepeatTitle: "Agwat ng Pag-ulit",
+    stepRepeatDesc:
+      "Tukuyin ang agwat (hal. tuwing 2 linggo o tuwing 3 buwan).",
+    stepEndsTitle: "Kailan Matatapos",
+    stepEndsDesc:
+      "Tukuyin kung kailan titigil: Huwag Matapos, pagkatapos ng itinakdang beses, o sa tiyak na petsa.",
+    stepWeekendTitle: "Pagsasaayos sa Weekend",
+    stepWeekendDesc:
+      "Awtomatikong iakma kung ang petsa ay tumapat sa Sabado o Linggo (ilipat sa susunod na araw ng trabaho, nakaraan, o laktawan).",
+    stepAutoEnterTitle: "Awtomatikong Ipasok ang Transaksyon",
+    stepAutoEnterDesc:
+      "Kapag naka-on, awtomatikong maipopost ang transaksyon sa takdang araw nang hindi humihingi ng manwal na kumpirmasyon.",
+    stepSaveTitle: "I-save ang Iskedyul",
+    stepSaveDesc:
+      "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
+  },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Uri ng Grupo",
+    stepGroupTypeDesc:
+      "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
+    stepNameTitle: "Pangalan ng Kategorya",
+    stepNameDesc:
+      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
+    stepIconTitle: "Icon ng Kategorya",
+    stepIconDesc:
+      "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",
+    stepColorTitle: "Kulay ng Tema",
+    stepColorDesc:
+      "Pumili ng natatanging kulay para sa mga tsart at mabilis na pagkilala.",
+    stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
+    stepCustomColorDesc:
+      "Maglagay ng sariling hex color code upang personal na iayon ang iyong mga kategorya.",
+    stepCancelTitle: "Kanselahin",
+    stepCancelDesc:
+      "Ibasura ang mga pagbabago at bumalik nang hindi gumagawa ng kategorya.",
+    stepSaveTitle: "Gumawa ng Kategorya",
+    stepSaveDesc:
+      "I-save at simulan ang paggamit sa bagong kategorya para sa mga transaksyon at badyet.",
+  },
+  budgetFormWalkthrough: {
+    stepCategoryTitle: "Pagpili ng Kategorya",
+    stepCategoryDesc:
+      "Piliin kung saang kategorya ilalapat ang badyet na ito (hal. Pamamalengke, Libangan).",
+    stepEnableBudgetTitle: "Paganahin ang Badyet",
+    stepEnableBudgetDesc:
+      "I-on o i-off ang limitasyon sa badyet nang hindi binubura ang iyong tala.",
+    stepAmountTitle: "Halaga ng Badyet",
+    stepAmountDesc:
+      "Ilagay ang iyong target na limitasyon sa gastusin para sa takdang panahon gamit ang calculator.",
+    stepFrequencyTitle: "Dalas ng Badyet",
+    stepFrequencyDesc:
+      "Piliin kung gaano kadalas magre-reset ang badyet: Araw-araw, Lingguhan, Buwanan, Quarterly, o Taunan.",
+    stepRolloverTitle: "Rollover ng Badyet",
+    stepRolloverDesc:
+      "Awtomatikong ilipat ang natirang pondo o kakulangan sa susunod na panahon.",
+    stepOverBudgetAlertTitle: "Alerto Kapag Lumagpas sa Badyet",
+    stepOverBudgetAlertDesc:
+      "Makatanggap ng babala kapag ang paggastos ay umabot o lumagpas sa limitasyon ng badyet.",
+    stepSaveTitle: "I-save ang Badyet",
+    stepSaveDesc:
+      "I-tap upang i-save at simulan ang limitasyon sa paggastos para sa kategoryang ito.",
+  },
+  goalFormWalkthrough: {
+    stepTitleTitle: "Pamagat ng Tunguhin",
+    stepTitleDesc:
+      "Pangalanan ang iyong layunin sa pag-iipon, tulad ng Emergency Fund, Bakasyon, o Bagong Kotse.",
+    stepTargetAmountTitle: "Target na Halaga",
+    stepTargetAmountDesc:
+      "Itakda ang kabuuang halaga na nais mong maipon para sa mahalagang layuning ito.",
+    stepLinkedAccountsTitle: "Mga Nakakabit na Account at Pocket",
+    stepLinkedAccountsDesc:
+      "Piliin kung aling mga account at virtual pocket ang mag-aambag ng pondo para sa layuning ito.",
+    stepTargetDateTitle: "Target na Petsa",
+    stepTargetDateDesc:
+      "Magtakda ng opsyonal na takdang araw upang masukat ang kailangang ipunin bawat buwan.",
+    stepIconTitle: "Icon ng Tunguhin",
+    stepIconDesc:
+      "Pumili ng nakakapukaw na icon na kakatawan sa iyong pangarap.",
+    stepAccentColorTitle: "Kulay ng Accent",
+    stepAccentColorDesc:
+      "Pumili ng kulay ng tema para sa progress bar at card ng layunin.",
+    stepNotesTitle: "Mga Tala at Motibasyon",
+    stepNotesDesc:
+      "Magdagdag ng paalala kung bakit mahalaga sa iyo ang layuning ito.",
+    stepSaveTitle: "I-save ang Tunguhin",
+    stepSaveDesc:
+      "I-tap ang checkmark upang i-save ang iyong layunin at simulan ang pagsubaybay sa pag-unlad.",
+  },
   transactionsWalkthrough: {
     stepSearchTitle: "Maghanap ng Transaksyon",
     stepSearchDesc:

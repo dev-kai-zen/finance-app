@@ -71,6 +71,21 @@ export const PROMPT_SETTING_KEYS = {
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
   firstGoalCelebrated: "prompt.firstGoalCelebrated",
+  firstScheduleCelebrated: "prompt.firstScheduleCelebrated",
+  accountFormWalkthroughDismissed: "prompt.accountFormWalkthroughDismissed",
+  accountGroupSetupWalkthroughDismissed:
+    "prompt.accountGroupSetupWalkthroughDismissed",
+  accountTypeFormWalkthroughDismissed:
+    "prompt.accountTypeFormWalkthroughDismissed",
+  transactionFormWalkthroughDismissed:
+    "prompt.transactionFormWalkthroughDismissed",
+  scheduledTransactionsWalkthroughDismissed:
+    "prompt.scheduledTransactionsWalkthroughDismissed",
+  scheduledTransactionFormWalkthroughDismissed:
+    "prompt.scheduledTransactionFormWalkthroughDismissed",
+  categoryFormWalkthroughDismissed: "prompt.categoryFormWalkthroughDismissed",
+  budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
+  goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
 } as const;
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";
