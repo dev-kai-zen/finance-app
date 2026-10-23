@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import { TRANSACTIONS_WALKTHROUGH_STEPS } from "./transactions-walkthrough-steps";
-import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
+import type {
+  LayoutRect,
+  WalkthroughStep,
+  WalkthroughTargetId,
+} from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
+import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
 export function useTransactionsWalkthrough(options: {
-  onScrollToTarget?: (targetId: string) => void;
+  onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
 } = {}) {
   const { onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -17,6 +26,7 @@ export function useTransactionsWalkthrough(options: {
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measurementGenerationRef = useRef(0);
 
   const currentStep: WalkthroughStep | undefined =
     TRANSACTIONS_WALKTHROUGH_STEPS[activeStepIndex];
@@ -27,15 +37,37 @@ export function useTransactionsWalkthrough(options: {
         clearTimeout(timerRef.current);
       }
 
-      onScrollToTarget?.(step.targetId);
+      const generation = ++measurementGenerationRef.current;
 
-      // Wait 350ms for native animated scroll to settle before measuring
-      timerRef.current = setTimeout(async () => {
+      const applyLayout = async () => {
         const layout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
         setActiveTargetLayout(layout);
-      }, 350);
+      };
+
+      void (async () => {
+        const initialLayout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
+        if (
+          initialLayout &&
+          isWalkthroughTargetVisible(initialLayout, windowHeight, insets)
+        ) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
+        onScrollToTarget?.(step.targetId);
+
+        timerRef.current = setTimeout(() => {
+          void applyLayout();
+        }, 350);
+      })();
     },
-    [measureTarget, onScrollToTarget],
+    [insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {

@@ -38,11 +38,12 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   useWalkthroughRegistry,
+  useWalkthroughTarget,
   DraggableTourChip,
   TransactionsWalkthroughOverlay,
   useTransactionsWalkthrough,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { useAccounts } from "@/modules/accounts";
 import { AdBanner } from "@/modules/ads";
@@ -198,6 +199,15 @@ function TransactionsScreenContent({
   const fabRef = useRef<View>(null);
   const { registerTarget } = useWalkthroughRegistry();
   const { isPromptDismissed } = useExperiencePreferences();
+  const searchRef = useWalkthroughTarget("txSearch");
+  const filterRef = useWalkthroughTarget("txFilter");
+  const sortDateRef = useWalkthroughTarget("txSortDate");
+  const sortAmountRef = useWalkthroughTarget("txSortAmount");
+  const sortOrderRef = useWalkthroughTarget("txSortOrder");
+  const viewModeRef = useWalkthroughTarget("txViewMode");
+  const scheduledRef = useWalkthroughTarget("txScheduled");
+  const trashRef = useWalkthroughTarget("txTrash");
+  const exportRef = useWalkthroughTarget("txExport");
 
   useEffect(() => {
     registerTarget("txFab", fabRef);
@@ -206,11 +216,9 @@ function TransactionsScreenContent({
 
   const sectionListRef = useRef<SectionList<any>>(null);
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    try {
-      (sectionListRef.current as any)?.getScrollResponder?.()?.scrollTo?.({ y: 0, animated: true });
-    } catch {
-      // safe fallback
+  const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
+    if (targetId === "txFab") {
+      return;
     }
   }, []);
 
@@ -602,7 +610,11 @@ function TransactionsScreenContent({
       <View style={styles.container}>
         {/* Search & Actions Header (Kaizen SearchScreen Design) */}
         <View style={styles.searchRow}>
-          <WalkthroughTarget id="txSearch" style={styles.searchInputContainer}>
+          <View
+            ref={searchRef}
+            collapsable={false}
+            style={styles.searchInputContainer}
+          >
             <Search
               color={theme.colors.textMuted}
               size={18}
@@ -628,11 +640,12 @@ function TransactionsScreenContent({
                 <X color={theme.colors.textMuted} size={16} />
               </Pressable>
             )}
-          </WalkthroughTarget>
+          </View>
 
           {/* Filter Trigger Button */}
-          <WalkthroughTarget id="txFilter">
             <Pressable
+              ref={filterRef as never}
+              collapsable={false}
               accessibilityLabel={`Filters, ${activeFilterCount} active`}
               onPress={() => setIsFilterModalOpen(true)}
               style={[
@@ -663,7 +676,6 @@ function TransactionsScreenContent({
                 </View>
               )}
             </Pressable>
-          </WalkthroughTarget>
 
         </View>
 
@@ -679,9 +691,10 @@ function TransactionsScreenContent({
 
           <View style={styles.sortActionsRow}>
             {/* Sort Field Chips */}
-            <WalkthroughTarget id="txSortDate">
-              <Pressable
-                accessibilityLabel="Sort by date"
+            <Pressable
+              ref={sortDateRef as never}
+              collapsable={false}
+              accessibilityLabel="Sort by date"
                 onPress={() =>
                   setFilterState((prev) => ({ ...prev, sortBy: "date" }))
                 }
@@ -689,11 +702,11 @@ function TransactionsScreenContent({
               >
                 <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
               </Pressable>
-            </WalkthroughTarget>
 
-            <WalkthroughTarget id="txSortAmount">
-              <Pressable
-                accessibilityLabel="Sort by amount"
+            <Pressable
+              ref={sortAmountRef as never}
+              collapsable={false}
+              accessibilityLabel="Sort by amount"
                 onPress={() =>
                   setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
                 }
@@ -701,12 +714,11 @@ function TransactionsScreenContent({
               >
                 <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
               </Pressable>
-            </WalkthroughTarget>
 
-            {/* Sort Order Toggle */}
-            <WalkthroughTarget id="txSortOrder">
-              <Pressable
-                accessibilityLabel={`Sort order ${filterState.sortOrder}`}
+            <Pressable
+              ref={sortOrderRef as never}
+              collapsable={false}
+              accessibilityLabel={`Sort order ${filterState.sortOrder}`}
                 onPress={toggleSortOrder}
                 style={styles.sortOrderButton}
               >
@@ -716,12 +728,11 @@ function TransactionsScreenContent({
                   <ArrowDown color={theme.colors.success} size={16} />
                 )}
               </Pressable>
-            </WalkthroughTarget>
 
-            {/* View Mode Toggle */}
-            <WalkthroughTarget id="txViewMode">
-              <Pressable
-                accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
+            <Pressable
+              ref={viewModeRef as never}
+              collapsable={false}
+              accessibilityLabel={`Switch to ${viewMode === "compact" ? "detailed" : "compact"} view`}
                 accessibilityRole="button"
                 onPress={() =>
                   setViewMode(viewMode === "compact" ? "detailed" : "compact")
@@ -737,15 +748,15 @@ function TransactionsScreenContent({
                   <LayoutList color={theme.colors.textSecondary} size={16} />
                 )}
               </Pressable>
-            </WalkthroughTarget>
           </View>
         </View>
 
         {/* Secondary transaction actions */}
         <View style={styles.secondaryActionsRow}>
-          <WalkthroughTarget id="txScheduled">
-            <Pressable
-              accessibilityLabel="Open scheduled transactions"
+          <Pressable
+            ref={scheduledRef as never}
+            collapsable={false}
+            accessibilityLabel="Open scheduled transactions"
               accessibilityRole="button"
               onPress={() =>
                 router.push("/transactions/scheduled")
@@ -755,11 +766,11 @@ function TransactionsScreenContent({
               <CalendarClock color={theme.colors.primary} size={17} />
               <Text style={styles.schedulesButtonText}>Scheduled</Text>
             </Pressable>
-          </WalkthroughTarget>
 
-          <WalkthroughTarget id="txTrash">
-            <Pressable
-              accessibilityLabel="Open transaction trash"
+          <Pressable
+            ref={trashRef as never}
+            collapsable={false}
+            accessibilityLabel="Open transaction trash"
               accessibilityRole="button"
               onPress={() => {
                 clearError();
@@ -770,11 +781,11 @@ function TransactionsScreenContent({
               <Trash2 color={theme.colors.danger} size={17} />
               <Text style={styles.trashButtonText}>Trash</Text>
             </Pressable>
-          </WalkthroughTarget>
 
-          <WalkthroughTarget id="txExport">
-            <Pressable
-              accessibilityLabel="Export CSV"
+          <Pressable
+            ref={exportRef as never}
+            collapsable={false}
+            accessibilityLabel="Export CSV"
               accessibilityState={{ disabled: exportingCsv || loading }}
               disabled={exportingCsv || loading}
               onPress={handleOpenExportCsv}
@@ -785,7 +796,6 @@ function TransactionsScreenContent({
             >
               <Download color={theme.colors.success} size={18} />
             </Pressable>
-          </WalkthroughTarget>
         </View>
 
         {/* Transactions Feed Grouped By Date */}
