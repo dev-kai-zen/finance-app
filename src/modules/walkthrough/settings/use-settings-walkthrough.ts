@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import { SETTINGS_WALKTHROUGH_STEPS } from "./settings-walkthrough-steps";
-import type { LayoutRect, WalkthroughStep, WalkthroughTargetId } from "../types/walkthrough.types";
+import type {
+  LayoutRect,
+  WalkthroughStep,
+  WalkthroughTargetId,
+} from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
+import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
 export function useSettingsWalkthrough({
   onScrollToTarget,
@@ -11,6 +18,8 @@ export function useSettingsWalkthrough({
 } = {}) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -18,6 +27,7 @@ export function useSettingsWalkthrough({
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measurementGenerationRef = useRef(0);
 
   const currentStep: WalkthroughStep | undefined =
     SETTINGS_WALKTHROUGH_STEPS[activeStepIndex];
@@ -28,25 +38,43 @@ export function useSettingsWalkthrough({
         clearTimeout(timerRef.current);
       }
 
-      // 1. Scroll to bring element into viewing area
-      onScrollToTarget?.(step.targetId);
+      const generation = ++measurementGenerationRef.current;
 
-      // 2. Wait 350ms for native animated scroll to completely stop before measuring
-      timerRef.current = setTimeout(async () => {
+      const applyLayout = async () => {
         const layout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
         setActiveTargetLayout(layout);
-      }, 350);
+      };
+
+      void (async () => {
+        const initialLayout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
+        if (
+          initialLayout &&
+          isWalkthroughTargetVisible(initialLayout, windowHeight, insets)
+        ) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
+        onScrollToTarget?.(step.targetId);
+
+        timerRef.current = setTimeout(() => {
+          void applyLayout();
+        }, 350);
+      })();
     },
-    [measureTarget, onScrollToTarget],
+    [insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (SETTINGS_WALKTHROUGH_STEPS[0]) {
-      updateMeasurement(SETTINGS_WALKTHROUGH_STEPS[0]);
-    }
-  }, [updateMeasurement]);
+  }, []);
 
   const skipWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -67,23 +95,20 @@ export function useSettingsWalkthrough({
       completeWalkthrough();
       return;
     }
-    const nextIdx = activeStepIndex + 1;
-    setActiveStepIndex(nextIdx);
-    const nextStepObj = SETTINGS_WALKTHROUGH_STEPS[nextIdx];
-    if (nextStepObj) {
-      updateMeasurement(nextStepObj);
-    }
-  }, [activeStepIndex, completeWalkthrough, updateMeasurement]);
+    setActiveStepIndex(activeStepIndex + 1);
+  }, [activeStepIndex, completeWalkthrough]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
-    const prevIdx = activeStepIndex - 1;
-    setActiveStepIndex(prevIdx);
-    const prevStepObj = SETTINGS_WALKTHROUGH_STEPS[prevIdx];
-    if (prevStepObj) {
-      updateMeasurement(prevStepObj);
+    setActiveStepIndex(activeStepIndex - 1);
+  }, [activeStepIndex]);
+
+  useEffect(() => {
+    if (!isWalkthroughActive || !currentStep) {
+      return;
     }
-  }, [activeStepIndex, updateMeasurement]);
+    updateMeasurement(currentStep);
+  }, [currentStep, isWalkthroughActive, updateMeasurement]);
 
   useEffect(() => {
     return () => {

@@ -44,6 +44,7 @@ import {
   useSettingsWalkthrough,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
@@ -106,6 +107,7 @@ function SettingsScreenContent() {
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
+  const { isPromptDismissed } = experience;
 
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
@@ -127,12 +129,13 @@ function SettingsScreenContent() {
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
   const itemScrollY = useRef<Record<string, number>>({});
+  const didAutoStartWalkthroughRef = useRef(false);
 
   const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
     const offset = itemScrollY.current[targetId];
     if (offset !== undefined) {
       scrollRef.current?.scrollTo({
-        y: Math.max(0, offset - 90),
+        y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
         animated: true,
       });
     }
@@ -143,13 +146,18 @@ function SettingsScreenContent() {
   });
 
   useEffect(() => {
-    if (!experience.isPromptDismissed("settingsWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("settingsWalkthroughDismissed")
+    ) {
+      return;
     }
-  }, [experience, walkthrough.startWalkthrough]);
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
 
   const languageValue =
     preference === "system"
