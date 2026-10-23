@@ -328,25 +328,27 @@ export function DashboardWalkthroughOverlay({
 
               <Pressable
                 accessibilityLabel={
-                  isFabStep
-                    ? t("dashboard.walkthroughStartTx")
+                  stepIndex === totalSteps - 1
+                    ? "Finish Walkthrough"
                     : t("dashboard.walkthroughNext")
                 }
                 accessibilityRole="button"
-                onPress={isFabStep ? onFabPress : onNext}
+                onPress={onNext}
                 style={({ pressed }) => [
                   styles.nextBtn,
                   pressed && styles.nextBtnPressed,
                 ]}
               >
                 <Text style={styles.nextBtnText}>
-                  {isFabStep
-                    ? t("dashboard.walkthroughStartTx")
+                  {stepIndex === totalSteps - 1
+                    ? "Finish"
                     : t("dashboard.walkthroughNext")}
                 </Text>
-                {!isFabStep ? (
+                {stepIndex === totalSteps - 1 ? (
+                  <Check color={theme.colors.onPrimary} size={16} />
+                ) : (
                   <ChevronRight color={theme.colors.onPrimary} size={16} />
-                ) : null}
+                )}
               </Pressable>
             </View>
           </View>
