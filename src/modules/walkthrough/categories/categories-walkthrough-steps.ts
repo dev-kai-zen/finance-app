@@ -4,6 +4,7 @@ export interface GetCategoriesWalkthroughStepsOptions {
   hasPresetsButton?: boolean;
   canReorderGroups?: boolean;
   canReorderSubcategories?: boolean;
+  hasCategoryGroups?: boolean;
 }
 
 export function getCategoriesWalkthroughSteps(
@@ -13,6 +14,7 @@ export function getCategoriesWalkthroughSteps(
     hasPresetsButton = true,
     canReorderGroups = true,
     canReorderSubcategories = true,
+    hasCategoryGroups = true,
   } = options;
 
   const steps: WalkthroughStep[] = [
@@ -49,21 +51,23 @@ export function getCategoriesWalkthroughSteps(
     descKey: "categoriesWalkthrough.stepNewCategoryDesc",
   });
 
-  if (canReorderSubcategories) {
+  if (hasCategoryGroups) {
+    if (canReorderSubcategories) {
+      steps.push({
+        id: "catFirstGroupReorderSub",
+        targetId: "catFirstGroupReorderSub",
+        titleKey: "categoriesWalkthrough.stepReorderSubTitle",
+        descKey: "categoriesWalkthrough.stepReorderSubDesc",
+      });
+    }
+
     steps.push({
-      id: "catFirstGroupReorderSub",
-      targetId: "catFirstGroupReorderSub",
-      titleKey: "categoriesWalkthrough.stepReorderSubTitle",
-      descKey: "categoriesWalkthrough.stepReorderSubDesc",
+      id: "catFirstGroupAddSub",
+      targetId: "catFirstGroupAddSub",
+      titleKey: "categoriesWalkthrough.stepAddSubTitle",
+      descKey: "categoriesWalkthrough.stepAddSubDesc",
     });
   }
-
-  steps.push({
-    id: "catFirstGroupAddSub",
-    targetId: "catFirstGroupAddSub",
-    titleKey: "categoriesWalkthrough.stepAddSubTitle",
-    descKey: "categoriesWalkthrough.stepAddSubDesc",
-  });
 
   return steps;
 }

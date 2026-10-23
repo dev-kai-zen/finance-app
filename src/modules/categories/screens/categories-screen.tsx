@@ -24,8 +24,11 @@ import {
   CategoriesWalkthroughOverlay,
   DraggableTourChip,
   useCategoriesWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
   WalkthroughRegistryProvider,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { useFocusEffect } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
@@ -116,42 +119,85 @@ function CategoriesScreenContent({
   const currentCategories = categories.filter((c) => c.type === selectedType);
 
   // Walkthrough targets & coordination
-  const typeToggleRef = useWalkthroughTarget("catTypeToggle");
-  const reorderGroupsRef = useWalkthroughTarget("catReorderGroups");
-  const presetsIconRef = useWalkthroughTarget("catPresetsIcon");
-  const newCategoryRef = useWalkthroughTarget("catNewCategory");
-  const firstGroupReorderSubRef = useWalkthroughTarget("catFirstGroupReorderSub");
-  const firstGroupAddSubRef = useWalkthroughTarget("catFirstGroupAddSub");
-
   const hasPresetsButton = hasExistingTransactions === false;
   const canReorderGroups = currentCategories.length > 1;
   const canReorderSubcategories = currentCategories.some(
     (g) => (g.subcategories?.length ?? 0) > 1,
   );
+  const hasCategoryGroups = !loading && currentCategories.length > 0;
+
+  const typeToggleRef = useWalkthroughTarget("catTypeToggle");
+  const reorderGroupsRef = useWalkthroughTarget(
+    canReorderGroups ? "catReorderGroups" : null,
+  );
+  const presetsIconRef = useWalkthroughTarget(
+    hasPresetsButton ? "catPresetsIcon" : null,
+  );
+  const newCategoryRef = useWalkthroughTarget("catNewCategory");
+  const firstGroupReorderSubRef = useWalkthroughTarget(
+    hasCategoryGroups && canReorderSubcategories
+      ? "catFirstGroupReorderSub"
+      : null,
+  );
+  const firstGroupAddSubRef = useWalkthroughTarget(
+    hasCategoryGroups ? "catFirstGroupAddSub" : null,
+  );
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useCategoriesWalkthrough({
     hasPresetsButton,
     canReorderGroups,
     canReorderSubcategories,
+    hasCategoryGroups,
     onScrollToTarget: handleScrollToTarget,
   });
 
   const { isPromptDismissed } = useExperiencePreferences();
 
   useEffect(() => {
-    if (!loading && !isPromptDismissed("categoriesWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      hasExistingTransactions === null ||
+      isPromptDismissed("categoriesWalkthroughDismissed")
+    ) {
+      return;
     }
-  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [
+    hasExistingTransactions,
+    isPromptDismissed,
+    loading,
+    walkthrough.startWalkthrough,
+  ]);
 
   const firstReorderableGroupId =
     currentCategories.find((g) => (g.subcategories?.length ?? 0) > 1)?.id ??
@@ -220,6 +266,7 @@ function CategoriesScreenContent({
 
   return (
     <PageContainer
+      scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       floatingAction={
         <DraggableTourChip
