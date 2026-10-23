@@ -4,8 +4,10 @@ import {
   AlertTriangle,
   ChevronRight,
   Crown,
+  PieChart,
   RotateCw,
 } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -25,6 +27,8 @@ import {
   BudgetFormWalkthroughOverlay,
   DraggableTourChip,
   useBudgetFormWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -94,6 +98,7 @@ function BudgetFormModalContent({
   pending = false,
 }: BudgetFormModalProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
@@ -282,20 +287,20 @@ function BudgetFormModalContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "budgetFormWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !initialBudget,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      initialBudget ||
-      isPromptDismissed("budgetFormWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !initialBudget && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [initialBudget, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [visible, initialBudget, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const handleDelete = () => {
     if (!initialBudget || !onDelete) return;
@@ -617,6 +622,16 @@ function BudgetFormModalContent({
         targetLayout={walkthrough.activeTargetLayout}
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
+      />
+
+      <WalkthroughIntroModal
+        visible={visible && !initialBudget && walkthroughIntro.isIntroVisible}
+        title={t("budgetFormWalkthrough.introTitle")}
+        subtitle={t("budgetFormWalkthrough.introSubtitle")}
+        message={t("budgetFormWalkthrough.introMessage")}
+        icon={<PieChart color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
     </>
   );

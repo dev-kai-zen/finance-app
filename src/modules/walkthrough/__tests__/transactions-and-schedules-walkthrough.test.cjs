@@ -198,8 +198,12 @@ test("schedule form walkthrough: handles once vs recurring frequencies", () => {
 test("phase 2 translations exist in en, es, and fil", () => {
   [en, es, fil].forEach((dict) => {
     assert.ok(dict.transactionFormWalkthrough, "transactionFormWalkthrough should exist");
+    assert.ok(dict.transactionFormWalkthrough.introTitle, "transactionFormWalkthrough.introTitle should exist");
+    assert.ok(dict.transactionFormWalkthrough.introSubtitle, "transactionFormWalkthrough.introSubtitle should exist");
+    assert.ok(dict.transactionFormWalkthrough.introMessage, "transactionFormWalkthrough.introMessage should exist");
     assert.ok(dict.scheduledTransactionsWalkthrough, "scheduledTransactionsWalkthrough should exist");
     assert.ok(dict.scheduleFormWalkthrough, "scheduleFormWalkthrough should exist");
     assert.ok(dict.scheduleCongratulations, "scheduleCongratulations should exist");
   });
 });
+

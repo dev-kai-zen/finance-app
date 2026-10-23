@@ -568,6 +568,10 @@ export const es = {
       "Define y administra tipos y grupos personalizados de cuentas.",
   },
   accountFormWalkthrough: {
+    introTitle: "Configuración de Cuenta",
+    introSubtitle: "Crea y configura tu cuenta",
+    introMessage:
+      "Configura el nombre, tipo, saldo inicial, moneda y subcuentas virtuales. ¿Deseas un recorrido rápido por este formulario?",
     stepNameTitle: "Nombre de la cuenta",
     stepNameDesc:
       "Asigna un nombre claro y reconocible como Cuenta corriente, Ahorros o Efectivo.",
@@ -603,6 +607,10 @@ export const es = {
       "Indica cuándo se inició esta cuenta para el seguimiento histórico de saldos.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Grupos de Cuentas",
+    introSubtitle: "Organiza tus tipos de cuentas",
+    introMessage:
+      "Administra grupos personalizados de activos y pasivos, y ajusta su orden. ¿Deseas un recorrido rápido?",
     stepClassificationPickerTitle: "Selector de Activos y Pasivos",
     stepClassificationPickerDesc:
       "Alterna entre Activos (lo que posees) y Pasivos (lo que debes).",
@@ -614,6 +622,10 @@ export const es = {
       "Crea un grupo personalizado como Billeteras digitales o Emprendimientos.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "Nuevo Grupo de Cuentas",
+    introSubtitle: "Crea categorías de cuentas personalizadas",
+    introMessage:
+      "Define una categoría personalizada con tu clasificación, icono y color preferidos. ¿Deseas un recorrido rápido?",
     stepNameTitle: "Nombre del grupo",
     stepNameDesc:
       "Nombra este grupo de cuentas, como Ahorro de alto rendimiento o Negocios.",
@@ -634,6 +646,10 @@ export const es = {
       "Toca la marca de verificación para guardar tu nuevo grupo de cuenta.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Registrar Transacción",
+    introSubtitle: "Controla tus ingresos, gastos o transferencias",
+    introMessage:
+      "Registra montos, categorías, cuentas, recibos, etiquetas y notas fácilmente. ¿Deseas un recorrido rápido por este formulario?",
     stepPresetsTitle: "Plantillas rápidas",
     stepPresetsDesc:
       "Plantillas de un toque para transacciones frecuentes. Autocompleta nombres, cuentas, montos y categorías rápidamente.",
@@ -765,6 +781,10 @@ export const es = {
       "Toca para guardar y activar tu transacción programada recurrente.",
   },
   budgetFormWalkthrough: {
+    introTitle: "Nuevo Presupuesto por Categoría",
+    introSubtitle: "Establece límites de gasto inteligentes",
+    introMessage:
+      "Configura límites de gasto por categoría, acumulaciones y alertas de sobregiro. ¿Deseas un recorrido rápido por este formulario?",
     stepCategoryTitle: "Selección de categoría",
     stepCategoryDesc:
       "Elige a qué categoría se aplica este presupuesto (p. ej. Comestibles, Ocio).",
@@ -788,6 +808,10 @@ export const es = {
       "Toca para guardar y activar tu límite de gasto por categoría.",
   },
   goalFormWalkthrough: {
+    introTitle: "Nueva Meta de Ahorro",
+    introSubtitle: "Planifica y sigue tus objetivos",
+    introMessage:
+      "Establece montos objetivo, vincula cuentas o bolsillos y programa fechas límite. ¿Deseas un recorrido rápido por este formulario?",
     stepTitleTitle: "Título de la meta",
     stepTitleDesc:
       "Asigna un nombre a tu meta de ahorro, como Fondo de emergencia, Vacaciones o Auto nuevo.",

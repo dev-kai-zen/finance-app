@@ -556,6 +556,10 @@ export const en = {
       "Define and manage custom account types and groups to tailor your tracking.",
   },
   accountFormWalkthrough: {
+    introTitle: "New Account Setup",
+    introSubtitle: "Create and configure your account",
+    introMessage:
+      "Configure your account name, type, starting balance, currency, and virtual sub-pockets. Would you like a quick walkthrough of this form?",
     stepNameTitle: "Account Name",
     stepNameDesc:
       "Give your account a clear, recognizable name such as Checking, Primary Savings, or Cash Wallet.",
@@ -591,6 +595,10 @@ export const en = {
       "Specify when this account started. Starting balances and calculations will be tracked from this date onward.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Account Group Setup",
+    introSubtitle: "Organize your account types",
+    introMessage:
+      "Manage custom account groups across assets and liabilities, and customize your grouping order. Would you like a quick walkthrough?",
     stepClassificationPickerTitle: "Asset & Liability Switcher",
     stepClassificationPickerDesc:
       "Switch between Assets (what you own, like cash and investments) and Liabilities (what you owe, like credit cards and loans).",
@@ -602,6 +610,10 @@ export const en = {
       "Create a custom account group tailored to your lifestyle, such as Digital Wallets or Side Hustles.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "New Account Group",
+    introSubtitle: "Create a custom category",
+    introMessage:
+      "Define a custom category with your preferred name, classification, icon, and theme color. Would you like a quick walkthrough?",
     stepNameTitle: "Group Name",
     stepNameDesc:
       "Name this account group, such as High-Yield Savings, Business Accounts, or Crypto Wallets.",
@@ -622,6 +634,10 @@ export const en = {
       "Tap the save checkmark to store your account group and start adding accounts to it.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Record Transaction",
+    introSubtitle: "Track your income, expense, or transfer",
+    introMessage:
+      "Quickly enter amounts, choose accounts, assign categories, attach receipts, or split items. Would you like a quick walkthrough of this form?",
     stepPresetsTitle: "Quick Presets",
     stepPresetsDesc:
       "One-tap templates for your recurring transactions. Quickly autofill names, accounts, amounts, and categories.",
@@ -753,6 +769,10 @@ export const en = {
       "Tap to save and activate your recurring scheduled transaction.",
   },
   budgetFormWalkthrough: {
+    introTitle: "New Category Budget",
+    introSubtitle: "Set smart spending limits",
+    introMessage:
+      "Set category spending limits, configure rollover balances, and enable alert thresholds. Would you like a quick walkthrough of this form?",
     stepCategoryTitle: "Category Selection",
     stepCategoryDesc:
       "Select which category this budget applies to (e.g. Groceries, Entertainment, Dining).",
@@ -776,6 +796,10 @@ export const en = {
       "Tap to save and activate your category spending limit.",
   },
   goalFormWalkthrough: {
+    introTitle: "New Savings Goal",
+    introSubtitle: "Track your financial targets",
+    introMessage:
+      "Set target amounts, link accounts or pockets, configure target dates, and track your progress. Would you like a quick walkthrough of this form?",
     stepTitleTitle: "Goal Title",
     stepTitleDesc:
       "Give your savings goal a name, like Emergency Fund, Dream Vacation, or New Car.",

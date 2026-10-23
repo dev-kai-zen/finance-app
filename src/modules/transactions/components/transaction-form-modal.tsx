@@ -15,10 +15,12 @@ import {
   ChevronRight,
   Paperclip,
   Plus,
+  Receipt,
   SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import { KeyboardStickyView } from "react-native-keyboard-controller";
 import {
   AmountCalculatorField,
@@ -32,6 +34,8 @@ import {
   DraggableTourChip,
   TransactionFormWalkthroughOverlay,
   useTransactionFormWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -288,6 +292,7 @@ function TransactionFormModalInner({
 }: TransactionFormModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const defaultAccounts = useDefaultAccounts();
   const { formFields, isPromptDismissed } = useExperiencePreferences();
@@ -1212,19 +1217,20 @@ function TransactionFormModalInner({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "transactionFormWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !isEditing,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("transactionFormWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !isEditing && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [visible, isEditing, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
@@ -3249,6 +3255,16 @@ function TransactionFormModalInner({
       <TransactionFormFieldPreferencesModal
         onClose={() => setIsFieldPreferencesOpen(false)}
         visible={isFieldPreferencesOpen}
+      />
+
+      <WalkthroughIntroModal
+        visible={visible && !isEditing && walkthroughIntro.isIntroVisible}
+        title={t("transactionFormWalkthrough.introTitle")}
+        subtitle={t("transactionFormWalkthrough.introSubtitle")}
+        message={t("transactionFormWalkthrough.introMessage")}
+        icon={<Receipt color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
     </>
   );

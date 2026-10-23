@@ -570,6 +570,10 @@ export const fil = {
       "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
   },
   accountFormWalkthrough: {
+    introTitle: "Setup ng Bagong Account",
+    introSubtitle: "Lumikha at i-configure ang iyong account",
+    introMessage:
+      "I-set up ang pangalan, uri, panimulang balanse, pera, at virtual pockets. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepNameTitle: "Pangalan ng Account",
     stepNameDesc:
       "Magbigay ng malinaw na pangalan tulad ng Checking, Pangunahing Ipon, o Cash Wallet.",
@@ -605,6 +609,10 @@ export const fil = {
       "Tukuyin kung kailan nagsimula ang account para sa tamang pagsubaybay sa kasaysayan.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Setup ng Grupo ng Account",
+    introSubtitle: "Ayusin ang mga uri ng account",
+    introMessage:
+      "Pamahalaan ang mga pasadyang grupo sa assets at liabilities, at baguhin ang pagkakasunod-sunod. Nais mo ba ng mabilisang walkthrough?",
     stepClassificationPickerTitle: "Piliin ang Assets o Liabilities",
     stepClassificationPickerDesc:
       "Lumipat sa pagitan ng Assets (mga pag-aari) at Liabilities (mga utang).",
@@ -616,6 +624,10 @@ export const fil = {
       "Gumawa ng sariling grupo tulad ng E-Wallets o mga Raket/Negosyo.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "Bagong Grupo ng Account",
+    introSubtitle: "Lumikha ng pasadyang kategorya ng account",
+    introMessage:
+      "Magtakda ng pasadyang kategorya kasama ang klasipikasyon, icon, at kulay ng tema. Nais mo ba ng mabilisang walkthrough?",
     stepNameTitle: "Pangalan ng Grupo",
     stepNameDesc:
       "Pangalanan ang grupong ito, tulad ng High-Yield Savings o Negosyo.",
@@ -636,6 +648,10 @@ export const fil = {
       "I-tap ang checkmark upang i-save ang bagong grupo ng account.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Magtala ng Transaksyon",
+    introSubtitle: "Subaybayan ang kita, gastos, o paglipat",
+    introMessage:
+      "Magtala ng halaga, kategorya, account, resibo, tag, at tala nang madali. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepPresetsTitle: "Quick Presets",
     stepPresetsDesc:
       "Isang tapik na template para sa mga madalas na transaksyon. Agad na pupunan ang pangalan, account, halaga, at kategorya.",
@@ -767,6 +783,10 @@ export const fil = {
       "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
   },
   budgetFormWalkthrough: {
+    introTitle: "Bagong Badyet sa Kategorya",
+    introSubtitle: "Magtakda ng limitasyon sa paggastos",
+    introMessage:
+      "Magtakda ng limitasyon sa kategorya, i-configure ang rollover, at mga alerto sa over-budget. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepCategoryTitle: "Pagpili ng Kategorya",
     stepCategoryDesc:
       "Piliin kung saang kategorya ilalapat ang badyet na ito (hal. Pamamalengke, Libangan).",
@@ -790,6 +810,10 @@ export const fil = {
       "I-tap upang i-save at simulan ang limitasyon sa paggastos para sa kategoryang ito.",
   },
   goalFormWalkthrough: {
+    introTitle: "Bagong Layunin sa Pag-iipon",
+    introSubtitle: "Planuhin at subaybayan ang iyong mga target",
+    introMessage:
+      "Magtakda ng target na halaga, i-link ang mga account o pocket, at itakda ang target na petsa. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepTitleTitle: "Pamagat ng Tunguhin",
     stepTitleDesc:
       "Pangalanan ang iyong layunin sa pag-iipon, tulad ng Emergency Fund, Bakasyon, o Bagong Kotse.",

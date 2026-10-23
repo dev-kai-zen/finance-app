@@ -8,7 +8,8 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, LayoutList, Lock, Trash2 } from "lucide-react-native";
+import { ChevronRight, Crown, LayoutList, Lock, Trash2, Wallet } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -33,6 +34,8 @@ import {
   DraggableTourChip,
   AccountFormWalkthroughOverlay,
   useAccountFormWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -136,6 +139,7 @@ function AccountFormModalContent({
 }: AccountFormModalProps) {
   const theme = useAppTheme();
   const router = useRouter();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
@@ -336,21 +340,21 @@ function AccountFormModalContent({
     showMaintainingBalance: !isLiabilityAccount,
     showPockets: pocketEligible,
   });
-  const didAutoStartWalkthroughRef = useRef(false);
+
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "accountFormWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !account,
+  });
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("accountFormWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !account && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [visible, account, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const handleCurrencySelect = (code: string) => {
     const normalized = code.trim().toUpperCase();
@@ -1199,6 +1203,16 @@ function AccountFormModalContent({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={visible && walkthroughIntro.isIntroVisible}
+        title={t("accountFormWalkthrough.introTitle")}
+        subtitle={t("accountFormWalkthrough.introSubtitle")}
+        message={t("accountFormWalkthrough.introMessage")}
+        icon={<Wallet color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
     </>
   );

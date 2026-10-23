@@ -7,7 +7,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Check, Plus } from "lucide-react-native";
+import { Check, FolderPlus, Plus } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   ConfirmModal,
   FullScreenFormModal,
@@ -24,6 +25,8 @@ import {
   DraggableTourChip,
   AccountTypeFormWalkthroughOverlay,
   useAccountTypeFormWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -70,6 +73,7 @@ function AccountTypeFormModalContent({
   onClose,
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { isPromptDismissed } = useExperiencePreferences();
   const scrollRef = useRef<ScrollView>(null);
@@ -104,23 +108,26 @@ function AccountTypeFormModalContent({
     [measureTargetInAncestor],
   );
 
+  const isEditing = Boolean(type);
+
   const walkthrough = useAccountTypeFormWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "accountTypeFormWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !isEditing,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("accountTypeFormWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !isEditing && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [visible, isEditing, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
   const {
     colors: hexColorsList,
     refresh: refreshHexColors,
@@ -137,7 +144,6 @@ function AccountTypeFormModalContent({
   const [localError, setLocalError] = useState<string | null>(null);
 
   const isProtected = type ? isProtectedAccountType(type) : false;
-  const isEditing = Boolean(type);
 
   useEffect(() => {
     if (visible) {
@@ -532,6 +538,16 @@ function AccountTypeFormModalContent({
         }
         variant={localError ? "warning" : "error"}
         visible={visible && !isColorFormOpen && Boolean(displayError)}
+      />
+
+      <WalkthroughIntroModal
+        visible={visible && !isEditing && walkthroughIntro.isIntroVisible}
+        title={t("accountTypeFormWalkthrough.introTitle")}
+        subtitle={t("accountTypeFormWalkthrough.introSubtitle")}
+        message={t("accountTypeFormWalkthrough.introMessage")}
+        icon={<FolderPlus color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
     </>
   );

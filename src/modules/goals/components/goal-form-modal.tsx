@@ -6,9 +6,11 @@ import {
   ChevronRight,
   Landmark,
   Plus,
+  Target,
   WalletCards,
   X,
 } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
@@ -34,6 +36,8 @@ import {
   DraggableTourChip,
   GoalFormWalkthroughOverlay,
   useGoalFormWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -83,6 +87,7 @@ function GoalFormModalContent({
   initialGoal = null,
 }: GoalFormModalProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const { accounts, pockets } = useAccounts();
@@ -282,20 +287,20 @@ function GoalFormModalContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "goalFormWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !initialGoal,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      initialGoal ||
-      isPromptDismissed("goalFormWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !initialGoal && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [initialGoal, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [visible, initialGoal, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   return (
     <>
@@ -718,6 +723,15 @@ function GoalFormModalContent({
           visible={helpTopic !== null}
         />
 
+      <WalkthroughIntroModal
+        visible={visible && !initialGoal && walkthroughIntro.isIntroVisible}
+        title={t("goalFormWalkthrough.introTitle")}
+        subtitle={t("goalFormWalkthrough.introSubtitle")}
+        message={t("goalFormWalkthrough.introMessage")}
+        icon={<Target color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
+      />
     </>
   );
 }
