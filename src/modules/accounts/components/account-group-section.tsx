@@ -19,7 +19,7 @@ import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-
 import {
   convertCurrencyMinorUnits,
 } from "@/utils/currency";
-import { WalkthroughTarget, type WalkthroughTargetId } from "@/modules/walkthrough";
+import { useWalkthroughTarget, type WalkthroughTargetId } from "@/modules/walkthrough";
 
 export function AccountGroupSection({
   group,
@@ -50,6 +50,7 @@ export function AccountGroupSection({
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const sectionRef = useWalkthroughTarget(walkthroughTargetId ?? null);
   const grouped = accounts.filter(
     (a) => a.accountType?.accountGroup === group,
   );
@@ -215,20 +216,14 @@ export function AccountGroupSection({
 
   return (
     <View style={styles.sectionContainer}>
-      {walkthroughTargetId ? (
-        <WalkthroughTarget
-          id={walkthroughTargetId}
-          style={styles.targetContainer}
-        >
-          {headerContent}
-          {firstGroupContent}
-        </WalkthroughTarget>
-      ) : (
-        <>
-          {headerContent}
-          {firstGroupContent}
-        </>
-      )}
+      <View
+        ref={walkthroughTargetId ? sectionRef : undefined}
+        collapsable={false}
+        style={walkthroughTargetId ? styles.targetContainer : undefined}
+      >
+        {headerContent}
+        {firstGroupContent}
+      </View>
       {remainingCards}
     </View>
   );

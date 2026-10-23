@@ -345,7 +345,7 @@ export function DashboardWalkthroughOverlay({
                     : t("dashboard.walkthroughNext")}
                 </Text>
                 {stepIndex === totalSteps - 1 ? null : (
-                  <ChevronRight color={theme.colors.onPrimary} size={16} />
+                  <ChevronRight color={theme.colors.textPrimary} size={16} />
                 )}
               </Pressable>
             </View>
@@ -403,7 +403,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
     },
     cardDesc: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm * 1.15,
     },
@@ -440,7 +440,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: theme.colors.onPrimary,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
     },

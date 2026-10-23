@@ -146,11 +146,14 @@ export function useWalkthroughRegistry() {
 /**
  * Hook to directly attach a ref to any component for precision walkthrough measurement.
  */
-export function useWalkthroughTarget(id: WalkthroughTargetId) {
+export function useWalkthroughTarget(id: WalkthroughTargetId | null) {
   const { registerTarget } = useWalkthroughRegistry();
   const ref = useRef<View>(null);
 
   useEffect(() => {
+    if (!id) {
+      return;
+    }
     registerTarget(id, ref);
     return () => registerTarget(id, null);
   }, [id, registerTarget]);

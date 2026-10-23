@@ -9,11 +9,13 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   useWalkthroughRegistry,
+  useWalkthroughTarget,
   DraggableTourChip,
   AccountsWalkthroughOverlay,
   useAccountsWalkthrough,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
@@ -90,8 +92,10 @@ function AccountsScreenContent({
   );
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
   const fabRef = useRef<View>(null);
-  const { registerTarget } = useWalkthroughRegistry();
+  const searchRef = useWalkthroughTarget("searchBox");
+  const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed } = useExperiencePreferences();
 
   useEffect(() => {
@@ -99,13 +103,29 @@ function AccountsScreenContent({
     return () => registerTarget("accountsFab", null);
   }, [registerTarget]);
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    if (targetId === "liabilitiesSection" || targetId === "accountsFab") {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    } else {
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "accountsFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useAccountsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
@@ -253,6 +273,7 @@ function AccountsScreenContent({
   return (
     <PageContainer
       contentContainerStyle={contentSpacing}
+      scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       floatingAction={
         <>
@@ -288,30 +309,25 @@ function AccountsScreenContent({
       ) : (
         <>
           <View style={managementActions}>
-            <WalkthroughTarget id="archivedChip">
-              <ArchivedAccountsChip
-                count={archivedCount}
-                onPress={() => setArchivedModalOpen(true)}
-              />
-            </WalkthroughTarget>
-            <WalkthroughTarget id="fundGroupsChip">
-              <FundGroupsChip
-                count={fundGroups.groups.length}
-                onPress={() => {
-                  fundGroups.refresh();
-                  setFundGroupsModalOpen(true);
-                }}
-              />
-            </WalkthroughTarget>
+            <ArchivedAccountsChip
+              count={archivedCount}
+              onPress={() => setArchivedModalOpen(true)}
+            />
+            <FundGroupsChip
+              count={fundGroups.groups.length}
+              onPress={() => {
+                fundGroups.refresh();
+                setFundGroupsModalOpen(true);
+              }}
+            />
           </View>
 
-          <WalkthroughTarget id="searchBox">
-            <AccountSearchBox
-              style={searchSpacing}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </WalkthroughTarget>
+          <AccountSearchBox
+            style={searchSpacing}
+            targetRef={searchRef}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
 
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
