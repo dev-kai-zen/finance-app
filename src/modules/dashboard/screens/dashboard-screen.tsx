@@ -16,7 +16,6 @@ import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import { useExperiencePreferences, useUserNickname } from "@/modules/settings";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
-import { ExperiencePromptsCard } from "../components/experience-prompts-card";
 import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
@@ -299,13 +298,6 @@ function DashboardScreenContent() {
   const netWorth = summary?.netWorthMinorUnits ?? 0;
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
-  const activeAccounts = accounts.filter((account) => !account.isArchived);
-  const expenseTransactionCount = recentTx.filter(
-    (transaction) => transaction.type === "expense",
-  ).length;
-  const hasCreditCardAccount = activeAccounts.some(
-    (account) => account.creditCardDetails,
-  );
 
   return (
     <PageContainer
@@ -346,11 +338,6 @@ function DashboardScreenContent() {
           )
         ) : (
           <>
-            <ExperiencePromptsCard
-              activeAccountCount={activeAccounts.length}
-              expenseTransactionCount={expenseTransactionCount}
-              hasCreditCardAccount={hasCreditCardAccount}
-            />
             <DashboardGreetingCard nickname={nickname} />
             <AdBanner placement="dashboard" variant="card" />
             <DashboardNetWorthCard
