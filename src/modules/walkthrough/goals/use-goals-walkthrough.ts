@@ -1,20 +1,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   getGoalsWalkthroughSteps,
   type GetGoalsWalkthroughStepsOptions,
 } from "./goals-walkthrough-steps";
-import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
+import type {
+  LayoutRect,
+  WalkthroughStep,
+  WalkthroughTargetId,
+} from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
+import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
-export interface UseGoalsWalkthroughOptions extends GetGoalsWalkthroughStepsOptions {
-  onScrollToTarget?: (targetId: string) => void;
+export interface UseGoalsWalkthroughOptions
+  extends GetGoalsWalkthroughStepsOptions {
+  onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
 }
 
 export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
-  const { hasGoals, onScrollToTarget } = options;
+  const { hasGoalInList, onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const steps = useMemo(
+    () => getGoalsWalkthroughSteps({ hasGoalInList }),
+    [hasGoalInList],
+  );
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -22,12 +37,7 @@ export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const steps = useMemo(
-    () => getGoalsWalkthroughSteps({ hasGoals }),
-    [hasGoals],
-  );
+  const measurementGenerationRef = useRef(0);
 
   const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
 
@@ -36,42 +46,47 @@ export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
-      if (settleTimerRef.current) {
-        clearTimeout(settleTimerRef.current);
-      }
 
-      onScrollToTarget?.(step.targetId);
+      const generation = ++measurementGenerationRef.current;
 
-      // 1. Initial measurement
-      timerRef.current = setTimeout(async () => {
+      const applyLayout = async () => {
         const layout = await measureTarget(step.targetId);
-        if (layout) {
-          setActiveTargetLayout(layout);
+        if (generation !== measurementGenerationRef.current) {
+          return;
         }
-      }, 350);
+        setActiveTargetLayout(layout);
+      };
 
-      // 2. Settle measurement after full scroll/animation completes
-      settleTimerRef.current = setTimeout(async () => {
-        const layout = await measureTarget(step.targetId);
-        if (layout) {
-          setActiveTargetLayout(layout);
+      void (async () => {
+        const initialLayout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
         }
-      }, 700);
+        if (
+          initialLayout &&
+          isWalkthroughTargetVisible(initialLayout, windowHeight, insets)
+        ) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
+        onScrollToTarget?.(step.targetId);
+
+        timerRef.current = setTimeout(() => {
+          void applyLayout();
+        }, 350);
+      })();
     },
-    [measureTarget, onScrollToTarget],
+    [insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (steps[0]) {
-      updateMeasurement(steps[0]);
-    }
-  }, [steps, updateMeasurement]);
+  }, []);
 
   const skipWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("goalsWalkthroughDismissed");
@@ -79,7 +94,6 @@ export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
 
   const completeWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("goalsWalkthroughDismissed");
@@ -90,28 +104,31 @@ export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
       completeWalkthrough();
       return;
     }
-    const nextIdx = activeStepIndex + 1;
-    setActiveStepIndex(nextIdx);
-    const nextStepObj = steps[nextIdx];
-    if (nextStepObj) {
-      updateMeasurement(nextStepObj);
-    }
-  }, [activeStepIndex, completeWalkthrough, steps, updateMeasurement]);
+    setActiveStepIndex(activeStepIndex + 1);
+  }, [activeStepIndex, completeWalkthrough, steps.length]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
-    const prevIdx = activeStepIndex - 1;
-    setActiveStepIndex(prevIdx);
-    const prevStepObj = steps[prevIdx];
-    if (prevStepObj) {
-      updateMeasurement(prevStepObj);
+    setActiveStepIndex(activeStepIndex - 1);
+  }, [activeStepIndex]);
+
+  useEffect(() => {
+    if (activeStepIndex <= steps.length - 1) {
+      return;
     }
-  }, [activeStepIndex, steps, updateMeasurement]);
+    setActiveStepIndex(Math.max(0, steps.length - 1));
+  }, [activeStepIndex, steps.length]);
+
+  useEffect(() => {
+    if (!isWalkthroughActive || !currentStep) {
+      return;
+    }
+    updateMeasurement(currentStep);
+  }, [currentStep, isWalkthroughActive, updateMeasurement]);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
-      if (settleTimerRef.current) clearTimeout(settleTimerRef.current);
     };
   }, []);
 

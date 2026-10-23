@@ -1,13 +1,13 @@
 import type { WalkthroughStep } from "../types/walkthrough.types";
 
 export interface GetGoalsWalkthroughStepsOptions {
-  hasGoals: boolean;
+  hasGoalInList?: boolean;
 }
 
 export function getGoalsWalkthroughSteps(
-  options: GetGoalsWalkthroughStepsOptions,
+  options: GetGoalsWalkthroughStepsOptions = {},
 ): WalkthroughStep[] {
-  const { hasGoals } = options;
+  const { hasGoalInList = false } = options;
 
   const steps: WalkthroughStep[] = [
     {
@@ -24,7 +24,7 @@ export function getGoalsWalkthroughSteps(
     },
   ];
 
-  if (hasGoals) {
+  if (hasGoalInList) {
     steps.push({
       id: "goalFirstItemMarkComplete",
       targetId: "goalFirstItemMarkComplete",

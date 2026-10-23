@@ -9,12 +9,7 @@ import {
 } from "react-native";
 import Svg, { Defs, Mask, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  X,
-} from "lucide-react-native";
+import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -301,10 +296,8 @@ export function GoalsWalkthroughOverlay({
                     ? "Finish"
                     : t("dashboard.walkthroughNext")}
                 </Text>
-                {isLastStep ? (
-                  <Sparkles color="#FFFFFF" size={15} />
-                ) : (
-                  <ChevronRight color="#FFFFFF" size={15} />
+                {isLastStep ? null : (
+                  <ChevronRight color={theme.colors.textPrimary} size={15} />
                 )}
               </Pressable>
             </View>
@@ -377,7 +370,7 @@ function createStyles(theme: AppTheme) {
       letterSpacing: -0.2,
     },
     cardDesc: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm * 1.15,
     },
@@ -412,7 +405,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: "#FFFFFF",
+      color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

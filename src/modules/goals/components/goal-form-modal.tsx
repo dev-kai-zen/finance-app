@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   Calendar,
+  Check,
   ChevronRight,
   Landmark,
   Plus,
@@ -22,14 +23,23 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
-import { useHexColors, type HexColor } from "@/modules/hex-colors";
+import {
+  HexColorFormModal,
+  useHexColors,
+  type HexColor,
+  type HexColorInput,
+} from "@/modules/hex-colors";
+import { useExperiencePreferences } from "@/modules/settings";
 import {
   DraggableTourChip,
   GoalFormWalkthroughOverlay,
   useGoalFormWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalInput, GoalWithProgress } from "../types/goal.types";
@@ -76,7 +86,11 @@ function GoalFormModalContent({
   const styles = useThemeStyles(createStyles);
 
   const { accounts, pockets } = useAccounts();
-  const { colors: hexColorsList } = useHexColors();
+  const {
+    colors: hexColorsList,
+    addColor,
+    refresh: refreshHexColors,
+  } = useHexColors();
 
   // Form State
   const [name, setName] = useState("");
@@ -99,12 +113,14 @@ function GoalFormModalContent({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [helpTopic, setHelpTopic] = useState<
     "linkedFunds" | "targetDeadline" | null
   >(null);
 
   useEffect(() => {
     if (visible) {
+      refreshHexColors();
       if (initialGoal) {
         setName(initialGoal.name);
         setNote(initialGoal.note || "");
@@ -142,7 +158,14 @@ function GoalFormModalContent({
       setFocusedFieldType(null);
       setHelpTopic(null);
     }
-  }, [visible, initialGoal]);
+  }, [visible, initialGoal, refreshHexColors]);
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    setHexColorsId(created.id);
+    setIsColorFormOpen(false);
+    return true;
+  };
 
   const selectedAccounts = useMemo(() => {
     const selectedSet = new Set(selectedAccountIds);
@@ -226,28 +249,53 @@ function GoalFormModalContent({
   const saveRef = useWalkthroughTarget("goalFormSave");
   const formScrollRef =
     useRef<React.ComponentRef<typeof KeyboardAwareFormPreset>>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    if (
-      targetId === "goalFormTitle" ||
-      targetId === "goalFormAmount" ||
-      targetId === "goalFormSave"
-    ) {
-      formScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (targetId === "goalFormLinked") {
-      formScrollRef.current?.scrollTo({ y: 160, animated: true });
-    } else if (targetId === "goalFormDate") {
-      formScrollRef.current?.scrollTo({ y: 320, animated: true });
-    } else if (targetId === "goalFormIcon" || targetId === "goalFormColor") {
-      formScrollRef.current?.scrollTo({ y: 460, animated: true });
-    } else if (targetId === "goalFormNotes") {
-      formScrollRef.current?.scrollToEnd({ animated: true });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "goalFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        formScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useGoalFormWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      initialGoal ||
+      isPromptDismissed("goalFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [initialGoal, isPromptDismissed, walkthrough.startWalkthrough]);
 
   return (
     <>
@@ -263,6 +311,10 @@ function GoalFormModalContent({
         titleAlign="left"
         visible={visible}
       >
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
         <KeyboardAwareFormPreset
           ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}
@@ -273,15 +325,20 @@ function GoalFormModalContent({
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
-          {errorMessage && (
+          <View
+            collapsable={false}
+            ref={scrollContentRef}
+            style={styles.formFields}
+          >
+          {errorMessage ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Goal Title */}
           <WalkthroughTarget id="goalFormTitle">
-            <View style={styles.section}>
+            <View style={styles.formField}>
               <Text style={styles.label}>Goal Title</Text>
               <TextInput
                 onBlur={() => setFocusedFieldType(null)}
@@ -297,7 +354,7 @@ function GoalFormModalContent({
 
           {/* Target Amount */}
           <WalkthroughTarget id="goalFormAmount">
-            <View style={styles.section}>
+            <View style={styles.formField}>
               <AmountCalculatorField
                 amountMinorUnits={targetAmountMinorUnits}
                 currencyCode={currencyCode}
@@ -310,7 +367,7 @@ function GoalFormModalContent({
 
           {/* Linked Accounts & Pockets */}
           <WalkthroughTarget id="goalFormLinked">
-            <View style={styles.section}>
+            <View style={styles.formField}>
               <View style={styles.labelRow}>
                 <Text style={styles.label}>Linked Accounts & Pockets</Text>
                 <HelpIconButton
@@ -419,7 +476,7 @@ function GoalFormModalContent({
 
           {/* Target Completion Date */}
           <WalkthroughTarget id="goalFormDate">
-            <View style={styles.section}>
+            <View style={styles.formField}>
               <View style={styles.labelRow}>
                 <Text style={styles.label}>Target Date (Deadline)</Text>
                 <HelpIconButton
@@ -456,9 +513,9 @@ function GoalFormModalContent({
           </WalkthroughTarget>
 
           {/* Icon & Color Selection */}
-          <View style={styles.section}>
+          <View style={styles.formField}>
             <Text style={styles.label}>Icon & Appearance</Text>
-            <View style={styles.appearanceRow}>
+            <View style={styles.appearanceCard}>
               <WalkthroughTarget id="goalFormIcon">
                 <Pressable
                   accessibilityLabel={`Current icon: ${iconKey || "target"}. Tap to change icon.`}
@@ -503,27 +560,54 @@ function GoalFormModalContent({
               </WalkthroughTarget>
 
               <WalkthroughTarget id="goalFormColor">
-                <View style={styles.colorPaletteWrapper}>
+                <View style={styles.colorBlock}>
                   <Text style={styles.colorPaletteTitle}>Accent Color</Text>
+                  <Text style={styles.colorHelperText}>
+                    Choose a palette color or add your own.
+                  </Text>
                   <View style={styles.colorPalette}>
-                    {hexColorsList.slice(0, 10).map((entry: HexColor) => {
+                    {hexColorsList.map((entry: HexColor) => {
                       const isSelected = hexColorsId === entry.id;
                       return (
                         <Pressable
                           key={entry.id}
+                          accessibilityLabel={`Accent color ${entry.name} (${entry.hex})`}
+                          accessibilityRole="button"
                           onPress={() => setHexColorsId(entry.id)}
                           style={[
                             styles.colorSwatch,
                             { backgroundColor: entry.hex },
-                            isSelected && styles.colorSwatchSelected,
+                            isSelected
+                              ? styles.colorSwatchSelected
+                              : styles.colorSwatchUnselected,
                           ]}
                         >
-                          {isSelected && (
-                            <Text style={styles.colorCheckMark}>✓</Text>
-                          )}
+                          {isSelected ? (
+                            <Check
+                              color={theme.colors.textInverse}
+                              size={18}
+                              strokeWidth={3}
+                            />
+                          ) : null}
                         </Pressable>
                       );
                     })}
+                    <Pressable
+                      accessibilityLabel="Add custom color"
+                      accessibilityRole="button"
+                      onPress={() => setIsColorFormOpen(true)}
+                      style={({ pressed }) => [
+                        styles.addColorSwatch,
+                        { borderColor: theme.colors.primary },
+                        pressed && styles.addColorSwatchPressed,
+                      ]}
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
                   </View>
                 </View>
               </WalkthroughTarget>
@@ -532,8 +616,8 @@ function GoalFormModalContent({
 
           {/* Optional Notes */}
           <WalkthroughTarget id="goalFormNotes">
-            <View style={styles.section}>
-              <Text style={styles.label}>Notes (Optional)</Text>
+            <View style={styles.formField}>
+              <Text style={styles.label}>Note (Optional)</Text>
               <TextInput
                 multiline
                 numberOfLines={3}
@@ -547,7 +631,18 @@ function GoalFormModalContent({
               />
             </View>
           </WalkthroughTarget>
+          </View>
         </KeyboardAwareFormPreset>
+        <GoalFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       <AmountCalculatorModal
@@ -594,7 +689,14 @@ function GoalFormModalContent({
             setIsIconPickerOpen(false);
           }}
           selectedIcon={iconKey}
+          themeColor={activeColorHex}
           visible={isIconPickerOpen}
+        />
+
+        <HexColorFormModal
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
         />
 
         <InfoModal
@@ -616,21 +718,6 @@ function GoalFormModalContent({
           visible={helpTopic !== null}
         />
 
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
-      />
-
-      <GoalFormWalkthroughOverlay
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
-        step={walkthrough.currentStep}
-        stepIndex={walkthrough.activeStepIndex}
-        targetLayout={walkthrough.activeTargetLayout}
-        totalSteps={walkthrough.totalSteps}
-        visible={walkthrough.isWalkthroughActive}
-      />
     </>
   );
 }
@@ -641,9 +728,14 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     scrollContent: {
-      gap: theme.spacing.lg,
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
+    },
+    formFields: {
+      gap: theme.spacing.xl,
+    },
+    formField: {
+      gap: theme.spacing.sm,
     },
     scrollContentNoteFocused: {
       paddingBottom: 160,
@@ -659,9 +751,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
-    },
-    section: {
-      gap: theme.spacing.xs,
     },
     label: {
       color: theme.colors.textPrimary,
@@ -805,15 +894,21 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
     },
-    appearanceRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: theme.spacing.lg,
+    appearanceCard: {
       backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      gap: theme.spacing.lg,
       padding: theme.spacing.md,
+    },
+    colorBlock: {
+      gap: theme.spacing.xs,
+    },
+    colorHelperText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.xs * 1.2,
     },
     iconSelectButton: {
       alignItems: "center",
@@ -843,40 +938,47 @@ function createStyles(theme: AppTheme) {
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    colorPaletteWrapper: {
-      flex: 1,
-    },
     colorPaletteTitle: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      marginBottom: 8,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
     colorPalette: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 8,
+      gap: theme.spacing.sm,
+      paddingTop: theme.spacing.xs,
     },
     colorSwatch: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
     },
-    colorSwatchSelected: {
-      borderWidth: 2,
-      borderColor: theme.colors.onPrimary,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
-      shadowRadius: 2,
-      elevation: 3,
+    colorSwatchUnselected: {
+      borderRadius: 15,
+      height: 30,
+      opacity: 0.82,
+      width: 30,
     },
-    colorCheckMark: {
-      color: "#FFFFFF",
-      fontSize: 12,
-      fontWeight: "bold",
+    colorSwatchSelected: {
+      borderColor: theme.colors.textInverse,
+      borderRadius: 22,
+      borderWidth: 2.5,
+      height: 44,
+      width: 44,
+      ...theme.shadows.card,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderRadius: 15,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
+    },
+    addColorSwatchPressed: {
+      opacity: 0.65,
+      transform: [{ scale: 0.96 }],
     },
   });
 }

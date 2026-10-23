@@ -22,8 +22,11 @@ import {
   GoalCongratulationsModal,
   GoalsWalkthroughOverlay,
   useGoalsWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { GoalCard } from "../components/goal-card";
 import { GoalFormModal } from "../components/goal-form-modal";
@@ -69,18 +72,43 @@ function GoalsScreenContent() {
   // Walkthrough targets & coordination
   const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
   const statusFiltersRef = useWalkthroughTarget("goalStatusFilters");
-  const markCompleteRef = useWalkthroughTarget("goalFirstItemMarkComplete");
+  const hasGoalInList = filteredGoals.length > 0;
+  const markCompleteRef = useWalkthroughTarget(
+    hasGoalInList ? "goalFirstItemMarkComplete" : null,
+  );
   const fabRef = useWalkthroughTarget("goalFab");
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "goalFab") {
+        return;
+      }
 
-  const hasGoals = goals.length > 0;
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
   const walkthrough = useGoalsWalkthrough({
-    hasGoals,
+    hasGoalInList,
     onScrollToTarget: handleScrollToTarget,
   });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
@@ -88,12 +116,18 @@ function GoalsScreenContent() {
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isPromptDismissed("goalsWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("goalsWalkthroughDismissed")
+    ) {
+      return;
     }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
   }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const handleOpenCreate = () => {
@@ -148,6 +182,7 @@ function GoalsScreenContent() {
   return (
     <PageContainer
       scrollRef={scrollRef}
+      scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>
