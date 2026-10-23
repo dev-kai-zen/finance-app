@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -11,12 +11,16 @@ import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   DraggableTourChip,
   AccountGroupSetupWalkthroughOverlay,
   useAccountGroupSetupWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
@@ -55,7 +59,7 @@ function AccountTypeManagerContent({
 }: AccountTypeManagerProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const walkthrough = useAccountGroupSetupWalkthrough();
+  const { isPromptDismissed } = useExperiencePreferences();
   const [group, setGroup] = useState<AccountGroup>("asset");
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
@@ -65,7 +69,61 @@ function AccountTypeManagerContent({
   const reorderableTypes = visibleTypes.filter(
     (type) => !isSystemOthersAccountTypeId(type.id),
   );
+  const showReorder = reorderableTypes.length > 1;
   const activeColor = group === "asset" ? theme.colors.success : theme.colors.danger;
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const pickerRef = useWalkthroughTarget("accountGroupPicker");
+  const reorderRef = useWalkthroughTarget(showReorder ? "accountGroupReorder" : null);
+  const newGroupRef = useWalkthroughTarget("accountGroupNew");
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useAccountGroupSetupWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+    showReorder,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      editor ||
+      deleting ||
+      !visible ||
+      isPromptDismissed("accountGroupSetupWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [
+    deleting,
+    editor,
+    isPromptDismissed,
+    visible,
+    walkthrough.startWalkthrough,
+  ]);
 
   const back = () => {
     setEditor(null);
@@ -149,9 +207,9 @@ function AccountTypeManagerContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <ScrollView contentContainerStyle={styles.formContent}>
-          <WalkthroughTarget id="accountGroupPicker">
-            <View style={styles.segmentRow}>
+        <ScrollView ref={scrollRef}>
+          <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
+          <View ref={pickerRef} collapsable={false} style={styles.segmentRow}>
               {(["asset", "liability"] as const).map((item) => (
                 <Pressable
                   key={item}
@@ -174,13 +232,13 @@ function AccountTypeManagerContent({
                 </Pressable>
               ))}
             </View>
-          </WalkthroughTarget>
 
           <View style={styles.toolbar}>
-            {reorderableTypes.length > 1 ? (
-              <WalkthroughTarget id="accountGroupReorder">
-                <Pressable
-                  accessibilityLabel="Reorder account groups"
+            {showReorder ? (
+              <Pressable
+                ref={reorderRef as never}
+                collapsable={false}
+                accessibilityLabel="Reorder account groups"
                   accessibilityRole="button"
                   disabled={mutations.pending}
                   onPress={() => setReorderVisible(true)}
@@ -193,12 +251,12 @@ function AccountTypeManagerContent({
                   <IconHelper color={activeColor} name="arrow-up-down" size={15} />
                   <Text style={[styles.toolbarChipText, { color: activeColor }]}>Reorder</Text>
                 </Pressable>
-              </WalkthroughTarget>
             ) : null}
 
-            <WalkthroughTarget id="accountGroupNew">
-              <Pressable
-                accessibilityLabel="New Account Group"
+            <Pressable
+              ref={newGroupRef as never}
+              collapsable={false}
+              accessibilityLabel="New Account Group"
                 accessibilityRole="button"
                 disabled={mutations.pending}
                 onPress={() => {
@@ -215,7 +273,6 @@ function AccountTypeManagerContent({
                 <IconHelper color={activeColor} name="plus" size={15} />
                 <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
               </Pressable>
-            </WalkthroughTarget>
           </View>
 
           {visibleTypes.length === 0 ? (
@@ -264,6 +321,7 @@ function AccountTypeManagerContent({
               );
             })
           )}
+          </View>
         </ScrollView>
         <AccountGroupSetupWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}

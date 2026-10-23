@@ -1,16 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
-import { ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS } from "./account-group-setup-walkthrough-steps";
-import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
+import {
+  getAccountGroupSetupWalkthroughSteps,
+  type GetAccountGroupSetupWalkthroughStepsOptions,
+} from "./account-group-setup-walkthrough-steps";
+import type {
+  LayoutRect,
+  WalkthroughStep,
+  WalkthroughTargetId,
+} from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
+import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
+
+export interface UseAccountGroupSetupWalkthroughOptions
+  extends GetAccountGroupSetupWalkthroughStepsOptions {
+  onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
+}
 
 export function useAccountGroupSetupWalkthrough({
   onScrollToTarget,
-}: {
-  onScrollToTarget?: (targetId: string) => void;
-} = {}) {
+  showReorder,
+}: UseAccountGroupSetupWalkthroughOptions) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -18,92 +34,110 @@ export function useAccountGroupSetupWalkthrough({
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measurementGenerationRef = useRef(0);
 
-  const currentStep: WalkthroughStep | undefined =
-    ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS[activeStepIndex];
+  const steps = useMemo(
+    () => getAccountGroupSetupWalkthroughSteps({ showReorder }),
+    [showReorder],
+  );
 
-  const clearTimers = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (timer2Ref.current) clearTimeout(timer2Ref.current);
-  }, []);
+  const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
 
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
-      clearTimers();
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
 
-      onScrollToTarget?.(step.targetId);
+      const generation = ++measurementGenerationRef.current;
 
-      timerRef.current = setTimeout(async () => {
+      const applyLayout = async () => {
         const layout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
         setActiveTargetLayout(layout);
+      };
 
-        timer2Ref.current = setTimeout(async () => {
-          const settledLayout = await measureTarget(step.targetId);
-          if (settledLayout) {
-            setActiveTargetLayout(settledLayout);
-          }
+      void (async () => {
+        const initialLayout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
+        if (
+          initialLayout &&
+          isWalkthroughTargetVisible(initialLayout, windowHeight, insets)
+        ) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
+        onScrollToTarget?.(step.targetId);
+
+        timerRef.current = setTimeout(() => {
+          void applyLayout();
         }, 350);
-      }, 350);
+      })();
     },
-    [clearTimers, measureTarget, onScrollToTarget],
+    [insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS[0]) {
-      updateMeasurement(ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS[0]);
-    }
-  }, [updateMeasurement]);
+  }, []);
 
   const skipWalkthrough = useCallback(() => {
-    clearTimers();
+    if (timerRef.current) clearTimeout(timerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("accountGroupSetupWalkthroughDismissed");
-  }, [clearTimers, dismissPrompt]);
+  }, [dismissPrompt]);
 
   const completeWalkthrough = useCallback(() => {
-    clearTimers();
+    if (timerRef.current) clearTimeout(timerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("accountGroupSetupWalkthroughDismissed");
-  }, [clearTimers, dismissPrompt]);
+  }, [dismissPrompt]);
 
   const nextStep = useCallback(() => {
-    if (activeStepIndex >= ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS.length - 1) {
+    if (activeStepIndex >= steps.length - 1) {
       completeWalkthrough();
       return;
     }
-    const nextIdx = activeStepIndex + 1;
-    setActiveStepIndex(nextIdx);
-    const nextStepObj = ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS[nextIdx];
-    if (nextStepObj) {
-      updateMeasurement(nextStepObj);
-    }
-  }, [activeStepIndex, completeWalkthrough, updateMeasurement]);
+    setActiveStepIndex(activeStepIndex + 1);
+  }, [activeStepIndex, completeWalkthrough, steps.length]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
-    const prevIdx = activeStepIndex - 1;
-    setActiveStepIndex(prevIdx);
-    const prevStepObj = ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS[prevIdx];
-    if (prevStepObj) {
-      updateMeasurement(prevStepObj);
+    setActiveStepIndex(activeStepIndex - 1);
+  }, [activeStepIndex]);
+
+  useEffect(() => {
+    if (activeStepIndex <= steps.length - 1) {
+      return;
     }
-  }, [activeStepIndex, updateMeasurement]);
+    setActiveStepIndex(Math.max(0, steps.length - 1));
+  }, [activeStepIndex, steps.length]);
+
+  useEffect(() => {
+    if (!isWalkthroughActive || !currentStep) {
+      return;
+    }
+    updateMeasurement(currentStep);
+  }, [currentStep, isWalkthroughActive, updateMeasurement]);
 
   useEffect(() => {
     return () => {
-      clearTimers();
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [clearTimers]);
+  }, []);
 
   return {
     isWalkthroughActive,
     activeStepIndex,
-    totalSteps: ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS.length,
+    totalSteps: steps.length,
     currentStep,
     activeTargetLayout,
     isCompleted: isPromptDismissed("accountGroupSetupWalkthroughDismissed"),

@@ -21,7 +21,10 @@ const {
   ACCOUNT_FORM_WALKTHROUGH_STEPS,
   getAccountFormWalkthroughSteps,
 } = require("../accounts/account-form-walkthrough-steps.ts");
-const { ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS } = require("../accounts/account-group-setup-walkthrough-steps.ts");
+const {
+  ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS,
+  getAccountGroupSetupWalkthroughSteps,
+} = require("../accounts/account-group-setup-walkthrough-steps.ts");
 const { ACCOUNT_TYPE_FORM_WALKTHROUGH_STEPS } = require("../accounts/account-type-form-walkthrough-steps.ts");
 const { en } = require("../../../infrastructure/localization/translations/en.ts");
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
@@ -99,6 +102,14 @@ test("account group setup walkthrough: defines all 3 required steps and translat
       assert.ok(dict.accountGroupSetupWalkthrough[descKey], `Missing translation key ${step.descKey}`);
     });
   });
+});
+
+test("account group setup walkthrough: omits reorder when fewer than two groups can move", () => {
+  const steps = getAccountGroupSetupWalkthroughSteps({ showReorder: false });
+  assert.deepEqual(
+    steps.map((step) => step.targetId),
+    ["accountGroupPicker", "accountGroupNew"],
+  );
 });
 
 test("account type form walkthrough: defines all 6 required steps and translations exist", () => {

@@ -28,7 +28,10 @@ export {
 
 export { AccountGroupSetupWalkthroughOverlay } from "./accounts/account-group-setup-walkthrough-overlay";
 export { useAccountGroupSetupWalkthrough } from "./accounts/use-account-group-setup-walkthrough";
-export { ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS } from "./accounts/account-group-setup-walkthrough-steps";
+export {
+  ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS,
+  getAccountGroupSetupWalkthroughSteps,
+} from "./accounts/account-group-setup-walkthrough-steps";
 
 export { AccountTypeFormWalkthroughOverlay } from "./accounts/account-type-form-walkthrough-overlay";
 export { useAccountTypeFormWalkthrough } from "./accounts/use-account-type-form-walkthrough";
