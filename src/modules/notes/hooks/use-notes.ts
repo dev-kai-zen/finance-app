@@ -18,6 +18,7 @@ import type {
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [hasAnyNotes, setHasAnyNotes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +34,7 @@ export function useNotes() {
         sortBy,
       });
       setNotes(items);
+      setHasAnyNotes(listNotes({ sortBy }).length > 0);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load notes.");
@@ -95,6 +97,7 @@ export function useNotes() {
 
   return {
     notes,
+    hasAnyNotes,
     loading,
     error,
     search,

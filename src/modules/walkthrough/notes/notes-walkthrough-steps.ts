@@ -1,15 +1,16 @@
 import type { WalkthroughStep } from "../types/walkthrough.types";
 
 export interface GetNotesWalkthroughStepsOptions {
-  hasNotes: boolean;
+  hasAnyNotes?: boolean;
+  hasNoteInList?: boolean;
 }
 
 export function getNotesWalkthroughSteps(
-  options: GetNotesWalkthroughStepsOptions,
+  options: GetNotesWalkthroughStepsOptions = {},
 ): WalkthroughStep[] {
-  const { hasNotes } = options;
+  const { hasAnyNotes = false, hasNoteInList = false } = options;
 
-  if (!hasNotes) {
+  if (!hasAnyNotes) {
     return [
       {
         id: "notesEmptyCreateButton",
@@ -20,7 +21,7 @@ export function getNotesWalkthroughSteps(
     ];
   }
 
-  return [
+  const steps: WalkthroughStep[] = [
     {
       id: "notesSearch",
       targetId: "notesSearch",
@@ -39,17 +40,22 @@ export function getNotesWalkthroughSteps(
       titleKey: "notesWalkthrough.stepSortFilterTitle",
       descKey: "notesWalkthrough.stepSortFilterDesc",
     },
-    {
+  ];
+
+  if (hasNoteInList) {
+    steps.push({
       id: "notesFirstItem",
       targetId: "notesFirstItem",
       titleKey: "notesWalkthrough.stepFirstItemTitle",
       descKey: "notesWalkthrough.stepFirstItemDesc",
-    },
-    {
+    });
+    steps.push({
       id: "notesFab",
       targetId: "notesFab",
       titleKey: "notesWalkthrough.stepFabTitle",
       descKey: "notesWalkthrough.stepFabDesc",
-    },
-  ];
+    });
+  }
+
+  return steps;
 }

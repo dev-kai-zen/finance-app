@@ -23,8 +23,8 @@ const { en } = require("../../../infrastructure/localization/translations/en.ts"
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
 const { fil } = require("../../../infrastructure/localization/translations/fil.ts");
 
-test("notes walkthrough: returns only empty create step when hasNotes is false", () => {
-  const steps = getNotesWalkthroughSteps({ hasNotes: false });
+test("notes walkthrough: returns only empty create step when hasAnyNotes is false", () => {
+  const steps = getNotesWalkthroughSteps({ hasAnyNotes: false });
   assert.equal(steps.length, 1);
   assert.equal(steps[0].id, "notesEmptyCreateButton");
   assert.equal(steps[0].targetId, "notesEmptyCreateButton");
@@ -32,8 +32,11 @@ test("notes walkthrough: returns only empty create step when hasNotes is false",
   assert.equal(steps[0].descKey, "notesWalkthrough.stepEmptyCreateDesc");
 });
 
-test("notes walkthrough: returns 5 guided steps in exact sequence when hasNotes is true", () => {
-  const steps = getNotesWalkthroughSteps({ hasNotes: true });
+test("notes walkthrough: returns 5 guided steps when library has notes and list is visible", () => {
+  const steps = getNotesWalkthroughSteps({
+    hasAnyNotes: true,
+    hasNoteInList: true,
+  });
   assert.equal(steps.length, 5);
 
   // 1. Search Notes
@@ -62,6 +65,17 @@ test("notes walkthrough: returns 5 guided steps in exact sequence when hasNotes 
   assert.equal(steps[4].targetId, "notesFab");
   assert.equal(steps[4].titleKey, "notesWalkthrough.stepFabTitle");
   assert.equal(steps[4].descKey, "notesWalkthrough.stepFabDesc");
+});
+
+test("notes walkthrough: omits first note step when filtered list is empty", () => {
+  const steps = getNotesWalkthroughSteps({
+    hasAnyNotes: true,
+    hasNoteInList: false,
+  });
+  assert.deepEqual(
+    steps.map((step) => step.targetId),
+    ["notesSearch", "notesViewMode", "notesSortFilter"],
+  );
 });
 
 test("notes walkthrough: translations exist for all keys across en, es, and fil", () => {

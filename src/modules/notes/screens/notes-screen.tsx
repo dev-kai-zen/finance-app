@@ -20,8 +20,11 @@ import {
   DraggableTourChip,
   NotesWalkthroughOverlay,
   useNotesWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { NoteCardTile } from "../components/note-card-tile";
 import { NoteEditorModal } from "../components/note-editor-modal";
@@ -46,6 +49,7 @@ function NotesScreenContent() {
 
   const {
     notes,
+    hasAnyNotes,
     loading,
     search,
     setSearch,
@@ -70,29 +74,61 @@ function NotesScreenContent() {
   const searchRef = useWalkthroughTarget("notesSearch");
   const viewModeRef = useWalkthroughTarget("notesViewMode");
   const sortFilterRef = useWalkthroughTarget("notesSortFilter");
-  const firstNoteRef = useWalkthroughTarget("notesFirstItem");
-  const fabRef = useWalkthroughTarget("notesFab");
+  const hasNoteInList = notes.length > 0;
+  const firstNoteRef = useWalkthroughTarget(
+    hasNoteInList ? "notesFirstItem" : null,
+  );
+  const fabRef = useWalkthroughTarget(hasNoteInList ? "notesFab" : null);
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "notesFab") {
+        return;
+      }
 
-  const hasNotes = notes.length > 0;
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
   const walkthrough = useNotesWalkthrough({
-    hasNotes,
+    hasAnyNotes,
+    hasNoteInList,
     onScrollToTarget: handleScrollToTarget,
   });
   const { isPromptDismissed } = useExperiencePreferences();
 
   useEffect(() => {
-    if (!loading && !isPromptDismissed("notesWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("notesWalkthroughDismissed")
+    ) {
+      return;
     }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
   }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   useFocusEffect(
@@ -180,6 +216,7 @@ function NotesScreenContent() {
   return (
     <PageContainer
       scrollRef={scrollRef}
+      scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>
