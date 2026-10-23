@@ -27,6 +27,8 @@ export interface FullScreenFormModalProps extends PropsWithChildren {
   headerRight?: ReactNode;
   headerTitle?: ReactNode;
   titleAlign?: "center" | "left";
+  saveButtonRef?: React.Ref<View>;
+  backButtonRef?: React.Ref<View>;
 }
 
 export function FullScreenFormModal({
@@ -44,6 +46,8 @@ export function FullScreenFormModal({
   headerRight,
   headerTitle,
   titleAlign = "center",
+  saveButtonRef,
+  backButtonRef,
   children,
 }: FullScreenFormModalProps) {
   const insets = useSafeAreaInsets();
@@ -74,6 +78,8 @@ export function FullScreenFormModal({
         ) : null}
         {onSave ? (
           <Pressable
+            ref={saveButtonRef as never}
+            collapsable={false}
             accessibilityLabel={saveLabel}
             accessibilityRole="button"
             disabled={pending || saveDisabled}
@@ -106,15 +112,17 @@ export function FullScreenFormModal({
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <Pressable
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-            disabled={pending}
-            onPress={onClose}
-            style={styles.backBtn}
-          >
-            <ChevronLeft color={theme.colors.textPrimary} size={24} />
-          </Pressable>
+          <View ref={backButtonRef}>
+            <Pressable
+              accessibilityLabel="Go back"
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={onClose}
+              style={styles.backBtn}
+            >
+              <ChevronLeft color={theme.colors.textPrimary} size={24} />
+            </Pressable>
+          </View>
 
           <View
             style={[

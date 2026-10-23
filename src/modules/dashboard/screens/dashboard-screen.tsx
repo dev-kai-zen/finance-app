@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import {
   ConfirmModal,
   FloatingActionButton,
@@ -17,7 +17,6 @@ import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
 import { useExperiencePreferences, useUserNickname } from "@/modules/settings";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
 import { ExperiencePromptsCard } from "../components/experience-prompts-card";
-import { FirstExpenseHintCard } from "../components/first-expense-hint-card";
 import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
@@ -29,14 +28,37 @@ import {
 } from "@/modules/transactions";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
+import {
+  WalkthroughRegistryProvider,
+  useWalkthroughRegistry,
+  DashboardWalkthroughOverlay,
+  DashboardCongratulationsModal,
+  DraggableTourChip,
+  useDashboardWalkthrough,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+} from "@/modules/walkthrough";
+import type { WalkthroughTargetId } from "@/modules/walkthrough";
 import { useDashboard } from "../hooks/use-dashboard";
 
 export function DashboardScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <DashboardScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function DashboardScreenContent() {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
-  const { homeMode, isPromptDismissed, setHomeMode } = useExperiencePreferences();
+  const {
+    homeMode,
+    isPromptDismissed,
+    setHomeMode,
+    dismissPrompt,
+  } = useExperiencePreferences();
   const { nickname } = useUserNickname();
 
   const {
@@ -84,6 +106,58 @@ export function DashboardScreen() {
     useState<TransactionListItem | null>(null);
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const fabRef = useRef<View>(null);
+  const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "fabButton") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useDashboardWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    registerTarget("fabButton", fabRef);
+    return () => registerTarget("fabButton", null);
+  }, [registerTarget]);
+
+  useEffect(() => {
+    if (
+      summary &&
+      !loading &&
+      !isPromptDismissed("dashboardWalkthroughDismissed")
+    ) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [summary, loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   useFocusEffect(
     useCallback(() => {
@@ -185,11 +259,18 @@ export function DashboardScreen() {
     preset?: Parameters<typeof recordTransaction>[1],
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
+    const isFirstEverTransaction = recentTx.length === 0;
     const success = await recordTransaction(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      if (
+        isFirstEverTransaction &&
+        !isPromptDismissed("firstTransactionCelebrated")
+      ) {
+        setShowCongratulationsModal(true);
+      }
     }
     return success;
   };
@@ -199,11 +280,18 @@ export function DashboardScreen() {
     preset?: Parameters<typeof recordTransfer>[1],
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
+    const isFirstEverTransaction = recentTx.length === 0;
     const success = await recordTransfer(input, preset, attachmentChanges);
     if (success) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      if (
+        isFirstEverTransaction &&
+        !isPromptDismissed("firstTransactionCelebrated")
+      ) {
+        setShowCongratulationsModal(true);
+      }
     }
     return success;
   };
@@ -215,21 +303,31 @@ export function DashboardScreen() {
   const expenseTransactionCount = recentTx.filter(
     (transaction) => transaction.type === "expense",
   ).length;
-  const showFirstExpenseHint =
-    homeMode === "simple" &&
-    !isPromptDismissed("firstExpenseDismissed") &&
-    recentTx.length === 0;
   const hasCreditCardAccount = activeAccounts.some(
     (account) => account.creditCardDetails,
   );
 
   return (
     <PageContainer
+      scrollContentRef={scrollContentRef}
+      scrollRef={scrollRef}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Record new transaction"
-          onPress={() => handleOpenTransactionModal("expense")}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Record new transaction"
+            fabRef={fabRef}
+            onPress={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              handleOpenTransactionModal("expense");
+            }}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
     >
       <View style={styles.container}>
@@ -248,7 +346,6 @@ export function DashboardScreen() {
           )
         ) : (
           <>
-            <FirstExpenseHintCard visible={showFirstExpenseHint} onDismiss={() => {}} />
             <ExperiencePromptsCard
               activeAccountCount={activeAccounts.length}
               expenseTransactionCount={expenseTransactionCount}
@@ -352,6 +449,29 @@ export function DashboardScreen() {
         title="Delete transaction?"
         variant="destructive"
         visible={pendingDeleteId !== null}
+      />
+
+      <DashboardWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenTransactionModal("expense");
+        }}
+      />
+
+      <DashboardCongratulationsModal
+        visible={showCongratulationsModal}
+        onClose={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
       />
     </PageContainer>
   );

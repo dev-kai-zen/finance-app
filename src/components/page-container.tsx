@@ -24,6 +24,8 @@ export interface PageContainerProps extends PropsWithChildren {
   contentContainerStyle?: ViewStyle;
   maxWidth?: number;
   scrollable?: boolean;
+  scrollRef?: React.RefObject<ScrollView | null>;
+  scrollContentRef?: React.RefObject<View | null>;
 }
 
 export function PageContainer({
@@ -33,6 +35,8 @@ export function PageContainer({
   contentContainerStyle,
   maxWidth = LAYOUT_DIMENSIONS.maxContentWidth,
   scrollable = true,
+  scrollRef,
+  scrollContentRef,
 }: PageContainerProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -48,6 +52,8 @@ export function PageContainer({
 
   const innerContent = (
     <View
+      ref={scrollContentRef}
+      collapsable={false}
       style={[
         styles.innerConstrained,
         { maxWidth },
@@ -72,6 +78,7 @@ export function PageContainer({
   return (
     <View style={styles.outerWrapper}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator
@@ -90,6 +97,7 @@ export interface PageEmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   icon?: ReactNode;
+  actionRef?: React.Ref<View>;
 }
 
 export function PageEmptyState({
@@ -98,6 +106,7 @@ export function PageEmptyState({
   actionLabel,
   onAction,
   icon,
+  actionRef,
 }: PageEmptyStateProps) {
   const styles = useThemeStyles(createEmptyStyles);
 
@@ -109,11 +118,12 @@ export function PageEmptyState({
         <Text style={styles.emptyDescription}>{description}</Text>
       ) : null}
       {actionLabel && onAction ? (
-        <AppButton
-          label={actionLabel}
-          onPress={onAction}
-          style={styles.emptyAction}
-        />
+        <View collapsable={false} ref={actionRef} style={styles.emptyAction}>
+          <AppButton
+            label={actionLabel}
+            onPress={onAction}
+          />
+        </View>
       ) : null}
     </View>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -24,6 +24,18 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  BudgetCongratulationsModal,
+  BudgetsWalkthroughOverlay,
+  DraggableTourChip,
+  useBudgetsWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { BudgetCard } from "../components/budget-card";
 import { BudgetFormModal } from "../components/budget-form-modal";
@@ -50,6 +62,14 @@ const FILTER_TABS: Array<{ key: FrequencyFilter; label: string }> = [
 ];
 
 export function BudgetsScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <BudgetsScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function BudgetsScreenContent() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -81,6 +101,70 @@ export function BudgetsScreen() {
     return budgetStatuses.filter((s) => s.budget.frequency === selectedFilter);
   }, [budgetStatuses, selectedFilter]);
 
+  // Walkthrough targets & coordination
+  const emptyCreateRef = useWalkthroughTarget("budgetEmptyCreateButton");
+  const totalActiveCardRef = useWalkthroughTarget("budgetTotalActiveCard");
+  const frequencyTabsRef = useWalkthroughTarget("budgetFrequencyTabs");
+  const hasBudgetInList = filteredStatuses.length > 0;
+  const firstItemToggleRef = useWalkthroughTarget(
+    hasBudgetInList ? "budgetFirstItemToggle" : null,
+  );
+  const fabRef = useWalkthroughTarget("budgetFab");
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "budgetFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const hasBudgets = budgets.length > 0;
+  const walkthrough = useBudgetsWalkthrough({
+    hasBudgets,
+    hasBudgetInList,
+    onScrollToTarget: handleScrollToTarget,
+  });
+  const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
+
+  const [congratulationsVisible, setCongratulationsVisible] = useState(false);
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("budgetsWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+
   const handleOpenCreate = () => {
     if (budgets.length >= PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS) {
       guardAction(() => {
@@ -102,7 +186,21 @@ export function BudgetsScreen() {
   };
 
   const handleSave = async (input: CategoryBudgetInput) => {
-    return saveBudget(input);
+    const isFirstBudget = budgets.length === 0;
+    const success = await saveBudget(input);
+    if (success && isFirstBudget && !isPromptDismissed("firstBudgetCelebrated")) {
+      dismissPrompt("firstBudgetCelebrated");
+      setCongratulationsVisible(true);
+    }
+    return success;
+  };
+
+  const handleCloseCongratulations = () => {
+    setCongratulationsVisible(false);
+    const timer = setTimeout(() => {
+      walkthrough.startWalkthrough();
+    }, 400);
+    return () => clearTimeout(timer);
   };
 
   const handleDeleteFromForm = async (id: string): Promise<boolean> => {
@@ -128,14 +226,23 @@ export function BudgetsScreen() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
+      scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
-        budgets.length > 0 ? (
-          <FloatingActionButton
-            accessibilityLabel="Set new category budget"
-            onPress={handleOpenCreate}
+        <>
+          {budgets.length > 0 ? (
+            <FloatingActionButton
+              accessibilityLabel="Set new category budget"
+              fabRef={fabRef}
+              onPress={handleOpenCreate}
+            />
+          ) : null}
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
           />
-        ) : undefined
+        </>
       }
     >
       <View style={styles.container}>
@@ -147,6 +254,7 @@ export function BudgetsScreen() {
         ) : budgets.length === 0 ? (
           <PageEmptyState
             actionLabel="+ Set Your First Category Budget"
+            actionRef={emptyCreateRef}
             description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
             onAction={handleOpenCreate}
             title="No Budgets Configured"
@@ -154,7 +262,7 @@ export function BudgetsScreen() {
         ) : (
           <>
             {/* Overview Summary Card */}
-            <View style={styles.summaryCard}>
+            <View collapsable={false} ref={totalActiveCardRef} style={styles.summaryCard}>
               <View style={styles.summaryTop}>
                 <View>
                   <Text style={styles.summaryTitle}>Total Active Budget</Text>
@@ -262,35 +370,37 @@ export function BudgetsScreen() {
             </View>
 
             {/* Frequency Filter Tabs */}
-            <ScrollView
-              contentContainerStyle={styles.filterScroll}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-            >
-              {FILTER_TABS.map((tab) => {
-                const active = selectedFilter === tab.key;
-                return (
-                  <Pressable
-                    key={tab.key}
-                    accessibilityRole="button"
-                    onPress={() => setSelectedFilter(tab.key)}
-                    style={[
-                      styles.filterTab,
-                      active && styles.filterTabActive,
-                    ]}
-                  >
-                    <Text
+            <View collapsable={false} ref={frequencyTabsRef}>
+              <ScrollView
+                contentContainerStyle={styles.filterScroll}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+              >
+                {FILTER_TABS.map((tab) => {
+                  const active = selectedFilter === tab.key;
+                  return (
+                    <Pressable
+                      key={tab.key}
+                      accessibilityRole="button"
+                      onPress={() => setSelectedFilter(tab.key)}
                       style={[
-                        styles.filterTabText,
-                        active && styles.filterTabTextActive,
+                        styles.filterTab,
+                        active && styles.filterTabActive,
                       ]}
                     >
-                      {tab.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
+                      <Text
+                        style={[
+                          styles.filterTabText,
+                          active && styles.filterTabTextActive,
+                        ]}
+                      >
+                        {tab.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
 
             {/* List of Category Budgets */}
             {filteredStatuses.length === 0 ? (
@@ -303,12 +413,13 @@ export function BudgetsScreen() {
               <View
                 style={[styles.budgetList, isDesktop && styles.budgetListDesktop]}
               >
-                {filteredStatuses.map((status) => (
+                {filteredStatuses.map((status, index) => (
                   <BudgetCard
                     key={status.budget.id}
                     onPress={() => handleOpenEdit(status)}
                     onToggle={(val) => toggleBudget(status.budget.id, val)}
                     status={status}
+                    toggleRef={index === 0 ? firstItemToggleRef : undefined}
                   />
                 ))}
               </View>
@@ -356,6 +467,32 @@ export function BudgetsScreen() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      {/* Budget Congratulations Modal */}
+      <BudgetCongratulationsModal
+        onClose={handleCloseCongratulations}
+        visible={congratulationsVisible}
+      />
+
+      {/* Budgets Walkthrough Overlay */}
+      <BudgetsWalkthroughOverlay
+        onEmptyCreatePress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenCreate();
+        }}
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenCreate();
+        }}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </PageContainer>
   );

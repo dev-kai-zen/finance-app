@@ -28,6 +28,7 @@ export interface GoalCardProps {
   onEdit: () => void;
   onToggleStatus: (status: GoalStatus) => void;
   onDelete: () => void;
+  markCompleteRef?: React.Ref<View>;
 }
 
 export const GoalCard = memo(function GoalCard({
@@ -36,6 +37,7 @@ export const GoalCard = memo(function GoalCard({
   onEdit,
   onToggleStatus,
   onDelete,
+  markCompleteRef,
 }: GoalCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -265,23 +267,25 @@ export const GoalCard = memo(function GoalCard({
 
       {/* Bottom Status Toggle */}
       <View style={styles.bottomBar}>
-        {isCompleted ? (
-          <Pressable
-            onPress={() => onToggleStatus("in_progress")}
-            style={styles.reopenButton}
-          >
-            <RotateCcw color={theme.colors.textSecondary} size={14} />
-            <Text style={styles.reopenButtonText}>Mark as In Progress</Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => onToggleStatus("completed")}
-            style={styles.completeButton}
-          >
-            <Check color={theme.colors.success} size={14} />
-            <Text style={styles.completeButtonText}>Mark as Completed</Text>
-          </Pressable>
-        )}
+        <View collapsable={false} ref={markCompleteRef}>
+          {isCompleted ? (
+            <Pressable
+              onPress={() => onToggleStatus("in_progress")}
+              style={styles.reopenButton}
+            >
+              <RotateCcw color={theme.colors.textSecondary} size={14} />
+              <Text style={styles.reopenButtonText}>Mark as In Progress</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => onToggleStatus("completed")}
+              style={styles.completeButton}
+            >
+              <Check color={theme.colors.success} size={14} />
+              <Text style={styles.completeButtonText}>Mark as Completed</Text>
+            </Pressable>
+          )}
+        </View>
 
         <View style={styles.statusPill}>
           <Text

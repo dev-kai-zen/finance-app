@@ -1,11 +1,22 @@
-import { useMemo, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, ScrollView, View } from "react-native";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  WalkthroughRegistryProvider,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  DraggableTourChip,
+  AccountsWalkthroughOverlay,
+  useAccountsWalkthrough,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
 import { AccountRow } from "@/modules/accounts/components/account-row";
@@ -43,7 +54,17 @@ type Overlay =
   | { kind: "edit-type"; type: AccountType }
   | null;
 
-export function AccountsScreen({
+export function AccountsScreen(props: {
+  initialView?: "types" | "account";
+}) {
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountsScreenContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountsScreenContent({
   initialView,
 }: {
   initialView?: "types" | "account";
@@ -69,6 +90,55 @@ export function AccountsScreen({
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
     () => new Set(),
   );
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const fabRef = useRef<View>(null);
+  const searchRef = useWalkthroughTarget("searchBox");
+  const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    registerTarget("accountsFab", fabRef);
+    return () => registerTarget("accountsFab", null);
+  }, [registerTarget]);
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "accountsFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useAccountsWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (!data.loading && !isPromptDismissed("accountsWalkthroughDismissed")) {
+      const timer = setTimeout(() => {
+        walkthrough.startWalkthrough();
+      }, 700);
+      return () => clearTimeout(timer);
+    }
+  }, [data.loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -203,11 +273,25 @@ export function AccountsScreen({
   return (
     <PageContainer
       contentContainerStyle={contentSpacing}
+      scrollContentRef={scrollContentRef}
+      scrollRef={scrollRef}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Open accounts menu"
-          onPress={() => setFabSheetOpen(true)}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Open accounts menu"
+            fabRef={fabRef}
+            onPress={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setFabSheetOpen(true);
+            }}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
     >
       <AccountError message={data.error} />
@@ -240,6 +324,7 @@ export function AccountsScreen({
 
           <AccountSearchBox
             style={searchSpacing}
+            targetRef={searchRef}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -267,6 +352,7 @@ export function AccountsScreen({
                   onSelect={select}
                   onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
                   onTogglePockets={togglePockets}
+                  walkthroughTargetId="assetsSection"
                 />
               ) : null}
 
@@ -297,6 +383,7 @@ export function AccountsScreen({
                   onSelect={select}
                   onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
                   onTogglePockets={togglePockets}
+                  walkthroughTargetId="liabilitiesSection"
                 />
               ) : null}
             </>
@@ -479,6 +566,20 @@ export function AccountsScreen({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <AccountsWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        onFabPress={() => {
+          walkthrough.nextStep();
+        }}
       />
     </PageContainer>
   );

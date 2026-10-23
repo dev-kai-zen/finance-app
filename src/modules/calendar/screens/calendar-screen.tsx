@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ConfirmModal,
@@ -15,6 +15,17 @@ import {
   type TransactionListItem,
 } from "@/modules/transactions";
 import { ProGate, useProStatus } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  CalendarWalkthroughOverlay,
+  DraggableTourChip,
+  useCalendarWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  WalkthroughRegistryProvider,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { CalendarBalanceSheetTab } from "../components/calendar-balance-sheet-tab";
 import { CalendarGrid } from "../components/calendar-grid";
 import { CalendarMonthHeader } from "../components/calendar-month-header";
@@ -22,12 +33,23 @@ import { CalendarNetTab } from "../components/calendar-net-tab";
 import { CalendarSchedulesTab } from "../components/calendar-schedules-tab";
 import { CalendarScopeBadge } from "../components/calendar-scope-badge";
 import { CalendarSummaryRibbon } from "../components/calendar-summary-ribbon";
-import { CalendarTabsHeader } from "../components/calendar-tabs-header";
+import {
+  CalendarTabsHeader,
+  type CalendarTabsHeaderHandle,
+} from "../components/calendar-tabs-header";
 import { CalendarTransactionsTab } from "../components/calendar-transactions-tab";
 import { useCalendarData } from "../hooks/use-calendar-data";
 import type { CalendarTab } from "../types/calendar.types";
 
 export function CalendarScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <CalendarScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CalendarScreenContent() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -102,6 +124,76 @@ export function CalendarScreen() {
     string | null
   >(null);
 
+  // Walkthrough targets & coordination
+  const navControlsRef = useWalkthroughTarget("calArrows");
+  const transactionsTabRef = useWalkthroughTarget("calTransactionsTab");
+  const schedulesTabRef = useWalkthroughTarget("calSchedulesTab");
+  const netTabRef = useWalkthroughTarget("calNetTab");
+  const balanceSheetTabRef = useWalkthroughTarget("calBalanceSheetTab");
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const tabsHeaderRef = useRef<CalendarTabsHeaderHandle>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handlePrepareTabTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "calTransactionsTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("transactions");
+      } else if (targetId === "calSchedulesTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("schedules");
+      } else if (targetId === "calNetTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("net");
+      } else if (targetId === "calBalanceSheetTab") {
+        tabsHeaderRef.current?.scrollTabIntoView("balance_sheet");
+      }
+    },
+    [],
+  );
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useCalendarWalkthrough({
+    onPrepareTabTarget: handlePrepareTabTarget,
+    onTabChange: setActiveTab,
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("calendarWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+
   // Handlers for transactions
   const handleEditTransaction = (tx: TransactionListItem) => {
     setInspectedTransaction(null);
@@ -162,11 +254,21 @@ export function CalendarScreen() {
           : scopedTransactions.length;
 
   return (
-    <PageContainer>
+    <PageContainer
+      scrollContentRef={scrollContentRef}
+      scrollRef={scrollRef}
+      floatingAction={
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+      }
+    >
       <View style={styles.content}>
         {/* 1. Month Navigation Header */}
         <CalendarMonthHeader
           activeMonth={activeMonth}
+          navControlsRef={navControlsRef}
           onNextMonth={goToNextMonth}
           onPrevMonth={goToPrevMonth}
           onToday={goToToday}
@@ -198,11 +300,16 @@ export function CalendarScreen() {
 
         {/* 5. Segmented Tabs Header */}
         <CalendarTabsHeader
+          ref={tabsHeaderRef}
           activeTab={activeTab}
+          balanceSheetRef={balanceSheetTabRef}
           isPro={isPro}
+          netRef={netTabRef}
           onSelectTab={handleSelectTab}
           scheduleCount={scopedSchedules.length}
+          schedulesRef={schedulesTabRef}
           transactionCount={scopedTransactions.length}
+          transactionsRef={transactionsTabRef}
         />
 
         {/* 6. Active Tab Content */}
@@ -348,6 +455,18 @@ export function CalendarScreen() {
         title="Skip Scheduled Occurrence"
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
+      />
+
+      {/* Calendar Walkthrough Overlay */}
+      <CalendarWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
 
     </PageContainer>

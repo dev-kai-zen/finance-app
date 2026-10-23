@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Check, Plus } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -11,6 +18,17 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  WalkthroughRegistryProvider,
+  DraggableTourChip,
+  AccountTypeFormWalkthroughOverlay,
+  useAccountTypeFormWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { ACCOUNT_DEFAULT_COLOR_IDS } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type {
@@ -34,7 +52,16 @@ export interface AccountTypeFormModalProps {
   onClose: () => void;
 }
 
-export function AccountTypeFormModal({
+export function AccountTypeFormModal(props: AccountTypeFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountTypeFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountTypeFormModalContent({
   visible,
   type,
   initialGroup = "asset",
@@ -44,6 +71,56 @@ export function AccountTypeFormModal({
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPromptDismissed } = useExperiencePreferences();
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const nameRef = useWalkthroughTarget("accountTypeFormName");
+  const classificationRef = useWalkthroughTarget("accountTypeFormClassification");
+  const iconRef = useWalkthroughTarget("accountTypeFormIcon");
+  const colorRef = useWalkthroughTarget("accountTypeFormColor");
+  const customColorRef = useWalkthroughTarget("accountTypeFormCustomColor");
+  const saveTargetRef = useWalkthroughTarget("accountTypeFormSave");
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "accountTypeFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useAccountTypeFormWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("accountTypeFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
   const {
     colors: hexColorsList,
     refresh: refreshHexColors,
@@ -169,197 +246,216 @@ export function AccountTypeFormModal({
         onDelete={isEditing && !isProtected ? handleDeleteTrigger : undefined}
         onSave={handleSave}
         pending={mutations.pending}
+        saveButtonRef={saveTargetRef}
         title={isEditing ? "Edit Account Group" : "New Account Group"}
         titleAlign="left"
         visible={visible}
       >
-        <KeyboardAwareForm contentContainerStyle={styles.formContent}>
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+        <KeyboardAwareForm ref={scrollRef}>
+          <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           {/* Group Name Field */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>GROUP NAME</Text>
-            <TextInput
-              editable={!mutations.pending && !isProtected}
-              maxLength={60}
-              onChangeText={(text) => {
-                setName(text);
-                if (localError) setLocalError(null);
-              }}
-              placeholder="e.g. Bank Accounts, Investments, Credit Cards..."
-              placeholderTextColor={theme.colors.textMuted}
-              style={[
-                styles.textInput,
-                isProtected && styles.textInputDisabled,
-              ]}
-              value={name}
-            />
-            {isProtected ? (
-              <Text style={styles.helperText}>
-                This system group name is protected. You can customize its
-                appearance below.
-              </Text>
-            ) : null}
-          </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>GROUP NAME</Text>
+              <TextInput
+                ref={nameRef as never}
+                editable={!mutations.pending && !isProtected}
+                maxLength={60}
+                onChangeText={(text) => {
+                  setName(text);
+                  if (localError) setLocalError(null);
+                }}
+                placeholder="e.g. Bank Accounts, Investments, Credit Cards..."
+                placeholderTextColor={theme.colors.textMuted}
+                style={[
+                  styles.textInput,
+                  isProtected && styles.textInputDisabled,
+                ]}
+                value={name}
+              />
+              {isProtected ? (
+                <Text style={styles.helperText}>
+                  This system group name is protected. You can customize its
+                  appearance below.
+                </Text>
+              ) : null}
+            </View>
 
           {/* Group Classification: Asset vs Liability */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>CLASSIFICATION</Text>
-            <View style={styles.segmentContainer}>
-              <Pressable
-                accessibilityLabel="Set as Asset"
-                accessibilityRole="button"
-                disabled={mutations.pending || isProtected}
-                onPress={() => handleAccountGroupChange("asset")}
-                style={[
-                  styles.segmentOption,
-                  accountGroup === "asset" && styles.segmentOptionActiveAsset,
-                  isProtected && styles.segmentOptionDisabled,
-                ]}
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>CLASSIFICATION</Text>
+              <View
+                ref={classificationRef}
+                collapsable={false}
+                style={styles.segmentContainer}
               >
-                <Text
+                <Pressable
+                  accessibilityLabel="Set as Asset"
+                  accessibilityRole="button"
+                  disabled={mutations.pending || isProtected}
+                  onPress={() => handleAccountGroupChange("asset")}
                   style={[
-                    styles.segmentText,
-                    accountGroup === "asset" && styles.segmentTextActiveOnColor,
+                    styles.segmentOption,
+                    accountGroup === "asset" && styles.segmentOptionActiveAsset,
+                    isProtected && styles.segmentOptionDisabled,
                   ]}
                 >
-                  Asset
-                </Text>
-              </Pressable>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      accountGroup === "asset" && styles.segmentTextActiveOnColor,
+                    ]}
+                  >
+                    Asset
+                  </Text>
+                </Pressable>
 
-              <Pressable
-                accessibilityLabel="Set as Liability"
-                accessibilityRole="button"
-                disabled={mutations.pending || isProtected}
-                onPress={() => handleAccountGroupChange("liability")}
-                style={[
-                  styles.segmentOption,
-                  accountGroup === "liability" &&
-                    styles.segmentOptionActiveLiability,
-                  isProtected && styles.segmentOptionDisabled,
-                ]}
-              >
-                <Text
+                <Pressable
+                  accessibilityLabel="Set as Liability"
+                  accessibilityRole="button"
+                  disabled={mutations.pending || isProtected}
+                  onPress={() => handleAccountGroupChange("liability")}
                   style={[
-                    styles.segmentText,
+                    styles.segmentOption,
                     accountGroup === "liability" &&
-                      styles.segmentTextActiveOnColor,
+                      styles.segmentOptionActiveLiability,
+                    isProtected && styles.segmentOptionDisabled,
                   ]}
                 >
-                  Liability
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      accountGroup === "liability" &&
+                        styles.segmentTextActiveOnColor,
+                    ]}
+                  >
+                    Liability
+                  </Text>
+                </Pressable>
+              </View>
+              {isProtected ? (
+                <Text style={styles.helperText}>
+                  System default groups cannot change classification.
                 </Text>
-              </Pressable>
+              ) : null}
             </View>
-            {isProtected ? (
-              <Text style={styles.helperText}>
-                System default groups cannot change classification.
-              </Text>
-            ) : null}
-          </View>
 
           {/* Icon Selector */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>ICON</Text>
-            <Pressable
-              accessibilityLabel={`Current icon: ${iconKey}. Tap to change icon.`}
-              accessibilityRole="button"
-              disabled={mutations.pending}
-              onPress={() => setIsIconPickerOpen(true)}
-              style={styles.iconCard}
-            >
-              <View style={styles.iconCardLeft}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>ICON</Text>
+              <Pressable
+                ref={iconRef as never}
+                collapsable={false}
+                accessibilityLabel={`Current icon: ${iconKey}. Tap to change icon.`}
+                accessibilityRole="button"
+                disabled={mutations.pending}
+                onPress={() => setIsIconPickerOpen(true)}
+                style={styles.iconCard}
+              >
+                <View style={styles.iconCardLeft}>
+                  <View
+                    style={[
+                      styles.iconBadge,
+                      {
+                        backgroundColor: `${currentColorHex}20`,
+                        borderColor: `${currentColorHex}50`,
+                      },
+                    ]}
+                  >
+                    <IconHelper
+                      color={currentColorHex}
+                      name={iconKey}
+                      size={22}
+                    />
+                  </View>
+                  <View style={styles.iconInfo}>
+                    <Text style={styles.iconNameText}>{iconKey}</Text>
+                    <Text style={styles.iconSubtext}>
+                      Tap to choose from icon library
+                    </Text>
+                  </View>
+                </View>
+
                 <View
                   style={[
-                    styles.iconBadge,
+                    styles.changeBadge,
                     {
-                      backgroundColor: `${currentColorHex}20`,
-                      borderColor: `${currentColorHex}50`,
+                      backgroundColor: `${theme.colors.primary}15`,
+                      borderColor: `${theme.colors.primary}40`,
                     },
                   ]}
                 >
-                  <IconHelper
-                    color={currentColorHex}
-                    name={iconKey}
-                    size={22}
-                  />
-                </View>
-                <View style={styles.iconInfo}>
-                  <Text style={styles.iconNameText}>{iconKey}</Text>
-                  <Text style={styles.iconSubtext}>
-                    Tap to choose from icon library
+                  <Text
+                    style={[
+                      styles.changeBadgeText,
+                      { color: theme.colors.primary },
+                    ]}
+                  >
+                    Change Icon
                   </Text>
                 </View>
-              </View>
-
-              <View
-                style={[
-                  styles.changeBadge,
-                  {
-                    backgroundColor: `${theme.colors.primary}15`,
-                    borderColor: `${theme.colors.primary}40`,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.changeBadgeText,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  Change Icon
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+              </Pressable>
+            </View>
 
           {/* Theme Color Selector */}
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>THEME COLOR</Text>
-            <View style={styles.colorPalette}>
-              {hexColorsList.map((c) => {
-                const isSelected = hexColorsId === c.id;
+              <View
+                ref={colorRef}
+                collapsable={false}
+                style={styles.colorPalette}
+              >
+                {hexColorsList.map((c) => {
+                  const isSelected = hexColorsId === c.id;
 
-                return (
+                  return (
+                    <Pressable
+                      key={c.id}
+                      accessibilityLabel={`Theme color ${c.name} (${c.hex})`}
+                      accessibilityRole="button"
+                      disabled={mutations.pending}
+                      onPress={() => setHexColorsId(c.id)}
+                      style={[
+                        styles.colorSwatch,
+                        { backgroundColor: c.hex },
+                        isSelected
+                          ? styles.colorSwatchSelected
+                          : styles.colorSwatchUnselected,
+                      ]}
+                    >
+                      {isSelected ? (
+                        <Check
+                          color={theme.colors.textInverse}
+                          size={20}
+                          strokeWidth={3}
+                        />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
                   <Pressable
-                    key={c.id}
-                    accessibilityLabel={`Theme color ${c.name} (${c.hex})`}
+                    ref={customColorRef as never}
+                    collapsable={false}
+                    accessibilityLabel="Add custom color"
                     accessibilityRole="button"
                     disabled={mutations.pending}
-                    onPress={() => setHexColorsId(c.id)}
-                    style={[
-                      styles.colorSwatch,
-                      { backgroundColor: c.hex },
-                      isSelected
-                        ? styles.colorSwatchSelected
-                        : styles.colorSwatchUnselected,
+                    onPress={() => setIsColorFormOpen(true)}
+                    style={({ pressed }) => [
+                      styles.addColorSwatch,
+                      { borderColor: theme.colors.primary },
+                      pressed && styles.addColorSwatchPressed,
                     ]}
                   >
-                    {isSelected ? (
-                      <Check
-                        color={theme.colors.textInverse}
-                        size={20}
-                        strokeWidth={3}
-                      />
-                    ) : null}
+                    <Plus
+                      color={theme.colors.primary}
+                      size={22}
+                      strokeWidth={2.5}
+                    />
                   </Pressable>
-                );
-              })}
-              <Pressable
-                accessibilityLabel="Add custom color"
-                accessibilityRole="button"
-                disabled={mutations.pending}
-                onPress={() => setIsColorFormOpen(true)}
-                style={({ pressed }) => [
-                  styles.addColorSwatch,
-                  { borderColor: theme.colors.primary },
-                  pressed && styles.addColorSwatchPressed,
-                ]}
-              >
-                <Plus
-                  color={theme.colors.primary}
-                  size={22}
-                  strokeWidth={2.5}
-                />
-              </Pressable>
-            </View>
+              </View>
           </View>
 
           {/* Linked accounts count info */}
@@ -375,7 +471,18 @@ export function AccountTypeFormModal({
               </Text>
             </View>
           ) : null}
+          </View>
         </KeyboardAwareForm>
+        <AccountTypeFormWalkthroughOverlay
+          visible={walkthrough.isWalkthroughActive}
+          stepIndex={walkthrough.activeStepIndex}
+          totalSteps={walkthrough.totalSteps}
+          step={walkthrough.currentStep}
+          targetLayout={walkthrough.activeTargetLayout}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+        />
       </FullScreenFormModal>
 
       {/* Full Icon Picker Modal */}

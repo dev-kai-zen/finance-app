@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import {
   Calendar,
+  Check,
   ChevronRight,
   Landmark,
   Plus,
@@ -22,7 +23,24 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
-import { useHexColors, type HexColor } from "@/modules/hex-colors";
+import {
+  HexColorFormModal,
+  useHexColors,
+  type HexColor,
+  type HexColorInput,
+} from "@/modules/hex-colors";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  DraggableTourChip,
+  GoalFormWalkthroughOverlay,
+  useGoalFormWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalInput, GoalWithProgress } from "../types/goal.types";
 import { GoalAccountPickerModal } from "./goal-account-picker-modal";
@@ -49,7 +67,16 @@ function parseDateString(dateStr: string): Date {
   return d;
 }
 
-export function GoalFormModal({
+export function GoalFormModal(props: GoalFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <GoalFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function GoalFormModalContent({
   visible,
   onClose,
   onSave,
@@ -59,7 +86,11 @@ export function GoalFormModal({
   const styles = useThemeStyles(createStyles);
 
   const { accounts, pockets } = useAccounts();
-  const { colors: hexColorsList } = useHexColors();
+  const {
+    colors: hexColorsList,
+    addColor,
+    refresh: refreshHexColors,
+  } = useHexColors();
 
   // Form State
   const [name, setName] = useState("");
@@ -82,12 +113,14 @@ export function GoalFormModal({
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [helpTopic, setHelpTopic] = useState<
     "linkedFunds" | "targetDeadline" | null
   >(null);
 
   useEffect(() => {
     if (visible) {
+      refreshHexColors();
       if (initialGoal) {
         setName(initialGoal.name);
         setNote(initialGoal.note || "");
@@ -125,7 +158,14 @@ export function GoalFormModal({
       setFocusedFieldType(null);
       setHelpTopic(null);
     }
-  }, [visible, initialGoal]);
+  }, [visible, initialGoal, refreshHexColors]);
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    setHexColorsId(created.id);
+    setIsColorFormOpen(false);
+    return true;
+  };
 
   const selectedAccounts = useMemo(() => {
     const selectedSet = new Set(selectedAccountIds);
@@ -206,6 +246,57 @@ export function GoalFormModal({
     }
   };
 
+  const saveRef = useWalkthroughTarget("goalFormSave");
+  const formScrollRef =
+    useRef<React.ComponentRef<typeof KeyboardAwareFormPreset>>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "goalFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        formScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useGoalFormWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      initialGoal ||
+      isPromptDismissed("goalFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [initialGoal, isPromptDismissed, walkthrough.startWalkthrough]);
+
   return (
     <>
       <FullScreenFormModal
@@ -214,12 +305,18 @@ export function GoalFormModal({
           void handleSubmit();
         }}
         pending={submitting}
+        saveButtonRef={saveRef}
         saveLabel={initialGoal ? "Update goal" : "Create goal"}
         title={initialGoal ? "Edit Goal" : "New Savings Goal"}
         titleAlign="left"
         visible={visible}
       >
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
         <KeyboardAwareFormPreset
+          ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           multilineContentContainerStyle={styles.scrollContentNoteFocused}
@@ -228,267 +325,324 @@ export function GoalFormModal({
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
-          {errorMessage && (
+          <View
+            collapsable={false}
+            ref={scrollContentRef}
+            style={styles.formFields}
+          >
+          {errorMessage ? (
             <View style={styles.errorBanner}>
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
-          )}
+          ) : null}
 
           {/* Goal Title */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Goal Title</Text>
-            <TextInput
-              onBlur={() => setFocusedFieldType(null)}
-              onChangeText={setName}
-              onFocus={() => setFocusedFieldType("normal")}
-              placeholder="e.g. Emergency Fund, Japan Trip"
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.input}
-              value={name}
-            />
-          </View>
-
-          {/* Target Amount */}
-          <View style={styles.section}>
-            <AmountCalculatorField
-              amountMinorUnits={targetAmountMinorUnits}
-              currencyCode={currencyCode}
-              label="Target Amount"
-              onOpenCalculator={() => setIsCalculatorOpen(true)}
-              showSignToggle={false}
-            />
-          </View>
-
-          {/* Linked Accounts & Pockets */}
-          <View style={styles.section}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Linked Accounts & Pockets</Text>
-              <HelpIconButton
-                accessibilityHint="Shows how linked accounts and pockets work"
-                accessibilityLabel="Linked accounts and pockets help"
-                onPress={() => setHelpTopic("linkedFunds")}
+          <WalkthroughTarget id="goalFormTitle">
+            <View style={styles.formField}>
+              <Text style={styles.label}>Goal Title</Text>
+              <TextInput
+                onBlur={() => setFocusedFieldType(null)}
+                onChangeText={setName}
+                onFocus={() => setFocusedFieldType("normal")}
+                placeholder="e.g. Emergency Fund, Japan Trip"
+                placeholderTextColor={theme.colors.textMuted}
+                style={styles.input}
+                value={name}
               />
             </View>
+          </WalkthroughTarget>
 
-            {/* Selected Accounts & Pockets List / Chips */}
-            {selectedAccounts.length > 0 || selectedPockets.length > 0 ? (
-              <View style={styles.accountsCard}>
-                <View style={styles.accountsCardHeader}>
-                  <Text style={styles.accountsCardHeaderTitle}>
-                    {selectedAccounts.length > 0 && selectedPockets.length > 0
-                      ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"}, ${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`
-                      : selectedAccounts.length > 0
-                        ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"} linked`
-                        : `${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`}
-                  </Text>
-                  <Text style={styles.accountsCardHeaderBalance}>
-                    {formatCurrency(totalLinkedBalance, currencyCode)}
-                  </Text>
-                </View>
+          {/* Target Amount */}
+          <WalkthroughTarget id="goalFormAmount">
+            <View style={styles.formField}>
+              <AmountCalculatorField
+                amountMinorUnits={targetAmountMinorUnits}
+                currencyCode={currencyCode}
+                label="Target Amount"
+                onOpenCalculator={() => setIsCalculatorOpen(true)}
+                showSignToggle={false}
+              />
+            </View>
+          </WalkthroughTarget>
 
-                <View style={styles.accountChipsWrapper}>
-                  {selectedAccounts.map((account) => (
-                    <View key={`acc-${account.id}`} style={styles.accountChip}>
-                      <View style={styles.accountChipLeft}>
-                        <Landmark color={theme.colors.primary} size={14} />
-                        <Text numberOfLines={1} style={styles.accountChipName}>
-                          {account.name}
-                        </Text>
-                        <Text style={styles.accountChipBalance}>
-                          ({formatCurrency(account.currentBalanceMinorUnits, account.currencyCode)})
-                        </Text>
-                      </View>
-                      <Pressable
-                        accessibilityLabel={`Unlink ${account.name}`}
-                        hitSlop={6}
-                        onPress={() => removeAccount(account.id)}
-                        style={styles.accountChipRemove}
-                      >
-                        <X color={theme.colors.textMuted} size={14} />
-                      </Pressable>
-                    </View>
-                  ))}
+          {/* Linked Accounts & Pockets */}
+          <WalkthroughTarget id="goalFormLinked">
+            <View style={styles.formField}>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Linked Accounts & Pockets</Text>
+                <HelpIconButton
+                  accessibilityHint="Shows how linked accounts and pockets work"
+                  accessibilityLabel="Linked accounts and pockets help"
+                  onPress={() => setHelpTopic("linkedFunds")}
+                />
+              </View>
 
-                  {selectedPockets.map((pocket) => {
-                    const parent = accountById.get(pocket.accountId);
-                    return (
-                      <View key={`pock-${pocket.id}`} style={styles.accountChip}>
+              {/* Selected Accounts & Pockets List / Chips */}
+              {selectedAccounts.length > 0 || selectedPockets.length > 0 ? (
+                <View style={styles.accountsCard}>
+                  <View style={styles.accountsCardHeader}>
+                    <Text style={styles.accountsCardHeaderTitle}>
+                      {selectedAccounts.length > 0 && selectedPockets.length > 0
+                        ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"}, ${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`
+                        : selectedAccounts.length > 0
+                          ? `${selectedAccounts.length} ${selectedAccounts.length === 1 ? "account" : "accounts"} linked`
+                          : `${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`}
+                    </Text>
+                    <Text style={styles.accountsCardHeaderBalance}>
+                      {formatCurrency(totalLinkedBalance, currencyCode)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.accountChipsWrapper}>
+                    {selectedAccounts.map((account) => (
+                      <View key={`acc-${account.id}`} style={styles.accountChip}>
                         <View style={styles.accountChipLeft}>
-                          <WalletCards color={theme.colors.info} size={14} />
+                          <Landmark color={theme.colors.primary} size={14} />
                           <Text numberOfLines={1} style={styles.accountChipName}>
-                            {pocket.name}
+                            {account.name}
                           </Text>
                           <Text style={styles.accountChipBalance}>
-                            ({parent?.name ? `${parent.name} • ` : ""}{formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP")})
+                            ({formatCurrency(account.currentBalanceMinorUnits, account.currencyCode)})
                           </Text>
                         </View>
                         <Pressable
-                          accessibilityLabel={`Unlink ${pocket.name}`}
+                          accessibilityLabel={`Unlink ${account.name}`}
                           hitSlop={6}
-                          onPress={() => removePocket(pocket.id)}
+                          onPress={() => removeAccount(account.id)}
                           style={styles.accountChipRemove}
                         >
                           <X color={theme.colors.textMuted} size={14} />
                         </Pressable>
                       </View>
-                    );
-                  })}
-                </View>
+                    ))}
 
+                    {selectedPockets.map((pocket) => {
+                      const parent = accountById.get(pocket.accountId);
+                      return (
+                        <View key={`pock-${pocket.id}`} style={styles.accountChip}>
+                          <View style={styles.accountChipLeft}>
+                            <WalletCards color={theme.colors.info} size={14} />
+                            <Text numberOfLines={1} style={styles.accountChipName}>
+                              {pocket.name}
+                            </Text>
+                            <Text style={styles.accountChipBalance}>
+                              ({parent?.name ? `${parent.name} • ` : ""}{formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP")})
+                            </Text>
+                          </View>
+                          <Pressable
+                            accessibilityLabel={`Unlink ${pocket.name}`}
+                            hitSlop={6}
+                            onPress={() => removePocket(pocket.id)}
+                            style={styles.accountChipRemove}
+                          >
+                            <X color={theme.colors.textMuted} size={14} />
+                          </Pressable>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <Pressable
+                    onPress={() => setIsAccountPickerOpen(true)}
+                    style={styles.manageAccountsButton}
+                  >
+                    <Plus color={theme.colors.primary} size={16} />
+                    <Text style={styles.manageAccountsText}>
+                      Add / Change Linked Funds
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
                 <Pressable
                   onPress={() => setIsAccountPickerOpen(true)}
-                  style={styles.manageAccountsButton}
+                  style={styles.pickerButton}
                 >
-                  <Plus color={theme.colors.primary} size={16} />
-                  <Text style={styles.manageAccountsText}>
-                    Add / Change Linked Funds
-                  </Text>
-                </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setIsAccountPickerOpen(true)}
-                style={styles.pickerButton}
-              >
-                <View style={styles.pickerLeft}>
-                  <Landmark color={theme.colors.primary} size={18} />
-                  <View>
-                    <Text style={styles.pickerMainText}>
-                      Link Accounts & Pockets
-                    </Text>
-                    <Text style={styles.pickerSubText}>
-                      Optional — select accounts or pockets to track
-                    </Text>
+                  <View style={styles.pickerLeft}>
+                    <Landmark color={theme.colors.primary} size={18} />
+                    <View>
+                      <Text style={styles.pickerMainText}>
+                        Link Accounts & Pockets
+                      </Text>
+                      <Text style={styles.pickerSubText}>
+                        Optional — select accounts or pockets to track
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <ChevronRight color={theme.colors.textSecondary} size={18} />
-              </Pressable>
-            )}
-          </View>
-
-          {/* Target Completion Date */}
-          <View style={styles.section}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Target Date (Deadline)</Text>
-              <HelpIconButton
-                accessibilityHint="Shows how the target deadline is used"
-                accessibilityLabel="Target deadline help"
-                onPress={() => setHelpTopic("targetDeadline")}
-              />
-            </View>
-            <View style={styles.datePickerRow}>
-              <Pressable
-                onPress={() => setIsDatePickerOpen(true)}
-                style={[styles.pickerButton, { flex: 1 }]}
-              >
-                <View style={styles.pickerLeft}>
-                  <Calendar color={theme.colors.primary} size={18} />
-                  <Text style={styles.pickerMainText}>
-                    {targetDate
-                      ? targetDate.toLocaleDateString()
-                      : "No deadline set"}
-                  </Text>
-                </View>
-                <ChevronRight color={theme.colors.textSecondary} size={18} />
-              </Pressable>
-              {targetDate && (
-                <Pressable
-                  onPress={() => setTargetDate(null)}
-                  style={styles.clearDateButton}
-                >
-                  <Text style={styles.clearDateText}>Clear</Text>
+                  <ChevronRight color={theme.colors.textSecondary} size={18} />
                 </Pressable>
               )}
             </View>
-          </View>
+          </WalkthroughTarget>
+
+          {/* Target Completion Date */}
+          <WalkthroughTarget id="goalFormDate">
+            <View style={styles.formField}>
+              <View style={styles.labelRow}>
+                <Text style={styles.label}>Target Date (Deadline)</Text>
+                <HelpIconButton
+                  accessibilityHint="Shows how the target deadline is used"
+                  accessibilityLabel="Target deadline help"
+                  onPress={() => setHelpTopic("targetDeadline")}
+                />
+              </View>
+              <View style={styles.datePickerRow}>
+                <Pressable
+                  onPress={() => setIsDatePickerOpen(true)}
+                  style={[styles.pickerButton, { flex: 1 }]}
+                >
+                  <View style={styles.pickerLeft}>
+                    <Calendar color={theme.colors.primary} size={18} />
+                    <Text style={styles.pickerMainText}>
+                      {targetDate
+                        ? targetDate.toLocaleDateString()
+                        : "No deadline set"}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textSecondary} size={18} />
+                </Pressable>
+                {targetDate && (
+                  <Pressable
+                    onPress={() => setTargetDate(null)}
+                    style={styles.clearDateButton}
+                  >
+                    <Text style={styles.clearDateText}>Clear</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          </WalkthroughTarget>
 
           {/* Icon & Color Selection */}
-          <View style={styles.section}>
+          <View style={styles.formField}>
             <Text style={styles.label}>Icon & Appearance</Text>
-            <View style={styles.appearanceRow}>
-              <Pressable
-                accessibilityLabel={`Current icon: ${iconKey || "target"}. Tap to change icon.`}
-                accessibilityRole="button"
-                onPress={() => setIsIconPickerOpen(true)}
-                style={styles.iconSelectButton}
-              >
-                <View
-                  style={[
-                    styles.iconCircle,
-                    {
-                      backgroundColor: `${activeColorHex}22`,
-                      borderColor: `${activeColorHex}55`,
-                    },
-                  ]}
+            <View style={styles.appearanceCard}>
+              <WalkthroughTarget id="goalFormIcon">
+                <Pressable
+                  accessibilityLabel={`Current icon: ${iconKey || "target"}. Tap to change icon.`}
+                  accessibilityRole="button"
+                  onPress={() => setIsIconPickerOpen(true)}
+                  style={styles.iconSelectButton}
                 >
-                  <IconHelper
-                    color={activeColorHex}
-                    name={iconKey || "target"}
-                    size={24}
-                  />
-                </View>
-                <View
-                  style={[
-                    styles.changeIconBadge,
-                    {
-                      backgroundColor: `${theme.colors.primary}15`,
-                      borderColor: `${theme.colors.primary}40`,
-                    },
-                  ]}
-                >
-                  <Text
+                  <View
                     style={[
-                      styles.iconSelectText,
-                      { color: theme.colors.primary },
+                      styles.iconCircle,
+                      {
+                        backgroundColor: `${activeColorHex}22`,
+                        borderColor: `${activeColorHex}55`,
+                      },
                     ]}
                   >
-                    Change Icon
-                  </Text>
-                </View>
-              </Pressable>
+                    <IconHelper
+                      color={activeColorHex}
+                      name={iconKey || "target"}
+                      size={24}
+                    />
+                  </View>
+                  <View
+                    style={[
+                      styles.changeIconBadge,
+                      {
+                        backgroundColor: `${theme.colors.primary}15`,
+                        borderColor: `${theme.colors.primary}40`,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.iconSelectText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
+                      Change Icon
+                    </Text>
+                  </View>
+                </Pressable>
+              </WalkthroughTarget>
 
-              <View style={styles.colorPaletteWrapper}>
-                <Text style={styles.colorPaletteTitle}>Accent Color</Text>
-                <View style={styles.colorPalette}>
-                  {hexColorsList.slice(0, 10).map((entry: HexColor) => {
-                    const isSelected = hexColorsId === entry.id;
-                    return (
-                      <Pressable
-                        key={entry.id}
-                        onPress={() => setHexColorsId(entry.id)}
-                        style={[
-                          styles.colorSwatch,
-                          { backgroundColor: entry.hex },
-                          isSelected && styles.colorSwatchSelected,
-                        ]}
-                      >
-                        {isSelected && (
-                          <Text style={styles.colorCheckMark}>✓</Text>
-                        )}
-                      </Pressable>
-                    );
-                  })}
+              <WalkthroughTarget id="goalFormColor">
+                <View style={styles.colorBlock}>
+                  <Text style={styles.colorPaletteTitle}>Accent Color</Text>
+                  <Text style={styles.colorHelperText}>
+                    Choose a palette color or add your own.
+                  </Text>
+                  <View style={styles.colorPalette}>
+                    {hexColorsList.map((entry: HexColor) => {
+                      const isSelected = hexColorsId === entry.id;
+                      return (
+                        <Pressable
+                          key={entry.id}
+                          accessibilityLabel={`Accent color ${entry.name} (${entry.hex})`}
+                          accessibilityRole="button"
+                          onPress={() => setHexColorsId(entry.id)}
+                          style={[
+                            styles.colorSwatch,
+                            { backgroundColor: entry.hex },
+                            isSelected
+                              ? styles.colorSwatchSelected
+                              : styles.colorSwatchUnselected,
+                          ]}
+                        >
+                          {isSelected ? (
+                            <Check
+                              color={theme.colors.textInverse}
+                              size={18}
+                              strokeWidth={3}
+                            />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                    <Pressable
+                      accessibilityLabel="Add custom color"
+                      accessibilityRole="button"
+                      onPress={() => setIsColorFormOpen(true)}
+                      style={({ pressed }) => [
+                        styles.addColorSwatch,
+                        { borderColor: theme.colors.primary },
+                        pressed && styles.addColorSwatchPressed,
+                      ]}
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
-              </View>
+              </WalkthroughTarget>
             </View>
           </View>
 
           {/* Optional Notes */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Notes (Optional)</Text>
-            <TextInput
-              multiline
-              numberOfLines={3}
-              onBlur={() => setFocusedFieldType(null)}
-              onChangeText={setNote}
-              onFocus={() => setFocusedFieldType("description")}
-              placeholder="Why this goal matters, milestones, or reminders..."
-              placeholderTextColor={theme.colors.textMuted}
-              style={[styles.input, styles.textArea]}
-              value={note}
-            />
+          <WalkthroughTarget id="goalFormNotes">
+            <View style={styles.formField}>
+              <Text style={styles.label}>Note (Optional)</Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                onBlur={() => setFocusedFieldType(null)}
+                onChangeText={setNote}
+                onFocus={() => setFocusedFieldType("description")}
+                placeholder="Why this goal matters, milestones, or reminders..."
+                placeholderTextColor={theme.colors.textMuted}
+                style={[styles.input, styles.textArea]}
+                value={note}
+              />
+            </View>
+          </WalkthroughTarget>
           </View>
         </KeyboardAwareFormPreset>
+        <GoalFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       <AmountCalculatorModal
@@ -535,7 +689,14 @@ export function GoalFormModal({
             setIsIconPickerOpen(false);
           }}
           selectedIcon={iconKey}
+          themeColor={activeColorHex}
           visible={isIconPickerOpen}
+        />
+
+        <HexColorFormModal
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
         />
 
         <InfoModal
@@ -556,6 +717,7 @@ export function GoalFormModal({
           }
           visible={helpTopic !== null}
         />
+
     </>
   );
 }
@@ -566,9 +728,14 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     scrollContent: {
-      gap: theme.spacing.lg,
       padding: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
+    },
+    formFields: {
+      gap: theme.spacing.xl,
+    },
+    formField: {
+      gap: theme.spacing.sm,
     },
     scrollContentNoteFocused: {
       paddingBottom: 160,
@@ -584,9 +751,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
-    },
-    section: {
-      gap: theme.spacing.xs,
     },
     label: {
       color: theme.colors.textPrimary,
@@ -730,15 +894,21 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
     },
-    appearanceRow: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: theme.spacing.lg,
+    appearanceCard: {
       backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
-      borderColor: theme.colors.border,
+      gap: theme.spacing.lg,
       padding: theme.spacing.md,
+    },
+    colorBlock: {
+      gap: theme.spacing.xs,
+    },
+    colorHelperText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.xs * 1.2,
     },
     iconSelectButton: {
       alignItems: "center",
@@ -768,40 +938,47 @@ function createStyles(theme: AppTheme) {
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    colorPaletteWrapper: {
-      flex: 1,
-    },
     colorPaletteTitle: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      marginBottom: 8,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
     colorPalette: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 8,
+      gap: theme.spacing.sm,
+      paddingTop: theme.spacing.xs,
     },
     colorSwatch: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
       alignItems: "center",
       justifyContent: "center",
     },
-    colorSwatchSelected: {
-      borderWidth: 2,
-      borderColor: theme.colors.onPrimary,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.3,
-      shadowRadius: 2,
-      elevation: 3,
+    colorSwatchUnselected: {
+      borderRadius: 15,
+      height: 30,
+      opacity: 0.82,
+      width: 30,
     },
-    colorCheckMark: {
-      color: "#FFFFFF",
-      fontSize: 12,
-      fontWeight: "bold",
+    colorSwatchSelected: {
+      borderColor: theme.colors.textInverse,
+      borderRadius: 22,
+      borderWidth: 2.5,
+      height: 44,
+      width: 44,
+      ...theme.shadows.card,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderRadius: 15,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
+    },
+    addColorSwatchPressed: {
+      opacity: 0.65,
+      transform: [{ scale: 0.96 }],
     },
   });
 }

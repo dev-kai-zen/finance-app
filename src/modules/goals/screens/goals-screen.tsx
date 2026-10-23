@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -15,11 +16,23 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  DraggableTourChip,
+  GoalCongratulationsModal,
+  GoalsWalkthroughOverlay,
+  useGoalsWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { GoalCard } from "../components/goal-card";
 import { GoalFormModal } from "../components/goal-form-modal";
 import { GoalSummaryHeader } from "../components/goal-summary-header";
 import { useGoals, type GoalFilter } from "../hooks/use-goals";
-import type { GoalStatus, GoalWithProgress } from "../types/goal.types";
+import type { GoalInput, GoalStatus, GoalWithProgress } from "../types/goal.types";
 
 const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "all", label: "All Goals" },
@@ -28,6 +41,14 @@ const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
 ];
 
 export function GoalsScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <GoalsScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function GoalsScreenContent() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
@@ -47,6 +68,67 @@ export function GoalsScreen() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
+
+  // Walkthrough targets & coordination
+  const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
+  const statusFiltersRef = useWalkthroughTarget("goalStatusFilters");
+  const hasGoalInList = filteredGoals.length > 0;
+  const markCompleteRef = useWalkthroughTarget(
+    hasGoalInList ? "goalFirstItemMarkComplete" : null,
+  );
+  const fabRef = useWalkthroughTarget("goalFab");
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "goalFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useGoalsWalkthrough({
+    hasGoalInList,
+    onScrollToTarget: handleScrollToTarget,
+  });
+  const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
+
+  const [congratulationsVisible, setCongratulationsVisible] = useState(false);
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("goalsWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const handleOpenCreate = () => {
     if (goals.length >= PRO_LIMITS.FREE_MAX_GOALS) {
@@ -68,6 +150,24 @@ export function GoalsScreen() {
     setIsFormOpen(true);
   };
 
+  const handleSaveGoal = async (input: GoalInput, existingId?: string | null) => {
+    const isFirstGoal = goals.length === 0 && !existingId;
+    const result = saveGoal(input, existingId);
+    if (result && isFirstGoal && !isPromptDismissed("firstGoalCelebrated")) {
+      dismissPrompt("firstGoalCelebrated");
+      setCongratulationsVisible(true);
+    }
+    return result;
+  };
+
+  const handleCloseCongratulations = () => {
+    setCongratulationsVisible(false);
+    const timer = setTimeout(() => {
+      walkthrough.startWalkthrough();
+    }, 400);
+    return () => clearTimeout(timer);
+  };
+
   const handleConfirmDelete = () => {
     if (goalToDelete) {
       deleteGoal(goalToDelete.id);
@@ -81,19 +181,35 @@ export function GoalsScreen() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
+      scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
-        <FloatingActionButton
-          accessibilityLabel="Add New Goal"
-          onPress={handleOpenCreate}
-        />
+        <>
+          <FloatingActionButton
+            accessibilityLabel="Add New Goal"
+            fabRef={fabRef}
+            onPress={handleOpenCreate}
+          />
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+        </>
       }
     >
       {/* Summary Metrics */}
-      <GoalSummaryHeader summary={summary} />
+      <GoalSummaryHeader
+        summary={summary}
+        totalTargetRef={totalTargetRef}
+      />
 
       {/* Filter Tabs */}
-      <View style={styles.filterTabsRow}>
+      <View
+        collapsable={false}
+        ref={statusFiltersRef}
+        style={styles.filterTabsRow}
+      >
         {FILTER_TABS.map((tab) => {
           const isSelected = filter === tab.key;
           const count =
@@ -168,10 +284,11 @@ export function GoalsScreen() {
         </View>
       ) : (
         <View style={styles.goalsList}>
-          {filteredGoals.map((goal) => (
+          {filteredGoals.map((goal, index) => (
             <GoalCard
               key={goal.id}
               goal={goal}
+              markCompleteRef={index === 0 ? markCompleteRef : undefined}
               onDelete={() => setGoalToDelete(goal)}
               onEdit={() => handleOpenEdit(goal)}
               onPress={() => handleOpenEdit(goal)}
@@ -187,7 +304,7 @@ export function GoalsScreen() {
       <GoalFormModal
         initialGoal={goalToEdit}
         onClose={() => setIsFormOpen(false)}
-        onSave={saveGoal}
+        onSave={handleSaveGoal}
         visible={isFormOpen}
       />
 
@@ -208,6 +325,28 @@ export function GoalsScreen() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      {/* Goal Congratulations Modal */}
+      <GoalCongratulationsModal
+        onClose={handleCloseCongratulations}
+        visible={congratulationsVisible}
+      />
+
+      {/* Goals Walkthrough Overlay */}
+      <GoalsWalkthroughOverlay
+        onFabPress={() => {
+          walkthrough.completeWalkthrough();
+          handleOpenCreate();
+        }}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </PageContainer>
   );

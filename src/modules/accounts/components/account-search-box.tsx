@@ -1,3 +1,4 @@
+import { type Ref } from "react";
 import { Search, X } from "lucide-react-native";
 import {
   Pressable,
@@ -17,6 +18,7 @@ export function AccountSearchBox({
   clearAccessibilityLabel = "Clear account search",
   placeholder = "Search accounts",
   style,
+  targetRef,
 }: {
   value: string;
   onChangeText: (value: string) => void;
@@ -24,12 +26,13 @@ export function AccountSearchBox({
   clearAccessibilityLabel?: string;
   placeholder?: string;
   style?: StyleProp<ViewStyle>;
+  targetRef?: Ref<View>;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
   return (
-    <View style={[styles.container, style]}>
+    <View ref={targetRef} collapsable={false} style={[styles.container, style]}>
       <Search color={theme.colors.textMuted} size={18} />
       <TextInput
         accessibilityLabel={accessibilityLabel}

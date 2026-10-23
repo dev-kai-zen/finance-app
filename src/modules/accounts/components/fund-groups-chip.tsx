@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useProStatus } from "@/modules/pro";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 
 export function FundGroupsChip({
   count,
@@ -14,9 +15,12 @@ export function FundGroupsChip({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { isPro } = useProStatus();
+  const chipRef = useWalkthroughTarget("fundGroupsChip");
 
   return (
     <Pressable
+      ref={chipRef as never}
+      collapsable={false}
       accessibilityLabel={`Fund Groups: ${count}. Tap to manage.`}
       accessibilityRole="button"
       onPress={onPress}

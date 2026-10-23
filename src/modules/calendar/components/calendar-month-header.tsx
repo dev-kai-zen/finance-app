@@ -11,6 +11,7 @@ export interface CalendarMonthHeaderProps {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onToday: () => void;
+  navControlsRef?: React.Ref<View>;
 }
 
 export function CalendarMonthHeader({
@@ -18,6 +19,7 @@ export function CalendarMonthHeader({
   onPrevMonth,
   onNextMonth,
   onToday,
+  navControlsRef,
 }: CalendarMonthHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -50,7 +52,11 @@ export function CalendarMonthHeader({
         )}
       </View>
 
-      <View style={styles.navControls}>
+      <View
+        collapsable={false}
+        ref={navControlsRef}
+        style={styles.navControls}
+      >
         <Pressable
           accessibilityLabel="Previous month"
           accessibilityRole="button"

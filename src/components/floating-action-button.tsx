@@ -15,6 +15,7 @@ export interface FloatingActionButtonProps {
   accessibilityLabel?: string;
   icon?: ReactNode;
   style?: ViewStyle;
+  fabRef?: React.Ref<View>;
 }
 
 export function FloatingActionButton({
@@ -22,6 +23,7 @@ export function FloatingActionButton({
   accessibilityLabel = "Quick action",
   icon,
   style,
+  fabRef,
 }: FloatingActionButtonProps) {
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
@@ -39,6 +41,8 @@ export function FloatingActionButton({
       ]}
     >
       <Pressable
+        ref={fabRef as any}
+        collapsable={false}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
         onPress={onPress}

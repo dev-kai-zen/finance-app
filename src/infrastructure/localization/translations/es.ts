@@ -102,6 +102,9 @@ export const es = {
     remindersTitle: "Recordatorios",
     remindersDescription: "Registro diario y alertas de facturas por vencer",
     remindersAccessibility: "Configurar recordatorios",
+    guideHelperTitle: "Asistente de guía",
+    guideHelperDescription:
+      "Muestra un botón Guía arrastrable en las pantallas para repetir los recorridos",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",
@@ -435,6 +438,490 @@ export const es = {
       "Activa tarjetas y plazos para compras con tarjeta.",
     promptCreditCardsAction: "Activar",
     promptDismiss: "Ahora no",
+    walkthroughChip: "Guía",
+    walkthroughSkip: "Omitir",
+    walkthroughNext: "Siguiente",
+    walkthroughBack: "Atrás",
+    walkthroughStartTx: "Toca + para empezar",
+    walkthroughStepCount: "Paso %{current} de %{total}",
+    stepNetWorthTitle: "Patrimonio neto",
+    stepNetWorthDesc:
+      "Esta tarjeta te muestra un resumen financiero completo: calcula tu patrimonio neto total (activos menos pasivos) y el historial de balance.",
+    stepCollapseTitle: "Plegar gráfico",
+    stepCollapseDesc:
+      "Toca este icono para plegar o desplegar el gráfico de patrimonio neto y ahorrar espacio.",
+    stepSettingsTitle: "Configuración de vista",
+    stepSettingsDesc:
+      "Personaliza el estilo de tu panel. Toca Siguiente para ver cómo cambiar entre las vistas Simple y Detallada.",
+    stepSettingsModalTitle: "Opciones de visualización",
+    stepSettingsModalDesc:
+      "En el modo Simple, verás etiquetas claras sobre dinero y gasto. En el modo Detallado, activos y pasivos completos. ¡Cambia cuando quieras!",
+    stepEyeTitle: "Ocultar saldos",
+    stepEyeDesc:
+      "Toca el ojo para ocultar o mostrar los importes (••••••) cuando uses la app en lugares públicos.",
+    stepRecentTxTitle: "Transacciones recientes",
+    stepRecentTxDesc:
+      "Tus gastos, ingresos y transferencias más recientes aparecen aquí. Toca cualquiera para ver detalles o editar.",
+    stepFabTitle: "Registra tu primera transacción",
+    stepFabDesc:
+      "¡Toca el botón (+) aquí para añadir tu primera transacción y empezar a controlar tu dinero!",
+    congratulationsTitle: "🎉 ¡Felicitaciones!",
+    congratulationsSubtitle: "¡Primera transacción registrada!",
+    congratulationsMessage:
+      "Has dado el primer paso para dominar tus finanzas. Cada registro te acerca más a tus objetivos.",
+    congratulationsButton: "Explorar panel",
+  },
+  accountsWalkthrough: {
+    stepArchivedTitle: "Cuentas archivadas",
+    stepArchivedDesc:
+      "Accede a todas tus cuentas y bolsillos archivados guardados de forma segura. Puedes ver su historial o restaurarlos en cualquier momento.",
+    stepFundGroupsTitle: "Grupos de fondos",
+    stepFundGroupsDesc:
+      "Organiza múltiples cuentas en grupos personalizados (como Fondo de emergencia, Ahorros u Operaciones) para monitorear totales combinados.",
+    stepSearchTitle: "Buscar cuentas",
+    stepSearchDesc:
+      "Filtra rápidamente tus cuentas por nombre en activos y pasivos.",
+    stepAssetsTitle: "Resumen de activos",
+    stepAssetsDesc:
+      "Consulta tus cuentas positivas (bancos, efectivo, inversiones y bolsillos) junto con su saldo total.",
+    stepLiabilitiesTitle: "Resumen de pasivos",
+    stepLiabilitiesDesc:
+      "Lleva el control de tarjetas de crédito, préstamos y deudas pendientes para conocer tus obligaciones.",
+    stepFabTitle: "Menú de cuentas",
+    stepFabDesc:
+      "Toca el botón (+) para abrir el menú de cuentas donde puedes crear nuevas cuentas o configurar tipos y grupos.",
+    stepSheetTitle: "Acciones de cuentas",
+    stepSheetDesc:
+      "Elige si deseas crear una nueva cuenta o configurar tus grupos y categorías de cuentas. ¡Toca Finalizar para completar la guía!",
+    actionAddAccount: "Agregar nueva cuenta",
+    actionAddAccountDesc:
+      "Crea cuentas de banco, efectivo, billetera o inversiones con saldo inicial.",
+    actionManageTypes: "Configuración de grupos",
+    actionManageTypesDesc:
+      "Define y administra tipos y grupos personalizados de cuentas.",
+  },
+  accountFormWalkthrough: {
+    stepNameTitle: "Nombre de la cuenta",
+    stepNameDesc:
+      "Asigna un nombre claro y reconocible como Cuenta corriente, Ahorros o Efectivo.",
+    stepNoteTitle: "Nota y detalles",
+    stepNoteDesc:
+      "Agrega contexto adicional, números de cuenta o recordatorios opcionales.",
+    stepTypeTitle: "Tipo y grupo de cuenta",
+    stepTypeDesc:
+      "Elige si esta cuenta es un Activo (banco, efectivo, inversión) o Pasivo (tarjeta de crédito, préstamo).",
+    stepIconTitle: "Ícono de la cuenta",
+    stepIconDesc:
+      "Elige un ícono personalizado o utiliza el ícono predeterminado del grupo de cuenta.",
+    stepStartingBalanceTitle: "Saldo inicial",
+    stepStartingBalanceDesc:
+      "Establece el saldo inicial en la fecha de apertura. Toca para abrir la calculadora.",
+    stepCurrencyTitle: "Selector de moneda",
+    stepCurrencyDesc:
+      "Selecciona la moneda de esta cuenta antes de registrar transacciones.",
+    stepMaintainingBalanceTitle: "Saldo mínimo de mantenimiento",
+    stepMaintainingBalanceDesc:
+      "Controla los requisitos de saldo mínimo para evitar cargos bancarios.",
+    stepEnablePocketsTitle: "Activar bolsillos virtuales",
+    stepEnablePocketsDesc:
+      "¡Ideal si usas una sola cuenta bancaria para múltiples fines! Por ejemplo, si tu cuenta corriente guarda dinero para Gastos diarios, Fondo de emergencia y Ahorros, los bolsillos te permiten subdividir y rastrear esos saldos por separado dentro de esta misma cuenta.",
+    stepHideSelectionTitle: "Ocultar de la selección",
+    stepHideSelectionDesc:
+      "Oculta cuentas secundarias o confidenciales en los selectores de transacciones habituales.",
+    stepHideReportsTitle: "Ocultar de los informes",
+    stepHideReportsDesc:
+      "Excluye saldos externos o fondos en custodia del patrimonio neto y estadísticas.",
+    stepOpeningDateTitle: "Fecha de apertura",
+    stepOpeningDateDesc:
+      "Indica cuándo se inició esta cuenta para el seguimiento histórico de saldos.",
+  },
+  accountGroupSetupWalkthrough: {
+    stepClassificationPickerTitle: "Selector de Activos y Pasivos",
+    stepClassificationPickerDesc:
+      "Alterna entre Activos (lo que posees) y Pasivos (lo que debes).",
+    stepReorderTitle: "Reordenar grupos",
+    stepReorderDesc:
+      "Personaliza el orden de tus grupos de cuentas según tus preferencias.",
+    stepNewGroupTitle: "Nuevo grupo de cuenta",
+    stepNewGroupDesc:
+      "Crea un grupo personalizado como Billeteras digitales o Emprendimientos.",
+  },
+  accountTypeFormWalkthrough: {
+    stepNameTitle: "Nombre del grupo",
+    stepNameDesc:
+      "Nombra este grupo de cuentas, como Ahorro de alto rendimiento o Negocios.",
+    stepClassificationTitle: "Clasificación",
+    stepClassificationDesc:
+      "Designa este grupo como Activo (riqueza positiva) o Pasivo (deuda u obligación).",
+    stepIconTitle: "Ícono del grupo",
+    stepIconDesc:
+      "Elige un ícono que identifique este grupo en tus cuentas e informes.",
+    stepColorTitle: "Color del tema",
+    stepColorDesc:
+      "Elige un color para diferenciar e identificar este grupo visualmente.",
+    stepCustomColorTitle: "Agregar color personalizado",
+    stepCustomColorDesc:
+      "Crea y guarda tu propia paleta de colores hexadecimales.",
+    stepSaveTitle: "Guardar grupo de cuenta",
+    stepSaveDesc:
+      "Toca la marca de verificación para guardar tu nuevo grupo de cuenta.",
+  },
+  transactionFormWalkthrough: {
+    stepPresetsTitle: "Plantillas rápidas",
+    stepPresetsDesc:
+      "Plantillas de un toque para transacciones frecuentes. Autocompleta nombres, cuentas, montos y categorías rápidamente.",
+    stepCustomizeTitle: "Personalizar campos",
+    stepCustomizeDesc:
+      "Elige qué campos mostrar u ocultar en el formulario para agilizar tu registro.",
+    stepTypePickerTitle: "Tipo de transacción",
+    stepTypePickerDesc:
+      "Alterna entre Gasto, Ingreso o Transferencia según el movimiento de tu dinero.",
+    stepNameTitle: "Nombre de transacción",
+    stepNameDesc:
+      "Ingresa el comercio, beneficiario o título (p. ej. Supermercado, Salario, Café).",
+    stepAttachmentTitle: "Comprobante y adjuntos",
+    stepAttachmentDesc:
+      "Adjunta fotos de recibos, facturas o comprobantes directamente al registro.",
+    stepDateTitle: "Fecha de transacción",
+    stepDateDesc:
+      "Establece la fecha del calendario en la que se realizó la operación.",
+    stepTimeTitle: "Hora exacta",
+    stepTimeDesc:
+      "Registra la hora y minuto exactos para un orden cronológico preciso.",
+    stepAmountTitle: "Monto",
+    stepAmountDesc:
+      "Toca para abrir la calculadora y calcular o ingresar el monto de la transacción.",
+    stepCurrencyTitle: "Selector de moneda",
+    stepCurrencyDesc:
+      "Cambia la moneda de entrada para gastos en el extranjero o compras internacionales.",
+    stepAccountTitle: "Cuenta y bolsillo",
+    stepAccountDesc:
+      "Selecciona la cuenta de origen o destino y el bolsillo virtual opcional.",
+    stepCategoryTitle: "Categoría",
+    stepCategoryDesc:
+      "Categoriza la transacción para saber a dónde va tu dinero en informes y presupuestos.",
+    stepSplitTitle: "Dividir por categoría",
+    stepSplitDesc:
+      "Divide un recibo o factura entre múltiples categorías con montos personalizados.",
+    stepLabelsTitle: "Etiquetas",
+    stepLabelsDesc:
+      "Agrega etiquetas (#vacaciones, #deducible, #proyecto) para seguimiento transversal.",
+    stepNoteTitle: "Nota y memo",
+    stepNoteDesc:
+      "Agrega notas opcionales, recordatorios o contexto para futuras consultas.",
+    stepCancelTitle: "Cancelar",
+    stepCancelDesc:
+      "Descarta los cambios actuales y cierra el formulario sin guardar.",
+    stepSaveTitle: "Guardar registro",
+    stepSaveDesc:
+      "Guarda tu transacción de inmediato en tu libro contable local.",
+    stepCloseTitle: "Cerrar formulario",
+    stepCloseDesc:
+      "Cierra este modal cuando hayas terminado o desees salir.",
+  },
+  scheduledTransactionsWalkthrough: {
+    stepSearchTitle: "Buscar programaciones",
+    stepSearchDesc:
+      "Encuentra transacciones programadas por título, categoría o cuenta asociada.",
+    stepFilterTitle: "Filtrar por estado",
+    stepFilterDesc:
+      "Filtra entre programaciones Activas, Completadas y Archivadas.",
+    stepFabTitle: "Nueva programación",
+    stepFabDesc:
+      "Toca el botón + para crear un nuevo ingreso, gasto o transferencia recurrente.",
+    stepFirstItemTitle: "Transacción programada",
+    stepFirstItemDesc:
+      "Revisa la frecuencia, las cuentas involucradas y la próxima fecha de ejecución.",
+    stepDueCardTitle: "Programación vencida",
+    stepDueCardDesc:
+      "Las transacciones que han alcanzado su fecha de vencimiento aparecen aquí para tu confirmación.",
+    stepDueSkipTitle: "Omitir ocurrencia",
+    stepDueSkipDesc:
+      "Omite esta única ocurrencia sin registrar una transacción y avanza al siguiente ciclo.",
+    stepDuePostTitle: "Acción de publicar",
+    stepDuePostDesc:
+      "Confirma y publica esta ocurrencia programada en tus transacciones de inmediato.",
+  },
+  scheduleCongratulations: {
+    title: "¡Primera programación creada! 🎉",
+    subtitle: "Automatiza tus finanzas recurrentes",
+    message:
+      "Tu transacción recurrente está configurada. Kaizen te alertará cuando venza o la publicará automáticamente.",
+    button: "Explorar recorrido de programadas",
+  },
+  scheduleFormWalkthrough: {
+    stepTypeTitle: "Tipo de transacción",
+    stepTypeDesc:
+      "Elige si este movimiento recurrente es un Gasto, Ingreso o Transferencia.",
+    stepNameTitle: "Nombre de transacción",
+    stepNameDesc:
+      "Asigna un nombre descriptivo, como Alquiler mensual, Sueldo o Suscripción de internet.",
+    stepAmountTitle: "Monto",
+    stepAmountDesc:
+      "Ingresa el monto recurrente de cada ocurrencia mediante la calculadora.",
+    stepAccountTitle: "Ubicación de cuenta",
+    stepAccountDesc:
+      "Elige la cuenta y el bolsillo de donde se deducirán o depositarán los fondos.",
+    stepCategoryTitle: "Categoría",
+    stepCategoryDesc:
+      "Asigna una categoría para supervisar tus presupuestos recurrentes.",
+    stepNoteTitle: "Nota y memo",
+    stepNoteDesc:
+      "Nota o memo opcional adjunto a cada transacción recurrente generada.",
+    stepRecurrenceTitle: "Recurrencia",
+    stepRecurrenceDesc:
+      "Configura con qué frecuencia se repetirá esta transacción.",
+    stepStartingOnTitle: "Comenzando el",
+    stepStartingOnDesc:
+      "Selecciona la fecha y hora en la que debe activarse la primera ocurrencia.",
+    stepFrequencyTitle: "Frecuencia",
+    stepFrequencyDesc:
+      "Elige el intervalo: Una vez, Diario, Semanal, Mensual o Anual.",
+    stepRepeatTitle: "Intervalo de repetición",
+    stepRepeatDesc:
+      "Define la cadencia del intervalo (p. ej. cada 2 semanas o cada 3 meses).",
+    stepEndsTitle: "Condición de finalización",
+    stepEndsDesc:
+      "Especifica cuándo termina: Nunca, tras una cantidad de ocurrencias o en una fecha fija.",
+    stepWeekendTitle: "Ajuste en fines de semana",
+    stepWeekendDesc:
+      "Ajusta automáticamente si la fecha cae en fin de semana (al siguiente día hábil, al anterior o saltar).",
+    stepAutoEnterTitle: "Registrar transacción automáticamente",
+    stepAutoEnterDesc:
+      "Si está activo, las transacciones se registrarán automáticamente en segundo plano en su fecha de vencimiento.",
+    stepSaveTitle: "Guardar programación",
+    stepSaveDesc:
+      "Toca para guardar y activar tu transacción programada recurrente.",
+  },
+  budgetFormWalkthrough: {
+    stepCategoryTitle: "Selección de categoría",
+    stepCategoryDesc:
+      "Elige a qué categoría se aplica este presupuesto (p. ej. Comestibles, Ocio).",
+    stepEnableBudgetTitle: "Activar presupuesto",
+    stepEnableBudgetDesc:
+      "Activa o desactiva este límite presupuestario sin eliminar su configuración.",
+    stepAmountTitle: "Monto del presupuesto",
+    stepAmountDesc:
+      "Establece tu límite de gasto objetivo para el período con la calculadora.",
+    stepFrequencyTitle: "Frecuencia del presupuesto",
+    stepFrequencyDesc:
+      "Elige con qué frecuencia se reinicia: Diario, Semanal, Mensual, Trimestral o Anual.",
+    stepRolloverTitle: "Acumular saldo (Rollover)",
+    stepRolloverDesc:
+      "Transfiere fondos no utilizados o déficits al siguiente período de forma automática.",
+    stepOverBudgetAlertTitle: "Alerta de exceso de presupuesto",
+    stepOverBudgetAlertDesc:
+      "Recibe una advertencia cuando tus gastos alcancen o superen este límite.",
+    stepSaveTitle: "Guardar presupuesto",
+    stepSaveDesc:
+      "Toca para guardar y activar tu límite de gasto por categoría.",
+  },
+  goalFormWalkthrough: {
+    stepTitleTitle: "Título de la meta",
+    stepTitleDesc:
+      "Asigna un nombre a tu meta de ahorro, como Fondo de emergencia, Vacaciones o Auto nuevo.",
+    stepTargetAmountTitle: "Monto objetivo",
+    stepTargetAmountDesc:
+      "Define el monto total que deseas ahorrar para este hito financiero.",
+    stepLinkedAccountsTitle: "Cuentas y bolsillos vinculados",
+    stepLinkedAccountsDesc:
+      "Selecciona qué cuentas y bolsillos virtuales acumulan fondos para esta meta.",
+    stepTargetDateTitle: "Fecha objetivo",
+    stepTargetDateDesc:
+      "Fija una fecha límite opcional para calcular tu ritmo de ahorro necesario.",
+    stepIconTitle: "Ícono de la meta",
+    stepIconDesc:
+      "Elige un ícono motivador que represente visualmente tu objetivo.",
+    stepAccentColorTitle: "Color de acento",
+    stepAccentColorDesc:
+      "Selecciona un color de tema para la barra de progreso y las tarjetas de la meta.",
+    stepNotesTitle: "Notas y motivación",
+    stepNotesDesc:
+      "Agrega notas, recordatorios o motivos de por qué esta meta es importante para ti.",
+    stepSaveTitle: "Guardar meta",
+    stepSaveDesc:
+      "Toca la marca de verificación para guardar tu meta y comenzar a medir tu progreso.",
+  },
+  transactionsWalkthrough: {
+    stepSearchTitle: "Buscar transacciones",
+    stepSearchDesc:
+      "Encuentra rápidamente transacciones por nota, beneficiario, categoría, cuenta o monto en tiempo real.",
+    stepFilterTitle: "Filtrar transacciones",
+    stepFilterDesc:
+      "Abre los filtros avanzados para acotar por rango de fechas, cuenta, categoría, tipo o etiquetas.",
+    stepSortDateTitle: "Ordenar por fecha",
+    stepSortDateDesc:
+      "Ordena tu historial cronológicamente por la fecha de transacción.",
+    stepSortAmountTitle: "Ordenar por monto",
+    stepSortAmountDesc:
+      "Ordena las transacciones por valor monetario para identificar rápidamente tus gastos más altos o más bajos.",
+    stepSortOrderTitle: "Sentido de ordenación",
+    stepSortOrderDesc:
+      "Alterna entre orden descendente (más recientes/altos primero) y ascendente (más antiguos/bajos primero).",
+    stepViewModeTitle: "Modo detallado y simple",
+    stepViewModeDesc:
+      "Alterna entre el modo Compacto para visualización densa y el modo Detallado con notas, etiquetas y cuentas.",
+    stepScheduledTitle: "Transacciones programadas",
+    stepScheduledDesc:
+      "Accede a transacciones futuras y recurrentes automatizadas para mantener al día tus pagos pendientes.",
+    stepTrashTitle: "Papelera de transacciones",
+    stepTrashDesc:
+      "Revisa de forma segura las transacciones eliminadas. Puedes restaurar registros o vaciar la papelera de forma permanente.",
+    stepExportTitle: "Exportar CSV",
+    stepExportDesc:
+      "Exporta tu historial filtrado a una hoja de cálculo CSV para compartir, respaldar o analizar.",
+    stepFabTitle: "Registrar transacción",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",
+  },
+  calendarWalkthrough: {
+    stepArrowsTitle: "Navegación del calendario",
+    stepArrowsDesc:
+      "Usa las flechas de navegación para desplazarte entre meses anteriores y futuros, o volver al día de hoy.",
+    stepTransactionsTitle: "Pestaña Transacciones",
+    stepTransactionsDesc:
+      "Revisa todos los ingresos, gastos y transferencias registrados para el día seleccionado o el mes completo.",
+    stepSchedulesTitle: "Pestaña Programados",
+    stepSchedulesDesc:
+      "Supervisa pagos recurrentes, facturas programadas y próximos vencimientos directamente en el calendario.",
+    stepNetTitle: "Pestaña Ganancias netas",
+    stepNetDesc:
+      "Analiza la diferencia entre ingresos y gastos, tendencias de flujo de caja y trayectoria neta.",
+    stepBalanceSheetTitle: "Pestaña Balance general",
+    stepBalanceSheetDesc:
+      "Monitorea activos, pasivos y patrimonio neto proyectados a lo largo de tu calendario en un solo vistazo.",
+  },
+  categoriesWalkthrough: {
+    stepTypeToggleTitle: "Gastos e Ingresos",
+    stepTypeToggleDesc:
+      "Alterna entre categorías de gastos y fuentes de ingresos para organizar y personalizar tus flujos de efectivo.",
+    stepReorderGroupsTitle: "Reordenar categorías",
+    stepReorderGroupsDesc:
+      "Reorganiza los grupos de categorías en tu orden preferido para selectores e informes.",
+    stepPresetsIconTitle: "Preajustes de categorías",
+    stepPresetsIconDesc:
+      "Carga rápidamente paquetes iniciales de categorías seleccionadas o administra los preajustes integrados.",
+    stepNewCategoryTitle: "Nueva categoría",
+    stepNewCategoryDesc:
+      "Crea un grupo de categorías personalizado con colores, íconos y clasificación a tu medida.",
+    stepReorderSubTitle: "Reordenar subcategorías",
+    stepReorderSubDesc:
+      "Organiza y jerarquiza subcategorías dentro de este grupo para un etiquetado más ágil.",
+    stepAddSubTitle: "Agregar subcategoría",
+    stepAddSubDesc:
+      "Agrega subcategorías detalladas dentro de este grupo para un control financiero más minucioso.",
+  },
+  budgetCongratulations: {
+    title: "¡Primer presupuesto creado!",
+    subtitle: "Gestión inteligente del gasto",
+    message:
+      "¡Has creado con éxito tu primer presupuesto por categoría! Controla límites de gasto, evita excesos y supervisa saldos transferibles con confianza.",
+    button: "Explorar funciones de presupuesto",
+  },
+  budgetsWalkthrough: {
+    stepEmptyCreateTitle: "Configura tu primer presupuesto",
+    stepEmptyCreateDesc:
+      "Toca aquí para establecer límites de gasto para cualquier categoría con periodos diarios, semanales, mensuales o acumulativos.",
+    stepTotalActiveTitle: "Presupuesto activo total",
+    stepTotalActiveDesc:
+      "Monitorea tus límites totales presupuestados, el avance del gasto en tiempo real, el saldo restante y alertas de exceso de un vistazo.",
+    stepFrequencyTabsTitle: "Filtro de frecuencia",
+    stepFrequencyTabsDesc:
+      "Filtra rápidamente tus presupuestos por periodo: diario, semanal, mensual, trimestral o anual.",
+    stepFirstItemToggleTitle: "Activar o desactivar presupuestos",
+    stepFirstItemToggleDesc:
+      "Activa o desactiva cualquier presupuesto a voluntad sin perder tus transacciones previas ni la configuración.",
+    stepFabTitle: "Crear presupuesto por categoría",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para fijar nuevos límites por categoría y alcanzar tus metas financieras.",
+  },
+  goalCongratulations: {
+    title: "¡Primer objetivo creado!",
+    subtitle: "Meta fijada para el éxito",
+    message:
+      "¡Felicitaciones por fijar tu primera meta de ahorro! Monitorea tu progreso, vincula cuentas y mantén la motivación para forjar tu futuro financiero.",
+    button: "Explorar recorrido de objetivos",
+  },
+  goalsWalkthrough: {
+    stepTotalTargetTitle: "Meta total y progreso",
+    stepTotalTargetDesc:
+      "Supervisa tu meta de ahorro consolidada, fondos acumulados, porcentaje de avance y el monto restante en todos tus objetivos activos.",
+    stepStatusFiltersTitle: "Filtros por estado",
+    stepStatusFiltersDesc:
+      "Filtra fácilmente entre Todos los objetivos, metas En progreso y logros Completados con contadores en tiempo real.",
+    stepFirstItemMarkCompleteTitle: "Marcar como completado",
+    stepFirstItemMarkCompleteDesc:
+      "Celebra alcanzar tu meta marcándola como completada, o reábrela en cualquier momento si deseas seguir ahorrando.",
+    stepFabTitle: "Agregar nuevo objetivo",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
+  },
+  notesWalkthrough: {
+    stepEmptyCreateTitle: "Crea tu primera nota",
+    stepEmptyCreateDesc:
+      "Toca aquí para comenzar a capturar tus pensamientos, listas de verificación financieras, notas y fotos de recibos.",
+    stepSearchTitle: "Buscar notas",
+    stepSearchDesc:
+      "Encuentra rápidamente cualquier nota buscando en títulos, listas de verificación o notas.",
+    stepViewModeTitle: "Modo de visualización",
+    stepViewModeDesc:
+      "Alterna entre mosaicos cuadrados para una galería visual o una vista de lista compacta.",
+    stepSortFilterTitle: "Filtro de modificación y orden",
+    stepSortFilterDesc:
+      "Ordena tus notas por fecha de última modificación (más reciente o más antigua) o alfabéticamente por título.",
+    stepFirstItemTitle: "Vista previa y gestos de notas",
+    stepFirstItemDesc:
+      "Toca cualquier nota para ver o editar detalles. Cuando el modo de visualización sea lista, puedes deslizar hacia la izquierda para mostrar el botón de eliminar.",
+    stepFabTitle: "Agregar nueva nota",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
+  },
+  settingsWalkthrough: {
+    stepLanguageTitle: "Preferencia de idioma",
+    stepLanguageDesc:
+      "Cambia entre inglés, español y filipino, o usa automáticamente el idioma predeterminado del sistema.",
+    stepCurrencyTitle: "Configuración de moneda",
+    stepCurrencyDesc:
+      "Configura tu moneda principal de informes, monedas secundarias y tipos de cambio personalizados.",
+    stepNicknameTitle: "Apodo de usuario",
+    stepNicknameDesc:
+      "Personaliza el saludo de tu panel con un nombre o apodo personalizado.",
+    stepThemeTitle: "Tema y paleta",
+    stepThemeDesc:
+      "Elige entre temas modernos claros, oscuros y OLED vibrantes, o sigue el aspecto del sistema.",
+    stepRemindersTitle: "Recordatorios y notificaciones",
+    stepRemindersDesc:
+      "Configura alarmas diarias de gastos y avisos de facturas para no olvidar ningún pago.",
+    stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
+    stepDefaultExpenseDesc:
+      "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",
+    stepDefaultIncomeTitle: "Cuenta de ingresos predeterminada",
+    stepDefaultIncomeDesc:
+      "Elige la cuenta de destino predeterminada para nuevos ingresos o nóminas.",
+    stepHexColorsTitle: "Paleta de colores hexadecimales",
+    stepHexColorsDesc:
+      "Administra y crea colores hexadecimales para personalizar categorías, cuentas y etiquetas.",
+    stepResetDataTitle: "Restablecer todos los datos",
+    stepResetDataDesc:
+      "Borra permanentemente todas las transacciones, cuentas y configuraciones para reiniciar.",
+    stepLocalBackupTitle: "Copia de seguridad local",
+    stepLocalBackupDesc:
+      "Exporta e importa copias de seguridad de la base de datos SQLite en tu dispositivo.",
+    stepGoogleDriveTitle: "Copia en Google Drive",
+    stepGoogleDriveDesc:
+      "Sincroniza tus datos de forma segura en Google Drive para copias automáticas en la nube.",
+    stepSecurityTitle: "Contraseña y huella dactilar",
+    stepSecurityDesc:
+      "Protege tus registros financieros con desbloqueo por huella biométrica o PIN seguro.",
+    stepProTitle: "Finance Pro - De por vida",
+    stepProDesc:
+      "Desbloquea cuentas ilimitadas, copia en la nube, adjuntos, recibos y rollover de presupuestos.",
+    stepRestorePurchasesTitle: "Restaurar compras",
+    stepRestorePurchasesDesc:
+      "Restaura tu licencia Pro activa si reinstalas la app o cambias de dispositivo.",
+    stepWhatsNewTitle: "Novedades",
+    stepWhatsNewDesc:
+      "Consulta las últimas funciones, notas de versión, correcciones de errores y mejoras.",
   },
   resetData: {
     dismissAccessibility:

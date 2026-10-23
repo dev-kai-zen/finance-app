@@ -21,6 +21,9 @@ export interface NoteSortFilterBarProps {
   onViewModeChange: (mode: NoteViewMode) => void;
   sortBy: NoteSortOption;
   onSortByChange: (sort: NoteSortOption) => void;
+  searchRef?: React.Ref<View>;
+  viewModeRef?: React.Ref<View>;
+  sortFilterRef?: React.Ref<View>;
 }
 
 const SORT_OPTIONS: { id: NoteSortOption; label: string }[] = [
@@ -37,6 +40,9 @@ export function NoteSortFilterBar({
   onViewModeChange,
   sortBy,
   onSortByChange,
+  searchRef,
+  viewModeRef,
+  sortFilterRef,
 }: NoteSortFilterBarProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -50,7 +56,11 @@ export function NoteSortFilterBar({
   return (
     <View style={styles.container}>
       {/* Search Input */}
-      <View style={styles.searchContainer}>
+      <View
+        collapsable={false}
+        ref={searchRef}
+        style={styles.searchContainer}
+      >
         <Search color={theme.colors.textMuted} size={16} />
         <TextInput
           accessibilityLabel="Search notes"
@@ -75,7 +85,11 @@ export function NoteSortFilterBar({
       {/* Action Controls: View Switch + Sort Trigger */}
       <View style={styles.controlsRow}>
         {/* View Mode Toggle */}
-        <View style={styles.segmentedControl}>
+        <View
+          collapsable={false}
+          ref={viewModeRef}
+          style={styles.segmentedControl}
+        >
           <Pressable
             accessibilityLabel="Tiles View"
             accessibilityRole="button"
@@ -115,15 +129,17 @@ export function NoteSortFilterBar({
         </View>
 
         {/* Sort Button */}
-        <Pressable
-          accessibilityLabel="Sort options"
-          accessibilityRole="button"
-          onPress={() => setSortSheetOpen(true)}
-          style={styles.sortButton}
-        >
-          <ArrowUpDown color={theme.colors.textSecondary} size={15} />
-          <Text style={styles.sortButtonText}>{currentSortLabel}</Text>
-        </Pressable>
+        <View collapsable={false} ref={sortFilterRef}>
+          <Pressable
+            accessibilityLabel="Sort options"
+            accessibilityRole="button"
+            onPress={() => setSortSheetOpen(true)}
+            style={styles.sortButton}
+          >
+            <ArrowUpDown color={theme.colors.textSecondary} size={15} />
+            <Text style={styles.sortButtonText}>{currentSortLabel}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Sort selection action bottom sheet */}

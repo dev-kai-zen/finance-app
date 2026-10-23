@@ -15,6 +15,8 @@ export const DEVELOPER_MODE_SETTING_KEY = "developer.mode";
 
 export const EXPERIENCE_HOME_SETTING_KEY = "experience.home";
 
+export const GUIDE_HELPER_SETTING_KEY = "experience.guideHelper";
+
 export const FORM_FIELD_SETTING_KEYS = {
   transactionName: "form.transactionName",
   split: "form.split",
@@ -59,6 +61,32 @@ export const PROMPT_SETTING_KEYS = {
   quickPresetsOfferDismissed: "prompt.quickPresetsOfferDismissed",
   transfersOfferDismissed: "prompt.transfersOfferDismissed",
   creditCardsOfferDismissed: "prompt.creditCardsOfferDismissed",
+  dashboardWalkthroughDismissed: "prompt.dashboardWalkthroughDismissed",
+  accountsWalkthroughDismissed: "prompt.accountsWalkthroughDismissed",
+  transactionsWalkthroughDismissed: "prompt.transactionsWalkthroughDismissed",
+  calendarWalkthroughDismissed: "prompt.calendarWalkthroughDismissed",
+  categoriesWalkthroughDismissed: "prompt.categoriesWalkthroughDismissed",
+  budgetsWalkthroughDismissed: "prompt.budgetsWalkthroughDismissed",
+  goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
+  notesWalkthroughDismissed: "prompt.notesWalkthroughDismissed",
+  settingsWalkthroughDismissed: "prompt.settingsWalkthroughDismissed",
+  firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
+  firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
+  firstGoalCelebrated: "prompt.firstGoalCelebrated",
+  firstScheduleCelebrated: "prompt.firstScheduleCelebrated",
+  accountFormWalkthroughDismissed: "prompt.accountFormWalkthroughDismissed",
+  accountGroupSetupWalkthroughDismissed:
+    "prompt.accountGroupSetupWalkthroughDismissed",
+  accountTypeFormWalkthroughDismissed:
+    "prompt.accountTypeFormWalkthroughDismissed",
+  transactionFormWalkthroughDismissed:
+    "prompt.transactionFormWalkthroughDismissed",
+  scheduledTransactionsWalkthroughDismissed:
+    "prompt.scheduledTransactionsWalkthroughDismissed",
+  scheduledTransactionFormWalkthroughDismissed:
+    "prompt.scheduledTransactionFormWalkthroughDismissed",
+  budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
+  goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
 } as const;
 
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";

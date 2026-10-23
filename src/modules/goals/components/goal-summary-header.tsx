@@ -10,11 +10,13 @@ import type { GoalSummaryStats } from "../types/goal.types";
 export interface GoalSummaryHeaderProps {
   summary: GoalSummaryStats;
   currencyCode?: string;
+  totalTargetRef?: React.Ref<View>;
 }
 
 export function GoalSummaryHeader({
   summary,
   currencyCode = "PHP",
+  totalTargetRef,
 }: GoalSummaryHeaderProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -35,7 +37,7 @@ export function GoalSummaryHeader({
   return (
     <View style={styles.container}>
       {/* Main Hero Card */}
-      <View style={styles.heroCard}>
+      <View collapsable={false} ref={totalTargetRef} style={styles.heroCard}>
         <View style={styles.heroTopRow}>
           <View>
             <Text style={styles.heroSubheading}>TOTAL TARGET</Text>

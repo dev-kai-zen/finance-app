@@ -23,6 +23,9 @@ export interface ScheduledOccurrenceCardProps {
   onSkip: (occurrenceId: string) => void;
   onEdit?: (schedule: ScheduledTransaction) => void;
   pending?: boolean;
+  cardRef?: React.Ref<View>;
+  skipRef?: React.Ref<View>;
+  postRef?: React.Ref<View>;
 }
 
 export function ScheduledOccurrenceCard({
@@ -35,6 +38,9 @@ export function ScheduledOccurrenceCard({
   onSkip,
   onEdit,
   pending = false,
+  cardRef,
+  skipRef,
+  postRef,
 }: ScheduledOccurrenceCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -48,7 +54,11 @@ export function ScheduledOccurrenceCard({
   const dueDateTime = occurrence.effectiveDueAt ?? occurrence.nominalDueAt;
 
   return (
-    <View style={[styles.card, isFailed && styles.cardFailed]}>
+    <View
+      ref={cardRef}
+      collapsable={false}
+      style={[styles.card, isFailed && styles.cardFailed]}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardMain}>
           <View style={styles.titleRow}>
@@ -135,6 +145,7 @@ export function ScheduledOccurrenceCard({
         <View style={styles.rightActions}>
           <AppButton
             accessibilityLabel="Skip occurrence"
+            buttonRef={skipRef}
             disabled={pending}
             label="Skip"
             leading={
@@ -146,6 +157,7 @@ export function ScheduledOccurrenceCard({
           />
           <AppButton
             accessibilityLabel={isFailed ? "Retry action" : "Post action"}
+            buttonRef={postRef}
             disabled={pending}
             label={isFailed ? "Retry Action" : "Post Action"}
             leading={

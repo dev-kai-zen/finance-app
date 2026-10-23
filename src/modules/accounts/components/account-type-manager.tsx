@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -11,6 +11,17 @@ import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  WalkthroughRegistryProvider,
+  DraggableTourChip,
+  AccountGroupSetupWalkthroughOverlay,
+  useAccountGroupSetupWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
 import { isSystemOthersAccountTypeId } from "@/modules/accounts/constants/account-types.constants";
@@ -22,21 +33,33 @@ import type {
 } from "@/modules/accounts/types/account.types";
 import { isProtectedAccountType } from "@/modules/accounts/utils/account-type-protection";
 
-export function AccountTypeManager({
-  visible,
-  types,
-  accounts,
-  mutations,
-  onClose,
-}: {
+export type AccountTypeManagerProps = {
   visible: boolean;
   types: AccountType[];
   accounts: AccountListItem[];
   mutations: AccountMutations;
   onClose: () => void;
-}) {
+};
+
+export function AccountTypeManager(props: AccountTypeManagerProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <AccountTypeManagerContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function AccountTypeManagerContent({
+  visible,
+  types,
+  accounts,
+  mutations,
+  onClose,
+}: AccountTypeManagerProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPromptDismissed } = useExperiencePreferences();
   const [group, setGroup] = useState<AccountGroup>("asset");
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
@@ -46,7 +69,61 @@ export function AccountTypeManager({
   const reorderableTypes = visibleTypes.filter(
     (type) => !isSystemOthersAccountTypeId(type.id),
   );
+  const showReorder = reorderableTypes.length > 1;
   const activeColor = group === "asset" ? theme.colors.success : theme.colors.danger;
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const pickerRef = useWalkthroughTarget("accountGroupPicker");
+  const reorderRef = useWalkthroughTarget(showReorder ? "accountGroupReorder" : null);
+  const newGroupRef = useWalkthroughTarget("accountGroupNew");
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useAccountGroupSetupWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+    showReorder,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      editor ||
+      deleting ||
+      !visible ||
+      isPromptDismissed("accountGroupSetupWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [
+    deleting,
+    editor,
+    isPromptDismissed,
+    visible,
+    walkthrough.startWalkthrough,
+  ]);
 
   const back = () => {
     setEditor(null);
@@ -126,35 +203,42 @@ export function AccountTypeManager({
         visible
         onClose={onClose}
       >
-        <ScrollView contentContainerStyle={styles.formContent}>
-          <View style={styles.segmentRow}>
-            {(["asset", "liability"] as const).map((item) => (
-              <Pressable
-                key={item}
-                disabled={mutations.pending}
-                onPress={() => setGroup(item)}
-                style={[
-                  styles.segment,
-                  group === item &&
-                    (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
-                ]}
-              >
-                <Text
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+        <ScrollView ref={scrollRef}>
+          <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
+          <View ref={pickerRef} collapsable={false} style={styles.segmentRow}>
+              {(["asset", "liability"] as const).map((item) => (
+                <Pressable
+                  key={item}
+                  disabled={mutations.pending}
+                  onPress={() => setGroup(item)}
                   style={[
-                    styles.segmentText,
-                    group === item && styles.segmentTextActive,
+                    styles.segment,
+                    group === item &&
+                      (item === "asset" ? styles.segmentActiveAsset : styles.segmentActiveLiability),
                   ]}
                 >
-                  {item === "asset" ? "Assets" : "Liabilities"}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      group === item && styles.segmentTextActive,
+                    ]}
+                  >
+                    {item === "asset" ? "Assets" : "Liabilities"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
           <View style={styles.toolbar}>
-            {reorderableTypes.length > 1 ? (
-                <Pressable
-                  accessibilityLabel="Reorder account groups"
+            {showReorder ? (
+              <Pressable
+                ref={reorderRef as never}
+                collapsable={false}
+                accessibilityLabel="Reorder account groups"
                   accessibilityRole="button"
                   disabled={mutations.pending}
                   onPress={() => setReorderVisible(true)}
@@ -170,23 +254,25 @@ export function AccountTypeManager({
             ) : null}
 
             <Pressable
+              ref={newGroupRef as never}
+              collapsable={false}
               accessibilityLabel="New Account Group"
-              accessibilityRole="button"
-              disabled={mutations.pending}
-              onPress={() => {
-                mutations.clearError();
-                setEditor({});
-              }}
-              style={({ pressed }) => [
-                styles.toolbarChip,
-                styles.toolbarChipPrimary,
-                { borderColor: activeColor },
-                pressed && styles.toolbarChipPressed,
-              ]}
-            >
-              <IconHelper color={activeColor} name="plus" size={15} />
-              <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
-            </Pressable>
+                accessibilityRole="button"
+                disabled={mutations.pending}
+                onPress={() => {
+                  mutations.clearError();
+                  setEditor({});
+                }}
+                style={({ pressed }) => [
+                  styles.toolbarChip,
+                  styles.toolbarChipPrimary,
+                  { borderColor: activeColor },
+                  pressed && styles.toolbarChipPressed,
+                ]}
+              >
+                <IconHelper color={activeColor} name="plus" size={15} />
+                <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
+              </Pressable>
           </View>
 
           {visibleTypes.length === 0 ? (
@@ -235,7 +321,18 @@ export function AccountTypeManager({
               );
             })
           )}
+          </View>
         </ScrollView>
+        <AccountGroupSetupWalkthroughOverlay
+          visible={walkthrough.isWalkthroughActive}
+          stepIndex={walkthrough.activeStepIndex}
+          totalSteps={walkthrough.totalSteps}
+          step={walkthrough.currentStep}
+          targetLayout={walkthrough.activeTargetLayout}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+        />
       </FullScreenFormModal>
 
       <SortableListModal

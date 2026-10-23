@@ -2,6 +2,7 @@ import type { DbContext } from "@/infrastructure/database/client";
 import {
   DEVELOPER_MODE_SETTING_KEY,
   EXPERIENCE_HOME_SETTING_KEY,
+  GUIDE_HELPER_SETTING_KEY,
   FORM_FIELD_SETTING_KEYS,
   GUIDED_SETUP_STRATEGY,
   NAV_HREF_BY_VISIBILITY_KEY,
@@ -112,6 +113,24 @@ export function setHomeExperienceMode(
 ): void {
   saveSettingsEntries(
     { [EXPERIENCE_HOME_SETTING_KEY]: mode },
+    context,
+  );
+  notifyListeners();
+}
+
+export function getGuideHelperEnabled(context?: DbContext): boolean {
+  const raw = getSettingByKey(GUIDE_HELPER_SETTING_KEY, context);
+  return parseStoredBoolean(raw, true);
+}
+
+export function setGuideHelperEnabled(
+  enabled: boolean,
+  context?: DbContext,
+): void {
+  saveSettingsEntries(
+    {
+      [GUIDE_HELPER_SETTING_KEY]: enabled ? "true" : "false",
+    },
     context,
   );
   notifyListeners();

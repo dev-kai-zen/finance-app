@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -19,6 +20,7 @@ import {
   KeyboardAwareForm,
   NotificationModal,
 } from "@/components";
+import { HexColorFormModal, useHexColors, type HexColorInput } from "@/modules/hex-colors";
 import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
@@ -47,17 +49,24 @@ export function CategoryFormModal({
   error = null,
   onClearError,
 }: CategoryFormModalProps) {
+  if (!visible) {
+    return null;
+  }
+
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { addColor } = useHexColors();
 
   const isSubcategory = Boolean(categoryToEdit?.parentId || initialParentId);
 
   const [name, setName] = useState("");
   const [type, setType] = useState<CategoryType>(initialType);
   const [selectedColor, setSelectedColor] = useState<string>("slate");
+  const [customColors, setCustomColors] = useState<string[]>([]);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [selectedIcon, setSelectedIcon] = useState<string>("tag");
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -65,7 +74,19 @@ export function CategoryFormModal({
   const categoricalColor =
     selectedColor in theme.colors.categorical
       ? theme.colors.categorical[selectedColor as keyof AppTheme["colors"]["categorical"]]
-      : theme.colors.primary;
+      : selectedColor.startsWith("#")
+        ? selectedColor
+        : theme.colors.primary;
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    if (!customColors.includes(created.hex)) {
+      setCustomColors((prev) => [...prev, created.hex]);
+    }
+    setSelectedColor(created.hex);
+    setIsColorFormOpen(false);
+    return true;
+  };
 
   useEffect(() => {
     if (visible) {
@@ -171,183 +192,226 @@ export function CategoryFormModal({
           >
             {/* Category Type Toggle */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>CATEGORY TYPE</Text>
+              <Text style={styles.fieldLabel}>GROUP TYPE</Text>
               <View style={styles.typeSegment}>
-                <Pressable
-                  accessibilityLabel="Expense category"
-                  accessibilityRole="button"
-                  disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
-                  onPress={() => setType("expense")}
-                  style={[
-                    styles.typeOption,
-                    type === "expense" && styles.typeOptionActiveExpense,
-                    isSubcategory && { opacity: 0.6 },
-                  ]}
-                >
-                  <Text
+                  <Pressable
+                    accessibilityLabel="Expense category"
+                    accessibilityRole="button"
+                    disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
+                    onPress={() => setType("expense")}
                     style={[
-                      styles.typeOptionText,
-                      type === "expense" && styles.typeOptionTextActiveColored,
+                      styles.typeOption,
+                      type === "expense" && styles.typeOptionActiveExpense,
+                      isSubcategory && { opacity: 0.6 },
                     ]}
                   >
-                    Expense
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.typeOptionText,
+                        type === "expense" && styles.typeOptionTextActiveColored,
+                      ]}
+                    >
+                      Expense
+                    </Text>
+                  </Pressable>
 
-                <Pressable
-                  accessibilityLabel="Income category"
-                  accessibilityRole="button"
-                  disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
-                  onPress={() => setType("income")}
-                  style={[
-                    styles.typeOption,
-                    type === "income" && styles.typeOptionActiveIncome,
-                    isSubcategory && { opacity: 0.6 },
-                  ]}
-                >
-                  <Text
+                  <Pressable
+                    accessibilityLabel="Income category"
+                    accessibilityRole="button"
+                    disabled={Boolean(categoryToEdit?.isSystem) || isSubcategory}
+                    onPress={() => setType("income")}
                     style={[
-                      styles.typeOptionText,
-                      type === "income" && styles.typeOptionTextActiveColored,
+                      styles.typeOption,
+                      type === "income" && styles.typeOptionActiveIncome,
+                      isSubcategory && { opacity: 0.6 },
                     ]}
                   >
-                    Income
-                  </Text>
-                </Pressable>
-              </View>
+                    <Text
+                      style={[
+                        styles.typeOptionText,
+                        type === "income" && styles.typeOptionTextActiveColored,
+                      ]}
+                    >
+                      Income
+                    </Text>
+                  </Pressable>
+                </View>
             </View>
 
             {/* Category Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
               <TextInput
-                accessibilityLabel="Category name"
-                autoFocus={!categoryToEdit}
-                maxLength={50}
-                onChangeText={setName}
-                placeholder="e.g. Subscriptions, Groceries"
-                placeholderTextColor={theme.colors.textMuted}
-                style={styles.textInput}
-                value={name}
-              />
-            </View>
-
-            {/* Color Selector */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>THEME COLOR</Text>
-              <View style={styles.colorPalette}>
-                {CATEGORY_COLOR_KEYS.map((colKey) => {
-                  const hex = theme.colors.categorical[colKey];
-                  const isSelected = selectedColor === colKey;
-
-                  return (
-                    <Pressable
-                      key={colKey}
-                      accessibilityLabel={`Select color ${colKey}`}
-                      accessibilityRole="button"
-                      onPress={() => setSelectedColor(colKey)}
-                      style={[
-                        styles.colorSwatch,
-                        { backgroundColor: hex },
-                        isSelected && styles.colorSwatchSelected,
-                      ]}
-                    >
-                      {isSelected ? <View style={styles.colorCheckDot} /> : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
+                  accessibilityLabel="Category name"
+                  autoFocus={!categoryToEdit}
+                  maxLength={50}
+                  onChangeText={setName}
+                  placeholder="e.g. Subscriptions, Groceries"
+                  placeholderTextColor={theme.colors.textMuted}
+                  style={styles.textInput}
+                  value={name}
+                />
             </View>
 
             {/* Icon Selector */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CATEGORY ICON</Text>
               <Pressable
-                accessibilityLabel="Choose category icon"
-                accessibilityRole="button"
-                onPress={() => setIsIconPickerOpen(true)}
-                style={styles.iconSelectTrigger}
-              >
-                <View style={styles.iconPreviewLeft}>
+                  accessibilityLabel="Choose category icon"
+                  accessibilityRole="button"
+                  onPress={() => setIsIconPickerOpen(true)}
+                  style={styles.iconSelectTrigger}
+                >
+                  <View style={styles.iconPreviewLeft}>
+                    <View
+                      style={[
+                        styles.iconPreviewBadge,
+                        {
+                          backgroundColor: `${categoricalColor}22`,
+                          borderColor: `${categoricalColor}55`,
+                        },
+                      ]}
+                    >
+                      <IconHelper
+                        color={categoricalColor}
+                        name={selectedIcon}
+                        size={22}
+                      />
+                    </View>
+                    <View style={styles.iconInfoCol}>
+                      <Text style={styles.iconNameText}>{selectedIcon}</Text>
+                      <Text style={styles.iconSubtext}>
+                        Tap to browse 100+ icons in library
+                      </Text>
+                    </View>
+                  </View>
                   <View
                     style={[
-                      styles.iconPreviewBadge,
-                      {
-                        backgroundColor: `${categoricalColor}22`,
-                        borderColor: `${categoricalColor}55`,
-                      },
+                      styles.changeIconBadge,
+                      { borderColor: `${categoricalColor}66` },
                     ]}
                   >
-                    <IconHelper
-                      color={categoricalColor}
-                      name={selectedIcon}
-                      size={22}
-                    />
-                  </View>
-                  <View style={styles.iconInfoCol}>
-                    <Text style={styles.iconNameText}>{selectedIcon}</Text>
-                    <Text style={styles.iconSubtext}>
-                      Tap to browse 100+ icons in library
+                    <Text style={[styles.changeIconBadgeText, { color: categoricalColor }]}>
+                      Change ▾
                     </Text>
                   </View>
+                </Pressable>
+            </View>
+
+            {/* Color Selector */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.fieldLabel}>THEME COLOR</Text>
+              <View style={styles.colorPalette}>
+                  {CATEGORY_COLOR_KEYS.map((colKey) => {
+                    const hex = theme.colors.categorical[colKey];
+                    const isSelected = selectedColor === colKey;
+
+                    return (
+                      <Pressable
+                        key={colKey}
+                        accessibilityLabel={`Select color ${colKey}`}
+                        accessibilityRole="button"
+                        onPress={() => setSelectedColor(colKey)}
+                        style={[
+                          styles.colorSwatch,
+                          { backgroundColor: hex },
+                          isSelected && styles.colorSwatchSelected,
+                        ]}
+                      >
+                        {isSelected ? <View style={styles.colorCheckDot} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                  {customColors.map((hex) => {
+                    const isSelected = selectedColor === hex;
+                    return (
+                      <Pressable
+                        key={hex}
+                        accessibilityLabel={`Select custom color ${hex}`}
+                        accessibilityRole="button"
+                        onPress={() => setSelectedColor(hex)}
+                        style={[
+                          styles.colorSwatch,
+                          { backgroundColor: hex },
+                          isSelected && styles.colorSwatchSelected,
+                        ]}
+                      >
+                        {isSelected ? <View style={styles.colorCheckDot} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                  <Pressable
+                      accessibilityLabel="Add custom color"
+                      accessibilityRole="button"
+                      onPress={() => setIsColorFormOpen(true)}
+                      style={({ pressed }) => [
+                        styles.addColorSwatch,
+                        { borderColor: theme.colors.primary },
+                        pressed && styles.addColorSwatchPressed,
+                      ]}
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={20}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
                 </View>
-                <View
-                  style={[
-                    styles.changeIconBadge,
-                    { borderColor: `${categoricalColor}66` },
-                  ]}
-                >
-                  <Text style={[styles.changeIconBadgeText, { color: categoricalColor }]}>
-                    Change ▾
-                  </Text>
-                </View>
-              </Pressable>
             </View>
           </KeyboardAwareForm>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>
             <Pressable
-              accessibilityLabel="Cancel"
-              accessibilityRole="button"
-              onPress={onClose}
-              style={styles.cancelBtn}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
+                accessibilityLabel="Cancel"
+                accessibilityRole="button"
+                onPress={onClose}
+                style={styles.cancelBtn}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
 
             <Pressable
-              accessibilityLabel={
-                pending
-                  ? "Saving..."
-                  : isSubcategory
-                    ? categoryToEdit
-                      ? "Update Subcategory"
-                      : "Create Subcategory"
-                    : categoryToEdit
-                      ? "Update Category"
-                      : "Create Category"
-              }
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={handleSave}
-              style={[styles.saveBtn, pending && styles.saveBtnDisabled]}
-            >
-              <Text style={styles.saveBtnText}>
-                {pending
-                  ? "Saving..."
-                  : isSubcategory
-                    ? categoryToEdit
-                      ? "Update Subcategory"
-                      : "Create Subcategory"
-                    : categoryToEdit
-                      ? "Update Category"
-                      : "Create Category"}
-              </Text>
-            </Pressable>
+                accessibilityLabel={
+                  pending
+                    ? "Saving..."
+                    : isSubcategory
+                      ? categoryToEdit
+                        ? "Update Subcategory"
+                        : "Create Subcategory"
+                      : categoryToEdit
+                        ? "Update Category"
+                        : "Create Category"
+                }
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={handleSave}
+                style={[
+                  styles.saveBtn,
+                  pending && styles.saveBtnDisabled,
+                ]}
+              >
+                <Text style={styles.saveBtnText}>
+                  {pending
+                    ? "Saving..."
+                    : isSubcategory
+                      ? categoryToEdit
+                        ? "Update Subcategory"
+                        : "Create Subcategory"
+                      : categoryToEdit
+                        ? "Update Category"
+                        : "Create Category"}
+                </Text>
+              </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      <HexColorFormModal
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
+      />
 
       <IconPickerModal
         onClose={() => setIsIconPickerOpen(false)}
@@ -534,6 +598,18 @@ function createStyles(theme: AppTheme) {
       borderRadius: 3,
       height: 6,
       width: 6,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderRadius: 18,
+      borderStyle: "dashed",
+      borderWidth: 2,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    addColorSwatchPressed: {
+      opacity: 0.6,
     },
     iconGrid: {
       flexDirection: "row",

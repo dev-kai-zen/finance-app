@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
+  View,
   type PressableProps,
   type StyleProp,
   type TextStyle,
@@ -30,6 +31,7 @@ export interface AppButtonProps
   leading?: ReactNode;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  buttonRef?: Ref<View>;
 }
 
 export function AppButton({
@@ -41,6 +43,7 @@ export function AppButton({
   disabled,
   style,
   textStyle,
+  buttonRef,
   ...props
 }: AppButtonProps) {
   const theme = useAppTheme();
@@ -57,6 +60,8 @@ export function AppButton({
 
   return (
     <Pressable
+      ref={buttonRef as never}
+      collapsable={false}
       {...props}
       accessibilityLabel={props.accessibilityLabel ?? label}
       accessibilityRole="button"

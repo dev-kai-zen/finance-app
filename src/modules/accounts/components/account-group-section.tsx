@@ -19,6 +19,7 @@ import { compareAccountTypesForDisplay } from "@/modules/accounts/utils/account-
 import {
   convertCurrencyMinorUnits,
 } from "@/utils/currency";
+import { useWalkthroughTarget, type WalkthroughTargetId } from "@/modules/walkthrough";
 
 export function AccountGroupSection({
   group,
@@ -32,6 +33,7 @@ export function AccountGroupSection({
   onTogglePockets,
   expandedPocketAccountIds,
   pockets,
+  walkthroughTargetId,
 }: {
   group: AccountGroup;
   accounts: AccountListItem[];
@@ -44,9 +46,11 @@ export function AccountGroupSection({
   onTogglePockets: (accountId: string) => void;
   expandedPocketAccountIds: ReadonlySet<string>;
   pockets: PocketListItem[];
+  walkthroughTargetId?: WalkthroughTargetId;
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const sectionRef = useWalkthroughTarget(walkthroughTargetId ?? null);
   const grouped = accounts.filter(
     (a) => a.accountType?.accountGroup === group,
   );
@@ -143,49 +147,84 @@ export function AccountGroupSection({
     return sortedGroups;
   }, [grouped, types, group]);
 
+  const headerContent = (
+    <View style={styles.headerRow}>
+      <Text style={styles.groupTitle}>
+        {isAsset ? "ASSETS" : "LIABILITIES"}
+      </Text>
+      {groupTotalNumber !== null ? (
+        <AccountAmountText
+          amountMinorUnits={groupTotalNumber}
+          currencyCode={preferences.defaultCurrency}
+          variant="title"
+        />
+      ) : (
+        <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
+      )}
+    </View>
+  );
+
+  const firstGroupContent =
+    typeGroups.length === 0 ? (
+      <View style={styles.emptyCard}>
+        <Text style={styles.emptyText}>
+          No {isAsset ? "asset" : "liability"} accounts added yet. Tap + to
+          add your first account.
+        </Text>
+      </View>
+    ) : (
+      <AccountTypeGroupCard
+        key={typeGroups[0].accountType.id}
+        accountType={typeGroups[0].accountType}
+        accounts={typeGroups[0].accounts}
+        expandedPocketAccountIds={expandedPocketAccountIds}
+        pockets={pockets}
+        onAddPocket={onAddPocket}
+        onEditType={onEditType}
+        onEditPocket={onEditPocket}
+        onSelectAccount={onSelect}
+        onSort={onSort}
+        onTogglePockets={onTogglePockets}
+      />
+    );
+
+  const remainingCards =
+    typeGroups.length > 1 ? (
+      <View
+        style={[
+          styles.typeGroupsList,
+          walkthroughTargetId ? styles.remainingGroupsList : undefined,
+        ]}
+      >
+        {typeGroups.slice(1).map((typeGroup) => (
+          <AccountTypeGroupCard
+            key={typeGroup.accountType.id}
+            accountType={typeGroup.accountType}
+            accounts={typeGroup.accounts}
+            expandedPocketAccountIds={expandedPocketAccountIds}
+            pockets={pockets}
+            onAddPocket={onAddPocket}
+            onEditType={onEditType}
+            onEditPocket={onEditPocket}
+            onSelectAccount={onSelect}
+            onSort={onSort}
+            onTogglePockets={onTogglePockets}
+          />
+        ))}
+      </View>
+    ) : null;
+
   return (
     <View style={styles.sectionContainer}>
-      <View style={styles.headerRow}>
-        <Text style={styles.groupTitle}>
-          {isAsset ? "ASSETS" : "LIABILITIES"}
-        </Text>
-        {groupTotalNumber !== null ? (
-          <AccountAmountText
-            amountMinorUnits={groupTotalNumber}
-            currencyCode={preferences.defaultCurrency}
-            variant="title"
-          />
-        ) : (
-          <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
-        )}
+      <View
+        ref={walkthroughTargetId ? sectionRef : undefined}
+        collapsable={false}
+        style={walkthroughTargetId ? styles.targetContainer : undefined}
+      >
+        {headerContent}
+        {firstGroupContent}
       </View>
-
-      {typeGroups.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>
-            No {isAsset ? "asset" : "liability"} accounts added yet. Tap + to
-            add your first account.
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.typeGroupsList}>
-          {typeGroups.map((typeGroup) => (
-            <AccountTypeGroupCard
-              key={typeGroup.accountType.id}
-              accountType={typeGroup.accountType}
-              accounts={typeGroup.accounts}
-              expandedPocketAccountIds={expandedPocketAccountIds}
-              pockets={pockets}
-              onAddPocket={onAddPocket}
-              onEditType={onEditType}
-              onEditPocket={onEditPocket}
-              onSelectAccount={onSelect}
-              onSort={onSort}
-              onTogglePockets={onTogglePockets}
-            />
-          ))}
-        </View>
-      )}
+      {remainingCards}
     </View>
   );
 }
@@ -195,6 +234,12 @@ function createStyles(theme: AppTheme) {
     sectionContainer: {
       gap: theme.spacing.md,
       marginBottom: theme.spacing.xl,
+    },
+    targetContainer: {
+      gap: theme.spacing.md,
+    },
+    remainingGroupsList: {
+      marginTop: -(theme.spacing.md - theme.spacing.sm),
     },
     headerRow: {
       alignItems: "center",

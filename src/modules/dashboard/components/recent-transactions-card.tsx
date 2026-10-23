@@ -8,6 +8,7 @@ import { useResolveEntityColor } from "@/modules/hex-colors";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import type { TransactionListItem } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 
 export interface RecentTransactionsCardProps {
   transactions: TransactionListItem[];
@@ -26,9 +27,10 @@ export function RecentTransactionsCard({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const cardRef = useWalkthroughTarget("recentTxCard");
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>Recent Transactions</Text>
         <Pressable

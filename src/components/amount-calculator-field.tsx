@@ -20,6 +20,8 @@ export interface AmountCalculatorFieldProps {
   /** When true, shows `unsetDisplayLabel` instead of a formatted zero amount. */
   amountUnset?: boolean;
   unsetDisplayLabel?: string;
+  currencyRef?: React.Ref<View>;
+  amountInputRef?: React.Ref<View>;
 }
 
 export function AmountCalculatorField({
@@ -36,6 +38,8 @@ export function AmountCalculatorField({
   onPressCurrency,
   amountUnset = false,
   unsetDisplayLabel = "Required",
+  currencyRef,
+  amountInputRef,
 }: AmountCalculatorFieldProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -62,7 +66,10 @@ export function AmountCalculatorField({
         {labelAccessory}
       </View>
       <View style={styles.row}>
-        <View style={[styles.amountShell, disabled && styles.amountShellDisabled]}>
+        <View
+          ref={amountInputRef}
+          style={[styles.amountShell, disabled && styles.amountShellDisabled]}
+        >
           {showSignToggle ? (
             <Pressable
               accessibilityLabel={
@@ -120,25 +127,27 @@ export function AmountCalculatorField({
         </View>
 
         {showCurrencyPill ? (
-          onPressCurrency ? (
-            <Pressable
-              accessibilityLabel={`Currency ${currencyCode}. Tap to change.`}
-              accessibilityRole="button"
-              disabled={disabled}
-              onPress={onPressCurrency}
-              style={({ pressed }) => [
-                styles.currencyPill,
-                styles.currencyPillPressable,
-                pressed && styles.currencyPillPressed,
-              ]}
-            >
-              <Text style={styles.currencyPillText}>{currencyCode}</Text>
-            </Pressable>
-          ) : (
-            <View style={styles.currencyPill}>
-              <Text style={styles.currencyPillText}>{currencyCode}</Text>
-            </View>
-          )
+          <View ref={currencyRef}>
+            {onPressCurrency ? (
+              <Pressable
+                accessibilityLabel={`Currency ${currencyCode}. Tap to change.`}
+                accessibilityRole="button"
+                disabled={disabled}
+                onPress={onPressCurrency}
+                style={({ pressed }) => [
+                  styles.currencyPill,
+                  styles.currencyPillPressable,
+                  pressed && styles.currencyPillPressed,
+                ]}
+              >
+                <Text style={styles.currencyPillText}>{currencyCode}</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.currencyPill}>
+                <Text style={styles.currencyPillText}>{currencyCode}</Text>
+              </View>
+            )}
+          </View>
         ) : null}
       </View>
     </View>

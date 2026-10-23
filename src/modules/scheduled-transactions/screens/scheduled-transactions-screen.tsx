@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   CalendarClock,
   Pause,
@@ -23,11 +23,24 @@ import { AccountSearchBox } from "@/modules/accounts/components/account-search-b
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  DraggableTourChip,
+  FirstScheduleCongratulationsModal,
+  ScheduledTransactionsWalkthroughOverlay,
+  useScheduledTransactionsWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
 import { useScheduledTransactions } from "../hooks/use-scheduled-transactions";
 import type {
+  SaveScheduledTransactionInput,
   ScheduleOccurrence,
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
@@ -52,6 +65,14 @@ const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
 ];
 
 export function ScheduledTransactionsScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <ScheduledTransactionsScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function ScheduledTransactionsScreenContent() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
@@ -88,6 +109,20 @@ export function ScheduledTransactionsScreen() {
     ReadonlySet<ScheduleListFilter>
   >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
   const [searchQuery, setSearchQuery] = useState("");
+
+  const searchRef = useWalkthroughTarget("scheduledSearch");
+  const filterRef = useWalkthroughTarget("scheduledFilter");
+  const fabRef = useWalkthroughTarget("scheduledFab");
+  const firstItemRef = useWalkthroughTarget("scheduledFirstItem");
+  const dueCardRef = useWalkthroughTarget("scheduledDueCard");
+  const dueSkipRef = useWalkthroughTarget("scheduledDueSkip");
+  const duePostRef = useWalkthroughTarget("scheduledDuePost");
+  const pageScrollRef = useRef<ScrollView | null>(null);
+  const scrollContentRef = useRef<View | null>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
+  const [showCongrats, setShowCongrats] = useState(false);
 
   const searchContext = useMemo((): ScheduleListSearchContext => {
     const accountById = new Map(
@@ -229,6 +264,68 @@ export function ScheduledTransactionsScreen() {
     });
   };
 
+  const hasSchedules = activeSchedules.length > 0;
+  const showDueSection =
+    selectedFilters.has("active") && actionableOccurrences.length > 0;
+  const showFirstItem = visibleSchedules.length > 0;
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "scheduledFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        pageScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useScheduledTransactionsWalkthrough({
+    hasSchedules,
+    hasDueSchedule: showDueSection,
+    showDueSection,
+    showFirstItem,
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("scheduledTransactionsWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, loading, walkthrough.startWalkthrough]);
+
+  const handleSave = (
+    input: SaveScheduledTransactionInput,
+    id?: string,
+  ) => {
+    const isFirst = schedules.length === 0 && !editingSchedule;
+    const success = save(input, id);
+    if (success && isFirst && !isPromptDismissed("firstScheduleCelebrated")) {
+      dismissPrompt("firstScheduleCelebrated");
+      setShowCongrats(true);
+    }
+    return success;
+  };
+
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
   }));
@@ -239,10 +336,13 @@ export function ScheduledTransactionsScreen() {
       floatingAction={
         <FloatingActionButton
           accessibilityLabel="Create scheduled transaction"
+          fabRef={fabRef}
           icon={<CalendarClock color={theme.colors.onPrimary} size={24} />}
           onPress={openNew}
         />
       }
+      scrollContentRef={scrollContentRef}
+      scrollRef={pageScrollRef}
     >
       <View style={styles.content}>
         {error ? (
@@ -257,13 +357,14 @@ export function ScheduledTransactionsScreen() {
           onChangeText={setSearchQuery}
           placeholder="Search name, account, category..."
           style={styles.searchBox}
+          targetRef={searchRef}
           value={searchQuery}
         />
 
-        {selectedFilters.has("active") && actionableOccurrences.length > 0 ? (
+        {showDueSection ? (
           <View style={styles.dueSection}>
             <Text style={styles.sectionHeading}>Needs attention</Text>
-            {actionableOccurrences.map((occurrence) => {
+            {actionableOccurrences.map((occurrence, index) => {
               const schedule = scheduleById.get(occurrence.scheduleId);
               if (!schedule) return null;
               const source = accounts.find(
@@ -279,14 +380,17 @@ export function ScheduledTransactionsScreen() {
               return (
                 <ScheduledOccurrenceCard
                   key={occurrence.id}
+                  cardRef={index === 0 ? dueCardRef : undefined}
                   category={category}
                   destinationAccount={destination}
                   occurrence={occurrence}
-                  onEdit={openEdit}
+                  onEdit={undefined}
                   onPost={handlePost}
                   onSkip={skipOccurrence}
                   pending={pending}
+                  postRef={index === 0 ? duePostRef : undefined}
                   schedule={schedule}
+                  skipRef={index === 0 ? dueSkipRef : undefined}
                   sourceAccount={source}
                 />
               );
@@ -298,6 +402,8 @@ export function ScheduledTransactionsScreen() {
           <Text style={styles.sectionHeading}>Schedules</Text>
           <View
             accessibilityLabel="Schedule status filters"
+            collapsable={false}
+            ref={filterRef}
             style={styles.filterOptions}
           >
             {SCHEDULE_FILTER_OPTIONS.map((option) => (
@@ -323,7 +429,7 @@ export function ScheduledTransactionsScreen() {
             title={emptyStateContent.title}
           />
         ) : (
-          visibleSchedules.map((schedule) => {
+          visibleSchedules.map((schedule, index) => {
             const source = accounts.find(
               (account) => account.id === schedule.accountId,
             );
@@ -341,6 +447,8 @@ export function ScheduledTransactionsScreen() {
             return (
               <View
                 key={schedule.id}
+                collapsable={false}
+                ref={index === 0 ? firstItemRef : undefined}
                 style={[
                   styles.scheduleCard,
                   schedule.archivedAt && styles.archivedScheduleCard,
@@ -507,7 +615,7 @@ export function ScheduledTransactionsScreen() {
           setFormVisible(false);
           setEditingSchedule(null);
         }}
-        onSave={save}
+        onSave={handleSave}
         pending={pending}
         pockets={pockets}
         visible={formVisible}
@@ -609,6 +717,31 @@ export function ScheduledTransactionsScreen() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <DraggableTourChip
+        onPress={walkthrough.startWalkthrough}
+        visible={!walkthrough.isWalkthroughActive}
+      />
+
+      <ScheduledTransactionsWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
+      />
+
+      <FirstScheduleCongratulationsModal
+        onClose={() => setShowCongrats(false)}
+        onStartTour={() => {
+          setShowCongrats(false);
+          walkthrough.startWalkthrough();
+        }}
+        visible={showCongrats}
       />
     </PageContainer>
   );

@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Archive } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 
 export interface ArchivedAccountsChipProps {
   count: number;
@@ -11,9 +12,12 @@ export interface ArchivedAccountsChipProps {
 export function ArchivedAccountsChip({ count, onPress }: ArchivedAccountsChipProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const chipRef = useWalkthroughTarget("archivedChip");
 
   return (
     <Pressable
+        ref={chipRef as never}
+        collapsable={false}
         accessibilityLabel={`Archived accounts and pockets: ${count}. Tap to view.`}
         accessibilityRole="button"
         onPress={onPress}

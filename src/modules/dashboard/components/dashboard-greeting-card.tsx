@@ -15,7 +15,9 @@ export interface DashboardGreetingCardProps {
   nickname?: string | null;
 }
 
-export function DashboardGreetingCard({ nickname }: DashboardGreetingCardProps) {
+export function DashboardGreetingCard({
+  nickname,
+}: DashboardGreetingCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ArrowDownLeft,
@@ -38,12 +38,29 @@ import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-c
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components/settings-default-account-picker-modal";
 import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-modal";
+import {
+  DraggableTourChip,
+  SettingsWalkthroughOverlay,
+  useSettingsWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
 
 export function SettingsScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <SettingsScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function SettingsScreenContent() {
   const router = useRouter();
   const styles = useThemeStyles(createStyles);
   const {
@@ -90,6 +107,58 @@ export function SettingsScreen() {
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
+  const { isPromptDismissed } = experience;
+
+  // Walkthrough targets & coordination
+  const languageRef = useWalkthroughTarget("settingsLanguage");
+  const currencyRef = useWalkthroughTarget("settingsCurrency");
+  const nicknameRef = useWalkthroughTarget("settingsNickname");
+  const themeRef = useWalkthroughTarget("settingsTheme");
+  const remindersRef = useWalkthroughTarget("settingsReminders");
+  const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
+  const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
+  const hexColorsRef = useWalkthroughTarget("settingsHexColors");
+  const resetDataRef = useWalkthroughTarget("settingsResetData");
+  const localBackupRef = useWalkthroughTarget("settingsLocalBackup");
+  const googleDriveRef = useWalkthroughTarget("settingsGoogleDrive");
+  const securityRef = useWalkthroughTarget("settingsSecurity");
+  const proRef = useWalkthroughTarget("settingsPro");
+  const restorePurchasesRef = useWalkthroughTarget("settingsRestorePurchases");
+  const whatsNewRef = useWalkthroughTarget("settingsWhatsNew");
+
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const itemScrollY = useRef<Record<string, number>>({});
+  const didAutoStartWalkthroughRef = useRef(false);
+
+  const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
+    const offset = itemScrollY.current[targetId];
+    if (offset !== undefined) {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
+        animated: true,
+      });
+    }
+  }, []);
+
+  const walkthrough = useSettingsWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("settingsWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+
   const languageValue =
     preference === "system"
       ? t("settings.languageSystemValue", {
@@ -120,14 +189,34 @@ export function SettingsScreen() {
       })}`;
 
   return (
-    <PageContainer>
+    <PageContainer
+      scrollRef={scrollRef}
+      floatingAction={
+        <DraggableTourChip
+          defaultPlacement="top-left"
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+      }
+    >
       <View style={styles.container}>
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["localization"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>
             {t("settings.localizationSection")}
           </Text>
           <View style={styles.card}>
             <Pressable
+              ref={languageRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsLanguage"] =
+                  (sectionOffsets.current["localization"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.languageAccessibility", {
                 language: languageValue,
               })}
@@ -153,6 +242,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={currencyRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsCurrency"] =
+                  (sectionOffsets.current["localization"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.currencySetupAccessibility")}
               accessibilityRole="button"
               onPress={() => router.push("/currency-setup")}
@@ -183,12 +278,23 @@ export function SettingsScreen() {
           style={{ marginBottom: theme.spacing.lg }}
         />
 
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["general"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>
             {t("settings.generalSection")}
           </Text>
           <View style={styles.card}>
             <Pressable
+              ref={nicknameRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsNickname"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.nicknameTitle")}
               accessibilityRole="button"
               onPress={() => setIsNicknameModalOpen(true)}
@@ -214,6 +320,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={themeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsTheme"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.themeAccessibility", {
                 theme: theme.name,
               })}
@@ -242,6 +354,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={remindersRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsReminders"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.remindersAccessibility", {
                 defaultValue: "Configure reminder settings",
               })}
@@ -270,7 +388,34 @@ export function SettingsScreen() {
 
             <View style={styles.rowDivider} />
 
+            <View style={styles.toggleRow}>
+              <View style={styles.iconContainer}>
+                <Sparkles color="#00A3FF" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.guideHelperTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.guideHelperDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.guideHelperTitle")}
+                onValueChange={(value) => experience.setGuideHelper(value)}
+                value={experience.guideHelperEnabled}
+              />
+            </View>
+
+            <View style={styles.rowDivider} />
+
             <Pressable
+              ref={defaultExpenseRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDefaultExpense"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.defaultExpenseAccessibility", {
                 account: expenseAccountName,
               })}
@@ -298,6 +443,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={defaultIncomeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDefaultIncome"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.defaultIncomeAccessibility", {
                 account: incomeAccountName,
               })}
@@ -325,6 +476,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={hexColorsRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsHexColors"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.hexColorsAccessibility", {
                 count: colors.length,
               })}
@@ -354,6 +511,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={resetDataRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsResetData"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.resetDataAccessibility")}
               accessibilityRole="button"
               onPress={() => {
@@ -378,10 +541,21 @@ export function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["backup"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>{t("settings.backupSection")}</Text>
           <View style={styles.card}>
             <Pressable
+              ref={localBackupRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsLocalBackup"] =
+                  (sectionOffsets.current["backup"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.localBackupAccessibility")}
               accessibilityRole="button"
               onPress={() => router.push("/local-backup")}
@@ -404,6 +578,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={googleDriveRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGoogleDrive"] =
+                  (sectionOffsets.current["backup"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.googleDriveAccessibility")}
               accessibilityRole="button"
               onPress={() => router.push("/google-drive-backup")}
@@ -450,10 +630,21 @@ export function SettingsScreen() {
           ) : null}
         </View>
 
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["security"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>{t("settings.securitySection")}</Text>
           <View style={styles.card}>
             <Pressable
+              ref={securityRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsSecurity"] =
+                  (sectionOffsets.current["security"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.securityMenuAccessibility")}
               accessibilityRole="button"
               onPress={() => setIsSecurityOpen(true)}
@@ -489,10 +680,21 @@ export function SettingsScreen() {
         </View>
 
         {/* Kaizen Pro Section */}
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["pro"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>{t("pro.paywallTitle")}</Text>
           <View style={styles.card}>
             <Pressable
+              ref={proRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsPro"] =
+                  (sectionOffsets.current["pro"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityRole="button"
               onPress={() => setIsPaywallOpen(true)}
               style={({ pressed }) => [
@@ -519,6 +721,12 @@ export function SettingsScreen() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={restorePurchasesRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsRestorePurchases"] =
+                  (sectionOffsets.current["pro"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityRole="button"
               disabled={isRestoring}
               onPress={async () => {
@@ -671,10 +879,21 @@ export function SettingsScreen() {
           </View>
         ) : null}
 
-        <View style={styles.section}>
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["about"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
           <Text style={styles.sectionTitle}>{t("settings.aboutSection")}</Text>
           <View style={styles.card}>
             <Pressable
+              ref={whatsNewRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsWhatsNew"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.whatsNewAccessibility")}
               accessibilityRole="button"
               onPress={() => setIsWhatsNewOpen(true)}
@@ -696,6 +915,18 @@ export function SettingsScreen() {
           </View>
         </View>
       </View>
+
+      {/* Settings Walkthrough Overlay */}
+      <SettingsWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
+      />
 
       <WhatsNewModal
         blocks={getLatestReleaseNotes()}

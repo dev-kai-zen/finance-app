@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   AlertTriangle,
@@ -20,6 +20,18 @@ import { CategoryPickerModal, type Category } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import {
+  BudgetFormWalkthroughOverlay,
+  DraggableTourChip,
+  useBudgetFormWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import type {
   BudgetFrequency,
   BudgetRolloverMode,
@@ -62,7 +74,16 @@ const FREQUENCY_DESCRIPTIONS: Record<BudgetFrequency, string> = {
   yearly: "Resets on January 1st every year",
 };
 
-export function BudgetFormModal({
+export function BudgetFormModal(props: BudgetFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <BudgetFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function BudgetFormModalContent({
   visible,
   onClose,
   onSave,
@@ -226,6 +247,56 @@ export function BudgetFormModal({
     }
   };
 
+  const saveRef = useWalkthroughTarget("budgetFormSave");
+  const formScrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "budgetFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        formScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useBudgetFormWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      initialBudget ||
+      isPromptDismissed("budgetFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [initialBudget, isPromptDismissed, walkthrough.startWalkthrough]);
+
   const handleDelete = () => {
     if (!initialBudget || !onDelete) return;
     void onDelete(initialBudget.id);
@@ -242,6 +313,7 @@ export function BudgetFormModal({
       <FullScreenFormModal
         deleteLabel="Remove budget"
         pending={pending}
+        saveButtonRef={saveRef}
         saveLabel="Save budget"
         title={
           initialBudget ? "Edit Category Budget" : "New Category Budget"
@@ -253,123 +325,133 @@ export function BudgetFormModal({
         onSave={() => void handleSave()}
       >
         <ScrollView
+          ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
+          <View collapsable={false} ref={scrollContentRef}>
               {/* Category Picker Selector */}
-              <View style={styles.section}>
-                <Text style={styles.fieldLabel}>CATEGORY</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  disabled={Boolean(initialBudget)}
-                  onPress={() => setIsCategoryPickerOpen(true)}
-                  style={[
-                    styles.selectorButton,
-                    Boolean(initialBudget) && styles.selectorDisabled,
-                  ]}
-                >
-                  <View style={styles.selectorLeft}>
-                    {selectedCategory ? (
-                      <View
-                        style={[
-                          styles.categoryIconWrap,
-                          { backgroundColor: `${categoryColor}20` },
-                        ]}
-                      >
-                        <IconHelper
-                          color={categoryColor}
-                          name={selectedCategory.icon || "tag"}
-                          size={18}
-                        />
-                      </View>
-                    ) : null}
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.selectorText,
-                        !selectedCategory && styles.placeholderText,
-                      ]}
-                    >
-                      {selectedCategory ? selectedCategory.name : "Select a category"}
-                    </Text>
-                  </View>
-                  {!initialBudget && (
-                    <ChevronRight color={theme.colors.textSecondary} size={18} />
-                  )}
-                </Pressable>
-              </View>
-
-              {/* Enable / Disable Switch */}
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <Text style={styles.switchTitle}>Enable Budget</Text>
-                  <Text style={styles.switchDescription}>
-                    Track expenses and evaluate spending limits
-                  </Text>
-                </View>
-                <ThemedSwitch
-                  accessibilityLabel="Enable Budget"
-                  disabled={pending}
-                  onValueChange={setIsEnabled}
-                  value={isEnabled}
-                />
-              </View>
-
-              {/* Amount Calculator Field */}
-              <View style={styles.section}>
-                <AmountCalculatorField
-                  amountMinorUnits={amountMinorUnits}
-                  amountSign="+"
-                  currencyCode="PHP"
-                  label={
-                    frequency === "custom_monthly"
-                      ? "DEFAULT MONTHLY AMOUNT"
-                      : "BUDGET AMOUNT"
-                  }
-                  onOpenCalculator={() => setIsCalculatorOpen(true)}
-                  showSignToggle={false}
-                />
-              </View>
-
-              {/* Frequency Picker Chips */}
-              <View style={styles.section}>
-                <Text style={styles.fieldLabel}>FREQUENCY</Text>
-                <ScrollView
-                  ref={frequencyScrollRef}
-                  contentContainerStyle={styles.frequencyRow}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                >
-                  {frequencyOptions.map((opt) => {
-                    const isSelected = frequency === opt.key;
-                    return (
-                      <Pressable
-                        key={opt.key}
-                        accessibilityRole="button"
-                        onPress={() => handleSelectFrequency(opt.key)}
-                        style={[
-                          styles.frequencyChip,
-                          isSelected && styles.frequencyChipSelected,
-                        ]}
-                      >
-                        <Text
+              <WalkthroughTarget id="budgetFormCategory">
+                <View style={styles.section}>
+                  <Text style={styles.fieldLabel}>CATEGORY</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    disabled={Boolean(initialBudget)}
+                    onPress={() => setIsCategoryPickerOpen(true)}
+                    style={[
+                      styles.selectorButton,
+                      Boolean(initialBudget) && styles.selectorDisabled,
+                    ]}
+                  >
+                    <View style={styles.selectorLeft}>
+                      {selectedCategory ? (
+                        <View
                           style={[
-                            styles.frequencyChipText,
-                            isSelected && styles.frequencyChipTextSelected,
+                            styles.categoryIconWrap,
+                            { backgroundColor: `${categoryColor}20` },
                           ]}
                         >
-                          {opt.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-                <Text style={styles.frequencyHelpText}>
-                  {FREQUENCY_DESCRIPTIONS[frequency]}
-                </Text>
-              </View>
+                          <IconHelper
+                            color={categoryColor}
+                            name={selectedCategory.icon || "tag"}
+                            size={18}
+                          />
+                        </View>
+                      ) : null}
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.selectorText,
+                          !selectedCategory && styles.placeholderText,
+                        ]}
+                      >
+                        {selectedCategory ? selectedCategory.name : "Select a category"}
+                      </Text>
+                    </View>
+                    {!initialBudget && (
+                      <ChevronRight color={theme.colors.textSecondary} size={18} />
+                    )}
+                  </Pressable>
+                </View>
+              </WalkthroughTarget>
+
+              {/* Enable / Disable Switch */}
+              <WalkthroughTarget id="budgetFormEnable">
+                <View style={styles.switchRow}>
+                  <View style={styles.switchTextCol}>
+                    <Text style={styles.switchTitle}>Enable Budget</Text>
+                    <Text style={styles.switchDescription}>
+                      Track expenses and evaluate spending limits
+                    </Text>
+                  </View>
+                  <ThemedSwitch
+                    accessibilityLabel="Enable Budget"
+                    disabled={pending}
+                    onValueChange={setIsEnabled}
+                    value={isEnabled}
+                  />
+                </View>
+              </WalkthroughTarget>
+
+              {/* Amount Calculator Field */}
+              <WalkthroughTarget id="budgetFormAmount">
+                <View style={styles.section}>
+                  <AmountCalculatorField
+                    amountMinorUnits={amountMinorUnits}
+                    amountSign="+"
+                    currencyCode="PHP"
+                    label={
+                      frequency === "custom_monthly"
+                        ? "DEFAULT MONTHLY AMOUNT"
+                        : "BUDGET AMOUNT"
+                    }
+                    onOpenCalculator={() => setIsCalculatorOpen(true)}
+                    showSignToggle={false}
+                  />
+                </View>
+              </WalkthroughTarget>
+
+              {/* Frequency Picker Chips */}
+              <WalkthroughTarget id="budgetFormFrequency">
+                <View style={styles.section}>
+                  <Text style={styles.fieldLabel}>FREQUENCY</Text>
+                  <ScrollView
+                    ref={frequencyScrollRef}
+                    contentContainerStyle={styles.frequencyRow}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {frequencyOptions.map((opt) => {
+                      const isSelected = frequency === opt.key;
+                      return (
+                        <Pressable
+                          key={opt.key}
+                          accessibilityRole="button"
+                          onPress={() => handleSelectFrequency(opt.key)}
+                          style={[
+                            styles.frequencyChip,
+                            isSelected && styles.frequencyChipSelected,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.frequencyChipText,
+                              isSelected && styles.frequencyChipTextSelected,
+                            ]}
+                          >
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                  <Text style={styles.frequencyHelpText}>
+                    {FREQUENCY_DESCRIPTIONS[frequency]}
+                  </Text>
+                </View>
+              </WalkthroughTarget>
 
               {/* Custom Monthly 12-Month Table */}
               {frequency === "custom_monthly" && (
@@ -382,30 +464,32 @@ export function BudgetFormModal({
               )}
 
               {/* Rollover Settings */}
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <View style={styles.labelWithIcon}>
-                    <RotateCw color={theme.colors.primary} size={16} />
-                    <Text style={styles.switchTitle}>Rollover Budget</Text>
-                    {!isPro && (
-                      <View style={styles.proChip}>
-                        <Crown color="#D97706" size={10} />
-                        <Text style={styles.proChipText}>PRO</Text>
-                      </View>
-                    )}
+              <WalkthroughTarget id="budgetFormRollover">
+                <View style={styles.switchRow}>
+                  <View style={styles.switchTextCol}>
+                    <View style={styles.labelWithIcon}>
+                      <RotateCw color={theme.colors.primary} size={16} />
+                      <Text style={styles.switchTitle}>Rollover Budget</Text>
+                      {!isPro && (
+                        <View style={styles.proChip}>
+                          <Crown color="#D97706" size={10} />
+                          <Text style={styles.proChipText}>PRO</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.switchDescription}>
+                      Unspent budget from the previous period carries over to the
+                      next
+                    </Text>
                   </View>
-                  <Text style={styles.switchDescription}>
-                    Unspent budget from the previous period carries over to the
-                    next
-                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel="Rollover Budget"
+                    disabled={pending}
+                    onValueChange={handleToggleRollover}
+                    value={allowRollover}
+                  />
                 </View>
-                <ThemedSwitch
-                  accessibilityLabel="Rollover Budget"
-                  disabled={pending}
-                  onValueChange={handleToggleRollover}
-                  value={allowRollover}
-                />
-              </View>
+              </WalkthroughTarget>
 
               {allowRollover && (
                 <View style={styles.subOptionContainer}>
@@ -451,29 +535,32 @@ export function BudgetFormModal({
               )}
 
               {/* Over-budget Warning Notification Setting */}
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <View style={styles.labelWithIcon}>
-                    <AlertTriangle color={theme.colors.warning} size={16} />
-                    <Text style={styles.switchTitle}>Over-Budget Alert</Text>
-                    {!isPro && (
-                      <View style={styles.proChip}>
-                        <Crown color="#D97706" size={10} />
-                        <Text style={styles.proChipText}>PRO</Text>
-                      </View>
-                    )}
+              <WalkthroughTarget id="budgetFormAlert">
+                <View style={styles.switchRow}>
+                  <View style={styles.switchTextCol}>
+                    <View style={styles.labelWithIcon}>
+                      <AlertTriangle color={theme.colors.warning} size={16} />
+                      <Text style={styles.switchTitle}>Over-Budget Alert</Text>
+                      {!isPro && (
+                        <View style={styles.proChip}>
+                          <Crown color="#D97706" size={10} />
+                          <Text style={styles.proChipText}>PRO</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.switchDescription}>
+                      Prompt a confirmation when an expense exceeds this budget
+                    </Text>
                   </View>
-                  <Text style={styles.switchDescription}>
-                    Prompt a confirmation when an expense exceeds this budget
-                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel="Over-Budget Alert"
+                    disabled={pending}
+                    onValueChange={handleToggleNotifyOnExceeded}
+                    value={notifyOnExceeded}
+                  />
                 </View>
-                <ThemedSwitch
-                  accessibilityLabel="Over-Budget Alert"
-                  disabled={pending}
-                  onValueChange={handleToggleNotifyOnExceeded}
-                  value={notifyOnExceeded}
-                />
-              </View>
+              </WalkthroughTarget>
+          </View>
         </ScrollView>
       </FullScreenFormModal>
 
@@ -514,6 +601,22 @@ export function BudgetFormModal({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <DraggableTourChip
+        onPress={walkthrough.startWalkthrough}
+        visible={!walkthrough.isWalkthroughActive}
+      />
+
+      <BudgetFormWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </>
   );

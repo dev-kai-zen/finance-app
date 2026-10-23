@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -18,7 +18,18 @@ import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
 import { hasTransactions } from "@/modules/transactions";
+import {
+  CategoriesWalkthroughOverlay,
+  DraggableTourChip,
+  useCategoriesWalkthrough,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  WalkthroughRegistryProvider,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { useFocusEffect } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { CategoryGroupCard } from "../components/category-group-card";
@@ -27,7 +38,15 @@ import { SubcategoryModal } from "../components/subcategory-modal";
 import { useCategories } from "../hooks/use-categories";
 import type { Category, CategoryType } from "../types/category.types";
 
-export function CategoriesScreen({
+export function CategoriesScreen(props: { initialView?: "group" }) {
+  return (
+    <WalkthroughRegistryProvider>
+      <CategoriesScreenContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CategoriesScreenContent({
   initialView,
 }: {
   initialView?: "group";
@@ -99,6 +118,91 @@ export function CategoriesScreen({
 
   const currentCategories = categories.filter((c) => c.type === selectedType);
 
+  // Walkthrough targets & coordination
+  const hasPresetsButton = hasExistingTransactions === false;
+  const canReorderGroups = currentCategories.length > 1;
+  const canReorderSubcategories = currentCategories.some(
+    (g) => (g.subcategories?.length ?? 0) > 1,
+  );
+  const hasCategoryGroups = !loading && currentCategories.length > 0;
+
+  const typeToggleRef = useWalkthroughTarget("catTypeToggle");
+  const reorderGroupsRef = useWalkthroughTarget(
+    canReorderGroups ? "catReorderGroups" : null,
+  );
+  const presetsIconRef = useWalkthroughTarget(
+    hasPresetsButton ? "catPresetsIcon" : null,
+  );
+  const newCategoryRef = useWalkthroughTarget("catNewCategory");
+  const firstGroupReorderSubRef = useWalkthroughTarget(
+    hasCategoryGroups && canReorderSubcategories
+      ? "catFirstGroupReorderSub"
+      : null,
+  );
+  const firstGroupAddSubRef = useWalkthroughTarget(
+    hasCategoryGroups ? "catFirstGroupAddSub" : null,
+  );
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
+
+  const walkthrough = useCategoriesWalkthrough({
+    hasPresetsButton,
+    canReorderGroups,
+    canReorderSubcategories,
+    hasCategoryGroups,
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  const { isPromptDismissed } = useExperiencePreferences();
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      hasExistingTransactions === null ||
+      isPromptDismissed("categoriesWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [
+    hasExistingTransactions,
+    isPromptDismissed,
+    loading,
+    walkthrough.startWalkthrough,
+  ]);
+
+  const firstReorderableGroupId =
+    currentCategories.find((g) => (g.subcategories?.length ?? 0) > 1)?.id ??
+    currentCategories[0]?.id;
+
   // Group Handlers
   const handleCreateGroup = () => {
     setGroupToEdit(null);
@@ -161,10 +265,19 @@ export function CategoriesScreen({
   };
 
   return (
-    <PageContainer>
+    <PageContainer
+      scrollContentRef={scrollContentRef}
+      scrollRef={scrollRef}
+      floatingAction={
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+      }
+    >
       <View style={styles.container}>
         {/* Category type chips */}
-        <View style={styles.tabRow}>
+        <View collapsable={false} ref={typeToggleRef} style={styles.tabRow}>
           <Pressable
             accessibilityLabel="Expenses"
             accessibilityRole="button"
@@ -219,7 +332,9 @@ export function CategoriesScreen({
               <Pressable
                 accessibilityLabel="Manage category presets"
                 accessibilityRole="button"
+                collapsable={false}
                 onPress={() => setPresetMenuVisible(true)}
+                ref={presetsIconRef}
                 style={({ pressed }) => [
                   styles.presetsButton,
                   pressed && styles.headerActionPressed,
@@ -235,7 +350,9 @@ export function CategoriesScreen({
               <Pressable
                 accessibilityLabel="Reorder Groups"
                 accessibilityRole="button"
+                collapsable={false}
                 onPress={() => setReorderGroupsVisible(true)}
+                ref={reorderGroupsRef}
                 style={[
                   styles.headerActionBtn,
                   { borderColor: `${activeColor}40` },
@@ -249,7 +366,9 @@ export function CategoriesScreen({
             <Pressable
               accessibilityLabel={`New ${selectedType === "expense" ? "expense" : "income"} category`}
               accessibilityRole="button"
+              collapsable={false}
               onPress={handleCreateGroup}
+              ref={newCategoryRef}
               style={({ pressed }) => [
                 styles.newGroupBtn,
                 { borderColor: activeColor },
@@ -276,9 +395,10 @@ export function CategoriesScreen({
           />
         ) : (
           <View style={[styles.groupsList, isDesktop && styles.groupsListDesktop]}>
-            {currentCategories.map((group) => (
+            {currentCategories.map((group, index) => (
               <CategoryGroupCard
                 key={group.id}
+                addSubRef={index === 0 ? firstGroupAddSubRef : undefined}
                 canDeleteGroup={!isProtectedCategoryId(group.id)}
                 group={group}
                 isExpanded={isGroupExpanded(group.id)}
@@ -289,6 +409,11 @@ export function CategoriesScreen({
                 onEditSubcategory={(sub) => handleEditSubcategory(group, sub)}
                 onReorderSubcategories={() => handleOpenReorderSubcategories(group)}
                 onToggleExpand={() => toggleExpand(group.id)}
+                reorderSubRef={
+                  group.id === firstReorderableGroupId
+                    ? firstGroupReorderSubRef
+                    : undefined
+                }
               />
             ))}
           </View>
@@ -458,6 +583,18 @@ export function CategoriesScreen({
           !isGroupModalVisible &&
           !isSubModalVisible
         }
+      />
+
+      {/* Categories Walkthrough Overlay */}
+      <CategoriesWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </PageContainer>
   );

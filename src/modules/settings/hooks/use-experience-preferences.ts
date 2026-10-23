@@ -4,6 +4,7 @@ import { useFocusEffect } from "expo-router";
 import {
   applyGuidedWorkspaceSimpleDefaults,
   getDeveloperModeEnabled,
+  getGuideHelperEnabled,
   getHiddenNavHrefs,
   getHomeExperienceMode,
   getNavVisibilityPreferences,
@@ -11,6 +12,7 @@ import {
   isPromptDismissed,
   isTransactionFormFieldEnabled,
   setDeveloperModeEnabled,
+  setGuideHelperEnabled,
   setHomeExperienceMode,
   setNavItemVisible,
   setPromptDismissed,
@@ -31,6 +33,9 @@ export function useExperiencePreferences() {
   const [developerMode, setDeveloperModeState] = useState(() =>
     getDeveloperModeEnabled(),
   );
+  const [guideHelperEnabled, setGuideHelperEnabledState] = useState(() =>
+    getGuideHelperEnabled(),
+  );
   const [homeMode, setHomeModeState] = useState<HomeExperienceMode>(() =>
     getHomeExperienceMode(),
   );
@@ -50,6 +55,7 @@ export function useExperiencePreferences() {
 
   const refresh = useCallback(() => {
     setDeveloperModeState(getDeveloperModeEnabled());
+    setGuideHelperEnabledState(getGuideHelperEnabled());
     setHomeModeState(getHomeExperienceMode());
     setFormFieldsState(getTransactionFormFieldPreferences());
     setNavVisibilityState(getNavVisibilityPreferences());
@@ -69,6 +75,14 @@ export function useExperiencePreferences() {
   const setDeveloperMode = useCallback(
     (enabled: boolean) => {
       setDeveloperModeEnabled(enabled);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const setGuideHelper = useCallback(
+    (enabled: boolean) => {
+      setGuideHelperEnabled(enabled);
       refresh();
     },
     [refresh],
@@ -149,6 +163,8 @@ export function useExperiencePreferences() {
 
   return {
     developerMode,
+    guideHelperEnabled,
+    setGuideHelper,
     developerUnlockNotice,
     dismissDeveloperUnlockNotice,
     registerSettingsTitleTap,

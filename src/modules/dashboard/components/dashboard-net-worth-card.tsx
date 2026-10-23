@@ -23,6 +23,7 @@ import type {
 } from "@/modules/dashboard/types/dashboard.types";
 import type { HomeExperienceMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 
 const PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
 
@@ -53,6 +54,11 @@ export function DashboardNetWorthCard({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { t } = useLocalization();
+  const cardRef = useWalkthroughTarget("netWorthCard");
+  const collapseRef = useWalkthroughTarget("collapseIcon");
+  const settingsRef = useWalkthroughTarget("settingsIcon");
+  const eyeRef = useWalkthroughTarget("eyeIcon");
+
   const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
@@ -90,7 +96,7 @@ export function DashboardNetWorthCard({
   );
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <View style={styles.titleGroup}>
           <Text style={styles.label}>
@@ -99,6 +105,8 @@ export function DashboardNetWorthCard({
         </View>
         <View style={styles.headerActions}>
           <Pressable
+            ref={collapseRef as any}
+            collapsable={false}
             accessibilityLabel={
               chartVisible ? "Hide net worth chart" : "Show net worth chart"
             }
@@ -118,6 +126,8 @@ export function DashboardNetWorthCard({
           </Pressable>
           {onHomeModeChange ? (
             <Pressable
+              ref={settingsRef as any}
+              collapsable={false}
               accessibilityLabel={t("dashboard.displayModeAccessibility")}
               accessibilityRole="button"
               hitSlop={5}
@@ -131,6 +141,8 @@ export function DashboardNetWorthCard({
             </Pressable>
           ) : null}
           <Pressable
+            ref={eyeRef as any}
+            collapsable={false}
             accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
             accessibilityRole="button"
             hitSlop={5}
@@ -309,7 +321,7 @@ export function DashboardNetWorthCard({
           visible={displayModeSheetVisible}
         />
       ) : null}
-    </View>
+      </View>
   );
 }
 

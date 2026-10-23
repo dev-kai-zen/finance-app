@@ -1,5 +1,18 @@
-import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
+import {
+  type LayoutChangeEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Crown } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -11,35 +24,97 @@ export interface CalendarTabsHeaderProps {
   scheduleCount: number;
   onSelectTab: (tab: CalendarTab) => void;
   isPro?: boolean;
+  transactionsRef?: React.Ref<View>;
+  schedulesRef?: React.Ref<View>;
+  netRef?: React.Ref<View>;
+  balanceSheetRef?: React.Ref<View>;
 }
 
-export function CalendarTabsHeader({
-  activeTab,
-  transactionCount,
-  scheduleCount,
-  onSelectTab,
-  isPro = true,
-}: CalendarTabsHeaderProps) {
+export interface CalendarTabsHeaderHandle {
+  scrollTabIntoView: (tab: CalendarTab) => void;
+}
+
+export const CalendarTabsHeader = forwardRef<
+  CalendarTabsHeaderHandle,
+  CalendarTabsHeaderProps
+>(function CalendarTabsHeader(
+  {
+    activeTab,
+    transactionCount,
+    scheduleCount,
+    onSelectTab,
+    isPro = true,
+    transactionsRef,
+    schedulesRef,
+    netRef,
+    balanceSheetRef,
+  },
+  ref,
+) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const tabLayouts = useRef<Partial<Record<CalendarTab, { x: number; width: number }>>>({});
 
   const formatCount = (count: number) => {
     if (count > 999) return "999+";
     return String(count);
   };
 
+  const handleTabLayout = (tab: CalendarTab) => (event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    tabLayouts.current[tab] = { x, width };
+    if (activeTab === tab) {
+      scrollViewRef.current?.scrollTo({
+        x: Math.max(0, x - 16),
+        animated: true,
+      });
+    }
+  };
+
+  const scrollTabIntoView = useCallback((tab: CalendarTab) => {
+    const layout = tabLayouts.current[tab];
+    if (layout) {
+      scrollViewRef.current?.scrollTo({
+        x: Math.max(0, layout.x - 16),
+        animated: true,
+      });
+      return;
+    }
+    if (tab === "balance_sheet") {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    } else if (tab === "transactions") {
+      scrollViewRef.current?.scrollTo({ x: 0, animated: true });
+    }
+  }, []);
+
+  useImperativeHandle(ref, () => ({ scrollTabIntoView }), [scrollTabIntoView]);
+
+  const handleContentSizeChange = () => {
+    scrollTabIntoView(activeTab);
+  };
+
+  useEffect(() => {
+    scrollTabIntoView(activeTab);
+  }, [activeTab, scrollTabIntoView]);
+
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        onContentSizeChange={handleContentSizeChange}
       >
         <Pressable
           accessibilityLabel="Transactions tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "transactions" }}
+          collapsable={false}
+          onLayout={handleTabLayout("transactions")}
           onPress={() => onSelectTab("transactions")}
+          ref={transactionsRef}
           style={[
             styles.tab,
             activeTab === "transactions" && styles.activeTab,
@@ -76,7 +151,10 @@ export function CalendarTabsHeader({
           accessibilityLabel="Schedules tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "schedules" }}
+          collapsable={false}
+          onLayout={handleTabLayout("schedules")}
           onPress={() => onSelectTab("schedules")}
+          ref={schedulesRef}
           style={[
             styles.tab,
             activeTab === "schedules" && styles.activeTab,
@@ -113,7 +191,10 @@ export function CalendarTabsHeader({
           accessibilityLabel="Net Earnings tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "net" }}
+          collapsable={false}
+          onLayout={handleTabLayout("net")}
           onPress={() => onSelectTab("net")}
+          ref={netRef}
           style={[
             styles.tab,
             activeTab === "net" && styles.activeTab,
@@ -139,7 +220,10 @@ export function CalendarTabsHeader({
           accessibilityLabel="Balance Sheet tab"
           accessibilityRole="tab"
           accessibilityState={{ selected: activeTab === "balance_sheet" }}
+          collapsable={false}
+          onLayout={handleTabLayout("balance_sheet")}
           onPress={() => onSelectTab("balance_sheet")}
+          ref={balanceSheetRef}
           style={[
             styles.tab,
             activeTab === "balance_sheet" && styles.activeTab,
@@ -163,7 +247,7 @@ export function CalendarTabsHeader({
       </ScrollView>
     </View>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
