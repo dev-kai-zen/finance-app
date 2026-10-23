@@ -345,7 +345,7 @@ export function DashboardWalkthroughOverlay({
                     : t("dashboard.walkthroughNext")}
                 </Text>
                 {stepIndex === totalSteps - 1 ? (
-                  <Check color={theme.colors.onPrimary} size={16} />
+                  <Sparkles color="#FFFFFF" size={15} />
                 ) : (
                   <ChevronRight color={theme.colors.onPrimary} size={16} />
                 )}
