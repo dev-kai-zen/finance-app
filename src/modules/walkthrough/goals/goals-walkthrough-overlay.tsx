@@ -301,13 +301,8 @@ function createStyles(theme: AppTheme) {
     highlightBorder: {
       position: "absolute",
       borderWidth: 2,
-      borderColor: theme.colors.primary,
+      borderColor: "#00A3FF",
       backgroundColor: "transparent",
-      shadowColor: theme.colors.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.5,
-      shadowRadius: 8,
-      elevation: 6,
     },
     interactiveForwarder: {
       position: "absolute",

@@ -362,14 +362,10 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     focusRing: {
-      borderColor: theme.colors.primary,
+      borderColor: "#00A3FF",
       borderWidth: 2,
       position: "absolute",
       backgroundColor: "transparent",
-      shadowColor: theme.colors.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.8,
-      shadowRadius: 8,
     },
     card: {
       backgroundColor: theme.colors.surface,
