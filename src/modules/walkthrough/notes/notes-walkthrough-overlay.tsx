@@ -192,38 +192,38 @@ export function NotesWalkthroughOverlay({
           />
         </Svg>
 
-        {/* Interactive touch forwarder on highlighted FAB */}
-        {targetLayout && isFabStep && onFabPress ? (
-          <Pressable
-            accessibilityLabel="Tap add note"
-            accessibilityRole="button"
-            onPress={onFabPress}
-            style={{
-              position: "absolute",
-              left: cutoutX,
-              top: cutoutY,
-              width: cutoutW,
-              height: cutoutH,
-              borderRadius: cutoutRadius,
-            }}
-          />
-        ) : null}
-
-        {/* Interactive touch forwarder on empty create button */}
-        {targetLayout && isEmptyCreateStep && onEmptyCreatePress ? (
-          <Pressable
-            accessibilityLabel="Tap create first note"
-            accessibilityRole="button"
-            onPress={onEmptyCreatePress}
-            style={{
-              position: "absolute",
-              left: cutoutX,
-              top: cutoutY,
-              width: cutoutW,
-              height: cutoutH,
-              borderRadius: cutoutRadius,
-            }}
-          />
+        {/* Target Focus Ring */}
+        {targetLayout ? (
+          <View
+            pointerEvents={isFabStep || isEmptyCreateStep ? "auto" : "none"}
+            style={[
+              styles.focusRing,
+              {
+                left: cutoutX,
+                top: cutoutY,
+                width: cutoutW,
+                height: cutoutH,
+                borderRadius: cutoutRadius,
+              },
+            ]}
+          >
+            {isFabStep && onFabPress ? (
+              <Pressable
+                accessibilityLabel="Tap add note"
+                accessibilityRole="button"
+                onPress={onFabPress}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
+            {isEmptyCreateStep && onEmptyCreatePress ? (
+              <Pressable
+                accessibilityLabel="Tap create first note"
+                accessibilityRole="button"
+                onPress={onEmptyCreatePress}
+                style={StyleSheet.absoluteFill}
+              />
+            ) : null}
+          </View>
         ) : null}
 
         {/* Tooltip Card */}
@@ -327,6 +327,12 @@ function createStyles(theme: AppTheme) {
     overlayContainer: {
       flex: 1,
       position: "relative",
+    },
+    focusRing: {
+      borderColor: "#00A3FF",
+      borderWidth: 2,
+      position: "absolute",
+      backgroundColor: "transparent",
     },
     card: {
       backgroundColor: theme.colors.surface,

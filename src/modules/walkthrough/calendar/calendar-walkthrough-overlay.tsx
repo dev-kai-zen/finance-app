@@ -174,6 +174,23 @@ export function CalendarWalkthroughOverlay({
           />
         </Svg>
 
+        {/* Target Focus Ring */}
+        {targetLayout ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.focusRing,
+              {
+                left: cutoutX,
+                top: cutoutY,
+                width: cutoutW,
+                height: cutoutH,
+                borderRadius: cutoutRadius,
+              },
+            ]}
+          />
+        ) : null}
+
         {/* Tooltip Card */}
         <View style={tooltipContainerStyle}>
           <View style={styles.card}>
@@ -275,6 +292,12 @@ function createStyles(theme: AppTheme) {
     overlayContainer: {
       flex: 1,
       position: "relative",
+    },
+    focusRing: {
+      borderColor: "#00A3FF",
+      borderWidth: 2,
+      position: "absolute",
+      backgroundColor: "transparent",
     },
     card: {
       backgroundColor: theme.colors.surface,
