@@ -8,7 +8,11 @@ export {
   isWalkthroughTargetVisible,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
 } from "./utils/walkthrough-viewport";
-export { DraggableTourChip } from "./components/draggable-tour-chip";
+export {
+  DraggableTourChip,
+  type DraggableTourChipProps,
+  type GuideChipPlacement,
+} from "./components/draggable-tour-chip";
 
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";
 export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulations-modal";

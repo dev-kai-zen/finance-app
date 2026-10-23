@@ -102,6 +102,9 @@ export const fil = {
     remindersTitle: "Mga Paalala",
     remindersDescription: "Araw-araw na pag-record at mga paalala sa bayarin",
     remindersAccessibility: "I-configure ang mga paalala",
+    guideHelperTitle: "Guide helper",
+    guideHelperDescription:
+      "Ipakita ang draggable na Guide button sa mga screen para ulitin ang walkthrough",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -436,7 +439,7 @@ export const fil = {
       "I-on ang credit cards at installments para sa mga card purchase.",
     promptCreditCardsAction: "I-on",
     promptDismiss: "Hindi muna",
-    walkthroughChip: "Tour",
+    walkthroughChip: "Guide",
     walkthroughSkip: "Laktawan",
     walkthroughNext: "Susunod",
     walkthroughBack: "Bumalik",

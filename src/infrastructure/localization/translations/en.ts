@@ -94,6 +94,9 @@ export const en = {
     remindersTitle: "Reminders",
     remindersDescription: "Daily logging and due bill reminders",
     remindersAccessibility: "Configure reminder settings",
+    guideHelperTitle: "Guide helper",
+    guideHelperDescription:
+      "Show a draggable Guide button on screens to replay walkthroughs",
     defaultAccountsSection: "DEFAULT ACCOUNTS",
     expense: "Expense",
     income: "Income",
@@ -423,7 +426,7 @@ export const en = {
       "Turn on credit cards and installments for card purchases.",
     promptCreditCardsAction: "Turn on",
     promptDismiss: "Not now",
-    walkthroughChip: "Tour",
+    walkthroughChip: "Guide",
     walkthroughSkip: "Skip",
     walkthroughNext: "Next",
     walkthroughBack: "Back",

@@ -102,6 +102,9 @@ export const es = {
     remindersTitle: "Recordatorios",
     remindersDescription: "Registro diario y alertas de facturas por vencer",
     remindersAccessibility: "Configurar recordatorios",
+    guideHelperTitle: "Asistente de guía",
+    guideHelperDescription:
+      "Muestra un botón Guía arrastrable en las pantallas para repetir los recorridos",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",

@@ -193,6 +193,7 @@ function SettingsScreenContent() {
       scrollRef={scrollRef}
       floatingAction={
         <DraggableTourChip
+          defaultPlacement="top-left"
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
@@ -384,6 +385,27 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <View style={styles.toggleRow}>
+              <View style={styles.iconContainer}>
+                <Sparkles color="#00A3FF" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.guideHelperTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.guideHelperDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.guideHelperTitle")}
+                onValueChange={(value) => experience.setGuideHelper(value)}
+                value={experience.guideHelperEnabled}
+              />
+            </View>
 
             <View style={styles.rowDivider} />
 

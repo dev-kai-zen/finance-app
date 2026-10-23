@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   PanResponder,
@@ -13,35 +13,100 @@ import { Sparkles } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { useExperiencePreferences } from "@/modules/settings/hooks/use-experience-preferences";
+
+export type GuideChipPlacement =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right";
 
 export interface DraggableTourChipProps {
   onPress: () => void;
   visible?: boolean;
+  defaultPlacement?: GuideChipPlacement;
 }
 
 const EDGE_MARGIN = 16;
 const DEFAULT_CHIP_WIDTH = 86;
 const DEFAULT_CHIP_HEIGHT = 36;
+const GUIDE_CHIP_BORDER = "#00A3FF";
+const FAB_CLEARANCE = 130;
+
+function computePlacementPosition(
+  placement: GuideChipPlacement,
+  width: number,
+  height: number,
+  chipWidth: number,
+  insets: { top: number; bottom: number },
+): { x: number; y: number } {
+  const minY = 8 + insets.top;
+  const maxY = Math.max(minY, height - insets.bottom - FAB_CLEARANCE);
+  const bottomY = Math.max(minY, maxY - DEFAULT_CHIP_HEIGHT);
+
+  switch (placement) {
+    case "top-left":
+      return { x: EDGE_MARGIN, y: minY };
+    case "top-right":
+      return {
+        x: Math.max(EDGE_MARGIN, width - chipWidth - EDGE_MARGIN),
+        y: minY,
+      };
+    case "bottom-right":
+      return {
+        x: Math.max(EDGE_MARGIN, width - chipWidth - EDGE_MARGIN),
+        y: bottomY,
+      };
+    case "bottom-left":
+    default:
+      return { x: EDGE_MARGIN, y: bottomY };
+  }
+}
 
 export function DraggableTourChip({
   onPress,
   visible = true,
+  defaultPlacement = "bottom-left",
 }: DraggableTourChipProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { guideHelperEnabled } = useExperiencePreferences();
 
   const [chipWidth, setChipWidth] = useState(DEFAULT_CHIP_WIDTH);
   const isDraggingRef = useRef(false);
+  const visibleRef = useRef(visible);
+  const onPressRef = useRef(onPress);
+  const layoutRef = useRef({ width, height, chipWidth, insets });
 
-  const initialX = Math.max(12, width - DEFAULT_CHIP_WIDTH - EDGE_MARGIN);
-  const initialY = 12;
+  visibleRef.current = visible;
+  onPressRef.current = onPress;
+  layoutRef.current = { width, height, chipWidth, insets };
 
-  const pan = useRef(new Animated.ValueXY({ x: initialX, y: initialY })).current;
-  const currentPos = useRef({ x: initialX, y: initialY });
+  const initialPos = computePlacementPosition(
+    defaultPlacement,
+    width,
+    height,
+    DEFAULT_CHIP_WIDTH,
+    insets,
+  );
+
+  const pan = useRef(new Animated.ValueXY(initialPos)).current;
+  const currentPos = useRef(initialPos);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const didApplyInitialPlacement = useRef(false);
+
+  const syncPanToPosition = useCallback(
+    (pos: { x: number; y: number }) => {
+      pan.stopAnimation();
+      pan.flattenOffset();
+      pan.setValue(pos);
+      currentPos.current = pos;
+    },
+    [pan],
+  );
 
   useEffect(() => {
     const listenerId = pan.addListener((value) => {
@@ -52,14 +117,45 @@ export function DraggableTourChip({
     };
   }, [pan]);
 
+  useEffect(() => {
+    if (didApplyInitialPlacement.current) return;
+    didApplyInitialPlacement.current = true;
+    const pos = computePlacementPosition(
+      defaultPlacement,
+      width,
+      height,
+      chipWidth,
+      insets,
+    );
+    syncPanToPosition(pos);
+  }, [
+    chipWidth,
+    defaultPlacement,
+    height,
+    insets,
+    syncPanToPosition,
+    width,
+  ]);
+
+  useEffect(() => {
+    if (visible) return;
+    pan.stopAnimation();
+    pan.flattenOffset();
+    isDraggingRef.current = false;
+  }, [pan, visible]);
+
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => visibleRef.current,
       onMoveShouldSetPanResponder: (_, gesture) => {
+        if (!visibleRef.current) return false;
         return Math.hypot(gesture.dx, gesture.dy) > 4;
       },
       onPanResponderGrant: () => {
+        if (!visibleRef.current) return;
         isDraggingRef.current = false;
+        pan.stopAnimation();
+        pan.flattenOffset();
         pan.setOffset({
           x: currentPos.current.x,
           y: currentPos.current.y,
@@ -74,6 +170,7 @@ export function DraggableTourChip({
         }).start();
       },
       onPanResponderMove: (_, gesture) => {
+        if (!visibleRef.current) return;
         if (!isDraggingRef.current && Math.hypot(gesture.dx, gesture.dy) > 4) {
           isDraggingRef.current = true;
         }
@@ -81,6 +178,12 @@ export function DraggableTourChip({
         pan.y.setValue(gesture.dy);
       },
       onPanResponderRelease: (_, gesture) => {
+        if (!visibleRef.current) {
+          pan.flattenOffset();
+          isDraggingRef.current = false;
+          return;
+        }
+
         pan.flattenOffset();
 
         Animated.spring(scaleAnim, {
@@ -92,18 +195,18 @@ export function DraggableTourChip({
 
         const distance = Math.hypot(gesture.dx, gesture.dy);
         if (distance < 6 && !isDraggingRef.current) {
-          onPress();
+          onPressRef.current();
           return;
         }
 
-        // Snap to nearest screen edge (left or right)
-        const snapToRight = currentPos.current.x > (width - chipWidth) / 2;
-        const targetX = snapToRight
-          ? width - chipWidth - EDGE_MARGIN
-          : EDGE_MARGIN;
+        const { width: w, chipWidth: cw, insets: ins } = layoutRef.current;
+        const screenHeight = layoutRef.current.height;
 
-        const minY = 8;
-        const maxY = Math.max(minY, height - insets.bottom - 130);
+        const snapToRight = currentPos.current.x > (w - cw) / 2;
+        const targetX = snapToRight ? w - cw - EDGE_MARGIN : EDGE_MARGIN;
+
+        const minY = 8 + ins.top;
+        const maxY = Math.max(minY, screenHeight - ins.bottom - FAB_CLEARANCE);
         const clampedY = Math.max(minY, Math.min(maxY, currentPos.current.y));
 
         Animated.spring(pan, {
@@ -113,27 +216,43 @@ export function DraggableTourChip({
           tension: 45,
         }).start();
       },
+      onPanResponderTerminate: () => {
+        pan.flattenOffset();
+        isDraggingRef.current = false;
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: false,
+          friction: 7,
+          tension: 40,
+        }).start();
+      },
     }),
   ).current;
 
-  if (!visible) {
+  if (!guideHelperEnabled) {
     return null;
   }
+
+  const chipLabel = t("dashboard.walkthroughChip");
 
   return (
     <Animated.View
       {...panResponder.panHandlers}
-      accessibilityLabel={t("dashboard.walkthroughChip")}
+      accessibilityElementsHidden={!visible}
+      accessibilityLabel={chipLabel}
       accessibilityRole="button"
+      importantForAccessibility={visible ? "auto" : "no-hide-descendants"}
       onLayout={(e) => {
         const layoutWidth = e.nativeEvent.layout.width;
         if (layoutWidth > 0 && Math.abs(layoutWidth - chipWidth) > 2) {
           setChipWidth(layoutWidth);
         }
       }}
+      pointerEvents={visible ? "auto" : "none"}
       style={[
         styles.floatingContainer,
         {
+          opacity: visible ? 1 : 0,
           transform: [
             { translateX: pan.x },
             { translateY: pan.y },
@@ -143,9 +262,9 @@ export function DraggableTourChip({
       ]}
     >
       <View style={styles.chipInner}>
-        <Sparkles color={theme.colors.primary} size={14} />
+        <Sparkles color={GUIDE_CHIP_BORDER} size={14} />
         <Text numberOfLines={1} style={styles.chipText}>
-          {t("dashboard.walkthroughChip")}
+          {chipLabel}
         </Text>
       </View>
     </Animated.View>
@@ -168,7 +287,7 @@ function createStyles(theme: AppTheme) {
     chipInner: {
       alignItems: "center",
       backgroundColor: theme.colors.surface,
-      borderColor: `${theme.colors.primary}45`,
+      borderColor: GUIDE_CHIP_BORDER,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1.5,
       flexDirection: "row",
@@ -178,7 +297,7 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: theme.spacing.md,
     },
     chipText: {
-      color: theme.colors.primary,
+      color: GUIDE_CHIP_BORDER,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.2,
