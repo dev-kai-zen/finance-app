@@ -1,5 +1,25 @@
 import type { WalkthroughStep } from "../types/walkthrough.types";
 
+export interface GetAccountFormWalkthroughStepsOptions {
+  showMaintainingBalance: boolean;
+  showPockets: boolean;
+}
+
+export function getAccountFormWalkthroughSteps({
+  showMaintainingBalance,
+  showPockets,
+}: GetAccountFormWalkthroughStepsOptions): WalkthroughStep[] {
+  return ACCOUNT_FORM_WALKTHROUGH_STEPS.filter((step) => {
+    if (step.id === "accountFormMaintainingBalance") {
+      return showMaintainingBalance;
+    }
+    if (step.id === "accountFormEnablePockets") {
+      return showPockets;
+    }
+    return true;
+  });
+}
+
 export const ACCOUNT_FORM_WALKTHROUGH_STEPS: WalkthroughStep[] = [
   {
     id: "accountFormName",

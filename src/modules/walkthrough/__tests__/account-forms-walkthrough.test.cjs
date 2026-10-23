@@ -17,7 +17,10 @@ require.extensions[".ts"] = function (module, filename) {
   module._compile(result.outputText, filename);
 };
 
-const { ACCOUNT_FORM_WALKTHROUGH_STEPS } = require("../accounts/account-form-walkthrough-steps.ts");
+const {
+  ACCOUNT_FORM_WALKTHROUGH_STEPS,
+  getAccountFormWalkthroughSteps,
+} = require("../accounts/account-form-walkthrough-steps.ts");
 const { ACCOUNT_GROUP_SETUP_WALKTHROUGH_STEPS } = require("../accounts/account-group-setup-walkthrough-steps.ts");
 const { ACCOUNT_TYPE_FORM_WALKTHROUGH_STEPS } = require("../accounts/account-type-form-walkthrough-steps.ts");
 const { en } = require("../../../infrastructure/localization/translations/en.ts");
@@ -45,6 +48,26 @@ test("account form walkthrough: defines all 11 required steps in exact order", (
   steps.forEach((step, idx) => {
     assert.equal(step.targetId, expectedTargetIds[idx]);
   });
+});
+
+test("account form walkthrough: omits fields that are not on the form", () => {
+  const assetSteps = getAccountFormWalkthroughSteps({
+    showMaintainingBalance: true,
+    showPockets: false,
+  });
+  assert.equal(assetSteps.some((step) => step.targetId === "accountFormEnablePockets"), false);
+  assert.equal(assetSteps.some((step) => step.targetId === "accountFormMaintainingBalance"), true);
+
+  const liabilitySteps = getAccountFormWalkthroughSteps({
+    showMaintainingBalance: false,
+    showPockets: true,
+  });
+  assert.equal(
+    liabilitySteps.some((step) => step.targetId === "accountFormMaintainingBalance"),
+    false,
+  );
+  assert.equal(liabilitySteps[0].targetId, "accountFormName");
+  assert.equal(liabilitySteps.at(-1).targetId, "accountFormOpeningDate");
 });
 
 test("account form walkthrough: translations exist in en, es, and fil", () => {

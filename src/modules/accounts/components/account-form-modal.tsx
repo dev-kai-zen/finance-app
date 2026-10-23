@@ -23,18 +23,20 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { useDefaultAccounts } from "@/modules/settings";
+import { useDefaultAccounts, useExperiencePreferences } from "@/modules/settings";
 import {
   CurrencyPickerModal,
   useCurrencyPreferences,
 } from "@/modules/currencies";
 import {
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   DraggableTourChip,
   AccountFormWalkthroughOverlay,
   useAccountFormWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { AccountAmountText } from "@/modules/accounts/components/account-amount-text";
 import { AccountTypeFormModal } from "@/modules/accounts/components/account-type-form-modal";
@@ -290,46 +292,65 @@ function AccountFormModalContent({
   }, [value.creditCardDetails?.creditLimit, currencyDivisor]);
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
+  const nameRef = useWalkthroughTarget("accountFormName");
+  const noteRef = useWalkthroughTarget("accountFormNote");
+  const typeRef = useWalkthroughTarget("accountFormType");
+  const iconRef = useWalkthroughTarget("accountFormIcon");
   const startingBalanceRef = useWalkthroughTarget("accountFormStartingBalance");
   const currencyPillRef = useWalkthroughTarget("accountFormCurrency");
+  const maintainingBalanceRef = useWalkthroughTarget(
+    isLiabilityAccount ? null : "accountFormMaintainingBalance",
+  );
+  const pocketsRef = useWalkthroughTarget(
+    pocketEligible ? "accountFormEnablePockets" : null,
+  );
+  const hideSelectionRef = useWalkthroughTarget("accountFormHideSelection");
+  const hideReportsRef = useWalkthroughTarget("accountFormHideReports");
+  const openingDateRef = useWalkthroughTarget("accountFormOpeningDate");
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    switch (targetId) {
-      case "accountFormName":
-      case "accountFormNote":
-      case "accountFormType":
-        scrollRef.current?.scrollTo({ y: 0, animated: true });
-        break;
-      case "accountFormIcon":
-        scrollRef.current?.scrollTo({ y: 60, animated: true });
-        break;
-      case "accountFormStartingBalance":
-      case "accountFormCurrency":
-        scrollRef.current?.scrollTo({ y: 160, animated: true });
-        break;
-      case "accountFormMaintainingBalance":
-        scrollRef.current?.scrollTo({ y: 280, animated: true });
-        break;
-      case "accountFormEnablePockets":
-        scrollRef.current?.scrollTo({ y: 360, animated: true });
-        break;
-      case "accountFormHideSelection":
-        scrollRef.current?.scrollTo({ y: 440, animated: true });
-        break;
-      case "accountFormHideReports":
-        scrollRef.current?.scrollTo({ y: 520, animated: true });
-        break;
-      case "accountFormOpeningDate":
-        scrollRef.current?.scrollTo({ y: 640, animated: true });
-        break;
-      default:
-        break;
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useAccountFormWalkthrough({
     onScrollToTarget: handleScrollToTarget,
+    showMaintainingBalance: !isLiabilityAccount,
+    showPockets: pocketEligible,
   });
+  const didAutoStartWalkthroughRef = useRef(false);
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("accountFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
 
   const handleCurrencySelect = (code: string) => {
     const normalized = code.trim().toUpperCase();
@@ -559,12 +580,12 @@ function AccountFormModalContent({
         />
         <KeyboardAwareForm
           ref={scrollRef}
-          contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <WalkthroughTarget id="accountFormName">
-            <Text style={styles.fieldLabel}>Account Name</Text>
+          <View ref={scrollContentRef} collapsable={false} style={styles.content}>
+          <Text style={styles.fieldLabel}>Account Name</Text>
             <TextInput
+              ref={nameRef as never}
               editable={!pending}
               maxLength={100}
               placeholder="Account Name"
@@ -573,11 +594,10 @@ function AccountFormModalContent({
               value={value.name}
               onChangeText={(name) => setValue((prev) => ({ ...prev, name }))}
             />
-          </WalkthroughTarget>
 
-          <WalkthroughTarget id="accountFormNote">
-            <Text style={styles.fieldLabel}>Note</Text>
+          <Text style={styles.fieldLabel}>Note</Text>
             <TextInput
+              ref={noteRef as never}
               editable={!pending}
               maxLength={1000}
               multiline
@@ -587,11 +607,11 @@ function AccountFormModalContent({
               value={value.note ?? ""}
               onChangeText={(note) => setValue((prev) => ({ ...prev, note }))}
             />
-          </WalkthroughTarget>
 
-          <WalkthroughTarget id="accountFormType">
-            <Text style={styles.fieldLabel}>Account Type</Text>
+          <Text style={styles.fieldLabel}>Account Type</Text>
             <Pressable
+              ref={typeRef as never}
+              collapsable={false}
               accessibilityLabel="Choose account type"
               accessibilityRole="button"
               disabled={pending}
@@ -610,11 +630,11 @@ function AccountFormModalContent({
               </Text>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </WalkthroughTarget>
 
-          <WalkthroughTarget id="accountFormIcon">
-            <Text style={styles.fieldLabel}>Account Icon</Text>
+          <Text style={styles.fieldLabel}>Account Icon</Text>
             <Pressable
+              ref={iconRef as never}
+              collapsable={false}
               accessibilityLabel={`Current icon: ${currentIconKey}. Tap to change icon.`}
               accessibilityRole="button"
               disabled={pending}
@@ -664,7 +684,6 @@ function AccountFormModalContent({
                 </Text>
               </View>
             </Pressable>
-          </WalkthroughTarget>
 
           <AmountCalculatorField
             amountInputRef={startingBalanceRef}
@@ -720,22 +739,24 @@ function AccountFormModalContent({
           )}
 
           {!isLiabilityAccount ? (
-            <WalkthroughTarget id="accountFormMaintainingBalance">
-              <AmountCalculatorField
-                amountMinorUnits={maintainingMinorUnits}
-                currencyCode={activeCurrencyCode}
-                disabled={pending}
-                label="Maintaining Balance"
-                showCurrencyPill
-                showSignToggle={false}
-                onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
-              />
-            </WalkthroughTarget>
+            <AmountCalculatorField
+              amountInputRef={maintainingBalanceRef}
+              amountMinorUnits={maintainingMinorUnits}
+              currencyCode={activeCurrencyCode}
+              disabled={pending}
+              label="Maintaining Balance"
+              showCurrencyPill
+              showSignToggle={false}
+              onOpenCalculator={() => setMaintainingCalculatorOpen(true)}
+            />
           ) : null}
 
           {pocketEligible ? (
-            <WalkthroughTarget id="accountFormEnablePockets">
-              <View style={styles.toggleRow}>
+            <View
+              ref={pocketsRef}
+              collapsable={false}
+              style={styles.toggleRow}
+            >
                 <View style={styles.toggleCopy}>
                   <Text style={styles.toggleLabel}>Enable pockets</Text>
                   <Text style={styles.toggleHint}>
@@ -750,12 +771,14 @@ function AccountFormModalContent({
                   }
                   value={value.pocketEnabled}
                 />
-              </View>
-            </WalkthroughTarget>
+            </View>
           ) : null}
 
-          <WalkthroughTarget id="accountFormHideSelection">
-            <View style={styles.toggleRow}>
+          <View
+            ref={hideSelectionRef}
+            collapsable={false}
+            style={styles.toggleRow}
+          >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
                   <Text style={styles.toggleLabel}>Hide from selection</Text>
@@ -776,11 +799,13 @@ function AccountFormModalContent({
                 onValueChange={handleToggleHideFromSelection}
                 value={value.hideFromSelection}
               />
-            </View>
-          </WalkthroughTarget>
+          </View>
 
-          <WalkthroughTarget id="accountFormHideReports">
-            <View style={styles.toggleRow}>
+          <View
+            ref={hideReportsRef}
+            collapsable={false}
+            style={styles.toggleRow}
+          >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
                   <Text style={styles.toggleLabel}>Hide from reports</Text>
@@ -801,8 +826,7 @@ function AccountFormModalContent({
                 onValueChange={handleToggleHideFromReports}
                 value={value.hideFromReports}
               />
-            </View>
-          </WalkthroughTarget>
+          </View>
 
           {account && !account.isArchived ? (
             <>
@@ -838,9 +862,10 @@ function AccountFormModalContent({
             </>
           ) : null}
 
-          <WalkthroughTarget id="accountFormOpeningDate">
-            <Text style={styles.fieldLabel}>Opening Date</Text>
+          <Text style={styles.fieldLabel}>Opening Date</Text>
             <Pressable
+              ref={openingDateRef as never}
+              collapsable={false}
               accessibilityLabel="Choose opening date"
               accessibilityRole="button"
               disabled={openingBalanceReadOnly}
@@ -852,7 +877,6 @@ function AccountFormModalContent({
               </Text>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-          </WalkthroughTarget>
 
           {isCreditCardType ? (
             <View style={styles.creditCardSection}>
@@ -968,6 +992,7 @@ function AccountFormModalContent({
               </Text>
             </View>
           ) : null}
+          </View>
         </KeyboardAwareForm>
         <AccountFormWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}
