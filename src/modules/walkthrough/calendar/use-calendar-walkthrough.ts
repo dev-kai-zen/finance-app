@@ -6,10 +6,11 @@ import { useWalkthroughRegistry } from "../components/walkthrough-target";
 
 export interface UseCalendarWalkthroughOptions {
   onTabChange?: (tab: "transactions" | "schedules" | "net" | "balance_sheet") => void;
+  onScrollToTarget?: (targetId: string) => void;
 }
 
 export function useCalendarWalkthrough(options: UseCalendarWalkthroughOptions = {}) {
-  const { onTabChange } = options;
+  const { onTabChange, onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
 
@@ -45,13 +46,14 @@ export function useCalendarWalkthrough(options: UseCalendarWalkthroughOptions = 
       }
 
       syncTabForStep(step);
+      onScrollToTarget?.(step.targetId);
 
       timerRef.current = setTimeout(async () => {
         const layout = await measureTarget(step.targetId);
         setActiveTargetLayout(layout);
       }, 350);
     },
-    [measureTarget, syncTabForStep],
+    [measureTarget, onScrollToTarget, syncTabForStep],
   );
 
   const startWalkthrough = useCallback(() => {

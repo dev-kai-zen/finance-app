@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ConfirmModal,
@@ -125,8 +125,15 @@ function CalendarScreenContent() {
   const netTabRef = useWalkthroughTarget("calNetTab");
   const balanceSheetTabRef = useWalkthroughTarget("calBalanceSheetTab");
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const walkthrough = useCalendarWalkthrough({
     onTabChange: setActiveTab,
+    onScrollToTarget: handleScrollToTarget,
   });
 
   const { isPromptDismissed } = useExperiencePreferences();
@@ -201,6 +208,7 @@ function CalendarScreenContent() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       floatingAction={
         <DraggableTourChip
           onPress={walkthrough.startWalkthrough}

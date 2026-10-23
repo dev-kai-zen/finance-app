@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -105,8 +105,17 @@ function BudgetsScreenContent() {
   const firstItemToggleRef = useWalkthroughTarget("budgetFirstItemToggle");
   const fabRef = useWalkthroughTarget("budgetFab");
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const hasBudgets = budgets.length > 0;
-  const walkthrough = useBudgetsWalkthrough({ hasBudgets });
+  const walkthrough = useBudgetsWalkthrough({
+    hasBudgets,
+    onScrollToTarget: handleScrollToTarget,
+  });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
 
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
@@ -181,6 +190,7 @@ function BudgetsScreenContent() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>

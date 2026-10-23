@@ -7,8 +7,12 @@ import {
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
 
-export function useBudgetsWalkthrough(options: GetBudgetsWalkthroughStepsOptions) {
-  const { hasBudgets } = options;
+export interface UseBudgetsWalkthroughOptions extends GetBudgetsWalkthroughStepsOptions {
+  onScrollToTarget?: (targetId: string) => void;
+}
+
+export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
+  const { hasBudgets, onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
 
@@ -32,12 +36,15 @@ export function useBudgetsWalkthrough(options: GetBudgetsWalkthroughStepsOptions
         clearTimeout(timerRef.current);
       }
 
+      onScrollToTarget?.(step.targetId);
+
+      // Wait 350ms for native animated scroll to settle before measuring
       timerRef.current = setTimeout(async () => {
         const layout = await measureTarget(step.targetId);
         setActiveTargetLayout(layout);
-      }, 100);
+      }, 350);
     },
-    [measureTarget],
+    [measureTarget, onScrollToTarget],
   );
 
   const startWalkthrough = useCallback(() => {

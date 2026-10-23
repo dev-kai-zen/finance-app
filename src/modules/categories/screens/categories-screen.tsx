@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -129,10 +129,17 @@ function CategoriesScreenContent({
     (g) => (g.subcategories?.length ?? 0) > 1,
   );
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const walkthrough = useCategoriesWalkthrough({
     hasPresetsButton,
     canReorderGroups,
     canReorderSubcategories,
+    onScrollToTarget: handleScrollToTarget,
   });
 
   const { isPromptDismissed } = useExperiencePreferences();
@@ -213,6 +220,7 @@ function CategoriesScreenContent({
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       floatingAction={
         <DraggableTourChip
           onPress={walkthrough.startWalkthrough}

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -72,8 +73,17 @@ function NotesScreenContent() {
   const firstNoteRef = useWalkthroughTarget("notesFirstItem");
   const fabRef = useWalkthroughTarget("notesFab");
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const hasNotes = notes.length > 0;
-  const walkthrough = useNotesWalkthrough({ hasNotes });
+  const walkthrough = useNotesWalkthrough({
+    hasNotes,
+    onScrollToTarget: handleScrollToTarget,
+  });
   const { isPromptDismissed } = useExperiencePreferences();
 
   useEffect(() => {
@@ -169,6 +179,7 @@ function NotesScreenContent() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>

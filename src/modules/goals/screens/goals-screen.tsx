@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -71,8 +72,17 @@ function GoalsScreenContent() {
   const markCompleteRef = useWalkthroughTarget("goalFirstItemMarkComplete");
   const fabRef = useWalkthroughTarget("goalFab");
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
+
   const hasGoals = goals.length > 0;
-  const walkthrough = useGoalsWalkthrough({ hasGoals });
+  const walkthrough = useGoalsWalkthrough({
+    hasGoals,
+    onScrollToTarget: handleScrollToTarget,
+  });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
 
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
@@ -137,6 +147,7 @@ function GoalsScreenContent() {
 
   return (
     <PageContainer
+      scrollRef={scrollRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>

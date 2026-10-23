@@ -7,8 +7,12 @@ import {
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
 
-export function useNotesWalkthrough(options: GetNotesWalkthroughStepsOptions) {
-  const { hasNotes } = options;
+export interface UseNotesWalkthroughOptions extends GetNotesWalkthroughStepsOptions {
+  onScrollToTarget?: (targetId: string) => void;
+}
+
+export function useNotesWalkthrough(options: UseNotesWalkthroughOptions) {
+  const { hasNotes, onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
 
@@ -32,12 +36,15 @@ export function useNotesWalkthrough(options: GetNotesWalkthroughStepsOptions) {
         clearTimeout(timerRef.current);
       }
 
+      onScrollToTarget?.(step.targetId);
+
+      // Wait 350ms for native animated scroll to settle before measuring
       timerRef.current = setTimeout(async () => {
         const layout = await measureTarget(step.targetId);
         setActiveTargetLayout(layout);
-      }, 100);
+      }, 350);
     },
-    [measureTarget],
+    [measureTarget, onScrollToTarget],
   );
 
   const startWalkthrough = useCallback(() => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Platform,
@@ -204,7 +204,19 @@ function TransactionsScreenContent({
     return () => registerTarget("txFab", null);
   }, [registerTarget]);
 
-  const walkthrough = useTransactionsWalkthrough();
+  const sectionListRef = useRef<SectionList<any>>(null);
+
+  const handleScrollToTarget = useCallback((targetId: string) => {
+    try {
+      (sectionListRef.current as any)?.getScrollResponder?.()?.scrollTo?.({ y: 0, animated: true });
+    } catch {
+      // safe fallback
+    }
+  }, []);
+
+  const walkthrough = useTransactionsWalkthrough({
+    onScrollToTarget: handleScrollToTarget,
+  });
 
   useEffect(() => {
     if (!loading && !isPromptDismissed("transactionsWalkthroughDismissed")) {
@@ -778,6 +790,7 @@ function TransactionsScreenContent({
 
         {/* Transactions Feed Grouped By Date */}
         <SectionList
+          ref={sectionListRef}
           ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
             <View>
