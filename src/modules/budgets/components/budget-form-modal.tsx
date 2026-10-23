@@ -20,13 +20,17 @@ import { CategoryPickerModal, type Category } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
 import {
   BudgetFormWalkthroughOverlay,
   DraggableTourChip,
   useBudgetFormWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import type {
   BudgetFrequency,
@@ -245,28 +249,53 @@ function BudgetFormModalContent({
 
   const saveRef = useWalkthroughTarget("budgetFormSave");
   const formScrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const { isPromptDismissed } = useExperiencePreferences();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    if (
-      targetId === "budgetFormCategory" ||
-      targetId === "budgetFormEnable" ||
-      targetId === "budgetFormAmount" ||
-      targetId === "budgetFormSave"
-    ) {
-      formScrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (targetId === "budgetFormFrequency") {
-      formScrollRef.current?.scrollTo({ y: 150, animated: true });
-    } else if (
-      targetId === "budgetFormRollover" ||
-      targetId === "budgetFormAlert"
-    ) {
-      formScrollRef.current?.scrollToEnd({ animated: true });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "budgetFormSave") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        formScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useBudgetFormWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      initialBudget ||
+      isPromptDismissed("budgetFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [initialBudget, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const handleDelete = () => {
     if (!initialBudget || !onDelete) return;
@@ -302,6 +331,7 @@ function BudgetFormModalContent({
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >
+          <View collapsable={false} ref={scrollContentRef}>
               {/* Category Picker Selector */}
               <WalkthroughTarget id="budgetFormCategory">
                 <View style={styles.section}>
@@ -530,6 +560,7 @@ function BudgetFormModalContent({
                   />
                 </View>
               </WalkthroughTarget>
+          </View>
         </ScrollView>
       </FullScreenFormModal>
 

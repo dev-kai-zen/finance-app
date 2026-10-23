@@ -9,12 +9,7 @@ import {
 } from "react-native";
 import Svg, { Defs, Mask, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  X,
-} from "lucide-react-native";
+import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -104,11 +99,7 @@ export function BudgetFormWalkthroughOverlay({
     }
   }
 
-  const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === totalSteps - 1;
-
-  const titleText = t(step.titleKey as any);
-  const descText = t(step.descKey as any);
 
   return (
     <Modal
@@ -183,43 +174,68 @@ export function BudgetFormWalkthroughOverlay({
             <View style={styles.cardHeader}>
               <View style={styles.stepBadge}>
                 <Text style={styles.stepBadgeText}>
-                  Step {stepIndex + 1} of {totalSteps}
+                  {t("dashboard.walkthroughStepCount", {
+                    current: stepIndex + 1,
+                    total: totalSteps,
+                  })}
                 </Text>
               </View>
 
               <Pressable
-                accessibilityLabel="Close walkthrough"
+                accessibilityLabel={t("dashboard.walkthroughSkip")}
                 accessibilityRole="button"
                 hitSlop={8}
                 onPress={onSkip}
-                style={styles.skipIconBtn}
+                style={({ pressed }) => [
+                  styles.skipIconBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <X color={theme.colors.textMuted} size={18} />
+                <X color={theme.colors.textMuted} size={16} />
               </Pressable>
             </View>
 
-            {/* Content */}
-            <Text style={styles.cardTitle}>{titleText}</Text>
-            <Text style={styles.cardDesc}>{descText}</Text>
+            <Text style={styles.cardTitle}>{t(step.titleKey as never)}</Text>
+            <Text style={styles.cardDesc}>{t(step.descKey as never)}</Text>
 
-            {/* Footer Navigation */}
             <View style={styles.cardActions}>
-              {!isFirstStep ? (
+              {stepIndex > 0 ? (
                 <Pressable
-                  accessibilityLabel="Previous step"
+                  accessibilityLabel={t("dashboard.walkthroughBack")}
                   accessibilityRole="button"
                   onPress={onPrev}
-                  style={styles.backBtn}
+                  style={({ pressed }) => [
+                    styles.backBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
                 >
                   <ChevronLeft color={theme.colors.textSecondary} size={16} />
-                  <Text style={styles.backBtnText}>Back</Text>
+                  <Text style={styles.backBtnText}>
+                    {t("dashboard.walkthroughBack")}
+                  </Text>
                 </Pressable>
               ) : (
-                <View />
+                <Pressable
+                  accessibilityLabel={t("dashboard.walkthroughSkip")}
+                  accessibilityRole="button"
+                  onPress={onSkip}
+                  style={({ pressed }) => [
+                    styles.backBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text style={styles.backBtnText}>
+                    {t("dashboard.walkthroughSkip")}
+                  </Text>
+                </Pressable>
               )}
 
               <Pressable
-                accessibilityLabel={isLastStep ? "Finish walkthrough" : "Next step"}
+                accessibilityLabel={
+                  isLastStep
+                    ? "Finish Walkthrough"
+                    : t("dashboard.walkthroughNext")
+                }
                 accessibilityRole="button"
                 onPress={onNext}
                 style={({ pressed }) => [
@@ -228,12 +244,12 @@ export function BudgetFormWalkthroughOverlay({
                 ]}
               >
                 <Text style={styles.nextBtnText}>
-                  {isLastStep ? "Finish" : t("dashboard.walkthroughNext")}
+                  {isLastStep
+                    ? "Finish"
+                    : t("dashboard.walkthroughNext")}
                 </Text>
-                {isLastStep ? (
-                  <Sparkles color="#FFFFFF" size={15} />
-                ) : (
-                  <ChevronRight color="#FFFFFF" size={16} />
+                {isLastStep ? null : (
+                  <ChevronRight color={theme.colors.textPrimary} size={16} />
                 )}
               </Pressable>
             </View>
@@ -295,50 +311,49 @@ function createStyles(theme: AppTheme) {
     },
     cardTitle: {
       color: theme.colors.textPrimary,
-      fontSize: 17,
-      fontWeight: "700",
-      lineHeight: 22,
+      fontSize: theme.typography.fontSize.base,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: -0.2,
     },
     cardDesc: {
-      color: theme.colors.textSecondary,
-      fontSize: 14,
-      lineHeight: 20,
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.sm * 1.15,
     },
     cardActions: {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      marginTop: theme.spacing.sm,
-      paddingTop: theme.spacing.sm,
+      marginTop: theme.spacing.xs,
     },
     backBtn: {
       alignItems: "center",
       flexDirection: "row",
       gap: 4,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
     },
     backBtnText: {
       color: theme.colors.textSecondary,
-      fontSize: 14,
-      fontWeight: "600",
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     nextBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
-      gap: 6,
-      paddingHorizontal: 16,
-      paddingVertical: 9,
+      gap: 5,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
     },
     nextBtnPressed: {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: "#FFFFFF",
-      fontSize: 14,
-      fontWeight: "700",
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

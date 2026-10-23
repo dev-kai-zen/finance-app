@@ -30,8 +30,11 @@ import {
   BudgetsWalkthroughOverlay,
   DraggableTourChip,
   useBudgetsWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { BudgetCard } from "../components/budget-card";
@@ -102,18 +105,45 @@ function BudgetsScreenContent() {
   const emptyCreateRef = useWalkthroughTarget("budgetEmptyCreateButton");
   const totalActiveCardRef = useWalkthroughTarget("budgetTotalActiveCard");
   const frequencyTabsRef = useWalkthroughTarget("budgetFrequencyTabs");
-  const firstItemToggleRef = useWalkthroughTarget("budgetFirstItemToggle");
+  const hasBudgetInList = filteredStatuses.length > 0;
+  const firstItemToggleRef = useWalkthroughTarget(
+    hasBudgetInList ? "budgetFirstItemToggle" : null,
+  );
   const fabRef = useWalkthroughTarget("budgetFab");
 
   const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "budgetFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const hasBudgets = budgets.length > 0;
   const walkthrough = useBudgetsWalkthrough({
     hasBudgets,
+    hasBudgetInList,
     onScrollToTarget: handleScrollToTarget,
   });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
@@ -121,12 +151,18 @@ function BudgetsScreenContent() {
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isPromptDismissed("budgetsWalkthroughDismissed")) {
-      const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
-      return () => clearTimeout(timer);
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("budgetsWalkthroughDismissed")
+    ) {
+      return;
     }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
   }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
 
   const handleOpenCreate = () => {
@@ -191,6 +227,7 @@ function BudgetsScreenContent() {
   return (
     <PageContainer
       scrollRef={scrollRef}
+      scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
       floatingAction={
         <>

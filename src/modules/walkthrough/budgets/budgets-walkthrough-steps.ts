@@ -2,12 +2,13 @@ import type { WalkthroughStep } from "../types/walkthrough.types";
 
 export interface GetBudgetsWalkthroughStepsOptions {
   hasBudgets: boolean;
+  hasBudgetInList?: boolean;
 }
 
 export function getBudgetsWalkthroughSteps(
   options: GetBudgetsWalkthroughStepsOptions,
 ): WalkthroughStep[] {
-  const { hasBudgets } = options;
+  const { hasBudgets, hasBudgetInList = true } = options;
 
   if (!hasBudgets) {
     return [
@@ -20,7 +21,7 @@ export function getBudgetsWalkthroughSteps(
     ];
   }
 
-  return [
+  const steps: WalkthroughStep[] = [
     {
       id: "budgetTotalActiveCard",
       targetId: "budgetTotalActiveCard",
@@ -33,17 +34,23 @@ export function getBudgetsWalkthroughSteps(
       titleKey: "budgetsWalkthrough.stepFrequencyTabsTitle",
       descKey: "budgetsWalkthrough.stepFrequencyTabsDesc",
     },
-    {
+  ];
+
+  if (hasBudgetInList) {
+    steps.push({
       id: "budgetFirstItemToggle",
       targetId: "budgetFirstItemToggle",
       titleKey: "budgetsWalkthrough.stepFirstItemToggleTitle",
       descKey: "budgetsWalkthrough.stepFirstItemToggleDesc",
-    },
-    {
-      id: "budgetFab",
-      targetId: "budgetFab",
-      titleKey: "budgetsWalkthrough.stepFabTitle",
-      descKey: "budgetsWalkthrough.stepFabDesc",
-    },
-  ];
+    });
+  }
+
+  steps.push({
+    id: "budgetFab",
+    targetId: "budgetFab",
+    titleKey: "budgetsWalkthrough.stepFabTitle",
+    descKey: "budgetsWalkthrough.stepFabDesc",
+  });
+
+  return steps;
 }
