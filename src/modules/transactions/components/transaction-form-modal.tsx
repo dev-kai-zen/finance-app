@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import {
   Modal,
@@ -32,8 +32,11 @@ import {
   DraggableTourChip,
   TransactionFormWalkthroughOverlay,
   useTransactionFormWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
   WalkthroughRegistryProvider,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -287,7 +290,7 @@ function TransactionFormModalInner({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const defaultAccounts = useDefaultAccounts();
-  const { formFields } = useExperiencePreferences();
+  const { formFields, isPromptDismissed } = useExperiencePreferences();
   const {
     saveCategory: saveCategoryRecord,
     saving: categorySaving,
@@ -1158,59 +1161,70 @@ function TransactionFormModalInner({
   const cancelRef = useWalkthroughTarget("txFormCancel");
   const saveRef = useWalkthroughTarget("txFormSave");
 
-  const formScrollRef = useRef<any>(null);
+  const formScrollRef = useRef<React.ComponentRef<typeof KeyboardAwareFormPreset>>(
+    null,
+  );
+  const scrollContentRef = useRef<View>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (
+        targetId === "txFormClose" ||
+        targetId === "txFormPresets" ||
+        targetId === "txFormCustomize" ||
+        targetId === "txFormTypePicker" ||
+        targetId === "txFormCancel" ||
+        targetId === "txFormSave"
+      ) {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        formScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useTransactionFormWalkthrough({
-    options: {
-      showPresets: !isEditing && showQuickPresetsUi,
-      showCustomize: true,
-      showName: showTransactionNameField,
-      showAttachment: showAttachmentsField,
-      showTime: showExactTimeField,
-      isTransfer: mode === "transfer",
-      showSplit: canUseSplit && showSplitField,
-      showLabels: showLabelsField,
-      showNote: showNoteField,
-    },
-    onScrollToTarget: (targetId) => {
-      switch (targetId) {
-        case "txFormPresets":
-        case "txFormCustomize":
-        case "txFormTypePicker":
-        case "txFormName":
-        case "txFormAttachment":
-        case "txFormDate":
-        case "txFormTime":
-          formScrollRef.current?.scrollTo?.({ y: 0, animated: true });
-          break;
-        case "txFormAmount":
-        case "txFormCurrency":
-          formScrollRef.current?.scrollTo?.({ y: 60, animated: true });
-          break;
-        case "txFormAccount":
-          formScrollRef.current?.scrollTo?.({ y: 150, animated: true });
-          break;
-        case "txFormCategory":
-          formScrollRef.current?.scrollTo?.({ y: 220, animated: true });
-          break;
-        case "txFormSplit":
-          formScrollRef.current?.scrollTo?.({ y: 300, animated: true });
-          break;
-        case "txFormLabels":
-          formScrollRef.current?.scrollTo?.({ y: 380, animated: true });
-          break;
-        case "txFormNote":
-          formScrollRef.current?.scrollTo?.({ y: 460, animated: true });
-          break;
-        case "txFormCancel":
-        case "txFormSave":
-          formScrollRef.current?.scrollToEnd?.({ animated: true });
-          break;
-        default:
-          break;
-      }
-    },
+    showPresets: !isEditing && showQuickPresetsUi,
+    showCustomize: true,
+    showName: showTransactionNameField,
+    showAttachment: showAttachmentsField,
+    showTime: showExactTimeField,
+    isTransfer: mode === "transfer",
+    showSplit: canUseSplit && showSplitField,
+    showLabels: showLabelsField,
+    showNote: showNoteField,
+    onScrollToTarget: handleScrollToTarget,
   });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      isPromptDismissed("transactionFormWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, walkthrough.startWalkthrough]);
 
   const resolvedTermMonths = useMemo(() => {
     if (installmentTermOption === "custom") {
@@ -1856,6 +1870,7 @@ function TransactionFormModalInner({
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
+            <View ref={scrollContentRef} collapsable={false}>
             <View style={styles.nameDateGroup}>
               {showTransactionNameField || showAttachmentsField ? (
                 <View style={styles.nameSuggestionAnchor}>
@@ -2832,6 +2847,7 @@ function TransactionFormModalInner({
                 </Text>
               </View>
             ) : null}
+            </View>
           </KeyboardAwareFormPreset>
 
           {/* Action Buttons */}
