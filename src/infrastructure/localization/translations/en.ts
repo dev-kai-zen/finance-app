@@ -322,7 +322,6 @@ export const en = {
       "Every feature and detail is shaped by real user experiences. Feel free to share your thoughts, report issues, or suggest new ideas. I'd love to hear from you.",
     signaturePre: "Rooting for your financial peace,",
     signatureName: "Kaizen Dev",
-    signatureTitle: "Solo Creator of Kaizen Finance",
     actionBegin: "Let's Begin",
     actionFeedback: "Send Feedback",
     actionSupport: "Support via Pro",
@@ -483,6 +482,13 @@ export const en = {
       "Turn on credit cards and installments for card purchases.",
     promptCreditCardsAction: "Turn on",
     promptDismiss: "Not now",
+    walkthroughIntroBadge: "First Time Here?",
+    walkthroughIntroTitle: "Welcome to your Dashboard!",
+    walkthroughIntroSubtitle: "Your financial command center",
+    walkthroughIntroMessage:
+      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. Would you like a quick walkthrough of how everything works?",
+    walkthroughIntroStart: "Take a Tour",
+    walkthroughIntroSkip: "Explore on My Own",
     walkthroughChip: "Guide",
     walkthroughSkip: "Skip",
     walkthroughNext: "Next",
@@ -517,6 +523,10 @@ export const en = {
     congratulationsButton: "Explore Dashboard",
   },
   accountsWalkthrough: {
+    introTitle: "Welcome to Accounts!",
+    introSubtitle: "Your complete financial portfolio",
+    introMessage:
+      "Organize all your cash wallets, bank accounts, investments, and credit cards in one place. Would you like a quick walkthrough?",
     stepArchivedTitle: "Archived Accounts",
     stepArchivedDesc:
       "Access all your archived accounts and sub-pockets safely stored away. You can view their history and restore them anytime.",
@@ -665,6 +675,10 @@ export const en = {
       "Dismiss this entry modal when you are done or want to exit.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "Welcome to Scheduled Transactions!",
+    introSubtitle: "Automate recurring bills & income",
+    introMessage:
+      "Manage subscriptions, recurring bills, and repeating income with automated posting. Would you like a quick walkthrough?",
     stepSearchTitle: "Search Schedules",
     stepSearchDesc:
       "Find scheduled transactions by title, category, or associated account.",
@@ -788,6 +802,10 @@ export const en = {
       "Tap the save checkmark to store your goal and begin tracking progress.",
   },
   transactionsWalkthrough: {
+    introTitle: "Welcome to Transactions!",
+    introSubtitle: "Your detailed financial ledger",
+    introMessage:
+      "Search, filter, inspect, and track all your income, expenses, and transfers with ease. Would you like a quick walkthrough?",
     stepSearchTitle: "Search Transactions",
     stepSearchDesc:
       "Quickly find transactions by note, payee, category, account, or amount in real time.",
@@ -820,6 +838,10 @@ export const en = {
       "Tap the (+) button anytime to log a new expense, income, or transfer between accounts. You're ready to go!",
   },
   calendarWalkthrough: {
+    introTitle: "Welcome to Calendar!",
+    introSubtitle: "Timeline of your financial journey",
+    introMessage:
+      "View daily cash flow, upcoming recurring bills, and projected balances on an interactive calendar. Would you like a quick walkthrough?",
     stepArrowsTitle: "Calendar Navigation",
     stepArrowsDesc:
       "Use the month navigation arrows to browse backward and forward across months, or jump straight back to today.",
@@ -837,6 +859,10 @@ export const en = {
       "Track your assets, liabilities, and projected equity across the calendar at a single glance.",
   },
   categoriesWalkthrough: {
+    introTitle: "Welcome to Categories!",
+    introSubtitle: "Organize your income & spending",
+    introMessage:
+      "Customize category groups, icons, and nested subcategories to classify every transaction. Would you like a quick walkthrough?",
     stepTypeToggleTitle: "Expenses & Income",
     stepTypeToggleDesc:
       "Toggle between Expense categories and Income streams to organize and customize your cash flows.",
@@ -864,6 +890,10 @@ export const en = {
     button: "Explore Budget Features",
   },
   budgetsWalkthrough: {
+    introTitle: "Welcome to Budgets!",
+    introSubtitle: "Smart spending management",
+    introMessage:
+      "Set category spending limits, track rollover buffers, and keep your finances on target. Would you like a quick walkthrough?",
     stepEmptyCreateTitle: "Set Your First Budget",
     stepEmptyCreateDesc:
       "Tap here to configure spending limits for any category with daily, weekly, monthly, or custom rollover periods.",
@@ -888,6 +918,10 @@ export const en = {
     button: "Explore Goals Tour",
   },
   goalsWalkthrough: {
+    introTitle: "Welcome to Goals!",
+    introSubtitle: "Turn financial dreams into reality",
+    introMessage:
+      "Track your savings milestones, link accounts, and monitor progress toward your future. Would you like a quick walkthrough?",
     stepTotalTargetTitle: "Total Target & Progress",
     stepTotalTargetDesc:
       "Monitor your combined savings target, total accumulated funds, percentage progress, and remaining shortfall across all active goals.",
@@ -902,6 +936,10 @@ export const en = {
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
   },
   notesWalkthrough: {
+    introTitle: "Welcome to Notes!",
+    introSubtitle: "Financial checklists & memos",
+    introMessage:
+      "Keep track of checklists, receipts, reminders, and financial ideas in one organized place. Would you like a quick walkthrough?",
     stepEmptyCreateTitle: "Create Your First Note",
     stepEmptyCreateDesc:
       "Tap here to start capturing your thoughts, financial checklists, memos, and receipt photos.",
@@ -922,6 +960,10 @@ export const en = {
       "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
   },
   settingsWalkthrough: {
+    introTitle: "Welcome to Settings!",
+    introSubtitle: "Personalize your Kaizen experience",
+    introMessage:
+      "Configure currencies, themes, notifications, security, and default accounts. Would you like a quick walkthrough?",
     stepLanguageTitle: "Language Preference",
     stepLanguageDesc:
       "Switch between English, Spanish, and Filipino, or automatically match your device system default.",

@@ -35,14 +35,18 @@ import {
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
+import { ArrowLeftRight } from "lucide-react-native";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   DraggableTourChip,
+  WalkthroughIntroModal,
   TransactionsWalkthroughOverlay,
   useTransactionsWalkthrough,
+  useWalkthroughIntro,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { useAccounts } from "@/modules/accounts";
@@ -149,6 +153,7 @@ function TransactionsScreenContent({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -226,14 +231,19 @@ function TransactionsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "transactionsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (!loading && !isPromptDismissed("transactionsWalkthroughDismissed")) {
+    if (!loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
       return () => clearTimeout(timer);
     }
-  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useEffect(() => {
     if (initialAccountId) {
@@ -1011,6 +1021,16 @@ function TransactionsScreenContent({
         onClose={() => setExportCsvSheetOpen(false)}
         title="Export CSV"
         visible={exportCsvSheetOpen}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("transactionsWalkthrough.introTitle")}
+        subtitle={t("transactionsWalkthrough.introSubtitle")}
+        message={t("transactionsWalkthrough.introMessage")}
+        icon={<ArrowLeftRight color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       <TransactionsWalkthroughOverlay

@@ -17,11 +17,14 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   DraggableTourChip,
   GoalCongratulationsModal,
   GoalsWalkthroughOverlay,
+  WalkthroughIntroModal,
   useGoalsWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -50,6 +53,7 @@ export function GoalsScreen() {
 
 function GoalsScreenContent() {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -111,24 +115,23 @@ function GoalsScreenContent() {
     hasGoalInList,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "goalsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
 
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      loading ||
-      isPromptDismissed("goalsWalkthroughDismissed")
-    ) {
-      return;
+    if (!loading && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const handleOpenCreate = () => {
     if (goals.length >= PRO_LIMITS.FREE_MAX_GOALS) {
@@ -331,6 +334,16 @@ function GoalsScreenContent() {
       <GoalCongratulationsModal
         onClose={handleCloseCongratulations}
         visible={congratulationsVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("goalsWalkthrough.introTitle")}
+        subtitle={t("goalsWalkthrough.introSubtitle")}
+        message={t("goalsWalkthrough.introMessage")}
+        icon={<Target color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       {/* Goals Walkthrough Overlay */}

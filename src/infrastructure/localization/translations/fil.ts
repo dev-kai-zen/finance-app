@@ -335,7 +335,6 @@ export const fil = {
       "Ang app na ito ay para sa iyo. Huwag mag-atubiling magpadala ng feedback, mga mungkahi, o karanasan. Sabik akong marinig ang iyong kwento.",
     signaturePre: "Kasama mo sa iyong pag-unlad,",
     signatureName: "Kaizen Dev",
-    signatureTitle: "Solo Creator ng Kaizen Finance",
     actionBegin: "Simulan Natin",
     actionFeedback: "Magpadala ng Feedback",
     actionSupport: "Suportahan gamit ang Pro",
@@ -497,6 +496,13 @@ export const fil = {
       "I-on ang credit cards at installments para sa mga card purchase.",
     promptCreditCardsAction: "I-on",
     promptDismiss: "Hindi muna",
+    walkthroughIntroBadge: "Unang beses mo ba rito?",
+    walkthroughIntroTitle: "Maligayang pagdating sa iyong Dashboard!",
+    walkthroughIntroSubtitle: "Ang iyong command center sa pananalapi",
+    walkthroughIntroMessage:
+      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Nais mo ba ng mabilisang walkthrough para maging pamilyar?",
+    walkthroughIntroStart: "Mag-tour",
+    walkthroughIntroSkip: "I-explore mag-isa",
     walkthroughChip: "Guide",
     walkthroughSkip: "Laktawan",
     walkthroughNext: "Susunod",
@@ -531,6 +537,10 @@ export const fil = {
     congratulationsButton: "Tingnan ang Dashboard",
   },
   accountsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Account!",
+    introSubtitle: "Ang iyong buong portfolio sa pananalapi",
+    introMessage:
+      "Ayusin ang iyong mga cash wallet, bank account, investments, at credit cards sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
     stepArchivedTitle: "Mga Naka-archive na Account",
     stepArchivedDesc:
       "Tingnan ang lahat ng naka-archive na account at pockets. Ligtas itong nakatago at maaaring ibalik anumang oras.",
@@ -679,6 +689,10 @@ export const fil = {
       "Isara ang modal na ito kapag tapos ka na o nais mong lumabas.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Naka-iskedyul na Transaksyon!",
+    introSubtitle: "I-automate ang mga paulit-ulit na bayarin at kita",
+    introMessage:
+      "Pamahalaan ang mga subscription, paulit-ulit na gastusin, at kita gamit ang automatic posting. Nais mo ba ng mabilisang walkthrough?",
     stepSearchTitle: "Maghanap ng Iskedyul",
     stepSearchDesc:
       "Maghanap ng mga naka-iskedyul na transaksyon gamit ang pangalan, kategorya, o account.",
@@ -802,6 +816,10 @@ export const fil = {
       "I-tap ang checkmark upang i-save ang iyong layunin at simulan ang pagsubaybay sa pag-unlad.",
   },
   transactionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Transaksyon!",
+    introSubtitle: "Ang iyong detalyadong talaan sa pananalapi",
+    introMessage:
+      "Maghanap, mag-filter, at subaybayan ang lahat ng iyong kita, gastusin, at transfer nang madali. Nais mo ba ng mabilisang walkthrough?",
     stepSearchTitle: "Maghanap ng Transaksyon",
     stepSearchDesc:
       "Mabilis na maghanap ng transaksyon gamit ang tala, tatanggap, kategorya, account, o halaga.",
@@ -834,6 +852,10 @@ export const fil = {
       "I-tap ang (+) button anumang oras para magtala ng bagong gastos, kita, o transfer. Handa ka na!",
   },
   calendarWalkthrough: {
+    introTitle: "Maligayang pagdating sa Kalendaryo!",
+    introSubtitle: "Timeline ng iyong pananalapi",
+    introMessage:
+      "Tingnan ang pang-araw-araw na cash flow, mga paparating na bayarin, at mga inaasahang balanse sa kalendaryo. Nais mo ba ng mabilisang walkthrough?",
     stepArrowsTitle: "Paglipat ng Buwan sa Kalendaryo",
     stepArrowsDesc:
       "Gamitin ang mga arrow upang magpalipat-lipat sa mga nakaraan at darating na buwan, o bumalik agad sa araw na ito.",
@@ -851,6 +873,10 @@ export const fil = {
       "Subaybayan ang iyong mga ari-arian, utang, at kabuuang equity sa timeline ng kalendaryo.",
   },
   categoriesWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Kategorya!",
+    introSubtitle: "Ayusin ang iyong kita at gastusin",
+    introMessage:
+      "I-customize ang mga category groups, icon, at subcategories upang maiuri ang bawat transaksyon. Nais mo ba ng mabilisang walkthrough?",
     stepTypeToggleTitle: "Mga Gastos at Kita",
     stepTypeToggleDesc:
       "Magpalipat-lipat sa mga kategorya ng gastos at kita upang maisaayos at ma-customize ang iyong cash flow.",
@@ -878,6 +904,10 @@ export const fil = {
     button: "I-explore ang mga Badyet",
   },
   budgetsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Badyet!",
+    introSubtitle: "Matalinong pamamahala sa gastusin",
+    introMessage:
+      "Magtakda ng mga limitasyon sa bawat kategorya at panatilihing nasa ayos ang iyong pananalapi. Nais mo ba ng mabilisang walkthrough?",
     stepEmptyCreateTitle: "Itakda ang Iyong Unang Badyet",
     stepEmptyCreateDesc:
       "I-tap dito upang magtakda ng limitasyon sa paggastos para sa anumang kategorya araw-araw, lingguhan, o buwanan.",
@@ -902,6 +932,10 @@ export const fil = {
     button: "Galugarin ang Tour ng mga Layunin",
   },
   goalsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Layunin!",
+    introSubtitle: "Tuparin ang iyong mga pangarap sa pananalapi",
+    introMessage:
+      "Subaybayan ang iyong ipon, mag-link ng mga account, at bantayan ang iyong pag-unlad. Nais mo ba ng mabilisang walkthrough?",
     stepTotalTargetTitle: "Kabuuang Target at Progreso",
     stepTotalTargetDesc:
       "Subaybayan ang iyong kabuuang target sa pag-iipon, naipong pondo, porsyento ng progreso, at natitirang kulang sa lahat ng aktibong layunin.",
@@ -916,6 +950,10 @@ export const fil = {
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
   },
   notesWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Tala!",
+    introSubtitle: "Checklists at mga paalala sa pananalapi",
+    introMessage:
+      "Itala ang mga checklist, resibo, paalala, at mga ideya sa pananalapi sa isang organisadong lugar. Nais mo ba ng mabilisang walkthrough?",
     stepEmptyCreateTitle: "Gumawa ng Unang Tala",
     stepEmptyCreateDesc:
       "Pindutin dito upang simulan ang pagtatala ng iyong mga saloobin, financial checklist, memo, at mga larawan ng resibo.",
@@ -936,6 +974,10 @@ export const fil = {
       "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
   },
   settingsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Setting!",
+    introSubtitle: "I-personalize ang iyong karanasan sa Kaizen",
+    introMessage:
+      "I-configure ang mga currency, tema, paalala, seguridad, at default accounts. Nais mo ba ng mabilisang walkthrough?",
     stepLanguageTitle: "Kagustuhan sa Wika",
     stepLanguageDesc:
       "Lumipat sa pagitan ng Ingles, Espanyol, at Filipino, o awtomatikong itugma sa default ng iyong device.",

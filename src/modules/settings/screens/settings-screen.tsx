@@ -17,6 +17,7 @@ import {
   Palette,
   Pipette,
   RotateCcw,
+  Settings as SettingsIcon,
   ShieldCheck,
   Smile,
   Sparkles,
@@ -43,7 +44,9 @@ import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-m
 import {
   DraggableTourChip,
   SettingsWalkthroughOverlay,
+  WalkthroughIntroModal,
   useSettingsWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -148,19 +151,19 @@ function SettingsScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "settingsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("settingsWalkthroughDismissed")
-    ) {
-      return;
+    if (walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const languageValue =
     preference === "system"
@@ -1045,6 +1048,27 @@ function SettingsScreenContent() {
         onCancel={() => setIsNicknameModalOpen(false)}
         onSave={setNickname}
         visible={isNicknameModalOpen}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("settingsWalkthrough.introTitle")}
+        subtitle={t("settingsWalkthrough.introSubtitle")}
+        message={t("settingsWalkthrough.introMessage")}
+        icon={<SettingsIcon color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
+      />
+
+      <SettingsWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
       />
     </PageContainer>
   );

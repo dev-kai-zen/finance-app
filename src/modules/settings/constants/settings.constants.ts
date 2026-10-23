@@ -90,6 +90,8 @@ export const PROMPT_SETTING_KEYS = {
   developerMessageSeen: "prompt.developerMessageSeen",
 } as const;
 
+export type PromptSettingKey = keyof typeof PROMPT_SETTING_KEYS;
+
 export const ONBOARDING_SETUP_STRATEGY_KEY = "workspace.setupStrategy";
 export const GUIDED_SETUP_STRATEGY = "guided";
 

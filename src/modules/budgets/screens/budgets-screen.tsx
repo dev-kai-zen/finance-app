@@ -25,11 +25,15 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { PieChart } from "lucide-react-native";
 import {
   BudgetCongratulationsModal,
   BudgetsWalkthroughOverlay,
   DraggableTourChip,
+  WalkthroughIntroModal,
   useBudgetsWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -73,6 +77,7 @@ function BudgetsScreenContent() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const [selectedFilter, setSelectedFilter] = useState<FrequencyFilter>("all");
@@ -146,24 +151,23 @@ function BudgetsScreenContent() {
     hasBudgetInList,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "budgetsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
 
   const [congratulationsVisible, setCongratulationsVisible] = useState(false);
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      loading ||
-      isPromptDismissed("budgetsWalkthroughDismissed")
-    ) {
-      return;
+    if (!loading && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const handleOpenCreate = () => {
     if (budgets.length >= PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS) {
@@ -473,6 +477,16 @@ function BudgetsScreenContent() {
       <BudgetCongratulationsModal
         onClose={handleCloseCongratulations}
         visible={congratulationsVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("budgetsWalkthrough.introTitle")}
+        subtitle={t("budgetsWalkthrough.introSubtitle")}
+        message={t("budgetsWalkthrough.introMessage")}
+        icon={<PieChart color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       {/* Budgets Walkthrough Overlay */}

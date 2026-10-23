@@ -157,9 +157,6 @@ export function DeveloperMessageModal({
               <Text style={styles.signatureName}>
                 {t("developerMessage.signatureName")}
               </Text>
-              <Text style={styles.signatureTitle}>
-                {t("developerMessage.signatureTitle")}
-              </Text>
             </View>
 
             {/* Primary Action Button */}
@@ -333,11 +330,6 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
       marginTop: 2,
-    },
-    signatureTitle: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      marginTop: 1,
     },
     primaryActionButton: {
       marginTop: theme.spacing.sm,

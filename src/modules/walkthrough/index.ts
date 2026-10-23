@@ -13,6 +13,14 @@ export {
   type DraggableTourChipProps,
   type GuideChipPlacement,
 } from "./components/draggable-tour-chip";
+export {
+  WalkthroughIntroModal,
+  type WalkthroughIntroModalProps,
+} from "./components/walkthrough-intro-modal";
+export {
+  useWalkthroughIntro,
+  type UseWalkthroughIntroOptions,
+} from "./hooks/use-walkthrough-intro";
 
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";
 export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulations-modal";

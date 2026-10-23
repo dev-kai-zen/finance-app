@@ -15,11 +15,14 @@ import {
   type TransactionListItem,
 } from "@/modules/transactions";
 import { ProGate, useProStatus } from "@/modules/pro";
-import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { Calendar as CalendarIcon } from "lucide-react-native";
 import {
   CalendarWalkthroughOverlay,
   DraggableTourChip,
+  WalkthroughIntroModal,
   useCalendarWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -52,6 +55,7 @@ export function CalendarScreen() {
 function CalendarScreenContent() {
   const router = useRouter();
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { isPro } = useProStatus();
 
@@ -178,21 +182,19 @@ function CalendarScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
-  const { isPromptDismissed } = useExperiencePreferences();
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "calendarWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("calendarWalkthroughDismissed")
-    ) {
-      return;
+    if (walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   // Handlers for transactions
   const handleEditTransaction = (tx: TransactionListItem) => {
@@ -455,6 +457,16 @@ function CalendarScreenContent() {
         title="Skip Scheduled Occurrence"
         variant="destructive"
         visible={pendingSkipScheduleId !== null}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("calendarWalkthrough.introTitle")}
+        subtitle={t("calendarWalkthrough.introSubtitle")}
+        message={t("calendarWalkthrough.introMessage")}
+        icon={<CalendarIcon color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       {/* Calendar Walkthrough Overlay */}

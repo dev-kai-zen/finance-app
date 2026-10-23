@@ -334,7 +334,6 @@ export const es = {
       "Esta herramienta está hecha para ti. Si tienes sugerencias, comentarios o ideas de nuevas funciones, no dudes en escribirme. Me encantará leerte.",
     signaturePre: "Deseándote el mayor de los éxitos,",
     signatureName: "Kaizen Dev",
-    signatureTitle: "Creador independiente de Kaizen Finance",
     actionBegin: "Comencemos",
     actionFeedback: "Enviar comentarios",
     actionSupport: "Apoyar con Pro",
@@ -495,6 +494,13 @@ export const es = {
       "Activa tarjetas y plazos para compras con tarjeta.",
     promptCreditCardsAction: "Activar",
     promptDismiss: "Ahora no",
+    walkthroughIntroBadge: "¿Primera vez aquí?",
+    walkthroughIntroTitle: "¡Te damos la bienvenida a tu Panel!",
+    walkthroughIntroSubtitle: "Tu centro de control financiero",
+    walkthroughIntroMessage:
+      "Aquí puedes ver tu patrimonio neto total, monitorear tus gastos mensuales y gestionar tus transacciones. ¿Te gustaría hacer un recorrido rápido para conocer cómo funciona?",
+    walkthroughIntroStart: "Iniciar recorrido",
+    walkthroughIntroSkip: "Explorar por mi cuenta",
     walkthroughChip: "Guía",
     walkthroughSkip: "Omitir",
     walkthroughNext: "Siguiente",
@@ -529,6 +535,10 @@ export const es = {
     congratulationsButton: "Explorar panel",
   },
   accountsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Cuentas!",
+    introSubtitle: "Tu portafolio financiero completo",
+    introMessage:
+      "Organiza tus billeteras de efectivo, cuentas bancarias, inversiones y tarjetas en un solo lugar. ¿Te gustaría hacer un recorrido rápido?",
     stepArchivedTitle: "Cuentas archivadas",
     stepArchivedDesc:
       "Accede a todas tus cuentas y bolsillos archivados guardados de forma segura. Puedes ver su historial o restaurarlos en cualquier momento.",
@@ -677,6 +687,10 @@ export const es = {
       "Cierra este modal cuando hayas terminado o desees salir.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Programados!",
+    introSubtitle: "Automatiza ingresos y facturas recurrentes",
+    introMessage:
+      "Administra suscripciones, facturas recurrentes e ingresos periódicos con registro automático. ¿Te gustaría hacer un recorrido rápido?",
     stepSearchTitle: "Buscar programaciones",
     stepSearchDesc:
       "Encuentra transacciones programadas por título, categoría o cuenta asociada.",
@@ -800,6 +814,10 @@ export const es = {
       "Toca la marca de verificación para guardar tu meta y comenzar a medir tu progreso.",
   },
   transactionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Transacciones!",
+    introSubtitle: "Tu registro financiero detallado",
+    introMessage:
+      "Busca, filtra y supervisa todos tus ingresos, gastos y transferencias con facilidad. ¿Te gustaría hacer un recorrido rápido?",
     stepSearchTitle: "Buscar transacciones",
     stepSearchDesc:
       "Encuentra rápidamente transacciones por nota, beneficiario, categoría, cuenta o monto en tiempo real.",
@@ -832,6 +850,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",
   },
   calendarWalkthrough: {
+    introTitle: "¡Te damos la bienvenida al Calendario!",
+    introSubtitle: "Línea de tiempo de tus finanzas",
+    introMessage:
+      "Visualiza el flujo de caja diario, facturas recurrentes y saldos proyectados en un calendario interactivo. ¿Te gustaría hacer un recorrido rápido?",
     stepArrowsTitle: "Navegación del calendario",
     stepArrowsDesc:
       "Usa las flechas de navegación para desplazarte entre meses anteriores y futuros, o volver al día de hoy.",
@@ -849,6 +871,10 @@ export const es = {
       "Monitorea activos, pasivos y patrimonio neto proyectados a lo largo de tu calendario en un solo vistazo.",
   },
   categoriesWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Categorías!",
+    introSubtitle: "Organiza tus ingresos y gastos",
+    introMessage:
+      "Personaliza grupos de categorías, íconos y subcategorías para clasificar cada transacción. ¿Te gustaría hacer un recorrido rápido?",
     stepTypeToggleTitle: "Gastos e Ingresos",
     stepTypeToggleDesc:
       "Alterna entre categorías de gastos y fuentes de ingresos para organizar y personalizar tus flujos de efectivo.",
@@ -876,6 +902,10 @@ export const es = {
     button: "Explorar funciones de presupuesto",
   },
   budgetsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Presupuestos!",
+    introSubtitle: "Gestión inteligente de gastos",
+    introMessage:
+      "Establece límites por categoría, controla el remanente y mantén tus finanzas bajo control. ¿Te gustaría hacer un recorrido rápido?",
     stepEmptyCreateTitle: "Configura tu primer presupuesto",
     stepEmptyCreateDesc:
       "Toca aquí para establecer límites de gasto para cualquier categoría con periodos diarios, semanales, mensuales o acumulativos.",
@@ -900,6 +930,10 @@ export const es = {
     button: "Explorar recorrido de objetivos",
   },
   goalsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Metas!",
+    introSubtitle: "Haz realidad tus objetivos financieros",
+    introMessage:
+      "Monitorea tus metas de ahorro, vincula cuentas y sigue tu progreso hacia el futuro. ¿Te gustaría hacer un recorrido rápido?",
     stepTotalTargetTitle: "Meta total y progreso",
     stepTotalTargetDesc:
       "Supervisa tu meta de ahorro consolidada, fondos acumulados, porcentaje de avance y el monto restante en todos tus objetivos activos.",
@@ -914,6 +948,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
   },
   notesWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Notas!",
+    introSubtitle: "Listas y notas financieras",
+    introMessage:
+      "Guarda listas de verificación, recibos, recordatorios e ideas financieras en un lugar organizado. ¿Te gustaría hacer un recorrido rápido?",
     stepEmptyCreateTitle: "Crea tu primera nota",
     stepEmptyCreateDesc:
       "Toca aquí para comenzar a capturar tus pensamientos, listas de verificación financieras, notas y fotos de recibos.",
@@ -934,6 +972,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
   },
   settingsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Ajustes!",
+    introSubtitle: "Personaliza tu experiencia Kaizen",
+    introMessage:
+      "Configura monedas, temas, recordatorios, seguridad y cuentas predeterminadas. ¿Te gustaría hacer un recorrido rápido?",
     stepLanguageTitle: "Preferencia de idioma",
     stepLanguageDesc:
       "Cambia entre inglés, español y filipino, o usa automáticamente el idioma predeterminado del sistema.",

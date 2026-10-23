@@ -7,13 +7,17 @@ import { SortableListModal, type SortableItem } from "@/components/sortable-list
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { Wallet } from "lucide-react-native";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   DraggableTourChip,
+  WalkthroughIntroModal,
   AccountsWalkthroughOverlay,
   useAccountsWalkthrough,
+  useWalkthroughIntro,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
@@ -70,6 +74,7 @@ function AccountsScreenContent({
   initialView?: "types" | "account";
 }) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
   const fundGroups = useFundGroups();
@@ -131,14 +136,19 @@ function AccountsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "accountsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (!data.loading && !isPromptDismissed("accountsWalkthroughDismissed")) {
+    if (!data.loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
       return () => clearTimeout(timer);
     }
-  }, [data.loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [data.loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -566,6 +576,16 @@ function AccountsScreenContent({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("accountsWalkthrough.introTitle")}
+        subtitle={t("accountsWalkthrough.introSubtitle")}
+        message={t("accountsWalkthrough.introMessage")}
+        icon={<Wallet color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       <AccountsWalkthroughOverlay

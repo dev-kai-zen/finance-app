@@ -20,10 +20,14 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import { hasTransactions } from "@/modules/transactions";
+import { useLocalization } from "@/infrastructure/localization";
+import { Tags } from "lucide-react-native";
 import {
   CategoriesWalkthroughOverlay,
   DraggableTourChip,
+  WalkthroughIntroModal,
   useCategoriesWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -54,6 +58,7 @@ function CategoriesScreenContent({
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const {
     categories,
@@ -176,28 +181,20 @@ function CategoriesScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
-  const { isPromptDismissed } = useExperiencePreferences();
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "categoriesWalkthroughDismissed",
+    enabled: hasExistingTransactions !== null,
+    onStart: walkthrough.startWalkthrough,
+  });
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      loading ||
-      hasExistingTransactions === null ||
-      isPromptDismissed("categoriesWalkthroughDismissed")
-    ) {
-      return;
+    if (!loading && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [
-    hasExistingTransactions,
-    isPromptDismissed,
-    loading,
-    walkthrough.startWalkthrough,
-  ]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const firstReorderableGroupId =
     currentCategories.find((g) => (g.subcategories?.length ?? 0) > 1)?.id ??
@@ -583,6 +580,16 @@ function CategoriesScreenContent({
           !isGroupModalVisible &&
           !isSubModalVisible
         }
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("categoriesWalkthrough.introTitle")}
+        subtitle={t("categoriesWalkthrough.introSubtitle")}
+        message={t("categoriesWalkthrough.introMessage")}
+        icon={<Tags color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       {/* Categories Walkthrough Overlay */}

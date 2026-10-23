@@ -24,11 +24,15 @@ import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { Repeat } from "lucide-react-native";
 import {
   DraggableTourChip,
   FirstScheduleCongratulationsModal,
   ScheduledTransactionsWalkthroughOverlay,
+  WalkthroughIntroModal,
   useScheduledTransactionsWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -74,6 +78,7 @@ export function ScheduledTransactionsScreen() {
 
 function ScheduledTransactionsScreenContent() {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories } = useCategories();
@@ -298,20 +303,19 @@ function ScheduledTransactionsScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "scheduledTransactionsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      loading ||
-      isPromptDismissed("scheduledTransactionsWalkthroughDismissed")
-    ) {
-      return;
+    if (!loading && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, loading, walkthrough.startWalkthrough]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const handleSave = (
     input: SaveScheduledTransactionInput,
@@ -722,6 +726,16 @@ function ScheduledTransactionsScreenContent() {
       <DraggableTourChip
         onPress={walkthrough.startWalkthrough}
         visible={!walkthrough.isWalkthroughActive}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("scheduledTransactionsWalkthrough.introTitle")}
+        subtitle={t("scheduledTransactionsWalkthrough.introSubtitle")}
+        message={t("scheduledTransactionsWalkthrough.introMessage")}
+        icon={<Repeat color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       <ScheduledTransactionsWalkthroughOverlay

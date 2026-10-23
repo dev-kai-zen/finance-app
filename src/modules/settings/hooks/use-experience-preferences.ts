@@ -49,6 +49,7 @@ export function useExperiencePreferences() {
     getHiddenNavHrefs(),
   );
   const [developerUnlockNotice, setDeveloperUnlockNotice] = useState(false);
+  const [, setRevision] = useState(0);
 
   const tapCountRef = useRef(0);
   const lastTapAtRef = useRef(0);
@@ -60,6 +61,7 @@ export function useExperiencePreferences() {
     setFormFieldsState(getTransactionFormFieldPreferences());
     setNavVisibilityState(getNavVisibilityPreferences());
     setHiddenNavHrefs(getHiddenNavHrefs());
+    setRevision((prev) => prev + 1);
   }, []);
 
   useEffect(() => {

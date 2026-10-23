@@ -27,13 +27,16 @@ import {
 } from "@/modules/transactions";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   DashboardWalkthroughOverlay,
   DashboardCongratulationsModal,
   DraggableTourChip,
+  WalkthroughIntroModal,
   useDashboardWalkthrough,
+  useWalkthroughIntro,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
 } from "@/modules/walkthrough";
 import type { WalkthroughTargetId } from "@/modules/walkthrough";
@@ -49,6 +52,7 @@ export function DashboardScreen() {
 
 function DashboardScreenContent() {
   const router = useRouter();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
@@ -140,6 +144,12 @@ function DashboardScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "dashboardWalkthroughDismissed",
+    prerequisitePromptKey: "developerMessageSeen",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
     registerTarget("fabButton", fabRef);
     return () => registerTarget("fabButton", null);
@@ -149,14 +159,19 @@ function DashboardScreenContent() {
     if (
       summary &&
       !loading &&
-      !isPromptDismissed("dashboardWalkthroughDismissed")
+      walkthroughIntro.canTrigger
     ) {
       const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
       return () => clearTimeout(timer);
     }
-  }, [summary, loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [
+    summary,
+    loading,
+    walkthroughIntro.canTrigger,
+    walkthroughIntro.triggerIfFirstTime,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -436,6 +451,18 @@ function DashboardScreenContent() {
         title="Delete transaction?"
         variant="destructive"
         visible={pendingDeleteId !== null}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("dashboard.walkthroughIntroTitle")}
+        subtitle={t("dashboard.walkthroughIntroSubtitle")}
+        message={t("dashboard.walkthroughIntroMessage")}
+        badge={t("dashboard.walkthroughIntroBadge")}
+        startLabel={t("dashboard.walkthroughIntroStart")}
+        skipLabel={t("dashboard.walkthroughIntroSkip")}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       <DashboardWalkthroughOverlay

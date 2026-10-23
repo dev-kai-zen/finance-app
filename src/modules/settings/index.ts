@@ -21,7 +21,10 @@ export {
   DEVELOPER_MODE_SETTING_KEY,
   USER_NICKNAME_SETTING_KEY,
 } from "./constants/settings.constants";
-export type { NavVisibilityKey } from "./constants/settings.constants";
+export type {
+  NavVisibilityKey,
+  PromptSettingKey,
+} from "./constants/settings.constants";
 export {
   getUserNickname,
   setUserNickname,

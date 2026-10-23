@@ -15,11 +15,14 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
-import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { StickyNote } from "lucide-react-native";
 import {
   DraggableTourChip,
   NotesWalkthroughOverlay,
+  WalkthroughIntroModal,
   useNotesWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
@@ -45,6 +48,7 @@ function NotesScreenContent() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -114,22 +118,20 @@ function NotesScreenContent() {
     hasNoteInList,
     onScrollToTarget: handleScrollToTarget,
   });
-  const { isPromptDismissed } = useExperiencePreferences();
+
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "notesWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
 
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      loading ||
-      isPromptDismissed("notesWalkthroughDismissed")
-    ) {
-      return;
+    if (!loading && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useFocusEffect(
     useCallback(() => {
@@ -337,6 +339,16 @@ function NotesScreenContent() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("notesWalkthrough.introTitle")}
+        subtitle={t("notesWalkthrough.introSubtitle")}
+        message={t("notesWalkthrough.introMessage")}
+        icon={<StickyNote color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       {/* Notes Walkthrough Overlay */}
