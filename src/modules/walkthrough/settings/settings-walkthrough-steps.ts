@@ -32,6 +32,12 @@ export const SETTINGS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "settingsWalkthrough.stepRemindersDesc",
   },
   {
+    id: "settingsGuideHelper",
+    targetId: "settingsGuideHelper",
+    titleKey: "settingsWalkthrough.stepGuideHelperTitle",
+    descKey: "settingsWalkthrough.stepGuideHelperDesc",
+  },
+  {
     id: "settingsDefaultExpense",
     targetId: "settingsDefaultExpense",
     titleKey: "settingsWalkthrough.stepDefaultExpenseTitle",

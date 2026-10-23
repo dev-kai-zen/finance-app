@@ -1017,6 +1017,9 @@ export const fil = {
     stepRemindersTitle: "Mga Paalala at Notipikasyon",
     stepRemindersDesc:
       "Magtakda ng pang-araw-araw na paalala sa pagtatala ng gastos at bayarin sa takdang petsa.",
+    stepGuideHelperTitle: "Guide Helper",
+    stepGuideHelperDesc:
+      "Ipakita o itago ang lumulutang na chip ng gabay sa mga screen at form upang masimulan muli ang mga walkthrough anumang oras.",
     stepDefaultExpenseTitle: "Default na Account para sa Gastos",
     stepDefaultExpenseDesc:
       "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",

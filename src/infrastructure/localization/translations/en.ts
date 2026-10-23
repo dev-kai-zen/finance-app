@@ -1003,6 +1003,9 @@ export const en = {
     stepRemindersTitle: "Notification Reminders",
     stepRemindersDesc:
       "Set daily expense tracking alarms and reminders for upcoming bills to never miss a payment.",
+    stepGuideHelperTitle: "Guide Helper",
+    stepGuideHelperDesc:
+      "Show or hide the floating tour chip across screens and forms so you can restart guided walkthroughs anytime.",
     stepDefaultExpenseTitle: "Default Expense Account",
     stepDefaultExpenseDesc:
       "Set the preselected account and pocket automatically used when logging new expenses.",

@@ -1015,6 +1015,9 @@ export const es = {
     stepRemindersTitle: "Recordatorios y notificaciones",
     stepRemindersDesc:
       "Configura alarmas diarias de gastos y avisos de facturas para no olvidar ningún pago.",
+    stepGuideHelperTitle: "Asistente de guía",
+    stepGuideHelperDesc:
+      "Muestra u oculta el botón flotante del tour en pantallas y formularios para reiniciar los recorridos guiados en cualquier momento.",
     stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
     stepDefaultExpenseDesc:
       "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",

@@ -121,6 +121,7 @@ function SettingsScreenContent() {
   const nicknameRef = useWalkthroughTarget("settingsNickname");
   const themeRef = useWalkthroughTarget("settingsTheme");
   const remindersRef = useWalkthroughTarget("settingsReminders");
+  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -394,7 +395,15 @@ function SettingsScreenContent() {
 
             <View style={styles.rowDivider} />
 
-            <View style={styles.toggleRow}>
+            <View
+              ref={guideHelperRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGuideHelper"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={styles.toggleRow}
+            >
               <View style={styles.iconContainer}>
                 <Sparkles color="#00A3FF" size={20} />
               </View>
