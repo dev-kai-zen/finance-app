@@ -691,29 +691,6 @@ export const fil = {
     stepSaveDesc:
       "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
   },
-  categoryFormWalkthrough: {
-    stepGroupTypeTitle: "Uri ng Grupo",
-    stepGroupTypeDesc:
-      "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
-    stepNameTitle: "Pangalan ng Kategorya",
-    stepNameDesc:
-      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
-    stepIconTitle: "Icon ng Kategorya",
-    stepIconDesc:
-      "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",
-    stepColorTitle: "Kulay ng Tema",
-    stepColorDesc:
-      "Pumili ng natatanging kulay para sa mga tsart at mabilis na pagkilala.",
-    stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
-    stepCustomColorDesc:
-      "Maglagay ng sariling hex color code upang personal na iayon ang iyong mga kategorya.",
-    stepCancelTitle: "Kanselahin",
-    stepCancelDesc:
-      "Ibasura ang mga pagbabago at bumalik nang hindi gumagawa ng kategorya.",
-    stepSaveTitle: "Gumawa ng Kategorya",
-    stepSaveDesc:
-      "I-save at simulan ang paggamit sa bagong kategorya para sa mga transaksyon at badyet.",
-  },
   budgetFormWalkthrough: {
     stepCategoryTitle: "Pagpili ng Kategorya",
     stepCategoryDesc:

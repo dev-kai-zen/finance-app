@@ -134,13 +134,6 @@ export type WalkthroughTargetId =
   | "catFormCustomColor"
   | "catFormCancel"
   | "catFormCreate"
-  | "categoryFormType"
-  | "categoryFormName"
-  | "categoryFormIcon"
-  | "categoryFormColor"
-  | "categoryFormCustomColor"
-  | "categoryFormCancel"
-  | "categoryFormSave"
   // Budget Form
   | "budgetFormCategory"
   | "budgetFormEnable"

@@ -678,29 +678,6 @@ export const en = {
     stepSaveDesc:
       "Tap to save and activate your recurring scheduled transaction.",
   },
-  categoryFormWalkthrough: {
-    stepGroupTypeTitle: "Group Type",
-    stepGroupTypeDesc:
-      "Choose whether this category tracks Expenses (spending) or Income (earnings).",
-    stepNameTitle: "Category Name",
-    stepNameDesc:
-      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
-    stepIconTitle: "Category Icon",
-    stepIconDesc:
-      "Pick an intuitive icon to visually represent this category across transactions and reports.",
-    stepColorTitle: "Theme Color",
-    stepColorDesc:
-      "Choose a distinctive accent color for charts, badges, and quick identification.",
-    stepCustomColorTitle: "Add Custom Color",
-    stepCustomColorDesc:
-      "Pick or enter any custom hex color code to perfectly personalize your categories.",
-    stepCancelTitle: "Cancel",
-    stepCancelDesc:
-      "Discard changes and return without creating a category.",
-    stepSaveTitle: "Create Category",
-    stepSaveDesc:
-      "Save and activate your new category to use in transactions and budgets.",
-  },
   budgetFormWalkthrough: {
     stepCategoryTitle: "Category Selection",
     stepCategoryDesc:

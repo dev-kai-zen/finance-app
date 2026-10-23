@@ -67,9 +67,6 @@ export { CALENDAR_WALKTHROUGH_STEPS } from "./calendar/calendar-walkthrough-step
 export { CategoriesWalkthroughOverlay } from "./categories/categories-walkthrough-overlay";
 export { useCategoriesWalkthrough } from "./categories/use-categories-walkthrough";
 export { getCategoriesWalkthroughSteps } from "./categories/categories-walkthrough-steps";
-export { CategoryFormWalkthroughOverlay } from "./categories/category-form-walkthrough-overlay";
-export { useCategoryFormWalkthrough } from "./categories/use-category-form-walkthrough";
-export { CATEGORY_FORM_WALKTHROUGH_STEPS } from "./categories/category-form-walkthrough-steps";
 
 export { BudgetCongratulationsModal } from "./budgets/budget-congratulations-modal";
 export { BudgetsWalkthroughOverlay } from "./budgets/budgets-walkthrough-overlay";

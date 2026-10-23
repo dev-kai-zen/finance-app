@@ -83,7 +83,6 @@ export const PROMPT_SETTING_KEYS = {
     "prompt.scheduledTransactionsWalkthroughDismissed",
   scheduledTransactionFormWalkthroughDismissed:
     "prompt.scheduledTransactionFormWalkthroughDismissed",
-  categoryFormWalkthroughDismissed: "prompt.categoryFormWalkthroughDismissed",
   budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
   goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
 } as const;

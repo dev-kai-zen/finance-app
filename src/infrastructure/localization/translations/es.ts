@@ -690,29 +690,6 @@ export const es = {
     stepSaveDesc:
       "Toca para guardar y activar tu transacción programada recurrente.",
   },
-  categoryFormWalkthrough: {
-    stepGroupTypeTitle: "Tipo de grupo",
-    stepGroupTypeDesc:
-      "Elige si esta categoría registrará Gastos o Ingresos.",
-    stepNameTitle: "Nombre de categoría",
-    stepNameDesc:
-      "Ingresa un nombre claro, como Comestibles, Restaurantes o Trabajo independiente.",
-    stepIconTitle: "Ícono de categoría",
-    stepIconDesc:
-      "Elige un ícono intuitivo para identificar esta categoría en transacciones e informes.",
-    stepColorTitle: "Color del tema",
-    stepColorDesc:
-      "Selecciona un color distintivo para gráficos, insignias e identificación visual.",
-    stepCustomColorTitle: "Agregar color personalizado",
-    stepCustomColorDesc:
-      "Ingresa cualquier código hexadecimal personalizado para personalizar tus categorías.",
-    stepCancelTitle: "Cancelar",
-    stepCancelDesc:
-      "Descarta los cambios y regresa sin crear la categoría.",
-    stepSaveTitle: "Crear categoría",
-    stepSaveDesc:
-      "Guarda y activa tu nueva categoría para utilizarla en transacciones y presupuestos.",
-  },
   budgetFormWalkthrough: {
     stepCategoryTitle: "Selección de categoría",
     stepCategoryDesc:
