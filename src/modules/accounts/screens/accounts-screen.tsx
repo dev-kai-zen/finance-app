@@ -318,27 +318,26 @@ function AccountsScreenContent({
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "asset",
               ) || !normalizedSearchQuery ? (
-                <WalkthroughTarget id="assetsSection">
-                  <AccountGroupSection
-                    accounts={filteredActive}
-                    group="asset"
-                    pockets={data.pockets}
-                    types={data.types}
-                    onEditType={handleEditType}
-                    expandedPocketAccountIds={expandedPocketAccountIds}
-                    onAddPocket={handleOpenCreatePocket}
-                    onEditPocket={(pocket) =>
-                      open({
-                        kind: "pocket-form",
-                        accountId: pocket.accountId,
-                        pocketId: pocket.id,
-                      })
-                    }
-                    onSelect={select}
-                    onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
-                    onTogglePockets={togglePockets}
-                  />
-                </WalkthroughTarget>
+                <AccountGroupSection
+                  accounts={filteredActive}
+                  group="asset"
+                  pockets={data.pockets}
+                  types={data.types}
+                  onEditType={handleEditType}
+                  expandedPocketAccountIds={expandedPocketAccountIds}
+                  onAddPocket={handleOpenCreatePocket}
+                  onEditPocket={(pocket) =>
+                    open({
+                      kind: "pocket-form",
+                      accountId: pocket.accountId,
+                      pocketId: pocket.id,
+                    })
+                  }
+                  onSelect={select}
+                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                  onTogglePockets={togglePockets}
+                  walkthroughTargetId="assetsSection"
+                />
               ) : null}
 
               <AdBanner
@@ -350,27 +349,26 @@ function AccountsScreenContent({
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "liability",
               ) || !normalizedSearchQuery ? (
-                <WalkthroughTarget id="liabilitiesSection">
-                  <AccountGroupSection
-                    accounts={filteredActive}
-                    group="liability"
-                    pockets={data.pockets}
-                    types={data.types}
-                    onEditType={handleEditType}
-                    expandedPocketAccountIds={expandedPocketAccountIds}
-                    onAddPocket={handleOpenCreatePocket}
-                    onEditPocket={(pocket) =>
-                      open({
-                        kind: "pocket-form",
-                        accountId: pocket.accountId,
-                        pocketId: pocket.id,
-                      })
-                    }
-                    onSelect={select}
-                    onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
-                    onTogglePockets={togglePockets}
-                  />
-                </WalkthroughTarget>
+                <AccountGroupSection
+                  accounts={filteredActive}
+                  group="liability"
+                  pockets={data.pockets}
+                  types={data.types}
+                  onEditType={handleEditType}
+                  expandedPocketAccountIds={expandedPocketAccountIds}
+                  onAddPocket={handleOpenCreatePocket}
+                  onEditPocket={(pocket) =>
+                    open({
+                      kind: "pocket-form",
+                      accountId: pocket.accountId,
+                      pocketId: pocket.id,
+                    })
+                  }
+                  onSelect={select}
+                  onSort={normalizedSearchQuery ? undefined : handleSortAccounts}
+                  onTogglePockets={togglePockets}
+                  walkthroughTargetId="liabilitiesSection"
+                />
               ) : null}
             </>
           ) : (

@@ -49,7 +49,7 @@ export function useCalendarWalkthrough(options: UseCalendarWalkthroughOptions = 
       timerRef.current = setTimeout(async () => {
         const layout = await measureTarget(step.targetId);
         setActiveTargetLayout(layout);
-      }, 120);
+      }, 350);
     },
     [measureTarget, syncTabForStep],
   );

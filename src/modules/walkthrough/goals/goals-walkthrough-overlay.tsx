@@ -220,71 +220,93 @@ export function GoalsWalkthroughOverlay({
         ) : null}
 
         {/* Tooltip Card */}
-        <View style={tooltipContainerStyle} pointerEvents="box-none">
-          <View style={styles.tooltipCard}>
-            {/* Top Bar */}
+        <View style={tooltipContainerStyle}>
+          <View style={styles.card}>
+            {/* Card Header: Step Badge & Skip Button */}
             <View style={styles.cardHeader}>
-              <View style={styles.badgeRow}>
-                <View style={styles.stepBadge}>
-                  <Sparkles color={theme.colors.primary} size={12} />
-                  <Text style={styles.stepBadgeText}>
-                    Step {stepIndex + 1} of {totalSteps}
-                  </Text>
-                </View>
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>
+                  {t("dashboard.walkthroughStepCount", {
+                    current: stepIndex + 1,
+                    total: totalSteps,
+                  })}
+                </Text>
               </View>
-
               <Pressable
-                accessibilityLabel="Close tour"
+                accessibilityLabel={t("dashboard.walkthroughSkip")}
                 accessibilityRole="button"
                 hitSlop={8}
                 onPress={onSkip}
-                style={styles.closeBtn}
+                style={({ pressed }) => [
+                  styles.skipIconBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <X color={theme.colors.textMuted} size={18} />
+                <X color={theme.colors.textMuted} size={16} />
               </Pressable>
             </View>
 
             {/* Title & Description */}
-            <Text style={styles.stepTitle}>{t(step.titleKey as never)}</Text>
-            <Text style={styles.stepDesc}>{t(step.descKey as never)}</Text>
+            <Text style={styles.cardTitle}>{t(step.titleKey as never)}</Text>
+            <Text style={styles.cardDesc}>{t(step.descKey as never)}</Text>
 
-            {/* Footer Navigation */}
-            <View style={styles.cardFooter}>
-              <Pressable
-                accessibilityLabel="Skip walkthrough"
-                accessibilityRole="button"
-                onPress={onSkip}
-                style={styles.skipBtn}
-              >
-                <Text style={styles.skipBtnText}>Skip Tour</Text>
-              </Pressable>
-
-              <View style={styles.navButtonGroup}>
-                {stepIndex > 0 ? (
-                  <Pressable
-                    accessibilityLabel="Previous step"
-                    accessibilityRole="button"
-                    onPress={onPrev}
-                    style={styles.prevBtn}
-                  >
-                    <ChevronLeft color={theme.colors.textPrimary} size={18} />
-                  </Pressable>
-                ) : null}
-
+            {/* Action Row */}
+            <View style={styles.cardActions}>
+              {stepIndex > 0 ? (
                 <Pressable
-                  accessibilityLabel={isLastStep ? "Finish tour" : "Next step"}
+                  accessibilityLabel={t("dashboard.walkthroughBack")}
                   accessibilityRole="button"
-                  onPress={onNext}
-                  style={styles.nextBtn}
+                  onPress={onPrev}
+                  style={({ pressed }) => [
+                    styles.backBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
                 >
-                  <Text style={styles.nextBtnText}>
-                    {isLastStep ? "Got It!" : "Next"}
+                  <ChevronLeft color={theme.colors.textSecondary} size={16} />
+                  <Text style={styles.backBtnText}>
+                    {t("dashboard.walkthroughBack")}
                   </Text>
-                  {!isLastStep ? (
-                    <ChevronRight color={theme.colors.onPrimary} size={16} />
-                  ) : null}
                 </Pressable>
-              </View>
+              ) : (
+                <Pressable
+                  accessibilityLabel={t("dashboard.walkthroughSkip")}
+                  accessibilityRole="button"
+                  onPress={onSkip}
+                  style={({ pressed }) => [
+                    styles.backBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Text style={styles.backBtnText}>
+                    {t("dashboard.walkthroughSkip")}
+                  </Text>
+                </Pressable>
+              )}
+
+              <Pressable
+                accessibilityLabel={
+                  isLastStep
+                    ? "Finish Walkthrough"
+                    : t("dashboard.walkthroughNext")
+                }
+                accessibilityRole="button"
+                onPress={onNext}
+                style={({ pressed }) => [
+                  styles.nextBtn,
+                  pressed && styles.nextBtnPressed,
+                ]}
+              >
+                <Text style={styles.nextBtnText}>
+                  {isLastStep
+                    ? "Finish"
+                    : t("dashboard.walkthroughNext")}
+                </Text>
+                {isLastStep ? (
+                  <Sparkles color="#FFFFFF" size={15} />
+                ) : (
+                  <ChevronRight color="#FFFFFF" size={15} />
+                )}
+              </Pressable>
             </View>
           </View>
         </View>
@@ -297,6 +319,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     overlayContainer: {
       flex: 1,
+      position: "relative",
     },
     highlightBorder: {
       position: "absolute",
@@ -309,103 +332,87 @@ function createStyles(theme: AppTheme) {
       zIndex: 50,
       backgroundColor: "transparent",
     },
-    tooltipCard: {
-      backgroundColor: theme.colors.surfaceElevated || theme.colors.surface,
+    card: {
+      backgroundColor: theme.colors.surface,
+      borderColor: `${theme.colors.primary}30`,
       borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.lg,
       borderWidth: 1,
-      borderColor: theme.colors.border,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.2,
-      shadowRadius: 16,
       elevation: 12,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.lg,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.22,
+      shadowRadius: 14,
     },
     cardHeader: {
+      alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: theme.spacing.sm,
-    },
-    badgeRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
+      marginBottom: 2,
     },
     stepBadge: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 5,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: `${theme.colors.primary}30`,
       borderRadius: theme.borderRadius.round,
-      backgroundColor: `${theme.colors.primary}18`,
+      borderWidth: 1,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 3,
     },
     stepBadgeText: {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.3,
     },
-    closeBtn: {
+    skipIconBtn: {
+      alignItems: "center",
+      justifyContent: "center",
       padding: 4,
     },
-    stepTitle: {
-      fontSize: theme.typography.fontSize.md,
-      fontWeight: theme.typography.fontWeight.bold,
+    cardTitle: {
       color: theme.colors.textPrimary,
-      marginBottom: theme.spacing.xs,
+      fontSize: theme.typography.fontSize.base,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: -0.2,
     },
-    stepDesc: {
-      fontSize: theme.typography.fontSize.sm,
+    cardDesc: {
       color: theme.colors.textSecondary,
-      lineHeight: 20,
-      marginBottom: theme.spacing.md,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.sm * 1.15,
     },
-    cardFooter: {
+    cardActions: {
+      alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
       marginTop: theme.spacing.xs,
-      paddingTop: theme.spacing.sm,
-      borderTopWidth: 1,
-      borderTopColor: theme.colors.border,
     },
-    skipBtn: {
-      paddingVertical: 6,
-      paddingHorizontal: 4,
+    backBtn: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
     },
-    skipBtnText: {
-      color: theme.colors.textMuted,
+    backBtnText: {
+      color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
     },
-    navButtonGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: theme.spacing.sm,
-    },
-    prevBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: theme.colors.surface,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-      justifyContent: "center",
-      alignItems: "center",
-    },
     nextBtn: {
-      flexDirection: "row",
       alignItems: "center",
-      gap: 4,
       backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.medium,
+      flexDirection: "row",
+      gap: 5,
       paddingHorizontal: theme.spacing.md,
-      height: 36,
-      borderRadius: 18,
-      justifyContent: "center",
+      paddingVertical: theme.spacing.sm,
+    },
+    nextBtnPressed: {
+      opacity: 0.85,
     },
     nextBtnText: {
-      color: theme.colors.onPrimary,
+      color: "#FFFFFF",
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
