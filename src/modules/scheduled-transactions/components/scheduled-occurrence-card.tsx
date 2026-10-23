@@ -54,7 +54,11 @@ export function ScheduledOccurrenceCard({
   const dueDateTime = occurrence.effectiveDueAt ?? occurrence.nominalDueAt;
 
   return (
-    <View ref={cardRef} style={[styles.card, isFailed && styles.cardFailed]}>
+    <View
+      ref={cardRef}
+      collapsable={false}
+      style={[styles.card, isFailed && styles.cardFailed]}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.cardMain}>
           <View style={styles.titleRow}>
@@ -139,36 +143,34 @@ export function ScheduledOccurrenceCard({
         ) : null}
 
         <View style={styles.rightActions}>
-          <View ref={skipRef}>
-            <AppButton
-              accessibilityLabel="Skip occurrence"
-              disabled={pending}
-              label="Skip"
-              leading={
-                <FastForward color={theme.colors.textSecondary} size={15} />
-              }
-              onPress={() => onSkip(occurrence.id)}
-              size="small"
-              variant="secondary"
-            />
-          </View>
-          <View ref={postRef}>
-            <AppButton
-              accessibilityLabel={isFailed ? "Retry action" : "Post action"}
-              disabled={pending}
-              label={isFailed ? "Retry Action" : "Post Action"}
-              leading={
-                isFailed ? (
-                  <RotateCcw color={theme.colors.onPrimary} size={15} />
-                ) : (
-                  <Check color={theme.colors.onPrimary} size={15} />
-                )
-              }
-              onPress={() => onPost(occurrence)}
-              size="small"
-              variant="primary"
-            />
-          </View>
+          <AppButton
+            accessibilityLabel="Skip occurrence"
+            buttonRef={skipRef}
+            disabled={pending}
+            label="Skip"
+            leading={
+              <FastForward color={theme.colors.textSecondary} size={15} />
+            }
+            onPress={() => onSkip(occurrence.id)}
+            size="small"
+            variant="secondary"
+          />
+          <AppButton
+            accessibilityLabel={isFailed ? "Retry action" : "Post action"}
+            buttonRef={postRef}
+            disabled={pending}
+            label={isFailed ? "Retry Action" : "Post Action"}
+            leading={
+              isFailed ? (
+                <RotateCcw color={theme.colors.onPrimary} size={15} />
+              ) : (
+                <Check color={theme.colors.onPrimary} size={15} />
+              )
+            }
+            onPress={() => onPost(occurrence)}
+            size="small"
+            variant="primary"
+          />
         </View>
       </View>
     </View>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
@@ -29,8 +29,11 @@ import {
   FirstScheduleCongratulationsModal,
   ScheduledTransactionsWalkthroughOverlay,
   useScheduledTransactionsWalkthrough,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
@@ -115,6 +118,9 @@ function ScheduledTransactionsScreenContent() {
   const dueSkipRef = useWalkthroughTarget("scheduledDueSkip");
   const duePostRef = useWalkthroughTarget("scheduledDuePost");
   const pageScrollRef = useRef<ScrollView | null>(null);
+  const scrollContentRef = useRef<View | null>(null);
+  const didAutoStartWalkthroughRef = useRef(false);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const [showCongrats, setShowCongrats] = useState(false);
 
@@ -259,26 +265,53 @@ function ScheduledTransactionsScreenContent() {
   };
 
   const hasSchedules = activeSchedules.length > 0;
-  const hasDueSchedule = actionableOccurrences.length > 0;
+  const showDueSection =
+    selectedFilters.has("active") && actionableOccurrences.length > 0;
+  const showFirstItem = visibleSchedules.length > 0;
 
-  const handleScrollToTarget = useCallback((targetId: string) => {
-    if (targetId === "scheduledFab") {
-      pageScrollRef.current?.scrollToEnd({ animated: true });
-    } else if (
-      targetId === "scheduledFirstItem" ||
-      targetId === "scheduledFilter"
-    ) {
-      pageScrollRef.current?.scrollTo({ y: 160, animated: true });
-    } else {
-      pageScrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      if (targetId === "scheduledFab") {
+        return;
+      }
+
+      void (async () => {
+        const layout = await measureTargetInAncestor(targetId, scrollContentRef);
+        if (!layout) {
+          return;
+        }
+
+        pageScrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useScheduledTransactionsWalkthrough({
     hasSchedules,
-    hasDueSchedule,
+    hasDueSchedule: showDueSection,
+    showDueSection,
+    showFirstItem,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useEffect(() => {
+    if (
+      didAutoStartWalkthroughRef.current ||
+      loading ||
+      isPromptDismissed("scheduledTransactionsWalkthroughDismissed")
+    ) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      didAutoStartWalkthroughRef.current = true;
+      walkthrough.startWalkthrough();
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [isPromptDismissed, loading, walkthrough.startWalkthrough]);
 
   const handleSave = (
     input: SaveScheduledTransactionInput,
@@ -301,14 +334,14 @@ function ScheduledTransactionsScreenContent() {
     <PageContainer
       contentContainerStyle={contentSpacing}
       floatingAction={
-        <View collapsable={false} ref={fabRef}>
-          <FloatingActionButton
-            accessibilityLabel="Create scheduled transaction"
-            icon={<CalendarClock color={theme.colors.onPrimary} size={24} />}
-            onPress={openNew}
-          />
-        </View>
+        <FloatingActionButton
+          accessibilityLabel="Create scheduled transaction"
+          fabRef={fabRef}
+          icon={<CalendarClock color={theme.colors.onPrimary} size={24} />}
+          onPress={openNew}
+        />
       }
+      scrollContentRef={scrollContentRef}
       scrollRef={pageScrollRef}
     >
       <View style={styles.content}>
@@ -318,18 +351,17 @@ function ScheduledTransactionsScreenContent() {
           </View>
         ) : null}
 
-        <View collapsable={false} ref={searchRef}>
-          <AccountSearchBox
-            accessibilityLabel="Search scheduled transactions"
-            clearAccessibilityLabel="Clear scheduled transaction search"
-            onChangeText={setSearchQuery}
-            placeholder="Search name, account, category..."
-            style={styles.searchBox}
-            value={searchQuery}
-          />
-        </View>
+        <AccountSearchBox
+          accessibilityLabel="Search scheduled transactions"
+          clearAccessibilityLabel="Clear scheduled transaction search"
+          onChangeText={setSearchQuery}
+          placeholder="Search name, account, category..."
+          style={styles.searchBox}
+          targetRef={searchRef}
+          value={searchQuery}
+        />
 
-        {selectedFilters.has("active") && actionableOccurrences.length > 0 ? (
+        {showDueSection ? (
           <View style={styles.dueSection}>
             <Text style={styles.sectionHeading}>Needs attention</Text>
             {actionableOccurrences.map((occurrence, index) => {

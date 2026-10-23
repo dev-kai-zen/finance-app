@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -223,18 +223,11 @@ export function ScheduledTransactionsWalkthroughOverlay({
                   pressed && styles.nextBtnPressed,
                 ]}
               >
-                {isLastStep ? (
-                  <>
-                    <Sparkles color="#FFFFFF" size={15} />
-                    <Text style={styles.nextBtnText}>Finish</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.nextBtnText}>
-                      {t("dashboard.walkthroughNext")}
-                    </Text>
-                    <ChevronRight color="#FFFFFF" size={16} />
-                  </>
+                <Text style={styles.nextBtnText}>
+                  {isLastStep ? "Finish" : t("dashboard.walkthroughNext")}
+                </Text>
+                {isLastStep ? null : (
+                  <ChevronRight color={theme.colors.textPrimary} size={16} />
                 )}
               </Pressable>
             </View>
@@ -315,7 +308,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 6,
     },
     description: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.textPrimary,
       fontSize: 13,
       lineHeight: 18,
     },
@@ -363,7 +356,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: "#FFFFFF",
+      color: theme.colors.textPrimary,
       fontSize: 13,
       fontWeight: "700",
     },

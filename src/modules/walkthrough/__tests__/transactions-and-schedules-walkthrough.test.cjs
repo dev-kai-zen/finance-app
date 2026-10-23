@@ -150,6 +150,35 @@ test("scheduled transactions screen walkthrough: branches correctly across 3 sta
   );
 });
 
+test("scheduled transactions screen walkthrough: omits controls that are not on screen", () => {
+  const hiddenDue = getScheduledTransactionsWalkthroughSteps({
+    hasSchedules: true,
+    showDueSection: false,
+    showFirstItem: true,
+  });
+  assert.deepEqual(
+    hiddenDue.map((step) => step.targetId),
+    ["scheduledSearch", "scheduledFilter", "scheduledFirstItem", "scheduledFab"],
+  );
+
+  const hiddenList = getScheduledTransactionsWalkthroughSteps({
+    hasSchedules: true,
+    showDueSection: true,
+    showFirstItem: false,
+  });
+  assert.deepEqual(
+    hiddenList.map((step) => step.targetId),
+    [
+      "scheduledSearch",
+      "scheduledDueCard",
+      "scheduledDueSkip",
+      "scheduledDuePost",
+      "scheduledFilter",
+      "scheduledFab",
+    ],
+  );
+});
+
 test("schedule form walkthrough: handles once vs recurring frequencies", () => {
   const onceSteps = getScheduleFormWalkthroughSteps({ frequency: "once" });
   const onceTargetIds = onceSteps.map((s) => s.targetId);

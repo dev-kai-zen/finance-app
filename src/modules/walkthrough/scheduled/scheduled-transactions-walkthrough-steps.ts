@@ -3,46 +3,49 @@ import type { WalkthroughStep } from "../types/walkthrough.types";
 export interface ScheduledTransactionsWalkthroughOptions {
   hasSchedules?: boolean;
   hasDueSchedule?: boolean;
+  /** Due card is mounted. Defaults to hasDueSchedule. */
+  showDueSection?: boolean;
+  /** A schedule row is mounted. Defaults to hasSchedules. */
+  showFirstItem?: boolean;
 }
 
 export function getScheduledTransactionsWalkthroughSteps(
   options: ScheduledTransactionsWalkthroughOptions = {},
 ): WalkthroughStep[] {
-  const { hasSchedules = false, hasDueSchedule = false } = options;
+  const {
+    hasSchedules = false,
+    hasDueSchedule = false,
+    showDueSection = hasDueSchedule,
+    showFirstItem = hasSchedules,
+  } = options;
 
-  // Case A: No schedules created yet
+  const searchStep: WalkthroughStep = {
+    id: "scheduledSearch",
+    targetId: "scheduledSearch",
+    titleKey: "scheduledTransactionsWalkthrough.stepSearchTitle",
+    descKey: "scheduledTransactionsWalkthrough.stepSearchDesc",
+  };
+  const filterStep: WalkthroughStep = {
+    id: "scheduledFilter",
+    targetId: "scheduledFilter",
+    titleKey: "scheduledTransactionsWalkthrough.stepFilterTitle",
+    descKey: "scheduledTransactionsWalkthrough.stepFilterDesc",
+  };
+  const fabStep: WalkthroughStep = {
+    id: "scheduledFab",
+    targetId: "scheduledFab",
+    titleKey: "scheduledTransactionsWalkthrough.stepFabTitle",
+    descKey: "scheduledTransactionsWalkthrough.stepFabDesc",
+  };
+
   if (!hasSchedules) {
-    return [
-      {
-        id: "scheduledSearch",
-        targetId: "scheduledSearch",
-        titleKey: "scheduledTransactionsWalkthrough.stepSearchTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepSearchDesc",
-      },
-      {
-        id: "scheduledFilter",
-        targetId: "scheduledFilter",
-        titleKey: "scheduledTransactionsWalkthrough.stepFilterTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepFilterDesc",
-      },
-      {
-        id: "scheduledFab",
-        targetId: "scheduledFab",
-        titleKey: "scheduledTransactionsWalkthrough.stepFabTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepFabDesc",
-      },
-    ];
+    return [searchStep, filterStep, fabStep];
   }
 
-  // Case B: Due schedule exists needing attention
-  if (hasDueSchedule) {
-    return [
-      {
-        id: "scheduledSearch",
-        targetId: "scheduledSearch",
-        titleKey: "scheduledTransactionsWalkthrough.stepSearchTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepSearchDesc",
-      },
+  const steps: WalkthroughStep[] = [searchStep];
+
+  if (showDueSection) {
+    steps.push(
       {
         id: "scheduledDueCard",
         targetId: "scheduledDueCard",
@@ -61,52 +64,20 @@ export function getScheduledTransactionsWalkthroughSteps(
         titleKey: "scheduledTransactionsWalkthrough.stepDuePostTitle",
         descKey: "scheduledTransactionsWalkthrough.stepDuePostDesc",
       },
-      {
-        id: "scheduledFilter",
-        targetId: "scheduledFilter",
-        titleKey: "scheduledTransactionsWalkthrough.stepFilterTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepFilterDesc",
-      },
-      {
-        id: "scheduledFirstItem",
-        targetId: "scheduledFirstItem",
-        titleKey: "scheduledTransactionsWalkthrough.stepFirstItemTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepFirstItemDesc",
-      },
-      {
-        id: "scheduledFab",
-        targetId: "scheduledFab",
-        titleKey: "scheduledTransactionsWalkthrough.stepFabTitle",
-        descKey: "scheduledTransactionsWalkthrough.stepFabDesc",
-      },
-    ];
+    );
   }
 
-  // Case C: Standard list / 1st schedule walkthrough
-  return [
-    {
-      id: "scheduledSearch",
-      targetId: "scheduledSearch",
-      titleKey: "scheduledTransactionsWalkthrough.stepSearchTitle",
-      descKey: "scheduledTransactionsWalkthrough.stepSearchDesc",
-    },
-    {
-      id: "scheduledFilter",
-      targetId: "scheduledFilter",
-      titleKey: "scheduledTransactionsWalkthrough.stepFilterTitle",
-      descKey: "scheduledTransactionsWalkthrough.stepFilterDesc",
-    },
-    {
+  steps.push(filterStep);
+
+  if (showFirstItem) {
+    steps.push({
       id: "scheduledFirstItem",
       targetId: "scheduledFirstItem",
       titleKey: "scheduledTransactionsWalkthrough.stepFirstItemTitle",
       descKey: "scheduledTransactionsWalkthrough.stepFirstItemDesc",
-    },
-    {
-      id: "scheduledFab",
-      targetId: "scheduledFab",
-      titleKey: "scheduledTransactionsWalkthrough.stepFabTitle",
-      descKey: "scheduledTransactionsWalkthrough.stepFabDesc",
-    },
-  ];
+    });
+  }
+
+  steps.push(fabStep);
+  return steps;
 }

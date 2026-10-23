@@ -1,33 +1,45 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useWindowDimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   getScheduledTransactionsWalkthroughSteps,
   type ScheduledTransactionsWalkthroughOptions,
 } from "./scheduled-transactions-walkthrough-steps";
-import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
+import type {
+  LayoutRect,
+  WalkthroughStep,
+  WalkthroughTargetId,
+} from "../types/walkthrough.types";
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
+import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
-export interface UseScheduledTransactionsWalkthroughProps {
-  hasSchedules: boolean;
-  hasDueSchedule: boolean;
-  onScrollToTarget?: (targetId: string) => void;
+export interface UseScheduledTransactionsWalkthroughProps
+  extends ScheduledTransactionsWalkthroughOptions {
+  onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
 }
 
 export function useScheduledTransactionsWalkthrough({
-  hasSchedules,
-  hasDueSchedule,
+  hasSchedules = false,
+  hasDueSchedule = false,
+  showDueSection,
+  showFirstItem,
   onScrollToTarget,
 }: UseScheduledTransactionsWalkthroughProps) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
+  const { height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   const steps = useMemo(
     () =>
       getScheduledTransactionsWalkthroughSteps({
         hasSchedules,
         hasDueSchedule,
+        showDueSection,
+        showFirstItem,
       }),
-    [hasSchedules, hasDueSchedule],
+    [hasDueSchedule, hasSchedules, showDueSection, showFirstItem],
   );
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
@@ -36,89 +48,100 @@ export function useScheduledTransactionsWalkthrough({
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const measurementGenerationRef = useRef(0);
 
   const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
 
-  const clearTimers = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (timer2Ref.current) clearTimeout(timer2Ref.current);
-  }, []);
-
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
-      clearTimers();
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
 
-      // 1. Auto-scroll to target
-      onScrollToTarget?.(step.targetId);
+      const generation = ++measurementGenerationRef.current;
 
-      // 2. Initial measurement attempt
-      timerRef.current = setTimeout(async () => {
+      const applyLayout = async () => {
         const layout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
         setActiveTargetLayout(layout);
+      };
 
-        // 3. Settle check
-        timer2Ref.current = setTimeout(async () => {
-          const settledLayout = await measureTarget(step.targetId);
-          if (settledLayout) {
-            setActiveTargetLayout(settledLayout);
-          }
+      void (async () => {
+        const initialLayout = await measureTarget(step.targetId);
+        if (generation !== measurementGenerationRef.current) {
+          return;
+        }
+        if (
+          initialLayout &&
+          isWalkthroughTargetVisible(initialLayout, windowHeight, insets)
+        ) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
+        onScrollToTarget?.(step.targetId);
+
+        timerRef.current = setTimeout(() => {
+          void applyLayout();
         }, 350);
-      }, 350);
+      })();
     },
-    [clearTimers, measureTarget, onScrollToTarget],
+    [insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (steps[0]) {
-      updateMeasurement(steps[0]);
-    }
-  }, [steps, updateMeasurement]);
+  }, []);
 
   const skipWalkthrough = useCallback(() => {
-    clearTimers();
+    if (timerRef.current) clearTimeout(timerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("scheduledTransactionsWalkthroughDismissed");
-  }, [clearTimers, dismissPrompt]);
+  }, [dismissPrompt]);
 
   const completeWalkthrough = useCallback(() => {
-    clearTimers();
+    if (timerRef.current) clearTimeout(timerRef.current);
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("scheduledTransactionsWalkthroughDismissed");
-  }, [clearTimers, dismissPrompt]);
+  }, [dismissPrompt]);
 
   const nextStep = useCallback(() => {
     if (activeStepIndex >= steps.length - 1) {
       completeWalkthrough();
       return;
     }
-    const nextIdx = activeStepIndex + 1;
-    setActiveStepIndex(nextIdx);
-    const nextStepObj = steps[nextIdx];
-    if (nextStepObj) {
-      updateMeasurement(nextStepObj);
-    }
-  }, [activeStepIndex, completeWalkthrough, steps, updateMeasurement]);
+    setActiveStepIndex(activeStepIndex + 1);
+  }, [activeStepIndex, completeWalkthrough, steps.length]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
-    const prevIdx = activeStepIndex - 1;
-    setActiveStepIndex(prevIdx);
-    const prevStepObj = steps[prevIdx];
-    if (prevStepObj) {
-      updateMeasurement(prevStepObj);
+    setActiveStepIndex(activeStepIndex - 1);
+  }, [activeStepIndex]);
+
+  useEffect(() => {
+    if (activeStepIndex <= steps.length - 1) {
+      return;
     }
-  }, [activeStepIndex, steps, updateMeasurement]);
+    setActiveStepIndex(Math.max(0, steps.length - 1));
+  }, [activeStepIndex, steps.length]);
+
+  useEffect(() => {
+    if (!isWalkthroughActive || !currentStep) {
+      return;
+    }
+    updateMeasurement(currentStep);
+  }, [currentStep, isWalkthroughActive, updateMeasurement]);
 
   useEffect(() => {
     return () => {
-      clearTimers();
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [clearTimers]);
+  }, []);
 
   return {
     isWalkthroughActive,
