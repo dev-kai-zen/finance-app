@@ -45,6 +45,7 @@ import type {
 } from "@/modules/accounts/types/fund-group.types";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
+import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
 
 type EditorState = {
@@ -74,6 +75,7 @@ export function FundGroupsModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const { isPro } = useProStatus();
   const mutations = useFundGroupMutations(onRefresh);
@@ -916,8 +918,8 @@ export function FundGroupsModal({
       />
 
       <ProFeatureModal
-        featureDescription="Organize multiple accounts and sub-pockets into custom business, personal, or project portfolios with combined balances and dedicated reporting with Kaizen Pro."
-        featureTitle="Fund Groups"
+        featureDescription={t("pro.locked.fundGroupsDesc")}
+        featureTitle={t("pro.locked.fundGroupsTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

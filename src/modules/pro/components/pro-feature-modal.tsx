@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,12 +9,15 @@ import {
   View,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import { Crown, Lock, Sparkles, X } from "lucide-react-native";
+import { Crown, Flame, Lock, X } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+
+import { PRO_CONSTANTS } from "../constants/pro.constants";
 import { useProStatus } from "../hooks/use-pro-status";
+import { ProPaywallModal } from "../screens/pro-paywall-modal";
 
 export interface ProFeatureModalProps {
   visible: boolean;
@@ -31,6 +35,7 @@ export function ProFeatureModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const {
     isPro,
@@ -41,7 +46,7 @@ export function ProFeatureModal({
     restorePurchases,
   } = useProStatus();
 
-  const priceText = offering?.priceString || "$9.99";
+  const priceText = offering?.priceString || PRO_CONSTANTS.FALLBACK_PRICE;
 
   const handlePurchase = async () => {
     if (isPro) {
@@ -86,98 +91,153 @@ export function ProFeatureModal({
     "Unlock all advanced tools, unlimited entities, and an ad-free experience forever with a one-time purchase.";
 
   return (
-    <Modal
-      animationType="fade"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
-      <View style={styles.overlay}>
-        <BlurView
-          intensity={90}
-          tint={theme.mode === "dark" ? "dark" : "light"}
-          style={StyleSheet.absoluteFill}
-        />
-        <Pressable
-          accessibilityLabel={t("common.close")}
-          onPress={onClose}
-          style={styles.backdrop}
-        />
-
-        <View style={styles.compactGateCard}>
-          {/* Top Close Button */}
+    <>
+      <Modal
+        animationType="fade"
+        onRequestClose={onClose}
+        transparent
+        visible={visible}
+      >
+        <View style={styles.overlay}>
+          <BlurView
+            intensity={90}
+            tint={theme.mode === "dark" ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
           <Pressable
             accessibilityLabel={t("common.close")}
-            accessibilityRole="button"
-            hitSlop={10}
             onPress={onClose}
-            style={styles.closeBtn}
-          >
-            <X color={theme.colors.textSecondary} size={20} />
-          </Pressable>
+            style={styles.backdrop}
+          />
 
-          {/* Hero Icon with Lock Badge */}
-          <View style={styles.compactHeroIconWrapper}>
-            <Crown color="#D97706" size={26} />
-            <View style={styles.compactLockBadge}>
-              <Lock color="#FFFFFF" size={10} strokeWidth={2.5} />
+          <View style={styles.compactGateCard}>
+            {/* Top Close Button */}
+            <Pressable
+              accessibilityLabel={t("common.close")}
+              accessibilityRole="button"
+              hitSlop={10}
+              onPress={onClose}
+              style={styles.closeBtn}
+            >
+              <X color={theme.colors.textSecondary} size={20} />
+            </Pressable>
+
+            {/* Hero Icon with Lock Badge */}
+            <View style={styles.compactHeroIconWrapper}>
+              <Crown color="#D97706" size={26} />
+              <View style={styles.compactLockBadge}>
+                <Lock color="#FFFFFF" size={10} strokeWidth={2.5} />
+              </View>
             </View>
-          </View>
 
-          {/* Title */}
-          <Text accessibilityRole="header" style={styles.compactGateTitle}>
-            {title}
-          </Text>
+            {/* Title */}
+            <Text accessibilityRole="header" style={styles.compactGateTitle}>
+              {title}
+            </Text>
 
-          {/* Descriptive Information Card */}
-          <View style={styles.featureInfoCard}>
-            <Text style={styles.featureInfoText}>{description}</Text>
-          </View>
+            {/* Descriptive Information Card (Positive Reinforcement) */}
+            <View style={styles.featureInfoCard}>
+              <Text style={styles.featureInfoText}>{description}</Text>
+            </View>
 
-          {/* Upgrade Button */}
-          <Pressable
-            accessibilityRole="button"
-            disabled={isPurchasing}
-            onPress={handlePurchase}
-            style={({ pressed }) => [
-              styles.upgradeButton,
-              pressed && styles.upgradeButtonPressed,
-              isPurchasing && styles.upgradeButtonDisabled,
-            ]}
-          >
-            {isPurchasing ? (
-              <ActivityIndicator color="#000000" size="small" />
-            ) : (
-              <>
-                <Sparkles color="#000000" size={16} />
-                <Text style={styles.upgradeButtonText}>
-                  {t("pro.paywallUpgradeBtn", { price: priceText })}
-                </Text>
-              </>
-            )}
-          </Pressable>
+            {/* Launch Deal Promo Box */}
+            <View style={styles.launchDealBox}>
+              <View style={styles.launchDealHeader}>
+                <View style={styles.launchDealHeaderLeft}>
+                  <Flame color="#F59E0B" size={14} />
+                  <Text style={styles.launchDealBadge}>
+                    {t("pro.launchSpecialBadge")}
+                  </Text>
+                </View>
+                <View style={styles.discountPill}>
+                  <Text style={styles.discountPillText}>
+                    {t("pro.launchDiscountBadge")}
+                  </Text>
+                </View>
+              </View>
 
-          {/* Restore Purchases Button */}
-          <Pressable
-            accessibilityRole="button"
-            disabled={isRestoring}
-            onPress={handleRestore}
-            style={styles.restoreBtn}
-          >
-            {isRestoring ? (
-              <ActivityIndicator
-                color={theme.colors.textSecondary}
-                size="small"
-              />
-            ) : (
-              <Text style={styles.restoreBtnText}>
-                {t("pro.restorePurchases")}
+              <View style={styles.priceRow}>
+                <View style={styles.priceLeft}>
+                  <View style={styles.strikeWrapper}>
+                    <Text style={styles.strikePrice}>
+                      {t("pro.launchRegularPrice")}
+                    </Text>
+                    <View style={styles.strikeLine} />
+                  </View>
+                  <Text style={styles.promoPrice}>{priceText}</Text>
+                </View>
+
+                <View style={styles.savingsPill}>
+                  <Text style={styles.savingsPillText}>
+                    {t("pro.launchSavingsText")}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Upgrade Button */}
+            <Pressable
+              accessibilityRole="button"
+              disabled={isPurchasing}
+              onPress={handlePurchase}
+              style={({ pressed }) => [
+                styles.upgradeButton,
+                pressed && styles.upgradeButtonPressed,
+                isPurchasing && styles.upgradeButtonDisabled,
+              ]}
+            >
+              {isPurchasing ? (
+                <ActivityIndicator color="#000000" size="small" />
+              ) : (
+                <>
+                  <Crown color="#000000" size={17} />
+                  <Text style={styles.upgradeButtonText}>
+                    {t("pro.featureModalUpgradeBtn", { price: priceText })}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+
+            {/* Explore All Features Link */}
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setPaywallOpen(true)}
+              style={styles.exploreLink}
+            >
+              <Text style={styles.exploreLinkText}>
+                {t("pro.exploreAllFeatures")}
               </Text>
-            )}
-          </Pressable>
+            </Pressable>
+
+            {/* Restore Purchases Button */}
+            <Pressable
+              accessibilityRole="button"
+              disabled={isRestoring}
+              onPress={handleRestore}
+              style={styles.restoreBtn}
+            >
+              {isRestoring ? (
+                <ActivityIndicator
+                  color={theme.colors.textSecondary}
+                  size="small"
+                />
+              ) : (
+                <Text style={styles.restoreBtnText}>
+                  {t("pro.restorePurchases")}
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      {/* Full Carousel Paywall Modal */}
+      <ProPaywallModal
+        onClose={() => setPaywallOpen(false)}
+        visible={paywallOpen}
+      />
+    </>
   );
 }
 
@@ -201,10 +261,10 @@ function createStyles(theme: AppTheme) {
       maxWidth: 420,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
       alignItems: "center",
       borderWidth: 1.5,
-      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderColor: "rgba(217, 119, 6, 0.45)",
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.18,
@@ -231,7 +291,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: "rgba(217, 119, 6, 0.15)",
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
       position: "relative",
     },
     compactLockBadge: {
@@ -249,43 +309,128 @@ function createStyles(theme: AppTheme) {
     },
     compactGateTitle: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md + 1,
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "center",
-      marginBottom: theme.spacing.md,
-      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.sm,
     },
     featureInfoCard: {
       width: "100%",
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      marginBottom: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm + 2,
+      marginBottom: theme.spacing.md,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
     featureInfoText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs + 1,
-      lineHeight: 19,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 18,
       textAlign: "center",
       fontWeight: theme.typography.fontWeight.medium,
     },
-    upgradeButton: {
-      backgroundColor: theme.colors.warning,
+    launchDealBox: {
+      width: "100%",
+      backgroundColor:
+        theme.mode === "dark"
+          ? "rgba(245, 158, 11, 0.08)"
+          : "rgba(245, 158, 11, 0.06)",
       borderRadius: theme.borderRadius.medium,
-      paddingVertical: 14,
-      paddingHorizontal: theme.spacing.xl,
+      borderWidth: 1,
+      borderColor: "rgba(245, 158, 11, 0.35)",
+      padding: theme.spacing.sm + 2,
+      marginBottom: theme.spacing.md,
+      gap: 4,
+    },
+    launchDealHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    launchDealHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+    },
+    launchDealBadge: {
+      color: "#F59E0B",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.6,
+    },
+    discountPill: {
+      backgroundColor: "rgba(245, 158, 11, 0.22)",
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.round,
+    },
+    discountPillText: {
+      color: "#D97706",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    priceRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingTop: 2,
+    },
+    priceLeft: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 8,
+    },
+    strikeWrapper: {
+      position: "relative",
+      justifyContent: "center",
+    },
+    strikePrice: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    strikeLine: {
+      position: "absolute",
+      height: 1.5,
+      backgroundColor: "#EF4444",
+      left: 0,
+      right: 0,
+    },
+    promoPrice: {
+      color: "#F59E0B",
+      fontSize: 20,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    savingsPill: {
+      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      borderColor: "rgba(16, 185, 129, 0.3)",
+    },
+    savingsPillText: {
+      color: "#10B981",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    upgradeButton: {
+      backgroundColor: "#F59E0B",
+      borderRadius: theme.borderRadius.medium,
+      paddingVertical: 13,
+      paddingHorizontal: theme.spacing.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       width: "100%",
-      gap: 8,
-      marginBottom: theme.spacing.md,
+      gap: 7,
+      marginBottom: 6,
     },
     upgradeButtonPressed: {
-      opacity: 0.85,
+      opacity: 0.88,
     },
     upgradeButtonDisabled: {
       opacity: 0.65,
@@ -296,8 +441,17 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.3,
     },
+    exploreLink: {
+      paddingVertical: 4,
+      marginBottom: 2,
+    },
+    exploreLinkText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
     restoreBtn: {
-      paddingVertical: 8,
+      paddingVertical: 4,
       marginBottom: theme.spacing.xs,
     },
     restoreBtnText: {

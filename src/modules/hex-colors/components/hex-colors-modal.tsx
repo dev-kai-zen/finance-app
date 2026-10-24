@@ -15,6 +15,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useHexColors } from "../hooks/use-hex-colors";
 import type { HexColor, HexColorInput } from "../types/hex-color.types";
@@ -31,6 +32,7 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { isPro } = useProStatus();
 
   const { colors, loading, error, clearError, addColor, editColor, removeColor } = useHexColors();
@@ -230,8 +232,8 @@ export function HexColorsModal({ visible, onClose }: HexColorsModalProps) {
       />
 
       <ProFeatureModal
-        featureDescription="Create custom hex color palettes to personalize accounts, categories, and tags across your finances with Kaizen Pro."
-        featureTitle="Custom Hex Colors"
+        featureDescription={t("pro.locked.hexColorsDesc")}
+        featureTitle={t("pro.locked.hexColorsTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

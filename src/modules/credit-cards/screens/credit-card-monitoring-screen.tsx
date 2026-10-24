@@ -11,6 +11,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { useLocalization } from "@/infrastructure/localization";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
@@ -20,6 +21,7 @@ export function CreditCardMonitoringScreen() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const { isPro } = useProStatus();
   const [proModalVisible, setProModalVisible] = useState(false);
@@ -171,8 +173,8 @@ export function CreditCardMonitoringScreen() {
       )}
 
       <ProFeatureModal
-        featureDescription="Track multi-card billing cycles, statement cutoffs, payment due dates, 0% installment payoffs, and credit limit utilization in real time with Kaizen Pro."
-        featureTitle="Credit Card Monitoring"
+        featureDescription={t("pro.locked.creditCardsDesc")}
+        featureTitle={t("pro.locked.creditCardsTitle")}
         onClose={handleClose}
         visible={proModalVisible}
       />

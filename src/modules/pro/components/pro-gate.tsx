@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Crown, Sparkles, Check, Lock } from "lucide-react-native";
+import { Crown, Flame, Sparkles, Check, Lock } from "lucide-react-native";
 import { BlurView } from "expo-blur";
 
 import { IconHelper } from "@/components/icon-helper";
@@ -16,6 +16,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 
+import { PRO_CONSTANTS } from "../constants/pro.constants";
 import { useProStatus } from "../hooks/use-pro-status";
 import { ProPaywallModal } from "../screens/pro-paywall-modal";
 
@@ -60,7 +61,7 @@ export function ProGate({
   ];
 
   const displayBenefits = benefits ?? defaultBenefits;
-  const priceText = offering?.priceString || "$9.99";
+  const priceText = offering?.priceString || PRO_CONSTANTS.FALLBACK_PRICE;
 
   const handleRestore = async () => {
     const result = await restorePurchases();
@@ -78,6 +79,42 @@ export function ProGate({
       Alert.alert(t("pro.restoreErrorTitle"), result.error);
     }
   };
+
+  const renderLaunchDealBox = () => (
+    <View style={styles.launchDealBox}>
+      <View style={styles.launchDealHeader}>
+        <View style={styles.launchDealHeaderLeft}>
+          <Flame color="#F59E0B" size={14} />
+          <Text style={styles.launchDealBadge}>
+            {t("pro.launchSpecialBadge")}
+          </Text>
+        </View>
+        <View style={styles.discountPill}>
+          <Text style={styles.discountPillText}>
+            {t("pro.launchDiscountBadge")}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.priceRow}>
+        <View style={styles.priceLeft}>
+          <View style={styles.strikeWrapper}>
+            <Text style={styles.strikePrice}>
+              {t("pro.launchRegularPrice")}
+            </Text>
+            <View style={styles.strikeLine} />
+          </View>
+          <Text style={styles.promoPrice}>{priceText}</Text>
+        </View>
+
+        <View style={styles.savingsPill}>
+          <Text style={styles.savingsPillText}>
+            {t("pro.launchSavingsText")}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
 
   if (mode === "blur") {
     return (
@@ -116,6 +153,8 @@ export function ProGate({
               </View>
             ) : null}
 
+            {renderLaunchDealBox()}
+
             <Pressable
               accessibilityRole="button"
               onPress={() => setPaywallOpen(true)}
@@ -124,9 +163,20 @@ export function ProGate({
                 pressed && styles.upgradeButtonPressed,
               ]}
             >
-              <Sparkles color="#000000" size={16} />
+              <Crown color="#000000" size={17} />
               <Text style={styles.upgradeButtonText}>
-                {t("pro.paywallUpgradeBtn", { price: priceText })}
+                {t("pro.featureModalUpgradeBtn", { price: priceText })}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setPaywallOpen(true)}
+              style={styles.exploreLink}
+            >
+              <Text style={styles.exploreLinkText}>
+                {t("pro.exploreAllFeatures")}
               </Text>
             </Pressable>
 
@@ -181,9 +231,9 @@ export function ProGate({
           </View>
         ) : null}
 
-        {benefits ? (
+        {displayBenefits && displayBenefits.length > 0 ? (
           <View style={styles.benefitsList}>
-            {benefits.map((item, idx) => (
+            {displayBenefits.map((item, idx) => (
               <View key={idx} style={styles.benefitRow}>
                 <View style={styles.benefitIconWrapper}>
                   <Check color={theme.colors.primary} size={14} />
@@ -194,6 +244,8 @@ export function ProGate({
           </View>
         ) : null}
 
+        {renderLaunchDealBox()}
+
         {/* Upgrade Button */}
         <Pressable
           accessibilityRole="button"
@@ -203,9 +255,20 @@ export function ProGate({
             pressed && styles.upgradeButtonPressed,
           ]}
         >
-          <Sparkles color="#000000" size={18} />
+          <Crown color="#000000" size={18} />
           <Text style={styles.upgradeButtonText}>
-            {t("pro.paywallUpgradeBtn", { price: priceText })}
+            {t("pro.featureModalUpgradeBtn", { price: priceText })}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => setPaywallOpen(true)}
+          style={styles.exploreLink}
+        >
+          <Text style={styles.exploreLinkText}>
+            {t("pro.exploreAllFeatures")}
           </Text>
         </Pressable>
 
@@ -248,21 +311,24 @@ function createStyles(theme: AppTheme) {
     },
     gateScroll: {
       flexGrow: 1,
-      padding: theme.spacing.xl,
+      alignItems: "center",
       justifyContent: "center",
+      padding: theme.spacing.lg,
     },
     gateCard: {
+      width: "100%",
+      maxWidth: 420,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
       padding: theme.spacing.xl,
       alignItems: "center",
       borderWidth: 1.5,
-      borderColor: "rgba(217, 119, 6, 0.3)",
+      borderColor: "rgba(217, 119, 6, 0.4)",
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 4,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 6,
     },
     heroIconWrapper: {
       width: 64,
@@ -271,13 +337,13 @@ function createStyles(theme: AppTheme) {
       backgroundColor: "rgba(217, 119, 6, 0.15)",
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
       position: "relative",
     },
     lockBadge: {
       position: "absolute",
-      bottom: -1,
-      right: -1,
+      bottom: -2,
+      right: -2,
       backgroundColor: theme.mode === "dark" ? "#27272A" : "#18181B",
       borderWidth: 2,
       borderColor: theme.colors.surface,
@@ -292,22 +358,12 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xl,
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "center",
-      marginBottom: theme.spacing.xs,
-    },
-    gateSubtitle: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.sm,
-      textAlign: "center",
-      lineHeight: 20,
-      marginBottom: theme.spacing.xl,
+      marginBottom: theme.spacing.sm,
     },
     benefitsList: {
       width: "100%",
       gap: theme.spacing.sm,
-      marginBottom: theme.spacing.xl,
-      backgroundColor: theme.colors.surfaceMuted,
-      padding: theme.spacing.lg,
-      borderRadius: theme.borderRadius.large,
+      marginVertical: theme.spacing.md,
     },
     benefitRow: {
       flexDirection: "row",
@@ -315,21 +371,105 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
     },
     benefitIconWrapper: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      width: 24,
+      height: 24,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: theme.colors.surfaceMuted,
       alignItems: "center",
       justifyContent: "center",
     },
     benefitText: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.xs + 1,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontSize: theme.typography.fontSize.sm,
       flex: 1,
     },
+    launchDealBox: {
+      width: "100%",
+      backgroundColor:
+        theme.mode === "dark"
+          ? "rgba(245, 158, 11, 0.08)"
+          : "rgba(245, 158, 11, 0.06)",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      borderColor: "rgba(245, 158, 11, 0.35)",
+      padding: theme.spacing.sm + 2,
+      marginBottom: theme.spacing.md,
+      gap: 4,
+    },
+    launchDealHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    launchDealHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+    },
+    launchDealBadge: {
+      color: "#F59E0B",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.6,
+    },
+    discountPill: {
+      backgroundColor: "rgba(245, 158, 11, 0.22)",
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.round,
+    },
+    discountPillText: {
+      color: "#D97706",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    priceRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingTop: 2,
+    },
+    priceLeft: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 8,
+    },
+    strikeWrapper: {
+      position: "relative",
+      justifyContent: "center",
+    },
+    strikePrice: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    strikeLine: {
+      position: "absolute",
+      height: 1.5,
+      backgroundColor: "#EF4444",
+      left: 0,
+      right: 0,
+    },
+    promoPrice: {
+      color: "#F59E0B",
+      fontSize: 20,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    savingsPill: {
+      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      borderColor: "rgba(16, 185, 129, 0.3)",
+    },
+    savingsPillText: {
+      color: "#10B981",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
     upgradeButton: {
-      backgroundColor: theme.colors.warning,
+      backgroundColor: "#F59E0B",
       borderRadius: theme.borderRadius.medium,
       paddingVertical: 14,
       paddingHorizontal: theme.spacing.xl,
@@ -338,10 +478,10 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: "100%",
       gap: 8,
-      marginBottom: theme.spacing.md,
+      marginBottom: 6,
     },
     upgradeButtonPressed: {
-      opacity: 0.85,
+      opacity: 0.88,
     },
     upgradeButtonText: {
       color: "#000000",
@@ -349,9 +489,18 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.3,
     },
+    exploreLink: {
+      paddingVertical: 4,
+      marginBottom: 2,
+    },
+    exploreLinkText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
     restoreBtn: {
-      paddingVertical: 8,
-      marginBottom: theme.spacing.sm,
+      paddingVertical: 6,
+      marginBottom: theme.spacing.xs,
     },
     restoreBtnText: {
       color: theme.colors.textSecondary,
@@ -391,10 +540,10 @@ function createStyles(theme: AppTheme) {
       maxWidth: 420,
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.xl,
+      padding: theme.spacing.lg,
       alignItems: "center",
       borderWidth: 1.5,
-      borderColor: "rgba(217, 119, 6, 0.4)",
+      borderColor: "rgba(217, 119, 6, 0.45)",
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.18,
@@ -408,7 +557,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: "rgba(217, 119, 6, 0.15)",
       alignItems: "center",
       justifyContent: "center",
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
       position: "relative",
     },
     compactLockBadge: {
@@ -426,25 +575,25 @@ function createStyles(theme: AppTheme) {
     },
     compactGateTitle: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.lg,
+      fontSize: theme.typography.fontSize.md + 1,
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "center",
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
     },
     featureInfoCard: {
       width: "100%",
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.medium,
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: theme.spacing.md,
-      marginBottom: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm + 2,
+      marginBottom: theme.spacing.md,
       borderWidth: 1,
       borderColor: theme.colors.border,
     },
     featureInfoText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs + 1,
-      lineHeight: 19,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: 18,
       textAlign: "center",
       fontWeight: theme.typography.fontWeight.medium,
     },

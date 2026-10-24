@@ -36,41 +36,25 @@ export function ReportsScreen() {
       ) : null}
 
       {activeTab === "balance-sheet" ? (
-        <ProGate
-          featureDescription="Track assets, liabilities, and equity variations across custom periods with Pro."
-          featureTitle="Balance Sheet Comparison"
-          mode="blur"
-        >
+        <ProGate mode="blur">
           <BalanceSheetReport />
         </ProGate>
       ) : null}
 
       {activeTab === "cash-flow" ? (
-        <ProGate
-          featureDescription="Analyze operating cash flows, liquidity trends, and net balances over time with Pro."
-          featureTitle="Cash Flow Analytics"
-          mode="blur"
-        >
+        <ProGate mode="blur">
           <CashFlowReport />
         </ProGate>
       ) : null}
 
       {activeTab === "net-worth" ? (
-        <ProGate
-          featureDescription="Monitor long-term wealth velocity, compounding trajectories, and total portfolio valuation with Pro."
-          featureTitle="Net Worth Growth Trends"
-          mode="blur"
-        >
+        <ProGate mode="blur">
           <NetWorthGrowthReport />
         </ProGate>
       ) : null}
 
       {activeTab === "labels-summary" ? (
-        <ProGate
-          featureDescription="Aggregate expenses and income tagged under custom labels, projects, and events with Pro."
-          featureTitle="Labels & Tags Breakdown"
-          mode="blur"
-        >
+        <ProGate mode="blur">
           <LabelsSummaryReport />
         </ProGate>
       ) : null}

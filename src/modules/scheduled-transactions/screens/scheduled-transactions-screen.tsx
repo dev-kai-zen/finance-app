@@ -239,8 +239,10 @@ function ScheduledTransactionsScreenContent() {
         setEditingSchedule(null);
         setFormVisible(true);
       }, {
-        featureTitle: "Scheduled Transactions Limit",
-        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS} active scheduled transactions. Upgrade to Kaizen Pro for unlimited recurring transactions, automatic background posting, and recurrence analytics.`,
+        featureTitle: t("pro.limits.schedulesTitle"),
+        featureDescription: t("pro.limits.schedulesDesc", {
+          count: PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS,
+        }),
       });
       return;
     }
@@ -641,8 +643,10 @@ function ScheduledTransactionsScreenContent() {
               guardAction(() => {
                 restore(toRestore.id);
               }, {
-                featureTitle: "Scheduled Transactions Limit",
-                featureDescription: `Restoring this schedule would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS} scheduled transactions. Upgrade to Kaizen Pro for unlimited schedules.`,
+                featureTitle: t("pro.limits.schedulesTitle"),
+                featureDescription: t("pro.limits.restoreScheduleDesc", {
+                  count: PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS,
+                }),
               });
               return;
             }

@@ -278,8 +278,8 @@ export function QuickSyncCard() {
       />
 
       <ProFeatureModal
-        featureDescription="Automatically keep your financial records, accounts, and transactions backed up to Google Drive in real time with Kaizen Pro."
-        featureTitle="Automatic Cloud Quick Sync"
+        featureDescription={t("pro.locked.quickSyncDesc")}
+        featureTitle={t("pro.locked.quickSyncTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

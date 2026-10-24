@@ -1205,8 +1205,35 @@ export const es = {
     launchSavingsText: "AHORRA ₱300",
     launchSubtext: "Pago único · Acceso de por vida · Actualizaciones para siempre",
     launchUpgradeBtn: "Aprovechar Oferta (%{price})",
+    featureModalUpgradeBtn: "Aprovechar Oferta (%{price}) · 60% OFF",
+    exploreAllFeatures: "Ver Todas las Funciones Pro →",
     swipeCardsHint: "Desliza a la izquierda o derecha para ver las funciones",
     guaranteeText: "Pago único · 100% Privado · Restaura en cualquier momento",
+    limits: {
+      accountsTitle: "¡Tu portafolio está creciendo!",
+      accountsDesc:
+        "¡Has completado tus primeras %{count} cuentas — excelente organización! Pasa a Kaizen Pro para cuentas ilimitadas, subcuentas y seguimiento patrimonial completo.",
+      pocketsDesc:
+        "¡Estás organizando tus finanzas como un profesional! Mejora a Kaizen Pro para crear subcuentas ilimitadas y segmentar tus ahorros y gastos.",
+      budgetsTitle: "¡Dominando tus gastos!",
+      budgetsDesc:
+        "¡Estás controlando activamente %{count} presupuestos por categoría! Mejora a Kaizen Pro para presupuestos ilimitados con renovación inteligente de excedentes y alertas de umbral.",
+      goalsTitle: "¡Grandes metas en marcha!",
+      goalsDesc:
+        "¡Has establecido tus primeros %{count} hitos de ahorro! Acelera tu camino con Kaizen Pro para metas ilimitadas, fechas objetivo y seguimiento multicuenta.",
+      schedulesTitle: "¡Automatizando tus finanzas!",
+      schedulesDesc:
+        "¡Te mantienes al día con tus pagos! Mejora a Kaizen Pro para transacciones recurrentes ilimitadas, registro automático en segundo plano y análisis de recurrencia.",
+      notesTitle: "¡Excelente registro de notas!",
+      notesDesc:
+        "¡Has completado tus primeras %{count} notas financieras! Desbloquea Kaizen Pro para notas ilimitadas, adjuntar fotos de recibos y etiquetas personalizadas.",
+      restoreAccountDesc:
+        "Restaurar esta cuenta superaría tus %{count} cuentas activas. Mejora a Kaizen Pro para cuentas ilimitadas y total libertad.",
+      restorePocketDesc:
+        "Restaurar esta subcuenta superaría tus %{count} bolsillos para esta cuenta. Mejora a Kaizen Pro para subcuentas ilimitadas.",
+      restoreScheduleDesc:
+        "Restaurar este cronograma superaría tus %{count} transacciones recurrentes. Mejora a Kaizen Pro para cronogramas ilimitados.",
+    },
     restorePurchases: "Restaurar Compras",
     restoring: "Restaurando...",
     restoreSuccessTitle: "Compras Restauradas",
@@ -1220,13 +1247,87 @@ export const es = {
     purchaseSuccessMsg: "¡Gracias por apoyar a Kaizen Finance! Todas las funciones Pro ya están desbloqueadas.",
     disclaimer:
       "El pago se cargará a tu cuenta de Google Play al confirmar la compra. Esta es una compra única no consumible sin tarifas recurrentes.",
-    reportsLockedTitle: "Reportes y Análisis Financiero",
+    reportsLockedTitle: "¿Listo para una Claridad Financiera Total?",
     reportsLockedSubtitle:
-      "Desbloquea tendencias de flujo de caja, balance general, crecimiento de patrimonio neto y análisis de gastos con Kaizen Pro.",
+      "Ya controlas tus gastos diarios — ¡ahora mira el panorama completo! Eleva tus finanzas con gráficos ejecutivos de flujo de caja, balance general y trayectoria de patrimonio neto.",
     reportsLockedCta: "Desbloquear Acceso De Por Vida",
-    widgetsLockedTitle: "Widgets Financieros en Pantalla de Inicio",
+    widgetsLockedTitle: "Tu Dinero de un Vistazo",
     widgetsLockedSubtitle:
-      "Fija gráficos interactivos de Presupuesto Mensual, Flujo de Caja y Patrimonio Neto en tu pantalla de inicio con Kaizen Pro.",
+      "Mantente consciente de tu presupuesto sin siquiera abrir la app. Fija gráficos interactivos de gasto mensual y patrimonio neto en tu pantalla de inicio.",
     widgetsLockedCta: "Desbloquear Widgets Pro",
+    locked: {
+      cloudSyncTitle: "Tranquilidad Total para tus Finanzas",
+      cloudSyncDesc:
+        "Tu historial financiero no tiene precio. Mantén cada transacción y presupuesto respaldado en tu Google Drive personal y restaura en un toque en cualquier momento.",
+      securityTitle: "Privacidad de Nivel Bancario Solo para Tus Ojos",
+      securityDesc:
+        "Tus finanzas son personales. Agrega desbloqueo instantáneo con huella o Face ID para que tu patrimonio neto y transacciones estén completamente protegidos.",
+      creditCardsTitle: "Evita Intereses y Cargos de Tarjetas de Crédito",
+      creditCardsDesc:
+        "Toma el mando de tus ciclos de facturación, fechas de corte, pagos en cuotas al 0% y alertas de límite de crédito para cuidar tu historial crediticio.",
+      budgetRolloverTitle: "Haz que tu Presupuesto Sobrante Trabaje por Ti",
+      budgetRolloverDesc:
+        "¡Premia tus buenos hábitos! Traslada automáticamente el excedente no gastado al mes siguiente para que cada peso ahorrado cuente.",
+      receiptsTitle: "Mantén Comprobantes Listos para Declarar",
+      receiptsDesc:
+        "No vuelvas a perder un recibo en papel o factura. Adjunta fotos directamente a tus transacciones y notas para una contabilidad sin esfuerzo.",
+      autoPostTitle: "Ahorra Tiempo en Piloto Automático",
+      autoPostDesc:
+        "Ejecuta automáticamente ingresos y facturas recurrentes en sus fechas de vencimiento en segundo plano para no olvidar ningún pago.",
+      fieldReceiptsTitle: "Contabilidad Lista para Impuestos",
+      fieldReceiptsDesc:
+        "Mantén facturas y comprobantes organizados adjuntando fotos en alta resolución directamente a tus registros.",
+      fieldSplitTitle: "Precisión en Múltiples Categorías",
+      fieldSplitDesc:
+        "¡Un recibo, varias categorías! Divide fácilmente las compras de supermercado o compras grandes entre las cuentas exactas.",
+      fieldInstallmentsTitle: "Control Total de Cuotas y Pagos",
+      fieldInstallmentsDesc:
+        "Toma el mando de tus compras a cuotas, compromisos a plazo y suscripciones con planes de amortización claros.",
+      fieldLabelsTitle: "Claridad Financiera Multidimensional",
+      fieldLabelsDesc:
+        "Etiqueta transacciones por proyecto, viaje o evento para un filtrado y análisis profundo de tus gastos.",
+      fieldQuickPresetsTitle: "Registro Ultra Rápido en 1 Toque",
+      fieldQuickPresetsDesc:
+        "Ahorra tiempo cada día registrando gastos frecuentes como café o transporte en un solo toque.",
+      remindersMonthlyTitle: "Inicia el Mes con Máxima Claridad",
+      remindersMonthlyDesc:
+        "Celebra tus avances con un informe ejecutivo privado de flujo de caja, tasa de ahorro y patrimonio el primer día de cada mes.",
+      remindersCreditCardsTitle: "Protege tu Calificación Crediticia",
+      remindersCreditCardsDesc:
+        "Anticípate a las fechas de corte y vencimiento con recordatorios proactivos adaptados a cada tarjeta.",
+      remindersCreditLimitTitle: "Protección contra Deuda en Tiempo Real",
+      remindersCreditLimitDesc:
+        "Evita cargos por sobregiro y caídas en tu historial con alertas antes de rebasar el 80% de tu límite de crédito.",
+      remindersScheduledTitle: "Nunca Olvides un Pago Programado",
+      remindersScheduledDesc:
+        "Anticípate a facturas, suscripciones y transferencias recurrentes con alertas inteligentes.",
+      remindersBudgetTitle: "Mantén tus Gastos en Zona Segura",
+      remindersBudgetDesc:
+        "Mantén tus gastos controlados con avisos automáticos cuando una categoría se acerque al 80% y 100% de su límite.",
+      remindersGoalsTitle: "Celebra Cada Meta de Ahorro",
+      remindersGoalsDesc:
+        "Mantén el entusiasmo con avisos previos a las fechas límite y felicitaciones al alcanzar el 50%, 75% y 100%.",
+      accountHideSelectionTitle: "Registro Diario Sin Distracciones",
+      accountHideSelectionDesc:
+        "Mantén limpia la lista de cuentas al registrar gastos ocultando fondos de emergencia o bóvedas de ahorro.",
+      accountHideReportsTitle: "Patrimonio Neto Real",
+      accountHideReportsDesc:
+        "Excluye depósitos en garantía o cuentas comerciales para que tus estadísticas reflejen exclusivamente tu riqueza personal.",
+      fundGroupsTitle: "Control Multi-Portafolio",
+      fundGroupsDesc:
+        "Separa ahorros personales, flujos de negocio y proyectos independientes en grupos organizados con balances totales.",
+      localBackupTitle: "Copia de Seguridad Local Automatizada",
+      localBackupDesc:
+        "Mantén el control total de tus registros con copias automáticas y cifradas diarias, semanales o mensuales en tu dispositivo.",
+      quickSyncTitle: "Tranquilidad en la Nube en Tiempo Real",
+      quickSyncDesc:
+        "Cada gasto y cambio se respalda al instante en tu Google Drive personal de forma segura y en segundo plano.",
+      hexColorsTitle: "Personalización Visual Exclusiva",
+      hexColorsDesc:
+        "Crea paletas de colores hex personalizadas para estilizar tus cuentas, categorías y etiquetas.",
+      iconLibraryTitle: "Colección Ampliada de 200+ Íconos",
+      iconLibraryDesc:
+        "Personaliza cada cuenta, presupuesto y meta de ahorro con más de 200 íconos Lucide en alta definición.",
+    },
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

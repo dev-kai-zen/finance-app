@@ -122,8 +122,8 @@ function BudgetFormModalContent({
       guardAction(() => {
         setAllowRollover(true);
       }, {
-        featureTitle: "Rollover Budget",
-        featureDescription: "Automatically carry unspent budget surplus or deficit from previous periods into your next budget cycle with Kaizen Pro.",
+        featureTitle: t("pro.locked.budgetRolloverTitle"),
+        featureDescription: t("pro.locked.budgetRolloverDesc"),
       });
       return;
     }

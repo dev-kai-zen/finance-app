@@ -89,7 +89,7 @@ export function LockedProWidget({ title, subtitle }: LockedProWidgetProps) {
         }}
       >
         <TextWidget
-          text="🔒 Pro Exclusive Widget"
+          text="✨ Your Finances at a Glance"
           style={{
             fontSize: 12,
             fontWeight: "bold",
@@ -99,7 +99,7 @@ export function LockedProWidget({ title, subtitle }: LockedProWidgetProps) {
         <TextWidget
           text={
             subtitle ??
-            "Live interactive charts and real-time financial tracking are available with Kaizen Pro."
+            "Stay effortlessly mindful of your budget and net worth straight from your home screen with Kaizen Pro."
           }
           style={{
             fontSize: 10,
@@ -125,7 +125,7 @@ export function LockedProWidget({ title, subtitle }: LockedProWidgetProps) {
         }}
       >
         <TextWidget
-          text="Tap to Unlock with Pro →"
+          text="Claim Launch Offer • 60% OFF →"
           style={{
             fontSize: 11,
             fontWeight: "bold",

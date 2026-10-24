@@ -1189,8 +1189,35 @@ export const en = {
     launchSavingsText: "SAVE ₱300",
     launchSubtext: "Pay once · Lifetime access · Forever updates",
     launchUpgradeBtn: "Claim Launch Offer (%{price})",
+    featureModalUpgradeBtn: "Claim Launch Offer (%{price}) · 60% OFF",
+    exploreAllFeatures: "Explore All Pro Features →",
     swipeCardsHint: "Swipe left or right to explore Pro features",
     guaranteeText: "One-time purchase · 100% Private · Restore anytime",
+    limits: {
+      accountsTitle: "You're expanding your portfolio!",
+      accountsDesc:
+        "You’ve maxed out your first %{count} accounts — great job staying organized! Level up to Kaizen Pro for unlimited accounts, sub-pockets, and complete wealth tracking.",
+      pocketsDesc:
+        "You're organizing your finances like a pro! Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.",
+      budgetsTitle: "Mastering your spending!",
+      budgetsDesc:
+        "You’re actively tracking %{count} category budgets! Upgrade to Kaizen Pro to manage unlimited budgets with automatic surplus rollovers and threshold alerts.",
+      goalsTitle: "Big dreams in motion!",
+      goalsDesc:
+        "You’ve set your first %{count} savings milestones! Supercharge your journey with Kaizen Pro for unlimited goals, target dates, and multi-pocket tracking.",
+      schedulesTitle: "Automating your finances!",
+      schedulesDesc:
+        "You’re staying on top of your bills! Upgrade to Kaizen Pro for unlimited recurring transactions, background auto-posting, and recurrence analytics.",
+      notesTitle: "Keeping great records!",
+      notesDesc:
+        "You’ve filled your first %{count} financial notes! Unlock Kaizen Pro for unlimited notes, document and receipt photo attachments, and custom color tagging.",
+      restoreAccountDesc:
+        "Restoring this account would exceed your %{count} active accounts. Upgrade to Kaizen Pro for unlimited accounts and complete portfolio freedom.",
+      restorePocketDesc:
+        "Restoring this pocket would exceed your %{count} pockets for this account. Upgrade to Kaizen Pro for unlimited sub-pockets.",
+      restoreScheduleDesc:
+        "Restoring this schedule would exceed your %{count} recurring transactions. Upgrade to Kaizen Pro for unlimited schedules.",
+    },
     restorePurchases: "Restore Purchases",
     restoring: "Restoring...",
     restoreSuccessTitle: "Purchases Restored",
@@ -1204,14 +1231,88 @@ export const en = {
     purchaseSuccessMsg: "Thank you for supporting Kaizen Finance! All Pro features are now unlocked.",
     disclaimer:
       "Payment will be charged to your Google Play account at confirmation of purchase. This is a one-time non-consumable purchase with no recurring fees.",
-    reportsLockedTitle: "Reports & Financial Analytics",
+    reportsLockedTitle: "Ready for Complete Financial Clarity?",
     reportsLockedSubtitle:
-      "Unlock Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns with Kaizen Pro.",
+      "You’re taking control of your daily spending — now see the big picture! Elevate your finances with executive-level Cash Flow charts, Balance Sheets, and Net Worth trajectory.",
     reportsLockedCta: "Unlock Lifetime Access",
-    widgetsLockedTitle: "Home Screen Financial Widgets",
+    widgetsLockedTitle: "Your Money at a Glance",
     widgetsLockedSubtitle:
-      "Pin interactive Monthly Budget, Cash Flow, and Net Worth charts directly to your Android home screen with Kaizen Pro.",
+      "Stay effortlessly mindful of your budget without opening the app. Pin interactive monthly spend meters and net worth charts straight to your Android home screen.",
     widgetsLockedCta: "Unlock Pro Widgets",
+    locked: {
+      cloudSyncTitle: "Total Peace of Mind for Your Finances",
+      cloudSyncDesc:
+        "Your financial journey is priceless. Keep every transaction, budget, and receipt permanently backed up to your personal Google Drive and restore in one tap anytime.",
+      securityTitle: "Bank-Grade Privacy for Your Eyes Only",
+      securityDesc:
+        "Your finances are personal. Add instant Fingerprint or Face ID security so your private net worth and transactions stay completely protected.",
+      creditCardsTitle: "Outsmart Credit Card Interest & Fees",
+      creditCardsDesc:
+        "Take command of multiple billing cycles, statement cutoff reminders, 0% installment schedules, and credit limit alerts to keep your credit score spotless.",
+      budgetRolloverTitle: "Make Your Unspent Budget Work for You",
+      budgetRolloverDesc:
+        "Rewarding smart habits! Automatically roll unspent surplus forward into your next month so every peso you save stays accounted for.",
+      receiptsTitle: "Keep Tax-Ready Financial Records",
+      receiptsDesc:
+        "Never lose a paper receipt or invoice again. Snap and attach high-res photos directly to your transactions and notes for effortless bookkeeping.",
+      autoPostTitle: "Save Time on Autopilot",
+      autoPostDesc:
+        "Automatically execute recurring income, bills, and transfers on their due dates in the background so you never miss a payment.",
+      fieldReceiptsTitle: "Tax-Ready Bookkeeping",
+      fieldReceiptsDesc:
+        "Keep paper receipts and invoices permanently organized by attaching high-res photos directly to your records.",
+      fieldSplitTitle: "Pinpoint Multi-Category Precision",
+      fieldSplitDesc:
+        "One receipt, multiple categories! Effortlessly break down supermarket or mall purchases across exact accounts.",
+      fieldInstallmentsTitle: "Never Lose Track of Pay-Offs",
+      fieldInstallmentsDesc:
+        "Take total control of gadget installments, credit terms, and subscriptions with clear payoff roadmaps.",
+      fieldLabelsTitle: "Dimensional Financial Clarity",
+      fieldLabelsDesc:
+        "Organize spending by project, trip, or tax event for razor-sharp filtering and analytics.",
+      fieldQuickPresetsTitle: "Lightning-Fast 1-Tap Logging",
+      fieldQuickPresetsDesc:
+        "Save time every day by logging frequent coffee, groceries, and commute expenses in a single tap.",
+      remindersMonthlyTitle: "Start Every Month with Full Clarity",
+      remindersMonthlyDesc:
+        "Celebrate your progress with a private executive report summarizing your cash flow, savings rate, and net worth on the 1st of every month.",
+      remindersCreditCardsTitle: "Protect Your Credit Score",
+      remindersCreditCardsDesc:
+        "Stay ahead of statement cutoffs and payment deadlines with proactive reminders tailored to each card.",
+      remindersCreditLimitTitle: "Real-Time Debt Protection",
+      remindersCreditLimitDesc:
+        "Avoid over-limit fees and credit score drops with proactive alerts as balances approach 80% of your limit.",
+      remindersScheduledTitle: "Never Miss a Bill Payment",
+      remindersScheduledDesc:
+        "Stay ahead of upcoming bills, subscriptions, and scheduled transfers with smart advance notifications.",
+      remindersBudgetTitle: "Stay Inside Your Budget Comfort Zone",
+      remindersBudgetDesc:
+        "Keep your spending on target with instant proactive alerts as category expenses approach 80% and 100%.",
+      remindersGoalsTitle: "Celebrate Every Savings Milestone",
+      remindersGoalsDesc:
+        "Stay energized and motivated with advance deadline notices and milestone celebrations as you hit 50%, 75%, and 100%.",
+      accountHideSelectionTitle: "Streamlined Everyday Logging",
+      accountHideSelectionDesc:
+        "Keep your daily transaction picker clutter-free by tucking away emergency funds or vault accounts.",
+      accountHideReportsTitle: "True Personal Net Worth",
+      accountHideReportsDesc:
+        "Exclude escrow deposits, business collateral, or tracked external funds so your personal analytics reflect 100% pure personal wealth.",
+      fundGroupsTitle: "Multi-Portfolio Command",
+      fundGroupsDesc:
+        "Effortlessly separate personal savings, business cash flows, and side-hustles into organized fund groups with dedicated balance rollups.",
+      localBackupTitle: "Automated Device Redundancy",
+      localBackupDesc:
+        "Keep full control of your financial records with automatic, encrypted daily, weekly, or monthly local backups directly on your device storage.",
+      quickSyncTitle: "Real-Time Cloud Peace of Mind",
+      quickSyncDesc:
+        "Every transaction and budget change safely syncs to your personal Google Drive in the background as you record it.",
+      hexColorsTitle: "Personalized Visual Styling",
+      hexColorsDesc:
+        "Design custom hex color palettes to personalize accounts, categories, and tags across your financial dashboard.",
+      iconLibraryTitle: "Expanded 200+ Icon Collection",
+      iconLibraryDesc:
+        "Personalize every account, budget, and savings goal with over 200 high-definition Lucide icons.",
+    },
   },
 } as const;
 

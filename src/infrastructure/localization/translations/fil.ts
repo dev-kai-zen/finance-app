@@ -1206,8 +1206,35 @@ export const fil = {
     launchSavingsText: "TIPID ₱300",
     launchSubtext: "Isang bayad · Habambuhay na access · Libreng updates",
     launchUpgradeBtn: "Kunin ang Promo Offer (%{price})",
+    featureModalUpgradeBtn: "Kunin ang Promo Offer (%{price}) · 60% OFF",
+    exploreAllFeatures: "Tingnan ang Lahat ng Pro Features →",
     swipeCardsHint: "I-swipe pakaliwa o pakanan para sa mga feature",
     guaranteeText: "Isang beses na bayad · 100% Pribado · Ibalik anumang oras",
+    limits: {
+      accountsTitle: "Lumalago ang iyong portfolio!",
+      accountsDesc:
+        "Nagamit mo na ang iyong unang %{count} accounts — magaling ang pag-oorganisa! Mag-level up sa Kaizen Pro para sa walang limitasyong accounts, sub-pockets, at buong wealth tracking.",
+      pocketsDesc:
+        "Inaayos mo ang iyong pera tulad ng isang pro! Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets para sa mas malinaw na paghihiwalay ng ipon at gastos.",
+      budgetsTitle: "Hawak mo ang iyong paggastos!",
+      budgetsDesc:
+        "Aktibo mong sinusubaybayan ang %{count} category budgets! Mag-upgrade sa Kaizen Pro para sa walang limitasyong badyet na may awtomatikong surplus rollover at threshold alerts.",
+      goalsTitle: "Malalaking pangarap ang sumusulong!",
+      goalsDesc:
+        "Naitakda mo na ang iyong unang %{count} savings milestones! Pabilisin ang iyong pag-unlad gamit ang Kaizen Pro para sa walang limitasyong targets, target dates, at multi-pocket tracking.",
+      schedulesTitle: "Awtomasyon sa iyong pananalapi!",
+      schedulesDesc:
+        "Nananatili kang maagap sa iyong mga bayarin! Mag-upgrade sa Kaizen Pro para sa walang limitasyong recurring transactions, background auto-posting, at recurrence analytics.",
+      notesTitle: "Mahusay na pagtatala ng talaan!",
+      notesDesc:
+        "Napuno mo na ang iyong unang %{count} tala sa pananalapi! Buksan ang Kaizen Pro para sa walang limitasyong notes, photo at receipt attachments, at custom color tagging.",
+      restoreAccountDesc:
+        "Ang pag-restore sa account na ito ay lalampas sa iyong %{count} aktibong accounts. Mag-upgrade sa Kaizen Pro para sa walang limitasyong accounts at ganap na kalayaan.",
+      restorePocketDesc:
+        "Ang pag-restore sa pocket na ito ay lalampas sa iyong %{count} pockets para sa account na ito. Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets.",
+      restoreScheduleDesc:
+        "Ang pag-restore sa iskedyul na ito ay lalampas sa iyong %{count} recurring transactions. Mag-upgrade sa Kaizen Pro para sa walang limitasyong schedules.",
+    },
     restorePurchases: "Ibalik ang mga Binili (Restore)",
     restoring: "Ibinabalik...",
     restoreSuccessTitle: "Naibalik ang mga Binili",
@@ -1221,13 +1248,87 @@ export const fil = {
     purchaseSuccessMsg: "Salamat sa pagsuporta sa Kaizen Finance! Lahat ng Pro features ay bukas na.",
     disclaimer:
       "Ang bayad ay sisingilin sa iyong Google Play account sa pagkumpirma ng pagbili. Ito ay isang beses na pagbili na walang paulit-ulit na bayarin.",
-    reportsLockedTitle: "Mga Ulat at Financial Analytics",
+    reportsLockedTitle: "Handa na para sa Ganap na Kalinawan sa Pera?",
     reportsLockedSubtitle:
-      "Buksan ang mga graph ng Cash Flow, Balance Sheet, Net Worth Growth, at breakdown ng gastusin gamit ang Kaizen Pro.",
+      "Hawak mo na ang iyong araw-araw na paggastos — ngayon tingnan ang kabuuang larawan! I-angat ang iyong pananalapi gamit ang Cash Flow charts, Balance Sheets, at Net Worth trajectory.",
     reportsLockedCta: "I-unlock ang Habambuhay na Access",
-    widgetsLockedTitle: "Mga Financial Widget sa Home Screen",
+    widgetsLockedTitle: "Ang Iyong Pera sa Isang Sulyap",
     widgetsLockedSubtitle:
-      "I-pin ang mga interactive na chart ng Buwanang Badyet, Cash Flow, at Net Worth sa iyong home screen gamit ang Kaizen Pro.",
+      "Maging maalam sa iyong badyet kahit hindi binubuksan ang app. I-pin ang mga interactive chart ng buwanang gastos at net worth sa iyong home screen.",
     widgetsLockedCta: "I-unlock ang Pro Widgets",
+    locked: {
+      cloudSyncTitle: "Ganap na Kapayapaan ng Isip para sa Iyong Pera",
+      cloudSyncDesc:
+        "Walang katumbas ang iyong talaan sa pananalapi. Panatilihing ligtas na naka-backup ang bawat transaksyon sa iyong personal na Google Drive at i-restore sa isang tap lamang.",
+      securityTitle: "Bank-Grade na Proteksyon para sa Iyong Paningin Lamang",
+      securityDesc:
+        "Personal ang iyong pananalapi. Magdagdag ng Fingerprint o Face ID lock upang ang iyong pribadong net worth at mga tala ay manatiling protektado.",
+      creditCardsTitle: "Umiwas sa Interes at Bayarin sa Credit Card",
+      creditCardsDesc:
+        "Pamahalaan ang mga billing cycle, statement cutoffs, 0% installment payoffs, at credit limit alerts upang mapanatiling malinis ang iyong credit record.",
+      budgetRolloverTitle: "Gawing Kapaki-pakinabang ang Natirang Badyet",
+      budgetRolloverDesc:
+        "Gantimpala para sa magandang gawi! Awtomatikong dalhin ang natirang pondo sa susunod na buwan upang ang bawat pisong naipon ay manatiling bilang.",
+      receiptsTitle: "Panatilihing Maayos ang mga Resibo at Tala",
+      receiptsDesc:
+        "Huwag nang mawalan ng resibo o invoice. Mag-attach ng mga larawan sa iyong notes at transaksyon para sa maayos na bookkeeping.",
+      autoPostTitle: "Makatipid ng Oras nang Awtomatiko",
+      autoPostDesc:
+        "Awtomatikong iproseso ang mga recurring income at bayarin sa takdang petsa sa background upang hindi makaligtaan ang anumang bayarin.",
+      fieldReceiptsTitle: "Maayos at Handa sa Buwis na Talaan",
+      fieldReceiptsDesc:
+        "Panatilihing organisado ang mga resibo sa pamamagitan ng pag-attach ng malilinaw na larawan direkta sa iyong tala.",
+      fieldSplitTitle: "Eksaktong Paghati-hati ng Gastos",
+      fieldSplitDesc:
+        "Isang resibo, maraming kategorya! Madaling hatiin ang mga pinamili sa supermarket o mall sa mga tamang account.",
+      fieldInstallmentsTitle: "Subaybayan ang mga Hulugan",
+      fieldInstallmentsDesc:
+        "Maging kontrolado ang mga installment ng gadget, bayarin sa card, at plano ng pagbabayad nang walang kalituhan.",
+      fieldLabelsTitle: "Mas Malalim na Pag-uuri ng Pera",
+      fieldLabelsDesc:
+        "Lagyan ng sariling tag o label ang bawat gastos para sa proyekto, biyahe, o okasyon para sa madaling pagsusuri.",
+      fieldQuickPresetsTitle: "Mabilisang 1-Tap na Pagtatala",
+      fieldQuickPresetsDesc:
+        "Makatipid ng oras araw-araw sa pamamagitan ng pagtatala ng madalas na kape, pamasahe, at groseri sa isang tap lamang.",
+      remindersMonthlyTitle: "Simulan ang Buwan nang may Malinaw na Isip",
+      remindersMonthlyDesc:
+        "Ipagdiwang ang iyong pag-unlad gamit ang buwanang ulat ng cash flow, naipon, at net worth tuwing ika-1 ng buwan.",
+      remindersCreditCardsTitle: "Protektahan ang Iyong Credit Score",
+      remindersCreditCardsDesc:
+        "Maging handa bago ang due date gamit ang mga paalalang akma sa billing cycle ng bawat credit card.",
+      remindersCreditLimitTitle: "Babala Bago Lumampas sa Limitasyon",
+      remindersCreditLimitDesc:
+        "Umiwas sa dagdag na singil gamit ang maagang abiso kapag ang balanse ay umabot na sa 80% ng card limit.",
+      remindersScheduledTitle: "Huwag Makaligtaan ang mga Bayarin",
+      remindersScheduledDesc:
+        "Manatiling una sa mga paparating na bayarin, subscription, at nakatakdang transfer gamit ang maagang paalala.",
+      remindersBudgetTitle: "Manatili sa Tamang Hangganan ng Badyet",
+      remindersBudgetDesc:
+        "Panatilihing nasa ayos ang paggasta gamit ang mga abiso kapag umabot na sa 80% o 100% ang nagastos sa isang kategorya.",
+      remindersGoalsTitle: "Ipagdiwang ang Bawat Naabot na Ipon",
+      remindersGoalsDesc:
+        "Manatiling inspirado gamit ang mga paalala sa deadline at pagbati kapag naabot ang 50%, 75%, at 100% ng iyong ipon.",
+      accountHideSelectionTitle: "Malinis na Pang-araw-araw na Pagtatala",
+      accountHideSelectionDesc:
+        "Panatilihing maayos ang picker ng account sa pamamagitan ng pagtago ng mga emergency fund o lihim na naipon.",
+      accountHideReportsTitle: "Tunay na Personal na Net Worth",
+      accountHideReportsDesc:
+        "Ihiwalay ang escrow, deposito, o panlabas na pondo upang 100% tunay na sariling kayamanan ang makita sa ulat.",
+      fundGroupsTitle: "Ganap na Pamamahala sa mga Portfolio",
+      fundGroupsDesc:
+        "Madaling paghiwalayin ang personal na ipon, pondo sa negosyo, at mga sideline sa organisadong fund groups.",
+      localBackupTitle: "Awtomatikong Lokal na Backup",
+      localBackupDesc:
+        "Panatilihin ang buong kontrol sa iyong talaan gamit ang awtomatiko at ligtas na backup direkta sa memorya ng iyong device.",
+      quickSyncTitle: "Real-Time Cloud na Proteksyon",
+      quickSyncDesc:
+        "Ligtas na naka-sync sa iyong Google Drive ang bawat binagong transaksyon at badyet sa mismong oras na itala ito.",
+      hexColorsTitle: "Pansariling Disenyo at Kulay",
+      hexColorsDesc:
+        "Gumawa ng sariling hex color palette para sa mga account, kategorya, at tag sa iyong dashboard.",
+      iconLibraryTitle: "Mahigit 200 Dagdag na Lucide Icon",
+      iconLibraryDesc:
+        "I-personalize ang bawat account, badyet, at layunin gamit ang pinalawak na koleksyon ng mahigit 200 icon.",
+    },
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

@@ -417,8 +417,8 @@ export function LocalBackupScreen() {
       />
 
       <ProFeatureModal
-        featureDescription="Automatically create secure, scheduled local backup copies on a daily, weekly, or monthly schedule whenever the app is active with Kaizen Pro."
-        featureTitle="Automatic Local Backups"
+        featureDescription={t("pro.locked.localBackupDesc")}
+        featureTitle={t("pro.locked.localBackupTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

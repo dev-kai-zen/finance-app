@@ -39,34 +39,29 @@ const PRO_FORM_FIELDS: ReadonlySet<FormFieldPreferenceKey> = new Set([
   "quickPresets",
 ]);
 
-const PRO_FIELD_META: Record<
+const PRO_FIELD_KEYS: Record<
   string,
-  { title: string; description: string }
+  { titleKey: string; descKey: string }
 > = {
   attachments: {
-    title: "Receipt Attachments",
-    description:
-      "Attach photos, invoices, and documents directly to transactions for complete bookkeeping with Kaizen Pro.",
+    titleKey: "pro.locked.fieldReceiptsTitle",
+    descKey: "pro.locked.fieldReceiptsDesc",
   },
   split: {
-    title: "Split Transactions",
-    description:
-      "Break down single receipts and transactions across multiple categories or accounts with Kaizen Pro.",
+    titleKey: "pro.locked.fieldSplitTitle",
+    descKey: "pro.locked.fieldSplitDesc",
   },
   installments: {
-    title: "Installments & Subscriptions",
-    description:
-      "Track installment purchases, recurring payment plans, and pay-off schedules with Kaizen Pro.",
+    titleKey: "pro.locked.fieldInstallmentsTitle",
+    descKey: "pro.locked.fieldInstallmentsDesc",
   },
   labels: {
-    title: "Custom Labels & Tags",
-    description:
-      "Tag transactions with custom labels, projects, and event markers for deep dimensional filtering with Kaizen Pro.",
+    titleKey: "pro.locked.fieldLabelsTitle",
+    descKey: "pro.locked.fieldLabelsDesc",
   },
   quickPresets: {
-    title: "Quick Presets",
-    description:
-      "Log frequent transactions in one tap with customized amounts, categories, and account templates with Kaizen Pro.",
+    titleKey: "pro.locked.fieldQuickPresetsTitle",
+    descKey: "pro.locked.fieldQuickPresetsDesc",
   },
 };
 
@@ -94,17 +89,21 @@ export function TransactionFormFieldPreferencesModal({
     value: boolean,
   ) => {
     if (value && !isPro && PRO_FORM_FIELDS.has(field)) {
-      const meta = PRO_FIELD_META[field] ?? {
-        title: labelForOptional(field),
-        description: `Unlock ${labelForOptional(field)} and advanced transaction customization with Kaizen Pro.`,
-      };
+      const keys = PRO_FIELD_KEYS[field];
+      const featureTitle = keys
+        ? t(keys.titleKey as never)
+        : labelForOptional(field);
+      const featureDescription = keys
+        ? t(keys.descKey as never)
+        : `Unlock ${labelForOptional(field)} with Kaizen Pro.`;
+
       guardAction(
         () => {
           setFormField(field, true);
         },
         {
-          featureTitle: meta.title,
-          featureDescription: meta.description,
+          featureTitle,
+          featureDescription,
         },
       );
       return;

@@ -467,8 +467,8 @@ export function GoogleDriveBackupPanel() {
       />
 
       <ProFeatureModal
-        featureDescription="Securely back up your entire encrypted financial database directly to your personal Google Drive account and restore across devices with Kaizen Pro."
-        featureTitle="Google Drive Cloud Backup"
+        featureDescription={t("pro.locked.cloudSyncDesc")}
+        featureTitle={t("pro.locked.cloudSyncTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

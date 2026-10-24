@@ -424,9 +424,8 @@ function AccountFormModalContent({
           setValue((prev) => ({ ...prev, hideFromSelection: true }));
         },
         {
-          featureTitle: "Hide from Selection",
-          featureDescription:
-            "Hide secondary, savings, or confidential accounts from everyday transaction pickers with Kaizen Pro.",
+          featureTitle: t("pro.locked.accountHideSelectionTitle"),
+          featureDescription: t("pro.locked.accountHideSelectionDesc"),
         },
       );
       return;
@@ -441,9 +440,8 @@ function AccountFormModalContent({
           setValue((prev) => ({ ...prev, hideFromReports: true }));
         },
         {
-          featureTitle: "Hide from Reports",
-          featureDescription:
-            "Exclude escrow, security deposit, or tracked external accounts from net worth and analytics totals with Kaizen Pro.",
+          featureTitle: t("pro.locked.accountHideReportsTitle"),
+          featureDescription: t("pro.locked.accountHideReportsDesc"),
         },
       );
       return;
