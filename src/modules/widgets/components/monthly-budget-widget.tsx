@@ -8,12 +8,22 @@ import {
   WIDGET_THEME,
 } from "../constants/widget.constants";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
+import { LockedProWidget } from "./locked-pro-widget";
 
 interface MonthlyBudgetWidgetProps {
   snapshot?: FinancialWidgetSnapshot;
 }
 
 export function MonthlyBudgetWidget({ snapshot }: MonthlyBudgetWidgetProps) {
+  if (!snapshot?.isPro) {
+    return (
+      <LockedProWidget
+        title="Monthly Budget"
+        subtitle="Monitor category spending progress and limit alerts in real time."
+      />
+    );
+  }
+
   const month = snapshot?.monthLabel ?? "This Month";
   const hasActiveBudgets = snapshot?.hasActiveBudgets ?? false;
   const isBudgetExceeded = snapshot?.isBudgetExceeded ?? false;

@@ -1214,5 +1214,9 @@ export const fil = {
     reportsLockedSubtitle:
       "Buksan ang mga graph ng Cash Flow, Balance Sheet, Net Worth Growth, at breakdown ng gastusin gamit ang Kaizen Pro.",
     reportsLockedCta: "I-unlock ang Habambuhay na Access",
+    widgetsLockedTitle: "Mga Financial Widget sa Home Screen",
+    widgetsLockedSubtitle:
+      "I-pin ang mga interactive na chart ng Buwanang Badyet, Cash Flow, at Net Worth sa iyong home screen gamit ang Kaizen Pro.",
+    widgetsLockedCta: "I-unlock ang Pro Widgets",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

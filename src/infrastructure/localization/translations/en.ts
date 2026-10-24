@@ -1197,6 +1197,10 @@ export const en = {
     reportsLockedSubtitle:
       "Unlock Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns with Kaizen Pro.",
     reportsLockedCta: "Unlock Lifetime Access",
+    widgetsLockedTitle: "Home Screen Financial Widgets",
+    widgetsLockedSubtitle:
+      "Pin interactive Monthly Budget, Cash Flow, and Net Worth charts directly to your Android home screen with Kaizen Pro.",
+    widgetsLockedCta: "Unlock Pro Widgets",
   },
 } as const;
 

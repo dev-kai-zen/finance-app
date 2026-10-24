@@ -15,6 +15,7 @@ export const QUICK_TRANSFER_DEEP_LINK =
   "finance-app://transactions?action=new&type=transfer&source=widget";
 export const DASHBOARD_DEEP_LINK = "finance-app://";
 export const BUDGETS_DEEP_LINK = "finance-app://budgets";
+export const PRO_PAYWALL_DEEP_LINK = "finance-app://settings?openPro=true";
 
 export const WIDGET_SNAPSHOT_SETTINGS_KEY = "widget_financial_snapshot";
 
@@ -44,6 +45,7 @@ export const DEFAULT_WIDGET_SNAPSHOT = {
   hasActiveBudgets: false,
   isBudgetExceeded: false,
   currencyCode: "PHP",
+  isPro: false,
   updatedAt: 0,
 } as const;
 

@@ -8,12 +8,22 @@ import {
   WIDGET_THEME,
 } from "../constants/widget.constants";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
+import { LockedProWidget } from "./locked-pro-widget";
 
 interface MonthlyCashflowWidgetProps {
   snapshot?: FinancialWidgetSnapshot;
 }
 
 export function MonthlyCashflowWidget({ snapshot }: MonthlyCashflowWidgetProps) {
+  if (!snapshot?.isPro) {
+    return (
+      <LockedProWidget
+        title="Cash Flow"
+        subtitle="Track live monthly inflow, outflow, and net savings rate."
+      />
+    );
+  }
+
   const month = snapshot?.monthLabel ?? "This Month";
   const inflow = snapshot?.inflowFormatted ?? "₱0.00";
   const outflow = snapshot?.outflowFormatted ?? "₱0.00";

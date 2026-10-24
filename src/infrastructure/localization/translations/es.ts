@@ -1213,5 +1213,9 @@ export const es = {
     reportsLockedSubtitle:
       "Desbloquea tendencias de flujo de caja, balance general, crecimiento de patrimonio neto y análisis de gastos con Kaizen Pro.",
     reportsLockedCta: "Desbloquear Acceso De Por Vida",
+    widgetsLockedTitle: "Widgets Financieros en Pantalla de Inicio",
+    widgetsLockedSubtitle:
+      "Fija gráficos interactivos de Presupuesto Mensual, Flujo de Caja y Patrimonio Neto en tu pantalla de inicio con Kaizen Pro.",
+    widgetsLockedCta: "Desbloquear Widgets Pro",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

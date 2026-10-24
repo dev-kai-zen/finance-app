@@ -81,6 +81,14 @@ export const PRO_FEATURES: ProFeatureItem[] = [
       "Full access to Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns.",
   },
   {
+    icon: "sparkles",
+    titleKey: "pro.features.widgets.title",
+    defaultTitle: "Home Screen Financial Widgets",
+    descKey: "pro.features.widgets.desc",
+    defaultDesc:
+      "Pin interactive Monthly Budget, Cash Flow, and Net Worth charts directly to your Android home screen.",
+  },
+  {
     icon: "cloud-off",
     titleKey: "pro.features.offline.title",
     defaultTitle: "Offline-First Reliability",

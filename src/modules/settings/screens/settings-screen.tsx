@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -100,7 +100,14 @@ function SettingsScreenContent() {
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [isDeveloperMessageOpen, setIsDeveloperMessageOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const { openPro } = useLocalSearchParams<{ openPro?: string }>();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
+  useEffect(() => {
+    if (openPro === "true" || openPro === "1") {
+      setIsPaywallOpen(true);
+    }
+  }, [openPro]);
   const {
     isPro,
     isDevSimulated,

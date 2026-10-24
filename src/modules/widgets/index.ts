@@ -6,6 +6,7 @@ export { TripleActionWidget } from "./components/triple-action-widget";
 export { MonthlyCashflowWidget } from "./components/monthly-cashflow-widget";
 export { NetWorthWidget } from "./components/net-worth-widget";
 export { MonthlyBudgetWidget } from "./components/monthly-budget-widget";
+export { LockedProWidget } from "./components/locked-pro-widget";
 export { WidgetSyncProcessor } from "./components/widget-sync-processor";
 export {
   registerWidgets,
@@ -48,6 +49,7 @@ export {
   QUICK_TRANSFER_DEEP_LINK,
   DASHBOARD_DEEP_LINK,
   BUDGETS_DEEP_LINK,
+  PRO_PAYWALL_DEEP_LINK,
   WIDGET_SNAPSHOT_SETTINGS_KEY,
   WIDGET_THEME,
 } from "./constants/widget.constants";
