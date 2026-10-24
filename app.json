@@ -25,7 +25,7 @@
       ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/kaizen-finance-app-logo.png"

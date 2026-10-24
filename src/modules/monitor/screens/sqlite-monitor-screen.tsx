@@ -265,7 +265,7 @@ export function SqliteMonitorScreen() {
                   </Text>
                   {queryResult.columns.length > 3 ? (
                     <Text style={styles.resultHintText}>
-                      Scroll horizontally to see all columns. 
+                      Scroll horizontally to see all columns.
                     </Text>
                   ) : null}
                 </View>
