@@ -1196,6 +1196,7 @@ export const es = {
     paywallLifetimeBadge: "PAGO ÚNICO · ACCESO DE POR VIDA",
     paywallUpgradeBtn: "Desbloquear Pro De Por Vida (%{price})",
     paywallProcessing: "Procesando...",
+    featuresLeadIn: "Esto es lo que obtendrás al mejorar a Pro:",
     launchSpecialBadge: "OFERTA ESPECIAL DE LANZAMIENTO",
     launchSpecialSubtitle: "Por tiempo limitado · Ahorra 60%",
     launchRegularPrice: "₱499",

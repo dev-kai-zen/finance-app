@@ -1197,6 +1197,7 @@ export const fil = {
     paywallLifetimeBadge: "ISANG BESES NA BAYAD · HABAMBUHAY NA ACCESS",
     paywallUpgradeBtn: "I-unlock ang Pro (%{price})",
     paywallProcessing: "Pinoproseso...",
+    featuresLeadIn: "Narito ang makukuha mo kapag nag-upgrade ka sa Pro:",
     launchSpecialBadge: "PROMO SA PAGLUNSAD",
     launchSpecialSubtitle: "Limitadong alok · Makatipid ng 60%",
     launchRegularPrice: "₱499",

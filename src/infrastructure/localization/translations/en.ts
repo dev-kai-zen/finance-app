@@ -1180,6 +1180,7 @@ export const en = {
     paywallLifetimeBadge: "ONE-TIME PURCHASE · LIFETIME ACCESS",
     paywallUpgradeBtn: "Unlock Lifetime Pro (%{price})",
     paywallProcessing: "Processing...",
+    featuresLeadIn: "Here’s what you’ll get when you upgrade to Pro:",
     launchSpecialBadge: "EARLY BIRD LAUNCH SPECIAL",
     launchSpecialSubtitle: "Limited time offer · Save 60%",
     launchRegularPrice: "₱499",

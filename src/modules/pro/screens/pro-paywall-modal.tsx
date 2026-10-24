@@ -131,11 +131,11 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Value Proposition Hero */}
+            {/* Value Proposition Hero / Feature Lead-In */}
             <View style={styles.heroBanner}>
-              <Sparkles color="#D97706" size={20} />
+              <Sparkles color="#D97706" size={18} />
               <Text style={styles.heroTitle}>
-                {t("pro.paywallSubtitle")}
+                {t("pro.featuresLeadIn")}
               </Text>
             </View>
 
@@ -329,7 +329,7 @@ function createStyles(theme: AppTheme) {
     heroTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontWeight: theme.typography.fontWeight.semibold,
       textAlign: "center",
       lineHeight: 18,
       flexShrink: 1,
