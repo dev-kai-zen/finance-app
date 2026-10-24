@@ -473,8 +473,8 @@ export function OnboardingScreen() {
               <View style={styles.samplePreview}>
                 <Sparkles color={theme.colors.primary} size={20} />
                 {[
-                  "Cash, payroll bank, emergency savings (with a pocket), and e-wallet",
-                  "Liabilities grouped as Loans (e.g. BDO) and Credits (e.g. Workmate)",
+                  "Wallet, payroll bank (with Bills & Savings pockets), and GCash",
+                  "Liabilities grouped with an example loan (BDO)",
                   "Complete income and expense category groups with subcategories",
                   "All accounts start at zero — add your own opening balances when ready",
                 ].map((item) => (

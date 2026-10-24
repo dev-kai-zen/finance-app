@@ -128,7 +128,7 @@ export async function completeGuidedSetup(
     if (strategy === "recommended") {
       await prepareWorkspaceCategories("recommended", tx, now);
       createRecommendedAccounts(tx, now, input.currencyCode);
-      setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
+      setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
       setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     } else if (strategy === "manual") {
       await prepareWorkspaceCategories("manual", tx, now);
@@ -176,7 +176,7 @@ export async function completeRecommendedSetup(): Promise<WorkspaceState> {
     clearSampleWorkspaceIfNeeded(tx);
     await prepareWorkspaceCategories("recommended", tx, now);
     createRecommendedAccounts(tx, now);
-    setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
+    setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
     setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     saveCompletedSettings("personal", "recommended", tx, now);
   });
