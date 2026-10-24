@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  getReminderSettings,
-  saveReminderSettings,
-} from "../repositories/reminder-settings.repository";
+import { getReminderSettings } from "../repositories/reminder-settings.repository";
+import { persistReminderSettings } from "../services/persist-reminder-settings.service";
 import { syncAllReminders } from "../services/sync-all-reminders.service";
 import {
   checkNotificationPermissions,
@@ -47,7 +45,7 @@ export function useNotificationSettings() {
 
       setSettings((prev) => {
         const next = { ...prev, [key]: value };
-        saveReminderSettings({ [key]: value });
+        persistReminderSettings({ [key]: value });
         syncAllReminders(next);
         return next;
       });
@@ -74,7 +72,7 @@ export function useNotificationSettings() {
         }
 
         const next = { ...prev, [target]: nextDays };
-        saveReminderSettings({ [target]: nextDays });
+        persistReminderSettings({ [target]: nextDays });
         syncAllReminders(next);
         return next;
       });

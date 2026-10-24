@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { getDashboardSummary } from "../repositories/dashboard.repository";
 import type { DashboardSummary } from "../types/dashboard.types";
@@ -25,6 +26,12 @@ export function useDashboard() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
   return {
     summary,

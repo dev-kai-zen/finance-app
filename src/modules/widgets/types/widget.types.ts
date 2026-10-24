@@ -37,6 +37,7 @@ export interface FinancialWidgetSnapshot {
   hasActiveBudgets: boolean;
   isBudgetExceeded: boolean;
   currencyCode: string;
+  isPro?: boolean;
   updatedAt: number;
 }
 

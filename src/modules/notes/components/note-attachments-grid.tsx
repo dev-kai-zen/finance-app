@@ -11,6 +11,7 @@ import { Image } from "expo-image";
 import { Camera, Crown, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
 import { ActionBottomSheet } from "@/components";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
+import { useLocalization } from "@/infrastructure/localization";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
 import type { NoteAttachment, NoteAttachmentDraft } from "../types/note.types";
@@ -37,6 +38,7 @@ export function NoteAttachmentsGrid({
 }: NoteAttachmentsGridProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { isPro } = useProStatus();
 
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -218,8 +220,8 @@ export function NoteAttachmentsGrid({
       />
 
       <ProFeatureModal
-        featureDescription="Attach photos, receipts, invoices, and documents directly to your financial notes with Kaizen Pro."
-        featureTitle="Note Attachments"
+        featureDescription={t("pro.locked.receiptsDesc")}
+        featureTitle={t("pro.locked.receiptsTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

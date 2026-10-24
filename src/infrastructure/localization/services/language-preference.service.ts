@@ -9,6 +9,7 @@ import {
   readLanguagePreferenceValue,
   writeLanguagePreferenceValue,
 } from "@/infrastructure/localization/repositories/language-preference.repository";
+import { queueDebouncedQuickSync } from "@/infrastructure/sync";
 import type {
   LanguagePreference,
   SupportedLocale,
@@ -34,6 +35,7 @@ export function setLanguagePreference(
     preference,
     context,
   );
+  queueDebouncedQuickSync([LANGUAGE_PREFERENCE_SETTING_KEY]);
 }
 
 export function resolveSupportedLocale(

@@ -39,16 +39,17 @@ require.extensions[".ts"] = (module, filename) => {
 
 const {
   APP_RESET_USER_DATA_TABLE_NAMES,
+  QUICK_SYNC_WATCHED_TABLE_NAME_SET,
   QUICK_SYNC_WATCHED_TABLE_NAMES,
   USER_DATA_TABLE_NAMES,
   USER_DATA_TABLE_NAME_SET,
 } = require("@/infrastructure/database/user-data-tables");
 
-test("user data tables: Quick Sync watches every user-data table", () => {
-  assert.deepEqual(
-    [...QUICK_SYNC_WATCHED_TABLE_NAMES].sort(),
-    [...USER_DATA_TABLE_NAMES].sort(),
-  );
+test("user data tables: Quick Sync listener excludes settings only", () => {
+  const expected = USER_DATA_TABLE_NAMES.filter((name) => name !== "settings");
+  assert.deepEqual([...QUICK_SYNC_WATCHED_TABLE_NAMES].sort(), expected.sort());
+  assert.equal(QUICK_SYNC_WATCHED_TABLE_NAME_SET.has("settings"), false);
+  assert.equal(QUICK_SYNC_WATCHED_TABLE_NAME_SET.has("transactions"), true);
 
   for (const name of USER_DATA_TABLE_NAMES) {
     assert.equal(
@@ -59,10 +60,11 @@ test("user data tables: Quick Sync watches every user-data table", () => {
   }
 });
 
-test("user data tables: app reset tables are included in Quick Sync watch list", () => {
+test("user data tables: app reset tables except settings are in Quick Sync watch list", () => {
   for (const name of APP_RESET_USER_DATA_TABLE_NAMES) {
+    if (name === "settings") continue;
     assert.equal(
-      USER_DATA_TABLE_NAME_SET.has(name),
+      QUICK_SYNC_WATCHED_TABLE_NAME_SET.has(name),
       true,
       `reset table not watched by Quick Sync: ${name}`,
     );

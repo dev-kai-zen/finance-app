@@ -23,6 +23,7 @@ import {
   type IconPickerScope,
 } from "@/constants/icon-picker-catalog";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
+import { useLocalization } from "@/infrastructure/localization";
 import { IconHelper } from "./icon-helper";
 
 export interface IconPickerModalProps {
@@ -47,6 +48,7 @@ export function IconPickerModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const activeColor = themeColor ?? theme.colors.primary;
   const { isPro } = useProStatus();
   const [proModalVisible, setProModalVisible] = useState(false);
@@ -380,8 +382,8 @@ export function IconPickerModal({
       </View>
 
       <ProFeatureModal
-        featureDescription="Unlock 200+ specialized icons from the expanded Lucide icon library to personalize your accounts, categories, and financial goals with Kaizen Pro."
-        featureTitle="Expanded Icon Library"
+        featureDescription={t("pro.locked.iconLibraryDesc")}
+        featureTitle={t("pro.locked.iconLibraryTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />

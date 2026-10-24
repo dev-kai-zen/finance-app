@@ -2,6 +2,7 @@ import type {
   GoogleDriveBackupCatalog,
   GoogleDriveBackupFile,
 } from "@/infrastructure/sync";
+import type { BackupScheduleFields } from "@/utils/backup-schedule";
 
 export interface GoogleDriveUser {
   id: string;
@@ -50,3 +51,9 @@ export interface QuickSyncState {
   fileId: string | null;
   lastError: string | null;
 }
+
+export interface GoogleDriveScheduledBackupConfig extends BackupScheduleFields {
+  enabled: boolean;
+}
+
+export type GoogleDriveScheduledBackupOperation = "idle" | "configuring";

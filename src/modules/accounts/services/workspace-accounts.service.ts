@@ -58,6 +58,8 @@ const RECOMMENDED_ACCOUNT_IDS = {
   bdoLoan: "recommended:account:bdo",
   workmateCredit: "recommended:account:workmate",
   emergencyPocket: "recommended:pocket:emergency",
+  billsPocket: "recommended:pocket:bills",
+  savingsPocket: "recommended:pocket:savings",
 } as const;
 
 type RecommendedLiabilityTemplate = "loans" | "credits";
@@ -187,6 +189,7 @@ export function createInitialAccount(
 export function createRecommendedAccounts(
   context: DbContext,
   now = new Date(),
+  currencyCode = "PHP",
 ): void {
   const accountTypeIds = ensureRecommendedAccountTypes(context, now);
   const liabilityTypeIds = ensureRecommendedLiabilityAccountTypes(context, now);
@@ -197,31 +200,29 @@ export function createRecommendedAccounts(
     id: string;
     name: string;
     template: InitialAccountTemplate;
+    pocketEnabled?: boolean;
     note?: string;
   }> = [
     {
       id: RECOMMENDED_ACCOUNT_IDS.cash,
-      name: "Cash on Hand",
+      name: "Wallet",
       template: "cash",
-      note: "Petty cash and everyday pocket money",
+      pocketEnabled: false,
+      note: "Everyday cash and petty expenses",
     },
     {
       id: RECOMMENDED_ACCOUNT_IDS.bank,
       name: "Payroll Account",
       template: "bank",
-      note: "Salary deposits and bill payments",
-    },
-    {
-      id: RECOMMENDED_ACCOUNT_IDS.savings,
-      name: "Emergency Savings",
-      template: "savings",
-      note: "Rainy-day fund with a dedicated pocket",
+      pocketEnabled: true,
+      note: "Salary deposits, bill allocations, and savings",
     },
     {
       id: RECOMMENDED_ACCOUNT_IDS.ewallet,
-      name: "E-Wallet",
+      name: "GCASH",
       template: "ewallet",
-      note: "Mobile wallet for rides, delivery, and subscriptions",
+      pocketEnabled: false,
+      note: "Mobile wallet for quick payments, transfers, and delivery",
     },
   ];
 
@@ -234,13 +235,13 @@ export function createRecommendedAccounts(
         name: account.name,
         note: account.note ?? null,
         iconKey: template.iconKey,
-        currencyCode: "PHP",
+        currencyCode,
         openingBalanceMinorUnits: 0,
         openingBalanceAt,
         startingBalanceLocked: false,
         hideFromSelection: false,
         hideFromReports: false,
-        pocketEnabled: template.pocketEnabled,
+        pocketEnabled: account.pocketEnabled ?? template.pocketEnabled,
         maintainingBalanceMinorUnits: null,
         isArchived: false,
         sortOrder: 0,
@@ -253,12 +254,26 @@ export function createRecommendedAccounts(
 
   insertPocket(
     {
-      id: RECOMMENDED_ACCOUNT_IDS.emergencyPocket,
-      accountId: RECOMMENDED_ACCOUNT_IDS.savings,
-      name: "Emergency Fund",
+      id: RECOMMENDED_ACCOUNT_IDS.billsPocket,
+      accountId: RECOMMENDED_ACCOUNT_IDS.bank,
+      name: "Bills",
       targetAmountMinorUnits: null,
       isArchived: false,
       sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    context,
+  );
+
+  insertPocket(
+    {
+      id: RECOMMENDED_ACCOUNT_IDS.savingsPocket,
+      accountId: RECOMMENDED_ACCOUNT_IDS.bank,
+      name: "Savings",
+      targetAmountMinorUnits: null,
+      isArchived: false,
+      sortOrder: 1,
       createdAt: now,
       updatedAt: now,
     },
@@ -279,13 +294,6 @@ export function createRecommendedAccounts(
       note: "Example loan under the Loans account type",
       sortOrder: 0,
     },
-    {
-      id: RECOMMENDED_ACCOUNT_IDS.workmateCredit,
-      name: "Workmate",
-      template: "credits",
-      note: "Example store or company credit under the Credits account type",
-      sortOrder: 0,
-    },
   ];
 
   for (const account of liabilityAccounts) {
@@ -297,7 +305,7 @@ export function createRecommendedAccounts(
         name: account.name,
         note: account.note,
         iconKey: typeDefinition.iconKey,
-        currencyCode: "PHP",
+        currencyCode,
         openingBalanceMinorUnits: 0,
         openingBalanceAt,
         startingBalanceLocked: false,

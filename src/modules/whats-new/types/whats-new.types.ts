@@ -1,11 +1,17 @@
 import type { TranslationKey } from "@/infrastructure/localization/translations/en";
 
+export interface ReleaseNoteSection {
+  categoryKey: TranslationKey;
+  itemKeys: TranslationKey[];
+}
+
 export interface ReleaseNoteBlock {
   version: string;
-  titleKey: TranslationKey;
-  itemKeys: TranslationKey[];
+  titleKey?: TranslationKey;
+  sections: ReleaseNoteSection[];
 }
 
 export interface WhatsNewPresentation {
   blocks: ReleaseNoteBlock[];
 }
+

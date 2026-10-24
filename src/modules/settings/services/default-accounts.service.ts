@@ -2,8 +2,8 @@ import type { DbContext } from "@/infrastructure/database/client";
 import { DEFAULT_ACCOUNT_SETTINGS_KEYS } from "../constants/settings.constants";
 import {
   getSettingsByKey,
-  saveSettingsEntries,
 } from "../repositories/settings.repository";
+import { persistSettingsEntries } from "./persist-settings.service";
 
 export interface DefaultAccountsConfig {
   defaultExpenseAccountId: string | null;
@@ -62,7 +62,7 @@ export function setDefaultExpenseAccount(
   pocketId: string | null = null,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultExpenseAccountId]: accountId,
       [DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultExpensePocketId]: accountId ? pocketId : null,
@@ -77,7 +77,7 @@ export function setDefaultIncomeAccount(
   pocketId: string | null = null,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultIncomeAccountId]: accountId,
       [DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultIncomePocketId]: accountId ? pocketId : null,

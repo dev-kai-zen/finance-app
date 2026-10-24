@@ -54,6 +54,7 @@ export type WalkthroughTargetId =
   | "settingsNickname"
   | "settingsTheme"
   | "settingsReminders"
+  | "settingsGuideHelper"
   | "settingsDefaultExpense"
   | "settingsDefaultIncome"
   | "settingsHexColors"

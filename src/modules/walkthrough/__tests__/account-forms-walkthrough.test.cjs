@@ -132,3 +132,20 @@ test("account type form walkthrough: defines all 6 required steps and translatio
     });
   });
 });
+
+test("account forms walkthrough: intro translations exist in en, es, and fil", () => {
+  [en, es, fil].forEach((dict) => {
+    assert.ok(dict.accountFormWalkthrough.introTitle);
+    assert.ok(dict.accountFormWalkthrough.introSubtitle);
+    assert.ok(dict.accountFormWalkthrough.introMessage);
+
+    assert.ok(dict.accountGroupSetupWalkthrough.introTitle);
+    assert.ok(dict.accountGroupSetupWalkthrough.introSubtitle);
+    assert.ok(dict.accountGroupSetupWalkthrough.introMessage);
+
+    assert.ok(dict.accountTypeFormWalkthrough.introTitle);
+    assert.ok(dict.accountTypeFormWalkthrough.introSubtitle);
+    assert.ok(dict.accountTypeFormWalkthrough.introMessage);
+  });
+});
+

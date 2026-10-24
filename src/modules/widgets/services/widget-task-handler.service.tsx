@@ -14,6 +14,7 @@ import { TripleActionWidget } from "../components/triple-action-widget";
 import { MonthlyCashflowWidget } from "../components/monthly-cashflow-widget";
 import { NetWorthWidget } from "../components/net-worth-widget";
 import { MonthlyBudgetWidget } from "../components/monthly-budget-widget";
+import { initializeProStatus } from "@/modules/pro";
 import {
   DUAL_ACTION_WIDGET_NAME,
   MONTHLY_BUDGET_WIDGET_NAME,
@@ -47,16 +48,19 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
           renderWidget(<TripleActionWidget />);
           break;
         case MONTHLY_CASHFLOW_WIDGET_NAME: {
+          await initializeProStatus();
           const snapshot = getFinancialSnapshot();
           renderWidget(<MonthlyCashflowWidget snapshot={snapshot} />);
           break;
         }
         case NET_WORTH_WIDGET_NAME: {
+          await initializeProStatus();
           const snapshot = getFinancialSnapshot();
           renderWidget(<NetWorthWidget snapshot={snapshot} />);
           break;
         }
         case MONTHLY_BUDGET_WIDGET_NAME: {
+          await initializeProStatus();
           const snapshot = getFinancialSnapshot();
           renderWidget(<MonthlyBudgetWidget snapshot={snapshot} />);
           break;
@@ -258,6 +262,7 @@ export async function pinNetWorthWidget(): Promise<boolean> {
 export async function updateMonthlyCashflowWidgets(): Promise<void> {
   if (Platform.OS !== "android") return;
   try {
+    await initializeProStatus();
     const snapshot = getFinancialSnapshot();
     await requestWidgetUpdate({
       widgetName: MONTHLY_CASHFLOW_WIDGET_NAME,
@@ -272,6 +277,7 @@ export async function updateMonthlyCashflowWidgets(): Promise<void> {
 export async function updateNetWorthWidgets(): Promise<void> {
   if (Platform.OS !== "android") return;
   try {
+    await initializeProStatus();
     const snapshot = getFinancialSnapshot();
     await requestWidgetUpdate({
       widgetName: NET_WORTH_WIDGET_NAME,
@@ -298,6 +304,7 @@ export async function pinMonthlyBudgetWidget(): Promise<boolean> {
 export async function updateMonthlyBudgetWidgets(): Promise<void> {
   if (Platform.OS !== "android") return;
   try {
+    await initializeProStatus();
     const snapshot = getFinancialSnapshot();
     await requestWidgetUpdate({
       widgetName: MONTHLY_BUDGET_WIDGET_NAME,

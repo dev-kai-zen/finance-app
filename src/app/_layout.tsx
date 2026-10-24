@@ -17,11 +17,15 @@ import {
   WorkspaceProvider,
 } from "@/modules/onboarding";
 import { NotificationsReminderProcessor } from "@/modules/notifications";
-import { QuickSyncProcessor } from "@/modules/google-drive-backup";
+import {
+  GoogleDriveScheduledBackupProcessor,
+  QuickSyncProcessor,
+} from "@/modules/google-drive-backup";
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 import { WhatsNewGate } from "@/modules/whats-new";
+import { DeveloperMessageGate } from "@/modules/developer-message";
 import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
 import { initializeAdsSdk } from "@/modules/ads";
 
@@ -64,11 +68,13 @@ function RootLayoutContent() {
                   >
                     <AppLockGate>
                       <OnboardingGate>
+                      <DeveloperMessageGate>
                       <WhatsNewGate>
                         <>
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
                         <LocalBackupProcessor />
+                        <GoogleDriveScheduledBackupProcessor />
                         <QuickSyncProcessor />
                         <NotificationsReminderProcessor />
                         <WidgetSyncProcessor />
@@ -141,6 +147,7 @@ function RootLayoutContent() {
                         </ExperienceAppShell>
                         </>
                       </WhatsNewGate>
+                      </DeveloperMessageGate>
                     </OnboardingGate>
                   </AppLockGate>
                 </SafeAreaView>

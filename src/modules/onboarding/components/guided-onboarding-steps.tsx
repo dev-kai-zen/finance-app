@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AlertCircle, Check, Clock, Sparkles } from "lucide-react-native";
+import { AlertCircle, Check, Clock, Layers, Sparkles, Wallet } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
@@ -30,6 +30,7 @@ import {
   GUIDED_ONBOARDING_PROGRESS_INDEX,
   GUIDED_ONBOARDING_STEP_COUNT,
 } from "@/modules/onboarding/constants/guided-onboarding.constants";
+import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
 import { OnboardingStepShell } from "@/modules/onboarding/components/onboarding-step-shell";
 
 const ACCOUNT_TEMPLATES: Array<{
@@ -56,7 +57,7 @@ export function GuidedWelcomeStep({
   onGetStarted: () => void;
   onRestore: () => void;
   onSample: () => void;
-  onFullSetup: () => void;
+  onFullSetup?: () => void;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -76,7 +77,6 @@ export function GuidedWelcomeStep({
           <View style={styles.quietLinks}>
             <QuietLink disabled={disabled} label={t("onboarding.restoreBackup")} onPress={onRestore} />
             <QuietLink disabled={disabled} label={t("onboarding.seeExample")} onPress={onSample} />
-            <QuietLink disabled={disabled} label={t("onboarding.setupMyself")} onPress={onFullSetup} />
           </View>
         </View>
       }
@@ -286,6 +286,61 @@ export function GuidedCurrencyStep({
   );
 }
 
+export function GuidedAccountChoiceStep({
+  nickname,
+  onChooseStrategy,
+  busy,
+}: {
+  nickname?: string;
+  onChooseStrategy: (strategy: "custom" | "recommended" | "manual") => void;
+  busy: boolean;
+}) {
+  const theme = useAppTheme();
+  const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+
+  const title = nickname?.trim()
+    ? t("onboarding.accountSetupChoiceTitleAssisted", { name: nickname.trim() })
+    : t("onboarding.accountSetupChoiceTitle");
+  const description = nickname?.trim()
+    ? t("onboarding.accountSetupChoiceDescriptionAssisted")
+    : t("onboarding.accountSetupChoiceDescription");
+
+  return (
+    <OnboardingStepShell
+      description={description}
+      progressIndex={guidedProgress.account}
+      progressTotal={guidedTotal}
+      title={title}
+    >
+      <View style={styles.cardsList}>
+        <OnboardingOptionCard
+          description={t("onboarding.accountChoiceSingleDesc")}
+          disabled={busy}
+          icon={<Wallet color={theme.colors.textSecondary} size={23} />}
+          onPress={() => onChooseStrategy("custom")}
+          title={t("onboarding.accountChoiceSingleTitle")}
+        />
+        <OnboardingOptionCard
+          badge={t("onboarding.accountChoiceRecommendedBadge")}
+          description={t("onboarding.accountChoiceRecommendedDesc")}
+          disabled={busy}
+          icon={<Sparkles color={theme.colors.primary} size={23} />}
+          onPress={() => onChooseStrategy("recommended")}
+          title={t("onboarding.accountChoiceRecommendedTitle")}
+        />
+        <OnboardingOptionCard
+          description={t("onboarding.accountChoiceManualDesc")}
+          disabled={busy}
+          icon={<Layers color={theme.colors.textSecondary} size={23} />}
+          onPress={() => onChooseStrategy("manual")}
+          title={t("onboarding.accountChoiceManualTitle")}
+        />
+      </View>
+    </OnboardingStepShell>
+  );
+}
+
 export function GuidedAccountStep({
   nickname,
   accountName,
@@ -488,6 +543,7 @@ export function GuidedNotificationsStep({
 export function GuidedReadyStep({
   nickname,
   accountName,
+  accountStrategy = "custom",
   currencyCode,
   dailyReminderEnabled,
   busy,
@@ -495,6 +551,7 @@ export function GuidedReadyStep({
 }: {
   nickname?: string;
   accountName: string;
+  accountStrategy?: "custom" | "recommended" | "manual";
   currencyCode: string;
   dailyReminderEnabled?: boolean;
   busy: boolean;
@@ -535,7 +592,13 @@ export function GuidedReadyStep({
           {t("onboarding.readyCurrency", { currency: currencyCode })}
         </Text>
         <Text style={styles.summaryLine}>
-          {t("onboarding.readyAccount", { name: accountName.trim() })}
+          {accountStrategy === "recommended"
+            ? t("onboarding.readyAccountRecommended")
+            : accountStrategy === "manual"
+              ? t("onboarding.readyAccountManual")
+              : t("onboarding.readyAccount", {
+                  name: accountName.trim() || t("onboarding.accountTemplateCash"),
+                })}
         </Text>
         {dailyReminderEnabled ? (
           <Text style={styles.summaryLine}>
@@ -630,6 +693,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     optionList: { gap: theme.spacing.xs },
+    cardsList: { gap: theme.spacing.md },
     choiceRow: {
       alignItems: "center",
       borderColor: theme.colors.border,

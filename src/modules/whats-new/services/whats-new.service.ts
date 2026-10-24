@@ -13,12 +13,37 @@ import {
   saveLastSeenAppFingerprint,
 } from "@/modules/whats-new/repositories/whats-new.repository";
 
+type WhatsNewListener = () => void;
+const listeners = new Set<WhatsNewListener>();
+
+export function subscribeToWhatsNew(listener: WhatsNewListener): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notifyWhatsNewListeners(): void {
+  listeners.forEach((listener) => {
+    try {
+      listener();
+    } catch {
+      // Ignore listener errors
+    }
+  });
+}
+
 export function getLastSeenAppFingerprint(): string | null {
   return readLastSeenAppFingerprint();
 }
 
 export function markWhatsNewSeen(fingerprint = getAppFingerprint()): void {
   saveLastSeenAppFingerprint(fingerprint);
+  notifyWhatsNewListeners();
+}
+
+export function isWhatsNewPending(): boolean {
+  return evaluateAutoShowPresentation() !== null;
 }
 
 export function getLatestReleaseNotes(): ReleaseNoteBlock[] {
@@ -42,8 +67,12 @@ export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {
   }
 
   if (lastSeenFingerprint === null) {
-    markWhatsNewSeen(currentFingerprint);
-    return null;
+    const initialBlocks = getLatestReleaseNotes();
+    if (initialBlocks.length === 0) {
+      markWhatsNewSeen(currentFingerprint);
+      return null;
+    }
+    return { blocks: initialBlocks };
   }
 
   const blocks = resolveReleaseNotesForUpdate(

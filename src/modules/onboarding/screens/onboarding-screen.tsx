@@ -25,6 +25,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { GoogleDriveBackupPanel } from "@/modules/google-drive-backup";
 import { OnboardingOptionCard } from "@/modules/onboarding/components/onboarding-option-card";
 import {
+  GuidedAccountChoiceStep,
   GuidedAccountStep,
   GuidedCurrencyStep,
   GuidedLanguageStep,
@@ -46,6 +47,7 @@ type OnboardingStep =
   | "nickname"
   | "language"
   | "currency"
+  | "accountChoice"
   | "account"
   | "notifications"
   | "ready"
@@ -67,6 +69,9 @@ export function OnboardingScreen() {
   const [guidedCurrency, setGuidedCurrency] = useState(
     currencyPreferences.defaultCurrency,
   );
+  const [accountStrategy, setAccountStrategy] = useState<
+    "custom" | "recommended" | "manual"
+  >("custom");
   const [accountTemplate, setAccountTemplate] =
     useState<InitialAccountTemplate>("cash");
   const [accountName, setAccountName] = useState("");
@@ -103,6 +108,7 @@ export function OnboardingScreen() {
     step === "nickname" ||
     step === "language" ||
     step === "currency" ||
+    step === "accountChoice" ||
     step === "account" ||
     step === "notifications" ||
     step === "ready";
@@ -133,12 +139,16 @@ export function OnboardingScreen() {
       setStep("language");
       return;
     }
-    if (step === "account") {
+    if (step === "accountChoice") {
       setStep("currency");
       return;
     }
+    if (step === "account") {
+      setStep("accountChoice");
+      return;
+    }
     if (step === "notifications") {
-      setStep("account");
+      setStep(accountStrategy === "custom" ? "account" : "accountChoice");
       return;
     }
     if (step === "ready") {
@@ -200,10 +210,6 @@ export function OnboardingScreen() {
                 <View style={styles.guidedStepHost}>
                   <GuidedWelcomeStep
                     disabled={workspace.busy}
-                    onFullSetup={() => {
-                      workspace.clearError();
-                      setStep("fullSetup");
-                    }}
                     onGetStarted={() => {
                       workspace.clearError();
                       setStep("nickname");
@@ -236,10 +242,6 @@ export function OnboardingScreen() {
               <View style={styles.guidedStepHost}>
                 <GuidedWelcomeStep
                   disabled={workspace.busy}
-                  onFullSetup={() => {
-                    workspace.clearError();
-                    setStep("fullSetup");
-                  }}
                   onGetStarted={() => {
                     workspace.clearError();
                     setStep("nickname");
@@ -290,9 +292,27 @@ export function OnboardingScreen() {
                 onChange={setGuidedCurrency}
                 onContinue={() => {
                   workspace.clearError();
-                  setStep("account");
+                  setStep("accountChoice");
                 }}
                 selectedCode={guidedCurrency}
+              />
+            </View>
+          ) : null}
+
+          {step === "accountChoice" ? (
+            <View style={styles.guidedStepHost}>
+              <GuidedAccountChoiceStep
+                busy={workspace.busy}
+                nickname={nickname}
+                onChooseStrategy={(chosenStrategy) => {
+                  workspace.clearError();
+                  setAccountStrategy(chosenStrategy);
+                  if (chosenStrategy === "custom") {
+                    setStep("account");
+                  } else {
+                    setStep("notifications");
+                  }
+                }}
               />
             </View>
           ) : null}
@@ -336,6 +356,7 @@ export function OnboardingScreen() {
             <View style={styles.guidedStepHost}>
               <GuidedReadyStep
                 accountName={accountName}
+                accountStrategy={accountStrategy}
                 busy={workspace.busy}
                 currencyCode={guidedCurrency}
                 dailyReminderEnabled={dailyReminderEnabled}
@@ -344,14 +365,18 @@ export function OnboardingScreen() {
                   void workspace.completeGuidedSetup({
                     currencyCode: guidedCurrency,
                     nickname,
-                    account: {
-                      name: accountName,
-                      openingAmount: openingAmountInput(
-                        openingAmountMinor,
-                        guidedCurrency,
-                      ),
-                      template: accountTemplate,
-                    },
+                    accountStrategy,
+                    account:
+                      accountStrategy === "custom"
+                        ? {
+                            name: accountName,
+                            openingAmount: openingAmountInput(
+                              openingAmountMinor,
+                              guidedCurrency,
+                            ),
+                            template: accountTemplate,
+                          }
+                        : undefined,
                   })
                 }
               />
@@ -448,8 +473,8 @@ export function OnboardingScreen() {
               <View style={styles.samplePreview}>
                 <Sparkles color={theme.colors.primary} size={20} />
                 {[
-                  "Cash, payroll bank, emergency savings (with a pocket), and e-wallet",
-                  "Liabilities grouped as Loans (e.g. BDO) and Credits (e.g. Workmate)",
+                  "Wallet, payroll bank (with Bills & Savings pockets), and GCash",
+                  "Liabilities grouped with an example loan (BDO)",
                   "Complete income and expense category groups with subcategories",
                   "All accounts start at zero — add your own opening balances when ready",
                 ].map((item) => (

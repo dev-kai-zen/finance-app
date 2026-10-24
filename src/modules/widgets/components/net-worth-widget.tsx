@@ -8,12 +8,22 @@ import {
   WIDGET_THEME,
 } from "../constants/widget.constants";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
+import { LockedProWidget } from "./locked-pro-widget";
 
 interface NetWorthWidgetProps {
   snapshot?: FinancialWidgetSnapshot;
 }
 
 export function NetWorthWidget({ snapshot }: NetWorthWidgetProps) {
+  if (!snapshot?.isPro) {
+    return (
+      <LockedProWidget
+        title="Net Worth"
+        subtitle="Track total assets, liabilities, and portfolio growth over time."
+      />
+    );
+  }
+
   const netWorth = snapshot?.netWorthFormatted ?? "₱0.00";
   const assets = snapshot?.totalAssetsFormatted ?? "₱0.00";
   const liabilities = snapshot?.totalLiabilitiesFormatted ?? "₱0.00";

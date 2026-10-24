@@ -7,6 +7,8 @@ import {
   View,
 } from "react-native";
 import { ConfirmModal, IconHelper, InfoModal, NotificationModal } from "@/components";
+import { Layers } from "lucide-react-native";
+import { useLocalization } from "@/infrastructure/localization";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
@@ -17,6 +19,8 @@ import {
   DraggableTourChip,
   AccountGroupSetupWalkthroughOverlay,
   useAccountGroupSetupWalkthrough,
+  WalkthroughIntroModal,
+  useWalkthroughIntro,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -58,6 +62,7 @@ function AccountTypeManagerContent({
   onClose,
 }: AccountTypeManagerProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const { isPromptDismissed } = useExperiencePreferences();
   const [group, setGroup] = useState<AccountGroup>("asset");
@@ -102,27 +107,25 @@ function AccountTypeManagerContent({
     showReorder,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "accountGroupSetupWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: visible && !editor && !deleting,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      editor ||
-      deleting ||
-      !visible ||
-      isPromptDismissed("accountGroupSetupWalkthroughDismissed")
-    ) {
-      return;
+    if (visible && !editor && !deleting && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
   }, [
-    deleting,
-    editor,
-    isPromptDismissed,
     visible,
-    walkthrough.startWalkthrough,
+    editor,
+    deleting,
+    walkthroughIntro.canTrigger,
+    walkthroughIntro.triggerIfFirstTime,
   ]);
 
   const back = () => {
@@ -359,6 +362,15 @@ function AccountTypeManagerContent({
         visible={Boolean(mutations.error)}
       />
 
+      <WalkthroughIntroModal
+        visible={visible && !editor && walkthroughIntro.isIntroVisible}
+        title={t("accountGroupSetupWalkthrough.introTitle")}
+        subtitle={t("accountGroupSetupWalkthrough.introSubtitle")}
+        message={t("accountGroupSetupWalkthrough.introMessage")}
+        icon={<Layers color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
+      />
     </>
   );
 }

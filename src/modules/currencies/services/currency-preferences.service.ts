@@ -1,4 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { queueDebouncedQuickSync } from "@/infrastructure/sync";
 import {
   DEFAULT_CURRENCY_PREFERENCES,
   setActiveCurrencyFormattingPreferences,
@@ -69,13 +70,11 @@ export function saveDefaultCurrencyCode(
   if (!SUPPORTED_CURRENCY_CODES.includes(currencyCode)) {
     throw new Error("Choose a supported currency.");
   }
-  saveCurrencyPreferenceEntries(
-    {
-      [CURRENCY_PREFERENCE_KEYS.defaultCurrency]: currencyCode,
-    },
-    context,
-    now,
-  );
+  const entries = {
+    [CURRENCY_PREFERENCE_KEYS.defaultCurrency]: currencyCode,
+  };
+  saveCurrencyPreferenceEntries(entries, context, now);
+  queueDebouncedQuickSync(Object.keys(entries));
 }
 
 export function saveCurrencyPreferences(
@@ -84,21 +83,19 @@ export function saveCurrencyPreferences(
 ): CurrencyPreferences {
   const validated = validateCurrencyPreferences(preferences);
 
+  const entries = {
+    [CURRENCY_PREFERENCE_KEYS.defaultCurrency]: validated.defaultCurrency,
+    [CURRENCY_PREFERENCE_KEYS.displayCurrency]: String(validated.displayCurrency),
+    [CURRENCY_PREFERENCE_KEYS.colorAmounts]: String(validated.colorAmounts),
+    [CURRENCY_PREFERENCE_KEYS.negativeFormat]: validated.negativeFormat,
+    [CURRENCY_PREFERENCE_KEYS.decimalFormat]: validated.decimalFormat,
+  };
+
   context.transaction((tx) => {
-    saveCurrencyPreferenceEntries(
-      {
-        [CURRENCY_PREFERENCE_KEYS.defaultCurrency]: validated.defaultCurrency,
-        [CURRENCY_PREFERENCE_KEYS.displayCurrency]: String(
-          validated.displayCurrency,
-        ),
-        [CURRENCY_PREFERENCE_KEYS.colorAmounts]: String(validated.colorAmounts),
-        [CURRENCY_PREFERENCE_KEYS.negativeFormat]: validated.negativeFormat,
-        [CURRENCY_PREFERENCE_KEYS.decimalFormat]: validated.decimalFormat,
-      },
-      tx,
-    );
+    saveCurrencyPreferenceEntries(entries, tx);
   });
 
+  queueDebouncedQuickSync(Object.keys(entries));
   setActiveCurrencyFormattingPreferences(validated);
   listeners.forEach((listener) => listener(validated));
   return validated;

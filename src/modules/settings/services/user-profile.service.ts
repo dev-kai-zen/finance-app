@@ -2,8 +2,8 @@ import type { DbContext } from "@/infrastructure/database/client";
 import { USER_NICKNAME_SETTING_KEY } from "../constants/settings.constants";
 import {
   getSettingByKey,
-  saveSettingsEntries,
 } from "../repositories/settings.repository";
+import { persistSettingsEntries } from "./persist-settings.service";
 
 type UserProfileListener = () => void;
 const listeners = new Set<UserProfileListener>();
@@ -41,7 +41,7 @@ export function setUserNickname(
   now = new Date(),
 ): void {
   const trimmed = nickname?.trim();
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [USER_NICKNAME_SETTING_KEY]: trimmed && trimmed.length > 0 ? trimmed : null,
     },

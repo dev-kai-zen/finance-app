@@ -1,3 +1,4 @@
+import { queueDebouncedQuickSync } from "@/infrastructure/sync";
 import {
   saveAutomaticBackupConfig,
 } from "@/modules/local-backup/repositories/local-backup-settings.repository";
@@ -11,5 +12,6 @@ export async function configureAutomaticLocalBackup(
   const isPro = getCurrentProStatus().isPro;
   const effectiveConfig = !isPro ? { ...config, enabled: false } : config;
   saveAutomaticBackupConfig(effectiveConfig);
+  queueDebouncedQuickSync();
   if (effectiveConfig.enabled) await runAutomaticLocalBackupIfDue();
 }

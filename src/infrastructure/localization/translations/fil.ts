@@ -53,9 +53,19 @@ export const fil = {
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
+  scheduledBackup: {
+    title: "Naka-iskedyul na backup",
+    description:
+      "Mag-upload ng buong backup na walang password araw-araw, linggu-linggo, o buwan-buwan kapag binuksan mo ang app.",
+    lastRun: "Huling naka-iskedyul na backup: %{time}",
+    neverRun: "Hindi pa",
+    proTitle: "Naka-iskedyul na Google Drive Backup",
+    proDescription:
+      "Awtomatikong mag-upload ng buong backup sa Google Drive ayon sa iyong iskedyul gamit ang Kaizen Pro.",
+  },
   quickSync: {
     title: "Quick Sync",
-    description: "Awtomatikong i-backup ang iyong mga pagbabago sa Google Drive",
+    description: "I-sync ang mga pagbabago sa Google Drive kapag nagbago ang data mo",
     networkLabel: "I-sync sa pamamagitan ng",
     wifiOnly: "Wi-Fi lamang",
     wifiOnlyDescription: "I-sync lamang kapag nakakonekta sa Wi-Fi",
@@ -153,6 +163,14 @@ export const fil = {
     whatsNew: "Ano ang Bago",
     whatsNewDescription: "Tingnan ang mga highlight mula sa pinakabagong update",
     whatsNewAccessibility: "Buksan ang mga release note na ano ang bago",
+    developerMessage: "Mensahe at Layunin ng Developer",
+    developerMessageSubtitle:
+      "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
+    developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
+    privacy: "Privacy",
+    privacySubtitle: "Basahin ang aming patakaran sa privacy online",
+    privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
+    privacyOpenError: "Hindi mabuksan ang website ng patakaran sa privacy.",
     developerModeEnabledTitle: "Naka-on ang developer mode",
     developerModeEnabledMessage: "Available na ang SQLite Monitor sa menu.",
     developerSection: "DEVELOPER",
@@ -286,22 +304,74 @@ export const fil = {
     dismissAccessibility: "Isara ang ano ang bago",
     versionLabel: "Bersyon %{version}",
     empty: "Wala pang release notes para sa bersyong ito.",
+    categories: {
+      accounts: "Mga Account",
+      transactions: "Mga Transaksyon",
+      calendar: "Kalendaryo",
+      budgets: "Mga Badyet",
+      scheduledTransactions: "Naka-iskedyul na Transaksyon",
+      creditCards: "Mga Credit Card",
+      goals: "Mga Layunin",
+      reports: "Mga Ulat at Analytics",
+      security: "Privacy at Seguridad",
+      backup: "Backup at Pag-sync",
+      general: "Pangkalahatan",
+    },
     v100: {
       title: "Maligayang pagdating sa Kaizen Finance",
-      item1:
-        "Subaybayan ang mga account, transaksyon, badyet, at layunin gamit ang offline-first na lokal na database.",
-      item2:
-        "I-back up at i-restore ang data mo gamit ang lokal na archive o Google Drive sync.",
-      item3:
-        "I-customize ang tema, wika, at currency formatting ayon sa paraan mo ng pamamahala ng pera.",
+      accountsItem1:
+        "Subaybayan ang pera, bank account, credit card, at ipon gamit ang running balance.",
+      accountsItem2:
+        "Maglipat ng pera sa pagitan ng iyong mga account nang may awtomatikong update sa balanse.",
+      transactionsItem1:
+        "Mabilis na magtala ng kita at gastos gamit ang mga kategorya, tala, at custom fields.",
+      transactionsItem2:
+        "Mag-attach ng mga larawan ng resibo at mag-filter ng mga transaksyon ayon sa petsa o account.",
+      calendarItem1:
+        "Tingnan ang kabuuang gastos bawat araw at mga darating na bayarin sa kalendaryo.",
+      calendarItem2:
+        "Inayos ang mga bug kapag pumipili ng petsa.",
+      budgetsItem1:
+        "Magtakda ng buwanang limitasyon sa gastos bawat kategorya upang maiwasan ang labis na paggastos.",
+      budgetsItem2:
+        "Kumuha ng visual na progress bar at mga babala bago ka lumampas sa badyet.",
+      scheduledItem1:
+        "Mag-set up ng mga paulit-ulit na bayarin, subscription, at sahod na may paalala sa takdang petsa.",
+      creditCardsItem1:
+        "Subaybayan ang billing cycle, takdang petsa ng bayad, credit limit, at paggamit ng credit card.",
+      goalsItem1:
+        "Magtakda ng mga layunin sa pag-iipon at subaybayan ang iyong pag-usad habang nag-iipon.",
+      reportsItem1:
+        "Tingnan ang malinaw na mga tsart at visual na ulat ng iyong mga gawi sa paggastos at net worth.",
+      securityItem1:
+        "100% offline-first — mananatiling pribado sa iyong device ang lahat ng datos sa pananalapi.",
+      securityItem2:
+        "I-lock ang app gamit ang iyong fingerprint, Face ID, o PIN.",
+      backupItem1:
+        "Ligtas na mag-export at mag-import ng mga backup file o mag-sync sa Google Drive.",
     },
-    v100fixes: {
-      title: "Mga ayos at pagpapabuti",
-      item1:
-        "Inayos ang error kapag ine-edit ang naka-iskedyul na transaksyon na kailangan pa ng pansin (due o failed).",
-      item2:
-        "Ang mga pending na scheduled occurrence ay sumusunod na sa pinakabagong halaga, account, at kategorya pag na-edit mo ang iskedyul.",
-    },
+  },
+  developerMessage: {
+    badge: "MENSAHE AT MISYON NG DEVELOPER",
+    title: "Mensahe mula sa Developer",
+    subtitle: "Ang layunin at puso sa likod ng application na ito",
+    missionTitle: "Ang Misyon: Financial Literacy para sa Lahat",
+    missionBody:
+      "Nang binuo ko ang app na ito, iisa lang ang aking mithiin: tulungan ang bawat isa na maging maalam sa pananalapi (financially literate). Ang kalayaan sa pera ay hindi nagsisimula sa kumplikadong pamumuhunan; nagsisimula ito sa pagkatutong magmonitor ng sariling cashflow. Kapag alam mo kung saan nanggagaling at saan napupunta ang iyong pera, nagkakaroon ka ng kapayapaan at kontrol.",
+    kaizenTitle: "Ang Bunga ng Unti-unting Pag-unlad",
+    kaizenBody:
+      "Sa wikang Hapon, ang 'Kaizen' (改善) ay nangangahulugang tuluy-tuloy na pagpapabuti. Hindi mo kailangang baguhin ang lahat sa isang iglap. Ang pagtatala ng kahit isang gastos bawat araw ay lumilikha ng pangmatagalang gawi tungo sa tagumpay.",
+    supportTitle: "Independiyenteng Gawa para sa Iyo",
+    supportBody:
+      "Binuo ko ang Kaizen Finance nang mag-isa bilang isang ligtas, offline-first na kasama—walang pagbenta ng datos at walang abala. Kung nakatutulong ito sa iyong buhay, ang pagbili ng Kaizen Pro ay direktang sumusuporta sa akin upang patuloy na mapaganda ang app.",
+    feedbackTitle: "Mahalaga ang Iyong Boses",
+    feedbackBody:
+      "Ang app na ito ay para sa iyo. Huwag mag-atubiling magpadala ng feedback, mga mungkahi, o karanasan. Sabik akong marinig ang iyong kwento.",
+    signaturePre: "Kasama mo sa iyong pag-unlad,",
+    signatureName: "John Paul C. Arellano",
+    actionBegin: "Simulan Natin",
+    actionFeedback: "Magpadala ng Feedback",
+    actionSupport: "Suportahan gamit ang Pro",
   },
   onboarding: {
     welcomeTitle: "Maligayang pagdating sa Kaizen Finance",
@@ -371,9 +441,30 @@ export const fil = {
     readyNickname: "Palayaw: %{name}",
     readyCurrency: "Currency: %{currency}",
     readyAccount: "Account: %{name}",
+    readyAccountRecommended:
+      "Mga Account: Inirekumendang starter pack (Cash, Bangko, Ipon, E-Wallet)",
+    readyAccountManual:
+      "Mga Account: Magsimula mula sa simula (walang panimulang account)",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
     finishSetup: "Pumunta sa Home",
     continue: "Magpatuloy",
+    accountSetupChoiceTitle: "Paano mo gustong i-setup ang iyong mga account?",
+    accountSetupChoiceTitleAssisted:
+      "Paano mo gustong i-setup ang iyong mga account, %{name}?",
+    accountSetupChoiceDescription:
+      "Piliin kung gagawa ng iyong unang account, gagamit ng inirekumendang starter presets, o magsisimula mula sa simula.",
+    accountSetupChoiceDescriptionAssisted:
+      "Piliin kung gagawa ng iyong unang account, gagamit ng inirekumendang starter presets, o magsisimula mula sa simula.",
+    accountChoiceSingleTitle: "Gawin ang aking unang account",
+    accountChoiceSingleDesc:
+      "I-setup ang iyong pangunahing account gamit ang sariling pangalan, uri, at panimulang balanse.",
+    accountChoiceRecommendedTitle: "Gamitin ang inirekumendang mga account",
+    accountChoiceRecommendedDesc:
+      "Handang gamiting mga account (Cash, Bangko, Ipon, E-Wallet) at kumpletong kategorya.",
+    accountChoiceRecommendedBadge: "Inirerekomenda",
+    accountChoiceManualTitle: "Magsimula mula sa simula",
+    accountChoiceManualDesc:
+      "Magsimula nang walang laman. Ikaw ang magdadagdag ng mga account at kategorya mamaya.",
     fullSetupTitle: "I-setup ang workspace",
     fullSetupDescription: "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",
     manualSetupTitle: "Magsimula from scratch",
@@ -439,6 +530,13 @@ export const fil = {
       "I-on ang credit cards at installments para sa mga card purchase.",
     promptCreditCardsAction: "I-on",
     promptDismiss: "Hindi muna",
+    walkthroughIntroBadge: "Unang beses mo ba rito?",
+    walkthroughIntroTitle: "Maligayang pagdating sa iyong Dashboard!",
+    walkthroughIntroSubtitle: "Ang iyong command center sa pananalapi",
+    walkthroughIntroMessage:
+      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Nais mo ba ng mabilisang walkthrough para maging pamilyar?",
+    walkthroughIntroStart: "Mag-tour",
+    walkthroughIntroSkip: "I-explore mag-isa",
     walkthroughChip: "Guide",
     walkthroughSkip: "Laktawan",
     walkthroughNext: "Susunod",
@@ -473,6 +571,10 @@ export const fil = {
     congratulationsButton: "Tingnan ang Dashboard",
   },
   accountsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Account!",
+    introSubtitle: "Ang iyong buong portfolio sa pananalapi",
+    introMessage:
+      "Ayusin ang iyong mga cash wallet, bank account, investments, at credit cards sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
     stepArchivedTitle: "Mga Naka-archive na Account",
     stepArchivedDesc:
       "Tingnan ang lahat ng naka-archive na account at pockets. Ligtas itong nakatago at maaaring ibalik anumang oras.",
@@ -502,6 +604,10 @@ export const fil = {
       "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
   },
   accountFormWalkthrough: {
+    introTitle: "Setup ng Bagong Account",
+    introSubtitle: "Lumikha at i-configure ang iyong account",
+    introMessage:
+      "I-set up ang pangalan, uri, panimulang balanse, pera, at virtual pockets. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepNameTitle: "Pangalan ng Account",
     stepNameDesc:
       "Magbigay ng malinaw na pangalan tulad ng Checking, Pangunahing Ipon, o Cash Wallet.",
@@ -537,6 +643,10 @@ export const fil = {
       "Tukuyin kung kailan nagsimula ang account para sa tamang pagsubaybay sa kasaysayan.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Setup ng Grupo ng Account",
+    introSubtitle: "Ayusin ang mga uri ng account",
+    introMessage:
+      "Pamahalaan ang mga pasadyang grupo sa assets at liabilities, at baguhin ang pagkakasunod-sunod. Nais mo ba ng mabilisang walkthrough?",
     stepClassificationPickerTitle: "Piliin ang Assets o Liabilities",
     stepClassificationPickerDesc:
       "Lumipat sa pagitan ng Assets (mga pag-aari) at Liabilities (mga utang).",
@@ -548,6 +658,10 @@ export const fil = {
       "Gumawa ng sariling grupo tulad ng E-Wallets o mga Raket/Negosyo.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "Bagong Grupo ng Account",
+    introSubtitle: "Lumikha ng pasadyang kategorya ng account",
+    introMessage:
+      "Magtakda ng pasadyang kategorya kasama ang klasipikasyon, icon, at kulay ng tema. Nais mo ba ng mabilisang walkthrough?",
     stepNameTitle: "Pangalan ng Grupo",
     stepNameDesc:
       "Pangalanan ang grupong ito, tulad ng High-Yield Savings o Negosyo.",
@@ -568,6 +682,10 @@ export const fil = {
       "I-tap ang checkmark upang i-save ang bagong grupo ng account.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Magtala ng Transaksyon",
+    introSubtitle: "Subaybayan ang kita, gastos, o paglipat",
+    introMessage:
+      "Magtala ng halaga, kategorya, account, resibo, tag, at tala nang madali. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepPresetsTitle: "Quick Presets",
     stepPresetsDesc:
       "Isang tapik na template para sa mga madalas na transaksyon. Agad na pupunan ang pangalan, account, halaga, at kategorya.",
@@ -621,6 +739,10 @@ export const fil = {
       "Isara ang modal na ito kapag tapos ka na o nais mong lumabas.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Naka-iskedyul na Transaksyon!",
+    introSubtitle: "I-automate ang mga paulit-ulit na bayarin at kita",
+    introMessage:
+      "Pamahalaan ang mga subscription, paulit-ulit na gastusin, at kita gamit ang automatic posting. Nais mo ba ng mabilisang walkthrough?",
     stepSearchTitle: "Maghanap ng Iskedyul",
     stepSearchDesc:
       "Maghanap ng mga naka-iskedyul na transaksyon gamit ang pangalan, kategorya, o account.",
@@ -695,6 +817,10 @@ export const fil = {
       "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
   },
   budgetFormWalkthrough: {
+    introTitle: "Bagong Badyet sa Kategorya",
+    introSubtitle: "Magtakda ng limitasyon sa paggastos",
+    introMessage:
+      "Magtakda ng limitasyon sa kategorya, i-configure ang rollover, at mga alerto sa over-budget. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepCategoryTitle: "Pagpili ng Kategorya",
     stepCategoryDesc:
       "Piliin kung saang kategorya ilalapat ang badyet na ito (hal. Pamamalengke, Libangan).",
@@ -718,6 +844,10 @@ export const fil = {
       "I-tap upang i-save at simulan ang limitasyon sa paggastos para sa kategoryang ito.",
   },
   goalFormWalkthrough: {
+    introTitle: "Bagong Layunin sa Pag-iipon",
+    introSubtitle: "Planuhin at subaybayan ang iyong mga target",
+    introMessage:
+      "Magtakda ng target na halaga, i-link ang mga account o pocket, at itakda ang target na petsa. Nais mo ba ng mabilisang walkthrough sa form na ito?",
     stepTitleTitle: "Pamagat ng Tunguhin",
     stepTitleDesc:
       "Pangalanan ang iyong layunin sa pag-iipon, tulad ng Emergency Fund, Bakasyon, o Bagong Kotse.",
@@ -744,6 +874,10 @@ export const fil = {
       "I-tap ang checkmark upang i-save ang iyong layunin at simulan ang pagsubaybay sa pag-unlad.",
   },
   transactionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Transaksyon!",
+    introSubtitle: "Ang iyong detalyadong talaan sa pananalapi",
+    introMessage:
+      "Maghanap, mag-filter, at subaybayan ang lahat ng iyong kita, gastusin, at transfer nang madali. Nais mo ba ng mabilisang walkthrough?",
     stepSearchTitle: "Maghanap ng Transaksyon",
     stepSearchDesc:
       "Mabilis na maghanap ng transaksyon gamit ang tala, tatanggap, kategorya, account, o halaga.",
@@ -776,6 +910,10 @@ export const fil = {
       "I-tap ang (+) button anumang oras para magtala ng bagong gastos, kita, o transfer. Handa ka na!",
   },
   calendarWalkthrough: {
+    introTitle: "Maligayang pagdating sa Kalendaryo!",
+    introSubtitle: "Timeline ng iyong pananalapi",
+    introMessage:
+      "Tingnan ang pang-araw-araw na cash flow, mga paparating na bayarin, at mga inaasahang balanse sa kalendaryo. Nais mo ba ng mabilisang walkthrough?",
     stepArrowsTitle: "Paglipat ng Buwan sa Kalendaryo",
     stepArrowsDesc:
       "Gamitin ang mga arrow upang magpalipat-lipat sa mga nakaraan at darating na buwan, o bumalik agad sa araw na ito.",
@@ -793,6 +931,10 @@ export const fil = {
       "Subaybayan ang iyong mga ari-arian, utang, at kabuuang equity sa timeline ng kalendaryo.",
   },
   categoriesWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Kategorya!",
+    introSubtitle: "Ayusin ang iyong kita at gastusin",
+    introMessage:
+      "I-customize ang mga category groups, icon, at subcategories upang maiuri ang bawat transaksyon. Nais mo ba ng mabilisang walkthrough?",
     stepTypeToggleTitle: "Mga Gastos at Kita",
     stepTypeToggleDesc:
       "Magpalipat-lipat sa mga kategorya ng gastos at kita upang maisaayos at ma-customize ang iyong cash flow.",
@@ -820,6 +962,10 @@ export const fil = {
     button: "I-explore ang mga Badyet",
   },
   budgetsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Badyet!",
+    introSubtitle: "Matalinong pamamahala sa gastusin",
+    introMessage:
+      "Magtakda ng mga limitasyon sa bawat kategorya at panatilihing nasa ayos ang iyong pananalapi. Nais mo ba ng mabilisang walkthrough?",
     stepEmptyCreateTitle: "Itakda ang Iyong Unang Badyet",
     stepEmptyCreateDesc:
       "I-tap dito upang magtakda ng limitasyon sa paggastos para sa anumang kategorya araw-araw, lingguhan, o buwanan.",
@@ -844,6 +990,10 @@ export const fil = {
     button: "Galugarin ang Tour ng mga Layunin",
   },
   goalsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Layunin!",
+    introSubtitle: "Tuparin ang iyong mga pangarap sa pananalapi",
+    introMessage:
+      "Subaybayan ang iyong ipon, mag-link ng mga account, at bantayan ang iyong pag-unlad. Nais mo ba ng mabilisang walkthrough?",
     stepTotalTargetTitle: "Kabuuang Target at Progreso",
     stepTotalTargetDesc:
       "Subaybayan ang iyong kabuuang target sa pag-iipon, naipong pondo, porsyento ng progreso, at natitirang kulang sa lahat ng aktibong layunin.",
@@ -858,6 +1008,10 @@ export const fil = {
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
   },
   notesWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Tala!",
+    introSubtitle: "Checklists at mga paalala sa pananalapi",
+    introMessage:
+      "Itala ang mga checklist, resibo, paalala, at mga ideya sa pananalapi sa isang organisadong lugar. Nais mo ba ng mabilisang walkthrough?",
     stepEmptyCreateTitle: "Gumawa ng Unang Tala",
     stepEmptyCreateDesc:
       "Pindutin dito upang simulan ang pagtatala ng iyong mga saloobin, financial checklist, memo, at mga larawan ng resibo.",
@@ -878,6 +1032,10 @@ export const fil = {
       "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
   },
   settingsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Setting!",
+    introSubtitle: "I-personalize ang iyong karanasan sa Kaizen",
+    introMessage:
+      "I-configure ang mga currency, tema, paalala, seguridad, at default accounts. Nais mo ba ng mabilisang walkthrough?",
     stepLanguageTitle: "Kagustuhan sa Wika",
     stepLanguageDesc:
       "Lumipat sa pagitan ng Ingles, Espanyol, at Filipino, o awtomatikong itugma sa default ng iyong device.",
@@ -893,6 +1051,9 @@ export const fil = {
     stepRemindersTitle: "Mga Paalala at Notipikasyon",
     stepRemindersDesc:
       "Magtakda ng pang-araw-araw na paalala sa pagtatala ng gastos at bayarin sa takdang petsa.",
+    stepGuideHelperTitle: "Guide Helper",
+    stepGuideHelperDesc:
+      "Ipakita o itago ang lumulutang na chip ng gabay sa mga screen at form upang masimulan muli ang mga walkthrough anumang oras.",
     stepDefaultExpenseTitle: "Default na Account para sa Gastos",
     stepDefaultExpenseDesc:
       "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",
@@ -1040,6 +1201,44 @@ export const fil = {
     paywallLifetimeBadge: "ISANG BESES NA BAYAD · HABAMBUHAY NA ACCESS",
     paywallUpgradeBtn: "I-unlock ang Pro (%{price})",
     paywallProcessing: "Pinoproseso...",
+    featuresLeadIn: "Narito ang makukuha mo kapag nag-upgrade ka sa Pro:",
+    launchSpecialBadge: "PROMO SA PAGLUNSAD",
+    launchSpecialSubtitle: "Limitadong alok · Makatipid ng 60%",
+    launchRegularPrice: "₱499",
+    launchPromoPrice: "₱199",
+    launchDiscountBadge: "60% OFF",
+    launchSavingsText: "TIPID ₱300",
+    launchSubtext: "Isang bayad · Habambuhay na access · Libreng updates",
+    launchUpgradeBtn: "Kunin ang Promo Offer (%{price})",
+    featureModalUpgradeBtn: "Kunin ang Promo Offer (%{price}) · 60% OFF",
+    exploreAllFeatures: "Tingnan ang Lahat ng Pro Features →",
+    swipeCardsHint: "I-swipe pakaliwa o pakanan para sa mga feature",
+    guaranteeText: "Isang beses na bayad · 100% Pribado · Ibalik anumang oras",
+    limits: {
+      accountsTitle: "Lumalago ang iyong portfolio!",
+      accountsDesc:
+        "Nagamit mo na ang iyong unang %{count} accounts — magaling ang pag-oorganisa! Mag-level up sa Kaizen Pro para sa walang limitasyong accounts, sub-pockets, at buong wealth tracking.",
+      pocketsDesc:
+        "Inaayos mo ang iyong pera tulad ng isang pro! Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets para sa mas malinaw na paghihiwalay ng ipon at gastos.",
+      budgetsTitle: "Hawak mo ang iyong paggastos!",
+      budgetsDesc:
+        "Aktibo mong sinusubaybayan ang %{count} category budgets! Mag-upgrade sa Kaizen Pro para sa walang limitasyong badyet na may awtomatikong surplus rollover at threshold alerts.",
+      goalsTitle: "Malalaking pangarap ang sumusulong!",
+      goalsDesc:
+        "Naitakda mo na ang iyong unang %{count} savings milestones! Pabilisin ang iyong pag-unlad gamit ang Kaizen Pro para sa walang limitasyong targets, target dates, at multi-pocket tracking.",
+      schedulesTitle: "Awtomasyon sa iyong pananalapi!",
+      schedulesDesc:
+        "Nananatili kang maagap sa iyong mga bayarin! Mag-upgrade sa Kaizen Pro para sa walang limitasyong recurring transactions, background auto-posting, at recurrence analytics.",
+      notesTitle: "Mahusay na pagtatala ng talaan!",
+      notesDesc:
+        "Napuno mo na ang iyong unang %{count} tala sa pananalapi! Buksan ang Kaizen Pro para sa walang limitasyong notes, photo at receipt attachments, at custom color tagging.",
+      restoreAccountDesc:
+        "Ang pag-restore sa account na ito ay lalampas sa iyong %{count} aktibong accounts. Mag-upgrade sa Kaizen Pro para sa walang limitasyong accounts at ganap na kalayaan.",
+      restorePocketDesc:
+        "Ang pag-restore sa pocket na ito ay lalampas sa iyong %{count} pockets para sa account na ito. Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets.",
+      restoreScheduleDesc:
+        "Ang pag-restore sa iskedyul na ito ay lalampas sa iyong %{count} recurring transactions. Mag-upgrade sa Kaizen Pro para sa walang limitasyong schedules.",
+    },
     restorePurchases: "Ibalik ang mga Binili (Restore)",
     restoring: "Ibinabalik...",
     restoreSuccessTitle: "Naibalik ang mga Binili",
@@ -1053,9 +1252,87 @@ export const fil = {
     purchaseSuccessMsg: "Salamat sa pagsuporta sa Kaizen Finance! Lahat ng Pro features ay bukas na.",
     disclaimer:
       "Ang bayad ay sisingilin sa iyong Google Play account sa pagkumpirma ng pagbili. Ito ay isang beses na pagbili na walang paulit-ulit na bayarin.",
-    reportsLockedTitle: "Mga Ulat at Financial Analytics",
+    reportsLockedTitle: "Handa na para sa Ganap na Kalinawan sa Pera?",
     reportsLockedSubtitle:
-      "Buksan ang mga graph ng Cash Flow, Balance Sheet, Net Worth Growth, at breakdown ng gastusin gamit ang Kaizen Pro.",
+      "Hawak mo na ang iyong araw-araw na paggastos — ngayon tingnan ang kabuuang larawan! I-angat ang iyong pananalapi gamit ang Cash Flow charts, Balance Sheets, at Net Worth trajectory.",
     reportsLockedCta: "I-unlock ang Habambuhay na Access",
+    widgetsLockedTitle: "Ang Iyong Pera sa Isang Sulyap",
+    widgetsLockedSubtitle:
+      "Maging maalam sa iyong badyet kahit hindi binubuksan ang app. I-pin ang mga interactive chart ng buwanang gastos at net worth sa iyong home screen.",
+    widgetsLockedCta: "I-unlock ang Pro Widgets",
+    locked: {
+      cloudSyncTitle: "Ganap na Kapayapaan ng Isip para sa Iyong Pera",
+      cloudSyncDesc:
+        "Walang katumbas ang iyong talaan sa pananalapi. Panatilihing ligtas na naka-backup ang bawat transaksyon sa iyong personal na Google Drive at i-restore sa isang tap lamang.",
+      securityTitle: "Bank-Grade na Proteksyon para sa Iyong Paningin Lamang",
+      securityDesc:
+        "Personal ang iyong pananalapi. Magdagdag ng Fingerprint o Face ID lock upang ang iyong pribadong net worth at mga tala ay manatiling protektado.",
+      creditCardsTitle: "Umiwas sa Interes at Bayarin sa Credit Card",
+      creditCardsDesc:
+        "Pamahalaan ang mga billing cycle, statement cutoffs, 0% installment payoffs, at credit limit alerts upang mapanatiling malinis ang iyong credit record.",
+      budgetRolloverTitle: "Gawing Kapaki-pakinabang ang Natirang Badyet",
+      budgetRolloverDesc:
+        "Gantimpala para sa magandang gawi! Awtomatikong dalhin ang natirang pondo sa susunod na buwan upang ang bawat pisong naipon ay manatiling bilang.",
+      receiptsTitle: "Panatilihing Maayos ang mga Resibo at Tala",
+      receiptsDesc:
+        "Huwag nang mawalan ng resibo o invoice. Mag-attach ng mga larawan sa iyong notes at transaksyon para sa maayos na bookkeeping.",
+      autoPostTitle: "Makatipid ng Oras nang Awtomatiko",
+      autoPostDesc:
+        "Awtomatikong iproseso ang mga recurring income at bayarin sa takdang petsa sa background upang hindi makaligtaan ang anumang bayarin.",
+      fieldReceiptsTitle: "Maayos at Handa sa Buwis na Talaan",
+      fieldReceiptsDesc:
+        "Panatilihing organisado ang mga resibo sa pamamagitan ng pag-attach ng malilinaw na larawan direkta sa iyong tala.",
+      fieldSplitTitle: "Eksaktong Paghati-hati ng Gastos",
+      fieldSplitDesc:
+        "Isang resibo, maraming kategorya! Madaling hatiin ang mga pinamili sa supermarket o mall sa mga tamang account.",
+      fieldInstallmentsTitle: "Subaybayan ang mga Hulugan",
+      fieldInstallmentsDesc:
+        "Maging kontrolado ang mga installment ng gadget, bayarin sa card, at plano ng pagbabayad nang walang kalituhan.",
+      fieldLabelsTitle: "Mas Malalim na Pag-uuri ng Pera",
+      fieldLabelsDesc:
+        "Lagyan ng sariling tag o label ang bawat gastos para sa proyekto, biyahe, o okasyon para sa madaling pagsusuri.",
+      fieldQuickPresetsTitle: "Mabilisang 1-Tap na Pagtatala",
+      fieldQuickPresetsDesc:
+        "Makatipid ng oras araw-araw sa pamamagitan ng pagtatala ng madalas na kape, pamasahe, at groseri sa isang tap lamang.",
+      remindersMonthlyTitle: "Simulan ang Buwan nang may Malinaw na Isip",
+      remindersMonthlyDesc:
+        "Ipagdiwang ang iyong pag-unlad gamit ang buwanang ulat ng cash flow, naipon, at net worth tuwing ika-1 ng buwan.",
+      remindersCreditCardsTitle: "Protektahan ang Iyong Credit Score",
+      remindersCreditCardsDesc:
+        "Maging handa bago ang due date gamit ang mga paalalang akma sa billing cycle ng bawat credit card.",
+      remindersCreditLimitTitle: "Babala Bago Lumampas sa Limitasyon",
+      remindersCreditLimitDesc:
+        "Umiwas sa dagdag na singil gamit ang maagang abiso kapag ang balanse ay umabot na sa 80% ng card limit.",
+      remindersScheduledTitle: "Huwag Makaligtaan ang mga Bayarin",
+      remindersScheduledDesc:
+        "Manatiling una sa mga paparating na bayarin, subscription, at nakatakdang transfer gamit ang maagang paalala.",
+      remindersBudgetTitle: "Manatili sa Tamang Hangganan ng Badyet",
+      remindersBudgetDesc:
+        "Panatilihing nasa ayos ang paggasta gamit ang mga abiso kapag umabot na sa 80% o 100% ang nagastos sa isang kategorya.",
+      remindersGoalsTitle: "Ipagdiwang ang Bawat Naabot na Ipon",
+      remindersGoalsDesc:
+        "Manatiling inspirado gamit ang mga paalala sa deadline at pagbati kapag naabot ang 50%, 75%, at 100% ng iyong ipon.",
+      accountHideSelectionTitle: "Malinis na Pang-araw-araw na Pagtatala",
+      accountHideSelectionDesc:
+        "Panatilihing maayos ang picker ng account sa pamamagitan ng pagtago ng mga emergency fund o lihim na naipon.",
+      accountHideReportsTitle: "Tunay na Personal na Net Worth",
+      accountHideReportsDesc:
+        "Ihiwalay ang escrow, deposito, o panlabas na pondo upang 100% tunay na sariling kayamanan ang makita sa ulat.",
+      fundGroupsTitle: "Ganap na Pamamahala sa mga Portfolio",
+      fundGroupsDesc:
+        "Madaling paghiwalayin ang personal na ipon, pondo sa negosyo, at mga sideline sa organisadong fund groups.",
+      localBackupTitle: "Awtomatikong Lokal na Backup",
+      localBackupDesc:
+        "Panatilihin ang buong kontrol sa iyong talaan gamit ang awtomatiko at ligtas na backup direkta sa memorya ng iyong device.",
+      quickSyncTitle: "Real-Time Cloud na Proteksyon",
+      quickSyncDesc:
+        "Ligtas na naka-sync sa iyong Google Drive ang bawat binagong transaksyon at badyet sa mismong oras na itala ito.",
+      hexColorsTitle: "Pansariling Disenyo at Kulay",
+      hexColorsDesc:
+        "Gumawa ng sariling hex color palette para sa mga account, kategorya, at tag sa iyong dashboard.",
+      iconLibraryTitle: "Mahigit 200 Dagdag na Lucide Icon",
+      iconLibraryDesc:
+        "I-personalize ang bawat account, badyet, at layunin gamit ang pinalawak na koleksyon ng mahigit 200 icon.",
+    },
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

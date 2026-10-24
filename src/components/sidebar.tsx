@@ -197,7 +197,6 @@ export const Sidebar = memo(function Sidebar({
         >
           {/* Primary Navigation */}
           <View style={styles.primaryNav}>
-            <Text style={styles.sectionLabel}>{t("navigation.menu")}</Text>
             <View style={styles.navGroup}>
               {primaryItems.map((item) => {
                 const active = isItemActive(item.href);
@@ -578,14 +577,6 @@ function createStyles(theme: AppTheme) {
     scrollIndicatorButtonPressed: {
       backgroundColor: theme.colors.surfaceMuted,
       transform: [{ scale: 0.92 }],
-    },
-    sectionLabel: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.semibold,
-      letterSpacing: 0.8,
-      marginBottom: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
     },
     primaryNav: {
       flex: 1,

@@ -73,8 +73,9 @@ const APP_RESET_USER_DATA_TABLES = [
 ] as const;
 
 /**
- * User-owned data tables that should trigger a full-database Quick Sync backup on change.
+ * User-owned data tables included in backup scope and reset flows.
  * Superset of {@link APP_RESET_USER_DATA_TABLE_NAMES} (e.g. split entries, currencies).
+ * Auto-sync listens via {@link QUICK_SYNC_WATCHED_TABLE_NAMES} (settings excluded).
  */
 const USER_DATA_TABLES = [
   ...APP_RESET_USER_DATA_TABLES,
@@ -90,7 +91,19 @@ export const USER_DATA_TABLE_NAMES = USER_DATA_TABLES.map((table) =>
   getTableName(table),
 );
 
-/** Same set Quick Sync listens to via `addDatabaseChangeListener`. */
-export const QUICK_SYNC_WATCHED_TABLE_NAMES = USER_DATA_TABLE_NAMES;
+/**
+ * Tables Quick Sync listens to via `addDatabaseChangeListener`.
+ * Excludes `settings` so widget snapshots and Quick Sync metadata writes do not
+ * run SQLite reads inside the update hook (see regression at 7f5cf17).
+ */
+const SETTINGS_TABLE_NAME = getTableName(settings);
+
+export const QUICK_SYNC_WATCHED_TABLE_NAMES = USER_DATA_TABLE_NAMES.filter(
+  (name) => name !== SETTINGS_TABLE_NAME,
+);
+
+export const QUICK_SYNC_WATCHED_TABLE_NAME_SET = new Set<string>(
+  QUICK_SYNC_WATCHED_TABLE_NAMES,
+);
 
 export const USER_DATA_TABLE_NAME_SET = new Set<string>(USER_DATA_TABLE_NAMES);

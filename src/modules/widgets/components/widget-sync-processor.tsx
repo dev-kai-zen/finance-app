@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
 import { addDatabaseChangeListener } from "expo-sqlite";
+import { initializeProStatus, subscribeToProStatus } from "@/modules/pro";
 import { updateDataWidgets } from "../services/widget-snapshot.service";
 
 /** Subset of `USER_DATA_TABLE_NAMES` in `@/infrastructure/database/user-data-tables`. */
@@ -26,8 +27,15 @@ export function WidgetSyncProcessor(): null {
       return;
     }
 
-    // Trigger an initial refresh on app startup
-    void updateDataWidgets();
+    // Trigger an initial refresh on app startup once Pro status is initialized
+    void initializeProStatus().then(() => {
+      void updateDataWidgets();
+    });
+
+    // React immediately whenever Pro status changes (e.g. purchase, restore, dev simulation)
+    const unsubscribePro = subscribeToProStatus(() => {
+      void updateDataWidgets();
+    });
 
     const subscription = addDatabaseChangeListener((event) => {
       if (!SYNCED_TABLES.has(event.tableName)) {
@@ -44,6 +52,7 @@ export function WidgetSyncProcessor(): null {
     });
 
     return () => {
+      unsubscribePro();
       subscription.remove();
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);

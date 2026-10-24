@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -11,11 +11,14 @@ import {
   Crown,
   Database,
   HardDrive,
+  Heart,
   Info,
   Languages,
   Palette,
   Pipette,
   RotateCcw,
+  Settings as SettingsIcon,
+  Shield,
   ShieldCheck,
   Smile,
   Sparkles,
@@ -33,6 +36,7 @@ import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
 import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
+import { DeveloperMessageModal } from "@/modules/developer-message";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
@@ -41,7 +45,9 @@ import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-m
 import {
   DraggableTourChip,
   SettingsWalkthroughOverlay,
+  WalkthroughIntroModal,
   useSettingsWalkthrough,
+  useWalkthroughIntro,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -51,6 +57,7 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
 
 export function SettingsScreen() {
   return (
@@ -93,8 +100,16 @@ function SettingsScreenContent() {
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+  const [isDeveloperMessageOpen, setIsDeveloperMessageOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const { openPro } = useLocalSearchParams<{ openPro?: string }>();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
+  useEffect(() => {
+    if (openPro === "true" || openPro === "1") {
+      setIsPaywallOpen(true);
+    }
+  }, [openPro]);
   const {
     isPro,
     isDevSimulated,
@@ -115,6 +130,7 @@ function SettingsScreenContent() {
   const nicknameRef = useWalkthroughTarget("settingsNickname");
   const themeRef = useWalkthroughTarget("settingsTheme");
   const remindersRef = useWalkthroughTarget("settingsReminders");
+  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -145,19 +161,19 @@ function SettingsScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "settingsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (
-      didAutoStartWalkthroughRef.current ||
-      isPromptDismissed("settingsWalkthroughDismissed")
-    ) {
-      return;
+    if (walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
     }
-    const timer = setTimeout(() => {
-      didAutoStartWalkthroughRef.current = true;
-      walkthrough.startWalkthrough();
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const languageValue =
     preference === "system"
@@ -388,7 +404,15 @@ function SettingsScreenContent() {
 
             <View style={styles.rowDivider} />
 
-            <View style={styles.toggleRow}>
+            <View
+              ref={guideHelperRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGuideHelper"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={styles.toggleRow}
+            >
               <View style={styles.iconContainer}>
                 <Sparkles color="#00A3FF" size={20} />
               </View>
@@ -912,6 +936,60 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.developerMessageAccessibility")}
+              accessibilityRole="button"
+              onPress={() => setIsDeveloperMessageOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Heart color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.developerMessage")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.developerMessageSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.privacyAccessibility")}
+              accessibilityRole="link"
+              onPress={() => {
+                void Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                  Alert.alert("Error", t("settings.privacyOpenError"));
+                });
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Shield color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.privacy")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.privacySubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
         </View>
       </View>
@@ -932,6 +1010,13 @@ function SettingsScreenContent() {
         blocks={getLatestReleaseNotes()}
         visible={isWhatsNewOpen}
         onClose={() => setIsWhatsNewOpen(false)}
+      />
+
+      <DeveloperMessageModal
+        isPro={isPro}
+        onClose={() => setIsDeveloperMessageOpen(false)}
+        onOpenPro={() => setIsPaywallOpen(true)}
+        visible={isDeveloperMessageOpen}
       />
 
       <ResetDataModal
@@ -1010,6 +1095,27 @@ function SettingsScreenContent() {
         onCancel={() => setIsNicknameModalOpen(false)}
         onSave={setNickname}
         visible={isNicknameModalOpen}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("settingsWalkthrough.introTitle")}
+        subtitle={t("settingsWalkthrough.introSubtitle")}
+        message={t("settingsWalkthrough.introMessage")}
+        icon={<SettingsIcon color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
+      />
+
+      <SettingsWalkthroughOverlay
+        visible={walkthrough.isWalkthroughActive}
+        stepIndex={walkthrough.activeStepIndex}
+        totalSteps={walkthrough.totalSteps}
+        step={walkthrough.currentStep}
+        targetLayout={walkthrough.activeTargetLayout}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
       />
     </PageContainer>
   );

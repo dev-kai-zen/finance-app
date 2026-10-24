@@ -114,3 +114,20 @@ test("Goal Form Walkthrough: includes 8 steps in exact requested order", () => {
     }
   }
 });
+
+test("Budget and Goal Form Walkthrough: intro translations exist in en, es, and fil", () => {
+  for (const [lang, translations] of [
+    ["en", en],
+    ["es", es],
+    ["fil", fil],
+  ]) {
+    assert.ok(translations.budgetFormWalkthrough.introTitle, `Missing ${lang} introTitle for budgetFormWalkthrough`);
+    assert.ok(translations.budgetFormWalkthrough.introSubtitle, `Missing ${lang} introSubtitle for budgetFormWalkthrough`);
+    assert.ok(translations.budgetFormWalkthrough.introMessage, `Missing ${lang} introMessage for budgetFormWalkthrough`);
+
+    assert.ok(translations.goalFormWalkthrough.introTitle, `Missing ${lang} introTitle for goalFormWalkthrough`);
+    assert.ok(translations.goalFormWalkthrough.introSubtitle, `Missing ${lang} introSubtitle for goalFormWalkthrough`);
+    assert.ok(translations.goalFormWalkthrough.introMessage, `Missing ${lang} introMessage for goalFormWalkthrough`);
+  }
+});
+

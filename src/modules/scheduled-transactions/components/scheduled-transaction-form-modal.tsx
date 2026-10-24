@@ -19,6 +19,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import {
   AccountPickerModal,
   accountColor,
@@ -140,6 +141,7 @@ function ScheduledTransactionFormModalContent({
   defaultIncomePocketId: propsDefaultIncomePocketId,
 }: ScheduledTransactionFormModalProps) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const defaultAccounts = useDefaultAccounts();
@@ -283,8 +285,8 @@ function ScheduledTransactionFormModalContent({
       guardAction(() => {
         setAutoPost(true);
       }, {
-        featureTitle: "Automatic Schedule Posting",
-        featureDescription: "Automatically execute recurring income, bills, and transfers on their due dates in the background without requiring manual confirmation with Kaizen Pro.",
+        featureTitle: t("pro.locked.autoPostTitle"),
+        featureDescription: t("pro.locked.autoPostDesc"),
       });
       return;
     }
@@ -929,8 +931,8 @@ function ScheduledTransactionFormModalContent({
       />
 
       <ProFeatureModal
-        featureDescription="Automatically execute recurring income, bills, and transfers on their due dates in the background without requiring manual confirmation with Kaizen Pro."
-        featureTitle="Automatic Schedule Posting"
+        featureDescription={t("pro.locked.autoPostDesc")}
+        featureTitle={t("pro.locked.autoPostTitle")}
         onClose={closePaywall}
         visible={paywallVisible}
       />

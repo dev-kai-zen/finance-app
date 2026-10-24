@@ -105,9 +105,12 @@ export async function completeManualSetup(): Promise<WorkspaceState> {
   return completedState("personal", "manual");
 }
 
+export type GuidedAccountStrategy = "custom" | "recommended" | "manual";
+
 export interface GuidedWorkspaceInput {
   currencyCode: string;
-  account: InitialAccountInput;
+  account?: InitialAccountInput;
+  accountStrategy?: GuidedAccountStrategy;
   nickname?: string;
 }
 
@@ -115,27 +118,42 @@ export async function completeGuidedSetup(
   input: GuidedWorkspaceInput,
 ): Promise<WorkspaceState> {
   const now = new Date();
+  const strategy =
+    input.accountStrategy ?? (input.account ? "custom" : "recommended");
   let accountId = "";
 
   await db.transaction(async (tx) => {
     clearSampleWorkspaceIfNeeded(tx);
-    await prepareWorkspaceCategories("recommended", tx, now);
-    accountId = createInitialAccount(
-      input.account,
-      tx,
-      now,
-      input.currencyCode,
-    );
+
+    if (strategy === "recommended") {
+      await prepareWorkspaceCategories("recommended", tx, now);
+      createRecommendedAccounts(tx, now, input.currencyCode);
+      setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
+      setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
+    } else if (strategy === "manual") {
+      await prepareWorkspaceCategories("manual", tx, now);
+    } else {
+      await prepareWorkspaceCategories("recommended", tx, now);
+      if (input.account) {
+        accountId = createInitialAccount(
+          input.account,
+          tx,
+          now,
+          input.currencyCode,
+        );
+        setDefaultExpenseAccount(accountId, null, tx);
+        setDefaultIncomeAccount(accountId, null, tx);
+      }
+    }
+
     saveDefaultCurrencyCode(input.currencyCode, tx, now);
     applyGuidedWorkspaceSimpleDefaults(tx);
-    setDefaultExpenseAccount(accountId, null, tx);
-    setDefaultIncomeAccount(accountId, null, tx);
     if (input.nickname && input.nickname.trim()) {
       setUserNickname(input.nickname.trim(), tx, now);
     }
     saveCompletedSettings(
       "personal",
-      "guided",
+      strategy === "custom" ? "guided" : strategy,
       tx,
       now,
       input.currencyCode,
@@ -144,7 +162,11 @@ export async function completeGuidedSetup(
 
   saveCurrencyPreferences(getCurrencyPreferences());
 
-  return completedState("personal", "guided", input.currencyCode);
+  return completedState(
+    "personal",
+    strategy === "custom" ? "guided" : strategy,
+    input.currencyCode,
+  );
 }
 
 export async function completeRecommendedSetup(): Promise<WorkspaceState> {
@@ -154,7 +176,7 @@ export async function completeRecommendedSetup(): Promise<WorkspaceState> {
     clearSampleWorkspaceIfNeeded(tx);
     await prepareWorkspaceCategories("recommended", tx, now);
     createRecommendedAccounts(tx, now);
-    setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
+    setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
     setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     saveCompletedSettings("personal", "recommended", tx, now);
   });

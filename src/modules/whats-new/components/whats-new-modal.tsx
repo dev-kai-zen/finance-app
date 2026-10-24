@@ -28,6 +28,8 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
+  const primaryVersion = blocks[0]?.version;
+
   return (
     <Modal
       animationType="fade"
@@ -43,52 +45,77 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
           style={styles.backdrop}
         />
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          style={styles.scrollView}
+        <View
+          style={[
+            styles.card,
+            isTabletOrDesktop(width) && styles.cardDesktop,
+          ]}
         >
-          <View
-            style={[
-              styles.card,
-              isTabletOrDesktop(width) && styles.cardDesktop,
-            ]}
-          >
+          {/* Fixed Header */}
+          <View style={styles.header}>
             <View style={styles.iconCircle}>
-              <Sparkles color={theme.colors.primary} size={26} />
+              <Sparkles color={theme.colors.primary} size={24} />
             </View>
 
             <Text style={styles.heading}>{t("whatsNew.heading")}</Text>
 
+            {primaryVersion ? (
+              <View style={styles.versionBadge}>
+                <Text style={styles.versionBadgeText}>
+                  {t("whatsNew.versionLabel", { version: primaryVersion })}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Scrollable Body */}
+          <ScrollView
+            contentContainerStyle={styles.bodyScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={true}
+            style={styles.bodyScrollView}
+          >
             {blocks.length === 0 ? (
               <Text style={styles.emptyMessage}>{t("whatsNew.empty")}</Text>
             ) : (
               blocks.map((block) => (
                 <View key={block.version} style={styles.block}>
-                  <Text style={styles.versionLabel}>
-                    {t("whatsNew.versionLabel", { version: block.version })}
-                  </Text>
-                  <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
-                  <View style={styles.itemList}>
-                    {block.itemKeys.map((itemKey) => (
-                      <View key={itemKey} style={styles.itemRow}>
-                        <Text style={styles.bullet}>•</Text>
-                        <Text style={styles.itemText}>{t(itemKey)}</Text>
+                  {block.titleKey ? (
+                    <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
+                  ) : null}
+
+                  {block.sections.map((section, sectionIdx) => (
+                    <View
+                      key={`${section.categoryKey}-${sectionIdx}`}
+                      style={styles.section}
+                    >
+                      <Text style={styles.categoryTitle}>
+                        {t(section.categoryKey)}
+                      </Text>
+                      <View style={styles.itemList}>
+                        {section.itemKeys.map((itemKey) => (
+                          <View key={itemKey} style={styles.itemRow}>
+                            <Text style={styles.bullet}>•</Text>
+                            <Text style={styles.itemText}>{t(itemKey)}</Text>
+                          </View>
+                        ))}
                       </View>
-                    ))}
-                  </View>
+                    </View>
+                  ))}
                 </View>
               ))
             )}
+          </ScrollView>
 
+          {/* Fixed Footer */}
+          <View style={styles.footer}>
             <AppButton
               label={t("whatsNew.continue")}
               onPress={onClose}
               style={styles.continueButton}
             />
           </View>
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -101,6 +128,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.overlay,
       flex: 1,
       justifyContent: "center",
+      padding: theme.spacing.lg,
     },
     backdrop: {
       bottom: 0,
@@ -109,30 +137,30 @@ function createStyles(theme: AppTheme) {
       right: 0,
       top: 0,
     },
-    scrollView: {
-      flexGrow: 0,
-      maxHeight: "100%",
-      width: "100%",
-    },
-    scrollContent: {
-      alignItems: "center",
-      flexGrow: 1,
-      justifyContent: "center",
-      padding: theme.spacing.lg,
-    },
     card: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
       borderCurve: "continuous",
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
+      display: "flex",
+      flexDirection: "column",
+      maxHeight: "82%",
       maxWidth: 440,
-      padding: theme.spacing.xl,
+      overflow: "hidden",
       width: "100%",
       ...theme.shadows.modal,
     },
     cardDesktop: {
       maxWidth: 480,
+    },
+    header: {
+      alignItems: "center",
+      borderBottomColor: theme.colors.border,
+      borderBottomWidth: 1,
+      paddingBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.xl,
+      paddingTop: theme.spacing.xl,
     },
     iconCircle: {
       alignItems: "center",
@@ -141,44 +169,72 @@ function createStyles(theme: AppTheme) {
       borderColor: `${theme.colors.primary}40`,
       borderRadius: 999,
       borderWidth: 1,
-      height: 58,
+      height: 52,
       justifyContent: "center",
-      marginBottom: theme.spacing.md,
-      width: 58,
+      marginBottom: theme.spacing.sm,
+      width: 52,
     },
     heading: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
-      marginBottom: theme.spacing.lg,
       textAlign: "center",
     },
-    emptyMessage: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
-      marginBottom: theme.spacing.lg,
-      textAlign: "center",
+    versionBadge: {
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: `${theme.colors.primary}35`,
+      borderRadius: 999,
+      borderWidth: 1,
+      marginTop: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 3,
     },
-    block: {
-      gap: theme.spacing.sm,
-      marginBottom: theme.spacing.lg,
-    },
-    versionLabel: {
-      color: theme.colors.textMuted,
+    versionBadgeText: {
+      color: theme.colors.primary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.6,
       textTransform: "uppercase",
     },
+    bodyScrollView: {
+      flexGrow: 1,
+      flexShrink: 1,
+      width: "100%",
+    },
+    bodyScrollContent: {
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.lg,
+    },
+    emptyMessage: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.sm,
+      paddingVertical: theme.spacing.lg,
+      textAlign: "center",
+    },
+    block: {
+      gap: theme.spacing.md,
+    },
     blockTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.semibold,
+      marginBottom: theme.spacing.xs,
+      textAlign: "center",
+    },
+    section: {
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+    },
+    categoryTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.2,
     },
     itemList: {
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.xs,
+      gap: 6,
+      marginTop: 2,
     },
     itemRow: {
       alignItems: "flex-start",
@@ -189,6 +245,7 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
+      marginTop: 1,
     },
     itemText: {
       color: theme.colors.textSecondary,
@@ -196,8 +253,16 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
+    footer: {
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.md,
+    },
     continueButton: {
-      marginTop: theme.spacing.sm,
+      width: "100%",
     },
   });
 }
+

@@ -74,9 +74,8 @@ export function SecuritySettingsModal({
   ) => {
     if (mode === "set" && !isPro) {
       setProMeta({
-        title: "App Password & Master Lock",
-        description:
-          "Protect your financial data, accounts, and transactions with a secure master app password with Kaizen Pro.",
+        title: t("pro.locked.securityTitle"),
+        description: t("pro.locked.securityDesc"),
       });
       setProModalVisible(true);
       return;
@@ -121,9 +120,8 @@ export function SecuritySettingsModal({
     clearError();
     if (value && !isPro) {
       setProMeta({
-        title: "Biometric Authentication",
-        description:
-          "Instantly unlock Kaizen Finance with your fingerprint or Face ID with Kaizen Pro.",
+        title: t("pro.locked.securityTitle"),
+        description: t("pro.locked.securityDesc"),
       });
       setProModalVisible(true);
       return;

@@ -10,6 +10,9 @@ const root = path.resolve(__dirname, "../../..");
 const originalLoad = Module._load;
 
 Module._load = function (request, parent, ...rest) {
+  if (request === "@/utils/backup-schedule") {
+    return require(path.join(root, "utils/backup-schedule.ts"));
+  }
   if (request === "expo-crypto") {
     return {
       AESEncryptionKey: {},
@@ -96,24 +99,38 @@ test("password-protected backups never restore without their password", async ()
   );
 });
 
-test("automatic backup schedule respects daily and weekly intervals", () => {
-  const now = new Date("2026-10-07T12:00:00.000Z");
+test("automatic backup schedule respects configured daily and weekly slots", () => {
+  const dailyConfig = {
+    frequency: "daily",
+    timeOfDay: "02:00",
+    weekday: 0,
+    dayOfMonth: 1,
+  };
+  const now = new Date(2026, 9, 7, 12, 0, 0, 0);
 
-  assert.equal(isAutomaticBackupDue(null, "daily", now), true);
+  assert.equal(isAutomaticBackupDue(null, dailyConfig, now), true);
   assert.equal(
-    isAutomaticBackupDue(new Date("2026-10-06T13:00:00.000Z"), "daily", now),
+    isAutomaticBackupDue(new Date(2026, 9, 7, 3, 0, 0, 0), dailyConfig, now),
     false,
   );
   assert.equal(
-    isAutomaticBackupDue(new Date("2026-10-06T12:00:00.000Z"), "daily", now),
+    isAutomaticBackupDue(new Date(2026, 9, 6, 20, 0, 0, 0), dailyConfig, now),
     true,
   );
+
+  const weeklyConfig = {
+    frequency: "weekly",
+    timeOfDay: "09:00",
+    weekday: 3,
+    dayOfMonth: 1,
+  };
+  const weeklyNow = new Date(2026, 9, 8, 12, 0, 0, 0);
   assert.equal(
-    isAutomaticBackupDue(new Date("2026-10-01T12:00:00.000Z"), "weekly", now),
+    isAutomaticBackupDue(new Date(2026, 9, 8, 10, 0, 0, 0), weeklyConfig, weeklyNow),
     false,
   );
   assert.equal(
-    isAutomaticBackupDue(new Date("2026-09-30T12:00:00.000Z"), "weekly", now),
+    isAutomaticBackupDue(new Date(2026, 9, 1, 12, 0, 0, 0), weeklyConfig, weeklyNow),
     true,
   );
 });

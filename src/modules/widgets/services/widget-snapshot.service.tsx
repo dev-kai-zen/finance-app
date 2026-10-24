@@ -7,6 +7,7 @@ import { settings } from "@/infrastructure/database/schema";
 import { getDashboardSummary, getMonthlyCashflow } from "@/modules/dashboard";
 import { getBudgetsSummary } from "@/modules/budgets";
 import { getCurrencyPreferences } from "@/modules/currencies";
+import { getCurrentProStatus } from "@/modules/pro";
 import { formatCurrency, DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import type { FinancialWidgetSnapshot } from "../types/widget.types";
 import {
@@ -86,6 +87,7 @@ export function computeAndSaveFinancialSnapshot(
       hasActiveBudgets,
       isBudgetExceeded,
       currencyCode: homeCurrency,
+      isPro: getCurrentProStatus().isPro,
       updatedAt: Date.now(),
     };
 

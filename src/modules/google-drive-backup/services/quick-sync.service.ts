@@ -3,6 +3,8 @@ import NetInfo from "@react-native-community/netinfo";
 import {
   getQuickSyncConfig,
   getQuickSyncState,
+  queueDebouncedQuickSync,
+  registerQuickSyncDebouncedExecutor,
   saveQuickSyncConfig,
   setQuickSyncRuntimeStatus,
   subscribeToQuickSync,
@@ -19,6 +21,13 @@ import {
 let activeSyncPromise: Promise<boolean> | null = null;
 
 export { getQuickSyncState, subscribeToQuickSync };
+
+/** Debounced Quick Sync after user preference / settings writes (not Quick Sync metadata). */
+export function queueQuickSyncForPreferenceChange(
+  changedKeys: readonly string[],
+): void {
+  queueDebouncedQuickSync(changedKeys);
+}
 
 export async function setQuickSyncEnabled(enabled: boolean): Promise<void> {
   saveQuickSyncConfig({ enabled });
@@ -119,3 +128,9 @@ async function performSync(
     return false;
   }
 }
+
+registerQuickSyncDebouncedExecutor(() => {
+  void triggerQuickSync().catch(() => {
+    // Errors are broadcast through QuickSyncState
+  });
+});

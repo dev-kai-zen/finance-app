@@ -7,13 +7,17 @@ import { SortableListModal, type SortableItem } from "@/components/sortable-list
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
+import { useLocalization } from "@/infrastructure/localization";
+import { Wallet } from "lucide-react-native";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
   DraggableTourChip,
+  WalkthroughIntroModal,
   AccountsWalkthroughOverlay,
   useAccountsWalkthrough,
+  useWalkthroughIntro,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
@@ -70,6 +74,7 @@ function AccountsScreenContent({
   initialView?: "types" | "account";
 }) {
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
   const fundGroups = useFundGroups();
@@ -131,14 +136,19 @@ function AccountsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "accountsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+  });
+
   useEffect(() => {
-    if (!data.loading && !isPromptDismissed("accountsWalkthroughDismissed")) {
+    if (!data.loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
-        walkthrough.startWalkthrough();
-      }, 700);
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
       return () => clearTimeout(timer);
     }
-  }, [data.loading, isPromptDismissed, walkthrough.startWalkthrough]);
+  }, [data.loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [sortModalTitle, setSortModalTitle] = useState("");
@@ -249,8 +259,8 @@ function AccountsScreenContent({
       guardAction(() => {
         open({ kind: "pocket-form", accountId: account.id });
       }, {
-        featureTitle: "Pocket Limit Reached",
-        featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT} pockets per account. Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.`,
+        featureTitle: t("pro.limits.accountsTitle"),
+        featureDescription: t("pro.limits.pocketsDesc"),
       });
       return;
     }
@@ -422,8 +432,10 @@ function AccountsScreenContent({
             guardAction(() => {
               open({ kind: "create" });
             }, {
-              featureTitle: "Account Limit Reached",
-              featureDescription: `The free tier includes up to ${PRO_LIMITS.FREE_MAX_ACCOUNTS} active accounts. Upgrade to Kaizen Pro for unlimited accounts, custom icons, sub-pockets, and comprehensive portfolio tracking.`,
+              featureTitle: t("pro.limits.accountsTitle"),
+              featureDescription: t("pro.limits.accountsDesc", {
+                count: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+              }),
             });
             return;
           }
@@ -508,8 +520,10 @@ function AccountsScreenContent({
           if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
             setArchivedModalOpen(false);
             guardAction(() => {}, {
-              featureTitle: "Account Limit Reached",
-              featureDescription: `Restoring this account would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_ACCOUNTS} accounts. Upgrade to Kaizen Pro for unlimited accounts.`,
+              featureTitle: t("pro.limits.accountsTitle"),
+              featureDescription: t("pro.limits.restoreAccountDesc", {
+                count: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+              }),
             });
             return false;
           }
@@ -524,8 +538,10 @@ function AccountsScreenContent({
             if (accountPockets.length >= PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT) {
               setArchivedModalOpen(false);
               guardAction(() => {}, {
-                featureTitle: "Pocket Limit Reached",
-                featureDescription: `Restoring this pocket would exceed the free tier limit of ${PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT} pockets for this account. Upgrade to Kaizen Pro for unlimited pockets.`,
+                featureTitle: t("pro.limits.accountsTitle"),
+                featureDescription: t("pro.limits.restorePocketDesc", {
+                  count: PRO_LIMITS.FREE_MAX_POCKETS_PER_ACCOUNT,
+                }),
               });
               return false;
             }
@@ -566,6 +582,16 @@ function AccountsScreenContent({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("accountsWalkthrough.introTitle")}
+        subtitle={t("accountsWalkthrough.introSubtitle")}
+        message={t("accountsWalkthrough.introMessage")}
+        icon={<Wallet color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
       />
 
       <AccountsWalkthroughOverlay

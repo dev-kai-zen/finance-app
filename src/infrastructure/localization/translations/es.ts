@@ -53,9 +53,19 @@ export const es = {
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
+  scheduledBackup: {
+    title: "Copia programada",
+    description:
+      "Sube una copia completa sin contraseña a diario, semanal o mensualmente al abrir la app.",
+    lastRun: "Última copia programada: %{time}",
+    neverRun: "Nunca",
+    proTitle: "Copias programadas en Google Drive",
+    proDescription:
+      "Sube automáticamente copias completas a Google Drive según tu horario con Kaizen Pro.",
+  },
   quickSync: {
     title: "Sincronización Rápida",
-    description: "Guarda automáticamente tus cambios en Google Drive",
+    description: "Sincroniza cambios con Google Drive cuando cambian tus datos",
     networkLabel: "Sincronizar mediante",
     wifiOnly: "Solo Wi-Fi",
     wifiOnlyDescription: "Solo sincronizar al conectarse a Wi-Fi",
@@ -153,6 +163,14 @@ export const es = {
     whatsNew: "Novedades",
     whatsNewDescription: "Consulta lo destacado de las últimas actualizaciones",
     whatsNewAccessibility: "Abrir las notas de la versión",
+    developerMessage: "Mensaje y meta del desarrollador",
+    developerMessageSubtitle:
+      "Una carta de John Paul Arellano sobre nuestra misión y educación financiera",
+    developerMessageAccessibility: "Leer mensaje y meta del desarrollador",
+    privacy: "Privacidad",
+    privacySubtitle: "Lee nuestra política de privacidad en línea",
+    privacyAccessibility: "Abrir el sitio web de la política de privacidad",
+    privacyOpenError: "No se pudo abrir el sitio web de la política de privacidad.",
     developerModeEnabledTitle: "Modo desarrollador activado",
     developerModeEnabledMessage: "SQLite Monitor ya está en el menú.",
     developerSection: "DESARROLLADOR",
@@ -285,22 +303,74 @@ export const es = {
     dismissAccessibility: "Cerrar novedades",
     versionLabel: "Versión %{version}",
     empty: "Aún no hay notas de la versión para esta actualización.",
+    categories: {
+      accounts: "Cuentas",
+      transactions: "Transacciones",
+      calendar: "Calendario",
+      budgets: "Presupuestos",
+      scheduledTransactions: "Transacciones programadas",
+      creditCards: "Tarjetas de crédito",
+      goals: "Metas",
+      reports: "Informes y análisis",
+      security: "Privacidad y seguridad",
+      backup: "Copia de seguridad y sincronización",
+      general: "General",
+    },
     v100: {
       title: "Te damos la bienvenida a Kaizen Finance",
-      item1:
-        "Gestiona cuentas, transacciones, presupuestos y metas con una base de datos local offline-first.",
-      item2:
-        "Haz copias de seguridad y restaura tus datos con archivos locales o sincronización con Google Drive.",
-      item3:
-        "Personaliza temas, idiomas y formato de moneda según cómo administras tu dinero.",
+      accountsItem1:
+        "Controla efectivo, cuentas bancarias, tarjetas y ahorros con saldos actualizados.",
+      accountsItem2:
+        "Transfiere dinero entre tus cuentas con actualización automática de saldos.",
+      transactionsItem1:
+        "Registra ingresos y gastos rápidamente con categorías, notas y campos personalizados.",
+      transactionsItem2:
+        "Adjunta fotos de recibos y filtra transacciones por fecha o cuenta.",
+      calendarItem1:
+        "Visualiza tus gastos diarios y próximos pagos en un calendario intuitivo.",
+      calendarItem2:
+        "Se corrigieron errores al seleccionar fechas.",
+      budgetsItem1:
+        "Define límites de gasto mensuales por categoría para mantener tus finanzas bajo control.",
+      budgetsItem2:
+        "Recibe barras de progreso visuales y advertencias antes de exceder tu presupuesto.",
+      scheduledItem1:
+        "Configura facturas recurrentes, suscripciones e ingresos con recordatorios de fecha de vencimiento.",
+      creditCardsItem1:
+        "Controla ciclos de facturación, fechas límite de pago, límites de crédito y uso.",
+      goalsItem1:
+        "Establece metas de ahorro y monitorea tu progreso a lo largo del tiempo.",
+      reportsItem1:
+        "Consulta gráficos claros y resúmenes visuales de tus hábitos de gasto y patrimonio neto.",
+      securityItem1:
+        "100% offline-first: todos tus datos financieros permanecen privados en tu dispositivo.",
+      securityItem2:
+        "Bloquea la aplicación con huella digital, Face ID o PIN.",
+      backupItem1:
+        "Exporta e importa archivos de respaldo de forma segura o sincroniza con Google Drive.",
     },
-    v100fixes: {
-      title: "Correcciones y mejoras",
-      item1:
-        "Se corrigió un error al editar una transacción programada que aún requiere atención (vencida o fallida).",
-      item2:
-        "Las ocurrencias programadas pendientes reflejan el importe, la cuenta y la categoría más recientes cuando editas la programación.",
-    },
+  },
+  developerMessage: {
+    badge: "NOTA Y MISIÓN DEL DESARROLLADOR",
+    title: "Una carta del desarrollador",
+    subtitle: "El corazón y propósito detrás de esta aplicación",
+    missionTitle: "La misión: Educación financiera para todos",
+    missionBody:
+      "Al crear esta aplicación, mi objetivo fundamental fue claro: ayudar a todas las personas a alcanzar la educación financiera. La libertad económica no requiere fórmulas complejas; comienza aquí, aprendiendo a monitorear conscientemente tu flujo de dinero. Saber de dónde viene y a dónde va cada centavo es la base de la tranquilidad.",
+    kaizenTitle: "El poder de los pequeños pasos",
+    kaizenBody:
+      "En japonés, 'Kaizen' (改善) significa mejora continua. No necesitas cambiar todo de la noche a la mañana. Dedicar un par de minutos al día a registrar tus gastos genera un hábito que transformará tu futuro.",
+    supportTitle: "Desarrollo independiente y privado",
+    supportBody:
+      "Desarrollo Kaizen Finance de forma independiente, respetando tu privacidad y funcionando sin conexión, sin vender tus datos. Si la aplicación te resulta útil, adquirir Kaizen Pro apoya directamente mi trabajo para seguir mejorándola.",
+    feedbackTitle: "Tu opinión cuenta",
+    feedbackBody:
+      "Esta herramienta está hecha para ti. Si tienes sugerencias, comentarios o ideas de nuevas funciones, no dudes en escribirme. Me encantará leerte.",
+    signaturePre: "Deseándote el mayor de los éxitos,",
+    signatureName: "John Paul C. Arellano",
+    actionBegin: "Comencemos",
+    actionFeedback: "Enviar comentarios",
+    actionSupport: "Apoyar con Pro",
   },
   onboarding: {
     welcomeTitle: "Bienvenido a Kaizen Finance",
@@ -370,9 +440,29 @@ export const es = {
     readyNickname: "Apodo: %{name}",
     readyCurrency: "Moneda: %{currency}",
     readyAccount: "Cuenta: %{name}",
+    readyAccountRecommended:
+      "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
+    readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
     finishSetup: "Ir a Inicio",
     continue: "Continuar",
+    accountSetupChoiceTitle: "¿Cómo te gustaría configurar tus cuentas?",
+    accountSetupChoiceTitleAssisted:
+      "¿Cómo te gustaría configurar tus cuentas, %{name}?",
+    accountSetupChoiceDescription:
+      "Elige si deseas crear tu primera cuenta, usar ajustes iniciales recomendados o empezar desde cero.",
+    accountSetupChoiceDescriptionAssisted:
+      "Elige si deseas crear tu cuenta principal, usar ajustes recomendados o empezar desde cero.",
+    accountChoiceSingleTitle: "Crear mi primera cuenta",
+    accountChoiceSingleDesc:
+      "Configura tu cuenta principal con nombre, tipo y saldo inicial personalizados.",
+    accountChoiceRecommendedTitle: "Usar cuentas recomendadas",
+    accountChoiceRecommendedDesc:
+      "Cuentas listas para usar (Efectivo, Banco, Ahorros, Billetera) y categorías completas.",
+    accountChoiceRecommendedBadge: "Recomendado",
+    accountChoiceManualTitle: "Empezar desde cero",
+    accountChoiceManualDesc:
+      "Comienza con un espacio vacío. Añadirás tus cuentas y categorías manualmente.",
     fullSetupTitle: "Configura tu espacio",
     fullSetupDescription: "Elige cuánta estructura quieres el primer día.",
     manualSetupTitle: "Empezar desde cero",
@@ -438,6 +528,13 @@ export const es = {
       "Activa tarjetas y plazos para compras con tarjeta.",
     promptCreditCardsAction: "Activar",
     promptDismiss: "Ahora no",
+    walkthroughIntroBadge: "¿Primera vez aquí?",
+    walkthroughIntroTitle: "¡Te damos la bienvenida a tu Panel!",
+    walkthroughIntroSubtitle: "Tu centro de control financiero",
+    walkthroughIntroMessage:
+      "Aquí puedes ver tu patrimonio neto total, monitorear tus gastos mensuales y gestionar tus transacciones. ¿Te gustaría hacer un recorrido rápido para conocer cómo funciona?",
+    walkthroughIntroStart: "Iniciar recorrido",
+    walkthroughIntroSkip: "Explorar por mi cuenta",
     walkthroughChip: "Guía",
     walkthroughSkip: "Omitir",
     walkthroughNext: "Siguiente",
@@ -472,6 +569,10 @@ export const es = {
     congratulationsButton: "Explorar panel",
   },
   accountsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Cuentas!",
+    introSubtitle: "Tu portafolio financiero completo",
+    introMessage:
+      "Organiza tus billeteras de efectivo, cuentas bancarias, inversiones y tarjetas en un solo lugar. ¿Te gustaría hacer un recorrido rápido?",
     stepArchivedTitle: "Cuentas archivadas",
     stepArchivedDesc:
       "Accede a todas tus cuentas y bolsillos archivados guardados de forma segura. Puedes ver su historial o restaurarlos en cualquier momento.",
@@ -501,6 +602,10 @@ export const es = {
       "Define y administra tipos y grupos personalizados de cuentas.",
   },
   accountFormWalkthrough: {
+    introTitle: "Configuración de Cuenta",
+    introSubtitle: "Crea y configura tu cuenta",
+    introMessage:
+      "Configura el nombre, tipo, saldo inicial, moneda y subcuentas virtuales. ¿Deseas un recorrido rápido por este formulario?",
     stepNameTitle: "Nombre de la cuenta",
     stepNameDesc:
       "Asigna un nombre claro y reconocible como Cuenta corriente, Ahorros o Efectivo.",
@@ -536,6 +641,10 @@ export const es = {
       "Indica cuándo se inició esta cuenta para el seguimiento histórico de saldos.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Grupos de Cuentas",
+    introSubtitle: "Organiza tus tipos de cuentas",
+    introMessage:
+      "Administra grupos personalizados de activos y pasivos, y ajusta su orden. ¿Deseas un recorrido rápido?",
     stepClassificationPickerTitle: "Selector de Activos y Pasivos",
     stepClassificationPickerDesc:
       "Alterna entre Activos (lo que posees) y Pasivos (lo que debes).",
@@ -547,6 +656,10 @@ export const es = {
       "Crea un grupo personalizado como Billeteras digitales o Emprendimientos.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "Nuevo Grupo de Cuentas",
+    introSubtitle: "Crea categorías de cuentas personalizadas",
+    introMessage:
+      "Define una categoría personalizada con tu clasificación, icono y color preferidos. ¿Deseas un recorrido rápido?",
     stepNameTitle: "Nombre del grupo",
     stepNameDesc:
       "Nombra este grupo de cuentas, como Ahorro de alto rendimiento o Negocios.",
@@ -567,6 +680,10 @@ export const es = {
       "Toca la marca de verificación para guardar tu nuevo grupo de cuenta.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Registrar Transacción",
+    introSubtitle: "Controla tus ingresos, gastos o transferencias",
+    introMessage:
+      "Registra montos, categorías, cuentas, recibos, etiquetas y notas fácilmente. ¿Deseas un recorrido rápido por este formulario?",
     stepPresetsTitle: "Plantillas rápidas",
     stepPresetsDesc:
       "Plantillas de un toque para transacciones frecuentes. Autocompleta nombres, cuentas, montos y categorías rápidamente.",
@@ -620,6 +737,10 @@ export const es = {
       "Cierra este modal cuando hayas terminado o desees salir.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Programados!",
+    introSubtitle: "Automatiza ingresos y facturas recurrentes",
+    introMessage:
+      "Administra suscripciones, facturas recurrentes e ingresos periódicos con registro automático. ¿Te gustaría hacer un recorrido rápido?",
     stepSearchTitle: "Buscar programaciones",
     stepSearchDesc:
       "Encuentra transacciones programadas por título, categoría o cuenta asociada.",
@@ -694,6 +815,10 @@ export const es = {
       "Toca para guardar y activar tu transacción programada recurrente.",
   },
   budgetFormWalkthrough: {
+    introTitle: "Nuevo Presupuesto por Categoría",
+    introSubtitle: "Establece límites de gasto inteligentes",
+    introMessage:
+      "Configura límites de gasto por categoría, acumulaciones y alertas de sobregiro. ¿Deseas un recorrido rápido por este formulario?",
     stepCategoryTitle: "Selección de categoría",
     stepCategoryDesc:
       "Elige a qué categoría se aplica este presupuesto (p. ej. Comestibles, Ocio).",
@@ -717,6 +842,10 @@ export const es = {
       "Toca para guardar y activar tu límite de gasto por categoría.",
   },
   goalFormWalkthrough: {
+    introTitle: "Nueva Meta de Ahorro",
+    introSubtitle: "Planifica y sigue tus objetivos",
+    introMessage:
+      "Establece montos objetivo, vincula cuentas o bolsillos y programa fechas límite. ¿Deseas un recorrido rápido por este formulario?",
     stepTitleTitle: "Título de la meta",
     stepTitleDesc:
       "Asigna un nombre a tu meta de ahorro, como Fondo de emergencia, Vacaciones o Auto nuevo.",
@@ -743,6 +872,10 @@ export const es = {
       "Toca la marca de verificación para guardar tu meta y comenzar a medir tu progreso.",
   },
   transactionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Transacciones!",
+    introSubtitle: "Tu registro financiero detallado",
+    introMessage:
+      "Busca, filtra y supervisa todos tus ingresos, gastos y transferencias con facilidad. ¿Te gustaría hacer un recorrido rápido?",
     stepSearchTitle: "Buscar transacciones",
     stepSearchDesc:
       "Encuentra rápidamente transacciones por nota, beneficiario, categoría, cuenta o monto en tiempo real.",
@@ -775,6 +908,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",
   },
   calendarWalkthrough: {
+    introTitle: "¡Te damos la bienvenida al Calendario!",
+    introSubtitle: "Línea de tiempo de tus finanzas",
+    introMessage:
+      "Visualiza el flujo de caja diario, facturas recurrentes y saldos proyectados en un calendario interactivo. ¿Te gustaría hacer un recorrido rápido?",
     stepArrowsTitle: "Navegación del calendario",
     stepArrowsDesc:
       "Usa las flechas de navegación para desplazarte entre meses anteriores y futuros, o volver al día de hoy.",
@@ -792,6 +929,10 @@ export const es = {
       "Monitorea activos, pasivos y patrimonio neto proyectados a lo largo de tu calendario en un solo vistazo.",
   },
   categoriesWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Categorías!",
+    introSubtitle: "Organiza tus ingresos y gastos",
+    introMessage:
+      "Personaliza grupos de categorías, íconos y subcategorías para clasificar cada transacción. ¿Te gustaría hacer un recorrido rápido?",
     stepTypeToggleTitle: "Gastos e Ingresos",
     stepTypeToggleDesc:
       "Alterna entre categorías de gastos y fuentes de ingresos para organizar y personalizar tus flujos de efectivo.",
@@ -819,6 +960,10 @@ export const es = {
     button: "Explorar funciones de presupuesto",
   },
   budgetsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Presupuestos!",
+    introSubtitle: "Gestión inteligente de gastos",
+    introMessage:
+      "Establece límites por categoría, controla el remanente y mantén tus finanzas bajo control. ¿Te gustaría hacer un recorrido rápido?",
     stepEmptyCreateTitle: "Configura tu primer presupuesto",
     stepEmptyCreateDesc:
       "Toca aquí para establecer límites de gasto para cualquier categoría con periodos diarios, semanales, mensuales o acumulativos.",
@@ -843,6 +988,10 @@ export const es = {
     button: "Explorar recorrido de objetivos",
   },
   goalsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Metas!",
+    introSubtitle: "Haz realidad tus objetivos financieros",
+    introMessage:
+      "Monitorea tus metas de ahorro, vincula cuentas y sigue tu progreso hacia el futuro. ¿Te gustaría hacer un recorrido rápido?",
     stepTotalTargetTitle: "Meta total y progreso",
     stepTotalTargetDesc:
       "Supervisa tu meta de ahorro consolidada, fondos acumulados, porcentaje de avance y el monto restante en todos tus objetivos activos.",
@@ -857,6 +1006,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
   },
   notesWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Notas!",
+    introSubtitle: "Listas y notas financieras",
+    introMessage:
+      "Guarda listas de verificación, recibos, recordatorios e ideas financieras en un lugar organizado. ¿Te gustaría hacer un recorrido rápido?",
     stepEmptyCreateTitle: "Crea tu primera nota",
     stepEmptyCreateDesc:
       "Toca aquí para comenzar a capturar tus pensamientos, listas de verificación financieras, notas y fotos de recibos.",
@@ -877,6 +1030,10 @@ export const es = {
       "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
   },
   settingsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Ajustes!",
+    introSubtitle: "Personaliza tu experiencia Kaizen",
+    introMessage:
+      "Configura monedas, temas, recordatorios, seguridad y cuentas predeterminadas. ¿Te gustaría hacer un recorrido rápido?",
     stepLanguageTitle: "Preferencia de idioma",
     stepLanguageDesc:
       "Cambia entre inglés, español y filipino, o usa automáticamente el idioma predeterminado del sistema.",
@@ -892,6 +1049,9 @@ export const es = {
     stepRemindersTitle: "Recordatorios y notificaciones",
     stepRemindersDesc:
       "Configura alarmas diarias de gastos y avisos de facturas para no olvidar ningún pago.",
+    stepGuideHelperTitle: "Asistente de guía",
+    stepGuideHelperDesc:
+      "Muestra u oculta el botón flotante del tour en pantallas y formularios para reiniciar los recorridos guiados en cualquier momento.",
     stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
     stepDefaultExpenseDesc:
       "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",
@@ -1040,6 +1200,44 @@ export const es = {
     paywallLifetimeBadge: "PAGO ÚNICO · ACCESO DE POR VIDA",
     paywallUpgradeBtn: "Desbloquear Pro De Por Vida (%{price})",
     paywallProcessing: "Procesando...",
+    featuresLeadIn: "Esto es lo que obtendrás al mejorar a Pro:",
+    launchSpecialBadge: "OFERTA ESPECIAL DE LANZAMIENTO",
+    launchSpecialSubtitle: "Por tiempo limitado · Ahorra 60%",
+    launchRegularPrice: "₱499",
+    launchPromoPrice: "₱199",
+    launchDiscountBadge: "60% OFF",
+    launchSavingsText: "AHORRA ₱300",
+    launchSubtext: "Pago único · Acceso de por vida · Actualizaciones para siempre",
+    launchUpgradeBtn: "Aprovechar Oferta (%{price})",
+    featureModalUpgradeBtn: "Aprovechar Oferta (%{price}) · 60% OFF",
+    exploreAllFeatures: "Ver Todas las Funciones Pro →",
+    swipeCardsHint: "Desliza a la izquierda o derecha para ver las funciones",
+    guaranteeText: "Pago único · 100% Privado · Restaura en cualquier momento",
+    limits: {
+      accountsTitle: "¡Tu portafolio está creciendo!",
+      accountsDesc:
+        "¡Has completado tus primeras %{count} cuentas — excelente organización! Pasa a Kaizen Pro para cuentas ilimitadas, subcuentas y seguimiento patrimonial completo.",
+      pocketsDesc:
+        "¡Estás organizando tus finanzas como un profesional! Mejora a Kaizen Pro para crear subcuentas ilimitadas y segmentar tus ahorros y gastos.",
+      budgetsTitle: "¡Dominando tus gastos!",
+      budgetsDesc:
+        "¡Estás controlando activamente %{count} presupuestos por categoría! Mejora a Kaizen Pro para presupuestos ilimitados con renovación inteligente de excedentes y alertas de umbral.",
+      goalsTitle: "¡Grandes metas en marcha!",
+      goalsDesc:
+        "¡Has establecido tus primeros %{count} hitos de ahorro! Acelera tu camino con Kaizen Pro para metas ilimitadas, fechas objetivo y seguimiento multicuenta.",
+      schedulesTitle: "¡Automatizando tus finanzas!",
+      schedulesDesc:
+        "¡Te mantienes al día con tus pagos! Mejora a Kaizen Pro para transacciones recurrentes ilimitadas, registro automático en segundo plano y análisis de recurrencia.",
+      notesTitle: "¡Excelente registro de notas!",
+      notesDesc:
+        "¡Has completado tus primeras %{count} notas financieras! Desbloquea Kaizen Pro para notas ilimitadas, adjuntar fotos de recibos y etiquetas personalizadas.",
+      restoreAccountDesc:
+        "Restaurar esta cuenta superaría tus %{count} cuentas activas. Mejora a Kaizen Pro para cuentas ilimitadas y total libertad.",
+      restorePocketDesc:
+        "Restaurar esta subcuenta superaría tus %{count} bolsillos para esta cuenta. Mejora a Kaizen Pro para subcuentas ilimitadas.",
+      restoreScheduleDesc:
+        "Restaurar este cronograma superaría tus %{count} transacciones recurrentes. Mejora a Kaizen Pro para cronogramas ilimitados.",
+    },
     restorePurchases: "Restaurar Compras",
     restoring: "Restaurando...",
     restoreSuccessTitle: "Compras Restauradas",
@@ -1053,9 +1251,87 @@ export const es = {
     purchaseSuccessMsg: "¡Gracias por apoyar a Kaizen Finance! Todas las funciones Pro ya están desbloqueadas.",
     disclaimer:
       "El pago se cargará a tu cuenta de Google Play al confirmar la compra. Esta es una compra única no consumible sin tarifas recurrentes.",
-    reportsLockedTitle: "Reportes y Análisis Financiero",
+    reportsLockedTitle: "¿Listo para una Claridad Financiera Total?",
     reportsLockedSubtitle:
-      "Desbloquea tendencias de flujo de caja, balance general, crecimiento de patrimonio neto y análisis de gastos con Kaizen Pro.",
+      "Ya controlas tus gastos diarios — ¡ahora mira el panorama completo! Eleva tus finanzas con gráficos ejecutivos de flujo de caja, balance general y trayectoria de patrimonio neto.",
     reportsLockedCta: "Desbloquear Acceso De Por Vida",
+    widgetsLockedTitle: "Tu Dinero de un Vistazo",
+    widgetsLockedSubtitle:
+      "Mantente consciente de tu presupuesto sin siquiera abrir la app. Fija gráficos interactivos de gasto mensual y patrimonio neto en tu pantalla de inicio.",
+    widgetsLockedCta: "Desbloquear Widgets Pro",
+    locked: {
+      cloudSyncTitle: "Tranquilidad Total para tus Finanzas",
+      cloudSyncDesc:
+        "Tu historial financiero no tiene precio. Mantén cada transacción y presupuesto respaldado en tu Google Drive personal y restaura en un toque en cualquier momento.",
+      securityTitle: "Privacidad de Nivel Bancario Solo para Tus Ojos",
+      securityDesc:
+        "Tus finanzas son personales. Agrega desbloqueo instantáneo con huella o Face ID para que tu patrimonio neto y transacciones estén completamente protegidos.",
+      creditCardsTitle: "Evita Intereses y Cargos de Tarjetas de Crédito",
+      creditCardsDesc:
+        "Toma el mando de tus ciclos de facturación, fechas de corte, pagos en cuotas al 0% y alertas de límite de crédito para cuidar tu historial crediticio.",
+      budgetRolloverTitle: "Haz que tu Presupuesto Sobrante Trabaje por Ti",
+      budgetRolloverDesc:
+        "¡Premia tus buenos hábitos! Traslada automáticamente el excedente no gastado al mes siguiente para que cada peso ahorrado cuente.",
+      receiptsTitle: "Mantén Comprobantes Listos para Declarar",
+      receiptsDesc:
+        "No vuelvas a perder un recibo en papel o factura. Adjunta fotos directamente a tus transacciones y notas para una contabilidad sin esfuerzo.",
+      autoPostTitle: "Ahorra Tiempo en Piloto Automático",
+      autoPostDesc:
+        "Ejecuta automáticamente ingresos y facturas recurrentes en sus fechas de vencimiento en segundo plano para no olvidar ningún pago.",
+      fieldReceiptsTitle: "Contabilidad Lista para Impuestos",
+      fieldReceiptsDesc:
+        "Mantén facturas y comprobantes organizados adjuntando fotos en alta resolución directamente a tus registros.",
+      fieldSplitTitle: "Precisión en Múltiples Categorías",
+      fieldSplitDesc:
+        "¡Un recibo, varias categorías! Divide fácilmente las compras de supermercado o compras grandes entre las cuentas exactas.",
+      fieldInstallmentsTitle: "Control Total de Cuotas y Pagos",
+      fieldInstallmentsDesc:
+        "Toma el mando de tus compras a cuotas, compromisos a plazo y suscripciones con planes de amortización claros.",
+      fieldLabelsTitle: "Claridad Financiera Multidimensional",
+      fieldLabelsDesc:
+        "Etiqueta transacciones por proyecto, viaje o evento para un filtrado y análisis profundo de tus gastos.",
+      fieldQuickPresetsTitle: "Registro Ultra Rápido en 1 Toque",
+      fieldQuickPresetsDesc:
+        "Ahorra tiempo cada día registrando gastos frecuentes como café o transporte en un solo toque.",
+      remindersMonthlyTitle: "Inicia el Mes con Máxima Claridad",
+      remindersMonthlyDesc:
+        "Celebra tus avances con un informe ejecutivo privado de flujo de caja, tasa de ahorro y patrimonio el primer día de cada mes.",
+      remindersCreditCardsTitle: "Protege tu Calificación Crediticia",
+      remindersCreditCardsDesc:
+        "Anticípate a las fechas de corte y vencimiento con recordatorios proactivos adaptados a cada tarjeta.",
+      remindersCreditLimitTitle: "Protección contra Deuda en Tiempo Real",
+      remindersCreditLimitDesc:
+        "Evita cargos por sobregiro y caídas en tu historial con alertas antes de rebasar el 80% de tu límite de crédito.",
+      remindersScheduledTitle: "Nunca Olvides un Pago Programado",
+      remindersScheduledDesc:
+        "Anticípate a facturas, suscripciones y transferencias recurrentes con alertas inteligentes.",
+      remindersBudgetTitle: "Mantén tus Gastos en Zona Segura",
+      remindersBudgetDesc:
+        "Mantén tus gastos controlados con avisos automáticos cuando una categoría se acerque al 80% y 100% de su límite.",
+      remindersGoalsTitle: "Celebra Cada Meta de Ahorro",
+      remindersGoalsDesc:
+        "Mantén el entusiasmo con avisos previos a las fechas límite y felicitaciones al alcanzar el 50%, 75% y 100%.",
+      accountHideSelectionTitle: "Registro Diario Sin Distracciones",
+      accountHideSelectionDesc:
+        "Mantén limpia la lista de cuentas al registrar gastos ocultando fondos de emergencia o bóvedas de ahorro.",
+      accountHideReportsTitle: "Patrimonio Neto Real",
+      accountHideReportsDesc:
+        "Excluye depósitos en garantía o cuentas comerciales para que tus estadísticas reflejen exclusivamente tu riqueza personal.",
+      fundGroupsTitle: "Control Multi-Portafolio",
+      fundGroupsDesc:
+        "Separa ahorros personales, flujos de negocio y proyectos independientes en grupos organizados con balances totales.",
+      localBackupTitle: "Copia de Seguridad Local Automatizada",
+      localBackupDesc:
+        "Mantén el control total de tus registros con copias automáticas y cifradas diarias, semanales o mensuales en tu dispositivo.",
+      quickSyncTitle: "Tranquilidad en la Nube en Tiempo Real",
+      quickSyncDesc:
+        "Cada gasto y cambio se respalda al instante en tu Google Drive personal de forma segura y en segundo plano.",
+      hexColorsTitle: "Personalización Visual Exclusiva",
+      hexColorsDesc:
+        "Crea paletas de colores hex personalizadas para estilizar tus cuentas, categorías y etiquetas.",
+      iconLibraryTitle: "Colección Ampliada de 200+ Íconos",
+      iconLibraryDesc:
+        "Personaliza cada cuenta, presupuesto y meta de ahorro con más de 200 íconos Lucide en alta definición.",
+    },
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

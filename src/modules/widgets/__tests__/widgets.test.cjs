@@ -98,6 +98,7 @@ const {
   QUICK_TRANSFER_DEEP_LINK,
   DASHBOARD_DEEP_LINK,
   BUDGETS_DEEP_LINK,
+  PRO_PAYWALL_DEEP_LINK,
   WIDGET_SNAPSHOT_SETTINGS_KEY,
   DEFAULT_WIDGET_SNAPSHOT,
   WIDGET_THEME,
@@ -128,6 +129,7 @@ test("widgets: constants define expected provider names and deep link URIs", () 
   );
   assert.equal(DASHBOARD_DEEP_LINK, "finance-app://");
   assert.equal(BUDGETS_DEEP_LINK, "finance-app://budgets");
+  assert.equal(PRO_PAYWALL_DEEP_LINK, "finance-app://settings?openPro=true");
   assert.equal(WIDGET_SNAPSHOT_SETTINGS_KEY, "widget_financial_snapshot");
 
   assert.equal(WIDGET_THEME.background, "#11231E");
@@ -160,6 +162,7 @@ test("widgets: snapshot fallback provides safe defaults", () => {
   assert.equal(DEFAULT_WIDGET_SNAPSHOT.outflowFormatted, "₱0.00");
   assert.equal(DEFAULT_WIDGET_SNAPSHOT.netSavingsFormatted, "₱0.00");
   assert.equal(DEFAULT_WIDGET_SNAPSHOT.currencyCode, "PHP");
+  assert.equal(DEFAULT_WIDGET_SNAPSHOT.isPro, false);
 });
 
 test("widgets: app.json configures all Phase 1 and Phase 2 widgets properly", () => {
@@ -319,5 +322,25 @@ test("widgets: sync processor listens to category_budgets and transaction_entrie
   const processorContent = fs.readFileSync(processorPath, "utf8");
   assert.match(processorContent, /"category_budgets"/);
   assert.match(processorContent, /"transaction_entries"/);
+});
+
+test("widgets: chart widgets gate behind Pro entitlement with LockedProWidget", () => {
+  const compDir = path.resolve(__dirname, "../components");
+
+  const lockedWidgetCode = fs.readFileSync(path.join(compDir, "locked-pro-widget.tsx"), "utf8");
+  assert.match(lockedWidgetCode, /PRO_PAYWALL_DEEP_LINK/);
+  assert.match(lockedWidgetCode, /Tap to Unlock with Pro/);
+
+  const cashflowCode = fs.readFileSync(path.join(compDir, "monthly-cashflow-widget.tsx"), "utf8");
+  assert.match(cashflowCode, /LockedProWidget/);
+  assert.match(cashflowCode, /snapshot\?\.isPro/);
+
+  const netWorthCode = fs.readFileSync(path.join(compDir, "net-worth-widget.tsx"), "utf8");
+  assert.match(netWorthCode, /LockedProWidget/);
+  assert.match(netWorthCode, /snapshot\?\.isPro/);
+
+  const budgetCode = fs.readFileSync(path.join(compDir, "monthly-budget-widget.tsx"), "utf8");
+  assert.match(budgetCode, /LockedProWidget/);
+  assert.match(budgetCode, /snapshot\?\.isPro/);
 });
 

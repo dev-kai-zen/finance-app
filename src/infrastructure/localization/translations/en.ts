@@ -47,9 +47,19 @@ export const en = {
     failed: "Sync failed",
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
+  scheduledBackup: {
+    title: "Scheduled backup",
+    description:
+      "Upload a full unprotected backup on a daily, weekly, or monthly schedule when you open the app.",
+    lastRun: "Last scheduled backup: %{time}",
+    neverRun: "Never",
+    proTitle: "Scheduled Google Drive Backups",
+    proDescription:
+      "Automatically upload full backup archives to Google Drive on your chosen schedule with Kaizen Pro.",
+  },
   quickSync: {
     title: "Quick Sync",
-    description: "Automatically backup your changes to Google Drive",
+    description: "Sync changes to Google Drive when your data changes",
     networkLabel: "Sync over",
     wifiOnly: "Wi-Fi only",
     wifiOnlyDescription: "Only sync when connected to Wi-Fi",
@@ -141,6 +151,14 @@ export const en = {
     whatsNew: "What's New",
     whatsNewDescription: "See highlights from the latest app updates",
     whatsNewAccessibility: "Open what's new release notes",
+    developerMessage: "Developer Message & Goal",
+    developerMessageSubtitle:
+      "A note from John Paul Arellano on our mission and financial literacy",
+    developerMessageAccessibility: "Read message and goal from the developer",
+    privacy: "Privacy",
+    privacySubtitle: "Read our privacy policy online",
+    privacyAccessibility: "Open privacy policy website",
+    privacyOpenError: "Could not open privacy policy website.",
     developerModeEnabledTitle: "Developer mode on",
     developerModeEnabledMessage: "SQLite Monitor is now available in the menu.",
     developerSection: "DEVELOPER",
@@ -273,22 +291,74 @@ export const en = {
     dismissAccessibility: "Dismiss what's new",
     versionLabel: "Version %{version}",
     empty: "Release notes for this version are not available yet.",
+    categories: {
+      accounts: "Accounts",
+      transactions: "Transactions",
+      calendar: "Calendar",
+      budgets: "Budgets",
+      scheduledTransactions: "Scheduled Transactions",
+      creditCards: "Credit Cards",
+      goals: "Goals",
+      reports: "Reports & Analytics",
+      security: "Privacy & Security",
+      backup: "Backup & Sync",
+      general: "General",
+    },
     v100: {
       title: "Welcome to Kaizen Finance",
-      item1:
-        "Track accounts, transactions, budgets, and goals with an offline-first local database.",
-      item2:
-        "Back up and restore your data with local archives or Google Drive sync.",
-      item3:
-        "Customize themes, languages, and currency formatting to match how you manage money.",
+      accountsItem1:
+        "Track cash, bank accounts, credit cards, and savings with running balances.",
+      accountsItem2:
+        "Transfer money between your accounts with automatic balance updates.",
+      transactionsItem1:
+        "Log income and expenses quickly with categories, notes, and custom fields.",
+      transactionsItem2:
+        "Attach receipt photos and filter transactions by date or account.",
+      calendarItem1:
+        "View your daily spending totals and upcoming expenses on a calendar.",
+      calendarItem2:
+        "Fix bugs when selecting date.",
+      budgetsItem1:
+        "Set monthly spending limits for each category to keep spending on track.",
+      budgetsItem2:
+        "Get visual progress bars and warnings before you overspend.",
+      scheduledItem1:
+        "Set up recurring bills, subscriptions, and paychecks with due date reminders.",
+      creditCardsItem1:
+        "Track statement billing cycles, due dates, credit limits, and utilization.",
+      goalsItem1:
+        "Set savings targets and monitor your progress as you save money.",
+      reportsItem1:
+        "See clear charts and visual breakdowns of your spending habits and net worth.",
+      securityItem1:
+        "100% offline-first — all financial data stays private on your device.",
+      securityItem2:
+        "Lock the app with your device fingerprint, Face ID, or PIN.",
+      backupItem1:
+        "Safely export and import backup files or sync securely with Google Drive.",
     },
-    v100fixes: {
-      title: "Fixes & improvements",
-      item1:
-        "Fixed an error when editing a scheduled transaction that still needs attention (due or failed).",
-      item2:
-        "Pending scheduled occurrences now pick up your latest amount, account, and category when you edit the schedule.",
-    },
+  },
+  developerMessage: {
+    badge: "DEVELOPER'S NOTE & MISSION",
+    title: "A Note from the Developer",
+    subtitle: "The heart and goal behind this application",
+    missionTitle: "The Mission: Financial Literacy for Everyone",
+    missionBody:
+      "When I created this app, my core goal as a developer was simple: to help everyone become financially literate. Financial freedom doesn't require complex Wall Street strategies—it begins right here, by learning to mindfully monitor your cashflow. Understanding every inflow and outflow is the foundation of lasting confidence.",
+    kaizenTitle: "The Power of Small Improvements",
+    kaizenBody:
+      "In Japanese, 'Kaizen' (改善) means continuous improvement. You don't have to change everything overnight. Just tracking one expense a day and checking in on your balance builds a steady habit that transforms your financial life over time.",
+    supportTitle: "Independent & Built for You",
+    supportBody:
+      "Kaizen Finance is crafted independently as a private, offline-first app—no data harvesting, no intrusive bloat. If this app brings value to your journey, upgrading to Kaizen Pro directly funds my ongoing development and keeps this project thriving.",
+    feedbackTitle: "Your Voice Matters",
+    feedbackBody:
+      "Every feature and detail is shaped by real user experiences. Feel free to share your thoughts, report issues, or suggest new ideas. I'd love to hear from you.",
+    signaturePre: "Rooting for your financial peace,",
+    signatureName: "John Paul C. Arellano",
+    actionBegin: "Let's Begin",
+    actionFeedback: "Send Feedback",
+    actionSupport: "Support via Pro",
   },
   onboarding: {
     welcomeTitle: "Welcome to Kaizen Finance",
@@ -358,9 +428,29 @@ export const en = {
     readyNickname: "Nickname: %{name}",
     readyCurrency: "Currency: %{currency}",
     readyAccount: "Account: %{name}",
+    readyAccountRecommended:
+      "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
+    readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
     finishSetup: "Go to Home",
     continue: "Continue",
+    accountSetupChoiceTitle: "How would you like to set up accounts?",
+    accountSetupChoiceTitleAssisted:
+      "How would you like to set up your accounts, %{name}?",
+    accountSetupChoiceDescription:
+      "Choose whether to create your first account, use recommended starter presets, or start from scratch.",
+    accountSetupChoiceDescriptionAssisted:
+      "Choose whether to set up your primary account, use ready-to-go starter presets, or start with a clean slate.",
+    accountChoiceSingleTitle: "Create my first account",
+    accountChoiceSingleDesc:
+      "Set up your primary account with your own custom name, type, and opening balance.",
+    accountChoiceRecommendedTitle: "Use recommended accounts",
+    accountChoiceRecommendedDesc:
+      "Ready-to-use accounts (Cash, Bank, Savings, E-Wallet) and full category presets.",
+    accountChoiceRecommendedBadge: "Recommended",
+    accountChoiceManualTitle: "Start from scratch",
+    accountChoiceManualDesc:
+      "Start with an empty workspace. You'll add your accounts and categories manually later.",
     fullSetupTitle: "Set up your workspace",
     fullSetupDescription: "Choose how much structure you want on day one.",
     manualSetupTitle: "Start from scratch",
@@ -426,6 +516,13 @@ export const en = {
       "Turn on credit cards and installments for card purchases.",
     promptCreditCardsAction: "Turn on",
     promptDismiss: "Not now",
+    walkthroughIntroBadge: "First Time Here?",
+    walkthroughIntroTitle: "Welcome to your Dashboard!",
+    walkthroughIntroSubtitle: "Your financial command center",
+    walkthroughIntroMessage:
+      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. Would you like a quick walkthrough of how everything works?",
+    walkthroughIntroStart: "Take a Tour",
+    walkthroughIntroSkip: "Explore on My Own",
     walkthroughChip: "Guide",
     walkthroughSkip: "Skip",
     walkthroughNext: "Next",
@@ -460,6 +557,10 @@ export const en = {
     congratulationsButton: "Explore Dashboard",
   },
   accountsWalkthrough: {
+    introTitle: "Welcome to Accounts!",
+    introSubtitle: "Your complete financial portfolio",
+    introMessage:
+      "Organize all your cash wallets, bank accounts, investments, and credit cards in one place. Would you like a quick walkthrough?",
     stepArchivedTitle: "Archived Accounts",
     stepArchivedDesc:
       "Access all your archived accounts and sub-pockets safely stored away. You can view their history and restore them anytime.",
@@ -489,6 +590,10 @@ export const en = {
       "Define and manage custom account types and groups to tailor your tracking.",
   },
   accountFormWalkthrough: {
+    introTitle: "New Account Setup",
+    introSubtitle: "Create and configure your account",
+    introMessage:
+      "Configure your account name, type, starting balance, currency, and virtual sub-pockets. Would you like a quick walkthrough of this form?",
     stepNameTitle: "Account Name",
     stepNameDesc:
       "Give your account a clear, recognizable name such as Checking, Primary Savings, or Cash Wallet.",
@@ -524,6 +629,10 @@ export const en = {
       "Specify when this account started. Starting balances and calculations will be tracked from this date onward.",
   },
   accountGroupSetupWalkthrough: {
+    introTitle: "Account Group Setup",
+    introSubtitle: "Organize your account types",
+    introMessage:
+      "Manage custom account groups across assets and liabilities, and customize your grouping order. Would you like a quick walkthrough?",
     stepClassificationPickerTitle: "Asset & Liability Switcher",
     stepClassificationPickerDesc:
       "Switch between Assets (what you own, like cash and investments) and Liabilities (what you owe, like credit cards and loans).",
@@ -535,6 +644,10 @@ export const en = {
       "Create a custom account group tailored to your lifestyle, such as Digital Wallets or Side Hustles.",
   },
   accountTypeFormWalkthrough: {
+    introTitle: "New Account Group",
+    introSubtitle: "Create a custom category",
+    introMessage:
+      "Define a custom category with your preferred name, classification, icon, and theme color. Would you like a quick walkthrough?",
     stepNameTitle: "Group Name",
     stepNameDesc:
       "Name this account group, such as High-Yield Savings, Business Accounts, or Crypto Wallets.",
@@ -555,6 +668,10 @@ export const en = {
       "Tap the save checkmark to store your account group and start adding accounts to it.",
   },
   transactionFormWalkthrough: {
+    introTitle: "Record Transaction",
+    introSubtitle: "Track your income, expense, or transfer",
+    introMessage:
+      "Quickly enter amounts, choose accounts, assign categories, attach receipts, or split items. Would you like a quick walkthrough of this form?",
     stepPresetsTitle: "Quick Presets",
     stepPresetsDesc:
       "One-tap templates for your recurring transactions. Quickly autofill names, accounts, amounts, and categories.",
@@ -608,6 +725,10 @@ export const en = {
       "Dismiss this entry modal when you are done or want to exit.",
   },
   scheduledTransactionsWalkthrough: {
+    introTitle: "Welcome to Scheduled Transactions!",
+    introSubtitle: "Automate recurring bills & income",
+    introMessage:
+      "Manage subscriptions, recurring bills, and repeating income with automated posting. Would you like a quick walkthrough?",
     stepSearchTitle: "Search Schedules",
     stepSearchDesc:
       "Find scheduled transactions by title, category, or associated account.",
@@ -682,6 +803,10 @@ export const en = {
       "Tap to save and activate your recurring scheduled transaction.",
   },
   budgetFormWalkthrough: {
+    introTitle: "New Category Budget",
+    introSubtitle: "Set smart spending limits",
+    introMessage:
+      "Set category spending limits, configure rollover balances, and enable alert thresholds. Would you like a quick walkthrough of this form?",
     stepCategoryTitle: "Category Selection",
     stepCategoryDesc:
       "Select which category this budget applies to (e.g. Groceries, Entertainment, Dining).",
@@ -705,6 +830,10 @@ export const en = {
       "Tap to save and activate your category spending limit.",
   },
   goalFormWalkthrough: {
+    introTitle: "New Savings Goal",
+    introSubtitle: "Track your financial targets",
+    introMessage:
+      "Set target amounts, link accounts or pockets, configure target dates, and track your progress. Would you like a quick walkthrough of this form?",
     stepTitleTitle: "Goal Title",
     stepTitleDesc:
       "Give your savings goal a name, like Emergency Fund, Dream Vacation, or New Car.",
@@ -731,6 +860,10 @@ export const en = {
       "Tap the save checkmark to store your goal and begin tracking progress.",
   },
   transactionsWalkthrough: {
+    introTitle: "Welcome to Transactions!",
+    introSubtitle: "Your detailed financial ledger",
+    introMessage:
+      "Search, filter, inspect, and track all your income, expenses, and transfers with ease. Would you like a quick walkthrough?",
     stepSearchTitle: "Search Transactions",
     stepSearchDesc:
       "Quickly find transactions by note, payee, category, account, or amount in real time.",
@@ -763,6 +896,10 @@ export const en = {
       "Tap the (+) button anytime to log a new expense, income, or transfer between accounts. You're ready to go!",
   },
   calendarWalkthrough: {
+    introTitle: "Welcome to Calendar!",
+    introSubtitle: "Timeline of your financial journey",
+    introMessage:
+      "View daily cash flow, upcoming recurring bills, and projected balances on an interactive calendar. Would you like a quick walkthrough?",
     stepArrowsTitle: "Calendar Navigation",
     stepArrowsDesc:
       "Use the month navigation arrows to browse backward and forward across months, or jump straight back to today.",
@@ -780,6 +917,10 @@ export const en = {
       "Track your assets, liabilities, and projected equity across the calendar at a single glance.",
   },
   categoriesWalkthrough: {
+    introTitle: "Welcome to Categories!",
+    introSubtitle: "Organize your income & spending",
+    introMessage:
+      "Customize category groups, icons, and nested subcategories to classify every transaction. Would you like a quick walkthrough?",
     stepTypeToggleTitle: "Expenses & Income",
     stepTypeToggleDesc:
       "Toggle between Expense categories and Income streams to organize and customize your cash flows.",
@@ -807,6 +948,10 @@ export const en = {
     button: "Explore Budget Features",
   },
   budgetsWalkthrough: {
+    introTitle: "Welcome to Budgets!",
+    introSubtitle: "Smart spending management",
+    introMessage:
+      "Set category spending limits, track rollover buffers, and keep your finances on target. Would you like a quick walkthrough?",
     stepEmptyCreateTitle: "Set Your First Budget",
     stepEmptyCreateDesc:
       "Tap here to configure spending limits for any category with daily, weekly, monthly, or custom rollover periods.",
@@ -831,6 +976,10 @@ export const en = {
     button: "Explore Goals Tour",
   },
   goalsWalkthrough: {
+    introTitle: "Welcome to Goals!",
+    introSubtitle: "Turn financial dreams into reality",
+    introMessage:
+      "Track your savings milestones, link accounts, and monitor progress toward your future. Would you like a quick walkthrough?",
     stepTotalTargetTitle: "Total Target & Progress",
     stepTotalTargetDesc:
       "Monitor your combined savings target, total accumulated funds, percentage progress, and remaining shortfall across all active goals.",
@@ -845,6 +994,10 @@ export const en = {
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
   },
   notesWalkthrough: {
+    introTitle: "Welcome to Notes!",
+    introSubtitle: "Financial checklists & memos",
+    introMessage:
+      "Keep track of checklists, receipts, reminders, and financial ideas in one organized place. Would you like a quick walkthrough?",
     stepEmptyCreateTitle: "Create Your First Note",
     stepEmptyCreateDesc:
       "Tap here to start capturing your thoughts, financial checklists, memos, and receipt photos.",
@@ -865,6 +1018,10 @@ export const en = {
       "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
   },
   settingsWalkthrough: {
+    introTitle: "Welcome to Settings!",
+    introSubtitle: "Personalize your Kaizen experience",
+    introMessage:
+      "Configure currencies, themes, notifications, security, and default accounts. Would you like a quick walkthrough?",
     stepLanguageTitle: "Language Preference",
     stepLanguageDesc:
       "Switch between English, Spanish, and Filipino, or automatically match your device system default.",
@@ -880,6 +1037,9 @@ export const en = {
     stepRemindersTitle: "Notification Reminders",
     stepRemindersDesc:
       "Set daily expense tracking alarms and reminders for upcoming bills to never miss a payment.",
+    stepGuideHelperTitle: "Guide Helper",
+    stepGuideHelperDesc:
+      "Show or hide the floating tour chip across screens and forms so you can restart guided walkthroughs anytime.",
     stepDefaultExpenseTitle: "Default Expense Account",
     stepDefaultExpenseDesc:
       "Set the preselected account and pocket automatically used when logging new expenses.",
@@ -1024,6 +1184,44 @@ export const en = {
     paywallLifetimeBadge: "ONE-TIME PURCHASE · LIFETIME ACCESS",
     paywallUpgradeBtn: "Unlock Lifetime Pro (%{price})",
     paywallProcessing: "Processing...",
+    featuresLeadIn: "Here’s what you’ll get when you upgrade to Pro:",
+    launchSpecialBadge: "EARLY BIRD LAUNCH SPECIAL",
+    launchSpecialSubtitle: "Limited time offer · Save 60%",
+    launchRegularPrice: "₱499",
+    launchPromoPrice: "₱199",
+    launchDiscountBadge: "60% OFF",
+    launchSavingsText: "SAVE ₱300",
+    launchSubtext: "Pay once · Lifetime access · Forever updates",
+    launchUpgradeBtn: "Claim Launch Offer (%{price})",
+    featureModalUpgradeBtn: "Claim Launch Offer (%{price}) · 60% OFF",
+    exploreAllFeatures: "Explore All Pro Features →",
+    swipeCardsHint: "Swipe left or right to explore Pro features",
+    guaranteeText: "One-time purchase · 100% Private · Restore anytime",
+    limits: {
+      accountsTitle: "You're expanding your portfolio!",
+      accountsDesc:
+        "You’ve maxed out your first %{count} accounts — great job staying organized! Level up to Kaizen Pro for unlimited accounts, sub-pockets, and complete wealth tracking.",
+      pocketsDesc:
+        "You're organizing your finances like a pro! Upgrade to Kaizen Pro to create unlimited sub-pockets for granular expense and savings segregation.",
+      budgetsTitle: "Mastering your spending!",
+      budgetsDesc:
+        "You’re actively tracking %{count} category budgets! Upgrade to Kaizen Pro to manage unlimited budgets with automatic surplus rollovers and threshold alerts.",
+      goalsTitle: "Big dreams in motion!",
+      goalsDesc:
+        "You’ve set your first %{count} savings milestones! Supercharge your journey with Kaizen Pro for unlimited goals, target dates, and multi-pocket tracking.",
+      schedulesTitle: "Automating your finances!",
+      schedulesDesc:
+        "You’re staying on top of your bills! Upgrade to Kaizen Pro for unlimited recurring transactions, background auto-posting, and recurrence analytics.",
+      notesTitle: "Keeping great records!",
+      notesDesc:
+        "You’ve filled your first %{count} financial notes! Unlock Kaizen Pro for unlimited notes, document and receipt photo attachments, and custom color tagging.",
+      restoreAccountDesc:
+        "Restoring this account would exceed your %{count} active accounts. Upgrade to Kaizen Pro for unlimited accounts and complete portfolio freedom.",
+      restorePocketDesc:
+        "Restoring this pocket would exceed your %{count} pockets for this account. Upgrade to Kaizen Pro for unlimited sub-pockets.",
+      restoreScheduleDesc:
+        "Restoring this schedule would exceed your %{count} recurring transactions. Upgrade to Kaizen Pro for unlimited schedules.",
+    },
     restorePurchases: "Restore Purchases",
     restoring: "Restoring...",
     restoreSuccessTitle: "Purchases Restored",
@@ -1037,10 +1235,88 @@ export const en = {
     purchaseSuccessMsg: "Thank you for supporting Kaizen Finance! All Pro features are now unlocked.",
     disclaimer:
       "Payment will be charged to your Google Play account at confirmation of purchase. This is a one-time non-consumable purchase with no recurring fees.",
-    reportsLockedTitle: "Reports & Financial Analytics",
+    reportsLockedTitle: "Ready for Complete Financial Clarity?",
     reportsLockedSubtitle:
-      "Unlock Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and Expense breakdowns with Kaizen Pro.",
+      "You’re taking control of your daily spending — now see the big picture! Elevate your finances with executive-level Cash Flow charts, Balance Sheets, and Net Worth trajectory.",
     reportsLockedCta: "Unlock Lifetime Access",
+    widgetsLockedTitle: "Your Money at a Glance",
+    widgetsLockedSubtitle:
+      "Stay effortlessly mindful of your budget without opening the app. Pin interactive monthly spend meters and net worth charts straight to your Android home screen.",
+    widgetsLockedCta: "Unlock Pro Widgets",
+    locked: {
+      cloudSyncTitle: "Total Peace of Mind for Your Finances",
+      cloudSyncDesc:
+        "Your financial journey is priceless. Keep every transaction, budget, and receipt permanently backed up to your personal Google Drive and restore in one tap anytime.",
+      securityTitle: "Bank-Grade Privacy for Your Eyes Only",
+      securityDesc:
+        "Your finances are personal. Add instant Fingerprint or Face ID security so your private net worth and transactions stay completely protected.",
+      creditCardsTitle: "Outsmart Credit Card Interest & Fees",
+      creditCardsDesc:
+        "Take command of multiple billing cycles, statement cutoff reminders, 0% installment schedules, and credit limit alerts to keep your credit score spotless.",
+      budgetRolloverTitle: "Make Your Unspent Budget Work for You",
+      budgetRolloverDesc:
+        "Rewarding smart habits! Automatically roll unspent surplus forward into your next month so every peso you save stays accounted for.",
+      receiptsTitle: "Keep Tax-Ready Financial Records",
+      receiptsDesc:
+        "Never lose a paper receipt or invoice again. Snap and attach high-res photos directly to your transactions and notes for effortless bookkeeping.",
+      autoPostTitle: "Save Time on Autopilot",
+      autoPostDesc:
+        "Automatically execute recurring income, bills, and transfers on their due dates in the background so you never miss a payment.",
+      fieldReceiptsTitle: "Tax-Ready Bookkeeping",
+      fieldReceiptsDesc:
+        "Keep paper receipts and invoices permanently organized by attaching high-res photos directly to your records.",
+      fieldSplitTitle: "Pinpoint Multi-Category Precision",
+      fieldSplitDesc:
+        "One receipt, multiple categories! Effortlessly break down supermarket or mall purchases across exact accounts.",
+      fieldInstallmentsTitle: "Never Lose Track of Pay-Offs",
+      fieldInstallmentsDesc:
+        "Take total control of gadget installments, credit terms, and subscriptions with clear payoff roadmaps.",
+      fieldLabelsTitle: "Dimensional Financial Clarity",
+      fieldLabelsDesc:
+        "Organize spending by project, trip, or tax event for razor-sharp filtering and analytics.",
+      fieldQuickPresetsTitle: "Lightning-Fast 1-Tap Logging",
+      fieldQuickPresetsDesc:
+        "Save time every day by logging frequent coffee, groceries, and commute expenses in a single tap.",
+      remindersMonthlyTitle: "Start Every Month with Full Clarity",
+      remindersMonthlyDesc:
+        "Celebrate your progress with a private executive report summarizing your cash flow, savings rate, and net worth on the 1st of every month.",
+      remindersCreditCardsTitle: "Protect Your Credit Score",
+      remindersCreditCardsDesc:
+        "Stay ahead of statement cutoffs and payment deadlines with proactive reminders tailored to each card.",
+      remindersCreditLimitTitle: "Real-Time Debt Protection",
+      remindersCreditLimitDesc:
+        "Avoid over-limit fees and credit score drops with proactive alerts as balances approach 80% of your limit.",
+      remindersScheduledTitle: "Never Miss a Bill Payment",
+      remindersScheduledDesc:
+        "Stay ahead of upcoming bills, subscriptions, and scheduled transfers with smart advance notifications.",
+      remindersBudgetTitle: "Stay Inside Your Budget Comfort Zone",
+      remindersBudgetDesc:
+        "Keep your spending on target with instant proactive alerts as category expenses approach 80% and 100%.",
+      remindersGoalsTitle: "Celebrate Every Savings Milestone",
+      remindersGoalsDesc:
+        "Stay energized and motivated with advance deadline notices and milestone celebrations as you hit 50%, 75%, and 100%.",
+      accountHideSelectionTitle: "Streamlined Everyday Logging",
+      accountHideSelectionDesc:
+        "Keep your daily transaction picker clutter-free by tucking away emergency funds or vault accounts.",
+      accountHideReportsTitle: "True Personal Net Worth",
+      accountHideReportsDesc:
+        "Exclude escrow deposits, business collateral, or tracked external funds so your personal analytics reflect 100% pure personal wealth.",
+      fundGroupsTitle: "Multi-Portfolio Command",
+      fundGroupsDesc:
+        "Effortlessly separate personal savings, business cash flows, and side-hustles into organized fund groups with dedicated balance rollups.",
+      localBackupTitle: "Automated Device Redundancy",
+      localBackupDesc:
+        "Keep full control of your financial records with automatic, encrypted daily, weekly, or monthly local backups directly on your device storage.",
+      quickSyncTitle: "Real-Time Cloud Peace of Mind",
+      quickSyncDesc:
+        "Every transaction and budget change safely syncs to your personal Google Drive in the background as you record it.",
+      hexColorsTitle: "Personalized Visual Styling",
+      hexColorsDesc:
+        "Design custom hex color palettes to personalize accounts, categories, and tags across your financial dashboard.",
+      iconLibraryTitle: "Expanded 200+ Icon Collection",
+      iconLibraryDesc:
+        "Personalize every account, budget, and savings goal with over 200 high-definition Lucide icons.",
+    },
   },
 } as const;
 

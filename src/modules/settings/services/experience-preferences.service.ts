@@ -14,8 +14,8 @@ import {
 import {
   getSettingByKey,
   getSettingsByKey,
-  saveSettingsEntries,
 } from "../repositories/settings.repository";
+import { persistSettingsEntries } from "./persist-settings.service";
 
 export type FormFieldPreferenceKey = keyof typeof FORM_FIELD_SETTING_KEYS;
 export type HomeExperienceMode = "simple" | "detailed";
@@ -92,7 +92,7 @@ export function setDeveloperModeEnabled(
   enabled: boolean,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [DEVELOPER_MODE_SETTING_KEY]: enabled ? "true" : "false",
     },
@@ -111,7 +111,7 @@ export function setHomeExperienceMode(
   mode: HomeExperienceMode,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     { [EXPERIENCE_HOME_SETTING_KEY]: mode },
     context,
   );
@@ -127,7 +127,7 @@ export function setGuideHelperEnabled(
   enabled: boolean,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [GUIDE_HELPER_SETTING_KEY]: enabled ? "true" : "false",
     },
@@ -184,7 +184,7 @@ export function setTransactionFormFieldEnabled(
   enabled: boolean,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     { [FORM_FIELD_SETTING_KEYS[field]]: enabled ? "true" : "false" },
     context,
   );
@@ -203,7 +203,7 @@ export function setTransactionFormFieldPreferences(
     entries[FORM_FIELD_SETTING_KEYS[field]] = enabled ? "true" : "false";
   }
   if (Object.keys(entries).length === 0) return;
-  saveSettingsEntries(entries, context);
+  persistSettingsEntries(entries, context);
   notifyListeners();
 }
 
@@ -254,7 +254,7 @@ export function setNavItemVisible(
   visible: boolean,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     { [NAV_VISIBILITY_SETTING_KEYS[navKey]]: visible ? "true" : "false" },
     context,
   );
@@ -275,7 +275,7 @@ export function applyGuidedWorkspaceSimpleDefaults(context: DbContext): void {
   const navOff = Object.fromEntries(
     Object.values(NAV_VISIBILITY_SETTING_KEYS).map((key) => [key, "false"]),
   );
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       ...formOff,
       ...navOff,
@@ -300,7 +300,7 @@ export function setPromptDismissed(
   dismissed: boolean,
   context?: DbContext,
 ): void {
-  saveSettingsEntries(
+  persistSettingsEntries(
     {
       [PROMPT_SETTING_KEYS[promptKey]]: dismissed ? "true" : "false",
     },

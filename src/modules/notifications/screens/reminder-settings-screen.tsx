@@ -272,8 +272,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "monthlySummaryReminderEnabled",
                       val,
-                      "Monthly Financial Summary",
-                      "Receive comprehensive spending insights, savings summaries, and net worth reports on the 1st of every month with Kaizen Pro.",
+                      t("pro.locked.remindersMonthlyTitle"),
+                      t("pro.locked.remindersMonthlyDesc"),
                     );
                   }}
                   value={settings.monthlySummaryReminderEnabled}
@@ -345,8 +345,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "creditCardsReminderEnabled",
                       val,
-                      "Due Credit Card Bills",
-                      "Never miss a credit card bill with customizable advance reminder alerts tailored to your billing cycle in Kaizen Pro.",
+                      t("pro.locked.remindersCreditCardsTitle"),
+                      t("pro.locked.remindersCreditCardsDesc"),
                     );
                   }}
                   value={settings.creditCardsReminderEnabled}
@@ -421,8 +421,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "creditLimitAlertsEnabled",
                       val,
-                      "Credit Limit Warnings",
-                      "Get real-time protective alerts when credit card balances cross 80% or approach card spending limits in Kaizen Pro.",
+                      t("pro.locked.remindersCreditLimitTitle"),
+                      t("pro.locked.remindersCreditLimitDesc"),
                     );
                   }}
                   value={settings.creditLimitAlertsEnabled}
@@ -463,8 +463,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "scheduledTransactionsReminderEnabled",
                       val,
-                      "Due Scheduled Transactions",
-                      "Stay on top of upcoming recurring bills, subscriptions, and scheduled transfers with proactive reminders in Kaizen Pro.",
+                      t("pro.locked.remindersScheduledTitle"),
+                      t("pro.locked.remindersScheduledDesc"),
                     );
                   }}
                   value={settings.scheduledTransactionsReminderEnabled}
@@ -549,8 +549,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "budgetThresholdAlertsEnabled",
                       val,
-                      "Budget Threshold Warnings",
-                      "Receive instant notifications when spending reaches 80% or 100% of your category budgets with Kaizen Pro.",
+                      t("pro.locked.remindersBudgetTitle"),
+                      t("pro.locked.remindersBudgetDesc"),
                     );
                   }}
                   value={settings.budgetThresholdAlertsEnabled}
@@ -587,8 +587,8 @@ export function ReminderSettingsScreen() {
                     handleToggleProSetting(
                       "savingsGoalAlertsEnabled",
                       val,
-                      "Savings Goals & Deadlines",
-                      "Stay motivated with advance notifications before target deadlines and milestone alerts as you save with Kaizen Pro.",
+                      t("pro.locked.remindersGoalsTitle"),
+                      t("pro.locked.remindersGoalsDesc"),
                     );
                   }}
                   value={settings.savingsGoalAlertsEnabled}
