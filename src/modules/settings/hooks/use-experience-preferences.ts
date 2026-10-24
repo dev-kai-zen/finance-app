@@ -49,7 +49,7 @@ export function useExperiencePreferences() {
     getHiddenNavHrefs(),
   );
   const [developerUnlockNotice, setDeveloperUnlockNotice] = useState(false);
-  const [, setRevision] = useState(0);
+  const [revision, setRevision] = useState(0);
 
   const tapCountRef = useRef(0);
   const lastTapAtRef = useRef(0);
@@ -160,7 +160,7 @@ export function useExperiencePreferences() {
   const isPromptDismissedState = useCallback(
     (promptKey: Parameters<typeof isPromptDismissed>[0]) =>
       isPromptDismissed(promptKey),
-    [],
+    [revision],
   );
 
   return {

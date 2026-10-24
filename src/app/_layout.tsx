@@ -68,8 +68,8 @@ function RootLayoutContent() {
                   >
                     <AppLockGate>
                       <OnboardingGate>
-                      <WhatsNewGate>
                       <DeveloperMessageGate>
+                      <WhatsNewGate>
                         <>
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
@@ -146,8 +146,8 @@ function RootLayoutContent() {
                           </Stack>
                         </ExperienceAppShell>
                         </>
-                      </DeveloperMessageGate>
                       </WhatsNewGate>
+                      </DeveloperMessageGate>
                     </OnboardingGate>
                   </AppLockGate>
                 </SafeAreaView>
