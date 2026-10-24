@@ -153,7 +153,7 @@ export const en = {
     whatsNewAccessibility: "Open what's new release notes",
     developerMessage: "Developer Message & Goal",
     developerMessageSubtitle:
-      "A note from Kaizen Dev on our mission and financial literacy",
+      "A note from John Paul Arellano on our mission and financial literacy",
     developerMessageAccessibility: "Read message and goal from the developer",
     developerModeEnabledTitle: "Developer mode on",
     developerModeEnabledMessage: "SQLite Monitor is now available in the menu.",
@@ -336,7 +336,7 @@ export const en = {
   },
   developerMessage: {
     badge: "DEVELOPER'S NOTE & MISSION",
-    title: "A Note from Kaizen Dev",
+    title: "A Note from the Developer",
     subtitle: "The heart and goal behind this application",
     missionTitle: "The Mission: Financial Literacy for Everyone",
     missionBody:
@@ -351,7 +351,7 @@ export const en = {
     feedbackBody:
       "Every feature and detail is shaped by real user experiences. Feel free to share your thoughts, report issues, or suggest new ideas. I'd love to hear from you.",
     signaturePre: "Rooting for your financial peace,",
-    signatureName: "Kaizen Dev",
+    signatureName: "John Paul C. Arellano",
     actionBegin: "Let's Begin",
     actionFeedback: "Send Feedback",
     actionSupport: "Support via Pro",

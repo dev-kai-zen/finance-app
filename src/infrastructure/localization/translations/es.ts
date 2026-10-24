@@ -165,7 +165,7 @@ export const es = {
     whatsNewAccessibility: "Abrir las notas de la versión",
     developerMessage: "Mensaje y meta del desarrollador",
     developerMessageSubtitle:
-      "Una carta de Kaizen Dev sobre nuestra misión y educación financiera",
+      "Una carta de John Paul Arellano sobre nuestra misión y educación financiera",
     developerMessageAccessibility: "Leer mensaje y meta del desarrollador",
     developerModeEnabledTitle: "Modo desarrollador activado",
     developerModeEnabledMessage: "SQLite Monitor ya está en el menú.",
@@ -348,7 +348,7 @@ export const es = {
   },
   developerMessage: {
     badge: "NOTA Y MISIÓN DEL DESARROLLADOR",
-    title: "Una carta de Kaizen Dev",
+    title: "Una carta del desarrollador",
     subtitle: "El corazón y propósito detrás de esta aplicación",
     missionTitle: "La misión: Educación financiera para todos",
     missionBody:
@@ -363,7 +363,7 @@ export const es = {
     feedbackBody:
       "Esta herramienta está hecha para ti. Si tienes sugerencias, comentarios o ideas de nuevas funciones, no dudes en escribirme. Me encantará leerte.",
     signaturePre: "Deseándote el mayor de los éxitos,",
-    signatureName: "Kaizen Dev",
+    signatureName: "John Paul C. Arellano",
     actionBegin: "Comencemos",
     actionFeedback: "Enviar comentarios",
     actionSupport: "Apoyar con Pro",

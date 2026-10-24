@@ -165,7 +165,7 @@ export const fil = {
     whatsNewAccessibility: "Buksan ang mga release note na ano ang bago",
     developerMessage: "Mensahe at Layunin ng Developer",
     developerMessageSubtitle:
-      "Liham mula kay Kaizen Dev tungkol sa aming misyon at financial literacy",
+      "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
     developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
     developerModeEnabledTitle: "Naka-on ang developer mode",
     developerModeEnabledMessage: "Available na ang SQLite Monitor sa menu.",
@@ -349,7 +349,7 @@ export const fil = {
   },
   developerMessage: {
     badge: "MENSAHE AT MISYON NG DEVELOPER",
-    title: "Mensahe mula kay Kaizen Dev",
+    title: "Mensahe mula sa Developer",
     subtitle: "Ang layunin at puso sa likod ng application na ito",
     missionTitle: "Ang Misyon: Financial Literacy para sa Lahat",
     missionBody:
@@ -364,7 +364,7 @@ export const fil = {
     feedbackBody:
       "Ang app na ito ay para sa iyo. Huwag mag-atubiling magpadala ng feedback, mga mungkahi, o karanasan. Sabik akong marinig ang iyong kwento.",
     signaturePre: "Kasama mo sa iyong pag-unlad,",
-    signatureName: "Kaizen Dev",
+    signatureName: "John Paul C. Arellano",
     actionBegin: "Simulan Natin",
     actionFeedback: "Magpadala ng Feedback",
     actionSupport: "Suportahan gamit ang Pro",
