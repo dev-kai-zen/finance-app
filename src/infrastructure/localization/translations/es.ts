@@ -299,21 +299,51 @@ export const es = {
     dismissAccessibility: "Cerrar novedades",
     versionLabel: "Versión %{version}",
     empty: "Aún no hay notas de la versión para esta actualización.",
+    categories: {
+      accounts: "Cuentas",
+      transactions: "Transacciones",
+      calendar: "Calendario",
+      budgets: "Presupuestos",
+      scheduledTransactions: "Transacciones programadas",
+      creditCards: "Tarjetas de crédito",
+      goals: "Metas",
+      reports: "Informes y análisis",
+      security: "Privacidad y seguridad",
+      backup: "Copia de seguridad y sincronización",
+      general: "General",
+    },
     v100: {
       title: "Te damos la bienvenida a Kaizen Finance",
-      item1:
-        "Gestiona cuentas, transacciones, presupuestos y metas con una base de datos local offline-first.",
-      item2:
-        "Haz copias de seguridad y restaura tus datos con archivos locales o sincronización con Google Drive.",
-      item3:
-        "Personaliza temas, idiomas y formato de moneda según cómo administras tu dinero.",
-    },
-    v100fixes: {
-      title: "Correcciones y mejoras",
-      item1:
-        "Se corrigió un error al editar una transacción programada que aún requiere atención (vencida o fallida).",
-      item2:
-        "Las ocurrencias programadas pendientes reflejan el importe, la cuenta y la categoría más recientes cuando editas la programación.",
+      accountsItem1:
+        "Controla efectivo, cuentas bancarias, tarjetas y ahorros con saldos actualizados.",
+      accountsItem2:
+        "Transfiere dinero entre tus cuentas con actualización automática de saldos.",
+      transactionsItem1:
+        "Registra ingresos y gastos rápidamente con categorías, notas y campos personalizados.",
+      transactionsItem2:
+        "Adjunta fotos de recibos y filtra transacciones por fecha o cuenta.",
+      calendarItem1:
+        "Visualiza tus gastos diarios y próximos pagos en un calendario intuitivo.",
+      calendarItem2:
+        "Se corrigieron errores al seleccionar fechas.",
+      budgetsItem1:
+        "Define límites de gasto mensuales por categoría para mantener tus finanzas bajo control.",
+      budgetsItem2:
+        "Recibe barras de progreso visuales y advertencias antes de exceder tu presupuesto.",
+      scheduledItem1:
+        "Configura facturas recurrentes, suscripciones e ingresos con recordatorios de fecha de vencimiento.",
+      creditCardsItem1:
+        "Controla ciclos de facturación, fechas límite de pago, límites de crédito y uso.",
+      goalsItem1:
+        "Establece metas de ahorro y monitorea tu progreso a lo largo del tiempo.",
+      reportsItem1:
+        "Consulta gráficos claros y resúmenes visuales de tus hábitos de gasto y patrimonio neto.",
+      securityItem1:
+        "100% offline-first: todos tus datos financieros permanecen privados en tu dispositivo.",
+      securityItem2:
+        "Bloquea la aplicación con huella digital, Face ID o PIN.",
+      backupItem1:
+        "Exporta e importa archivos de respaldo de forma segura o sincroniza con Google Drive.",
     },
   },
   developerMessage: {

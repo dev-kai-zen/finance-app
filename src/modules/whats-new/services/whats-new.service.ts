@@ -42,8 +42,12 @@ export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {
   }
 
   if (lastSeenFingerprint === null) {
-    markWhatsNewSeen(currentFingerprint);
-    return null;
+    const initialBlocks = getLatestReleaseNotes();
+    if (initialBlocks.length === 0) {
+      markWhatsNewSeen(currentFingerprint);
+      return null;
+    }
+    return { blocks: initialBlocks };
   }
 
   const blocks = resolveReleaseNotesForUpdate(

@@ -287,21 +287,51 @@ export const en = {
     dismissAccessibility: "Dismiss what's new",
     versionLabel: "Version %{version}",
     empty: "Release notes for this version are not available yet.",
+    categories: {
+      accounts: "Accounts",
+      transactions: "Transactions",
+      calendar: "Calendar",
+      budgets: "Budgets",
+      scheduledTransactions: "Scheduled Transactions",
+      creditCards: "Credit Cards",
+      goals: "Goals",
+      reports: "Reports & Analytics",
+      security: "Privacy & Security",
+      backup: "Backup & Sync",
+      general: "General",
+    },
     v100: {
       title: "Welcome to Kaizen Finance",
-      item1:
-        "Track accounts, transactions, budgets, and goals with an offline-first local database.",
-      item2:
-        "Back up and restore your data with local archives or Google Drive sync.",
-      item3:
-        "Customize themes, languages, and currency formatting to match how you manage money.",
-    },
-    v100fixes: {
-      title: "Fixes & improvements",
-      item1:
-        "Fixed an error when editing a scheduled transaction that still needs attention (due or failed).",
-      item2:
-        "Pending scheduled occurrences now pick up your latest amount, account, and category when you edit the schedule.",
+      accountsItem1:
+        "Track cash, bank accounts, credit cards, and savings with running balances.",
+      accountsItem2:
+        "Transfer money between your accounts with automatic balance updates.",
+      transactionsItem1:
+        "Log income and expenses quickly with categories, notes, and custom fields.",
+      transactionsItem2:
+        "Attach receipt photos and filter transactions by date or account.",
+      calendarItem1:
+        "View your daily spending totals and upcoming expenses on a calendar.",
+      calendarItem2:
+        "Fix bugs when selecting date.",
+      budgetsItem1:
+        "Set monthly spending limits for each category to keep spending on track.",
+      budgetsItem2:
+        "Get visual progress bars and warnings before you overspend.",
+      scheduledItem1:
+        "Set up recurring bills, subscriptions, and paychecks with due date reminders.",
+      creditCardsItem1:
+        "Track statement billing cycles, due dates, credit limits, and utilization.",
+      goalsItem1:
+        "Set savings targets and monitor your progress as you save money.",
+      reportsItem1:
+        "See clear charts and visual breakdowns of your spending habits and net worth.",
+      securityItem1:
+        "100% offline-first — all financial data stays private on your device.",
+      securityItem2:
+        "Lock the app with your device fingerprint, Face ID, or PIN.",
+      backupItem1:
+        "Safely export and import backup files or sync securely with Google Drive.",
     },
   },
   developerMessage: {

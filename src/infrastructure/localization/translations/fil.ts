@@ -300,21 +300,51 @@ export const fil = {
     dismissAccessibility: "Isara ang ano ang bago",
     versionLabel: "Bersyon %{version}",
     empty: "Wala pang release notes para sa bersyong ito.",
+    categories: {
+      accounts: "Mga Account",
+      transactions: "Mga Transaksyon",
+      calendar: "Kalendaryo",
+      budgets: "Mga Badyet",
+      scheduledTransactions: "Naka-iskedyul na Transaksyon",
+      creditCards: "Mga Credit Card",
+      goals: "Mga Layunin",
+      reports: "Mga Ulat at Analytics",
+      security: "Privacy at Seguridad",
+      backup: "Backup at Pag-sync",
+      general: "Pangkalahatan",
+    },
     v100: {
       title: "Maligayang pagdating sa Kaizen Finance",
-      item1:
-        "Subaybayan ang mga account, transaksyon, badyet, at layunin gamit ang offline-first na lokal na database.",
-      item2:
-        "I-back up at i-restore ang data mo gamit ang lokal na archive o Google Drive sync.",
-      item3:
-        "I-customize ang tema, wika, at currency formatting ayon sa paraan mo ng pamamahala ng pera.",
-    },
-    v100fixes: {
-      title: "Mga ayos at pagpapabuti",
-      item1:
-        "Inayos ang error kapag ine-edit ang naka-iskedyul na transaksyon na kailangan pa ng pansin (due o failed).",
-      item2:
-        "Ang mga pending na scheduled occurrence ay sumusunod na sa pinakabagong halaga, account, at kategorya pag na-edit mo ang iskedyul.",
+      accountsItem1:
+        "Subaybayan ang pera, bank account, credit card, at ipon gamit ang running balance.",
+      accountsItem2:
+        "Maglipat ng pera sa pagitan ng iyong mga account nang may awtomatikong update sa balanse.",
+      transactionsItem1:
+        "Mabilis na magtala ng kita at gastos gamit ang mga kategorya, tala, at custom fields.",
+      transactionsItem2:
+        "Mag-attach ng mga larawan ng resibo at mag-filter ng mga transaksyon ayon sa petsa o account.",
+      calendarItem1:
+        "Tingnan ang kabuuang gastos bawat araw at mga darating na bayarin sa kalendaryo.",
+      calendarItem2:
+        "Inayos ang mga bug kapag pumipili ng petsa.",
+      budgetsItem1:
+        "Magtakda ng buwanang limitasyon sa gastos bawat kategorya upang maiwasan ang labis na paggastos.",
+      budgetsItem2:
+        "Kumuha ng visual na progress bar at mga babala bago ka lumampas sa badyet.",
+      scheduledItem1:
+        "Mag-set up ng mga paulit-ulit na bayarin, subscription, at sahod na may paalala sa takdang petsa.",
+      creditCardsItem1:
+        "Subaybayan ang billing cycle, takdang petsa ng bayad, credit limit, at paggamit ng credit card.",
+      goalsItem1:
+        "Magtakda ng mga layunin sa pag-iipon at subaybayan ang iyong pag-usad habang nag-iipon.",
+      reportsItem1:
+        "Tingnan ang malinaw na mga tsart at visual na ulat ng iyong mga gawi sa paggastos at net worth.",
+      securityItem1:
+        "100% offline-first — mananatiling pribado sa iyong device ang lahat ng datos sa pananalapi.",
+      securityItem2:
+        "I-lock ang app gamit ang iyong fingerprint, Face ID, o PIN.",
+      backupItem1:
+        "Ligtas na mag-export at mag-import ng mga backup file o mag-sync sa Google Drive.",
     },
   },
   developerMessage: {
