@@ -21,14 +21,14 @@ const LOCKED_FIELDS = [
 ] as const;
 
 const OPTIONAL_FIELDS: FormFieldPreferenceKey[] = [
+  "exactTime",
+  "quickPresets",
   "transactionName",
   "attachments",
   "split",
   "installments",
   "labels",
   "note",
-  "quickPresets",
-  "exactTime",
 ];
 
 const PRO_FORM_FIELDS: ReadonlySet<FormFieldPreferenceKey> = new Set([
