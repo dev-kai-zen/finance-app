@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowDownLeft,
@@ -18,6 +18,7 @@ import {
   Pipette,
   RotateCcw,
   Settings as SettingsIcon,
+  Shield,
   ShieldCheck,
   Smile,
   Sparkles,
@@ -56,6 +57,7 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
 
 export function SettingsScreen() {
   return (
@@ -955,6 +957,35 @@ function SettingsScreenContent() {
                 </Text>
                 <Text style={styles.settingDescription}>
                   {t("settings.developerMessageSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.privacyAccessibility")}
+              accessibilityRole="link"
+              onPress={() => {
+                void Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+                  Alert.alert("Error", t("settings.privacyOpenError"));
+                });
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Shield color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.privacy")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.privacySubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

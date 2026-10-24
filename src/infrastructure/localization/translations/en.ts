@@ -155,6 +155,10 @@ export const en = {
     developerMessageSubtitle:
       "A note from John Paul Arellano on our mission and financial literacy",
     developerMessageAccessibility: "Read message and goal from the developer",
+    privacy: "Privacy",
+    privacySubtitle: "Read our privacy policy online",
+    privacyAccessibility: "Open privacy policy website",
+    privacyOpenError: "Could not open privacy policy website.",
     developerModeEnabledTitle: "Developer mode on",
     developerModeEnabledMessage: "SQLite Monitor is now available in the menu.",
     developerSection: "DEVELOPER",

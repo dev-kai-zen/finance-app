@@ -167,6 +167,10 @@ export const fil = {
     developerMessageSubtitle:
       "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
     developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
+    privacy: "Privacy",
+    privacySubtitle: "Basahin ang aming patakaran sa privacy online",
+    privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
+    privacyOpenError: "Hindi mabuksan ang website ng patakaran sa privacy.",
     developerModeEnabledTitle: "Naka-on ang developer mode",
     developerModeEnabledMessage: "Available na ang SQLite Monitor sa menu.",
     developerSection: "DEVELOPER",
