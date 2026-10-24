@@ -9,15 +9,15 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Sparkles, X, Check, ShieldCheck, Crown } from "lucide-react-native";
+import { Crown, Flame, ShieldCheck, Sparkles, X } from "lucide-react-native";
 import { BlurView } from "expo-blur";
 
-import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 
-import { PRO_FEATURES } from "../constants/pro.constants";
+import { ProCardsCarousel } from "../components/pro-cards-carousel";
+import { PRO_CONSTANTS } from "../constants/pro.constants";
 import { useProStatus } from "../hooks/use-pro-status";
 
 export interface ProPaywallModalProps {
@@ -40,7 +40,7 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
     restorePurchases,
   } = useProStatus();
 
-  const priceText = offering?.priceString || "$9.99";
+  const priceText = offering?.priceString || PRO_CONSTANTS.FALLBACK_PRICE;
 
   const handlePurchase = async () => {
     if (isPro) {
@@ -99,7 +99,7 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
         <View
           style={[
             styles.sheet,
-            { paddingBottom: Math.max(insets.bottom, 20) },
+            { paddingBottom: Math.max(insets.bottom, 16) },
           ]}
         >
           {/* Header */}
@@ -133,48 +133,59 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
           >
             {/* Value Proposition Hero */}
             <View style={styles.heroBanner}>
-              <Sparkles color="#D97706" size={28} />
+              <Sparkles color="#D97706" size={20} />
               <Text style={styles.heroTitle}>
                 {t("pro.paywallSubtitle")}
               </Text>
             </View>
 
-            {/* Feature List */}
-            <View style={styles.featureList}>
-              {PRO_FEATURES.map((feature, idx) => (
-                <View key={idx} style={styles.featureItem}>
-                  <View style={styles.featureIconContainer}>
-                    <IconHelper
-                      color={theme.colors.primary}
-                      name={feature.icon}
-                      size={20}
-                    />
-                  </View>
-                  <View style={styles.featureTextContainer}>
-                    <Text style={styles.featureTitle}>
-                      {feature.defaultTitle}
-                    </Text>
-                    <Text style={styles.featureDesc}>
-                      {feature.defaultDesc}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </View>
+            {/* Feature Cards Carousel (Swipe Left/Right) */}
+            <ProCardsCarousel />
 
-            {/* CTA Section */}
-            <View style={styles.ctaCard}>
-              <View style={styles.priceRow}>
-                <View>
-                  <Text style={styles.priceLabel}>{t("pro.lifetime")}</Text>
-                  <Text style={styles.priceSubLabel}>{t("pro.oneTimeOffer")}</Text>
+            {/* Launching Price & Conversion Card */}
+            <View style={styles.launchCard}>
+              {/* Top Urgency Ribbon */}
+              <View style={styles.launchRibbon}>
+                <View style={styles.launchRibbonLeft}>
+                  <Flame color="#F59E0B" size={16} />
+                  <Text style={styles.launchRibbonTitle}>
+                    {t("pro.launchSpecialBadge")}
+                  </Text>
                 </View>
-                <Text style={styles.priceAmount}>{priceText}</Text>
+                <View style={styles.discountPill}>
+                  <Text style={styles.discountPillText}>
+                    {t("pro.launchDiscountBadge")}
+                  </Text>
+                </View>
               </View>
 
+              {/* Price comparison row */}
+              <View style={styles.priceRow}>
+                <View style={styles.priceLeft}>
+                  <View style={styles.strikeWrapper}>
+                    <Text style={styles.strikePrice}>
+                      {t("pro.launchRegularPrice")}
+                    </Text>
+                    <View style={styles.strikeLine} />
+                  </View>
+                  <Text style={styles.promoPrice}>{priceText}</Text>
+                </View>
+
+                <View style={styles.savingsPill}>
+                  <Text style={styles.savingsPillText}>
+                    {t("pro.launchSavingsText")}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.launchSubtext}>
+                {t("pro.launchSubtext")}
+              </Text>
+
+              {/* Primary Action Button */}
               {isPro ? (
                 <View style={styles.proActiveNotice}>
-                  <ShieldCheck color={theme.colors.success} size={20} />
+                  <ShieldCheck color={theme.colors.success} size={22} />
                   <Text style={styles.proActiveText}>
                     {t("pro.proActive")}
                   </Text>
@@ -196,12 +207,17 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
                     <>
                       <Crown color="#000000" size={18} />
                       <Text style={styles.purchaseButtonText}>
-                        {t("pro.paywallUpgradeBtn", { price: priceText })}
+                        {t("pro.launchUpgradeBtn", { price: priceText })}
                       </Text>
                     </>
                   )}
                 </Pressable>
               )}
+
+              {/* Guarantees */}
+              <Text style={styles.guaranteeText}>
+                {t("pro.guaranteeText")}
+              </Text>
             </View>
 
             {/* Restore Purchases */}
@@ -245,7 +261,7 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surface,
       borderTopLeftRadius: theme.borderRadius.large,
       borderTopRightRadius: theme.borderRadius.large,
-      maxHeight: "90%",
+      maxHeight: "92%",
       minHeight: 520,
     },
     header: {
@@ -254,9 +270,9 @@ function createStyles(theme: AppTheme) {
       borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.lg,
-      paddingBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.sm,
     },
     headerCopy: {
       flex: 1,
@@ -266,7 +282,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
-      marginBottom: 6,
+      marginBottom: 4,
     },
     crownContainer: {
       backgroundColor: "rgba(217, 119, 6, 0.15)",
@@ -281,7 +297,7 @@ function createStyles(theme: AppTheme) {
     },
     title: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.xl,
+      fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.2,
     },
@@ -294,97 +310,135 @@ function createStyles(theme: AppTheme) {
       width: 36,
     },
     scrollContent: {
-      padding: theme.spacing.xl,
-      gap: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      gap: theme.spacing.md,
     },
     heroBanner: {
       backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.lg,
+      borderRadius: theme.borderRadius.medium,
+      paddingVertical: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      marginHorizontal: theme.spacing.lg,
       alignItems: "center",
       borderWidth: 1,
-      borderColor: "rgba(217, 119, 6, 0.2)",
+      borderColor: "rgba(217, 119, 6, 0.25)",
+      flexDirection: "row",
+      justifyContent: "center",
       gap: 8,
     },
     heroTitle: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
+      fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       textAlign: "center",
-      lineHeight: 20,
-    },
-    featureList: {
-      gap: theme.spacing.md,
-    },
-    featureItem: {
-      flexDirection: "row",
-      alignItems: "flex-start",
-      gap: theme.spacing.md,
-    },
-    featureIconContainer: {
-      width: 38,
-      height: 38,
-      borderRadius: theme.borderRadius.medium,
-      backgroundColor: theme.colors.surfaceMuted,
-      alignItems: "center",
-      justifyContent: "center",
-      marginTop: 2,
-    },
-    featureTextContainer: {
-      flex: 1,
-      minWidth: 0,
-    },
-    featureTitle: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
-      fontWeight: theme.typography.fontWeight.semibold,
-      marginBottom: 2,
-    },
-    featureDesc: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
       lineHeight: 18,
+      flexShrink: 1,
     },
-    ctaCard: {
+    launchCard: {
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.large,
-      padding: theme.spacing.lg,
+      padding: theme.spacing.md,
+      marginHorizontal: theme.spacing.lg,
       borderWidth: 1.5,
-      borderColor: theme.colors.primary,
-      gap: theme.spacing.md,
+      borderColor: "#F59E0B",
+      gap: 8,
+    },
+    launchRibbon: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingBottom: 6,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+    },
+    launchRibbonLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+    },
+    launchRibbonTitle: {
+      color: "#F59E0B",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.8,
+    },
+    discountPill: {
+      backgroundColor: "rgba(245, 158, 11, 0.18)",
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      borderColor: "rgba(245, 158, 11, 0.4)",
+    },
+    discountPillText: {
+      color: "#D97706",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     priceRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
+      paddingTop: 2,
     },
-    priceLabel: {
-      color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.md,
-      fontWeight: theme.typography.fontWeight.bold,
+    priceLeft: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: 8,
     },
-    priceSubLabel: {
+    strikeWrapper: {
+      position: "relative",
+      justifyContent: "center",
+    },
+    strikePrice: {
       color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
-    priceAmount: {
-      color: theme.colors.primary,
-      fontSize: theme.typography.fontSize.xxl,
+    strikeLine: {
+      position: "absolute",
+      height: 1.5,
+      backgroundColor: "#EF4444",
+      left: 0,
+      right: 0,
+    },
+    promoPrice: {
+      color: "#F59E0B",
+      fontSize: 26,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    savingsPill: {
+      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      borderColor: "rgba(16, 185, 129, 0.35)",
+    },
+    savingsPillText: {
+      color: "#10B981",
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.5,
+    },
+    launchSubtext: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      lineHeight: 15,
     },
     purchaseButton: {
-      backgroundColor: theme.colors.warning,
+      backgroundColor: "#F59E0B",
       borderRadius: theme.borderRadius.medium,
-      paddingVertical: 14,
-      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: 13,
+      paddingHorizontal: theme.spacing.md,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
+      marginTop: 2,
     },
     purchaseButtonPressed: {
-      opacity: 0.85,
+      opacity: 0.88,
     },
     purchaseButtonDisabled: {
       opacity: 0.6,
@@ -400,16 +454,22 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       justifyContent: "center",
       gap: 8,
-      paddingVertical: 10,
+      paddingVertical: 8,
     },
     proActiveText: {
       color: theme.colors.success,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
+    guaranteeText: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      textAlign: "center",
+      marginTop: 2,
+    },
     restoreBtn: {
       alignItems: "center",
-      paddingVertical: 8,
+      paddingVertical: 4,
     },
     restoreText: {
       color: theme.colors.textSecondary,
@@ -422,6 +482,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 10,
       textAlign: "center",
       lineHeight: 14,
+      paddingHorizontal: theme.spacing.xl,
     },
   });
 }

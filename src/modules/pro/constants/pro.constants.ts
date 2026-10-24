@@ -2,7 +2,10 @@ export const PRO_CONSTANTS = {
   ENTITLEMENT_ID: "kaizen_finance_pro",
   LEGACY_ENTITLEMENT_ID: "pro",
   LIFETIME_PRODUCT_ID: "lifetime",
-  FALLBACK_PRICE: "$9.99",
+  FALLBACK_PRICE: "₱199",
+  REGULAR_PRICE: "₱499",
+  LAUNCH_DISCOUNT: "60% OFF",
+  LAUNCH_SAVINGS: "Save ₱300",
   FALLBACK_TITLE: "Lifetime Pro Access",
   FALLBACK_DESCRIPTION:
     "Unlock unlimited accounts, budgets & goals, automatic Google Drive cloud backup, advanced analytics, and enjoy an ad-free experience forever with a one-time payment.",
@@ -97,3 +100,98 @@ export const PRO_FEATURES: ProFeatureItem[] = [
       "Pro status is saved locally on your device so all features work seamlessly without internet connectivity.",
   },
 ];
+
+export interface ProCarouselCardItem {
+  id: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  accentColor: string;
+  iconName: "TrendingUp" | "Cloud" | "Infinity" | "ShieldCheck" | "Smartphone";
+  highlights: string[];
+}
+
+export const PRO_CAROUSEL_CARDS: ProCarouselCardItem[] = [
+  {
+    id: "analytics",
+    badge: "INSIGHTS & REPORTS",
+    title: "Deep Financial Analytics",
+    subtitle: "See where every single peso goes",
+    description:
+      "Interactive Cash Flow trends, Balance Sheet comparisons, Net Worth Growth, and detailed expense breakdowns at your fingertips.",
+    accentColor: "#3B82F6",
+    iconName: "TrendingUp",
+    highlights: [
+      "Cash Flow Spikes",
+      "Net Worth Growth",
+      "Balance Sheets",
+      "Category Breakdowns",
+    ],
+  },
+  {
+    id: "backup",
+    badge: "CLOUD SYNC",
+    title: "Google Drive Cloud Backup",
+    subtitle: "Never lose a single transaction",
+    description:
+      "Automatic encrypted backups to your personal Google Drive account. Switch phones or restore your entire finances in seconds.",
+    accentColor: "#10B981",
+    iconName: "Cloud",
+    highlights: [
+      "Automatic Schedule",
+      "1-Tap Fast Restore",
+      "Encrypted & Private",
+      "Multi-Device Safe",
+    ],
+  },
+  {
+    id: "unlimited",
+    badge: "ZERO RESTRICTIONS",
+    title: "Unlimited Accounts & Planning",
+    subtitle: "Complete financial freedom",
+    description:
+      "Break free from free tier limits. Create unlimited bank accounts, sub-pockets, category rollover budgets, recurring bills, and savings goals.",
+    accentColor: "#F59E0B",
+    iconName: "Infinity",
+    highlights: [
+      "Unlimited Accounts",
+      "Unlimited Sub-Pockets",
+      "Smart Rollover Budgets",
+      "Unlimited Goals",
+    ],
+  },
+  {
+    id: "security",
+    badge: "PRIVACY FIRST",
+    title: "Biometric & Local Privacy",
+    subtitle: "Your eyes only",
+    description:
+      "Protect your finances with Fingerprint or Face ID biometric unlock and a secure master passcode. 100% offline-first architecture.",
+    accentColor: "#8B5CF6",
+    iconName: "ShieldCheck",
+    highlights: [
+      "Fingerprint / Face ID",
+      "Master App Passcode",
+      "Hide Sensitive Balances",
+      "100% Local Storage",
+    ],
+  },
+  {
+    id: "widgets",
+    badge: "HOME SCREEN & TOOLS",
+    title: "Live Widgets & Power Tools",
+    subtitle: "Track without opening the app",
+    description:
+      "Pin interactive budget and net worth chart widgets directly to your Android home screen. Attach receipt photos and track credit card cycles.",
+    accentColor: "#EC4899",
+    iconName: "Smartphone",
+    highlights: [
+      "Android Home Widgets",
+      "Receipt Attachments",
+      "Credit Card Cycles",
+      "Custom Hex Colors",
+    ],
+  },
+];
+
