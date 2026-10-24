@@ -1,4 +1,5 @@
 import type { DbContext } from "@/infrastructure/database/client";
+import { isDevModeAllowed } from "@/utils/dev-mode";
 import {
   DEVELOPER_MODE_SETTING_KEY,
   EXPERIENCE_HOME_SETTING_KEY,
@@ -16,6 +17,8 @@ import {
   getSettingsByKey,
 } from "../repositories/settings.repository";
 import { persistSettingsEntries } from "./persist-settings.service";
+
+export { isDevModeAllowed };
 
 export type FormFieldPreferenceKey = keyof typeof FORM_FIELD_SETTING_KEYS;
 export type HomeExperienceMode = "simple" | "detailed";
@@ -85,6 +88,9 @@ function missingDefaultForGuided(context?: DbContext): boolean {
 }
 
 export function getDeveloperModeEnabled(context?: DbContext): boolean {
+  if (!isDevModeAllowed()) {
+    return false;
+  }
   return getSettingByKey(DEVELOPER_MODE_SETTING_KEY, context) === "true";
 }
 
@@ -92,6 +98,9 @@ export function setDeveloperModeEnabled(
   enabled: boolean,
   context?: DbContext,
 ): void {
+  if (!isDevModeAllowed()) {
+    return;
+  }
   persistSettingsEntries(
     {
       [DEVELOPER_MODE_SETTING_KEY]: enabled ? "true" : "false",

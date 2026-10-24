@@ -22,17 +22,23 @@ export function ExperienceAppShell({
       <AppShell
         banner={banner}
         hiddenNavHrefs={hiddenNavHrefs}
-        onSettingsTitlePress={experience.registerSettingsTitleTap}
+        onSettingsTitlePress={
+          experience.isDevModeAllowed
+            ? experience.registerSettingsTitleTap
+            : undefined
+        }
       >
         {children}
       </AppShell>
-      <NotificationModal
-        message={t("settings.developerModeEnabledMessage")}
-        onClose={experience.dismissDeveloperUnlockNotice}
-        title={t("settings.developerModeEnabledTitle")}
-        variant="success"
-        visible={experience.developerUnlockNotice}
-      />
+      {experience.isDevModeAllowed && (
+        <NotificationModal
+          message={t("settings.developerModeEnabledMessage")}
+          onClose={experience.dismissDeveloperUnlockNotice}
+          title={t("settings.developerModeEnabledTitle")}
+          variant="success"
+          visible={experience.developerUnlockNotice}
+        />
+      )}
     </>
   );
 }

@@ -794,7 +794,7 @@ function SettingsScreenContent() {
           </View>
         </View>
 
-        {experience.developerMode ? (
+        {experience.isDevModeAllowed && experience.developerMode ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t("settings.developerSection")}</Text>
             <View style={styles.card}>

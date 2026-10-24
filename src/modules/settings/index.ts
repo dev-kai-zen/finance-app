@@ -40,6 +40,7 @@ export {
   getHomeExperienceMode,
   getNavVisibilityPreferences,
   getTransactionFormFieldPreferences,
+  isDevModeAllowed,
   isGuidedWorkspace,
   isPromptDismissed,
   isTransactionFormFieldEnabled,

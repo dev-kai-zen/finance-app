@@ -37,7 +37,7 @@ const QUERY_PRESETS = [
 
 export function SqliteMonitorScreen() {
   const router = useRouter();
-  const { developerMode } = useExperiencePreferences();
+  const { developerMode, isDevModeAllowed } = useExperiencePreferences();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const styles = useThemeStyles(createStyles);
@@ -97,12 +97,12 @@ export function SqliteMonitorScreen() {
     }
   };
 
-  if (!developerMode) {
+  if (!isDevModeAllowed || !developerMode) {
     return (
       <PageContainer>
         <PageErrorState
-          message="SQLite Monitor is available when developer mode is enabled in Settings."
-          onRetry={() => router.replace("/settings")}
+          message="SQLite Monitor is not available."
+          onRetry={() => router.replace("/")}
         />
       </PageContainer>
     );
@@ -265,7 +265,7 @@ export function SqliteMonitorScreen() {
                   </Text>
                   {queryResult.columns.length > 3 ? (
                     <Text style={styles.resultHintText}>
-                      Scroll horizontally to see all columns.
+                      Scroll horizontally to see all columns. 
                     </Text>
                   ) : null}
                 </View>

@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { isDevModeAllowed } from "@/utils/dev-mode";
 import { PRO_SECURE_KEYS } from "../constants/pro.constants";
 
 const memoryStore = new Map<string, string>();
@@ -68,8 +69,13 @@ export async function readCachedProState(): Promise<CachedProState> {
     getSecureValue(PRO_SECURE_KEYS.DEV_SIMULATE_PRO),
   ]);
 
-  const isDevSimulated = devSimVal === "true";
+  const devAllowed = isDevModeAllowed();
+  const isDevSimulated = devAllowed && devSimVal === "true";
   const isPro = isDevSimulated || isProVal === "true";
+
+  if (!devAllowed && devSimVal === "true") {
+    void deleteSecureValue(PRO_SECURE_KEYS.DEV_SIMULATE_PRO);
+  }
 
   return {
     isPro,
@@ -97,6 +103,10 @@ export async function clearCachedProUnlock(): Promise<void> {
 }
 
 export async function writeDevSimulatedPro(enabled: boolean): Promise<void> {
+  if (!isDevModeAllowed()) {
+    await deleteSecureValue(PRO_SECURE_KEYS.DEV_SIMULATE_PRO);
+    return;
+  }
   if (enabled) {
     await setSecureValue(PRO_SECURE_KEYS.DEV_SIMULATE_PRO, "true");
   } else {

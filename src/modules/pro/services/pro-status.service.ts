@@ -1,3 +1,4 @@
+import { isDevModeAllowed } from "@/utils/dev-mode";
 import {
   clearCachedProUnlock,
   readCachedProState,
@@ -185,6 +186,9 @@ export async function restorePro(): Promise<ProRestoreResult> {
 }
 
 export async function setDevSimulationMode(enabled: boolean): Promise<void> {
+  if (!isDevModeAllowed()) {
+    return;
+  }
   await writeDevSimulatedPro(enabled);
 
   if (enabled) {

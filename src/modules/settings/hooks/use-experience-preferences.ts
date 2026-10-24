@@ -9,6 +9,7 @@ import {
   getHomeExperienceMode,
   getNavVisibilityPreferences,
   getTransactionFormFieldPreferences,
+  isDevModeAllowed,
   isPromptDismissed,
   isTransactionFormFieldEnabled,
   setDeveloperModeEnabled,
@@ -91,6 +92,9 @@ export function useExperiencePreferences() {
   );
 
   const registerSettingsTitleTap = useCallback(() => {
+    if (!isDevModeAllowed()) {
+      return;
+    }
     const now = Date.now();
     if (now - lastTapAtRef.current > DEVELOPER_TAP_RESET_MS) {
       tapCountRef.current = 0;
@@ -164,6 +168,7 @@ export function useExperiencePreferences() {
   );
 
   return {
+    isDevModeAllowed: isDevModeAllowed(),
     developerMode,
     guideHelperEnabled,
     setGuideHelper,

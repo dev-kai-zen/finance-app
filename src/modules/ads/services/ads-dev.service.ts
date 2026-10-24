@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { isDevModeAllowed } from "@/utils/dev-mode";
 
 const ADS_SECURE_KEYS = {
   FORCE_TEST_ADS: "kaizen_ads_force_test_ads_v1",
@@ -30,17 +31,21 @@ export function subscribeToAdsDevMode(listener: AdsDevListener): () => void {
 }
 
 export function getIsForceTestAds(): boolean {
+  if (!isDevModeAllowed()) {
+    return false;
+  }
   return inMemoryForceTestAds;
 }
 
 export async function initializeAdsDevMode(): Promise<boolean> {
-  if (isInitialized) {
-    return inMemoryForceTestAds;
-  }
-
-  if (Platform.OS === "web") {
+  if (!isDevModeAllowed() || Platform.OS === "web") {
+    inMemoryForceTestAds = false;
     isInitialized = true;
     return false;
+  }
+
+  if (isInitialized) {
+    return inMemoryForceTestAds;
   }
 
   try {
@@ -56,6 +61,12 @@ export async function initializeAdsDevMode(): Promise<boolean> {
 }
 
 export async function setForceTestAds(enabled: boolean): Promise<void> {
+  if (!isDevModeAllowed()) {
+    inMemoryForceTestAds = false;
+    notifyListeners();
+    return;
+  }
+
   inMemoryForceTestAds = enabled;
   notifyListeners();
 

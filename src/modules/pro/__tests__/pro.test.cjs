@@ -152,6 +152,27 @@ test("pro repository: dev simulation flag overrides pro status", async () => {
   assert.equal(clearedState.isPro, false);
 });
 
+test("pro repository: rejects dev simulation and keeps isPro false when dev mode is disabled", async () => {
+  const originalDev = global.__DEV__;
+  const originalEnv = process.env.EXPO_PUBLIC_ENABLE_DEV_MODE;
+  try {
+    global.__DEV__ = false;
+    process.env.EXPO_PUBLIC_ENABLE_DEV_MODE = "false";
+
+    await proRepo.writeDevSimulatedPro(true);
+    const state = await proRepo.readCachedProState();
+    assert.equal(state.isDevSimulated, false);
+    assert.equal(state.isPro, false);
+  } finally {
+    global.__DEV__ = originalDev;
+    if (originalEnv !== undefined) {
+      process.env.EXPO_PUBLIC_ENABLE_DEV_MODE = originalEnv;
+    } else {
+      delete process.env.EXPO_PUBLIC_ENABLE_DEV_MODE;
+    }
+  }
+});
+
 test("pro billing: returns fallback offering package when remote is unconfigured", async () => {
   const pkg = await proBilling.fetchProPackage();
   assert.equal(pkg.productId, PRO_CONSTANTS.LIFETIME_PRODUCT_ID);
