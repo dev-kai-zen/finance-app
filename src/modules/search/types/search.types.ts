@@ -42,7 +42,9 @@ export interface SearchCatalogItem {
     | "smile"
     | "search"
     | "heart"
-    | "database";
+    | "database"
+    | "download"
+    | "archive";
   iconColor?: string;
   route: string;
   targetId?: string;

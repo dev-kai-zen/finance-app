@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, View } from "react-native";
+import { useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
@@ -59,7 +60,7 @@ type Overlay =
   | null;
 
 export function AccountsScreen(props: {
-  initialView?: "types" | "account";
+  initialView?: "types" | "account" | "archived";
 }) {
   return (
     <WalkthroughRegistryProvider>
@@ -71,8 +72,9 @@ export function AccountsScreen(props: {
 function AccountsScreenContent({
   initialView,
 }: {
-  initialView?: "types" | "account";
+  initialView?: "types" | "account" | "archived";
 }) {
+  const router = useRouter();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
@@ -86,15 +88,23 @@ function AccountsScreenContent({
     return null;
   });
 
+  const [fabSheetOpen, setFabSheetOpen] = useState(false);
+  const [archivedModalOpen, setArchivedModalOpen] = useState(
+    () => initialView === "archived",
+  );
+
   useEffect(() => {
     if (initialView === "account") {
       setOverlay({ kind: "create" });
+      router.setParams({ setup: undefined, view: undefined });
     } else if (initialView === "types") {
       setOverlay({ kind: "types" });
+      router.setParams({ setup: undefined, view: undefined });
+    } else if (initialView === "archived") {
+      setArchivedModalOpen(true);
+      router.setParams({ setup: undefined, view: undefined });
     }
-  }, [initialView]);
-  const [fabSheetOpen, setFabSheetOpen] = useState(false);
-  const [archivedModalOpen, setArchivedModalOpen] = useState(false);
+  }, [initialView, router]);
   const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
     string | null
   >(null);

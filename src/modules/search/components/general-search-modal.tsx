@@ -14,6 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  Archive,
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
@@ -26,6 +27,7 @@ import {
   CreditCard,
   Crown,
   Database,
+  Download,
   FileText,
   HardDrive,
   Heart,
@@ -119,6 +121,10 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <Heart color={color} size={size} />;
     case "database":
       return <Database color={color} size={size} />;
+    case "download":
+      return <Download color={color} size={size} />;
+    case "archive":
+      return <Archive color={color} size={size} />;
     default:
       return <Plus color={color} size={size} />;
   }

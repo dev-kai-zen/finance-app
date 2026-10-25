@@ -306,4 +306,34 @@ test("search catalog: creation quick actions route with action=new", () => {
   assert.equal(scheduledItem.route, "/transactions/scheduled?action=new");
 });
 
+test("search catalog: finds trash, export csv, and archived accounts actions", () => {
+  const queries = [
+    { query: "trash", expectedId: "action_transactions_trash" },
+    { query: "deleted transactions", expectedId: "action_transactions_trash" },
+    { query: "export", expectedId: "action_export_transactions_csv" },
+    { query: "csv", expectedId: "action_export_transactions_csv" },
+    { query: "archived accounts", expectedId: "action_archived_accounts" },
+    { query: "archive", expectedId: "action_archived_accounts" },
+  ];
+
+  for (const { query, expectedId } of queries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}'`,
+    );
+  }
+});
+
 
