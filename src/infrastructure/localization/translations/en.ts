@@ -148,9 +148,9 @@ export const en = {
     resetDataDescription:
       "Permanently erase all local app data and start over.",
     aboutSection: "ABOUT",
-    whatsNew: "What's New",
-    whatsNewDescription: "See highlights from the latest app updates",
-    whatsNewAccessibility: "Open what's new release notes",
+    versionHistory: "Version History",
+    versionHistoryDescription: "See what changed in each app version",
+    versionHistoryAccessibility: "Open version history",
     developerMessage: "Developer Message & Goal",
     developerMessageSubtitle:
       "A note from John Paul Arellano on our mission and financial literacy",
@@ -285,13 +285,16 @@ export const en = {
     palettes: "PALETTES",
     choices: "%{count} choices",
   },
-  whatsNew: {
-    heading: "What's New",
+  versionHistory: {
+    heading: "Version History",
     continue: "Continue",
-    dismissAccessibility: "Dismiss what's new",
+    dismissAccessibility: "Dismiss version history",
     versionLabel: "Version %{version}",
     empty: "Release notes for this version are not available yet.",
     categories: {
+      feature: "Feature",
+      update: "Update",
+      fix: "Fix",
       accounts: "Accounts",
       transactions: "Transactions",
       calendar: "Calendar",
@@ -303,6 +306,10 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v110: {
+      updateItem1:
+        "Rename What's New to Version History and show every past update in one list.",
     },
     v100: {
       title: "Welcome to Kaizen Finance",
@@ -1067,9 +1074,9 @@ export const en = {
     stepRestorePurchasesTitle: "Restore Purchases",
     stepRestorePurchasesDesc:
       "Restore your active Pro license if reinstalling or moving your workspace to a new device.",
-    stepWhatsNewTitle: "What's New",
-    stepWhatsNewDesc:
-      "Check out the latest features, release notes, bug fixes, and improvements in this version.",
+    stepVersionHistoryTitle: "Version History",
+    stepVersionHistoryDesc:
+      "Browse what changed in every version of the app, including new features, fixes, and improvements.",
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",

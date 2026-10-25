@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { settings } from "@/infrastructure/database/schema";
-import { WHATS_NEW_LAST_SEEN_FINGERPRINT_KEY } from "@/modules/whats-new/constants/whats-new.constants";
+import { VERSION_HISTORY_LAST_SEEN_FINGERPRINT_KEY } from "@/modules/version-history/constants/version-history.constants";
 
 export function getLastSeenAppFingerprint(
   context: DbContext = db,
@@ -10,7 +10,7 @@ export function getLastSeenAppFingerprint(
   const rows = context
     .select({ value: settings.value })
     .from(settings)
-    .where(inArray(settings.key, [WHATS_NEW_LAST_SEEN_FINGERPRINT_KEY]))
+    .where(inArray(settings.key, [VERSION_HISTORY_LAST_SEEN_FINGERPRINT_KEY]))
     .all();
 
   return rows[0]?.value ?? null;
@@ -24,7 +24,7 @@ export function saveLastSeenAppFingerprint(
   context
     .insert(settings)
     .values({
-      key: WHATS_NEW_LAST_SEEN_FINGERPRINT_KEY,
+      key: VERSION_HISTORY_LAST_SEEN_FINGERPRINT_KEY,
       value: fingerprint,
       updatedAt: now,
     })

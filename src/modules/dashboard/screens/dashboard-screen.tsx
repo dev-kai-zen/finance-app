@@ -40,7 +40,7 @@ import {
   WALKTHROUGH_SCROLL_TOP_OFFSET,
 } from "@/modules/walkthrough";
 import type { WalkthroughTargetId } from "@/modules/walkthrough";
-import { useIsWhatsNewPending } from "@/modules/whats-new";
+import { useIsVersionHistoryPending } from "@/modules/version-history";
 import { useDashboard } from "../hooks/use-dashboard";
 
 export function DashboardScreen() {
@@ -145,12 +145,12 @@ function DashboardScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
-  const isWhatsNewPending = useIsWhatsNewPending();
+  const isVersionHistoryPending = useIsVersionHistoryPending();
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "dashboardWalkthroughDismissed",
     prerequisitePromptKey: "developerMessageSeen",
-    enabled: !isWhatsNewPending,
+    enabled: !isVersionHistoryPending,
     onStart: walkthrough.startWalkthrough,
   });
 

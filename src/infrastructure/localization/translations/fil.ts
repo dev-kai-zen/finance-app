@@ -160,9 +160,9 @@ export const fil = {
     resetDataDescription:
       "Permanenteng burahin ang lahat ng lokal na app data at magsimulang muli.",
     aboutSection: "TUNGKOL SA APP",
-    whatsNew: "Ano ang Bago",
-    whatsNewDescription: "Tingnan ang mga highlight mula sa pinakabagong update",
-    whatsNewAccessibility: "Buksan ang mga release note na ano ang bago",
+    versionHistory: "Kasaysayan ng Bersyon",
+    versionHistoryDescription: "Tingnan ang mga pagbabago sa bawat bersyon ng app",
+    versionHistoryAccessibility: "Buksan ang kasaysayan ng bersyon",
     developerMessage: "Mensahe at Layunin ng Developer",
     developerMessageSubtitle:
       "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
@@ -298,13 +298,16 @@ export const fil = {
     palettes: "MGA PALETTE",
     choices: "%{count} pagpipilian",
   },
-  whatsNew: {
-    heading: "Ano ang Bago",
+  versionHistory: {
+    heading: "Kasaysayan ng Bersyon",
     continue: "Magpatuloy",
-    dismissAccessibility: "Isara ang ano ang bago",
+    dismissAccessibility: "Isara ang kasaysayan ng bersyon",
     versionLabel: "Bersyon %{version}",
     empty: "Wala pang release notes para sa bersyong ito.",
     categories: {
+      feature: "Bagong Feature",
+      update: "Update",
+      fix: "Ayos",
       accounts: "Mga Account",
       transactions: "Mga Transaksyon",
       calendar: "Kalendaryo",
@@ -316,6 +319,10 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v110: {
+      updateItem1:
+        "Pinalitan ang Ano ang Bago ng Kasaysayan ng Bersyon at ipinapakita na ang lahat ng nakaraang update sa isang listahan.",
     },
     v100: {
       title: "Maligayang pagdating sa Kaizen Finance",
@@ -1081,9 +1088,9 @@ export const fil = {
     stepRestorePurchasesTitle: "Ibalik ang mga Binili",
     stepRestorePurchasesDesc:
       "Ibalik ang iyong Pro license kapag nag-reinstall o naglipat ng workspace sa bagong device.",
-    stepWhatsNewTitle: "Mga Bagong Tampok",
-    stepWhatsNewDesc:
-      "Tingnan ang pinakabagong mga tampok, release notes, pag-aayos, at mga pagpapabuti.",
+    stepVersionHistoryTitle: "Kasaysayan ng Bersyon",
+    stepVersionHistoryDesc:
+      "Tingnan ang mga pagbabago sa bawat bersyon ng app, kasama ang mga bagong tampok, pag-aayos, at pagpapabuti.",
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",

@@ -61,11 +61,11 @@ test("whats new: defines release notes with categorized sections", () => {
 test("whats new: includes Calendar category with date selection fix", () => {
   const v100 = RELEASE_NOTES.find((block) => block.version === "1.0.0");
   const calendarSection = v100.sections.find(
-    (s) => s.categoryKey === "whatsNew.categories.calendar"
+    (s) => s.categoryKey === "versionHistory.categories.calendar"
   );
   assert.ok(calendarSection, "Calendar section must exist");
-  assert.ok(calendarSection.itemKeys.includes("whatsNew.v100.calendarItem2"));
+  assert.ok(calendarSection.itemKeys.includes("versionHistory.v100.calendarItem2"));
 
-  const calendarFixTextEn = resolvePath(en, "whatsNew.v100.calendarItem2");
+  const calendarFixTextEn = resolvePath(en, "versionHistory.v100.calendarItem2");
   assert.match(calendarFixTextEn, /date/i);
 });

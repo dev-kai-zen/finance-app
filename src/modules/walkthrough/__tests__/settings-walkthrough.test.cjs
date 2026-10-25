@@ -41,7 +41,7 @@ test("settings walkthrough: defines all 16 steps in exact required sequence", ()
     { targetId: "settingsSecurity", titleKey: "settingsWalkthrough.stepSecurityTitle" },
     { targetId: "settingsPro", titleKey: "settingsWalkthrough.stepProTitle" },
     { targetId: "settingsRestorePurchases", titleKey: "settingsWalkthrough.stepRestorePurchasesTitle" },
-    { targetId: "settingsWhatsNew", titleKey: "settingsWalkthrough.stepWhatsNewTitle" },
+    { targetId: "settingsVersionHistory", titleKey: "settingsWalkthrough.stepVersionHistoryTitle" },
   ];
 
   expectedSequence.forEach((expected, index) => {
@@ -69,7 +69,7 @@ test("settings walkthrough: translations exist for all 16 steps across en, es, a
     "Security",
     "Pro",
     "RestorePurchases",
-    "WhatsNew",
+    "VersionHistory",
   ];
 
   for (const suffix of stepSuffixes) {
