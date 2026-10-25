@@ -11,7 +11,7 @@ export interface ReleaseNoteBlock {
   sections: ReleaseNoteSection[];
 }
 
-export interface WhatsNewPresentation {
+export interface VersionHistoryPresentation {
   blocks: ReleaseNoteBlock[];
 }
 

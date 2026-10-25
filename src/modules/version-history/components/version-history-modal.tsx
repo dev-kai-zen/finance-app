@@ -14,21 +14,19 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import type { ReleaseNoteBlock } from "@/modules/whats-new/types/whats-new.types";
+import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-history.types";
 
-interface WhatsNewModalProps {
+interface VersionHistoryModalProps {
   blocks: ReleaseNoteBlock[];
   visible: boolean;
   onClose: () => void;
 }
 
-export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) {
+export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistoryModalProps) {
   const { width } = useWindowDimensions();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-
-  const primaryVersion = blocks[0]?.version;
 
   return (
     <Modal
@@ -39,7 +37,7 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
     >
       <View style={styles.overlay}>
         <Pressable
-          accessibilityLabel={t("whatsNew.dismissAccessibility")}
+          accessibilityLabel={t("versionHistory.dismissAccessibility")}
           accessibilityRole="button"
           onPress={onClose}
           style={styles.backdrop}
@@ -57,15 +55,7 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
               <Sparkles color={theme.colors.primary} size={24} />
             </View>
 
-            <Text style={styles.heading}>{t("whatsNew.heading")}</Text>
-
-            {primaryVersion ? (
-              <View style={styles.versionBadge}>
-                <Text style={styles.versionBadgeText}>
-                  {t("whatsNew.versionLabel", { version: primaryVersion })}
-                </Text>
-              </View>
-            ) : null}
+            <Text style={styles.heading}>{t("versionHistory.heading")}</Text>
           </View>
 
           {/* Scrollable Body */}
@@ -76,10 +66,13 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
             style={styles.bodyScrollView}
           >
             {blocks.length === 0 ? (
-              <Text style={styles.emptyMessage}>{t("whatsNew.empty")}</Text>
+              <Text style={styles.emptyMessage}>{t("versionHistory.empty")}</Text>
             ) : (
               blocks.map((block) => (
                 <View key={block.version} style={styles.block}>
+                  <View style={styles.versionBadge}>
+                    <Text style={styles.versionBadgeText}>v{block.version}</Text>
+                  </View>
                   {block.titleKey ? (
                     <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
                   ) : null}
@@ -110,7 +103,7 @@ export function WhatsNewModal({ blocks, visible, onClose }: WhatsNewModalProps) 
           {/* Fixed Footer */}
           <View style={styles.footer}>
             <AppButton
-              label={t("whatsNew.continue")}
+              label={t("versionHistory.continue")}
               onPress={onClose}
               style={styles.continueButton}
             />
@@ -181,11 +174,11 @@ function createStyles(theme: AppTheme) {
       textAlign: "center",
     },
     versionBadge: {
+      alignSelf: "flex-start",
       backgroundColor: `${theme.colors.primary}15`,
       borderColor: `${theme.colors.primary}35`,
       borderRadius: 999,
       borderWidth: 1,
-      marginTop: theme.spacing.xs,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: 3,
     },
@@ -214,13 +207,12 @@ function createStyles(theme: AppTheme) {
     },
     block: {
       gap: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
     },
     blockTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.semibold,
-      marginBottom: theme.spacing.xs,
-      textAlign: "center",
     },
     section: {
       gap: theme.spacing.xs,

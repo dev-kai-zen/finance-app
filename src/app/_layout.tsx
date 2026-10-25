@@ -24,7 +24,7 @@ import {
 import { ScheduledTransactionsProcessor } from "@/modules/scheduled-transactions";
 import { AppLockGate } from "@/modules/security";
 import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
-import { WhatsNewGate } from "@/modules/whats-new";
+import { VersionHistoryGate } from "@/modules/version-history";
 import { DeveloperMessageGate } from "@/modules/developer-message";
 import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
 import { initializeAdsSdk } from "@/modules/ads";
@@ -69,7 +69,7 @@ function RootLayoutContent() {
                     <AppLockGate>
                       <OnboardingGate>
                       <DeveloperMessageGate>
-                      <WhatsNewGate>
+                      <VersionHistoryGate>
                         <>
                         <ScheduledTransactionsProcessor />
                         <TransactionAttachmentsSyncProcessor />
@@ -146,7 +146,7 @@ function RootLayoutContent() {
                           </Stack>
                         </ExperienceAppShell>
                         </>
-                      </WhatsNewGate>
+                      </VersionHistoryGate>
                       </DeveloperMessageGate>
                     </OnboardingGate>
                   </AppLockGate>

@@ -64,7 +64,7 @@ export type WalkthroughTargetId =
   | "settingsSecurity"
   | "settingsPro"
   | "settingsRestorePurchases"
-  | "settingsWhatsNew"
+  | "settingsVersionHistory"
   // Accounts Form & Groups
   | "accountFormName"
   | "accountFormNote"

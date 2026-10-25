@@ -92,9 +92,9 @@ export const SETTINGS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "settingsWalkthrough.stepRestorePurchasesDesc",
   },
   {
-    id: "settingsWhatsNew",
-    targetId: "settingsWhatsNew",
-    titleKey: "settingsWalkthrough.stepWhatsNewTitle",
-    descKey: "settingsWalkthrough.stepWhatsNewDesc",
+    id: "settingsVersionHistory",
+    targetId: "settingsVersionHistory",
+    titleKey: "settingsWalkthrough.stepVersionHistoryTitle",
+    descKey: "settingsWalkthrough.stepVersionHistoryDesc",
   },
 ];

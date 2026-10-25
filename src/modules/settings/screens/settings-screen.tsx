@@ -35,7 +35,7 @@ import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
-import { getLatestReleaseNotes, WhatsNewModal } from "@/modules/whats-new";
+import { getAllReleaseNotes, VersionHistoryModal } from "@/modules/version-history";
 import { DeveloperMessageModal } from "@/modules/developer-message";
 import { ThemePickerModal } from "@/modules/settings/components/theme-picker-modal";
 import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-card";
@@ -99,7 +99,7 @@ function SettingsScreenContent() {
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
-  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isDeveloperMessageOpen, setIsDeveloperMessageOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const { openPro } = useLocalSearchParams<{ openPro?: string }>();
@@ -140,7 +140,7 @@ function SettingsScreenContent() {
   const securityRef = useWalkthroughTarget("settingsSecurity");
   const proRef = useWalkthroughTarget("settingsPro");
   const restorePurchasesRef = useWalkthroughTarget("settingsRestorePurchases");
-  const whatsNewRef = useWalkthroughTarget("settingsWhatsNew");
+  const versionHistoryRef = useWalkthroughTarget("settingsVersionHistory");
 
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
@@ -912,15 +912,15 @@ function SettingsScreenContent() {
           <Text style={styles.sectionTitle}>{t("settings.aboutSection")}</Text>
           <View style={styles.card}>
             <Pressable
-              ref={whatsNewRef as any}
+              ref={versionHistoryRef as any}
               collapsable={false}
               onLayout={(e) => {
-                itemScrollY.current["settingsWhatsNew"] =
+                itemScrollY.current["settingsVersionHistory"] =
                   (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
               }}
-              accessibilityLabel={t("settings.whatsNewAccessibility")}
+              accessibilityLabel={t("settings.versionHistoryAccessibility")}
               accessibilityRole="button"
-              onPress={() => setIsWhatsNewOpen(true)}
+              onPress={() => setIsVersionHistoryOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
                 pressed && styles.settingRowPressed,
@@ -931,7 +931,7 @@ function SettingsScreenContent() {
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
-                  {t("settings.whatsNew")}
+                  {t("settings.versionHistory")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1006,10 +1006,10 @@ function SettingsScreenContent() {
         visible={walkthrough.isWalkthroughActive}
       />
 
-      <WhatsNewModal
-        blocks={getLatestReleaseNotes()}
-        visible={isWhatsNewOpen}
-        onClose={() => setIsWhatsNewOpen(false)}
+      <VersionHistoryModal
+        blocks={getAllReleaseNotes()}
+        visible={isVersionHistoryOpen}
+        onClose={() => setIsVersionHistoryOpen(false)}
       />
 
       <DeveloperMessageModal

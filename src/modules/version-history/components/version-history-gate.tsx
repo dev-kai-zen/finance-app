@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 
 import { useWorkspace } from "@/modules/onboarding";
 import { useExperiencePreferences } from "@/modules/settings";
-import { WhatsNewModal } from "@/modules/whats-new/components/whats-new-modal";
+import { VersionHistoryModal } from "@/modules/version-history/components/version-history-modal";
 import {
   evaluateAutoShowPresentation,
-  markWhatsNewSeen,
-} from "@/modules/whats-new/services/whats-new.service";
-import type { ReleaseNoteBlock } from "@/modules/whats-new/types/whats-new.types";
+  markVersionHistorySeen,
+} from "@/modules/version-history/services/version-history.service";
+import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-history.types";
 
-export function WhatsNewGate({ children }: PropsWithChildren) {
+export function VersionHistoryGate({ children }: PropsWithChildren) {
   const { state } = useWorkspace();
   const experience = useExperiencePreferences();
   const [visible, setVisible] = useState(false);
@@ -34,12 +34,12 @@ export function WhatsNewGate({ children }: PropsWithChildren) {
   return (
     <>
       {children}
-      <WhatsNewModal
+      <VersionHistoryModal
         blocks={blocks}
         visible={visible}
         onClose={() => {
           setVisible(false);
-          markWhatsNewSeen();
+          markVersionHistorySeen();
         }}
       />
     </>

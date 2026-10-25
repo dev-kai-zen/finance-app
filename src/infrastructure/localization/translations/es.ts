@@ -160,9 +160,9 @@ export const es = {
     resetDataDescription:
       "Borra permanentemente todos los datos locales y comienza de nuevo.",
     aboutSection: "ACERCA DE",
-    whatsNew: "Novedades",
-    whatsNewDescription: "Consulta lo destacado de las últimas actualizaciones",
-    whatsNewAccessibility: "Abrir las notas de la versión",
+    versionHistory: "Historial de versiones",
+    versionHistoryDescription: "Consulta qué cambió en cada versión de la app",
+    versionHistoryAccessibility: "Abrir el historial de versiones",
     developerMessage: "Mensaje y meta del desarrollador",
     developerMessageSubtitle:
       "Una carta de John Paul Arellano sobre nuestra misión y educación financiera",
@@ -297,13 +297,16 @@ export const es = {
     palettes: "PALETAS",
     choices: "%{count} opciones",
   },
-  whatsNew: {
-    heading: "Novedades",
+  versionHistory: {
+    heading: "Historial de versiones",
     continue: "Continuar",
-    dismissAccessibility: "Cerrar novedades",
+    dismissAccessibility: "Cerrar historial de versiones",
     versionLabel: "Versión %{version}",
     empty: "Aún no hay notas de la versión para esta actualización.",
     categories: {
+      feature: "Función nueva",
+      update: "Actualización",
+      fix: "Corrección",
       accounts: "Cuentas",
       transactions: "Transacciones",
       calendar: "Calendario",
@@ -315,6 +318,10 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v110: {
+      updateItem1:
+        "Cambia Novedades a Historial de versiones y muestra todas las actualizaciones anteriores en una lista.",
     },
     v100: {
       title: "Te damos la bienvenida a Kaizen Finance",
@@ -1079,9 +1086,9 @@ export const es = {
     stepRestorePurchasesTitle: "Restaurar compras",
     stepRestorePurchasesDesc:
       "Restaura tu licencia Pro activa si reinstalas la app o cambias de dispositivo.",
-    stepWhatsNewTitle: "Novedades",
-    stepWhatsNewDesc:
-      "Consulta las últimas funciones, notas de versión, correcciones de errores y mejoras.",
+    stepVersionHistoryTitle: "Historial de versiones",
+    stepVersionHistoryDesc:
+      "Consulta qué cambió en cada versión de la app, incluidas nuevas funciones, correcciones y mejoras.",
   },
   resetData: {
     dismissAccessibility:

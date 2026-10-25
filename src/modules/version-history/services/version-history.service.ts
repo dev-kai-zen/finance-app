@@ -1,29 +1,29 @@
-import { RELEASE_NOTES } from "@/modules/whats-new/constants/release-notes";
+import { RELEASE_NOTES } from "@/modules/version-history/constants/release-notes";
 import type {
   ReleaseNoteBlock,
-  WhatsNewPresentation,
-} from "@/modules/whats-new/types/whats-new.types";
+  VersionHistoryPresentation,
+} from "@/modules/version-history/types/version-history.types";
 import {
   getAppFingerprint,
   getMarketingVersionFromFingerprint,
-} from "@/modules/whats-new/utils/app-fingerprint";
-import { compareSemver } from "@/modules/whats-new/utils/compare-app-versions";
+} from "@/modules/version-history/utils/app-fingerprint";
+import { compareSemver } from "@/modules/version-history/utils/compare-app-versions";
 import {
   getLastSeenAppFingerprint as readLastSeenAppFingerprint,
   saveLastSeenAppFingerprint,
-} from "@/modules/whats-new/repositories/whats-new.repository";
+} from "@/modules/version-history/repositories/version-history.repository";
 
-type WhatsNewListener = () => void;
-const listeners = new Set<WhatsNewListener>();
+type VersionHistoryListener = () => void;
+const listeners = new Set<VersionHistoryListener>();
 
-export function subscribeToWhatsNew(listener: WhatsNewListener): () => void {
+export function subscribeToVersionHistory(listener: VersionHistoryListener): () => void {
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
   };
 }
 
-function notifyWhatsNewListeners(): void {
+function notifyVersionHistoryListeners(): void {
   listeners.forEach((listener) => {
     try {
       listener();
@@ -37,13 +37,19 @@ export function getLastSeenAppFingerprint(): string | null {
   return readLastSeenAppFingerprint();
 }
 
-export function markWhatsNewSeen(fingerprint = getAppFingerprint()): void {
+export function markVersionHistorySeen(fingerprint = getAppFingerprint()): void {
   saveLastSeenAppFingerprint(fingerprint);
-  notifyWhatsNewListeners();
+  notifyVersionHistoryListeners();
 }
 
-export function isWhatsNewPending(): boolean {
+export function isVersionHistoryPending(): boolean {
   return evaluateAutoShowPresentation() !== null;
+}
+
+export function getAllReleaseNotes(): ReleaseNoteBlock[] {
+  return [...RELEASE_NOTES].sort((left, right) =>
+    compareSemver(right.version, left.version),
+  );
 }
 
 export function getLatestReleaseNotes(): ReleaseNoteBlock[] {
@@ -58,7 +64,7 @@ export function getLatestReleaseNotes(): ReleaseNoteBlock[] {
   return [RELEASE_NOTES[0]!];
 }
 
-export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {
+export function evaluateAutoShowPresentation(): VersionHistoryPresentation | null {
   const currentFingerprint = getAppFingerprint();
   const lastSeenFingerprint = getLastSeenAppFingerprint();
 
@@ -69,7 +75,7 @@ export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {
   if (lastSeenFingerprint === null) {
     const initialBlocks = getLatestReleaseNotes();
     if (initialBlocks.length === 0) {
-      markWhatsNewSeen(currentFingerprint);
+      markVersionHistorySeen(currentFingerprint);
       return null;
     }
     return { blocks: initialBlocks };
@@ -81,7 +87,7 @@ export function evaluateAutoShowPresentation(): WhatsNewPresentation | null {
   );
 
   if (blocks.length === 0) {
-    markWhatsNewSeen(currentFingerprint);
+    markVersionHistorySeen(currentFingerprint);
     return null;
   }
 

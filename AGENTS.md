@@ -399,7 +399,7 @@ When modifying this project, AI agents must:
 11. **DO NOT EDIT ANY FILES INSIDE THE `node_modules`**: AI agents are strictly forbidden from modifying any file inside `node_modules`. All fixes and adaptations must be made in application code or configuration.
 12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.
 13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).
-14. **What's New Updates Rule**: Follow the What's New guidelines in Section 18 when updating or adding release notes.
+14. **Version History Updates Rule**: Follow the Version History guidelines in Section 18 when updating or adding release notes.
 
 ---
 
@@ -422,9 +422,9 @@ The Minimal Diff Principle means minimizing unrelated and incidental changes, no
 
 ---
 
-# 18. What's New & Release Notes Rules
+# 18. Version History & Release Notes Rules
 
-When adding or updating "What's New" release notes (`src/modules/whats-new/`):
+When adding or updating "Version History" release notes (`src/modules/version-history/`):
 
 1. **Group by Feature / Category**:
    - Every note must be organized under a module or feature section (e.g., `Calendar`, `Transactions`, `Accounts`, `Budgets`, `Credit Cards`, `Reports`, `Backup & Sync`, `Settings`, or `General`).
@@ -451,6 +451,6 @@ When adding or updating "What's New" release notes (`src/modules/whats-new/`):
    - All string keys must exist in `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts`.
    - Never add English release notes without the matching Filipino and Spanish translations.
 5. **Version Bump Alignment**:
-   - Whenever the application version is incremented in `package.json` and `app.json`, add a new release block at the top of `RELEASE_NOTES` in `src/modules/whats-new/constants/release-notes.ts`.
+   - Whenever the application version is incremented in `package.json` and `app.json`, add a new release block at the top of `RELEASE_NOTES` in `src/modules/version-history/constants/release-notes.ts`.
    - First deployment (v1.0.0) provides a comprehensive overview of all app features; subsequent versions summarize only what changed or was fixed in that release.
 
