@@ -384,6 +384,8 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v110: {
+      searchItem1:
+        "Magdagdag ng Mabilisang Paghahanap upang madaling mahanap at mapuntahan ang mga screen, setting, at aksyon.",
       updateItem1:
         "Pinalitan ang Ano ang Bago ng Kasaysayan ng Bersyon at ipinapakita na ang lahat ng nakaraang update sa isang listahan.",
     },

@@ -371,6 +371,8 @@ export const en = {
       general: "General",
     },
     v110: {
+      searchItem1:
+        "Add Quick Search to quickly find and navigate to screens, settings, and actions.",
       updateItem1:
         "Rename What's New to Version History and show every past update in one list.",
     },

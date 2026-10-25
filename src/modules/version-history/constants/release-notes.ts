@@ -6,6 +6,12 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     version: "1.1.0",
     sections: [
       {
+        categoryKey: "versionHistory.categories.general",
+        itemKeys: [
+          "versionHistory.v110.searchItem1",
+        ],
+      },
+      {
         categoryKey: "versionHistory.categories.update",
         itemKeys: [
           "versionHistory.v110.updateItem1",

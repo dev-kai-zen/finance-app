@@ -383,6 +383,8 @@ export const es = {
       general: "General",
     },
     v110: {
+      searchItem1:
+        "Añadir Búsqueda Rápida para encontrar y acceder fácilmente a pantallas, ajustes y acciones.",
       updateItem1:
         "Cambia Novedades a Historial de versiones y muestra todas las actualizaciones anteriores en una lista.",
     },
