@@ -25,8 +25,10 @@ import {
   Cloud,
   CreditCard,
   Crown,
+  Database,
   FileText,
   HardDrive,
+  Heart,
   History,
   Languages,
   Palette,
@@ -38,6 +40,7 @@ import {
   SearchX,
   Settings,
   ShieldCheck,
+  Smile,
   Sparkles,
   Tags,
   Target,
@@ -108,6 +111,14 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <RotateCcw color={color} size={size} />;
     case "trash-2":
       return <Trash2 color={color} size={size} />;
+    case "smile":
+      return <Smile color={color} size={size} />;
+    case "search":
+      return <Search color={color} size={size} />;
+    case "heart":
+      return <Heart color={color} size={size} />;
+    case "database":
+      return <Database color={color} size={size} />;
     default:
       return <Plus color={color} size={size} />;
   }

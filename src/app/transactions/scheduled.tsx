@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { InfoModal, ModalScreenHeader } from "@/components";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ScheduledTransactionsScreen } from "@/modules/scheduled-transactions";
 
 export default function ScheduledTransactionsRoute() {
+  const { action } = useLocalSearchParams<{ action?: string }>();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const [helpVisible, setHelpVisible] = useState(false);
@@ -30,7 +32,9 @@ export default function ScheduledTransactionsRoute() {
         title={t("scheduledTransactions.helpTitle")}
         visible={helpVisible}
       />
-      <ScheduledTransactionsScreen />
+      <ScheduledTransactionsScreen
+        initialAction={action === "new" ? "new" : undefined}
+      />
     </View>
   );
 }

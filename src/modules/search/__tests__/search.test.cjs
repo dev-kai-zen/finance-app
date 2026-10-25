@@ -203,3 +203,88 @@ test("search settings translation: labels exist in EN, ES, and FIL", () => {
   assert.ok(es.settings.quickSearchDescription, "Missing ES quickSearchDescription");
   assert.ok(fil.settings.quickSearchDescription, "Missing FIL quickSearchDescription");
 });
+
+test("search catalog: finds Nickname setting easily", () => {
+  const queryVariations = ["nickname", "name", "profile", "palayaw", "apodo"];
+
+  for (const query of queryVariations) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    const hasNickname = matches.some((item) => item.id === "setting_nickname");
+    assert.ok(
+      hasNickname,
+      `Expected 'setting_nickname' to match query '${query}', found: ${matches.map((m) => m.id).join(", ")}`,
+    );
+
+    const nicknameItem = matches.find((item) => item.id === "setting_nickname");
+    assert.equal(nicknameItem.targetId, "settingsNickname");
+    assert.equal(nicknameItem.openModal, true);
+    assert.equal(nicknameItem.route, "/settings?target=settingsNickname&openModal=true");
+  }
+});
+
+test("search catalog: finds specific reports", () => {
+  const reportQueries = [
+    { query: "cash flow", expectedId: "screen_report_cash_flow" },
+    { query: "balance sheet", expectedId: "screen_report_balance_sheet" },
+    { query: "net worth", expectedId: "screen_report_net_worth" },
+    { query: "labels", expectedId: "screen_report_labels_summary" },
+  ];
+
+  for (const { query, expectedId } of reportQueries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}'`,
+    );
+  }
+});
+
+test("search catalog: finds new quick actions", () => {
+  const actionQueries = [
+    { query: "scheduled", expectedId: "action_add_scheduled" },
+    { query: "category", expectedId: "action_add_category" },
+    { query: "credit card", expectedId: "action_add_credit_card" },
+  ];
+
+  for (const { query, expectedId } of actionQueries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}'`,
+    );
+  }
+});
+

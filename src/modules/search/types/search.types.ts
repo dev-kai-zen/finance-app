@@ -38,7 +38,11 @@ export interface SearchCatalogItem {
     | "history"
     | "crown"
     | "rotate-ccw"
-    | "trash-2";
+    | "trash-2"
+    | "smile"
+    | "search"
+    | "heart"
+    | "database";
   iconColor?: string;
   route: string;
   targetId?: string;

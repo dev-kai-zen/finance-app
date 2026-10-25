@@ -68,15 +68,19 @@ const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
   { label: "Archived", value: "archived" },
 ];
 
-export function ScheduledTransactionsScreen() {
+export function ScheduledTransactionsScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <ScheduledTransactionsScreenContent />
+      <ScheduledTransactionsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function ScheduledTransactionsScreenContent() {
+function ScheduledTransactionsScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
@@ -99,7 +103,13 @@ function ScheduledTransactionsScreenContent() {
     scheduleIdsWithPostings,
   } = useScheduledTransactions();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
-  const [formVisible, setFormVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(() => initialAction === "new");
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      setFormVisible(true);
+    }
+  }, [initialAction]);
   const [editingSchedule, setEditingSchedule] =
     useState<ScheduledTransaction | null>(null);
   const [pendingEnd, setPendingEnd] =

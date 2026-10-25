@@ -153,6 +153,8 @@ function SettingsScreenContent() {
             setIsResetDataOpen(true);
           } else if (target === "settingsVersionHistory") {
             setIsVersionHistoryOpen(true);
+          } else if (target === "settingsDeveloperMessage") {
+            setIsDeveloperMessageOpen(true);
           } else if (target === "settingsPro") {
             setIsPaywallOpen(true);
           }
@@ -498,7 +500,17 @@ function SettingsScreenContent() {
 
             <View style={styles.rowDivider} />
 
-            <View style={styles.toggleRow}>
+            <View
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsQuickSearch"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={[
+                styles.toggleRow,
+                highlightedTarget === "settingsQuickSearch" && styles.settingRowHighlighted,
+              ]}
+            >
               <View style={styles.iconContainer}>
                 <Search color={theme.colors.primary} size={20} />
               </View>
@@ -865,6 +877,7 @@ function SettingsScreenContent() {
               }}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsRestorePurchases" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -1035,11 +1048,17 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDeveloperMessage"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.developerMessageAccessibility")}
               accessibilityRole="button"
               onPress={() => setIsDeveloperMessageOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsDeveloperMessage" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -1060,6 +1079,11 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsPrivacy"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.privacyAccessibility")}
               accessibilityRole="link"
               onPress={() => {
@@ -1069,6 +1093,7 @@ function SettingsScreenContent() {
               }}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsPrivacy" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
