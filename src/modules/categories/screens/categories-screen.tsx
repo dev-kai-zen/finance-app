@@ -42,7 +42,10 @@ import { SubcategoryModal } from "../components/subcategory-modal";
 import { useCategories } from "../hooks/use-categories";
 import type { Category, CategoryType } from "../types/category.types";
 
-export function CategoriesScreen(props: { initialView?: "group" }) {
+export function CategoriesScreen(props: {
+  initialType?: CategoryType;
+  initialView?: "group";
+}) {
   return (
     <WalkthroughRegistryProvider>
       <CategoriesScreenContent {...props} />
@@ -51,8 +54,10 @@ export function CategoriesScreen(props: { initialView?: "group" }) {
 }
 
 function CategoriesScreenContent({
+  initialType,
   initialView,
 }: {
+  initialType?: CategoryType;
   initialView?: "group";
 }) {
   const { width } = useWindowDimensions();
@@ -73,8 +78,16 @@ function CategoriesScreenContent({
     clearError,
   } = useCategories();
 
-  const [selectedType, setSelectedType] = useState<CategoryType>("expense");
+  const [selectedType, setSelectedType] = useState<CategoryType>(
+    () => initialType ?? "expense",
+  );
   const [hasExistingTransactions, setHasExistingTransactions] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (initialType) {
+      setSelectedType(initialType);
+    }
+  }, [initialType]);
 
   useFocusEffect(
     useCallback(() => {

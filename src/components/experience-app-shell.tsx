@@ -4,6 +4,7 @@ import { NotificationModal } from "@/components/notification-modal";
 import { AppShell } from "@/components/app-shell";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
+import { GeneralSearchModal, SearchProvider } from "@/modules/search";
 
 export function ExperienceAppShell({
   banner,
@@ -18,7 +19,7 @@ export function ExperienceAppShell({
   }
 
   return (
-    <>
+    <SearchProvider>
       <AppShell
         banner={banner}
         hiddenNavHrefs={hiddenNavHrefs}
@@ -30,6 +31,7 @@ export function ExperienceAppShell({
       >
         {children}
       </AppShell>
+      <GeneralSearchModal />
       {experience.isDevModeAllowed && (
         <NotificationModal
           message={t("settings.developerModeEnabledMessage")}
@@ -39,6 +41,6 @@ export function ExperienceAppShell({
           visible={experience.developerUnlockNotice}
         />
       )}
-    </>
+    </SearchProvider>
   );
 }

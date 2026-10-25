@@ -121,13 +121,21 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
   return { key, label };
 }
 
-function initialFilterState(accountId?: string): TransactionFilterState {
-  if (!accountId) {
+function initialFilterState(
+  accountId?: string,
+  initialType?: string,
+): TransactionFilterState {
+  const filterType =
+    initialType === "expense" || initialType === "income" || initialType === "transfer"
+      ? initialType
+      : "all";
+  if (!accountId && filterType === "all") {
     return DEFAULT_TRANSACTION_FILTERS;
   }
   return {
     ...DEFAULT_TRANSACTION_FILTERS,
-    accountIds: [accountId],
+    ...(accountId ? { accountIds: [accountId] } : {}),
+    type: filterType,
   };
 }
 
@@ -197,7 +205,10 @@ function TransactionsScreenContent({
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
-    initialFilterState(initialAccountId),
+    initialFilterState(
+      initialAccountId,
+      initialAction !== "new" ? initialType : undefined,
+    ),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
 
@@ -246,10 +257,12 @@ function TransactionsScreenContent({
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useEffect(() => {
-    if (initialAccountId) {
+    if (initialAction !== "new" && initialType) {
+      setFilterState(initialFilterState(initialAccountId, initialType));
+    } else if (initialAccountId) {
       setFilterState(initialFilterState(initialAccountId));
     }
-  }, [initialAccountId]);
+  }, [initialAccountId, initialAction, initialType]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);

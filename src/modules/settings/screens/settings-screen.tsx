@@ -17,6 +17,7 @@ import {
   Palette,
   Pipette,
   RotateCcw,
+  Search,
   Settings as SettingsIcon,
   Shield,
   ShieldCheck,
@@ -102,14 +103,73 @@ function SettingsScreenContent() {
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isDeveloperMessageOpen, setIsDeveloperMessageOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
-  const { openPro } = useLocalSearchParams<{ openPro?: string }>();
+  const { openPro, target, openModal } = useLocalSearchParams<{
+    openPro?: string;
+    target?: string;
+    openModal?: string;
+  }>();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [highlightedTarget, setHighlightedTarget] = useState<string | null>(null);
+  const handledTargetRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (openPro === "true" || openPro === "1") {
       setIsPaywallOpen(true);
     }
   }, [openPro]);
+
+  useEffect(() => {
+    if (!target) return;
+    const targetKey = `${target}-${openModal ?? "false"}`;
+    if (handledTargetRef.current === targetKey) return;
+    handledTargetRef.current = targetKey;
+
+    setHighlightedTarget(target);
+
+    const scrollTimer = setTimeout(() => {
+      const offset = itemScrollY.current[target];
+      if (offset !== undefined) {
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      }
+
+      if (openModal === "true") {
+        const modalTimer = setTimeout(() => {
+          if (target === "settingsSecurity") {
+            setIsSecurityOpen(true);
+          } else if (target === "settingsTheme") {
+            setIsThemePickerOpen(true);
+          } else if (target === "settingsHexColors") {
+            setIsHexColorsOpen(true);
+          } else if (target === "settingsNickname") {
+            setIsNicknameModalOpen(true);
+          } else if (target === "settingsDefaultExpense") {
+            setIsExpensePickerOpen(true);
+          } else if (target === "settingsDefaultIncome") {
+            setIsIncomePickerOpen(true);
+          } else if (target === "settingsResetData") {
+            setIsResetDataOpen(true);
+          } else if (target === "settingsVersionHistory") {
+            setIsVersionHistoryOpen(true);
+          } else if (target === "settingsPro") {
+            setIsPaywallOpen(true);
+          }
+        }, 350);
+        return () => clearTimeout(modalTimer);
+      }
+    }, 250);
+
+    const clearHighlightTimer = setTimeout(() => {
+      setHighlightedTarget(null);
+    }, 3500);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearHighlightTimer);
+    };
+  }, [target, openModal]);
   const {
     isPro,
     isDevSimulated,
@@ -240,6 +300,7 @@ function SettingsScreenContent() {
               onPress={() => router.push("/language")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsLanguage" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -269,6 +330,7 @@ function SettingsScreenContent() {
               onPress={() => router.push("/currency-setup")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsCurrency" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -316,6 +378,7 @@ function SettingsScreenContent() {
               onPress={() => setIsNicknameModalOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsNickname" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -349,6 +412,7 @@ function SettingsScreenContent() {
               onPress={() => setIsThemePickerOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsTheme" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -383,6 +447,7 @@ function SettingsScreenContent() {
               onPress={() => router.push("/reminder-settings")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsReminders" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -433,6 +498,27 @@ function SettingsScreenContent() {
 
             <View style={styles.rowDivider} />
 
+            <View style={styles.toggleRow}>
+              <View style={styles.iconContainer}>
+                <Search color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.quickSearchTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.quickSearchDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.quickSearchTitle")}
+                onValueChange={(value) => experience.setGeneralSearch(value)}
+                value={experience.generalSearchEnabled}
+              />
+            </View>
+
+            <View style={styles.rowDivider} />
+
             <Pressable
               ref={defaultExpenseRef as any}
               collapsable={false}
@@ -447,6 +533,7 @@ function SettingsScreenContent() {
               onPress={() => setIsExpensePickerOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsDefaultExpense" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -480,6 +567,7 @@ function SettingsScreenContent() {
               onPress={() => setIsIncomePickerOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsDefaultIncome" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -513,6 +601,7 @@ function SettingsScreenContent() {
               onPress={() => setIsHexColorsOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsHexColors" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -549,6 +638,7 @@ function SettingsScreenContent() {
               }}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsResetData" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -585,6 +675,7 @@ function SettingsScreenContent() {
               onPress={() => router.push("/local-backup")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsLocalBackup" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -613,6 +704,7 @@ function SettingsScreenContent() {
               onPress={() => router.push("/google-drive-backup")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsGoogleDrive" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -674,6 +766,7 @@ function SettingsScreenContent() {
               onPress={() => setIsSecurityOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsSecurity" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -723,6 +816,7 @@ function SettingsScreenContent() {
               onPress={() => setIsPaywallOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsPro" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -923,6 +1017,7 @@ function SettingsScreenContent() {
               onPress={() => setIsVersionHistoryOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsVersionHistory" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -1167,6 +1262,12 @@ function createStyles(theme: AppTheme) {
       minHeight: 68,
       paddingHorizontal: theme.spacing.lg,
       paddingVertical: theme.spacing.md,
+    },
+    settingRowHighlighted: {
+      backgroundColor: theme.colors.primary + "18",
+      borderColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1.5,
     },
     settingRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
