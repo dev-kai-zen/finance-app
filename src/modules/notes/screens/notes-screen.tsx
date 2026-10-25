@@ -6,7 +6,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { ConfirmModal } from "@/components";
 import { FloatingActionButton } from "@/components/floating-action-button";
@@ -49,6 +49,7 @@ function NotesScreenContent({
 }: {
   initialAction?: "new";
 }) {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -72,17 +73,11 @@ function NotesScreenContent({
   } = useNotes();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
-  const [editorVisible, setEditorVisible] = useState(() => initialAction === "new");
+  const [editorVisible, setEditorVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (initialAction === "new") {
-      setSelectedNote(null);
-      setEditorVisible(true);
-    }
-  }, [initialAction]);
+  const handledActionRef = useRef<string | null>(null);
 
   // Walkthrough targets & coordination
   const emptyCreateRef = useWalkthroughTarget("notesEmptyCreateButton");
@@ -150,7 +145,7 @@ function NotesScreenContent({
     }, [refresh]),
   );
 
-  const handleOpenNewNote = () => {
+  const handleOpenNewNote = useCallback(() => {
     if (notes.length >= PRO_LIMITS.FREE_MAX_NOTES) {
       guardAction(() => {
         setSelectedNote(null);
@@ -165,7 +160,19 @@ function NotesScreenContent({
     }
     setSelectedNote(null);
     setEditorVisible(true);
-  };
+  }, [guardAction, notes.length, t]);
+
+  useEffect(() => {
+    if (!loading && initialAction === "new") {
+      if (handledActionRef.current !== "new") {
+        handledActionRef.current = "new";
+        handleOpenNewNote();
+        router.setParams({ action: undefined });
+      }
+    } else if (!initialAction) {
+      handledActionRef.current = null;
+    }
+  }, [handleOpenNewNote, initialAction, loading, router]);
 
   const handleSelectNote = (note: Note) => {
     setSelectedNote(note);

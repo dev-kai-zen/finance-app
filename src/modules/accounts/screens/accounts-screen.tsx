@@ -84,7 +84,6 @@ function AccountsScreenContent({
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (initialView === "types") return { kind: "types" };
-    if (initialView === "account") return { kind: "create" };
     return null;
   });
 
@@ -92,19 +91,7 @@ function AccountsScreenContent({
   const [archivedModalOpen, setArchivedModalOpen] = useState(
     () => initialView === "archived",
   );
-
-  useEffect(() => {
-    if (initialView === "account") {
-      setOverlay({ kind: "create" });
-      router.setParams({ setup: undefined, view: undefined });
-    } else if (initialView === "types") {
-      setOverlay({ kind: "types" });
-      router.setParams({ setup: undefined, view: undefined });
-    } else if (initialView === "archived") {
-      setArchivedModalOpen(true);
-      router.setParams({ setup: undefined, view: undefined });
-    }
-  }, [initialView, router]);
+  const handledViewRef = useRef<string | null>(null);
   const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
     string | null
   >(null);
@@ -199,6 +186,46 @@ function AccountsScreenContent({
     mutations.clearError();
     setOverlay(next);
   };
+
+  const handleOpenAddAccount = useCallback(() => {
+    const activeCount = data.accounts.filter((a) => !a.isArchived).length;
+    if (activeCount >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
+      guardAction(() => {
+        open({ kind: "create" });
+      }, {
+        featureTitle: t("pro.limits.accountsTitle"),
+        featureDescription: t("pro.limits.accountsDesc", {
+          count: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+        }),
+      });
+      return;
+    }
+    open({ kind: "create" });
+  }, [data.accounts, guardAction, mutations.pending, t]);
+
+  useEffect(() => {
+    if (!data.loading && initialView === "account") {
+      if (handledViewRef.current !== "account") {
+        handledViewRef.current = "account";
+        handleOpenAddAccount();
+        router.setParams({ setup: undefined, view: undefined });
+      }
+    } else if (initialView === "types") {
+      if (handledViewRef.current !== "types") {
+        handledViewRef.current = "types";
+        setOverlay({ kind: "types" });
+        router.setParams({ setup: undefined, view: undefined });
+      }
+    } else if (initialView === "archived") {
+      if (handledViewRef.current !== "archived") {
+        handledViewRef.current = "archived";
+        setArchivedModalOpen(true);
+        router.setParams({ setup: undefined, view: undefined });
+      }
+    } else if (!initialView) {
+      handledViewRef.current = null;
+    }
+  }, [data.loading, handleOpenAddAccount, initialView, router]);
 
   const close = () => setOverlay(null);
   const selectedAccountId = overlay
@@ -445,20 +472,7 @@ function AccountsScreenContent({
 
       <AccountsFabSheet
         visible={fabSheetOpen}
-        onAddAccount={() => {
-          if (active.length >= PRO_LIMITS.FREE_MAX_ACCOUNTS) {
-            guardAction(() => {
-              open({ kind: "create" });
-            }, {
-              featureTitle: t("pro.limits.accountsTitle"),
-              featureDescription: t("pro.limits.accountsDesc", {
-                count: PRO_LIMITS.FREE_MAX_ACCOUNTS,
-              }),
-            });
-            return;
-          }
-          open({ kind: "create" });
-        }}
+        onAddAccount={handleOpenAddAccount}
         onClose={() => setFabSheetOpen(false)}
         onManageTypes={() => open({ kind: "types" })}
       />

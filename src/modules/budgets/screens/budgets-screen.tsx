@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import {
   AlertCircle,
   AlertTriangle,
@@ -78,6 +79,7 @@ function BudgetsScreenContent({
 }: {
   initialAction?: "new";
 }) {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -85,16 +87,10 @@ function BudgetsScreenContent({
   const styles = useThemeStyles(createStyles);
 
   const [selectedFilter, setSelectedFilter] = useState<FrequencyFilter>("all");
-  const [isFormOpen, setIsFormOpen] = useState(() => initialAction === "new");
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [budgetToEdit, setBudgetToEdit] = useState<CategoryBudget | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialAction === "new") {
-      setBudgetToEdit(null);
-      setIsFormOpen(true);
-    }
-  }, [initialAction]);
+  const handledActionRef = useRef<string | null>(null);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const { preferences } = useCurrencyPreferences();
@@ -180,7 +176,7 @@ function BudgetsScreenContent({
     }
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     if (budgets.length >= PRO_LIMITS.FREE_MAX_CATEGORY_BUDGETS) {
       guardAction(() => {
         setBudgetToEdit(null);
@@ -195,7 +191,19 @@ function BudgetsScreenContent({
     }
     setBudgetToEdit(null);
     setIsFormOpen(true);
-  };
+  }, [budgets.length, guardAction, t]);
+
+  useEffect(() => {
+    if (!loading && initialAction === "new") {
+      if (handledActionRef.current !== "new") {
+        handledActionRef.current = "new";
+        handleOpenCreate();
+        router.setParams({ action: undefined });
+      }
+    } else if (!initialAction) {
+      handledActionRef.current = null;
+    }
+  }, [handleOpenCreate, initialAction, loading, router]);
 
   const handleOpenEdit = (status: BudgetStatus) => {
     setBudgetToEdit(status.budget);
