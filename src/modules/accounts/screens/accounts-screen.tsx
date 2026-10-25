@@ -85,6 +85,14 @@ function AccountsScreenContent({
     if (initialView === "account") return { kind: "create" };
     return null;
   });
+
+  useEffect(() => {
+    if (initialView === "account") {
+      setOverlay({ kind: "create" });
+    } else if (initialView === "types") {
+      setOverlay({ kind: "types" });
+    }
+  }, [initialView]);
   const [fabSheetOpen, setFabSheetOpen] = useState(false);
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
   const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<

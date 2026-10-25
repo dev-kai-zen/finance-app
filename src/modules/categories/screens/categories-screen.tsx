@@ -101,6 +101,13 @@ function CategoriesScreenContent({
   );
   const [groupToEdit, setGroupToEdit] = useState<Category | null>(null);
 
+  useEffect(() => {
+    if (initialView === "group") {
+      setGroupToEdit(null);
+      setIsGroupModalVisible(true);
+    }
+  }, [initialView]);
+
   // Subcategory Modal State
   const [isSubModalVisible, setIsSubModalVisible] = useState(false);
   const [parentForSub, setParentForSub] = useState<Category | null>(null);

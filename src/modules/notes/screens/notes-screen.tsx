@@ -36,15 +36,19 @@ import { NoteTableRow } from "../components/note-table-row";
 import { useNotes } from "../hooks/use-notes";
 import type { Note, NoteAttachmentDraft } from "../types/note.types";
 
-export function NotesScreen() {
+export function NotesScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <NotesScreenContent />
+      <NotesScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function NotesScreenContent() {
+function NotesScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -68,10 +72,17 @@ function NotesScreenContent() {
   } = useNotes();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
-  const [editorVisible, setEditorVisible] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(() => initialAction === "new");
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      setSelectedNote(null);
+      setEditorVisible(true);
+    }
+  }, [initialAction]);
 
   // Walkthrough targets & coordination
   const emptyCreateRef = useWalkthroughTarget("notesEmptyCreateButton");

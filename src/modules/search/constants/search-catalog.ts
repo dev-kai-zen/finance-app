@@ -98,7 +98,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     descriptionKey: "search.actionAddBudgetDesc",
     iconName: "pie-chart",
     iconColor: "#EC4899",
-    route: "/budgets",
+    route: "/budgets?action=new",
     keywords: [
       "new budget",
       "create budget",
@@ -115,7 +115,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     descriptionKey: "search.actionAddGoalDesc",
     iconName: "target",
     iconColor: "#F59E0B",
-    route: "/goals",
+    route: "/goals?action=new",
     keywords: [
       "new goal",
       "savings goal",
@@ -134,7 +134,7 @@ export const SEARCH_CATALOG: SearchCatalogItem[] = [
     descriptionKey: "search.actionAddNoteDesc",
     iconName: "file-text",
     iconColor: "#8B5CF6",
-    route: "/notes",
+    route: "/notes?action=new",
     keywords: [
       "new note",
       "memo",

@@ -65,15 +65,19 @@ const FILTER_TABS: Array<{ key: FrequencyFilter; label: string }> = [
   { key: "yearly", label: "Yearly" },
 ];
 
-export function BudgetsScreen() {
+export function BudgetsScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <BudgetsScreenContent />
+      <BudgetsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function BudgetsScreenContent() {
+function BudgetsScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -81,9 +85,16 @@ function BudgetsScreenContent() {
   const styles = useThemeStyles(createStyles);
 
   const [selectedFilter, setSelectedFilter] = useState<FrequencyFilter>("all");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(() => initialAction === "new");
   const [budgetToEdit, setBudgetToEdit] = useState<CategoryBudget | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      setBudgetToEdit(null);
+      setIsFormOpen(true);
+    }
+  }, [initialAction]);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const { preferences } = useCurrencyPreferences();

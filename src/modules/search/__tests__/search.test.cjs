@@ -288,3 +288,22 @@ test("search catalog: finds new quick actions", () => {
   }
 });
 
+test("search catalog: creation quick actions route with action=new", () => {
+  const goalItem = SEARCH_CATALOG.find((item) => item.id === "action_add_goal");
+  assert.ok(goalItem, "action_add_goal must exist");
+  assert.equal(goalItem.route, "/goals?action=new");
+
+  const budgetItem = SEARCH_CATALOG.find((item) => item.id === "action_add_budget");
+  assert.ok(budgetItem, "action_add_budget must exist");
+  assert.equal(budgetItem.route, "/budgets?action=new");
+
+  const noteItem = SEARCH_CATALOG.find((item) => item.id === "action_add_note");
+  assert.ok(noteItem, "action_add_note must exist");
+  assert.equal(noteItem.route, "/notes?action=new");
+
+  const scheduledItem = SEARCH_CATALOG.find((item) => item.id === "action_add_scheduled");
+  assert.ok(scheduledItem, "action_add_scheduled must exist");
+  assert.equal(scheduledItem.route, "/transactions/scheduled?action=new");
+});
+
+

@@ -43,15 +43,19 @@ const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "completed", label: "Completed" },
 ];
 
-export function GoalsScreen() {
+export function GoalsScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <GoalsScreenContent />
+      <GoalsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function GoalsScreenContent() {
+function GoalsScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
@@ -69,9 +73,16 @@ function GoalsScreenContent() {
   } = useGoals();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(() => initialAction === "new");
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
+
+  useEffect(() => {
+    if (initialAction === "new") {
+      setGoalToEdit(null);
+      setIsFormOpen(true);
+    }
+  }, [initialAction]);
 
   // Walkthrough targets & coordination
   const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
