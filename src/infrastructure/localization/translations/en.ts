@@ -8,7 +8,7 @@ export const en = {
   },
   search: {
     openSearch: "Open search",
-    searchPlaceholder: "Search screens, settings & actions...",
+    searchPlaceholder: "Search...",
     noResultsTitle: "No matching results",
     noResultsSubtitle:
       "Try searching with other keywords like 'password', 'expense', or 'currency'.",

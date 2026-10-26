@@ -13,7 +13,7 @@ export const fil = {
   },
   search: {
     openSearch: "Buksan ang paghahanap",
-    searchPlaceholder: "Maghanap ng screens, settings at aksyon...",
+    searchPlaceholder: "Maghanap...",
     noResultsTitle: "Walang tumugmang resulta",
     noResultsSubtitle:
       "Subukang maghanap gamit ang ibang mga keyword tulad ng 'password', 'gastos', o 'currency'.",

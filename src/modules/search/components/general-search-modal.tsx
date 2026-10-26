@@ -273,6 +273,8 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
               autoCorrect={false}
               autoFocus
               clearButtonMode="while-editing"
+              multiline={false}
+              numberOfLines={1}
               onChangeText={setSearchQuery}
               placeholder={t("search.searchPlaceholder")}
               placeholderTextColor={theme.colors.textMuted}

@@ -39,7 +39,11 @@ export const SearchTriggerButton = memo(function SearchTriggerButton({
         ]}
       >
         <Search color={theme.colors.textMuted} size={16} />
-        <Text numberOfLines={1} style={styles.barPlaceholder}>
+        <Text
+          ellipsizeMode="tail"
+          numberOfLines={1}
+          style={styles.barPlaceholder}
+        >
           {t("search.searchPlaceholder")}
         </Text>
       </Pressable>
@@ -83,10 +87,10 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.sm,
+      height: 38,
       marginHorizontal: 0,
       marginBottom: theme.spacing.xs,
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: 10,
     },
     barPressed: {
       borderColor: theme.colors.primary,
@@ -97,6 +101,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       fontSize: 13,
       fontWeight: "400",
+      minWidth: 0,
     },
   });
 }

@@ -13,7 +13,7 @@ export const es = {
   },
   search: {
     openSearch: "Abrir búsqueda",
-    searchPlaceholder: "Buscar pantallas, ajustes y acciones...",
+    searchPlaceholder: "Buscar...",
     noResultsTitle: "Sin resultados coincidentes",
     noResultsSubtitle:
       "Intenta buscar con otras palabras clave como 'contraseña', 'gasto' o 'moneda'.",
