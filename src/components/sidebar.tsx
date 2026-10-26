@@ -26,6 +26,8 @@ import {
 import { IconHelper } from "./icon-helper";
 import { MoreFeaturesModal } from "./more-features-modal";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
+import { useExperiencePreferences } from "@/modules/settings";
+import { SearchTriggerButton } from "@/modules/search";
 import { sendFeedback } from "@/utils/send-feedback";
 
 interface NavItemConfig {
@@ -67,6 +69,7 @@ export const Sidebar = memo(function Sidebar({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { isPro } = useProStatus();
+  const { generalSearchEnabled } = useExperiencePreferences();
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -182,6 +185,13 @@ export const Sidebar = memo(function Sidebar({
           </Text>
         </View>
       </View>
+
+      {/* Search Trigger Bar */}
+      {generalSearchEnabled && (
+        <View style={styles.sidebarSearchWrapper}>
+          <SearchTriggerButton onPressOverride={onNavigate} variant="bar" />
+        </View>
+      )}
 
       {/* Scrollable Navigation Body */}
       <View style={styles.scrollWrapper}>
@@ -542,6 +552,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       lineHeight: 16,
+    },
+    sidebarSearchWrapper: {
+      paddingBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.xs,
     },
     scrollWrapper: {
       flex: 1,

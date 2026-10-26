@@ -13,9 +13,17 @@ import { NetWorthGrowthReport } from "../components/net-worth/net-worth-growth-r
 import { ReportsTabBar } from "../components/reports-tab-bar";
 import type { ReportTabKey } from "../types/reports.types";
 
-export function ReportsScreen() {
+export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
   const styles = useThemeStyles(createStyles);
-  const [activeTab, setActiveTab] = useState<ReportTabKey>("income-expense");
+  const [activeTab, setActiveTab] = useState<ReportTabKey>(
+    () => props?.initialTab ?? "income-expense",
+  );
+
+  React.useEffect(() => {
+    if (props?.initialTab) {
+      setActiveTab(props.initialTab);
+    }
+  }, [props?.initialTab]);
 
   return (
     <PageContainer

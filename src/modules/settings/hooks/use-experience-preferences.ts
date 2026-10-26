@@ -5,6 +5,7 @@ import {
   applyGuidedWorkspaceSimpleDefaults,
   getDeveloperModeEnabled,
   getGuideHelperEnabled,
+  getGeneralSearchEnabled,
   getHiddenNavHrefs,
   getHomeExperienceMode,
   getNavVisibilityPreferences,
@@ -14,6 +15,7 @@ import {
   isTransactionFormFieldEnabled,
   setDeveloperModeEnabled,
   setGuideHelperEnabled,
+  setGeneralSearchEnabled,
   setHomeExperienceMode,
   setNavItemVisible,
   setPromptDismissed,
@@ -37,6 +39,9 @@ export function useExperiencePreferences() {
   const [guideHelperEnabled, setGuideHelperEnabledState] = useState(() =>
     getGuideHelperEnabled(),
   );
+  const [generalSearchEnabled, setGeneralSearchEnabledState] = useState(() =>
+    getGeneralSearchEnabled(),
+  );
   const [homeMode, setHomeModeState] = useState<HomeExperienceMode>(() =>
     getHomeExperienceMode(),
   );
@@ -58,6 +63,7 @@ export function useExperiencePreferences() {
   const refresh = useCallback(() => {
     setDeveloperModeState(getDeveloperModeEnabled());
     setGuideHelperEnabledState(getGuideHelperEnabled());
+    setGeneralSearchEnabledState(getGeneralSearchEnabled());
     setHomeModeState(getHomeExperienceMode());
     setFormFieldsState(getTransactionFormFieldPreferences());
     setNavVisibilityState(getNavVisibilityPreferences());
@@ -86,6 +92,14 @@ export function useExperiencePreferences() {
   const setGuideHelper = useCallback(
     (enabled: boolean) => {
       setGuideHelperEnabled(enabled);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const setGeneralSearch = useCallback(
+    (enabled: boolean) => {
+      setGeneralSearchEnabled(enabled);
       refresh();
     },
     [refresh],
@@ -172,6 +186,8 @@ export function useExperiencePreferences() {
     developerMode,
     guideHelperEnabled,
     setGuideHelper,
+    generalSearchEnabled,
+    setGeneralSearch,
     developerUnlockNotice,
     dismissDeveloperUnlockNotice,
     registerSettingsTitleTap,

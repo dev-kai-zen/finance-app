@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import {
   CalendarClock,
   Pause,
@@ -68,15 +69,20 @@ const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
   { label: "Archived", value: "archived" },
 ];
 
-export function ScheduledTransactionsScreen() {
+export function ScheduledTransactionsScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <ScheduledTransactionsScreenContent />
+      <ScheduledTransactionsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function ScheduledTransactionsScreenContent() {
+function ScheduledTransactionsScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
+  const router = useRouter();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
@@ -100,6 +106,7 @@ function ScheduledTransactionsScreenContent() {
   } = useScheduledTransactions();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [formVisible, setFormVisible] = useState(false);
+  const handledActionRef = useRef<string | null>(null);
   const [editingSchedule, setEditingSchedule] =
     useState<ScheduledTransaction | null>(null);
   const [pendingEnd, setPendingEnd] =
@@ -233,7 +240,7 @@ function ScheduledTransactionsScreenContent() {
     pendingDelete && scheduleIdsWithPostings.has(pendingDelete.id),
   );
 
-  const openNew = () => {
+  const openNew = useCallback(() => {
     if (activeSchedules.length >= PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS) {
       guardAction(() => {
         setEditingSchedule(null);
@@ -248,7 +255,19 @@ function ScheduledTransactionsScreenContent() {
     }
     setEditingSchedule(null);
     setFormVisible(true);
-  };
+  }, [activeSchedules.length, guardAction, t]);
+
+  useEffect(() => {
+    if (!loading && initialAction === "new") {
+      if (handledActionRef.current !== "new") {
+        handledActionRef.current = "new";
+        openNew();
+        router.setParams({ action: undefined });
+      }
+    } else if (!initialAction) {
+      handledActionRef.current = null;
+    }
+  }, [initialAction, loading, openNew, router]);
 
   const openEdit = (schedule: ScheduledTransaction) => {
     setEditingSchedule(schedule);

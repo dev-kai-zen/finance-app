@@ -36,6 +36,7 @@ export { useExperiencePreferences } from "./hooks/use-experience-preferences";
 export {
   applyGuidedWorkspaceSimpleDefaults,
   getDeveloperModeEnabled,
+  getGeneralSearchEnabled,
   getHiddenNavHrefs,
   getHomeExperienceMode,
   getNavVisibilityPreferences,
@@ -46,6 +47,7 @@ export {
   isTransactionFormFieldEnabled,
   isNavItemVisible,
   setDeveloperModeEnabled,
+  setGeneralSearchEnabled,
   setHomeExperienceMode,
   setNavItemVisible,
   setPromptDismissed,

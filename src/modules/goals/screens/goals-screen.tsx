@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { Target } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -43,15 +44,20 @@ const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "completed", label: "Completed" },
 ];
 
-export function GoalsScreen() {
+export function GoalsScreen(props?: { initialAction?: "new" }) {
   return (
     <WalkthroughRegistryProvider>
-      <GoalsScreenContent />
+      <GoalsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function GoalsScreenContent() {
+function GoalsScreenContent({
+  initialAction,
+}: {
+  initialAction?: "new";
+}) {
+  const router = useRouter();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
@@ -72,6 +78,7 @@ function GoalsScreenContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
+  const handledActionRef = useRef<string | null>(null);
 
   // Walkthrough targets & coordination
   const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
@@ -133,7 +140,7 @@ function GoalsScreenContent() {
     }
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = useCallback(() => {
     if (goals.length >= PRO_LIMITS.FREE_MAX_GOALS) {
       guardAction(() => {
         setGoalToEdit(null);
@@ -148,7 +155,19 @@ function GoalsScreenContent() {
     }
     setGoalToEdit(null);
     setIsFormOpen(true);
-  };
+  }, [goals.length, guardAction, t]);
+
+  useEffect(() => {
+    if (!loading && initialAction === "new") {
+      if (handledActionRef.current !== "new") {
+        handledActionRef.current = "new";
+        handleOpenCreate();
+        router.setParams({ action: undefined });
+      }
+    } else if (!initialAction) {
+      handledActionRef.current = null;
+    }
+  }, [handleOpenCreate, initialAction, loading, router]);
 
   const handleOpenEdit = (goal: GoalWithProgress) => {
     setGoalToEdit(goal);

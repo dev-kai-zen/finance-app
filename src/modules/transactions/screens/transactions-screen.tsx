@@ -121,13 +121,21 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
   return { key, label };
 }
 
-function initialFilterState(accountId?: string): TransactionFilterState {
-  if (!accountId) {
+function initialFilterState(
+  accountId?: string,
+  initialType?: string,
+): TransactionFilterState {
+  const filterType =
+    initialType === "expense" || initialType === "income" || initialType === "transfer"
+      ? initialType
+      : "all";
+  if (!accountId && filterType === "all") {
     return DEFAULT_TRANSACTION_FILTERS;
   }
   return {
     ...DEFAULT_TRANSACTION_FILTERS,
-    accountIds: [accountId],
+    ...(accountId ? { accountIds: [accountId] } : {}),
+    type: filterType,
   };
 }
 
@@ -197,7 +205,10 @@ function TransactionsScreenContent({
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
-    initialFilterState(initialAccountId),
+    initialFilterState(
+      initialAccountId,
+      initialAction !== "new" ? initialType : undefined,
+    ),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
 
@@ -246,10 +257,12 @@ function TransactionsScreenContent({
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   useEffect(() => {
-    if (initialAccountId) {
+    if (initialAction !== "new" && initialType) {
+      setFilterState(initialFilterState(initialAccountId, initialType));
+    } else if (initialAccountId) {
       setFilterState(initialFilterState(initialAccountId));
     }
-  }, [initialAccountId]);
+  }, [initialAccountId, initialAction, initialType]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -264,6 +277,8 @@ function TransactionsScreenContent({
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
   const handledActionRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -287,10 +302,31 @@ function TransactionsScreenContent({
           source: undefined,
         });
       }
+    } else if (initialAction === "trash") {
+      if (handledActionRef.current !== "trash") {
+        handledActionRef.current = "trash";
+        clearError();
+        setIsTrashModalOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
+    } else if (initialAction === "export") {
+      if (handledActionRef.current !== "export") {
+        handledActionRef.current = "export";
+        setExportCsvSheetOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
     } else {
       handledActionRef.current = null;
     }
-  }, [initialAction, initialType, router]);
+  }, [clearError, initialAction, initialType, router]);
 
   useEffect(() => {
     setInspectedTransaction((current) =>
@@ -305,9 +341,6 @@ function TransactionsScreenContent({
     () => transactions.find((tx) => tx.id === pendingDeleteId) ?? null,
     [transactions, pendingDeleteId],
   );
-
-  const [exportingCsv, setExportingCsv] = useState(false);
-  const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;

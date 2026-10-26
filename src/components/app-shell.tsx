@@ -14,6 +14,8 @@ import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { useExperiencePreferences } from "@/modules/settings";
+import { SearchTriggerButton } from "@/modules/search";
 
 type Translate = ReturnType<typeof useLocalization>["t"];
 
@@ -88,6 +90,7 @@ export function AppShell({
   const styles = useThemeStyles(createStyles);
   const pathname = usePathname();
   const { t } = useLocalization();
+  const { generalSearchEnabled } = useExperiencePreferences();
   const screenTitle = getScreenTitle(pathname, t);
   const isSettingsScreen = pathname.startsWith("/settings");
   const handleSettingsTitlePress =
@@ -129,7 +132,10 @@ export function AppShell({
                 title={screenTitle}
               />
             </View>
-            <SyncStatusChip />
+            <View style={styles.topBarRightGroup}>
+              {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
+              <SyncStatusChip />
+            </View>
           </View>
           {banner}
           <View style={styles.desktopContentArea}>{children}</View>
@@ -171,7 +177,10 @@ export function AppShell({
                 />
               </View>
 
-              <SyncStatusChip />
+              <View style={styles.topBarRightGroup}>
+                {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
+                <SyncStatusChip />
+              </View>
             </View>
           </View>
 
@@ -296,6 +305,11 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
+    },
+    topBarRightGroup: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
     },
     topBarBrand: {
       alignItems: "center",

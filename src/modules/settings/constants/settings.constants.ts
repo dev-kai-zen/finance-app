@@ -17,6 +17,8 @@ export const EXPERIENCE_HOME_SETTING_KEY = "experience.home";
 
 export const GUIDE_HELPER_SETTING_KEY = "experience.guideHelper";
 
+export const GENERAL_SEARCH_SETTING_KEY = "experience.generalSearch";
+
 export const FORM_FIELD_SETTING_KEYS = {
   transactionName: "form.transactionName",
   split: "form.split",
