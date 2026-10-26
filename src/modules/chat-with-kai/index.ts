@@ -1,0 +1,75 @@
+export {
+  ChatWithKaiModal,
+  ChatToEncodeModal,
+} from "./components/chat-with-kai-modal";
+export { CategoryKeywordsManagerModal } from "./components/category-keywords-manager-modal";
+export {
+  KaiKnowledgeModal,
+  type KaiKnowledgeModalProps,
+  type KnowledgeTab,
+} from "./components/kai-knowledge-modal";
+export {
+  KaiKnowledgeSelectorRow,
+  type KaiKnowledgeSelectorRowProps,
+} from "./components/kai-knowledge-selector-row";
+export { KaiKnowledgeScreen } from "./screens/kai-knowledge-screen";
+export {
+  useChatWithKai,
+  useChatToEncode,
+} from "./hooks/use-chat-with-kai";
+export { parseChatTransaction } from "./services/parse-chat-transaction.service";
+export { extractAmount } from "./services/extract-amount.service";
+export { matchAccounts } from "./services/match-accounts.service";
+export { matchCategory } from "./services/match-category.service";
+export { extractMerchantNote } from "./services/extract-merchant-note.service";
+export {
+  EntityKeywordsSection,
+  type EntityKeywordsSectionProps,
+} from "./components/entity-keywords-section";
+export {
+  seedDefaultChatKnowledgeIfEmpty,
+  listCategoryKeywords,
+  getCategoryKeywordMap,
+  getCategoryKeywordsByCategoryId,
+  addCategoryKeyword,
+  updateCategoryKeyword,
+  deleteCategoryKeyword,
+  checkCategoryKeywordAvailable,
+  syncCategoryKeywords,
+  listAccountKeywords,
+  getAccountKeywordMap,
+  getAccountKeywordsByAccountId,
+  addAccountKeyword,
+  updateAccountKeyword,
+  deleteAccountKeyword,
+  checkAccountKeywordAvailable,
+  syncAccountKeywords,
+  DuplicateKeywordError,
+} from "./repositories/chat-knowledge.repository";
+export {
+  listActionKeywords,
+  getActionKeywordsByType,
+  getActionKeywordMap,
+  addActionKeyword,
+  updateActionKeyword,
+  deleteActionKeyword,
+  checkActionKeywordAvailable,
+  seedDefaultActionKeywordsIfEmpty,
+  resetToDefaultActionKeywords,
+} from "./repositories/action-keywords.repository";
+
+export type {
+  ChatWithKaiModalProps,
+  ChatToEncodeModalProps,
+  ChatMessage,
+  ParsedTransactionProposal,
+  ParseChatTransactionResult,
+  ParseChatTransactionSuccess,
+  ParseChatTransactionFailure,
+  ParseChatTransactionContext,
+  CategoryKeywordItem,
+  AccountKeywordItem,
+  ActionKeywordItem,
+} from "./types/chat-with-kai.types";
+
+

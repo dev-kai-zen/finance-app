@@ -54,6 +54,12 @@ export const AttachmentViewerModal = deferComponent(
   "AttachmentViewerModal",
 ) as typeof import("./components/attachment-viewer-modal").AttachmentViewerModal;
 
+export const TransactionSpeedDialFab = deferComponent(
+  () =>
+    require("./components/transaction-speed-dial-fab").TransactionSpeedDialFab,
+  "TransactionSpeedDialFab",
+) as typeof import("./components/transaction-speed-dial-fab").TransactionSpeedDialFab;
+
 export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;

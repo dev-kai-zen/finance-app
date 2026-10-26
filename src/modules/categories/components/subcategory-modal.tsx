@@ -25,6 +25,11 @@ import {
   type HexColorInput,
   useHexColors,
 } from "@/modules/hex-colors";
+import {
+  KaiKnowledgeSelectorRow,
+  getCategoryKeywordsByCategoryId,
+  syncCategoryKeywords,
+} from "@/modules/chat-with-kai";
 import type { Category, CategoryInput } from "../types/category.types";
 
 export interface SubcategoryModalProps {
@@ -66,6 +71,7 @@ export function SubcategoryModal({
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [keywords, setKeywords] = useState<string[]>([]);
 
   const parentHexObj = hexColorsList.find(
     (entry) =>
@@ -92,10 +98,14 @@ export function SubcategoryModal({
         subcategoryToEdit.hexColorsId ?? parentCategory?.hexColorsId ?? "color_slate",
       );
       setSelectedIcon(subcategoryToEdit.icon ?? "tag");
+      void getCategoryKeywordsByCategoryId(subcategoryToEdit.id).then((rows) => {
+        setKeywords(rows.map((r) => r.keyword));
+      });
     } else {
       setName("");
       setHexColorsId(parentCategory?.hexColorsId ?? "color_slate");
       setSelectedIcon("tag");
+      setKeywords([]);
     }
     setIsColorFormOpen(false);
     setLocalError(null);
@@ -133,6 +143,16 @@ export function SubcategoryModal({
     );
 
     if (success) {
+      const targetId =
+        subcategoryToEdit?.id ??
+        (typeof success === "object" && success ? success.id : null);
+      if (targetId) {
+        try {
+          await syncCategoryKeywords(targetId, keywords);
+        } catch (e) {
+          console.error("Failed to sync subcategory keywords:", e);
+        }
+      }
       onClose();
     }
   };
@@ -354,6 +374,22 @@ export function SubcategoryModal({
                 </Pressable>
               </View>
             </View>
+
+            {/* Keywords (Kai Knowledge) */}
+            <KaiKnowledgeSelectorRow
+              accentColor={categoricalColor}
+              count={keywords.length}
+              disabled={pending}
+              entityId={subcategoryToEdit?.id}
+              entityType="category"
+              onKeywordsUpdated={() => {
+                if (subcategoryToEdit?.id) {
+                  void getCategoryKeywordsByCategoryId(subcategoryToEdit.id).then((rows) => {
+                    setKeywords(rows.map((r) => r.keyword));
+                  });
+                }
+              }}
+            />
           </KeyboardAwareForm>
 
           {/* Action Buttons */}

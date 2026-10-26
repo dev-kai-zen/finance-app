@@ -21,3 +21,4 @@ export * from "./note-attachments";
 export * from "./currencies";
 export * from "./exchange-rates";
 export * from "./goals";
+export * from "./chat-knowledge-keywords";

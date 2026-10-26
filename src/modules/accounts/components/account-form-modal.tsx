@@ -47,6 +47,11 @@ import { AccountTypePickerModal } from "@/modules/accounts/components/account-ty
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
+import {
+  KaiKnowledgeSelectorRow,
+  getAccountKeywordsByAccountId,
+  syncAccountKeywords,
+} from "@/modules/chat-with-kai";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import type {
   AccountGroup,
@@ -103,7 +108,7 @@ export type AccountFormModalProps = {
   error: string | null;
   onClose: () => void;
   onClearError: () => void;
-  onSave: (value: AccountInput, id?: string) => Promise<boolean>;
+  onSave: (value: AccountInput, id?: string) => Promise<boolean | string>;
   onDelete?: (accountId: string) => Promise<boolean>;
   onRestore?: (accountId: string) => Promise<boolean>;
   onPermanentDelete?: (accountId: string) => Promise<boolean>;
@@ -234,14 +239,19 @@ function AccountFormModalContent({
     });
     if (account) {
       setAmountSign(parseAmountSign(openingAmount));
+      void getAccountKeywordsByAccountId(account.id).then((rows) => {
+        setKeywords(rows.map((r) => r.keyword));
+      });
     } else {
       const defaultType = types.find(
         (type) => type.id === getDefaultAssetAccountTypeId(types),
       );
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
+      setKeywords([]);
     }
     setConfirmAction(null);
   }, [visible, account, types, preferences.defaultCurrency]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
@@ -501,8 +511,17 @@ function AccountFormModalContent({
       },
       account?.id,
     ).then(
-      (saved) => {
+      async (saved) => {
         if (saved) {
+          const targetId =
+            account?.id ?? (typeof saved === "string" ? saved : null);
+          if (targetId) {
+            try {
+              await syncAccountKeywords(targetId, keywords);
+            } catch (e) {
+              console.error("Failed to sync account keywords:", e);
+            }
+          }
           if (account?.id) {
             if (isDefaultExpense && defaultExpenseAccountId !== account.id) {
               setExpenseAccount(account.id);
@@ -952,6 +971,22 @@ function AccountFormModalContent({
               </Text>
             </View>
           ) : null}
+
+          {/* Keywords (Kai Knowledge) */}
+          <KaiKnowledgeSelectorRow
+            accentColor={typeColor}
+            count={keywords.length}
+            disabled={pending}
+            entityId={account?.id}
+            entityType="account"
+            onKeywordsUpdated={() => {
+              if (account?.id) {
+                void getAccountKeywordsByAccountId(account.id).then((rows) => {
+                  setKeywords(rows.map((r) => r.keyword));
+                });
+              }
+            }}
+          />
 
           {account ? (
             <View style={styles.balanceFooter}>

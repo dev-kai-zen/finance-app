@@ -20,11 +20,13 @@ import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
+  TransactionSpeedDialFab,
   useTransactionPresets,
   useTransactions,
   type TransactionListItem,
   type TransactionType,
 } from "@/modules/transactions";
+import { ChatWithKaiModal } from "@/modules/chat-with-kai";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
 import { useLocalization } from "@/infrastructure/localization";
@@ -103,6 +105,7 @@ function DashboardScreenContent() {
   } = useTransactionPresets();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -324,14 +327,20 @@ function DashboardScreenContent() {
       scrollRef={scrollRef}
       floatingAction={
         <>
-          <FloatingActionButton
+          <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
-            onPress={() => {
+            onPressForm={() => {
               if (walkthrough.isWalkthroughActive) {
                 walkthrough.completeWalkthrough();
               }
               handleOpenTransactionModal("expense");
+            }}
+            onPressChat={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setIsChatModalOpen(true);
             }}
           />
           <DraggableTourChip
@@ -441,6 +450,37 @@ function DashboardScreenContent() {
         onCategoriesChanged={() => void refreshCategories()}
         pending={pendingAction}
         visible={isModalOpen}
+      />
+
+      <ChatWithKaiModal
+        accounts={accounts}
+        categories={categories}
+        defaultCurrency={currencyPreferences.defaultCurrency}
+        defaultExpenseAccountId={accounts[0]?.id ?? null}
+        onClose={() => setIsChatModalOpen(false)}
+        onEditInForm={(prefilled) => {
+          setPrefilledTransaction(prefilled);
+          setIsEditingTransaction(false);
+          setIsModalOpen(true);
+        }}
+        onSaveTransaction={async (input) => {
+          const success = await recordTransaction(input);
+          if (success) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return success;
+        }}
+        onSaveTransfer={async (input) => {
+          const success = await recordTransfer(input);
+          if (success) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return success;
+        }}
+        pockets={pockets}
+        visible={isChatModalOpen}
       />
 
       <ConfirmModal

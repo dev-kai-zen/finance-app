@@ -26,6 +26,11 @@ import {
   useHexColors,
 } from "@/modules/hex-colors";
 import { CATEGORY_DEFAULT_COLOR_IDS } from "@/modules/categories/constants/categories.constants";
+import {
+  KaiKnowledgeSelectorRow,
+  getCategoryKeywordsByCategoryId,
+  syncCategoryKeywords,
+} from "@/modules/chat-with-kai";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 export interface CategoryGroupModalProps {
@@ -67,6 +72,7 @@ export function CategoryGroupModal({
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [keywords, setKeywords] = useState<string[]>([]);
 
   const selectedHexObj = hexColorsList.find((c) => c.id === hexColorsId);
   const categoricalColor = selectedHexObj?.hex ?? theme.colors.primary;
@@ -85,11 +91,15 @@ export function CategoryGroupModal({
       setType(categoryToEdit.type);
       setHexColorsId(categoryToEdit.hexColorsId ?? "color_slate");
       setSelectedIcon(categoryToEdit.icon ?? "tag");
+      void getCategoryKeywordsByCategoryId(categoryToEdit.id).then((rows) => {
+        setKeywords(rows.map((r) => r.keyword));
+      });
     } else {
       setName("");
       setType(initialType);
       setHexColorsId(CATEGORY_DEFAULT_COLOR_IDS[initialType]);
       setSelectedIcon("tag");
+      setKeywords([]);
     }
     setIsColorFormOpen(false);
     setLocalError(null);
@@ -129,6 +139,16 @@ export function CategoryGroupModal({
     );
 
     if (success) {
+      const targetId =
+        categoryToEdit?.id ??
+        (typeof success === "object" && success ? success.id : null);
+      if (targetId) {
+        try {
+          await syncCategoryKeywords(targetId, keywords);
+        } catch (e) {
+          console.error("Failed to sync category keywords:", e);
+        }
+      }
       onClose();
     }
   };
@@ -346,6 +366,22 @@ export function CategoryGroupModal({
                 </Pressable>
               </View>
             </View>
+
+            {/* Keywords (Kai Knowledge) */}
+            <KaiKnowledgeSelectorRow
+              accentColor={categoricalColor}
+              count={keywords.length}
+              disabled={pending}
+              entityId={categoryToEdit?.id}
+              entityType="category"
+              onKeywordsUpdated={() => {
+                if (categoryToEdit?.id) {
+                  void getCategoryKeywordsByCategoryId(categoryToEdit.id).then((rows) => {
+                    setKeywords(rows.map((r) => r.keyword));
+                  });
+                }
+              }}
+            />
           </KeyboardAwareForm>
 
           {/* Action Buttons */}

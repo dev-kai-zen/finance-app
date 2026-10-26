@@ -61,6 +61,8 @@ import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
+import { TransactionSpeedDialFab } from "../components/transaction-speed-dial-fab";
+import { ChatWithKaiModal } from "@/modules/chat-with-kai";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
@@ -266,6 +268,7 @@ function TransactionsScreenContent({
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [formInitialType, setFormInitialType] = useState<
     TransactionType | undefined
   >(undefined);
@@ -632,14 +635,20 @@ function TransactionsScreenContent({
       contentContainerStyle={styles.pageContent}
       floatingAction={
         <>
-          <FloatingActionButton
+          <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
-            onPress={() => {
+            onPressForm={() => {
               if (walkthrough.isWalkthroughActive) {
                 walkthrough.completeWalkthrough();
               }
               handleOpenNewTransaction();
+            }}
+            onPressChat={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setIsChatModalOpen(true);
             }}
           />
           <DraggableTourChip
@@ -983,6 +992,33 @@ function TransactionsScreenContent({
         onEdit={handleEdit}
         transaction={inspectedTransaction}
         visible={!!inspectedTransaction}
+      />
+
+      <ChatWithKaiModal
+        accounts={accounts}
+        categories={categories}
+        onClose={() => setIsChatModalOpen(false)}
+        onEditInForm={(prefilled) => {
+          setPrefilledTransaction(prefilled);
+          setIsEditingTransaction(false);
+          setIsFormModalOpen(true);
+        }}
+        onSaveTransaction={async (input) => {
+          const success = await recordTransaction(input);
+          if (success) {
+            refreshAccounts();
+          }
+          return success;
+        }}
+        onSaveTransfer={async (input) => {
+          const success = await recordTransfer(input);
+          if (success) {
+            refreshAccounts();
+          }
+          return success;
+        }}
+        pockets={pockets}
+        visible={isChatModalOpen}
       />
 
       {/* Filter Modal */}

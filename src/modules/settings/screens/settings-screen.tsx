@@ -532,6 +532,31 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              accessibilityLabel={t("settings.kaiKnowledgeTitle")}
+              accessibilityRole="button"
+              onPress={() => router.push("/kai-knowledge")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Sparkles color="#8B5CF6" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiKnowledgeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.kaiKnowledgeDescription")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
               ref={defaultExpenseRef as any}
               collapsable={false}
               onLayout={(e) => {
