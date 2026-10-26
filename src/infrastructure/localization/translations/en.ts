@@ -376,6 +376,10 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v111: {
+      quickActionsItem1:
+        "Show free plan limits when using the dashboard's quick action buttons.",
+    },
     v110: {
       searchItem1:
         "Add Quick Search to quickly find and navigate to screens, settings, and actions.",

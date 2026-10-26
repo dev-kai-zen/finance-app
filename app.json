@@ -3,7 +3,7 @@
     "name": "Kaizen Finance",
     "slug": "finance-app",
     "scheme": "finance-app",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/kaizen-finance-app-logo.png",
     "userInterfaceStyle": "automatic",
@@ -25,7 +25,7 @@
       ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/kaizen-finance-app-logo.png"
@@ -61,16 +61,8 @@
         "expo-localization",
         {
           "supportedLocales": {
-            "ios": [
-              "en",
-              "fil",
-              "es"
-            ],
-            "android": [
-              "en",
-              "fil",
-              "es"
-            ]
+            "ios": ["en", "fil", "es"],
+            "android": ["en", "fil", "es"]
           }
         }
       ],

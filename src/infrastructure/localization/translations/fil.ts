@@ -389,6 +389,10 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v111: {
+      quickActionsItem1:
+        "Ipakita ang mga limitasyon ng libreng plano kapag ginagamit ang mga quick action button sa dashboard.",
+    },
     v110: {
       searchItem1:
         "Magdagdag ng Mabilisang Paghahanap upang madaling mahanap at mapuntahan ang mga screen, setting, at aksyon.",

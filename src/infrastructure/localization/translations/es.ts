@@ -388,6 +388,10 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v111: {
+      quickActionsItem1:
+        "Muestra los límites del plan gratuito al usar los botones de acción rápida del panel.",
+    },
     v110: {
       searchItem1:
         "Añadir Búsqueda Rápida para encontrar y acceder fácilmente a pantallas, ajustes y acciones.",
