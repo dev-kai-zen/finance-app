@@ -10,12 +10,19 @@ import {
   addCategoryKeyword,
   getAccountKeywordMap,
   getCategoryKeywordMap,
+  reassignCategoryKeyword,
   seedDefaultChatKnowledgeIfEmpty,
 } from "../repositories/chat-knowledge.repository";
 import {
   getActionKeywordMap,
   seedDefaultActionKeywordsIfEmpty,
 } from "../repositories/action-keywords.repository";
+import {
+  getMerchantKeywordMap,
+  seedDefaultMerchantsIfEmpty,
+  upsertMerchant,
+} from "../repositories/merchants.repository";
+import type { MerchantLookupInfo } from "../services/extract-merchant-note.service";
 import {
   findRecentDuplicateTransaction,
   getMerchantHistory,
@@ -36,21 +43,27 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
   const [actionKeywordsMap, setActionKeywordsMap] = useState<
     Map<string, TransactionType>
   >(new Map());
+  const [merchantKeywordsMap, setMerchantKeywordsMap] = useState<
+    Map<string, MerchantLookupInfo>
+  >(new Map());
 
   const reloadKeywords = useCallback(async () => {
     try {
       await Promise.all([
         seedDefaultChatKnowledgeIfEmpty(),
         seedDefaultActionKeywordsIfEmpty(),
+        seedDefaultMerchantsIfEmpty(),
       ]);
-      const [catMap, accMap, actMap] = await Promise.all([
+      const [catMap, accMap, actMap, merchMap] = await Promise.all([
         getCategoryKeywordMap(),
         getAccountKeywordMap(),
         getActionKeywordMap(),
+        getMerchantKeywordMap(),
       ]);
       setCategoryKeywordsMap(catMap);
       setAccountKeywordsMap(accMap);
       setActionKeywordsMap(actMap);
+      setMerchantKeywordsMap(merchMap);
     } catch {
       // In-memory fallback is used if DB query fails
     }
@@ -113,6 +126,8 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
               context.accountKeywordsMap ?? accountKeywordsMap,
             actionKeywordsMap:
               context.actionKeywordsMap ?? actionKeywordsMap,
+            merchantKeywordsMap:
+              context.merchantKeywordsMap ?? merchantKeywordsMap,
             getMerchantHistory:
               context.getMerchantHistory ?? getMerchantHistory,
             findRecentDuplicateTransaction:
@@ -204,9 +219,10 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
         }),
       );
 
-      // Teach-Me-Once Learning: Persist merchant -> category keyword to SQLite
+      // Teach-Me-Once Learning: Persist merchant -> category keyword and merchant record
       if (candidateMerchantName) {
         try {
+          await upsertMerchant(candidateMerchantName, category.id);
           await addCategoryKeyword(category.id, candidateMerchantName);
           await reloadKeywords();
         } catch {
@@ -216,6 +232,101 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
     },
     [lang, reloadKeywords],
   );
+
+  const updateProposalCategory = useCallback(
+    async (messageId: string, category: Category) => {
+      let candidateMerchantName: string | null = null;
+
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId && msg.proposal) {
+            const originalCatId =
+              msg.proposal.originalCategoryId ?? msg.proposal.categoryId;
+            const matchedKw = msg.proposal.matchedKeyword;
+
+            candidateMerchantName = msg.proposal.name;
+
+            const updatedProposal: ParsedTransactionProposal = {
+              ...msg.proposal,
+              categoryId: category.id,
+              categoryName: category.name,
+              categoryIcon: category.icon ?? null,
+              categoryColor: category.hexColorsId ?? null,
+            };
+
+            // Check if user changed the category of a matched keyword
+            let pendingReassignment = null;
+            if (matchedKw && originalCatId && originalCatId !== category.id) {
+              pendingReassignment = {
+                keyword: matchedKw,
+                newCategoryId: category.id,
+                newCategoryName: category.name,
+              };
+            }
+
+            return {
+              ...msg,
+              proposal: updatedProposal,
+              pendingKeywordReassignment: pendingReassignment,
+            };
+          }
+          return msg;
+        }),
+      );
+
+      // Auto-update merchant's default category if merchant name exists
+      if (candidateMerchantName) {
+        try {
+          await upsertMerchant(candidateMerchantName, category.id);
+          await reloadKeywords();
+        } catch {
+          // Ignore
+        }
+      }
+    },
+    [reloadKeywords],
+  );
+
+  const confirmReassignKeyword = useCallback(
+    async (messageId: string) => {
+      let kwToReassign: string | null = null;
+      let newCatId: string | null = null;
+
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId && msg.pendingKeywordReassignment) {
+            kwToReassign = msg.pendingKeywordReassignment.keyword;
+            newCatId = msg.pendingKeywordReassignment.newCategoryId;
+            return {
+              ...msg,
+              pendingKeywordReassignment: null,
+            };
+          }
+          return msg;
+        }),
+      );
+
+      if (kwToReassign && newCatId) {
+        try {
+          await reassignCategoryKeyword(kwToReassign, newCatId);
+          await reloadKeywords();
+        } catch {
+          // Ignore
+        }
+      }
+    },
+    [reloadKeywords],
+  );
+
+  const dismissReassignKeyword = useCallback((messageId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId
+          ? { ...msg, pendingKeywordReassignment: null }
+          : msg,
+      ),
+    );
+  }, []);
 
   const clearConversation = useCallback(() => {
     setMessages([createInitialMessage()]);
@@ -230,9 +341,13 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
     sendMessage,
     markProposalSaved,
     assignCategoryToProposal,
+    updateProposalCategory,
+    confirmReassignKeyword,
+    dismissReassignKeyword,
     clearConversation,
     categoryKeywordsMap,
     accountKeywordsMap,
+    merchantKeywordsMap,
     reloadKeywords,
   };
 }

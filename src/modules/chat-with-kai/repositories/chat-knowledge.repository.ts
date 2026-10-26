@@ -237,6 +237,40 @@ export async function updateCategoryKeyword(
 }
 
 /**
+ * Reassigns an existing keyword to a new category ID, or inserts it if not found.
+ */
+export async function reassignCategoryKeyword(
+  keyword: string,
+  newCategoryId: string,
+  client: DbContext = db,
+): Promise<void> {
+  const cleanKeyword = keyword.trim().toLowerCase();
+  if (!cleanKeyword) return;
+
+  const existing = await client
+    .select({ id: categoryKeywords.id })
+    .from(categoryKeywords)
+    .where(sql`lower(${categoryKeywords.keyword}) = ${cleanKeyword}`)
+    .limit(1);
+
+  if (existing.length > 0) {
+    await client
+      .update(categoryKeywords)
+      .set({ categoryId: newCategoryId })
+      .where(eq(categoryKeywords.id, existing[0].id));
+  } else {
+    const id = `ckw_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    await client.insert(categoryKeywords).values({
+      id,
+      categoryId: newCategoryId,
+      keyword: cleanKeyword,
+      language: "any",
+      createdAt: new Date(),
+    });
+  }
+}
+
+/**
  * Fetches all account keywords stored in the database.
  */
 export async function listAccountKeywords(

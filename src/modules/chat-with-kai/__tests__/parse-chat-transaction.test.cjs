@@ -315,5 +315,53 @@ test("parse-chat-transaction: flags potential duplicate transaction within 24 ho
   }
 });
 
+test("parse-chat-transaction: clean note defaults to null unless explicit note/memo is written", () => {
+  const resultWithoutNote = parseChatTransaction(
+    "I spent 500 on lunch on Mcdonalds from my wallet",
+    defaultContext,
+  );
+  assert.equal(resultWithoutNote.success, true);
+  if (resultWithoutNote.success) {
+    assert.equal(resultWithoutNote.proposal.note, null);
+  }
+
+  const resultWithExplicitNote = parseChatTransaction(
+    "I spent 500 on lunch at Mcdonalds from my wallet note: team celebration",
+    defaultContext,
+  );
+  assert.equal(resultWithExplicitNote.success, true);
+  if (resultWithExplicitNote.success) {
+    assert.equal(resultWithExplicitNote.proposal.note, "Team celebration");
+  }
+});
+
+test("parse-chat-transaction: resolves custom merchant and default category from merchantKeywordsMap", () => {
+  const mockMerchantMap = new Map([
+    [
+      "lola nena's",
+      {
+        merchantId: "merch-lola",
+        name: "Lola Nena's",
+        defaultCategoryId: "cat-food",
+        defaultAccountId: "acc-gcash",
+      },
+    ],
+  ]);
+
+  const result = parseChatTransaction("Lola Nena's 350", {
+    ...defaultContext,
+    merchantKeywordsMap: mockMerchantMap,
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.name, "Lola Nena's");
+    assert.equal(result.proposal.amountMinorUnits, 35000);
+    assert.equal(result.proposal.categoryId, "cat-food");
+    assert.equal(result.proposal.accountId, "acc-gcash");
+    assert.equal(result.proposal.note, null);
+  }
+});
+
 
 

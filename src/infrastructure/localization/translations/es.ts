@@ -391,6 +391,14 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v120: {
+      chatItem1:
+        "Enseña a Kai tus comercios y categorías favoritos para registrar transacciones más rápido.",
+      chatItem2:
+        "Recuerda las correcciones de categorías con una sencilla confirmación de un toque.",
+      chatItem3:
+        "Mantén los registros limpios eliminando notas automáticas no deseadas.",
+    },
     v111: {
       quickActionsItem1:
         "Muestra los límites del plan gratuito al usar los botones de acción rápida del panel.",
@@ -1502,5 +1510,8 @@ export const es = {
     selectCategory: "Seleccionar Categoría:",
     browseAll: "Explorar Todo",
     chooseCorrectAmount: "Elige la cantidad correcta:",
+    alwaysCategorizeAs: "¿Categorizar siempre '%{keyword}' como '%{category}'?",
+    yesAlways: "Sí, siempre",
+    justThisTime: "Solo esta vez",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

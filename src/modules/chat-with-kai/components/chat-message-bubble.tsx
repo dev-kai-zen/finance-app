@@ -24,6 +24,8 @@ interface ChatMessageBubbleProps {
   onSelectAmount?: (amount: number) => void;
   onSelectCategoryForProposal?: (messageId: string, category: Category) => void;
   onRequestCategoryPicker?: (messageId: string) => void;
+  onConfirmReassignKeyword?: (messageId: string) => void;
+  onDismissReassignKeyword?: (messageId: string) => void;
 }
 
 export function ChatMessageBubble({
@@ -36,6 +38,8 @@ export function ChatMessageBubble({
   onSelectAmount,
   onSelectCategoryForProposal,
   onRequestCategoryPicker,
+  onConfirmReassignKeyword,
+  onDismissReassignKeyword,
 }: ChatMessageBubbleProps) {
   const styles = useThemeStyles(createStyles);
   const theme = useAppTheme();
@@ -158,6 +162,47 @@ export function ChatMessageBubble({
             onSave={onSave}
             proposal={message.proposal}
           />
+        ) : null}
+
+        {/* Smart "Teach Kai" Keyword Confirmation Banner */}
+        {message.pendingKeywordReassignment ? (
+          <View style={styles.teachKaiBanner}>
+            <View style={styles.teachKaiHeader}>
+              <Sparkles color={theme.colors.primary} size={15} />
+              <Text style={styles.teachKaiTitle}>
+                {t("chatWithKai.alwaysCategorizeAs")
+                  ? t("chatWithKai.alwaysCategorizeAs", {
+                      keyword: message.pendingKeywordReassignment.keyword,
+                      category: message.pendingKeywordReassignment.newCategoryName,
+                    })
+                  : `Always categorize "${message.pendingKeywordReassignment.keyword}" as "${message.pendingKeywordReassignment.newCategoryName}"?`}
+              </Text>
+            </View>
+            <View style={styles.teachKaiActions}>
+              <Pressable
+                onPress={() => onConfirmReassignKeyword?.(message.id)}
+                style={({ pressed }) => [
+                  styles.teachKaiAlwaysBtn,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.teachKaiAlwaysBtnText}>
+                  {t("chatWithKai.yesAlways") || "Yes, Always"}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => onDismissReassignKeyword?.(message.id)}
+                style={({ pressed }) => [
+                  styles.teachKaiDismissBtn,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.teachKaiDismissBtnText}>
+                  {t("chatWithKai.justThisTime") || "Just this time"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
         ) : null}
 
         {message.suggestedPrompts && message.suggestedPrompts.length > 0 ? (
@@ -293,6 +338,53 @@ function createStyles(theme: AppTheme) {
     buttonPressed: {
       opacity: 0.75,
       transform: [{ scale: 0.96 }],
+    },
+    teachKaiBanner: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      gap: theme.spacing.xs,
+      marginTop: theme.spacing.xs,
+      padding: theme.spacing.sm,
+    },
+    teachKaiHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    teachKaiTitle: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    teachKaiActions: {
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "flex-end",
+      marginTop: 4,
+    },
+    teachKaiAlwaysBtn: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.small,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+    },
+    teachKaiAlwaysBtnText: {
+      color: theme.colors.onPrimary,
+      fontSize: 12,
+      fontWeight: "700",
+    },
+    teachKaiDismissBtn: {
+      borderRadius: theme.borderRadius.small,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+    },
+    teachKaiDismissBtnText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontWeight: "500",
     },
   });
 }

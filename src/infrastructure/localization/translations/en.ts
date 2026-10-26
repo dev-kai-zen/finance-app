@@ -379,6 +379,14 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v120: {
+      chatItem1:
+        "Teach Kai your favorite merchants and categories for faster, smarter transaction chat.",
+      chatItem2:
+        "Remember custom category corrections with a simple one-tap confirmation.",
+      chatItem3:
+        "Keep transaction records tidy by removing unintended automated notes.",
+    },
     v111: {
       quickActionsItem1:
         "Show free plan limits when using the dashboard's quick action buttons.",
@@ -1486,6 +1494,9 @@ export const en = {
     selectCategory: "Select Category:",
     browseAll: "Browse All",
     chooseCorrectAmount: "Choose the correct amount:",
+    alwaysCategorizeAs: "Always categorize '%{keyword}' as '%{category}'?",
+    yesAlways: "Yes, Always",
+    justThisTime: "Just this time",
   },
 } as const;
 

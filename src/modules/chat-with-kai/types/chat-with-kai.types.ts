@@ -9,6 +9,7 @@ import type {
   TransactionListItem,
   TransactionType,
 } from "@/modules/transactions";
+import type { MerchantLookupInfo } from "../services/extract-merchant-note.service";
 
 export type ChatMessageRole = "user" | "assistant";
 
@@ -28,6 +29,9 @@ export interface ParsedTransactionProposal {
   categoryName?: string | null;
   categoryIcon?: string | null;
   categoryColor?: string | null;
+  merchantId?: string | null;
+  matchedKeyword?: string | null;
+  originalCategoryId?: string | null;
   // Transfer
   transferAccountId?: string | null;
   transferAccountName?: string | null;
@@ -68,6 +72,12 @@ export type ParseChatTransactionResult =
   | ParseChatTransactionSuccess
   | ParseChatTransactionFailure;
 
+export interface PendingKeywordReassignment {
+  keyword: string;
+  newCategoryId: string;
+  newCategoryName: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: ChatMessageRole;
@@ -78,6 +88,7 @@ export interface ChatMessage {
   suggestedPrompts?: string[];
   suggestedAmounts?: number[];
   partialProposal?: ParsedTransactionProposal | null;
+  pendingKeywordReassignment?: PendingKeywordReassignment | null;
 }
 
 export interface CategoryKeywordItem {
@@ -111,6 +122,7 @@ export interface ParseChatTransactionContext {
   categoryKeywordsMap?: Map<string, string>;
   accountKeywordsMap?: Map<string, string>;
   actionKeywordsMap?: Map<string, TransactionType>;
+  merchantKeywordsMap?: Map<string, MerchantLookupInfo>;
   defaultExpenseAccountId?: string | null;
   defaultIncomeAccountId?: string | null;
   defaultCurrency: string;

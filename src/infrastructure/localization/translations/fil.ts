@@ -392,6 +392,14 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v120: {
+      chatItem1:
+        "Turuan si Kai ng iyong mga paboritong tindahan at kategorya para sa mas mabilis na pagtatala.",
+      chatItem2:
+        "Tandaan ang mga pagwawasto sa kategorya gamit ang simpleng one-tap confirmation.",
+      chatItem3:
+        "Panatilihing malinis ang mga talaan sa pamamagitan ng pag-alis ng mga hindi sinasadyang tala.",
+    },
     v111: {
       quickActionsItem1:
         "Ipakita ang mga limitasyon ng libreng plano kapag ginagamit ang mga quick action button sa dashboard.",
@@ -1503,5 +1511,8 @@ export const fil = {
     selectCategory: "Pumili ng Kategorya:",
     browseAll: "I-browse Lahat",
     chooseCorrectAmount: "Piliin ang tamang halaga:",
+    alwaysCategorizeAs: "Palagiang i-tag ang '%{keyword}' bilang '%{category}'?",
+    yesAlways: "Oo, Palagi",
+    justThisTime: "Ngayon lang",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

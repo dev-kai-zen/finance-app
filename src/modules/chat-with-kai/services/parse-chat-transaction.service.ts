@@ -136,7 +136,41 @@ export function parseChatTransaction(
     matchedAmountText: amountResult.matchedText,
     matchedAccountTexts: accountsResult.matchedTexts,
     matchedCategoryKeyword: categoryResult.matchedKeyword,
+    merchantLookupMap: context.merchantKeywordsMap,
   });
+
+  // 5b. Default Category/Account from matched Merchant Table
+  if (detectedType !== "transfer" && merchantNoteResult.matchedMerchant) {
+    if (!categoryResult.category && merchantNoteResult.matchedMerchant.defaultCategoryId) {
+      const allCats: Category[] = [];
+      for (const cat of context.categories) {
+        allCats.push(cat);
+        if (cat.subcategories?.length) {
+          allCats.push(...cat.subcategories);
+        }
+      }
+      const defaultCat = allCats.find(
+        (c) => c.id === merchantNoteResult.matchedMerchant!.defaultCategoryId,
+      );
+      if (defaultCat) {
+        categoryResult = {
+          category: defaultCat,
+          matchedKeyword: merchantNoteResult.matchedMerchant.name,
+          confidence: 0.95,
+        };
+      }
+    }
+
+    const userMentionedAccount = accountsResult.matchedTexts.length > 0;
+    if (!userMentionedAccount && merchantNoteResult.matchedMerchant.defaultAccountId) {
+      const defaultAcc = context.accounts.find(
+        (a) => a.id === merchantNoteResult.matchedMerchant!.defaultAccountId,
+      );
+      if (defaultAcc) {
+        effectiveSourceAccount = defaultAcc;
+      }
+    }
+  }
 
   // 6. Auto-learning from past transaction history
   if (
@@ -202,6 +236,9 @@ export function parseChatTransaction(
       categoryName: null,
       categoryIcon: null,
       categoryColor: null,
+      merchantId: merchantNoteResult.matchedMerchant?.merchantId ?? null,
+      matchedKeyword: categoryResult.matchedKeyword ?? null,
+      originalCategoryId: null,
       transferAccountId: null,
       transferAccountName: null,
       isSaved: false,
@@ -256,6 +293,9 @@ export function parseChatTransaction(
     categoryName: categoryResult.category?.name ?? null,
     categoryIcon: categoryResult.category?.icon ?? null,
     categoryColor: categoryResult.category?.hexColorsId ?? null,
+    merchantId: merchantNoteResult.matchedMerchant?.merchantId ?? null,
+    matchedKeyword: categoryResult.matchedKeyword ?? null,
+    originalCategoryId: categoryResult.category?.id ?? null,
     transferAccountId: accountsResult.destinationAccount?.id ?? null,
     transferAccountName: accountsResult.destinationAccount?.name ?? null,
     isSaved: false,

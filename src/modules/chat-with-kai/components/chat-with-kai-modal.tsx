@@ -63,6 +63,9 @@ export function ChatWithKaiModal({
     sendMessage,
     markProposalSaved,
     assignCategoryToProposal,
+    updateProposalCategory,
+    confirmReassignKeyword,
+    dismissReassignKeyword,
     clearConversation,
     reloadKeywords,
   } = useChatWithKai({
@@ -278,6 +281,8 @@ export function ChatWithKaiModal({
                 onSelectCategoryForProposal={(msgId, cat) => {
                   void assignCategoryToProposal(msgId, cat);
                 }}
+                onConfirmReassignKeyword={confirmReassignKeyword}
+                onDismissReassignKeyword={dismissReassignKeyword}
                 onSelectPrompt={(p) => sendMessage(p)}
               />
             )}
@@ -333,7 +338,14 @@ export function ChatWithKaiModal({
         onClose={() => setPickerTargetMessageId(null)}
         onSelectCategory={(category) => {
           if (pickerTargetMessageId) {
-            void assignCategoryToProposal(pickerTargetMessageId, category);
+            const targetMsg = messages.find(
+              (m) => m.id === pickerTargetMessageId,
+            );
+            if (targetMsg?.partialProposal) {
+              void assignCategoryToProposal(pickerTargetMessageId, category);
+            } else if (targetMsg?.proposal) {
+              void updateProposalCategory(pickerTargetMessageId, category);
+            }
             setPickerTargetMessageId(null);
           }
         }}

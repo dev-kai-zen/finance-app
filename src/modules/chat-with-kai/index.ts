@@ -82,6 +82,21 @@ export type {
   CategoryKeywordItem,
   AccountKeywordItem,
   ActionKeywordItem,
+  PendingKeywordReassignment,
 } from "./types/chat-with-kai.types";
+export {
+  listMerchants,
+  getMerchantKeywordMap,
+  upsertMerchant,
+  addMerchantKeyword,
+  updateMerchantDefaultCategory,
+  seedDefaultMerchantsIfEmpty,
+} from "./repositories/merchants.repository";
+export { reassignCategoryKeyword } from "./repositories/chat-knowledge.repository";
+export type {
+  MerchantItem,
+  MerchantKeywordItem,
+  MerchantLookupResult,
+} from "./repositories/merchants.repository";
 
 
