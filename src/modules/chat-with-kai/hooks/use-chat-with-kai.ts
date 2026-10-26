@@ -7,6 +7,7 @@ import type {
 import { parseChatTransaction } from "../services/parse-chat-transaction.service";
 import { SAMPLE_PROMPTS } from "../constants/sample-prompts";
 import {
+  addCategoryKeyword,
   getAccountKeywordMap,
   getCategoryKeywordMap,
   seedDefaultChatKnowledgeIfEmpty,
@@ -15,7 +16,12 @@ import {
   getActionKeywordMap,
   seedDefaultActionKeywordsIfEmpty,
 } from "../repositories/action-keywords.repository";
-import type { TransactionType } from "@/modules/transactions";
+import {
+  findRecentDuplicateTransaction,
+  getMerchantHistory,
+  type TransactionType,
+} from "@/modules/transactions";
+import type { Category } from "@/modules/categories";
 
 export function useChatWithKai(context: ParseChatTransactionContext) {
   const lang = context.language ?? "en";
@@ -107,6 +113,11 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
               context.accountKeywordsMap ?? accountKeywordsMap,
             actionKeywordsMap:
               context.actionKeywordsMap ?? actionKeywordsMap,
+            getMerchantHistory:
+              context.getMerchantHistory ?? getMerchantHistory,
+            findRecentDuplicateTransaction:
+              context.findRecentDuplicateTransaction ??
+              findRecentDuplicateTransaction,
           };
           const result = parseChatTransaction(textToSend, enrichedContext);
           const assistantMessageId = `assistant-${Date.now()}`;
@@ -128,6 +139,8 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
               timestamp: new Date(),
               failureReason: result.reason,
               suggestedPrompts: result.suggestedPrompts,
+              suggestedAmounts: result.suggestedAmounts,
+              partialProposal: result.partialProposal,
             };
             setMessages((prev) => [...prev, assistantMsg]);
           }
@@ -156,6 +169,54 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
     );
   }, []);
 
+  const assignCategoryToProposal = useCallback(
+    async (messageId: string, category: Category) => {
+      let candidateMerchantName: string | null = null;
+
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId && msg.partialProposal) {
+            candidateMerchantName = msg.partialProposal.name;
+            const completedProposal: ParsedTransactionProposal = {
+              ...msg.partialProposal,
+              categoryId: category.id,
+              categoryName: category.name,
+              categoryIcon: category.icon ?? null,
+              categoryColor: category.hexColorsId ?? null,
+            };
+
+            let explanation = `I prepared your transaction for ${category.name}.`;
+            if (lang === "fil") {
+              explanation = `Naihanda ko ang iyong nagastos para sa ${category.name}.`;
+            } else if (lang === "es") {
+              explanation = `Preparé tu transacción para ${category.name}.`;
+            }
+
+            return {
+              ...msg,
+              text: explanation,
+              failureReason: null,
+              proposal: completedProposal,
+              partialProposal: null,
+            };
+          }
+          return msg;
+        }),
+      );
+
+      // Teach-Me-Once Learning: Persist merchant -> category keyword to SQLite
+      if (candidateMerchantName) {
+        try {
+          await addCategoryKeyword(category.id, candidateMerchantName);
+          await reloadKeywords();
+        } catch {
+          // If keyword is already assigned or conflicts, ignore gracefully
+        }
+      }
+    },
+    [lang, reloadKeywords],
+  );
+
   const clearConversation = useCallback(() => {
     setMessages([createInitialMessage()]);
     setInputText("");
@@ -168,6 +229,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
     processing,
     sendMessage,
     markProposalSaved,
+    assignCategoryToProposal,
     clearConversation,
     categoryKeywordsMap,
     accountKeywordsMap,

@@ -1483,6 +1483,9 @@ export const en = {
     noCategoriesFound: "No categories found",
     noAccountsFound: "No accounts found",
     allCategories: "All",
+    selectCategory: "Select Category:",
+    browseAll: "Browse All",
+    chooseCorrectAmount: "Choose the correct amount:",
   },
 } as const;
 

@@ -1500,5 +1500,8 @@ export const fil = {
     noCategoriesFound: "Walang nahanap na kategorya",
     noAccountsFound: "Walang nahanap na account",
     allCategories: "Lahat",
+    selectCategory: "Pumili ng Kategorya:",
+    browseAll: "I-browse Lahat",
+    chooseCorrectAmount: "Piliin ang tamang halaga:",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

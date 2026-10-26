@@ -5,11 +5,12 @@ import type {
 } from "../types/chat-with-kai.types";
 import { INTENT_VOCABULARY } from "../constants/intent-vocabulary";
 import { SAMPLE_PROMPTS } from "../constants/sample-prompts";
-import { extractAmount } from "./extract-amount.service";
+import { extractAmount, extractAmounts } from "./extract-amount.service";
 import { matchAccounts } from "./match-accounts.service";
 import { matchCategory } from "./match-category.service";
 import { extractMerchantNote } from "./extract-merchant-note.service";
 import type { TransactionType } from "@/modules/transactions";
+import type { Category } from "@/modules/categories";
 
 /**
  * Main Orchestrator: Parses a natural language sentence into a structured transaction proposal.
@@ -31,8 +32,19 @@ export function parseChatTransaction(
     };
   }
 
-  // 1. Amount Extraction
-  const amountResult = extractAmount(text);
+  // 1. Amount Extraction (Check single vs multiple ambiguous amounts)
+  const amountsResult = extractAmounts(text);
+  if (amountsResult.hasMultipleAmounts) {
+    return {
+      success: false,
+      reason: "multiple_amounts",
+      message: getLocalizedMessage("multiple_amounts", lang),
+      suggestedPrompts: defaultPrompts.slice(0, 3),
+      suggestedAmounts: amountsResult.allAmounts.map((a) => a.rawAmount),
+    };
+  }
+
+  const amountResult = amountsResult.primaryAmount;
   if (!amountResult) {
     return {
       success: false,
@@ -98,7 +110,7 @@ export function parseChatTransaction(
   }
 
   // Fallback source account if none matched
-  const effectiveSourceAccount =
+  let effectiveSourceAccount =
     accountsResult.sourceAccount ?? context.accounts[0] ?? null;
 
   if (!effectiveSourceAccount) {
@@ -111,7 +123,7 @@ export function parseChatTransaction(
   }
 
   // 4. Category Matching (For Expense / Income)
-  const categoryResult = matchCategory(
+  let categoryResult = matchCategory(
     text,
     context.categories,
     detectedType,
@@ -126,8 +138,110 @@ export function parseChatTransaction(
     matchedCategoryKeyword: categoryResult.matchedKeyword,
   });
 
+  // 6. Auto-learning from past transaction history
+  if (
+    detectedType !== "transfer" &&
+    merchantNoteResult.name &&
+    context.getMerchantHistory
+  ) {
+    try {
+      const history = context.getMerchantHistory(merchantNoteResult.name);
+      if (history) {
+        // If category is not yet matched, infer from history frequency
+        if (!categoryResult.category && history.mostFrequentCategoryId) {
+          const allCats: Category[] = [];
+          for (const cat of context.categories) {
+            allCats.push(cat);
+            if (cat.subcategories?.length) {
+              allCats.push(...cat.subcategories);
+            }
+          }
+          const inferredCat = allCats.find(
+            (c) => c.id === history.mostFrequentCategoryId,
+          );
+          if (inferredCat) {
+            categoryResult = {
+              category: inferredCat,
+              matchedKeyword: merchantNoteResult.name,
+              confidence: 0.9,
+            };
+          }
+        }
+
+        // If user didn't mention an account explicitly, prefer past frequent account for this merchant
+        const userMentionedAccount = accountsResult.matchedTexts.length > 0;
+        if (!userMentionedAccount && history.mostFrequentAccountId) {
+          const inferredAcc = context.accounts.find(
+            (a) => a.id === history.mostFrequentAccountId,
+          );
+          if (inferredAcc) {
+            effectiveSourceAccount = inferredAcc;
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback if history lookup is unavailable
+    }
+  }
+
   const currencyCode =
     effectiveSourceAccount.currencyCode || context.defaultCurrency || "PHP";
+
+  // If expense or income and category wasn't found, require category selection
+  if (detectedType !== "transfer" && !categoryResult.category) {
+    const partialProposal: ParsedTransactionProposal = {
+      type: detectedType,
+      amountMinorUnits: amountResult.amountMinorUnits,
+      currencyCode,
+      name: merchantNoteResult.name,
+      note: merchantNoteResult.note,
+      occurredAt: new Date(),
+      accountId: effectiveSourceAccount.id,
+      accountName: effectiveSourceAccount.name,
+      categoryId: null,
+      categoryName: null,
+      categoryIcon: null,
+      categoryColor: null,
+      transferAccountId: null,
+      transferAccountName: null,
+      isSaved: false,
+    };
+
+    return {
+      success: false,
+      reason: "missing_category",
+      message: getLocalizedMessage(
+        "missing_category",
+        lang,
+        merchantNoteResult.name ?? undefined,
+      ),
+      suggestedPrompts: defaultPrompts.slice(0, 3),
+      partialProposal,
+    };
+  }
+
+  let isPotentialDuplicate = false;
+  let duplicateWarningMessage: string | null = null;
+
+  if (context.findRecentDuplicateTransaction) {
+    try {
+      const dupCheck = context.findRecentDuplicateTransaction({
+        amountMinorUnits: amountResult.amountMinorUnits,
+        name: merchantNoteResult.name,
+        hoursLookback: 24,
+      });
+      if (dupCheck.isDuplicate) {
+        isPotentialDuplicate = true;
+        duplicateWarningMessage = getLocalizedMessage(
+          "duplicate_warning",
+          lang,
+          merchantNoteResult.name ?? undefined,
+        );
+      }
+    } catch {
+      // Graceful fallback
+    }
+  }
 
   const proposal: ParsedTransactionProposal = {
     type: detectedType,
@@ -145,6 +259,8 @@ export function parseChatTransaction(
     transferAccountId: accountsResult.destinationAccount?.id ?? null,
     transferAccountName: accountsResult.destinationAccount?.name ?? null,
     isSaved: false,
+    isPotentialDuplicate,
+    duplicateWarningMessage,
   };
 
   return {
@@ -228,6 +344,9 @@ function getLocalizedMessage(
   key:
     | "empty"
     | "missing_amount"
+    | "multiple_amounts"
+    | "missing_category"
+    | "duplicate_warning"
     | "missing_transfer_destination"
     | "need_two_accounts_for_transfer"
     | "no_accounts_available"
@@ -245,6 +364,33 @@ function getLocalizedMessage(
       en: "I couldn't identify the amount. How much was spent, received, or transferred? (e.g., 'Spent 500 on lunch').",
       fil: "Hindi ko nakita ang halaga. Magkano ang nagastos, natanggap, o inilipat? (hal., 'Nagastos ng 500 sa tanghalian').",
       es: "No pude identificar el monto. ¿Cuánto gastaste, recibiste o transferiste? (ej., 'Gasté 500 en almuerzo').",
+    },
+    multiple_amounts: {
+      en: "I found multiple amounts in your message. Which one is the transaction amount?",
+      fil: "May nakita akong higit sa isang halaga sa iyong mensahe. Alin dito ang halaga ng transaksyon?",
+      es: "Encontré varios montos en tu mensaje. ¿Cuál es el monto de la transacción?",
+    },
+    missing_category: {
+      en: param
+        ? `I prepared your transaction at ${param}. Which category should I put this under?`
+        : "Which category should I put this transaction under?",
+      fil: param
+        ? `Naihanda ko ang transaksyon sa ${param}. Saang kategorya ko ito ilalagay?`
+        : "Saang kategorya ko dapat ilagay ang transaksyong ito?",
+      es: param
+        ? `Preparé tu transacción en ${param}. ¿En qué categoría debo colocarla?`
+        : "¿En qué categoría debo colocar esta transacción?",
+    },
+    duplicate_warning: {
+      en: param
+        ? `A similar transaction at ${param} was already recorded in the last 24 hours.`
+        : "A similar transaction was already recorded in the last 24 hours.",
+      fil: param
+        ? `May katulad na transaksyon sa ${param} na naitala na sa nakalipas na 24 oras.`
+        : "May katulad na transaksyon na naitala na sa nakalipas na 24 oras.",
+      es: param
+        ? `Ya se registró una transacción similar en ${param} en las últimas 24 horas.`
+        : "Ya se registró una transacción similar en las últimas 24 horas.",
     },
     missing_transfer_destination: {
       en: "I recognize a transfer, but where would you like to transfer to? (e.g. 'to GCash')",

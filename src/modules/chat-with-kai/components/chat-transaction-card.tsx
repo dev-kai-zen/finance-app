@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import {
+  AlertTriangle,
   ArrowRight,
   ArrowRightLeft,
   CheckCircle2,
@@ -99,6 +100,17 @@ export function ChatTransactionCard({
           <Text style={styles.dateText}>Ready to record</Text>
         )}
       </View>
+
+      {/* Duplicate Warning Banner */}
+      {proposal.isPotentialDuplicate && !saved ? (
+        <View style={styles.duplicateWarningBox}>
+          <AlertTriangle color={theme.colors.warning ?? "#F59E0B"} size={13} />
+          <Text style={styles.duplicateWarningText}>
+            {proposal.duplicateWarningMessage ??
+              "A similar transaction was already recorded recently."}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Amount Display */}
       <View style={styles.amountContainer}>
@@ -238,6 +250,24 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
+    },
+    duplicateWarningBox: {
+      alignItems: "center",
+      backgroundColor: "rgba(245, 158, 11, 0.12)",
+      borderColor: "rgba(245, 158, 11, 0.35)",
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      marginTop: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 5,
+    },
+    duplicateWarningText: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 11,
+      lineHeight: 15,
     },
     typeBadge: {
       alignItems: "center",

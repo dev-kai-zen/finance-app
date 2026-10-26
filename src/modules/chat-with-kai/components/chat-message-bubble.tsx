@@ -1,8 +1,12 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Bot, Sparkles } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ChevronRight, Sparkles, Tag } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { IconHelper } from "@/components";
+import { formatCurrency } from "@/utils/currency";
+import { useLocalization } from "@/infrastructure/localization";
+import type { Category } from "@/modules/categories";
 import type {
   ChatMessage,
   ParsedTransactionProposal,
@@ -12,19 +16,30 @@ import { ChatSuggestionChips } from "./chat-suggestion-chips";
 
 interface ChatMessageBubbleProps {
   message: ChatMessage;
+  categories?: Category[];
+  defaultCurrency?: string;
   onEdit: (proposal: ParsedTransactionProposal) => void;
   onSave: (proposal: ParsedTransactionProposal) => Promise<boolean>;
   onSelectPrompt: (prompt: string) => void;
+  onSelectAmount?: (amount: number) => void;
+  onSelectCategoryForProposal?: (messageId: string, category: Category) => void;
+  onRequestCategoryPicker?: (messageId: string) => void;
 }
 
 export function ChatMessageBubble({
   message,
+  categories = [],
+  defaultCurrency = "PHP",
   onEdit,
   onSave,
   onSelectPrompt,
+  onSelectAmount,
+  onSelectCategoryForProposal,
+  onRequestCategoryPicker,
 }: ChatMessageBubbleProps) {
   const styles = useThemeStyles(createStyles);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const isUser = message.role === "user";
 
   if (isUser) {
@@ -37,6 +52,20 @@ export function ChatMessageBubble({
     );
   }
 
+  // Quick categories for missing_category selection (flattened, matching type)
+  const targetType =
+    message.partialProposal?.type === "income" ? "income" : "expense";
+  const allFlattened: Category[] = [];
+  for (const c of categories) {
+    allFlattened.push(c);
+    if (c.subcategories?.length) {
+      allFlattened.push(...c.subcategories);
+    }
+  }
+  const quickCategories = allFlattened
+    .filter((c) => c.type === targetType)
+    .slice(0, 4);
+
   return (
     <View style={styles.assistantRow}>
       <View style={styles.assistantAvatar}>
@@ -47,6 +76,81 @@ export function ChatMessageBubble({
         <View style={styles.assistantBubble}>
           <Text style={styles.assistantText}>{message.text}</Text>
         </View>
+
+        {/* Missing Category Selection Section */}
+        {message.failureReason === "missing_category" &&
+        message.partialProposal ? (
+          <View style={styles.interactiveBox}>
+            <Text style={styles.interactiveTitle}>
+              {t("chatWithKai.selectCategory")}
+            </Text>
+            <View style={styles.chipsWrap}>
+              {quickCategories.map((cat) => (
+                <Pressable
+                  key={cat.id}
+                  onPress={() => onSelectCategoryForProposal?.(message.id, cat)}
+                  style={({ pressed }) => [
+                    styles.categoryChip,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  {cat.icon ? (
+                    <IconHelper
+                      color={theme.colors.primary}
+                      name={cat.icon}
+                      size={13}
+                    />
+                  ) : (
+                    <Tag color={theme.colors.primary} size={12} />
+                  )}
+                  <Text numberOfLines={1} style={styles.categoryChipText}>
+                    {cat.name}
+                  </Text>
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => onRequestCategoryPicker?.(message.id)}
+                style={({ pressed }) => [
+                  styles.browseChip,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.browseChipText}>
+                  {t("chatWithKai.browseAll")}
+                </Text>
+                <ChevronRight color={theme.colors.textMuted} size={13} />
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {/* Multiple Amounts Disambiguation Section */}
+        {message.failureReason === "multiple_amounts" &&
+        message.suggestedAmounts &&
+        message.suggestedAmounts.length > 0 ? (
+          <View style={styles.interactiveBox}>
+            <Text style={styles.interactiveTitle}>
+              {t("chatWithKai.chooseCorrectAmount")}
+            </Text>
+            <View style={styles.chipsWrap}>
+              {message.suggestedAmounts.map((amt) => {
+                const formatted = formatCurrency(amt * 100, defaultCurrency);
+                return (
+                  <Pressable
+                    key={amt}
+                    onPress={() => onSelectAmount?.(amt)}
+                    style={({ pressed }) => [
+                      styles.amountChip,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.amountChipText}>{formatted}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
 
         {message.proposal ? (
           <ChatTransactionCard
@@ -120,6 +224,75 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 14,
       lineHeight: 20,
+    },
+    interactiveBox: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginTop: 4,
+      padding: 10,
+    },
+    interactiveTitle: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+      marginBottom: 8,
+      textTransform: "uppercase",
+    },
+    chipsWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+    },
+    categoryChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    categoryChipText: {
+      color: theme.colors.textPrimary,
+      fontSize: 12,
+      fontWeight: "500",
+      maxWidth: 140,
+    },
+    browseChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 3,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    browseChipText: {
+      color: theme.colors.primary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    amountChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.round,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+    },
+    amountChipText: {
+      color: theme.colors.onPrimary,
+      fontSize: 13,
+      fontWeight: "700",
+    },
+    buttonPressed: {
+      opacity: 0.75,
+      transform: [{ scale: 0.96 }],
     },
   });
 }

@@ -1499,5 +1499,8 @@ export const es = {
     noCategoriesFound: "No se encontraron categorías",
     noAccountsFound: "No se encontraron cuentas",
     allCategories: "Todas",
+    selectCategory: "Seleccionar Categoría:",
+    browseAll: "Explorar Todo",
+    chooseCorrectAmount: "Elige la cantidad correcta:",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

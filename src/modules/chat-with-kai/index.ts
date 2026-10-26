@@ -30,7 +30,7 @@ export {
   useChatToEncode,
 } from "./hooks/use-chat-with-kai";
 export { parseChatTransaction } from "./services/parse-chat-transaction.service";
-export { extractAmount } from "./services/extract-amount.service";
+export { extractAmount, extractAmounts } from "./services/extract-amount.service";
 export { matchAccounts } from "./services/match-accounts.service";
 export { matchCategory } from "./services/match-category.service";
 export { extractMerchantNote } from "./services/extract-merchant-note.service";

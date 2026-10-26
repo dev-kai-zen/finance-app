@@ -228,4 +228,92 @@ test("parse-chat-transaction: falls back to default account when NO account is m
   }
 });
 
+test("parse-chat-transaction: detects multiple ambiguous amounts", () => {
+  const result = parseChatTransaction(
+    "Spent 500 on lunch and 100 on tip using my wallet",
+    defaultContext,
+  );
+
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(result.reason, "multiple_amounts");
+    assert.ok(result.suggestedAmounts);
+    assert.deepEqual(result.suggestedAmounts, [500, 100]);
+  }
+});
+
+test("parse-chat-transaction: returns missing_category when category cannot be inferred and does NOT fallback to first category", () => {
+  const customContext = {
+    ...defaultContext,
+    categories: [
+      { id: "cat-housing", name: "Housing", type: "expense", icon: "home" },
+      { id: "cat-other", name: "Other Category", type: "expense", icon: "tag" },
+    ],
+  };
+
+  const result = parseChatTransaction(
+    "Spent 350 at MysteriousShopX using my wallet",
+    customContext,
+  );
+
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(result.reason, "missing_category");
+    assert.ok(result.partialProposal);
+    assert.equal(result.partialProposal.amountMinorUnits, 35000);
+    assert.equal(result.partialProposal.categoryId, null);
+    assert.equal(result.partialProposal.categoryName, null);
+  }
+});
+
+test("parse-chat-transaction: auto-learns category and account from merchant history", () => {
+  const mockHistory = (name) => {
+    if (name.toLowerCase().includes("shell")) {
+      return {
+        merchantName: "Shell",
+        mostFrequentCategoryId: "cat-transport",
+        mostFrequentAccountId: "acc-bdo",
+        lastAmountMinorUnits: 150000,
+        transactionCount: 5,
+      };
+    }
+    return null;
+  };
+
+  const result = parseChatTransaction("Shell 1500", {
+    ...defaultContext,
+    getMerchantHistory: mockHistory,
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.name, "Shell");
+    assert.equal(result.proposal.amountMinorUnits, 150000);
+    assert.equal(result.proposal.categoryId, "cat-transport");
+    assert.equal(result.proposal.accountId, "acc-bdo");
+  }
+});
+
+test("parse-chat-transaction: flags potential duplicate transaction within 24 hours", () => {
+  const mockDuplicateCheck = ({ amountMinorUnits, name }) => {
+    return {
+      isDuplicate: true,
+      duplicateCount: 1,
+      lastOccurredAt: new Date(Date.now() - 3600000),
+    };
+  };
+
+  const result = parseChatTransaction("Spent 500 on lunch at Mcdonalds", {
+    ...defaultContext,
+    findRecentDuplicateTransaction: mockDuplicateCheck,
+  });
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.isPotentialDuplicate, true);
+    assert.ok(result.proposal.duplicateWarningMessage?.includes("similar transaction"));
+  }
+});
+
+
 

@@ -32,6 +32,7 @@ import type {
   CreateTransferInput,
   TransactionListItem,
 } from "@/modules/transactions";
+import { CategoryPickerModal } from "@/modules/categories";
 
 export function ChatWithKaiModal({
   visible,
@@ -52,6 +53,7 @@ export function ChatWithKaiModal({
   const { locale, t } = useLocalization();
 
   const listRef = useRef<FlatList>(null);
+  const [pickerTargetMessageId, setPickerTargetMessageId] = useState<string | null>(null);
 
   const {
     messages,
@@ -60,6 +62,7 @@ export function ChatWithKaiModal({
     processing,
     sendMessage,
     markProposalSaved,
+    assignCategoryToProposal,
     clearConversation,
     reloadKeywords,
   } = useChatWithKai({
@@ -71,6 +74,12 @@ export function ChatWithKaiModal({
     defaultCurrency,
     language: (locale as "en" | "fil" | "es") || "en",
   });
+
+  const activePickerMessage = pickerTargetMessageId
+    ? messages.find((m) => m.id === pickerTargetMessageId)
+    : null;
+  const activePickerType =
+    activePickerMessage?.partialProposal?.type === "income" ? "income" : "expense";
 
   useEffect(() => {
     if (visible && messages.length > 0) {
@@ -257,9 +266,18 @@ export function ChatWithKaiModal({
             }}
             renderItem={({ item }) => (
               <ChatMessageBubble
+                categories={categories}
+                defaultCurrency={defaultCurrency}
                 message={item}
                 onEdit={handleEdit}
+                onRequestCategoryPicker={(msgId) => {
+                  setPickerTargetMessageId(msgId);
+                }}
                 onSave={handleSave}
+                onSelectAmount={(amount) => sendMessage(amount.toString())}
+                onSelectCategoryForProposal={(msgId, cat) => {
+                  void assignCategoryToProposal(msgId, cat);
+                }}
                 onSelectPrompt={(p) => sendMessage(p)}
               />
             )}
@@ -309,6 +327,20 @@ export function ChatWithKaiModal({
           </View>
         </KeyboardAvoidingView>
       </View>
+
+      <CategoryPickerModal
+        categories={categories}
+        onClose={() => setPickerTargetMessageId(null)}
+        onSelectCategory={(category) => {
+          if (pickerTargetMessageId) {
+            void assignCategoryToProposal(pickerTargetMessageId, category);
+            setPickerTargetMessageId(null);
+          }
+        }}
+        title={t("chatWithKai.filterCategory") || "Select Category"}
+        type={activePickerType}
+        visible={pickerTargetMessageId !== null}
+      />
     </Modal>
   );
 }

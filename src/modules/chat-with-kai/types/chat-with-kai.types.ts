@@ -3,6 +3,9 @@ import type { Category } from "@/modules/categories";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
+  DuplicateCheckInput,
+  DuplicateCheckResult,
+  MerchantHistoryInsight,
   TransactionListItem,
   TransactionType,
 } from "@/modules/transactions";
@@ -31,6 +34,8 @@ export interface ParsedTransactionProposal {
   transferPocketId?: string | null;
   transferPocketName?: string | null;
   isSaved?: boolean;
+  isPotentialDuplicate?: boolean;
+  duplicateWarningMessage?: string | null;
 }
 
 export interface ParseChatTransactionSuccess {
@@ -42,6 +47,8 @@ export interface ParseChatTransactionSuccess {
 
 export type ParseChatTransactionFailureReason =
   | "missing_amount"
+  | "multiple_amounts"
+  | "missing_category"
   | "missing_transfer_destination"
   | "missing_accounts"
   | "unknown_account"
@@ -53,6 +60,8 @@ export interface ParseChatTransactionFailure {
   reason: ParseChatTransactionFailureReason;
   message: string;
   suggestedPrompts: string[];
+  suggestedAmounts?: number[];
+  partialProposal?: ParsedTransactionProposal | null;
 }
 
 export type ParseChatTransactionResult =
@@ -67,6 +76,8 @@ export interface ChatMessage {
   proposal?: ParsedTransactionProposal | null;
   failureReason?: ParseChatTransactionFailureReason | null;
   suggestedPrompts?: string[];
+  suggestedAmounts?: number[];
+  partialProposal?: ParsedTransactionProposal | null;
 }
 
 export interface CategoryKeywordItem {
@@ -104,6 +115,10 @@ export interface ParseChatTransactionContext {
   defaultIncomeAccountId?: string | null;
   defaultCurrency: string;
   language?: "en" | "fil" | "es";
+  getMerchantHistory?: (merchantName: string) => MerchantHistoryInsight | null;
+  findRecentDuplicateTransaction?: (
+    input: DuplicateCheckInput,
+  ) => DuplicateCheckResult;
 }
 
 export interface ChatWithKaiModalProps {
