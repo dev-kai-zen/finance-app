@@ -1147,9 +1147,15 @@ export const fil = {
     stepRemindersTitle: "Mga Paalala at Notipikasyon",
     stepRemindersDesc:
       "Magtakda ng pang-araw-araw na paalala sa pagtatala ng gastos at bayarin sa takdang petsa.",
+    stepWidgetsTitle: "Mga Widget sa Home Screen",
+    stepWidgetsDesc:
+      "I-pin ang mga pindutan ng mabilisang transaksyon at buod ng pananalapi sa iyong home screen.",
     stepGuideHelperTitle: "Guide Helper",
     stepGuideHelperDesc:
       "Ipakita o itago ang lumulutang na chip ng gabay sa mga screen at form upang masimulan muli ang mga walkthrough anumang oras.",
+    stepKaiKnowledgeTitle: "Pamahalaan ang Kaalaman ni Kai",
+    stepKaiKnowledgeDesc:
+      "Turuan si Kai ng mga keyword para sa iyong mga account at kategorya upang mas maging matalino ang pag-chat.",
     stepDefaultExpenseTitle: "Default na Account para sa Gastos",
     stepDefaultExpenseDesc:
       "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",

@@ -193,7 +193,9 @@ function SettingsScreenContent() {
   const nicknameRef = useWalkthroughTarget("settingsNickname");
   const themeRef = useWalkthroughTarget("settingsTheme");
   const remindersRef = useWalkthroughTarget("settingsReminders");
+  const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
+  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -475,11 +477,18 @@ function SettingsScreenContent() {
             {Platform.OS === "android" ? (
               <>
                 <Pressable
+                  ref={widgetsRef as any}
+                  collapsable={false}
+                  onLayout={(e) => {
+                    itemScrollY.current["settingsWidgets"] =
+                      (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+                  }}
                   accessibilityLabel={t("settings.widgetsAccessibility")}
                   accessibilityRole="button"
                   onPress={() => router.push("/widgets")}
                   style={({ pressed }) => [
                     styles.settingRow,
+                    highlightedTarget === "settingsWidgets" && styles.settingRowHighlighted,
                     pressed && styles.settingRowPressed,
                   ]}
                 >
@@ -562,11 +571,18 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={kaiKnowledgeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsKaiKnowledge"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.kaiKnowledgeTitle")}
               accessibilityRole="button"
               onPress={() => router.push("/kai-knowledge")}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsKaiKnowledge" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >

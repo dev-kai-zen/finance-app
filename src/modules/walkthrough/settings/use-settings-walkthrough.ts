@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Platform, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import { SETTINGS_WALKTHROUGH_STEPS } from "./settings-walkthrough-steps";
@@ -21,6 +21,15 @@ export function useSettingsWalkthrough({
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
+  const steps = useMemo(() => {
+    if (Platform.OS === "android") {
+      return SETTINGS_WALKTHROUGH_STEPS;
+    }
+    return SETTINGS_WALKTHROUGH_STEPS.filter(
+      (step) => step.targetId !== "settingsWidgets",
+    );
+  }, []);
+
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [activeTargetLayout, setActiveTargetLayout] =
@@ -29,8 +38,7 @@ export function useSettingsWalkthrough({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const measurementGenerationRef = useRef(0);
 
-  const currentStep: WalkthroughStep | undefined =
-    SETTINGS_WALKTHROUGH_STEPS[activeStepIndex];
+  const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
 
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
@@ -91,12 +99,12 @@ export function useSettingsWalkthrough({
   }, [dismissPrompt]);
 
   const nextStep = useCallback(() => {
-    if (activeStepIndex >= SETTINGS_WALKTHROUGH_STEPS.length - 1) {
+    if (activeStepIndex >= steps.length - 1) {
       completeWalkthrough();
       return;
     }
     setActiveStepIndex(activeStepIndex + 1);
-  }, [activeStepIndex, completeWalkthrough]);
+  }, [activeStepIndex, completeWalkthrough, steps.length]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
@@ -119,7 +127,7 @@ export function useSettingsWalkthrough({
   return {
     isWalkthroughActive,
     activeStepIndex,
-    totalSteps: SETTINGS_WALKTHROUGH_STEPS.length,
+    totalSteps: steps.length,
     currentStep,
     activeTargetLayout,
     isCompleted: isPromptDismissed("settingsWalkthroughDismissed"),

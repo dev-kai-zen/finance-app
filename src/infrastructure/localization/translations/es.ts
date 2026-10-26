@@ -1145,9 +1145,15 @@ export const es = {
     stepRemindersTitle: "Recordatorios y notificaciones",
     stepRemindersDesc:
       "Configura alarmas diarias de gastos y avisos de facturas para no olvidar ningún pago.",
+    stepWidgetsTitle: "Widgets de pantalla de inicio",
+    stepWidgetsDesc:
+      "Fija accesos rápidos a transacciones y resúmenes financieros directamente en tu pantalla de inicio.",
     stepGuideHelperTitle: "Asistente de guía",
     stepGuideHelperDesc:
       "Muestra u oculta el botón flotante del tour en pantallas y formularios para reiniciar los recorridos guiados en cualquier momento.",
+    stepKaiKnowledgeTitle: "Administrar conocimiento de Kai",
+    stepKaiKnowledgeDesc:
+      "Enséñale a Kai palabras clave para tus cuentas y categorías para que el registro por chat sea aún más inteligente.",
     stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
     stepDefaultExpenseDesc:
       "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",
