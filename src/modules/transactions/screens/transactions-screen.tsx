@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -76,6 +77,8 @@ import type {
   TransactionListItem,
   TransactionType,
 } from "../types/transaction.types";
+
+const TRANSACTIONS_PAGE_SIZE = 50;
 
 interface DateGroup {
   key: string;
@@ -213,6 +216,11 @@ function TransactionsScreenContent({
     ),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
+  const [renderedLimit, setRenderedLimit] = useState(TRANSACTIONS_PAGE_SIZE);
+
+  useEffect(() => {
+    setRenderedLimit(TRANSACTIONS_PAGE_SIZE);
+  }, [searchQuery, filterState]);
 
   const fabRef = useRef<View>(null);
   const { registerTarget } = useWalkthroughRegistry();
@@ -447,12 +455,27 @@ function TransactionsScreenContent({
     return list;
   }, [transactions, searchQuery, filterState]);
 
+  const visibleTransactions = useMemo(
+    () => filteredTransactions.slice(0, renderedLimit),
+    [filteredTransactions, renderedLimit],
+  );
+
+  const hasMoreTransactions = renderedLimit < filteredTransactions.length;
+
+  const handleLoadMore = useCallback(() => {
+    if (renderedLimit < filteredTransactions.length) {
+      setRenderedLimit((prev) =>
+        Math.min(prev + TRANSACTIONS_PAGE_SIZE, filteredTransactions.length),
+      );
+    }
+  }, [renderedLimit, filteredTransactions.length]);
+
   // Group transactions by date
   const groupedTransactions = useMemo(() => {
     const groups: DateGroup[] = [];
     const map = new Map<string, DateGroup>();
 
-    for (const tx of filteredTransactions) {
+    for (const tx of visibleTransactions) {
       const { key, label } = getDateGroupInfo(tx.occurredAt);
       if (!map.has(key)) {
         const group: DateGroup = { key, label, items: [] };
@@ -463,7 +486,7 @@ function TransactionsScreenContent({
     }
 
     return groups;
-  }, [filteredTransactions]);
+  }, [visibleTransactions]);
 
   const handleOpenNewTransaction = () => {
     refreshAccounts();
@@ -932,8 +955,14 @@ function TransactionsScreenContent({
           stickySectionHeadersEnabled={false}
           style={styles.sectionList}
           windowSize={7}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
           ListFooterComponent={
-            filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
+            hasMoreTransactions ? (
+              <View style={styles.loadMoreFooter}>
+                <ActivityIndicator color={theme.colors.primary} size="small" />
+              </View>
+            ) : filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
               <AdBanner
                 placement="transactions"
                 variant="card"
@@ -1337,6 +1366,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    loadMoreFooter: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: theme.spacing.md,
     },
   });
 }

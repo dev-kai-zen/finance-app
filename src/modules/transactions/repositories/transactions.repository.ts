@@ -684,30 +684,21 @@ export function restoreTransactionsByGroupId(
 }
 
 export function calculateTransactionStats(context: DbContext = db): TransactionStats {
-  const allTx = context
-    .select()
+  const result = context
+    .select({
+      totalInflow: sql<number>`coalesce(sum(case when ${transactions.type} != 'transfer' and ${transactions.amountMinorUnits} > 0 then ${transactions.amountMinorUnits} else 0 end), 0)`,
+      totalOutflow: sql<number>`coalesce(sum(case when ${transactions.type} != 'transfer' and ${transactions.amountMinorUnits} < 0 then abs(${transactions.amountMinorUnits}) else 0 end), 0)`,
+      standaloneCount: sql<number>`coalesce(sum(case when ${transactions.type} != 'transfer' then 1 else 0 end), 0)`,
+      transferCount: sql<number>`count(distinct case when ${transactions.type} = 'transfer' and ${transactions.transactionGroupId} is not null then ${transactions.transactionGroupId} else null end)`,
+    })
     .from(transactions)
     .where(isNull(transactions.deletedAt))
-    .all();
+    .get();
 
-  let totalInflow = 0;
-  let totalOutflow = 0;
-  const groupedTransferIds = new Set<string>();
-
-  for (const tx of allTx) {
-    if (tx.type === "transfer") {
-      if (tx.transactionGroupId) groupedTransferIds.add(tx.transactionGroupId);
-      continue;
-    }
-    if (tx.amountMinorUnits > 0) {
-      totalInflow += tx.amountMinorUnits;
-    } else if (tx.amountMinorUnits < 0) {
-      totalOutflow += Math.abs(tx.amountMinorUnits);
-    }
-  }
-
-  const transferCount = groupedTransferIds.size;
-  const standaloneCount = allTx.filter((tx) => tx.type !== "transfer").length;
+  const totalInflow = Number(result?.totalInflow ?? 0);
+  const totalOutflow = Number(result?.totalOutflow ?? 0);
+  const standaloneCount = Number(result?.standaloneCount ?? 0);
+  const transferCount = Number(result?.transferCount ?? 0);
 
   return {
     totalInflowMinorUnits: totalInflow,

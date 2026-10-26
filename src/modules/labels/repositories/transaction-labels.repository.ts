@@ -33,35 +33,39 @@ export function getLabelsForTransactionIds(
   const result = new Map<string, Label[]>();
   if (transactionIds.length === 0) return result;
 
-  const rows = context
-    .select({
-      transactionId: transactionLabels.transactionId,
-      id: labels.id,
-      name: labels.name,
-      color: labels.color,
-      sortOrder: labels.sortOrder,
-      isArchived: labels.isArchived,
-      createdAt: labels.createdAt,
-      updatedAt: labels.updatedAt,
-    })
-    .from(transactionLabels)
-    .innerJoin(labels, eq(transactionLabels.labelId, labels.id))
-    .where(inArray(transactionLabels.transactionId, transactionIds))
-    .orderBy(asc(labels.sortOrder), asc(labels.name))
-    .all();
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < transactionIds.length; i += CHUNK_SIZE) {
+    const chunk = transactionIds.slice(i, i + CHUNK_SIZE);
+    const rows = context
+      .select({
+        transactionId: transactionLabels.transactionId,
+        id: labels.id,
+        name: labels.name,
+        color: labels.color,
+        sortOrder: labels.sortOrder,
+        isArchived: labels.isArchived,
+        createdAt: labels.createdAt,
+        updatedAt: labels.updatedAt,
+      })
+      .from(transactionLabels)
+      .innerJoin(labels, eq(transactionLabels.labelId, labels.id))
+      .where(inArray(transactionLabels.transactionId, chunk))
+      .orderBy(asc(labels.sortOrder), asc(labels.name))
+      .all();
 
-  for (const row of rows) {
-    const list = result.get(row.transactionId) ?? [];
-    list.push({
-      id: row.id,
-      name: row.name,
-      color: row.color,
-      sortOrder: row.sortOrder,
-      isArchived: row.isArchived,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    });
-    result.set(row.transactionId, list);
+    for (const row of rows) {
+      const list = result.get(row.transactionId) ?? [];
+      list.push({
+        id: row.id,
+        name: row.name,
+        color: row.color,
+        sortOrder: row.sortOrder,
+        isArchived: row.isArchived,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+      });
+      result.set(row.transactionId, list);
+    }
   }
 
   return result;
