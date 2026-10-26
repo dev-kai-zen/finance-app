@@ -8,6 +8,7 @@ export { NetWorthWidget } from "./components/net-worth-widget";
 export { MonthlyBudgetWidget } from "./components/monthly-budget-widget";
 export { LockedProWidget } from "./components/locked-pro-widget";
 export { WidgetSyncProcessor } from "./components/widget-sync-processor";
+export { WidgetGalleryScreen } from "./screens/widget-gallery-screen";
 export {
   registerWidgets,
   widgetTaskHandler,

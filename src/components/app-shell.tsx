@@ -29,6 +29,7 @@ function getScreenTitle(pathname: string, t: Translate): string {
   if (pathname.startsWith("/language")) return t("navigation.language");
   if (pathname.startsWith("/reminder-settings"))
     return t("settings.remindersTitle", { defaultValue: "Reminders" });
+  if (pathname.startsWith("/widgets")) return t("widgetGallery.title");
   if (pathname.startsWith("/accounts")) return t("navigation.accounts");
   if (pathname.startsWith("/transactions/scheduled"))
     return t("navigation.scheduledTransactions");
@@ -105,6 +106,7 @@ export function AppShell({
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||
+    pathname.startsWith("/widgets") ||
     pathname.startsWith("/transactions/scheduled");
 
   if (isDesktop) {

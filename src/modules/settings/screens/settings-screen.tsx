@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowDownLeft,
@@ -14,6 +14,7 @@ import {
   Heart,
   Info,
   Languages,
+  LayoutGrid,
   Palette,
   Pipette,
   RotateCcw,
@@ -470,6 +471,35 @@ function SettingsScreenContent() {
             </Pressable>
 
             <View style={styles.rowDivider} />
+
+            {Platform.OS === "android" ? (
+              <>
+                <Pressable
+                  accessibilityLabel={t("settings.widgetsAccessibility")}
+                  accessibilityRole="button"
+                  onPress={() => router.push("/widgets")}
+                  style={({ pressed }) => [
+                    styles.settingRow,
+                    pressed && styles.settingRowPressed,
+                  ]}
+                >
+                  <View style={styles.iconContainer}>
+                    <LayoutGrid color={theme.colors.primary} size={20} />
+                  </View>
+                  <View style={styles.settingCopy}>
+                    <Text style={styles.settingLabel}>
+                      {t("settings.widgetsTitle")}
+                    </Text>
+                    <Text style={styles.settingDescription}>
+                      {t("settings.widgetsDescription")}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textMuted} size={18} />
+                </Pressable>
+
+                <View style={styles.rowDivider} />
+              </>
+            ) : null}
 
             <View
               ref={guideHelperRef as any}
