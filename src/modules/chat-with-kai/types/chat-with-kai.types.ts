@@ -44,6 +44,7 @@ export type ParseChatTransactionFailureReason =
   | "missing_amount"
   | "missing_transfer_destination"
   | "missing_accounts"
+  | "unknown_account"
   | "unintelligible"
   | "empty";
 

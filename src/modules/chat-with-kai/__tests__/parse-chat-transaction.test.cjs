@@ -194,3 +194,38 @@ test("parse-chat-transaction: recognizes dynamic custom action keywords", () => 
   }
 });
 
+test("parse-chat-transaction: rejects transaction with unknown_account when explicit account does not exist", () => {
+  const result = parseChatTransaction(
+    "I spent 500 on lunch at Mcdonalds using my wallet",
+    {
+      ...defaultContext,
+      accounts: [{ id: "acc-bdo", name: "BDO", currencyCode: "PHP" }],
+      defaultExpenseAccountId: "acc-bdo",
+    },
+  );
+
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(result.reason, "unknown_account");
+    assert.ok(result.message.includes("wallet"));
+  }
+});
+
+test("parse-chat-transaction: falls back to default account when NO account is mentioned", () => {
+  const result = parseChatTransaction(
+    "I spent 500 on lunch at Mcdonalds",
+    {
+      ...defaultContext,
+      accounts: [{ id: "acc-bdo", name: "BDO", currencyCode: "PHP" }],
+      defaultExpenseAccountId: "acc-bdo",
+    },
+  );
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.accountId, "acc-bdo");
+    assert.equal(result.proposal.amountMinorUnits, 50000);
+  }
+});
+
+

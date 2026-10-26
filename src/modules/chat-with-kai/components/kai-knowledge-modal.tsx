@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,11 +15,11 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ArrowDownLeft,
-  ArrowLeft,
   ArrowLeftRight,
   ArrowUpRight,
-  Check,
+  ChevronLeft,
   ChevronRight,
+  HelpCircle,
   Pencil,
   Plus,
   RotateCcw,
@@ -35,16 +35,8 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { IconHelper } from "@/components/icon-helper";
-import {
-  CategoryPickerModal,
-  useCategories,
-  type Category,
-} from "@/modules/categories";
-import {
-  AccountPickerModal,
-  useAccounts,
-  type AccountListItem,
-} from "@/modules/accounts";
+import { useCategories, type Category } from "@/modules/categories";
+import { useAccounts, type AccountListItem } from "@/modules/accounts";
 import type { TransactionType } from "@/modules/transactions";
 import {
   addActionKeyword,
@@ -58,7 +50,6 @@ import {
   addCategoryKeyword,
   checkCategoryKeywordAvailable,
   deleteCategoryKeyword,
-  getCategoryKeywordsByCategoryId,
   listAccountKeywords,
   listCategoryKeywords,
   updateCategoryKeyword,
@@ -67,7 +58,6 @@ import {
   addAccountKeyword,
   checkAccountKeywordAvailable,
   deleteAccountKeyword,
-  getAccountKeywordsByAccountId,
   updateAccountKeyword,
 } from "../repositories/chat-knowledge.repository";
 import type {
@@ -75,6 +65,9 @@ import type {
   ActionKeywordItem,
   CategoryKeywordItem,
 } from "../types/chat-with-kai.types";
+import { KaiKnowledgeHelpModal } from "./kai-knowledge-help-modal";
+import { KaiCategoryPickerModal } from "./kai-category-picker-modal";
+import { KaiAccountPickerModal } from "./kai-account-picker-modal";
 
 export type KnowledgeTab = "actions" | "categories" | "accounts";
 
@@ -112,7 +105,7 @@ export function KaiKnowledgeModal({
   const { t } = useLocalization();
 
   const { categories: fetchedCategories } = useCategories();
-  const { accounts: fetchedAccounts, pockets } = useAccounts();
+  const { accounts: fetchedAccounts } = useAccounts();
 
   const categories =
     categoriesProp && categoriesProp.length > 0
@@ -120,6 +113,20 @@ export function KaiKnowledgeModal({
       : fetchedCategories;
   const accounts =
     accountsProp && accountsProp.length > 0 ? accountsProp : fetchedAccounts;
+
+  // Flatten categories so both parents and subcategories are searchable/findable
+  const flatCategories = useMemo(() => {
+    const flat: Category[] = [];
+    for (const cat of categories) {
+      flat.push(cat);
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        for (const sub of cat.subcategories) {
+          flat.push(sub);
+        }
+      }
+    }
+    return flat;
+  }, [categories]);
 
   const [activeTab, setActiveTab] = useState<KnowledgeTab>(initialTab);
   const [selectedActionType, setSelectedActionType] =
@@ -134,6 +141,7 @@ export function KaiKnowledgeModal({
   // Pickers state
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const [accountPickerVisible, setAccountPickerVisible] = useState(false);
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -149,7 +157,6 @@ export function KaiKnowledgeModal({
 
   // Input states for adding
   const [inputVal, setInputVal] = useState("");
-  const [inputLanguage, setInputLanguage] = useState("any");
   const [processing, setProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -158,9 +165,11 @@ export function KaiKnowledgeModal({
     null,
   );
   const [editInputVal, setEditInputVal] = useState("");
-  const [editLanguageVal, setEditLanguageVal] = useState("any");
   const [editError, setEditError] = useState<string | null>(null);
   const [editProcessing, setEditProcessing] = useState(false);
+
+  // Ref to track if modal just opened to prevent unwanted resets
+  const prevVisibleRef = useRef(false);
 
   // Load knowledge
   const loadData = useCallback(async () => {
@@ -178,55 +187,84 @@ export function KaiKnowledgeModal({
     }
   }, []);
 
+  // Initialize ONLY on modal visibility transition (false -> true)
   useEffect(() => {
-    if (visible) {
+    if (visible && !prevVisibleRef.current) {
       setActiveTab(initialTab);
       loadData();
       setInputVal("");
-      setInputLanguage("any");
       setErrorMessage(null);
       setSearchQuery("");
       setEditingItem(null);
 
       if (initialTab === "categories" && initialSelectedId) {
         setSelectedCategoryId(initialSelectedId);
-      } else if (categories.length > 0 && !selectedCategoryId) {
-        setSelectedCategoryId(categories[0].id);
+      } else if (flatCategories.length > 0) {
+        setSelectedCategoryId(flatCategories[0].id);
       }
 
       if (initialTab === "accounts" && initialSelectedId) {
         setSelectedAccountId(initialSelectedId);
-      } else if (accounts.length > 0 && !selectedAccountId) {
+      } else if (accounts.length > 0) {
         setSelectedAccountId(accounts[0].id);
       }
     }
+    prevVisibleRef.current = visible;
   }, [
     visible,
     initialTab,
     initialSelectedId,
-    categories,
+    flatCategories,
     accounts,
     loadData,
+  ]);
+
+  // If categories or accounts loaded after initial mount, ensure selection is set
+  useEffect(() => {
+    if (visible) {
+      if (!selectedCategoryId && flatCategories.length > 0) {
+        setSelectedCategoryId(
+          initialTab === "categories" && initialSelectedId
+            ? initialSelectedId
+            : flatCategories[0].id,
+        );
+      }
+      if (!selectedAccountId && accounts.length > 0) {
+        setSelectedAccountId(
+          initialTab === "accounts" && initialSelectedId
+            ? initialSelectedId
+            : accounts[0].id,
+        );
+      }
+    }
+  }, [
+    visible,
+    flatCategories,
+    accounts,
     selectedCategoryId,
     selectedAccountId,
+    initialTab,
+    initialSelectedId,
   ]);
 
   // Selected Category Entity
   const selectedCategory = useMemo(() => {
     if (!selectedCategoryId) return null;
-    return categories.find((c) => c.id === selectedCategoryId) ?? null;
-  }, [categories, selectedCategoryId]);
+    return flatCategories.find((c) => c.id === selectedCategoryId) ?? null;
+  }, [flatCategories, selectedCategoryId]);
 
   const selectedCategoryDisplayName = useMemo(() => {
     if (!selectedCategory) return null;
     if (selectedCategory.parentId) {
-      const parent = categories.find((c) => c.id === selectedCategory.parentId);
+      const parent = flatCategories.find(
+        (c) => c.id === selectedCategory.parentId,
+      );
       if (parent) {
         return `${parent.name} › ${selectedCategory.name}`;
       }
     }
     return selectedCategory.name;
-  }, [selectedCategory, categories]);
+  }, [selectedCategory, flatCategories]);
 
   // Selected Account Entity
   const selectedAccount = useMemo(() => {
@@ -241,11 +279,7 @@ export function KaiKnowledgeModal({
     );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return list.filter(
-      (k) =>
-        k.keyword.toLowerCase().includes(q) ||
-        (k.language ?? "").toLowerCase().includes(q),
-    );
+    return list.filter((k) => k.keyword.toLowerCase().includes(q));
   }, [actionKeywords, selectedActionType, searchQuery]);
 
   const displayedCategoryKeywords = useMemo(() => {
@@ -255,11 +289,7 @@ export function KaiKnowledgeModal({
     );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return list.filter(
-      (k) =>
-        k.keyword.toLowerCase().includes(q) ||
-        (k.language ?? "").toLowerCase().includes(q),
-    );
+    return list.filter((k) => k.keyword.toLowerCase().includes(q));
   }, [categoryKeywords, selectedCategoryId, searchQuery]);
 
   const displayedAccountKeywords = useMemo(() => {
@@ -269,16 +299,12 @@ export function KaiKnowledgeModal({
     );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return list.filter(
-      (k) =>
-        k.keyword.toLowerCase().includes(q) ||
-        (k.language ?? "").toLowerCase().includes(q),
-    );
+    return list.filter((k) => k.keyword.toLowerCase().includes(q));
   }, [accountKeywords, selectedAccountId, searchQuery]);
 
   // Handlers for adding keywords
   const handleAddKeyword = async () => {
-    const clean = inputVal.trim();
+    const clean = inputVal.trim().toLowerCase();
     if (!clean) return;
 
     setProcessing(true);
@@ -297,7 +323,7 @@ export function KaiKnowledgeModal({
         const created = await addActionKeyword(
           selectedActionType,
           clean,
-          inputLanguage,
+          "any",
         );
         setActionKeywords((prev) => [...prev, created]);
       } else if (activeTab === "categories") {
@@ -320,7 +346,7 @@ export function KaiKnowledgeModal({
         const created = await addCategoryKeyword(
           selectedCategoryId,
           clean,
-          inputLanguage,
+          "any",
         );
         setCategoryKeywords((prev) => [...prev, created]);
       } else if (activeTab === "accounts") {
@@ -343,7 +369,7 @@ export function KaiKnowledgeModal({
         const created = await addAccountKeyword(
           selectedAccountId,
           clean,
-          inputLanguage,
+          "any",
         );
         setAccountKeywords((prev) => [...prev, created]);
       }
@@ -397,18 +423,17 @@ export function KaiKnowledgeModal({
     setEditingItem({
       id: item.id,
       keyword: item.keyword,
-      language: item.language ?? "any",
+      language: "any",
       entityType,
     });
     setEditInputVal(item.keyword);
-    setEditLanguageVal(item.language ?? "any");
     setEditError(null);
   };
 
   // Save Edit Dialog
   const handleSaveEdit = async () => {
     if (!editingItem) return;
-    const clean = editInputVal.trim();
+    const clean = editInputVal.trim().toLowerCase();
     if (!clean) {
       setEditError("Keyword cannot be empty.");
       return;
@@ -422,7 +447,7 @@ export function KaiKnowledgeModal({
         const updated = await updateActionKeyword(
           editingItem.id,
           clean,
-          editLanguageVal,
+          "any",
         );
         setActionKeywords((prev) =>
           prev.map((k) => (k.id === updated.id ? updated : k)),
@@ -431,7 +456,7 @@ export function KaiKnowledgeModal({
         const updated = await updateCategoryKeyword(
           editingItem.id,
           clean,
-          editLanguageVal,
+          "any",
         );
         setCategoryKeywords((prev) =>
           prev.map((k) => (k.id === updated.id ? updated : k)),
@@ -440,7 +465,7 @@ export function KaiKnowledgeModal({
         const updated = await updateAccountKeyword(
           editingItem.id,
           clean,
-          editLanguageVal,
+          "any",
         );
         setAccountKeywords((prev) =>
           prev.map((k) => (k.id === updated.id ? updated : k)),
@@ -474,7 +499,9 @@ export function KaiKnowledgeModal({
               setActionKeywords(actRows);
               onKeywordsUpdated?.();
             } catch (err: any) {
-              setErrorMessage(err?.message ?? "Failed to reset action keywords.");
+              setErrorMessage(
+                err?.message ?? "Failed to reset action keywords.",
+              );
             } finally {
               setProcessing(false);
             }
@@ -483,14 +510,6 @@ export function KaiKnowledgeModal({
       ],
     );
   };
-
-  // Language options
-  const languageOptions = [
-    { code: "any", label: t("chatWithKai.langAny") },
-    { code: "en", label: t("chatWithKai.langEn") },
-    { code: "fil", label: t("chatWithKai.langFil") },
-    { code: "es", label: t("chatWithKai.langEs") },
-  ];
 
   return (
     <Modal
@@ -509,28 +528,32 @@ export function KaiKnowledgeModal({
           },
         ]}
       >
-        {/* Full-Screen Header */}
+        {/* Top Header: ChevronLeft + Left-aligned Title + Right Help Button */}
         <View style={styles.topHeader}>
-          <Pressable
-            accessibilityLabel="Back"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={onClose}
-            style={styles.backBtn}
-          >
-            <ArrowLeft color={theme.colors.textPrimary} size={22} />
-          </Pressable>
-
-          <View style={styles.topTitleBox}>
-            <Text style={styles.topTitle}>
+          <View style={styles.headerLeftGroup}>
+            <Pressable
+              accessibilityLabel="Back"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClose}
+              style={styles.backBtn}
+            >
+              <ChevronLeft color={theme.colors.textPrimary} size={24} />
+            </Pressable>
+            <Text numberOfLines={1} style={styles.topTitle}>
               {t("chatWithKai.knowledgeHubTitle")}
-            </Text>
-            <Text numberOfLines={1} style={styles.topSubtitle}>
-              {t("chatWithKai.knowledgeHubSubtitle")}
             </Text>
           </View>
 
-          <View style={styles.headerRightPlaceholder} />
+          <Pressable
+            accessibilityLabel={t("chatWithKai.helpModalTitle")}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setHelpModalVisible(true)}
+            style={styles.helpBtn}
+          >
+            <HelpCircle color={theme.colors.primary} size={22} />
+          </Pressable>
         </View>
 
         {/* Top 3-Tab Segmented Control */}
@@ -626,259 +649,215 @@ export function KaiKnowledgeModal({
           </Pressable>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* TAB 1: ACTIONS */}
+        {/* Fixed Non-Scrolling Screen Body */}
+        <View style={styles.mainBodyContainer}>
+          {/* TAB 1: ACTIONS CONTROLS (Toggle only - banner removed) */}
           {activeTab === "actions" && (
-            <View>
-              {/* Action Type Segmented Bar */}
-              <View style={styles.actionSegmentRow}>
-                <Pressable
-                  onPress={() => setSelectedActionType("expense")}
+            <View style={styles.actionSegmentRow}>
+              <Pressable
+                onPress={() => setSelectedActionType("expense")}
+                style={[
+                  styles.actionSegmentBtn,
+                  selectedActionType === "expense" &&
+                    styles.actionSegmentBtnActiveExpense,
+                ]}
+              >
+                <ArrowUpRight
+                  color={
+                    selectedActionType === "expense"
+                      ? "#EF4444"
+                      : theme.colors.textMuted
+                  }
+                  size={15}
+                />
+                <Text
                   style={[
-                    styles.actionSegmentBtn,
-                    selectedActionType === "expense" &&
-                      styles.actionSegmentBtnActiveExpense,
+                    styles.actionSegmentBtnText,
+                    selectedActionType === "expense" && {
+                      color: "#EF4444",
+                      fontWeight: "700",
+                    },
                   ]}
                 >
-                  <ArrowUpRight
-                    color={
-                      selectedActionType === "expense"
-                        ? "#EF4444"
-                        : theme.colors.textMuted
-                    }
-                    size={15}
-                  />
-                  <Text
-                    style={[
-                      styles.actionSegmentBtnText,
-                      selectedActionType === "expense" && {
-                        color: "#EF4444",
-                        fontWeight: "700",
-                      },
-                    ]}
-                  >
-                    {t("chatWithKai.actionExpense")} (
-                    {
-                      actionKeywords.filter((k) => k.actionType === "expense")
-                        .length
-                    }
-                    )
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setSelectedActionType("income")}
-                  style={[
-                    styles.actionSegmentBtn,
-                    selectedActionType === "income" &&
-                      styles.actionSegmentBtnActiveIncome,
-                  ]}
-                >
-                  <ArrowDownLeft
-                    color={
-                      selectedActionType === "income"
-                        ? "#10B981"
-                        : theme.colors.textMuted
-                    }
-                    size={15}
-                  />
-                  <Text
-                    style={[
-                      styles.actionSegmentBtnText,
-                      selectedActionType === "income" && {
-                        color: "#10B981",
-                        fontWeight: "700",
-                      },
-                    ]}
-                  >
-                    {t("chatWithKai.actionIncome")} (
-                    {
-                      actionKeywords.filter((k) => k.actionType === "income")
-                        .length
-                    }
-                    )
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setSelectedActionType("transfer")}
-                  style={[
-                    styles.actionSegmentBtn,
-                    selectedActionType === "transfer" &&
-                      styles.actionSegmentBtnActiveTransfer,
-                  ]}
-                >
-                  <ArrowLeftRight
-                    color={
-                      selectedActionType === "transfer"
-                        ? "#3B82F6"
-                        : theme.colors.textMuted
-                    }
-                    size={15}
-                  />
-                  <Text
-                    style={[
-                      styles.actionSegmentBtnText,
-                      selectedActionType === "transfer" && {
-                        color: "#3B82F6",
-                        fontWeight: "700",
-                      },
-                    ]}
-                  >
-                    {t("chatWithKai.actionTransfer")} (
-                    {
-                      actionKeywords.filter((k) => k.actionType === "transfer")
-                        .length
-                    }
-                    )
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Action Banner */}
-              <View style={styles.infoBanner}>
-                <Sparkles color={theme.colors.primary} size={16} />
-                <Text style={styles.infoBannerText}>
-                  {selectedActionType === "expense"
-                    ? t("chatWithKai.actionExpenseDescription")
-                    : selectedActionType === "income"
-                      ? t("chatWithKai.actionIncomeDescription")
-                      : t("chatWithKai.actionTransferDescription")}
+                  {t("chatWithKai.actionExpense")} (
+                  {
+                    actionKeywords.filter((k) => k.actionType === "expense")
+                      .length
+                  }
+                  )
                 </Text>
-              </View>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setSelectedActionType("income")}
+                style={[
+                  styles.actionSegmentBtn,
+                  selectedActionType === "income" &&
+                    styles.actionSegmentBtnActiveIncome,
+                ]}
+              >
+                <ArrowDownLeft
+                  color={
+                    selectedActionType === "income"
+                      ? "#10B981"
+                      : theme.colors.textMuted
+                  }
+                  size={15}
+                />
+                <Text
+                  style={[
+                    styles.actionSegmentBtnText,
+                    selectedActionType === "income" && {
+                      color: "#10B981",
+                      fontWeight: "700",
+                    },
+                  ]}
+                >
+                  {t("chatWithKai.actionIncome")} (
+                  {
+                    actionKeywords.filter((k) => k.actionType === "income")
+                      .length
+                  }
+                  )
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setSelectedActionType("transfer")}
+                style={[
+                  styles.actionSegmentBtn,
+                  selectedActionType === "transfer" &&
+                    styles.actionSegmentBtnActiveTransfer,
+                ]}
+              >
+                <ArrowLeftRight
+                  color={
+                    selectedActionType === "transfer"
+                      ? "#3B82F6"
+                      : theme.colors.textMuted
+                  }
+                  size={15}
+                />
+                <Text
+                  style={[
+                    styles.actionSegmentBtnText,
+                    selectedActionType === "transfer" && {
+                      color: "#3B82F6",
+                      fontWeight: "700",
+                    },
+                  ]}
+                >
+                  {t("chatWithKai.actionTransfer")} (
+                  {
+                    actionKeywords.filter((k) => k.actionType === "transfer")
+                      .length
+                  }
+                  )
+                </Text>
+              </Pressable>
             </View>
           )}
 
-          {/* TAB 2: CATEGORIES (Category Picker Card) */}
+          {/* TAB 2: CATEGORIES SELECTOR (Banner removed) */}
           {activeTab === "categories" && (
-            <View>
-              <Pressable
-                accessibilityLabel={t("chatWithKai.changeCategory")}
-                accessibilityRole="button"
-                onPress={() => setCategoryPickerVisible(true)}
-                style={({ pressed }) => [
-                  styles.entitySelectorCard,
-                  pressed && styles.entitySelectorCardPressed,
-                ]}
-              >
-                <View style={styles.entitySelectorLeft}>
-                  <View
-                    style={[
-                      styles.entityIconBadge,
-                      {
-                        backgroundColor: `${theme.colors.primary}18`,
-                        borderColor: `${theme.colors.primary}40`,
-                      },
-                    ]}
-                  >
-                    <IconHelper
-                      color={theme.colors.primary}
-                      name={selectedCategory?.icon ?? "tag"}
-                      size={20}
-                    />
-                  </View>
-                  <View style={styles.entityTextBox}>
-                    <Text style={styles.entitySelectorLabel}>
-                      {t("chatWithKai.tabCategories").toUpperCase()}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.entitySelectorTitle}>
-                      {selectedCategoryDisplayName ??
-                        t("chatWithKai.selectCategoryPrompt")}
-                    </Text>
-                  </View>
+            <Pressable
+              accessibilityLabel={t("chatWithKai.changeCategory")}
+              accessibilityRole="button"
+              onPress={() => setCategoryPickerVisible(true)}
+              style={({ pressed }) => [
+                styles.entitySelectorCard,
+                pressed && styles.entitySelectorCardPressed,
+              ]}
+            >
+              <View style={styles.entitySelectorLeft}>
+                <View
+                  style={[
+                    styles.entityIconBadge,
+                    {
+                      backgroundColor: `${theme.colors.primary}18`,
+                      borderColor: `${theme.colors.primary}40`,
+                    },
+                  ]}
+                >
+                  <IconHelper
+                    color={theme.colors.primary}
+                    name={selectedCategory?.icon ?? "tag"}
+                    size={20}
+                  />
                 </View>
-
-                <View style={styles.changeActionBadge}>
-                  <Text style={styles.changeActionText}>
-                    {t("chatWithKai.changeCategory")}
+                <View style={styles.entityTextBox}>
+                  <Text style={styles.entitySelectorLabel}>
+                    {t("chatWithKai.tabCategories").toUpperCase()}
                   </Text>
-                  <ChevronRight color={theme.colors.primary} size={16} />
+                  <Text numberOfLines={1} style={styles.entitySelectorTitle}>
+                    {selectedCategoryDisplayName ??
+                      t("chatWithKai.selectCategoryPrompt")}
+                  </Text>
                 </View>
-              </Pressable>
-
-              <View style={styles.infoBanner}>
-                <Sparkles color={theme.colors.primary} size={16} />
-                <Text style={styles.infoBannerText}>
-                  {t("chatWithKai.bannerCategory")}
-                </Text>
               </View>
-            </View>
+
+              <View style={styles.changeActionBadge}>
+                <Text style={styles.changeActionText}>
+                  {t("chatWithKai.changeCategory")}
+                </Text>
+                <ChevronRight color={theme.colors.primary} size={16} />
+              </View>
+            </Pressable>
           )}
 
-          {/* TAB 3: ACCOUNTS (Account Picker Card) */}
+          {/* TAB 3: ACCOUNTS SELECTOR (Banner removed) */}
           {activeTab === "accounts" && (
-            <View>
-              <Pressable
-                accessibilityLabel={t("chatWithKai.changeAccount")}
-                accessibilityRole="button"
-                onPress={() => setAccountPickerVisible(true)}
-                style={({ pressed }) => [
-                  styles.entitySelectorCard,
-                  pressed && styles.entitySelectorCardPressed,
-                ]}
-              >
-                <View style={styles.entitySelectorLeft}>
-                  <View
-                    style={[
-                      styles.entityIconBadge,
-                      {
-                        backgroundColor: `${theme.colors.primary}18`,
-                        borderColor: `${theme.colors.primary}40`,
-                      },
-                    ]}
-                  >
-                    <IconHelper
-                      color={theme.colors.primary}
-                      name={
-                        selectedAccount?.iconKey ??
-                        selectedAccount?.accountType?.iconKey ??
-                        "wallet"
-                      }
-                      size={20}
-                    />
-                  </View>
-                  <View style={styles.entityTextBox}>
-                    <Text style={styles.entitySelectorLabel}>
-                      {t("chatWithKai.tabAccounts").toUpperCase()}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.entitySelectorTitle}>
-                      {selectedAccount?.name ??
-                        t("chatWithKai.selectAccountPrompt")}
-                    </Text>
-                  </View>
+            <Pressable
+              accessibilityLabel={t("chatWithKai.changeAccount")}
+              accessibilityRole="button"
+              onPress={() => setAccountPickerVisible(true)}
+              style={({ pressed }) => [
+                styles.entitySelectorCard,
+                pressed && styles.entitySelectorCardPressed,
+              ]}
+            >
+              <View style={styles.entitySelectorLeft}>
+                <View
+                  style={[
+                    styles.entityIconBadge,
+                    {
+                      backgroundColor: `${theme.colors.primary}18`,
+                      borderColor: `${theme.colors.primary}40`,
+                    },
+                  ]}
+                >
+                  <IconHelper
+                    color={theme.colors.primary}
+                    name={
+                      selectedAccount?.iconKey ??
+                      selectedAccount?.accountType?.iconKey ??
+                      "wallet"
+                    }
+                    size={20}
+                  />
                 </View>
-
-                <View style={styles.changeActionBadge}>
-                  <Text style={styles.changeActionText}>
-                    {t("chatWithKai.changeAccount")}
+                <View style={styles.entityTextBox}>
+                  <Text style={styles.entitySelectorLabel}>
+                    {t("chatWithKai.tabAccounts").toUpperCase()}
                   </Text>
-                  <ChevronRight color={theme.colors.primary} size={16} />
+                  <Text numberOfLines={1} style={styles.entitySelectorTitle}>
+                    {selectedAccount?.name ??
+                      t("chatWithKai.selectAccountPrompt")}
+                  </Text>
                 </View>
-              </Pressable>
-
-              <View style={styles.infoBanner}>
-                <Sparkles color={theme.colors.primary} size={16} />
-                <Text style={styles.infoBannerText}>
-                  {t("chatWithKai.bannerAccount")}
-                </Text>
               </View>
-            </View>
+
+              <View style={styles.changeActionBadge}>
+                <Text style={styles.changeActionText}>
+                  {t("chatWithKai.changeAccount")}
+                </Text>
+                <ChevronRight color={theme.colors.primary} size={16} />
+              </View>
+            </Pressable>
           )}
 
-          {/* ADD KEYWORD SECTION */}
+          {/* ADD KEYWORD SECTION (Fixed directly above table) */}
           <View style={styles.addSectionCard}>
-            <Text style={styles.sectionHeading}>
-              {activeTab === "actions"
-                ? `ADD ACTION KEYWORD (${selectedActionType.toUpperCase()})`
-                : activeTab === "categories"
-                  ? `ADD KEYWORD FOR ${selectedCategory?.name?.toUpperCase() ?? "CATEGORY"}`
-                  : `ADD KEYWORD FOR ${selectedAccount?.name?.toUpperCase() ?? "ACCOUNT"}`}
-            </Text>
-
             <View style={styles.addInputRow}>
               <TextInput
                 autoCapitalize="none"
@@ -913,42 +892,14 @@ export function KaiKnowledgeModal({
                 ]}
               >
                 {processing ? (
-                  <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                  <ActivityIndicator
+                    color={theme.colors.onPrimary}
+                    size="small"
+                  />
                 ) : (
                   <Plus color={theme.colors.onPrimary} size={18} />
                 )}
               </Pressable>
-            </View>
-
-            {/* Language Selector for Added Keyword */}
-            <View style={styles.languageSegmentRow}>
-              <Text style={styles.languageLabel}>
-                {t("chatWithKai.selectLanguage")}:
-              </Text>
-              <View style={styles.languagePillsWrap}>
-                {languageOptions.map((opt) => {
-                  const isSelected = inputLanguage === opt.code;
-                  return (
-                    <Pressable
-                      key={opt.code}
-                      onPress={() => setInputLanguage(opt.code)}
-                      style={[
-                        styles.langPill,
-                        isSelected && styles.langPillSelected,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.langPillText,
-                          isSelected && styles.langPillTextSelected,
-                        ]}
-                      >
-                        {opt.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
             </View>
 
             {errorMessage && (
@@ -956,9 +907,9 @@ export function KaiKnowledgeModal({
             )}
           </View>
 
-          {/* KEYWORDS TABLE CONTAINER */}
+          {/* KEYWORDS TABLE CONTAINER (Fills remaining height: flex 1) */}
           <View style={styles.tableCard}>
-            {/* Table Header Controls: Search Box & Optional Reset */}
+            {/* Table Header Controls: Search Box & Optional Reset Defaults */}
             <View style={styles.tableTopControls}>
               <View style={styles.searchBox}>
                 <Search color={theme.colors.textMuted} size={16} />
@@ -993,215 +944,202 @@ export function KaiKnowledgeModal({
               )}
             </View>
 
-            {/* Table Column Headers */}
+            {/* Fixed Table Column Headers */}
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.tableHeaderCell, styles.cellKeyword]}>
                 {t("chatWithKai.tableHeaderKeyword").toUpperCase()}
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.cellLanguage]}>
-                {t("chatWithKai.tableHeaderLanguage").toUpperCase()}
               </Text>
               <Text style={[styles.tableHeaderCell, styles.cellActions]}>
                 {t("chatWithKai.tableHeaderActions").toUpperCase()}
               </Text>
             </View>
 
-            {/* Table Body */}
-            {activeTab === "actions" &&
-              displayedActionKeywords.length === 0 && (
-                <View style={styles.emptyTableState}>
-                  <Text style={styles.emptyTableText}>
-                    {searchQuery.trim()
-                      ? t("chatWithKai.noKeywordsMatching", {
-                          query: searchQuery,
-                        })
-                      : t("chatWithKai.noKeywordsYet")}
-                  </Text>
-                </View>
-              )}
-
-            {activeTab === "actions" &&
-              displayedActionKeywords.map((item, idx) => (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.tableRow,
-                    idx % 2 === 1 && styles.tableRowEven,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.rowKeywordText}>
-                    {item.keyword}
-                  </Text>
-
-                  <View style={styles.rowLanguageBadge}>
-                    <Text style={styles.rowLanguageBadgeText}>
-                      {(item.language ?? "any").toUpperCase()}
+            {/* Scrollable Table Data Rows ONLY */}
+            <ScrollView
+              contentContainerStyle={styles.tableScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={true}
+              style={styles.tableScroll}
+            >
+              {activeTab === "actions" &&
+                displayedActionKeywords.length === 0 && (
+                  <View style={styles.emptyTableState}>
+                    <Text style={styles.emptyTableText}>
+                      {searchQuery.trim()
+                        ? t("chatWithKai.noKeywordsMatching", {
+                            query: searchQuery,
+                          })
+                        : t("chatWithKai.noKeywordsYet")}
                     </Text>
                   </View>
+                )}
 
-                  <View style={styles.rowActionsCell}>
-                    <Pressable
-                      accessibilityLabel="Edit keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleOpenEdit(item, "action")}
-                      style={styles.iconActionBtn}
-                    >
-                      <Pencil color={theme.colors.primary} size={16} />
-                    </Pressable>
+              {activeTab === "actions" &&
+                displayedActionKeywords.map((item, idx) => (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.tableRow,
+                      idx % 2 === 1 && styles.tableRowEven,
+                    ]}
+                  >
+                    <Text numberOfLines={1} style={styles.rowKeywordText}>
+                      {item.keyword}
+                    </Text>
 
-                    <Pressable
-                      accessibilityLabel="Delete keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleRemoveActionKeyword(item.id)}
-                      style={[styles.iconActionBtn, styles.iconDeleteBtn]}
-                    >
-                      <Trash2 color={theme.colors.danger} size={16} />
-                    </Pressable>
+                    <View style={styles.rowActionsCell}>
+                      <Pressable
+                        accessibilityLabel="Edit keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleOpenEdit(item, "action")}
+                        style={styles.iconActionBtn}
+                      >
+                        <Pencil color={theme.colors.primary} size={16} />
+                      </Pressable>
+
+                      <Pressable
+                        accessibilityLabel="Delete keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleRemoveActionKeyword(item.id)}
+                        style={[styles.iconActionBtn, styles.iconDeleteBtn]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={16} />
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
 
-            {activeTab === "categories" &&
-              displayedCategoryKeywords.length === 0 && (
-                <View style={styles.emptyTableState}>
-                  <Text style={styles.emptyTableText}>
-                    {searchQuery.trim()
-                      ? t("chatWithKai.noKeywordsMatching", {
-                          query: searchQuery,
-                        })
-                      : t("chatWithKai.noKeywordsYet")}
-                  </Text>
-                </View>
-              )}
-
-            {activeTab === "categories" &&
-              displayedCategoryKeywords.map((item, idx) => (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.tableRow,
-                    idx % 2 === 1 && styles.tableRowEven,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.rowKeywordText}>
-                    {item.keyword}
-                  </Text>
-
-                  <View style={styles.rowLanguageBadge}>
-                    <Text style={styles.rowLanguageBadgeText}>
-                      {(item.language ?? "any").toUpperCase()}
+              {activeTab === "categories" &&
+                displayedCategoryKeywords.length === 0 && (
+                  <View style={styles.emptyTableState}>
+                    <Text style={styles.emptyTableText}>
+                      {searchQuery.trim()
+                        ? t("chatWithKai.noKeywordsMatching", {
+                            query: searchQuery,
+                          })
+                        : t("chatWithKai.noKeywordsYet")}
                     </Text>
                   </View>
+                )}
 
-                  <View style={styles.rowActionsCell}>
-                    <Pressable
-                      accessibilityLabel="Edit keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleOpenEdit(item, "category")}
-                      style={styles.iconActionBtn}
-                    >
-                      <Pencil color={theme.colors.primary} size={16} />
-                    </Pressable>
+              {activeTab === "categories" &&
+                displayedCategoryKeywords.map((item, idx) => (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.tableRow,
+                      idx % 2 === 1 && styles.tableRowEven,
+                    ]}
+                  >
+                    <Text numberOfLines={1} style={styles.rowKeywordText}>
+                      {item.keyword}
+                    </Text>
 
-                    <Pressable
-                      accessibilityLabel="Delete keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleRemoveCategoryKeyword(item.id)}
-                      style={[styles.iconActionBtn, styles.iconDeleteBtn]}
-                    >
-                      <Trash2 color={theme.colors.danger} size={16} />
-                    </Pressable>
+                    <View style={styles.rowActionsCell}>
+                      <Pressable
+                        accessibilityLabel="Edit keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleOpenEdit(item, "category")}
+                        style={styles.iconActionBtn}
+                      >
+                        <Pencil color={theme.colors.primary} size={16} />
+                      </Pressable>
+
+                      <Pressable
+                        accessibilityLabel="Delete keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleRemoveCategoryKeyword(item.id)}
+                        style={[styles.iconActionBtn, styles.iconDeleteBtn]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={16} />
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
 
-            {activeTab === "accounts" &&
-              displayedAccountKeywords.length === 0 && (
-                <View style={styles.emptyTableState}>
-                  <Text style={styles.emptyTableText}>
-                    {searchQuery.trim()
-                      ? t("chatWithKai.noKeywordsMatching", {
-                          query: searchQuery,
-                        })
-                      : t("chatWithKai.noKeywordsYet")}
-                  </Text>
-                </View>
-              )}
-
-            {activeTab === "accounts" &&
-              displayedAccountKeywords.map((item, idx) => (
-                <View
-                  key={item.id}
-                  style={[
-                    styles.tableRow,
-                    idx % 2 === 1 && styles.tableRowEven,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.rowKeywordText}>
-                    {item.keyword}
-                  </Text>
-
-                  <View style={styles.rowLanguageBadge}>
-                    <Text style={styles.rowLanguageBadgeText}>
-                      {(item.language ?? "any").toUpperCase()}
+              {activeTab === "accounts" &&
+                displayedAccountKeywords.length === 0 && (
+                  <View style={styles.emptyTableState}>
+                    <Text style={styles.emptyTableText}>
+                      {searchQuery.trim()
+                        ? t("chatWithKai.noKeywordsMatching", {
+                            query: searchQuery,
+                          })
+                        : t("chatWithKai.noKeywordsYet")}
                     </Text>
                   </View>
+                )}
 
-                  <View style={styles.rowActionsCell}>
-                    <Pressable
-                      accessibilityLabel="Edit keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleOpenEdit(item, "account")}
-                      style={styles.iconActionBtn}
-                    >
-                      <Pencil color={theme.colors.primary} size={16} />
-                    </Pressable>
+              {activeTab === "accounts" &&
+                displayedAccountKeywords.map((item, idx) => (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.tableRow,
+                      idx % 2 === 1 && styles.tableRowEven,
+                    ]}
+                  >
+                    <Text numberOfLines={1} style={styles.rowKeywordText}>
+                      {item.keyword}
+                    </Text>
 
-                    <Pressable
-                      accessibilityLabel="Delete keyword"
-                      accessibilityRole="button"
-                      hitSlop={6}
-                      onPress={() => handleRemoveAccountKeyword(item.id)}
-                      style={[styles.iconActionBtn, styles.iconDeleteBtn]}
-                    >
-                      <Trash2 color={theme.colors.danger} size={16} />
-                    </Pressable>
+                    <View style={styles.rowActionsCell}>
+                      <Pressable
+                        accessibilityLabel="Edit keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleOpenEdit(item, "account")}
+                        style={styles.iconActionBtn}
+                      >
+                        <Pencil color={theme.colors.primary} size={16} />
+                      </Pressable>
+
+                      <Pressable
+                        accessibilityLabel="Delete keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleRemoveAccountKeyword(item.id)}
+                        style={[styles.iconActionBtn, styles.iconDeleteBtn]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={16} />
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
+            </ScrollView>
           </View>
-        </ScrollView>
+        </View>
 
-        {/* CATEGORY PICKER MODAL */}
-        <CategoryPickerModal
+        {/* DEDICATED CATEGORY PICKER MODAL */}
+        <KaiCategoryPickerModal
           categories={categories}
           onClose={() => setCategoryPickerVisible(false)}
           onSelectCategory={(cat) => {
             setSelectedCategoryId(cat.id);
-            setCategoryPickerVisible(false);
           }}
           selectedCategoryId={selectedCategoryId}
-          title={t("chatWithKai.filterCategory")}
           visible={categoryPickerVisible}
         />
 
-        {/* ACCOUNT PICKER MODAL */}
-        <AccountPickerModal
+        {/* DEDICATED ACCOUNT PICKER MODAL */}
+        <KaiAccountPickerModal
           accounts={accounts}
-          hidePockets={true}
           onClose={() => setAccountPickerVisible(false)}
-          onSelectLocation={(acc) => {
+          onSelectAccount={(acc) => {
             setSelectedAccountId(acc.id);
-            setAccountPickerVisible(false);
           }}
-          pockets={pockets}
           selectedAccountId={selectedAccountId}
           visible={accountPickerVisible}
+        />
+
+        {/* HELP / INFORMATION MODAL */}
+        <KaiKnowledgeHelpModal
+          onClose={() => setHelpModalVisible(false)}
+          visible={helpModalVisible}
         />
 
         {/* EDIT KEYWORD DIALOG MODAL */}
@@ -1239,34 +1177,6 @@ export function KaiKnowledgeModal({
                   style={styles.dialogInput}
                   value={editInputVal}
                 />
-
-                <Text style={[styles.dialogFieldLabel, { marginTop: 14 }]}>
-                  {t("chatWithKai.tableHeaderLanguage").toUpperCase()}
-                </Text>
-                <View style={styles.languagePillsWrap}>
-                  {languageOptions.map((opt) => {
-                    const isSelected = editLanguageVal === opt.code;
-                    return (
-                      <Pressable
-                        key={opt.code}
-                        onPress={() => setEditLanguageVal(opt.code)}
-                        style={[
-                          styles.langPill,
-                          isSelected && styles.langPillSelected,
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.langPillText,
-                            isSelected && styles.langPillTextSelected,
-                          ]}
-                        >
-                          {opt.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
 
                 {editError && (
                   <Text style={styles.errorBannerText}>{editError}</Text>
@@ -1329,31 +1239,34 @@ const createStyles = (theme: AppTheme) =>
       borderBottomColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
     },
+    headerLeftGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+      flex: 1,
+      marginRight: 12,
+      gap: 8,
+    },
     backBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 38,
+      height: 38,
+      borderRadius: 10,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: theme.colors.surfaceElevated,
-    },
-    topTitleBox: {
-      flex: 1,
-      alignItems: "center",
-      marginHorizontal: 12,
     },
     topTitle: {
       fontSize: 17,
       fontWeight: "700",
       color: theme.colors.textPrimary,
+      flex: 1,
     },
-    topSubtitle: {
-      fontSize: 12,
-      color: theme.colors.textSecondary,
-      marginTop: 2,
-    },
-    headerRightPlaceholder: {
-      width: 40,
+    helpBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: `${theme.colors.primary}15`,
     },
     tabBar: {
       flexDirection: "row",
@@ -1369,7 +1282,7 @@ const createStyles = (theme: AppTheme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 10,
+      paddingVertical: 9,
       borderRadius: 10,
       backgroundColor: theme.colors.surfaceElevated,
       gap: 6,
@@ -1388,14 +1301,16 @@ const createStyles = (theme: AppTheme) =>
       color: theme.colors.primary,
       fontWeight: "700",
     },
-    scrollContent: {
-      padding: 16,
-      paddingBottom: 40,
+    mainBodyContainer: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 6,
     },
     actionSegmentRow: {
       flexDirection: "row",
       gap: 8,
-      marginBottom: 12,
+      marginBottom: 10,
     },
     actionSegmentBtn: {
       flex: 1,
@@ -1426,33 +1341,16 @@ const createStyles = (theme: AppTheme) =>
       fontWeight: "600",
       color: theme.colors.textSecondary,
     },
-    infoBanner: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 12,
-      borderRadius: 12,
-      backgroundColor: `${theme.colors.primary}12`,
-      borderWidth: 1,
-      borderColor: `${theme.colors.primary}25`,
-      marginBottom: 16,
-      gap: 10,
-    },
-    infoBannerText: {
-      flex: 1,
-      fontSize: 13,
-      lineHeight: 18,
-      color: theme.colors.textPrimary,
-    },
     entitySelectorCard: {
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: 14,
+      padding: 12,
       borderRadius: 14,
       backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      marginBottom: 12,
+      marginBottom: 10,
     },
     entitySelectorCardPressed: {
       opacity: 0.85,
@@ -1462,29 +1360,29 @@ const createStyles = (theme: AppTheme) =>
       flexDirection: "row",
       alignItems: "center",
       flex: 1,
-      marginRight: 12,
+      marginRight: 10,
     },
     entityIconBadge: {
-      width: 42,
-      height: 42,
-      borderRadius: 12,
+      width: 38,
+      height: 38,
+      borderRadius: 10,
       borderWidth: 1,
       alignItems: "center",
       justifyContent: "center",
-      marginRight: 12,
+      marginRight: 10,
     },
     entityTextBox: {
       flex: 1,
     },
     entitySelectorLabel: {
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: "700",
       letterSpacing: 0.5,
       color: theme.colors.textMuted,
       marginBottom: 2,
     },
     entitySelectorTitle: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: "700",
       color: theme.colors.textPrimary,
     },
@@ -1493,49 +1391,41 @@ const createStyles = (theme: AppTheme) =>
       alignItems: "center",
       gap: 4,
       paddingVertical: 6,
-      paddingHorizontal: 10,
+      paddingHorizontal: 8,
       borderRadius: 8,
       backgroundColor: `${theme.colors.primary}15`,
     },
     changeActionText: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "600",
       color: theme.colors.primary,
     },
     addSectionCard: {
-      padding: 14,
+      padding: 12,
       borderRadius: 14,
       backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
-      marginBottom: 16,
-    },
-    sectionHeading: {
-      fontSize: 11,
-      fontWeight: "700",
-      letterSpacing: 0.5,
-      color: theme.colors.textMuted,
       marginBottom: 10,
     },
     addInputRow: {
       flexDirection: "row",
       gap: 8,
-      marginBottom: 10,
     },
     addTextInput: {
       flex: 1,
-      height: 44,
+      height: 42,
       borderRadius: 10,
       backgroundColor: theme.colors.surfaceElevated,
       borderWidth: 1,
       borderColor: theme.colors.border,
       paddingHorizontal: 12,
-      fontSize: 14,
+      fontSize: 13,
       color: theme.colors.textPrimary,
     },
     addSubmitBtn: {
-      width: 44,
-      height: 44,
+      width: 42,
+      height: 42,
       borderRadius: 10,
       backgroundColor: theme.colors.primary,
       alignItems: "center",
@@ -1544,47 +1434,13 @@ const createStyles = (theme: AppTheme) =>
     addSubmitBtnDisabled: {
       opacity: 0.4,
     },
-    languageSegmentRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-    },
-    languageLabel: {
-      fontSize: 12,
-      fontWeight: "600",
-      color: theme.colors.textSecondary,
-    },
-    languagePillsWrap: {
-      flexDirection: "row",
-      gap: 6,
-    },
-    langPill: {
-      paddingHorizontal: 10,
-      paddingVertical: 5,
-      borderRadius: 8,
-      backgroundColor: theme.colors.surfaceElevated,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    langPillSelected: {
-      backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
-    },
-    langPillText: {
-      fontSize: 11,
-      fontWeight: "600",
-      color: theme.colors.textSecondary,
-    },
-    langPillTextSelected: {
-      color: theme.colors.onPrimary,
-      fontWeight: "700",
-    },
     errorBannerText: {
       fontSize: 12,
       color: theme.colors.danger,
-      marginTop: 8,
+      marginTop: 6,
     },
     tableCard: {
+      flex: 1,
       borderRadius: 14,
       backgroundColor: theme.colors.surface,
       borderWidth: 1,
@@ -1595,16 +1451,16 @@ const createStyles = (theme: AppTheme) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: 12,
+      padding: 10,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      gap: 10,
+      gap: 8,
     },
     searchBox: {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      height: 38,
+      height: 36,
       borderRadius: 8,
       backgroundColor: theme.colors.surfaceElevated,
       paddingHorizontal: 10,
@@ -1612,7 +1468,7 @@ const createStyles = (theme: AppTheme) =>
     },
     searchInput: {
       flex: 1,
-      fontSize: 13,
+      fontSize: 12.5,
       color: theme.colors.textPrimary,
       paddingVertical: 0,
     },
@@ -1626,7 +1482,7 @@ const createStyles = (theme: AppTheme) =>
       backgroundColor: theme.colors.surfaceElevated,
     },
     resetBtnText: {
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: "600",
       color: theme.colors.textMuted,
     },
@@ -1634,13 +1490,13 @@ const createStyles = (theme: AppTheme) =>
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 14,
-      paddingVertical: 10,
+      paddingVertical: 8,
       backgroundColor: theme.colors.surfaceElevated,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
     },
     tableHeaderCell: {
-      fontSize: 11,
+      fontSize: 10.5,
       fontWeight: "700",
       letterSpacing: 0.5,
       color: theme.colors.textMuted,
@@ -1648,19 +1504,22 @@ const createStyles = (theme: AppTheme) =>
     cellKeyword: {
       flex: 1,
     },
-    cellLanguage: {
-      width: 75,
-      textAlign: "center",
-    },
     cellActions: {
-      width: 80,
-      textAlign: "center",
+      width: 72,
+      textAlign: "right",
+      paddingRight: 6,
+    },
+    tableScroll: {
+      flex: 1,
+    },
+    tableScrollContent: {
+      flexGrow: 1,
     },
     tableRow: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 14,
-      paddingVertical: 12,
+      paddingVertical: 10,
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: theme.colors.border,
     },
@@ -1669,37 +1528,22 @@ const createStyles = (theme: AppTheme) =>
     },
     rowKeywordText: {
       flex: 1,
-      fontSize: 14,
+      fontSize: 13.5,
       fontWeight: "600",
       color: theme.colors.textPrimary,
       marginRight: 8,
     },
-    rowLanguageBadge: {
-      width: 75,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    rowLanguageBadgeText: {
-      fontSize: 10,
-      fontWeight: "700",
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 6,
-      overflow: "hidden",
-      backgroundColor: theme.colors.surfaceElevated,
-      color: theme.colors.textSecondary,
-    },
     rowActionsCell: {
-      width: 80,
+      width: 72,
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      gap: 12,
+      justifyContent: "flex-end",
+      gap: 8,
     },
     iconActionBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
+      width: 30,
+      height: 30,
+      borderRadius: 7,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: `${theme.colors.primary}12`,
@@ -1708,6 +1552,7 @@ const createStyles = (theme: AppTheme) =>
       backgroundColor: `${theme.colors.danger}12`,
     },
     emptyTableState: {
+      flex: 1,
       padding: 32,
       alignItems: "center",
       justifyContent: "center",

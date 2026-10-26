@@ -153,7 +153,7 @@ export async function addActionKeyword(
   await client.insert(actionKeywords).values({
     id,
     actionType,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   });
@@ -161,7 +161,7 @@ export async function addActionKeyword(
   return {
     id,
     actionType,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   };
@@ -203,13 +203,13 @@ export async function updateActionKeyword(
     .limit(1);
 
   if (existing.length > 0) {
-    throw new DuplicateKeywordError(keyword.trim(), `${existing[0].actionType} action`);
+    throw new DuplicateKeywordError(cleanKeyword, `${existing[0].actionType} action`);
   }
 
   await client
     .update(actionKeywords)
     .set({
-      keyword: keyword.trim(),
+      keyword: cleanKeyword,
       language,
     })
     .where(eq(actionKeywords.id, id));
@@ -272,7 +272,7 @@ export async function seedDefaultActionKeywordsIfEmpty(
     valuesToInsert.push({
       id: `actkw_seed_${i}_${Date.now()}`,
       actionType: item.actionType,
-      keyword: item.keyword.trim(),
+      keyword: lowerKw,
       language: item.language,
       createdAt: now,
     });

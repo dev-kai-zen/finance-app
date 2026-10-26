@@ -9,6 +9,18 @@ export {
   type KnowledgeTab,
 } from "./components/kai-knowledge-modal";
 export {
+  KaiCategoryPickerModal,
+  type KaiCategoryPickerModalProps,
+} from "./components/kai-category-picker-modal";
+export {
+  KaiAccountPickerModal,
+  type KaiAccountPickerModalProps,
+} from "./components/kai-account-picker-modal";
+export {
+  KaiKnowledgeHelpModal,
+  type KaiKnowledgeHelpModalProps,
+} from "./components/kai-knowledge-help-modal";
+export {
   KaiKnowledgeSelectorRow,
   type KaiKnowledgeSelectorRowProps,
 } from "./components/kai-knowledge-selector-row";

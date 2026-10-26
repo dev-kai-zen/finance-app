@@ -149,7 +149,7 @@ export async function addCategoryKeyword(
   await client.insert(categoryKeywords).values({
     id,
     categoryId,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   });
@@ -157,7 +157,7 @@ export async function addCategoryKeyword(
   return {
     id,
     categoryId,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   };
@@ -210,7 +210,7 @@ export async function updateCategoryKeyword(
   await client
     .update(categoryKeywords)
     .set({
-      keyword: keyword.trim(),
+      keyword: cleanKeyword,
       language,
     })
     .where(eq(categoryKeywords.id, id));
@@ -346,7 +346,7 @@ export async function addAccountKeyword(
       .limit(1);
 
     const accName = existingAcc[0]?.name ?? "another account";
-    throw new DuplicateKeywordError(keyword.trim(), accName);
+    throw new DuplicateKeywordError(cleanKeyword, accName);
   }
 
   const id = `akw_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
@@ -355,7 +355,7 @@ export async function addAccountKeyword(
   await client.insert(accountKeywords).values({
     id,
     accountId,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   });
@@ -363,7 +363,7 @@ export async function addAccountKeyword(
   return {
     id,
     accountId,
-    keyword: keyword.trim(),
+    keyword: cleanKeyword,
     language,
     createdAt,
   };
@@ -400,13 +400,13 @@ export async function updateAccountKeyword(
       .limit(1);
 
     const accName = existingAcc[0]?.name ?? "another account";
-    throw new DuplicateKeywordError(keyword.trim(), accName);
+    throw new DuplicateKeywordError(cleanKeyword, accName);
   }
 
   await client
     .update(accountKeywords)
     .set({
-      keyword: keyword.trim(),
+      keyword: cleanKeyword,
       language,
     })
     .where(eq(accountKeywords.id, id));
@@ -646,7 +646,7 @@ export async function seedDefaultChatKnowledgeIfEmpty(
     valuesToInsert.push({
       id: `ckw_seed_${i}_${Date.now()}`,
       categoryId: item.categoryId,
-      keyword: item.keyword.trim(),
+      keyword: lowerKw,
       language: item.language,
       createdAt: now,
     });

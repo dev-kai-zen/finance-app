@@ -63,6 +63,19 @@ export function parseChatTransaction(
     context.accountKeywordsMap,
   );
 
+  if (accountsResult.unmatchedAccountAttempt) {
+    return {
+      success: false,
+      reason: "unknown_account",
+      message: getLocalizedMessage(
+        "unknown_account",
+        lang,
+        accountsResult.unmatchedAccountAttempt,
+      ),
+      suggestedPrompts: defaultPrompts.slice(0, 3),
+    };
+  }
+
   if (detectedType === "transfer") {
     if (!accountsResult.sourceAccount || !accountsResult.destinationAccount) {
       if (context.accounts.length < 2) {
@@ -217,8 +230,10 @@ function getLocalizedMessage(
     | "missing_amount"
     | "missing_transfer_destination"
     | "need_two_accounts_for_transfer"
-    | "no_accounts_available",
+    | "no_accounts_available"
+    | "unknown_account",
   lang: "en" | "fil" | "es",
+  param?: string,
 ): string {
   const messages: Record<string, Record<"en" | "fil" | "es", string>> = {
     empty: {
@@ -245,6 +260,11 @@ function getLocalizedMessage(
       en: "No active accounts found. Please create an account first.",
       fil: "Walang nahanap na aktibong account. Mangyaring gumawa muna ng account.",
       es: "No se encontraron cuentas activas. Por favor crea una cuenta primero.",
+    },
+    unknown_account: {
+      en: `I couldn't find an account matching '${param ?? "account"}'. Please check your account name or add it in Manage Kai Knowledge.`,
+      fil: `Hindi ko mahanap ang account na tumutugma sa '${param ?? "account"}'. Pakitingnan ang pangalan ng iyong account o idagdag ito sa Kaalaman ni Kai.`,
+      es: `No pude encontrar una cuenta que coincida con '${param ?? "cuenta"}'. Por favor verifica el nombre de tu cuenta o agrégala en Conocimiento de Kai.`,
     },
   };
 
