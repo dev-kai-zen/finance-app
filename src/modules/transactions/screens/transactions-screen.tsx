@@ -269,6 +269,7 @@ function TransactionsScreenContent({
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<(() => void) | null>(null);
   const [formInitialType, setFormInitialType] = useState<
     TransactionType | undefined
   >(undefined);
@@ -480,6 +481,8 @@ function TransactionsScreenContent({
     if (success) {
       refreshAccounts();
       refreshPresets();
+      onChatEditSaved?.();
+      setOnChatEditSaved(null);
     }
     return success;
   };
@@ -493,6 +496,8 @@ function TransactionsScreenContent({
     if (success) {
       refreshAccounts();
       refreshPresets();
+      onChatEditSaved?.();
+      setOnChatEditSaved(null);
     }
     return success;
   };
@@ -958,6 +963,7 @@ function TransactionsScreenContent({
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
           setFormInitialType(undefined);
+          setOnChatEditSaved(null);
           router.setParams({
             action: undefined,
             type: undefined,
@@ -998,9 +1004,10 @@ function TransactionsScreenContent({
         accounts={accounts}
         categories={categories}
         onClose={() => setIsChatModalOpen(false)}
-        onEditInForm={(prefilled) => {
+        onEditInForm={(prefilled, onSaved) => {
           setPrefilledTransaction(prefilled);
           setIsEditingTransaction(false);
+          setOnChatEditSaved(() => onSaved ?? null);
           setIsFormModalOpen(true);
         }}
         onSaveTransaction={async (input) => {

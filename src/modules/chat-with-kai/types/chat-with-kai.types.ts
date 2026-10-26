@@ -142,7 +142,10 @@ export interface ChatWithKaiModalProps {
   defaultExpenseAccountId?: string | null;
   defaultIncomeAccountId?: string | null;
   defaultCurrency?: string;
-  onEditInForm: (prefilledTransaction: TransactionListItem) => void;
+  onEditInForm: (
+    prefilledTransaction: TransactionListItem,
+    onSaved?: () => void,
+  ) => void;
   onSaveTransaction: (input: CreateTransactionInput) => Promise<boolean>;
   onSaveTransfer?: (input: CreateTransferInput) => Promise<boolean>;
 }

@@ -137,8 +137,16 @@ export function ChatWithKaiModal({
       destinationLocationBalanceAfterMinorUnits: null,
     };
 
+    const targetMsg = messages.find(
+      (m) => m.proposal === proposal || m.partialProposal === proposal,
+    );
+
     onClose();
-    onEditInForm(draftItem);
+    onEditInForm(draftItem, () => {
+      if (targetMsg) {
+        markProposalSaved(targetMsg.id);
+      }
+    });
   };
 
   const handleSave = async (

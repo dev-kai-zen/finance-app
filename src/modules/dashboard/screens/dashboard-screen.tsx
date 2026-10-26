@@ -106,6 +106,7 @@ function DashboardScreenContent() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<(() => void) | null>(null);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -286,6 +287,8 @@ function DashboardScreenContent() {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      onChatEditSaved?.();
+      setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
         !isPromptDismissed("firstTransactionCelebrated")
@@ -307,6 +310,8 @@ function DashboardScreenContent() {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      onChatEditSaved?.();
+      setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
         !isPromptDismissed("firstTransactionCelebrated")
@@ -419,6 +424,7 @@ function DashboardScreenContent() {
           setIsModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
+          setOnChatEditSaved(null);
         }}
         onSaveTransaction={handleSaveTx}
         onSaveTransfer={handleSaveTransfer}
@@ -458,9 +464,10 @@ function DashboardScreenContent() {
         defaultCurrency={currencyPreferences.defaultCurrency}
         defaultExpenseAccountId={accounts[0]?.id ?? null}
         onClose={() => setIsChatModalOpen(false)}
-        onEditInForm={(prefilled) => {
+        onEditInForm={(prefilled, onSaved) => {
           setPrefilledTransaction(prefilled);
           setIsEditingTransaction(false);
+          setOnChatEditSaved(() => onSaved ?? null);
           setIsModalOpen(true);
         }}
         onSaveTransaction={async (input) => {
