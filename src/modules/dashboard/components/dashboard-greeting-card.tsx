@@ -95,7 +95,7 @@ export function DashboardGreetingCard({
             <TimeIcon color={iconColor} size={18} />
           </View>
           <Text numberOfLines={1} style={styles.greetingTitle}>
-            {greetingText}
+            {`${greetingText}!`}
           </Text>
         </View>
         {formattedDate ? (
