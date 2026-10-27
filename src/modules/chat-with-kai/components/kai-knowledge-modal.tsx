@@ -35,7 +35,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { IconHelper } from "@/components/icon-helper";
+import { ConfirmModal, IconHelper } from "@/components";
 import { useCategories, type Category } from "@/modules/categories";
 import { useAccounts, type AccountListItem } from "@/modules/accounts";
 import type { TransactionType } from "@/modules/transactions";
@@ -103,6 +103,17 @@ interface EditingKeywordState {
   keyword: string;
   language: string;
   entityType: "action" | "category" | "account" | "merchant";
+}
+
+interface DeleteTarget {
+  type:
+    | "actionKeyword"
+    | "categoryKeyword"
+    | "accountKeyword"
+    | "merchantKeyword"
+    | "merchant";
+  id: string;
+  name: string;
 }
 
 export function KaiKnowledgeModal({
@@ -233,6 +244,10 @@ export function KaiKnowledgeModal({
   const [editInputVal, setEditInputVal] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [editProcessing, setEditProcessing] = useState(false);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   // Ref to track if modal just opened to prevent unwanted resets
   const prevVisibleRef = useRef(false);
@@ -470,34 +485,12 @@ export function KaiKnowledgeModal({
     }
   };
 
-  const handleDeleteMerchant = (merchant: MerchantItem) => {
-    Alert.alert(
-      t("chatWithKai.deleteMerchantTitle"),
-      t("chatWithKai.deleteMerchantConfirm", { name: merchant.name }),
-      [
-        { text: t("chatWithKai.cancel"), style: "cancel" },
-        {
-          text: t("chatWithKai.cancel") === "Cancel" ? "Delete" : "Burahin",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteMerchant(merchant.id);
-              setMerchants((prev) => prev.filter((m) => m.id !== merchant.id));
-              setMerchantKeywords((prev) =>
-                prev.filter((k) => k.merchantId !== merchant.id),
-              );
-              if (selectedMerchantId === merchant.id) {
-                const remaining = merchants.filter((m) => m.id !== merchant.id);
-                setSelectedMerchantId(remaining[0]?.id ?? null);
-              }
-              onKeywordsUpdated?.();
-            } catch (err: any) {
-              setErrorMessage(err?.message ?? "Failed to delete merchant.");
-            }
-          },
-        },
-      ],
-    );
+  const handlePromptDeleteMerchant = (merchant: MerchantItem) => {
+    setDeleteTarget({
+      type: "merchant",
+      id: merchant.id,
+      name: merchant.name,
+    });
   };
 
   const handleOpenEditMerchant = (merchant: MerchantItem) => {
@@ -648,44 +641,66 @@ export function KaiKnowledgeModal({
     }
   };
 
-  // Handlers for deleting keywords
-  const handleRemoveActionKeyword = async (id: string) => {
-    try {
-      await deleteActionKeyword(id);
-      setActionKeywords((prev) => prev.filter((k) => k.id !== id));
-      onKeywordsUpdated?.();
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? "Failed to delete keyword.");
-    }
+  // Handlers for deleting keywords & merchants with confirmation modal
+  const handlePromptDeleteKeyword = (
+    type:
+      | "actionKeyword"
+      | "categoryKeyword"
+      | "accountKeyword"
+      | "merchantKeyword",
+    id: string,
+    keyword: string,
+  ) => {
+    setDeleteTarget({
+      type,
+      id,
+      name: keyword,
+    });
   };
 
-  const handleRemoveCategoryKeyword = async (id: string) => {
-    try {
-      await deleteCategoryKeyword(id);
-      setCategoryKeywords((prev) => prev.filter((k) => k.id !== id));
-      onKeywordsUpdated?.();
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? "Failed to delete keyword.");
-    }
-  };
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeletePending(true);
 
-  const handleRemoveAccountKeyword = async (id: string) => {
     try {
-      await deleteAccountKeyword(id);
-      setAccountKeywords((prev) => prev.filter((k) => k.id !== id));
-      onKeywordsUpdated?.();
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? "Failed to delete keyword.");
-    }
-  };
+      if (deleteTarget.type === "actionKeyword") {
+        await deleteActionKeyword(deleteTarget.id);
+        setActionKeywords((prev) =>
+          prev.filter((k) => k.id !== deleteTarget.id),
+        );
+      } else if (deleteTarget.type === "categoryKeyword") {
+        await deleteCategoryKeyword(deleteTarget.id);
+        setCategoryKeywords((prev) =>
+          prev.filter((k) => k.id !== deleteTarget.id),
+        );
+      } else if (deleteTarget.type === "accountKeyword") {
+        await deleteAccountKeyword(deleteTarget.id);
+        setAccountKeywords((prev) =>
+          prev.filter((k) => k.id !== deleteTarget.id),
+        );
+      } else if (deleteTarget.type === "merchantKeyword") {
+        await deleteMerchantKeyword(deleteTarget.id);
+        setMerchantKeywords((prev) =>
+          prev.filter((k) => k.id !== deleteTarget.id),
+        );
+      } else if (deleteTarget.type === "merchant") {
+        await deleteMerchant(deleteTarget.id);
+        setMerchants((prev) => prev.filter((m) => m.id !== deleteTarget.id));
+        setMerchantKeywords((prev) =>
+          prev.filter((k) => k.merchantId !== deleteTarget.id),
+        );
+        if (selectedMerchantId === deleteTarget.id) {
+          const remaining = merchants.filter((m) => m.id !== deleteTarget.id);
+          setSelectedMerchantId(remaining[0]?.id ?? null);
+        }
+      }
 
-  const handleRemoveMerchantKeyword = async (id: string) => {
-    try {
-      await deleteMerchantKeyword(id);
-      setMerchantKeywords((prev) => prev.filter((k) => k.id !== id));
+      setDeleteTarget(null);
       onKeywordsUpdated?.();
     } catch (err: any) {
-      setErrorMessage(err?.message ?? "Failed to delete keyword.");
+      setErrorMessage(err?.message ?? "Failed to delete item.");
+    } finally {
+      setDeletePending(false);
     }
   };
 
@@ -1640,7 +1655,13 @@ export function KaiKnowledgeModal({
                         accessibilityLabel="Delete keyword"
                         accessibilityRole="button"
                         hitSlop={6}
-                        onPress={() => handleRemoveActionKeyword(item.id)}
+                        onPress={() =>
+                          handlePromptDeleteKeyword(
+                            "actionKeyword",
+                            item.id,
+                            item.keyword,
+                          )
+                        }
                         style={[styles.iconActionBtn, styles.iconDeleteBtn]}
                       >
                         <Trash2 color={theme.colors.danger} size={16} />
@@ -1691,7 +1712,13 @@ export function KaiKnowledgeModal({
                         accessibilityLabel="Delete keyword"
                         accessibilityRole="button"
                         hitSlop={6}
-                        onPress={() => handleRemoveCategoryKeyword(item.id)}
+                        onPress={() =>
+                          handlePromptDeleteKeyword(
+                            "categoryKeyword",
+                            item.id,
+                            item.keyword,
+                          )
+                        }
                         style={[styles.iconActionBtn, styles.iconDeleteBtn]}
                       >
                         <Trash2 color={theme.colors.danger} size={16} />
@@ -1742,7 +1769,13 @@ export function KaiKnowledgeModal({
                         accessibilityLabel="Delete keyword"
                         accessibilityRole="button"
                         hitSlop={6}
-                        onPress={() => handleRemoveAccountKeyword(item.id)}
+                        onPress={() =>
+                          handlePromptDeleteKeyword(
+                            "accountKeyword",
+                            item.id,
+                            item.keyword,
+                          )
+                        }
                         style={[styles.iconActionBtn, styles.iconDeleteBtn]}
                       >
                         <Trash2 color={theme.colors.danger} size={16} />
@@ -1864,7 +1897,7 @@ export function KaiKnowledgeModal({
                           accessibilityLabel="Delete merchant"
                           accessibilityRole="button"
                           hitSlop={6}
-                          onPress={() => handleDeleteMerchant(item)}
+                          onPress={() => handlePromptDeleteMerchant(item)}
                           style={[styles.iconActionBtn, styles.iconDeleteBtn]}
                         >
                           <Trash2 color={theme.colors.danger} size={16} />
@@ -1919,7 +1952,11 @@ export function KaiKnowledgeModal({
                         accessibilityRole="button"
                         hitSlop={6}
                         onPress={() =>
-                          handleRemoveMerchantKeyword(item.id)
+                          handlePromptDeleteKeyword(
+                            "merchantKeyword",
+                            item.id,
+                            item.keyword,
+                          )
                         }
                         style={[styles.iconActionBtn, styles.iconDeleteBtn]}
                       >
@@ -2245,6 +2282,33 @@ export function KaiKnowledgeModal({
             </View>
           </View>
         </Modal>
+
+        {/* DELETE CONFIRMATION MODAL */}
+        <ConfirmModal
+          cancelLabel={t("chatWithKai.cancel")}
+          confirmLabel={t("chatWithKai.deleteBtn")}
+          message={
+            deleteTarget?.type === "merchant"
+              ? t("chatWithKai.deleteMerchantConfirm", {
+                  name: deleteTarget.name,
+                })
+              : t("chatWithKai.deleteKeywordConfirm", {
+                  keyword: deleteTarget?.name ?? "",
+                })
+          }
+          onCancel={() => {
+            if (!deletePending) setDeleteTarget(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          pending={deletePending}
+          title={
+            deleteTarget?.type === "merchant"
+              ? t("chatWithKai.deleteMerchantTitle")
+              : t("chatWithKai.deleteKeywordTitle")
+          }
+          variant="destructive"
+          visible={deleteTarget !== null}
+        />
       </KeyboardAvoidingView>
     </Modal>
   );
