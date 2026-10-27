@@ -1446,7 +1446,7 @@ export const fil = {
     },
   },
   transactions: {
-    speedDialForm: "Manwal na Porma",
+    speedDialForm: "Manwal na Entry",
     speedDialChat: "Makipag-chat kay Kai",
   },
   chatWithKai: {

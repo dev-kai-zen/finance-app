@@ -75,42 +75,38 @@ export function TransactionSpeedDialFab({
           <View style={styles.optionsContainer}>
             {/* Option 1: Chat to Encode */}
             <Pressable
-              accessibilityLabel="Chat to encode transaction"
+              accessibilityLabel={t("transactions.speedDialChat")}
               accessibilityRole="button"
               onPress={handleSelectChat}
               style={({ pressed }) => [
-                styles.optionRow,
+                styles.optionCapsule,
                 pressed && styles.optionPressed,
               ]}
             >
-              <View style={styles.labelPill}>
-                <Text style={styles.labelText}>
-                  {t("transactions.speedDialChat")}
-                </Text>
-              </View>
-              <View style={[styles.optionIconCircle, styles.chatIconCircle]}>
+              <View style={[styles.optionIconContainer, styles.chatIconContainer]}>
                 <Sparkles color={theme.colors.onPrimary} size={18} />
               </View>
+              <Text style={styles.optionLabelText}>
+                {t("transactions.speedDialChat")}
+              </Text>
             </Pressable>
 
-            {/* Option 2: Manual Form */}
+            {/* Option 2: Manual Entry */}
             <Pressable
-              accessibilityLabel="Manual transaction form"
+              accessibilityLabel={t("transactions.speedDialForm")}
               accessibilityRole="button"
               onPress={handleSelectForm}
               style={({ pressed }) => [
-                styles.optionRow,
+                styles.optionCapsule,
                 pressed && styles.optionPressed,
               ]}
             >
-              <View style={styles.labelPill}>
-                <Text style={styles.labelText}>
-                  {t("transactions.speedDialForm")}
-                </Text>
+              <View style={[styles.optionIconContainer, styles.formIconContainer]}>
+                <FileText color={theme.colors.textPrimary} size={18} />
               </View>
-              <View style={[styles.optionIconCircle, styles.formIconCircle]}>
-                <FileText color={theme.colors.onPrimary} size={18} />
-              </View>
+              <Text style={styles.optionLabelText}>
+                {t("transactions.speedDialForm")}
+              </Text>
             </Pressable>
           </View>
         ) : null}
@@ -160,53 +156,50 @@ function createStyles(theme: AppTheme) {
     },
     optionsContainer: {
       alignItems: "flex-end",
-      gap: theme.spacing.md,
+      gap: theme.spacing.sm + 4,
       marginBottom: theme.spacing.md,
     },
-    optionRow: {
+    optionCapsule: {
       alignItems: "center",
-      flexDirection: "row",
-      gap: 10,
-    },
-    labelPill: {
       backgroundColor: theme.colors.surfaceElevated,
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
-      elevation: 4,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      elevation: 5,
+      flexDirection: "row",
+      gap: 12,
+      minHeight: 52,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
     },
-    labelText: {
-      color: theme.colors.textPrimary,
-      fontSize: 13,
-      fontWeight: "600",
-    },
-    optionIconCircle: {
+    optionIconContainer: {
       alignItems: "center",
-      borderRadius: 22,
-      elevation: 4,
-      height: 44,
+      borderRadius: 18,
+      height: 36,
       justifyContent: "center",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      width: 44,
+      width: 36,
     },
-    chatIconCircle: {
+    chatIconContainer: {
       backgroundColor: theme.colors.primary,
     },
-    formIconCircle: {
-      backgroundColor: theme.colors.textSecondary,
+    formIconContainer: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
+    },
+    optionLabelText: {
+      color: theme.colors.textPrimary,
+      fontSize: 15,
+      fontWeight: "600",
+      letterSpacing: -0.2,
     },
     optionPressed: {
-      opacity: 0.8,
-      transform: [{ scale: 0.95 }],
+      opacity: 0.85,
+      transform: [{ scale: 0.96 }],
     },
     fab: {
       alignItems: "center",

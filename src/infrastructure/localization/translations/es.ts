@@ -1445,7 +1445,7 @@ export const es = {
     },
   },
   transactions: {
-    speedDialForm: "Formulario Manual",
+    speedDialForm: "Entrada Manual",
     speedDialChat: "Chatear con Kai",
   },
   chatWithKai: {

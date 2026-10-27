@@ -1429,7 +1429,7 @@ export const en = {
     },
   },
   transactions: {
-    speedDialForm: "Manual Form",
+    speedDialForm: "Manual Entry",
     speedDialChat: "Chat with Kai",
   },
   chatWithKai: {
