@@ -388,9 +388,11 @@ export const es = {
     versionLabel: "Versión %{version}",
     empty: "Aún no hay notas de la versión para esta actualización.",
     categories: {
+      new: "Nuevo:",
+      improve: "Mejoras:",
+      fix: "Correcciones:",
       feature: "Función nueva",
       update: "Actualización",
-      fix: "Corrección",
       accounts: "Cuentas",
       transactions: "Transacciones",
       calendar: "Calendario",
@@ -404,24 +406,38 @@ export const es = {
       general: "General",
     },
     v120: {
-      chatItem1:
-        "Enseña a Kai tus comercios y categorías favoritos para registrar transacciones más rápido.",
-      chatItem2:
-        "Recuerda las correcciones de categorías con una sencilla confirmación de un toque.",
-      chatItem3:
-        "Mantén los registros limpios eliminando notas automáticas no deseadas.",
+      date: "27 de octubre de 2026",
+      newItem1:
+        "Habla con Kai para registrar gastos, transacciones y hacer preguntas financieras rápidamente.",
+      newItem2:
+        "Consulta tus saldos y finanzas directamente desde la pantalla de inicio de tu teléfono.",
+      newItem3:
+        "Organiza y personaliza tus comercios y beneficiarios frecuentes en un solo lugar.",
+      improveItem1:
+        "Enseña a Kai tus palabras clave favoritas y elige categorías directamente en la conversación.",
+      improveItem2:
+        "Accede directamente a transferencias, informes y chat con IA desde la Búsqueda rápida.",
+      improveItem3:
+        "Toca \"Omitir por ahora\" en las pantallas de celebración de metas y presupuestos para volver más rápido al panel.",
+      fixItem1:
+        "Disfruta de un desplazamiento más rápido y fluido al revisar tu historial de transacciones.",
+      fixItem2:
+        "Se corrigieron los textos de botones y mensajes de saludo en inglés, español y filipino.",
     },
     v111: {
+      date: "26 de octubre de 2026",
       quickActionsItem1:
         "Muestra los límites del plan gratuito al usar los botones de acción rápida del panel.",
     },
     v110: {
+      date: "25 de octubre de 2026",
       searchItem1:
         "Añadir Búsqueda Rápida para encontrar y acceder fácilmente a pantallas, ajustes y acciones.",
       updateItem1:
         "Cambia Novedades a Historial de versiones y muestra todas las actualizaciones anteriores en una lista.",
     },
     v100: {
+      date: "24 de octubre de 2026",
       title: "Te damos la bienvenida a Kaizen Finance",
       accountsItem1:
         "Controla efectivo, cuentas bancarias, tarjetas y ahorros con saldos actualizados.",

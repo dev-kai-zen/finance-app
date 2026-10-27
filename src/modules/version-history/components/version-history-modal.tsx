@@ -70,8 +70,13 @@ export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistory
             ) : (
               blocks.map((block) => (
                 <View key={block.version} style={styles.block}>
-                  <View style={styles.versionBadge}>
-                    <Text style={styles.versionBadgeText}>v{block.version}</Text>
+                  <View style={styles.versionHeaderRow}>
+                    <View style={styles.versionBadge}>
+                      <Text style={styles.versionBadgeText}>v{block.version}</Text>
+                    </View>
+                    {block.dateKey ? (
+                      <Text style={styles.versionDateText}>{t(block.dateKey)}</Text>
+                    ) : null}
                   </View>
                   {block.titleKey ? (
                     <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
@@ -173,6 +178,11 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       textAlign: "center",
     },
+    versionHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
     versionBadge: {
       alignSelf: "flex-start",
       backgroundColor: `${theme.colors.primary}15`,
@@ -188,6 +198,11 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.6,
       textTransform: "uppercase",
+    },
+    versionDateText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     bodyScrollView: {
       flexGrow: 1,

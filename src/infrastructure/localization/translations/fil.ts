@@ -389,9 +389,11 @@ export const fil = {
     versionLabel: "Bersyon %{version}",
     empty: "Wala pang release notes para sa bersyong ito.",
     categories: {
+      new: "Bago:",
+      improve: "Pinaunlad:",
+      fix: "Inayos:",
       feature: "Bagong Feature",
       update: "Update",
-      fix: "Ayos",
       accounts: "Mga Account",
       transactions: "Mga Transaksyon",
       calendar: "Kalendaryo",
@@ -405,24 +407,38 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v120: {
-      chatItem1:
-        "Turuan si Kai ng iyong mga paboritong tindahan at kategorya para sa mas mabilis na pagtatala.",
-      chatItem2:
-        "Tandaan ang mga pagwawasto sa kategorya gamit ang simpleng one-tap confirmation.",
-      chatItem3:
-        "Panatilihing malinis ang mga talaan sa pamamagitan ng pag-alis ng mga hindi sinasadyang tala.",
+      date: "Oktubre 27, 2026",
+      newItem1:
+        "Makisabay kay Kai para mabilis na magtala ng mga gastos, transaksyon, at magtanong tungkol sa pananalapi.",
+      newItem2:
+        "Tingnan ang iyong mga balanse at pananalapi mula mismo sa home screen ng iyong telepono.",
+      newItem3:
+        "Ayusin at pamahalaan ang iyong mga madalas na tindahan at binabayaran sa isang lugar.",
+      improveItem1:
+        "Turuan si Kai ng iyong mga paboritong keyword at pumili ng mga kategorya sa mismong usapan.",
+      improveItem2:
+        "Dumiretso sa mga paglilipat, ulat, at AI chat mula sa Quick Search.",
+      improveItem3:
+        "Pindutin ang \"Laktawan muna\" sa mga pagdiriwang ng layunin at badyet upang makabalik agad sa dashboard.",
+      fixItem1:
+        "Masiyahan sa mas mabilis at maayos na pag-scroll habang tinitingnan ang kasaysayan ng transaksyon.",
+      fixItem2:
+        "Inayos ang teksto ng pindutan at mga mensahe ng pagbati sa Ingles, Espanyol, at Filipino.",
     },
     v111: {
+      date: "Oktubre 26, 2026",
       quickActionsItem1:
         "Ipakita ang mga limitasyon ng libreng plano kapag ginagamit ang mga quick action button sa dashboard.",
     },
     v110: {
+      date: "Oktubre 25, 2026",
       searchItem1:
         "Magdagdag ng Mabilisang Paghahanap upang madaling mahanap at mapuntahan ang mga screen, setting, at aksyon.",
       updateItem1:
         "Pinalitan ang Ano ang Bago ng Kasaysayan ng Bersyon at ipinapakita na ang lahat ng nakaraang update sa isang listahan.",
     },
     v100: {
+      date: "Oktubre 24, 2026",
       title: "Maligayang pagdating sa Kaizen Finance",
       accountsItem1:
         "Subaybayan ang pera, bank account, credit card, at ipon gamit ang running balance.",

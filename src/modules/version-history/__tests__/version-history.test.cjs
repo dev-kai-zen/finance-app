@@ -42,6 +42,12 @@ test("whats new: defines release notes with categorized sections", () => {
       assert.ok(resolvePath(fil, block.titleKey), `Missing FIL title: ${block.titleKey}`);
     }
 
+    if (block.dateKey) {
+      assert.ok(resolvePath(en, block.dateKey), `Missing EN date: ${block.dateKey}`);
+      assert.ok(resolvePath(es, block.dateKey), `Missing ES date: ${block.dateKey}`);
+      assert.ok(resolvePath(fil, block.dateKey), `Missing FIL date: ${block.dateKey}`);
+    }
+
     for (const section of block.sections) {
       assert.ok(section.categoryKey, "Section must have categoryKey");
       assert.ok(resolvePath(en, section.categoryKey), `Missing EN category: ${section.categoryKey}`);

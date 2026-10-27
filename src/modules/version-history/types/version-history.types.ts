@@ -7,6 +7,7 @@ export interface ReleaseNoteSection {
 
 export interface ReleaseNoteBlock {
   version: string;
+  dateKey?: TranslationKey;
   titleKey?: TranslationKey;
   sections: ReleaseNoteSection[];
 }

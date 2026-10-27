@@ -376,9 +376,11 @@ export const en = {
     versionLabel: "Version %{version}",
     empty: "Release notes for this version are not available yet.",
     categories: {
+      new: "New:",
+      improve: "Improve:",
+      fix: "Fix:",
       feature: "Feature",
       update: "Update",
-      fix: "Fix",
       accounts: "Accounts",
       transactions: "Transactions",
       calendar: "Calendar",
@@ -392,24 +394,38 @@ export const en = {
       general: "General",
     },
     v120: {
-      chatItem1:
-        "Teach Kai your favorite merchants and categories for faster, smarter transaction chat.",
-      chatItem2:
-        "Remember custom category corrections with a simple one-tap confirmation.",
-      chatItem3:
-        "Keep transaction records tidy by removing unintended automated notes.",
+      date: "October 27, 2026",
+      newItem1:
+        "Talk to Kai to quickly log expenses, record transactions, and ask financial questions.",
+      newItem2:
+        "Check your balances and finances right from your phone's home screen.",
+      newItem3:
+        "Organize and customize your frequent merchants and payees in one central place.",
+      improveItem1:
+        "Teach Kai your favorite keywords and pick categories directly inside the conversation.",
+      improveItem2:
+        "Jump straight to transfers, reports, and AI chat directly from Quick Search.",
+      improveItem3:
+        "Tap \"Skip for now\" on goal and budget milestone screens to return to your dashboard faster.",
+      fixItem1:
+        "Enjoy faster, stutter-free scrolling when viewing your full transaction history.",
+      fixItem2:
+        "Fixed button text and greeting messages across English, Spanish, and Filipino.",
     },
     v111: {
+      date: "October 26, 2026",
       quickActionsItem1:
         "Show free plan limits when using the dashboard's quick action buttons.",
     },
     v110: {
+      date: "October 25, 2026",
       searchItem1:
         "Add Quick Search to quickly find and navigate to screens, settings, and actions.",
       updateItem1:
         "Rename What's New to Version History and show every past update in one list.",
     },
     v100: {
+      date: "October 24, 2026",
       title: "Welcome to Kaizen Finance",
       accountsItem1:
         "Track cash, bank accounts, credit cards, and savings with running balances.",
