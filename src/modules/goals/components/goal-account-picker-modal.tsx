@@ -36,6 +36,7 @@ export interface GoalAccountPickerModalProps {
   pockets?: PocketListItem[];
   selectedAccountIds: string[];
   selectedPocketIds?: string[];
+  currencyCode?: string;
   onConfirm: (accountIds: string[], pocketIds: string[]) => void;
 }
 
@@ -46,6 +47,7 @@ export function GoalAccountPickerModal({
   pockets = [],
   selectedAccountIds,
   selectedPocketIds = [],
+  currencyCode,
   onConfirm,
 }: GoalAccountPickerModalProps) {
   const theme = useAppTheme();
@@ -82,6 +84,8 @@ export function GoalAccountPickerModal({
     // Only select accounts whose pockets are not currently selected
     const accountsWithoutSelectedPockets = accounts
       .filter((account) =>
+        !account.isArchived &&
+        (!currencyCode || account.currencyCode === currencyCode) &&
         !pockets.some(
           (p) => p.accountId === account.id && localSelectedPocketIds.includes(p.id),
         ),
@@ -95,9 +99,19 @@ export function GoalAccountPickerModal({
     setLocalSelectedPocketIds([]);
   };
 
+  const hasExcludedCurrencyAccounts = useMemo(() => {
+    if (!currencyCode) return false;
+    return accounts.some(
+      (acc) => !acc.isArchived && acc.currencyCode !== currencyCode,
+    );
+  }, [accounts, currencyCode]);
+
   // Filter accounts and pockets based on search query
   const filteredAccounts = useMemo(() => {
-    const activeAccounts = accounts.filter((acc) => !acc.isArchived);
+    const activeAccounts = accounts.filter(
+      (acc) =>
+        !acc.isArchived && (!currencyCode || acc.currencyCode === currencyCode),
+    );
     const query = searchQuery.trim().toLowerCase();
     if (!query) return activeAccounts;
 
@@ -112,7 +126,7 @@ export function GoalAccountPickerModal({
             pocket.name.toLowerCase().includes(query),
         ),
     );
-  }, [accounts, pockets, searchQuery]);
+  }, [accounts, currencyCode, pockets, searchQuery]);
 
   // Group accounts by accountType exactly like AccountPickerModal
   const groupedAccounts = useMemo(() => {
@@ -188,15 +202,23 @@ export function GoalAccountPickerModal({
     const selectedPockSet = new Set(localSelectedPocketIds);
 
     const accSum = accounts
-      .filter((a) => selectedAccSet.has(a.id))
+      .filter(
+        (a) =>
+          selectedAccSet.has(a.id) &&
+          (!currencyCode || a.currencyCode === currencyCode),
+      )
       .reduce((sum, a) => sum + Math.max(0, a.currentBalanceMinorUnits), 0);
 
     const pockSum = pockets
-      .filter((p) => selectedPockSet.has(p.id))
+      .filter((p) => {
+        if (!selectedPockSet.has(p.id)) return false;
+        const parent = accounts.find((a) => a.id === p.accountId);
+        return !currencyCode || parent?.currencyCode === currencyCode;
+      })
       .reduce((sum, p) => sum + Math.max(0, p.currentBalanceMinorUnits), 0);
 
     return accSum + pockSum;
-  }, [accounts, pockets, localSelectedAccountIds, localSelectedPocketIds]);
+  }, [accounts, pockets, localSelectedAccountIds, localSelectedPocketIds, currencyCode]);
 
   const handleSave = () => {
     onConfirm(localSelectedAccountIds, localSelectedPocketIds);
@@ -280,6 +302,13 @@ export function GoalAccountPickerModal({
 
           {/* Quick Selection Toolbar & Double Counting Rule Banner */}
           <View style={styles.toolbar}>
+            {hasExcludedCurrencyAccounts && currencyCode && (
+              <View style={styles.currencyFilterBanner}>
+                <Text style={styles.currencyFilterText}>
+                  Showing only {currencyCode} accounts. Accounts in other currencies cannot be linked to this goal.
+                </Text>
+              </View>
+            )}
             <View style={styles.ruleBanner}>
               <Text style={styles.ruleText}>
                 An account and its own pockets cannot be selected together to prevent double-counting.
@@ -584,7 +613,7 @@ export function GoalAccountPickerModal({
                 <Text style={styles.footerTotalLabel}>Combined Balance:</Text>
               </View>
               <Text style={styles.footerTotalAmount}>
-                {formatCurrency(totalSelectedBalance)}
+                {formatCurrency(totalSelectedBalance, currencyCode || "PHP")}
               </Text>
             </View>
 
@@ -697,6 +726,21 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 11,
       lineHeight: 14,
+    },
+    currencyFilterBanner: {
+      backgroundColor: `${theme.colors.primary}12`,
+      borderRadius: theme.borderRadius.small,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 5,
+      borderLeftWidth: 3,
+      borderLeftColor: theme.colors.primary,
+      marginTop: 2,
+    },
+    currencyFilterText: {
+      color: theme.colors.textPrimary,
+      fontSize: 11,
+      lineHeight: 14,
+      fontWeight: "500",
     },
     toolbarActions: {
       flexDirection: "row",

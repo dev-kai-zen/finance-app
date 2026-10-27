@@ -7,10 +7,13 @@ export const es = {
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
+    delete: "Eliminar",
     goBack: "Volver",
+    keep: "Conservar",
     ok: "Aceptar",
     search: "Buscar",
     skipForNow: "Omitir por ahora",
+    today: "Hoy",
   },
   search: {
     openSearch: "Abrir búsqueda",
@@ -425,6 +428,10 @@ export const es = {
         "Se corrigieron los textos de botones y mensajes de saludo en inglés, español y filipino.",
       fixItem3:
         "Usa tu cuenta predeterminada de gastos o ingresos en el Chat cuando no se mencione ninguna cuenta.",
+      fixItem4:
+        "Montos correctos en el Chat para yenes japoneses, won coreanos y monedas sin decimales.",
+      fixItem5:
+        "Permitir cambiar la moneda del objetivo de ahorro y vincular solo cuentas coincidentes.",
     },
     v111: {
       date: "26 de octubre de 2026",
@@ -690,6 +697,18 @@ export const es = {
     congratulationsMessage:
       "Has dado el primer paso para dominar tus finanzas. Cada registro te acerca más a tus objetivos.",
     congratulationsButton: "Explorar panel",
+    deleteTransactionTitle: "¿Eliminar transacción?",
+    deleteTransactionMessage:
+      "Este registro se moverá a la Papelera. Puedes restaurarlo más tarde.",
+  },
+  calendar: {
+    firstOfMonth: "1.º del mes",
+    endOfMonth: "Fin de mes",
+    selectToday: "Seleccionar hoy",
+    selectFirstDay: "Seleccionar el primer día del mes",
+    selectEndDay: "Seleccionar el fin de mes",
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
   },
   accountsWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Cuentas!",

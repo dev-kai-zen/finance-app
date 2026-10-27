@@ -499,15 +499,15 @@ function DashboardScreenContent() {
       />
 
       <ConfirmModal
-        cancelLabel="Keep"
-        confirmLabel="Delete"
-        message="This record will be moved to Trash. You can restore it later."
+        cancelLabel={t("common.keep")}
+        confirmLabel={t("common.delete")}
+        message={t("dashboard.deleteTransactionMessage")}
         onCancel={() => setPendingDeleteId(null)}
         onConfirm={() => {
           void handleConfirmDeleteTransaction();
         }}
         pending={pendingAction}
-        title="Delete transaction?"
+        title={t("dashboard.deleteTransactionTitle")}
         variant="destructive"
         visible={pendingDeleteId !== null}
       />

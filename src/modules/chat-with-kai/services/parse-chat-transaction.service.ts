@@ -11,6 +11,7 @@ import { matchCategory } from "./match-category.service";
 import { extractMerchantNote } from "./extract-merchant-note.service";
 import type { TransactionType } from "@/modules/transactions";
 import type { Category } from "@/modules/categories";
+import { getCurrencyMinorUnitExponent } from "@/utils/currency";
 
 /**
  * Main Orchestrator: Parses a natural language sentence into a structured transaction proposal.
@@ -249,7 +250,8 @@ export function parseChatTransaction(
       const matchedPocket = context.pockets.find(
         (p) =>
           p.id === candidatePocketId &&
-          p.accountId === effectiveSourceAccount.id,
+          p.accountId === effectiveSourceAccount.id &&
+          !p.isArchived,
       );
       if (matchedPocket) {
         effectivePocketId = matchedPocket.id;
@@ -260,12 +262,16 @@ export function parseChatTransaction(
 
   const currencyCode =
     effectiveSourceAccount.currencyCode || context.defaultCurrency || "PHP";
+  const currencyExponent = getCurrencyMinorUnitExponent(currencyCode);
+  const resolvedAmountMinorUnits = Math.round(
+    amountResult.rawAmount * (10 ** currencyExponent),
+  );
 
   // If expense or income and category wasn't found, require category selection
   if (detectedType !== "transfer" && !categoryResult.category) {
     const partialProposal: ParsedTransactionProposal = {
       type: detectedType,
-      amountMinorUnits: amountResult.amountMinorUnits,
+      amountMinorUnits: resolvedAmountMinorUnits,
       currencyCode,
       name: merchantNoteResult.name,
       note: merchantNoteResult.note,
@@ -306,7 +312,7 @@ export function parseChatTransaction(
   if (context.findRecentDuplicateTransaction) {
     try {
       const dupCheck = context.findRecentDuplicateTransaction({
-        amountMinorUnits: amountResult.amountMinorUnits,
+        amountMinorUnits: resolvedAmountMinorUnits,
         name: merchantNoteResult.name,
         hoursLookback: 24,
       });
@@ -325,7 +331,7 @@ export function parseChatTransaction(
 
   const proposal: ParsedTransactionProposal = {
     type: detectedType,
-    amountMinorUnits: amountResult.amountMinorUnits,
+    amountMinorUnits: resolvedAmountMinorUnits,
     currencyCode,
     name: merchantNoteResult.name,
     note: merchantNoteResult.note,

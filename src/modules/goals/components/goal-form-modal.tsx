@@ -25,6 +25,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
+import { CurrencyPickerModal, useCurrencyPreferences } from "@/modules/currencies";
 import {
   HexColorFormModal,
   useHexColors,
@@ -91,6 +92,8 @@ function GoalFormModalContent({
   const styles = useThemeStyles(createStyles);
 
   const { accounts, pockets } = useAccounts();
+  const { preferences } = useCurrencyPreferences();
+  const defaultCurrency = preferences.defaultCurrency || "PHP";
   const {
     colors: hexColorsList,
     addColor,
@@ -101,7 +104,7 @@ function GoalFormModalContent({
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [targetAmountMinorUnits, setTargetAmountMinorUnits] = useState(0);
-  const [currencyCode, setCurrencyCode] = useState("PHP");
+  const [currencyCode, setCurrencyCode] = useState(defaultCurrency);
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [selectedPocketIds, setSelectedPocketIds] = useState<string[]>([]);
   const [targetDate, setTargetDate] = useState<Date | null>(null);
@@ -115,6 +118,7 @@ function GoalFormModalContent({
 
   // Sub-modals
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
@@ -130,7 +134,7 @@ function GoalFormModalContent({
         setName(initialGoal.name);
         setNote(initialGoal.note || "");
         setTargetAmountMinorUnits(initialGoal.targetAmountMinorUnits);
-        setCurrencyCode(initialGoal.currencyCode || "PHP");
+        setCurrencyCode(initialGoal.currencyCode || defaultCurrency);
         setSelectedAccountIds(
           initialGoal.accountIds && initialGoal.accountIds.length > 0
             ? initialGoal.accountIds
@@ -152,7 +156,7 @@ function GoalFormModalContent({
         setName("");
         setNote("");
         setTargetAmountMinorUnits(1000000); // ₱10,000.00 default
-        setCurrencyCode("PHP");
+        setCurrencyCode(defaultCurrency);
         setSelectedAccountIds([]);
         setSelectedPocketIds([]);
         setTargetDate(null);
@@ -365,6 +369,7 @@ function GoalFormModalContent({
                 currencyCode={currencyCode}
                 label="Target Amount"
                 onOpenCalculator={() => setIsCalculatorOpen(true)}
+                onPressCurrency={() => setIsCurrencyPickerOpen(true)}
                 showSignToggle={false}
               />
             </View>
@@ -665,6 +670,7 @@ function GoalFormModalContent({
         {/* Multi-Account & Pocket Picker Modal */}
         <GoalAccountPickerModal
           accounts={accounts}
+          currencyCode={currencyCode}
           pockets={pockets}
           onClose={() => setIsAccountPickerOpen(false)}
           onConfirm={(accountIds, pocketIds) => {
@@ -674,6 +680,20 @@ function GoalFormModalContent({
           selectedAccountIds={selectedAccountIds}
           selectedPocketIds={selectedPocketIds}
           visible={isAccountPickerOpen}
+        />
+
+        <CurrencyPickerModal
+          onClose={() => setIsCurrencyPickerOpen(false)}
+          onSelect={(code) => {
+            if (code !== currencyCode) {
+              setCurrencyCode(code);
+              setSelectedAccountIds([]);
+              setSelectedPocketIds([]);
+            }
+            setIsCurrencyPickerOpen(false);
+          }}
+          selectedCode={currencyCode}
+          visible={isCurrencyPickerOpen}
         />
 
         <DatePickerModal

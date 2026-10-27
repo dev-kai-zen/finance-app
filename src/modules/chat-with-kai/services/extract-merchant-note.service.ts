@@ -133,7 +133,7 @@ export function extractMerchantNote(
   // 7. Extract merchant after prepositions "at", "sa", "en", "from", "mula", "de"
   if (!detectedMerchantName) {
     const atMatch = text.match(
-      /\b(?:at|sa|en|from|mula|de)\s+([A-Za-z0-9&'\s]+?)(?:\s+(?:from|to|using|with|via|galing|mula|gamit|de|con|a)|$)/i,
+      /\b(?:at|sa|en|from|mula|de)\s+([A-Za-z0-9&'\s]+?)(?:\s+(?:from|to|using|with|via|galing|mula|gamit|de|con|a)\b|$)/i,
     );
     if (atMatch && atMatch[1]?.trim()) {
       const candidate = atMatch[1].trim();

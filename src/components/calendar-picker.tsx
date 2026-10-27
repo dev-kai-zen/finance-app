@@ -10,6 +10,7 @@ import {
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 
 export interface CalendarPickerProps {
   value: Date;
@@ -37,6 +38,7 @@ const MONTH_NAMES = [
 export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t, locale } = useLocalization();
 
   const [activeYear, setActiveYear] = useState<number>(() => value.getFullYear());
   const [activeMonth, setActiveMonth] = useState<number>(() => value.getMonth());
@@ -69,6 +71,33 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
 
   const isStartOfMonthActive = isValueInActiveMonth && selectedDay === 1;
   const isEndOfMonthActive = isValueInActiveMonth && selectedDay === daysInMonth;
+
+  const resolvedLocale = useMemo(() => {
+    return locale === "fil" ? "fil-PH" : locale === "es" ? "es-ES" : "en-US";
+  }, [locale]);
+
+  const localizedMonthName = useMemo(() => {
+    const d = new Date(activeYear, activeMonth, 1);
+    try {
+      const str = d.toLocaleDateString(resolvedLocale, { month: "long" });
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    } catch {
+      return MONTH_NAMES[activeMonth];
+    }
+  }, [activeYear, activeMonth, resolvedLocale]);
+
+  const localizedWeekdays = useMemo(() => {
+    try {
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(2026, 0, 4 + i);
+        const dayStr = d.toLocaleDateString(resolvedLocale, { weekday: "short" });
+        const clean = dayStr.replace(/\./g, "");
+        return clean.charAt(0).toUpperCase() + clean.slice(1, 2);
+      });
+    } catch {
+      return WEEKDAYS;
+    }
+  }, [resolvedLocale]);
 
   const handlePrevMonth = () => {
     if (activeMonth === 0) {
@@ -130,7 +159,7 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
       {/* Month & Navigation Bar */}
       <View style={styles.navRow}>
         <Pressable
-          accessibilityLabel="Previous month"
+          accessibilityLabel={t("calendar.prevMonth")}
           accessibilityRole="button"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={handlePrevMonth}
@@ -143,12 +172,12 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
 
         <View style={styles.monthYearContainer}>
           <Text style={styles.monthYearText}>
-            {MONTH_NAMES[activeMonth]} {activeYear}
+            {localizedMonthName} {activeYear}
           </Text>
         </View>
 
         <Pressable
-          accessibilityLabel="Next month"
+          accessibilityLabel={t("calendar.nextMonth")}
           accessibilityRole="button"
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={handleNextMonth}
@@ -163,7 +192,7 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
       {/* Quick Shortcuts Bar: Today, 1st of Month, End of Month */}
       <View style={styles.quickBar}>
         <Pressable
-          accessibilityLabel="Select today"
+          accessibilityLabel={t("calendar.selectToday")}
           accessibilityRole="button"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           onPress={handleSelectToday}
@@ -185,12 +214,12 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
               isTodayActive && styles.chipTextActive,
             ]}
           >
-            Today
+            {t("common.today")}
           </Text>
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Select first day of month"
+          accessibilityLabel={t("calendar.selectFirstDay")}
           accessibilityRole="button"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           onPress={handleSelectStartOfMonth}
@@ -206,12 +235,12 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
               isStartOfMonthActive && styles.chipTextActive,
             ]}
           >
-            1st of Month
+            {t("calendar.firstOfMonth")}
           </Text>
         </Pressable>
 
         <Pressable
-          accessibilityLabel="Select end of month"
+          accessibilityLabel={t("calendar.selectEndDay")}
           accessibilityRole="button"
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           onPress={handleSelectEndOfMonth}
@@ -227,15 +256,15 @@ export function CalendarPicker({ value, onChange, style }: CalendarPickerProps) 
               isEndOfMonthActive && styles.chipTextActive,
             ]}
           >
-            End of Month
+            {t("calendar.endOfMonth")}
           </Text>
         </Pressable>
       </View>
 
       {/* Weekday Header Row */}
       <View style={styles.weekdayRow}>
-        {WEEKDAYS.map((day) => (
-          <View key={day} style={styles.weekdayCell}>
+        {localizedWeekdays.map((day, idx) => (
+          <View key={`weekday-${idx}`} style={styles.weekdayCell}>
             <Text style={styles.weekdayText}>{day}</Text>
           </View>
         ))}

@@ -7,10 +7,13 @@ export const fil = {
   common: {
     cancel: "Kanselahin",
     close: "Isara",
+    delete: "Burahin",
     goBack: "Bumalik",
+    keep: "Panatilihin",
     ok: "OK",
     search: "Maghanap",
     skipForNow: "Laktawan muna",
+    today: "Ngayon",
   },
   search: {
     openSearch: "Buksan ang paghahanap",
@@ -426,6 +429,10 @@ export const fil = {
         "Inayos ang teksto ng pindutan at mga mensahe ng pagbati sa Ingles, Espanyol, at Filipino.",
       fixItem3:
         "Gamitin ang iyong default na account para sa gastos o kita sa Chat kapag walang binanggit na account.",
+      fixItem4:
+        "Tamang halaga sa Chat para sa Japanese Yen, Korean Won, at zero-decimal currencies.",
+      fixItem5:
+        "Maaari nang palitan ang currency ng savings goal at itugma sa mga konektadong account.",
     },
     v111: {
       date: "Oktubre 26, 2026",
@@ -692,6 +699,18 @@ export const fil = {
     congratulationsMessage:
       "Nagawa mo ang unang hakbang sa pamamahala ng iyong pera. Bawat transaksyon ay maglalapit sa iyo sa iyong mga financial goals.",
     congratulationsButton: "Tingnan ang Dashboard",
+    deleteTransactionTitle: "Burahin ang transaksyon?",
+    deleteTransactionMessage:
+      "Ililipat ang rekord na ito sa Basurahan. Maaari mo itong ibalik mamaya.",
+  },
+  calendar: {
+    firstOfMonth: "Ika-1 ng Buwan",
+    endOfMonth: "Katapusan ng Buwan",
+    selectToday: "Piliin ang araw na ito",
+    selectFirstDay: "Piliin ang unang araw ng buwan",
+    selectEndDay: "Piliin ang katapusan ng buwan",
+    prevMonth: "Nakaraang buwan",
+    nextMonth: "Susunod na buwan",
   },
   accountsWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Account!",

@@ -2,10 +2,13 @@ export const en = {
   common: {
     cancel: "Cancel",
     close: "Close",
+    delete: "Delete",
     goBack: "Go back",
+    keep: "Keep",
     ok: "OK",
     search: "Search",
     skipForNow: "Skip for now",
+    today: "Today",
   },
   search: {
     openSearch: "Open search",
@@ -413,6 +416,10 @@ export const en = {
         "Fixed button text and greeting messages across English, Spanish, and Filipino.",
       fixItem3:
         "Use your default expense or income account in Chat when no account is mentioned.",
+      fixItem4:
+        "Correct amounts in Chat for Japanese Yen, Korean Won, and other zero-decimal currencies.",
+      fixItem5:
+        "Allow customizing savings goal currency and ensure goals link only matching accounts.",
     },
     v111: {
       date: "October 26, 2026",
@@ -678,6 +685,18 @@ export const en = {
     congratulationsMessage:
       "You've taken the first step in mastering your money. Every transaction you record brings you closer to your financial goals.",
     congratulationsButton: "Explore Dashboard",
+    deleteTransactionTitle: "Delete transaction?",
+    deleteTransactionMessage:
+      "This record will be moved to Trash. You can restore it later.",
+  },
+  calendar: {
+    firstOfMonth: "1st of Month",
+    endOfMonth: "End of Month",
+    selectToday: "Select today",
+    selectFirstDay: "Select first day of month",
+    selectEndDay: "Select end of month",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
   },
   accountsWalkthrough: {
     introTitle: "Welcome to Accounts!",

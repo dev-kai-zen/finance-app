@@ -650,12 +650,13 @@ function TransactionFormModalInner({
           createMode === "income"
             ? effectiveDefaultIncomeAccountId
             : effectiveDefaultExpenseAccountId;
-        const defaultAccount = accounts.find(
-          (a) => a.id === targetDefaultAccountId && !a.isArchived,
+        const activeAccounts = accounts.filter((a) => !a.isArchived);
+        const defaultAccount = activeAccounts.find(
+          (a) => a.id === targetDefaultAccountId,
         );
         const firstAccount = defaultAccount
           ? defaultAccount.id
-          : (accounts.length > 0 ? accounts[0].id : "");
+          : (activeAccounts.length > 0 ? activeAccounts[0].id : "");
         setSelectedAccountId(firstAccount);
         const targetDefaultPocketId =
           createMode === "income"
@@ -671,7 +672,8 @@ function TransactionFormModalInner({
               )
             : null;
         setSelectedPocketId(defaultPocket ? defaultPocket.id : null);
-        setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
+        const secondAccount = activeAccounts.find((a) => a.id !== firstAccount);
+        setTransferToAccountId(secondAccount ? secondAccount.id : "");
         setTransferToPocketId(null);
 
         setSelectedCategoryId(
@@ -745,10 +747,13 @@ function TransactionFormModalInner({
         mode === "income"
           ? effectiveDefaultIncomeAccountId
           : effectiveDefaultExpenseAccountId;
-      const defaultAccount = accounts.find(
-        (a) => a.id === targetDefaultAccountId && !a.isArchived,
+      const activeAccounts = accounts.filter((a) => !a.isArchived);
+      const defaultAccount = activeAccounts.find(
+        (a) => a.id === targetDefaultAccountId,
       );
-      const chosenAccountId = defaultAccount ? defaultAccount.id : accounts[0].id;
+      const chosenAccountId = defaultAccount
+        ? defaultAccount.id
+        : (activeAccounts[0]?.id ?? "");
       setSelectedAccountId(chosenAccountId);
 
       const targetDefaultPocketId =

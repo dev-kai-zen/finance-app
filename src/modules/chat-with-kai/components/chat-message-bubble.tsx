@@ -4,7 +4,7 @@ import { ChevronRight, RotateCcw, Sparkles, Tag } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
-import { formatCurrency } from "@/utils/currency";
+import { formatCurrency, getCurrencyMinorUnitExponent } from "@/utils/currency";
 import { useLocalization } from "@/infrastructure/localization";
 import type { Category } from "@/modules/categories";
 import type {
@@ -155,7 +155,11 @@ export function ChatMessageBubble({
             </Text>
             <View style={styles.chipsWrap}>
               {message.suggestedAmounts.map((amt) => {
-                const formatted = formatCurrency(amt * 100, defaultCurrency);
+                const exponent = getCurrencyMinorUnitExponent(defaultCurrency);
+                const formatted = formatCurrency(
+                  Math.round(amt * (10 ** exponent)),
+                  defaultCurrency,
+                );
                 return (
                   <Pressable
                     key={amt}
