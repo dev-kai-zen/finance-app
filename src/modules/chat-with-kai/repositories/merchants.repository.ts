@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   categories,
@@ -458,4 +458,201 @@ export async function seedDefaultMerchantsIfEmpty(
   }
 
   return count;
+}
+
+/**
+ * Fetches merchant keywords, optionally filtered by merchantId.
+ */
+export async function listMerchantKeywords(
+  merchantId?: string,
+  client: DbContext = db,
+): Promise<MerchantKeywordItem[]> {
+  await seedDefaultMerchantsIfEmpty(client);
+
+  const query = client
+    .select({
+      id: merchantKeywords.id,
+      merchantId: merchantKeywords.merchantId,
+      keyword: merchantKeywords.keyword,
+      createdAt: merchantKeywords.createdAt,
+    })
+    .from(merchantKeywords);
+
+  if (merchantId) {
+    const rows = await query
+      .where(eq(merchantKeywords.merchantId, merchantId))
+      .orderBy(merchantKeywords.keyword);
+    return rows;
+  }
+
+  const rows = await query.orderBy(merchantKeywords.keyword);
+  return rows;
+}
+
+/**
+ * Updates an existing merchant's name, default category, or default account.
+ */
+export async function updateMerchant(
+  merchantId: string,
+  updates: {
+    name?: string;
+    defaultCategoryId?: string | null;
+    defaultAccountId?: string | null;
+  },
+  client: DbContext = db,
+): Promise<MerchantItem> {
+  const now = new Date();
+  const setObj: Record<string, any> = { updatedAt: now };
+
+  if (updates.name !== undefined) {
+    const cleanName = updates.name.trim();
+    if (!cleanName) throw new Error("Merchant name cannot be empty.");
+    setObj.name = cleanName;
+  }
+  if (updates.defaultCategoryId !== undefined) {
+    setObj.defaultCategoryId = updates.defaultCategoryId;
+  }
+  if (updates.defaultAccountId !== undefined) {
+    setObj.defaultAccountId = updates.defaultAccountId;
+  }
+
+  await client
+    .update(merchants)
+    .set(setObj)
+    .where(eq(merchants.id, merchantId));
+
+  const rows = await client
+    .select({
+      id: merchants.id,
+      name: merchants.name,
+      defaultCategoryId: merchants.defaultCategoryId,
+      defaultAccountId: merchants.defaultAccountId,
+      createdAt: merchants.createdAt,
+      updatedAt: merchants.updatedAt,
+    })
+    .from(merchants)
+    .where(eq(merchants.id, merchantId))
+    .limit(1);
+
+  if (!rows[0]) throw new Error("Merchant not found");
+  return rows[0];
+}
+
+/**
+ * Deletes a merchant and all of its associated keywords.
+ */
+export async function deleteMerchant(
+  merchantId: string,
+  client: DbContext = db,
+): Promise<void> {
+  await client
+    .delete(merchantKeywords)
+    .where(eq(merchantKeywords.merchantId, merchantId));
+
+  await client.delete(merchants).where(eq(merchants.id, merchantId));
+}
+
+/**
+ * Updates a keyword's text.
+ */
+export async function updateMerchantKeyword(
+  keywordId: string,
+  newKeyword: string,
+  client: DbContext = db,
+): Promise<MerchantKeywordItem> {
+  const clean = newKeyword.trim().toLowerCase();
+  if (!clean) throw new Error("Keyword cannot be empty.");
+
+  await client
+    .update(merchantKeywords)
+    .set({ keyword: clean })
+    .where(eq(merchantKeywords.id, keywordId));
+
+  const rows = await client
+    .select({
+      id: merchantKeywords.id,
+      merchantId: merchantKeywords.merchantId,
+      keyword: merchantKeywords.keyword,
+      createdAt: merchantKeywords.createdAt,
+    })
+    .from(merchantKeywords)
+    .where(eq(merchantKeywords.id, keywordId))
+    .limit(1);
+
+  if (!rows[0]) throw new Error("Merchant keyword not found");
+  return rows[0];
+}
+
+/**
+ * Deletes a specific merchant keyword.
+ */
+export async function deleteMerchantKeyword(
+  keywordId: string,
+  client: DbContext = db,
+): Promise<void> {
+  await client
+    .delete(merchantKeywords)
+    .where(eq(merchantKeywords.id, keywordId));
+}
+
+/**
+ * Checks if a merchant keyword is available (not duplicate).
+ */
+export async function checkMerchantKeywordAvailable(
+  keyword: string,
+  currentKeywordId?: string,
+  client: DbContext = db,
+): Promise<{ available: boolean; conflictMerchantName?: string }> {
+  const clean = keyword.trim().toLowerCase();
+  if (!clean) return { available: false };
+
+  const existing = await client
+    .select({
+      id: merchantKeywords.id,
+      merchantId: merchantKeywords.merchantId,
+      merchantName: merchants.name,
+    })
+    .from(merchantKeywords)
+    .innerJoin(merchants, eq(merchantKeywords.merchantId, merchants.id))
+    .where(
+      and(
+        sql`lower(${merchantKeywords.keyword}) = ${clean}`,
+        currentKeywordId ? ne(merchantKeywords.id, currentKeywordId) : undefined,
+      ),
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    return {
+      available: false,
+      conflictMerchantName: existing[0].merchantName,
+    };
+  }
+
+  return { available: true };
+}
+
+/**
+ * Checks if a merchant name is available (case-insensitive).
+ */
+export async function checkMerchantNameAvailable(
+  name: string,
+  currentMerchantId?: string,
+  client: DbContext = db,
+): Promise<boolean> {
+  const clean = name.trim().toLowerCase();
+  if (!clean) return false;
+
+  const existing = await client
+    .select({ id: merchants.id })
+    .from(merchants)
+    .where(
+      and(
+        sql`lower(${merchants.name}) = ${clean}`,
+        currentMerchantId ? ne(merchants.id, currentMerchantId) : undefined,
+      ),
+    )
+    .limit(1);
+
+  return existing.length === 0;
 }

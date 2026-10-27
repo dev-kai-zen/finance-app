@@ -17,6 +17,10 @@ export {
   type KaiAccountPickerModalProps,
 } from "./components/kai-account-picker-modal";
 export {
+  KaiMerchantPickerModal,
+  type KaiMerchantPickerModalProps,
+} from "./components/kai-merchant-picker-modal";
+export {
   KaiKnowledgeHelpModal,
   type KaiKnowledgeHelpModalProps,
 } from "./components/kai-knowledge-help-modal";
@@ -88,7 +92,14 @@ export {
   listMerchants,
   getMerchantKeywordMap,
   upsertMerchant,
+  updateMerchant,
+  deleteMerchant,
   addMerchantKeyword,
+  updateMerchantKeyword,
+  deleteMerchantKeyword,
+  checkMerchantKeywordAvailable,
+  checkMerchantNameAvailable,
+  listMerchantKeywords,
   updateMerchantDefaultCategory,
   seedDefaultMerchantsIfEmpty,
 } from "./repositories/merchants.repository";

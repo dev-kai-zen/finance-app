@@ -25,6 +25,7 @@ import {
   RotateCcw,
   Search,
   Sparkles,
+  Store,
   Tag,
   Trash2,
   Wallet,
@@ -60,6 +61,20 @@ import {
   deleteAccountKeyword,
   updateAccountKeyword,
 } from "../repositories/chat-knowledge.repository";
+import {
+  addMerchantKeyword,
+  checkMerchantKeywordAvailable,
+  checkMerchantNameAvailable,
+  deleteMerchant,
+  deleteMerchantKeyword,
+  listMerchantKeywords,
+  listMerchants,
+  updateMerchant,
+  updateMerchantKeyword,
+  upsertMerchant,
+  type MerchantItem,
+  type MerchantKeywordItem,
+} from "../repositories/merchants.repository";
 import type {
   AccountKeywordItem,
   ActionKeywordItem,
@@ -68,8 +83,10 @@ import type {
 import { KaiKnowledgeHelpModal } from "./kai-knowledge-help-modal";
 import { KaiCategoryPickerModal } from "./kai-category-picker-modal";
 import { KaiAccountPickerModal } from "./kai-account-picker-modal";
+import { KaiMerchantPickerModal } from "./kai-merchant-picker-modal";
 
-export type KnowledgeTab = "actions" | "categories" | "accounts";
+export type KnowledgeTab = "actions" | "categories" | "accounts" | "merchants";
+export type MerchantSubTab = "merchants" | "keywords";
 
 export interface KaiKnowledgeModalProps {
   visible: boolean;
@@ -85,7 +102,7 @@ interface EditingKeywordState {
   id: string;
   keyword: string;
   language: string;
-  entityType: "action" | "category" | "account";
+  entityType: "action" | "category" | "account" | "merchant";
 }
 
 export function KaiKnowledgeModal({
@@ -138,6 +155,55 @@ export function KaiKnowledgeModal({
     null,
   );
 
+  // Merchants state
+  const [merchantSubTab, setMerchantSubTab] =
+    useState<MerchantSubTab>("merchants");
+  const [merchants, setMerchants] = useState<MerchantItem[]>([]);
+  const [merchantKeywords, setMerchantKeywords] = useState<
+    MerchantKeywordItem[]
+  >([]);
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(
+    null,
+  );
+  const [merchantPickerVisible, setMerchantPickerVisible] = useState(false);
+
+  // New merchant inline inputs (in "merchants" sub-tab)
+  const [newMerchantName, setNewMerchantName] = useState("");
+  const [newMerchantCategoryId, setNewMerchantCategoryId] = useState<
+    string | null
+  >(null);
+  const [newMerchantAccountId, setNewMerchantAccountId] = useState<
+    string | null
+  >(null);
+  const [merchantCategoryPickerVisible, setMerchantCategoryPickerVisible] =
+    useState(false);
+  const [merchantAccountPickerVisible, setMerchantAccountPickerVisible] =
+    useState(false);
+
+  // Editing merchant state
+  const [editingMerchant, setEditingMerchant] = useState<MerchantItem | null>(
+    null,
+  );
+  const [editMerchantName, setEditMerchantName] = useState("");
+  const [editMerchantCategoryId, setEditMerchantCategoryId] = useState<
+    string | null
+  >(null);
+  const [editMerchantAccountId, setEditMerchantAccountId] = useState<
+    string | null
+  >(null);
+  const [
+    editMerchantCategoryPickerVisible,
+    setEditMerchantCategoryPickerVisible,
+  ] = useState(false);
+  const [
+    editMerchantAccountPickerVisible,
+    setEditMerchantAccountPickerVisible,
+  ] = useState(false);
+  const [editMerchantProcessing, setEditMerchantProcessing] = useState(false);
+  const [editMerchantError, setEditMerchantError] = useState<string | null>(
+    null,
+  );
+
   // Pickers state
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const [accountPickerVisible, setAccountPickerVisible] = useState(false);
@@ -174,14 +240,19 @@ export function KaiKnowledgeModal({
   // Load knowledge
   const loadData = useCallback(async () => {
     try {
-      const [actRows, catRows, accRows] = await Promise.all([
-        listActionKeywords(),
-        listCategoryKeywords(),
-        listAccountKeywords(),
-      ]);
+      const [actRows, catRows, accRows, merchRows, mkwRows] =
+        await Promise.all([
+          listActionKeywords(),
+          listCategoryKeywords(),
+          listAccountKeywords(),
+          listMerchants(),
+          listMerchantKeywords(),
+        ]);
       setActionKeywords(actRows);
       setCategoryKeywords(catRows);
       setAccountKeywords(accRows);
+      setMerchants(merchRows);
+      setMerchantKeywords(mkwRows);
     } catch (err) {
       console.error("[KaiKnowledgeModal] Failed to load data:", err);
     }
@@ -196,6 +267,8 @@ export function KaiKnowledgeModal({
       setErrorMessage(null);
       setSearchQuery("");
       setEditingItem(null);
+      setEditingMerchant(null);
+      setMerchantSubTab("merchants");
 
       if (initialTab === "categories" && initialSelectedId) {
         setSelectedCategoryId(initialSelectedId);
@@ -208,6 +281,10 @@ export function KaiKnowledgeModal({
       } else if (accounts.length > 0) {
         setSelectedAccountId(accounts[0].id);
       }
+
+      if (initialTab === "merchants" && initialSelectedId) {
+        setSelectedMerchantId(initialSelectedId);
+      }
     }
     prevVisibleRef.current = visible;
   }, [
@@ -219,7 +296,7 @@ export function KaiKnowledgeModal({
     loadData,
   ]);
 
-  // If categories or accounts loaded after initial mount, ensure selection is set
+  // If categories, accounts, or merchants loaded after initial mount, ensure selection is set
   useEffect(() => {
     if (visible) {
       if (!selectedCategoryId && flatCategories.length > 0) {
@@ -236,13 +313,22 @@ export function KaiKnowledgeModal({
             : accounts[0].id,
         );
       }
+      if (!selectedMerchantId && merchants.length > 0) {
+        setSelectedMerchantId(
+          initialTab === "merchants" && initialSelectedId
+            ? initialSelectedId
+            : merchants[0].id,
+        );
+      }
     }
   }, [
     visible,
     flatCategories,
     accounts,
+    merchants,
     selectedCategoryId,
     selectedAccountId,
+    selectedMerchantId,
     initialTab,
     initialSelectedId,
   ]);
@@ -271,6 +357,21 @@ export function KaiKnowledgeModal({
     if (!selectedAccountId) return null;
     return accounts.find((a) => a.id === selectedAccountId) ?? null;
   }, [accounts, selectedAccountId]);
+
+  // Selected Merchant Entity
+  const selectedMerchant = useMemo(() => {
+    if (!selectedMerchantId) return null;
+    return merchants.find((m) => m.id === selectedMerchantId) ?? null;
+  }, [merchants, selectedMerchantId]);
+
+  // Keyword counts per merchant
+  const merchantKeywordCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const kw of merchantKeywords) {
+      counts[kw.merchantId] = (counts[kw.merchantId] ?? 0) + 1;
+    }
+    return counts;
+  }, [merchantKeywords]);
 
   // Current entity keywords filtered by search query
   const displayedActionKeywords = useMemo(() => {
@@ -301,6 +402,153 @@ export function KaiKnowledgeModal({
     const q = searchQuery.toLowerCase().trim();
     return list.filter((k) => k.keyword.toLowerCase().includes(q));
   }, [accountKeywords, selectedAccountId, searchQuery]);
+
+  const displayedMerchants = useMemo(() => {
+    if (!searchQuery.trim()) return merchants;
+    const q = searchQuery.toLowerCase().trim();
+    return merchants.filter((m) => {
+      if (m.name.toLowerCase().includes(q)) return true;
+      const cat = m.defaultCategoryId
+        ? flatCategories.find((c) => c.id === m.defaultCategoryId)
+        : null;
+      if (cat && cat.name.toLowerCase().includes(q)) return true;
+      const acc = m.defaultAccountId
+        ? accounts.find((a) => a.id === m.defaultAccountId)
+        : null;
+      if (acc && acc.name.toLowerCase().includes(q)) return true;
+      return false;
+    });
+  }, [merchants, searchQuery, flatCategories, accounts]);
+
+  const displayedMerchantKeywords = useMemo(() => {
+    if (!selectedMerchantId) return [];
+    const list = merchantKeywords.filter(
+      (k) => k.merchantId === selectedMerchantId,
+    );
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase().trim();
+    return list.filter((k) => k.keyword.toLowerCase().includes(q));
+  }, [merchantKeywords, selectedMerchantId, searchQuery]);
+
+  // Handlers for adding merchants
+  const handleAddMerchant = async () => {
+    const cleanName = newMerchantName.trim();
+    if (!cleanName) return;
+
+    setProcessing(true);
+    setErrorMessage(null);
+
+    try {
+      const isAvailable = await checkMerchantNameAvailable(cleanName);
+      if (!isAvailable) {
+        setErrorMessage(`"${cleanName}" already exists.`);
+        setProcessing(false);
+        return;
+      }
+
+      const created = await upsertMerchant(
+        cleanName,
+        newMerchantCategoryId,
+        newMerchantAccountId,
+      );
+
+      setMerchants((prev) =>
+        [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      const mkwRows = await listMerchantKeywords();
+      setMerchantKeywords(mkwRows);
+
+      setNewMerchantName("");
+      setNewMerchantCategoryId(null);
+      setNewMerchantAccountId(null);
+      setErrorMessage(null);
+      onKeywordsUpdated?.();
+    } catch (err: any) {
+      setErrorMessage(err?.message ?? "Failed to add merchant.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleDeleteMerchant = (merchant: MerchantItem) => {
+    Alert.alert(
+      t("chatWithKai.deleteMerchantTitle"),
+      t("chatWithKai.deleteMerchantConfirm", { name: merchant.name }),
+      [
+        { text: t("chatWithKai.cancel"), style: "cancel" },
+        {
+          text: t("chatWithKai.cancel") === "Cancel" ? "Delete" : "Burahin",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMerchant(merchant.id);
+              setMerchants((prev) => prev.filter((m) => m.id !== merchant.id));
+              setMerchantKeywords((prev) =>
+                prev.filter((k) => k.merchantId !== merchant.id),
+              );
+              if (selectedMerchantId === merchant.id) {
+                const remaining = merchants.filter((m) => m.id !== merchant.id);
+                setSelectedMerchantId(remaining[0]?.id ?? null);
+              }
+              onKeywordsUpdated?.();
+            } catch (err: any) {
+              setErrorMessage(err?.message ?? "Failed to delete merchant.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleOpenEditMerchant = (merchant: MerchantItem) => {
+    setEditingMerchant(merchant);
+    setEditMerchantName(merchant.name);
+    setEditMerchantCategoryId(merchant.defaultCategoryId);
+    setEditMerchantAccountId(merchant.defaultAccountId);
+    setEditMerchantError(null);
+  };
+
+  const handleSaveEditMerchant = async () => {
+    if (!editingMerchant) return;
+    const cleanName = editMerchantName.trim();
+    if (!cleanName) {
+      setEditMerchantError("Merchant name cannot be empty.");
+      return;
+    }
+
+    setEditMerchantProcessing(true);
+    setEditMerchantError(null);
+
+    try {
+      const isAvailable = await checkMerchantNameAvailable(
+        cleanName,
+        editingMerchant.id,
+      );
+      if (!isAvailable) {
+        setEditMerchantError(`"${cleanName}" already exists.`);
+        setEditMerchantProcessing(false);
+        return;
+      }
+
+      const updated = await updateMerchant(editingMerchant.id, {
+        name: cleanName,
+        defaultCategoryId: editMerchantCategoryId,
+        defaultAccountId: editMerchantAccountId,
+      });
+
+      setMerchants((prev) =>
+        prev
+          .map((m) => (m.id === updated.id ? updated : m))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setEditingMerchant(null);
+      onKeywordsUpdated?.();
+    } catch (err: any) {
+      setEditMerchantError(err?.message ?? "Failed to update merchant.");
+    } finally {
+      setEditMerchantProcessing(false);
+    }
+  };
 
   // Handlers for adding keywords
   const handleAddKeyword = async () => {
@@ -372,6 +620,22 @@ export function KaiKnowledgeModal({
           "any",
         );
         setAccountKeywords((prev) => [...prev, created]);
+      } else if (activeTab === "merchants") {
+        if (!selectedMerchantId) {
+          setErrorMessage("Please select a merchant first.");
+          setProcessing(false);
+          return;
+        }
+        const check = await checkMerchantKeywordAvailable(clean);
+        if (!check.available) {
+          setErrorMessage(
+            `"${clean}" is already assigned to merchant "${check.conflictMerchantName}".`,
+          );
+          setProcessing(false);
+          return;
+        }
+        const created = await addMerchantKeyword(selectedMerchantId, clean);
+        setMerchantKeywords((prev) => [...prev, created]);
       }
 
       setInputVal("");
@@ -415,10 +679,20 @@ export function KaiKnowledgeModal({
     }
   };
 
+  const handleRemoveMerchantKeyword = async (id: string) => {
+    try {
+      await deleteMerchantKeyword(id);
+      setMerchantKeywords((prev) => prev.filter((k) => k.id !== id));
+      onKeywordsUpdated?.();
+    } catch (err: any) {
+      setErrorMessage(err?.message ?? "Failed to delete keyword.");
+    }
+  };
+
   // Open Edit Dialog
   const handleOpenEdit = (
     item: { id: string; keyword: string; language?: string | null },
-    entityType: "action" | "category" | "account",
+    entityType: "action" | "category" | "account" | "merchant",
   ) => {
     setEditingItem({
       id: item.id,
@@ -468,6 +742,22 @@ export function KaiKnowledgeModal({
           "any",
         );
         setAccountKeywords((prev) =>
+          prev.map((k) => (k.id === updated.id ? updated : k)),
+        );
+      } else if (editingItem.entityType === "merchant") {
+        const check = await checkMerchantKeywordAvailable(
+          clean,
+          editingItem.id,
+        );
+        if (!check.available) {
+          setEditError(
+            `"${clean}" is already assigned to merchant "${check.conflictMerchantName}".`,
+          );
+          setEditProcessing(false);
+          return;
+        }
+        const updated = await updateMerchantKeyword(editingItem.id, clean);
+        setMerchantKeywords((prev) =>
           prev.map((k) => (k.id === updated.id ? updated : k)),
         );
       }
@@ -556,8 +846,13 @@ export function KaiKnowledgeModal({
           </Pressable>
         </View>
 
-        {/* Top 3-Tab Segmented Control */}
-        <View style={styles.tabBar}>
+        {/* Top 4-Tab Segmented Control */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tabBarScroll}
+          contentContainerStyle={styles.tabBarScrollContent}
+        >
           <Pressable
             accessibilityLabel="Actions Tab"
             accessibilityRole="button"
@@ -647,7 +942,38 @@ export function KaiKnowledgeModal({
               {t("chatWithKai.tabAccounts")}
             </Text>
           </Pressable>
-        </View>
+
+          <Pressable
+            accessibilityLabel="Merchants Tab"
+            accessibilityRole="button"
+            onPress={() => {
+              setActiveTab("merchants");
+              setErrorMessage(null);
+              setSearchQuery("");
+            }}
+            style={[
+              styles.tabBtn,
+              activeTab === "merchants" && styles.tabBtnActive,
+            ]}
+          >
+            <Store
+              color={
+                activeTab === "merchants"
+                  ? theme.colors.primary
+                  : theme.colors.textMuted
+              }
+              size={16}
+            />
+            <Text
+              style={[
+                styles.tabBtnText,
+                activeTab === "merchants" && styles.tabBtnTextActive,
+              ]}
+            >
+              {t("chatWithKai.tabMerchants")}
+            </Text>
+          </Pressable>
+        </ScrollView>
 
         {/* Fixed Non-Scrolling Screen Body */}
         <View style={styles.mainBodyContainer}>
@@ -856,58 +1182,342 @@ export function KaiKnowledgeModal({
             </Pressable>
           )}
 
-          {/* ADD KEYWORD SECTION (Fixed directly above table) */}
-          <View style={styles.addSectionCard}>
-            <View style={styles.addInputRow}>
-              <TextInput
-                autoCapitalize="none"
-                editable={!processing}
-                onChangeText={(text) => {
-                  setInputVal(text);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                onSubmitEditing={handleAddKeyword}
-                placeholder={
-                  activeTab === "actions"
-                    ? t("chatWithKai.addActionPlaceholder")
-                    : activeTab === "categories"
-                      ? t("chatWithKai.addKeywordPlaceholderCategory")
-                      : t("chatWithKai.addKeywordPlaceholderAccount")
-                }
-                placeholderTextColor={theme.colors.textMuted}
-                returnKeyType="done"
-                style={styles.addTextInput}
-                value={inputVal}
-              />
-
+          {/* TAB 4: MERCHANTS CONTROLS (Two-tier segmented toggle) */}
+          {activeTab === "merchants" && (
+            <View style={styles.actionSegmentRow}>
               <Pressable
-                accessibilityLabel="Add Keyword"
-                accessibilityRole="button"
-                disabled={processing || !inputVal.trim()}
-                onPress={handleAddKeyword}
+                onPress={() => {
+                  setMerchantSubTab("merchants");
+                  setErrorMessage(null);
+                  setSearchQuery("");
+                }}
                 style={[
-                  styles.addSubmitBtn,
-                  (!inputVal.trim() || processing) &&
-                    styles.addSubmitBtnDisabled,
+                  styles.actionSegmentBtn,
+                  merchantSubTab === "merchants" &&
+                    styles.actionSegmentBtnActiveTransfer,
                 ]}
               >
-                {processing ? (
-                  <ActivityIndicator
-                    color={theme.colors.onPrimary}
-                    size="small"
-                  />
-                ) : (
-                  <Plus color={theme.colors.onPrimary} size={18} />
-                )}
+                <Store
+                  color={
+                    merchantSubTab === "merchants"
+                      ? "#3B82F6"
+                      : theme.colors.textMuted
+                  }
+                  size={15}
+                />
+                <Text
+                  style={[
+                    styles.actionSegmentBtnText,
+                    merchantSubTab === "merchants" && {
+                      color: "#3B82F6",
+                      fontWeight: "700",
+                    },
+                  ]}
+                >
+                  {t("chatWithKai.subTabMerchants")} ({merchants.length})
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setMerchantSubTab("keywords");
+                  setErrorMessage(null);
+                  setSearchQuery("");
+                }}
+                style={[
+                  styles.actionSegmentBtn,
+                  merchantSubTab === "keywords" &&
+                    styles.actionSegmentBtnActiveTransfer,
+                ]}
+              >
+                <Tag
+                  color={
+                    merchantSubTab === "keywords"
+                      ? "#3B82F6"
+                      : theme.colors.textMuted
+                  }
+                  size={15}
+                />
+                <Text
+                  style={[
+                    styles.actionSegmentBtnText,
+                    merchantSubTab === "keywords" && {
+                      color: "#3B82F6",
+                      fontWeight: "700",
+                    },
+                  ]}
+                >
+                  {t("chatWithKai.subTabMerchantKeywords")} (
+                  {selectedMerchant
+                    ? (merchantKeywordCounts[selectedMerchant.id] ?? 0)
+                    : merchantKeywords.length}
+                  )
+                </Text>
               </Pressable>
             </View>
+          )}
 
-            {errorMessage && (
-              <Text style={styles.errorBannerText}>{errorMessage}</Text>
-            )}
-          </View>
+          {/* TAB 4 SUB-TAB 2: MERCHANT SELECTOR CARD */}
+          {activeTab === "merchants" && merchantSubTab === "keywords" && (
+            <Pressable
+              accessibilityLabel={t("chatWithKai.changeMerchant")}
+              accessibilityRole="button"
+              onPress={() => setMerchantPickerVisible(true)}
+              style={({ pressed }) => [
+                styles.entitySelectorCard,
+                pressed && styles.entitySelectorCardPressed,
+              ]}
+            >
+              <View style={styles.entitySelectorLeft}>
+                <View
+                  style={[
+                    styles.entityIconBadge,
+                    {
+                      backgroundColor: `${theme.colors.primary}18`,
+                      borderColor: `${theme.colors.primary}40`,
+                    },
+                  ]}
+                >
+                  <Store color={theme.colors.primary} size={20} />
+                </View>
+                <View style={styles.entityTextBox}>
+                  <Text style={styles.entitySelectorLabel}>
+                    {t("chatWithKai.tableHeaderMerchant").toUpperCase()}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.entitySelectorTitle}>
+                    {selectedMerchant?.name ??
+                      t("chatWithKai.selectMerchantPrompt")}
+                  </Text>
+                  {selectedMerchant && (
+                    <View style={styles.selectorMetaRow}>
+                      {selectedMerchant.defaultCategoryId ? (
+                        <View style={styles.badgePillSmall}>
+                          <Tag color={theme.colors.textMuted} size={9} />
+                          <Text
+                            numberOfLines={1}
+                            style={styles.badgeTextSmall}
+                          >
+                            {flatCategories.find(
+                              (c) =>
+                                c.id === selectedMerchant.defaultCategoryId,
+                            )?.name ?? "Category"}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {selectedMerchant.defaultAccountId ? (
+                        <View style={styles.badgePillSmall}>
+                          <Wallet color={theme.colors.textMuted} size={9} />
+                          <Text
+                            numberOfLines={1}
+                            style={styles.badgeTextSmall}
+                          >
+                            {accounts.find(
+                              (a) =>
+                                a.id === selectedMerchant.defaultAccountId,
+                            )?.name ?? "Account"}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  )}
+                </View>
+              </View>
 
-          {/* KEYWORDS TABLE CONTAINER (Fills remaining height: flex 1) */}
+              <View style={styles.changeActionBadge}>
+                <Text style={styles.changeActionText}>
+                  {t("chatWithKai.changeMerchant")}
+                </Text>
+                <ChevronRight color={theme.colors.primary} size={16} />
+              </View>
+            </Pressable>
+          )}
+
+          {/* ADD SECTION (Merchants Entity Add vs Keywords Add) */}
+          {activeTab === "merchants" && merchantSubTab === "merchants" ? (
+            <View style={styles.addSectionCard}>
+              <View style={styles.addInputRow}>
+                <TextInput
+                  autoCapitalize="words"
+                  editable={!processing}
+                  onChangeText={(text) => {
+                    setNewMerchantName(text);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  onSubmitEditing={handleAddMerchant}
+                  placeholder={t("chatWithKai.addMerchantPlaceholder")}
+                  placeholderTextColor={theme.colors.textMuted}
+                  returnKeyType="done"
+                  style={styles.addTextInput}
+                  value={newMerchantName}
+                />
+
+                <Pressable
+                  accessibilityLabel="Add Merchant"
+                  accessibilityRole="button"
+                  disabled={processing || !newMerchantName.trim()}
+                  onPress={handleAddMerchant}
+                  style={[
+                    styles.addSubmitBtn,
+                    (!newMerchantName.trim() || processing) &&
+                      styles.addSubmitBtnDisabled,
+                  ]}
+                >
+                  {processing ? (
+                    <ActivityIndicator
+                      color={theme.colors.onPrimary}
+                      size="small"
+                    />
+                  ) : (
+                    <Plus color={theme.colors.onPrimary} size={18} />
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Optional Default Category & Account Pickers */}
+              <View style={styles.merchantDefaultsRow}>
+                <Pressable
+                  onPress={() => setMerchantCategoryPickerVisible(true)}
+                  style={[
+                    styles.merchantDefaultChip,
+                    newMerchantCategoryId && styles.merchantDefaultChipActive,
+                  ]}
+                >
+                  <Tag
+                    color={
+                      newMerchantCategoryId
+                        ? theme.colors.primary
+                        : theme.colors.textMuted
+                    }
+                    size={12}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.merchantDefaultChipText,
+                      newMerchantCategoryId &&
+                        styles.merchantDefaultChipTextActive,
+                    ]}
+                  >
+                    {newMerchantCategoryId
+                      ? (flatCategories.find(
+                          (c) => c.id === newMerchantCategoryId,
+                        )?.name ?? t("chatWithKai.defaultCategory"))
+                      : `${t("chatWithKai.defaultCategory")} (${t("chatWithKai.optionalBadge")})`}
+                  </Text>
+                  {newMerchantCategoryId && (
+                    <Pressable
+                      hitSlop={6}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setNewMerchantCategoryId(null);
+                      }}
+                    >
+                      <X color={theme.colors.primary} size={12} />
+                    </Pressable>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setMerchantAccountPickerVisible(true)}
+                  style={[
+                    styles.merchantDefaultChip,
+                    newMerchantAccountId && styles.merchantDefaultChipActive,
+                  ]}
+                >
+                  <Wallet
+                    color={
+                      newMerchantAccountId
+                        ? theme.colors.primary
+                        : theme.colors.textMuted
+                    }
+                    size={12}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.merchantDefaultChipText,
+                      newMerchantAccountId &&
+                        styles.merchantDefaultChipTextActive,
+                    ]}
+                  >
+                    {newMerchantAccountId
+                      ? (accounts.find((a) => a.id === newMerchantAccountId)
+                          ?.name ?? t("chatWithKai.defaultAccount"))
+                      : `${t("chatWithKai.defaultAccount")} (${t("chatWithKai.optionalBadge")})`}
+                  </Text>
+                  {newMerchantAccountId && (
+                    <Pressable
+                      hitSlop={6}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setNewMerchantAccountId(null);
+                      }}
+                    >
+                      <X color={theme.colors.primary} size={12} />
+                    </Pressable>
+                  )}
+                </Pressable>
+              </View>
+
+              {errorMessage && (
+                <Text style={styles.errorBannerText}>{errorMessage}</Text>
+              )}
+            </View>
+          ) : (
+            <View style={styles.addSectionCard}>
+              <View style={styles.addInputRow}>
+                <TextInput
+                  autoCapitalize="none"
+                  editable={!processing}
+                  onChangeText={(text) => {
+                    setInputVal(text);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  onSubmitEditing={handleAddKeyword}
+                  placeholder={
+                    activeTab === "actions"
+                      ? t("chatWithKai.addActionPlaceholder")
+                      : activeTab === "categories"
+                        ? t("chatWithKai.addKeywordPlaceholderCategory")
+                        : activeTab === "accounts"
+                          ? t("chatWithKai.addKeywordPlaceholderAccount")
+                          : t("chatWithKai.addKeywordPlaceholderMerchant")
+                  }
+                  placeholderTextColor={theme.colors.textMuted}
+                  returnKeyType="done"
+                  style={styles.addTextInput}
+                  value={inputVal}
+                />
+
+                <Pressable
+                  accessibilityLabel="Add Keyword"
+                  accessibilityRole="button"
+                  disabled={processing || !inputVal.trim()}
+                  onPress={handleAddKeyword}
+                  style={[
+                    styles.addSubmitBtn,
+                    (!inputVal.trim() || processing) &&
+                      styles.addSubmitBtnDisabled,
+                  ]}
+                >
+                  {processing ? (
+                    <ActivityIndicator
+                      color={theme.colors.onPrimary}
+                      size="small"
+                    />
+                  ) : (
+                    <Plus color={theme.colors.onPrimary} size={18} />
+                  )}
+                </Pressable>
+              </View>
+
+              {errorMessage && (
+                <Text style={styles.errorBannerText}>{errorMessage}</Text>
+              )}
+            </View>
+          )}
+
+          {/* TABLE CONTAINER (Fills remaining height: flex 1) */}
           <View style={styles.tableCard}>
             {/* Table Header Controls: Search Box & Optional Reset Defaults */}
             <View style={styles.tableTopControls}>
@@ -916,7 +1526,11 @@ export function KaiKnowledgeModal({
                 <TextInput
                   autoCapitalize="none"
                   onChangeText={setSearchQuery}
-                  placeholder={t("chatWithKai.searchKeywordsPlaceholder")}
+                  placeholder={
+                    activeTab === "merchants" && merchantSubTab === "merchants"
+                      ? t("chatWithKai.pickerSearchMerchant")
+                      : t("chatWithKai.searchKeywordsPlaceholder")
+                  }
                   placeholderTextColor={theme.colors.textMuted}
                   style={styles.searchInput}
                   value={searchQuery}
@@ -945,14 +1559,37 @@ export function KaiKnowledgeModal({
             </View>
 
             {/* Fixed Table Column Headers */}
-            <View style={styles.tableHeaderRow}>
-              <Text style={[styles.tableHeaderCell, styles.cellKeyword]}>
-                {t("chatWithKai.tableHeaderKeyword").toUpperCase()}
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.cellActions]}>
-                {t("chatWithKai.tableHeaderActions").toUpperCase()}
-              </Text>
-            </View>
+            {activeTab === "merchants" && merchantSubTab === "merchants" ? (
+              <View style={styles.tableHeaderRow}>
+                <Text
+                  style={[styles.tableHeaderCell, styles.cellMerchantCol]}
+                >
+                  {t("chatWithKai.tableHeaderMerchant").toUpperCase()}
+                </Text>
+                <Text
+                  style={[styles.tableHeaderCell, styles.cellDefaultsCol]}
+                >
+                  {t("chatWithKai.tableHeaderCategory").toUpperCase()}
+                </Text>
+                <Text
+                  style={[styles.tableHeaderCell, styles.cellAliasesCol]}
+                >
+                  {t("chatWithKai.tableHeaderAliases").toUpperCase()}
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.cellActions]}>
+                  {t("chatWithKai.tableHeaderActions").toUpperCase()}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.tableHeaderRow}>
+                <Text style={[styles.tableHeaderCell, styles.cellKeyword]}>
+                  {t("chatWithKai.tableHeaderKeyword").toUpperCase()}
+                </Text>
+                <Text style={[styles.tableHeaderCell, styles.cellActions]}>
+                  {t("chatWithKai.tableHeaderActions").toUpperCase()}
+                </Text>
+              </View>
+            )}
 
             {/* Scrollable Table Data Rows ONLY */}
             <ScrollView
@@ -961,6 +1598,7 @@ export function KaiKnowledgeModal({
               showsVerticalScrollIndicator={true}
               style={styles.tableScroll}
             >
+              {/* TAB 1: ACTIONS ROWS */}
               {activeTab === "actions" &&
                 displayedActionKeywords.length === 0 && (
                   <View style={styles.emptyTableState}>
@@ -1011,6 +1649,7 @@ export function KaiKnowledgeModal({
                   </View>
                 ))}
 
+              {/* TAB 2: CATEGORIES ROWS */}
               {activeTab === "categories" &&
                 displayedCategoryKeywords.length === 0 && (
                   <View style={styles.emptyTableState}>
@@ -1061,6 +1700,7 @@ export function KaiKnowledgeModal({
                   </View>
                 ))}
 
+              {/* TAB 3: ACCOUNTS ROWS */}
               {activeTab === "accounts" &&
                 displayedAccountKeywords.length === 0 && (
                   <View style={styles.emptyTableState}>
@@ -1110,6 +1750,184 @@ export function KaiKnowledgeModal({
                     </View>
                   </View>
                 ))}
+
+              {/* TAB 4: MERCHANTS ENTITY ROWS (Sub-tab: "merchants") */}
+              {activeTab === "merchants" &&
+                merchantSubTab === "merchants" &&
+                displayedMerchants.length === 0 && (
+                  <View style={styles.emptyTableState}>
+                    <Text style={styles.emptyTableText}>
+                      {searchQuery.trim()
+                        ? t("chatWithKai.noKeywordsMatching", {
+                            query: searchQuery,
+                          })
+                        : t("chatWithKai.noMerchantsFound")}
+                    </Text>
+                  </View>
+                )}
+
+              {activeTab === "merchants" &&
+                merchantSubTab === "merchants" &&
+                displayedMerchants.map((item, idx) => {
+                  const cat = item.defaultCategoryId
+                    ? flatCategories.find(
+                        (c) => c.id === item.defaultCategoryId,
+                      )
+                    : null;
+                  const acc = item.defaultAccountId
+                    ? accounts.find((a) => a.id === item.defaultAccountId)
+                    : null;
+                  const kwCount = merchantKeywordCounts[item.id] ?? 0;
+
+                  return (
+                    <View
+                      key={item.id}
+                      style={[
+                        styles.tableRow,
+                        idx % 2 === 1 && styles.tableRowEven,
+                      ]}
+                    >
+                      <View style={styles.cellMerchantCol}>
+                        <View style={styles.merchantRowTitleWrap}>
+                          <Store
+                            color={theme.colors.primary}
+                            size={14}
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text
+                            numberOfLines={1}
+                            style={styles.rowMerchantName}
+                          >
+                            {item.name}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.cellDefaultsCol}>
+                        {cat ? (
+                          <View style={styles.tableChipBadge}>
+                            <Tag color={theme.colors.textMuted} size={9} />
+                            <Text
+                              numberOfLines={1}
+                              style={styles.tableChipText}
+                            >
+                              {cat.name}
+                            </Text>
+                          </View>
+                        ) : null}
+                        {acc ? (
+                          <View style={styles.tableChipBadge}>
+                            <Wallet color={theme.colors.textMuted} size={9} />
+                            <Text
+                              numberOfLines={1}
+                              style={styles.tableChipText}
+                            >
+                              {acc.name}
+                            </Text>
+                          </View>
+                        ) : null}
+                        {!cat && !acc && (
+                          <Text style={styles.emptyDashText}>—</Text>
+                        )}
+                      </View>
+
+                      <View style={styles.cellAliasesCol}>
+                        <Pressable
+                          accessibilityLabel={`${kwCount} aliases, view keywords`}
+                          accessibilityRole="button"
+                          onPress={() => {
+                            setSelectedMerchantId(item.id);
+                            setMerchantSubTab("keywords");
+                            setSearchQuery("");
+                          }}
+                          style={styles.aliasesCountBtn}
+                        >
+                          <Tag color={theme.colors.primary} size={11} />
+                          <Text style={styles.aliasesCountBtnText}>
+                            {kwCount}
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      <View style={styles.rowActionsCell}>
+                        <Pressable
+                          accessibilityLabel="Edit merchant"
+                          accessibilityRole="button"
+                          hitSlop={6}
+                          onPress={() => handleOpenEditMerchant(item)}
+                          style={styles.iconActionBtn}
+                        >
+                          <Pencil color={theme.colors.primary} size={16} />
+                        </Pressable>
+
+                        <Pressable
+                          accessibilityLabel="Delete merchant"
+                          accessibilityRole="button"
+                          hitSlop={6}
+                          onPress={() => handleDeleteMerchant(item)}
+                          style={[styles.iconActionBtn, styles.iconDeleteBtn]}
+                        >
+                          <Trash2 color={theme.colors.danger} size={16} />
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                })}
+
+              {/* TAB 4: MERCHANT KEYWORDS ROWS (Sub-tab: "keywords") */}
+              {activeTab === "merchants" &&
+                merchantSubTab === "keywords" &&
+                displayedMerchantKeywords.length === 0 && (
+                  <View style={styles.emptyTableState}>
+                    <Text style={styles.emptyTableText}>
+                      {searchQuery.trim()
+                        ? t("chatWithKai.noKeywordsMatching", {
+                            query: searchQuery,
+                          })
+                        : t("chatWithKai.noKeywordsYet")}
+                    </Text>
+                  </View>
+                )}
+
+              {activeTab === "merchants" &&
+                merchantSubTab === "keywords" &&
+                displayedMerchantKeywords.map((item, idx) => (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.tableRow,
+                      idx % 2 === 1 && styles.tableRowEven,
+                    ]}
+                  >
+                    <Text numberOfLines={1} style={styles.rowKeywordText}>
+                      {item.keyword}
+                    </Text>
+
+                    <View style={styles.rowActionsCell}>
+                      <Pressable
+                        accessibilityLabel="Edit keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() => handleOpenEdit(item, "merchant")}
+                        style={styles.iconActionBtn}
+                      >
+                        <Pencil color={theme.colors.primary} size={16} />
+                      </Pressable>
+
+                      <Pressable
+                        accessibilityLabel="Delete keyword"
+                        accessibilityRole="button"
+                        hitSlop={6}
+                        onPress={() =>
+                          handleRemoveMerchantKeyword(item.id)
+                        }
+                        style={[styles.iconActionBtn, styles.iconDeleteBtn]}
+                      >
+                        <Trash2 color={theme.colors.danger} size={16} />
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
             </ScrollView>
           </View>
         </View>
@@ -1134,6 +1952,64 @@ export function KaiKnowledgeModal({
           }}
           selectedAccountId={selectedAccountId}
           visible={accountPickerVisible}
+        />
+
+        {/* DEDICATED MERCHANT PICKER MODAL */}
+        <KaiMerchantPickerModal
+          accounts={accounts}
+          categories={categories}
+          keywordCounts={merchantKeywordCounts}
+          merchants={merchants}
+          onClose={() => setMerchantPickerVisible(false)}
+          onSelectMerchant={(merch) => {
+            setSelectedMerchantId(merch.id);
+          }}
+          selectedMerchantId={selectedMerchantId}
+          visible={merchantPickerVisible}
+        />
+
+        {/* MERCHANT DEFAULTS: CATEGORY PICKER (FOR ADD MERCHANT) */}
+        <KaiCategoryPickerModal
+          categories={categories}
+          onClose={() => setMerchantCategoryPickerVisible(false)}
+          onSelectCategory={(cat) => {
+            setNewMerchantCategoryId(cat.id);
+          }}
+          selectedCategoryId={newMerchantCategoryId}
+          visible={merchantCategoryPickerVisible}
+        />
+
+        {/* MERCHANT DEFAULTS: ACCOUNT PICKER (FOR ADD MERCHANT) */}
+        <KaiAccountPickerModal
+          accounts={accounts}
+          onClose={() => setMerchantAccountPickerVisible(false)}
+          onSelectAccount={(acc) => {
+            setNewMerchantAccountId(acc.id);
+          }}
+          selectedAccountId={newMerchantAccountId}
+          visible={merchantAccountPickerVisible}
+        />
+
+        {/* MERCHANT DEFAULTS: CATEGORY PICKER (FOR EDIT MERCHANT) */}
+        <KaiCategoryPickerModal
+          categories={categories}
+          onClose={() => setEditMerchantCategoryPickerVisible(false)}
+          onSelectCategory={(cat) => {
+            setEditMerchantCategoryId(cat.id);
+          }}
+          selectedCategoryId={editMerchantCategoryId}
+          visible={editMerchantCategoryPickerVisible}
+        />
+
+        {/* MERCHANT DEFAULTS: ACCOUNT PICKER (FOR EDIT MERCHANT) */}
+        <KaiAccountPickerModal
+          accounts={accounts}
+          onClose={() => setEditMerchantAccountPickerVisible(false)}
+          onSelectAccount={(acc) => {
+            setEditMerchantAccountId(acc.id);
+          }}
+          selectedAccountId={editMerchantAccountId}
+          visible={editMerchantAccountPickerVisible}
         />
 
         {/* HELP / INFORMATION MODAL */}
@@ -1218,6 +2094,157 @@ export function KaiKnowledgeModal({
             </View>
           </View>
         </Modal>
+
+        {/* EDIT MERCHANT DIALOG MODAL */}
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setEditingMerchant(null)}
+          transparent
+          visible={editingMerchant !== null}
+        >
+          <View style={styles.dialogBackdrop}>
+            <View style={styles.dialogCard}>
+              <View style={styles.dialogHeader}>
+                <Text style={styles.dialogTitle}>
+                  {t("chatWithKai.editMerchantTitle")}
+                </Text>
+                <Pressable
+                  hitSlop={6}
+                  onPress={() => setEditingMerchant(null)}
+                >
+                  <X color={theme.colors.textMuted} size={20} />
+                </Pressable>
+              </View>
+
+              <View style={styles.dialogBody}>
+                <Text style={styles.dialogFieldLabel}>
+                  {t("chatWithKai.tableHeaderMerchant").toUpperCase()}
+                </Text>
+                <TextInput
+                  autoCapitalize="words"
+                  editable={!editMerchantProcessing}
+                  onChangeText={(text) => {
+                    setEditMerchantName(text);
+                    if (editMerchantError) setEditMerchantError(null);
+                  }}
+                  style={styles.dialogInput}
+                  value={editMerchantName}
+                />
+
+                <Text style={[styles.dialogFieldLabel, { marginTop: 12 }]}>
+                  {t("chatWithKai.defaultCategory").toUpperCase()}
+                </Text>
+                <Pressable
+                  onPress={() => setEditMerchantCategoryPickerVisible(true)}
+                  style={styles.dialogPickerBtn}
+                >
+                  <View style={styles.dialogPickerBtnLeft}>
+                    <Tag color={theme.colors.primary} size={16} />
+                    <Text
+                      numberOfLines={1}
+                      style={styles.dialogPickerBtnText}
+                    >
+                      {editMerchantCategoryId
+                        ? (flatCategories.find(
+                            (c) => c.id === editMerchantCategoryId,
+                          )?.name ?? t("chatWithKai.defaultCategory"))
+                        : t("chatWithKai.noDefaultCategory")}
+                    </Text>
+                  </View>
+                  {editMerchantCategoryId ? (
+                    <Pressable
+                      hitSlop={6}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setEditMerchantCategoryId(null);
+                      }}
+                    >
+                      <X color={theme.colors.textMuted} size={16} />
+                    </Pressable>
+                  ) : (
+                    <ChevronRight color={theme.colors.textMuted} size={16} />
+                  )}
+                </Pressable>
+
+                <Text style={[styles.dialogFieldLabel, { marginTop: 12 }]}>
+                  {t("chatWithKai.defaultAccount").toUpperCase()}
+                </Text>
+                <Pressable
+                  onPress={() => setEditMerchantAccountPickerVisible(true)}
+                  style={styles.dialogPickerBtn}
+                >
+                  <View style={styles.dialogPickerBtnLeft}>
+                    <Wallet color={theme.colors.primary} size={16} />
+                    <Text
+                      numberOfLines={1}
+                      style={styles.dialogPickerBtnText}
+                    >
+                      {editMerchantAccountId
+                        ? (accounts.find(
+                            (a) => a.id === editMerchantAccountId,
+                          )?.name ?? t("chatWithKai.defaultAccount"))
+                        : t("chatWithKai.noDefaultAccount")}
+                    </Text>
+                  </View>
+                  {editMerchantAccountId ? (
+                    <Pressable
+                      hitSlop={6}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setEditMerchantAccountId(null);
+                      }}
+                    >
+                      <X color={theme.colors.textMuted} size={16} />
+                    </Pressable>
+                  ) : (
+                    <ChevronRight color={theme.colors.textMuted} size={16} />
+                  )}
+                </Pressable>
+
+                {editMerchantError && (
+                  <Text style={styles.errorBannerText}>
+                    {editMerchantError}
+                  </Text>
+                )}
+              </View>
+
+              <View style={styles.dialogFooter}>
+                <Pressable
+                  disabled={editMerchantProcessing}
+                  onPress={() => setEditingMerchant(null)}
+                  style={styles.dialogCancelBtn}
+                >
+                  <Text style={styles.dialogCancelText}>
+                    {t("chatWithKai.cancel")}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  disabled={
+                    editMerchantProcessing || !editMerchantName.trim()
+                  }
+                  onPress={handleSaveEditMerchant}
+                  style={[
+                    styles.dialogSaveBtn,
+                    (!editMerchantName.trim() || editMerchantProcessing) &&
+                      styles.dialogSaveBtnDisabled,
+                  ]}
+                >
+                  {editMerchantProcessing ? (
+                    <ActivityIndicator
+                      color={theme.colors.onPrimary}
+                      size="small"
+                    />
+                  ) : (
+                    <Text style={styles.dialogSaveText}>
+                      {t("chatWithKai.saveChanges")}
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -1268,21 +2295,24 @@ const createStyles = (theme: AppTheme) =>
       justifyContent: "center",
       backgroundColor: `${theme.colors.primary}15`,
     },
-    tabBar: {
-      flexDirection: "row",
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+    tabBarScroll: {
+      flexGrow: 0,
       backgroundColor: theme.colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
+    },
+    tabBarScrollContent: {
+      flexDirection: "row",
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       gap: 8,
     },
     tabBtn: {
-      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      paddingVertical: 9,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
       borderRadius: 10,
       backgroundColor: theme.colors.surfaceElevated,
       gap: 6,
@@ -1646,5 +2676,136 @@ const createStyles = (theme: AppTheme) =>
       fontSize: 13,
       fontWeight: "700",
       color: theme.colors.onPrimary,
+    },
+    cellMerchantCol: {
+      flex: 1.3,
+    },
+    cellDefaultsCol: {
+      flex: 1.2,
+      flexDirection: "column",
+      gap: 3,
+    },
+    cellAliasesCol: {
+      width: 58,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    merchantRowTitleWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    rowMerchantName: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: theme.colors.textPrimary,
+      flex: 1,
+    },
+    tableChipBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1.5,
+      borderRadius: 5,
+      backgroundColor: theme.colors.surfaceElevated,
+      alignSelf: "flex-start",
+      maxWidth: "100%",
+    },
+    tableChipText: {
+      fontSize: 10,
+      color: theme.colors.textSecondary,
+      maxWidth: 90,
+    },
+    emptyDashText: {
+      fontSize: 12,
+      color: theme.colors.textMuted,
+      paddingLeft: 4,
+    },
+    aliasesCountBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+      backgroundColor: `${theme.colors.primary}15`,
+    },
+    aliasesCountBtnText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: theme.colors.primary,
+    },
+    selectorMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 4,
+    },
+    badgePillSmall: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 6,
+      backgroundColor: theme.colors.surfaceElevated,
+    },
+    badgeTextSmall: {
+      fontSize: 10,
+      color: theme.colors.textSecondary,
+      maxWidth: 100,
+    },
+    merchantDefaultsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 8,
+    },
+    merchantDefaultChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      backgroundColor: theme.colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      flex: 1,
+    },
+    merchantDefaultChipActive: {
+      borderColor: `${theme.colors.primary}60`,
+      backgroundColor: `${theme.colors.primary}0D`,
+    },
+    merchantDefaultChipText: {
+      fontSize: 11,
+      color: theme.colors.textMuted,
+      flex: 1,
+    },
+    merchantDefaultChipTextActive: {
+      color: theme.colors.primary,
+      fontWeight: "600",
+    },
+    dialogPickerBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      height: 42,
+      borderRadius: 10,
+      backgroundColor: theme.colors.surfaceElevated,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      paddingHorizontal: 12,
+    },
+    dialogPickerBtnLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      flex: 1,
+    },
+    dialogPickerBtnText: {
+      fontSize: 13,
+      color: theme.colors.textPrimary,
+      flex: 1,
     },
   });

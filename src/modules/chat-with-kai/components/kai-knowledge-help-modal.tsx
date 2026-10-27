@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Globe, HelpCircle, Sparkles, Tag, Wallet, X } from "lucide-react-native";
+import { Globe, HelpCircle, Sparkles, Store, Tag, Wallet, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -125,7 +125,27 @@ export function KaiKnowledgeHelpModal({
               </View>
             </View>
 
-            {/* Section 4: Languages */}
+            {/* Section 4: Merchants */}
+            <View style={styles.infoSection}>
+              <View
+                style={[
+                  styles.sectionIconWrap,
+                  { backgroundColor: "#8B5CF618" },
+                ]}
+              >
+                <Store color="#8B5CF6" size={18} />
+              </View>
+              <View style={styles.sectionTextWrap}>
+                <Text style={styles.sectionTitle}>
+                  {t("chatWithKai.helpMerchantsTitle")}
+                </Text>
+                <Text style={styles.sectionDesc}>
+                  {t("chatWithKai.helpMerchantsDesc")}
+                </Text>
+              </View>
+            </View>
+
+            {/* Section 5: Languages */}
             <View style={styles.infoSection}>
               <View
                 style={[
