@@ -53,6 +53,7 @@ export function ChatWithKaiModal({
   const { locale, t } = useLocalization();
 
   const listRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const [pickerTargetMessageId, setPickerTargetMessageId] = useState<string | null>(null);
 
   const {
@@ -91,6 +92,13 @@ export function ChatWithKaiModal({
       }, 100);
     }
   }, [visible, messages.length]);
+
+  const handleRetryUserMessage = (text: string) => {
+    setInputText(text);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 60);
+  };
 
   const handleEdit = (proposal: ParsedTransactionProposal) => {
     const isNeg = proposal.type === "expense";
@@ -291,6 +299,7 @@ export function ChatWithKaiModal({
                 }}
                 onConfirmReassignKeyword={confirmReassignKeyword}
                 onDismissReassignKeyword={dismissReassignKeyword}
+                onRetryUserMessage={handleRetryUserMessage}
                 onSelectPrompt={(p) => sendMessage(p)}
               />
             )}
@@ -305,6 +314,7 @@ export function ChatWithKaiModal({
             ]}
           >
             <TextInput
+              ref={inputRef}
               accessibilityLabel="Type your transaction message"
               editable={!processing}
               multiline={false}

@@ -64,6 +64,24 @@ export function ChatTransactionCard({
     }
   };
 
+  const accountGroupLabel =
+    proposal.accountGroup === "liability"
+      ? "Liability"
+      : proposal.accountGroup === "asset"
+        ? "Asset"
+        : proposal.accountGroup
+          ? proposal.accountGroup.charAt(0).toUpperCase() + proposal.accountGroup.slice(1)
+          : "Asset";
+
+  const transferDestGroupLabel =
+    proposal.transferAccountGroup === "liability"
+      ? "Liability"
+      : proposal.transferAccountGroup === "asset"
+        ? "Asset"
+        : proposal.transferAccountGroup
+          ? proposal.transferAccountGroup.charAt(0).toUpperCase() + proposal.transferAccountGroup.slice(1)
+          : "Asset";
+
   return (
     <View style={styles.card}>
       {/* Header: Type Badge & Status */}
@@ -112,47 +130,69 @@ export function ChatTransactionCard({
         </View>
       ) : null}
 
-      {/* Amount Display */}
-      <View style={styles.amountContainer}>
-        <Text
-          style={[
-            styles.amountText,
-            isExpense && styles.expenseAmount,
-            isIncome && styles.incomeAmount,
-            isTransfer && styles.transferAmount,
-          ]}
-        >
-          {isExpense ? `-${formattedAmount}` : isIncome ? `+${formattedAmount}` : formattedAmount}
-        </Text>
-        {proposal.name ? (
-          <Text numberOfLines={1} style={styles.merchantNameText}>
-            {proposal.name}
+      {/* Body: Two-Column Layout (Amount, Merchant, Category on Left; Group, Account on Right) */}
+      {isTransfer ? (
+        <View style={styles.transferSection}>
+          <Text style={[styles.amountText, styles.transferAmount]}>
+            {formattedAmount}
           </Text>
-        ) : null}
-      </View>
 
-      {/* Details Row */}
-      <View style={styles.detailsBox}>
-        {isTransfer ? (
-          <View style={styles.transferRow}>
-            <View style={styles.accountPill}>
-              <Wallet color={theme.colors.textSecondary} size={12} />
-              <Text numberOfLines={1} style={styles.accountPillText}>
-                {proposal.accountName}
-              </Text>
+          <View style={styles.transferAccountsRow}>
+            <View style={styles.transferAccountCol}>
+              <View style={styles.groupBadge}>
+                <Text style={styles.groupBadgeText}>{accountGroupLabel}</Text>
+              </View>
+              <View style={styles.accountRow}>
+                <Wallet color={theme.colors.textSecondary} size={12} />
+                <Text numberOfLines={1} style={styles.accountNameText}>
+                  {proposal.accountName}
+                </Text>
+              </View>
             </View>
-            <ArrowRight color={theme.colors.textMuted} size={13} />
-            <View style={styles.accountPill}>
-              <Wallet color={theme.colors.primary} size={12} />
-              <Text numberOfLines={1} style={styles.accountPillText}>
-                {proposal.transferAccountName ?? "Destination"}
-              </Text>
+
+            <ArrowRight color={theme.colors.textMuted} size={14} style={styles.transferArrow} />
+
+            <View style={[styles.transferAccountCol, styles.transferAccountColRight]}>
+              <View style={styles.groupBadge}>
+                <Text style={styles.groupBadgeText}>{transferDestGroupLabel}</Text>
+              </View>
+              <View style={styles.accountRow}>
+                <Wallet color={theme.colors.primary} size={12} />
+                <Text numberOfLines={1} style={styles.accountNameText}>
+                  {proposal.transferAccountName ?? "Destination"}
+                </Text>
+              </View>
             </View>
           </View>
-        ) : (
-          <View style={styles.infoRow}>
+
+          {proposal.note ? (
+            <Text numberOfLines={1} style={styles.noteText}>
+              Note: {proposal.note}
+            </Text>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.bodyRow}>
+          {/* Left Column: Amount, Merchant Name, Category */}
+          <View style={styles.leftColumn}>
+            <Text
+              style={[
+                styles.amountText,
+                isExpense && styles.expenseAmount,
+                isIncome && styles.incomeAmount,
+              ]}
+            >
+              {isExpense ? `-${formattedAmount}` : `+${formattedAmount}`}
+            </Text>
+
+            {proposal.name ? (
+              <Text numberOfLines={1} style={styles.merchantNameText}>
+                {proposal.name}
+              </Text>
+            ) : null}
+
             {/* Category */}
-            <View style={styles.metaItem}>
+            <View style={styles.categoryItem}>
               {proposal.categoryIcon ? (
                 <View
                   style={[
@@ -163,31 +203,43 @@ export function ChatTransactionCard({
                   <IconHelper
                     color={theme.colors.onPrimary}
                     name={proposal.categoryIcon}
-                    size={12}
+                    size={11}
                   />
                 </View>
               ) : null}
-              <Text numberOfLines={1} style={styles.metaItemText}>
+              <Text numberOfLines={1} style={styles.categoryItemText}>
                 {proposal.categoryName ?? "Uncategorized"}
               </Text>
             </View>
 
-            {/* Account */}
-            <View style={styles.metaItem}>
-              <Wallet color={theme.colors.textSecondary} size={12} />
-              <Text numberOfLines={1} style={styles.metaItemText}>
+            {proposal.note && proposal.note !== proposal.name ? (
+              <Text numberOfLines={1} style={styles.noteText}>
+                Note: {proposal.note}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Right Column: Account Group & Account Name */}
+          <View style={styles.rightColumn}>
+            <View style={styles.groupBadge}>
+              <Text style={styles.groupBadgeText}>{accountGroupLabel}</Text>
+            </View>
+
+            <View style={styles.accountRow}>
+              <Wallet color={theme.colors.textSecondary} size={13} />
+              <Text numberOfLines={1} style={styles.accountNameText}>
                 {proposal.accountName}
               </Text>
             </View>
-          </View>
-        )}
 
-        {proposal.note && proposal.note !== proposal.name ? (
-          <Text numberOfLines={1} style={styles.noteText}>
-            Note: {proposal.note}
-          </Text>
-        ) : null}
-      </View>
+            {proposal.pocketName ? (
+              <Text numberOfLines={1} style={styles.pocketNameText}>
+                {proposal.pocketName}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      )}
 
       {/* Action Buttons */}
       <View style={styles.actionsRow}>
@@ -337,44 +389,88 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "600",
     },
-    detailsBox: {
+    bodyRow: {
+      alignItems: "flex-start",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 2,
+    },
+    leftColumn: {
+      flex: 1,
+      gap: 3,
+      marginRight: theme.spacing.sm,
+    },
+    rightColumn: {
+      alignItems: "flex-end",
+      justifyContent: "flex-start",
+      minWidth: 100,
+    },
+    groupBadge: {
       backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.medium,
-      gap: 6,
-      padding: 10,
-    },
-    infoRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 12,
-    },
-    transferRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 6,
-    },
-    accountPill: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.round,
+      borderRadius: theme.borderRadius.small,
       borderWidth: 1,
+      marginBottom: 4,
+      paddingHorizontal: 7,
+      paddingVertical: 2,
+    },
+    groupBadgeText: {
+      color: theme.colors.textSecondary,
+      fontSize: 10,
+      fontWeight: "700",
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+    },
+    accountRow: {
+      alignItems: "center",
       flexDirection: "row",
       gap: 5,
-      paddingHorizontal: 8,
-      paddingVertical: 3,
+      justifyContent: "flex-end",
     },
-    accountPillText: {
+    accountNameText: {
       color: theme.colors.textPrimary,
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: "600",
-      maxWidth: 100,
+      maxWidth: 130,
     },
-    metaItem: {
+    pocketNameText: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+      marginTop: 2,
+    },
+    categoryItem: {
       alignItems: "center",
       flexDirection: "row",
-      gap: 6,
+      gap: 5,
+      marginTop: 2,
+    },
+    categoryItemText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "500",
+      maxWidth: 160,
+    },
+    transferSection: {
+      gap: 8,
+      paddingVertical: 2,
+    },
+    transferAccountsRow: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      padding: 8,
+    },
+    transferAccountCol: {
+      alignItems: "flex-start",
+      flex: 1,
+    },
+    transferAccountColRight: {
+      alignItems: "flex-end",
+    },
+    transferArrow: {
+      marginHorizontal: 8,
     },
     iconCircle: {
       alignItems: "center",
@@ -382,12 +478,6 @@ function createStyles(theme: AppTheme) {
       height: 18,
       justifyContent: "center",
       width: 18,
-    },
-    metaItemText: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      fontWeight: "500",
-      maxWidth: 130,
     },
     noteText: {
       color: theme.colors.textMuted,

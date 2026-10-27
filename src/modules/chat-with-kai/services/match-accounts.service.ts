@@ -17,8 +17,27 @@ function clean(str: string): string {
 }
 
 /**
+ * Sorts accounts by:
+ * 1. Name length descending (so "Credit Card BDO" matches before "BDO")
+ * 2. Account Group: Asset (0) prioritized over Liability (1) when names or lengths match
+ * 3. Sort order
+ */
+function sortAccountsByPriority(accounts: AccountListItem[]): AccountListItem[] {
+  return [...accounts].sort((a, b) => {
+    const lenDiff = b.name.length - a.name.length;
+    if (lenDiff !== 0) return lenDiff;
+
+    const aIsLiability = a.accountType?.accountGroup === "liability" ? 1 : 0;
+    const bIsLiability = b.accountType?.accountGroup === "liability" ? 1 : 0;
+    if (aIsLiability !== bIsLiability) return aIsLiability - bIsLiability;
+
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  });
+}
+
+/**
  * Searches for an account in a given segment of text.
- * Sorts accounts by name length descending so "Credit Card BDO" matches before "BDO".
+ * Sorts accounts by name length descending and prioritizes Asset over Liability.
  */
 function findAccountInSegment(
   segment: string,
@@ -26,7 +45,7 @@ function findAccountInSegment(
   accountKeywordsMap?: Map<string, string>,
 ): { account: AccountListItem; matchedText: string } | null {
   const normSegment = clean(segment);
-  const sorted = [...accounts].sort((a, b) => b.name.length - a.name.length);
+  const sorted = sortAccountsByPriority(accounts);
 
   for (const acc of sorted) {
     const normName = clean(acc.name);
@@ -199,7 +218,7 @@ export function matchAccounts(
 
     // Try finding any two accounts mentioned
     const foundAccounts: AccountListItem[] = [];
-    const sorted = [...accounts].sort((a, b) => b.name.length - a.name.length);
+    const sorted = sortAccountsByPriority(accounts);
     for (const acc of sorted) {
       const regex = new RegExp(`\\b${clean(acc.name)}\\b`, "i");
       if (regex.test(lowerText) && !foundAccounts.some((a) => a.id === acc.id)) {
@@ -263,7 +282,7 @@ export function matchAccounts(
 
     // If no preposition matched, check if an account name was directly mentioned anywhere
     if (!sourceAccount) {
-      const sorted = [...accounts].sort((a, b) => b.name.length - a.name.length);
+      const sorted = sortAccountsByPriority(accounts);
       for (const acc of sorted) {
         const regex = new RegExp(`\\b${clean(acc.name)}\\b`, "i");
         if (regex.test(lowerText)) {

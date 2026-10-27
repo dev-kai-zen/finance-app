@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import {
   ConfirmModal,
   FloatingActionButton,
@@ -115,6 +115,7 @@ function DashboardScreenContent() {
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+  const returnToChatOnFormCloseRef = useRef(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
@@ -421,10 +422,17 @@ function DashboardScreenContent() {
         onClearError={clearTransactionError}
         onClearPresetError={clearPresetError}
         onClose={() => {
+          const shouldReturnToChat = returnToChatOnFormCloseRef.current;
+          returnToChatOnFormCloseRef.current = false;
           setIsModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
           setOnChatEditSaved(null);
+          if (shouldReturnToChat) {
+            setTimeout(() => {
+              setIsChatModalOpen(true);
+            }, Platform.OS === "ios" ? 250 : 80);
+          }
         }}
         onSaveTransaction={handleSaveTx}
         onSaveTransfer={handleSaveTransfer}
@@ -465,6 +473,7 @@ function DashboardScreenContent() {
         defaultExpenseAccountId={accounts[0]?.id ?? null}
         onClose={() => setIsChatModalOpen(false)}
         onEditInForm={(prefilled, onSaved) => {
+          returnToChatOnFormCloseRef.current = true;
           setPrefilledTransaction(prefilled);
           setIsEditingTransaction(false);
           setOnChatEditSaved(() => onSaved ?? null);

@@ -292,6 +292,7 @@ function TransactionsScreenContent({
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
   const handledActionRef = useRef<string | null>(null);
+  const returnToChatOnFormCloseRef = useRef(false);
 
   useEffect(() => {
     if (initialAction === "new") {
@@ -998,6 +999,8 @@ function TransactionsScreenContent({
         onClearError={clearError}
         onClearPresetError={clearPresetError}
         onClose={() => {
+          const shouldReturnToChat = returnToChatOnFormCloseRef.current;
+          returnToChatOnFormCloseRef.current = false;
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
@@ -1008,6 +1011,11 @@ function TransactionsScreenContent({
             type: undefined,
             source: undefined,
           });
+          if (shouldReturnToChat) {
+            setTimeout(() => {
+              setIsChatModalOpen(true);
+            }, Platform.OS === "ios" ? 250 : 80);
+          }
         }}
         initialType={formInitialType}
         onSaveTransaction={handleRecordTransaction}
@@ -1044,6 +1052,7 @@ function TransactionsScreenContent({
         categories={categories}
         onClose={() => setIsChatModalOpen(false)}
         onEditInForm={(prefilled, onSaved) => {
+          returnToChatOnFormCloseRef.current = true;
           setPrefilledTransaction(prefilled);
           setIsEditingTransaction(false);
           setOnChatEditSaved(() => onSaved ?? null);

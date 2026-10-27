@@ -23,6 +23,7 @@ export interface ParsedTransactionProposal {
   // Expense / Income
   accountId: string;
   accountName: string;
+  accountGroup?: string | null;
   pocketId?: string | null;
   pocketName?: string | null;
   categoryId?: string | null;
@@ -35,6 +36,7 @@ export interface ParsedTransactionProposal {
   // Transfer
   transferAccountId?: string | null;
   transferAccountName?: string | null;
+  transferAccountGroup?: string | null;
   transferPocketId?: string | null;
   transferPocketName?: string | null;
   isSaved?: boolean;

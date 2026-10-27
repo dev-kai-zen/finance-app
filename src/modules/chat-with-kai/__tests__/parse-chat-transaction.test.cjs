@@ -362,6 +362,33 @@ test("parse-chat-transaction: resolves custom merchant and default category from
     assert.equal(result.proposal.note, null);
   }
 });
+test("parse-chat-transaction: prioritizes Asset over Liability when account names are identical", () => {
+  const accountsWithDuplicateNames = [
+    {
+      id: "acc-gcash-liability",
+      name: "GCASH",
+      currencyCode: "PHP",
+      sortOrder: 0,
+      accountType: { id: "type-liability", name: "Credit/Loan", accountGroup: "liability" },
+    },
+    {
+      id: "acc-gcash-asset",
+      name: "GCASH",
+      currencyCode: "PHP",
+      sortOrder: 1,
+      accountType: { id: "type-ewallet", name: "E-Wallet", accountGroup: "asset" },
+    },
+  ];
 
+  const result = parseChatTransaction("Lunch 250 using Gcash", {
+    ...defaultContext,
+    accounts: accountsWithDuplicateNames,
+  });
 
-
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.accountId, "acc-gcash-asset");
+    assert.equal(result.proposal.accountName, "GCASH");
+    assert.equal(result.proposal.accountGroup, "asset");
+  }
+});

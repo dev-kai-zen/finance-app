@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight, Sparkles, Tag } from "lucide-react-native";
+import { ChevronRight, RotateCcw, Sparkles, Tag } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { IconHelper } from "@/components";
@@ -26,6 +26,7 @@ interface ChatMessageBubbleProps {
   onRequestCategoryPicker?: (messageId: string) => void;
   onConfirmReassignKeyword?: (messageId: string) => void;
   onDismissReassignKeyword?: (messageId: string) => void;
+  onRetryUserMessage?: (text: string) => void;
 }
 
 export function ChatMessageBubble({
@@ -40,6 +41,7 @@ export function ChatMessageBubble({
   onRequestCategoryPicker,
   onConfirmReassignKeyword,
   onDismissReassignKeyword,
+  onRetryUserMessage,
 }: ChatMessageBubbleProps) {
   const styles = useThemeStyles(createStyles);
   const theme = useAppTheme();
@@ -49,6 +51,21 @@ export function ChatMessageBubble({
   if (isUser) {
     return (
       <View style={styles.userRow}>
+        {onRetryUserMessage ? (
+          <Pressable
+            accessibilityHint="Fills the message into the input field for editing"
+            accessibilityLabel="Edit or retry message"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onRetryUserMessage(message.text)}
+            style={({ pressed }) => [
+              styles.retryButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <RotateCcw color={theme.colors.textMuted} size={15} />
+          </Pressable>
+        ) : null}
         <View style={styles.userBubble}>
           <Text style={styles.userText}>{message.text}</Text>
         </View>
@@ -219,10 +236,19 @@ export function ChatMessageBubble({
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     userRow: {
+      alignItems: "center",
       flexDirection: "row",
+      gap: 6,
       justifyContent: "flex-end",
       marginVertical: 4,
-      paddingLeft: 48,
+      paddingLeft: 40,
+    },
+    retryButton: {
+      alignItems: "center",
+      borderRadius: 15,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
     },
     userBubble: {
       backgroundColor: theme.colors.primary,
