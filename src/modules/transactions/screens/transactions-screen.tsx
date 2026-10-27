@@ -335,6 +335,16 @@ function TransactionsScreenContent({
           source: undefined,
         });
       }
+    } else if (initialAction === "chat") {
+      if (handledActionRef.current !== "chat") {
+        handledActionRef.current = "chat";
+        setIsChatModalOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
     } else {
       handledActionRef.current = null;
     }

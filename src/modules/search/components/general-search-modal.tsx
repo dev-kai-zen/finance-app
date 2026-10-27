@@ -33,6 +33,7 @@ import {
   Heart,
   History,
   Languages,
+  LayoutGrid,
   Palette,
   PieChart,
   Plus,
@@ -125,6 +126,8 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <Download color={color} size={size} />;
     case "archive":
       return <Archive color={color} size={size} />;
+    case "layout-grid":
+      return <LayoutGrid color={color} size={size} />;
     default:
       return <Plus color={color} size={size} />;
   }

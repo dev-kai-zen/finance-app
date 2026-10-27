@@ -44,7 +44,8 @@ export interface SearchCatalogItem {
     | "heart"
     | "database"
     | "download"
-    | "archive";
+    | "archive"
+    | "layout-grid";
   iconColor?: string;
   route: string;
   targetId?: string;
