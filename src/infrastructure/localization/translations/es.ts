@@ -10,6 +10,7 @@ export const es = {
     goBack: "Volver",
     ok: "Aceptar",
     search: "Buscar",
+    skipForNow: "Omitir por ahora",
   },
   search: {
     openSearch: "Abrir búsqueda",

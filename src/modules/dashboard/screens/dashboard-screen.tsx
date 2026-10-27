@@ -546,6 +546,14 @@ function DashboardScreenContent() {
           dismissPrompt("firstTransactionCelebrated");
           setShowCongratulationsModal(false);
         }}
+        onExplore={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
+        onSkip={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
       />
     </PageContainer>
   );

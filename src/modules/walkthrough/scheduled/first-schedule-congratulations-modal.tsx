@@ -15,26 +15,39 @@ export interface FirstScheduleCongratulationsModalProps {
   visible: boolean;
   onClose: () => void;
   onStartTour?: () => void;
+  onSkip?: () => void;
 }
 
 export function FirstScheduleCongratulationsModal({
   visible,
   onClose,
   onStartTour,
+  onSkip,
 }: FirstScheduleCongratulationsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
-  const handleAction = () => {
-    onClose();
-    onStartTour?.();
+  const handleStart = () => {
+    if (onStartTour) {
+      onStartTour();
+    } else {
+      onClose();
+    }
+  };
+
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
+    } else {
+      onClose();
+    }
   };
 
   return (
     <Modal
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleSkip}
       statusBarTranslucent
       transparent
       visible={visible}
@@ -62,21 +75,37 @@ export function FirstScheduleCongratulationsModal({
             </Text>
           </View>
 
-          {/* Action Button */}
-          <Pressable
-            accessibilityLabel={t("scheduleCongratulations.button")}
-            accessibilityRole="button"
-            onPress={handleAction}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              pressed && styles.primaryBtnPressed,
-            ]}
-          >
-            <Sparkles color="#FFFFFF" size={16} />
-            <Text style={styles.primaryBtnText}>
-              {t("scheduleCongratulations.button")}
-            </Text>
-          </Pressable>
+          {/* Actions */}
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityLabel={t("scheduleCongratulations.button")}
+              accessibilityRole="button"
+              onPress={handleStart}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                pressed && styles.primaryBtnPressed,
+              ]}
+            >
+              <Sparkles color="#FFFFFF" size={16} />
+              <Text style={styles.primaryBtnText}>
+                {t("scheduleCongratulations.button")}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel={t("common.skipForNow")}
+              accessibilityRole="button"
+              onPress={handleSkip}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                pressed && styles.secondaryBtnPressed,
+              ]}
+            >
+              <Text style={styles.secondaryBtnText}>
+                {t("common.skipForNow")}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
@@ -150,6 +179,10 @@ function createStyles(theme: AppTheme) {
       lineHeight: 18,
       textAlign: "center",
     },
+    actions: {
+      gap: theme.spacing.xs,
+      width: "100%",
+    },
     primaryBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
@@ -167,6 +200,23 @@ function createStyles(theme: AppTheme) {
       color: "#FFFFFF",
       fontSize: 15,
       fontWeight: "700",
+    },
+    secondaryBtn: {
+      alignItems: "center",
+      backgroundColor: "transparent",
+      borderRadius: 14,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.lg,
+      width: "100%",
+    },
+    secondaryBtnPressed: {
+      backgroundColor: `${theme.colors.textSecondary}12`,
+    },
+    secondaryBtnText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

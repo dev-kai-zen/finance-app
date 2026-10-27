@@ -5,6 +5,7 @@ export const en = {
     goBack: "Go back",
     ok: "OK",
     search: "Search",
+    skipForNow: "Skip for now",
   },
   search: {
     openSearch: "Open search",

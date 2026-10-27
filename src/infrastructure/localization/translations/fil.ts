@@ -10,6 +10,7 @@ export const fil = {
     goBack: "Bumalik",
     ok: "OK",
     search: "Maghanap",
+    skipForNow: "Laktawan muna",
   },
   search: {
     openSearch: "Buksan ang paghahanap",

@@ -774,6 +774,7 @@ function ScheduledTransactionsScreenContent({
 
       <FirstScheduleCongratulationsModal
         onClose={() => setShowCongrats(false)}
+        onSkip={() => setShowCongrats(false)}
         onStartTour={() => {
           setShowCongrats(false);
           walkthrough.startWalkthrough();
