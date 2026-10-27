@@ -423,6 +423,8 @@ export const es = {
         "Disfruta de un desplazamiento más rápido y fluido al revisar tu historial de transacciones.",
       fixItem2:
         "Se corrigieron los textos de botones y mensajes de saludo en inglés, español y filipino.",
+      fixItem3:
+        "Usa tu cuenta predeterminada de gastos o ingresos en el Chat cuando no se mencione ninguna cuenta.",
     },
     v111: {
       date: "26 de octubre de 2026",

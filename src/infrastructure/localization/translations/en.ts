@@ -411,6 +411,8 @@ export const en = {
         "Enjoy faster, stutter-free scrolling when viewing your full transaction history.",
       fixItem2:
         "Fixed button text and greeting messages across English, Spanish, and Filipino.",
+      fixItem3:
+        "Use your default expense or income account in Chat when no account is mentioned.",
     },
     v111: {
       date: "October 26, 2026",

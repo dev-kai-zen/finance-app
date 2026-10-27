@@ -33,6 +33,7 @@ import type {
   TransactionListItem,
 } from "@/modules/transactions";
 import { CategoryPickerModal } from "@/modules/categories";
+import { useDefaultAccounts } from "@/modules/settings";
 
 export function ChatWithKaiModal({
   visible,
@@ -40,8 +41,10 @@ export function ChatWithKaiModal({
   accounts,
   pockets = [],
   categories,
-  defaultExpenseAccountId,
-  defaultIncomeAccountId,
+  defaultExpenseAccountId: propsDefaultExpenseAccountId,
+  defaultIncomeAccountId: propsDefaultIncomeAccountId,
+  defaultExpensePocketId: propsDefaultExpensePocketId,
+  defaultIncomePocketId: propsDefaultIncomePocketId,
   defaultCurrency = "PHP",
   onEditInForm,
   onSaveTransaction,
@@ -51,6 +54,24 @@ export function ChatWithKaiModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { locale, t } = useLocalization();
+  const defaultAccounts = useDefaultAccounts();
+
+  const effectiveDefaultExpenseAccountId =
+    propsDefaultExpenseAccountId !== undefined
+      ? propsDefaultExpenseAccountId
+      : defaultAccounts.defaultExpenseAccountId;
+  const effectiveDefaultIncomeAccountId =
+    propsDefaultIncomeAccountId !== undefined
+      ? propsDefaultIncomeAccountId
+      : defaultAccounts.defaultIncomeAccountId;
+  const effectiveDefaultExpensePocketId =
+    propsDefaultExpensePocketId !== undefined
+      ? propsDefaultExpensePocketId
+      : defaultAccounts.defaultExpensePocketId;
+  const effectiveDefaultIncomePocketId =
+    propsDefaultIncomePocketId !== undefined
+      ? propsDefaultIncomePocketId
+      : defaultAccounts.defaultIncomePocketId;
 
   const listRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
@@ -73,8 +94,10 @@ export function ChatWithKaiModal({
     accounts,
     pockets,
     categories,
-    defaultExpenseAccountId,
-    defaultIncomeAccountId,
+    defaultExpenseAccountId: effectiveDefaultExpenseAccountId,
+    defaultIncomeAccountId: effectiveDefaultIncomeAccountId,
+    defaultExpensePocketId: effectiveDefaultExpensePocketId,
+    defaultIncomePocketId: effectiveDefaultIncomePocketId,
     defaultCurrency,
     language: (locale as "en" | "fil" | "es") || "en",
   });
@@ -191,6 +214,7 @@ export function ChatWithKaiModal({
       const isNeg = proposal.type === "expense";
       const txInput: CreateTransactionInput = {
         accountId: proposal.accountId,
+        pocketId: proposal.pocketId ?? null,
         categoryId: proposal.categoryId ?? null,
         type: proposal.type as "expense" | "income",
         amountMinorUnits: isNeg

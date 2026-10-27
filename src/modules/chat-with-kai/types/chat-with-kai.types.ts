@@ -127,6 +127,8 @@ export interface ParseChatTransactionContext {
   merchantKeywordsMap?: Map<string, MerchantLookupInfo>;
   defaultExpenseAccountId?: string | null;
   defaultIncomeAccountId?: string | null;
+  defaultExpensePocketId?: string | null;
+  defaultIncomePocketId?: string | null;
   defaultCurrency: string;
   language?: "en" | "fil" | "es";
   getMerchantHistory?: (merchantName: string) => MerchantHistoryInsight | null;
@@ -143,6 +145,8 @@ export interface ChatWithKaiModalProps {
   categories: Category[];
   defaultExpenseAccountId?: string | null;
   defaultIncomeAccountId?: string | null;
+  defaultExpensePocketId?: string | null;
+  defaultIncomePocketId?: string | null;
   defaultCurrency?: string;
   onEditInForm: (
     prefilledTransaction: TransactionListItem,

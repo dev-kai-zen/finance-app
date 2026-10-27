@@ -62,10 +62,27 @@ export function parseChatTransaction(
   );
 
   // 3. Accounts Matching (Source & Destination)
-  const defaultAccId =
-    detectedType === "income"
-      ? context.defaultIncomeAccountId || context.defaultExpenseAccountId
-      : context.defaultExpenseAccountId;
+  let defaultAccId: string | null = null;
+  if (detectedType === "income") {
+    if (
+      context.defaultIncomeAccountId &&
+      context.accounts.some((a) => a.id === context.defaultIncomeAccountId)
+    ) {
+      defaultAccId = context.defaultIncomeAccountId;
+    } else if (
+      context.defaultExpenseAccountId &&
+      context.accounts.some((a) => a.id === context.defaultExpenseAccountId)
+    ) {
+      defaultAccId = context.defaultExpenseAccountId;
+    }
+  } else {
+    if (
+      context.defaultExpenseAccountId &&
+      context.accounts.some((a) => a.id === context.defaultExpenseAccountId)
+    ) {
+      defaultAccId = context.defaultExpenseAccountId;
+    }
+  }
 
   const accountsResult = matchAccounts(
     text,
@@ -218,6 +235,29 @@ export function parseChatTransaction(
     }
   }
 
+  let effectivePocketId: string | null = null;
+  let effectivePocketName: string | null = null;
+
+  // If user did not explicitly mention an account, resolve default pocket if matching effective account
+  if (accountsResult.matchedTexts.length === 0 && context.pockets?.length) {
+    const candidatePocketId =
+      detectedType === "income"
+        ? context.defaultIncomePocketId
+        : context.defaultExpensePocketId;
+
+    if (candidatePocketId) {
+      const matchedPocket = context.pockets.find(
+        (p) =>
+          p.id === candidatePocketId &&
+          p.accountId === effectiveSourceAccount.id,
+      );
+      if (matchedPocket) {
+        effectivePocketId = matchedPocket.id;
+        effectivePocketName = matchedPocket.name;
+      }
+    }
+  }
+
   const currencyCode =
     effectiveSourceAccount.currencyCode || context.defaultCurrency || "PHP";
 
@@ -233,6 +273,8 @@ export function parseChatTransaction(
       accountId: effectiveSourceAccount.id,
       accountName: effectiveSourceAccount.name,
       accountGroup: effectiveSourceAccount.accountType?.accountGroup ?? null,
+      pocketId: effectivePocketId,
+      pocketName: effectivePocketName,
       categoryId: null,
       categoryName: null,
       categoryIcon: null,
@@ -291,6 +333,8 @@ export function parseChatTransaction(
     accountId: effectiveSourceAccount.id,
     accountName: effectiveSourceAccount.name,
     accountGroup: effectiveSourceAccount.accountType?.accountGroup ?? null,
+    pocketId: effectivePocketId,
+    pocketName: effectivePocketName,
     categoryId: categoryResult.category?.id ?? null,
     categoryName: categoryResult.category?.name ?? null,
     categoryIcon: categoryResult.category?.icon ?? null,

@@ -424,6 +424,8 @@ export const fil = {
         "Masiyahan sa mas mabilis at maayos na pag-scroll habang tinitingnan ang kasaysayan ng transaksyon.",
       fixItem2:
         "Inayos ang teksto ng pindutan at mga mensahe ng pagbati sa Ingles, Espanyol, at Filipino.",
+      fixItem3:
+        "Gamitin ang iyong default na account para sa gastos o kita sa Chat kapag walang binanggit na account.",
     },
     v111: {
       date: "Oktubre 26, 2026",

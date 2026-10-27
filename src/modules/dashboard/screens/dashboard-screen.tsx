@@ -470,7 +470,6 @@ function DashboardScreenContent() {
         accounts={accounts}
         categories={categories}
         defaultCurrency={currencyPreferences.defaultCurrency}
-        defaultExpenseAccountId={accounts[0]?.id ?? null}
         onClose={() => setIsChatModalOpen(false)}
         onEditInForm={(prefilled, onSaved) => {
           returnToChatOnFormCloseRef.current = true;

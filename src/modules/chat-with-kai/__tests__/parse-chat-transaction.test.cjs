@@ -211,20 +211,91 @@ test("parse-chat-transaction: rejects transaction with unknown_account when expl
   }
 });
 
-test("parse-chat-transaction: falls back to default account when NO account is mentioned", () => {
+test("parse-chat-transaction: falls back to default expense account when NO account is mentioned for expense", () => {
   const result = parseChatTransaction(
     "I spent 500 on lunch at Mcdonalds",
     {
       ...defaultContext,
-      accounts: [{ id: "acc-bdo", name: "BDO", currencyCode: "PHP" }],
-      defaultExpenseAccountId: "acc-bdo",
+      accounts: [
+        { id: "acc-bdo", name: "BDO", currencyCode: "PHP" },
+        { id: "acc-wallet", name: "Wallet", currencyCode: "PHP" },
+      ],
+      defaultExpenseAccountId: "acc-wallet",
+      defaultIncomeAccountId: "acc-bdo",
     },
   );
 
   assert.equal(result.success, true);
   if (result.success) {
-    assert.equal(result.proposal.accountId, "acc-bdo");
+    assert.equal(result.proposal.accountId, "acc-wallet");
     assert.equal(result.proposal.amountMinorUnits, 50000);
+  }
+});
+
+test("parse-chat-transaction: falls back to default income account when NO account is mentioned for income", () => {
+  const result = parseChatTransaction(
+    "Received 25000 salary",
+    {
+      ...defaultContext,
+      accounts: [
+        { id: "acc-cash", name: "Cash", currencyCode: "PHP" },
+        { id: "acc-bdo", name: "BDO Savings", currencyCode: "PHP" },
+      ],
+      defaultExpenseAccountId: "acc-cash",
+      defaultIncomeAccountId: "acc-bdo",
+    },
+  );
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.type, "income");
+    assert.equal(result.proposal.accountId, "acc-bdo");
+    assert.equal(result.proposal.amountMinorUnits, 2500000);
+  }
+});
+
+test("parse-chat-transaction: income falls back to defaultExpenseAccountId when defaultIncomeAccountId is not configured", () => {
+  const result = parseChatTransaction(
+    "Received 5000 bonus",
+    {
+      ...defaultContext,
+      accounts: [
+        { id: "acc-gcash", name: "GCash", currencyCode: "PHP" },
+        { id: "acc-bdo", name: "BDO", currencyCode: "PHP" },
+      ],
+      defaultExpenseAccountId: "acc-gcash",
+      defaultIncomeAccountId: null,
+    },
+  );
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.type, "income");
+    assert.equal(result.proposal.accountId, "acc-gcash");
+  }
+});
+
+test("parse-chat-transaction: attaches default pocket when falling back to default account", () => {
+  const result = parseChatTransaction(
+    "Spent 300 on groceries",
+    {
+      ...defaultContext,
+      accounts: [
+        { id: "acc-gcash", name: "GCash", currencyCode: "PHP" },
+      ],
+      pockets: [
+        { id: "pkt-food", accountId: "acc-gcash", name: "Food Allowance" },
+      ],
+      defaultExpenseAccountId: "acc-gcash",
+      defaultExpensePocketId: "pkt-food",
+    },
+  );
+
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.proposal.accountId, "acc-gcash");
+    assert.equal(result.proposal.pocketId, "pkt-food");
+    assert.equal(result.proposal.pocketName, "Food Allowance");
   }
 });
 
