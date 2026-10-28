@@ -419,6 +419,8 @@ export const fil = {
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
       fixItem2:
         "Agad na i-update ang draft card sa chat pagkatapos i-edit at i-save sa form.",
+      fixItem3:
+        "Gawing negatibo ang senyales para sa mga pananagutan at positibo para sa mga ari-arian kapag zero ang panimulang balanse.",
     },
     v120: {
       date: "Oktubre 27, 2026",

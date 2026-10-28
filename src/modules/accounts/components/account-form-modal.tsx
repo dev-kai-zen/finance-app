@@ -91,6 +91,16 @@ function isZeroAmountString(amount: string): boolean {
   return /^0(\.0+)?$/.test(stripped);
 }
 
+function resolveInitialAmountSign(
+  minorUnits: number | undefined | null,
+  accountGroup?: string | null,
+): "+" | "-" {
+  if (minorUnits === undefined || minorUnits === null || minorUnits === 0) {
+    return accountGroup === "liability" ? "-" : "+";
+  }
+  return minorUnits < 0 ? "-" : "+";
+}
+
 function getDefaultAssetAccountTypeId(types: AccountType[]): string {
   return (
     types
@@ -180,14 +190,18 @@ function AccountFormModalContent({
         }
       : undefined,
   }));
-  const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
-    parseAmountSign(
-      openingAmountInput(
-        account?.openingBalanceMinorUnits ?? 0,
-        initialCurrencyCode,
-      ),
-    ),
-  );
+  const [amountSign, setAmountSign] = useState<"+" | "-">(() => {
+    if (account) {
+      const group =
+        account.accountType?.accountGroup ??
+        types.find((t) => t.id === account.accountTypeId)?.accountGroup;
+      return resolveInitialAmountSign(account.openingBalanceMinorUnits, group);
+    }
+    const defaultType = types.find(
+      (type) => type.id === getDefaultAssetAccountTypeId(types),
+    );
+    return defaultType?.accountGroup === "liability" ? "-" : "+";
+  });
   const {
     defaultExpenseAccountId,
     defaultIncomeAccountId,
@@ -238,7 +252,12 @@ function AccountFormModalContent({
         : undefined,
     });
     if (account) {
-      setAmountSign(parseAmountSign(openingAmount));
+      const group =
+        account.accountType?.accountGroup ??
+        types.find((t) => t.id === account.accountTypeId)?.accountGroup;
+      setAmountSign(
+        resolveInitialAmountSign(account.openingBalanceMinorUnits, group),
+      );
       void getAccountKeywordsByAccountId(account.id).then((rows) => {
         setKeywords(rows.map((r) => r.keyword));
       });
@@ -1091,6 +1110,11 @@ function AccountFormModalContent({
               openingAmountInput(Math.abs(minorUnits), activeCurrencyCode) ||
               formatted,
           }));
+          if (minorUnits === 0) {
+            setAmountSign(isLiabilityAccount ? "-" : "+");
+          } else if (minorUnits < 0) {
+            setAmountSign("-");
+          }
           setCalculatorOpen(false);
         }}
       />
@@ -1178,7 +1202,9 @@ function AccountFormModalContent({
               selectedType?.accountGroup === "liability" ? "" : prev.maintainingAmount,
           }));
           if (selectedType) {
-            setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
+            if (amountMinorUnits === 0) {
+              setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
+            }
           }
         }}
       />

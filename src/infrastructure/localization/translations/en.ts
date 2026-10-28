@@ -406,6 +406,8 @@ export const en = {
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
       fixItem2:
         "Update transaction draft cards in chat immediately after editing and saving in the form.",
+      fixItem3:
+        "Default liability accounts to a negative sign and asset accounts to positive when starting balance is zero.",
     },
     v120: {
       date: "October 27, 2026",

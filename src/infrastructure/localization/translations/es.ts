@@ -418,6 +418,8 @@ export const es = {
         "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
       fixItem2:
         "Actualiza de inmediato la tarjeta borrador en el chat tras editar y guardar en el formulario.",
+      fixItem3:
+        "Predeterminar las cuentas de pasivo con signo negativo y las de activo con signo positivo cuando el saldo inicial sea cero.",
     },
     v120: {
       date: "27 de octubre de 2026",
