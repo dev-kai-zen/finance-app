@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Application from "expo-application";
+import Constants from "expo-constants";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -186,6 +188,15 @@ function SettingsScreenContent() {
     restorePurchases,
     isRestoring,
   } = useProStatus();
+  const rawAppVersion =
+    Application.nativeApplicationVersion ??
+    Constants.expoConfig?.version ??
+    "1.2.1";
+  const appVersion = rawAppVersion.startsWith("v")
+    ? rawAppVersion
+    : `v${rawAppVersion}`;
+  const tierLabel = isPro ? t("settings.tierPro") : t("settings.tierFree");
+  const appVersionSummary = `${appVersion} | ${tierLabel}`;
   const { isForceTestAds, toggleForceTestAds } = useAdsDevMode();
   const security = useSecuritySettings();
   const resetData = useResetData();
@@ -1214,6 +1225,31 @@ function SettingsScreenContent() {
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              collapsable={false}
+              accessibilityLabel={`${t("settings.appVersion")}: ${appVersionSummary}`}
+              accessibilityRole="button"
+              onPress={() => setIsVersionHistoryOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Info color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.appVersion")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {appVersionSummary}
+                </Text>
+              </View>
             </Pressable>
           </View>
         </View>

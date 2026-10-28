@@ -260,6 +260,11 @@ export const es = {
     privacySubtitle: "Lee nuestra política de privacidad en línea",
     privacyAccessibility: "Abrir el sitio web de la política de privacidad",
     privacyOpenError: "No se pudo abrir el sitio web de la política de privacidad.",
+    appVersion: "Versión de la app",
+    buildReleased: "Lanzamiento",
+    buildDevelopment: "Desarrollo",
+    tierPro: "Pro",
+    tierFree: "Gratis",
     developerModeEnabledTitle: "Modo desarrollador activado",
     developerModeEnabledMessage: "SQLite Monitor ya está en el menú.",
     developerSection: "DESARROLLADOR",
@@ -414,6 +419,8 @@ export const es = {
       date: "28 de octubre de 2026",
       newItem1:
         "Elige entre el modo Revisar Primero o Guardado Automático en el Chat con Kai.",
+      improveItem1:
+        "Consulta la versión de la app y el estado de tu plan en los ajustes.",
       fixItem1:
         "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
       fixItem2:

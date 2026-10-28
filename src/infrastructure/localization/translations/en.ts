@@ -248,6 +248,11 @@ export const en = {
     privacySubtitle: "Read our privacy policy online",
     privacyAccessibility: "Open privacy policy website",
     privacyOpenError: "Could not open privacy policy website.",
+    appVersion: "App Version",
+    buildReleased: "Released",
+    buildDevelopment: "Development",
+    tierPro: "Pro",
+    tierFree: "Free",
     developerModeEnabledTitle: "Developer mode on",
     developerModeEnabledMessage: "SQLite Monitor is now available in the menu.",
     developerSection: "DEVELOPER",
@@ -402,6 +407,8 @@ export const en = {
       date: "October 28, 2026",
       newItem1:
         "Choose between Review First or Auto-Save mode in Chat with Kai.",
+      improveItem1:
+        "View your app version and membership status directly in the About settings section.",
       fixItem1:
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
       fixItem2:

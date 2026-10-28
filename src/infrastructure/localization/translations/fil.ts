@@ -260,6 +260,11 @@ export const fil = {
     privacySubtitle: "Basahin ang aming patakaran sa privacy online",
     privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
     privacyOpenError: "Hindi mabuksan ang website ng patakaran sa privacy.",
+    appVersion: "Bersyon ng App",
+    buildReleased: "Released",
+    buildDevelopment: "Development",
+    tierPro: "Pro",
+    tierFree: "Free",
     developerModeEnabledTitle: "Naka-on ang developer mode",
     developerModeEnabledMessage: "Available na ang SQLite Monitor sa menu.",
     developerSection: "DEVELOPER",
@@ -415,6 +420,8 @@ export const fil = {
       date: "Oktubre 28, 2026",
       newItem1:
         "Pumili sa pagitan ng Suriin Muna o Awtomatikong Pag-save sa Chat with Kai.",
+      improveItem1:
+        "Tingnan ang bersyon ng app at status ng plano sa seksyon ng Tungkol sa App sa settings.",
       fixItem1:
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
       fixItem2:
