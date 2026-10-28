@@ -408,6 +408,11 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v121: {
+      date: "28 de octubre de 2026",
+      fixItem1:
+        "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
+    },
     v120: {
       date: "27 de octubre de 2026",
       newItem1:

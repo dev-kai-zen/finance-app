@@ -13,6 +13,8 @@ export interface ResolveTransactionExchangeInput {
   typedCurrencyCode: string;
   /** Absolute typed amount in typed currency minor units. */
   typedAmountMinorUnitsAbs: number;
+  /** Signed amount in transaction/account currency if provided. */
+  signedAmountMinorUnits?: number;
   /** Signed account amount when user edited account field; otherwise omitted. */
   signedAccountAmountMinorUnits?: number;
   exchangeRateScaled?: number | null;
@@ -27,7 +29,14 @@ export interface ResolvedTransactionExchange {
   exchangeRateScaled: number | null;
 }
 
-function signForType(type: "income" | "expense", magnitude: number): number {
+function resolveSignedAmount(
+  type: "income" | "expense",
+  magnitude: number,
+  explicitSigned?: number,
+): number {
+  if (explicitSigned !== undefined && explicitSigned !== 0) {
+    return explicitSigned < 0 ? -Math.abs(magnitude) : Math.abs(magnitude);
+  }
   return type === "expense" ? -Math.abs(magnitude) : Math.abs(magnitude);
 }
 
@@ -45,7 +54,11 @@ export function resolveTransactionExchangeSnapshot(
   if (typed === account) {
     return {
       currencyCode: account,
-      amountMinorUnits: signForType(input.type, typedAbs),
+      amountMinorUnits: resolveSignedAmount(
+        input.type,
+        typedAbs,
+        input.signedAmountMinorUnits,
+      ),
       originalAmountMinorUnits: null,
       exchangeRateScaled: null,
     };
@@ -62,7 +75,11 @@ export function resolveTransactionExchangeSnapshot(
     rate = deriveExchangeRate(accountAbs, typedAbs, typed, account);
     return {
       currencyCode: typed,
-      amountMinorUnits: signForType(input.type, accountAbs),
+      amountMinorUnits: resolveSignedAmount(
+        input.type,
+        accountAbs,
+        input.signedAccountAmountMinorUnits ?? input.signedAmountMinorUnits,
+      ),
       originalAmountMinorUnits: typedAbs,
       exchangeRateScaled: rate,
     };
@@ -75,7 +92,11 @@ export function resolveTransactionExchangeSnapshot(
   const accountMagnitude = applyExchangeRate(typedAbs, rate, typed, account);
   return {
     currencyCode: typed,
-    amountMinorUnits: signForType(input.type, accountMagnitude),
+    amountMinorUnits: resolveSignedAmount(
+      input.type,
+      accountMagnitude,
+      input.signedAccountAmountMinorUnits ?? input.signedAmountMinorUnits,
+    ),
     originalAmountMinorUnits: typedAbs,
     exchangeRateScaled: rate,
   };

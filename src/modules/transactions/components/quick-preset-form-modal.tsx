@@ -534,10 +534,13 @@ export function QuickPresetFormModal({
 
       <AmountCalculatorModal
         currencyCode={currencyCode}
-        initialMinorUnits={amountMinorUnits}
+        initialMinorUnits={Math.abs(amountMinorUnits)}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(value) => {
           clearFormError();
+          if (mode === "income" && value < 0) {
+            setAmountSign("-");
+          }
           setAmountMinorUnits(Math.abs(value));
           setCalculatorOpen(false);
         }}

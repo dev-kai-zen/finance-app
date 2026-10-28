@@ -53,6 +53,7 @@ export function createTransactionInContext(
       accountCurrencyCode: account.currencyCode,
       typedCurrencyCode: input.currencyCode ?? account.currencyCode,
       typedAmountMinorUnitsAbs: typedAbs,
+      signedAmountMinorUnits: input.amountMinorUnits,
       signedAccountAmountMinorUnits: input.signedAccountAmountMinorUnits,
       exchangeRateScaled: input.exchangeRateScaled,
       lastEdited: input.exchangeLastEdited,

@@ -396,6 +396,11 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v121: {
+      date: "October 28, 2026",
+      fixItem1:
+        "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
+    },
     v120: {
       date: "October 27, 2026",
       newItem1:

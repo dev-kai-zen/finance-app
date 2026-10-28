@@ -409,6 +409,11 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v121: {
+      date: "Oktubre 28, 2026",
+      fixItem1:
+        "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
+    },
     v120: {
       date: "Oktubre 27, 2026",
       newItem1:

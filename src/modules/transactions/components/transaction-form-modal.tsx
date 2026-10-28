@@ -1419,7 +1419,9 @@ function TransactionFormModalInner({
         ? preset.amountMinorUnits !== null && preset.amountMinorUnits > 0
           ? "+"
           : "-"
-        : "+",
+        : preset.amountMinorUnits !== null && preset.amountMinorUnits < 0
+          ? "-"
+          : "+",
     );
     setNote(preset.note ?? "");
     setOccurredAt(getCurrentTransactionDate());
@@ -1607,7 +1609,7 @@ function TransactionFormModalInner({
         }
       }
 
-      if (mode === "expense" && amountMinorUnits > 0) {
+      if (mode === "expense" && amountSign === "-" && amountMinorUnits > 0) {
         if (!bypassCreditLimitCheck && selectedAccount?.creditCardDetails) {
           const creditCheck = checkCreditLimitExceeded({
             accountId: selectedAccountId,
@@ -1693,7 +1695,7 @@ function TransactionFormModalInner({
             : undefined,
         pocketId: selectedPocketId,
         type: mode,
-        amountMinorUnits: Math.abs(amountMinorUnits),
+        amountMinorUnits: signedAmount,
         typedAmountMinorUnitsAbs: Math.abs(amountMinorUnits),
         currencyCode: entryCurrency,
         signedAccountAmountMinorUnits:
@@ -2916,10 +2918,13 @@ function TransactionFormModalInner({
       {/* Sub-Modals */}
       <AmountCalculatorModal
         currencyCode={mode === "transfer" ? accountCurrencyCode : entryCurrency}
-        initialMinorUnits={amountMinorUnits}
+        initialMinorUnits={Math.abs(amountMinorUnits)}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
           setExchangeLastEdited("typed");
+          if (mode === "income" && minorUnits < 0) {
+            setAmountSign("-");
+          }
           setAmountMinorUnits(Math.abs(minorUnits));
           setIsCalculatorOpen(false);
         }}
@@ -2936,7 +2941,7 @@ function TransactionFormModalInner({
         initialMinorUnits={
           mode === "transfer" && isTransferCrossCurrency
             ? transferDestinationAmountMinorUnits
-            : accountAmountMinorUnits
+            : Math.abs(accountAmountMinorUnits)
         }
         onClose={() => setIsAccountAmountCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
@@ -2944,6 +2949,9 @@ function TransactionFormModalInner({
             setTransferDestinationAmountMinorUnits(Math.abs(minorUnits));
           } else {
             setExchangeLastEdited("account");
+            if (mode === "income" && minorUnits < 0) {
+              setAmountSign("-");
+            }
             setAccountAmountMinorUnits(Math.abs(minorUnits));
           }
           setIsAccountAmountCalculatorOpen(false);
