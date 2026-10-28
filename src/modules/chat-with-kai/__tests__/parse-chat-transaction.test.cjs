@@ -4,6 +4,19 @@ const path = require("node:path");
 const ts = require("typescript");
 const fs = require("node:fs");
 
+const Module = require("node:module");
+const originalResolve = Module._resolveFilename;
+const root = path.resolve(__dirname, "../../../");
+
+Module._resolveFilename = function (request, parent, ...rest) {
+  return originalResolve.call(
+    this,
+    request.startsWith("@/") ? path.join(root, request.slice(2)) : request,
+    parent,
+    ...rest,
+  );
+};
+
 // Register .ts handler for require
 require.extensions[".ts"] = function (module, filename) {
   const code = fs.readFileSync(filename, "utf8");

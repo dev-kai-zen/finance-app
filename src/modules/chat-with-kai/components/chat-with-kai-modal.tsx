@@ -12,16 +12,18 @@ import {
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  Bot,
   RotateCcw,
   SendHorizontal,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type {
+  ChatSavedTransactionResult,
   ChatWithKaiModalProps,
   ParsedTransactionProposal,
 } from "../types/chat-with-kai.types";
@@ -33,7 +35,11 @@ import type {
   TransactionListItem,
 } from "@/modules/transactions";
 import { CategoryPickerModal } from "@/modules/categories";
-import { useDefaultAccounts } from "@/modules/settings";
+import {
+  KaiChatSettingsModal,
+  useChatTransactionMode,
+  useDefaultAccounts,
+} from "@/modules/settings";
 
 export function ChatWithKaiModal({
   visible,
@@ -49,12 +55,17 @@ export function ChatWithKaiModal({
   onEditInForm,
   onSaveTransaction,
   onSaveTransfer,
+  onDeleteTransaction,
 }: ChatWithKaiModalProps) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { locale, t } = useLocalization();
   const defaultAccounts = useDefaultAccounts();
+  const { mode, setMode } = useChatTransactionMode();
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined
@@ -77,6 +88,47 @@ export function ChatWithKaiModal({
   const inputRef = useRef<TextInput>(null);
   const [pickerTargetMessageId, setPickerTargetMessageId] = useState<string | null>(null);
 
+  const handleAutoSave = async (
+    proposal: ParsedTransactionProposal,
+  ): Promise<string | null> => {
+    try {
+      if (proposal.type === "transfer") {
+        if (!onSaveTransfer || !proposal.transferAccountId) return null;
+        const transferInput: CreateTransferInput = {
+          fromAccountId: proposal.accountId,
+          toAccountId: proposal.transferAccountId,
+          amountMinorUnits: proposal.amountMinorUnits,
+          name: proposal.name ?? null,
+          note: proposal.note ?? null,
+          occurredAt: proposal.occurredAt ?? new Date(),
+        };
+        const res = await onSaveTransfer(transferInput);
+        if (typeof res === "string" && res.length > 0) return res;
+        return null;
+      }
+
+      const isNeg = proposal.type === "expense";
+      const txInput: CreateTransactionInput = {
+        accountId: proposal.accountId,
+        pocketId: proposal.pocketId ?? null,
+        categoryId: proposal.categoryId ?? null,
+        type: proposal.type as "expense" | "income",
+        amountMinorUnits: isNeg
+          ? -Math.abs(proposal.amountMinorUnits)
+          : Math.abs(proposal.amountMinorUnits),
+        currencyCode: proposal.currencyCode,
+        name: proposal.name ?? null,
+        note: proposal.note ?? null,
+        occurredAt: proposal.occurredAt ?? new Date(),
+      };
+      const res = await onSaveTransaction(txInput);
+      if (typeof res === "string" && res.length > 0) return res;
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
   const {
     messages,
     inputText,
@@ -84,23 +136,31 @@ export function ChatWithKaiModal({
     processing,
     sendMessage,
     markProposalSaved,
+    updateProposalData,
+    markProposalDeleted,
     assignCategoryToProposal,
     updateProposalCategory,
     confirmReassignKeyword,
     dismissReassignKeyword,
     clearConversation,
     reloadKeywords,
-  } = useChatWithKai({
-    accounts,
-    pockets,
-    categories,
-    defaultExpenseAccountId: effectiveDefaultExpenseAccountId,
-    defaultIncomeAccountId: effectiveDefaultIncomeAccountId,
-    defaultExpensePocketId: effectiveDefaultExpensePocketId,
-    defaultIncomePocketId: effectiveDefaultIncomePocketId,
-    defaultCurrency,
-    language: (locale as "en" | "fil" | "es") || "en",
-  });
+  } = useChatWithKai(
+    {
+      accounts,
+      pockets,
+      categories,
+      defaultExpenseAccountId: effectiveDefaultExpenseAccountId,
+      defaultIncomeAccountId: effectiveDefaultIncomeAccountId,
+      defaultExpensePocketId: effectiveDefaultExpensePocketId,
+      defaultIncomePocketId: effectiveDefaultIncomePocketId,
+      defaultCurrency,
+      language: (locale as "en" | "fil" | "es") || "en",
+    },
+    {
+      mode,
+      onAutoSave: handleAutoSave,
+    },
+  );
 
   const activePickerMessage = pickerTargetMessageId
     ? messages.find((m) => m.id === pickerTargetMessageId)
@@ -129,8 +189,10 @@ export function ChatWithKaiModal({
       ? -Math.abs(proposal.amountMinorUnits)
       : Math.abs(proposal.amountMinorUnits);
 
+    const isAlreadySaved = Boolean(proposal.isSaved && proposal.transactionId);
+
     const draftItem: TransactionListItem = {
-      id: `chat-draft-${Date.now()}`,
+      id: isAlreadySaved ? proposal.transactionId! : `chat-draft-${Date.now()}`,
       accountId: proposal.accountId,
       accountName: proposal.accountName,
       accountCurrency: proposal.currencyCode,
@@ -173,11 +235,65 @@ export function ChatWithKaiModal({
     );
 
     onClose();
-    onEditInForm(draftItem, () => {
-      if (targetMsg) {
-        markProposalSaved(targetMsg.id);
-      }
-    });
+    onEditInForm(
+      draftItem,
+      (updatedData?: ChatSavedTransactionResult) => {
+        if (targetMsg) {
+          if (updatedData) {
+            updateProposalData(targetMsg.id, {
+              amountMinorUnits:
+                updatedData.amountMinorUnits !== undefined
+                  ? updatedData.amountMinorUnits
+                  : proposal.amountMinorUnits,
+              currencyCode: updatedData.currencyCode ?? proposal.currencyCode,
+              type: updatedData.type ?? proposal.type,
+              name: updatedData.name !== undefined ? updatedData.name : proposal.name,
+              note: updatedData.note !== undefined ? updatedData.note : proposal.note,
+              occurredAt: updatedData.occurredAt ?? proposal.occurredAt,
+              accountId: updatedData.accountId ?? proposal.accountId,
+              accountName: updatedData.accountName ?? proposal.accountName,
+              categoryId:
+                updatedData.categoryId !== undefined
+                  ? updatedData.categoryId
+                  : proposal.categoryId,
+              categoryName:
+                updatedData.categoryName !== undefined
+                  ? (updatedData.categoryName || proposal.categoryName)
+                  : proposal.categoryName,
+              categoryIcon:
+                updatedData.categoryIcon !== undefined
+                  ? (updatedData.categoryIcon || proposal.categoryIcon)
+                  : proposal.categoryIcon,
+              categoryColor:
+                updatedData.categoryColor !== undefined
+                  ? (updatedData.categoryColor || proposal.categoryColor)
+                  : proposal.categoryColor,
+              pocketId:
+                updatedData.pocketId !== undefined
+                  ? updatedData.pocketId
+                  : proposal.pocketId,
+              pocketName:
+                updatedData.pocketName !== undefined
+                  ? updatedData.pocketName
+                  : proposal.pocketName,
+              transferAccountId:
+                updatedData.transferAccountId !== undefined
+                  ? updatedData.transferAccountId
+                  : proposal.transferAccountId,
+              transferAccountName:
+                updatedData.transferAccountName !== undefined
+                  ? updatedData.transferAccountName
+                  : proposal.transferAccountName,
+              transactionId: updatedData.id ?? proposal.transactionId,
+              isSaved: true,
+            });
+          } else {
+            markProposalSaved(targetMsg.id);
+          }
+        }
+      },
+      isAlreadySaved,
+    );
   };
 
   const handleSave = async (
@@ -199,12 +315,15 @@ export function ChatWithKaiModal({
           occurredAt: proposal.occurredAt ?? new Date(),
         };
 
-        const success = await onSaveTransfer(transferInput);
+        const res = await onSaveTransfer(transferInput);
+        const success = Boolean(res);
         if (success) {
-          // Find message with this proposal and mark saved
           const targetMsg = messages.find((m) => m.proposal === proposal);
           if (targetMsg) {
-            markProposalSaved(targetMsg.id);
+            markProposalSaved(
+              targetMsg.id,
+              typeof res === "string" ? res : undefined,
+            );
           }
         }
         return success;
@@ -226,14 +345,40 @@ export function ChatWithKaiModal({
         occurredAt: proposal.occurredAt ?? new Date(),
       };
 
-      const success = await onSaveTransaction(txInput);
+      const res = await onSaveTransaction(txInput);
+      const success = Boolean(res);
       if (success) {
         const targetMsg = messages.find((m) => m.proposal === proposal);
         if (targetMsg) {
-          markProposalSaved(targetMsg.id);
+          markProposalSaved(
+            targetMsg.id,
+            typeof res === "string" ? res : undefined,
+          );
         }
       }
       return success;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleDelete = async (
+    proposal: ParsedTransactionProposal,
+  ): Promise<boolean> => {
+    if (!proposal.transactionId || !onDeleteTransaction) return false;
+    try {
+      const ok = await onDeleteTransaction(proposal.transactionId);
+      if (ok) {
+        const targetMsg = messages.find(
+          (m) =>
+            m.proposal === proposal ||
+            m.proposal?.transactionId === proposal.transactionId,
+        );
+        if (targetMsg) {
+          markProposalDeleted(targetMsg.id);
+        }
+      }
+      return ok;
     } catch {
       return false;
     }
@@ -246,21 +391,25 @@ export function ChatWithKaiModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <View style={[styles.modalRoot, { paddingTop: insets.top }]}>
+      <View
+        style={[
+          styles.modalRoot,
+          {
+            paddingTop: insets.top,
+            paddingRight: insets.right,
+            paddingLeft: insets.left,
+          },
+        ]}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.headerIcon}>
               <Sparkles color={theme.colors.onPrimary} size={18} />
             </View>
-            <View>
-              <Text style={styles.headerTitle}>
-                {t("chatWithKai.modalTitle")}
-              </Text>
-              <Text style={styles.headerSubtitle}>
-                {t("chatWithKai.modalSubtitle")}
-              </Text>
-            </View>
+            <Text numberOfLines={1} style={styles.headerTitle}>
+              {t("chatWithKai.modalTitle")}
+            </Text>
           </View>
 
           <View style={styles.headerActions}>
@@ -274,6 +423,18 @@ export function ChatWithKaiModal({
               ]}
             >
               <RotateCcw color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel={t("chatWithKai.settingsTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsSettingsOpen(true)}
+              style={({ pressed }) => [
+                styles.iconButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <SlidersHorizontal color={theme.colors.textMuted} size={18} />
             </Pressable>
 
             <Pressable
@@ -312,18 +473,20 @@ export function ChatWithKaiModal({
                 categories={categories}
                 defaultCurrency={defaultCurrency}
                 message={item}
+                mode={mode}
+                onConfirmReassignKeyword={confirmReassignKeyword}
+                onDelete={handleDelete}
+                onDismissReassignKeyword={dismissReassignKeyword}
                 onEdit={handleEdit}
                 onRequestCategoryPicker={(msgId) => {
                   setPickerTargetMessageId(msgId);
                 }}
+                onRetryUserMessage={handleRetryUserMessage}
                 onSave={handleSave}
                 onSelectAmount={(amount) => sendMessage(amount.toString())}
                 onSelectCategoryForProposal={(msgId, cat) => {
                   void assignCategoryToProposal(msgId, cat);
                 }}
-                onConfirmReassignKeyword={confirmReassignKeyword}
-                onDismissReassignKeyword={dismissReassignKeyword}
-                onRetryUserMessage={handleRetryUserMessage}
                 onSelectPrompt={(p) => sendMessage(p)}
               />
             )}
@@ -354,7 +517,7 @@ export function ChatWithKaiModal({
             <Pressable
               accessibilityLabel="Send message"
               accessibilityRole="button"
-              disabled={!inputText.trim() || processing}
+              disabled={processing || !inputText.trim()}
               onPress={() => sendMessage()}
               style={({ pressed }) => [
                 styles.sendButton,
@@ -395,6 +558,16 @@ export function ChatWithKaiModal({
         type={activePickerType}
         visible={pickerTargetMessageId !== null}
       />
+
+      <KaiChatSettingsModal
+        mode={mode}
+        onClose={() => setIsSettingsOpen(false)}
+        onOpenKnowledge={() => router.push("/kai-knowledge")}
+        onSelectMode={(newMode) => {
+          setMode(newMode);
+        }}
+        visible={isSettingsOpen}
+      />
     </Modal>
   );
 }
@@ -414,13 +587,16 @@ function createStyles(theme: AppTheme) {
       borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
-      paddingHorizontal: theme.spacing.md,
+      paddingLeft: theme.spacing.md,
+      paddingRight: theme.spacing.lg,
       paddingVertical: theme.spacing.sm,
     },
     headerLeft: {
       alignItems: "center",
+      flex: 1,
       flexDirection: "row",
       gap: theme.spacing.sm,
+      marginRight: theme.spacing.sm,
     },
     headerIcon: {
       alignItems: "center",
@@ -435,10 +611,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 16,
       fontWeight: "700",
     },
-    headerSubtitle: {
-      color: theme.colors.textMuted,
-      fontSize: 11,
-    },
     headerActions: {
       alignItems: "center",
       flexDirection: "row",
@@ -451,6 +623,9 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 36,
     },
+    buttonPressed: {
+      opacity: 0.7,
+    },
     keyboardContainer: {
       flex: 1,
     },
@@ -459,41 +634,37 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.md,
     },
     inputBar: {
+      alignItems: "center",
       backgroundColor: theme.colors.surface,
       borderTopColor: theme.colors.border,
       borderTopWidth: 1,
       flexDirection: "row",
-      gap: 8,
+      gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingTop: theme.spacing.sm,
     },
     textInput: {
-      backgroundColor: theme.colors.surfaceMuted,
+      backgroundColor: theme.colors.surfaceElevated,
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
       color: theme.colors.textPrimary,
       flex: 1,
       fontSize: 14,
-      paddingHorizontal: 16,
+      paddingHorizontal: theme.spacing.md,
       paddingVertical: Platform.OS === "ios" ? 10 : 8,
     },
     sendButton: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
       borderRadius: theme.borderRadius.round,
-      height: 42,
+      height: 40,
       justifyContent: "center",
-      width: 42,
+      width: 40,
     },
     sendButtonDisabled: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderWidth: 1,
-    },
-    buttonPressed: {
-      opacity: 0.8,
-      transform: [{ scale: 0.95 }],
+      backgroundColor: theme.colors.surfaceElevated,
+      opacity: 0.5,
     },
   });
 }

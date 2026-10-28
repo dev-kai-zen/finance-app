@@ -1,4 +1,5 @@
 export { SettingsScreen } from "./screens/settings-screen";
+export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
 export {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -10,10 +11,18 @@ export {
   setTransactionViewMode,
 } from "./services/transaction-view-mode.service";
 export type { TransactionViewMode } from "./services/transaction-view-mode.service";
+export {
+  getChatTransactionMode,
+  setChatTransactionMode,
+  subscribeToChatTransactionMode,
+} from "./services/chat-transaction-mode.service";
+export type { ChatTransactionMode } from "./services/chat-transaction-mode.service";
 export { useDefaultAccounts } from "./hooks/use-default-accounts";
+export { useChatTransactionMode } from "./hooks/use-chat-transaction-mode";
 export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
+  CHAT_TRANSACTION_MODE_SETTING_KEY,
   FORM_FIELD_SETTING_KEYS,
   NAV_VISIBILITY_SETTING_KEYS,
   NAV_HREF_BY_VISIBILITY_KEY,

@@ -40,6 +40,8 @@ export interface ParsedTransactionProposal {
   transferPocketId?: string | null;
   transferPocketName?: string | null;
   isSaved?: boolean;
+  transactionId?: string | null;
+  isDeleted?: boolean;
   isPotentialDuplicate?: boolean;
   duplicateWarningMessage?: string | null;
 }
@@ -137,6 +139,26 @@ export interface ParseChatTransactionContext {
   ) => DuplicateCheckResult;
 }
 
+export interface ChatSavedTransactionResult {
+  id?: string;
+  type?: TransactionType;
+  amountMinorUnits?: number;
+  currencyCode?: string;
+  name?: string | null;
+  note?: string | null;
+  occurredAt?: Date;
+  accountId?: string;
+  accountName?: string | null;
+  categoryId?: string | null;
+  categoryName?: string | null;
+  categoryIcon?: string | null;
+  categoryColor?: string | null;
+  pocketId?: string | null;
+  pocketName?: string | null;
+  transferAccountId?: string | null;
+  transferAccountName?: string | null;
+}
+
 export interface ChatWithKaiModalProps {
   visible: boolean;
   onClose: () => void;
@@ -150,10 +172,12 @@ export interface ChatWithKaiModalProps {
   defaultCurrency?: string;
   onEditInForm: (
     prefilledTransaction: TransactionListItem,
-    onSaved?: () => void,
+    onSaved?: (updatedTx?: ChatSavedTransactionResult) => void,
+    isEditing?: boolean,
   ) => void;
-  onSaveTransaction: (input: CreateTransactionInput) => Promise<boolean>;
-  onSaveTransfer?: (input: CreateTransferInput) => Promise<boolean>;
+  onSaveTransaction: (input: CreateTransactionInput) => Promise<boolean | string | null>;
+  onSaveTransfer?: (input: CreateTransferInput) => Promise<boolean | string | null>;
+  onDeleteTransaction?: (id: string) => Promise<boolean>;
 }
 
 export type ChatToEncodeModalProps = ChatWithKaiModalProps;

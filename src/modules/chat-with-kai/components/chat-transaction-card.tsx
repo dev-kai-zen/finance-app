@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -12,12 +13,14 @@ import {
   ArrowRightLeft,
   CheckCircle2,
   Edit3,
+  Trash2,
   TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
@@ -25,20 +28,28 @@ import type { ParsedTransactionProposal } from "../types/chat-with-kai.types";
 
 interface ChatTransactionCardProps {
   proposal: ParsedTransactionProposal;
+  mode?: "review" | "auto";
   onEdit: (proposal: ParsedTransactionProposal) => void;
   onSave: (proposal: ParsedTransactionProposal) => Promise<boolean>;
+  onDelete?: (proposal: ParsedTransactionProposal) => Promise<boolean>;
 }
 
 export function ChatTransactionCard({
   proposal,
+  mode = "review",
   onEdit,
   onSave,
+  onDelete,
 }: ChatTransactionCardProps) {
   const styles = useThemeStyles(createStyles);
   const theme = useAppTheme();
+  const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(Boolean(proposal.isSaved));
+  const [deleting, setDeleting] = useState(false);
+
+  const saved = Boolean(proposal.isSaved);
+  const isDeleted = Boolean(proposal.isDeleted);
 
   const isExpense = proposal.type === "expense";
   const isIncome = proposal.type === "income";
@@ -55,13 +66,33 @@ export function ChatTransactionCard({
     if (saving || saved) return;
     setSaving(true);
     try {
-      const ok = await onSave(proposal);
-      if (ok) {
-        setSaved(true);
-      }
+      await onSave(proposal);
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDeletePress = () => {
+    if (deleting || !onDelete) return;
+    Alert.alert(
+      t("chatWithKai.deleteConfirmTitle"),
+      t("chatWithKai.deleteConfirmMessage"),
+      [
+        { text: t("chatWithKai.cancel"), style: "cancel" },
+        {
+          text: t("chatWithKai.deleteButton"),
+          style: "destructive",
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await onDelete(proposal);
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const accountGroupLabel =
@@ -109,10 +140,19 @@ export function ChatTransactionCard({
           </Text>
         </View>
 
-        {saved ? (
+        {isDeleted ? (
+          <View style={styles.deletedStatusBadge}>
+            <Trash2 color={theme.colors.danger} size={13} />
+            <Text style={styles.deletedStatusText}>
+              {t("chatWithKai.deletedBadge")}
+            </Text>
+          </View>
+        ) : saved ? (
           <View style={styles.savedStatusBadge}>
             <CheckCircle2 color={theme.colors.success} size={13} />
-            <Text style={styles.savedStatusText}>Saved</Text>
+            <Text style={styles.savedStatusText}>
+              {mode === "auto" ? t("chatWithKai.recordedBadge") : "Saved"}
+            </Text>
           </View>
         ) : (
           <Text style={styles.dateText}>Ready to record</Text>
@@ -120,7 +160,7 @@ export function ChatTransactionCard({
       </View>
 
       {/* Duplicate Warning Banner */}
-      {proposal.isPotentialDuplicate && !saved ? (
+      {proposal.isPotentialDuplicate && !saved && !isDeleted ? (
         <View style={styles.duplicateWarningBox}>
           <AlertTriangle color={theme.colors.warning ?? "#F59E0B"} size={13} />
           <Text style={styles.duplicateWarningText}>
@@ -148,32 +188,38 @@ export function ChatTransactionCard({
                   {proposal.accountName}
                 </Text>
               </View>
+              {proposal.pocketName ? (
+                <Text numberOfLines={1} style={styles.pocketNameText}>
+                  ↳ {proposal.pocketName}
+                </Text>
+              ) : null}
             </View>
 
-            <ArrowRight color={theme.colors.textMuted} size={14} style={styles.transferArrow} />
+            <View style={styles.transferArrowWrapper}>
+              <ArrowRight color={theme.colors.textMuted} size={18} />
+            </View>
 
-            <View style={[styles.transferAccountCol, styles.transferAccountColRight]}>
+            <View style={styles.transferAccountCol}>
               <View style={styles.groupBadge}>
                 <Text style={styles.groupBadgeText}>{transferDestGroupLabel}</Text>
               </View>
               <View style={styles.accountRow}>
-                <Wallet color={theme.colors.primary} size={12} />
+                <Wallet color={theme.colors.textSecondary} size={12} />
                 <Text numberOfLines={1} style={styles.accountNameText}>
-                  {proposal.transferAccountName ?? "Destination"}
+                  {proposal.transferAccountName ?? "Destination Account"}
                 </Text>
               </View>
+              {proposal.transferPocketName ? (
+                <Text numberOfLines={1} style={styles.pocketNameText}>
+                  ↳ {proposal.transferPocketName}
+                </Text>
+              ) : null}
             </View>
           </View>
-
-          {proposal.note ? (
-            <Text numberOfLines={1} style={styles.noteText}>
-              Note: {proposal.note}
-            </Text>
-          ) : null}
         </View>
       ) : (
-        <View style={styles.bodyRow}>
-          {/* Left Column: Amount, Merchant Name, Category */}
+        <View style={styles.columnsContainer}>
+          {/* Left Column: Amount, Merchant, Category */}
           <View style={styles.leftColumn}>
             <Text
               style={[
@@ -182,51 +228,46 @@ export function ChatTransactionCard({
                 isIncome && styles.incomeAmount,
               ]}
             >
-              {isExpense ? `-${formattedAmount}` : `+${formattedAmount}`}
+              {formattedAmount}
             </Text>
 
             {proposal.name ? (
-              <Text numberOfLines={1} style={styles.merchantNameText}>
+              <Text numberOfLines={1} style={styles.merchantText}>
                 {proposal.name}
               </Text>
             ) : null}
 
-            {/* Category */}
-            <View style={styles.categoryItem}>
-              {proposal.categoryIcon ? (
-                <View
-                  style={[
-                    styles.iconCircle,
-                    { backgroundColor: categoryColor ?? theme.colors.surfaceMuted },
-                  ]}
-                >
-                  <IconHelper
-                    color={theme.colors.onPrimary}
-                    name={proposal.categoryIcon}
-                    size={11}
-                  />
-                </View>
-              ) : null}
-              <Text numberOfLines={1} style={styles.categoryItemText}>
-                {proposal.categoryName ?? "Uncategorized"}
-              </Text>
-            </View>
-
-            {proposal.note && proposal.note !== proposal.name ? (
-              <Text numberOfLines={1} style={styles.noteText}>
-                Note: {proposal.note}
-              </Text>
+            {proposal.categoryName ? (
+              <View style={styles.categoryRow}>
+                {proposal.categoryIcon ? (
+                  <View
+                    style={[
+                      styles.categoryIconWrap,
+                      { backgroundColor: categoryColor },
+                    ]}
+                  >
+                    <IconHelper
+                      color="#FFFFFF"
+                      name={proposal.categoryIcon}
+                      size={10}
+                    />
+                  </View>
+                ) : null}
+                <Text numberOfLines={1} style={styles.categoryNameText}>
+                  {proposal.categoryName}
+                </Text>
+              </View>
             ) : null}
           </View>
 
-          {/* Right Column: Account Group & Account Name */}
+          {/* Right Column: Account Group Pill, Account Name, Pocket */}
           <View style={styles.rightColumn}>
             <View style={styles.groupBadge}>
               <Text style={styles.groupBadgeText}>{accountGroupLabel}</Text>
             </View>
 
             <View style={styles.accountRow}>
-              <Wallet color={theme.colors.textSecondary} size={13} />
+              <Wallet color={theme.colors.textSecondary} size={12} />
               <Text numberOfLines={1} style={styles.accountNameText}>
                 {proposal.accountName}
               </Text>
@@ -234,51 +275,106 @@ export function ChatTransactionCard({
 
             {proposal.pocketName ? (
               <Text numberOfLines={1} style={styles.pocketNameText}>
-                {proposal.pocketName}
+                ↳ {proposal.pocketName}
               </Text>
             ) : null}
           </View>
         </View>
       )}
 
-      {/* Action Buttons */}
-      <View style={styles.actionsRow}>
-        <Pressable
-          accessibilityLabel="Edit generated transaction"
-          accessibilityRole="button"
-          onPress={() => onEdit(proposal)}
-          style={({ pressed }) => [
-            styles.editButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Edit3 color={theme.colors.textPrimary} size={14} />
-          <Text style={styles.editButtonText}>Tap to Edit</Text>
-        </Pressable>
+      {/* Note Preview if present */}
+      {proposal.note && (
+        <View style={styles.noteBox}>
+          <Text style={styles.noteLabel}>Note:</Text>
+          <Text numberOfLines={2} style={styles.noteText}>
+            {proposal.note}
+          </Text>
+        </View>
+      )}
 
-        <Pressable
-          accessibilityLabel={saved ? "Transaction already saved" : "Save transaction"}
-          accessibilityRole="button"
-          disabled={saving || saved}
-          onPress={handleSavePress}
-          style={({ pressed }) => [
-            styles.saveButton,
-            saved && styles.saveButtonSaved,
-            pressed && !saved && styles.buttonPressed,
-          ]}
-        >
-          {saving ? (
-            <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-          ) : saved ? (
-            <>
-              <CheckCircle2 color={theme.colors.onPrimary} size={14} />
-              <Text style={styles.saveButtonText}>Saved ✓</Text>
-            </>
-          ) : (
-            <Text style={styles.saveButtonText}>Save</Text>
-          )}
-        </Pressable>
-      </View>
+      {/* Action Buttons */}
+      {isDeleted ? (
+        <View style={styles.deletedNoticeBox}>
+          <Text style={styles.deletedNoticeText}>
+            {t("chatWithKai.deletedNotice")}
+          </Text>
+        </View>
+      ) : saved ? (
+        <View style={styles.actionsRow}>
+          <Pressable
+            accessibilityLabel={t("chatWithKai.tapToEdit")}
+            accessibilityRole="button"
+            onPress={() => onEdit(proposal)}
+            style={({ pressed }) => [
+              styles.editButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Edit3 color={theme.colors.textPrimary} size={14} />
+            <Text style={styles.editButtonText}>
+              {t("chatWithKai.tapToEdit")}
+            </Text>
+          </Pressable>
+
+          {onDelete ? (
+            <Pressable
+              accessibilityLabel={t("chatWithKai.deleteButton")}
+              accessibilityRole="button"
+              disabled={deleting}
+              onPress={handleDeletePress}
+              style={({ pressed }) => [
+                styles.deleteButton,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              {deleting ? (
+                <ActivityIndicator color={theme.colors.danger} size="small" />
+              ) : (
+                <>
+                  <Trash2 color={theme.colors.danger} size={14} />
+                  <Text style={styles.deleteButtonText}>
+                    {t("chatWithKai.deleteButton")}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          ) : null}
+        </View>
+      ) : (
+        <View style={styles.actionsRow}>
+          <Pressable
+            accessibilityLabel={t("chatWithKai.tapToEdit")}
+            accessibilityRole="button"
+            onPress={() => onEdit(proposal)}
+            style={({ pressed }) => [
+              styles.editButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Edit3 color={theme.colors.textPrimary} size={14} />
+            <Text style={styles.editButtonText}>
+              {t("chatWithKai.tapToEdit")}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Save transaction"
+            accessibilityRole="button"
+            disabled={saving}
+            onPress={handleSavePress}
+            style={({ pressed }) => [
+              styles.saveButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            {saving ? (
+              <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save</Text>
+            )}
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -341,8 +437,6 @@ function createStyles(theme: AppTheme) {
     typeBadgeText: {
       fontSize: 11,
       fontWeight: "700",
-      letterSpacing: 0.3,
-      textTransform: "uppercase",
     },
     expenseBadgeText: {
       color: theme.colors.danger,
@@ -353,30 +447,59 @@ function createStyles(theme: AppTheme) {
     transferBadgeText: {
       color: theme.colors.primary,
     },
+    savedStatusBadge: {
+      alignItems: "center",
+      backgroundColor: "rgba(16, 185, 129, 0.12)",
+      borderRadius: theme.borderRadius.round,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    savedStatusText: {
+      color: theme.colors.success,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    deletedStatusBadge: {
+      alignItems: "center",
+      backgroundColor: "rgba(239, 68, 68, 0.12)",
+      borderRadius: theme.borderRadius.round,
+      flexDirection: "row",
+      gap: 5,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    deletedStatusText: {
+      color: theme.colors.danger,
+      fontSize: 12,
+      fontWeight: "600",
+    },
     dateText: {
       color: theme.colors.textMuted,
       fontSize: 11,
     },
-    savedStatusBadge: {
-      alignItems: "center",
+    columnsContainer: {
       flexDirection: "row",
+      gap: theme.spacing.md,
+      justifyContent: "space-between",
+    },
+    leftColumn: {
+      flex: 1,
+      gap: 3,
+    },
+    rightColumn: {
+      alignItems: "flex-end",
+      flex: 1,
       gap: 4,
     },
-    savedStatusText: {
-      color: theme.colors.success,
-      fontSize: 11,
-      fontWeight: "600",
-    },
-    amountContainer: {
-      gap: 2,
-    },
     amountText: {
-      fontSize: 22,
+      fontSize: 20,
       fontWeight: "800",
-      letterSpacing: -0.5,
+      letterSpacing: -0.3,
     },
     expenseAmount: {
-      color: theme.colors.textPrimary,
+      color: theme.colors.danger,
     },
     incomeAmount: {
       color: theme.colors.success,
@@ -384,109 +507,97 @@ function createStyles(theme: AppTheme) {
     transferAmount: {
       color: theme.colors.primary,
     },
-    merchantNameText: {
-      color: theme.colors.textSecondary,
-      fontSize: 14,
+    merchantText: {
+      color: theme.colors.textPrimary,
+      fontSize: 13,
       fontWeight: "600",
     },
-    bodyRow: {
-      alignItems: "flex-start",
+    categoryRow: {
+      alignItems: "center",
       flexDirection: "row",
-      justifyContent: "space-between",
-      paddingVertical: 2,
+      gap: 5,
+      marginTop: 2,
     },
-    leftColumn: {
-      flex: 1,
-      gap: 3,
-      marginRight: theme.spacing.sm,
+    categoryIconWrap: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.round,
+      height: 16,
+      justifyContent: "center",
+      width: 16,
     },
-    rightColumn: {
-      alignItems: "flex-end",
-      justifyContent: "flex-start",
-      minWidth: 100,
+    categoryNameText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "500",
     },
     groupBadge: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
+      backgroundColor: "rgba(139, 92, 246, 0.12)",
       borderRadius: theme.borderRadius.small,
-      borderWidth: 1,
-      marginBottom: 4,
       paddingHorizontal: 7,
       paddingVertical: 2,
     },
     groupBadgeText: {
-      color: theme.colors.textSecondary,
+      color: theme.colors.primary,
       fontSize: 10,
       fontWeight: "700",
-      letterSpacing: 0.5,
+      letterSpacing: 0.3,
       textTransform: "uppercase",
     },
     accountRow: {
       alignItems: "center",
       flexDirection: "row",
       gap: 5,
-      justifyContent: "flex-end",
     },
     accountNameText: {
       color: theme.colors.textPrimary,
       fontSize: 13,
       fontWeight: "600",
-      maxWidth: 130,
     },
     pocketNameText: {
       color: theme.colors.textMuted,
       fontSize: 11,
-      marginTop: 2,
-    },
-    categoryItem: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 5,
-      marginTop: 2,
-    },
-    categoryItemText: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      fontWeight: "500",
-      maxWidth: 160,
     },
     transferSection: {
-      gap: 8,
-      paddingVertical: 2,
+      gap: theme.spacing.sm,
     },
     transferAccountsRow: {
       alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
+      gap: theme.spacing.xs,
       justifyContent: "space-between",
-      padding: 8,
     },
     transferAccountCol: {
-      alignItems: "flex-start",
       flex: 1,
+      gap: 3,
     },
-    transferAccountColRight: {
-      alignItems: "flex-end",
-    },
-    transferArrow: {
-      marginHorizontal: 8,
-    },
-    iconCircle: {
+    transferArrowWrapper: {
       alignItems: "center",
-      borderRadius: 9,
-      height: 18,
       justifyContent: "center",
-      width: 18,
+      paddingHorizontal: 4,
+    },
+    noteBox: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      gap: 2,
+      paddingHorizontal: 8,
+      paddingVertical: 5,
+    },
+    noteLabel: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      fontWeight: "700",
+      textTransform: "uppercase",
     },
     noteText: {
-      color: theme.colors.textMuted,
-      fontSize: 11,
-      fontStyle: "italic",
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 16,
     },
     actionsRow: {
       flexDirection: "row",
-      gap: 8,
+      gap: theme.spacing.sm,
       marginTop: 2,
     },
     editButton: {
@@ -506,6 +617,23 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "600",
     },
+    deleteButton: {
+      alignItems: "center",
+      backgroundColor: "rgba(239, 68, 68, 0.08)",
+      borderColor: "rgba(239, 68, 68, 0.25)",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flex: 1,
+      flexDirection: "row",
+      gap: 6,
+      justifyContent: "center",
+      paddingVertical: 9,
+    },
+    deleteButtonText: {
+      color: theme.colors.danger,
+      fontSize: 13,
+      fontWeight: "600",
+    },
     saveButton: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
@@ -516,13 +644,24 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       paddingVertical: 9,
     },
-    saveButtonSaved: {
-      backgroundColor: theme.colors.success,
-    },
     saveButtonText: {
       color: theme.colors.onPrimary,
       fontSize: 13,
       fontWeight: "600",
+    },
+    deletedNoticeBox: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      paddingVertical: 8,
+      marginTop: 2,
+    },
+    deletedNoticeText: {
+      color: theme.colors.textMuted,
+      fontSize: 12,
+      fontStyle: "italic",
     },
     buttonPressed: {
       opacity: 0.8,

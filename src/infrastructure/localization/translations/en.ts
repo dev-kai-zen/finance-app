@@ -194,6 +194,8 @@ export const en = {
     kaiKnowledgeTitle: "Manage Kai Knowledge",
     kaiKnowledgeDescription:
       "Teach Kai keywords for actions, categories, and accounts",
+    kaiChatModeTitle: "Chat with Kai Mode",
+    kaiChatModeSubtitle: "Review first or auto-save",
     defaultAccountsSection: "DEFAULT ACCOUNTS",
     expense: "Expense",
     income: "Income",
@@ -398,8 +400,12 @@ export const en = {
     },
     v121: {
       date: "October 28, 2026",
+      newItem1:
+        "Choose between Review First or Auto-Save mode in Chat with Kai.",
       fixItem1:
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
+      fixItem2:
+        "Update transaction draft cards in chat immediately after editing and saving in the form.",
     },
     v120: {
       date: "October 27, 2026",
@@ -1478,6 +1484,23 @@ export const en = {
   chatWithKai: {
     modalTitle: "Chat with Kai",
     modalSubtitle: "Your smart personal finance companion",
+    settingsTitle: "Kai Chat Settings",
+    settingsSubtitle: "Configure transaction recording behavior",
+    modeSectionTitle: "TRANSACTION RECORDING MODE",
+    modeReviewTitle: "Review First",
+    modeReviewDesc: "Kai prepares a draft for you to review and confirm before saving.",
+    modeReviewPill: "Tap to Edit · Save",
+    modeAutoTitle: "Auto-Save",
+    modeAutoDesc: "Kai records transactions instantly as you chat. Tap to edit or delete anytime.",
+    modeAutoPill: "Tap to Edit · Delete",
+    recordedBadge: "Recorded",
+    tapToEdit: "Tap to Edit",
+    deleteButton: "Delete",
+    deleteConfirmTitle: "Delete Transaction?",
+    deleteConfirmMessage: "Are you sure you want to delete this recorded transaction?",
+    deletedBadge: "Deleted",
+    deletedNotice: "Transaction was deleted",
+    manageKnowledgeLink: "Manage Recognition Keywords",
     inputPlaceholder: "e.g. Spent 500 on lunch at McDonald's from wallet",
     sectionTitle: "Keywords (Kai Assistant Knowledge)",
     bannerCategory: "Keywords entered here teach Kai to automatically recognize this category when you enter transactions via chat.",

@@ -202,6 +202,8 @@ export const fil = {
     kaiKnowledgeTitle: "Pamahalaan ang Kaalaman ni Kai",
     kaiKnowledgeDescription:
       "Turuan si Kai ng mga keyword para sa aksyon, kategorya, at account",
+    kaiChatModeTitle: "Paraan ng Kai Chat",
+    kaiChatModeSubtitle: "Suriin muna o awtomatikong i-save",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -411,8 +413,12 @@ export const fil = {
     },
     v121: {
       date: "Oktubre 28, 2026",
+      newItem1:
+        "Pumili sa pagitan ng Suriin Muna o Awtomatikong Pag-save sa Chat with Kai.",
       fixItem1:
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
+      fixItem2:
+        "Agad na i-update ang draft card sa chat pagkatapos i-edit at i-save sa form.",
     },
     v120: {
       date: "Oktubre 27, 2026",
@@ -1495,6 +1501,23 @@ export const fil = {
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",
     modalSubtitle: "Ang iyong matalinong kasama sa personal na pananalapi",
+    settingsTitle: "Mga Setting ng Kai Chat",
+    settingsSubtitle: "Isaayos kung paano itatala ang mga transaksyon",
+    modeSectionTitle: "PARAAN NG PAGTALA NG TRANSAKSYON",
+    modeReviewTitle: "Suriin Muna",
+    modeReviewDesc: "Ihahanda ni Kai ang draft para suriin at kumpirmahin bago i-save.",
+    modeReviewPill: "I-edit · I-save",
+    modeAutoTitle: "Awtomatikong I-save",
+    modeAutoDesc: "Agad na itatala ni Kai ang transaksyon habang nakikipag-chat. Maaaring i-edit o burahin anumang oras.",
+    modeAutoPill: "I-edit · Burahin",
+    recordedBadge: "Naitala",
+    tapToEdit: "I-tap para I-edit",
+    deleteButton: "Burahin",
+    deleteConfirmTitle: "Burahin ang Transaksyon?",
+    deleteConfirmMessage: "Sigurado ka bang nais mong burahin ang naitalang transaksyong ito?",
+    deletedBadge: "Nabura",
+    deletedNotice: "Nabura na ang transaksyon",
+    manageKnowledgeLink: "Pamahalaan ang mga Keyword",
     inputPlaceholder: "hal. Nagastos ng 500 sa tanghalian sa McDonald's mula wallet",
     sectionTitle: "Mga Keyword (Kaalaman ng Kai Assistant)",
     bannerCategory: "Ang mga keyword na inilagay dito ay nagtuturo kay Kai na awtomatikong matukoy ang kategoryang ito kapag nagtala ka ng transaksyon sa chat.",

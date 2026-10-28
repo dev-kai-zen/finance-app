@@ -29,10 +29,21 @@ import {
   type TransactionType,
 } from "@/modules/transactions";
 import type { Category } from "@/modules/categories";
+import { formatCurrency } from "@/utils/currency";
 
-export function useChatWithKai(context: ParseChatTransactionContext) {
+export interface UseChatWithKaiOptions {
+  mode?: "review" | "auto";
+  onAutoSave?: (proposal: ParsedTransactionProposal) => Promise<string | boolean | null>;
+}
+
+export function useChatWithKai(
+  context: ParseChatTransactionContext,
+  options?: UseChatWithKaiOptions,
+) {
   const lang = context.language ?? "en";
   const initialPrompts = SAMPLE_PROMPTS[lang] ?? SAMPLE_PROMPTS.en;
+  const currentMode = options?.mode ?? "review";
+  const onAutoSave = options?.onAutoSave;
 
   const [categoryKeywordsMap, setCategoryKeywordsMap] = useState<
     Map<string, string>
@@ -116,7 +127,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
       setMessages((prev) => [...prev, userMessage]);
 
       // Small async delay for natural conversational rhythm
-      setTimeout(() => {
+      setTimeout(async () => {
         try {
           const enrichedContext: ParseChatTransactionContext = {
             ...context,
@@ -138,12 +149,44 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
           const assistantMessageId = `assistant-${Date.now()}`;
 
           if (result.success) {
+            let proposal = result.proposal;
+            let explanation = result.explanation;
+
+            // Auto-Save mode: immediately save if all required fields are present
+            if (currentMode === "auto" && onAutoSave) {
+              try {
+                const saveResult = await onAutoSave(proposal);
+                if (saveResult) {
+                  proposal = {
+                    ...proposal,
+                    isSaved: true,
+                    transactionId: typeof saveResult === "string" ? saveResult : undefined,
+                  };
+                  const formatted = formatCurrency(
+                    proposal.amountMinorUnits,
+                    proposal.currencyCode,
+                  );
+                  const label =
+                    proposal.categoryName ?? proposal.name ?? "transaction";
+                  if (lang === "fil") {
+                    explanation = `Naitala ang ${formatted} para sa ${label}.`;
+                  } else if (lang === "es") {
+                    explanation = `Se registró ${formatted} para ${label}.`;
+                  } else {
+                    explanation = `Recorded ${formatted} for ${label}.`;
+                  }
+                }
+              } catch {
+                // If auto-save encounters an error, proposal remains ready to save manually
+              }
+            }
+
             const assistantMsg: ChatMessage = {
               id: assistantMessageId,
               role: "assistant",
-              text: result.explanation,
+              text: explanation,
               timestamp: new Date(),
-              proposal: result.proposal,
+              proposal,
             };
             setMessages((prev) => [...prev, assistantMsg]);
           } else {
@@ -164,10 +207,67 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
         }
       }, 180);
     },
-    [inputText, processing, context, categoryKeywordsMap, accountKeywordsMap],
+    [
+      inputText,
+      processing,
+      context,
+      categoryKeywordsMap,
+      accountKeywordsMap,
+      actionKeywordsMap,
+      merchantKeywordsMap,
+      currentMode,
+      onAutoSave,
+      lang,
+    ],
   );
 
-  const markProposalSaved = useCallback((messageId: string) => {
+  const markProposalSaved = useCallback(
+    (messageId: string, transactionId?: string | null) => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId && msg.proposal) {
+            return {
+              ...msg,
+              proposal: {
+                ...msg.proposal,
+                isSaved: true,
+                transactionId: transactionId ?? msg.proposal.transactionId,
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+    },
+    [],
+  );
+
+  const updateProposalData = useCallback(
+    (
+      messageId: string,
+      updated?: Partial<ParsedTransactionProposal>,
+    ) => {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.id === messageId && msg.proposal) {
+            return {
+              ...msg,
+              proposal: {
+                ...msg.proposal,
+                ...(updated ?? {}),
+                isSaved: true,
+                transactionId: updated?.transactionId ?? msg.proposal.transactionId,
+              },
+            };
+          }
+          return msg;
+        }),
+      );
+    },
+    [],
+  );
+
+  const markProposalDeleted = useCallback((messageId: string) => {
     setMessages((prev) =>
       prev.map((msg) => {
         if (msg.id === messageId && msg.proposal) {
@@ -175,7 +275,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
             ...msg,
             proposal: {
               ...msg.proposal,
-              isSaved: true,
+              isDeleted: true,
             },
           };
         }
@@ -187,6 +287,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
   const assignCategoryToProposal = useCallback(
     async (messageId: string, category: Category) => {
       let candidateMerchantName: string | null = null;
+      let completedProposalToSave: ParsedTransactionProposal | null = null;
 
       setMessages((prev) =>
         prev.map((msg) => {
@@ -199,6 +300,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
               categoryIcon: category.icon ?? null,
               categoryColor: category.hexColorsId ?? null,
             };
+            completedProposalToSave = completedProposal;
 
             let explanation = `I prepared your transaction for ${category.name}.`;
             if (lang === "fil") {
@@ -219,6 +321,45 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
         }),
       );
 
+      // In Auto-Save mode, automatically record once category is chosen
+      if (currentMode === "auto" && onAutoSave && completedProposalToSave) {
+        try {
+          const saveResult = await onAutoSave(completedProposalToSave);
+          if (saveResult) {
+            const formatted = formatCurrency(
+              (completedProposalToSave as ParsedTransactionProposal).amountMinorUnits,
+              (completedProposalToSave as ParsedTransactionProposal).currencyCode,
+            );
+            let explanation = `Recorded ${formatted} for ${category.name}.`;
+            if (lang === "fil") {
+              explanation = `Naitala ang ${formatted} para sa ${category.name}.`;
+            } else if (lang === "es") {
+              explanation = `Se registró ${formatted} para ${category.name}.`;
+            }
+
+            setMessages((prev) =>
+              prev.map((msg) => {
+                if (msg.id === messageId && msg.proposal) {
+                  return {
+                    ...msg,
+                    text: explanation,
+                    proposal: {
+                      ...msg.proposal,
+                      isSaved: true,
+                      transactionId:
+                        typeof saveResult === "string" ? saveResult : undefined,
+                    },
+                  };
+                }
+                return msg;
+              }),
+            );
+          }
+        } catch {
+          // If auto-save encounters an error, proposal remains ready to save manually
+        }
+      }
+
       // Teach-Me-Once Learning: Persist merchant -> category keyword and merchant record
       if (candidateMerchantName) {
         try {
@@ -230,7 +371,7 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
         }
       }
     },
-    [lang, reloadKeywords],
+    [lang, reloadKeywords, currentMode, onAutoSave],
   );
 
   const updateProposalCategory = useCallback(
@@ -340,6 +481,8 @@ export function useChatWithKai(context: ParseChatTransactionContext) {
     processing,
     sendMessage,
     markProposalSaved,
+    updateProposalData,
+    markProposalDeleted,
     assignCategoryToProposal,
     updateProposalCategory,
     confirmReassignKeyword,

@@ -396,12 +396,12 @@ function CalendarScreenContent() {
         onSaveTransaction={async (input, preset, atts) => {
           const success = await recordTransaction(input, preset, atts);
           if (success) refreshAll();
-          return success;
+          return Boolean(success);
         }}
         onSaveTransfer={async (input, preset, atts) => {
           const success = await recordTransfer(input, preset, atts);
           if (success) refreshAll();
-          return success;
+          return Boolean(success);
         }}
         onUpdateTransaction={async (id, input, atts) => {
           const success = await editTransaction(id, input, atts);

@@ -22,6 +22,7 @@ import {
   Settings as SettingsIcon,
   Shield,
   ShieldCheck,
+  SlidersHorizontal,
   Smile,
   Sparkles,
   Terminal,
@@ -59,6 +60,8 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
+import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
 
 export function SettingsScreen() {
@@ -95,6 +98,8 @@ function SettingsScreenContent() {
   } = useDefaultAccounts();
 
   const { nickname, setNickname } = useUserNickname();
+  const { mode: chatMode, setMode: setChatMode } = useChatTransactionMode();
+  const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
@@ -595,6 +600,35 @@ function SettingsScreenContent() {
                 </Text>
                 <Text style={styles.settingDescription}>
                   {t("settings.kaiKnowledgeDescription")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.kaiChatModeTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsChatSettingsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <SlidersHorizontal color="#8B5CF6" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiChatModeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {chatMode === "auto"
+                    ? t("chatWithKai.modeAutoTitle")
+                    : t("chatWithKai.modeReviewTitle")}
+                  {" · "}
+                  {t("settings.kaiChatModeSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1238,6 +1272,14 @@ function SettingsScreenContent() {
       <HexColorsModal
         visible={isHexColorsOpen}
         onClose={() => setIsHexColorsOpen(false)}
+      />
+
+      <KaiChatSettingsModal
+        mode={chatMode}
+        onClose={() => setIsChatSettingsOpen(false)}
+        onOpenKnowledge={() => router.push("/kai-knowledge")}
+        onSelectMode={setChatMode}
+        visible={isChatSettingsOpen}
       />
 
       {isExpensePickerOpen ? (

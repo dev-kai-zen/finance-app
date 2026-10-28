@@ -202,6 +202,8 @@ export const es = {
     kaiKnowledgeTitle: "Administrar Conocimiento de Kai",
     kaiKnowledgeDescription:
       "Enseña a Kai palabras clave para acciones, categorías y cuentas",
+    kaiChatModeTitle: "Modo de Chat con Kai",
+    kaiChatModeSubtitle: "Revisar primero o autoguardar",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",
@@ -410,8 +412,12 @@ export const es = {
     },
     v121: {
       date: "28 de octubre de 2026",
+      newItem1:
+        "Elige entre el modo Revisar Primero o Guardado Automático en el Chat con Kai.",
       fixItem1:
         "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
+      fixItem2:
+        "Actualiza de inmediato la tarjeta borrador en el chat tras editar y guardar en el formulario.",
     },
     v120: {
       date: "27 de octubre de 2026",
@@ -1494,6 +1500,23 @@ export const es = {
   chatWithKai: {
     modalTitle: "Chatear con Kai",
     modalSubtitle: "Tu asistente inteligente de finanzas personales",
+    settingsTitle: "Configuración de Chat Kai",
+    settingsSubtitle: "Configura el comportamiento al registrar transacciones",
+    modeSectionTitle: "MODO DE REGISTRO DE TRANSACCIONES",
+    modeReviewTitle: "Revisar Primero",
+    modeReviewDesc: "Kai prepara un borrador para que lo revises y confirmes antes de guardar.",
+    modeReviewPill: "Editar · Guardar",
+    modeAutoTitle: "Guardado Automático",
+    modeAutoDesc: "Kai registra transacciones al instante mientras chateas. Puedes editar o eliminar en cualquier momento.",
+    modeAutoPill: "Editar · Eliminar",
+    recordedBadge: "Registrado",
+    tapToEdit: "Tocar para Editar",
+    deleteButton: "Eliminar",
+    deleteConfirmTitle: "¿Eliminar Transacción?",
+    deleteConfirmMessage: "¿Estás seguro de que deseas eliminar esta transacción registrada?",
+    deletedBadge: "Eliminado",
+    deletedNotice: "La transacción fue eliminada",
+    manageKnowledgeLink: "Administrar Palabras Clave",
     inputPlaceholder: "ej. Gasté 500 en almuerzo en McDonald's de mi billetera",
     sectionTitle: "Palabras clave (Conocimiento de Kai)",
     bannerCategory: "Las palabras clave introducidas aquí enseñan a Kai a reconocer automáticamente esta categoría al registrar transacciones por chat.",

@@ -77,6 +77,7 @@ export {
 export type {
   ChatWithKaiModalProps,
   ChatToEncodeModalProps,
+  ChatSavedTransactionResult,
   ChatMessage,
   ParsedTransactionProposal,
   ParseChatTransactionResult,

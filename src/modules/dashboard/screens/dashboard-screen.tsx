@@ -26,7 +26,10 @@ import {
   type TransactionListItem,
   type TransactionType,
 } from "@/modules/transactions";
-import { ChatWithKaiModal } from "@/modules/chat-with-kai";
+import {
+  ChatWithKaiModal,
+  type ChatSavedTransactionResult,
+} from "@/modules/chat-with-kai";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
 import { useLocalization } from "@/infrastructure/localization";
@@ -106,7 +109,9 @@ function DashboardScreenContent() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [onChatEditSaved, setOnChatEditSaved] = useState<(() => void) | null>(null);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<
+    ((data?: ChatSavedTransactionResult) => void) | null
+  >(null);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -283,12 +288,31 @@ function DashboardScreenContent() {
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
     const isFirstEverTransaction = recentTx.length === 0;
-    const success = await recordTransaction(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransaction(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
-      onChatEditSaved?.();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
       setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
@@ -297,7 +321,7 @@ function DashboardScreenContent() {
         setShowCongratulationsModal(true);
       }
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleSaveTransfer = async (
@@ -306,12 +330,25 @@ function DashboardScreenContent() {
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
     const isFirstEverTransaction = recentTx.length === 0;
-    const success = await recordTransfer(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransfer(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
-      onChatEditSaved?.();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
       setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
@@ -320,7 +357,7 @@ function DashboardScreenContent() {
         setShowCongratulationsModal(true);
       }
     }
-    return success;
+    return Boolean(res);
   };
 
   const netWorth = summary?.netWorthMinorUnits ?? 0;
@@ -450,6 +487,27 @@ function DashboardScreenContent() {
           if (success) {
             refreshAccounts();
             refreshDashboard();
+            const cat = categories
+              .flatMap((c) => [c, ...(c.subcategories ?? [])])
+              .find((c) => c.id === input.categoryId);
+            const acc = accounts.find((a) => a.id === input.accountId);
+            onChatEditSaved?.({
+              id,
+              type: input.type,
+              amountMinorUnits: Math.abs(input.amountMinorUnits),
+              currencyCode: input.currencyCode,
+              name: input.name ?? null,
+              note: input.note ?? null,
+              occurredAt: input.occurredAt ?? new Date(),
+              accountId: input.accountId,
+              accountName: acc?.name ?? null,
+              categoryId: input.categoryId ?? null,
+              categoryName: cat?.name ?? null,
+              categoryIcon: cat?.icon ?? null,
+              categoryColor: cat?.hexColorsId ?? null,
+              pocketId: input.pocketId ?? null,
+            });
+            setOnChatEditSaved(null);
           }
           return success;
         }}
@@ -458,6 +516,21 @@ function DashboardScreenContent() {
           if (success) {
             refreshAccounts();
             refreshDashboard();
+            const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+            const toAcc = accounts.find((a) => a.id === input.toAccountId);
+            onChatEditSaved?.({
+              id: input.transactionGroupId,
+              type: "transfer",
+              amountMinorUnits: Math.abs(input.amountMinorUnits),
+              name: input.name ?? null,
+              note: input.note ?? null,
+              occurredAt: input.occurredAt ?? new Date(),
+              accountId: input.fromAccountId,
+              accountName: fromAcc?.name ?? null,
+              transferAccountId: input.toAccountId,
+              transferAccountName: toAcc?.name ?? null,
+            });
+            setOnChatEditSaved(null);
           }
           return success;
         }}
@@ -471,28 +544,29 @@ function DashboardScreenContent() {
         categories={categories}
         defaultCurrency={currencyPreferences.defaultCurrency}
         onClose={() => setIsChatModalOpen(false)}
-        onEditInForm={(prefilled, onSaved) => {
+        onDeleteTransaction={deleteTx}
+        onEditInForm={(prefilled, onSaved, isEditing = false) => {
           returnToChatOnFormCloseRef.current = true;
           setPrefilledTransaction(prefilled);
-          setIsEditingTransaction(false);
+          setIsEditingTransaction(isEditing);
           setOnChatEditSaved(() => onSaved ?? null);
           setIsModalOpen(true);
         }}
         onSaveTransaction={async (input) => {
-          const success = await recordTransaction(input);
-          if (success) {
+          const res = await recordTransaction(input);
+          if (res) {
             refreshAccounts();
             refreshDashboard();
           }
-          return success;
+          return res;
         }}
         onSaveTransfer={async (input) => {
-          const success = await recordTransfer(input);
-          if (success) {
+          const res = await recordTransfer(input);
+          if (res) {
             refreshAccounts();
             refreshDashboard();
           }
-          return success;
+          return res;
         }}
         pockets={pockets}
         visible={isChatModalOpen}

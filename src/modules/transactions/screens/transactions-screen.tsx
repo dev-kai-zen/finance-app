@@ -63,7 +63,10 @@ import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
 import { TransactionSpeedDialFab } from "../components/transaction-speed-dial-fab";
-import { ChatWithKaiModal } from "@/modules/chat-with-kai";
+import {
+  ChatWithKaiModal,
+  type ChatSavedTransactionResult,
+} from "@/modules/chat-with-kai";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
@@ -277,7 +280,9 @@ function TransactionsScreenContent({
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const [onChatEditSaved, setOnChatEditSaved] = useState<(() => void) | null>(null);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<
+    ((data?: ChatSavedTransactionResult) => void) | null
+  >(null);
   const [formInitialType, setFormInitialType] = useState<
     TransactionType | undefined
   >(undefined);
@@ -511,14 +516,33 @@ function TransactionsScreenContent({
     preset?: Parameters<typeof recordTransaction>[1],
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
-    const success = await recordTransaction(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransaction(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshPresets();
-      onChatEditSaved?.();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
       setOnChatEditSaved(null);
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleRecordTransfer = async (
@@ -526,14 +550,27 @@ function TransactionsScreenContent({
     preset?: Parameters<typeof recordTransfer>[1],
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
-    const success = await recordTransfer(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransfer(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshPresets();
-      onChatEditSaved?.();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
       setOnChatEditSaved(null);
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleUpdateTransaction = async (
@@ -542,7 +579,30 @@ function TransactionsScreenContent({
     attachmentChanges?: Parameters<typeof editTransaction>[2],
   ) => {
     const success = await editTransaction(id, input, attachmentChanges);
-    if (success) refreshAccounts();
+    if (success) {
+      refreshAccounts();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
+      setOnChatEditSaved(null);
+    }
     return success;
   };
 
@@ -551,7 +611,24 @@ function TransactionsScreenContent({
     attachmentChanges?: Parameters<typeof editTransfer>[1],
   ) => {
     const success = await editTransfer(input, attachmentChanges);
-    if (success) refreshAccounts();
+    if (success) {
+      refreshAccounts();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: input.transactionGroupId,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
+      setOnChatEditSaved(null);
+    }
     return success;
   };
 
@@ -1051,26 +1128,27 @@ function TransactionsScreenContent({
         accounts={accounts}
         categories={categories}
         onClose={() => setIsChatModalOpen(false)}
-        onEditInForm={(prefilled, onSaved) => {
+        onDeleteTransaction={deleteTx}
+        onEditInForm={(prefilled, onSaved, isEditing = false) => {
           returnToChatOnFormCloseRef.current = true;
           setPrefilledTransaction(prefilled);
-          setIsEditingTransaction(false);
+          setIsEditingTransaction(isEditing);
           setOnChatEditSaved(() => onSaved ?? null);
           setIsFormModalOpen(true);
         }}
         onSaveTransaction={async (input) => {
-          const success = await recordTransaction(input);
-          if (success) {
+          const res = await recordTransaction(input);
+          if (res) {
             refreshAccounts();
           }
-          return success;
+          return res;
         }}
         onSaveTransfer={async (input) => {
-          const success = await recordTransfer(input);
-          if (success) {
+          const res = await recordTransfer(input);
+          if (res) {
             refreshAccounts();
           }
-          return success;
+          return res;
         }}
         pockets={pockets}
         visible={isChatModalOpen}

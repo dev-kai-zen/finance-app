@@ -18,8 +18,10 @@ interface ChatMessageBubbleProps {
   message: ChatMessage;
   categories?: Category[];
   defaultCurrency?: string;
+  mode?: "review" | "auto";
   onEdit: (proposal: ParsedTransactionProposal) => void;
   onSave: (proposal: ParsedTransactionProposal) => Promise<boolean>;
+  onDelete?: (proposal: ParsedTransactionProposal) => Promise<boolean>;
   onSelectPrompt: (prompt: string) => void;
   onSelectAmount?: (amount: number) => void;
   onSelectCategoryForProposal?: (messageId: string, category: Category) => void;
@@ -33,8 +35,10 @@ export function ChatMessageBubble({
   message,
   categories = [],
   defaultCurrency = "PHP",
+  mode = "review",
   onEdit,
   onSave,
+  onDelete,
   onSelectPrompt,
   onSelectAmount,
   onSelectCategoryForProposal,
@@ -179,6 +183,8 @@ export function ChatMessageBubble({
 
         {message.proposal ? (
           <ChatTransactionCard
+            mode={mode}
+            onDelete={onDelete}
             onEdit={onEdit}
             onSave={onSave}
             proposal={message.proposal}
