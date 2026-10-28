@@ -27,6 +27,7 @@ import {
   AppButton,
   BackupScheduleOptions,
   ConfirmModal,
+  InfoModal,
   ModalScreenHeader,
   NotificationModal,
   ThemedSwitch,
@@ -66,6 +67,7 @@ export function LocalBackupScreen() {
   const [restoreListVisible, setRestoreListVisible] = useState(false);
   const [deleteCandidate, setDeleteCandidate] =
     useState<LocalBackupFile | null>(null);
+  const [storageHelpVisible, setStorageHelpVisible] = useState(false);
 
   const busy = backup.operation !== "idle" && backup.operation !== "loading";
   const personalWorkspace = workspace.state.mode === "personal";
@@ -120,7 +122,15 @@ export function LocalBackupScreen() {
     <View style={styles.container}>
       <ModalScreenHeader
         backAccessibilityLabel={t("common.goBack")}
+        helpAccessibilityLabel="Storage Info"
+        onPressHelp={() => setStorageHelpVisible(true)}
         title={t("navigation.localBackup")}
+      />
+      <InfoModal
+        message="Local backups remain available across normal app updates, but uninstalling the app or clearing its data can remove them. Automatic backups keep the 7 most recent copies. Export a backup to save an independent copy in your device Files, Drive, or cloud storage."
+        onClose={() => setStorageHelpVisible(false)}
+        title="About Local Storage & Backups"
+        visible={storageHelpVisible}
       />
       <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
       <View style={styles.summaryCard}>
@@ -134,7 +144,7 @@ export function LocalBackupScreen() {
           <Text selectable style={styles.summaryDescription}>
             {latestBackup
               ? `${formatDateTime(latestBackup.createdAt)} · ${formatFileSize(latestBackup.size)}`
-              : "Create a backup to keep a restorable copy of your financial data in this app."}
+              : "No backup created yet"}
           </Text>
         </View>
         {latestBackup ? (
@@ -205,9 +215,6 @@ export function LocalBackupScreen() {
                   </View>
                 )}
               </View>
-              <Text selectable style={styles.rowDescription}>
-                Runs when you open the app after your scheduled backup time.
-              </Text>
             </View>
             <ThemedSwitch
               accessibilityLabel="Automatic backups"
@@ -231,20 +238,7 @@ export function LocalBackupScreen() {
             />
           ) : null}
         </View>
-        <Text selectable style={styles.sectionHelp}>
-          Automatic copies are unprotected and remain inside the app. The newest
-          seven are retained. Export an important copy to keep it outside the app.
-        </Text>
       </Section>
-
-      <View style={styles.storageNotice}>
-        <Text style={styles.storageNoticeTitle}>About app-managed storage</Text>
-        <Text selectable style={styles.storageNoticeText}>
-          These backups remain available across normal app updates, but uninstalling
-          the app or clearing its data can remove them. Use Export for a copy you
-          control in Files, Drive, or another storage provider.
-        </Text>
-      </View>
 
       {operationLabel ? (
         <View accessibilityLiveRegion="polite" style={styles.operationBar}>

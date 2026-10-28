@@ -414,7 +414,7 @@ export const en = {
       improveItem3:
         "Streamline settings, categories, and dashboard cards for a cleaner, distraction-free layout.",
       improveItem4:
-        "Clean up Quick Search and planning forms with sleek, distraction-free rows and helpful info tips.",
+        "Streamline Quick Search, planning forms, and backup & security screens for a clean, minimalist experience.",
       fixItem1:
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
       fixItem2:

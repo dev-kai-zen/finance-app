@@ -426,7 +426,7 @@ export const es = {
       improveItem3:
         "Simplifica los ajustes, categorías y tarjetas del panel para un diseño más limpio y sin distracciones.",
       improveItem4:
-        "Haga más clara la Búsqueda Rápida y los formularios de planificación con filas compactas y consejos útiles.",
+        "Simplifique la Búsqueda Rápida, formularios y pantallas de seguridad y copias para una experiencia minimalista.",
       fixItem1:
         "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
       fixItem2:

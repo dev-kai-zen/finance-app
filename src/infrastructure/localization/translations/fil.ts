@@ -427,7 +427,7 @@ export const fil = {
       improveItem3:
         "Gawing mas simple ang mga setting, kategorya, at dashboard card para sa mas malinis na layout.",
       improveItem4:
-        "Gawing mas malinis ang Quick Search at mga form sa pagpaplano na may mga simpleng listahan at kapaki-pakinabang na gabay.",
+        "Pinasimple ang Quick Search, mga form, at mga screen ng backup at seguridad para sa mas malinis na karanasan.",
       fixItem1:
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
       fixItem2:
