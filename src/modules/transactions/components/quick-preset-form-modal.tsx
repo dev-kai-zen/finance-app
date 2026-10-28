@@ -386,10 +386,7 @@ export function QuickPresetFormModal({
                   ) : null}
                 </View>
               </View>
-              <View style={styles.selectorChangeBadge}>
-                <Text style={styles.selectorChangeText}>Change</Text>
-                <ChevronRight color={theme.colors.textSecondary} size={14} />
-              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
           </View>
 
@@ -452,10 +449,7 @@ export function QuickPresetFormModal({
                     ) : null}
                   </View>
                 </View>
-                <View style={styles.selectorChangeBadge}>
-                  <Text style={styles.selectorChangeText}>Change</Text>
-                  <ChevronRight color={theme.colors.textSecondary} size={14} />
-                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </View>
           ) : (
@@ -494,27 +488,20 @@ export function QuickPresetFormModal({
                     >
                       {selectedCategory?.name ?? "Select Category"}
                     </Text>
-                    {selectedCategory ? (
+                    {parentOfSelectedCategory ? (
                       <Text style={styles.selectorSubText}>
-                        {parentOfSelectedCategory
-                          ? `${parentOfSelectedCategory.name} > Subcategory`
-                          : mode === "expense"
-                            ? "Expense Category"
-                            : "Income Category"}
+                        {parentOfSelectedCategory.name}
                       </Text>
                     ) : null}
                   </View>
                 </View>
-                <View style={styles.selectorChangeBadge}>
-                  <Text style={styles.selectorChangeText}>Change</Text>
-                  <ChevronRight color={theme.colors.textSecondary} size={14} />
-                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </View>
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
+            <Text style={styles.fieldLabel}>NOTE</Text>
             <TextInput
               maxLength={1000}
               multiline
@@ -522,8 +509,8 @@ export function QuickPresetFormModal({
                 clearFormError();
                 setNote(value);
               }}
-              placeholder="e.g. Grocery run at SM, Grab to airport..."
-              placeholderTextColor={theme.colors.textSecondary}
+              placeholder="Add note..."
+              placeholderTextColor={theme.colors.textMuted}
               style={styles.noteInput}
               textAlignVertical="top"
               value={note}
