@@ -184,12 +184,16 @@ function GoalsScreenContent({
     return result;
   };
 
-  const handleCloseCongratulations = () => {
+  const handleStartCongratulationsTour = () => {
     setCongratulationsVisible(false);
     const timer = setTimeout(() => {
       walkthrough.startWalkthrough();
     }, 400);
     return () => clearTimeout(timer);
+  };
+
+  const handleSkipCongratulations = () => {
+    setCongratulationsVisible(false);
   };
 
   const handleConfirmDelete = () => {
@@ -353,7 +357,9 @@ function GoalsScreenContent({
 
       {/* Goal Congratulations Modal */}
       <GoalCongratulationsModal
-        onClose={handleCloseCongratulations}
+        onClose={handleSkipCongratulations}
+        onSkip={handleSkipCongratulations}
+        onStartTour={handleStartCongratulationsTour}
         visible={congratulationsVisible}
       />
 

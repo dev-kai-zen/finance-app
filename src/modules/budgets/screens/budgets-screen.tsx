@@ -220,12 +220,16 @@ function BudgetsScreenContent({
     return success;
   };
 
-  const handleCloseCongratulations = () => {
+  const handleStartCongratulationsTour = () => {
     setCongratulationsVisible(false);
     const timer = setTimeout(() => {
       walkthrough.startWalkthrough();
     }, 400);
     return () => clearTimeout(timer);
+  };
+
+  const handleSkipCongratulations = () => {
+    setCongratulationsVisible(false);
   };
 
   const handleDeleteFromForm = async (id: string): Promise<boolean> => {
@@ -496,7 +500,9 @@ function BudgetsScreenContent({
 
       {/* Budget Congratulations Modal */}
       <BudgetCongratulationsModal
-        onClose={handleCloseCongratulations}
+        onClose={handleSkipCongratulations}
+        onSkip={handleSkipCongratulations}
+        onStartTour={handleStartCongratulationsTour}
         visible={congratulationsVisible}
       />
 

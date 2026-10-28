@@ -650,12 +650,13 @@ function TransactionFormModalInner({
           createMode === "income"
             ? effectiveDefaultIncomeAccountId
             : effectiveDefaultExpenseAccountId;
-        const defaultAccount = accounts.find(
-          (a) => a.id === targetDefaultAccountId && !a.isArchived,
+        const activeAccounts = accounts.filter((a) => !a.isArchived);
+        const defaultAccount = activeAccounts.find(
+          (a) => a.id === targetDefaultAccountId,
         );
         const firstAccount = defaultAccount
           ? defaultAccount.id
-          : (accounts.length > 0 ? accounts[0].id : "");
+          : (activeAccounts.length > 0 ? activeAccounts[0].id : "");
         setSelectedAccountId(firstAccount);
         const targetDefaultPocketId =
           createMode === "income"
@@ -671,7 +672,8 @@ function TransactionFormModalInner({
               )
             : null;
         setSelectedPocketId(defaultPocket ? defaultPocket.id : null);
-        setTransferToAccountId(accounts.length > 1 ? accounts[1].id : "");
+        const secondAccount = activeAccounts.find((a) => a.id !== firstAccount);
+        setTransferToAccountId(secondAccount ? secondAccount.id : "");
         setTransferToPocketId(null);
 
         setSelectedCategoryId(
@@ -745,10 +747,13 @@ function TransactionFormModalInner({
         mode === "income"
           ? effectiveDefaultIncomeAccountId
           : effectiveDefaultExpenseAccountId;
-      const defaultAccount = accounts.find(
-        (a) => a.id === targetDefaultAccountId && !a.isArchived,
+      const activeAccounts = accounts.filter((a) => !a.isArchived);
+      const defaultAccount = activeAccounts.find(
+        (a) => a.id === targetDefaultAccountId,
       );
-      const chosenAccountId = defaultAccount ? defaultAccount.id : accounts[0].id;
+      const chosenAccountId = defaultAccount
+        ? defaultAccount.id
+        : (activeAccounts[0]?.id ?? "");
       setSelectedAccountId(chosenAccountId);
 
       const targetDefaultPocketId =
@@ -1414,7 +1419,9 @@ function TransactionFormModalInner({
         ? preset.amountMinorUnits !== null && preset.amountMinorUnits > 0
           ? "+"
           : "-"
-        : "+",
+        : preset.amountMinorUnits !== null && preset.amountMinorUnits < 0
+          ? "-"
+          : "+",
     );
     setNote(preset.note ?? "");
     setOccurredAt(getCurrentTransactionDate());
@@ -1602,7 +1609,7 @@ function TransactionFormModalInner({
         }
       }
 
-      if (mode === "expense" && amountMinorUnits > 0) {
+      if (mode === "expense" && amountSign === "-" && amountMinorUnits > 0) {
         if (!bypassCreditLimitCheck && selectedAccount?.creditCardDetails) {
           const creditCheck = checkCreditLimitExceeded({
             accountId: selectedAccountId,
@@ -1688,7 +1695,7 @@ function TransactionFormModalInner({
             : undefined,
         pocketId: selectedPocketId,
         type: mode,
-        amountMinorUnits: Math.abs(amountMinorUnits),
+        amountMinorUnits: signedAmount,
         typedAmountMinorUnitsAbs: Math.abs(amountMinorUnits),
         currencyCode: entryCurrency,
         signedAccountAmountMinorUnits:
@@ -2110,7 +2117,7 @@ function TransactionFormModalInner({
             {/* Account Selector */}
             <View style={styles.inputGroup}>
               {mode === "transfer" ? (
-                <Text style={styles.fieldLabel}>TRANSFER FROM</Text>
+                <Text style={styles.fieldLabel}>Transfer from</Text>
               ) : null}
               <Pressable
                 ref={accountRef}
@@ -2162,10 +2169,7 @@ function TransactionFormModalInner({
                     )}
                   </View>
                 </View>
-                <View style={styles.selectorChangeBadge}>
-                  <Text style={styles.selectorChangeText}>Change</Text>
-                  <ChevronRight size={14} color={theme.colors.textSecondary} />
-                </View>
+                <ChevronRight size={18} color={theme.colors.textMuted} />
               </Pressable>
             </View>
 
@@ -2173,7 +2177,7 @@ function TransactionFormModalInner({
             {mode === "transfer" ? (
               <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.fieldLabel}>TRANSFER TO</Text>
+                  <Text style={styles.fieldLabel}>Transfer to</Text>
                   <Pressable
                   accessibilityLabel={`Destination account location ${transferToAccount?.name ?? "none selected"}${transferToPocket ? `, ${transferToPocket.name}` : ""}. Tap to choose.`}
                   accessibilityRole="button"
@@ -2223,10 +2227,7 @@ function TransactionFormModalInner({
                       )}
                     </View>
                   </View>
-                  <View style={styles.selectorChangeBadge}>
-                    <Text style={styles.selectorChangeText}>Change</Text>
-                    <ChevronRight size={14} color={theme.colors.textSecondary} />
-                  </View>
+                  <ChevronRight size={18} color={theme.colors.textMuted} />
                   </Pressable>
                   {isTransferCrossCurrency && transferToAccount ? (
                     <Pressable
@@ -2328,16 +2329,13 @@ function TransactionFormModalInner({
                               )}
                             </View>
                           </View>
-                          <View style={styles.selectorChangeBadge}>
-                            <Text style={styles.selectorChangeText}>Change</Text>
-                            <ChevronRight size={14} color={theme.colors.textSecondary} />
-                          </View>
+                          <ChevronRight size={18} color={theme.colors.textMuted} />
                         </Pressable>
                       </View>
 
                       {/* Fee Category */}
                       <View style={styles.transferFeeFieldGroup}>
-                        <Text style={styles.fieldLabel}>FEE CATEGORY</Text>
+                        <Text style={styles.fieldLabel}>Fee category</Text>
                         <Pressable
                           accessibilityLabel={`Fee category ${feeCategory?.name ?? "none selected"}. Tap to change.`}
                           accessibilityRole="button"
@@ -2371,19 +2369,14 @@ function TransactionFormModalInner({
                               >
                                 {feeCategory?.name ?? "Select Fee Category"}
                               </Text>
-                              {feeCategory && (
+                              {feeCategory && parentOfFeeCategory ? (
                                 <Text style={styles.selectorSubText}>
-                                  {parentOfFeeCategory
-                                    ? `${parentOfFeeCategory.name} > Subcategory`
-                                    : "Expense Category"}
+                                  {parentOfFeeCategory.name}
                                 </Text>
-                              )}
+                              ) : null}
                             </View>
                           </View>
-                          <View style={styles.selectorChangeBadge}>
-                            <Text style={styles.selectorChangeText}>Change</Text>
-                            <ChevronRight size={14} color={theme.colors.textSecondary} />
-                          </View>
+                          <ChevronRight size={18} color={theme.colors.textMuted} />
                         </Pressable>
                       </View>
                     </View>
@@ -2429,21 +2422,14 @@ function TransactionFormModalInner({
                           >
                             {selectedCategory?.name ?? "Select Category"}
                           </Text>
-                          {selectedCategory && (
+                          {selectedCategory && parentOfSelectedCategory ? (
                             <Text style={styles.selectorSubText}>
-                              {parentOfSelectedCategory
-                                ? `${parentOfSelectedCategory.name} > Subcategory`
-                                : mode === "expense"
-                                  ? "Expense Category"
-                                  : "Income Category"}
+                              {parentOfSelectedCategory.name}
                             </Text>
-                          )}
+                          ) : null}
                         </View>
                       </View>
-                      <View style={styles.selectorChangeBadge}>
-                        <Text style={styles.selectorChangeText}>Change</Text>
-                        <ChevronRight size={14} color={theme.colors.textSecondary} />
-                      </View>
+                      <ChevronRight size={18} color={theme.colors.textMuted} />
                     </Pressable>
                     {mode === "expense" && selectedCategoryId && amountMinorUnits > 0 ? (
                       <BudgetLiveIndicator
@@ -2499,11 +2485,11 @@ function TransactionFormModalInner({
                 <View style={styles.installmentHeader}>
                   <View style={styles.installmentHeaderText}>
                     <Text style={styles.installmentTitle}>Installment purchase</Text>
-                    <Text style={styles.installmentDescription}>
-                      {installmentFieldsLocked
-                        ? `${installmentEditState.billedInstallmentCount} installment payment${installmentEditState.billedInstallmentCount === 1 ? "" : "s"} already on a statement. Terms cannot be changed.`
-                        : "The full purchase uses your credit limit now; one portion is billed per statement."}
-                    </Text>
+                    {installmentFieldsLocked ? (
+                      <Text style={styles.installmentDescription}>
+                        {`${installmentEditState.billedInstallmentCount} installment payment${installmentEditState.billedInstallmentCount === 1 ? "" : "s"} already billed. Terms cannot be changed.`}
+                      </Text>
+                    ) : null}
                   </View>
                   <ThemedSwitch
                     accessibilityLabel="Installment purchase"
@@ -2721,7 +2707,7 @@ function TransactionFormModalInner({
 
             {showLabelsField ? (
             <View ref={labelsRef} style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>LABELS (OPTIONAL)</Text>
+              <Text style={styles.fieldLabel}>Labels (optional)</Text>
               <View style={styles.labelChipsRow}>
                 {selectedLabelIds.length === 0 ? (
                   <Pressable
@@ -2788,14 +2774,14 @@ function TransactionFormModalInner({
 
             {showNoteField ? (
             <View ref={noteRef} style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
+              <Text style={styles.fieldLabel}>Note (optional)</Text>
               <TextInput
                 maxLength={200}
                 multiline
                 onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setNote}
                 onFocus={() => setFocusedFieldType("description")}
-                placeholder="e.g. Grocery run at SM, Grab to airport..."
+                placeholder="Add note..."
                 placeholderTextColor={theme.colors.textSecondary}
                 style={styles.noteInput}
                 textAlignVertical="top"
@@ -2827,13 +2813,6 @@ function TransactionFormModalInner({
                     value={saveAsQuickPreset && canSaveAsQuickPreset}
                   />
                 </Host>
-                <Text style={styles.quickPresetHelp}>
-                  {matchingPreset
-                    ? `Reuse this name by updating “${matchingPreset.transactionName}” with the current details.`
-                    : name.trim()
-                      ? "Reuse these details when you type this transaction name."
-                      : "Enter a transaction name above to save as a Quick Preset."}
-                </Text>
                 {saveAsQuickPreset && canSaveAsQuickPreset ? (
                   <Host matchContents style={styles.quickPresetCheckbox}>
                     <Checkbox
@@ -2911,10 +2890,13 @@ function TransactionFormModalInner({
       {/* Sub-Modals */}
       <AmountCalculatorModal
         currencyCode={mode === "transfer" ? accountCurrencyCode : entryCurrency}
-        initialMinorUnits={amountMinorUnits}
+        initialMinorUnits={Math.abs(amountMinorUnits)}
         onClose={() => setIsCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
           setExchangeLastEdited("typed");
+          if (mode === "income" && minorUnits < 0) {
+            setAmountSign("-");
+          }
           setAmountMinorUnits(Math.abs(minorUnits));
           setIsCalculatorOpen(false);
         }}
@@ -2931,7 +2913,7 @@ function TransactionFormModalInner({
         initialMinorUnits={
           mode === "transfer" && isTransferCrossCurrency
             ? transferDestinationAmountMinorUnits
-            : accountAmountMinorUnits
+            : Math.abs(accountAmountMinorUnits)
         }
         onClose={() => setIsAccountAmountCalculatorOpen(false)}
         onConfirm={(minorUnits) => {
@@ -2939,6 +2921,9 @@ function TransactionFormModalInner({
             setTransferDestinationAmountMinorUnits(Math.abs(minorUnits));
           } else {
             setExchangeLastEdited("account");
+            if (mode === "income" && minorUnits < 0) {
+              setAmountSign("-");
+            }
             setAccountAmountMinorUnits(Math.abs(minorUnits));
           }
           setIsAccountAmountCalculatorOpen(false);

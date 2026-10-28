@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import {
   ConfirmModal,
   FloatingActionButton,
@@ -20,11 +20,16 @@ import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
+  TransactionSpeedDialFab,
   useTransactionPresets,
   useTransactions,
   type TransactionListItem,
   type TransactionType,
 } from "@/modules/transactions";
+import {
+  ChatWithKaiModal,
+  type ChatSavedTransactionResult,
+} from "@/modules/chat-with-kai";
 import { DashboardNetWorthCard } from "../components/dashboard-net-worth-card";
 import { RecentTransactionsCard } from "../components/recent-transactions-card";
 import { useLocalization } from "@/infrastructure/localization";
@@ -103,6 +108,10 @@ function DashboardScreenContent() {
   } = useTransactionPresets();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<
+    ((data?: ChatSavedTransactionResult) => void) | null
+  >(null);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -111,6 +120,7 @@ function DashboardScreenContent() {
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false);
+  const returnToChatOnFormCloseRef = useRef(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
@@ -278,11 +288,32 @@ function DashboardScreenContent() {
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
     const isFirstEverTransaction = recentTx.length === 0;
-    const success = await recordTransaction(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransaction(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
+      setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
         !isPromptDismissed("firstTransactionCelebrated")
@@ -290,7 +321,7 @@ function DashboardScreenContent() {
         setShowCongratulationsModal(true);
       }
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleSaveTransfer = async (
@@ -299,11 +330,26 @@ function DashboardScreenContent() {
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
     const isFirstEverTransaction = recentTx.length === 0;
-    const success = await recordTransfer(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransfer(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshDashboard();
       refreshPresets();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
+      setOnChatEditSaved(null);
       if (
         isFirstEverTransaction &&
         !isPromptDismissed("firstTransactionCelebrated")
@@ -311,7 +357,7 @@ function DashboardScreenContent() {
         setShowCongratulationsModal(true);
       }
     }
-    return success;
+    return Boolean(res);
   };
 
   const netWorth = summary?.netWorthMinorUnits ?? 0;
@@ -324,14 +370,20 @@ function DashboardScreenContent() {
       scrollRef={scrollRef}
       floatingAction={
         <>
-          <FloatingActionButton
+          <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
-            onPress={() => {
+            onPressForm={() => {
               if (walkthrough.isWalkthroughActive) {
                 walkthrough.completeWalkthrough();
               }
               handleOpenTransactionModal("expense");
+            }}
+            onPressChat={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setIsChatModalOpen(true);
             }}
           />
           <DraggableTourChip
@@ -407,9 +459,17 @@ function DashboardScreenContent() {
         onClearError={clearTransactionError}
         onClearPresetError={clearPresetError}
         onClose={() => {
+          const shouldReturnToChat = returnToChatOnFormCloseRef.current;
+          returnToChatOnFormCloseRef.current = false;
           setIsModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
+          setOnChatEditSaved(null);
+          if (shouldReturnToChat) {
+            setTimeout(() => {
+              setIsChatModalOpen(true);
+            }, Platform.OS === "ios" ? 250 : 80);
+          }
         }}
         onSaveTransaction={handleSaveTx}
         onSaveTransfer={handleSaveTransfer}
@@ -427,6 +487,27 @@ function DashboardScreenContent() {
           if (success) {
             refreshAccounts();
             refreshDashboard();
+            const cat = categories
+              .flatMap((c) => [c, ...(c.subcategories ?? [])])
+              .find((c) => c.id === input.categoryId);
+            const acc = accounts.find((a) => a.id === input.accountId);
+            onChatEditSaved?.({
+              id,
+              type: input.type,
+              amountMinorUnits: Math.abs(input.amountMinorUnits),
+              currencyCode: input.currencyCode,
+              name: input.name ?? null,
+              note: input.note ?? null,
+              occurredAt: input.occurredAt ?? new Date(),
+              accountId: input.accountId,
+              accountName: acc?.name ?? null,
+              categoryId: input.categoryId ?? null,
+              categoryName: cat?.name ?? null,
+              categoryIcon: cat?.icon ?? null,
+              categoryColor: cat?.hexColorsId ?? null,
+              pocketId: input.pocketId ?? null,
+            });
+            setOnChatEditSaved(null);
           }
           return success;
         }}
@@ -435,6 +516,21 @@ function DashboardScreenContent() {
           if (success) {
             refreshAccounts();
             refreshDashboard();
+            const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+            const toAcc = accounts.find((a) => a.id === input.toAccountId);
+            onChatEditSaved?.({
+              id: input.transactionGroupId,
+              type: "transfer",
+              amountMinorUnits: Math.abs(input.amountMinorUnits),
+              name: input.name ?? null,
+              note: input.note ?? null,
+              occurredAt: input.occurredAt ?? new Date(),
+              accountId: input.fromAccountId,
+              accountName: fromAcc?.name ?? null,
+              transferAccountId: input.toAccountId,
+              transferAccountName: toAcc?.name ?? null,
+            });
+            setOnChatEditSaved(null);
           }
           return success;
         }}
@@ -443,16 +539,49 @@ function DashboardScreenContent() {
         visible={isModalOpen}
       />
 
+      <ChatWithKaiModal
+        accounts={accounts}
+        categories={categories}
+        defaultCurrency={currencyPreferences.defaultCurrency}
+        onClose={() => setIsChatModalOpen(false)}
+        onDeleteTransaction={deleteTx}
+        onEditInForm={(prefilled, onSaved, isEditing = false) => {
+          returnToChatOnFormCloseRef.current = true;
+          setPrefilledTransaction(prefilled);
+          setIsEditingTransaction(isEditing);
+          setOnChatEditSaved(() => onSaved ?? null);
+          setIsModalOpen(true);
+        }}
+        onSaveTransaction={async (input) => {
+          const res = await recordTransaction(input);
+          if (res) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return res;
+        }}
+        onSaveTransfer={async (input) => {
+          const res = await recordTransfer(input);
+          if (res) {
+            refreshAccounts();
+            refreshDashboard();
+          }
+          return res;
+        }}
+        pockets={pockets}
+        visible={isChatModalOpen}
+      />
+
       <ConfirmModal
-        cancelLabel="Keep"
-        confirmLabel="Delete"
-        message="This record will be moved to Trash. You can restore it later."
+        cancelLabel={t("common.keep")}
+        confirmLabel={t("common.delete")}
+        message={t("dashboard.deleteTransactionMessage")}
         onCancel={() => setPendingDeleteId(null)}
         onConfirm={() => {
           void handleConfirmDeleteTransaction();
         }}
         pending={pendingAction}
-        title="Delete transaction?"
+        title={t("dashboard.deleteTransactionTitle")}
         variant="destructive"
         visible={pendingDeleteId !== null}
       />
@@ -487,6 +616,14 @@ function DashboardScreenContent() {
       <DashboardCongratulationsModal
         visible={showCongratulationsModal}
         onClose={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
+        onExplore={() => {
+          dismissPrompt("firstTransactionCelebrated");
+          setShowCongratulationsModal(false);
+        }}
+        onSkip={() => {
           dismissPrompt("firstTransactionCelebrated");
           setShowCongratulationsModal(false);
         }}

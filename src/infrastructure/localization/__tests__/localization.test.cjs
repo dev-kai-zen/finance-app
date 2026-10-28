@@ -32,6 +32,10 @@ Module._load = function (request, parent, ...rest) {
     };
   }
 
+  if (request === "@/infrastructure/sync") {
+    return { queueDebouncedQuickSync: () => {} };
+  }
+
   return originalLoad.call(this, request, parent, ...rest);
 };
 

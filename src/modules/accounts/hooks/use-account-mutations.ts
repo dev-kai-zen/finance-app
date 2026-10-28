@@ -39,7 +39,13 @@ export function useAccountMutations(onSuccess: () => void) {
   };
   return {
     pending, error, clearError: () => setError(null),
-    saveAccount: (input: AccountInput, id?: string) => run(() => saveAccount(input, id)),
+    saveAccount: async (input: AccountInput, id?: string): Promise<string | boolean> => {
+      let createdId: string | null = null;
+      const ok = await run(() => {
+        createdId = saveAccount(input, id);
+      });
+      return ok ? (createdId ?? true) : false;
+    },
     lockStartingBalance: (id: string) => run(() => lockAccountStartingBalance(id)),
     saveType: (input: AccountTypeInput, id?: string) => run(() => saveAccountType(input, id)),
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Platform,
   Pressable,
@@ -61,6 +62,11 @@ import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
+import { TransactionSpeedDialFab } from "../components/transaction-speed-dial-fab";
+import {
+  ChatWithKaiModal,
+  type ChatSavedTransactionResult,
+} from "@/modules/chat-with-kai";
 import { TransactionRow } from "../components/transaction-row";
 import { useTransactions } from "../hooks/use-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
@@ -74,6 +80,8 @@ import type {
   TransactionListItem,
   TransactionType,
 } from "../types/transaction.types";
+
+const TRANSACTIONS_PAGE_SIZE = 50;
 
 interface DateGroup {
   key: string;
@@ -211,6 +219,11 @@ function TransactionsScreenContent({
     ),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
+  const [renderedLimit, setRenderedLimit] = useState(TRANSACTIONS_PAGE_SIZE);
+
+  useEffect(() => {
+    setRenderedLimit(TRANSACTIONS_PAGE_SIZE);
+  }, [searchQuery, filterState]);
 
   const fabRef = useRef<View>(null);
   const { registerTarget } = useWalkthroughRegistry();
@@ -266,6 +279,10 @@ function TransactionsScreenContent({
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [onChatEditSaved, setOnChatEditSaved] = useState<
+    ((data?: ChatSavedTransactionResult) => void) | null
+  >(null);
   const [formInitialType, setFormInitialType] = useState<
     TransactionType | undefined
   >(undefined);
@@ -280,6 +297,7 @@ function TransactionsScreenContent({
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
   const handledActionRef = useRef<string | null>(null);
+  const returnToChatOnFormCloseRef = useRef(false);
 
   useEffect(() => {
     if (initialAction === "new") {
@@ -317,6 +335,16 @@ function TransactionsScreenContent({
       if (handledActionRef.current !== "export") {
         handledActionRef.current = "export";
         setExportCsvSheetOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
+    } else if (initialAction === "chat") {
+      if (handledActionRef.current !== "chat") {
+        handledActionRef.current = "chat";
+        setIsChatModalOpen(true);
         router.setParams({
           action: undefined,
           type: undefined,
@@ -443,12 +471,27 @@ function TransactionsScreenContent({
     return list;
   }, [transactions, searchQuery, filterState]);
 
+  const visibleTransactions = useMemo(
+    () => filteredTransactions.slice(0, renderedLimit),
+    [filteredTransactions, renderedLimit],
+  );
+
+  const hasMoreTransactions = renderedLimit < filteredTransactions.length;
+
+  const handleLoadMore = useCallback(() => {
+    if (renderedLimit < filteredTransactions.length) {
+      setRenderedLimit((prev) =>
+        Math.min(prev + TRANSACTIONS_PAGE_SIZE, filteredTransactions.length),
+      );
+    }
+  }, [renderedLimit, filteredTransactions.length]);
+
   // Group transactions by date
   const groupedTransactions = useMemo(() => {
     const groups: DateGroup[] = [];
     const map = new Map<string, DateGroup>();
 
-    for (const tx of filteredTransactions) {
+    for (const tx of visibleTransactions) {
       const { key, label } = getDateGroupInfo(tx.occurredAt);
       if (!map.has(key)) {
         const group: DateGroup = { key, label, items: [] };
@@ -459,7 +502,7 @@ function TransactionsScreenContent({
     }
 
     return groups;
-  }, [filteredTransactions]);
+  }, [visibleTransactions]);
 
   const handleOpenNewTransaction = () => {
     refreshAccounts();
@@ -473,12 +516,33 @@ function TransactionsScreenContent({
     preset?: Parameters<typeof recordTransaction>[1],
     attachmentChanges?: Parameters<typeof recordTransaction>[2],
   ) => {
-    const success = await recordTransaction(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransaction(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshPresets();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
+      setOnChatEditSaved(null);
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleRecordTransfer = async (
@@ -486,12 +550,27 @@ function TransactionsScreenContent({
     preset?: Parameters<typeof recordTransfer>[1],
     attachmentChanges?: Parameters<typeof recordTransfer>[2],
   ) => {
-    const success = await recordTransfer(input, preset, attachmentChanges);
-    if (success) {
+    const res = await recordTransfer(input, preset, attachmentChanges);
+    if (res) {
       refreshAccounts();
       refreshPresets();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: typeof res === "string" ? res : undefined,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
+      setOnChatEditSaved(null);
     }
-    return success;
+    return Boolean(res);
   };
 
   const handleUpdateTransaction = async (
@@ -500,7 +579,30 @@ function TransactionsScreenContent({
     attachmentChanges?: Parameters<typeof editTransaction>[2],
   ) => {
     const success = await editTransaction(id, input, attachmentChanges);
-    if (success) refreshAccounts();
+    if (success) {
+      refreshAccounts();
+      const cat = categories
+        .flatMap((c) => [c, ...(c.subcategories ?? [])])
+        .find((c) => c.id === input.categoryId);
+      const acc = accounts.find((a) => a.id === input.accountId);
+      onChatEditSaved?.({
+        id,
+        type: input.type,
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        currencyCode: input.currencyCode,
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.accountId,
+        accountName: acc?.name ?? null,
+        categoryId: input.categoryId ?? null,
+        categoryName: cat?.name ?? null,
+        categoryIcon: cat?.icon ?? null,
+        categoryColor: cat?.hexColorsId ?? null,
+        pocketId: input.pocketId ?? null,
+      });
+      setOnChatEditSaved(null);
+    }
     return success;
   };
 
@@ -509,7 +611,24 @@ function TransactionsScreenContent({
     attachmentChanges?: Parameters<typeof editTransfer>[1],
   ) => {
     const success = await editTransfer(input, attachmentChanges);
-    if (success) refreshAccounts();
+    if (success) {
+      refreshAccounts();
+      const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+      const toAcc = accounts.find((a) => a.id === input.toAccountId);
+      onChatEditSaved?.({
+        id: input.transactionGroupId,
+        type: "transfer",
+        amountMinorUnits: Math.abs(input.amountMinorUnits),
+        name: input.name ?? null,
+        note: input.note ?? null,
+        occurredAt: input.occurredAt ?? new Date(),
+        accountId: input.fromAccountId,
+        accountName: fromAcc?.name ?? null,
+        transferAccountId: input.toAccountId,
+        transferAccountName: toAcc?.name ?? null,
+      });
+      setOnChatEditSaved(null);
+    }
     return success;
   };
 
@@ -632,14 +751,20 @@ function TransactionsScreenContent({
       contentContainerStyle={styles.pageContent}
       floatingAction={
         <>
-          <FloatingActionButton
+          <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
-            onPress={() => {
+            onPressForm={() => {
               if (walkthrough.isWalkthroughActive) {
                 walkthrough.completeWalkthrough();
               }
               handleOpenNewTransaction();
+            }}
+            onPressChat={() => {
+              if (walkthrough.isWalkthroughActive) {
+                walkthrough.completeWalkthrough();
+              }
+              setIsChatModalOpen(true);
             }}
           />
           <DraggableTourChip
@@ -918,8 +1043,14 @@ function TransactionsScreenContent({
           stickySectionHeadersEnabled={false}
           style={styles.sectionList}
           windowSize={7}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
           ListFooterComponent={
-            filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
+            hasMoreTransactions ? (
+              <View style={styles.loadMoreFooter}>
+                <ActivityIndicator color={theme.colors.primary} size="small" />
+              </View>
+            ) : filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
               <AdBanner
                 placement="transactions"
                 variant="card"
@@ -945,15 +1076,23 @@ function TransactionsScreenContent({
         onClearError={clearError}
         onClearPresetError={clearPresetError}
         onClose={() => {
+          const shouldReturnToChat = returnToChatOnFormCloseRef.current;
+          returnToChatOnFormCloseRef.current = false;
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
           setFormInitialType(undefined);
+          setOnChatEditSaved(null);
           router.setParams({
             action: undefined,
             type: undefined,
             source: undefined,
           });
+          if (shouldReturnToChat) {
+            setTimeout(() => {
+              setIsChatModalOpen(true);
+            }, Platform.OS === "ios" ? 250 : 80);
+          }
         }}
         initialType={formInitialType}
         onSaveTransaction={handleRecordTransaction}
@@ -983,6 +1122,36 @@ function TransactionsScreenContent({
         onEdit={handleEdit}
         transaction={inspectedTransaction}
         visible={!!inspectedTransaction}
+      />
+
+      <ChatWithKaiModal
+        accounts={accounts}
+        categories={categories}
+        onClose={() => setIsChatModalOpen(false)}
+        onDeleteTransaction={deleteTx}
+        onEditInForm={(prefilled, onSaved, isEditing = false) => {
+          returnToChatOnFormCloseRef.current = true;
+          setPrefilledTransaction(prefilled);
+          setIsEditingTransaction(isEditing);
+          setOnChatEditSaved(() => onSaved ?? null);
+          setIsFormModalOpen(true);
+        }}
+        onSaveTransaction={async (input) => {
+          const res = await recordTransaction(input);
+          if (res) {
+            refreshAccounts();
+          }
+          return res;
+        }}
+        onSaveTransfer={async (input) => {
+          const res = await recordTransfer(input);
+          if (res) {
+            refreshAccounts();
+          }
+          return res;
+        }}
+        pockets={pockets}
+        visible={isChatModalOpen}
       />
 
       {/* Filter Modal */}
@@ -1294,6 +1463,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    loadMoreFooter: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: theme.spacing.md,
     },
   });
 }

@@ -9,6 +9,11 @@ import {
   getPocketRestoreBlockReason,
   requirePocketForAccount,
 } from "@/modules/accounts/services/pocket-rules";
+import {
+  getDefaultAccounts,
+  setDefaultExpenseAccount,
+  setDefaultIncomeAccount,
+} from "@/modules/settings";
 
 export function setPocketArchived(id: string, isArchived: boolean): void {
   db.transaction((tx) => {
@@ -20,6 +25,13 @@ export function setPocketArchived(id: string, isArchived: boolean): void {
         ?.currentBalanceMinorUnits ?? 0;
       if (balance !== 0) {
         throw new Error("Move the remaining pocket balance to Main before archiving it.");
+      }
+      const defaults = getDefaultAccounts(tx);
+      if (defaults.defaultExpensePocketId === id) {
+        setDefaultExpenseAccount(defaults.defaultExpenseAccountId, null, tx);
+      }
+      if (defaults.defaultIncomePocketId === id) {
+        setDefaultIncomeAccount(defaults.defaultIncomeAccountId, null, tx);
       }
     } else {
       const parent = findAccountById(existing.accountId, tx);

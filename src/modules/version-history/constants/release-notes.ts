@@ -3,10 +3,72 @@ import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-h
 /** Newest releases first. Append a block for each store release you want to highlight. */
 export const RELEASE_NOTES: ReleaseNoteBlock[] = [
   {
-    version: "1.1.1",
+    version: "1.2.1",
+    dateKey: "versionHistory.v121.date",
     sections: [
       {
-        categoryKey: "versionHistory.categories.general",
+        categoryKey: "versionHistory.categories.new",
+        itemKeys: [
+          "versionHistory.v121.newItem1",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.improve",
+        itemKeys: [
+          "versionHistory.v121.improveItem1",
+          "versionHistory.v121.improveItem2",
+          "versionHistory.v121.improveItem3",
+          "versionHistory.v121.improveItem4",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.fix",
+        itemKeys: [
+          "versionHistory.v121.fixItem1",
+          "versionHistory.v121.fixItem2",
+          "versionHistory.v121.fixItem3",
+        ],
+      },
+    ],
+  },
+  {
+    version: "1.2.0",
+    dateKey: "versionHistory.v120.date",
+    sections: [
+      {
+        categoryKey: "versionHistory.categories.new",
+        itemKeys: [
+          "versionHistory.v120.newItem1",
+          "versionHistory.v120.newItem2",
+          "versionHistory.v120.newItem3",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.improve",
+        itemKeys: [
+          "versionHistory.v120.improveItem1",
+          "versionHistory.v120.improveItem2",
+          "versionHistory.v120.improveItem3",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.fix",
+        itemKeys: [
+          "versionHistory.v120.fixItem1",
+          "versionHistory.v120.fixItem2",
+          "versionHistory.v120.fixItem3",
+          "versionHistory.v120.fixItem4",
+          "versionHistory.v120.fixItem5",
+        ],
+      },
+    ],
+  },
+  {
+    version: "1.1.1",
+    dateKey: "versionHistory.v111.date",
+    sections: [
+      {
+        categoryKey: "versionHistory.categories.improve",
         itemKeys: [
           "versionHistory.v111.quickActionsItem1",
         ],
@@ -15,15 +77,16 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
   },
   {
     version: "1.1.0",
+    dateKey: "versionHistory.v110.date",
     sections: [
       {
-        categoryKey: "versionHistory.categories.general",
+        categoryKey: "versionHistory.categories.new",
         itemKeys: [
           "versionHistory.v110.searchItem1",
         ],
       },
       {
-        categoryKey: "versionHistory.categories.update",
+        categoryKey: "versionHistory.categories.improve",
         itemKeys: [
           "versionHistory.v110.updateItem1",
         ],
@@ -32,6 +95,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
   },
   {
     version: "1.0.0",
+    dateKey: "versionHistory.v100.date",
     titleKey: "versionHistory.v100.title",
     sections: [
       {

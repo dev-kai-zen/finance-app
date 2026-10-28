@@ -15,6 +15,8 @@ import { updateTransaction } from "../services/update-transaction.service";
 import type {
   CreateTransactionInput,
   CreateTransferInput,
+  Transaction,
+  TransferResult,
   TransactionFilter,
   TransactionAttachmentChanges,
   TransactionListItem,
@@ -77,19 +79,19 @@ export function useTransactions(initialFilter?: TransactionFilter) {
       input: CreateTransactionInput,
       preset?: TransactionPresetSubmission,
       attachmentChanges?: TransactionAttachmentChanges,
-    ): Promise<boolean> => {
+    ): Promise<string | null> => {
       try {
         setPendingAction(true);
         setError(null);
-        await recordTransactionService(
+        const result = (await recordTransactionService(
           { kind: "transaction", input, preset },
           attachmentChanges,
-        );
+        )) as Transaction;
         refresh();
-        return true;
+        return result.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transaction.");
-        return false;
+        return null;
       } finally {
         setPendingAction(false);
       }
@@ -102,19 +104,19 @@ export function useTransactions(initialFilter?: TransactionFilter) {
       input: CreateTransferInput,
       preset?: TransactionPresetSubmission,
       attachmentChanges?: TransactionAttachmentChanges,
-    ): Promise<boolean> => {
+    ): Promise<string | null> => {
       try {
         setPendingAction(true);
         setError(null);
-        await recordTransactionService(
+        const result = (await recordTransactionService(
           { kind: "transfer", input, preset },
           attachmentChanges,
-        );
+        )) as TransferResult;
         refresh();
-        return true;
+        return result.outLeg.transactionGroupId ?? result.outLeg.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transfer.");
-        return false;
+        return null;
       } finally {
         setPendingAction(false);
       }

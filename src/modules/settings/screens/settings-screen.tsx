@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Application from "expo-application";
+import Constants from "expo-constants";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -14,6 +16,7 @@ import {
   Heart,
   Info,
   Languages,
+  LayoutGrid,
   Palette,
   Pipette,
   RotateCcw,
@@ -21,6 +24,7 @@ import {
   Settings as SettingsIcon,
   Shield,
   ShieldCheck,
+  SlidersHorizontal,
   Smile,
   Sparkles,
   Terminal,
@@ -58,7 +62,10 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
+import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
+import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
   return (
@@ -80,6 +87,7 @@ function SettingsScreenContent() {
     availableThemes,
   } = useThemeController();
   const { activeLanguage, preference, t } = useLocalization();
+  const { preferences: currencyPrefs } = useCurrencyPreferences();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
   const {
@@ -94,6 +102,8 @@ function SettingsScreenContent() {
   } = useDefaultAccounts();
 
   const { nickname, setNickname } = useUserNickname();
+  const { mode: chatMode, setMode: setChatMode } = useChatTransactionMode();
+  const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
@@ -180,6 +190,15 @@ function SettingsScreenContent() {
     restorePurchases,
     isRestoring,
   } = useProStatus();
+  const rawAppVersion =
+    Application.nativeApplicationVersion ??
+    Constants.expoConfig?.version ??
+    "1.2.1";
+  const appVersion = rawAppVersion.startsWith("v")
+    ? rawAppVersion
+    : `v${rawAppVersion}`;
+  const tierLabel = isPro ? t("settings.tierPro") : t("settings.tierFree");
+  const appVersionSummary = `${appVersion} | ${tierLabel}`;
   const { isForceTestAds, toggleForceTestAds } = useAdsDevMode();
   const security = useSecuritySettings();
   const resetData = useResetData();
@@ -192,7 +211,9 @@ function SettingsScreenContent() {
   const nicknameRef = useWalkthroughTarget("settingsNickname");
   const themeRef = useWalkthroughTarget("settingsTheme");
   const remindersRef = useWalkthroughTarget("settingsReminders");
+  const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
+  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -344,7 +365,7 @@ function SettingsScreenContent() {
                   {t("settings.currencySetup")}
                 </Text>
                 <Text style={styles.settingDescription}>
-                  {t("settings.currencySetupDescription")}
+                  {currencyPrefs.defaultCurrency}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -460,16 +481,44 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.remindersTitle", { defaultValue: "Reminders" })}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.remindersDescription", {
-                    defaultValue: "Daily logging and due bill reminders",
-                  })}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
 
             <View style={styles.rowDivider} />
+
+            {Platform.OS === "android" ? (
+              <>
+                <Pressable
+                  ref={widgetsRef as any}
+                  collapsable={false}
+                  onLayout={(e) => {
+                    itemScrollY.current["settingsWidgets"] =
+                      (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+                  }}
+                  accessibilityLabel={t("settings.widgetsAccessibility")}
+                  accessibilityRole="button"
+                  onPress={() => router.push("/widgets")}
+                  style={({ pressed }) => [
+                    styles.settingRow,
+                    highlightedTarget === "settingsWidgets" && styles.settingRowHighlighted,
+                    pressed && styles.settingRowPressed,
+                  ]}
+                >
+                  <View style={styles.iconContainer}>
+                    <LayoutGrid color={theme.colors.primary} size={20} />
+                  </View>
+                  <View style={styles.settingCopy}>
+                    <Text style={styles.settingLabel}>
+                      {t("settings.widgetsTitle")}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textMuted} size={18} />
+                </Pressable>
+
+                <View style={styles.rowDivider} />
+              </>
+            ) : null}
 
             <View
               ref={guideHelperRef as any}
@@ -486,9 +535,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.guideHelperTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.guideHelperDescription")}
                 </Text>
               </View>
               <ThemedSwitch
@@ -518,9 +564,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.quickSearchTitle")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.quickSearchDescription")}
-                </Text>
               </View>
               <ThemedSwitch
                 accessibilityLabel={t("settings.quickSearchTitle")}
@@ -528,6 +571,62 @@ function SettingsScreenContent() {
                 value={experience.generalSearchEnabled}
               />
             </View>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={kaiKnowledgeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsKaiKnowledge"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.kaiKnowledgeTitle")}
+              accessibilityRole="button"
+              onPress={() => router.push("/kai-knowledge")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsKaiKnowledge" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Sparkles color="#8B5CF6" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiKnowledgeTitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.kaiChatModeTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsChatSettingsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <SlidersHorizontal color="#8B5CF6" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiChatModeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {chatMode === "auto"
+                    ? t("chatWithKai.modeAutoTitle")
+                    : t("chatWithKai.modeReviewTitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
 
             <View style={styles.rowDivider} />
 
@@ -1110,6 +1209,31 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              collapsable={false}
+              accessibilityLabel={`${t("settings.appVersion")}: ${appVersionSummary}`}
+              accessibilityRole="button"
+              onPress={() => setIsVersionHistoryOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Info color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.appVersion")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {appVersionSummary}
+                </Text>
+              </View>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -1167,6 +1291,14 @@ function SettingsScreenContent() {
       <HexColorsModal
         visible={isHexColorsOpen}
         onClose={() => setIsHexColorsOpen(false)}
+      />
+
+      <KaiChatSettingsModal
+        mode={chatMode}
+        onClose={() => setIsChatSettingsOpen(false)}
+        onOpenKnowledge={() => router.push("/kai-knowledge")}
+        onSelectMode={setChatMode}
+        visible={isChatSettingsOpen}
       />
 
       {isExpensePickerOpen ? (

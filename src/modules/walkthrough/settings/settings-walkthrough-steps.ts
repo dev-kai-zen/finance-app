@@ -32,10 +32,22 @@ export const SETTINGS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "settingsWalkthrough.stepRemindersDesc",
   },
   {
+    id: "settingsWidgets",
+    targetId: "settingsWidgets",
+    titleKey: "settingsWalkthrough.stepWidgetsTitle",
+    descKey: "settingsWalkthrough.stepWidgetsDesc",
+  },
+  {
     id: "settingsGuideHelper",
     targetId: "settingsGuideHelper",
     titleKey: "settingsWalkthrough.stepGuideHelperTitle",
     descKey: "settingsWalkthrough.stepGuideHelperDesc",
+  },
+  {
+    id: "settingsKaiKnowledge",
+    targetId: "settingsKaiKnowledge",
+    titleKey: "settingsWalkthrough.stepKaiKnowledgeTitle",
+    descKey: "settingsWalkthrough.stepKaiKnowledgeDesc",
   },
   {
     id: "settingsDefaultExpense",

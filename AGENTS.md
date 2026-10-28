@@ -426,31 +426,39 @@ The Minimal Diff Principle means minimizing unrelated and incidental changes, no
 
 When adding or updating "Version History" release notes (`src/modules/version-history/`):
 
-1. **Group by Feature / Category**:
-   - Every note must be organized under a module or feature section (e.g., `Calendar`, `Transactions`, `Accounts`, `Budgets`, `Credit Cards`, `Reports`, `Backup & Sync`, `Settings`, or `General`).
-   - Group updates logically so users can quickly scan by area of interest.
-2. **Strict Layman's Terms (Plain Language)**:
+1. **Continuous Release Notes Updates**:
+   - Whenever you implement a new feature, improvement, or bug fix, proactively add it to the active release notes in `src/modules/version-history/constants/release-notes.ts`.
+   - Never postpone release note entries; keep them synchronized with code changes and commits.
+2. **Category Grouping (`New:`, `Improve:`, `Fix:`)**:
+   - For all post-v1.0.0 releases, organize updates under standard category headers:
+     - `New:` (`versionHistory.categories.new`) – Brand-new features and capabilities.
+     - `Improve:` (`versionHistory.categories.improve`) – Enhancements to existing workflows and UI.
+     - `Fix:` (`versionHistory.categories.fix`) – Bug fixes and performance optimizations.
+   - Initial deployment (v1.0.0) remains grouped by feature domain.
+3. **Release Dates Requirement**:
+   - Every release block must specify a localized `dateKey` (e.g. `versionHistory.v120.date`) matching the deployment date (e.g., "October 27, 2026").
+4. **Strict Layman's Terms (Plain Language)**:
    - Notes must be written from the user's perspective in simple, non-technical language.
    - Describe what the user can do, what was improved, or what issue was resolved.
    - Never expose internal code mechanics, component names, API details, or technical jargon (e.g., avoid "refactored component", "state reducer", "SQLite WAL mode", "null check added").
    - Example (Good):
      ```text
-     Calendar
+     Fix:
      • Fix bugs when selecting date
      • Show daily spending totals directly on the calendar
      ```
    - Example (Bad):
      ```text
-     Calendar
+     Fix:
      • Refactored DatePicker memoized hook and resolved state mutation race condition
      ```
-3. **Concise Bullet Points**:
+5. **Concise Bullet Points**:
    - Limit items to 1 clear, punchy sentence (15–20 words max per bullet).
    - Use active verbs: *Add*, *Fix*, *Improve*, *Update*.
-4. **Localization Requirement Across All Supported Languages**:
+6. **Localization Requirement Across All Supported Languages**:
    - All string keys must exist in `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts`.
    - Never add English release notes without the matching Filipino and Spanish translations.
-5. **Version Bump Alignment**:
+7. **Version Bump Alignment**:
    - Whenever the application version is incremented in `package.json` and `app.json`, add a new release block at the top of `RELEASE_NOTES` in `src/modules/version-history/constants/release-notes.ts`.
    - First deployment (v1.0.0) provides a comprehensive overview of all app features; subsequent versions summarize only what changed or was fixed in that release.
 

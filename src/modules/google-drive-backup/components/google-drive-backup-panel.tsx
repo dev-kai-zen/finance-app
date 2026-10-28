@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import {
   CheckCircle2,
+  ChevronRight,
   Cloud,
   CloudDownload,
   CloudUpload,
@@ -255,10 +256,8 @@ export function GoogleDriveBackupPanel() {
                 <CloudUpload color={theme.colors.primary} size={20} />
                 <View style={styles.copy}>
                   <Text style={styles.actionTitle}>Back up now</Text>
-                  <Text style={styles.description}>
-                    Save with a password, or choose an unprotected backup
-                  </Text>
                 </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
 
               <View style={styles.insetDivider} />
@@ -276,10 +275,8 @@ export function GoogleDriveBackupPanel() {
                 <CloudDownload color={theme.colors.primary} size={20} />
                 <View style={styles.copy}>
                   <Text style={styles.actionTitle}>Restore from backup</Text>
-                  <Text style={styles.description}>
-                    Choose a saved backup from Google Drive
-                  </Text>
                 </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
 
               <View style={styles.insetDivider} />
@@ -297,10 +294,8 @@ export function GoogleDriveBackupPanel() {
                 <FolderOpen color={theme.colors.primary} size={20} />
                 <View style={styles.copy}>
                   <Text style={styles.actionTitle}>Open backups folder</Text>
-                  <Text style={styles.description}>
-                    View Kaizen Finance / Backups in Google Drive
-                  </Text>
                 </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </>
           ) : (
@@ -549,9 +544,9 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.md,
-      minHeight: 62,
+      minHeight: 52,
       paddingHorizontal: theme.spacing.lg,
-      paddingVertical: theme.spacing.sm,
+      paddingVertical: theme.spacing.md,
     },
     quickSyncActionRow: {
       backgroundColor: `${theme.colors.primary}08`,

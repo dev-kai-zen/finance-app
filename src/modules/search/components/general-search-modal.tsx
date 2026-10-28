@@ -33,6 +33,7 @@ import {
   Heart,
   History,
   Languages,
+  LayoutGrid,
   Palette,
   PieChart,
   Plus,
@@ -125,6 +126,8 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <Download color={color} size={size} />;
     case "archive":
       return <Archive color={color} size={size} />;
+    case "layout-grid":
+      return <LayoutGrid color={color} size={size} />;
     default:
       return <Plus color={color} size={size} />;
   }
@@ -218,9 +221,6 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
                 </View>
               ) : null}
             </View>
-            <Text numberOfLines={1} style={styles.itemDescription}>
-              {item.description}
-            </Text>
           </View>
 
           <ChevronRight color={theme.colors.textMuted} size={16} />
@@ -273,6 +273,8 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
               autoCorrect={false}
               autoFocus
               clearButtonMode="while-editing"
+              multiline={false}
+              numberOfLines={1}
               onChangeText={setSearchQuery}
               placeholder={t("search.searchPlaceholder")}
               placeholderTextColor={theme.colors.textMuted}
@@ -448,20 +450,21 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.md,
       paddingHorizontal: theme.spacing.lg,
-      paddingVertical: 10,
+      paddingVertical: 8,
     },
     resultRowPressed: {
       backgroundColor: theme.colors.surfaceMuted,
     },
     iconWrapper: {
       alignItems: "center",
-      borderRadius: 10,
-      height: 38,
+      borderRadius: 8,
+      height: 36,
       justifyContent: "center",
-      width: 38,
+      width: 36,
     },
     rowContent: {
       flex: 1,
+      justifyContent: "center",
     },
     titleRow: {
       alignItems: "center",
@@ -474,11 +477,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 15,
       fontWeight: "600",
       letterSpacing: -0.1,
-    },
-    itemDescription: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      marginTop: 2,
     },
     badgeChip: {
       backgroundColor: theme.colors.surfaceMuted,

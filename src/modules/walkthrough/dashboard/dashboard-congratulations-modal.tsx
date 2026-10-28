@@ -14,20 +14,40 @@ import { useLocalization } from "@/infrastructure/localization";
 export interface DashboardCongratulationsModalProps {
   visible: boolean;
   onClose: () => void;
+  onExplore?: () => void;
+  onSkip?: () => void;
 }
 
 export function DashboardCongratulationsModal({
   visible,
   onClose,
+  onExplore,
+  onSkip,
 }: DashboardCongratulationsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
+  const handleExplore = () => {
+    if (onExplore) {
+      onExplore();
+    } else {
+      onClose();
+    }
+  };
+
+  const handleSkip = () => {
+    if (onSkip) {
+      onSkip();
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <Modal
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleSkip}
       statusBarTranslucent
       transparent
       visible={visible}
@@ -55,20 +75,36 @@ export function DashboardCongratulationsModal({
             </Text>
           </View>
 
-          {/* Action Button */}
-          <Pressable
-            accessibilityLabel={t("dashboard.congratulationsButton")}
-            accessibilityRole="button"
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              pressed && styles.primaryBtnPressed,
-            ]}
-          >
-            <Text style={styles.primaryBtnText}>
-              {t("dashboard.congratulationsButton")}
-            </Text>
-          </Pressable>
+          {/* Actions */}
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityLabel={t("dashboard.congratulationsButton")}
+              accessibilityRole="button"
+              onPress={handleExplore}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                pressed && styles.primaryBtnPressed,
+              ]}
+            >
+              <Text style={styles.primaryBtnText}>
+                {t("dashboard.congratulationsButton")}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel={t("common.skipForNow")}
+              accessibilityRole="button"
+              onPress={handleSkip}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                pressed && styles.secondaryBtnPressed,
+              ]}
+            >
+              <Text style={styles.secondaryBtnText}>
+                {t("common.skipForNow")}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>
@@ -146,6 +182,10 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.xs,
       textAlign: "center",
     },
+    actions: {
+      gap: theme.spacing.xs,
+      width: "100%",
+    },
     primaryBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
@@ -162,6 +202,23 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    secondaryBtn: {
+      alignItems: "center",
+      backgroundColor: "transparent",
+      borderRadius: theme.borderRadius.medium,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: theme.spacing.lg,
+      width: "100%",
+    },
+    secondaryBtnPressed: {
+      backgroundColor: `${theme.colors.textSecondary}12`,
+    },
+    secondaryBtnText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
   });
 }

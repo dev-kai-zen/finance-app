@@ -40,6 +40,10 @@ import m0035 from './0035_add_transactions_currency_code.sql';
 import m0036 from './0036_add_currency_code_budgets_schedules_presets.sql';
 import m0037 from './0037_add_transaction_exchange_snapshot.sql';
 import m0038 from './0038_add_transaction_entries.sql';
+import m0039 from './0039_add_chat_knowledge_keywords.sql';
+import m0040 from './0040_add_kai_action_keywords.sql';
+import m0041 from './0041_add_language_to_account_keywords.sql';
+import m0042 from './0042_add_merchants_and_keywords.sql';
 
   export default {
     journal,
@@ -82,7 +86,12 @@ m0034,
 m0035,
 m0036,
 m0037,
-m0038
+m0038,
+m0039,
+m0040,
+m0041,
+m0042
     }
   }
+
   

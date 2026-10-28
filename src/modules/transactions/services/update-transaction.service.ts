@@ -70,6 +70,7 @@ export function updateTransactionInContext(
       accountCurrencyCode: account.currencyCode,
       typedCurrencyCode: input.currencyCode ?? account.currencyCode,
       typedAmountMinorUnitsAbs: typedAbsForInstallment,
+      signedAmountMinorUnits: input.amountMinorUnits,
       signedAccountAmountMinorUnits: input.signedAccountAmountMinorUnits,
       exchangeRateScaled: input.exchangeRateScaled,
       lastEdited: input.exchangeLastEdited,

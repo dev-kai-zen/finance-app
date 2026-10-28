@@ -176,7 +176,7 @@ export function PocketFormModal({
           <View style={styles.contextCard}>
             <Text style={styles.contextTitle}>{account.name}</Text>
             <Text style={styles.contextText}>
-              {account.currencyCode} · Pockets are app-only allocations and do not move money at your bank.
+              {account.currencyCode}
             </Text>
             {pocket ? (
               <View style={styles.balanceRow}>
@@ -225,9 +225,6 @@ export function PocketFormModal({
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
                   <Text style={styles.toggleLabel}>Default for Expense</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this pocket when recording expense transactions.
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Default for Expense"
@@ -240,9 +237,6 @@ export function PocketFormModal({
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
                   <Text style={styles.toggleLabel}>Default for Income</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this pocket when recording income transactions.
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Default for Income"

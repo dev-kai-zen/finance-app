@@ -72,26 +72,13 @@ export function evaluateAutoShowPresentation(): VersionHistoryPresentation | nul
     return null;
   }
 
-  if (lastSeenFingerprint === null) {
-    const initialBlocks = getLatestReleaseNotes();
-    if (initialBlocks.length === 0) {
-      markVersionHistorySeen(currentFingerprint);
-      return null;
-    }
-    return { blocks: initialBlocks };
-  }
-
-  const blocks = resolveReleaseNotesForUpdate(
-    lastSeenFingerprint,
-    currentFingerprint,
-  );
-
-  if (blocks.length === 0) {
+  const allBlocks = getAllReleaseNotes();
+  if (allBlocks.length === 0) {
     markVersionHistorySeen(currentFingerprint);
     return null;
   }
 
-  return { blocks };
+  return { blocks: allBlocks };
 }
 
 export function resolveReleaseNotesForUpdate(

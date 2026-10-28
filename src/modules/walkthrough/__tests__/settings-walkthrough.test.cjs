@@ -22,8 +22,8 @@ const { en } = require("../../../infrastructure/localization/translations/en.ts"
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
 const { fil } = require("../../../infrastructure/localization/translations/fil.ts");
 
-test("settings walkthrough: defines all 16 steps in exact required sequence", () => {
-  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 16);
+test("settings walkthrough: defines all 18 steps in exact required sequence", () => {
+  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 18);
 
   const expectedSequence = [
     { targetId: "settingsLanguage", titleKey: "settingsWalkthrough.stepLanguageTitle" },
@@ -31,7 +31,9 @@ test("settings walkthrough: defines all 16 steps in exact required sequence", ()
     { targetId: "settingsNickname", titleKey: "settingsWalkthrough.stepNicknameTitle" },
     { targetId: "settingsTheme", titleKey: "settingsWalkthrough.stepThemeTitle" },
     { targetId: "settingsReminders", titleKey: "settingsWalkthrough.stepRemindersTitle" },
+    { targetId: "settingsWidgets", titleKey: "settingsWalkthrough.stepWidgetsTitle" },
     { targetId: "settingsGuideHelper", titleKey: "settingsWalkthrough.stepGuideHelperTitle" },
+    { targetId: "settingsKaiKnowledge", titleKey: "settingsWalkthrough.stepKaiKnowledgeTitle" },
     { targetId: "settingsDefaultExpense", titleKey: "settingsWalkthrough.stepDefaultExpenseTitle" },
     { targetId: "settingsDefaultIncome", titleKey: "settingsWalkthrough.stepDefaultIncomeTitle" },
     { targetId: "settingsHexColors", titleKey: "settingsWalkthrough.stepHexColorsTitle" },
@@ -52,14 +54,16 @@ test("settings walkthrough: defines all 16 steps in exact required sequence", ()
   });
 });
 
-test("settings walkthrough: translations exist for all 16 steps across en, es, and fil", () => {
+test("settings walkthrough: translations exist for all 18 steps across en, es, and fil", () => {
   const stepSuffixes = [
     "Language",
     "Currency",
     "Nickname",
     "Theme",
     "Reminders",
+    "Widgets",
     "GuideHelper",
+    "KaiKnowledge",
     "DefaultExpense",
     "DefaultIncome",
     "HexColors",

@@ -13,7 +13,9 @@ import {
   AmountCalculatorField,
   AmountCalculatorModal,
   FullScreenFormModal,
+  HelpIconButton,
   IconHelper,
+  InfoModal,
   KeyboardAwareForm,
   ThemedSwitch,
 } from "@/components";
@@ -207,6 +209,10 @@ function ScheduledTransactionFormModalContent({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [dateTimePicker, setDateTimePicker] =
     useState<DateTimePickerTarget | null>(null);
+  const [infoModal, setInfoModal] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -608,13 +614,9 @@ function ScheduledTransactionFormModalContent({
                       >
                         {selectedCategory?.name ?? "Select Category"}
                       </Text>
-                      {selectedCategory ? (
+                      {parentCategory ? (
                         <Text style={styles.selectorSubText}>
-                          {parentCategory
-                            ? `${parentCategory.name} > Subcategory`
-                            : transactionType === "income"
-                              ? "Income Category"
-                              : "Expense Category"}
+                          {parentCategory.name}
                         </Text>
                       ) : null}
                     </View>
@@ -625,13 +627,13 @@ function ScheduledTransactionFormModalContent({
             )}
 
             <View collapsable={false} ref={noteRef}>
-              <Text style={styles.fieldLabel}>NOTE / MEMO (OPTIONAL)</Text>
+              <Text style={styles.fieldLabel}>NOTE</Text>
               <TextInput
                 maxLength={200}
                 multiline
                 onChangeText={setNote}
-                placeholder="e.g. Monthly rent, salary, subscription..."
-                placeholderTextColor={theme.colors.textSecondary}
+                placeholder="Add note..."
+                placeholderTextColor={theme.colors.textMuted}
                 style={styles.noteInput}
                 textAlignVertical="top"
                 value={note}
@@ -772,13 +774,21 @@ function ScheduledTransactionFormModalContent({
               <View collapsable={false} ref={weekendRef}>
                 <Section title="WEEKENDS">
                   <View style={styles.toggleCard}>
-                    <View style={styles.toggleText}>
+                    <View style={styles.toggleTitleRow}>
                       <Text style={styles.toggleTitle}>
                         If date falls on a weekend
                       </Text>
-                      <Text style={styles.toggleDescription}>
-                        Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.
-                      </Text>
+                      <HelpIconButton
+                        accessibilityHint="Explains weekend adjustment"
+                        accessibilityLabel="Weekend adjustment help"
+                        onPress={() =>
+                          setInfoModal({
+                            title: "Weekend Adjustment",
+                            message:
+                              "Automatically adjust execution date when scheduled date lands on a Saturday or Sunday.",
+                          })
+                        }
+                      />
                     </View>
                     <ThemedSwitch
                       accessibilityLabel="If date falls on a weekend"
@@ -827,11 +837,18 @@ function ScheduledTransactionFormModalContent({
                     <Text style={styles.proChipText}>PRO</Text>
                   </View>
                 )}
+                <HelpIconButton
+                  accessibilityHint="Explains automatic transaction entry"
+                  accessibilityLabel="Automatic entry help"
+                  onPress={() =>
+                    setInfoModal({
+                      title: "Automatic Entry",
+                      message:
+                        "Posts when the app processes the due date. Otherwise it appears as a due item for your confirmation.",
+                    })
+                  }
+                />
               </View>
-              <Text style={styles.autoPostDescription}>
-                Posts when the app processes the due date. Otherwise it appears
-                as a due item for your confirmation.
-              </Text>
             </View>
             <ThemedSwitch
               accessibilityLabel="Automatically enter transaction"
@@ -935,6 +952,13 @@ function ScheduledTransactionFormModalContent({
         featureTitle={t("pro.locked.autoPostTitle")}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <InfoModal
+        message={infoModal?.message ?? ""}
+        onClose={() => setInfoModal(null)}
+        title={infoModal?.title ?? ""}
+        visible={infoModal !== null}
       />
     </>
   );
@@ -1086,13 +1110,7 @@ function LocationSelector({
 
 function ChangeBadge() {
   const theme = useAppTheme();
-  const styles = useThemeStyles(createStyles);
-  return (
-    <View style={styles.selectorChangeBadge}>
-      <Text style={styles.selectorChangeText}>Change</Text>
-      <ChevronRight color={theme.colors.textSecondary} size={14} />
-    </View>
-  );
+  return <ChevronRight color={theme.colors.textMuted} size={18} />;
 }
 
 function createStyles(theme: AppTheme) {
@@ -1367,6 +1385,12 @@ function createStyles(theme: AppTheme) {
     },
     toggleText: {
       flex: 1,
+    },
+    toggleTitleRow: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
     },
     toggleTitle: {
       color: theme.colors.textPrimary,

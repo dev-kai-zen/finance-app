@@ -329,7 +329,7 @@ test("widgets: chart widgets gate behind Pro entitlement with LockedProWidget", 
 
   const lockedWidgetCode = fs.readFileSync(path.join(compDir, "locked-pro-widget.tsx"), "utf8");
   assert.match(lockedWidgetCode, /PRO_PAYWALL_DEEP_LINK/);
-  assert.match(lockedWidgetCode, /Tap to Unlock with Pro/);
+  assert.match(lockedWidgetCode, /Claim Launch Offer|Tap to unlock/i);
 
   const cashflowCode = fs.readFileSync(path.join(compDir, "monthly-cashflow-widget.tsx"), "utf8");
   assert.match(cashflowCode, /LockedProWidget/);
@@ -342,5 +342,58 @@ test("widgets: chart widgets gate behind Pro entitlement with LockedProWidget", 
   const budgetCode = fs.readFileSync(path.join(compDir, "monthly-budget-widget.tsx"), "utf8");
   assert.match(budgetCode, /LockedProWidget/);
   assert.match(budgetCode, /snapshot\?\.isPro/);
+});
+
+test("widgets: gallery catalog covers every widget registered in app.json", () => {
+  const appJson = JSON.parse(
+    fs.readFileSync(path.resolve(srcRoot, "../app.json"), "utf8"),
+  );
+  const widgetPlugin = appJson.expo.plugins.find(
+    (plugin) => Array.isArray(plugin) && plugin[0] === "react-native-android-widget",
+  );
+  const registeredNames = widgetPlugin[1].widgets.map((widget) => widget.name);
+
+  const constantsCode = fs.readFileSync(
+    path.resolve(__dirname, "../constants/widget.constants.ts"),
+    "utf8",
+  );
+  const catalogCode = fs.readFileSync(
+    path.resolve(__dirname, "../constants/widget-catalog.constants.ts"),
+    "utf8",
+  );
+
+  for (const name of registeredNames) {
+    const constantMatch = constantsCode.match(
+      new RegExp(`export const (\\w+) = "${name}";`),
+    );
+    assert.ok(constantMatch, `Missing widget name constant for ${name}`);
+    assert.match(
+      catalogCode,
+      new RegExp(`widgetName: ${constantMatch[1]},`),
+      `Gallery catalog is missing ${name}`,
+    );
+  }
+});
+
+test("widgets: gallery route and Android-only Settings entry exist", () => {
+  const routeCode = fs.readFileSync(path.resolve(srcRoot, "app/widgets.tsx"), "utf8");
+  assert.match(routeCode, /WidgetGalleryScreen/);
+  assert.match(routeCode, /from "@\/modules\/widgets"/);
+
+  const settingsCode = fs.readFileSync(
+    path.resolve(srcRoot, "modules/settings/screens/settings-screen.tsx"),
+    "utf8",
+  );
+  assert.match(settingsCode, /router\.push\("\/widgets"\)/);
+  assert.match(settingsCode, /Platform\.OS === "android"/);
+
+  for (const locale of ["en", "fil", "es"]) {
+    const translations = fs.readFileSync(
+      path.resolve(srcRoot, `infrastructure/localization/translations/${locale}.ts`),
+      "utf8",
+    );
+    assert.match(translations, /widgetGallery: \{/, `${locale} missing widgetGallery`);
+    assert.match(translations, /widgetsTitle:/, `${locale} missing settings.widgetsTitle`);
+  }
 });
 

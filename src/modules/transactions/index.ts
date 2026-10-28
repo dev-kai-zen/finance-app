@@ -54,6 +54,12 @@ export const AttachmentViewerModal = deferComponent(
   "AttachmentViewerModal",
 ) as typeof import("./components/attachment-viewer-modal").AttachmentViewerModal;
 
+export const TransactionSpeedDialFab = deferComponent(
+  () =>
+    require("./components/transaction-speed-dial-fab").TransactionSpeedDialFab,
+  "TransactionSpeedDialFab",
+) as typeof import("./components/transaction-speed-dial-fab").TransactionSpeedDialFab;
+
 export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;
@@ -252,6 +258,22 @@ export const getPocketIdsInUseByTransactions = deferFunction(
   () =>
     require("./services/is-pocket-in-use.service").getPocketIdsInUseByTransactions,
 ) as typeof import("./services/is-pocket-in-use.service").getPocketIdsInUseByTransactions;
+
+export const getMerchantHistory = deferFunction(
+  () => require("./services/get-merchant-history.service").getMerchantHistory,
+) as typeof import("./services/get-merchant-history.service").getMerchantHistory;
+
+export const findRecentDuplicateTransaction = deferFunction(
+  () =>
+    require("./services/find-recent-duplicate.service")
+      .findRecentDuplicateTransaction,
+) as typeof import("./services/find-recent-duplicate.service").findRecentDuplicateTransaction;
+
+export type { MerchantHistoryInsight } from "./services/get-merchant-history.service";
+export type {
+  DuplicateCheckInput,
+  DuplicateCheckResult,
+} from "./services/find-recent-duplicate.service";
 
 export type {
   Transaction,

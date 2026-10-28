@@ -6,6 +6,8 @@ const path = require("node:path");
 const Module = require("node:module");
 const ts = require("typescript");
 
+global.__DEV__ = true;
+
 const root = path.resolve(__dirname, "../../..");
 let sqlite;
 let database;
@@ -35,9 +37,11 @@ Module._resolveFilename = function (request, parent, ...rest) {
 Module._load = function (request, parent, ...rest) {
   if (
     request === "react-native" ||
+    request === "expo" ||
     request === "expo-sqlite" ||
     request === "expo-router" ||
     request === "expo-constants" ||
+    request === "expo-modules-core" ||
     request === "@expo/ui" ||
     request === "lucide-react-native"
   ) {
@@ -49,6 +53,9 @@ Module._load = function (request, parent, ...rest) {
       openDatabase: () => database,
       closeDatabase: () => {},
     };
+  }
+  if (request === "@/infrastructure/sync") {
+    return { queueDebouncedQuickSync: () => {} };
   }
   return originalLoad.call(this, request, parent, ...rest);
 };

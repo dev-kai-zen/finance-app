@@ -3,8 +3,10 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft, Paperclip } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
+import { IconHelper } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
@@ -128,6 +130,24 @@ export function TransactionRow({
         : `Transfer to ${transaction.transferAccountName ?? "Account"}`
       : transaction.categoryName || "Transaction");
 
+  const resolveEntityColor = useResolveEntityColor();
+  const categoryColor = transaction.categoryColor
+    ? resolveEntityColor(
+        transaction.categoryColor,
+        isIncome
+          ? theme.colors.success
+          : isTransfer
+            ? theme.colors.info
+            : theme.colors.danger,
+      )
+    : typeColor;
+  const iconName = isTransfer
+    ? "arrow-left-right"
+    : transaction.isSplit
+      ? "split"
+      : transaction.categoryIcon ||
+        (isIncome ? "arrow-down-left" : "tag");
+
   const formattedAmount = isTransfer
     ? formatCurrency(
         Math.abs(transaction.amountMinorUnits),
@@ -209,9 +229,12 @@ export function TransactionRow({
                 </View>
               ) : null}
             </View>
-            <Text numberOfLines={1} style={styles.compactMetaText}>
-              {compactMeta}
-            </Text>
+            <View style={styles.compactMetaRow}>
+              <IconHelper color={categoryColor} name={iconName} size={13} />
+              <Text numberOfLines={1} style={styles.compactMetaText}>
+                {compactMeta}
+              </Text>
+            </View>
             {exchangeLabel ? (
               <Text numberOfLines={1} style={styles.exchangeMetaText}>
                 {exchangeLabel}
@@ -269,31 +292,47 @@ export function TransactionRow({
         pressed && styles.txCardPressed,
       ]}
     >
-      <View style={styles.line}>
-        <View style={styles.titleRow}>
-          <Text numberOfLines={2} style={styles.txNameText}>
-            {title}
-          </Text>
-          {transaction.attachmentCount > 0 ? (
-            <View
-              accessibilityLabel={`${transaction.attachmentCount} attachments`}
-              style={styles.attachmentBadge}
-            >
-              <Paperclip color={theme.colors.primary} size={13} />
-              <Text style={styles.attachmentCount}>
-                {transaction.attachmentCount > 99
-                  ? "99+"
-                  : transaction.attachmentCount}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <Text
-          numberOfLines={1}
-          style={[styles.amountText, { color: amountColor }]}
+      <View style={styles.detailedHeaderRow}>
+        <View
+          style={[
+            styles.detailedIconBadge,
+            {
+              backgroundColor: `${categoryColor}18`,
+              borderColor: `${categoryColor}36`,
+            },
+          ]}
         >
-          {formattedAmount}
-        </Text>
+          <IconHelper color={categoryColor} name={iconName} size={20} />
+        </View>
+
+        <View style={styles.detailedHeaderMain}>
+          <View style={styles.line}>
+            <View style={styles.titleRow}>
+              <Text numberOfLines={2} style={styles.txNameText}>
+                {title}
+              </Text>
+              {transaction.attachmentCount > 0 ? (
+                <View
+                  accessibilityLabel={`${transaction.attachmentCount} attachments`}
+                  style={styles.attachmentBadge}
+                >
+                  <Paperclip color={theme.colors.primary} size={13} />
+                  <Text style={styles.attachmentCount}>
+                    {transaction.attachmentCount > 99
+                      ? "99+"
+                      : transaction.attachmentCount}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <Text
+              numberOfLines={1}
+              style={[styles.amountText, { color: amountColor }]}
+            >
+              {formattedAmount}
+            </Text>
+          </View>
+        </View>
       </View>
 
       {isTransfer ? (
@@ -425,8 +464,14 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textMuted,
       fontSize: theme.typography.fontSize.xs,
     },
+    compactMetaRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 5,
+    },
     compactMetaText: {
       color: theme.colors.textSecondary,
+      flex: 1,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
       lineHeight: theme.typography.lineHeight.xs,
@@ -455,6 +500,23 @@ function createStyles(theme: AppTheme) {
     txCardPressed: {
       backgroundColor: theme.colors.surfaceMuted,
       opacity: 0.9,
+    },
+    detailedHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      marginBottom: 2,
+    },
+    detailedIconBadge: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      height: 38,
+      justifyContent: "center",
+      width: 38,
+    },
+    detailedHeaderMain: {
+      flex: 1,
     },
     line: {
       alignItems: "flex-start",

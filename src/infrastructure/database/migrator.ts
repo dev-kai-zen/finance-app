@@ -45,6 +45,7 @@ export async function runSafeMigrations(
 
   try {
     await migrate(database, config);
+    ensureKaiKnowledgeTables();
 
     if (wasFkEnabled) {
       const violations = sqliteDatabase.getAllSync<{
@@ -130,3 +131,53 @@ export function useAppMigrations(
 
   return state;
 }
+
+function ensureKaiKnowledgeTables(): void {
+  try {
+    sqliteDatabase.execSync(`
+      CREATE TABLE IF NOT EXISTS category_keywords (
+        id TEXT PRIMARY KEY NOT NULL,
+        category_id TEXT NOT NULL,
+        keyword TEXT NOT NULL,
+        language TEXT DEFAULT 'any',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON UPDATE NO ACTION ON DELETE CASCADE
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS category_keywords_keyword_unique ON category_keywords (lower(keyword));
+      CREATE INDEX IF NOT EXISTS category_keywords_category_id_index ON category_keywords (category_id);
+
+      CREATE TABLE IF NOT EXISTS account_keywords (
+        id TEXT PRIMARY KEY NOT NULL,
+        account_id TEXT NOT NULL,
+        keyword TEXT NOT NULL,
+        language TEXT DEFAULT 'any',
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES accounts(id) ON UPDATE NO ACTION ON DELETE CASCADE
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS account_keywords_keyword_unique ON account_keywords (lower(keyword));
+      CREATE INDEX IF NOT EXISTS account_keywords_account_id_index ON account_keywords (account_id);
+
+      CREATE TABLE IF NOT EXISTS action_keywords (
+        id TEXT PRIMARY KEY NOT NULL,
+        action_type TEXT NOT NULL,
+        keyword TEXT NOT NULL,
+        language TEXT DEFAULT 'any',
+        created_at INTEGER NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS action_keywords_keyword_unique ON action_keywords (lower(keyword));
+      CREATE INDEX IF NOT EXISTS action_keywords_action_type_index ON action_keywords (action_type);
+    `);
+
+    // Safely verify if account_keywords already has language column
+    const tableInfo = sqliteDatabase.getAllSync<{ name: string }>(
+      "PRAGMA table_info(account_keywords);",
+    );
+    const hasLanguage = tableInfo.some((col) => col.name === "language");
+    if (!hasLanguage) {
+      sqliteDatabase.execSync("ALTER TABLE account_keywords ADD COLUMN language TEXT DEFAULT 'any';");
+    }
+  } catch (err) {
+    console.warn("[MIGRATIONS] ensureKaiKnowledgeTables caught warning:", err);
+  }
+}
+

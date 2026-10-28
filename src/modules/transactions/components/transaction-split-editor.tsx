@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight, Plus, Trash2 } from "lucide-react-native";
+import { ChevronRight, Info, Plus, Trash2 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
   IconHelper,
+  InfoModal,
   ThemedSwitch,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -54,6 +55,7 @@ export function TransactionSplitEditor({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const [calculatorLineKey, setCalculatorLineKey] = useState<string | null>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const calculatorLine = calculatorLineKey
     ? lines.find((line) => line.key === calculatorLineKey)
@@ -93,10 +95,19 @@ export function TransactionSplitEditor({
     <View style={styles.panel}>
       <View style={styles.headerRow}>
         <View style={styles.headerText}>
-          <Text style={styles.title}>Split by category</Text>
-          <Text style={styles.subtitle}>
-            Assign parts of this total to different categories.
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Split by category</Text>
+            <Pressable
+              accessibilityHint="Shows explanation of split transactions"
+              accessibilityLabel="Split by category info"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setShowInfoModal(true)}
+              style={styles.infoButton}
+            >
+              <Info color={theme.colors.textMuted} size={15} />
+            </Pressable>
+          </View>
         </View>
         <ThemedSwitch
           accessibilityLabel="Split by category"
@@ -132,54 +143,53 @@ export function TransactionSplitEditor({
 
             return (
               <View key={line.key} style={styles.lineCard}>
-                <View style={styles.lineHeader}>
-                  <Text style={styles.lineLabel}>Line {index + 1}</Text>
+                <View style={styles.selectorRow}>
+                  <Pressable
+                    accessibilityLabel={`Category for split ${index + 1}`}
+                    onPress={() => onPickCategory(line.key)}
+                    style={styles.selectorCard}
+                  >
+                    <View style={styles.selectorLeft}>
+                      <View
+                        style={[
+                          styles.selectorIconWrap,
+                          {
+                            backgroundColor: `${categoryColor}18`,
+                            borderColor: `${categoryColor}35`,
+                          },
+                        ]}
+                      >
+                        <IconHelper
+                          color={categoryColor}
+                          name={category?.icon ?? "tag"}
+                          size={16}
+                        />
+                      </View>
+                      <Text
+                        numberOfLines={1}
+                        style={
+                          category
+                            ? styles.selectorValueText
+                            : styles.selectorPlaceholderText
+                        }
+                      >
+                        {category?.name ?? "Select category"}
+                      </Text>
+                    </View>
+                    <ChevronRight color={theme.colors.textMuted} size={16} />
+                  </Pressable>
+
                   {lines.length > 2 ? (
                     <Pressable
-                      accessibilityLabel={`Remove split line ${index + 1}`}
+                      accessibilityLabel={`Remove split ${index + 1}`}
                       hitSlop={8}
                       onPress={() => removeLine(line.key)}
                       style={styles.removeButton}
                     >
-                      <Trash2 color={theme.colors.danger} size={16} />
+                      <Trash2 color={theme.colors.danger} size={18} />
                     </Pressable>
                   ) : null}
                 </View>
-
-                <Pressable
-                  accessibilityLabel={`Category for split line ${index + 1}`}
-                  onPress={() => onPickCategory(line.key)}
-                  style={styles.selectorCard}
-                >
-                  <View style={styles.selectorLeft}>
-                    <View
-                      style={[
-                        styles.selectorIconWrap,
-                        {
-                          backgroundColor: `${categoryColor}18`,
-                          borderColor: `${categoryColor}35`,
-                        },
-                      ]}
-                    >
-                      <IconHelper
-                        color={categoryColor}
-                        name={category?.icon ?? "tag"}
-                        size={16}
-                      />
-                    </View>
-                    <Text
-                      numberOfLines={1}
-                      style={
-                        category
-                          ? styles.selectorValueText
-                          : styles.selectorPlaceholderText
-                      }
-                    >
-                      {category?.name ?? "Select category"}
-                    </Text>
-                  </View>
-                  <ChevronRight color={theme.colors.textSecondary} size={14} />
-                </Pressable>
 
                 <AmountCalculatorField
                   amountMinorUnits={line.amountMinorUnits}
@@ -187,7 +197,6 @@ export function TransactionSplitEditor({
                   amountUnset={line.amountMinorUnits <= 0}
                   currencyCode={currencyCode}
                   disabled={disabled}
-                  label="Line amount"
                   onOpenCalculator={() => setCalculatorLineKey(line.key)}
                   showCurrencyPill={false}
                   showSignToggle={false}
@@ -224,6 +233,13 @@ export function TransactionSplitEditor({
       title="Enter split line amount"
       visible={calculatorLineKey !== null}
     />
+
+    <InfoModal
+      message="Assign parts of this total to different categories."
+      onClose={() => setShowInfoModal(false)}
+      title="Split by Category"
+      visible={showInfoModal}
+    />
     </>
   );
 }
@@ -246,17 +262,21 @@ function createStyles(theme: AppTheme) {
     },
     headerText: {
       flex: 1,
-      gap: theme.spacing.xs,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    infoButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 2,
     },
     title: {
       color: theme.colors.textPrimary,
       fontSize: 14,
       fontWeight: "700",
-    },
-    subtitle: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      lineHeight: 17,
     },
     summaryRow: {
       flexDirection: "row",
@@ -291,21 +311,18 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       backgroundColor: theme.colors.background,
     },
-    lineHeader: {
+    selectorRow: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-    },
-    lineLabel: {
-      color: theme.colors.textMuted,
-      fontSize: 10,
-      fontWeight: "700",
-      textTransform: "uppercase",
+      gap: theme.spacing.sm,
     },
     removeButton: {
+      alignItems: "center",
+      justifyContent: "center",
       padding: theme.spacing.xs,
     },
     selectorCard: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",

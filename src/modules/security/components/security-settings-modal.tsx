@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -65,6 +66,7 @@ export function SecuritySettingsModal({
   const [passwordModalMode, setPasswordModalMode] =
     useState<PasswordModalMode>("set");
   const [pendingBiometricEnable, setPendingBiometricEnable] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   if (!visible) return null;
 
@@ -139,9 +141,6 @@ export function SecuritySettingsModal({
     biometrics.isEnrolled;
 
   const getBiometricSubtitle = () => {
-    const label =
-      biometrics.biometricLabel || t("security.defaultBiometricLabel");
-
     if (!biometrics.hasHardware) {
       return t("security.biometricNoHardware");
     }
@@ -151,9 +150,7 @@ export function SecuritySettingsModal({
     if (!config.isPasswordSet) {
       return t("security.biometricRequiresPassword");
     }
-    return t("security.biometricDescription", {
-      biometric: label,
-    });
+    return null;
   };
 
   return (
@@ -186,14 +183,26 @@ export function SecuritySettingsModal({
                   {t("security.menuTitle")}
                 </Text>
               </View>
-              <Pressable
-                accessibilityLabel={t("common.close")}
-                accessibilityRole="button"
-                onPress={onClose}
-                style={styles.closeButton}
-              >
-                <X color={theme.colors.textMuted} size={20} />
-              </Pressable>
+              <View style={styles.headerRightActions}>
+                <Pressable
+                  accessibilityLabel="Security info"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setInfoModalVisible(true)}
+                  style={styles.closeButton}
+                >
+                  <Info color={theme.colors.textMuted} size={20} />
+                </Pressable>
+                <Pressable
+                  accessibilityLabel={t("common.close")}
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={onClose}
+                  style={styles.closeButton}
+                >
+                  <X color={theme.colors.textMuted} size={20} />
+                </Pressable>
+              </View>
             </View>
 
             <ScrollView
@@ -228,11 +237,6 @@ export function SecuritySettingsModal({
                           </View>
                         )}
                       </View>
-                      <Text style={styles.rowSubtitle}>
-                        {config.isPasswordSet
-                          ? t("security.passwordIsConfigured")
-                          : t("security.passwordNotConfigured")}
-                      </Text>
                     </View>
                     <View style={styles.badgeContainer}>
                       <View
@@ -345,9 +349,11 @@ export function SecuritySettingsModal({
                           </View>
                         )}
                       </View>
-                      <Text style={styles.rowSubtitle}>
-                        {getBiometricSubtitle()}
-                      </Text>
+                      {getBiometricSubtitle() ? (
+                        <Text style={styles.rowSubtitle}>
+                          {getBiometricSubtitle()}
+                        </Text>
+                      ) : null}
                     </View>
                     <ThemedSwitch
                       accessibilityLabel={t("security.biometricTitle", {
@@ -367,18 +373,17 @@ export function SecuritySettingsModal({
                   </View>
                 </View>
               </View>
-
-              {/* Information Note */}
-              <View style={styles.infoBox}>
-                <Info color={theme.colors.textMuted} size={18} />
-                <Text style={styles.infoText}>
-                  {t("security.securityNote")}
-                </Text>
-              </View>
             </ScrollView>
           </View>
         </View>
       </Modal>
+
+      <InfoModal
+        message={t("security.securityNote")}
+        onClose={() => setInfoModalVisible(false)}
+        title={t("security.menuTitle")}
+        visible={infoModalVisible}
+      />
 
       <PasswordFormModal
         biometricLabel={biometrics.biometricLabel}
@@ -455,6 +460,11 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    headerRightActions: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
     },
     closeButton: {
       padding: theme.spacing.xs,

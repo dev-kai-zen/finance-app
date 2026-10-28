@@ -336,4 +336,89 @@ test("search catalog: finds trash, export csv, and archived accounts actions", (
   }
 });
 
+test("search catalog: finds Manage Kai Knowledge and Widgets settings", () => {
+  const queries = [
+    { query: "kai", expectedId: "setting_kai_knowledge" },
+    { query: "kai knowledge", expectedId: "setting_kai_knowledge" },
+    { query: "teach kai", expectedId: "setting_kai_knowledge" },
+    { query: "widget", expectedId: "setting_widgets" },
+    { query: "home screen", expectedId: "setting_widgets" },
+  ];
+
+  for (const { query, expectedId } of queries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}'`,
+    );
+  }
+
+  const kaiItem = SEARCH_CATALOG.find((item) => item.id === "setting_kai_knowledge");
+  assert.ok(kaiItem, "setting_kai_knowledge must exist");
+  assert.equal(kaiItem.route, "/kai-knowledge");
+  assert.equal(kaiItem.targetId, "settingsKaiKnowledge");
+
+  const widgetItem = SEARCH_CATALOG.find((item) => item.id === "setting_widgets");
+  assert.ok(widgetItem, "setting_widgets must exist");
+  assert.equal(widgetItem.route, "/widgets");
+  assert.equal(widgetItem.targetId, "settingsWidgets");
+});
+
+test("search catalog: finds new actions and screens (Chat with Kai, Account Types, Transfers, Income & Expense)", () => {
+  const queries = [
+    { query: "chat with kai", expectedId: "action_chat_with_kai" },
+    { query: "account types", expectedId: "action_manage_account_types" },
+    { query: "transfers", expectedId: "screen_transactions_transfer" },
+    { query: "income & expense", expectedId: "screen_report_income_expense" },
+    { query: "income vs expense", expectedId: "screen_report_income_expense" },
+  ];
+
+  for (const { query, expectedId } of queries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}'`,
+    );
+  }
+
+  const chatItem = SEARCH_CATALOG.find((item) => item.id === "action_chat_with_kai");
+  assert.ok(chatItem, "action_chat_with_kai must exist");
+  assert.equal(chatItem.route, "/transactions?action=chat");
+
+  const typesItem = SEARCH_CATALOG.find((item) => item.id === "action_manage_account_types");
+  assert.ok(typesItem, "action_manage_account_types must exist");
+  assert.equal(typesItem.route, "/accounts?setup=types");
+
+  const transferScreen = SEARCH_CATALOG.find((item) => item.id === "screen_transactions_transfer");
+  assert.ok(transferScreen, "screen_transactions_transfer must exist");
+  assert.equal(transferScreen.route, "/transactions?type=transfer");
+
+  const incExpScreen = SEARCH_CATALOG.find((item) => item.id === "screen_report_income_expense");
+  assert.ok(incExpScreen, "screen_report_income_expense must exist");
+  assert.equal(incExpScreen.route, "/reports?tab=income-expense");
+});
+
+
 

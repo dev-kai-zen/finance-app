@@ -68,9 +68,7 @@ export function TransactionDetailModal({
 
   const displayAmountCents = isTransfer
     ? Math.abs(transaction.amountMinorUnits)
-    : isIncome
-      ? transaction.amountMinorUnits
-      : -Math.abs(transaction.amountMinorUnits);
+    : transaction.amountMinorUnits;
 
   const amountColor = !preferences.colorAmounts
     ? theme.colors.textPrimary

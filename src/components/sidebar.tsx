@@ -13,7 +13,7 @@ import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
-import { ChevronDown, Crown, Mail } from "lucide-react-native";
+import { ChevronDown, Code, Crown, Mail } from "lucide-react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -28,6 +28,7 @@ import { MoreFeaturesModal } from "./more-features-modal";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import { SearchTriggerButton } from "@/modules/search";
+import { isDevModeAllowed } from "@/utils/dev-mode";
 import { sendFeedback } from "@/utils/send-feedback";
 
 interface NavItemConfig {
@@ -69,6 +70,7 @@ export const Sidebar = memo(function Sidebar({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { isPro } = useProStatus();
+  const isDev = isDevModeAllowed();
   const { generalSearchEnabled } = useExperiencePreferences();
   const [moreFeaturesOpen, setMoreFeaturesOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
@@ -169,6 +171,12 @@ export const Sidebar = memo(function Sidebar({
         <View style={styles.brandText}>
           <View style={styles.brandNameRow}>
             <Text style={styles.brandName}>{APP_BRAND.name}</Text>
+            {isDev ? (
+              <View style={styles.headerDevChip}>
+                <Code color="#22C55E" size={10} />
+                <Text style={styles.headerDevChipText}>DEV</Text>
+              </View>
+            ) : null}
             {isPro ? (
               <View style={styles.headerProChip}>
                 <Crown color="#D97706" size={10} />
@@ -509,6 +517,23 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing.xs,
+    },
+    headerDevChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      borderRadius: 4,
+      backgroundColor: "#000000",
+      borderWidth: 1,
+      borderColor: "#22C55E",
+    },
+    headerDevChipText: {
+      color: "#22C55E",
+      fontSize: 9,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.5,
     },
     headerProChip: {
       flexDirection: "row",

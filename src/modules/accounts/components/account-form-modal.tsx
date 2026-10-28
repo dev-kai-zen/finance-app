@@ -47,6 +47,11 @@ import { AccountTypePickerModal } from "@/modules/accounts/components/account-ty
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { SYSTEM_ACCOUNT_TYPE_IDS } from "@/modules/accounts/constants/account-types.constants";
 import type { AccountInput } from "@/modules/accounts/schemas/account.schema";
+import {
+  KaiKnowledgeSelectorRow,
+  getAccountKeywordsByAccountId,
+  syncAccountKeywords,
+} from "@/modules/chat-with-kai";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import type {
   AccountGroup,
@@ -86,6 +91,16 @@ function isZeroAmountString(amount: string): boolean {
   return /^0(\.0+)?$/.test(stripped);
 }
 
+function resolveInitialAmountSign(
+  minorUnits: number | undefined | null,
+  accountGroup?: string | null,
+): "+" | "-" {
+  if (minorUnits === undefined || minorUnits === null || minorUnits === 0) {
+    return accountGroup === "liability" ? "-" : "+";
+  }
+  return minorUnits < 0 ? "-" : "+";
+}
+
 function getDefaultAssetAccountTypeId(types: AccountType[]): string {
   return (
     types
@@ -103,7 +118,7 @@ export type AccountFormModalProps = {
   error: string | null;
   onClose: () => void;
   onClearError: () => void;
-  onSave: (value: AccountInput, id?: string) => Promise<boolean>;
+  onSave: (value: AccountInput, id?: string) => Promise<boolean | string>;
   onDelete?: (accountId: string) => Promise<boolean>;
   onRestore?: (accountId: string) => Promise<boolean>;
   onPermanentDelete?: (accountId: string) => Promise<boolean>;
@@ -175,14 +190,18 @@ function AccountFormModalContent({
         }
       : undefined,
   }));
-  const [amountSign, setAmountSign] = useState<"+" | "-">(() =>
-    parseAmountSign(
-      openingAmountInput(
-        account?.openingBalanceMinorUnits ?? 0,
-        initialCurrencyCode,
-      ),
-    ),
-  );
+  const [amountSign, setAmountSign] = useState<"+" | "-">(() => {
+    if (account) {
+      const group =
+        account.accountType?.accountGroup ??
+        types.find((t) => t.id === account.accountTypeId)?.accountGroup;
+      return resolveInitialAmountSign(account.openingBalanceMinorUnits, group);
+    }
+    const defaultType = types.find(
+      (type) => type.id === getDefaultAssetAccountTypeId(types),
+    );
+    return defaultType?.accountGroup === "liability" ? "-" : "+";
+  });
   const {
     defaultExpenseAccountId,
     defaultIncomeAccountId,
@@ -233,15 +252,25 @@ function AccountFormModalContent({
         : undefined,
     });
     if (account) {
-      setAmountSign(parseAmountSign(openingAmount));
+      const group =
+        account.accountType?.accountGroup ??
+        types.find((t) => t.id === account.accountTypeId)?.accountGroup;
+      setAmountSign(
+        resolveInitialAmountSign(account.openingBalanceMinorUnits, group),
+      );
+      void getAccountKeywordsByAccountId(account.id).then((rows) => {
+        setKeywords(rows.map((r) => r.keyword));
+      });
     } else {
       const defaultType = types.find(
         (type) => type.id === getDefaultAssetAccountTypeId(types),
       );
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
+      setKeywords([]);
     }
     setConfirmAction(null);
   }, [visible, account, types, preferences.defaultCurrency]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [currencyPickerOpen, setCurrencyPickerOpen] = useState(false);
   const [maintainingCalculatorOpen, setMaintainingCalculatorOpen] = useState(false);
@@ -501,8 +530,17 @@ function AccountFormModalContent({
       },
       account?.id,
     ).then(
-      (saved) => {
+      async (saved) => {
         if (saved) {
+          const targetId =
+            account?.id ?? (typeof saved === "string" ? saved : null);
+          if (targetId) {
+            try {
+              await syncAccountKeywords(targetId, keywords);
+            } catch (e) {
+              console.error("Failed to sync account keywords:", e);
+            }
+          }
           if (account?.id) {
             if (isDefaultExpense && defaultExpenseAccountId !== account.id) {
               setExpenseAccount(account.id);
@@ -659,32 +697,10 @@ function AccountFormModalContent({
                   <Text numberOfLines={1} style={styles.iconNameText}>
                     {currentIconKey}
                   </Text>
-                  <Text numberOfLines={2} style={styles.iconSubtext}>
-                    {value.iconKey
-                      ? "Custom icon selected · Tap to change"
-                      : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
-                  </Text>
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.changeBadge,
-                  {
-                    backgroundColor: `${theme.colors.primary}15`,
-                    borderColor: `${theme.colors.primary}40`,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.changeBadgeText,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  Change Icon
-                </Text>
-              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
 
           <AmountCalculatorField
@@ -725,21 +741,6 @@ function AccountFormModalContent({
               setAmountSign((prev) => (prev === "+" ? "-" : "+"));
             }}
           />
-          {startingBalanceLocked ? (
-            <Text style={styles.helperText}>
-              Starting balance is locked and can no longer be changed.
-            </Text>
-          ) : !currencyLocked ? (
-            <Text style={styles.helperText}>
-              Tap the currency code beside starting balance to change this account&apos;s
-              currency.
-            </Text>
-          ) : (
-            <Text style={styles.helperText}>
-              Currency cannot be changed after transactions are recorded.
-            </Text>
-          )}
-
           {!isLiabilityAccount ? (
             <AmountCalculatorField
               amountInputRef={maintainingBalanceRef}
@@ -761,9 +762,6 @@ function AccountFormModalContent({
             >
                 <View style={styles.toggleCopy}>
                   <Text style={styles.toggleLabel}>Enable pockets</Text>
-                  <Text style={styles.toggleHint}>
-                    Show Main and allow separate pocket balances for this account.
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Enable pockets"
@@ -783,7 +781,7 @@ function AccountFormModalContent({
           >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
-                  <Text style={styles.toggleLabel}>Hide from selection</Text>
+                  <Text style={styles.toggleLabel}>Hide from transaction pickers</Text>
                   {!isPro && (
                     <View style={styles.proChip}>
                       <Crown color="#D97706" size={10} />
@@ -791,12 +789,9 @@ function AccountFormModalContent({
                     </View>
                   )}
                 </View>
-                <Text style={styles.toggleHint}>
-                  Exclude this account from transaction account pickers.
-                </Text>
               </View>
               <ThemedSwitch
-                accessibilityLabel="Hide from selection"
+                accessibilityLabel="Hide from transaction pickers"
                 disabled={pending}
                 onValueChange={handleToggleHideFromSelection}
                 value={value.hideFromSelection}
@@ -810,7 +805,7 @@ function AccountFormModalContent({
           >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
-                  <Text style={styles.toggleLabel}>Hide from reports</Text>
+                  <Text style={styles.toggleLabel}>Exclude from Net Worth & reports</Text>
                   {!isPro && (
                     <View style={styles.proChip}>
                       <Crown color="#D97706" size={10} />
@@ -818,12 +813,9 @@ function AccountFormModalContent({
                     </View>
                   )}
                 </View>
-                <Text style={styles.toggleHint}>
-                  Exclude this account from net worth and opening totals.
-                </Text>
               </View>
               <ThemedSwitch
-                accessibilityLabel="Hide from reports"
+                accessibilityLabel="Exclude from Net Worth & reports"
                 disabled={pending}
                 onValueChange={handleToggleHideFromReports}
                 value={value.hideFromReports}
@@ -834,13 +826,10 @@ function AccountFormModalContent({
             <>
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Expense</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this account when recording expense transactions.
-                  </Text>
+                  <Text style={styles.toggleLabel}>Default expense account</Text>
                 </View>
                 <ThemedSwitch
-                  accessibilityLabel="Default for Expense"
+                  accessibilityLabel="Default expense account"
                   disabled={pending}
                   onValueChange={setIsDefaultExpense}
                   value={isDefaultExpense}
@@ -849,13 +838,10 @@ function AccountFormModalContent({
 
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Income</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this account when recording income transactions.
-                  </Text>
+                  <Text style={styles.toggleLabel}>Default income account</Text>
                 </View>
                 <ThemedSwitch
-                  accessibilityLabel="Default for Income"
+                  accessibilityLabel="Default income account"
                   disabled={pending}
                   onValueChange={setIsDefaultIncome}
                   value={isDefaultIncome}
@@ -946,12 +932,24 @@ function AccountFormModalContent({
                   />
                 </View>
               </View>
-              <Text style={styles.helperText}>
-                For months with fewer days, billing dates use the last day of
-                the month.
-              </Text>
             </View>
           ) : null}
+
+          {/* Keywords (Kai Knowledge) */}
+          <KaiKnowledgeSelectorRow
+            accentColor={typeColor}
+            count={keywords.length}
+            disabled={pending}
+            entityId={account?.id}
+            entityType="account"
+            onKeywordsUpdated={() => {
+              if (account?.id) {
+                void getAccountKeywordsByAccountId(account.id).then((rows) => {
+                  setKeywords(rows.map((r) => r.keyword));
+                });
+              }
+            }}
+          />
 
           {account ? (
             <View style={styles.balanceFooter}>
@@ -989,9 +987,6 @@ function AccountFormModalContent({
                 <Trash2 color={theme.colors.danger} size={16} />
                 <Text style={styles.archivedDeleteBtnText}>Permanently Delete Account</Text>
               </Pressable>
-              <Text style={styles.helperText}>
-                This archived account has no transaction history and can be safely deleted permanently.
-              </Text>
             </View>
           ) : null}
           </View>
@@ -1056,6 +1051,11 @@ function AccountFormModalContent({
               openingAmountInput(Math.abs(minorUnits), activeCurrencyCode) ||
               formatted,
           }));
+          if (minorUnits === 0) {
+            setAmountSign(isLiabilityAccount ? "-" : "+");
+          } else if (minorUnits < 0) {
+            setAmountSign("-");
+          }
           setCalculatorOpen(false);
         }}
       />
@@ -1143,7 +1143,9 @@ function AccountFormModalContent({
               selectedType?.accountGroup === "liability" ? "" : prev.maintainingAmount,
           }));
           if (selectedType) {
-            setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
+            if (amountMinorUnits === 0) {
+              setAmountSign(selectedType.accountGroup === "liability" ? "-" : "+");
+            }
           }
         }}
       />

@@ -74,32 +74,36 @@ export function findSplitEntriesByTransactionIds(
     return map;
   }
 
-  const rows = context
-    .select({
-      entry: transactionEntries,
-      categoryName: categories.name,
-      categoryIcon: categories.icon,
-      categoryColor: categories.hexColorsId,
-    })
-    .from(transactionEntries)
-    .leftJoin(categories, eq(transactionEntries.categoryId, categories.id))
-    .where(inArray(transactionEntries.transactionId, transactionIds))
-    .orderBy(transactionEntries.createdAt)
-    .all();
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < transactionIds.length; i += CHUNK_SIZE) {
+    const chunk = transactionIds.slice(i, i + CHUNK_SIZE);
+    const rows = context
+      .select({
+        entry: transactionEntries,
+        categoryName: categories.name,
+        categoryIcon: categories.icon,
+        categoryColor: categories.hexColorsId,
+      })
+      .from(transactionEntries)
+      .leftJoin(categories, eq(transactionEntries.categoryId, categories.id))
+      .where(inArray(transactionEntries.transactionId, chunk))
+      .orderBy(transactionEntries.createdAt)
+      .all();
 
-  for (const row of rows) {
-    const item: TransactionSplitEntryListItem = {
-      id: row.entry.id,
-      categoryId: row.entry.categoryId,
-      amountMinorUnits: row.entry.amountMinorUnits,
-      note: row.entry.note,
-      categoryName: row.categoryName,
-      categoryIcon: row.categoryIcon,
-      categoryColor: normalizeCategoryColor(row.categoryColor),
-    };
-    const list = map.get(row.entry.transactionId) ?? [];
-    list.push(item);
-    map.set(row.entry.transactionId, list);
+    for (const row of rows) {
+      const item: TransactionSplitEntryListItem = {
+        id: row.entry.id,
+        categoryId: row.entry.categoryId,
+        amountMinorUnits: row.entry.amountMinorUnits,
+        note: row.entry.note,
+        categoryName: row.categoryName,
+        categoryIcon: row.categoryIcon,
+        categoryColor: normalizeCategoryColor(row.categoryColor),
+      };
+      const list = map.get(row.entry.transactionId) ?? [];
+      list.push(item);
+      map.set(row.entry.transactionId, list);
+    }
   }
 
   return map;
