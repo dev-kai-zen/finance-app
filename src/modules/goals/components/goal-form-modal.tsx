@@ -473,9 +473,6 @@ function GoalFormModalContent({
                       <Text style={styles.pickerMainText}>
                         Link Accounts & Pockets
                       </Text>
-                      <Text style={styles.pickerSubText}>
-                        Optional — select accounts or pockets to track
-                      </Text>
                     </View>
                   </View>
                   <ChevronRight color={theme.colors.textSecondary} size={18} />
@@ -627,14 +624,14 @@ function GoalFormModalContent({
           {/* Optional Notes */}
           <WalkthroughTarget id="goalFormNotes">
             <View style={styles.formField}>
-              <Text style={styles.label}>Note (Optional)</Text>
+              <Text style={styles.label}>Note</Text>
               <TextInput
                 multiline
                 numberOfLines={3}
                 onBlur={() => setFocusedFieldType(null)}
                 onChangeText={setNote}
                 onFocus={() => setFocusedFieldType("description")}
-                placeholder="Why this goal matters, milestones, or reminders..."
+                placeholder="Add note..."
                 placeholderTextColor={theme.colors.textMuted}
                 style={[styles.input, styles.textArea]}
                 value={note}

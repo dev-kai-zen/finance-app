@@ -426,6 +426,8 @@ export const fil = {
         "Pinasimple ang mga form ng account at transaksyon gamit ang mas malinis at minimalist na disenyo.",
       improveItem3:
         "Gawing mas simple ang mga setting, kategorya, at dashboard card para sa mas malinis na layout.",
+      improveItem4:
+        "Gawing mas malinis ang Quick Search at mga form sa pagpaplano na may mga simpleng listahan at kapaki-pakinabang na gabay.",
       fixItem1:
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
       fixItem2:

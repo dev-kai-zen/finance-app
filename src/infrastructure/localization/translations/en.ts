@@ -413,6 +413,8 @@ export const en = {
         "Simplify account and transaction forms with a cleaner, clutter-free minimalist design.",
       improveItem3:
         "Streamline settings, categories, and dashboard cards for a cleaner, distraction-free layout.",
+      improveItem4:
+        "Clean up Quick Search and planning forms with sleek, distraction-free rows and helpful info tips.",
       fixItem1:
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
       fixItem2:

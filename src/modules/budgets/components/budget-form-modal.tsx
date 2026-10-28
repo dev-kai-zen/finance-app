@@ -12,7 +12,9 @@ import {
   AmountCalculatorField,
   AmountCalculatorModal,
   FullScreenFormModal,
+  HelpIconButton,
   IconHelper,
+  InfoModal,
   NotificationModal,
   ThemedSwitch,
 } from "@/components";
@@ -116,6 +118,10 @@ function BudgetFormModalContent({
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(
     [],
   );
+  const [infoModal, setInfoModal] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const handleToggleRollover = (val: boolean) => {
     if (val && !isPro) {
@@ -387,9 +393,6 @@ function BudgetFormModalContent({
                 <View style={styles.switchRow}>
                   <View style={styles.switchTextCol}>
                     <Text style={styles.switchTitle}>Enable Budget</Text>
-                    <Text style={styles.switchDescription}>
-                      Track expenses and evaluate spending limits
-                    </Text>
                   </View>
                   <ThemedSwitch
                     accessibilityLabel="Enable Budget"
@@ -481,11 +484,18 @@ function BudgetFormModalContent({
                           <Text style={styles.proChipText}>PRO</Text>
                         </View>
                       )}
+                      <HelpIconButton
+                        accessibilityHint="Explains budget rollover"
+                        accessibilityLabel="Rollover budget help"
+                        onPress={() =>
+                          setInfoModal({
+                            title: "Rollover Budget",
+                            message:
+                              "Unspent budget from the previous period carries over to the next.",
+                          })
+                        }
+                      />
                     </View>
-                    <Text style={styles.switchDescription}>
-                      Unspent budget from the previous period carries over to the
-                      next
-                    </Text>
                   </View>
                   <ThemedSwitch
                     accessibilityLabel="Rollover Budget"
@@ -552,10 +562,18 @@ function BudgetFormModalContent({
                           <Text style={styles.proChipText}>PRO</Text>
                         </View>
                       )}
+                      <HelpIconButton
+                        accessibilityHint="Explains over-budget alerts"
+                        accessibilityLabel="Over-budget alert help"
+                        onPress={() =>
+                          setInfoModal({
+                            title: "Over-Budget Alert",
+                            message:
+                              "Prompt a confirmation when an expense exceeds this budget.",
+                          })
+                        }
+                      />
                     </View>
-                    <Text style={styles.switchDescription}>
-                      Prompt a confirmation when an expense exceeds this budget
-                    </Text>
                   </View>
                   <ThemedSwitch
                     accessibilityLabel="Over-Budget Alert"
@@ -606,6 +624,13 @@ function BudgetFormModalContent({
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <InfoModal
+        message={infoModal?.message ?? ""}
+        onClose={() => setInfoModal(null)}
+        title={infoModal?.title ?? ""}
+        visible={infoModal !== null}
       />
 
       <DraggableTourChip
