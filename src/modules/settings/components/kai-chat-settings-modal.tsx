@@ -138,12 +138,6 @@ export function KaiChatSettingsModal({
                   )}
                 </View>
               </View>
-
-              <View style={styles.buttonPreviewBadge}>
-                <Text style={styles.buttonPreviewText}>
-                  {t("chatWithKai.modeReviewPill")}
-                </Text>
-              </View>
             </Pressable>
 
             {/* Option 2: Auto-Save */}
@@ -195,12 +189,6 @@ export function KaiChatSettingsModal({
                     <Check color={theme.colors.onPrimary} size={13} />
                   )}
                 </View>
-              </View>
-
-              <View style={styles.buttonPreviewBadge}>
-                <Text style={styles.buttonPreviewText}>
-                  {t("chatWithKai.modeAutoPill")}
-                </Text>
               </View>
             </Pressable>
           </View>

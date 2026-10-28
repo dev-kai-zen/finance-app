@@ -697,32 +697,10 @@ function AccountFormModalContent({
                   <Text numberOfLines={1} style={styles.iconNameText}>
                     {currentIconKey}
                   </Text>
-                  <Text numberOfLines={2} style={styles.iconSubtext}>
-                    {value.iconKey
-                      ? "Custom icon selected · Tap to change"
-                      : `Using group default (${selectedType?.iconKey ?? "landmark"})`}
-                  </Text>
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.changeBadge,
-                  {
-                    backgroundColor: `${theme.colors.primary}15`,
-                    borderColor: `${theme.colors.primary}40`,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.changeBadgeText,
-                    { color: theme.colors.primary },
-                  ]}
-                >
-                  Change Icon
-                </Text>
-              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
 
           <AmountCalculatorField
@@ -763,21 +741,6 @@ function AccountFormModalContent({
               setAmountSign((prev) => (prev === "+" ? "-" : "+"));
             }}
           />
-          {startingBalanceLocked ? (
-            <Text style={styles.helperText}>
-              Starting balance is locked and can no longer be changed.
-            </Text>
-          ) : !currencyLocked ? (
-            <Text style={styles.helperText}>
-              Tap the currency code beside starting balance to change this account&apos;s
-              currency.
-            </Text>
-          ) : (
-            <Text style={styles.helperText}>
-              Currency cannot be changed after transactions are recorded.
-            </Text>
-          )}
-
           {!isLiabilityAccount ? (
             <AmountCalculatorField
               amountInputRef={maintainingBalanceRef}
@@ -799,9 +762,6 @@ function AccountFormModalContent({
             >
                 <View style={styles.toggleCopy}>
                   <Text style={styles.toggleLabel}>Enable pockets</Text>
-                  <Text style={styles.toggleHint}>
-                    Show Main and allow separate pocket balances for this account.
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Enable pockets"
@@ -821,7 +781,7 @@ function AccountFormModalContent({
           >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
-                  <Text style={styles.toggleLabel}>Hide from selection</Text>
+                  <Text style={styles.toggleLabel}>Hide from transaction pickers</Text>
                   {!isPro && (
                     <View style={styles.proChip}>
                       <Crown color="#D97706" size={10} />
@@ -829,12 +789,9 @@ function AccountFormModalContent({
                     </View>
                   )}
                 </View>
-                <Text style={styles.toggleHint}>
-                  Exclude this account from transaction account pickers.
-                </Text>
               </View>
               <ThemedSwitch
-                accessibilityLabel="Hide from selection"
+                accessibilityLabel="Hide from transaction pickers"
                 disabled={pending}
                 onValueChange={handleToggleHideFromSelection}
                 value={value.hideFromSelection}
@@ -848,7 +805,7 @@ function AccountFormModalContent({
           >
               <View style={styles.toggleCopy}>
                 <View style={styles.toggleLabelRow}>
-                  <Text style={styles.toggleLabel}>Hide from reports</Text>
+                  <Text style={styles.toggleLabel}>Exclude from Net Worth & reports</Text>
                   {!isPro && (
                     <View style={styles.proChip}>
                       <Crown color="#D97706" size={10} />
@@ -856,12 +813,9 @@ function AccountFormModalContent({
                     </View>
                   )}
                 </View>
-                <Text style={styles.toggleHint}>
-                  Exclude this account from net worth and opening totals.
-                </Text>
               </View>
               <ThemedSwitch
-                accessibilityLabel="Hide from reports"
+                accessibilityLabel="Exclude from Net Worth & reports"
                 disabled={pending}
                 onValueChange={handleToggleHideFromReports}
                 value={value.hideFromReports}
@@ -872,13 +826,10 @@ function AccountFormModalContent({
             <>
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Expense</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this account when recording expense transactions.
-                  </Text>
+                  <Text style={styles.toggleLabel}>Default expense account</Text>
                 </View>
                 <ThemedSwitch
-                  accessibilityLabel="Default for Expense"
+                  accessibilityLabel="Default expense account"
                   disabled={pending}
                   onValueChange={setIsDefaultExpense}
                   value={isDefaultExpense}
@@ -887,13 +838,10 @@ function AccountFormModalContent({
 
               <View style={styles.toggleRow}>
                 <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Income</Text>
-                  <Text style={styles.toggleHint}>
-                    Pre-select this account when recording income transactions.
-                  </Text>
+                  <Text style={styles.toggleLabel}>Default income account</Text>
                 </View>
                 <ThemedSwitch
-                  accessibilityLabel="Default for Income"
+                  accessibilityLabel="Default income account"
                   disabled={pending}
                   onValueChange={setIsDefaultIncome}
                   value={isDefaultIncome}
@@ -984,10 +932,6 @@ function AccountFormModalContent({
                   />
                 </View>
               </View>
-              <Text style={styles.helperText}>
-                For months with fewer days, billing dates use the last day of
-                the month.
-              </Text>
             </View>
           ) : null}
 
@@ -1043,9 +987,6 @@ function AccountFormModalContent({
                 <Trash2 color={theme.colors.danger} size={16} />
                 <Text style={styles.archivedDeleteBtnText}>Permanently Delete Account</Text>
               </Pressable>
-              <Text style={styles.helperText}>
-                This archived account has no transaction history and can be safely deleted permanently.
-              </Text>
             </View>
           ) : null}
           </View>

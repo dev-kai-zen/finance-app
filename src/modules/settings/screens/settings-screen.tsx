@@ -65,6 +65,7 @@ import { useUserNickname } from "../hooks/use-user-nickname";
 import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
+import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
   return (
@@ -86,6 +87,7 @@ function SettingsScreenContent() {
     availableThemes,
   } = useThemeController();
   const { activeLanguage, preference, t } = useLocalization();
+  const { preferences: currencyPrefs } = useCurrencyPreferences();
   const { colors } = useHexColors();
   const workspace = useWorkspace();
   const {
@@ -363,7 +365,7 @@ function SettingsScreenContent() {
                   {t("settings.currencySetup")}
                 </Text>
                 <Text style={styles.settingDescription}>
-                  {t("settings.currencySetupDescription")}
+                  {currencyPrefs.defaultCurrency}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -479,11 +481,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.remindersTitle", { defaultValue: "Reminders" })}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.remindersDescription", {
-                    defaultValue: "Daily logging and due bill reminders",
-                  })}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -515,9 +512,6 @@ function SettingsScreenContent() {
                     <Text style={styles.settingLabel}>
                       {t("settings.widgetsTitle")}
                     </Text>
-                    <Text style={styles.settingDescription}>
-                      {t("settings.widgetsDescription")}
-                    </Text>
                   </View>
                   <ChevronRight color={theme.colors.textMuted} size={18} />
                 </Pressable>
@@ -541,9 +535,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.guideHelperTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.guideHelperDescription")}
                 </Text>
               </View>
               <ThemedSwitch
@@ -572,9 +563,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.quickSearchTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.quickSearchDescription")}
                 </Text>
               </View>
               <ThemedSwitch
@@ -609,9 +597,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.kaiKnowledgeTitle")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.kaiKnowledgeDescription")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -638,8 +623,6 @@ function SettingsScreenContent() {
                   {chatMode === "auto"
                     ? t("chatWithKai.modeAutoTitle")
                     : t("chatWithKai.modeReviewTitle")}
-                  {" · "}
-                  {t("settings.kaiChatModeSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

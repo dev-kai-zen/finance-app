@@ -422,6 +422,10 @@ export const fil = {
         "Pumili sa pagitan ng Suriin Muna o Awtomatikong Pag-save sa Chat with Kai.",
       improveItem1:
         "Tingnan ang bersyon ng app at status ng plano sa seksyon ng Tungkol sa App sa settings.",
+      improveItem2:
+        "Pinasimple ang mga form ng account at transaksyon gamit ang mas malinis at minimalist na disenyo.",
+      improveItem3:
+        "Gawing mas simple ang mga setting, kategorya, at dashboard card para sa mas malinis na layout.",
       fixItem1:
         "Panatilihin ang piniling positibo o negatibong senyales kapag nagtatala ng mga refund o bawas sa kita.",
       fixItem2:

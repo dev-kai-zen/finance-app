@@ -6,7 +6,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
 
 export interface AmountCalculatorFieldProps {
-  label: string;
+  label?: string;
   labelAccessory?: ReactNode;
   amountMinorUnits: number;
   amountSign?: "+" | "-" | "transfer";
@@ -61,10 +61,12 @@ export function AmountCalculatorField({
 
   return (
     <View style={styles.group}>
-      <View style={styles.labelRow}>
-        <Text style={styles.label}>{label}</Text>
-        {labelAccessory}
-      </View>
+      {label || labelAccessory ? (
+        <View style={styles.labelRow}>
+          {label ? <Text style={styles.label}>{label}</Text> : null}
+          {labelAccessory}
+        </View>
+      ) : null}
       <View style={styles.row}>
         <View
           ref={amountInputRef}

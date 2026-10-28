@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -290,27 +290,9 @@ export function CategoryGroupModal({
                   </View>
                   <View style={styles.iconInfoCol}>
                     <Text style={styles.iconNameText}>{selectedIcon}</Text>
-                    <Text style={styles.iconSubtext}>Tap to choose icon</Text>
                   </View>
                 </View>
-                <View
-                  style={[
-                    styles.changeIconBadge,
-                    {
-                      backgroundColor: `${theme.colors.primary}15`,
-                      borderColor: `${theme.colors.primary}40`,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.changeIconBadgeText,
-                      { color: theme.colors.primary },
-                    ]}
-                  >
-                    Change Icon
-                  </Text>
-                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </View>
 

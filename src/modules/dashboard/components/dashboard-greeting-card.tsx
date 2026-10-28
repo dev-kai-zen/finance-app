@@ -116,21 +116,11 @@ export function DashboardGreetingCard({
           pressed && styles.quoteBoxPressed,
         ]}
       >
-        <View style={styles.quoteHeaderRow}>
-          <View style={styles.quoteIconBadge}>
-            <Quote color={theme.colors.primary} size={13} />
-          </View>
-          <View style={styles.shuffleButton}>
-            <Shuffle color={theme.colors.textMuted} size={12} />
-            <Text style={styles.shuffleText}>{t("dashboard.quoteShuffle")}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.quoteText}>“{quote.quote}”</Text>
-
-        <View style={styles.quoteFooter}>
-          <Text style={styles.authorText}>— {quote.author}</Text>
-        </View>
+        <Quote color={theme.colors.primary} size={14} style={styles.quoteIcon} />
+        <Text style={styles.quoteText}>
+          “{quote.quote}” <Text style={styles.authorText}>— {quote.author}</Text>
+        </Text>
+        <Shuffle color={theme.colors.textMuted} size={13} style={styles.shuffleIcon} />
       </Pressable>
     </View>
   );
@@ -186,56 +176,40 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
     },
     quoteBox: {
+      alignItems: "center",
       backgroundColor: `${theme.colors.primary}08`,
       borderColor: `${theme.colors.primary}20`,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.sm,
-      gap: theme.spacing.xs,
     },
     quoteBoxPressed: {
-      opacity: 0.8,
       backgroundColor: `${theme.colors.primary}12`,
-    },
-    quoteHeaderRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    quoteIconBadge: {
-      alignItems: "center",
-      justifyContent: "center",
       opacity: 0.8,
+    },
+    quoteIcon: {
+      flexShrink: 0,
+      opacity: 0.75,
     },
     quoteText: {
       color: theme.colors.textPrimary,
-      fontSize: theme.typography.fontSize.sm,
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
       fontStyle: "italic",
-      lineHeight: theme.typography.lineHeight.sm * 1.15,
-      marginTop: 2,
-    },
-    quoteFooter: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "flex-end",
-      marginTop: theme.spacing.xxs,
+      lineHeight: theme.typography.lineHeight.xs * 1.35,
     },
     authorText: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
+      fontStyle: "normal",
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    shuffleButton: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 4,
-      paddingVertical: 2,
-    },
-    shuffleText: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.medium,
+    shuffleIcon: {
+      flexShrink: 0,
+      opacity: 0.6,
     },
   });
 }

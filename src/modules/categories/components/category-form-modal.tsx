@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus } from "lucide-react-native";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -280,21 +280,9 @@ export function CategoryFormModal({
                     </View>
                     <View style={styles.iconInfoCol}>
                       <Text style={styles.iconNameText}>{selectedIcon}</Text>
-                      <Text style={styles.iconSubtext}>
-                        Tap to browse 100+ icons in library
-                      </Text>
                     </View>
                   </View>
-                  <View
-                    style={[
-                      styles.changeIconBadge,
-                      { borderColor: `${categoricalColor}66` },
-                    ]}
-                  >
-                    <Text style={[styles.changeIconBadgeText, { color: categoricalColor }]}>
-                      Change ▾
-                    </Text>
-                  </View>
+                  <ChevronRight color={theme.colors.textMuted} size={18} />
                 </Pressable>
             </View>
 

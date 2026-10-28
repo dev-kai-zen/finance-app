@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Check, FolderPlus, Plus } from "lucide-react-native";
+import { Check, ChevronRight, FolderPlus, Plus } from "lucide-react-native";
 import { useLocalization } from "@/infrastructure/localization";
 import {
   ConfirmModal,
@@ -379,30 +379,10 @@ function AccountTypeFormModalContent({
                   </View>
                   <View style={styles.iconInfo}>
                     <Text style={styles.iconNameText}>{iconKey}</Text>
-                    <Text style={styles.iconSubtext}>
-                      Tap to choose from icon library
-                    </Text>
                   </View>
                 </View>
 
-                <View
-                  style={[
-                    styles.changeBadge,
-                    {
-                      backgroundColor: `${theme.colors.primary}15`,
-                      borderColor: `${theme.colors.primary}40`,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.changeBadgeText,
-                      { color: theme.colors.primary },
-                    ]}
-                  >
-                    Change Icon
-                  </Text>
-                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
             </View>
 

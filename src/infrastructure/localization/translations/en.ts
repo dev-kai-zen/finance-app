@@ -409,6 +409,10 @@ export const en = {
         "Choose between Review First or Auto-Save mode in Chat with Kai.",
       improveItem1:
         "View your app version and membership status directly in the About settings section.",
+      improveItem2:
+        "Simplify account and transaction forms with a cleaner, clutter-free minimalist design.",
+      improveItem3:
+        "Streamline settings, categories, and dashboard cards for a cleaner, distraction-free layout.",
       fixItem1:
         "Preserve chosen positive and negative signs when recording expense refunds or income deductions.",
       fixItem2:

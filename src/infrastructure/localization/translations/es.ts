@@ -421,6 +421,10 @@ export const es = {
         "Elige entre el modo Revisar Primero o Guardado Automático en el Chat con Kai.",
       improveItem1:
         "Consulta la versión de la app y el estado de tu plan en los ajustes.",
+      improveItem2:
+        "Simplifica los formularios de cuentas y transacciones con un diseño más limpio y minimalista.",
+      improveItem3:
+        "Simplifica los ajustes, categorías y tarjetas del panel para un diseño más limpio y sin distracciones.",
       fixItem1:
         "Conservar los signos positivo o negativo al registrar reembolsos de gastos o deducciones de ingresos.",
       fixItem2:
