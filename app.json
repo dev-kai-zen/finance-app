@@ -3,7 +3,7 @@
     "name": "Kaizen Finance",
     "slug": "finance-app",
     "scheme": "finance-app",
-    "version": "1.2.2",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/kaizen-finance-app-logo.png",
     "userInterfaceStyle": "automatic",

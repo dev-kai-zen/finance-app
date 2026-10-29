@@ -442,7 +442,7 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
-    v122: {
+    v130: {
       date: "October 29, 2026",
       newItem1:
         "Create your own color combinations in the new Custom Theme Studio.",

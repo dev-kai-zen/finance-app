@@ -440,7 +440,7 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
-    v122: {
+    v130: {
       date: "Oktubre 29, 2026",
       newItem1:
         "Gumawa ng sarili mong kombinasyon ng kulay sa bagong Custom Theme Studio.",
