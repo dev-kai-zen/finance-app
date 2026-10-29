@@ -14,6 +14,29 @@ import type {
 
 export const CUSTOM_THEME_ID = "custom";
 
+export interface NamedHexSwatch {
+  name: string;
+  hex: string;
+}
+
+export const DEFAULT_HEX_SWATCHES: readonly NamedHexSwatch[] = [
+  { name: "Emerald", hex: "#10B981" },
+  { name: "Royal Blue", hex: "#2563EB" },
+  { name: "Violet", hex: "#8B5CF6" },
+  { name: "Amber Gold", hex: "#F59E0B" },
+  { name: "Sunset Orange", hex: "#EA580C" },
+  { name: "Teal", hex: "#0D9488" },
+  { name: "Sky Blue", hex: "#0EA5E9" },
+  { name: "Rose Pink", hex: "#EC4899" },
+  { name: "Crimson", hex: "#DC2626" },
+  { name: "Indigo", hex: "#4F46E5" },
+  { name: "Mint", hex: "#14B8A6" },
+  { name: "Coral", hex: "#FB923C" },
+  { name: "Lime", hex: "#84CC16" },
+  { name: "Lavender", hex: "#C084FC" },
+  { name: "Slate", hex: "#64748B" },
+] as const;
+
 export const DEFAULT_CUSTOM_THEME_CONFIG: CustomThemeConfig = {
   name: "Custom",
   baseMode: "dark",

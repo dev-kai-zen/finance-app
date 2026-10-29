@@ -411,11 +411,13 @@ export const fil = {
     tintRich: "Matingkad",
     primaryColorLabel: "Pangunahing Kulay",
     primaryColorHint: "Mga button, aktibong tab, at pangunahing highlight.",
+    primaryUsedFor: "Ginagamit sa: Action buttons (Save/Add), aktibong tabs, floating action button (+), napiling chips, at progress bars ng badyet at layunin.",
     accentColorLabel: "Accent na Kulay",
     accentColorHint: "Pangalawang highlight, mga badge, at chart.",
+    accentUsedFor: "Ginagamit sa: Kai AI assistant badges & sparkles, pangalawang sukatan sa ulat (savings rate), at mga notification icon.",
     applyCustomTheme: "Gamitin ang Custom Theme",
     unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
-    customShadeLabel: "Itimpla ang Hue at Kulay",
+    customShadeLabel: "I-adjust ang Tingkad at Liwanag",
   },
   versionHistory: {
     heading: "Kasaysayan ng Bersyon",
@@ -455,10 +457,14 @@ export const fil = {
         "Ipakita ang arawang net total at aktibong filter chips sa screen ng Mga Transaksyon.",
       improveItem3:
         "Direktang buksan ang mga kaugnay na transaksyon mula sa mga card sa Dashboard, Badyet, at Layunin.",
+      improveItem4:
+        "Ipakita kung saan ginagamit ang mga kulay ng tema at pumili mula sa iyong mga naka-save na kulay.",
       fixItem1:
         "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
       fixItem2:
         "Ayusin ang bilis at katatagan sa pagbukas ng app at mga screen.",
+      fixItem3:
+        "Inayos ang Quick Actions sa Home na nagbubukas ng Gastos sa halip na Kita o Paglilipat.",
     },
     v121: {
       date: "Oktubre 28, 2026",

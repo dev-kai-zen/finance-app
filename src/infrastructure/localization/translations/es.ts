@@ -410,11 +410,13 @@ export const es = {
     tintRich: "Intenso",
     primaryColorLabel: "Color Principal",
     primaryColorHint: "Botones, pestañas activas y resaltados principales.",
+    primaryUsedFor: "Aplicado a: Botones de acción (Guardar/Agregar), pestañas activas, botón flotante (+), chips seleccionados y barras de progreso.",
     accentColorLabel: "Color de Acento",
     accentColorHint: "Resaltados secundarios, insignias y gráficos.",
+    accentUsedFor: "Aplicado a: Destacados del asistente Kai AI, métricas secundarias en informes (tasa de ahorro) y alertas de notificación.",
     applyCustomTheme: "Aplicar Tema Personalizado",
     unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
-    customShadeLabel: "Ajustar tono y matiz",
+    customShadeLabel: "Ajustar brillo y tonalidad",
   },
   versionHistory: {
     heading: "Historial de versiones",
@@ -454,10 +456,14 @@ export const es = {
         "Muestra totales netos diarios y filtros activos en la pantalla de Transacciones.",
       improveItem3:
         "Abre directamente las transacciones filtradas desde las tarjetas del Panel, Presupuestos y Metas.",
+      improveItem4:
+        "Muestra guías claras de dónde se aplica cada color y selecciona desde tus colores hexadecimales guardados.",
       fixItem1:
         "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
       fixItem2:
         "Corrige la estabilidad al iniciar la aplicación y cargar pantallas.",
+      fixItem3:
+        "Se corrigió que las Acciones Rápidas en Inicio abrieran Gasto en lugar de Ingreso o Transferencia.",
     },
     v121: {
       date: "28 de octubre de 2026",

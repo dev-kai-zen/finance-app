@@ -413,11 +413,13 @@ export const en = {
     tintRich: "Rich",
     primaryColorLabel: "Primary Brand Color",
     primaryColorHint: "Buttons, active tabs, and primary highlights.",
+    primaryUsedFor: "Applied to: Action buttons (Save/Add), active navigation tabs, floating action button (+), selected chips, budget & goal progress bars.",
     accentColorLabel: "Accent Color",
     accentColorHint: "Secondary highlights, badges, and chart spikes.",
+    accentUsedFor: "Applied to: Kai AI assistant badges & sparkles, secondary report metrics (savings rate & ratios), and notification icons.",
     applyCustomTheme: "Apply Custom Theme",
     unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
-    customShadeLabel: "Fine-tune Hue & Shade",
+    customShadeLabel: "Fine-tune Tone & Brightness",
   },
   versionHistory: {
     heading: "Version History",
@@ -457,10 +459,14 @@ export const en = {
         "Show daily net totals and active filter chips on the Transactions screen.",
       improveItem3:
         "Jump directly to filtered transactions from Dashboard cards, Budgets, and Savings Goals.",
+      improveItem4:
+        "Show clear guides on where theme colors apply and choose from your saved hex color palette.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
       fixItem2:
         "Fix startup and screen loading reliability across the app.",
+      fixItem3:
+        "Fix Quick Actions on Home opening Expense instead of Income or Transfer.",
     },
     v121: {
       date: "October 28, 2026",

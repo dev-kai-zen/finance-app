@@ -589,6 +589,7 @@ function DashboardScreenContent() {
         presetError={presetError}
         error={transactionError}
         initialTransaction={prefilledTransaction}
+        initialType={modalMode}
         isEditing={isEditingTransaction}
         onClearError={clearTransactionError}
         onClearPresetError={clearPresetError}
@@ -598,6 +599,7 @@ function DashboardScreenContent() {
           setIsModalOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
+          setModalMode("expense");
           setOnChatEditSaved(null);
           if (shouldReturnToChat) {
             setTimeout(() => {

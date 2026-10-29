@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Check,
+  Info,
   Crown,
   Moon,
   Palette,
@@ -24,8 +25,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { isTabletOrDesktop } from "@/constants/layout";
 import {
-  CURATED_ACCENT_SWATCHES,
-  CURATED_PRIMARY_SWATCHES,
+  DEFAULT_HEX_SWATCHES,
   CUSTOM_THEME_ID,
   buildCustomTheme,
   isFreeThemePreset,
@@ -63,10 +63,7 @@ export interface ThemePickerModalProps {
 type ThemeModalTab = "presets" | "custom";
 type PresetModeFilter = "all" | "light" | "dark";
 
-const HUE_STEPS = [
-  0, 22, 45, 68, 90, 112, 135, 158, 180, 202, 225, 248, 270, 292, 315, 338,
-];
-const SHADE_LIGHTNESS_STEPS = [26, 32, 38, 44, 50, 56, 62, 68];
+const SHADE_LIGHTNESS_STEPS = [24, 30, 36, 42, 48, 54, 60, 66];
 
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const clean = normalizeHexColor(hex, "#10B981").replace("#", "");
@@ -186,28 +183,50 @@ export function ThemePickerModal({
     [draftConfig],
   );
 
-  const userHexList = useMemo(() => {
+  const swatches = useMemo(() => {
+    const list: Array<{ id: string; name: string; hex: string }> = [];
     const seen = new Set<string>();
-    const list: string[] = [];
-    for (const item of savedHexColors ?? []) {
-      const normalized = normalizeHexColor(item?.hex, "");
-      if (normalized && !seen.has(normalized)) {
-        seen.add(normalized);
-        list.push(normalized);
+
+    for (const color of savedHexColors ?? []) {
+      const normalized = normalizeHexColor(color?.hex, "");
+      if (isValidHexColor(normalized) && !seen.has(normalized.toUpperCase())) {
+        seen.add(normalized.toUpperCase());
+        list.push({
+          id: color.id,
+          name: color.name,
+          hex: normalized.toUpperCase(),
+        });
       }
     }
-    return list.slice(0, 12);
+
+    for (const def of DEFAULT_HEX_SWATCHES) {
+      const normalized = normalizeHexColor(def.hex, "").toUpperCase();
+      if (!seen.has(normalized)) {
+        seen.add(normalized);
+        list.push({
+          id: `default_${def.name.toLowerCase().replace(/\s+/g, "_")}`,
+          name: def.name,
+          hex: normalized,
+        });
+      }
+    }
+
+    return list;
   }, [savedHexColors]);
 
-  const primarySwatches = useMemo(() => {
-    const combined = [...CURATED_PRIMARY_SWATCHES, ...userHexList];
-    return Array.from(new Set(combined.map((hex) => hex.toUpperCase())));
-  }, [userHexList]);
+  const primaryColorName = useMemo(() => {
+    const match = swatches.find(
+      (s) => s.hex === draftConfig.primaryHex.toUpperCase(),
+    );
+    return match?.name ?? null;
+  }, [swatches, draftConfig.primaryHex]);
 
-  const accentSwatches = useMemo(() => {
-    const combined = [...CURATED_ACCENT_SWATCHES, ...userHexList];
-    return Array.from(new Set(combined.map((hex) => hex.toUpperCase())));
-  }, [userHexList]);
+  const accentColorName = useMemo(() => {
+    const match = swatches.find(
+      (s) => s.hex === draftConfig.accentHex.toUpperCase(),
+    );
+    return match?.name ?? null;
+  }, [swatches, draftConfig.accentHex]);
 
   const filteredPresets = useMemo(() => {
     if (modeFilter === "all") return themes;
@@ -704,9 +723,15 @@ export function ThemePickerModal({
                     <Text style={styles.studioSectionLabel}>
                       {t("themePicker.primaryColorLabel")}
                     </Text>
-                    <Text style={styles.studioSectionHint}>
-                      {t("themePicker.primaryColorHint")}
-                    </Text>
+                    {primaryColorName ? (
+                      <Text style={styles.selectedColorNamePill}>
+                        {primaryColorName}
+                      </Text>
+                    ) : (
+                      <Text style={styles.studioSectionHint}>
+                        {t("themePicker.primaryColorHint")}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.hexInputContainer}>
                     <View
@@ -727,20 +752,29 @@ export function ThemePickerModal({
                     />
                   </View>
                 </View>
+
+                {/* Primary Helper Callout */}
+                <View style={styles.colorHelperCard}>
+                  <Info color={theme.colors.primary} size={13} />
+                  <Text style={styles.colorHelperText}>
+                    {t("themePicker.primaryUsedFor")}
+                  </Text>
+                </View>
+
+                {/* Swatches Grid */}
                 <View style={styles.swatchGrid}>
-                  {primarySwatches.map((hex) => {
+                  {swatches.map((item) => {
                     const selected =
-                      draftConfig.primaryHex.toUpperCase() ===
-                      hex.toUpperCase();
+                      draftConfig.primaryHex.toUpperCase() === item.hex;
                     return (
                       <Pressable
-                        key={`primary-${hex}`}
-                        accessibilityLabel={`Primary color ${hex}`}
+                        key={`primary-${item.hex}`}
+                        accessibilityLabel={`${item.name} (${item.hex})`}
                         accessibilityRole="button"
-                        onPress={() => handleSelectPrimarySwatch(hex)}
+                        onPress={() => handleSelectPrimarySwatch(item.hex)}
                         style={[
                           styles.colorSwatchButton,
-                          { backgroundColor: hex },
+                          { backgroundColor: item.hex },
                           selected && styles.colorSwatchSelected,
                         ]}
                       >
@@ -752,43 +786,19 @@ export function ThemePickerModal({
                   })}
                 </View>
 
-                {/* Interactive Hue & Shade Strip for Primary Color */}
+                {/* Interactive Shade Strip for Primary Color */}
                 {(() => {
                   const currentHsl = hexToHsl(draftConfig.primaryHex);
-                  const activeSaturation = Math.max(65, currentHsl.s || 78);
+                  const activeSaturation = Math.max(60, currentHsl.s || 78);
                   return (
                     <View style={styles.shadePickerBox}>
-                      <Text style={styles.shadePickerLabel}>
-                        {t("themePicker.customShadeLabel")}
-                      </Text>
-                      <View style={styles.hueStripRow}>
-                        {HUE_STEPS.map((hue) => {
-                          const stepHex = hslToHex(hue, 80, 48);
-                          const isHueActive =
-                            Math.abs(currentHsl.h - hue) <= 12 ||
-                            Math.abs(currentHsl.h - hue) >= 348;
-                          return (
-                            <Pressable
-                              key={`primary-hue-${hue}`}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Hue ${hue}`}
-                              onPress={() =>
-                                handleSelectPrimarySwatch(
-                                  hslToHex(
-                                    hue,
-                                    activeSaturation,
-                                    Math.max(30, Math.min(64, currentHsl.l || 48)),
-                                  ),
-                                )
-                              }
-                              style={[
-                                styles.hueSegment,
-                                { backgroundColor: stepHex },
-                                isHueActive && styles.hueSegmentActive,
-                              ]}
-                            />
-                          );
-                        })}
+                      <View style={styles.shadePickerHeaderRow}>
+                        <Text style={styles.shadePickerLabel}>
+                          {t("themePicker.customShadeLabel")}
+                        </Text>
+                        <Text style={styles.shadePickerValueText}>
+                          {Math.round(currentHsl.l)}%
+                        </Text>
                       </View>
                       <View style={styles.shadeStripRow}>
                         {SHADE_LIGHTNESS_STEPS.map((lightness) => {
@@ -798,13 +808,16 @@ export function ThemePickerModal({
                             lightness,
                           );
                           const isShadeSelected =
-                            draftConfig.primaryHex.toUpperCase() === shadeHex;
+                            draftConfig.primaryHex.toUpperCase() ===
+                            shadeHex.toUpperCase();
                           return (
                             <Pressable
                               key={`primary-shade-${lightness}`}
                               accessibilityRole="button"
-                              accessibilityLabel={`Shade ${shadeHex}`}
-                              onPress={() => handleSelectPrimarySwatch(shadeHex)}
+                              accessibilityLabel={`Tone ${lightness}%`}
+                              onPress={() =>
+                                handleSelectPrimarySwatch(shadeHex)
+                              }
                               style={[
                                 styles.shadeSegment,
                                 { backgroundColor: shadeHex },
@@ -826,9 +839,15 @@ export function ThemePickerModal({
                     <Text style={styles.studioSectionLabel}>
                       {t("themePicker.accentColorLabel")}
                     </Text>
-                    <Text style={styles.studioSectionHint}>
-                      {t("themePicker.accentColorHint")}
-                    </Text>
+                    {accentColorName ? (
+                      <Text style={styles.selectedColorNamePill}>
+                        {accentColorName}
+                      </Text>
+                    ) : (
+                      <Text style={styles.studioSectionHint}>
+                        {t("themePicker.accentColorHint")}
+                      </Text>
+                    )}
                   </View>
                   <View style={styles.hexInputContainer}>
                     <View
@@ -849,67 +868,53 @@ export function ThemePickerModal({
                     />
                   </View>
                 </View>
+
+                {/* Accent Helper Callout */}
+                <View style={styles.colorHelperCard}>
+                  <Info color={theme.colors.accent} size={13} />
+                  <Text style={styles.colorHelperText}>
+                    {t("themePicker.accentUsedFor")}
+                  </Text>
+                </View>
+
+                {/* Swatches Grid */}
                 <View style={styles.swatchGrid}>
-                  {accentSwatches.map((hex) => {
+                  {swatches.map((item) => {
                     const selected =
-                      draftConfig.accentHex.toUpperCase() === hex.toUpperCase();
+                      draftConfig.accentHex.toUpperCase() === item.hex;
                     return (
                       <Pressable
-                        key={`accent-${hex}`}
-                        accessibilityLabel={`Accent color ${hex}`}
+                        key={`accent-${item.hex}`}
+                        accessibilityLabel={`${item.name} (${item.hex})`}
                         accessibilityRole="button"
-                        onPress={() => handleSelectAccentSwatch(hex)}
+                        onPress={() => handleSelectAccentSwatch(item.hex)}
                         style={[
                           styles.colorSwatchButton,
-                          { backgroundColor: hex },
+                          { backgroundColor: item.hex },
                           selected && styles.colorSwatchSelected,
                         ]}
                       >
                         {selected ? (
-                          <Check color="#111827" size={14} strokeWidth={3} />
+                          <Check color="#FFFFFF" size={14} strokeWidth={3} />
                         ) : null}
                       </Pressable>
                     );
                   })}
                 </View>
 
-                {/* Interactive Hue & Shade Strip for Accent Color */}
+                {/* Interactive Shade Strip for Accent Color */}
                 {(() => {
                   const currentHsl = hexToHsl(draftConfig.accentHex);
-                  const activeSaturation = Math.max(70, currentHsl.s || 82);
+                  const activeSaturation = Math.max(65, currentHsl.s || 82);
                   return (
                     <View style={styles.shadePickerBox}>
-                      <Text style={styles.shadePickerLabel}>
-                        {t("themePicker.customShadeLabel")}
-                      </Text>
-                      <View style={styles.hueStripRow}>
-                        {HUE_STEPS.map((hue) => {
-                          const stepHex = hslToHex(hue, 84, 50);
-                          const isHueActive =
-                            Math.abs(currentHsl.h - hue) <= 12 ||
-                            Math.abs(currentHsl.h - hue) >= 348;
-                          return (
-                            <Pressable
-                              key={`accent-hue-${hue}`}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Accent hue ${hue}`}
-                              onPress={() =>
-                                handleSelectAccentSwatch(
-                                  hslToHex(
-                                    hue,
-                                    activeSaturation,
-                                    Math.max(32, Math.min(66, currentHsl.l || 50)),
-                                  ),
-                                )
-                              }
-                              style={[
-                                styles.hueSegment,
-                                { backgroundColor: stepHex },
-                                isHueActive && styles.hueSegmentActive,
-                              ]}
-                            />
-                          );
-                        })}
+                      <View style={styles.shadePickerHeaderRow}>
+                        <Text style={styles.shadePickerLabel}>
+                          {t("themePicker.customShadeLabel")}
+                        </Text>
+                        <Text style={styles.shadePickerValueText}>
+                          {Math.round(currentHsl.l)}%
+                        </Text>
                       </View>
                       <View style={styles.shadeStripRow}>
                         {SHADE_LIGHTNESS_STEPS.map((lightness) => {
@@ -919,13 +924,16 @@ export function ThemePickerModal({
                             lightness,
                           );
                           const isShadeSelected =
-                            draftConfig.accentHex.toUpperCase() === shadeHex;
+                            draftConfig.accentHex.toUpperCase() ===
+                            shadeHex.toUpperCase();
                           return (
                             <Pressable
                               key={`accent-shade-${lightness}`}
                               accessibilityRole="button"
-                              accessibilityLabel={`Accent shade ${shadeHex}`}
-                              onPress={() => handleSelectAccentSwatch(shadeHex)}
+                              accessibilityLabel={`Tone ${lightness}%`}
+                              onPress={() =>
+                                handleSelectAccentSwatch(shadeHex)
+                              }
                               style={[
                                 styles.shadeSegment,
                                 { backgroundColor: shadeHex },
@@ -1387,6 +1395,28 @@ function createStyles(theme: AppTheme) {
       borderWidth: 2.5,
       transform: [{ scale: 1.06 }],
     },
+    selectedColorNamePill: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    colorHelperCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.background,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 6,
+    },
+    colorHelperText: {
+      color: theme.colors.textSecondary,
+      flex: 1,
+      fontSize: 11,
+      lineHeight: 15,
+    },
     shadePickerBox: {
       gap: 6,
       marginTop: theme.spacing.xs,
@@ -1394,26 +1424,21 @@ function createStyles(theme: AppTheme) {
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
     },
+    shadePickerHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
     shadePickerLabel: {
       color: theme.colors.textSecondary,
       fontSize: 11,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    hueStripRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 3,
-      height: 24,
-    },
-    hueSegment: {
-      flex: 1,
-      height: 20,
-      borderRadius: 5,
-    },
-    hueSegmentActive: {
-      height: 24,
-      borderWidth: 2,
-      borderColor: theme.colors.textPrimary,
+    shadePickerValueText: {
+      color: theme.colors.textMuted,
+      fontSize: 10,
+      fontVariant: ["tabular-nums"],
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     shadeStripRow: {
       flexDirection: "row",
