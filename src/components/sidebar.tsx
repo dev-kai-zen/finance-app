@@ -188,7 +188,7 @@ export const Sidebar = memo(function Sidebar({
               </View>
             )}
           </View>
-          <Text numberOfLines={1} style={styles.brandTagline}>
+          <Text style={styles.brandTagline}>
             {t("brand.tagline")}
           </Text>
         </View>
@@ -514,6 +514,8 @@ function createStyles(theme: AppTheme) {
       minWidth: 0,
     },
     brandNameRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing.xs,
@@ -646,6 +648,8 @@ function createStyles(theme: AppTheme) {
       width: 20,
     },
     linkText: {
+      flex: 1,
+      minWidth: 0,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
@@ -675,6 +679,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     badgeContainer: {
+      flexShrink: 0,
       marginLeft: "auto",
     },
     divider: {

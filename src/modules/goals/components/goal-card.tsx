@@ -86,7 +86,7 @@ export const GoalCard = memo(function GoalCard({
           </View>
           <View style={styles.titleTextWrapper}>
             <View style={styles.nameRow}>
-              <Text numberOfLines={1} style={styles.goalName}>
+              <Text style={styles.goalName}>
                 {goal.name}
               </Text>
               {isCompleted && (
@@ -354,6 +354,8 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     nameRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing.xs,
@@ -411,6 +413,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: theme.spacing.sm,
     },
     amountRow: {
+      gap: theme.spacing.sm,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-end",
@@ -477,20 +480,24 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
     },
     deadlineNumber: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
     },
     deadlineText: {
+      flex: 1,
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
     },
     deadlineWarning: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
     },
     deadlineWarningText: {
+      flex: 1,
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
@@ -514,6 +521,8 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.xs,
     },
     bottomBar: {
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",

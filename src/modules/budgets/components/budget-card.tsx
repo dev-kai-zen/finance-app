@@ -157,7 +157,7 @@ export const BudgetCard = memo(function BudgetCard({
 
         <View style={styles.targetGroup}>
           <Text style={styles.metricLabel}>Budget</Text>
-          <Text style={styles.targetValue}>
+          <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.targetValue}>
             {formatCurrency(effectiveTargetCents, budget.currencyCode, false)}
           </Text>
         </View>
@@ -292,18 +292,25 @@ function createStyles(theme: AppTheme) {
       height: "100%",
     },
     metricsRow: {
+      gap: theme.spacing.xs,
       alignItems: "flex-start",
       flexDirection: "row",
       justifyContent: "space-between",
       marginTop: theme.spacing.xs,
     },
     spentGroup: {
+      flex: 1,
+      minWidth: 0,
       alignItems: "flex-start",
     },
     targetGroup: {
+      flex: 1,
+      minWidth: 0,
       alignItems: "center",
     },
     remainingGroup: {
+      flex: 1,
+      minWidth: 0,
       alignItems: "flex-end",
     },
     metricLabel: {
@@ -338,6 +345,7 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     warningPillText: {
+      flex: 1,
       color: theme.colors.danger,
       fontSize: 12,
       fontWeight: "600",
@@ -348,6 +356,7 @@ function createStyles(theme: AppTheme) {
       gap: 6,
     },
     rolloverPillText: {
+      flex: 1,
       color: theme.colors.textSecondary,
       fontSize: 12,
     },

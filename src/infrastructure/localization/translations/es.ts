@@ -447,6 +447,8 @@ export const es = {
         "Personaliza el diseño de tu pantalla de inicio con nuevas tarjetas de Flujo de Caja, Cuentas y Gastos.",
       improveItem1:
         "Añade nuevos temas claros y oscuros con color y sincroniza tu tema elegido entre dispositivos.",
+      fixItem1:
+        "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
     },
     v121: {
       date: "28 de octubre de 2026",

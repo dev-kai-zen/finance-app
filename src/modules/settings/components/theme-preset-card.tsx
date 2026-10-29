@@ -44,7 +44,7 @@ export function ThemePresetCard({
     >
       <View style={styles.titleRow}>
         <View style={styles.nameRow}>
-          <Text numberOfLines={1} style={styles.name}>
+          <Text style={styles.name}>
             {preset.name}
           </Text>
           {isProLocked ? (
@@ -257,12 +257,16 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
     },
     nameRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
       flex: 1,
     },
     name: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,

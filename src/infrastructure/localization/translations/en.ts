@@ -450,11 +450,13 @@ export const en = {
         "Customize your Home screen layout with new Cashflow, Accounts, and Top Spending cards.",
       improveItem1:
         "Add expressive tinted light and dark theme presets and sync your chosen theme across devices.",
+      fixItem1:
+        "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
     },
     v121: {
       date: "October 28, 2026",
       newItem1:
-      "Choose between Review First or Auto-Save mode in Chat with Kai.",
+        "Choose between Review First or Auto-Save mode in Chat with Kai.",
       improveItem1:
         "View your app version and membership status directly in the About settings section.",
       improveItem2:
@@ -769,27 +771,36 @@ export const en = {
     sectionsOrderLabel: "Dashboard Cards & Order",
     resetLayout: "Reset default",
     presetCashflowFocus: "Cashflow Focus",
-    presetCashflowFocusDesc: "Prioritizes monthly income, spending, and top categories.",
+    presetCashflowFocusDesc:
+      "Prioritizes monthly income, spending, and top categories.",
     presetWealthOverview: "Wealth & Balances",
-    presetWealthOverviewDesc: "Highlights net worth, account balances, and cashflow.",
+    presetWealthOverviewDesc:
+      "Highlights net worth, account balances, and cashflow.",
     presetCompleteView: "Complete View",
     presetCompleteViewDesc: "Shows all 6 financial cards on your home screen.",
     presetMinimalist: "Minimalist",
-    presetMinimalistDesc: "Compact greeting, monthly cashflow, and recent transactions.",
+    presetMinimalistDesc:
+      "Compact greeting, monthly cashflow, and recent transactions.",
     widgetGreetingTitle: "Greeting & Date",
-    widgetGreetingDesc: "Personal welcome header and optional daily inspiration quote.",
+    widgetGreetingDesc:
+      "Personal welcome header and optional daily inspiration quote.",
     widgetNetWorthTitle: "Net Worth & Balance",
-    widgetNetWorthDesc: "Combined balance trend chart, assets, and liabilities.",
+    widgetNetWorthDesc:
+      "Combined balance trend chart, assets, and liabilities.",
     widgetCashflowTitle: "Monthly Cashflow",
-    widgetCashflowDesc: "This month's income vs. expenses bar and savings rate.",
+    widgetCashflowDesc:
+      "This month's income vs. expenses bar and savings rate.",
     widgetAccountsTitle: "Accounts Strip",
-    widgetAccountsDesc: "Quick horizontal cards of your active account balances.",
+    widgetAccountsDesc:
+      "Quick horizontal cards of your active account balances.",
     widgetTopCategoriesTitle: "Top Spending Categories",
-    widgetTopCategoriesDesc: "Where your money went this month with progress bars.",
+    widgetTopCategoriesDesc:
+      "Where your money went this month with progress bars.",
     widgetRecentTxTitle: "Recent Transactions",
     widgetRecentTxDesc: "Your latest recorded income, expenses, and transfers.",
     showDailyQuoteTitle: "Show Daily Inspiration Quote",
-    showDailyQuoteDesc: "Display a tap-to-shuffle financial quote inside the greeting card.",
+    showDailyQuoteDesc:
+      "Display a tap-to-shuffle financial quote inside the greeting card.",
     cashflowCardTitle: "Monthly Cashflow",
     netCashflowLabel: "Net Cashflow",
     cashflowIncome: "Income",

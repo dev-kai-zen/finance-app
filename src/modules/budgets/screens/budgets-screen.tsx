@@ -562,6 +562,8 @@ function createStyles(theme: AppTheme) {
       padding: theme.spacing.lg,
     },
     summaryTop: {
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
       alignItems: "flex-start",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -578,6 +580,7 @@ function createStyles(theme: AppTheme) {
       marginTop: 2,
     },
     summaryBadgeRow: {
+      flexWrap: "wrap",
       flexDirection: "row",
       gap: theme.spacing.xs,
     },
@@ -631,6 +634,8 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.sm,
     },
     metricItem: {
+      minWidth: 0,
+      paddingHorizontal: 4,
       alignItems: "center",
       flex: 1,
     },

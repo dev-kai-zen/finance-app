@@ -1450,6 +1450,7 @@ function createStyles(theme: AppTheme) {
       gap: 2,
     },
     settingLabel: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
@@ -1481,6 +1482,8 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
     },
     titleRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       alignItems: "center",
       flexDirection: "row",
       gap: 6,

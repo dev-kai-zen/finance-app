@@ -191,6 +191,7 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
     },
     titleWrap: {
+      minWidth: 0,
       flex: 1,
       gap: 2,
     },
@@ -206,6 +207,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.medium,
     },
     savingsPill: {
+      flexShrink: 0,
       alignItems: "center",
       backgroundColor: theme.colors.controlSecondary,
       borderRadius: theme.borderRadius.round,
@@ -220,6 +222,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
     },
     reportsLink: {
+      flexShrink: 0,
       alignItems: "center",
       flexDirection: "row",
       gap: 4,
@@ -290,6 +293,8 @@ function createStyles(theme: AppTheme) {
       width: 22,
     },
     metricLabel: {
+      flex: 1,
+      minWidth: 0,
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,

@@ -121,17 +121,21 @@ function createStyles(theme: AppTheme) {
       ...theme.shadows.card,
     },
     header: {
+      gap: theme.spacing.sm,
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
     },
     title: {
+      flex: 1,
+      minWidth: 0,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: -0.2,
     },
     viewAllButton: {
+      flexShrink: 0,
       alignItems: "center",
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",

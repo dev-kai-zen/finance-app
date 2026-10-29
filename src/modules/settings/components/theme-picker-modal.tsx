@@ -953,6 +953,8 @@ function createStyles(theme: AppTheme) {
       marginLeft: -8,
     },
     customBannerTitleRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       alignItems: "center",
       flexDirection: "row",
       gap: 6,
@@ -985,6 +987,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.primary,
     },
     sectionHeading: {
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",

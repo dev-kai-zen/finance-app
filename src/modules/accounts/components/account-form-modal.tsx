@@ -1363,6 +1363,7 @@ function createStyles(theme: AppTheme) {
       gap: 2,
     },
     toggleLabel: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
@@ -1460,6 +1461,8 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     toggleLabelRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
