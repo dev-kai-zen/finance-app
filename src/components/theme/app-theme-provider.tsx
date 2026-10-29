@@ -10,15 +10,22 @@ import React, {
 import { Appearance, useColorScheme } from "react-native";
 import {
   ALL_THEME_PRESETS,
+  CUSTOM_THEME_ID,
+  DEFAULT_CUSTOM_THEME_CONFIG,
   DEFAULT_THEME_ID,
   THEMES_BY_ID,
+  buildCustomTheme,
   getSystemTheme,
   getThemeById,
   type AppTheme,
+  type CustomThemeConfig,
   type ThemeSelection,
 } from "@/constants/theme";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
 import {
+  readSavedCustomThemeConfig,
   readThemeSelection,
+  writeSavedCustomThemeConfig,
   writeThemeSelection,
 } from "@/infrastructure/preferences/theme-preference.storage";
 
@@ -30,6 +37,8 @@ export interface ThemeContextValue {
   isFollowingSystem: boolean;
   setFollowSystem: (enabled: boolean) => void;
   availableThemes: AppTheme[];
+  customThemeConfig: CustomThemeConfig;
+  setCustomTheme: (config: CustomThemeConfig) => void;
 }
 
 const defaultTheme = getThemeById(DEFAULT_THEME_ID);
@@ -42,6 +51,8 @@ const ThemeContext = createContext<ThemeContextValue>({
   isFollowingSystem: false,
   setFollowSystem: () => {},
   availableThemes: ALL_THEME_PRESETS,
+  customThemeConfig: DEFAULT_CUSTOM_THEME_CONFIG,
+  setCustomTheme: () => {},
 });
 
 export interface AppThemeProviderProps extends PropsWithChildren {
@@ -50,13 +61,16 @@ export interface AppThemeProviderProps extends PropsWithChildren {
 
 /**
  * Provides the application theme to the React Native component tree.
- * Allows instant dynamic switching between presets.
+ * Allows instant dynamic switching between presets and custom themes.
  */
 export function AppThemeProvider({
   children,
   initialThemeId,
 }: AppThemeProviderProps) {
   const systemScheme = useColorScheme();
+  const [customThemeConfig, setCustomThemeConfig] =
+    useState<CustomThemeConfig>(() => readSavedCustomThemeConfig());
+
   const [selection, setSelection] = useState<ThemeSelection>(() => {
     if (initialThemeId && THEMES_BY_ID[initialThemeId]) {
       return { kind: "preset", presetId: initialThemeId };
@@ -64,6 +78,7 @@ export function AppThemeProvider({
 
     const storedSelection = readThemeSelection();
     if (storedSelection?.kind === "system") return storedSelection;
+    if (storedSelection?.kind === "custom") return storedSelection;
     if (
       storedSelection?.kind === "preset" &&
       THEMES_BY_ID[storedSelection.presetId]
@@ -77,32 +92,91 @@ export function AppThemeProvider({
     };
   });
 
+  const reloadThemeFromStorage = useCallback(() => {
+    const nextCustomConfig = readSavedCustomThemeConfig();
+    setCustomThemeConfig(nextCustomConfig);
+
+    const storedSelection = readThemeSelection();
+    if (storedSelection?.kind === "system") {
+      setSelection(storedSelection);
+      return;
+    }
+    if (storedSelection?.kind === "custom") {
+      setSelection(storedSelection);
+      return;
+    }
+    if (
+      storedSelection?.kind === "preset" &&
+      THEMES_BY_ID[storedSelection.presetId]
+    ) {
+      setSelection(storedSelection);
+    }
+  }, []);
+
+  useEffect(() => {
+    reloadThemeFromStorage();
+    return subscribeToDatabaseReplacement(() => {
+      reloadThemeFromStorage();
+    });
+  }, [reloadThemeFromStorage]);
+
   const activeTheme = useMemo<AppTheme>(() => {
     if (selection.kind === "system") {
       return getSystemTheme(systemScheme === "dark" ? "dark" : "light");
+    }
+    if (selection.kind === "custom") {
+      return buildCustomTheme(selection.config);
     }
 
     return getThemeById(selection.presetId);
   }, [selection, systemScheme]);
 
-  const setThemeId = useCallback((id: string) => {
-    if (THEMES_BY_ID[id]) {
-      const nextSelection: ThemeSelection = { kind: "preset", presetId: id };
-      setSelection(nextSelection);
-      writeThemeSelection(nextSelection);
-    }
+  const setThemeId = useCallback(
+    (id: string) => {
+      if (id === CUSTOM_THEME_ID) {
+        const nextSelection: ThemeSelection = {
+          kind: "custom",
+          config: customThemeConfig,
+        };
+        setSelection(nextSelection);
+        writeThemeSelection(nextSelection);
+        return;
+      }
+      if (THEMES_BY_ID[id]) {
+        const nextSelection: ThemeSelection = { kind: "preset", presetId: id };
+        setSelection(nextSelection);
+        writeThemeSelection(nextSelection);
+      }
+    },
+    [customThemeConfig],
+  );
+
+  const setCustomTheme = useCallback((config: CustomThemeConfig) => {
+    setCustomThemeConfig(config);
+    writeSavedCustomThemeConfig(config);
+    const nextSelection: ThemeSelection = { kind: "custom", config };
+    setSelection(nextSelection);
+    writeThemeSelection(nextSelection);
   }, []);
 
   const setFollowSystem = useCallback(
     (enabled: boolean) => {
       const nextSelection: ThemeSelection = enabled
         ? { kind: "system" }
-        : { kind: "preset", presetId: activeTheme.id };
+        : selection.kind === "custom"
+          ? { kind: "custom", config: customThemeConfig }
+          : {
+              kind: "preset",
+              presetId:
+                activeTheme.id === CUSTOM_THEME_ID
+                  ? DEFAULT_THEME_ID
+                  : activeTheme.id,
+            };
 
       setSelection(nextSelection);
       writeThemeSelection(nextSelection);
     },
-    [activeTheme.id],
+    [activeTheme.id, customThemeConfig, selection.kind],
   );
 
   useEffect(() => {
@@ -120,8 +194,17 @@ export function AppThemeProvider({
       isFollowingSystem: selection.kind === "system",
       setFollowSystem,
       availableThemes: ALL_THEME_PRESETS,
+      customThemeConfig,
+      setCustomTheme,
     }),
-    [activeTheme, selection.kind, setFollowSystem, setThemeId],
+    [
+      activeTheme,
+      customThemeConfig,
+      selection.kind,
+      setCustomTheme,
+      setFollowSystem,
+      setThemeId,
+    ],
   );
 
   return (

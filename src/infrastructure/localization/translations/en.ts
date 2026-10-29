@@ -47,15 +47,20 @@ export const en = {
     actionAddCreditCard: "Add Credit Card",
     actionAddCreditCardDesc: "Create a credit card account for monitoring",
     actionTransactionsTrash: "Deleted Transactions Trash",
-    actionTransactionsTrashDesc: "View, restore, or permanently remove deleted transactions",
+    actionTransactionsTrashDesc:
+      "View, restore, or permanently remove deleted transactions",
     actionExportTransactionsCsv: "Export Transactions (CSV)",
-    actionExportTransactionsCsvDesc: "Save or share transaction records as a CSV spreadsheet",
+    actionExportTransactionsCsvDesc:
+      "Save or share transaction records as a CSV spreadsheet",
     actionArchivedAccounts: "Archived Accounts & Pockets",
-    actionArchivedAccountsDesc: "View and restore hidden or archived accounts and pockets",
+    actionArchivedAccountsDesc:
+      "View and restore hidden or archived accounts and pockets",
     actionChatWithKai: "Chat with Kai",
-    actionChatWithKaiDesc: "Use AI chat to quickly encode transactions in natural language",
+    actionChatWithKaiDesc:
+      "Use AI chat to quickly encode transactions in natural language",
     actionManageAccountTypes: "Manage Account Types",
-    actionManageAccountTypesDesc: "Customize bank, cash, wallet, and credit card account types",
+    actionManageAccountTypesDesc:
+      "Customize bank, cash, wallet, and credit card account types",
     screenTransactionsExpense: "Transactions (Expenses)",
     screenTransactionsExpenseDesc: "View history of all recorded expenses",
     screenTransactionsIncome: "Transactions (Income)",
@@ -67,20 +72,28 @@ export const en = {
     screenCategoriesIncome: "Income Categories",
     screenCategoriesIncomeDesc: "Manage and organize income categories",
     screenReportIncomeExpense: "Income & Expense Report",
-    screenReportIncomeExpenseDesc: "Analyze cash flow variance and net earnings across months",
+    screenReportIncomeExpenseDesc:
+      "Analyze cash flow variance and net earnings across months",
     screenReportCashFlow: "Cash Flow Report",
     screenReportCashFlowDesc: "Analyze total money inflows versus outflows",
     screenReportBalanceSheet: "Balance Sheet Comparison",
-    screenReportBalanceSheetDesc: "Compare asset values and liabilities across periods",
+    screenReportBalanceSheetDesc:
+      "Compare asset values and liabilities across periods",
     screenReportNetWorth: "Net Worth Growth",
-    screenReportNetWorthDesc: "Track financial health and cumulative wealth growth",
+    screenReportNetWorthDesc:
+      "Track financial health and cumulative wealth growth",
     screenReportLabelsSummary: "Labels Summary Report",
-    screenReportLabelsSummaryDesc: "View transactions breakdown grouped by labels",
+    screenReportLabelsSummaryDesc:
+      "View transactions breakdown grouped by labels",
     settingNicknameDesc: "Set your profile nickname and greeting",
-    settingDeveloperMessageDesc: "Read a personal message and note from the creator",
-    settingPrivacyPolicyDesc: "Review our offline-first privacy policy and commitment",
-    settingRestorePurchasesDesc: "Restore your active Kaizen Pro lifetime license",
-    settingQuickSearchDesc: "Configure the search button in header and navigation",
+    settingDeveloperMessageDesc:
+      "Read a personal message and note from the creator",
+    settingPrivacyPolicyDesc:
+      "Review our offline-first privacy policy and commitment",
+    settingRestorePurchasesDesc:
+      "Restore your active Kaizen Pro lifetime license",
+    settingQuickSearchDesc:
+      "Configure the search button in header and navigation",
     settingSqliteMonitorDesc: "Inspect local database tables and diagnostics",
     guidesToSetting: "Guides to setting",
   },
@@ -163,7 +176,8 @@ export const en = {
     nicknameDescription: "Personalized name shown on your dashboard",
     nicknameNotSet: "Not set",
     editNicknameTitle: "Edit Nickname",
-    editNicknamePrompt: "Enter the name you'd like to be called on your dashboard.",
+    editNicknamePrompt:
+      "Enter the name you'd like to be called on your dashboard.",
     nicknameSave: "Save",
     nicknameCancel: "Cancel",
     localizationSection: "LOCALIZATION",
@@ -183,7 +197,8 @@ export const en = {
     remindersDescription: "Daily logging and due bill reminders",
     remindersAccessibility: "Configure reminder settings",
     widgetsTitle: "Home Screen Widgets",
-    widgetsDescription: "Add quick actions and money insights to your home screen",
+    widgetsDescription:
+      "Add quick actions and money insights to your home screen",
     widgetsAccessibility: "Open home screen widget gallery",
     guideHelperTitle: "Guide helper",
     guideHelperDescription:
@@ -378,6 +393,30 @@ export const en = {
     followDeviceDescription: "Paper in light mode and Ink in dark mode.",
     palettes: "PALETTES",
     choices: "%{count} choices",
+    tabPresets: "Presets",
+    tabCustomStudio: "Custom Studio",
+    customBannerTitle: "Custom Theme Studio",
+    customBannerSubtitle: "Design your own color combination and surface tint.",
+    customBannerActive: "Your custom color theme is currently active.",
+    customizeAction: "Customize",
+    filterAll: "All",
+    livePreview: "LIVE PREVIEW",
+    activeBadge: "Active",
+    baseModeLabel: "Base Mode",
+    modeLight: "Light",
+    modeDark: "Dark",
+    modeOled: "OLED Black",
+    surfaceTintLabel: "Surface & Card Tint",
+    surfaceTintHint: "Infuse your primary color into backgrounds and cards.",
+    tintNeutral: "Neutral",
+    tintSubtle: "Subtle",
+    tintRich: "Rich",
+    primaryColorLabel: "Primary Brand Color",
+    primaryColorHint: "Buttons, active tabs, and primary highlights.",
+    accentColorLabel: "Accent Color",
+    accentColorHint: "Secondary highlights, badges, and chart spikes.",
+    applyCustomTheme: "Apply Custom Theme",
+    unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
   },
   versionHistory: {
     heading: "Version History",
@@ -403,10 +442,19 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v122: {
+      date: "October 29, 2026",
+      newItem1:
+        "Create your own color combinations in the new Custom Theme Studio.",
+      newItem2:
+        "Customize your Home screen layout with new Cashflow, Accounts, and Top Spending cards.",
+      improveItem1:
+        "Add expressive tinted light and dark theme presets and sync your chosen theme across devices.",
+    },
     v121: {
       date: "October 28, 2026",
       newItem1:
-        "Choose between Review First or Auto-Save mode in Chat with Kai.",
+      "Choose between Review First or Auto-Save mode in Chat with Kai.",
       improveItem1:
         "View your app version and membership status directly in the About settings section.",
       improveItem2:
@@ -435,7 +483,7 @@ export const en = {
       improveItem2:
         "Jump straight to transfers, reports, and AI chat directly from Quick Search.",
       improveItem3:
-        "Tap \"Skip for now\" on goal and budget milestone screens to return to your dashboard faster.",
+        'Tap "Skip for now" on goal and budget milestone screens to return to your dashboard faster.',
       fixItem1:
         "Enjoy faster, stutter-free scrolling when viewing your full transaction history.",
       fixItem2:
@@ -472,8 +520,7 @@ export const en = {
         "Attach receipt photos and filter transactions by date or account.",
       calendarItem1:
         "View your daily spending totals and upcoming expenses on a calendar.",
-      calendarItem2:
-        "Fix bugs when selecting date.",
+      calendarItem2: "Fix bugs when selecting date.",
       budgetsItem1:
         "Set monthly spending limits for each category to keep spending on track.",
       budgetsItem2:
@@ -714,6 +761,53 @@ export const en = {
     deleteTransactionTitle: "Delete transaction?",
     deleteTransactionMessage:
       "This record will be moved to Trash. You can restore it later.",
+    customizeHome: "Customize Home",
+    customizeModalTitle: "Customize Home Screen",
+    customizeModalSubtitle:
+      "Choose which cards appear on your dashboard and arrange them in your preferred order.",
+    quickPresetsLabel: "1-Tap Layout Presets",
+    sectionsOrderLabel: "Dashboard Cards & Order",
+    resetLayout: "Reset default",
+    presetCashflowFocus: "Cashflow Focus",
+    presetCashflowFocusDesc: "Prioritizes monthly income, spending, and top categories.",
+    presetWealthOverview: "Wealth & Balances",
+    presetWealthOverviewDesc: "Highlights net worth, account balances, and cashflow.",
+    presetCompleteView: "Complete View",
+    presetCompleteViewDesc: "Shows all 6 financial cards on your home screen.",
+    presetMinimalist: "Minimalist",
+    presetMinimalistDesc: "Compact greeting, monthly cashflow, and recent transactions.",
+    widgetGreetingTitle: "Greeting & Date",
+    widgetGreetingDesc: "Personal welcome header and optional daily inspiration quote.",
+    widgetNetWorthTitle: "Net Worth & Balance",
+    widgetNetWorthDesc: "Combined balance trend chart, assets, and liabilities.",
+    widgetCashflowTitle: "Monthly Cashflow",
+    widgetCashflowDesc: "This month's income vs. expenses bar and savings rate.",
+    widgetAccountsTitle: "Accounts Strip",
+    widgetAccountsDesc: "Quick horizontal cards of your active account balances.",
+    widgetTopCategoriesTitle: "Top Spending Categories",
+    widgetTopCategoriesDesc: "Where your money went this month with progress bars.",
+    widgetRecentTxTitle: "Recent Transactions",
+    widgetRecentTxDesc: "Your latest recorded income, expenses, and transfers.",
+    showDailyQuoteTitle: "Show Daily Inspiration Quote",
+    showDailyQuoteDesc: "Display a tap-to-shuffle financial quote inside the greeting card.",
+    cashflowCardTitle: "Monthly Cashflow",
+    netCashflowLabel: "Net Cashflow",
+    cashflowIncome: "Income",
+    cashflowExpenses: "Expenses",
+    savingsRateBadge: "%{rate}% saved",
+    accountsCardTitle: "Accounts",
+    noAccountsYet: "No active accounts yet.",
+    topCategoriesCardTitle: "Top Spending This Month",
+    noSpendingThisMonth: "No expenses recorded this month yet.",
+    viewAll: "View all",
+    stepCustomizeHomeTitle: "Customize Home Screen",
+    stepCustomizeHomeDesc:
+      "Tap here anytime to show, hide, or reorder dashboard cards and switch between 1-tap layout presets.",
+    customizeHelpTitle: "About Customize Home Screen",
+    customizeHelpMessage:
+      "Personalize your dashboard to match how you manage your money:\n\n• 1-Tap Layout Presets: Quickly switch between Cashflow Focus, Wealth & Balances, Complete View, or Minimalist.\n• Show or Hide Cards: Toggle individual cards on or off using the switches.\n• Reorder Cards: Tap Reorder to drag and drop or use the arrows to arrange cards in your preferred order.",
+    reorderCards: "Reorder",
+    reorderCardsTitle: "Reorder Dashboard Cards",
   },
   calendar: {
     firstOfMonth: "1st of Month",
@@ -856,8 +950,7 @@ export const en = {
     stepAttachmentDesc:
       "Attach photos, receipts, invoices, or warranty slips directly to this transaction record.",
     stepDateTitle: "Transaction Date",
-    stepDateDesc:
-      "Set the calendar date when the transaction took place.",
+    stepDateDesc: "Set the calendar date when the transaction took place.",
     stepTimeTitle: "Exact Time",
     stepTimeDesc:
       "Log the exact hour and minute for precise chronological sequencing.",
@@ -886,8 +979,7 @@ export const en = {
     stepCancelDesc:
       "Discard your current changes and close the form without saving.",
     stepSaveTitle: "Save Record",
-    stepSaveDesc:
-      "Save your transaction immediately to your local ledger.",
+    stepSaveDesc: "Save your transaction immediately to your local ledger.",
     stepCloseTitle: "Close Form",
     stepCloseDesc:
       "Dismiss this entry modal when you are done or want to exit.",
@@ -901,8 +993,7 @@ export const en = {
     stepSearchDesc:
       "Find scheduled transactions by title, category, or associated account.",
     stepFilterTitle: "Filter by Status",
-    stepFilterDesc:
-      "Filter between Active, Completed, and Archived schedules.",
+    stepFilterDesc: "Filter between Active, Completed, and Archived schedules.",
     stepFabTitle: "New Schedule",
     stepFabDesc:
       "Tap the + button to create a new recurring income, expense, or transfer.",
@@ -994,8 +1085,7 @@ export const en = {
     stepOverBudgetAlertDesc:
       "Receive an alert when spending reaches or exceeds this budget limit.",
     stepSaveTitle: "Save Budget",
-    stepSaveDesc:
-      "Tap to save and activate your category spending limit.",
+    stepSaveDesc: "Tap to save and activate your category spending limit.",
   },
   goalFormWalkthrough: {
     introTitle: "New Savings Goal",
@@ -1015,8 +1105,7 @@ export const en = {
     stepTargetDateDesc:
       "Set an optional completion deadline to track daily or monthly required savings.",
     stepIconTitle: "Goal Icon",
-    stepIconDesc:
-      "Choose a motivating icon to visually represent your target.",
+    stepIconDesc: "Choose a motivating icon to visually represent your target.",
     stepAccentColorTitle: "Accent Color",
     stepAccentColorDesc:
       "Select a theme color for the progress bar and goal cards.",
@@ -1399,14 +1488,17 @@ export const en = {
     restorePurchases: "Restore Purchases",
     restoring: "Restoring...",
     restoreSuccessTitle: "Purchases Restored",
-    restoreSuccessMsg: "Your Lifetime Pro status has been successfully restored!",
+    restoreSuccessMsg:
+      "Your Lifetime Pro status has been successfully restored!",
     restoreNotFoundTitle: "No Purchases Found",
     restoreNotFoundMsg:
       "We couldn't find an active Lifetime Pro purchase for the account currently active in your Google Play Store.\n\nTip: Purchases are linked to your Google Play Store account. If you purchased using another account, open Google Play Store, switch accounts at the top-right profile icon, and try restoring again.",
     restoreErrorTitle: "Restore Failed",
-    restoreErrorMsg: "Unable to restore purchases at this time. Please try again later.",
+    restoreErrorMsg:
+      "Unable to restore purchases at this time. Please try again later.",
     purchaseSuccessTitle: "Welcome to Pro!",
-    purchaseSuccessMsg: "Thank you for supporting Kaizen Finance! All Pro features are now unlocked.",
+    purchaseSuccessMsg:
+      "Thank you for supporting Kaizen Finance! All Pro features are now unlocked.",
     disclaimer:
       "Payment will be charged to your Google Play account at confirmation of purchase. This is a one-time non-consumable purchase with no recurring fees.",
     reportsLockedTitle: "Ready for Complete Financial Clarity?",
@@ -1503,40 +1595,50 @@ export const en = {
     settingsSubtitle: "Configure transaction recording behavior",
     modeSectionTitle: "TRANSACTION RECORDING MODE",
     modeReviewTitle: "Review First",
-    modeReviewDesc: "Kai prepares a draft for you to review and confirm before saving.",
+    modeReviewDesc:
+      "Kai prepares a draft for you to review and confirm before saving.",
     modeReviewPill: "Tap to Edit · Save",
     modeAutoTitle: "Auto-Save",
-    modeAutoDesc: "Kai records transactions instantly as you chat. Tap to edit or delete anytime.",
+    modeAutoDesc:
+      "Kai records transactions instantly as you chat. Tap to edit or delete anytime.",
     modeAutoPill: "Tap to Edit · Delete",
     recordedBadge: "Recorded",
     tapToEdit: "Tap to Edit",
     deleteButton: "Delete",
     deleteConfirmTitle: "Delete Transaction?",
-    deleteConfirmMessage: "Are you sure you want to delete this recorded transaction?",
+    deleteConfirmMessage:
+      "Are you sure you want to delete this recorded transaction?",
     deletedBadge: "Deleted",
     deletedNotice: "Transaction was deleted",
     manageKnowledgeLink: "Manage Recognition Keywords",
     inputPlaceholder: "e.g. Spent 500 on lunch at McDonald's from wallet",
     sectionTitle: "Keywords (Kai Assistant Knowledge)",
-    bannerCategory: "Keywords entered here teach Kai to automatically recognize this category when you enter transactions via chat.",
-    bannerAccount: "Keywords entered here teach Kai to automatically recognize this account when you enter transactions via chat.",
+    bannerCategory:
+      "Keywords entered here teach Kai to automatically recognize this category when you enter transactions via chat.",
+    bannerAccount:
+      "Keywords entered here teach Kai to automatically recognize this account when you enter transactions via chat.",
     manageKeywords: "Recognition Keywords",
-    manageKeywordsSubtitle: "Assign keywords to categories for accurate recognition",
+    manageKeywordsSubtitle:
+      "Assign keywords to categories for accurate recognition",
     manageKeywordsAction: "Manage Keywords",
     addKeywordPlaceholder: "Add keyword (e.g. boba, grab, netflix)...",
-    addKeywordPlaceholderCategory: "Add keyword (e.g. coffee, groceries, netflix)...",
+    addKeywordPlaceholderCategory:
+      "Add keyword (e.g. coffee, groceries, netflix)...",
     addKeywordPlaceholderAccount: "Add keyword (e.g. payroll, wallet, bpi)...",
     addKeywordButton: "Add",
     keywordAdded: "Keyword added successfully",
     keywordDeleted: "Keyword removed",
     keywordDuplicateInList: "Keyword '%{keyword}' is already in the list",
-    keywordAlreadyExists: "Keyword '%{keyword}' is already assigned to '%{entity}'",
+    keywordAlreadyExists:
+      "Keyword '%{keyword}' is already assigned to '%{entity}'",
     resetDefaults: "Restore Defaults",
-    resetDefaultsConfirm: "Are you sure you want to restore the default recognition keywords?",
+    resetDefaultsConfirm:
+      "Are you sure you want to restore the default recognition keywords?",
     noKeywordsYet: "No keywords added yet.",
     filterCategory: "Select Category",
     knowledgeHubTitle: "Manage Kai Knowledge",
-    knowledgeHubSubtitle: "Teach Kai to recognize actions, categories, and accounts",
+    knowledgeHubSubtitle:
+      "Teach Kai to recognize actions, categories, and accounts",
     selectorTitle: "Keywords (Kai Knowledge)",
     selectorSubtitle: "%{count} keywords",
     selectorSubtitleSingle: "1 keyword",
@@ -1553,7 +1655,8 @@ export const en = {
     actionTransfer: "Transfer",
     actionExpenseDescription: "Words that indicate spending or money going out",
     actionIncomeDescription: "Words that indicate receiving money or income",
-    actionTransferDescription: "Words that indicate moving money between accounts",
+    actionTransferDescription:
+      "Words that indicate moving money between accounts",
     searchPlaceholder: "Search...",
     addActionPlaceholder: "Add action word (e.g. bought, paid, send)...",
     tableHeaderKeyword: "Keyword",
@@ -1575,10 +1678,14 @@ export const en = {
     changeCategory: "Change Category",
     changeAccount: "Change Account",
     changeMerchant: "Change Merchant",
-    selectCategoryPrompt: "Select a category to view and manage its recognition keywords.",
-    selectAccountPrompt: "Select an account to view and manage its recognition keywords.",
-    selectMerchantPrompt: "Select a merchant to view and manage its recognition keywords.",
-    addKeywordPlaceholderMerchant: "Add alias/keyword (e.g. mcdo, sbux, 711)...",
+    selectCategoryPrompt:
+      "Select a category to view and manage its recognition keywords.",
+    selectAccountPrompt:
+      "Select an account to view and manage its recognition keywords.",
+    selectMerchantPrompt:
+      "Select a merchant to view and manage its recognition keywords.",
+    addKeywordPlaceholderMerchant:
+      "Add alias/keyword (e.g. mcdo, sbux, 711)...",
     addMerchantPlaceholder: "Merchant name (e.g. Starbucks, Shell)...",
     defaultCategory: "Default Category",
     defaultAccount: "Default Account",
@@ -1590,27 +1697,35 @@ export const en = {
     editMerchantTitle: "Edit Merchant",
     addMerchantTitle: "Add Merchant",
     deleteMerchantTitle: "Delete Merchant",
-    deleteMerchantConfirm: "Are you sure you want to delete '%{name}' and all its recognition keywords?",
+    deleteMerchantConfirm:
+      "Are you sure you want to delete '%{name}' and all its recognition keywords?",
     deleteMerchantKeywordTitle: "Delete Keyword",
-    deleteMerchantKeywordConfirm: "Are you sure you want to delete this keyword?",
+    deleteMerchantKeywordConfirm:
+      "Are you sure you want to delete this keyword?",
     deleteKeywordTitle: "Delete Keyword",
     deleteKeywordConfirm: "Are you sure you want to delete '%{keyword}'?",
     deleteBtn: "Delete",
-    noKeywordsMatching: "No keywords found matching \"%{query}\"",
+    noKeywordsMatching: 'No keywords found matching "%{query}"',
     helpModalTitle: "About Kai Knowledge",
     helpModalSubtitle: "How Kai Assistant recognizes your input",
     helpActionsTitle: "Action Keywords",
-    helpActionsDesc: "Teach Kai which verbs represent spending (Expense), receiving (Income), or moving money between accounts (Transfer).",
+    helpActionsDesc:
+      "Teach Kai which verbs represent spending (Expense), receiving (Income), or moving money between accounts (Transfer).",
     helpCategoriesTitle: "Category Recognition",
-    helpCategoriesDesc: "Add keywords for apps, stores, services, or brands (e.g. Netflix, Grab, Starbucks). When you mention them in chat, Kai automatically selects the correct category.",
+    helpCategoriesDesc:
+      "Add keywords for apps, stores, services, or brands (e.g. Netflix, Grab, Starbucks). When you mention them in chat, Kai automatically selects the correct category.",
     helpAccountsTitle: "Account Recognition",
-    helpAccountsDesc: "Kai automatically matches your Account Name by default (e.g. 'using BDO' or 'from GCash'). Adding keywords is only needed for nicknames, abbreviations, or alternate names (e.g. 'wallet' for 'Cash Wallet', or 'payroll' for 'BPI Savings').",
+    helpAccountsDesc:
+      "Kai automatically matches your Account Name by default (e.g. 'using BDO' or 'from GCash'). Adding keywords is only needed for nicknames, abbreviations, or alternate names (e.g. 'wallet' for 'Cash Wallet', or 'payroll' for 'BPI Savings').",
     helpMerchantsTitle: "Merchant Recognition & Defaults",
-    helpMerchantsDesc: "Add stores, restaurants, or utility providers. Kai recognizes their names and aliases, automatically filling in their default category and default payment account if you didn't specify one in chat.",
+    helpMerchantsDesc:
+      "Add stores, restaurants, or utility providers. Kai recognizes their names and aliases, automatically filling in their default category and default payment account if you didn't specify one in chat.",
     helpLanguagesTitle: "Multi-Language Support",
-    helpLanguagesDesc: "Kai understands everyday chat across English, Filipino, and Spanish. Chat naturally like 'spent 200 on lunch from bdo' or 'nagbayad ng 500 sa kuryente gamit gcash'.",
+    helpLanguagesDesc:
+      "Kai understands everyday chat across English, Filipino, and Spanish. Chat naturally like 'spent 200 on lunch from bdo' or 'nagbayad ng 500 sa kuryente gamit gcash'.",
     helpClose: "Got it",
-    unknownAccountError: "I couldn't find an account matching '%{account}'. Please check your account name or add it in Manage Kai Knowledge.",
+    unknownAccountError:
+      "I couldn't find an account matching '%{account}'. Please check your account name or add it in Manage Kai Knowledge.",
     pickerSelectCategory: "Select Category",
     pickerSelectAccount: "Select Account",
     pickerSelectMerchant: "Select Merchant",
@@ -1631,8 +1746,10 @@ export const en = {
   widgetGallery: {
     title: "Home Screen Widgets",
     introTitle: "Add Kaizen to your home screen",
-    introSubtitle: "Tap Add on any widget and confirm the prompt. You can move or resize it afterwards.",
-    unsupportedPlatform: "Home screen widgets are currently available on Android only.",
+    introSubtitle:
+      "Tap Add on any widget and confirm the prompt. You can move or resize it afterwards.",
+    unsupportedPlatform:
+      "Home screen widgets are currently available on Android only.",
     quickActionsSection: "Quick Actions",
     insightsSection: "Money Insights",
     addButton: "Add",
@@ -1640,10 +1757,12 @@ export const en = {
     unlockButton: "Unlock",
     addedBadge: "On home screen",
     addAccessibility: "Add %{widget} widget to home screen",
-    proFeatureDescription: "Upgrade to Pro to see your cashflow, net worth, and budget right on your home screen.",
+    proFeatureDescription:
+      "Upgrade to Pro to see your cashflow, net worth, and budget right on your home screen.",
     manualHelpLink: "Can't add it? Add it manually",
     manualStepsTitle: "Add a widget manually",
-    manualStepsMessage: "1. Go to your home screen and long-press an empty area.\n2. Tap Widgets.\n3. Scroll to Kaizen Finance.\n4. Press and hold a widget, then drag it into place.",
+    manualStepsMessage:
+      "1. Go to your home screen and long-press an empty area.\n2. Tap Widgets.\n3. Scroll to Kaizen Finance.\n4. Press and hold a widget, then drag it into place.",
     manualStepsClose: "Got it",
     quickExpenseTitle: "Quick Expense",
     quickExpenseDescription: "Record an expense in one tap.",
@@ -1656,7 +1775,8 @@ export const en = {
     tripleActionTitle: "Expense, Income & Transfer",
     tripleActionDescription: "One bar for all three transaction types.",
     monthlyCashflowTitle: "Monthly Cashflow",
-    monthlyCashflowDescription: "See this month's income, spending, and savings at a glance.",
+    monthlyCashflowDescription:
+      "See this month's income, spending, and savings at a glance.",
     netWorthTitle: "Net Worth Glance",
     netWorthDescription: "Track your total net worth, assets, and debts.",
     monthlyBudgetTitle: "Monthly Budget Progress",

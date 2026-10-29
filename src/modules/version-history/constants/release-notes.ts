@@ -3,6 +3,25 @@ import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-h
 /** Newest releases first. Append a block for each store release you want to highlight. */
 export const RELEASE_NOTES: ReleaseNoteBlock[] = [
   {
+    version: "1.2.2",
+    dateKey: "versionHistory.v122.date",
+    sections: [
+      {
+        categoryKey: "versionHistory.categories.new",
+        itemKeys: [
+          "versionHistory.v122.newItem1",
+          "versionHistory.v122.newItem2",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.improve",
+        itemKeys: [
+          "versionHistory.v122.improveItem1",
+        ],
+      },
+    ],
+  },
+  {
     version: "1.2.1",
     dateKey: "versionHistory.v121.date",
     sections: [

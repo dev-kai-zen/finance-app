@@ -39,6 +39,12 @@ export const DASHBOARD_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "dashboard.stepRecentTxDesc",
   },
   {
+    id: "customizeHomeButton",
+    targetId: "customizeHomeButton",
+    titleKey: "dashboard.stepCustomizeHomeTitle",
+    descKey: "dashboard.stepCustomizeHomeDesc",
+  },
+  {
     id: "fabButton",
     targetId: "fabButton",
     titleKey: "dashboard.stepFabTitle",

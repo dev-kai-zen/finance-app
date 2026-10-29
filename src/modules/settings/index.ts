@@ -23,6 +23,7 @@ export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
   CHAT_TRANSACTION_MODE_SETTING_KEY,
+  DASHBOARD_LAYOUT_SETTING_KEY,
   FORM_FIELD_SETTING_KEYS,
   NAV_VISIBILITY_SETTING_KEYS,
   NAV_HREF_BY_VISIBILITY_KEY,
@@ -43,7 +44,11 @@ export {
 export { useUserNickname } from "./hooks/use-user-nickname";
 export { useExperiencePreferences } from "./hooks/use-experience-preferences";
 export {
+  ALL_DASHBOARD_WIDGET_IDS,
+  DEFAULT_DASHBOARD_LAYOUT,
+  applyDashboardLayoutPreset,
   applyGuidedWorkspaceSimpleDefaults,
+  getDashboardLayoutPreferences,
   getDeveloperModeEnabled,
   getGeneralSearchEnabled,
   getHiddenNavHrefs,
@@ -55,6 +60,7 @@ export {
   isPromptDismissed,
   isTransactionFormFieldEnabled,
   isNavItemVisible,
+  setDashboardLayoutPreferences,
   setDeveloperModeEnabled,
   setGeneralSearchEnabled,
   setHomeExperienceMode,
@@ -65,6 +71,9 @@ export {
   subscribeToExperiencePreferences,
 } from "./services/experience-preferences.service";
 export type {
+  DashboardLayoutPreferences,
+  DashboardLayoutPresetId,
+  DashboardWidgetId,
   FormFieldPreferenceKey,
   HomeExperienceMode,
   NavVisibilityPreferences,

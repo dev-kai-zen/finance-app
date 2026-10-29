@@ -131,7 +131,7 @@ export function ThemeSwatchPreview({ preset }: { preset: AppTheme }) {
   );
 }
 
-function FinanceThemePreview({ preset }: { preset: AppTheme }) {
+export function FinanceThemePreview({ preset }: { preset: AppTheme }) {
   return (
     <View
       accessibilityElementsHidden

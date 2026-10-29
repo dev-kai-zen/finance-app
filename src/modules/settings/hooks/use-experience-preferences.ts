@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import {
+  applyDashboardLayoutPreset,
   applyGuidedWorkspaceSimpleDefaults,
+  DEFAULT_DASHBOARD_LAYOUT,
+  getDashboardLayoutPreferences,
   getDeveloperModeEnabled,
   getGuideHelperEnabled,
   getGeneralSearchEnabled,
@@ -13,6 +16,7 @@ import {
   isDevModeAllowed,
   isPromptDismissed,
   isTransactionFormFieldEnabled,
+  setDashboardLayoutPreferences,
   setDeveloperModeEnabled,
   setGuideHelperEnabled,
   setGeneralSearchEnabled,
@@ -22,6 +26,9 @@ import {
   setTransactionFormFieldEnabled,
   setTransactionFormFieldPreferences,
   subscribeToExperiencePreferences,
+  type DashboardLayoutPreferences,
+  type DashboardLayoutPresetId,
+  type DashboardWidgetId,
   type FormFieldPreferenceKey,
   type HomeExperienceMode,
   type NavVisibilityPreferences,
@@ -45,6 +52,8 @@ export function useExperiencePreferences() {
   const [homeMode, setHomeModeState] = useState<HomeExperienceMode>(() =>
     getHomeExperienceMode(),
   );
+  const [dashboardLayout, setDashboardLayoutState] =
+    useState<DashboardLayoutPreferences>(() => getDashboardLayoutPreferences());
   const [formFields, setFormFieldsState] =
     useState<TransactionFormFieldPreferences>(() =>
       getTransactionFormFieldPreferences(),
@@ -65,6 +74,7 @@ export function useExperiencePreferences() {
     setGuideHelperEnabledState(getGuideHelperEnabled());
     setGeneralSearchEnabledState(getGeneralSearchEnabled());
     setHomeModeState(getHomeExperienceMode());
+    setDashboardLayoutState(getDashboardLayoutPreferences());
     setFormFieldsState(getTransactionFormFieldPreferences());
     setNavVisibilityState(getNavVisibilityPreferences());
     setHiddenNavHrefs(getHiddenNavHrefs());
@@ -162,6 +172,94 @@ export function useExperiencePreferences() {
     [refresh],
   );
 
+  const updateDashboardLayout = useCallback(
+    (next: DashboardLayoutPreferences) => {
+      setDashboardLayoutPreferences(next);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const toggleDashboardWidget = useCallback(
+    (widgetId: DashboardWidgetId, visible: boolean) => {
+      const current = getDashboardLayoutPreferences();
+      const hiddenSet = new Set(current.hidden);
+      if (visible) {
+        hiddenSet.delete(widgetId);
+      } else {
+        // Keep at least one main widget visible
+        const visibleCount =
+          current.order.length - (hiddenSet.has(widgetId) ? hiddenSet.size : hiddenSet.size + 1);
+        if (visibleCount <= 0) {
+          return;
+        }
+        hiddenSet.add(widgetId);
+      }
+      setDashboardLayoutPreferences({
+        ...current,
+        hidden: Array.from(hiddenSet),
+      });
+      refresh();
+    },
+    [refresh],
+  );
+
+  const moveDashboardWidget = useCallback(
+    (widgetId: DashboardWidgetId, direction: "up" | "down") => {
+      const current = getDashboardLayoutPreferences();
+      const index = current.order.indexOf(widgetId);
+      if (index === -1) return;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= current.order.length) return;
+      const nextOrder = [...current.order];
+      const [item] = nextOrder.splice(index, 1);
+      nextOrder.splice(targetIndex, 0, item);
+      setDashboardLayoutPreferences({
+        ...current,
+        order: nextOrder,
+      });
+      refresh();
+    },
+    [refresh],
+  );
+
+  const reorderDashboardWidgets = useCallback(
+    (orderedIds: DashboardWidgetId[]) => {
+      const current = getDashboardLayoutPreferences();
+      setDashboardLayoutPreferences({
+        ...current,
+        order: orderedIds,
+      });
+      refresh();
+    },
+    [refresh],
+  );
+
+  const setShowGreetingQuote = useCallback(
+    (showGreetingQuote: boolean) => {
+      const current = getDashboardLayoutPreferences();
+      setDashboardLayoutPreferences({
+        ...current,
+        showGreetingQuote,
+      });
+      refresh();
+    },
+    [refresh],
+  );
+
+  const selectDashboardPreset = useCallback(
+    (presetId: DashboardLayoutPresetId) => {
+      applyDashboardLayoutPreset(presetId);
+      refresh();
+    },
+    [refresh],
+  );
+
+  const resetDashboardLayout = useCallback(() => {
+    setDashboardLayoutPreferences(DEFAULT_DASHBOARD_LAYOUT);
+    refresh();
+  }, [refresh]);
+
   const dismissPrompt = useCallback(
     (promptKey: Parameters<typeof setPromptDismissed>[0]) => {
       setPromptDismissed(promptKey, true);
@@ -194,6 +292,14 @@ export function useExperiencePreferences() {
     setDeveloperMode,
     homeMode,
     setHomeMode,
+    dashboardLayout,
+    updateDashboardLayout,
+    toggleDashboardWidget,
+    moveDashboardWidget,
+    reorderDashboardWidgets,
+    setShowGreetingQuote,
+    selectDashboardPreset,
+    resetDashboardLayout,
     formFields,
     setFormField,
     setFormFields,

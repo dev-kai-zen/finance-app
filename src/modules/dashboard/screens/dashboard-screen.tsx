@@ -1,21 +1,29 @@
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SlidersHorizontal } from "lucide-react-native";
 import {
   ConfirmModal,
-  FloatingActionButton,
   PageContainer,
   PageErrorState,
   PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { ManualSetupChecklist, useWorkspace } from "@/modules/onboarding";
-import { useExperiencePreferences, useUserNickname } from "@/modules/settings";
+import {
+  useExperiencePreferences,
+  useUserNickname,
+  type DashboardWidgetId,
+} from "@/modules/settings";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
+import { DashboardCashflowCard } from "../components/dashboard-cashflow-card";
+import { DashboardAccountsCard } from "../components/dashboard-accounts-card";
+import { DashboardTopCategoriesCard } from "../components/dashboard-top-categories-card";
+import { CustomizeDashboardModal } from "../components/customize-dashboard-modal";
 import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
@@ -36,6 +44,7 @@ import { useLocalization } from "@/infrastructure/localization";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
+  useWalkthroughTarget,
   DashboardWalkthroughOverlay,
   DashboardCongratulationsModal,
   DraggableTourChip,
@@ -59,11 +68,19 @@ export function DashboardScreen() {
 function DashboardScreenContent() {
   const router = useRouter();
   const { t } = useLocalization();
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const {
     homeMode,
+    dashboardLayout,
+    toggleDashboardWidget,
+    moveDashboardWidget,
+    reorderDashboardWidgets,
+    setShowGreetingQuote,
+    selectDashboardPreset,
+    resetDashboardLayout,
     isPromptDismissed,
     setHomeMode,
     dismissPrompt,
@@ -108,6 +125,7 @@ function DashboardScreenContent() {
   } = useTransactionPresets();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [onChatEditSaved, setOnChatEditSaved] = useState<
     ((data?: ChatSavedTransactionResult) => void) | null
@@ -125,6 +143,7 @@ function DashboardScreenContent() {
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const fabRef = useRef<View>(null);
+  const customizeHomeRef = useWalkthroughTarget("customizeHomeButton");
   const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
 
   const handleScrollToTarget = useCallback(
@@ -364,6 +383,80 @@ function DashboardScreenContent() {
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
 
+  const visibleWidgets = useMemo<DashboardWidgetId[]>(() => {
+    const hiddenSet = new Set(dashboardLayout.hidden);
+    const list = dashboardLayout.order.filter((id) => !hiddenSet.has(id));
+    return list.length > 0 ? list : ["netWorth", "recentTransactions"];
+  }, [dashboardLayout.hidden, dashboardLayout.order]);
+
+  const renderWidget = (widgetId: DashboardWidgetId) => {
+    if (!summary) return null;
+    switch (widgetId) {
+      case "greeting":
+        return (
+          <DashboardGreetingCard
+            key="greeting"
+            nickname={nickname}
+            showQuote={dashboardLayout.showGreetingQuote}
+          />
+        );
+      case "netWorth":
+        return (
+          <DashboardNetWorthCard
+            key="netWorth"
+            currencyCode={currencyPreferences.defaultCurrency}
+            history={summary.netWorthHistory}
+            homeMode={homeMode}
+            monthlyChangePercentage={summary.netWorthChangePercentage}
+            monthlySpentMinorUnits={
+              summary.monthlyCashflow.totalOutflowMinorUnits
+            }
+            netWorthMinorUnits={netWorth}
+            onCustomizeDashboard={() => setIsCustomizeOpen(true)}
+            onHomeModeChange={setHomeMode}
+            totalAssetsMinorUnits={assets}
+            totalLiabilitiesMinorUnits={liabilities}
+          />
+        );
+      case "cashflow":
+        return (
+          <DashboardCashflowCard
+            key="cashflow"
+            cashflow={summary.monthlyCashflow}
+            currencyCode={currencyPreferences.defaultCurrency}
+            onPressReports={() => router.navigate("/reports" as any)}
+          />
+        );
+      case "accountsStrip":
+        return (
+          <DashboardAccountsCard
+            key="accountsStrip"
+            accounts={summary.accountsWithBalances}
+            onViewAll={() => router.navigate("/accounts" as any)}
+          />
+        );
+      case "topCategories":
+        return (
+          <DashboardTopCategoriesCard
+            key="topCategories"
+            categories={summary.topSpendingCategories}
+            currencyCode={currencyPreferences.defaultCurrency}
+            onViewCategories={() => router.navigate("/categories" as any)}
+          />
+        );
+      case "recentTransactions":
+        return (
+          <RecentTransactionsCard
+            key="recentTransactions"
+            currencyCode={currencyPreferences.defaultCurrency}
+            onPressTransaction={(tx) => setInspectedTransaction(tx)}
+            onViewAll={handleViewAllTransactions}
+            transactions={recentTx}
+          />
+        );
+    }
+  };
+
   return (
     <PageContainer
       scrollContentRef={scrollContentRef}
@@ -409,27 +502,46 @@ function DashboardScreenContent() {
           )
         ) : (
           <>
-            <DashboardGreetingCard nickname={nickname} />
-            <AdBanner placement="dashboard" variant="card" />
-            <DashboardNetWorthCard
-              currencyCode={currencyPreferences.defaultCurrency}
-              history={summary.netWorthHistory}
-              homeMode={homeMode}
-              monthlyChangePercentage={summary.netWorthChangePercentage}
-              monthlySpentMinorUnits={summary.monthlyCashflow.totalOutflowMinorUnits}
-              netWorthMinorUnits={netWorth}
-              onHomeModeChange={setHomeMode}
-              totalAssetsMinorUnits={assets}
-              totalLiabilitiesMinorUnits={liabilities}
-            />
-            <RecentTransactionsCard
-              onPressTransaction={(tx) => setInspectedTransaction(tx)}
-              onViewAll={handleViewAllTransactions}
-              transactions={recentTx}
-            />
+            {visibleWidgets.map((widgetId, index) => (
+              <View key={widgetId} style={styles.widgetSlot}>
+                {renderWidget(widgetId)}
+                {index === 0 ? (
+                  <AdBanner placement="dashboard" variant="card" />
+                ) : null}
+              </View>
+            ))}
+
+            <Pressable
+              ref={customizeHomeRef as any}
+              collapsable={false}
+              accessibilityLabel={t("dashboard.customizeHome")}
+              accessibilityRole="button"
+              onPress={() => setIsCustomizeOpen(true)}
+              style={({ pressed }) => [
+                styles.customizeHomeBtn,
+                pressed && styles.customizeHomeBtnPressed,
+              ]}
+            >
+              <SlidersHorizontal color={theme.colors.primary} size={15} />
+              <Text style={styles.customizeHomeBtnText}>
+                {t("dashboard.customizeHome")}
+              </Text>
+            </Pressable>
           </>
         )}
       </View>
+
+      <CustomizeDashboardModal
+        layout={dashboardLayout}
+        onClose={() => setIsCustomizeOpen(false)}
+        onMoveWidget={moveDashboardWidget}
+        onReorderWidgets={reorderDashboardWidgets}
+        onReset={resetDashboardLayout}
+        onSelectPreset={selectDashboardPreset}
+        onToggleQuote={setShowGreetingQuote}
+        onToggleWidget={toggleDashboardWidget}
+        visible={isCustomizeOpen}
+      />
 
       <TransactionDetailModal
         onAttachmentsChanged={() => {
@@ -638,6 +750,31 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.lg,
       paddingBottom: 80,
       paddingTop: theme.spacing.lg,
+    },
+    widgetSlot: {
+      gap: theme.spacing.lg,
+    },
+    customizeHomeBtn: {
+      alignItems: "center",
+      alignSelf: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.xs,
+    },
+    customizeHomeBtnPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      opacity: 0.85,
+    },
+    customizeHomeBtnText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
     },
   });
 }

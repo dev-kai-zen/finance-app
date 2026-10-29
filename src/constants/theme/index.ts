@@ -3,3 +3,4 @@ export * from "./theme.types";
 export * from "./foundations";
 export * from "./presets";
 export * from "./theme-registry";
+export * from "./custom-theme-builder";

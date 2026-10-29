@@ -1,6 +1,7 @@
 import type { DbContext } from "@/infrastructure/database/client";
 import { isDevModeAllowed } from "@/utils/dev-mode";
 import {
+  DASHBOARD_LAYOUT_SETTING_KEY,
   DEVELOPER_MODE_SETTING_KEY,
   EXPERIENCE_HOME_SETTING_KEY,
   GUIDE_HELPER_SETTING_KEY,
@@ -23,6 +24,48 @@ export { isDevModeAllowed };
 
 export type FormFieldPreferenceKey = keyof typeof FORM_FIELD_SETTING_KEYS;
 export type HomeExperienceMode = "simple" | "detailed";
+
+export type DashboardWidgetId =
+  | "greeting"
+  | "netWorth"
+  | "cashflow"
+  | "accountsStrip"
+  | "topCategories"
+  | "recentTransactions";
+
+export type DashboardLayoutPresetId =
+  | "cashflowFocus"
+  | "wealthOverview"
+  | "completeView"
+  | "minimalist";
+
+export interface DashboardLayoutPreferences {
+  order: DashboardWidgetId[];
+  hidden: DashboardWidgetId[];
+  showGreetingQuote: boolean;
+}
+
+export const ALL_DASHBOARD_WIDGET_IDS: DashboardWidgetId[] = [
+  "greeting",
+  "netWorth",
+  "cashflow",
+  "accountsStrip",
+  "topCategories",
+  "recentTransactions",
+];
+
+export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutPreferences = {
+  order: [
+    "greeting",
+    "netWorth",
+    "cashflow",
+    "accountsStrip",
+    "topCategories",
+    "recentTransactions",
+  ],
+  hidden: ["accountsStrip", "topCategories"],
+  showGreetingQuote: true,
+};
 
 export interface TransactionFormFieldPreferences {
   transactionName: boolean;
@@ -335,4 +378,128 @@ export function setPromptDismissed(
     context,
   );
   notifyListeners();
+}
+
+function isValidWidgetId(value: unknown): value is DashboardWidgetId {
+  return (
+    typeof value === "string" &&
+    (ALL_DASHBOARD_WIDGET_IDS as string[]).includes(value)
+  );
+}
+
+export function getDashboardLayoutPreferences(
+  context?: DbContext,
+): DashboardLayoutPreferences {
+  const raw = getSettingByKey(DASHBOARD_LAYOUT_SETTING_KEY, context);
+  if (!raw) {
+    return DEFAULT_DASHBOARD_LAYOUT;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<DashboardLayoutPreferences>;
+    const rawOrder = Array.isArray(parsed.order)
+      ? parsed.order.filter(isValidWidgetId)
+      : [];
+    const seen = new Set<DashboardWidgetId>(rawOrder);
+    const mergedOrder: DashboardWidgetId[] = [...rawOrder];
+    for (const id of ALL_DASHBOARD_WIDGET_IDS) {
+      if (!seen.has(id)) {
+        mergedOrder.push(id);
+      }
+    }
+    const hidden = Array.isArray(parsed.hidden)
+      ? Array.from(new Set(parsed.hidden.filter(isValidWidgetId)))
+      : DEFAULT_DASHBOARD_LAYOUT.hidden;
+    const showGreetingQuote =
+      typeof parsed.showGreetingQuote === "boolean"
+        ? parsed.showGreetingQuote
+        : DEFAULT_DASHBOARD_LAYOUT.showGreetingQuote;
+
+    return {
+      order: mergedOrder,
+      hidden,
+      showGreetingQuote,
+    };
+  } catch {
+    return DEFAULT_DASHBOARD_LAYOUT;
+  }
+}
+
+export function setDashboardLayoutPreferences(
+  preferences: DashboardLayoutPreferences,
+  context?: DbContext,
+): void {
+  persistSettingsEntries(
+    {
+      [DASHBOARD_LAYOUT_SETTING_KEY]: JSON.stringify(preferences),
+    },
+    context,
+  );
+  notifyListeners();
+}
+
+export function applyDashboardLayoutPreset(
+  presetId: DashboardLayoutPresetId,
+  context?: DbContext,
+): DashboardLayoutPreferences {
+  let nextLayout: DashboardLayoutPreferences;
+  switch (presetId) {
+    case "cashflowFocus":
+      nextLayout = {
+        order: [
+          "greeting",
+          "cashflow",
+          "topCategories",
+          "recentTransactions",
+          "accountsStrip",
+          "netWorth",
+        ],
+        hidden: ["netWorth"],
+        showGreetingQuote: true,
+      };
+      break;
+    case "wealthOverview":
+      nextLayout = {
+        order: [
+          "greeting",
+          "netWorth",
+          "accountsStrip",
+          "cashflow",
+          "recentTransactions",
+          "topCategories",
+        ],
+        hidden: ["topCategories"],
+        showGreetingQuote: true,
+      };
+      break;
+    case "completeView":
+      nextLayout = {
+        order: [
+          "greeting",
+          "netWorth",
+          "cashflow",
+          "accountsStrip",
+          "topCategories",
+          "recentTransactions",
+        ],
+        hidden: [],
+        showGreetingQuote: true,
+      };
+      break;
+    case "minimalist":
+      nextLayout = {
+        order: [
+          "greeting",
+          "cashflow",
+          "recentTransactions",
+          "netWorth",
+          "accountsStrip",
+          "topCategories",
+        ],
+        hidden: ["netWorth", "accountsStrip", "topCategories"],
+        showGreetingQuote: false,
+      };
+      break;
+  }
+  setDashboardLayoutPreferences(nextLayout, context);
+  return nextLayout;
 }

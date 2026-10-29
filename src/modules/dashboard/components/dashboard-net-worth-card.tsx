@@ -7,6 +7,7 @@ import {
   EyeOff,
   LayoutGrid,
   Settings2,
+  SlidersHorizontal,
   Sparkles,
   TrendingDown,
   TrendingUp,
@@ -36,6 +37,7 @@ export interface DashboardNetWorthCardProps {
   currencyCode?: string;
   homeMode?: HomeExperienceMode;
   onHomeModeChange?: (mode: HomeExperienceMode) => void;
+  onCustomizeDashboard?: () => void;
   monthlySpentMinorUnits?: number;
 }
 
@@ -48,6 +50,7 @@ export function DashboardNetWorthCard({
   currencyCode = "PHP",
   homeMode = "detailed",
   onHomeModeChange,
+  onCustomizeDashboard,
   monthlySpentMinorUnits = 0,
 }: DashboardNetWorthCardProps) {
   const theme = useAppTheme();
@@ -69,15 +72,13 @@ export function DashboardNetWorthCard({
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
   const privateValue = "••••••";
 
-  const displayModeItems = useMemo(
-    () => [
+  const displayModeItems = useMemo(() => {
+    const items = [
       {
         id: "simple",
         label: t("dashboard.displayModeSimple"),
         description: t("dashboard.displayModeSimpleDescription"),
-        icon: (
-          <Sparkles color={theme.colors.primary} size={20} />
-        ),
+        icon: <Sparkles color={theme.colors.primary} size={20} />,
         selected: homeMode === "simple",
         onPress: () => onHomeModeChange?.("simple"),
       },
@@ -85,15 +86,33 @@ export function DashboardNetWorthCard({
         id: "detailed",
         label: t("dashboard.displayModeDetailed"),
         description: t("dashboard.displayModeDetailedDescription"),
-        icon: (
-          <LayoutGrid color={theme.colors.textSecondary} size={20} />
-        ),
+        icon: <LayoutGrid color={theme.colors.textSecondary} size={20} />,
         selected: homeMode === "detailed",
         onPress: () => onHomeModeChange?.("detailed"),
       },
-    ],
-    [homeMode, onHomeModeChange, t, theme.colors.primary, theme.colors.textSecondary],
-  );
+    ];
+    if (onCustomizeDashboard) {
+      items.push({
+        id: "customizeLayout",
+        label: t("dashboard.customizeModalTitle"),
+        description: t("dashboard.customizeModalSubtitle"),
+        icon: <SlidersHorizontal color={theme.colors.primary} size={20} />,
+        selected: false,
+        onPress: () => {
+          setDisplayModeSheetVisible(false);
+          onCustomizeDashboard();
+        },
+      });
+    }
+    return items;
+  }, [
+    homeMode,
+    onCustomizeDashboard,
+    onHomeModeChange,
+    t,
+    theme.colors.primary,
+    theme.colors.textSecondary,
+  ]);
 
   return (
     <View ref={cardRef} collapsable={false} style={styles.card}>

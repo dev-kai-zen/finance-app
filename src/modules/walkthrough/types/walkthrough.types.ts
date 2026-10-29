@@ -5,6 +5,7 @@ export type WalkthroughTargetId =
   | "settingsDemonstration"
   | "eyeIcon"
   | "recentTxCard"
+  | "customizeHomeButton"
   | "fabButton"
   | "archivedChip"
   | "fundGroupsChip"
