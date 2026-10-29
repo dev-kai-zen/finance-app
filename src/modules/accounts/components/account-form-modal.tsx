@@ -732,7 +732,7 @@ function AccountFormModalContent({
                   style={styles.lockButton}
                 >
                   <Lock color={theme.colors.warning} size={12} />
-                  <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
+                  <Text style={styles.lockButtonText}>Lock</Text>
                 </Pressable>
               ) : null
             }
