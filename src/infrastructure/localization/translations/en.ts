@@ -417,6 +417,7 @@ export const en = {
     accentColorHint: "Secondary highlights, badges, and chart spikes.",
     applyCustomTheme: "Apply Custom Theme",
     unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
+    customShadeLabel: "Fine-tune Hue & Shade",
   },
   versionHistory: {
     heading: "Version History",
@@ -448,8 +449,14 @@ export const en = {
         "Create your own color combinations in the new Custom Theme Studio.",
       newItem2:
         "Customize your Home screen layout with new Cashflow, Accounts, and Top Spending cards.",
+      newItem3:
+        "Add a Quick Actions card to your Home screen and fine-tune custom colors with the visual shade picker.",
       improveItem1:
         "Add expressive tinted light and dark theme presets and sync your chosen theme across devices.",
+      improveItem2:
+        "Show daily net totals and active filter chips on the Transactions screen.",
+      improveItem3:
+        "Jump directly to filtered transactions from Dashboard cards, Budgets, and Savings Goals.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
       fixItem2:
@@ -821,6 +828,11 @@ export const en = {
       "Personalize your dashboard to match how you manage your money:\n\n• 1-Tap Layout Presets: Quickly switch between Cashflow Focus, Wealth & Balances, Complete View, or Minimalist.\n• Show or Hide Cards: Toggle individual cards on or off using the switches.\n• Reorder Cards: Tap Reorder to drag and drop or use the arrows to arrange cards in your preferred order.",
     reorderCards: "Reorder",
     reorderCardsTitle: "Reorder Dashboard Cards",
+    widgetQuickActionsTitle: "Quick Actions",
+    quickActionExpense: "Expense",
+    quickActionIncome: "Income",
+    quickActionTransfer: "Transfer",
+    quickActionAi: "Ask Kai",
   },
   calendar: {
     firstOfMonth: "1st of Month",
@@ -1233,7 +1245,7 @@ export const en = {
       "Quickly filter your category budgets by period — daily, weekly, monthly, quarterly, or yearly.",
     stepFirstItemToggleTitle: "Enable & Disable Budgets",
     stepFirstItemToggleDesc:
-      "Toggle any budget on or off at will without losing your past transactions or configuration.",
+      "Toggle any budget on or off at will, or tap View transactions on any card to inspect that category's spending.",
     stepFabTitle: "Create Category Budget",
     stepFabDesc:
       "Tap the (+) button anytime to set up additional category limits and stay on top of your financial goals.",
@@ -1256,9 +1268,9 @@ export const en = {
     stepStatusFiltersTitle: "Goal Status Filters",
     stepStatusFiltersDesc:
       "Easily filter between All Goals, active In Progress targets, and Completed milestones with live counter badges.",
-    stepFirstItemMarkCompleteTitle: "Mark as Completed",
+    stepFirstItemMarkCompleteTitle: "Add Funds & Complete Goal",
     stepFirstItemMarkCompleteDesc:
-      "Celebrate reaching your target by marking the goal as completed, or reopen it anytime if you want to keep saving.",
+      "Tap Add Funds to quickly record a deposit into your goal's linked account, or mark the goal as completed when you reach your target.",
     stepFabTitle: "Add New Goal",
     stepFabDesc:
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",

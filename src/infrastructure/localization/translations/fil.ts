@@ -415,6 +415,7 @@ export const fil = {
     accentColorHint: "Pangalawang highlight, mga badge, at chart.",
     applyCustomTheme: "Gamitin ang Custom Theme",
     unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
+    customShadeLabel: "Itimpla ang Hue at Kulay",
   },
   versionHistory: {
     heading: "Kasaysayan ng Bersyon",
@@ -446,8 +447,14 @@ export const fil = {
         "Gumawa ng sarili mong kombinasyon ng kulay sa bagong Custom Theme Studio.",
       newItem2:
         "I-customize ang ayos ng Home screen gamit ang bagong Cashflow, Accounts, at Top Spending card.",
+      newItem3:
+        "Magdagdag ng Quick Actions card sa iyong Home screen at timplahin ang custom na kulay gamit ang visual shade picker.",
       improveItem1:
         "Magdagdag ng mga bagong tinted light at dark theme preset at i-sync ang napiling tema sa iyong mga device.",
+      improveItem2:
+        "Ipakita ang arawang net total at aktibong filter chips sa screen ng Mga Transaksyon.",
+      improveItem3:
+        "Direktang buksan ang mga kaugnay na transaksyon mula sa mga card sa Dashboard, Badyet, at Layunin.",
       fixItem1:
         "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
       fixItem2:
@@ -812,6 +819,11 @@ export const fil = {
       "I-personalize ang iyong dashboard ayon sa gusto mong paraan ng pagsubaybay sa pera:\n\n• 1-Tap Layout Presets: Mabilis na lumipat sa Tutok sa Cashflow, Yaman at Balanse, Kumpletong Tanaw, o Minimalist.\n• Ipakita o Itago ang Card: Gamitin ang switch sa bawat card.\n• Ayusin ang Pagkakasunod-sunod: I-tap ang Ayusin para i-drag and drop o gamitin ang mga arrow.",
     reorderCards: "Ayusin",
     reorderCardsTitle: "Ayusin ang mga Card sa Dashboard",
+    widgetQuickActionsTitle: "Mabilisang Aksyon",
+    quickActionExpense: "Gastos",
+    quickActionIncome: "Kita",
+    quickActionTransfer: "Lipat",
+    quickActionAi: "Tanungin si Kai",
   },
   calendar: {
     firstOfMonth: "Ika-1 ng Buwan",
@@ -1229,7 +1241,7 @@ export const fil = {
       "Mabilis na salain ang iyong mga badyet ayon sa panahon — araw-araw, lingguhan, buwanan, o taunan.",
     stepFirstItemToggleTitle: "I-enable o I-disable ang Badyet",
     stepFirstItemToggleDesc:
-      "I-on o i-off ang anumang badyet kailanman nang hindi nabubura ang iyong mga nakaraang transaksyon o setting.",
+      "I-on o i-off ang anumang badyet kailanman, o i-tap ang View transactions sa card para makita ang mga gastusin sa kategoryang iyon.",
     stepFabTitle: "Gumawa ng Badyet sa Kategorya",
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng karagdagang limitasyon at maabot ang iyong mga layunin.",
@@ -1252,9 +1264,9 @@ export const fil = {
     stepStatusFiltersTitle: "Mga Filter ng Katayuan",
     stepStatusFiltersDesc:
       "Madaling mag-filter sa pagitan ng Lahat ng Layunin, Kasalukuyang Isinasagawa, at Nakumpleto gamit ang mga live counter badge.",
-    stepFirstItemMarkCompleteTitle: "Markahan bilang Nakumpleto",
+    stepFirstItemMarkCompleteTitle: "Magdagdag ng Pondo at Kumpletuhin",
     stepFirstItemMarkCompleteDesc:
-      "Ipagdiwang ang pag-abot sa iyong target sa pamamagitan ng pagmamarka dito bilang nakumpleto, o muling buksan ito kailanman.",
+      "I-tap ang Add Funds para mabilis na magtala ng ipon sa naka-link na account, o markahan bilang nakumpleto kapag naabot na ang target.",
     stepFabTitle: "Magdagdag ng Bagong Layunin",
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",

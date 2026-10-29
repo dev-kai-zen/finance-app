@@ -20,6 +20,7 @@ import {
   type DashboardWidgetId,
 } from "@/modules/settings";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
+import { DashboardQuickActionsCard } from "../components/dashboard-quick-actions-card";
 import { DashboardCashflowCard } from "../components/dashboard-cashflow-card";
 import { DashboardAccountsCard } from "../components/dashboard-accounts-card";
 import { DashboardTopCategoriesCard } from "../components/dashboard-top-categories-card";
@@ -418,6 +419,16 @@ function DashboardScreenContent() {
             totalLiabilitiesMinorUnits={liabilities}
           />
         );
+      case "quickActions":
+        return (
+          <DashboardQuickActionsCard
+            key="quickActions"
+            onAddExpense={() => handleOpenTransactionModal("expense")}
+            onAddIncome={() => handleOpenTransactionModal("income")}
+            onAddTransfer={() => handleOpenTransactionModal("transfer")}
+            onOpenAssistant={() => setIsChatModalOpen(true)}
+          />
+        );
       case "cashflow":
         return (
           <DashboardCashflowCard
@@ -425,6 +436,12 @@ function DashboardScreenContent() {
             cashflow={summary.monthlyCashflow}
             currencyCode={currencyPreferences.defaultCurrency}
             onPressReports={() => router.navigate("/reports" as any)}
+            onPressIncome={() =>
+              router.navigate("/transactions?type=income&datePreset=this_month" as any)
+            }
+            onPressExpense={() =>
+              router.navigate("/transactions?type=expense&datePreset=this_month" as any)
+            }
           />
         );
       case "accountsStrip":
@@ -442,6 +459,11 @@ function DashboardScreenContent() {
             categories={summary.topSpendingCategories}
             currencyCode={currencyPreferences.defaultCurrency}
             onViewCategories={() => router.navigate("/categories" as any)}
+            onPressCategory={(categoryId) =>
+              router.navigate(
+                `/transactions?categoryId=${encodeURIComponent(categoryId)}&datePreset=this_month` as any,
+              )
+            }
           />
         );
       case "recentTransactions":

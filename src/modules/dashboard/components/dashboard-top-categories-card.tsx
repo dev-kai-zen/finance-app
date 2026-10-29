@@ -13,12 +13,14 @@ export interface DashboardTopCategoriesCardProps {
   categories: CategorySpendingItem[];
   currencyCode?: string;
   onViewCategories?: () => void;
+  onPressCategory?: (categoryId: string) => void;
 }
 
 export function DashboardTopCategoriesCard({
   categories,
   currencyCode = "PHP",
   onViewCategories,
+  onPressCategory,
 }: DashboardTopCategoriesCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -62,7 +64,16 @@ export function DashboardTopCategoriesCard({
             const iconName = item.categoryIcon || "tag";
 
             return (
-              <View key={item.categoryId} style={styles.row}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!onPressCategory}
+                key={item.categoryId}
+                onPress={() => onPressCategory?.(item.categoryId)}
+                style={({ pressed }) => [
+                  styles.row,
+                  pressed && onPressCategory && styles.pressed,
+                ]}
+              >
                 <View
                   style={[
                     styles.iconBadge,
@@ -100,7 +111,7 @@ export function DashboardTopCategoriesCard({
                     <Text style={styles.percentText}>{item.percentage}%</Text>
                   </View>
                 </View>
-              </View>
+              </Pressable>
             );
           })}
         </View>

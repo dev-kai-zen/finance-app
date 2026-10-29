@@ -9,6 +9,7 @@ import {
   Landmark,
   MoreVertical,
   Pencil,
+  Plus,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -28,6 +29,7 @@ export interface GoalCardProps {
   onEdit: () => void;
   onToggleStatus: (status: GoalStatus) => void;
   onDelete: () => void;
+  onAddFunds?: () => void;
   markCompleteRef?: React.Ref<View>;
 }
 
@@ -37,6 +39,7 @@ export const GoalCard = memo(function GoalCard({
   onEdit,
   onToggleStatus,
   onDelete,
+  onAddFunds,
   markCompleteRef,
 }: GoalCardProps) {
   const theme = useAppTheme();
@@ -267,7 +270,17 @@ export const GoalCard = memo(function GoalCard({
 
       {/* Bottom Status Toggle */}
       <View style={styles.bottomBar}>
-        <View collapsable={false} ref={markCompleteRef}>
+        <View collapsable={false} ref={markCompleteRef} style={styles.bottomActionsRow}>
+          {!isCompleted && onAddFunds ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onAddFunds}
+              style={styles.addFundsButton}
+            >
+              <Plus color={theme.colors.primary} size={13} />
+              <Text style={styles.addFundsButtonText}>Add Funds</Text>
+            </Pressable>
+          ) : null}
           {isCompleted ? (
             <Pressable
               onPress={() => onToggleStatus("in_progress")}
@@ -530,6 +543,28 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.sm,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
+    },
+    bottomActionsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
+    },
+    addFundsButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: `${theme.colors.primary}15`,
+      borderWidth: 1,
+      borderColor: `${theme.colors.primary}45`,
+    },
+    addFundsButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     completeButton: {
       flexDirection: "row",

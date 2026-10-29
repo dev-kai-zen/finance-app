@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { AlertCircle, AlertTriangle, RotateCw } from "lucide-react-native";
+import { AlertCircle, AlertTriangle, ArrowRight, RotateCw } from "lucide-react-native";
 import { IconHelper, ThemedSwitch } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -13,6 +13,7 @@ export interface BudgetCardProps {
   status: BudgetStatus;
   onPress: () => void;
   onToggle: (isEnabled: boolean) => void;
+  onViewTransactions?: () => void;
   toggleRef?: React.Ref<View>;
 }
 
@@ -31,6 +32,7 @@ export const BudgetCard = memo(function BudgetCard({
   status,
   onPress,
   onToggle,
+  onViewTransactions,
   toggleRef,
 }: BudgetCardProps) {
   const theme = useAppTheme();
@@ -183,8 +185,18 @@ export const BudgetCard = memo(function BudgetCard({
       </View>
 
       {/* Rollover or Exceeded indicator Footer */}
-      {(budget.allowRollover || isExceeded) && (
+      {(budget.allowRollover || isExceeded || Boolean(onViewTransactions)) && (
         <View style={styles.footerRow}>
+          {onViewTransactions ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onViewTransactions}
+              style={styles.transactionsLink}
+            >
+              <Text style={styles.transactionsLinkText}>View transactions</Text>
+              <ArrowRight color={theme.colors.primary} size={13} />
+            </Pressable>
+          ) : null}
           {isExceeded ? (
             <View style={styles.warningPill}>
               <AlertCircle color={theme.colors.danger} size={14} />
@@ -334,6 +346,7 @@ function createStyles(theme: AppTheme) {
       fontWeight: "700",
     },
     footerRow: {
+      gap: theme.spacing.xs,
       borderTopColor: theme.colors.border,
       borderTopWidth: 1,
       marginTop: theme.spacing.md,
@@ -347,6 +360,18 @@ function createStyles(theme: AppTheme) {
     warningPillText: {
       flex: 1,
       color: theme.colors.danger,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    transactionsLink: {
+      alignItems: "center",
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      gap: 4,
+      paddingVertical: 2,
+    },
+    transactionsLinkText: {
+      color: theme.colors.primary,
       fontSize: 12,
       fontWeight: "600",
     },

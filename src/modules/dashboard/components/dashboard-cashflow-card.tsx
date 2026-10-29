@@ -17,12 +17,16 @@ export interface DashboardCashflowCardProps {
   cashflow: MonthlyCashflow;
   currencyCode?: string;
   onPressReports?: () => void;
+  onPressIncome?: () => void;
+  onPressExpense?: () => void;
 }
 
 export function DashboardCashflowCard({
   cashflow,
   currencyCode = "PHP",
   onPressReports,
+  onPressIncome,
+  onPressExpense,
 }: DashboardCashflowCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -115,7 +119,15 @@ export function DashboardCashflowCard({
 
       {/* Inflow vs Outflow Boxes */}
       <View style={styles.metricsRow}>
-        <View style={styles.metricBox}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!onPressIncome}
+          onPress={onPressIncome}
+          style={({ pressed }) => [
+            styles.metricBox,
+            pressed && onPressIncome && styles.pressed,
+          ]}
+        >
           <View style={styles.metricHeader}>
             <View
               style={[
@@ -140,9 +152,17 @@ export function DashboardCashflowCard({
           >
             {formatCurrency(inflow, currencyCode)}
           </Text>
-        </View>
+        </Pressable>
 
-        <View style={styles.metricBox}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={!onPressExpense}
+          onPress={onPressExpense}
+          style={({ pressed }) => [
+            styles.metricBox,
+            pressed && onPressExpense && styles.pressed,
+          ]}
+        >
           <View style={styles.metricHeader}>
             <View
               style={[
@@ -167,7 +187,7 @@ export function DashboardCashflowCard({
           >
             {formatCurrency(outflow, currencyCode)}
           </Text>
-        </View>
+        </Pressable>
       </View>
     </View>
   );

@@ -28,6 +28,7 @@ export type HomeExperienceMode = "simple" | "detailed";
 export type DashboardWidgetId =
   | "greeting"
   | "netWorth"
+  | "quickActions"
   | "cashflow"
   | "accountsStrip"
   | "topCategories"
@@ -48,6 +49,7 @@ export interface DashboardLayoutPreferences {
 export const ALL_DASHBOARD_WIDGET_IDS: DashboardWidgetId[] = [
   "greeting",
   "netWorth",
+  "quickActions",
   "cashflow",
   "accountsStrip",
   "topCategories",
@@ -58,6 +60,7 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutPreferences = {
   order: [
     "greeting",
     "netWorth",
+    "quickActions",
     "cashflow",
     "accountsStrip",
     "topCategories",
@@ -403,6 +406,13 @@ export function getDashboardLayoutPreferences(
     const mergedOrder: DashboardWidgetId[] = [...rawOrder];
     for (const id of ALL_DASHBOARD_WIDGET_IDS) {
       if (!seen.has(id)) {
+        if (id === "quickActions") {
+          const netWorthIdx = mergedOrder.indexOf("netWorth");
+          if (netWorthIdx !== -1) {
+            mergedOrder.splice(netWorthIdx + 1, 0, id);
+            continue;
+          }
+        }
         mergedOrder.push(id);
       }
     }
@@ -447,6 +457,7 @@ export function applyDashboardLayoutPreset(
       nextLayout = {
         order: [
           "greeting",
+          "quickActions",
           "cashflow",
           "topCategories",
           "recentTransactions",
@@ -465,9 +476,10 @@ export function applyDashboardLayoutPreset(
           "accountsStrip",
           "cashflow",
           "recentTransactions",
+          "quickActions",
           "topCategories",
         ],
-        hidden: ["topCategories"],
+        hidden: ["quickActions", "topCategories"],
         showGreetingQuote: true,
       };
       break;
@@ -476,6 +488,7 @@ export function applyDashboardLayoutPreset(
         order: [
           "greeting",
           "netWorth",
+          "quickActions",
           "cashflow",
           "accountsStrip",
           "topCategories",
@@ -491,11 +504,12 @@ export function applyDashboardLayoutPreset(
           "greeting",
           "cashflow",
           "recentTransactions",
+          "quickActions",
           "netWorth",
           "accountsStrip",
           "topCategories",
         ],
-        hidden: ["netWorth", "accountsStrip", "topCategories"],
+        hidden: ["quickActions", "netWorth", "accountsStrip", "topCategories"],
         showGreetingQuote: false,
       };
       break;

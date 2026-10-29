@@ -64,6 +64,10 @@ const WIDGET_METADATA: Record<
     icon: "trending-up",
     titleKey: "dashboard.widgetNetWorthTitle",
   },
+  quickActions: {
+    icon: "zap",
+    titleKey: "dashboard.widgetQuickActionsTitle",
+  },
   cashflow: {
     icon: "arrow-left-right",
     titleKey: "dashboard.widgetCashflowTitle",

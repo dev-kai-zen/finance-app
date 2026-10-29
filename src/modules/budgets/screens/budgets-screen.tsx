@@ -447,6 +447,13 @@ function BudgetsScreenContent({
                     key={status.budget.id}
                     onPress={() => handleOpenEdit(status)}
                     onToggle={(val) => toggleBudget(status.budget.id, val)}
+                    onViewTransactions={() =>
+                      router.push(
+                        `/transactions?categoryId=${encodeURIComponent(
+                          status.budget.categoryId,
+                        )}&datePreset=this_month` as any,
+                      )
+                    }
                     status={status}
                     toggleRef={index === 0 ? firstItemToggleRef : undefined}
                   />

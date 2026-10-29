@@ -4,6 +4,7 @@ import {
   Alert,
   Platform,
   Pressable,
+  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -53,9 +54,13 @@ import {
 import { useAccounts } from "@/modules/accounts";
 import { AdBanner } from "@/modules/ads";
 import { useCategories } from "@/modules/categories";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { useLabels } from "@/modules/labels";
+import { formatCurrency } from "@/utils/currency";
 import {
   DEFAULT_TRANSACTION_FILTERS,
   TransactionFilterModal,
+  type DatePreset,
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
 import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
@@ -87,6 +92,9 @@ interface DateGroup {
   key: string;
   label: string;
   items: TransactionListItem[];
+  netMinorUnits: number;
+  currencyCode: string;
+  hasNonTransfer: boolean;
 }
 
 function getDateGroupInfo(occurredAt: Date | string | undefined): {
@@ -130,6 +138,8 @@ function getDateGroupInfo(occurredAt: Date | string | undefined): {
 }
 
 function initialFilterState(
+  categoryId?: string,
+  datePreset?: string,
   accountId?: string,
   initialType?: string,
 ): TransactionFilterState {
@@ -137,17 +147,27 @@ function initialFilterState(
     initialType === "expense" || initialType === "income" || initialType === "transfer"
       ? initialType
       : "all";
-  if (!accountId && filterType === "all") {
+  const validPreset: DatePreset =
+    datePreset === "this_month" ||
+    datePreset === "last_month" ||
+    datePreset === "this_year"
+      ? datePreset
+      : "all";
+  if (!accountId && !categoryId && filterType === "all" && validPreset === "all") {
     return DEFAULT_TRANSACTION_FILTERS;
   }
   return {
     ...DEFAULT_TRANSACTION_FILTERS,
     ...(accountId ? { accountIds: [accountId] } : {}),
+    ...(categoryId ? { categoryIds: [categoryId] } : {}),
+    datePreset: validPreset,
     type: filterType,
   };
 }
 
 export interface TransactionsScreenProps {
+  initialCategoryId?: string;
+  initialDatePreset?: string;
   initialAccountId?: string;
   initialAction?: string;
   initialType?: string;
@@ -162,6 +182,8 @@ export function TransactionsScreen(props: TransactionsScreenProps = {}) {
 }
 
 function TransactionsScreenContent({
+  initialCategoryId,
+  initialDatePreset,
   initialAccountId,
   initialAction,
   initialType,
@@ -209,12 +231,18 @@ function TransactionsScreenContent({
 
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories, refresh: refreshCategories } = useCategories();
+  const { preferences: currencyPreferences } = useCurrencyPreferences();
+  const { labels: allLabels } = useLabels();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
     initialFilterState(
-      initialAccountId,
+
+      initialAction !== "new" ? initialCategoryId : undefined,
+      initialAction !== "new" ? initialDatePreset : undefined,
+      initialAction !== "new" ? initialAccountId : undefined,
+
       initialAction !== "new" ? initialType : undefined,
     ),
   );
@@ -271,11 +299,33 @@ function TransactionsScreenContent({
 
   useEffect(() => {
     if (initialAction !== "new" && initialType) {
-      setFilterState(initialFilterState(initialAccountId, initialType));
-    } else if (initialAccountId) {
-      setFilterState(initialFilterState(initialAccountId));
+      setFilterState(
+        initialFilterState(
+          initialCategoryId,
+          initialDatePreset,
+          initialAccountId,
+          initialType,
+        ),
+      );
+    } else if (
+      initialAction !== "new" &&
+      (initialAccountId || initialCategoryId || initialDatePreset)
+    ) {
+      setFilterState(
+        initialFilterState(
+          initialCategoryId,
+          initialDatePreset,
+          initialAccountId,
+        ),
+      );
     }
-  }, [initialAccountId, initialAction, initialType]);
+  }, [
+    initialAccountId,
+    initialAction,
+    initialCategoryId,
+    initialDatePreset,
+    initialType,
+  ]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -286,6 +336,9 @@ function TransactionsScreenContent({
   const [formInitialType, setFormInitialType] = useState<
     TransactionType | undefined
   >(undefined);
+  const [formInitialAccountId, setFormInitialAccountId] = useState<
+    string | null
+  >(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [inspectedTransaction, setInspectedTransaction] =
     useState<TransactionListItem | null>(null);
@@ -301,11 +354,12 @@ function TransactionsScreenContent({
 
   useEffect(() => {
     if (initialAction === "new") {
-      const actionKey = `${initialAction}-${initialType ?? "expense"}`;
+      const actionKey = `${initialAction}-${initialType ?? "expense"}-${initialAccountId ?? ""}`;
       if (handledActionRef.current !== actionKey) {
         handledActionRef.current = actionKey;
         setIsEditingTransaction(false);
         setPrefilledTransaction(null);
+        setFormInitialAccountId(initialAccountId ?? null);
         setFormInitialType(
           initialType === "income"
             ? "income"
@@ -354,7 +408,7 @@ function TransactionsScreenContent({
     } else {
       handledActionRef.current = null;
     }
-  }, [clearError, initialAction, initialType, router]);
+  }, [clearError, initialAccountId, initialAction, initialType, router]);
 
   useEffect(() => {
     setInspectedTransaction((current) =>
@@ -375,6 +429,7 @@ function TransactionsScreenContent({
     if (filterState.type !== "all") count += 1;
     if (filterState.datePreset !== "all") count += 1;
     if (filterState.accountIds.length > 0) count += 1;
+    if (filterState.categoryIds && filterState.categoryIds.length > 0) count += 1;
     if (filterState.labelIds && filterState.labelIds.length > 0) count += 1;
     return count;
   }, [filterState]);
@@ -411,6 +466,30 @@ function TransactionsScreenContent({
           filterState.accountIds.includes(tx.accountId) ||
           (tx.transferAccountId !== null &&
             filterState.accountIds.includes(tx.transferAccountId)),
+      );
+    }
+
+    // 3b. Category filter (includes subcategories when a parent category is selected, plus split entries)
+    if (filterState.categoryIds && filterState.categoryIds.length > 0) {
+      const matchingCatIds = new Set<string>();
+      for (const catId of filterState.categoryIds) {
+        matchingCatIds.add(catId);
+        const parent = categories.find((c) => c.id === catId);
+        if (parent?.subcategories) {
+          for (const sub of parent.subcategories) {
+            matchingCatIds.add(sub.id);
+          }
+        }
+      }
+      list = list.filter(
+        (tx) =>
+          (tx.categoryId !== null && matchingCatIds.has(tx.categoryId)) ||
+          Boolean(
+            tx.splitEntries?.some(
+              (entry) =>
+                entry.categoryId !== null && matchingCatIds.has(entry.categoryId),
+            ),
+          ),
       );
     }
 
@@ -469,7 +548,7 @@ function TransactionsScreenContent({
     });
 
     return list;
-  }, [transactions, searchQuery, filterState]);
+  }, [transactions, searchQuery, filterState, categories]);
 
   const visibleTransactions = useMemo(
     () => filteredTransactions.slice(0, renderedLimit),
@@ -494,15 +573,36 @@ function TransactionsScreenContent({
     for (const tx of visibleTransactions) {
       const { key, label } = getDateGroupInfo(tx.occurredAt);
       if (!map.has(key)) {
-        const group: DateGroup = { key, label, items: [] };
+        const group: DateGroup = {
+          key,
+          label,
+          items: [],
+          netMinorUnits: 0,
+          currencyCode: currencyPreferences.defaultCurrency,
+          hasNonTransfer: false,
+        };
         map.set(key, group);
         groups.push(group);
       }
-      map.get(key)!.items.push(tx);
+      const group = map.get(key)!;
+      group.items.push(tx);
+      if (tx.type !== "transfer") {
+        if (!group.hasNonTransfer) {
+          group.currencyCode = tx.currencyCode || currencyPreferences.defaultCurrency;
+        } else if (
+          tx.currencyCode &&
+          tx.currencyCode !== group.currencyCode
+        ) {
+          group.currencyCode = currencyPreferences.defaultCurrency;
+        }
+        group.hasNonTransfer = true;
+        const delta = Math.abs(tx.amountMinorUnits);
+        group.netMinorUnits += tx.type === "income" ? delta : -delta;
+      }
     }
 
     return groups;
-  }, [visibleTransactions]);
+  }, [visibleTransactions, currencyPreferences.defaultCurrency]);
 
   const handleOpenNewTransaction = () => {
     refreshAccounts();
@@ -741,6 +841,9 @@ function TransactionsScreenContent({
         key: group.key,
         title: group.label,
         count: group.items.length,
+        netMinorUnits: group.netMinorUnits,
+        currencyCode: group.currencyCode,
+        hasNonTransfer: group.hasNonTransfer,
         data: group.items,
       })),
     [groupedTransactions],
@@ -966,6 +1069,158 @@ function TransactionsScreenContent({
             </Pressable>
         </View>
 
+        {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.activeFiltersRow}
+            style={styles.activeFiltersScroll}
+          >
+            {searchQuery.trim().length > 0 ? (
+              <Pressable
+                style={styles.activeFilterChip}
+                onPress={() => setSearchQuery("")}
+                accessibilityRole="button"
+              >
+                <Text style={styles.activeFilterChipText} numberOfLines={1}>
+                  {`"${searchQuery.trim()}"`}
+                </Text>
+                <X size={13} color={theme.colors.primary} />
+              </Pressable>
+            ) : null}
+
+            {filterState.type !== "all" ? (
+              <Pressable
+                style={styles.activeFilterChip}
+                onPress={() =>
+                  setFilterState((prev) => ({ ...prev, type: "all" }))
+                }
+                accessibilityRole="button"
+              >
+                <Text style={styles.activeFilterChipText}>
+                  {filterState.type === "income"
+                    ? "Income"
+                    : filterState.type === "expense"
+                      ? "Expense"
+                      : "Transfer"}
+                </Text>
+                <X size={13} color={theme.colors.primary} />
+              </Pressable>
+            ) : null}
+
+            {filterState.datePreset !== "all" ? (
+              <Pressable
+                style={styles.activeFilterChip}
+                onPress={() =>
+                  setFilterState((prev) => ({
+                    ...prev,
+                    datePreset: "all",
+                    customDateFrom: null,
+                    customDateTo: null,
+                  }))
+                }
+                accessibilityRole="button"
+              >
+                <Text style={styles.activeFilterChipText}>
+                  {filterState.datePreset === "this_month"
+                    ? "This Month"
+                    : filterState.datePreset === "last_month"
+                      ? "Last Month"
+                      : filterState.datePreset === "this_year"
+                        ? "This Year"
+                        : "Custom Dates"}
+                </Text>
+                <X size={13} color={theme.colors.primary} />
+              </Pressable>
+            ) : null}
+
+            {filterState.accountIds.map((accId) => {
+              const accName =
+                accounts.find((a) => a.id === accId)?.name ?? "Account";
+              return (
+                <Pressable
+                  key={`acc-${accId}`}
+                  style={styles.activeFilterChip}
+                  onPress={() =>
+                    setFilterState((prev) => ({
+                      ...prev,
+                      accountIds: prev.accountIds.filter((id) => id !== accId),
+                    }))
+                  }
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.activeFilterChipText} numberOfLines={1}>
+                    {accName}
+                  </Text>
+                  <X size={13} color={theme.colors.primary} />
+                </Pressable>
+              );
+            })}
+
+            {(filterState.categoryIds ?? []).map((catId) => {
+              const allCats = categories.flatMap((c) => [
+                c,
+                ...(c.subcategories ?? []),
+              ]);
+              const catName =
+                allCats.find((c) => c.id === catId)?.name ?? "Category";
+              return (
+                <Pressable
+                  key={`cat-${catId}`}
+                  style={styles.activeFilterChip}
+                  onPress={() =>
+                    setFilterState((prev) => ({
+                      ...prev,
+                      categoryIds: (prev.categoryIds ?? []).filter(
+                        (id) => id !== catId,
+                      ),
+                    }))
+                  }
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.activeFilterChipText} numberOfLines={1}>
+                    {catName}
+                  </Text>
+                  <X size={13} color={theme.colors.primary} />
+                </Pressable>
+              );
+            })}
+
+            {(filterState.labelIds ?? []).map((lblId) => {
+              const lblName =
+                allLabels.find((l) => l.id === lblId)?.name ?? "Label";
+              return (
+                <Pressable
+                  key={`lbl-${lblId}`}
+                  style={styles.activeFilterChip}
+                  onPress={() =>
+                    setFilterState((prev) => ({
+                      ...prev,
+                      labelIds: (prev.labelIds ?? []).filter(
+                        (id) => id !== lblId,
+                      ),
+                    }))
+                  }
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.activeFilterChipText} numberOfLines={1}>
+                    {`#${lblName}`}
+                  </Text>
+                  <X size={13} color={theme.colors.primary} />
+                </Pressable>
+              );
+            })}
+
+            <Pressable
+              style={styles.clearAllFiltersChip}
+              onPress={handleClearFilters}
+              accessibilityRole="button"
+            >
+              <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
+            </Pressable>
+          </ScrollView>
+        )}
+
         {/* Transactions Feed Grouped By Date */}
         <SectionList
           ref={sectionListRef}
@@ -1031,6 +1286,25 @@ function TransactionsScreenContent({
           renderSectionHeader={({ section }) => (
             <View style={styles.dateGroupHeader}>
               <Text style={styles.dateGroupTitle}>{section.title}</Text>
+              {section.hasNonTransfer ? (
+                <Text
+                  style={[
+                    styles.dateNetText,
+                    currencyPreferences.colorAmounts &&
+                      (section.netMinorUnits > 0
+                        ? { color: theme.colors.success }
+                        : section.netMinorUnits < 0
+                          ? { color: theme.colors.danger }
+                          : null),
+                  ]}
+                >
+                  {formatCurrency(
+                    section.netMinorUnits,
+                    section.currencyCode,
+                    true,
+                  )}
+                </Text>
+              ) : null}
               <View style={styles.dateCountBadge}>
                 <Text style={styles.dateCountBadgeText}>
                   {section.count} {section.count === 1 ? "record" : "records"}
@@ -1082,6 +1356,7 @@ function TransactionsScreenContent({
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
           setFormInitialType(undefined);
+          setFormInitialAccountId(null);
           setOnChatEditSaved(null);
           router.setParams({
             action: undefined,
@@ -1095,6 +1370,8 @@ function TransactionsScreenContent({
           }
         }}
         initialType={formInitialType}
+        defaultExpenseAccountId={formInitialAccountId}
+        defaultIncomeAccountId={formInitialAccountId}
         onSaveTransaction={handleRecordTransaction}
         onSaveTransfer={handleRecordTransfer}
         onSavePreset={savePreset}
@@ -1261,8 +1538,8 @@ function createStyles(theme: AppTheme) {
     },
     container: {
       flex: 1,
-      gap: theme.spacing.md,
-      paddingTop: theme.spacing.lg,
+      gap: theme.spacing.xs,
+      paddingTop: theme.spacing.sm,
     },
     sectionList: {
       flex: 1,
@@ -1283,7 +1560,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flex: 1,
       flexDirection: "row",
-      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: 40,
       paddingHorizontal: theme.spacing.md,
       ...theme.shadows.card,
     },
@@ -1307,7 +1584,7 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.large,
       borderWidth: 1,
-      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: 40,
       justifyContent: "center",
       width: LAYOUT_DIMENSIONS.minTouchTarget,
       ...theme.shadows.card,
@@ -1325,7 +1602,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.xs,
-      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: 40,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.sm,
     },
@@ -1337,7 +1614,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.xs,
-      height: LAYOUT_DIMENSIONS.minTouchTarget,
+      height: 40,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.sm,
     },
@@ -1423,6 +1700,7 @@ function createStyles(theme: AppTheme) {
     },
     sortPillTextActive: {
       color: theme.colors.success,
+      flex: 1,
     },
     sortOrderButton: {
       alignItems: "center",
@@ -1444,6 +1722,7 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.xs,
     },
     dateGroupHeader: {
+      gap: theme.spacing.sm,
       alignItems: "center",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -1453,6 +1732,7 @@ function createStyles(theme: AppTheme) {
     },
     dateGroupTitle: {
       color: theme.colors.success,
+      flex: 1,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },
@@ -1463,6 +1743,58 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    activeFiltersScroll: {
+      flexGrow: 0,
+      maxHeight: 34,
+    },
+    activeFiltersRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingHorizontal: 2,
+    },
+    activeFilterChip: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}15`,
+      borderColor: `${theme.colors.primary}45`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
+      maxWidth: 180,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    activeFilterChipText: {
+      color: theme.colors.primary,
+      flexShrink: 1,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    clearAllFiltersChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    clearAllFiltersChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    dateHeaderRight: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    dateNetText: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     loadMoreFooter: {
       alignItems: "center",

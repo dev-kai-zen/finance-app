@@ -414,6 +414,7 @@ export const es = {
     accentColorHint: "Resaltados secundarios, insignias y gráficos.",
     applyCustomTheme: "Aplicar Tema Personalizado",
     unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
+    customShadeLabel: "Ajustar tono y matiz",
   },
   versionHistory: {
     heading: "Historial de versiones",
@@ -445,8 +446,14 @@ export const es = {
         "Crea tus propias combinaciones de colores en el nuevo Estudio de Tema Personalizado.",
       newItem2:
         "Personaliza el diseño de tu pantalla de inicio con nuevas tarjetas de Flujo de Caja, Cuentas y Gastos.",
+      newItem3:
+        "Añade una tarjeta de Acciones Rápidas a tu inicio y ajusta tus colores con el selector visual de tonos.",
       improveItem1:
         "Añade nuevos temas claros y oscuros con color y sincroniza tu tema elegido entre dispositivos.",
+      improveItem2:
+        "Muestra totales netos diarios y filtros activos en la pantalla de Transacciones.",
+      improveItem3:
+        "Abre directamente las transacciones filtradas desde las tarjetas del Panel, Presupuestos y Metas.",
       fixItem1:
         "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
       fixItem2:
@@ -810,6 +817,11 @@ export const es = {
       "Personaliza tu panel según cómo administras tu dinero:\n\n• Diseños Rápidos en 1 Toque: Cambia rápidamente entre Enfoque en Flujo de Caja, Patrimonio y Saldos, Vista Completa o Minimalista.\n• Mostrar u Ocultar Tarjetas: Activa o desactiva cada tarjeta con el interruptor.\n• Reordenar Tarjetas: Toca Reordenar para arrastrar y soltar o usar las flechas.",
     reorderCards: "Reordenar",
     reorderCardsTitle: "Reordenar Tarjetas del Panel",
+    widgetQuickActionsTitle: "Acciones rápidas",
+    quickActionExpense: "Gasto",
+    quickActionIncome: "Ingreso",
+    quickActionTransfer: "Transferir",
+    quickActionAi: "Preguntar a Kai",
   },
   calendar: {
     firstOfMonth: "1.º del mes",
@@ -1227,7 +1239,7 @@ export const es = {
       "Filtra rápidamente tus presupuestos por periodo: diario, semanal, mensual, trimestral o anual.",
     stepFirstItemToggleTitle: "Activar o desactivar presupuestos",
     stepFirstItemToggleDesc:
-      "Activa o desactiva cualquier presupuesto a voluntad sin perder tus transacciones previas ni la configuración.",
+      "Activa o desactiva cualquier presupuesto a voluntad, o toca View transactions en la tarjeta para ver los gastos de esa categoría.",
     stepFabTitle: "Crear presupuesto por categoría",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para fijar nuevos límites por categoría y alcanzar tus metas financieras.",
@@ -1250,9 +1262,9 @@ export const es = {
     stepStatusFiltersTitle: "Filtros por estado",
     stepStatusFiltersDesc:
       "Filtra fácilmente entre Todos los objetivos, metas En progreso y logros Completados con contadores en tiempo real.",
-    stepFirstItemMarkCompleteTitle: "Marcar como completado",
+    stepFirstItemMarkCompleteTitle: "Añadir fondos y completar",
     stepFirstItemMarkCompleteDesc:
-      "Celebra alcanzar tu meta marcándola como completada, o reábrela en cualquier momento si deseas seguir ahorrando.",
+      "Toca Add Funds para registrar rápidamente un ahorro en la cuenta vinculada, o márcala como completada al alcanzar tu meta.",
     stepFabTitle: "Agregar nuevo objetivo",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
