@@ -426,9 +426,9 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
     },
     sectionTitleRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      justifyContent: "space-between",
+      alignItems: "flex-start",
+      flexDirection: "column",
+      gap: theme.spacing.xs,
     },
     sectionActions: {
       alignItems: "center",
