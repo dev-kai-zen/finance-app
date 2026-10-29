@@ -21,7 +21,7 @@ import {
   type CustomThemeConfig,
   type ThemeSelection,
 } from "@/constants/theme";
-import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import {
   readSavedCustomThemeConfig,
   readThemeSelection,

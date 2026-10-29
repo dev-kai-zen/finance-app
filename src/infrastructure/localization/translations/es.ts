@@ -449,6 +449,8 @@ export const es = {
         "Añade nuevos temas claros y oscuros con color y sincroniza tu tema elegido entre dispositivos.",
       fixItem1:
         "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
+      fixItem2:
+        "Corrige la estabilidad al iniciar la aplicación y cargar pantallas.",
     },
     v121: {
       date: "28 de octubre de 2026",

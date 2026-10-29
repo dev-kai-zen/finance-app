@@ -1,4 +1,10 @@
-export { SettingsScreen } from "./screens/settings-screen";
+import React from "react";
+
+export function SettingsScreen() {
+  const { SettingsScreen: Screen } =
+    require("./screens/settings-screen") as typeof import("./screens/settings-screen");
+  return React.createElement(Screen);
+}
 export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
 export {
   getDefaultAccounts,

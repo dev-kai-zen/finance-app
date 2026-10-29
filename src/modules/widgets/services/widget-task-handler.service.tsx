@@ -87,6 +87,11 @@ export async function widgetTaskHandler(props: WidgetTaskHandlerProps): Promise<
  * Safe to call on any platform; will no-op on non-Android platforms.
  */
 export function registerWidgets(): void {
+  const globalRegistry = globalThis as Record<string, unknown>;
+  if (globalRegistry.__kaizenWidgetTaskRegistered) {
+    return;
+  }
+  globalRegistry.__kaizenWidgetTaskRegistered = true;
   if (Platform.OS !== "android") {
     return;
   }

@@ -450,6 +450,8 @@ export const fil = {
         "Magdagdag ng mga bagong tinted light at dark theme preset at i-sync ang napiling tema sa iyong mga device.",
       fixItem1:
         "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
+      fixItem2:
+        "Ayusin ang bilis at katatagan sa pagbukas ng app at mga screen.",
     },
     v121: {
       date: "Oktubre 28, 2026",

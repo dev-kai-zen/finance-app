@@ -452,6 +452,8 @@ export const en = {
         "Add expressive tinted light and dark theme presets and sync your chosen theme across devices.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
+      fixItem2:
+        "Fix startup and screen loading reliability across the app.",
     },
     v121: {
       date: "October 28, 2026",
