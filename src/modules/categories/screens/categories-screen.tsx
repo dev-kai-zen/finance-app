@@ -285,6 +285,9 @@ function CategoriesScreenContent({
     <PageContainer
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <DraggableTourChip
           onPress={walkthrough.startWalkthrough}

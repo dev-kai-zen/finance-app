@@ -467,6 +467,8 @@ export const en = {
         "Fix startup and screen loading reliability across the app.",
       fixItem3:
         "Fix Quick Actions on Home opening Expense instead of Income or Transfer.",
+      fixItem4:
+        "Prevent screen scrolling while first-time walkthrough guides are preparing or displayed.",
     },
     v121: {
       date: "October 28, 2026",

@@ -258,6 +258,9 @@ function BudgetsScreenContent({
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           {budgets.length > 0 ? (

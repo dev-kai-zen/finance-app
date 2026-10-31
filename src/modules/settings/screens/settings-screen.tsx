@@ -290,6 +290,9 @@ function SettingsScreenContent() {
   return (
     <PageContainer
       scrollRef={scrollRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <DraggableTourChip
           defaultPlacement="top-left"

@@ -464,6 +464,8 @@ export const es = {
         "Corrige la estabilidad al iniciar la aplicación y cargar pantallas.",
       fixItem3:
         "Se corrigió que las Acciones Rápidas en Inicio abrieran Gasto en lugar de Ingreso o Transferencia.",
+      fixItem4:
+        "Evita el desplazamiento de pantalla mientras se prepara o muestra la guía introductoria.",
     },
     v121: {
       date: "28 de octubre de 2026",

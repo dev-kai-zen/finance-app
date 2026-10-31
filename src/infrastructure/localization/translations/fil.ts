@@ -465,6 +465,8 @@ export const fil = {
         "Ayusin ang bilis at katatagan sa pagbukas ng app at mga screen.",
       fixItem3:
         "Inayos ang Quick Actions sa Home na nagbubukas ng Gastos sa halip na Kita o Paglilipat.",
+      fixItem4:
+        "Pigilan ang pag-scroll ng screen habang inihahanda o ipinapakita ang gabay sa unang paggamit.",
     },
     v121: {
       date: "Oktubre 28, 2026",

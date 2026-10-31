@@ -331,6 +331,9 @@ function GoalFormModalContent({
           multilineContentContainerStyle={styles.scrollContentNoteFocused}
           multilineFocused={focusedFieldType === "description"}
           preset="fullScreenForm"
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >

@@ -368,6 +368,9 @@ function ScheduledTransactionsScreenContent({
       }
       scrollContentRef={scrollContentRef}
       scrollRef={pageScrollRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
     >
       <View style={styles.content}>
         {error ? (

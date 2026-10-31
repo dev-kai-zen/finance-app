@@ -852,6 +852,9 @@ function TransactionsScreenContent({
   return (
     <PageContainer
       contentContainerStyle={styles.pageContent}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           <TransactionSpeedDialFab

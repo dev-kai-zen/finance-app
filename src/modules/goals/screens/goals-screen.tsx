@@ -212,6 +212,9 @@ function GoalsScreenContent({
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           <FloatingActionButton

@@ -620,6 +620,9 @@ function AccountFormModalContent({
         />
         <KeyboardAwareForm
           ref={scrollRef}
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
           showsVerticalScrollIndicator={false}
         >
           <View ref={scrollContentRef} collapsable={false} style={styles.content}>
