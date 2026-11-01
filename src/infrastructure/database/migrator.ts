@@ -46,6 +46,7 @@ export async function runSafeMigrations(
   try {
     await migrate(database, config);
     ensureKaiKnowledgeTables();
+    ensureFundGroupsSchema();
 
     if (wasFkEnabled) {
       const violations = sqliteDatabase.getAllSync<{
@@ -180,4 +181,19 @@ function ensureKaiKnowledgeTables(): void {
     console.warn("[MIGRATIONS] ensureKaiKnowledgeTables caught warning:", err);
   }
 }
+
+function ensureFundGroupsSchema(): void {
+  try {
+    const tableInfo = sqliteDatabase.getAllSync<{ name: string }>(
+      "PRAGMA table_info(fund_groups);",
+    );
+    const hasMemberKind = tableInfo.some((col) => col.name === "member_kind");
+    if (hasMemberKind) {
+      sqliteDatabase.execSync("ALTER TABLE fund_groups DROP COLUMN member_kind;");
+    }
+  } catch (err) {
+    console.warn("[MIGRATIONS] ensureFundGroupsSchema caught warning:", err);
+  }
+}
+
 

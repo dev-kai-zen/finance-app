@@ -467,6 +467,8 @@ export const fil = {
         "Inayos ang Quick Actions sa Home na nagbubukas ng Gastos sa halip na Kita o Paglilipat.",
       fixItem4:
         "Pigilan ang pag-scroll ng screen habang inihahanda o ipinapakita ang gabay sa unang paggamit.",
+      fixItem5:
+        "Ayusin ang isyu kung saan hindi makagawa o makapag-save ng Grupo ng Pondo ang mga datihang user.",
     },
     v121: {
       date: "Oktubre 28, 2026",

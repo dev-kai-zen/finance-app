@@ -466,6 +466,8 @@ export const es = {
         "Se corrigió que las Acciones Rápidas en Inicio abrieran Gasto en lugar de Ingreso o Transferencia.",
       fixItem4:
         "Evita el desplazamiento de pantalla mientras se prepara o muestra la guía introductoria.",
+      fixItem5:
+        "Corrige un problema que impedía a usuarios existentes crear o guardar Grupos de Fondos.",
     },
     v121: {
       date: "28 de octubre de 2026",

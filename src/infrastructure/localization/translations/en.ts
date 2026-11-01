@@ -469,6 +469,8 @@ export const en = {
         "Fix Quick Actions on Home opening Expense instead of Income or Transfer.",
       fixItem4:
         "Prevent screen scrolling while first-time walkthrough guides are preparing or displayed.",
+      fixItem5:
+        "Fix an issue preventing existing users from creating or saving Fund Groups.",
     },
     v121: {
       date: "October 28, 2026",
