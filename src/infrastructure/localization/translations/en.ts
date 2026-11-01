@@ -461,6 +461,10 @@ export const en = {
         "Jump directly to filtered transactions from Dashboard cards, Budgets, and Savings Goals.",
       improveItem4:
         "Show clear guides on where theme colors apply and choose from your saved hex color palette.",
+      improveItem5:
+        "Unify color swatches across Custom Theme Studio and app settings with a single palette.",
+      improveItem6:
+        "Refine icon colors across settings to distinguish primary actions and special assistant features.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
       fixItem2:
@@ -471,6 +475,8 @@ export const en = {
         "Prevent screen scrolling while first-time walkthrough guides are preparing or displayed.",
       fixItem5:
         "Fix an issue preventing existing users from creating or saving Fund Groups.",
+      fixItem6:
+        "Fix white and neutral colors showing red shades in Custom Theme Studio.",
     },
     v121: {
       date: "October 28, 2026",

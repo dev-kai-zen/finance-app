@@ -63,7 +63,8 @@ export interface ThemePickerModalProps {
 type ThemeModalTab = "presets" | "custom";
 type PresetModeFilter = "all" | "light" | "dark";
 
-const SHADE_LIGHTNESS_STEPS = [24, 30, 36, 42, 48, 54, 60, 66];
+const SHADE_LIGHTNESS_STEPS = [20, 28, 36, 44, 52, 60, 68, 76];
+const ACHROMATIC_LIGHTNESS_STEPS = [0, 18, 32, 48, 64, 78, 90, 100];
 
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const clean = normalizeHexColor(hex, "#10B981").replace("#", "");
@@ -187,26 +188,22 @@ export function ThemePickerModal({
     const list: Array<{ id: string; name: string; hex: string }> = [];
     const seen = new Set<string>();
 
-    for (const color of savedHexColors ?? []) {
+    const sourceList =
+      savedHexColors && savedHexColors.length > 0
+        ? savedHexColors
+        : DEFAULT_HEX_SWATCHES;
+
+    for (const color of sourceList) {
       const normalized = normalizeHexColor(color?.hex, "");
       if (isValidHexColor(normalized) && !seen.has(normalized.toUpperCase())) {
         seen.add(normalized.toUpperCase());
         list.push({
-          id: color.id,
+          id:
+            "id" in color && typeof color.id === "string"
+              ? color.id
+              : `default_${color.name.toLowerCase().replace(/\s+/g, "_")}`,
           name: color.name,
           hex: normalized.toUpperCase(),
-        });
-      }
-    }
-
-    for (const def of DEFAULT_HEX_SWATCHES) {
-      const normalized = normalizeHexColor(def.hex, "").toUpperCase();
-      if (!seen.has(normalized)) {
-        seen.add(normalized);
-        list.push({
-          id: `default_${def.name.toLowerCase().replace(/\s+/g, "_")}`,
-          name: def.name,
-          hex: normalized,
         });
       }
     }
@@ -789,7 +786,11 @@ export function ThemePickerModal({
                 {/* Interactive Shade Strip for Primary Color */}
                 {(() => {
                   const currentHsl = hexToHsl(draftConfig.primaryHex);
-                  const activeSaturation = Math.max(60, currentHsl.s || 78);
+                  const isAchromatic = currentHsl.s < 3;
+                  const activeSaturation = isAchromatic ? 0 : Math.max(35, currentHsl.s);
+                  const lightnessSteps = isAchromatic
+                    ? ACHROMATIC_LIGHTNESS_STEPS
+                    : SHADE_LIGHTNESS_STEPS;
                   return (
                     <View style={styles.shadePickerBox}>
                       <View style={styles.shadePickerHeaderRow}>
@@ -801,7 +802,7 @@ export function ThemePickerModal({
                         </Text>
                       </View>
                       <View style={styles.shadeStripRow}>
-                        {SHADE_LIGHTNESS_STEPS.map((lightness) => {
+                        {lightnessSteps.map((lightness) => {
                           const shadeHex = hslToHex(
                             currentHsl.h,
                             activeSaturation,
@@ -905,7 +906,11 @@ export function ThemePickerModal({
                 {/* Interactive Shade Strip for Accent Color */}
                 {(() => {
                   const currentHsl = hexToHsl(draftConfig.accentHex);
-                  const activeSaturation = Math.max(65, currentHsl.s || 82);
+                  const isAchromatic = currentHsl.s < 3;
+                  const activeSaturation = isAchromatic ? 0 : Math.max(35, currentHsl.s);
+                  const lightnessSteps = isAchromatic
+                    ? ACHROMATIC_LIGHTNESS_STEPS
+                    : SHADE_LIGHTNESS_STEPS;
                   return (
                     <View style={styles.shadePickerBox}>
                       <View style={styles.shadePickerHeaderRow}>
@@ -917,7 +922,7 @@ export function ThemePickerModal({
                         </Text>
                       </View>
                       <View style={styles.shadeStripRow}>
-                        {SHADE_LIGHTNESS_STEPS.map((lightness) => {
+                        {lightnessSteps.map((lightness) => {
                           const shadeHex = hslToHex(
                             currentHsl.h,
                             activeSaturation,
@@ -1451,7 +1456,7 @@ function createStyles(theme: AppTheme) {
       height: 24,
       borderRadius: 6,
       borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.2)",
+      borderColor: theme.colors.border,
     },
     shadeSegmentActive: {
       height: 28,

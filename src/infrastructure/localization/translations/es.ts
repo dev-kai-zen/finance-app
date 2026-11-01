@@ -458,6 +458,10 @@ export const es = {
         "Abre directamente las transacciones filtradas desde las tarjetas del Panel, Presupuestos y Metas.",
       improveItem4:
         "Muestra guías claras de dónde se aplica cada color y selecciona desde tus colores hexadecimales guardados.",
+      improveItem5:
+        "Unifica las muestras de color en el Estudio de temas y ajustes con una sola paleta.",
+      improveItem6:
+        "Mejora los colores de los iconos en los ajustes para distinguir acciones principales y funciones especiales.",
       fixItem1:
         "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
       fixItem2:
@@ -468,6 +472,8 @@ export const es = {
         "Evita el desplazamiento de pantalla mientras se prepara o muestra la guía introductoria.",
       fixItem5:
         "Corrige un problema que impedía a usuarios existentes crear o guardar Grupos de Fondos.",
+      fixItem6:
+        "Corrige que los colores blancos y neutros muestren tonos rojos en el Estudio de temas.",
     },
     v121: {
       date: "28 de octubre de 2026",

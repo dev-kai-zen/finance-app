@@ -459,6 +459,10 @@ export const fil = {
         "Direktang buksan ang mga kaugnay na transaksyon mula sa mga card sa Dashboard, Badyet, at Layunin.",
       improveItem4:
         "Ipakita kung saan ginagamit ang mga kulay ng tema at pumili mula sa iyong mga naka-save na kulay.",
+      improveItem5:
+        "Pag-isahin ang mga swatch ng kulay sa Custom Theme Studio at mga setting gamit ang iisang palette.",
+      improveItem6:
+        "Gawing mas malinaw ang mga kulay ng icon sa settings para sa pangunahing aksyon at espesyal na tampok.",
       fixItem1:
         "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
       fixItem2:
@@ -469,6 +473,8 @@ export const fil = {
         "Pigilan ang pag-scroll ng screen habang inihahanda o ipinapakita ang gabay sa unang paggamit.",
       fixItem5:
         "Ayusin ang isyu kung saan hindi makagawa o makapag-save ng Grupo ng Pondo ang mga datihang user.",
+      fixItem6:
+        "Ayusin ang paglabas ng pulang kulay kapag pumipili ng puti o neutral na kulay sa Custom Theme Studio.",
     },
     v121: {
       date: "Oktubre 28, 2026",
