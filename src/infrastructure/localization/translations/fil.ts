@@ -451,6 +451,8 @@ export const fil = {
         "I-customize ang ayos ng Home screen gamit ang bagong Cashflow, Accounts, at Top Spending card.",
       newItem3:
         "Magdagdag ng Quick Actions card sa iyong Home screen at timplahin ang custom na kulay gamit ang visual shade picker.",
+      newItem4:
+        "Makatanggap ng abiso sa loob ng app upang madaling ma-download at mailapat ang mga bagong update mula sa Google Play.",
       improveItem1:
         "Magdagdag ng mga bagong tinted light at dark theme preset at i-sync ang napiling tema sa iyong mga device.",
       improveItem2:
@@ -1792,5 +1794,12 @@ export const fil = {
     netWorthDescription: "Subaybayan ang kabuuang net worth, ari-arian, at utang.",
     monthlyBudgetTitle: "Progreso ng Buwanang Budget",
     monthlyBudgetDescription: "Alamin kung magkano pa ang natitira sa budget ngayong buwan.",
+  },
+  appUpdates: {
+    updateDownloadedTitle: "Handa nang i-install ang update",
+    updateDownloadedDescription:
+      "Matagumpay na na-download ang bagong bersyon ng Kaizen. I-restart ngayon upang makumpleto ang update.",
+    restartToApply: "I-restart",
+    later: "Mamaya",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

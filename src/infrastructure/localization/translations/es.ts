@@ -450,6 +450,8 @@ export const es = {
         "Personaliza el diseño de tu pantalla de inicio con nuevas tarjetas de Flujo de Caja, Cuentas y Gastos.",
       newItem3:
         "Añade una tarjeta de Acciones Rápidas a tu inicio y ajusta tus colores con el selector visual de tonos.",
+      newItem4:
+        "Recibe avisos dentro de la aplicación para descargar e instalar fácilmente nuevas actualizaciones desde Google Play.",
       improveItem1:
         "Añade nuevos temas claros y oscuros con color y sincroniza tu tema elegido entre dispositivos.",
       improveItem2:
@@ -1791,5 +1793,12 @@ export const es = {
     netWorthDescription: "Sigue tu patrimonio neto total, activos y deudas.",
     monthlyBudgetTitle: "Progreso del Presupuesto Mensual",
     monthlyBudgetDescription: "Mira cuánto queda de tu presupuesto este mes.",
+  },
+  appUpdates: {
+    updateDownloadedTitle: "Actualización lista para instalar",
+    updateDownloadedDescription:
+      "Se ha descargado una nueva versión de Kaizen. Reinicia ahora para completar la actualización.",
+    restartToApply: "Reiniciar",
+    later: "Más tarde",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

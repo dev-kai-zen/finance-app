@@ -453,6 +453,8 @@ export const en = {
         "Customize your Home screen layout with new Cashflow, Accounts, and Top Spending cards.",
       newItem3:
         "Add a Quick Actions card to your Home screen and fine-tune custom colors with the visual shade picker.",
+      newItem4:
+        "Get automatic in-app prompts to easily download and apply new updates from Google Play.",
       improveItem1:
         "Add expressive tinted light and dark theme presets and sync your chosen theme across devices.",
       improveItem2:
@@ -1824,6 +1826,13 @@ export const en = {
     netWorthDescription: "Track your total net worth, assets, and debts.",
     monthlyBudgetTitle: "Monthly Budget Progress",
     monthlyBudgetDescription: "Watch how much of this month's budget is left.",
+  },
+  appUpdates: {
+    updateDownloadedTitle: "Update ready to install",
+    updateDownloadedDescription:
+      "A new version of Kaizen has finished downloading. Restart now to complete the update.",
+    restartToApply: "Restart",
+    later: "Later",
   },
 } as const;
 
