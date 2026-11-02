@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Archive, ArchiveRestore, Check, Edit2, Plus, Trash2, X } from "lucide-react-native";
 import { ConfirmModal } from "@/components/confirm-modal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { LabelBadge } from "./label-badge";
@@ -27,6 +28,7 @@ export function LabelsManagerModal({
   onClose,
 }: LabelsManagerModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
 
   const { labels, activeLabels, archivedLabels, refresh } = useLabels({
@@ -180,7 +182,15 @@ export function LabelsManagerModal({
           {/* List */}
           <ScrollView
             style={styles.list}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              {
+                paddingBottom: Math.max(
+                  insets.bottom + theme.spacing.lg,
+                  theme.spacing.xxl,
+                ),
+              },
+            ]}
           >
             {labels.length === 0 ? (
               <View style={styles.emptyContainer}>

@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Check, Plus, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -33,6 +34,7 @@ export function LabelFormModal({
   onSave,
 }: LabelFormModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -224,7 +226,12 @@ export function LabelFormModal({
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View
+            style={[
+              styles.footer,
+              { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+            ]}
+          >
             <Pressable
               onPress={onClose}
               style={[styles.btn, styles.cancelBtn]}

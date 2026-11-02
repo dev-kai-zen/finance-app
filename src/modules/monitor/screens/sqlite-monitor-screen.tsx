@@ -20,6 +20,7 @@ import {
 } from "@/components";
 import { useExperiencePreferences } from "@/modules/settings";
 import { isTabletOrDesktop } from "@/constants/layout";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { MonitorQueryResultGrid } from "../components/monitor-query-result-grid";
@@ -37,6 +38,7 @@ const QUERY_PRESETS = [
 
 export function SqliteMonitorScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { developerMode, isDevModeAllowed } = useExperiencePreferences();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
@@ -361,6 +363,7 @@ export function SqliteMonitorScreen() {
             style={[
               styles.modalSheet,
               isDesktop && styles.modalSheetDesktop,
+              { paddingBottom: Math.max(insets.bottom, 20) },
             ]}
           >
             <View style={styles.modalHeader}>

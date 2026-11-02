@@ -474,6 +474,8 @@ export const es = {
         "Corrige un problema que impedía a usuarios existentes crear o guardar Grupos de Fondos.",
       fixItem6:
         "Corrige que los colores blancos y neutros muestren tonos rojos en el Estudio de temas.",
+      fixItem7:
+        "Corrige botones y listas de selección que quedaban cortados detrás de la barra de navegación del teléfono.",
     },
     v121: {
       date: "28 de octubre de 2026",

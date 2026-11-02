@@ -477,6 +477,8 @@ export const en = {
         "Fix an issue preventing existing users from creating or saving Fund Groups.",
       fixItem6:
         "Fix white and neutral colors showing red shades in Custom Theme Studio.",
+      fixItem7:
+        "Fix buttons and selection lists getting cut off behind the phone's system navigation bar.",
     },
     v121: {
       date: "October 28, 2026",

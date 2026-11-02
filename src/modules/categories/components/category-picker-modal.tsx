@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { Check, ChevronRight, Search, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
@@ -44,6 +45,7 @@ export function CategoryPickerModal({
   onRequestAddSubcategory,
 }: CategoryPickerModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<CategoryType>(type ?? "expense");
@@ -192,7 +194,10 @@ export function CategoryPickerModal({
           {subcategoryParentMode ? (
             <>
               <ScrollView
-                contentContainerStyle={styles.parentPickList}
+                contentContainerStyle={[
+                  styles.parentPickList,
+                  { paddingBottom: Math.max(insets.bottom + theme.spacing.lg, theme.spacing.xxl) },
+                ]}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
                 style={styles.parentPickFullScroll}
@@ -301,7 +306,15 @@ export function CategoryPickerModal({
           {/* Categories Hierarchical List */}
           <ScrollView
             style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              !enableQuickAdd && {
+                paddingBottom: Math.max(
+                  insets.bottom + theme.spacing.lg,
+                  theme.spacing.xxl,
+                ),
+              },
+            ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -450,7 +463,12 @@ export function CategoryPickerModal({
           </ScrollView>
 
           {enableQuickAdd && (onRequestAddCategory || onRequestAddSubcategory) ? (
-            <View style={styles.quickAddFooter}>
+            <View
+              style={[
+                styles.quickAddFooter,
+                { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+              ]}
+            >
               <View style={styles.quickAddActions}>
                 {onRequestAddCategory ? (
                   <TouchableOpacity

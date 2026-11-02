@@ -18,6 +18,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ChatTransactionMode } from "../services/chat-transaction-mode.service";
 
 interface KaiChatSettingsModalProps {
@@ -36,6 +37,7 @@ export function KaiChatSettingsModal({
   onOpenKnowledge,
 }: KaiChatSettingsModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
@@ -53,7 +55,12 @@ export function KaiChatSettingsModal({
           onPress={onClose}
           style={styles.backdropPressable}
         />
-        <View style={styles.sheetContainer}>
+        <View
+          style={[
+            styles.sheetContainer,
+            { paddingBottom: Math.max(insets.bottom, theme.spacing.xl + 8) },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   Check,
@@ -51,6 +52,7 @@ export function GoalAccountPickerModal({
   onConfirm,
 }: GoalAccountPickerModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -604,7 +606,12 @@ export function GoalAccountPickerModal({
           </ScrollView>
 
           {/* Footer Summary & Confirm Button */}
-          <View style={styles.footer}>
+          <View
+            style={[
+              styles.footer,
+              { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+            ]}
+          >
             <View style={styles.footerSummary}>
               <View>
                 <Text style={styles.footerSelectedCount}>

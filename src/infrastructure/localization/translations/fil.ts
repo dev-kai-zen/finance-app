@@ -475,6 +475,8 @@ export const fil = {
         "Ayusin ang isyu kung saan hindi makagawa o makapag-save ng Grupo ng Pondo ang mga datihang user.",
       fixItem6:
         "Ayusin ang paglabas ng pulang kulay kapag pumipili ng puti o neutral na kulay sa Custom Theme Studio.",
+      fixItem7:
+        "Ayusin ang mga pindutan at listahan ng pagpipilian na natatakpan ng navigation bar ng telepono.",
     },
     v121: {
       date: "Oktubre 28, 2026",

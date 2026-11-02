@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -41,6 +42,7 @@ export function TransactionFormWalkthroughOverlay({
 }: TransactionFormWalkthroughOverlayProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const insets = useSafeAreaInsets();
   const { t } = useLocalization();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -70,14 +72,17 @@ export function TransactionFormWalkthroughOverlay({
   const spotlightHeight = spotlightBottom - spotlightTop;
 
   // Decide if card sits below or above target
-  const spaceBelow = screenHeight - spotlightBottom;
+  const spaceBelow = screenHeight - insets.bottom - spotlightBottom;
   const placeAbove =
     spaceBelow < CARD_ESTIMATED_HEIGHT + 24 &&
     spotlightTop > CARD_ESTIMATED_HEIGHT + 24;
 
   const cardTop = placeAbove
-    ? Math.max(16, spotlightTop - CARD_ESTIMATED_HEIGHT - 12)
-    : Math.min(screenHeight - CARD_ESTIMATED_HEIGHT - 16, spotlightBottom + 12);
+    ? Math.max(16 + insets.top, spotlightTop - CARD_ESTIMATED_HEIGHT - 12)
+    : Math.min(
+        screenHeight - insets.bottom - CARD_ESTIMATED_HEIGHT - 16,
+        spotlightBottom + 12,
+      );
 
   return (
     <Modal

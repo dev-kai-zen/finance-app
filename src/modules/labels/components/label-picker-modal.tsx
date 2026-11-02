@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Check, Plus, Search, Settings2, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -34,6 +35,7 @@ export function LabelPickerModal({
   title = "Select Labels",
 }: LabelPickerModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
 
   const { labels, activeLabels, refresh } = useLabels({ includeArchived: true });
@@ -221,7 +223,12 @@ export function LabelPickerModal({
           </ScrollView>
 
           {/* Footer */}
-          <View style={styles.footer}>
+          <View
+            style={[
+              styles.footer,
+              { paddingBottom: Math.max(insets.bottom, theme.spacing.md) },
+            ]}
+          >
             <Text style={styles.countText}>
               {localSelectedIds.length} selected
             </Text>
