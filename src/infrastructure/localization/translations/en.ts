@@ -584,6 +584,9 @@ export const en = {
     kaizenTitle: "The Power of Small Improvements",
     kaizenBody:
       "In Japanese, 'Kaizen' (改善) means continuous improvement. You don't have to change everything overnight. Just tracking one expense a day and checking in on your balance builds a steady habit that transforms your financial life over time.",
+    logoTitle: "The Story Behind Our Colors",
+    logoBody:
+      "Every color in our logo reflects the journey we take toward financial peace:\n\n• Red (Starting from Zero): The starting line. Whether you are facing debt, living paycheck-to-paycheck, or starting from scratch with nothing, red represents where every honest financial journey begins.\n\n• White (Clarity & Understanding): The bridge of mindfulness. Tracking your cashflow brings darkness into light—replacing anxiety with clear visibility, calm awareness, and a deep understanding of your habits.\n\n• Green (Financial Literacy & Freedom): Thriving in the green. Moving beyond mere survival into lasting financial literacy, self-reliance, and the confidence to shape your own future.",
     supportTitle: "Independent & Built for You",
     supportBody:
       "Kaizen Finance is crafted independently as a private, offline-first app—no data harvesting, no intrusive bloat. If this app brings value to your journey, upgrading to Kaizen Pro directly funds my ongoing development and keeps this project thriving.",

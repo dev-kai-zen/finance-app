@@ -12,6 +12,7 @@ import {
   Crown,
   Heart,
   Mail,
+  Palette,
   Sparkles,
   TrendingUp,
 } from "lucide-react-native";
@@ -118,6 +119,20 @@ export function DeveloperMessageModal({
               </View>
               <Text style={styles.sectionBody}>
                 {t("developerMessage.kaizenBody")}
+              </Text>
+            </View>
+
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.sectionIcon, { backgroundColor: `${theme.colors.accent}18` }]}>
+                  <Palette color={theme.colors.accent} size={18} />
+                </View>
+                <Text style={styles.sectionTitle}>
+                  {t("developerMessage.logoTitle")}
+                </Text>
+              </View>
+              <Text style={styles.sectionBody}>
+                {t("developerMessage.logoBody")}
               </Text>
             </View>
 

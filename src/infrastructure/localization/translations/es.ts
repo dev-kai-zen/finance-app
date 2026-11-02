@@ -582,6 +582,9 @@ export const es = {
     kaizenTitle: "El poder de los pequeños pasos",
     kaizenBody:
       "En japonés, 'Kaizen' (改善) significa mejora continua. No necesitas cambiar todo de la noche a la mañana. Dedicar un par de minutos al día a registrar tus gastos genera un hábito que transformará tu futuro.",
+    logoTitle: "La historia detrás de nuestros colores",
+    logoBody:
+      "Cada color de nuestro logotipo refleja el camino hacia la tranquilidad financiera:\n\n• Rojo (Empezar desde cero): La línea de salida. Ya sea enfrentando deudas, viviendo al día o comenzando desde la nada, el rojo representa el punto de partida honesto de todo viaje.\n\n• Blanco (Claridad y comprensión): El puente de la consciencia. Monitorear tu flujo de dinero trae luz a la oscuridad, reemplazando la ansiedad por una visión clara de tus hábitos diarios.\n\n• Verde (Educación financiera y libertad): Prosperar en verde. Ir más allá de la supervivencia hacia una sólida educación financiera, independencia y confianza en tu futuro.",
     supportTitle: "Desarrollo independiente y privado",
     supportBody:
       "Desarrollo Kaizen Finance de forma independiente, respetando tu privacidad y funcionando sin conexión, sin vender tus datos. Si la aplicación te resulta útil, adquirir Kaizen Pro apoya directamente mi trabajo para seguir mejorándola.",

@@ -583,6 +583,9 @@ export const fil = {
     kaizenTitle: "Ang Bunga ng Unti-unting Pag-unlad",
     kaizenBody:
       "Sa wikang Hapon, ang 'Kaizen' (改善) ay nangangahulugang tuluy-tuloy na pagpapabuti. Hindi mo kailangang baguhin ang lahat sa isang iglap. Ang pagtatala ng kahit isang gastos bawat araw ay lumilikha ng pangmatagalang gawi tungo sa tagumpay.",
+    logoTitle: "Ang Kwento sa Likod ng Aming Kulay",
+    logoBody:
+      "Ang bawat kulay sa aming logo ay sumasalamin sa landas patungo sa kapayapaan sa pananalapi:\n\n• Pula (Pagsisimula sa Wala): Ang panimulang linya. May hinaharap mang utang, kakarampot na ipon, o nagsisimula sa wala, ang pula ang sumisimbolo sa tapat na pinagmumulan ng bawat paglalakbay.\n\n• Puti (Linaw at Pag-unawa): Ang tulay ng kamalayan. Ang pagsubaybay sa cashflow ay nagbibigay-liwanag sa dilim—pinapalitan ang kaba ng malinaw na pag-unawa sa iyong mga gawi sa pera.\n\n• Berde (Financial Literacy at Kalayaan): Pamumukadkad sa berde. Pag-angat mula sa simpleng pagtitiis tungo sa ganap na kaalaman sa pananalapi, tiwala sa sarili, at kontrol sa sariling kinabukasan.",
     supportTitle: "Independiyenteng Gawa para sa Iyo",
     supportBody:
       "Binuo ko ang Kaizen Finance nang mag-isa bilang isang ligtas, offline-first na kasama—walang pagbenta ng datos at walang abala. Kung nakatutulong ito sa iyong buhay, ang pagbili ng Kaizen Pro ay direktang sumusuporta sa akin upang patuloy na mapaganda ang app.",
