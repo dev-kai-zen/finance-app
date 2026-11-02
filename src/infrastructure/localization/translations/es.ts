@@ -443,7 +443,7 @@ export const es = {
       general: "General",
     },
     v130: {
-      date: "29 de octubre de 2026",
+      date: "2 de noviembre de 2026",
       newItem1:
         "Crea tus propias combinaciones de colores en el nuevo Estudio de Tema Personalizado.",
       newItem2:

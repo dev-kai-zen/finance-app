@@ -446,7 +446,7 @@ export const en = {
       general: "General",
     },
     v130: {
-      date: "October 29, 2026",
+      date: "November 2, 2026",
       newItem1:
         "Create your own color combinations in the new Custom Theme Studio.",
       newItem2:

@@ -444,7 +444,7 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v130: {
-      date: "Oktubre 29, 2026",
+      date: "Nobyembre 2, 2026",
       newItem1:
         "Gumawa ng sarili mong kombinasyon ng kulay sa bagong Custom Theme Studio.",
       newItem2:

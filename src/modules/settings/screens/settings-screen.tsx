@@ -193,7 +193,7 @@ function SettingsScreenContent() {
   const rawAppVersion =
     Application.nativeApplicationVersion ??
     Constants.expoConfig?.version ??
-    "1.2.1";
+    "1.3.0";
   const appVersion = rawAppVersion.startsWith("v")
     ? rawAppVersion
     : `v${rawAppVersion}`;
