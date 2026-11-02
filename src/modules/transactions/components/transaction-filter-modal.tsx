@@ -35,6 +35,7 @@ export interface TransactionFilterState {
   customDateFrom: string | null;
   customDateTo: string | null;
   accountIds: string[];
+  categoryIds?: string[];
   labelIds?: string[];
   sortBy: "date" | "amount";
   sortOrder: "asc" | "desc";
@@ -46,6 +47,7 @@ export const DEFAULT_TRANSACTION_FILTERS: TransactionFilterState = {
   customDateFrom: null,
   customDateTo: null,
   accountIds: [],
+  categoryIds: [],
   labelIds: [],
   sortBy: "date",
   sortOrder: "desc",

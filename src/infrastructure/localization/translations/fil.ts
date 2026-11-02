@@ -391,6 +391,33 @@ export const fil = {
       "Paper sa light mode at Ink sa dark mode.",
     palettes: "MGA PALETTE",
     choices: "%{count} pagpipilian",
+    tabPresets: "Mga Preset",
+    tabCustomStudio: "Custom Studio",
+    customBannerTitle: "Custom Theme Studio",
+    customBannerSubtitle: "Gumawa ng sarili mong kombinasyon ng kulay at surface tint.",
+    customBannerActive: "Kasalukuyang ginagamit ang iyong custom na kulay ng tema.",
+    customizeAction: "I-customize",
+    filterAll: "Lahat",
+    livePreview: "LIVE NA PREVIEW",
+    activeBadge: "Aktibo",
+    baseModeLabel: "Base Mode",
+    modeLight: "Maliwanag",
+    modeDark: "Madilim",
+    modeOled: "OLED Itim",
+    surfaceTintLabel: "Tint ng Surface at Card",
+    surfaceTintHint: "Ihalo ang iyong pangunahing kulay sa background at mga card.",
+    tintNeutral: "Neutral",
+    tintSubtle: "Banayad",
+    tintRich: "Matingkad",
+    primaryColorLabel: "Pangunahing Kulay",
+    primaryColorHint: "Mga button, aktibong tab, at pangunahing highlight.",
+    primaryUsedFor: "Ginagamit sa: Action buttons (Save/Add), aktibong tabs, floating action button (+), napiling chips, at progress bars ng badyet at layunin.",
+    accentColorLabel: "Accent na Kulay",
+    accentColorHint: "Pangalawang highlight, mga badge, at chart.",
+    accentUsedFor: "Ginagamit sa: Kai AI assistant badges & sparkles, pangalawang sukatan sa ulat (savings rate), at mga notification icon.",
+    applyCustomTheme: "Gamitin ang Custom Theme",
+    unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
+    customShadeLabel: "I-adjust ang Tingkad at Liwanag",
   },
   versionHistory: {
     heading: "Kasaysayan ng Bersyon",
@@ -415,6 +442,45 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v130: {
+      date: "Nobyembre 2, 2026",
+      newItem1:
+        "Gumawa ng sarili mong kombinasyon ng kulay sa bagong Custom Theme Studio.",
+      newItem2:
+        "I-customize ang ayos ng Home screen gamit ang bagong Cashflow, Accounts, at Top Spending card.",
+      newItem3:
+        "Magdagdag ng Quick Actions card sa iyong Home screen at timplahin ang custom na kulay gamit ang visual shade picker.",
+      newItem4:
+        "Makatanggap ng abiso sa loob ng app upang madaling ma-download at mailapat ang mga bagong update mula sa Google Play.",
+      improveItem1:
+        "Magdagdag ng mga bagong tinted light at dark theme preset at i-sync ang napiling tema sa iyong mga device.",
+      improveItem2:
+        "Ipakita ang arawang net total at aktibong filter chips sa screen ng Mga Transaksyon.",
+      improveItem3:
+        "Direktang buksan ang mga kaugnay na transaksyon mula sa mga card sa Dashboard, Badyet, at Layunin.",
+      improveItem4:
+        "Ipakita kung saan ginagamit ang mga kulay ng tema at pumili mula sa iyong mga naka-save na kulay.",
+      improveItem5:
+        "Pag-isahin ang mga swatch ng kulay sa Custom Theme Studio at mga setting gamit ang iisang palette.",
+      improveItem6:
+        "Gawing mas malinaw ang mga kulay ng icon sa settings para sa pangunahing aksyon at espesyal na tampok.",
+      improveItem7:
+        "Isaayos ang mga screen ng format ng pera gamit ang on-demand na tulong at mas malinis na mga opsyon.",
+      fixItem1:
+        "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
+      fixItem2:
+        "Ayusin ang bilis at katatagan sa pagbukas ng app at mga screen.",
+      fixItem3:
+        "Inayos ang Quick Actions sa Home na nagbubukas ng Gastos sa halip na Kita o Paglilipat.",
+      fixItem4:
+        "Pigilan ang pag-scroll ng screen habang inihahanda o ipinapakita ang gabay sa unang paggamit.",
+      fixItem5:
+        "Ayusin ang isyu kung saan hindi makagawa o makapag-save ng Grupo ng Pondo ang mga datihang user.",
+      fixItem6:
+        "Ayusin ang paglabas ng pulang kulay kapag pumipili ng puti o neutral na kulay sa Custom Theme Studio.",
+      fixItem7:
+        "Ayusin ang mga pindutan at listahan ng pagpipilian na natatakpan ng navigation bar ng telepono.",
     },
     v121: {
       date: "Oktubre 28, 2026",
@@ -517,6 +583,9 @@ export const fil = {
     kaizenTitle: "Ang Bunga ng Unti-unting Pag-unlad",
     kaizenBody:
       "Sa wikang Hapon, ang 'Kaizen' (改善) ay nangangahulugang tuluy-tuloy na pagpapabuti. Hindi mo kailangang baguhin ang lahat sa isang iglap. Ang pagtatala ng kahit isang gastos bawat araw ay lumilikha ng pangmatagalang gawi tungo sa tagumpay.",
+    logoTitle: "Ang Kwento sa Likod ng Aming Kulay",
+    logoBody:
+      "Ang bawat kulay sa aming logo ay sumasalamin sa landas patungo sa kapayapaan sa pananalapi:\n\n• Pula (Pagsisimula sa Wala): Ang panimulang linya. May hinaharap mang utang, kakarampot na ipon, o nagsisimula sa wala, ang pula ang sumisimbolo sa tapat na pinagmumulan ng bawat paglalakbay.\n\n• Puti (Linaw at Pag-unawa): Ang tulay ng kamalayan. Ang pagsubaybay sa cashflow ay nagbibigay-liwanag sa dilim—pinapalitan ang kaba ng malinaw na pag-unawa sa iyong mga gawi sa pera.\n\n• Berde (Financial Literacy at Kalayaan): Pamumukadkad sa berde. Pag-angat mula sa simpleng pagtitiis tungo sa ganap na kaalaman sa pananalapi, tiwala sa sarili, at kontrol sa sariling kinabukasan.",
     supportTitle: "Independiyenteng Gawa para sa Iyo",
     supportBody:
       "Binuo ko ang Kaizen Finance nang mag-isa bilang isang ligtas, offline-first na kasama—walang pagbenta ng datos at walang abala. Kung nakatutulong ito sa iyong buhay, ang pagbili ng Kaizen Pro ay direktang sumusuporta sa akin upang patuloy na mapaganda ang app.",
@@ -728,6 +797,58 @@ export const fil = {
     deleteTransactionTitle: "Burahin ang transaksyon?",
     deleteTransactionMessage:
       "Ililipat ang rekord na ito sa Basurahan. Maaari mo itong ibalik mamaya.",
+    customizeHome: "I-customize ang Home",
+    customizeModalTitle: "I-customize ang Home Screen",
+    customizeModalSubtitle:
+      "Piliin kung aling mga card ang lalabas sa iyong dashboard at ayusin ang pagkakasunod-sunod.",
+    quickPresetsLabel: "1-Tap Layout Presets",
+    sectionsOrderLabel: "Mga Card at Pagkakasunod-sunod",
+    resetLayout: "Ibalik sa dati",
+    presetCashflowFocus: "Tutok sa Cashflow",
+    presetCashflowFocusDesc: "Inuuna ang buwanang kita, gastos, at mga pangunahing kategorya.",
+    presetWealthOverview: "Yaman at Balanse",
+    presetWealthOverviewDesc: "Itinatampok ang net worth, balanse ng account, at cashflow.",
+    presetCompleteView: "Kumpletong Tanaw",
+    presetCompleteViewDesc: "Ipinapakita ang lahat ng 6 na card sa iyong home screen.",
+    presetMinimalist: "Minimalist",
+    presetMinimalistDesc: "Maikling pagbati, buwanang cashflow, at kamakailang transaksyon.",
+    widgetGreetingTitle: "Pagbati at Petsa",
+    widgetGreetingDesc: "Personal na pagbati at opsyonal na pang-araw-araw na quote.",
+    widgetNetWorthTitle: "Net Worth at Balanse",
+    widgetNetWorthDesc: "Chart ng balanse, kabuuang assets, at liabilities.",
+    widgetCashflowTitle: "Buwanang Cashflow",
+    widgetCashflowDesc: "Bar ng kita laban sa gastos ngayong buwan at savings rate.",
+    widgetAccountsTitle: "Listahan ng Accounts",
+    widgetAccountsDesc: "Mabilisang pahalang na card ng iyong mga aktibong account.",
+    widgetTopCategoriesTitle: "Pinakamalaking Gastos",
+    widgetTopCategoriesDesc: "Kung saan napunta ang pera mo ngayong buwan.",
+    widgetRecentTxTitle: "Kamakailang Transaksyon",
+    widgetRecentTxDesc: "Ang iyong pinakahuling naitalang kita, gastos, at transfer.",
+    showDailyQuoteTitle: "Ipakita ang Daily Inspiration Quote",
+    showDailyQuoteDesc: "Magpakita ng financial quote sa loob ng greeting card.",
+    cashflowCardTitle: "Buwanang Cashflow",
+    netCashflowLabel: "Net Cashflow",
+    cashflowIncome: "Kita",
+    cashflowExpenses: "Gastos",
+    savingsRateBadge: "%{rate}% naipon",
+    accountsCardTitle: "Mga Account",
+    noAccountsYet: "Wala pang aktibong account.",
+    topCategoriesCardTitle: "Pinakamalaking Gastos Ngayong Buwan",
+    noSpendingThisMonth: "Wala pang naitalang gastos ngayong buwan.",
+    viewAll: "Tingnan lahat",
+    stepCustomizeHomeTitle: "I-customize ang Home Screen",
+    stepCustomizeHomeDesc:
+      "I-tap ito anumang oras para ipakita, itago, o ayusin ang pagkakasunod-sunod ng mga dashboard card at pumili ng layout preset.",
+    customizeHelpTitle: "Tungkol sa I-customize ang Home Screen",
+    customizeHelpMessage:
+      "I-personalize ang iyong dashboard ayon sa gusto mong paraan ng pagsubaybay sa pera:\n\n• 1-Tap Layout Presets: Mabilis na lumipat sa Tutok sa Cashflow, Yaman at Balanse, Kumpletong Tanaw, o Minimalist.\n• Ipakita o Itago ang Card: Gamitin ang switch sa bawat card.\n• Ayusin ang Pagkakasunod-sunod: I-tap ang Ayusin para i-drag and drop o gamitin ang mga arrow.",
+    reorderCards: "Ayusin",
+    reorderCardsTitle: "Ayusin ang mga Card sa Dashboard",
+    widgetQuickActionsTitle: "Mabilisang Aksyon",
+    quickActionExpense: "Gastos",
+    quickActionIncome: "Kita",
+    quickActionTransfer: "Lipat",
+    quickActionAi: "Tanungin si Kai",
   },
   calendar: {
     firstOfMonth: "Ika-1 ng Buwan",
@@ -1145,7 +1266,7 @@ export const fil = {
       "Mabilis na salain ang iyong mga badyet ayon sa panahon — araw-araw, lingguhan, buwanan, o taunan.",
     stepFirstItemToggleTitle: "I-enable o I-disable ang Badyet",
     stepFirstItemToggleDesc:
-      "I-on o i-off ang anumang badyet kailanman nang hindi nabubura ang iyong mga nakaraang transaksyon o setting.",
+      "I-on o i-off ang anumang badyet kailanman, o i-tap ang View transactions sa card para makita ang mga gastusin sa kategoryang iyon.",
     stepFabTitle: "Gumawa ng Badyet sa Kategorya",
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng karagdagang limitasyon at maabot ang iyong mga layunin.",
@@ -1168,9 +1289,9 @@ export const fil = {
     stepStatusFiltersTitle: "Mga Filter ng Katayuan",
     stepStatusFiltersDesc:
       "Madaling mag-filter sa pagitan ng Lahat ng Layunin, Kasalukuyang Isinasagawa, at Nakumpleto gamit ang mga live counter badge.",
-    stepFirstItemMarkCompleteTitle: "Markahan bilang Nakumpleto",
+    stepFirstItemMarkCompleteTitle: "Magdagdag ng Pondo at Kumpletuhin",
     stepFirstItemMarkCompleteDesc:
-      "Ipagdiwang ang pag-abot sa iyong target sa pamamagitan ng pagmamarka dito bilang nakumpleto, o muling buksan ito kailanman.",
+      "I-tap ang Add Funds para mabilis na magtala ng ipon sa naka-link na account, o markahan bilang nakumpleto kapag naabot na ang target.",
     stepFabTitle: "Magdagdag ng Bagong Layunin",
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
@@ -1678,5 +1799,12 @@ export const fil = {
     netWorthDescription: "Subaybayan ang kabuuang net worth, ari-arian, at utang.",
     monthlyBudgetTitle: "Progreso ng Buwanang Budget",
     monthlyBudgetDescription: "Alamin kung magkano pa ang natitira sa budget ngayong buwan.",
+  },
+  appUpdates: {
+    updateDownloadedTitle: "Handa nang i-install ang update",
+    updateDownloadedDescription:
+      "Matagumpay na na-download ang bagong bersyon ng Kaizen. I-restart ngayon upang makumpleto ang update.",
+    restartToApply: "I-restart",
+    later: "Mamaya",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

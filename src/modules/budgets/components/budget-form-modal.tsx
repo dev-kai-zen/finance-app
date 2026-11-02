@@ -339,6 +339,9 @@ function BudgetFormModalContent({
           ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
         >

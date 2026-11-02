@@ -73,7 +73,7 @@ test("quick presets: migration removes preset_name without losing existing prese
   database.prepare(`
     INSERT INTO transaction_presets (
       id, preset_name, transaction_name, type, account_id, category_id,
-      amount_minor_units, created_at, updated_at
+      amount_cents, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     "existing_preset",
@@ -100,7 +100,7 @@ test("quick presets: migration removes preset_name without losing existing prese
     .prepare("SELECT * FROM transaction_presets WHERE id = ?")
     .get("existing_preset");
   assert.equal(preset.transaction_name, "Groceries");
-  assert.equal(preset.amount_minor_units, -2500);
+  assert.equal(preset.amount_cents, -2500);
 });
 
 test("quick presets: stores typed relational transaction defaults", () => {

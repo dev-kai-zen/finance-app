@@ -212,6 +212,9 @@ function GoalsScreenContent({
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           <FloatingActionButton
@@ -318,6 +321,18 @@ function GoalsScreenContent({
               goal={goal}
               markCompleteRef={index === 0 ? markCompleteRef : undefined}
               onDelete={() => setGoalToDelete(goal)}
+              onAddFunds={() => {
+                const linkedAccountId =
+                  goal.linkedAccounts?.[0]?.id ??
+                  goal.linkedPockets?.[0]?.accountId;
+                router.push(
+                  `/transactions?action=new&type=income${
+                    linkedAccountId
+                      ? `&accountId=${encodeURIComponent(linkedAccountId)}`
+                      : ""
+                  }` as any,
+                );
+              }}
               onEdit={() => handleOpenEdit(goal)}
               onPress={() => handleOpenEdit(goal)}
               onToggleStatus={(newStatus: GoalStatus) =>

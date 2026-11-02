@@ -27,6 +27,7 @@ import { TransactionAttachmentsSyncProcessor } from "@/modules/transactions";
 import { VersionHistoryGate } from "@/modules/version-history";
 import { DeveloperMessageGate } from "@/modules/developer-message";
 import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
+import { InAppUpdateProcessor } from "@/modules/app-updates";
 import { initializeAdsSdk } from "@/modules/ads";
 
 registerWidgets();
@@ -80,6 +81,7 @@ function RootLayoutContent() {
                         <QuickSyncProcessor />
                         <NotificationsReminderProcessor />
                         <WidgetSyncProcessor />
+                        <InAppUpdateProcessor />
 
                         <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
                           <Stack

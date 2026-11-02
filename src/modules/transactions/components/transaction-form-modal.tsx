@@ -1880,6 +1880,9 @@ function TransactionFormModalInner({
             contentContainerStyle={styles.formScrollContent}
             multilineFocused={focusedFieldType === "description"}
             preset="transactionSheet"
+            scrollEnabled={
+              walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+            }
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >

@@ -7,7 +7,9 @@ import {
   transactions,
 } from "@/infrastructure/database/schema";
 import type { TransactionSplitEntryListItem } from "../types/transaction.types";
-import { generateId } from "./transactions.repository";
+function generateId(context: DbContext = db): string {
+  return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
+}
 
 export function deleteEntriesByTransactionId(
   transactionId: string,

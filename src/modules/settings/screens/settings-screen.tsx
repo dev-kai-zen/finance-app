@@ -193,7 +193,7 @@ function SettingsScreenContent() {
   const rawAppVersion =
     Application.nativeApplicationVersion ??
     Constants.expoConfig?.version ??
-    "1.2.1";
+    "1.3.0";
   const appVersion = rawAppVersion.startsWith("v")
     ? rawAppVersion
     : `v${rawAppVersion}`;
@@ -290,6 +290,9 @@ function SettingsScreenContent() {
   return (
     <PageContainer
       scrollRef={scrollRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <DraggableTourChip
           defaultPlacement="top-left"
@@ -328,7 +331,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Languages color={theme.colors.info} size={20} />
+                <Languages color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -358,7 +361,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <CircleDollarSign color={theme.colors.success} size={20} />
+                <CircleDollarSign color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -530,7 +533,7 @@ function SettingsScreenContent() {
               style={styles.toggleRow}
             >
               <View style={styles.iconContainer}>
-                <Sparkles color="#00A3FF" size={20} />
+                <Sparkles color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -591,7 +594,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Sparkles color="#8B5CF6" size={20} />
+                <Sparkles color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -613,7 +616,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <SlidersHorizontal color="#8B5CF6" size={20} />
+                <SlidersHorizontal color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -717,7 +720,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Pipette color={theme.colors.accent} size={20} />
+                <Pipette color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -820,7 +823,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Cloud color={theme.colors.info} size={20} />
+                <Cloud color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <View style={styles.titleRow}>
@@ -829,7 +832,7 @@ function SettingsScreenContent() {
                   </Text>
                   {!isPro && (
                     <View style={styles.proChip}>
-                      <Crown color="#D97706" size={8} />
+                      <Crown color={theme.colors.accent} size={8} />
                       <Text style={styles.proChipText}>PRO</Text>
                     </View>
                   )}
@@ -891,7 +894,7 @@ function SettingsScreenContent() {
                   </Text>
                   {!isPro && (
                     <View style={styles.proChip}>
-                      <Crown color="#D97706" size={8} />
+                      <Crown color={theme.colors.accent} size={8} />
                       <Text style={styles.proChipText}>PRO</Text>
                     </View>
                   )}
@@ -932,7 +935,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Crown color="#D97706" size={20} />
+                <Crown color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -981,7 +984,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Sparkles color={theme.colors.primary} size={20} />
+                <Sparkles color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -1023,7 +1026,7 @@ function SettingsScreenContent() {
               <View style={styles.rowDivider} />
               <View style={styles.toggleRow}>
                 <View style={styles.iconContainer}>
-                  <Crown color="#D97706" size={20} />
+                  <Crown color={theme.colors.accent} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Simulate Pro Version</Text>
@@ -1040,7 +1043,7 @@ function SettingsScreenContent() {
               <View style={styles.rowDivider} />
               <View style={styles.toggleRow}>
                 <View style={styles.iconContainer}>
-                  <Sparkles color="#3B82F6" size={20} />
+                  <Sparkles color={theme.colors.textSecondary} size={20} />
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Force Google Test Ads</Text>
@@ -1134,7 +1137,7 @@ function SettingsScreenContent() {
               ]}
             >
               <View style={styles.iconContainer}>
-                <Sparkles color={theme.colors.primary} size={20} />
+                <Sparkles color={theme.colors.accent} size={20} />
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
@@ -1450,6 +1453,7 @@ function createStyles(theme: AppTheme) {
       gap: 2,
     },
     settingLabel: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
@@ -1481,6 +1485,8 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.danger,
     },
     titleRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       alignItems: "center",
       flexDirection: "row",
       gap: 6,

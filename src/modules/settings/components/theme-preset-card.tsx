@@ -44,7 +44,7 @@ export function ThemePresetCard({
     >
       <View style={styles.titleRow}>
         <View style={styles.nameRow}>
-          <Text numberOfLines={1} style={styles.name}>
+          <Text style={styles.name}>
             {preset.name}
           </Text>
           {isProLocked ? (
@@ -131,7 +131,7 @@ export function ThemeSwatchPreview({ preset }: { preset: AppTheme }) {
   );
 }
 
-function FinanceThemePreview({ preset }: { preset: AppTheme }) {
+export function FinanceThemePreview({ preset }: { preset: AppTheme }) {
   return (
     <View
       accessibilityElementsHidden
@@ -145,18 +145,39 @@ function FinanceThemePreview({ preset }: { preset: AppTheme }) {
       ]}
     >
       <View style={previewStyles.header}>
+        <View style={previewStyles.headerBrandRow}>
+          <View
+            style={[
+              previewStyles.brandMark,
+              { backgroundColor: preset.colors.primary },
+            ]}
+          />
+          <View
+            style={[
+              previewStyles.headerLine,
+              { backgroundColor: preset.colors.textMuted },
+            ]}
+          />
+        </View>
         <View
           style={[
-            previewStyles.brandMark,
-            { backgroundColor: preset.colors.primary },
+            previewStyles.accentBadge,
+            { backgroundColor: `${preset.colors.accent}25` },
           ]}
-        />
-        <View
-          style={[
-            previewStyles.headerLine,
-            { backgroundColor: preset.colors.textMuted },
-          ]}
-        />
+        >
+          <View
+            style={[
+              previewStyles.accentDot,
+              { backgroundColor: preset.colors.accent },
+            ]}
+          />
+          <View
+            style={[
+              previewStyles.accentLine,
+              { backgroundColor: preset.colors.accent },
+            ]}
+          />
+        </View>
       </View>
 
       <View
@@ -225,6 +246,20 @@ function FinanceThemePreview({ preset }: { preset: AppTheme }) {
           ]}
         />
       </View>
+
+      <View
+        style={[
+          previewStyles.primaryCta,
+          { backgroundColor: preset.colors.primary },
+        ]}
+      >
+        <View
+          style={[
+            previewStyles.ctaLine,
+            { backgroundColor: preset.colors.onPrimary },
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -257,12 +292,16 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
     },
     nameRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
+      minWidth: 0,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,
       flex: 1,
     },
     name: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
@@ -325,9 +364,33 @@ const previewStyles = StyleSheet.create({
     width: "100%",
   },
   header: {
+    justifyContent: "space-between",
     alignItems: "center",
     flexDirection: "row",
     gap: 5,
+  },
+  headerBrandRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 5,
+  },
+  accentBadge: {
+    alignItems: "center",
+    borderRadius: 99,
+    flexDirection: "row",
+    gap: 3,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  accentDot: {
+    borderRadius: 99,
+    height: 4,
+    width: 4,
+  },
+  accentLine: {
+    borderRadius: 2,
+    height: 2.5,
+    width: 14,
   },
   brandMark: {
     borderRadius: 3,
@@ -402,6 +465,19 @@ const previewStyles = StyleSheet.create({
     height: 3,
     opacity: 0.8,
     width: 30,
+  },
+  primaryCta: {
+    alignItems: "center",
+    borderRadius: 4,
+    height: 12,
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  ctaLine: {
+    borderRadius: 2,
+    height: 3,
+    opacity: 0.9,
+    width: 28,
   },
 });
 

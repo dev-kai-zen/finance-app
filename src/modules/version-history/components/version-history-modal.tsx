@@ -1,4 +1,5 @@
 import {
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -7,9 +8,8 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Sparkles } from "lucide-react-native";
-
 import { AppButton } from "@/components/app-button";
+import { APP_BRAND } from "@/constants/brand";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -51,11 +51,15 @@ export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistory
         >
           {/* Fixed Header */}
           <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <Sparkles color={theme.colors.primary} size={24} />
+            <View style={styles.headerTitleRow}>
+              <Image
+                accessibilityLabel={`${APP_BRAND.name} logo`}
+                resizeMode="cover"
+                source={APP_BRAND.logo}
+                style={styles.logo}
+              />
+              <Text style={styles.heading}>{t("versionHistory.heading")}</Text>
             </View>
-
-            <Text style={styles.heading}>{t("versionHistory.heading")}</Text>
           </View>
 
           {/* Scrollable Body */}
@@ -156,21 +160,20 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       borderBottomColor: theme.colors.border,
       borderBottomWidth: 1,
-      paddingBottom: theme.spacing.md,
-      paddingHorizontal: theme.spacing.xl,
-      paddingTop: theme.spacing.xl,
-    },
-    iconCircle: {
-      alignItems: "center",
-      alignSelf: "center",
-      backgroundColor: `${theme.colors.primary}18`,
-      borderColor: `${theme.colors.primary}40`,
-      borderRadius: 999,
-      borderWidth: 1,
-      height: 52,
       justifyContent: "center",
-      marginBottom: theme.spacing.sm,
-      width: 52,
+      paddingHorizontal: theme.spacing.xl,
+      paddingVertical: theme.spacing.md,
+    },
+    headerTitleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "center",
+    },
+    logo: {
+      borderRadius: theme.borderRadius.small,
+      height: 28,
+      width: 28,
     },
     heading: {
       color: theme.colors.textPrimary,

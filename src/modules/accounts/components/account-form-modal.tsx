@@ -620,6 +620,9 @@ function AccountFormModalContent({
         />
         <KeyboardAwareForm
           ref={scrollRef}
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
           showsVerticalScrollIndicator={false}
         >
           <View ref={scrollContentRef} collapsable={false} style={styles.content}>
@@ -732,7 +735,7 @@ function AccountFormModalContent({
                   style={styles.lockButton}
                 >
                   <Lock color={theme.colors.warning} size={12} />
-                  <Text style={styles.lockButtonText}>Lock Starting Balance</Text>
+                  <Text style={styles.lockButtonText}>Lock</Text>
                 </Pressable>
               ) : null
             }
@@ -1363,6 +1366,7 @@ function createStyles(theme: AppTheme) {
       gap: 2,
     },
     toggleLabel: {
+      flexShrink: 1,
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
@@ -1460,6 +1464,8 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     toggleLabelRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       flexDirection: "row",
       alignItems: "center",
       gap: 6,

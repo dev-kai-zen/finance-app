@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   Check,
@@ -76,6 +77,7 @@ function AccountPickerModalContent({
   onSetDefaultIncome,
 }: AccountPickerModalProps) {
   const theme = useAppTheme();
+  const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const [searchQuery, setSearchQuery] = useState("");
@@ -297,7 +299,15 @@ function AccountPickerModalContent({
           {/* Accounts List Grouped */}
           <ScrollView
             style={styles.scrollList}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingBottom: Math.max(
+                  insets.bottom + theme.spacing.lg,
+                  theme.spacing.xxl,
+                ),
+              },
+            ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >

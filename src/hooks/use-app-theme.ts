@@ -31,6 +31,8 @@ export function useThemeController() {
     isFollowingSystem,
     setFollowSystem,
     availableThemes,
+    customThemeConfig,
+    setCustomTheme,
   } = useThemeContext();
   return {
     theme,
@@ -40,5 +42,7 @@ export function useThemeController() {
     isFollowingSystem,
     setFollowSystem,
     availableThemes,
+    customThemeConfig,
+    setCustomTheme,
   };
 }

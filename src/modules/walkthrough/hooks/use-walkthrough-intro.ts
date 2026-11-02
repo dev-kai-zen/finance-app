@@ -25,6 +25,7 @@ export function useWalkthroughIntro({
     ? isPromptDismissed(prerequisitePromptKey)
     : true;
   const canTrigger = !isDismissed && isPrerequisiteMet && enabled;
+  const scrollEnabled = !canTrigger && !isIntroVisible;
 
   const triggerIfFirstTime = useCallback(() => {
     if (!isPromptDismissed(promptKey) && isPrerequisiteMet && enabled) {
@@ -55,6 +56,7 @@ export function useWalkthroughIntro({
     isDismissed,
     isPrerequisiteMet,
     canTrigger,
+    scrollEnabled,
     triggerIfFirstTime,
     showIntro,
     hideIntro,

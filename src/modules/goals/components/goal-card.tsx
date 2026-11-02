@@ -9,6 +9,7 @@ import {
   Landmark,
   MoreVertical,
   Pencil,
+  Plus,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -28,6 +29,7 @@ export interface GoalCardProps {
   onEdit: () => void;
   onToggleStatus: (status: GoalStatus) => void;
   onDelete: () => void;
+  onAddFunds?: () => void;
   markCompleteRef?: React.Ref<View>;
 }
 
@@ -37,6 +39,7 @@ export const GoalCard = memo(function GoalCard({
   onEdit,
   onToggleStatus,
   onDelete,
+  onAddFunds,
   markCompleteRef,
 }: GoalCardProps) {
   const theme = useAppTheme();
@@ -86,7 +89,7 @@ export const GoalCard = memo(function GoalCard({
           </View>
           <View style={styles.titleTextWrapper}>
             <View style={styles.nameRow}>
-              <Text numberOfLines={1} style={styles.goalName}>
+              <Text style={styles.goalName}>
                 {goal.name}
               </Text>
               {isCompleted && (
@@ -267,7 +270,17 @@ export const GoalCard = memo(function GoalCard({
 
       {/* Bottom Status Toggle */}
       <View style={styles.bottomBar}>
-        <View collapsable={false} ref={markCompleteRef}>
+        <View collapsable={false} ref={markCompleteRef} style={styles.bottomActionsRow}>
+          {!isCompleted && onAddFunds ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onAddFunds}
+              style={styles.addFundsButton}
+            >
+              <Plus color={theme.colors.primary} size={13} />
+              <Text style={styles.addFundsButtonText}>Add Funds</Text>
+            </Pressable>
+          ) : null}
           {isCompleted ? (
             <Pressable
               onPress={() => onToggleStatus("in_progress")}
@@ -354,6 +367,8 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     nameRow: {
+      flexWrap: "wrap",
+      rowGap: 4,
       flexDirection: "row",
       alignItems: "center",
       gap: theme.spacing.xs,
@@ -411,6 +426,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: theme.spacing.sm,
     },
     amountRow: {
+      gap: theme.spacing.sm,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-end",
@@ -477,20 +493,24 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
     },
     deadlineNumber: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
     },
     deadlineText: {
+      flex: 1,
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
     },
     deadlineWarning: {
+      flex: 1,
       flexDirection: "row",
       alignItems: "center",
       gap: 5,
     },
     deadlineWarningText: {
+      flex: 1,
       color: theme.colors.danger,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
@@ -514,6 +534,8 @@ function createStyles(theme: AppTheme) {
       marginTop: theme.spacing.xs,
     },
     bottomBar: {
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
@@ -521,6 +543,28 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.sm,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
+    },
+    bottomActionsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      flexWrap: "wrap",
+      gap: theme.spacing.sm,
+    },
+    addFundsButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: `${theme.colors.primary}15`,
+      borderWidth: 1,
+      borderColor: `${theme.colors.primary}45`,
+    },
+    addFundsButtonText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     completeButton: {
       flexDirection: "row",

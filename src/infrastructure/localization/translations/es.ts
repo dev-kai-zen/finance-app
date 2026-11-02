@@ -390,6 +390,33 @@ export const es = {
     followDeviceDescription: "Paper en modo claro e Ink en modo oscuro.",
     palettes: "PALETAS",
     choices: "%{count} opciones",
+    tabPresets: "Paletas",
+    tabCustomStudio: "Estudio Personalizado",
+    customBannerTitle: "Estudio de Tema Personalizado",
+    customBannerSubtitle: "Diseña tu propia combinación de colores y tinte de superficie.",
+    customBannerActive: "Tu tema de color personalizado está activo.",
+    customizeAction: "Personalizar",
+    filterAll: "Todos",
+    livePreview: "VISTA PREVIA EN VIVO",
+    activeBadge: "Activo",
+    baseModeLabel: "Modo Base",
+    modeLight: "Claro",
+    modeDark: "Oscuro",
+    modeOled: "Negro OLED",
+    surfaceTintLabel: "Tinte de Superficie y Tarjetas",
+    surfaceTintHint: "Integra tu color principal en los fondos y tarjetas.",
+    tintNeutral: "Neutro",
+    tintSubtle: "Sutil",
+    tintRich: "Intenso",
+    primaryColorLabel: "Color Principal",
+    primaryColorHint: "Botones, pestañas activas y resaltados principales.",
+    primaryUsedFor: "Aplicado a: Botones de acción (Guardar/Agregar), pestañas activas, botón flotante (+), chips seleccionados y barras de progreso.",
+    accentColorLabel: "Color de Acento",
+    accentColorHint: "Resaltados secundarios, insignias y gráficos.",
+    accentUsedFor: "Aplicado a: Destacados del asistente Kai AI, métricas secundarias en informes (tasa de ahorro) y alertas de notificación.",
+    applyCustomTheme: "Aplicar Tema Personalizado",
+    unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
+    customShadeLabel: "Ajustar brillo y tonalidad",
   },
   versionHistory: {
     heading: "Historial de versiones",
@@ -414,6 +441,45 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v130: {
+      date: "2 de noviembre de 2026",
+      newItem1:
+        "Crea tus propias combinaciones de colores en el nuevo Estudio de Tema Personalizado.",
+      newItem2:
+        "Personaliza el diseño de tu pantalla de inicio con nuevas tarjetas de Flujo de Caja, Cuentas y Gastos.",
+      newItem3:
+        "Añade una tarjeta de Acciones Rápidas a tu inicio y ajusta tus colores con el selector visual de tonos.",
+      newItem4:
+        "Recibe avisos dentro de la aplicación para descargar e instalar fácilmente nuevas actualizaciones desde Google Play.",
+      improveItem1:
+        "Añade nuevos temas claros y oscuros con color y sincroniza tu tema elegido entre dispositivos.",
+      improveItem2:
+        "Muestra totales netos diarios y filtros activos en la pantalla de Transacciones.",
+      improveItem3:
+        "Abre directamente las transacciones filtradas desde las tarjetas del Panel, Presupuestos y Metas.",
+      improveItem4:
+        "Muestra guías claras de dónde se aplica cada color y selecciona desde tus colores hexadecimales guardados.",
+      improveItem5:
+        "Unifica las muestras de color en el Estudio de temas y ajustes con una sola paleta.",
+      improveItem6:
+        "Mejora los colores de los iconos en los ajustes para distinguir acciones principales y funciones especiales.",
+      improveItem7:
+        "Mejora las pantallas de configuración de moneda con ayuda interactiva y listas más limpias.",
+      fixItem1:
+        "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
+      fixItem2:
+        "Corrige la estabilidad al iniciar la aplicación y cargar pantallas.",
+      fixItem3:
+        "Se corrigió que las Acciones Rápidas en Inicio abrieran Gasto en lugar de Ingreso o Transferencia.",
+      fixItem4:
+        "Evita el desplazamiento de pantalla mientras se prepara o muestra la guía introductoria.",
+      fixItem5:
+        "Corrige un problema que impedía a usuarios existentes crear o guardar Grupos de Fondos.",
+      fixItem6:
+        "Corrige que los colores blancos y neutros muestren tonos rojos en el Estudio de temas.",
+      fixItem7:
+        "Corrige botones y listas de selección que quedaban cortados detrás de la barra de navegación del teléfono.",
     },
     v121: {
       date: "28 de octubre de 2026",
@@ -516,6 +582,9 @@ export const es = {
     kaizenTitle: "El poder de los pequeños pasos",
     kaizenBody:
       "En japonés, 'Kaizen' (改善) significa mejora continua. No necesitas cambiar todo de la noche a la mañana. Dedicar un par de minutos al día a registrar tus gastos genera un hábito que transformará tu futuro.",
+    logoTitle: "La historia detrás de nuestros colores",
+    logoBody:
+      "Cada color de nuestro logotipo refleja el camino hacia la tranquilidad financiera:\n\n• Rojo (Empezar desde cero): La línea de salida. Ya sea enfrentando deudas, viviendo al día o comenzando desde la nada, el rojo representa el punto de partida honesto de todo viaje.\n\n• Blanco (Claridad y comprensión): El puente de la consciencia. Monitorear tu flujo de dinero trae luz a la oscuridad, reemplazando la ansiedad por una visión clara de tus hábitos diarios.\n\n• Verde (Educación financiera y libertad): Prosperar en verde. Ir más allá de la supervivencia hacia una sólida educación financiera, independencia y confianza en tu futuro.",
     supportTitle: "Desarrollo independiente y privado",
     supportBody:
       "Desarrollo Kaizen Finance de forma independiente, respetando tu privacidad y funcionando sin conexión, sin vender tus datos. Si la aplicación te resulta útil, adquirir Kaizen Pro apoya directamente mi trabajo para seguir mejorándola.",
@@ -726,6 +795,58 @@ export const es = {
     deleteTransactionTitle: "¿Eliminar transacción?",
     deleteTransactionMessage:
       "Este registro se moverá a la Papelera. Puedes restaurarlo más tarde.",
+    customizeHome: "Personalizar Inicio",
+    customizeModalTitle: "Personalizar Pantalla de Inicio",
+    customizeModalSubtitle:
+      "Elige qué tarjetas aparecen en tu panel y ordénalas a tu gusto.",
+    quickPresetsLabel: "Diseños Rápidos en 1 Toque",
+    sectionsOrderLabel: "Tarjetas y Orden del Panel",
+    resetLayout: "Restablecer",
+    presetCashflowFocus: "Enfoque en Flujo de Caja",
+    presetCashflowFocusDesc: "Prioriza ingresos mensuales, gastos y categorías principales.",
+    presetWealthOverview: "Patrimonio y Saldos",
+    presetWealthOverviewDesc: "Destaca patrimonio neto, saldos de cuentas y flujo de caja.",
+    presetCompleteView: "Vista Completa",
+    presetCompleteViewDesc: "Muestra las 6 tarjetas financieras en tu pantalla de inicio.",
+    presetMinimalist: "Minimalista",
+    presetMinimalistDesc: "Saludo compacto, flujo de caja mensual y transacciones recientes.",
+    widgetGreetingTitle: "Saludo y Fecha",
+    widgetGreetingDesc: "Encabezado de bienvenida y frase de inspiración diaria opcional.",
+    widgetNetWorthTitle: "Patrimonio Neto y Saldo",
+    widgetNetWorthDesc: "Gráfico de tendencia de saldo, activos y pasivos.",
+    widgetCashflowTitle: "Flujo de Caja Mensual",
+    widgetCashflowDesc: "Barra de ingresos vs. gastos de este mes y tasa de ahorro.",
+    widgetAccountsTitle: "Franja de Cuentas",
+    widgetAccountsDesc: "Tarjetas horizontales rápidas con los saldos de tus cuentas activas.",
+    widgetTopCategoriesTitle: "Principales Categorías de Gasto",
+    widgetTopCategoriesDesc: "Adónde fue tu dinero este mes con barras de progreso.",
+    widgetRecentTxTitle: "Transacciones Recientes",
+    widgetRecentTxDesc: "Tus últimos ingresos, gastos y transferencias registrados.",
+    showDailyQuoteTitle: "Mostrar Frase de Inspiración Diaria",
+    showDailyQuoteDesc: "Muestra una cita financiera dentro de la tarjeta de saludo.",
+    cashflowCardTitle: "Flujo de Caja Mensual",
+    netCashflowLabel: "Flujo Neto",
+    cashflowIncome: "Ingresos",
+    cashflowExpenses: "Gastos",
+    savingsRateBadge: "%{rate}% ahorrado",
+    accountsCardTitle: "Cuentas",
+    noAccountsYet: "Aún no hay cuentas activas.",
+    topCategoriesCardTitle: "Mayores Gastos de Este Mes",
+    noSpendingThisMonth: "Aún no hay gastos registrados este mes.",
+    viewAll: "Ver todo",
+    stepCustomizeHomeTitle: "Personalizar Pantalla de Inicio",
+    stepCustomizeHomeDesc:
+      "Toca aquí en cualquier momento para mostrar, ocultar o reordenar las tarjetas del panel y cambiar entre diseños rápidos.",
+    customizeHelpTitle: "Acerca de Personalizar Inicio",
+    customizeHelpMessage:
+      "Personaliza tu panel según cómo administras tu dinero:\n\n• Diseños Rápidos en 1 Toque: Cambia rápidamente entre Enfoque en Flujo de Caja, Patrimonio y Saldos, Vista Completa o Minimalista.\n• Mostrar u Ocultar Tarjetas: Activa o desactiva cada tarjeta con el interruptor.\n• Reordenar Tarjetas: Toca Reordenar para arrastrar y soltar o usar las flechas.",
+    reorderCards: "Reordenar",
+    reorderCardsTitle: "Reordenar Tarjetas del Panel",
+    widgetQuickActionsTitle: "Acciones rápidas",
+    quickActionExpense: "Gasto",
+    quickActionIncome: "Ingreso",
+    quickActionTransfer: "Transferir",
+    quickActionAi: "Preguntar a Kai",
   },
   calendar: {
     firstOfMonth: "1.º del mes",
@@ -1143,7 +1264,7 @@ export const es = {
       "Filtra rápidamente tus presupuestos por periodo: diario, semanal, mensual, trimestral o anual.",
     stepFirstItemToggleTitle: "Activar o desactivar presupuestos",
     stepFirstItemToggleDesc:
-      "Activa o desactiva cualquier presupuesto a voluntad sin perder tus transacciones previas ni la configuración.",
+      "Activa o desactiva cualquier presupuesto a voluntad, o toca View transactions en la tarjeta para ver los gastos de esa categoría.",
     stepFabTitle: "Crear presupuesto por categoría",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para fijar nuevos límites por categoría y alcanzar tus metas financieras.",
@@ -1166,9 +1287,9 @@ export const es = {
     stepStatusFiltersTitle: "Filtros por estado",
     stepStatusFiltersDesc:
       "Filtra fácilmente entre Todos los objetivos, metas En progreso y logros Completados con contadores en tiempo real.",
-    stepFirstItemMarkCompleteTitle: "Marcar como completado",
+    stepFirstItemMarkCompleteTitle: "Añadir fondos y completar",
     stepFirstItemMarkCompleteDesc:
-      "Celebra alcanzar tu meta marcándola como completada, o reábrela en cualquier momento si deseas seguir ahorrando.",
+      "Toca Add Funds para registrar rápidamente un ahorro en la cuenta vinculada, o márcala como completada al alcanzar tu meta.",
     stepFabTitle: "Agregar nuevo objetivo",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
@@ -1677,5 +1798,12 @@ export const es = {
     netWorthDescription: "Sigue tu patrimonio neto total, activos y deudas.",
     monthlyBudgetTitle: "Progreso del Presupuesto Mensual",
     monthlyBudgetDescription: "Mira cuánto queda de tu presupuesto este mes.",
+  },
+  appUpdates: {
+    updateDownloadedTitle: "Actualización lista para instalar",
+    updateDownloadedDescription:
+      "Se ha descargado una nueva versión de Kaizen. Reinicia ahora para completar la actualización.",
+    restartToApply: "Reiniciar",
+    later: "Más tarde",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

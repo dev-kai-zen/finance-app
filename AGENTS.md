@@ -399,7 +399,7 @@ When modifying this project, AI agents must:
 11. **DO NOT EDIT ANY FILES INSIDE THE `node_modules`**: AI agents are strictly forbidden from modifying any file inside `node_modules`. All fixes and adaptations must be made in application code or configuration.
 12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.
 13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).
-14. **Version History Updates Rule**: Follow the Version History guidelines in Section 18 when updating or adding release notes.
+14. **Version History & Semantic Versioning Rule**: Follow the Version History and Semantic Versioning (`MAJOR.MINOR.PATCH`) guidelines in Section 18 when updating or adding release notes. Whenever a new feature (`MINOR`), bug fix/polish (`PATCH`), or breaking change (`MAJOR`) is implemented, proactively ask the user whether to bump the version across `package.json`, `app.json`, `android/app/build.gradle`, and `RELEASE_NOTES`.
 
 ---
 
@@ -458,7 +458,12 @@ When adding or updating "Version History" release notes (`src/modules/version-hi
 6. **Localization Requirement Across All Supported Languages**:
    - All string keys must exist in `src/infrastructure/localization/translations/en.ts`, `fil.ts`, and `es.ts`.
    - Never add English release notes without the matching Filipino and Spanish translations.
-7. **Version Bump Alignment**:
+7. **Semantic Versioning (`MAJOR.MINOR.PATCH`) & Proactive Version Bump Alignment**:
+   - The application strictly follows **Semantic Versioning (`MAJOR.MINOR.PATCH`)**:
+     - **`MAJOR` (`X.0.0`)**: Major architectural overhauls or breaking changes.
+     - **`MINOR` (`1.X.0`)**: Brand-new user-facing features or capabilities (e.g., `1.2.1` → `1.3.0`).
+     - **`PATCH` (`1.2.X`)**: Bug fixes, UI polish, and minor improvements without new features (e.g., `1.2.1` → `1.2.2`).
+   - **Proactively Ask the User**: When a new feature, improvement, or fix is implemented during development, the agent must ask the user whether they want to keep it in the current active release or bump the version (recommending the appropriate `MINOR` or `PATCH` increment based on Semantic Versioning) and increment `versionCode`.
    - Whenever the application version is incremented in `package.json` and `app.json`, add a new release block at the top of `RELEASE_NOTES` in `src/modules/version-history/constants/release-notes.ts`.
    - First deployment (v1.0.0) provides a comprehensive overview of all app features; subsequent versions summarize only what changed or was fixed in that release.
 

@@ -115,7 +115,7 @@ export function AccountTypeGroupCard({
           </View>
           <View style={styles.titleCol}>
             <View style={styles.titleRow}>
-              <Text numberOfLines={1} style={[styles.groupTitle, { color: primaryColor }]}>
+              <Text numberOfLines={2} style={[styles.groupTitle, { color: primaryColor }]}>
                 {accountType.name}
               </Text>
               {onEditType ? (
@@ -491,6 +491,7 @@ function createStyles(theme: AppTheme) {
       gap: 4,
     },
     creditCardMetrics: {
+      flexShrink: 1,
       alignItems: "flex-end",
       marginRight: theme.spacing.xs,
     },

@@ -210,7 +210,12 @@ function AccountTypeManagerContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <ScrollView ref={scrollRef}>
+        <ScrollView
+          ref={scrollRef}
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
+        >
           <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           <View ref={pickerRef} collapsable={false} style={styles.segmentRow}>
               {(["asset", "liability"] as const).map((item) => (

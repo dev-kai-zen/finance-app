@@ -330,6 +330,9 @@ function AccountsScreenContent({
       contentContainerStyle={contentSpacing}
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           <FloatingActionButton

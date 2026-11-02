@@ -145,21 +145,21 @@ test("transactions: migrates legacy pocket movements and enables pockets on thei
   }
 
   const legs = db.prepare(`
-    SELECT account_id, pocket_id, amount_minor_units, transaction_group_id
+    SELECT account_id, pocket_id, amount_cents, transaction_group_id
     FROM transactions
     WHERE transaction_group_id = 'pocket-transfer:movement_legacy'
-    ORDER BY amount_minor_units
+    ORDER BY amount_cents
   `).all();
   assert.equal(legs.length, 2);
   assert.deepEqual(
-    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_minor_units]),
+    legs.map((leg) => [leg.account_id, leg.pocket_id, leg.amount_cents]),
     [
       ["acc_pocket_migration", null, -25000],
       ["acc_pocket_migration", "pocket_legacy", 25000],
     ],
   );
   assert.equal(
-    db.prepare("SELECT SUM(amount_minor_units) AS total FROM transactions WHERE account_id = ?")
+    db.prepare("SELECT SUM(amount_cents) AS total FROM transactions WHERE account_id = ?")
       .get("acc_pocket_migration").total,
     0,
   );

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Search, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { HelpIconButton, InfoModal } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -32,6 +33,10 @@ export function CurrencyOptionSheet<T extends string | number>({
   searchable = false,
   searchPlaceholder = "Search",
   emptyLabel = "No matching options",
+  helpTitle,
+  helpMessage,
+  onPressHelp,
+  showCount = true,
   onChange,
   onClose,
   onConfirm,
@@ -46,6 +51,10 @@ export function CurrencyOptionSheet<T extends string | number>({
   searchable?: boolean;
   searchPlaceholder?: string;
   emptyLabel?: string;
+  helpTitle?: string;
+  helpMessage?: string;
+  onPressHelp?: () => void;
+  showCount?: boolean;
   onChange: (value: T) => void;
   onClose: () => void;
   onConfirm: () => void;
@@ -56,9 +65,13 @@ export function CurrencyOptionSheet<T extends string | number>({
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const [query, setQuery] = useState("");
+  const [helpVisible, setHelpVisible] = useState(false);
 
   useEffect(() => {
-    if (visible) setQuery("");
+    if (visible) {
+      setQuery("");
+      setHelpVisible(false);
+    }
   }, [visible]);
 
   const filteredOptions = useMemo(() => {
@@ -72,6 +85,7 @@ export function CurrencyOptionSheet<T extends string | number>({
   }, [options, query]);
 
   return (
+    <>
     <Modal
       animationType="slide"
       onRequestClose={onClose}
@@ -98,9 +112,23 @@ export function CurrencyOptionSheet<T extends string | number>({
         >
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleCopy}>
-              <Text accessibilityRole="header" style={styles.modalTitle}>
+              <View style={styles.modalTitleRow}>
+                <Text accessibilityRole="header" style={styles.modalTitle}>
                 {title}
-              </Text>
+                </Text>
+                {helpMessage || onPressHelp ? (
+                  <HelpIconButton
+                    accessibilityLabel={`${title} help`}
+                    onPress={() => {
+                      if (onPressHelp) {
+                        onPressHelp();
+                      } else {
+                        setHelpVisible(true);
+                      }
+                    }}
+                  />
+                ) : null}
+              </View>
               {description ? (
                 <Text style={styles.modalDescription}>{description}</Text>
               ) : null}
@@ -137,11 +165,13 @@ export function CurrencyOptionSheet<T extends string | number>({
             </View>
           ) : null}
 
-          <View style={styles.modalToolbar}>
-            <Text style={styles.optionCount}>
-              {filteredOptions.length} / {options.length}
-            </Text>
-          </View>
+          {showCount ? (
+            <View style={styles.modalToolbar}>
+              <Text style={styles.optionCount}>
+                {filteredOptions.length} / {options.length}
+              </Text>
+            </View>
+          ) : null}
 
           <FlatList
             contentContainerStyle={styles.options}
@@ -202,6 +232,15 @@ export function CurrencyOptionSheet<T extends string | number>({
         </View>
       </KeyboardAvoidingView>
     </Modal>
+      {helpMessage ? (
+        <InfoModal
+          message={helpMessage}
+          onClose={() => setHelpVisible(false)}
+          title={helpTitle ?? title}
+          visible={helpVisible}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -247,6 +286,11 @@ function createStyles(theme: AppTheme) {
       marginBottom: theme.spacing.md,
     },
     modalTitleCopy: { flex: 1, gap: theme.spacing.xs },
+    modalTitleRow: {
+      alignItems: 'center',
+      flexDirection: 'row',
+      gap: theme.spacing.xs,
+    },
     modalTitle: {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.lg,

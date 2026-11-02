@@ -41,7 +41,7 @@ export function GoalSummaryHeader({
         <View style={styles.heroTopRow}>
           <View>
             <Text style={styles.heroSubheading}>TOTAL TARGET</Text>
-            <Text style={styles.heroTargetAmount}>
+            <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.heroTargetAmount}>
               {formatCurrency(totalTargetMinorUnits, currencyCode)}
             </Text>
           </View>
@@ -84,7 +84,7 @@ export function GoalSummaryHeader({
           </View>
           <View style={styles.alignRight}>
             <Text style={styles.statLabel}>Remaining shortfall</Text>
-            <Text style={styles.statValueRemaining}>
+            <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.statValueRemaining}>
               {formatCurrency(remaining, currencyCode)}
             </Text>
           </View>
@@ -157,6 +157,7 @@ function createStyles(theme: AppTheme) {
       ...theme.shadows.card,
     },
     heroTopRow: {
+      gap: theme.spacing.sm,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "flex-start",
@@ -201,6 +202,7 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
     },
     heroBottomRow: {
+      gap: theme.spacing.sm,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",

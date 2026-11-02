@@ -261,7 +261,12 @@ function AccountTypeFormModalContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <KeyboardAwareForm ref={scrollRef}>
+        <KeyboardAwareForm
+          ref={scrollRef}
+          scrollEnabled={
+            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+          }
+        >
           <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           {/* Group Name Field */}
             <View style={styles.inputGroup}>

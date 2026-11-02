@@ -3,9 +3,21 @@ import type { CategoricalColorKey } from "./palette";
 
 export type ThemeMode = "light" | "dark";
 
+export type CustomThemeBaseMode = "light" | "dark" | "oled";
+export type CustomThemeTintIntensity = "neutral" | "subtle" | "rich";
+
+export interface CustomThemeConfig {
+  name?: string;
+  baseMode: CustomThemeBaseMode;
+  primaryHex: string;
+  accentHex: string;
+  tintIntensity: CustomThemeTintIntensity;
+}
+
 export type ThemeSelection =
-  | { kind: "system" }
-  | { kind: "preset"; presetId: string };
+  | { kind: "system"; lightPresetId?: string; darkPresetId?: string }
+  | { kind: "preset"; presetId: string }
+  | { kind: "custom"; config: CustomThemeConfig };
 
 export interface ThemeColors {
   // Application surfaces & backgrounds

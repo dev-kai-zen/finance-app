@@ -1,7 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { Moon, Quote, Shuffle, Sun, Sunset } from "lucide-react-native";
+import {
+  Moon,
+  Quote,
+  Shuffle,
+  Sun,
+  Sunset,
+} from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -13,10 +19,12 @@ import {
 
 export interface DashboardGreetingCardProps {
   nickname?: string | null;
+  showQuote?: boolean;
 }
 
 export function DashboardGreetingCard({
   nickname,
+  showQuote = true,
 }: DashboardGreetingCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -106,22 +114,24 @@ export function DashboardGreetingCard({
       </View>
 
       {/* Quote Container with Tap-to-Shuffle */}
-      <Pressable
-        accessibilityHint="Tap to show another inspirational quote"
-        accessibilityLabel={`${quote.quote} - ${quote.author}`}
-        accessibilityRole="button"
-        onPress={handleShuffleQuote}
-        style={({ pressed }) => [
-          styles.quoteBox,
-          pressed && styles.quoteBoxPressed,
-        ]}
-      >
-        <Quote color={theme.colors.primary} size={14} style={styles.quoteIcon} />
-        <Text style={styles.quoteText}>
-          “{quote.quote}” <Text style={styles.authorText}>— {quote.author}</Text>
-        </Text>
-        <Shuffle color={theme.colors.textMuted} size={13} style={styles.shuffleIcon} />
-      </Pressable>
+      {showQuote ? (
+        <Pressable
+          accessibilityHint="Tap to show another inspirational quote"
+          accessibilityLabel={`${quote.quote} - ${quote.author}`}
+          accessibilityRole="button"
+          onPress={handleShuffleQuote}
+          style={({ pressed }) => [
+            styles.quoteBox,
+            pressed && styles.quoteBoxPressed,
+          ]}
+        >
+          <Quote color={theme.colors.primary} size={14} style={styles.quoteIcon} />
+          <Text style={styles.quoteText}>
+            “{quote.quote}” <Text style={styles.authorText}>— {quote.author}</Text>
+          </Text>
+          <Shuffle color={theme.colors.textMuted} size={13} style={styles.shuffleIcon} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -164,6 +174,11 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: -0.3,
     },
+    rightActions: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
     datePill: {
       backgroundColor: theme.colors.surfaceMuted,
       borderRadius: theme.borderRadius.round,
@@ -174,6 +189,14 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    customizeIconBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 30,
+      justifyContent: "center",
+      width: 30,
     },
     quoteBox: {
       alignItems: "center",

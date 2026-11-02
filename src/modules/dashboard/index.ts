@@ -19,3 +19,7 @@ export type {
   AccountWithBalance,
 } from "./types/dashboard.types";
 export { DashboardGreetingCard } from "./components/dashboard-greeting-card";
+export { DashboardCashflowCard } from "./components/dashboard-cashflow-card";
+export { DashboardAccountsCard } from "./components/dashboard-accounts-card";
+export { DashboardTopCategoriesCard } from "./components/dashboard-top-categories-card";
+export { CustomizeDashboardModal } from "./components/customize-dashboard-modal";

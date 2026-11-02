@@ -240,6 +240,9 @@ function NotesScreenContent({
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
       floatingAction={
         <>
           {notes.length > 0 ? (
