@@ -464,6 +464,8 @@ export const es = {
         "Unifica las muestras de color en el Estudio de temas y ajustes con una sola paleta.",
       improveItem6:
         "Mejora los colores de los iconos en los ajustes para distinguir acciones principales y funciones especiales.",
+      improveItem7:
+        "Mejora las pantallas de configuración de moneda con ayuda interactiva y listas más limpias.",
       fixItem1:
         "Corrige insignias superpuestas y textos cortados en el menú de navegación y tarjetas.",
       fixItem2:

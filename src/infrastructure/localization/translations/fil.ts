@@ -465,6 +465,8 @@ export const fil = {
         "Pag-isahin ang mga swatch ng kulay sa Custom Theme Studio at mga setting gamit ang iisang palette.",
       improveItem6:
         "Gawing mas malinaw ang mga kulay ng icon sa settings para sa pangunahing aksyon at espesyal na tampok.",
+      improveItem7:
+        "Isaayos ang mga screen ng format ng pera gamit ang on-demand na tulong at mas malinis na mga opsyon.",
       fixItem1:
         "Ayusin ang nagkakapatong na mga badge at napuputol na teksto sa navigation menu at mga card.",
       fixItem2:

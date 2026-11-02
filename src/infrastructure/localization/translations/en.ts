@@ -467,6 +467,8 @@ export const en = {
         "Unify color swatches across Custom Theme Studio and app settings with a single palette.",
       improveItem6:
         "Refine icon colors across settings to distinguish primary actions and special assistant features.",
+      improveItem7:
+        "Improve currency setup sheets with on-demand helper information and cleaner option lists.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
       fixItem2:

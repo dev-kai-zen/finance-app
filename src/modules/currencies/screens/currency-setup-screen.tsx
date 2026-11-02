@@ -167,6 +167,7 @@ export function CurrencySetupScreen({
         selectedValue={draft.defaultCurrency}
         searchable
         searchPlaceholder={t("currency.searchCurrencies")}
+        showCount={false}
         title={t("currency.chooseCurrency")}
         visible={sheet === "currency"}
       />
@@ -179,6 +180,7 @@ export function CurrencySetupScreen({
         onConfirm={confirmSheet}
         options={negativeOptions}
         selectedValue={draft.negativeFormat}
+        showCount={false}
         title={t("currency.negativeNumber")}
         visible={sheet === "negative"}
       />
@@ -189,12 +191,14 @@ export function CurrencySetupScreen({
       <CurrencyOptionSheet
         cancelLabel={t("common.cancel")}
         confirmLabel={t("common.ok")}
-        description={t("currency.decimalFormatDescription")}
+        helpMessage={t("currency.decimalFormatDescription")}
+        helpTitle={t("currency.decimalFormat")}
         onChange={(value) => setDraft((current) => ({ ...current, decimalFormat: value }))}
         onClose={() => setSheet(null)}
         onConfirm={confirmSheet}
         options={formatOptions}
         selectedValue={draft.decimalFormat}
+        showCount={false}
         title={t("currency.decimalFormat")}
         visible={sheet === "format"}
       />
