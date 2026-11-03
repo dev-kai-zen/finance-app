@@ -1,9 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CircleHelp,
   LayoutGrid,
+  Plus,
   Quote,
   RotateCcw,
+  Shuffle,
   Sparkles,
   TrendingUp,
   Wallet,
@@ -31,6 +33,11 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import {
+  HexColorFormModal,
+  useHexColors,
+  type HexColorInput,
+} from "@/modules/hex-colors";
 import type {
   DashboardLayoutPreferences,
   DashboardLayoutPresetId,
@@ -45,8 +52,27 @@ export interface CustomizeDashboardModalProps {
   onMoveWidget?: (widgetId: DashboardWidgetId, direction: "up" | "down") => void;
   onReorderWidgets?: (orderedIds: DashboardWidgetId[]) => void;
   onToggleQuote: (showQuote: boolean) => void;
+  onChangeQuoteColors?: (
+    quoteBackgroundColor: string | null,
+    quoteTextColor: string | null,
+  ) => void;
   onSelectPreset: (presetId: DashboardLayoutPresetId) => void;
   onReset: () => void;
+}
+
+const QUICK_NEUTRAL_SWATCHES = [
+  { id: "quick_white", name: "White", hex: "#FFFFFF" },
+  { id: "quick_dark", name: "Dark Slate", hex: "#0F172A" },
+];
+
+function isLightColor(hex: string): boolean {
+  const clean = hex.replace("#", "");
+  if (clean.length < 6) return false;
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 180;
 }
 
 const WIDGET_METADATA: Record<
@@ -93,6 +119,7 @@ export function CustomizeDashboardModal({
   onToggleWidget,
   onReorderWidgets,
   onToggleQuote,
+  onChangeQuoteColors,
   onSelectPreset,
   onReset,
 }: CustomizeDashboardModalProps) {
@@ -103,8 +130,44 @@ export function CustomizeDashboardModal({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
+  const { colors: savedColors, addColor } = useHexColors();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isReorderOpen, setIsReorderOpen] = useState(false);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
+  const [colorPickerTarget, setColorPickerTarget] = useState<
+    "background" | "text"
+  >("background");
+
+  const handleToggleQuote = (val: boolean) => {
+    onToggleQuote(val);
+    if (val) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
+  const availableColors = useMemo(() => {
+    const existingHexes = new Set(
+      savedColors.map((c) => c.hex.trim().toLowerCase()),
+    );
+    const extras = QUICK_NEUTRAL_SWATCHES.filter(
+      (n) => !existingHexes.has(n.hex.toLowerCase()),
+    );
+    return [...extras, ...savedColors];
+  }, [savedColors]);
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    if (colorPickerTarget === "background") {
+      onChangeQuoteColors?.(created.hex, layout.quoteTextColor ?? null);
+    } else {
+      onChangeQuoteColors?.(layout.quoteBackgroundColor ?? null, created.hex);
+    }
+    setIsColorFormOpen(false);
+    return true;
+  };
 
   const sortableItems = useMemo<SortableItem[]>(
     () =>
@@ -205,6 +268,7 @@ export function CustomizeDashboardModal({
           </View>
 
           <ScrollView
+            ref={scrollViewRef}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
           >
@@ -325,10 +389,298 @@ export function CustomizeDashboardModal({
               </Text>
               <ThemedSwitch
                 accessibilityLabel={t("dashboard.showDailyQuoteTitle")}
-                onValueChange={onToggleQuote}
+                onValueChange={handleToggleQuote}
                 value={layout.showGreetingQuote}
               />
             </View>
+
+            {/* Quote Appearance & Custom Colors */}
+            {layout.showGreetingQuote ? (
+              <View style={styles.quoteConfigCard}>
+                <View style={styles.quoteConfigHeader}>
+                  <View style={styles.quoteConfigHeaderLeft}>
+                    <Sparkles color={theme.colors.primary} size={15} />
+                    <Text style={styles.quoteConfigTitle}>
+                      {t("dashboard.quoteColorsTitle")}
+                    </Text>
+                  </View>
+                  {(layout.quoteBackgroundColor !== null &&
+                    layout.quoteBackgroundColor !== undefined) ||
+                  (layout.quoteTextColor !== null &&
+                    layout.quoteTextColor !== undefined) ? (
+                    <Pressable
+                      accessibilityLabel={t("dashboard.resetToDefault")}
+                      accessibilityRole="button"
+                      onPress={() => onChangeQuoteColors?.(null, null)}
+                      style={({ pressed }) => [
+                        styles.resetColorsButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <RotateCcw color={theme.colors.textMuted} size={12} />
+                      <Text style={styles.resetColorsText}>
+                        {t("dashboard.resetToDefault")}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+
+                {/* Live Preview Box */}
+                <View
+                  style={[
+                    styles.previewQuoteBox,
+                    layout.quoteBackgroundColor
+                      ? {
+                          backgroundColor: layout.quoteBackgroundColor,
+                          borderColor: `${layout.quoteBackgroundColor}40`,
+                        }
+                      : {
+                          backgroundColor: `${theme.colors.primary}08`,
+                          borderColor: `${theme.colors.primary}20`,
+                        },
+                  ]}
+                >
+                  <Quote
+                    color={layout.quoteTextColor ?? theme.colors.primary}
+                    size={14}
+                    style={{ opacity: layout.quoteTextColor ? 0.9 : 0.75 }}
+                  />
+                  <Text
+                    numberOfLines={2}
+                    style={[
+                      styles.previewQuoteText,
+                      layout.quoteTextColor
+                        ? { color: layout.quoteTextColor }
+                        : { color: theme.colors.textPrimary },
+                    ]}
+                  >
+                    “Do not save what is left after spending, but spend what is left after saving.”{" "}
+                    <Text
+                      style={[
+                        styles.previewAuthorText,
+                        layout.quoteTextColor
+                          ? { color: layout.quoteTextColor, opacity: 0.85 }
+                          : { color: theme.colors.textSecondary },
+                      ]}
+                    >
+                      — Warren Buffett
+                    </Text>
+                  </Text>
+                  <Shuffle
+                    color={layout.quoteTextColor ?? theme.colors.textMuted}
+                    size={13}
+                    style={{ opacity: layout.quoteTextColor ? 0.8 : 0.6 }}
+                  />
+                </View>
+
+                {/* Background Color Swatches */}
+                <View style={styles.colorPickerSection}>
+                  <Text style={styles.colorPickerLabel}>
+                    {t("dashboard.quoteBgColor")}
+                  </Text>
+                  <ScrollView
+                    contentContainerStyle={styles.swatchesScroll}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {/* Default (Theme) chip */}
+                    <Pressable
+                      accessibilityLabel={t("dashboard.themeDefault")}
+                      accessibilityRole="button"
+                      onPress={() =>
+                        onChangeQuoteColors?.(
+                          null,
+                          layout.quoteTextColor ?? null,
+                        )
+                      }
+                      style={[
+                        styles.defaultChip,
+                        !layout.quoteBackgroundColor &&
+                          styles.defaultChipSelected,
+                      ]}
+                    >
+                      <Sparkles
+                        color={
+                          !layout.quoteBackgroundColor
+                            ? theme.colors.primary
+                            : theme.colors.textMuted
+                        }
+                        size={12}
+                      />
+                      <Text
+                        style={[
+                          styles.defaultChipText,
+                          !layout.quoteBackgroundColor &&
+                            styles.defaultChipTextSelected,
+                        ]}
+                      >
+                        {t("dashboard.themeDefault")}
+                      </Text>
+                    </Pressable>
+
+                    {availableColors.map((color) => {
+                      const isSelected =
+                        layout.quoteBackgroundColor?.toLowerCase() ===
+                        color.hex.toLowerCase();
+                      const light = isLightColor(color.hex);
+                      return (
+                        <Pressable
+                          key={`bg-${color.id}`}
+                          accessibilityLabel={color.name}
+                          accessibilityRole="button"
+                          onPress={() =>
+                            onChangeQuoteColors?.(
+                              color.hex,
+                              layout.quoteTextColor ?? null,
+                            )
+                          }
+                          style={[
+                            styles.colorSwatch,
+                            { backgroundColor: color.hex },
+                            isSelected && styles.colorSwatchSelected,
+                          ]}
+                        >
+                          {isSelected ? (
+                            <View
+                              style={[
+                                styles.colorCheckDot,
+                                {
+                                  backgroundColor: light
+                                    ? "#0F172A"
+                                    : "#FFFFFF",
+                                },
+                              ]}
+                            />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+
+                    <Pressable
+                      accessibilityLabel="Add custom color"
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setColorPickerTarget("background");
+                        setIsColorFormOpen(true);
+                      }}
+                      style={({ pressed }) => [
+                        styles.addColorSwatch,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
+                  </ScrollView>
+                </View>
+
+                {/* Text Color Swatches */}
+                <View style={styles.colorPickerSection}>
+                  <Text style={styles.colorPickerLabel}>
+                    {t("dashboard.quoteTextColor")}
+                  </Text>
+                  <ScrollView
+                    contentContainerStyle={styles.swatchesScroll}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  >
+                    {/* Default (Theme) chip */}
+                    <Pressable
+                      accessibilityLabel={t("dashboard.themeDefault")}
+                      accessibilityRole="button"
+                      onPress={() =>
+                        onChangeQuoteColors?.(
+                          layout.quoteBackgroundColor ?? null,
+                          null,
+                        )
+                      }
+                      style={[
+                        styles.defaultChip,
+                        !layout.quoteTextColor && styles.defaultChipSelected,
+                      ]}
+                    >
+                      <Sparkles
+                        color={
+                          !layout.quoteTextColor
+                            ? theme.colors.primary
+                            : theme.colors.textMuted
+                        }
+                        size={12}
+                      />
+                      <Text
+                        style={[
+                          styles.defaultChipText,
+                          !layout.quoteTextColor &&
+                            styles.defaultChipTextSelected,
+                        ]}
+                      >
+                        {t("dashboard.themeDefault")}
+                      </Text>
+                    </Pressable>
+
+                    {availableColors.map((color) => {
+                      const isSelected =
+                        layout.quoteTextColor?.toLowerCase() ===
+                        color.hex.toLowerCase();
+                      const light = isLightColor(color.hex);
+                      return (
+                        <Pressable
+                          key={`txt-${color.id}`}
+                          accessibilityLabel={color.name}
+                          accessibilityRole="button"
+                          onPress={() =>
+                            onChangeQuoteColors?.(
+                              layout.quoteBackgroundColor ?? null,
+                              color.hex,
+                            )
+                          }
+                          style={[
+                            styles.colorSwatch,
+                            { backgroundColor: color.hex },
+                            isSelected && styles.colorSwatchSelected,
+                          ]}
+                        >
+                          {isSelected ? (
+                            <View
+                              style={[
+                                styles.colorCheckDot,
+                                {
+                                  backgroundColor: light
+                                    ? "#0F172A"
+                                    : "#FFFFFF",
+                                },
+                              ]}
+                            />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+
+                    <Pressable
+                      accessibilityLabel="Add custom color"
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setColorPickerTarget("text");
+                        setIsColorFormOpen(true);
+                      }}
+                      style={({ pressed }) => [
+                        styles.addColorSwatch,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
+                  </ScrollView>
+                </View>
+              </View>
+            ) : null}
           </ScrollView>
         </View>
       </View>
@@ -350,6 +702,12 @@ export function CustomizeDashboardModal({
         onClose={() => setIsHelpOpen(false)}
         title={t("dashboard.customizeHelpTitle")}
         visible={isHelpOpen}
+      />
+
+      <HexColorFormModal
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
       />
     </Modal>
   );
@@ -547,6 +905,132 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: 10,
+    },
+    quoteConfigCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+    },
+    quoteConfigHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    quoteConfigHeaderLeft: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
+    quoteConfigTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.5,
+      textTransform: "uppercase",
+    },
+    resetColorsButton: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+    },
+    resetColorsText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    previewQuoteBox: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    previewQuoteText: {
+      flex: 1,
+      fontSize: theme.typography.fontSize.xs,
+      fontStyle: "italic",
+      lineHeight: theme.typography.lineHeight.xs * 1.35,
+    },
+    previewAuthorText: {
+      fontStyle: "normal",
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    colorPickerSection: {
+      gap: 6,
+    },
+    colorPickerLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
+    },
+    swatchesScroll: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+      paddingVertical: 4,
+    },
+    defaultChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.controlSecondary,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
+      height: 32,
+      justifyContent: "center",
+      paddingHorizontal: 10,
+    },
+    defaultChipSelected: {
+      backgroundColor: `${theme.colors.primary}18`,
+      borderColor: theme.colors.primary,
+    },
+    defaultChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    defaultChipTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    colorSwatch: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1.5,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
+    },
+    colorSwatchSelected: {
+      borderColor: theme.colors.textPrimary,
+      borderWidth: 2.5,
+      transform: [{ scale: 1.08 }],
+    },
+    colorCheckDot: {
+      borderRadius: 3,
+      height: 6,
+      width: 6,
+    },
+    addColorSwatch: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
     },
     pressed: {
       opacity: 0.75,

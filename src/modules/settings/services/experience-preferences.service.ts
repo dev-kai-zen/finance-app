@@ -44,6 +44,8 @@ export interface DashboardLayoutPreferences {
   order: DashboardWidgetId[];
   hidden: DashboardWidgetId[];
   showGreetingQuote: boolean;
+  quoteBackgroundColor?: string | null;
+  quoteTextColor?: string | null;
 }
 
 export const ALL_DASHBOARD_WIDGET_IDS: DashboardWidgetId[] = [
@@ -68,6 +70,8 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayoutPreferences = {
   ],
   hidden: ["accountsStrip", "topCategories"],
   showGreetingQuote: true,
+  quoteBackgroundColor: null,
+  quoteTextColor: null,
 };
 
 export interface TransactionFormFieldPreferences {
@@ -423,11 +427,21 @@ export function getDashboardLayoutPreferences(
       typeof parsed.showGreetingQuote === "boolean"
         ? parsed.showGreetingQuote
         : DEFAULT_DASHBOARD_LAYOUT.showGreetingQuote;
+    const quoteBackgroundColor =
+      typeof parsed.quoteBackgroundColor === "string" && parsed.quoteBackgroundColor.trim()
+        ? parsed.quoteBackgroundColor.trim()
+        : null;
+    const quoteTextColor =
+      typeof parsed.quoteTextColor === "string" && parsed.quoteTextColor.trim()
+        ? parsed.quoteTextColor.trim()
+        : null;
 
     return {
       order: mergedOrder,
       hidden,
       showGreetingQuote,
+      quoteBackgroundColor,
+      quoteTextColor,
     };
   } catch {
     return DEFAULT_DASHBOARD_LAYOUT;
@@ -451,6 +465,7 @@ export function applyDashboardLayoutPreset(
   presetId: DashboardLayoutPresetId,
   context?: DbContext,
 ): DashboardLayoutPreferences {
+  const current = getDashboardLayoutPreferences(context);
   let nextLayout: DashboardLayoutPreferences;
   switch (presetId) {
     case "cashflowFocus":
@@ -466,6 +481,8 @@ export function applyDashboardLayoutPreset(
         ],
         hidden: ["netWorth"],
         showGreetingQuote: true,
+        quoteBackgroundColor: current.quoteBackgroundColor ?? null,
+        quoteTextColor: current.quoteTextColor ?? null,
       };
       break;
     case "wealthOverview":
@@ -481,6 +498,8 @@ export function applyDashboardLayoutPreset(
         ],
         hidden: ["quickActions", "topCategories"],
         showGreetingQuote: true,
+        quoteBackgroundColor: current.quoteBackgroundColor ?? null,
+        quoteTextColor: current.quoteTextColor ?? null,
       };
       break;
     case "completeView":
@@ -496,6 +515,8 @@ export function applyDashboardLayoutPreset(
         ],
         hidden: [],
         showGreetingQuote: true,
+        quoteBackgroundColor: current.quoteBackgroundColor ?? null,
+        quoteTextColor: current.quoteTextColor ?? null,
       };
       break;
     case "minimalist":
@@ -511,6 +532,8 @@ export function applyDashboardLayoutPreset(
         ],
         hidden: ["quickActions", "netWorth", "accountsStrip", "topCategories"],
         showGreetingQuote: false,
+        quoteBackgroundColor: current.quoteBackgroundColor ?? null,
+        quoteTextColor: current.quoteTextColor ?? null,
       };
       break;
   }

@@ -469,6 +469,8 @@ export const es = {
         "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
       improveItem1:
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
+      improveItem2:
+        "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restablécelos a los predeterminados.",
     },
     v130: {
       date: "2 de noviembre de 2026",
@@ -852,6 +854,11 @@ export const es = {
     widgetRecentTxDesc: "Tus últimos ingresos, gastos y transferencias registrados.",
     showDailyQuoteTitle: "Mostrar Frase de Inspiración Diaria",
     showDailyQuoteDesc: "Muestra una cita financiera dentro de la tarjeta de saludo.",
+    quoteColorsTitle: "Apariencia de la Frase",
+    quoteBgColor: "Color de Fondo",
+    quoteTextColor: "Color de Texto",
+    themeDefault: "Predeterminado",
+    resetToDefault: "Restablecer Colores",
     cashflowCardTitle: "Flujo de Caja Mensual",
     netCashflowLabel: "Flujo Neto",
     cashflowIncome: "Ingresos",

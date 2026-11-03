@@ -123,3 +123,25 @@ test("dashboard: computes monthly cashflow and category spending percentages", (
   assert.equal(grocPct, 75);
   assert.equal(dinePct, 25);
 });
+
+test("dashboard: persists layout preferences including quote colors", () => {
+  const db = setupTestDb();
+  const preferences = {
+    order: ["greeting", "netWorth", "quickActions"],
+    hidden: ["accountsStrip"],
+    showGreetingQuote: true,
+    quoteBackgroundColor: "#10B981",
+    quoteTextColor: "#FFFFFF",
+  };
+
+  db.prepare(`
+    INSERT INTO settings (key, value, updated_at)
+    VALUES ('dashboard_layout', ?, ${Date.now()})
+  `).run(JSON.stringify(preferences));
+
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'dashboard_layout'").get();
+  const parsed = JSON.parse(row.value);
+  assert.equal(parsed.showGreetingQuote, true);
+  assert.equal(parsed.quoteBackgroundColor, "#10B981");
+  assert.equal(parsed.quoteTextColor, "#FFFFFF");
+});

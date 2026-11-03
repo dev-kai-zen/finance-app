@@ -80,6 +80,7 @@ function DashboardScreenContent() {
     moveDashboardWidget,
     reorderDashboardWidgets,
     setShowGreetingQuote,
+    setQuoteColors,
     selectDashboardPreset,
     resetDashboardLayout,
     isPromptDismissed,
@@ -415,6 +416,8 @@ function DashboardScreenContent() {
             key="greeting"
             nickname={nickname}
             showQuote={dashboardLayout.showGreetingQuote}
+            quoteBackgroundColor={dashboardLayout.quoteBackgroundColor}
+            quoteTextColor={dashboardLayout.quoteTextColor}
           />
         );
       case "netWorth":
@@ -580,6 +583,7 @@ function DashboardScreenContent() {
         onReset={resetDashboardLayout}
         onSelectPreset={selectDashboardPreset}
         onToggleQuote={setShowGreetingQuote}
+        onChangeQuoteColors={setQuoteColors}
         onToggleWidget={toggleDashboardWidget}
         visible={isCustomizeOpen}
       />

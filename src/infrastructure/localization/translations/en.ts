@@ -472,6 +472,8 @@ export const en = {
         "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
       improveItem1:
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
+      improveItem2:
+        "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
     },
     v130: {
       date: "November 2, 2026",
@@ -863,6 +865,11 @@ export const en = {
     showDailyQuoteTitle: "Show Daily Inspiration Quote",
     showDailyQuoteDesc:
       "Display a tap-to-shuffle financial quote inside the greeting card.",
+    quoteColorsTitle: "Quote Appearance",
+    quoteBgColor: "Background Color",
+    quoteTextColor: "Text Color",
+    themeDefault: "Default",
+    resetToDefault: "Reset Colors",
     cashflowCardTitle: "Monthly Cashflow",
     netCashflowLabel: "Net Cashflow",
     cashflowIncome: "Income",

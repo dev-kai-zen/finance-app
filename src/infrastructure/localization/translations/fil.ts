@@ -470,6 +470,8 @@ export const fil = {
         "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
       improveItem1:
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
+      improveItem2:
+        "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
     },
     v130: {
       date: "Nobyembre 2, 2026",
@@ -854,6 +856,11 @@ export const fil = {
     widgetRecentTxDesc: "Ang iyong pinakahuling naitalang kita, gastos, at transfer.",
     showDailyQuoteTitle: "Ipakita ang Daily Inspiration Quote",
     showDailyQuoteDesc: "Magpakita ng financial quote sa loob ng greeting card.",
+    quoteColorsTitle: "Itsura ng Quote",
+    quoteBgColor: "Kulay ng Background",
+    quoteTextColor: "Kulay ng Text",
+    themeDefault: "Default",
+    resetToDefault: "I-reset ang Kulay",
     cashflowCardTitle: "Buwanang Cashflow",
     netCashflowLabel: "Net Cashflow",
     cashflowIncome: "Kita",

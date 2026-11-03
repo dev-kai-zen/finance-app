@@ -247,6 +247,19 @@ export function useExperiencePreferences() {
     [refresh],
   );
 
+  const setQuoteColors = useCallback(
+    (quoteBackgroundColor: string | null, quoteTextColor: string | null) => {
+      const current = getDashboardLayoutPreferences();
+      setDashboardLayoutPreferences({
+        ...current,
+        quoteBackgroundColor,
+        quoteTextColor,
+      });
+      refresh();
+    },
+    [refresh],
+  );
+
   const selectDashboardPreset = useCallback(
     (presetId: DashboardLayoutPresetId) => {
       applyDashboardLayoutPreset(presetId);
@@ -298,6 +311,7 @@ export function useExperiencePreferences() {
     moveDashboardWidget,
     reorderDashboardWidgets,
     setShowGreetingQuote,
+    setQuoteColors,
     selectDashboardPreset,
     resetDashboardLayout,
     formFields,
