@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { GeneralSearchModal, SearchProvider } from "@/modules/search";
+import { QuickEntryProvider } from "@/modules/gestures";
 
 export function ExperienceAppShell({
   banner,
@@ -20,6 +21,7 @@ export function ExperienceAppShell({
 
   return (
     <SearchProvider>
+      <QuickEntryProvider>
       <AppShell
         banner={banner}
         hiddenNavHrefs={hiddenNavHrefs}
@@ -41,6 +43,7 @@ export function ExperienceAppShell({
           visible={experience.developerUnlockNotice}
         />
       )}
+      </QuickEntryProvider>
     </SearchProvider>
   );
 }

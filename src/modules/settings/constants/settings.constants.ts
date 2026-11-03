@@ -13,6 +13,8 @@ export const TRANSACTION_VIEW_MODE_SETTING_KEY =
 
 export const CHAT_TRANSACTION_MODE_SETTING_KEY = "chat.transactionMode";
 
+export const GESTURE_SHAKE_ACTION_SETTING_KEY = "gestures.shakeAction";
+
 export const DEVELOPER_MODE_SETTING_KEY = "developer.mode";
 
 export const EXPERIENCE_HOME_SETTING_KEY = "experience.home";

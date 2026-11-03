@@ -58,6 +58,7 @@ export type WalkthroughTargetId =
   | "settingsWidgets"
   | "settingsGuideHelper"
   | "settingsKaiKnowledge"
+  | "settingsGestures"
   | "settingsDefaultExpense"
   | "settingsDefaultIncome"
   | "settingsHexColors"

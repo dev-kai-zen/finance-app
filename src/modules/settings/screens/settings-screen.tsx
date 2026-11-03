@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Smile,
+  Smartphone,
   Sparkles,
   Terminal,
   Trash2,
@@ -47,6 +48,8 @@ import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-c
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components/settings-default-account-picker-modal";
 import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-modal";
+import { GesturesSettingsModal, useQuickEntry } from "@/modules/gestures";
+import { useShakeActionSetting } from "../hooks/use-shake-action-setting";
 import {
   DraggableTourChip,
   SettingsWalkthroughOverlay,
@@ -104,6 +107,9 @@ function SettingsScreenContent() {
   const { nickname, setNickname } = useUserNickname();
   const { mode: chatMode, setMode: setChatMode } = useChatTransactionMode();
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
+  const { shakeAction, setShakeAction } = useShakeActionSetting();
+  const { triggerShakeAction } = useQuickEntry();
+  const [isGesturesModalOpen, setIsGesturesModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
@@ -165,6 +171,8 @@ function SettingsScreenContent() {
             setIsVersionHistoryOpen(true);
           } else if (target === "settingsDeveloperMessage") {
             setIsDeveloperMessageOpen(true);
+          } else if (target === "settingsGestures") {
+            setIsGesturesModalOpen(true);
           } else if (target === "settingsPro") {
             setIsPaywallOpen(true);
           }
@@ -214,6 +222,7 @@ function SettingsScreenContent() {
   const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
   const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
+  const gesturesRef = useWalkthroughTarget("settingsGestures");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -626,6 +635,49 @@ function SettingsScreenContent() {
                   {chatMode === "auto"
                     ? t("chatWithKai.modeAutoTitle")
                     : t("chatWithKai.modeReviewTitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={gesturesRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGestures"] =
+                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.gesturesAccessibility", {
+                action:
+                  shakeAction === "chat_with_kai"
+                    ? t("settings.shakeActionChatWithKai")
+                    : shakeAction === "manual_entry"
+                      ? t("settings.shakeActionManualEntry")
+                      : t("settings.shakeActionDisabled"),
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsGesturesModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsGestures" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Smartphone color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.gesturesTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {shakeAction === "chat_with_kai"
+                    ? `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionChatWithKai")}`
+                    : shakeAction === "manual_entry"
+                      ? `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionManualEntry")}`
+                      : `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionDisabled")}`}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1087,6 +1139,38 @@ function SettingsScreenContent() {
               </Pressable>
               <View style={styles.rowDivider} />
               <Pressable
+                accessibilityLabel={t("settings.testShakeGestureDev")}
+                accessibilityRole="button"
+                onPress={() => {
+                  if (shakeAction === "disabled") {
+                    Alert.alert(
+                      t("settings.gesturesTitle"),
+                      t("settings.shakeDisabledAlert"),
+                    );
+                  } else {
+                    triggerShakeAction();
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.settingRow,
+                  pressed && styles.settingRowPressed,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <Smartphone color={theme.colors.warning} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.testShakeGestureDev")}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {t("settings.testShakeGestureDevDescription")}
+                  </Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </Pressable>
+              <View style={styles.rowDivider} />
+              <Pressable
                 accessibilityLabel={t("settings.sqliteMonitor")}
                 accessibilityRole="button"
                 onPress={() => router.push("/monitor")}
@@ -1302,6 +1386,14 @@ function SettingsScreenContent() {
         onOpenKnowledge={() => router.push("/kai-knowledge")}
         onSelectMode={setChatMode}
         visible={isChatSettingsOpen}
+      />
+
+      <GesturesSettingsModal
+        onClose={() => setIsGesturesModalOpen(false)}
+        onSelectShakeAction={setShakeAction}
+        onTestShake={() => triggerShakeAction()}
+        shakeAction={shakeAction}
+        visible={isGesturesModalOpen}
       />
 
       {isExpensePickerOpen ? (

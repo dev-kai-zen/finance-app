@@ -211,6 +211,27 @@ export const en = {
       "Teach Kai keywords for actions, categories, and accounts",
     kaiChatModeTitle: "Chat with Kai Mode",
     kaiChatModeSubtitle: "Review first or auto-save",
+    gesturesTitle: "Gestures",
+    gesturesAccessibility: "Gestures: %{action}. Tap to configure.",
+    gesturesSubtitle: "Shake shortcuts & quick actions",
+    shakeGestureTitle: "Shake the Device",
+    shakeGestureDescription:
+      "Quickly shake your phone from any screen to open your selected quick action.",
+    shakeActionChatWithKai: "Chat with Kai",
+    shakeActionChatWithKaiDescription:
+      "Open AI assistant to record transactions with natural language",
+    shakeActionManualEntry: "Manual Entry",
+    shakeActionManualEntryDescription:
+      "Open the standard transaction form directly",
+    shakeActionDisabled: "Disabled",
+    shakeActionDisabledDescription:
+      "Do not trigger any action when device is shaken",
+    testShakeGesture: "Test Selected Action",
+    testShakeGestureDev: "Simulate Shake Gesture (Dev)",
+    testShakeGestureDevDescription:
+      "Trigger the configured shake action to test without physically shaking",
+    shakeDisabledAlert:
+      "Shake Gesture is currently disabled. Select Chat with Kai or Manual Entry to test.",
     defaultAccountsSection: "DEFAULT ACCOUNTS",
     expense: "Expense",
     income: "Income",
@@ -444,6 +465,13 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v140: {
+      date: "November 3, 2026",
+      newItem1:
+        "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
+      improveItem1:
+        "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
     },
     v130: {
       date: "November 2, 2026",
@@ -1353,6 +1381,9 @@ export const en = {
     stepKaiKnowledgeTitle: "Manage Kai Knowledge",
     stepKaiKnowledgeDesc:
       "Teach Kai custom keywords for your accounts and categories to make AI chat logging even smarter.",
+    stepGesturesTitle: "Gestures",
+    stepGesturesDesc:
+      "Configure physical device gestures like shaking your phone to quickly launch Chat with Kai or Manual Entry from anywhere in the app.",
     stepDefaultExpenseTitle: "Default Expense Account",
     stepDefaultExpenseDesc:
       "Set the preselected account and pocket automatically used when logging new expenses.",

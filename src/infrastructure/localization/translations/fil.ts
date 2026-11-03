@@ -204,6 +204,27 @@ export const fil = {
       "Turuan si Kai ng mga keyword para sa aksyon, kategorya, at account",
     kaiChatModeTitle: "Paraan ng Kai Chat",
     kaiChatModeSubtitle: "Suriin muna o awtomatikong i-save",
+    gesturesTitle: "Mga Galaw",
+    gesturesAccessibility: "Mga Galaw: %{action}. I-tap upang i-configure.",
+    gesturesSubtitle: "Mga shortcut sa pag-alog at mabilisang aksyon",
+    shakeGestureTitle: "I-alog ang Device",
+    shakeGestureDescription:
+      "Mabilisang i-alog ang iyong telepono mula sa anumang screen upang buksan ang iyong napiling aksyon.",
+    shakeActionChatWithKai: "Makipag-usap kay Kai",
+    shakeActionChatWithKaiDescription:
+      "Buksan ang AI assistant upang magtala ng mga transaksyon gamit ang natural na salita",
+    shakeActionManualEntry: "Mano-manong Pag-enter",
+    shakeActionManualEntryDescription:
+      "Direktang buksan ang karaniwang form ng transaksyon",
+    shakeActionDisabled: "Naka-off",
+    shakeActionDisabledDescription:
+      "Huwag mag-trigger ng anumang aksyon kapag inalog ang device",
+    testShakeGesture: "Subukan ang Napiling Aksyon",
+    testShakeGestureDev: "Gayahin ang Pag-alog ng Device (Dev)",
+    testShakeGestureDevDescription:
+      "I-trigger ang naka-configure na aksyon sa pag-alog upang subukan nang hindi pisikal na inaalog",
+    shakeDisabledAlert:
+      "Kasalukuyang naka-off ang Shake Gesture. Pumili ng Makipag-usap kay Kai o Mano-manong Pag-enter upang subukan.",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -442,6 +463,13 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v140: {
+      date: "Nobyembre 3, 2026",
+      newItem1:
+        "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
+      improveItem1:
+        "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
     },
     v130: {
       date: "Nobyembre 2, 2026",
@@ -1349,6 +1377,9 @@ export const fil = {
     stepKaiKnowledgeTitle: "Pamahalaan ang Kaalaman ni Kai",
     stepKaiKnowledgeDesc:
       "Turuan si Kai ng mga keyword para sa iyong mga account at kategorya upang mas maging matalino ang pag-chat.",
+    stepGesturesTitle: "Mga Galaw",
+    stepGesturesDesc:
+      "I-configure ang mga galaw tulad ng pag-alog ng iyong telepono upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter mula sa anumang screen.",
     stepDefaultExpenseTitle: "Default na Account para sa Gastos",
     stepDefaultExpenseDesc:
       "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",

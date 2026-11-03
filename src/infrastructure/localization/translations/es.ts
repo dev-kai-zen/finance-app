@@ -204,6 +204,27 @@ export const es = {
       "Enseña a Kai palabras clave para acciones, categorías y cuentas",
     kaiChatModeTitle: "Modo de Chat con Kai",
     kaiChatModeSubtitle: "Revisar primero o autoguardar",
+    gesturesTitle: "Gestos",
+    gesturesAccessibility: "Gestos: %{action}. Toca para configurar.",
+    gesturesSubtitle: "Atajos de agitación y acciones rápidas",
+    shakeGestureTitle: "Agitar el Dispositivo",
+    shakeGestureDescription:
+      "Agita rápidamente tu teléfono desde cualquier pantalla para abrir tu acción rápida seleccionada.",
+    shakeActionChatWithKai: "Chatear con Kai",
+    shakeActionChatWithKaiDescription:
+      "Abre el asistente de IA para registrar transacciones con lenguaje natural",
+    shakeActionManualEntry: "Entrada Manual",
+    shakeActionManualEntryDescription:
+      "Abre directamente el formulario estándar de transacciones",
+    shakeActionDisabled: "Desactivado",
+    shakeActionDisabledDescription:
+      "No activar ninguna acción cuando se agite el dispositivo",
+    testShakeGesture: "Probar Acción Seleccionada",
+    testShakeGestureDev: "Simular Gesto de Agitación (Dev)",
+    testShakeGestureDevDescription:
+      "Activa la acción de agitación configurada para probar sin agitar físicamente",
+    shakeDisabledAlert:
+      "El gesto de agitación está actualmente desactivado. Selecciona Chatear con Kai o Entrada Manual para probar.",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",
@@ -441,6 +462,13 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v140: {
+      date: "3 de noviembre de 2026",
+      newItem1:
+        "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
+      improveItem1:
+        "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
     },
     v130: {
       date: "2 de noviembre de 2026",
@@ -1347,6 +1375,9 @@ export const es = {
     stepKaiKnowledgeTitle: "Administrar conocimiento de Kai",
     stepKaiKnowledgeDesc:
       "Enséñale a Kai palabras clave para tus cuentas y categorías para que el registro por chat sea aún más inteligente.",
+    stepGesturesTitle: "Gestos",
+    stepGesturesDesc:
+      "Configura gestos físicos como agitar tu teléfono para abrir rápidamente el chat con Kai o la entrada manual desde cualquier pantalla.",
     stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
     stepDefaultExpenseDesc:
       "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",

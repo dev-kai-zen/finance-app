@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
-import { useRouter } from "expo-router";
+import { ActivityIndicator, DeviceEventEmitter, ScrollView, View } from "react-native";
+import { usePathname, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
@@ -79,6 +79,21 @@ function AccountsScreenContent({
   const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
+
+  const pathname = usePathname();
+  const isScreenActive = pathname.startsWith("/accounts");
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (isScreenActive) {
+          data.refresh();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [isScreenActive, data.refresh]);
   const fundGroups = useFundGroups();
   const mutations = useAccountMutations(data.refresh);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();

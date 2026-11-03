@@ -45,7 +45,8 @@ export interface SearchCatalogItem {
     | "database"
     | "download"
     | "archive"
-    | "layout-grid";
+    | "layout-grid"
+    | "smartphone";
   iconColor?: string;
   route: string;
   targetId?: string;

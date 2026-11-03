@@ -1,6 +1,6 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DeviceEventEmitter, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SlidersHorizontal } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -107,6 +107,22 @@ function DashboardScreenContent() {
     clearError: clearTransactionError,
     refresh: refreshTransactions,
   } = useTransactions();
+
+  const pathname = usePathname();
+  const isScreenActive = pathname === "/" || pathname === "";
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (isScreenActive) {
+          refreshDashboard();
+          void refreshTransactions();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [isScreenActive, refreshDashboard, refreshTransactions]);
   const {
     presets,
     archivedPresets,
