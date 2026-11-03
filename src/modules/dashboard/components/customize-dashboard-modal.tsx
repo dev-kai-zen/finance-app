@@ -30,6 +30,7 @@ import {
   type SortableItem,
 } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
+import { isLightColor } from "@/utils/color-contrast";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -65,15 +66,7 @@ const QUICK_NEUTRAL_SWATCHES = [
   { id: "quick_dark", name: "Dark Slate", hex: "#0F172A" },
 ];
 
-function isLightColor(hex: string): boolean {
-  const clean = hex.replace("#", "");
-  if (clean.length < 6) return false;
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 180;
-}
+// isLightColor imported from @/utils/color-contrast
 
 const WIDGET_METADATA: Record<
   DashboardWidgetId,

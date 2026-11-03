@@ -472,6 +472,8 @@ export const fil = {
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
       improveItem2:
         "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
+      fixItem1:
+        "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
     },
     v130: {
       date: "Nobyembre 2, 2026",

@@ -471,6 +471,8 @@ export const es = {
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
       improveItem2:
         "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restablécelos a los predeterminados.",
+      fixItem1:
+        "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
     },
     v130: {
       date: "2 de noviembre de 2026",

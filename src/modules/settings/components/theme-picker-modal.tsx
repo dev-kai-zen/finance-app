@@ -64,7 +64,7 @@ type ThemeModalTab = "presets" | "custom";
 type PresetModeFilter = "all" | "light" | "dark";
 
 const SHADE_LIGHTNESS_STEPS = [20, 28, 36, 44, 52, 60, 68, 76];
-const ACHROMATIC_LIGHTNESS_STEPS = [0, 18, 32, 48, 64, 78, 90, 100];
+const ACHROMATIC_LIGHTNESS_STEPS = [0, 18, 32, 48, 64, 78, 88, 94];
 
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
   const clean = normalizeHexColor(hex, "#10B981").replace("#", "");

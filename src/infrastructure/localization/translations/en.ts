@@ -474,6 +474,8 @@ export const en = {
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
       improveItem2:
         "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
+      fixItem1:
+        "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
     },
     v130: {
       date: "November 2, 2026",

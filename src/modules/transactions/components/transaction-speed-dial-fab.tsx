@@ -12,6 +12,7 @@ import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { getContrastTextColor } from "@/utils/color-contrast";
 
 export interface TransactionSpeedDialFabProps {
   onPressForm: () => void;
@@ -125,7 +126,7 @@ export function TransactionSpeedDialFab({
           ]}
         >
           {isOpen ? (
-            <X color={theme.colors.onPrimary} size={26} strokeWidth={2.5} />
+            <X color={getContrastTextColor(theme.colors.textPrimary, { darkText: theme.colors.textInverse, lightText: "#FFFFFF" })} size={26} strokeWidth={2.5} />
           ) : (
             <Plus color={theme.colors.onPrimary} size={28} strokeWidth={2.5} />
           )}
@@ -192,7 +193,10 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
     },
     optionLabelText: {
-      color: theme.colors.textPrimary,
+      color: getContrastTextColor(theme.colors.surfaceElevated, {
+        darkText: theme.colors.textPrimary,
+        lightText: "#FFFFFF",
+      }),
       fontSize: 15,
       fontWeight: "600",
       letterSpacing: -0.2,
@@ -204,6 +208,8 @@ function createStyles(theme: AppTheme) {
     fab: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.border,
+      borderWidth: StyleSheet.hairlineWidth,
       borderRadius: size / 2,
       elevation: 6,
       height: size,
@@ -216,6 +222,7 @@ function createStyles(theme: AppTheme) {
     },
     fabOpen: {
       backgroundColor: theme.colors.textPrimary,
+      borderColor: theme.colors.borderStrong,
     },
     fabPressed: {
       opacity: 0.85,

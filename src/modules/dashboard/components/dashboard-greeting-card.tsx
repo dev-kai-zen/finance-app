@@ -12,6 +12,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { getContrastTextColor, isLightColor } from "@/utils/color-contrast";
 import {
   getRandomQuote,
   type MotivationalQuote,
@@ -86,6 +87,28 @@ export function DashboardGreetingCard({
     };
   }, [nickname, t]);
 
+  const resolvedQuoteTextColor = useMemo(() => {
+    if (quoteBackgroundColor && quoteTextColor) {
+      const bgLight = isLightColor(quoteBackgroundColor);
+      const textLight = isLightColor(quoteTextColor);
+      if (bgLight === textLight) {
+        return getContrastTextColor(quoteBackgroundColor, {
+          darkText: theme.colors.textPrimary,
+          lightText: "#FFFFFF",
+        });
+      }
+      return quoteTextColor;
+    }
+    if (quoteTextColor) return quoteTextColor;
+    if (quoteBackgroundColor) {
+      return getContrastTextColor(quoteBackgroundColor, {
+        darkText: theme.colors.textPrimary,
+        lightText: "#FFFFFF",
+      });
+    }
+    return null;
+  }, [quoteTextColor, quoteBackgroundColor, theme.colors.textPrimary]);
+
   const formattedDate = useMemo(() => {
     try {
       return new Intl.DateTimeFormat(undefined, {
@@ -139,25 +162,25 @@ export function DashboardGreetingCard({
           ]}
         >
           <Quote
-            color={quoteTextColor ?? theme.colors.primary}
+            color={resolvedQuoteTextColor ?? theme.colors.primary}
             size={14}
             style={[
               styles.quoteIcon,
-              quoteTextColor ? { opacity: 0.9 } : null,
+              resolvedQuoteTextColor ? { opacity: 0.9 } : null,
             ]}
           />
           <Text
             style={[
               styles.quoteText,
-              quoteTextColor ? { color: quoteTextColor } : null,
+              resolvedQuoteTextColor ? { color: resolvedQuoteTextColor } : null,
             ]}
           >
             “{quote.quote}”{" "}
             <Text
               style={[
                 styles.authorText,
-                quoteTextColor
-                  ? { color: quoteTextColor, opacity: 0.85 }
+                resolvedQuoteTextColor
+                  ? { color: resolvedQuoteTextColor, opacity: 0.85 }
                   : null,
               ]}
             >
@@ -165,11 +188,11 @@ export function DashboardGreetingCard({
             </Text>
           </Text>
           <Shuffle
-            color={quoteTextColor ?? theme.colors.textMuted}
+            color={resolvedQuoteTextColor ?? theme.colors.textMuted}
             size={13}
             style={[
               styles.shuffleIcon,
-              quoteTextColor ? { opacity: 0.8 } : null,
+              resolvedQuoteTextColor ? { opacity: 0.8 } : null,
             ]}
           />
         </Pressable>
