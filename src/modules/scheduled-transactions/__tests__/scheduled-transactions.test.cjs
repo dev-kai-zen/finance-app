@@ -403,3 +403,61 @@ test("scheduled transactions: migration creates constrained schedule tables", ()
   assert.equal(occurrenceAfterScheduleDelete, undefined);
 });
 
+
+test("scheduled transactions: supports signed amounts for adjustments and prevents zero or negative transfers", () => {
+  const database = new DatabaseSync(":memory:");
+  database.exec("PRAGMA foreign_keys = ON;");
+  const journal = require("../../../../drizzle/meta/_journal.json");
+
+  for (const entry of journal.entries) {
+    const file = path.join(
+      __dirname,
+      "../../../../drizzle",
+      entry.tag + ".sql",
+    );
+    const migration = fs.readFileSync(file, "utf8");
+    for (const statement of migration.split("--> statement-breakpoint")) {
+      if (statement.trim()) database.exec(statement);
+    }
+  }
+
+  const now = Date.now();
+  database.exec(
+    "INSERT INTO account_types (id, name, account_group, sort_order, icon_key, is_system, created_at, updated_at) VALUES ('type_asset', 'Asset', 'asset', 0, 'wallet', 1, " + now + ", " + now + ");"
+  );
+  database.exec(
+    "INSERT INTO accounts (id, account_type_id, name, currency_code, opening_balance_minor_units, opening_balance_at, pocket_enabled, is_archived, sort_order, created_at, updated_at) VALUES ('acc1', 'type_asset', 'Checking', 'PHP', 0, " + now + ", 0, 0, 0, " + now + ", " + now + "), ('acc2', 'type_asset', 'Savings', 'PHP', 0, " + now + ", 0, 0, 0, " + now + ", " + now + ");"
+  );
+  database.exec(
+    "INSERT INTO categories (id, name, type, is_system, sort_order, created_at, updated_at) VALUES ('cat_exp', 'Bills', 'expense', 0, 0, " + now + ", " + now + "), ('cat_inc', 'Salary', 'income', 0, 0, " + now + ", " + now + ");"
+  );
+
+  const insertSchedule = database.prepare(
+    "INSERT INTO transaction_schedules (" +
+      "id, status, transaction_type, account_id, to_account_id, category_id, amount_minor_units, " +
+      "frequency, interval_count, starts_at, time_zone, end_mode, weekend_policy, " +
+      "auto_post, anchor_occurrence_number, next_occurrence_number, next_nominal_at, next_effective_at, created_at, updated_at" +
+      ") VALUES (?, 'active', ?, ?, ?, ?, ?, 'monthly', 1, ?, 'UTC', 'never', 'exact', 0, 1, 1, ?, ?, ?, ?)"
+  );
+
+  // Standard negative expense
+  insertSchedule.run("sch_std_exp", "expense", "acc1", null, "cat_exp", -5000, now, now, now, now, now);
+  // Positive expense adjustment
+  insertSchedule.run("sch_pos_exp", "expense", "acc1", null, "cat_exp", 2500, now, now, now, now, now);
+  // Standard positive income
+  insertSchedule.run("sch_std_inc", "income", "acc1", null, "cat_inc", 10000, now, now, now, now, now);
+  // Negative income adjustment
+  insertSchedule.run("sch_neg_inc", "income", "acc1", null, "cat_inc", -1500, now, now, now, now, now);
+  // Standard transfer (must be positive)
+  insertSchedule.run("sch_trans", "transfer", "acc1", "acc2", null, 3000, now, now, now, now, now);
+
+  // Zero amount should fail constraint
+  assert.throws(() => {
+    insertSchedule.run("sch_zero", "expense", "acc1", null, "cat_exp", 0, now, now, now, now, now);
+  });
+
+  // Negative transfer amount should fail constraint
+  assert.throws(() => {
+    insertSchedule.run("sch_neg_trans", "transfer", "acc1", "acc2", null, -1000, now, now, now, now, now);
+  });
+});

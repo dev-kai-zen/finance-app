@@ -468,6 +468,8 @@ export const fil = {
       date: "Nobyembre 4, 2026",
       newItem1:
         "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
+      newItem2:
+        "I-toggle ang positibo o negatibong halaga sa mga schedule upang madaling maitala ang mga refund at adjustment sa kita.",
       improveItem1:
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
       improveItem2:

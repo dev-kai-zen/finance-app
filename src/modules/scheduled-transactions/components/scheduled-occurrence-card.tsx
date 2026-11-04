@@ -45,10 +45,10 @@ export function ScheduledOccurrenceCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
-  const signedAmount =
-    schedule.transactionType === "expense"
-      ? -schedule.amountMinorUnits
-      : schedule.amountMinorUnits;
+  const isTransfer = schedule.transactionType === "transfer";
+  const signedAmount = isTransfer
+    ? Math.abs(schedule.amountMinorUnits)
+    : schedule.amountMinorUnits;
 
   const isFailed = occurrence.status === "failed";
   const dueDateTime = occurrence.effectiveDueAt ?? occurrence.nominalDueAt;
@@ -113,17 +113,17 @@ export function ScheduledOccurrenceCard({
         <Text
           style={[
             styles.amountText,
-            schedule.transactionType === "expense"
-              ? styles.amountExpense
-              : schedule.transactionType === "income"
+            isTransfer
+              ? styles.amountTransfer
+              : signedAmount > 0
                 ? styles.amountIncome
-                : styles.amountTransfer,
+                : styles.amountExpense,
           ]}
         >
           {formatCurrency(
             signedAmount,
             sourceAccount?.currencyCode ?? "PHP",
-            schedule.transactionType === "income",
+            signedAmount > 0 && !isTransfer,
           )}
         </Text>
       </View>

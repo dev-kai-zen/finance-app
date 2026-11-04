@@ -36,7 +36,10 @@ function saveScheduledTransactionInContext(
   const parsed = scheduledTransactionInputSchema.parse(rawInput);
   const input: SaveScheduledTransactionInput = {
     ...parsed,
-    amountMinorUnits: Math.abs(parsed.amountMinorUnits),
+    amountMinorUnits:
+      parsed.transactionType === "transfer"
+        ? Math.abs(parsed.amountMinorUnits)
+        : parsed.amountMinorUnits,
     name: parsed.name?.trim() || null,
     note: parsed.note?.trim() || null,
     intervalCount: parsed.frequency === "once" ? 1 : parsed.intervalCount,

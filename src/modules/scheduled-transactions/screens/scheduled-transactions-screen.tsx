@@ -467,10 +467,10 @@ function ScheduledTransactionsScreenContent({
             const category = categories.find(
               (item) => item.id === schedule.categoryId,
             );
-            const signedAmount =
-              schedule.transactionType === "expense"
-                ? -schedule.amountMinorUnits
-                : schedule.amountMinorUnits;
+            const isTransfer = schedule.transactionType === "transfer";
+            const signedAmount = isTransfer
+              ? Math.abs(schedule.amountMinorUnits)
+              : schedule.amountMinorUnits;
 
             return (
               <View
@@ -532,17 +532,17 @@ function ScheduledTransactionsScreenContent({
                   <Text
                     style={[
                       styles.amountText,
-                      schedule.transactionType === "expense"
-                        ? styles.amountExpense
-                        : schedule.transactionType === "income"
+                      isTransfer
+                        ? styles.amountTransfer
+                        : signedAmount > 0
                           ? styles.amountIncome
-                          : styles.amountTransfer,
+                          : styles.amountExpense,
                     ]}
                   >
                     {formatCurrency(
                       signedAmount,
                       source?.currencyCode ?? "PHP",
-                      schedule.transactionType === "income",
+                      signedAmount > 0 && !isTransfer,
                     )}
                   </Text>
                 </View>

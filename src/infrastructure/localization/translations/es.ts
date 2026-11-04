@@ -467,6 +467,8 @@ export const es = {
       date: "4 de noviembre de 2026",
       newItem1:
         "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
+      newItem2:
+        "Alterna montos positivos o negativos en las programaciones para registrar fácilmente reembolsos y ajustes de ingresos.",
       improveItem1:
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
       improveItem2:

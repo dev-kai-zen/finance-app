@@ -191,6 +191,7 @@ function ScheduledTransactionFormModalContent({
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [toPocketId, setToPocketId] = useState<string | null>(null);
   const [amountMinorUnits, setAmountMinorUnits] = useState(0);
+  const [amountSign, setAmountSign] = useState<"+" | "-">("-");
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
@@ -226,7 +227,9 @@ function ScheduledTransactionFormModalContent({
       setToAccountId(initialSchedule.toAccountId ?? null);
       setToPocketId(initialSchedule.toPocketId ?? null);
       setCategoryId(initialSchedule.categoryId ?? null);
-      setAmountMinorUnits(initialSchedule.amountMinorUnits);
+      const isNegative = initialSchedule.amountMinorUnits < 0;
+      setAmountSign(isNegative ? "-" : "+");
+      setAmountMinorUnits(Math.abs(initialSchedule.amountMinorUnits));
       setName(initialSchedule.name ?? "");
       setNote(initialSchedule.note ?? "");
       setFrequency(initialSchedule.frequency);
@@ -260,6 +263,7 @@ function ScheduledTransactionFormModalContent({
       setCategoryId(
         categories.find((item) => item.type === "expense")?.id ?? null,
       );
+      setAmountSign(type === "income" ? "+" : "-");
       setAmountMinorUnits(0);
       setName("");
       setNote("");
@@ -324,6 +328,11 @@ function ScheduledTransactionFormModalContent({
 
   const chooseType = (value: ScheduledTransactionType) => {
     setTransactionType(value);
+    if (value === "expense") {
+      setAmountSign("-");
+    } else if (value === "income") {
+      setAmountSign("+");
+    }
     setCategoryId(
       value === "transfer"
         ? null
@@ -418,6 +427,13 @@ function ScheduledTransactionFormModalContent({
     const resolvedWeekendPolicy: ScheduleWeekendPolicy =
       frequency === "once" || !weekendAdjust ? "exact" : weekendPolicy;
 
+    const signedAmount =
+      transactionType === "transfer"
+        ? Math.abs(amountMinorUnits)
+        : amountSign === "-"
+          ? -Math.abs(amountMinorUnits)
+          : Math.abs(amountMinorUnits);
+
     const success = onSave(
       {
         transactionType,
@@ -426,7 +442,7 @@ function ScheduledTransactionFormModalContent({
         categoryId,
         toAccountId,
         toPocketId,
-        amountMinorUnits,
+        amountMinorUnits: signedAmount,
         name,
         note,
         frequency,
@@ -540,14 +556,20 @@ function ScheduledTransactionFormModalContent({
                 amountSign={
                   transactionType === "transfer"
                     ? "transfer"
-                    : transactionType === "expense"
-                      ? "-"
-                      : "+"
+                    : amountSign
                 }
                 currencyCode={currencyCode}
                 label="Amount"
                 onOpenCalculator={() => setCalculatorOpen(true)}
-                showSignToggle={false}
+                showSignToggle={transactionType !== "transfer"}
+                onToggleSign={
+                  transactionType !== "transfer"
+                    ? () => {
+                        setLocalError(null);
+                        setAmountSign((prev) => (prev === "+" ? "-" : "+"));
+                      }
+                    : undefined
+                }
               />
             </View>
 
@@ -880,6 +902,10 @@ function ScheduledTransactionFormModalContent({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(value) => {
+          setLocalError(null);
+          if (transactionType === "income" && value < 0) {
+            setAmountSign("-");
+          }
           setAmountMinorUnits(Math.abs(value));
           setCalculatorOpen(false);
         }}

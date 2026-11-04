@@ -115,18 +115,16 @@ export function CalendarSchedulesTab({
                 ? categoryMap.get(item.categoryId)
                 : null;
 
-              const isExpense = item.transactionType === "expense";
-              const isIncome = item.transactionType === "income";
-
-              const signedAmount = isExpense
-                ? -item.amountMinorUnits
+              const isTransfer = item.transactionType === "transfer";
+              const signedAmount = isTransfer
+                ? Math.abs(item.amountMinorUnits)
                 : item.amountMinorUnits;
 
-              const amountColor = isIncome
-                ? theme.colors.success
-                : isExpense
-                  ? theme.colors.danger
-                  : theme.colors.textPrimary;
+              const amountColor = isTransfer
+                ? theme.colors.textPrimary
+                : signedAmount > 0
+                  ? theme.colors.success
+                  : theme.colors.danger;
 
               return (
                 <View key={item.id} style={styles.scheduleRow}>
@@ -167,7 +165,7 @@ export function CalendarSchedulesTab({
                       {formatCurrency(
                         signedAmount,
                         account?.currencyCode ?? "PHP",
-                        false,
+                        signedAmount > 0 && !isTransfer,
                       )}
                     </Text>
 

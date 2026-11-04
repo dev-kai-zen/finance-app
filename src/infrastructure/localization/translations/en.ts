@@ -470,6 +470,8 @@ export const en = {
       date: "November 4, 2026",
       newItem1:
         "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
+      newItem2:
+        "Toggle positive or negative amounts in schedules to easily record recurring refunds and income adjustments.",
       improveItem1:
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
       improveItem2:
