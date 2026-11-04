@@ -464,13 +464,17 @@ export const es = {
       general: "General",
     },
     v140: {
-      date: "3 de noviembre de 2026",
+      date: "4 de noviembre de 2026",
       newItem1:
         "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
       improveItem1:
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
       improveItem2:
         "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restablécelos a los predeterminados.",
+      improveItem3:
+        "Elige de tu paleta compartida o crea colores personalizados al escribir notas.",
+      improveItem4:
+        "Mantén el saludo y fecha siempre activos en el panel mientras personalizas libremente las demás tarjetas.",
       fixItem1:
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
     },
@@ -843,6 +847,7 @@ export const es = {
     presetMinimalist: "Minimalista",
     presetMinimalistDesc: "Saludo compacto, flujo de caja mensual y transacciones recientes.",
     widgetGreetingTitle: "Saludo y Fecha",
+    alwaysActive: "Siempre activo",
     widgetGreetingDesc: "Encabezado de bienvenida y frase de inspiración diaria opcional.",
     widgetNetWorthTitle: "Patrimonio Neto y Saldo",
     widgetNetWorthDesc: "Gráfico de tendencia de saldo, activos y pasivos.",

@@ -182,17 +182,15 @@ export function useExperiencePreferences() {
 
   const toggleDashboardWidget = useCallback(
     (widgetId: DashboardWidgetId, visible: boolean) => {
+      if (widgetId === "greeting") {
+        // Greeting & Date is always active as the primary dashboard header
+        return;
+      }
       const current = getDashboardLayoutPreferences();
-      const hiddenSet = new Set(current.hidden);
+      const hiddenSet = new Set(current.hidden.filter((id) => id !== "greeting"));
       if (visible) {
         hiddenSet.delete(widgetId);
       } else {
-        // Keep at least one main widget visible
-        const visibleCount =
-          current.order.length - (hiddenSet.has(widgetId) ? hiddenSet.size : hiddenSet.size + 1);
-        if (visibleCount <= 0) {
-          return;
-        }
         hiddenSet.add(widgetId);
       }
       setDashboardLayoutPreferences({

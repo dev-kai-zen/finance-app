@@ -467,13 +467,17 @@ export const en = {
       general: "General",
     },
     v140: {
-      date: "November 3, 2026",
+      date: "November 4, 2026",
       newItem1:
         "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
       improveItem1:
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
       improveItem2:
         "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
+      improveItem3:
+        "Choose from your shared color palette or create custom colors when writing notes.",
+      improveItem4:
+        "Keep the Greeting and Date header always active on the dashboard while freely toggling other cards.",
       fixItem1:
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
     },
@@ -848,6 +852,7 @@ export const en = {
     presetMinimalistDesc:
       "Compact greeting, monthly cashflow, and recent transactions.",
     widgetGreetingTitle: "Greeting & Date",
+    alwaysActive: "Always active",
     widgetGreetingDesc:
       "Personal welcome header and optional daily inspiration quote.",
     widgetNetWorthTitle: "Net Worth & Balance",

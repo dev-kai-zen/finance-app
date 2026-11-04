@@ -420,9 +420,11 @@ export function getDashboardLayoutPreferences(
         mergedOrder.push(id);
       }
     }
-    const hidden = Array.isArray(parsed.hidden)
-      ? Array.from(new Set(parsed.hidden.filter(isValidWidgetId)))
-      : DEFAULT_DASHBOARD_LAYOUT.hidden;
+    const hidden = (
+      Array.isArray(parsed.hidden)
+        ? Array.from(new Set(parsed.hidden.filter(isValidWidgetId)))
+        : DEFAULT_DASHBOARD_LAYOUT.hidden
+    ).filter((id) => id !== "greeting");
     const showGreetingQuote =
       typeof parsed.showGreetingQuote === "boolean"
         ? parsed.showGreetingQuote
@@ -452,9 +454,13 @@ export function setDashboardLayoutPreferences(
   preferences: DashboardLayoutPreferences,
   context?: DbContext,
 ): void {
+  const sanitized: DashboardLayoutPreferences = {
+    ...preferences,
+    hidden: (preferences.hidden ?? []).filter((id) => id !== "greeting"),
+  };
   persistSettingsEntries(
     {
-      [DASHBOARD_LAYOUT_SETTING_KEY]: JSON.stringify(preferences),
+      [DASHBOARD_LAYOUT_SETTING_KEY]: JSON.stringify(sanitized),
     },
     context,
   );

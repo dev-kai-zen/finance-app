@@ -335,7 +335,8 @@ export function CustomizeDashboardModal({
               <View style={styles.widgetList}>
                 {layout.order.map((widgetId) => {
                   const meta = WIDGET_METADATA[widgetId];
-                  const isVisible = !hiddenSet.has(widgetId);
+                  const isGreeting = widgetId === "greeting";
+                  const isVisible = isGreeting || !hiddenSet.has(widgetId);
 
                   return (
                     <View
@@ -357,12 +358,20 @@ export function CustomizeDashboardModal({
                         />
                       </View>
 
-                      <Text numberOfLines={1} style={styles.widgetTitle}>
-                        {t(meta.titleKey as never)}
-                      </Text>
+                      <View style={styles.widgetTitleContainer}>
+                        <Text numberOfLines={1} style={styles.widgetTitle}>
+                          {t(meta.titleKey as never)}
+                        </Text>
+                        {isGreeting ? (
+                          <Text style={styles.alwaysActiveBadge}>
+                            {t("dashboard.alwaysActive" as never)}
+                          </Text>
+                        ) : null}
+                      </View>
 
                       <ThemedSwitch
                         accessibilityLabel={t(meta.titleKey as never)}
+                        disabled={isGreeting}
                         onValueChange={(val) => onToggleWidget(widgetId, val)}
                         value={isVisible}
                       />
@@ -882,11 +891,20 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: 32,
     },
+    widgetTitleContainer: {
+      flex: 1,
+      justifyContent: "center",
+      gap: 2,
+    },
     widgetTitle: {
       color: theme.colors.textPrimary,
-      flex: 1,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    alwaysActiveBadge: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     optionCard: {
       alignItems: "center",

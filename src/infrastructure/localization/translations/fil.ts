@@ -465,13 +465,17 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v140: {
-      date: "Nobyembre 3, 2026",
+      date: "Nobyembre 4, 2026",
       newItem1:
         "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
       improveItem1:
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
       improveItem2:
         "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
+      improveItem3:
+        "Pumili mula sa iyong shared palette o gumawa ng sariling kulay kapag sumusulat ng mga tala.",
+      improveItem4:
+        "Panatilihing laging aktibo ang Pagbati at Petsa sa dashboard habang malayang inaayos ang ibang card.",
       fixItem1:
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
     },
@@ -845,6 +849,7 @@ export const fil = {
     presetMinimalist: "Minimalist",
     presetMinimalistDesc: "Maikling pagbati, buwanang cashflow, at kamakailang transaksyon.",
     widgetGreetingTitle: "Pagbati at Petsa",
+    alwaysActive: "Palaging aktibo",
     widgetGreetingDesc: "Personal na pagbati at opsyonal na pang-araw-araw na quote.",
     widgetNetWorthTitle: "Net Worth at Balanse",
     widgetNetWorthDesc: "Chart ng balanse, kabuuang assets, at liabilities.",
