@@ -111,6 +111,7 @@ export const es = {
     sqliteMonitor: "Monitor de SQLite",
     settings: "Configuración",
     sendFeedback: "Enviar comentarios",
+    supportDevelopment: "Apoyo y Comentarios",
     localBackup: "Copia de seguridad local",
     googleDriveBackup: "Copia de seguridad de Google Drive",
     language: "Idioma",
@@ -283,6 +284,10 @@ export const es = {
     developerMessageSubtitle:
       "Una carta de John Paul Arellano sobre nuestra misión y educación financiera",
     developerMessageAccessibility: "Leer mensaje y meta del desarrollador",
+    supportDevelopment: "Apoyar el Desarrollo",
+    supportDevelopmentSubtitle:
+      "Valora Kaizen en Google Play, comparte con amigos o envía comentarios",
+    supportDevelopmentAccessibility: "Abrir opciones de apoyo al desarrollo",
     privacy: "Privacidad",
     privacySubtitle: "Lee nuestra política de privacidad en línea",
     privacyAccessibility: "Abrir el sitio web de la política de privacidad",
@@ -475,6 +480,8 @@ export const es = {
         "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
       newItem2:
         "Alterna montos positivos o negativos en las programaciones para registrar fácilmente reembolsos y ajustes de ingresos.",
+      newItem3:
+        "Evita la pérdida accidental de datos en los formularios con un aviso de confirmación al salir con cambios sin guardar.",
       improveItem1:
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
       improveItem2:
@@ -483,6 +490,8 @@ export const es = {
         "Elige de tu paleta compartida o crea colores personalizados al escribir notas.",
       improveItem4:
         "Mantén el saludo y fecha siempre activos en el panel mientras personalizas libremente las demás tarjetas.",
+      improveItem5:
+        "Simplifica la creación de bolsillos eliminando el campo de monto objetivo sin uso.",
       fixItem1:
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
     },
@@ -640,6 +649,41 @@ export const es = {
     actionBegin: "Comencemos",
     actionFeedback: "Enviar comentarios",
     actionSupport: "Apoyar con Pro",
+  },
+  supportDevelopment: {
+    title: "Apoyar el Desarrollo",
+    subtitle: "Ayuda a Kaizen Finance a crecer y llegar a más personas",
+    badge: "APOYAR A KAIZEN",
+    spreadSectionTitle: "DIFUNDE LA VOZ",
+    directSectionTitle: "APOYO DIRECTO",
+    feedbackSectionTitle: "PONTE EN CONTACTO",
+    heroDescription:
+      "Kaizen Finance se desarrolla de forma independiente como una app privada y sin conexión. Tu apoyo mantiene las actualizaciones constantes y nos ayuda a seguir sin anuncios ni rastreo.",
+    proActiveBadge: "COLABORADOR PRO ACTIVO",
+    proActiveSubtitle:
+      "¡Gracias por apoyar a Kaizen! Todas las funciones Pro están desbloqueadas.",
+    rateTitle: "Valorar en Google Play",
+    rateSubtitle: "Deja una reseña de 5 estrellas para apoyar a un desarrollador independiente",
+    rateAction: "Valorar Kaizen",
+    shareTitle: "Compartir con Amigos",
+    shareSubtitle: "Ayuda a otros a controlar sus finanzas sin conexión y de forma privada",
+    shareAction: "Compartir App",
+    shareMessage: "¡Estoy usando Kaizen Finance para controlar mis ingresos, gastos y bolsillos sin conexión y de forma privada! Pruébalo:",
+    feedbackTitle: "Enviar Comentarios y Sugerencias",
+    feedbackSubtitle: "Cuéntanos qué te gustaría ver a continuación o reporta problemas",
+    feedbackAction: "Enviar Comentarios",
+    proTitle: "Actualizar a Kaizen Pro",
+    proSubtitle: "Desbloquea bolsillos ilimitados, copia de seguridad en la nube y todas las funciones",
+    proAction: "Ver Opciones Pro",
+  },
+  inAppReview: {
+    badge: "HITO ALCANZADO",
+    title: "¡10 Transacciones Registradas! 🎉",
+    description:
+      "¡Estás construyendo hábitos financieros constantes! Si Kaizen te está ayudando a llevar el control de tu dinero, una breve valoración en Google Play significa mucho para un desarrollador independiente.",
+    rateAction: "Valorar Kaizen ⭐",
+    maybeLaterAction: "Quizás Más Tarde",
+    dontAskAgain: "No volver a preguntar",
   },
   onboarding: {
     welcomeTitle: "Bienvenido a Kaizen Finance",

@@ -309,6 +309,13 @@
       "when": 1793005004000,
       "tag": "0043_allow_signed_scheduled_transactions",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "6",
+      "when": 1793005005000,
+      "tag": "0044_remove_pocket_target_amount",
+      "breakpoints": true
     }
   ]
 }

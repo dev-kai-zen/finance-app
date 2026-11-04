@@ -305,7 +305,7 @@ test("failed deletion rolls back without removing the type", () => {
   sqlite.exec("CREATE TRIGGER deny_type_delete BEFORE DELETE ON account_types BEGIN SELECT RAISE(ABORT, 'forced failure'); END");
   assert.throws(() => deleteAccountType(typeId), /forced failure/);
   assert.ok(types.findAccountTypeById(typeId));
-  assert.equal(sqlite.isTransaction, false);
+  assert.equal(Boolean(sqlite.isTransaction), false);
 });
 test("system Others groups stay last and cannot be reordered", () => {
   const first = saveAccountType(typeInput("First custom"));
@@ -576,7 +576,7 @@ test("pocket transfers create two grouped transaction legs without changing the 
     ...accountInput(undefined, "Checking", "1000.50"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "500.00" });
+  const pocketId = savePocket({ accountId, name: "Bills" });
 
   const { transactionGroupId: groupId } = pocketTransfer(
     accountId,
@@ -607,7 +607,7 @@ test("pocket-assigned transactions change the pocket and account by the same amo
     ...accountInput(undefined, "Checking", "1000.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Groceries", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Groceries" });
   pocketTransfer(accountId, null, pocketId, 40000);
   sqlite.prepare("INSERT INTO transactions (id, account_id, pocket_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES ('pocket_expense', ?, ?, 'expense', -5000, 1, 1, 1)").run(accountId, pocketId);
 
@@ -623,7 +623,7 @@ test("pocket settings gate creation, reject duplicates and Credit Cards, and pro
   assert.equal(supportsPockets("custom:credit", "liability", "Credit Cards"), true);
   const disabledId = saveAccount(accountInput(undefined, "Disabled", "100.00"));
   assert.throws(
-    () => savePocket({ accountId: disabledId, name: "Bills", targetAmount: "" }),
+    () => savePocket({ accountId: disabledId, name: "Bills" }),
     /Enable pockets/,
   );
 
@@ -631,10 +631,10 @@ test("pocket settings gate creation, reject duplicates and Credit Cards, and pro
     ...accountInput(undefined, "Checking", "100.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Bills", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Bills" });
   assert.equal(repo.findAccountById(accountId).pocketEnabled, true);
   assert.throws(
-    () => savePocket({ accountId, name: " bills ", targetAmount: "" }),
+    () => savePocket({ accountId, name: " bills " }),
     /already exists/,
   );
   pocketTransfer(accountId, null, pocketId, 5000);
@@ -654,8 +654,7 @@ test("pocket settings gate creation, reject duplicates and Credit Cards, and pro
   const liabilityPocketId = savePocket({
     accountId: liabilityId,
     name: "Housing Loan",
-    targetAmount: "",
-  });
+      });
   pocketTransfer(liabilityId, null, liabilityPocketId, 15000);
   assert.equal(
     getPocketsWithBalances().find((item) => item.id === liabilityPocketId).currentBalanceMinorUnits,
@@ -666,7 +665,7 @@ test("pocket settings gate creation, reject duplicates and Credit Cards, and pro
     accountInput(system.LIABILITY_CREDIT_CARD, "Credit Card", "-100.00"),
   );
   assert.throws(
-    () => savePocket({ accountId: creditCardId, name: "Payment", targetAmount: "" }),
+    () => savePocket({ accountId: creditCardId, name: "Payment" }),
     /Credit Card/,
   );
   assert.throws(
@@ -741,8 +740,7 @@ test("Fund Groups mix accounts and pockets without allowing parent-child double 
   const pocketId = savePocket({
     accountId: parentAccountId,
     name: "Inventory",
-    targetAmount: "",
-  });
+      });
   pocketTransfer(parentAccountId, null, pocketId, 12500);
   const groupId = saveFundGroup({
     name: "Microbusiness",
@@ -842,7 +840,7 @@ test("permanent pocket delete is allowed for unused archived pockets", () => {
     ...accountInput(undefined, "Pocket Parent", "100.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Spare", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Spare" });
   setPocketArchived(pocketId, true);
 
   const item = getPocketsWithBalances().find((pocket) => pocket.id === pocketId);
@@ -858,7 +856,7 @@ test("permanent pocket delete is blocked when the pocket has transaction history
     ...accountInput(undefined, "Used Pocket Parent", "100.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Used", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Used" });
   pocketTransfer(accountId, null, pocketId, 5000);
   pocketTransfer(accountId, pocketId, null, 5000);
   setPocketArchived(pocketId, true);
@@ -877,7 +875,7 @@ test("pocket restore is blocked while the parent account is archived", () => {
     ...accountInput(undefined, "Archived Parent", "100.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Nested", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Nested" });
   setPocketArchived(pocketId, true);
   setAccountArchived(accountId, true);
 
@@ -892,7 +890,7 @@ test("pocket restore is blocked when pockets are disabled on the parent account"
     ...accountInput(undefined, "No Pockets Account", "100.00"),
     pocketEnabled: true,
   });
-  const pocketId = savePocket({ accountId, name: "Legacy", targetAmount: "" });
+  const pocketId = savePocket({ accountId, name: "Legacy" });
   pocketTransfer(accountId, null, pocketId, 5000);
   pocketTransfer(accountId, pocketId, null, 5000);
   setPocketArchived(pocketId, true);

@@ -19,6 +19,10 @@ import {
   useUserNickname,
   type DashboardWidgetId,
 } from "@/modules/settings";
+import {
+  InAppReviewMilestoneModal,
+  useInAppReviewMilestone,
+} from "@/modules/support-development";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
 import { DashboardQuickActionsCard } from "../components/dashboard-quick-actions-card";
 import { DashboardCashflowCard } from "../components/dashboard-cashflow-card";
@@ -199,6 +203,19 @@ function DashboardScreenContent() {
     prerequisitePromptKey: "developerMessageSeen",
     enabled: !isVersionHistoryPending,
     onStart: walkthrough.startWalkthrough,
+  });
+
+  const {
+    isReviewModalVisible,
+    handleRateNow,
+    handleMaybeLater,
+    handleNeverAskAgain,
+  } = useInAppReviewMilestone({
+    enabled:
+      !showCongratulationsModal &&
+      !walkthrough.isWalkthroughActive &&
+      !isVersionHistoryPending &&
+      !walkthroughIntro.canTrigger,
   });
 
   useEffect(() => {
@@ -786,6 +803,13 @@ function DashboardScreenContent() {
           dismissPrompt("firstTransactionCelebrated");
           setShowCongratulationsModal(false);
         }}
+      />
+
+      <InAppReviewMilestoneModal
+        visible={isReviewModalVisible}
+        onRateNow={handleRateNow}
+        onMaybeLater={handleMaybeLater}
+        onNeverAskAgain={handleNeverAskAgain}
       />
     </PageContainer>
   );

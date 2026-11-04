@@ -10,7 +10,6 @@ import {
 import { pocketInputSchema } from "@/modules/accounts/schemas/pocket.schema";
 import { requireAccount, requireAccountType } from "@/modules/accounts/services/account-rules";
 import type { PocketInput } from "@/modules/accounts/types/account.types";
-import { parseMaintainingAmount } from "@/modules/accounts/utils/account-input";
 import { supportsPockets } from "@/modules/accounts/utils/pocket-eligibility";
 
 export function savePocket(input: PocketInput, id?: string): string {
@@ -41,13 +40,10 @@ export function savePocket(input: PocketInput, id?: string): string {
     }
 
     const now = new Date();
-    const targetAmountMinorUnits = value.targetAmount.trim()
-      ? parseMaintainingAmount(value.targetAmount, account.currencyCode)
-      : null;
     if (existing) {
       updatePocketRecord(
         existing.id,
-        { name: value.name.trim(), targetAmountMinorUnits, updatedAt: now },
+        { name: value.name.trim(), updatedAt: now },
         tx,
       );
       return existing.id;
@@ -61,7 +57,6 @@ export function savePocket(input: PocketInput, id?: string): string {
         id: pocketId,
         accountId: account.id,
         name: value.name.trim(),
-        targetAmountMinorUnits,
         isArchived: false,
         sortOrder,
         createdAt: now,

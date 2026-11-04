@@ -15,7 +15,6 @@ export const pockets = sqliteTable(
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    targetAmountMinorUnits: integer("target_amount_minor_units"),
     isArchived: integer("is_archived", { mode: "boolean" })
       .notNull()
       .default(false),

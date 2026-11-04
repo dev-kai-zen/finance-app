@@ -119,6 +119,7 @@ export const en = {
     sqliteMonitor: "SQLite Monitor",
     settings: "Settings",
     sendFeedback: "Send Feedback",
+    supportDevelopment: "Support & Feedback",
     localBackup: "Local Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Language",
@@ -286,6 +287,10 @@ export const en = {
     developerMessageSubtitle:
       "A note from John Paul Arellano on our mission and financial literacy",
     developerMessageAccessibility: "Read message and goal from the developer",
+    supportDevelopment: "Support Development",
+    supportDevelopmentSubtitle:
+      "Rate Kaizen on Google Play, share with friends, or send feedback",
+    supportDevelopmentAccessibility: "Open support development options",
     privacy: "Privacy",
     privacySubtitle: "Read our privacy policy online",
     privacyAccessibility: "Open privacy policy website",
@@ -478,6 +483,8 @@ export const en = {
         "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
       newItem2:
         "Toggle positive or negative amounts in schedules to easily record recurring refunds and income adjustments.",
+      newItem3:
+        "Prevent accidental data loss across forms with a confirmation prompt when leaving unsaved changes.",
       improveItem1:
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
       improveItem2:
@@ -486,6 +493,8 @@ export const en = {
         "Choose from your shared color palette or create custom colors when writing notes.",
       improveItem4:
         "Keep the Greeting and Date header always active on the dashboard while freely toggling other cards.",
+      improveItem5:
+        "Simplify creating pockets by removing the unused target amount field.",
       fixItem1:
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
     },
@@ -642,6 +651,41 @@ export const en = {
     actionBegin: "Let's Begin",
     actionFeedback: "Send Feedback",
     actionSupport: "Support via Pro",
+  },
+  supportDevelopment: {
+    title: "Support Development",
+    subtitle: "Help Kaizen Finance grow and reach more people",
+    badge: "SUPPORT KAIZEN",
+    spreadSectionTitle: "SPREAD THE WORD",
+    directSectionTitle: "DIRECT SUPPORT",
+    feedbackSectionTitle: "GET IN TOUCH",
+    heroDescription:
+      "Kaizen Finance is crafted independently as a private, offline-first app. Your support keeps updates coming and helps us stay completely ad-free and tracking-free.",
+    proActiveBadge: "ACTIVE PRO SUPPORTER",
+    proActiveSubtitle:
+      "Thank you for backing Kaizen! All Pro features are unlocked.",
+    rateTitle: "Rate on Google Play",
+    rateSubtitle: "Leave a 5-star review to support an independent developer",
+    rateAction: "Rate Kaizen",
+    shareTitle: "Share with Friends",
+    shareSubtitle: "Help others track their finances offline & privately",
+    shareAction: "Share App",
+    shareMessage: "I've been using Kaizen Finance to track my income, expenses, and pockets offline and privately! Check it out:",
+    feedbackTitle: "Send Feedback & Suggestions",
+    feedbackSubtitle: "Tell us what you'd like to see next or report issues",
+    feedbackAction: "Send Feedback",
+    proTitle: "Upgrade to Kaizen Pro",
+    proSubtitle: "Unlock unlimited pockets, cloud backup, and all features",
+    proAction: "View Pro Options",
+  },
+  inAppReview: {
+    badge: "MILESTONE REACHED",
+    title: "10 Transactions Tracked! 🎉",
+    description:
+      "You're building consistent financial habits! If Kaizen is helping you keep tabs on your money, a quick rating on Google Play means the world to an independent developer.",
+    rateAction: "Rate Kaizen ⭐",
+    maybeLaterAction: "Maybe Later",
+    dontAskAgain: "Don't ask again",
   },
   onboarding: {
     welcomeTitle: "Welcome to Kaizen Finance",

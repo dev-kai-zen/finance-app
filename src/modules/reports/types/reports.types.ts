@@ -38,7 +38,6 @@ export interface VarianceValue {
 export interface ReportPocketNode {
   id: string;
   name: string;
-  targetAmountMinorUnits: number | null;
   variance: VarianceValue;
 }
 

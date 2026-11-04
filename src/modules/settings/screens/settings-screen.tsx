@@ -28,6 +28,7 @@ import {
   Smile,
   Smartphone,
   Sparkles,
+  Star,
   Terminal,
   Trash2,
 } from "lucide-react-native";
@@ -171,6 +172,8 @@ function SettingsScreenContent() {
             setIsVersionHistoryOpen(true);
           } else if (target === "settingsDeveloperMessage") {
             setIsDeveloperMessageOpen(true);
+          } else if (target === "settingsSupportDevelopment") {
+            router.navigate("/support" as any);
           } else if (target === "settingsGestures") {
             setIsGesturesModalOpen(true);
           } else if (target === "settingsPro") {
@@ -1257,6 +1260,37 @@ function SettingsScreenContent() {
                 </Text>
                 <Text style={styles.settingDescription}>
                   {t("settings.developerMessageSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsSupportDevelopment"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.supportDevelopmentAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.navigate("/support" as any)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsSupportDevelopment" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Star color="#F59E0B" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.supportDevelopment")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.supportDevelopmentSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

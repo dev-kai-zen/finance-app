@@ -111,6 +111,7 @@ export const fil = {
     sqliteMonitor: "SQLite Monitor",
     settings: "Mga Setting",
     sendFeedback: "Magpadala ng Feedback",
+    supportDevelopment: "Suporta at Feedback",
     localBackup: "Lokal na Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",
@@ -283,6 +284,10 @@ export const fil = {
     developerMessageSubtitle:
       "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
     developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
+    supportDevelopment: "Suportahan ang Pagpapaunlad",
+    supportDevelopmentSubtitle:
+      "I-rate ang Kaizen sa Google Play, ibahagi sa mga kaibigan, o magpadala ng feedback",
+    supportDevelopmentAccessibility: "Buksan ang mga opsyon sa pagsuporta sa developer",
     privacy: "Privacy",
     privacySubtitle: "Basahin ang aming patakaran sa privacy online",
     privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
@@ -476,6 +481,8 @@ export const fil = {
         "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
       newItem2:
         "I-toggle ang positibo o negatibong halaga sa mga schedule upang madaling maitala ang mga refund at adjustment sa kita.",
+      newItem3:
+        "Iwasan ang aksidenteng pagkawala ng datos sa mga form gamit ang paalala kapag may hindi pa nai-save na pagbabago.",
       improveItem1:
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
       improveItem2:
@@ -484,6 +491,8 @@ export const fil = {
         "Pumili mula sa iyong shared palette o gumawa ng sariling kulay kapag sumusulat ng mga tala.",
       improveItem4:
         "Panatilihing laging aktibo ang Pagbati at Petsa sa dashboard habang malayang inaayos ang ibang card.",
+      improveItem5:
+        "Gawing mas simple ang paggawa ng pockets sa pamamagitan ng pag-alis ng hindi ginagamit na target amount.",
       fixItem1:
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
     },
@@ -641,6 +650,41 @@ export const fil = {
     actionBegin: "Simulan Natin",
     actionFeedback: "Magpadala ng Feedback",
     actionSupport: "Suportahan gamit ang Pro",
+  },
+  supportDevelopment: {
+    title: "Suportahan ang Pagpapaunlad",
+    subtitle: "Tulungang lumago ang Kaizen Finance at maabot ang mas maraming tao",
+    badge: "SUPORTAHAN ANG KAIZEN",
+    spreadSectionTitle: "IBAHAGI SA IBA",
+    directSectionTitle: "DIREKTONG SUPORTA",
+    feedbackSectionTitle: "MAKIPAG-UGNAYAN",
+    heroDescription:
+      "Ang Kaizen Finance ay independiyenteng binuo bilang isang pribado at offline-first na app. Ang iyong suporta ay nagpapanatili sa mga update at tumutulong sa aming manatiling walang ad at walang tracking.",
+    proActiveBadge: "AKTIBONG PRO SUPPORTER",
+    proActiveSubtitle:
+      "Salamat sa pagsuporta sa Kaizen! Naka-unlock ang lahat ng Pro features.",
+    rateTitle: "I-rate sa Google Play",
+    rateSubtitle: "Mag-iwan ng 5-star review para suportahan ang isang independent developer",
+    rateAction: "I-rate ang Kaizen",
+    shareTitle: "Ibahagi sa mga Kaibigan",
+    shareSubtitle: "Tulungan ang iba na subaybayan ang kanilang pera nang offline at pribado",
+    shareAction: "Ibahagi ang App",
+    shareMessage: "Ginagamit ko ang Kaizen Finance para subaybayan ang aking kita, gastusin, at pockets nang offline at pribado! Subukan ito:",
+    feedbackTitle: "Magpadala ng Feedback at Suhestiyon",
+    feedbackSubtitle: "Sabihin sa amin ang gusto mong makita o mag-ulat ng isyu",
+    feedbackAction: "Magpadala ng Feedback",
+    proTitle: "Mag-upgrade sa Kaizen Pro",
+    proSubtitle: "I-unlock ang walang limitasyong pockets, cloud backup, at lahat ng tampok",
+    proAction: "Tingnan ang Pro",
+  },
+  inAppReview: {
+    badge: "NAABOT NA MILESTONE",
+    title: "10 Transaksyon na ang Naitala! 🎉",
+    description:
+      "Bumubuo ka ng magandang gawi sa pananalapi! Kung nakatutulong ang Kaizen sa pagsubaybay ng iyong pera, ang mabilis na rating sa Google Play ay napakalaking tulong para sa isang independent developer.",
+    rateAction: "I-rate ang Kaizen ⭐",
+    maybeLaterAction: "Mamaya Na",
+    dontAskAgain: "Huwag nang itanong muli",
   },
   onboarding: {
     welcomeTitle: "Maligayang pagdating sa Kaizen Finance",

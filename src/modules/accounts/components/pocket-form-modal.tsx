@@ -12,7 +12,6 @@ import type { AppTheme } from "@/constants/theme";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type { AccountListItem, PocketListItem } from "@/modules/accounts/types/account.types";
 import { getPocketRestoreBlockReason } from "@/modules/accounts/services/pocket-rules";
-import { maintainingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -35,7 +34,6 @@ export function PocketFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [name, setName] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
@@ -55,10 +53,6 @@ export function PocketFormModal({
   useEffect(() => {
     if (visible) {
       const initialName = pocket?.name ?? "";
-      const initialTargetAmount = maintainingAmountInput(
-        pocket?.targetAmountMinorUnits,
-        account?.currencyCode ?? "PHP",
-      );
       const initialExpense =
         pocket && account
           ? defaultExpenseAccountId === account.id &&
@@ -71,7 +65,6 @@ export function PocketFormModal({
           : false;
 
       setName(initialName);
-      setTargetAmount(initialTargetAmount);
       setConfirmArchive(false);
       setArchiveError(null);
       mutations.clearError();
@@ -80,7 +73,6 @@ export function PocketFormModal({
 
       initialSnapshotRef.current = JSON.stringify({
         name: initialName,
-        targetAmount: initialTargetAmount,
         isDefaultExpense: initialExpense,
         isDefaultIncome: initialIncome,
       });
@@ -99,18 +91,17 @@ export function PocketFormModal({
     if (!visible || !initialSnapshotRef.current) return false;
     const currentSnapshot = JSON.stringify({
       name,
-      targetAmount,
       isDefaultExpense,
       isDefaultIncome,
     });
     return currentSnapshot !== initialSnapshotRef.current;
-  }, [visible, name, targetAmount, isDefaultExpense, isDefaultIncome]);
+  }, [visible, name, isDefaultExpense, isDefaultIncome]);
 
   if (!visible || !account) return null;
 
   const save = async () => {
     const saved = await mutations.savePocket(
-      { accountId: account.id, name, targetAmount },
+      { accountId: account.id, name },
       pocket?.id,
     );
     if (saved) {
@@ -232,13 +223,6 @@ export function PocketFormModal({
             onChangeText={setName}
             placeholder="e.g. Emergency Fund, Bills, Travel"
             value={name}
-          />
-          <AccountField
-            keyboardType="decimal-pad"
-            label="Target amount (optional)"
-            onChangeText={setTargetAmount}
-            placeholder="0.00"
-            value={targetAmount}
           />
 
           {pocket && !pocket.isArchived ? (

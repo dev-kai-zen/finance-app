@@ -95,6 +95,8 @@ export const PROMPT_SETTING_KEYS = {
   budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
   goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
   developerMessageSeen: "prompt.developerMessageSeen",
+  inAppReview10MilestoneDismissed: "prompt.inAppReview10MilestoneDismissed",
+  inAppReviewLastPromptedTimestamp: "prompt.inAppReviewLastPromptedTimestamp",
 } as const;
 
 export type PromptSettingKey = keyof typeof PROMPT_SETTING_KEYS;
