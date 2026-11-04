@@ -495,6 +495,8 @@ export const fil = {
         "Gawing mas simple ang paggawa ng pockets sa pamamagitan ng pag-alis ng hindi ginagamit na target amount.",
       fixItem1:
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
+      fixItem2:
+        "Ayusin ang mga pindutan sa ibaba ng tablet sidebar na natatakpan kapag naka-enable ang three-button navigation.",
     },
     v130: {
       date: "Nobyembre 2, 2026",

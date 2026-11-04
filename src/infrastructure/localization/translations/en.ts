@@ -497,6 +497,8 @@ export const en = {
         "Simplify creating pockets by removing the unused target amount field.",
       fixItem1:
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
+      fixItem2:
+        "Fix bottom buttons in the tablet sidebar being partially obscured when three-button navigation is enabled.",
     },
     v130: {
       date: "November 2, 2026",

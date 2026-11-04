@@ -494,6 +494,8 @@ export const es = {
         "Simplifica la creación de bolsillos eliminando el campo de monto objetivo sin uso.",
       fixItem1:
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
+      fixItem2:
+        "Corrige que los botones inferiores de la barra lateral en tabletas queden parcialmente tapados con la navegación de tres botones.",
     },
     v130: {
       date: "2 de noviembre de 2026",

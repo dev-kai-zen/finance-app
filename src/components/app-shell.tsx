@@ -123,7 +123,14 @@ export function AppShell({
     return (
       <View style={styles.desktopLayout}>
         {/* Persistent Desktop/Tablet Sidebar */}
-        <View style={styles.persistentSidebar}>
+        <View
+          style={[
+            styles.persistentSidebar,
+            {
+              paddingBottom: insets.bottom,
+            },
+          ]}
+        >
           <Sidebar hiddenHrefs={hiddenNavHrefs} />
         </View>
 
@@ -231,6 +238,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
     },
     persistentSidebar: {
+      backgroundColor: theme.colors.surface,
       borderRightColor: theme.colors.border,
       borderRightWidth: 1,
       height: "100%",
