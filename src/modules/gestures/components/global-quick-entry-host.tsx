@@ -24,11 +24,15 @@ import {
   type ChatSavedTransactionResult,
 } from "@/modules/chat-with-kai";
 import { useShakeActionSetting } from "@/modules/settings";
+import { useAppLock } from "@/modules/security";
+import { useIsAnyModalActive } from "@/hooks";
 import { QuickEntryContext } from "../context/quick-entry-context";
 import { useShakeGesture } from "../hooks/use-shake-gesture";
 
 export function QuickEntryProvider({ children }: PropsWithChildren) {
   const { shakeAction } = useShakeActionSetting();
+  const { isLocked } = useAppLock();
+  const isAnyModalActive = useIsAnyModalActive();
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -106,7 +110,11 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
 
   // Hook up shake sensor
   useShakeGesture({
-    enabled: shakeAction !== "disabled" && !isQuickEntryOpen,
+    enabled:
+      shakeAction !== "disabled" &&
+      !isQuickEntryOpen &&
+      !isLocked &&
+      !isAnyModalActive,
     onShake: triggerShakeAction,
   });
 

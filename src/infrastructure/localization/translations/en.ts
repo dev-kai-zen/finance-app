@@ -15,6 +15,8 @@ export const en = {
     saveChanges: "Save Changes",
     dontSave: "Don't Save",
     keepEditing: "Keep Editing",
+    account: "Account",
+    uncategorized: "Uncategorized",
   },
   search: {
     openSearch: "Open search",
@@ -499,6 +501,14 @@ export const en = {
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
       fixItem2:
         "Fix bottom buttons in the tablet sidebar being partially obscured when three-button navigation is enabled.",
+      fixItem3:
+        "Prevent shake gestures from launching quick entry while your device or app is locked.",
+      fixItem4:
+        "Prevent duplicate modal screens from opening when shaking while editing a transaction or form.",
+      fixItem5:
+        "Improve battery efficiency by pausing sensor listeners immediately when minimizing the app.",
+      fixItem6:
+        "Fix missing Spanish and Filipino translations on dashboard recent transactions.",
     },
     v130: {
       date: "November 2, 2026",
@@ -954,6 +964,13 @@ export const en = {
     quickActionIncome: "Income",
     quickActionTransfer: "Transfer",
     quickActionAi: "Ask Kai",
+    recentTransactionsTitle: "Recent Transactions",
+    viewAllTransactionsAccessibility: "View all transactions",
+    noRecentTransactions: "No transactions recorded yet.",
+    noRecentTransactionsHint: "Use the + button to record your first transaction.",
+    transferToAccount: "Transfer to %{account}",
+    transactionFallback: "Transaction",
+    viewTransactionAccessibility: "View transaction, %{title}",
   },
   calendar: {
     firstOfMonth: "1st of Month",

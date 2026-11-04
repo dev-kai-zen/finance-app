@@ -12,6 +12,7 @@ import { ChevronLeft, RotateCcw, Save, Trash2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { UnsavedChangesModal } from "./unsaved-changes-modal";
+import { useRegisterActiveModal } from "@/hooks";
 
 export interface FullScreenFormModalProps extends PropsWithChildren {
   visible: boolean;
@@ -57,6 +58,7 @@ export function FullScreenFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+  useRegisterActiveModal(visible);
 
   useEffect(() => {
     if (!visible) {

@@ -20,6 +20,8 @@ export const es = {
     saveChanges: "Guardar cambios",
     dontSave: "No guardar",
     keepEditing: "Seguir editando",
+    account: "Cuenta",
+    uncategorized: "Sin categoría",
   },
   search: {
     openSearch: "Abrir búsqueda",
@@ -496,6 +498,14 @@ export const es = {
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
       fixItem2:
         "Corrige que los botones inferiores de la barra lateral en tabletas queden parcialmente tapados con la navegación de tres botones.",
+      fixItem3:
+        "Evitar que los gestos de sacudida activen la entrada rápida mientras la aplicación está bloqueada.",
+      fixItem4:
+        "Evitar que se abran pantallas duplicadas al sacudir mientras se edita una transacción o formulario.",
+      fixItem5:
+        "Mejorar la eficiencia de la batería pausando los sensores inmediatamente al minimizar la aplicación.",
+      fixItem6:
+        "Corregir las traducciones faltantes en español y filipino en las transacciones recientes del panel.",
     },
     v130: {
       date: "2 de noviembre de 2026",
@@ -943,6 +953,13 @@ export const es = {
     quickActionIncome: "Ingreso",
     quickActionTransfer: "Transferir",
     quickActionAi: "Preguntar a Kai",
+    recentTransactionsTitle: "Transacciones recientes",
+    viewAllTransactionsAccessibility: "Ver todas las transacciones",
+    noRecentTransactions: "Aún no hay transacciones registradas.",
+    noRecentTransactionsHint: "Usa el botón + para registrar tu primera transacción.",
+    transferToAccount: "Transferencia a %{account}",
+    transactionFallback: "Transacción",
+    viewTransactionAccessibility: "Ver transacción, %{title}",
   },
   calendar: {
     firstOfMonth: "1.º del mes",

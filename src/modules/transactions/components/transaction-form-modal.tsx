@@ -45,6 +45,7 @@ import {
 } from "@/modules/walkthrough";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useRegisterActiveModal } from "@/hooks";
 import {
   AccountPickerModal,
   accountColor,
@@ -3360,6 +3361,7 @@ function TransactionFormModalInner({
 }
 
 export function TransactionFormModal(props: TransactionFormModalProps) {
+  useRegisterActiveModal(props.visible);
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>

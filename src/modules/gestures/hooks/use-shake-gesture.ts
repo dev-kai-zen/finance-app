@@ -35,10 +35,12 @@ export function useShakeGesture({ enabled, onShake }: UseShakeGestureOptions) {
     const startListening = async () => {
       try {
         const available = await Accelerometer.isAvailableAsync();
-        if (!available || !isMounted) {
+        if (!available || !isMounted || AppState.currentState !== "active") {
           return;
         }
 
+        subscription?.remove();
+        subscription = null;
         Accelerometer.setUpdateInterval(SHAKE_UPDATE_INTERVAL_MS);
 
         subscription = Accelerometer.addListener(({ x, y, z }) => {
@@ -113,4 +115,3 @@ export function useShakeGesture({ enabled, onShake }: UseShakeGestureOptions) {
     };
   }, [enabled]);
 }
-

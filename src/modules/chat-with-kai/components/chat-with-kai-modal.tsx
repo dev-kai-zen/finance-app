@@ -21,6 +21,7 @@ import {
 import { useRouter } from "expo-router";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useRegisterActiveModal } from "@/hooks";
 import { useLocalization } from "@/infrastructure/localization";
 import type {
   ChatSavedTransactionResult,
@@ -66,6 +67,7 @@ export function ChatWithKaiModal({
   const { mode, setMode } = useChatTransactionMode();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  useRegisterActiveModal(visible);
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined

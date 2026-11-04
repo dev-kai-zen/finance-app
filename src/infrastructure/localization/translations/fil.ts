@@ -20,6 +20,8 @@ export const fil = {
     saveChanges: "I-save ang Pagbabago",
     dontSave: "Huwag I-save",
     keepEditing: "Ipagpatuloy ang Pag-edit",
+    account: "Account",
+    uncategorized: "Walang kategorya",
   },
   search: {
     openSearch: "Buksan ang paghahanap",
@@ -497,6 +499,14 @@ export const fil = {
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
       fixItem2:
         "Ayusin ang mga pindutan sa ibaba ng tablet sidebar na natatakpan kapag naka-enable ang three-button navigation.",
+      fixItem3:
+        "Pigilan ang shake gesture sa pagbubukas ng quick entry habang naka-lock ang app.",
+      fixItem4:
+        "Pigilan ang pagdoble ng screen kapag nag-shake habang nag-e-edit ng transaksyon o form.",
+      fixItem5:
+        "Pahusayin ang battery efficiency sa pamamagitan ng pag-pause agad ng sensor kapag pinaliit ang app.",
+      fixItem6:
+        "Ayusin ang nawawalang salin sa Filipino at Espanyol sa mga kamakailang transaksyon ng dashboard.",
     },
     v130: {
       date: "Nobyembre 2, 2026",
@@ -945,6 +955,13 @@ export const fil = {
     quickActionIncome: "Kita",
     quickActionTransfer: "Lipat",
     quickActionAi: "Tanungin si Kai",
+    recentTransactionsTitle: "Mga Kamakailang Transaksyon",
+    viewAllTransactionsAccessibility: "Tingnan ang lahat ng transaksyon",
+    noRecentTransactions: "Wala pang naitalang transaksyon.",
+    noRecentTransactionsHint: "Gamitin ang + button upang itala ang iyong unang transaksyon.",
+    transferToAccount: "Paglipat sa %{account}",
+    transactionFallback: "Transaksyon",
+    viewTransactionAccessibility: "Tingnan ang transaksyon, %{title}",
   },
   calendar: {
     firstOfMonth: "Ika-1 ng Buwan",

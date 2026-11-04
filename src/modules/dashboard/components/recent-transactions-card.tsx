@@ -9,6 +9,7 @@ import { useCurrencyPreferences } from "@/modules/currencies";
 import type { TransactionListItem } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
+import { useLocalization } from "@/infrastructure/localization";
 
 export interface RecentTransactionsCardProps {
   transactions: TransactionListItem[];
@@ -27,14 +28,15 @@ export function RecentTransactionsCard({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const { t } = useLocalization();
   const cardRef = useWalkthroughTarget("recentTxCard");
 
   return (
     <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.title}>Recent Transactions</Text>
+        <Text style={styles.title}>{t("dashboard.recentTransactionsTitle")}</Text>
         <Pressable
-          accessibilityLabel="View all transactions"
+          accessibilityLabel={t("dashboard.viewAllTransactionsAccessibility")}
           accessibilityRole="button"
           onPress={onViewAll}
           style={({ pressed }) => [
@@ -42,16 +44,16 @@ export function RecentTransactionsCard({
             pressed && styles.viewAllButtonPressed,
           ]}
         >
-          <Text style={styles.viewAllText}>View all</Text>
+          <Text style={styles.viewAllText}>{t("dashboard.viewAll")}</Text>
           <ArrowRight color={theme.colors.primary} size={15} />
         </Pressable>
       </View>
 
       {transactions.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No transactions recorded yet.</Text>
+          <Text style={styles.emptyText}>{t("dashboard.noRecentTransactions")}</Text>
           <Text style={styles.emptyHint}>
-            Use the + button to record your first transaction.
+            {t("dashboard.noRecentTransactionsHint")}
           </Text>
         </View>
       ) : (
@@ -85,8 +87,10 @@ export function RecentTransactionsCard({
               tx.name ||
               tx.note ||
               (isTransfer
-                ? `Transfer to ${tx.transferAccountName ?? "Account"}`
-                : tx.categoryName || "Transaction");
+                ? t("dashboard.transferToAccount", {
+                    account: tx.transferAccountName ?? t("common.account"),
+                  })
+                : tx.categoryName || t("dashboard.transactionFallback"));
 
             const isPositive = tx.amountMinorUnits > 0;
             const formattedAmount = isTransfer
@@ -96,7 +100,7 @@ export function RecentTransactionsCard({
             return (
               <Pressable
                 key={tx.id}
-                accessibilityLabel={`View transaction, ${title}`}
+                accessibilityLabel={t("dashboard.viewTransactionAccessibility", { title })}
                 accessibilityRole="button"
                 disabled={!onPressTransaction}
                 onPress={() => onPressTransaction?.(tx)}
@@ -144,7 +148,7 @@ export function RecentTransactionsCard({
                     <Text numberOfLines={1} style={styles.metaCategory}>
                       {isTransfer
                         ? `${tx.accountName} → ${tx.transferAccountName}`
-                        : tx.categoryName || "Uncategorized"}
+                        : tx.categoryName || t("common.uncategorized")}
                     </Text>
                     <Text numberOfLines={1} style={styles.metaDate}>
                       {formattedDate}
