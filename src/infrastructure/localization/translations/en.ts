@@ -9,6 +9,12 @@ export const en = {
     search: "Search",
     skipForNow: "Skip for now",
     today: "Today",
+    unsavedChangesTitle: "Unsaved Changes",
+    unsavedChangesMessage:
+      "You have unsaved changes. What would you like to do before leaving?",
+    saveChanges: "Save Changes",
+    dontSave: "Don't Save",
+    keepEditing: "Keep Editing",
   },
   search: {
     openSearch: "Open search",

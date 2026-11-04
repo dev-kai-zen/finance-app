@@ -80,7 +80,7 @@ export function FundGroupsModal({
   const { isPro } = useProStatus();
   const mutations = useFundGroupMutations(onRefresh);
   const [editor, setEditor] = useState<EditorState | null>(null);
-  const [confirmAction, setConfirmAction] = useState<"discard" | "delete" | null>(null);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(
     () => new Set(),
@@ -92,7 +92,7 @@ export function FundGroupsModal({
   useEffect(() => {
     if (!visible) {
       setEditor(null);
-      setConfirmAction(null);
+      setIsConfirmDeleteOpen(false);
       setMemberSearchQuery("");
       setExpandedGroupIds(new Set());
       setRuleInfoVisible(false);
@@ -229,9 +229,18 @@ export function FundGroupsModal({
     return parts.length > 0 ? parts.join(", ") : "None selected";
   }, [editor]);
 
-  const dirty = editor
-    ? JSON.stringify(editor.initial) !== JSON.stringify(editor.value)
-    : false;
+  const isDirty = useMemo(() => {
+    if (!editor) return false;
+    const initialAccounts = [...editor.initial.accountIds].sort().join(",");
+    const currentAccounts = [...editor.value.accountIds].sort().join(",");
+    const initialPockets = [...editor.initial.pocketIds].sort().join(",");
+    const currentPockets = [...editor.value.pocketIds].sort().join(",");
+    return (
+      editor.value.name !== editor.initial.name ||
+      initialAccounts !== currentAccounts ||
+      initialPockets !== currentPockets
+    );
+  }, [editor]);
 
   const openCreate = () => {
     if (!isPro) {
@@ -268,18 +277,14 @@ export function FundGroupsModal({
     });
   };
 
-  const requestBack = () => {
-    if (!editor) {
-      onClose();
+  const handleClose = () => {
+    if (editor) {
+      setEditor(null);
+      setMemberSearchQuery("");
+      mutations.clearError();
       return;
     }
-    if (dirty) {
-      setConfirmAction("discard");
-      return;
-    }
-    setEditor(null);
-    setMemberSearchQuery("");
-    mutations.clearError();
+    onClose();
   };
 
   const toggleAccountMember = (accountId: string) => {
@@ -330,18 +335,11 @@ export function FundGroupsModal({
     });
   };
 
-  const confirm = () => {
-    if (confirmAction === "discard") {
-      setConfirmAction(null);
-      setEditor(null);
-      setMemberSearchQuery("");
-      mutations.clearError();
-      return;
-    }
-    if (confirmAction === "delete" && editor?.id) {
+  const handleDelete = () => {
+    if (editor?.id) {
       void mutations.remove(editor.id).then((removed) => {
         if (removed) {
-          setConfirmAction(null);
+          setIsConfirmDeleteOpen(false);
           setEditor(null);
           setMemberSearchQuery("");
         }
@@ -378,8 +376,10 @@ export function FundGroupsModal({
     <>
       <FullScreenFormModal
         deleteDisabled={mutations.pending}
+        isDirty={Boolean(editor && isDirty)}
         pending={mutations.pending}
         saveDisabled={
+          mutations.pending ||
           !editor?.value.name.trim() ||
           editor.value.accountIds.length + editor.value.pocketIds.length === 0
         }
@@ -388,8 +388,8 @@ export function FundGroupsModal({
         visible={visible}
         headerRight={editor ? undefined : managerHeader}
         headerTitle={editor ? undefined : managerTitle}
-        onClose={requestBack}
-        onDelete={editor?.id ? () => setConfirmAction("delete") : undefined}
+        onClose={handleClose}
+        onDelete={editor?.id ? () => setIsConfirmDeleteOpen(true) : undefined}
         onSave={editor ? save : undefined}
       >
         {editor ? (
@@ -881,17 +881,13 @@ export function FundGroupsModal({
       </FullScreenFormModal>
 
       <ConfirmModal
-        confirmLabel={confirmAction === "delete" ? "Delete Group" : "Discard"}
-        message={
-          confirmAction === "delete"
-            ? `Delete "${editor?.value.name || "this Fund Group"}"? Its accounts or pockets will not be deleted.`
-            : "Discard your unsaved Fund Group changes?"
-        }
+        confirmLabel="Delete Group"
+        message={`Delete "${editor?.value.name || "this Fund Group"}"? Its accounts or pockets will not be deleted.`}
         pending={mutations.pending}
-        title={confirmAction === "delete" ? "Delete Fund Group?" : "Discard changes?"}
-        visible={confirmAction !== null}
-        onCancel={() => setConfirmAction(null)}
-        onConfirm={confirm}
+        title="Delete Fund Group?"
+        visible={isConfirmDeleteOpen}
+        onCancel={() => setIsConfirmDeleteOpen(false)}
+        onConfirm={handleDelete}
       />
 
       <InfoModal

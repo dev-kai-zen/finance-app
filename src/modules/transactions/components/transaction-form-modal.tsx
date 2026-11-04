@@ -29,6 +29,7 @@ import {
   KeyboardAwareFormPreset,
   NotificationModal,
   ThemedSwitch,
+  UnsavedChangesModal,
 } from "@/components";
 import {
   DraggableTourChip,
@@ -1780,11 +1781,95 @@ function TransactionFormModalInner({
     onClearError?.();
   };
 
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowUnsavedPrompt(false);
+    }
+  }, [visible]);
+
+  const isDirty = useMemo(() => {
+    if (!visible) return false;
+    const hasAttachmentChanges =
+      attachmentDraft.changes.added.length > 0 ||
+      attachmentDraft.changes.removedIds.length > 0;
+
+    if (isEditing && initialTransaction) {
+      const isNeg = initialTransaction.amountMinorUnits < 0;
+      const initialSign = isNeg ? "-" : "+";
+      const initialAbsAmount =
+        initialTransaction.originalAmountMinorUnits ??
+        Math.abs(initialTransaction.amountMinorUnits);
+      return (
+        mode !== initialTransaction.type ||
+        name.trim() !== (initialTransaction.name || "").trim() ||
+        amountSign !== initialSign ||
+        amountMinorUnits !== initialAbsAmount ||
+        selectedAccountId !== initialTransaction.accountId ||
+        (selectedPocketId ?? null) !== (initialTransaction.pocketId ?? null) ||
+        (mode === "transfer" &&
+          (transferToAccountId !== (initialTransaction.transferAccountId || "") ||
+            (transferToPocketId ?? null) !==
+              (initialTransaction.transferPocketId ?? null))) ||
+        (mode !== "transfer" &&
+          selectedCategoryId !== (initialTransaction.categoryId || "")) ||
+        note.trim() !== (initialTransaction.note || "").trim() ||
+        installmentEnabled ||
+        splitEnabled ||
+        feeEnabled ||
+        selectedLabelIds.length !== (initialTransaction.labels?.length ?? 0) ||
+        hasAttachmentChanges
+      );
+    }
+
+    return (
+      amountMinorUnits > 0 ||
+      name.trim().length > 0 ||
+      note.trim().length > 0 ||
+      selectedLabelIds.length > 0 ||
+      hasAttachmentChanges ||
+      installmentEnabled ||
+      splitEnabled ||
+      feeEnabled ||
+      saveAsQuickPreset
+    );
+  }, [
+    visible,
+    isEditing,
+    initialTransaction,
+    mode,
+    name,
+    amountSign,
+    amountMinorUnits,
+    selectedAccountId,
+    selectedPocketId,
+    transferToAccountId,
+    transferToPocketId,
+    selectedCategoryId,
+    note,
+    installmentEnabled,
+    splitEnabled,
+    feeEnabled,
+    selectedLabelIds,
+    attachmentDraft.changes,
+    saveAsQuickPreset,
+  ]);
+
+  const handleRequestClose = useCallback(() => {
+    if (pending) return;
+    if (isDirty) {
+      setShowUnsavedPrompt(true);
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose, pending]);
+
   return (
     <>
       <Modal
         animationType="slide"
-        onRequestClose={onClose}
+        onRequestClose={handleRequestClose}
         transparent
         visible={visible}
       >
@@ -1792,7 +1877,7 @@ function TransactionFormModalInner({
         <Pressable
           accessibilityLabel="Dismiss transaction form"
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleRequestClose}
           style={styles.backdrop}
         />
 
@@ -1814,7 +1899,7 @@ function TransactionFormModalInner({
               ref={closeRef}
               accessibilityLabel="Close form"
               accessibilityRole="button"
-              onPress={onClose}
+              onPress={handleRequestClose}
               style={styles.closeBtn}
             >
               <Text style={styles.closeBtnText}>✕</Text>
@@ -2851,7 +2936,7 @@ function TransactionFormModalInner({
                 ref={cancelRef}
                 accessibilityLabel="Cancel"
                 accessibilityRole="button"
-                onPress={onClose}
+                onPress={handleRequestClose}
                 style={styles.cancelBtn}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -3253,6 +3338,22 @@ function TransactionFormModalInner({
         icon={<Receipt color={theme.colors.primary} size={32} />}
         onStart={walkthroughIntro.handleStart}
         onSkip={walkthroughIntro.handleSkip}
+      />
+
+      <UnsavedChangesModal
+        visible={showUnsavedPrompt}
+        pending={pending}
+        onSave={() => {
+          setShowUnsavedPrompt(false);
+          handleSave(false);
+        }}
+        onDiscard={() => {
+          setShowUnsavedPrompt(false);
+          onClose();
+        }}
+        onKeepEditing={() => {
+          setShowUnsavedPrompt(false);
+        }}
       />
     </>
   );

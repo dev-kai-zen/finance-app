@@ -14,6 +14,12 @@ export const es = {
     search: "Buscar",
     skipForNow: "Omitir por ahora",
     today: "Hoy",
+    unsavedChangesTitle: "Cambios sin guardar",
+    unsavedChangesMessage:
+      "Tienes cambios sin guardar. ¿Qué deseas hacer antes de salir?",
+    saveChanges: "Guardar cambios",
+    dontSave: "No guardar",
+    keepEditing: "Seguir editando",
   },
   search: {
     openSearch: "Abrir búsqueda",

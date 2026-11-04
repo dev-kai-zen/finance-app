@@ -14,6 +14,12 @@ export const fil = {
     search: "Maghanap",
     skipForNow: "Laktawan muna",
     today: "Ngayon",
+    unsavedChangesTitle: "Hindi Nai-save na Pagbabago",
+    unsavedChangesMessage:
+      "May mga pagbabago kang hindi pa nai-save. Ano ang nais mong gawin bago umalis?",
+    saveChanges: "I-save ang Pagbabago",
+    dontSave: "Huwag I-save",
+    keepEditing: "Ipagpatuloy ang Pag-edit",
   },
   search: {
     openSearch: "Buksan ang paghahanap",

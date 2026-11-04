@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
   ConfirmModal,
@@ -50,32 +50,40 @@ export function PocketFormModal({
 
   const [isDefaultExpense, setIsDefaultExpense] = useState(false);
   const [isDefaultIncome, setIsDefaultIncome] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
 
   useEffect(() => {
     if (visible) {
-      setName(pocket?.name ?? "");
-      setTargetAmount(
-        maintainingAmountInput(
-          pocket?.targetAmountMinorUnits,
-          account?.currencyCode ?? "PHP",
-        ),
+      const initialName = pocket?.name ?? "";
+      const initialTargetAmount = maintainingAmountInput(
+        pocket?.targetAmountMinorUnits,
+        account?.currencyCode ?? "PHP",
       );
+      const initialExpense =
+        pocket && account
+          ? defaultExpenseAccountId === account.id &&
+            defaultExpensePocketId === pocket.id
+          : false;
+      const initialIncome =
+        pocket && account
+          ? defaultIncomeAccountId === account.id &&
+            defaultIncomePocketId === pocket.id
+          : false;
+
+      setName(initialName);
+      setTargetAmount(initialTargetAmount);
       setConfirmArchive(false);
       setArchiveError(null);
       mutations.clearError();
-      if (pocket && account) {
-        setIsDefaultExpense(
-          defaultExpenseAccountId === account.id &&
-            defaultExpensePocketId === pocket.id,
-        );
-        setIsDefaultIncome(
-          defaultIncomeAccountId === account.id &&
-            defaultIncomePocketId === pocket.id,
-        );
-      } else {
-        setIsDefaultExpense(false);
-        setIsDefaultIncome(false);
-      }
+      setIsDefaultExpense(initialExpense);
+      setIsDefaultIncome(initialIncome);
+
+      initialSnapshotRef.current = JSON.stringify({
+        name: initialName,
+        targetAmount: initialTargetAmount,
+        isDefaultExpense: initialExpense,
+        isDefaultIncome: initialIncome,
+      });
     }
   }, [
     visible,
@@ -86,6 +94,17 @@ export function PocketFormModal({
     defaultIncomeAccountId,
     defaultIncomePocketId,
   ]);
+
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      name,
+      targetAmount,
+      isDefaultExpense,
+      isDefaultIncome,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, name, targetAmount, isDefaultExpense, isDefaultIncome]);
 
   if (!visible || !account) return null;
 
@@ -161,7 +180,9 @@ export function PocketFormModal({
       <FullScreenFormModal
         deleteAction={pocket?.isArchived ? "restore" : "delete"}
         deleteLabel={pocket?.isArchived ? "Restore pocket" : "Archive pocket"}
+        isDirty={isDirty}
         pending={mutations.pending}
+        saveDisabled={mutations.pending || !name.trim()}
         saveLabel="Save pocket"
         title={pocket ? "Edit Pocket" : "Add Pocket"}
         visible={visible}
