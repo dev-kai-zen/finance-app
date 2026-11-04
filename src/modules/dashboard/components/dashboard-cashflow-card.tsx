@@ -10,6 +10,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { MonthlyCashflow } from "../types/dashboard.types";
 
@@ -32,6 +33,7 @@ export function DashboardCashflowCard({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
 
   const inflow = cashflow.totalInflowMinorUnits;
   const outflow = cashflow.totalOutflowMinorUnits;
@@ -91,7 +93,7 @@ export function DashboardCashflowCard({
               (isNetPositive ? styles.positiveText : styles.negativeText),
           ]}
         >
-          {formatCurrency(net, currencyCode, true)}
+          {isPrivate ? "••••••" : formatCurrency(net, currencyCode, true)}
         </Text>
       </View>
 
@@ -150,7 +152,7 @@ export function DashboardCashflowCard({
               preferences.colorAmounts && styles.positiveText,
             ]}
           >
-            {formatCurrency(inflow, currencyCode)}
+            {isPrivate ? "••••••" : formatCurrency(inflow, currencyCode)}
           </Text>
         </Pressable>
 
@@ -185,7 +187,7 @@ export function DashboardCashflowCard({
               preferences.colorAmounts && styles.negativeText,
             ]}
           >
-            {formatCurrency(outflow, currencyCode)}
+            {isPrivate ? "••••••" : formatCurrency(outflow, currencyCode)}
           </Text>
         </Pressable>
       </View>

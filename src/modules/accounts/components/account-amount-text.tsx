@@ -1,6 +1,7 @@
 import { StyleSheet, Text, type TextProps, type TextStyle } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { usePrivacyMode } from "@/modules/settings";
 import { formatCurrency, formatPhpCurrency } from "@/utils/currency";
 
 export function AccountAmountText({
@@ -17,6 +18,7 @@ export function AccountAmountText({
 } & Omit<TextProps, "children" | "style">) {
   const theme = useAppTheme();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const result = formatPhpCurrency(amountMinorUnits, {
     positiveColor: theme.colors.success,
     negativeColor: theme.colors.danger,
@@ -42,7 +44,7 @@ export function AccountAmountText({
         style,
       ]}
     >
-      {formatted}
+      {isPrivate ? "••••••" : formatted}
     </Text>
   );
 }

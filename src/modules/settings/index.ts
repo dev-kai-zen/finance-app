@@ -26,6 +26,25 @@ export type { ChatTransactionMode } from "./services/chat-transaction-mode.servi
 export { useDefaultAccounts } from "./hooks/use-default-accounts";
 export { useChatTransactionMode } from "./hooks/use-chat-transaction-mode";
 export { useShakeActionSetting } from "./hooks/use-shake-action-setting";
+export { usePrivacyMode } from "./hooks/use-privacy-mode";
+export { useSoundAndHaptics } from "./hooks/use-sound-and-haptics";
+export {
+  getSoundAndHapticsPreferences,
+  setSoundAndHapticsPreferences,
+  DEFAULT_SOUND_AND_HAPTICS_PREFERENCES,
+  triggerHaptic,
+  playTransactionSavedSound,
+} from "./services/sound-and-haptics.service";
+export type {
+  SoundAndHapticsPreferences,
+  HapticCategory,
+  HapticType,
+} from "./services/sound-and-haptics.service";
+export {
+  getPrivacyModeSetting,
+  setPrivacyModeSetting,
+  formatPrivacyAmount,
+} from "./services/privacy-mode.service";
 export {
   getShakeActionSetting,
   setShakeActionSetting,
@@ -43,6 +62,8 @@ export {
   NAV_HREF_BY_VISIBILITY_KEY,
   PROMPT_SETTING_KEYS,
   DEVELOPER_MODE_SETTING_KEY,
+  PRIVACY_MODE_SETTING_KEY,
+  SOUND_AND_HAPTICS_SETTING_KEY,
   USER_NICKNAME_SETTING_KEY,
   PRIVACY_POLICY_URL,
 } from "./constants/settings.constants";

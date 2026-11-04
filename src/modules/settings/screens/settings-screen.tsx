@@ -31,6 +31,8 @@ import {
   Star,
   Terminal,
   Trash2,
+  Vibrate,
+  Volume2,
 } from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
@@ -66,6 +68,7 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { useSoundAndHaptics } from "../hooks/use-sound-and-haptics";
 import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
@@ -109,6 +112,7 @@ function SettingsScreenContent() {
   const { mode: chatMode, setMode: setChatMode } = useChatTransactionMode();
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const { shakeAction, setShakeAction } = useShakeActionSetting();
+  const soundAndHaptics = useSoundAndHaptics();
   const { triggerShakeAction } = useQuickEntry();
   const [isGesturesModalOpen, setIsGesturesModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
@@ -685,6 +689,98 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            {/* Sound & Haptics Section */}
+            <View style={styles.rowDivider} />
+
+            <View style={styles.toggleRow}>
+              <View style={styles.iconContainer}>
+                <Vibrate color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.hapticsMaster")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.hapticsMasterSubtitle")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.hapticsMaster")}
+                onValueChange={(value) => soundAndHaptics.setHapticsEnabled(value)}
+                value={soundAndHaptics.preferences.hapticsEnabled}
+              />
+            </View>
+
+            {soundAndHaptics.preferences.hapticsEnabled ? (
+              <View style={styles.subTogglesContainer}>
+                <View style={styles.subToggleRow}>
+                  <Text style={styles.subToggleLabel}>
+                    {t("settings.hapticsTransactions")}
+                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel={t("settings.hapticsTransactions")}
+                    onValueChange={(val) => soundAndHaptics.setSubToggle("transactions", val)}
+                    value={soundAndHaptics.preferences.subToggles.transactions}
+                  />
+                </View>
+
+                <View style={styles.subToggleRow}>
+                  <Text style={styles.subToggleLabel}>
+                    {t("settings.hapticsCalculator")}
+                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel={t("settings.hapticsCalculator")}
+                    onValueChange={(val) => soundAndHaptics.setSubToggle("calculator", val)}
+                    value={soundAndHaptics.preferences.subToggles.calculator}
+                  />
+                </View>
+
+                <View style={styles.subToggleRow}>
+                  <Text style={styles.subToggleLabel}>
+                    {t("settings.hapticsAlerts")}
+                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel={t("settings.hapticsAlerts")}
+                    onValueChange={(val) => soundAndHaptics.setSubToggle("alerts", val)}
+                    value={soundAndHaptics.preferences.subToggles.alerts}
+                  />
+                </View>
+
+                <View style={styles.subToggleRow}>
+                  <Text style={styles.subToggleLabel}>
+                    {t("settings.hapticsDestructive")}
+                  </Text>
+                  <ThemedSwitch
+                    accessibilityLabel={t("settings.hapticsDestructive")}
+                    onValueChange={(val) => soundAndHaptics.setSubToggle("destructive", val)}
+                    value={soundAndHaptics.preferences.subToggles.destructive}
+                  />
+                </View>
+              </View>
+            ) : null}
+
+            <View style={styles.rowDivider} />
+
+            {/* Play Sound on Save */}
+            <View style={styles.toggleRow}>
+              <View style={styles.iconContainer}>
+                <Volume2 color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.soundOnSave")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.soundOnSaveSubtitle")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.soundOnSave")}
+                onValueChange={(value) => soundAndHaptics.setSoundOnSaveEnabled(value)}
+                value={soundAndHaptics.preferences.soundOnSaveEnabled}
+              />
+            </View>
 
             <View style={styles.rowDivider} />
 
@@ -1540,6 +1636,26 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
+    },
+        subTogglesContainer: {
+      backgroundColor: `${theme.colors.surfaceMuted}60`,
+      borderRadius: theme.borderRadius.small,
+      marginHorizontal: theme.spacing.md,
+      marginVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+      gap: theme.spacing.xs,
+    },
+    subToggleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.xs,
+    },
+    subToggleLabel: {
+      color: theme.colors.textSecondary,
+      fontSize: 13,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     settingRow: {
       alignItems: "center",

@@ -105,7 +105,18 @@ function BudgetsScreenContent({
     saveBudget,
     toggleBudget,
     deleteBudget,
+    refresh,
   } = useBudgets();
+
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh]);
 
   // Filtered list
   const filteredStatuses = useMemo(() => {
@@ -255,6 +266,8 @@ function BudgetsScreenContent({
 
   return (
     <PageContainer
+      onRefresh={handlePullRefresh}
+      refreshing={isPullRefreshing}
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}

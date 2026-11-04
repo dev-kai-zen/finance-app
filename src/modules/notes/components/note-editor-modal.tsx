@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronLeft, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
+import { Check, ChevronLeft, Palette, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
 
 import { ConfirmModal, NotificationModal, UnsavedChangesModal } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -62,6 +62,7 @@ export function NoteEditorModal({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const initialSnapshotRef = useRef<string>("");
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
 
@@ -296,107 +297,11 @@ export function NoteEditorModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Color Palette Chips */}
-            <View style={styles.colorPalette}>
-              {/* Default (no accent) */}
-              <Pressable
-                accessibilityLabel="Default color (no accent)"
-                accessibilityRole="button"
-                onPress={() => setColor(null)}
-                style={[
-                  styles.colorChip,
-                  {
-                    backgroundColor: theme.colors.surfaceMuted,
-                    borderColor:
-                      color === null
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                    borderWidth: color === null ? 2.5 : 1,
-                  },
-                ]}
-              >
-                {color === null ? (
-                  <Check color={theme.colors.textPrimary} size={14} />
-                ) : (
-                  <Slash color={theme.colors.textMuted} size={12} />
-                )}
-              </Pressable>
-
-              {/* Hex colors from hex-colors repository */}
-              {hexColorsList.map((c) => {
-                const isSelected =
-                  Boolean(color) &&
-                  (color === c.hex ||
-                    color === c.id ||
-                    color?.toUpperCase() === c.hex.toUpperCase());
-                const light = isLightColor(c.hex);
-                const checkColor = light ? "#0F172A" : "#FFFFFF";
-
-                return (
-                  <Pressable
-                    key={c.id}
-                    accessibilityLabel={`Color ${c.name} (${c.hex})`}
-                    accessibilityRole="button"
-                    onPress={() => setColor(c.hex)}
-                    style={[
-                      styles.colorChip,
-                      {
-                        backgroundColor: c.hex,
-                        borderColor: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                        borderWidth: isSelected ? 2.5 : 1,
-                      },
-                    ]}
-                  >
-                    {isSelected ? <Check color={checkColor} size={14} /> : null}
-                  </Pressable>
-                );
-              })}
-
-              {/* Legacy Note Color if not in the hexColorsList */}
-              {hasLegacyColor && color ? (
-                <Pressable
-                  accessibilityLabel={`Current note color (${color})`}
-                  accessibilityRole="button"
-                  onPress={() => setColor(color)}
-                  style={[
-                    styles.colorChip,
-                    {
-                      backgroundColor: color,
-                      borderColor: theme.colors.primary,
-                      borderWidth: 2.5,
-                    },
-                  ]}
-                >
-                  <Check
-                    color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
-                    size={14}
-                  />
-                </Pressable>
-              ) : null}
-
-              {/* Add Custom Color (+) button */}
-              <Pressable
-                accessibilityLabel="Add custom color"
-                accessibilityRole="button"
-                onPress={() => setIsColorFormOpen(true)}
-                style={({ pressed }) => [
-                  styles.addColorChip,
-                  { borderColor: theme.colors.primary },
-                  pressed && styles.addColorChipPressed,
-                ]}
-              >
-                <Plus color={theme.colors.primary} size={15} strokeWidth={2.5} />
-              </Pressable>
-            </View>
-
-            {/* Note Title Input */}
+            {/* Title Input */}
             <TextInput
               accessibilityLabel="Note title"
-              maxLength={120}
               onChangeText={setTitle}
-              placeholder="Note Title"
+              placeholder="Title"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.titleInput}
               value={title}
@@ -426,6 +331,143 @@ export function NoteEditorModal({
               picking={picking}
             />
           </ScrollView>
+
+          {/* Color Palette Drawer (Option B: single horizontal row) */}
+          {isPaletteOpen ? (
+            <View style={styles.paletteDrawer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.paletteScrollContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {/* Default (no accent) */}
+                <Pressable
+                  accessibilityLabel="Default color (no accent)"
+                  accessibilityRole="button"
+                  onPress={() => setColor(null)}
+                  style={[
+                    styles.colorChip,
+                    {
+                      backgroundColor: theme.colors.surfaceMuted,
+                      borderColor:
+                        color === null
+                          ? theme.colors.primary
+                          : theme.colors.border,
+                      borderWidth: color === null ? 2.5 : 1,
+                    },
+                  ]}
+                >
+                  {color === null ? (
+                    <Check color={theme.colors.textPrimary} size={14} />
+                  ) : (
+                    <Slash color={theme.colors.textMuted} size={12} />
+                  )}
+                </Pressable>
+
+                {/* Hex colors from hex-colors repository */}
+                {hexColorsList.map((c) => {
+                  const isSelected =
+                    Boolean(color) &&
+                    (color === c.hex ||
+                      color === c.id ||
+                      color?.toUpperCase() === c.hex.toUpperCase());
+                  const light = isLightColor(c.hex);
+                  const checkColor = light ? "#0F172A" : "#FFFFFF";
+
+                  return (
+                    <Pressable
+                      key={c.id}
+                      accessibilityLabel={`Color ${c.name} (${c.hex})`}
+                      accessibilityRole="button"
+                      onPress={() => setColor(c.hex)}
+                      style={[
+                        styles.colorChip,
+                        {
+                          backgroundColor: c.hex,
+                          borderColor: isSelected
+                            ? theme.colors.primary
+                            : theme.colors.border,
+                          borderWidth: isSelected ? 2.5 : 1,
+                        },
+                      ]}
+                    >
+                      {isSelected ? <Check color={checkColor} size={14} /> : null}
+                    </Pressable>
+                  );
+                })}
+
+                {/* Legacy Note Color if not in the hexColorsList */}
+                {hasLegacyColor && color ? (
+                  <Pressable
+                    accessibilityLabel={`Current note color (${color})`}
+                    accessibilityRole="button"
+                    onPress={() => setColor(color)}
+                    style={[
+                      styles.colorChip,
+                      {
+                        backgroundColor: color,
+                        borderColor: theme.colors.primary,
+                        borderWidth: 2.5,
+                      },
+                    ]}
+                  >
+                    <Check
+                      color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
+                      size={14}
+                    />
+                  </Pressable>
+                ) : null}
+
+                {/* Add Custom Color (+) button */}
+                <Pressable
+                  accessibilityLabel="Add custom color"
+                  accessibilityRole="button"
+                  onPress={() => setIsColorFormOpen(true)}
+                  style={({ pressed }) => [
+                    styles.addColorChip,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Plus color={theme.colors.textSecondary} size={14} />
+                </Pressable>
+              </ScrollView>
+            </View>
+          ) : null}
+
+          {/* Bottom Toolbar */}
+          <View style={[styles.bottomToolbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+            <Pressable
+              accessibilityLabel="Note color palette"
+              accessibilityRole="button"
+              onPress={() => setIsPaletteOpen((prev) => !prev)}
+              style={({ pressed }) => [
+                styles.toolbarButton,
+                isPaletteOpen && styles.toolbarButtonActive,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Palette
+                color={
+                  color
+                    ? color
+                    : isPaletteOpen
+                      ? theme.colors.primary
+                      : theme.colors.textSecondary
+                }
+                size={20}
+              />
+            </Pressable>
+
+            {color ? (
+              <View
+                style={[
+                  styles.activeColorBadge,
+                  { backgroundColor: color },
+                ]}
+              />
+            ) : null}
+          </View>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -559,6 +601,48 @@ function createStyles(theme: AppTheme) {
     scrollContent: {
       gap: theme.spacing.md,
       padding: theme.spacing.lg,
+    },
+    buttonPressed: {
+      opacity: 0.7,
+    },
+    paletteDrawer: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      paddingVertical: theme.spacing.xs,
+    },
+    paletteScrollContent: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+    },
+    bottomToolbar: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderTopColor: theme.colors.border,
+      borderTopWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingTop: 8,
+    },
+    toolbarButton: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      height: 38,
+      justifyContent: "center",
+      width: 38,
+    },
+    toolbarButtonActive: {
+      backgroundColor: `${theme.colors.primary}18`,
+    },
+    activeColorBadge: {
+      borderColor: theme.colors.border,
+      borderRadius: 6,
+      borderWidth: 1,
+      height: 12,
+      width: 12,
     },
     colorPalette: {
       alignItems: "center",

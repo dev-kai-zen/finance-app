@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { Target } from "lucide-react-native";
 import {
+  AppButton,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
@@ -72,7 +73,18 @@ function GoalsScreenContent({
     saveGoal,
     deleteGoal,
     toggleStatus,
+    refresh,
   } = useGoals();
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh]);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -211,6 +223,8 @@ function GoalsScreenContent({
     <PageContainer
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       contentContainerStyle={contentSpacing}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
@@ -312,6 +326,12 @@ function GoalsScreenContent({
               ? "Create your first goal, link it to an account, and monitor your savings journey with live balances and deadlines using the + button."
               : "Adjust your filter or create a new goal to track your progress."}
           </Text>
+          <View style={styles.emptyCtaWrap}>
+            <AppButton
+              label={"+ Create First Goal"}
+              onPress={handleOpenCreate}
+            />
+          </View>
         </View>
       ) : (
         <View style={styles.goalsList}>
@@ -478,6 +498,9 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderStyle: "dashed",
       marginVertical: theme.spacing.lg,
+    },
+    emptyCtaWrap: {
+      marginTop: theme.spacing.lg,
     },
     emptyIconCircle: {
       width: 72,

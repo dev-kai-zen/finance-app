@@ -8,13 +8,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname } from "expo-router";
+import { Eye, EyeOff } from "lucide-react-native";
 import { Sidebar } from "./sidebar";
 import { SyncStatusChip } from "./sync-status-chip";
 import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { useExperiencePreferences } from "@/modules/settings";
+import { useExperiencePreferences, usePrivacyMode } from "@/modules/settings";
 import { SearchTriggerButton } from "@/modules/search";
 
 type Translate = ReturnType<typeof useLocalization>["t"];
@@ -94,6 +95,7 @@ export function AppShell({
   const pathname = usePathname();
   const { t } = useLocalization();
   const { generalSearchEnabled } = useExperiencePreferences();
+  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
   const screenTitle = getScreenTitle(pathname, t);
   const isSettingsScreen = pathname.startsWith("/settings");
   const handleSettingsTitlePress =
@@ -145,6 +147,26 @@ export function AppShell({
               />
             </View>
             <View style={styles.topBarRightGroup}>
+                <Pressable
+                  accessibilityLabel={
+                    isPrivate
+                      ? t("privacy.showBalances")
+                      : t("privacy.hideBalances")
+                  }
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={togglePrivacyMode}
+                  style={({ pressed }) => [
+                    styles.headerIconButton,
+                    pressed && styles.headerIconButtonPressed,
+                  ]}
+                >
+                  {isPrivate ? (
+                    <EyeOff color={styles.headerIconColor.color} size={19} />
+                  ) : (
+                    <Eye color={styles.headerIconColor.color} size={19} />
+                  )}
+                </Pressable>
               {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
               <SyncStatusChip />
             </View>
@@ -190,8 +212,28 @@ export function AppShell({
               </View>
 
               <View style={styles.topBarRightGroup}>
+                <Pressable
+                  accessibilityLabel={
+                    isPrivate
+                      ? t("privacy.showBalances")
+                      : t("privacy.hideBalances")
+                  }
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={togglePrivacyMode}
+                  style={({ pressed }) => [
+                    styles.headerIconButton,
+                    pressed && styles.headerIconButtonPressed,
+                  ]}
+                >
+                  {isPrivate ? (
+                    <EyeOff color={styles.headerIconColor.color} size={19} />
+                  ) : (
+                    <Eye color={styles.headerIconColor.color} size={19} />
+                  )}
+                </Pressable>
                 {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
-                <SyncStatusChip />
+                <SyncStatusChip compact />
               </View>
             </View>
           </View>
@@ -323,6 +365,20 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.xs,
+    },
+    headerIconButton: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.medium,
+      height: 34,
+      justifyContent: "center",
+      width: 34,
+    },
+    headerIconButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      opacity: 0.8,
+    },
+    headerIconColor: {
+      color: theme.colors.textSecondary,
     },
     topBarBrand: {
       alignItems: "center",

@@ -8,6 +8,7 @@ import { useResolveEntityColor } from "@/modules/hex-colors";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import type { TransactionListItem } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
+import { usePrivacyMode } from "@/modules/settings";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { useLocalization } from "@/infrastructure/localization";
 
@@ -28,6 +29,7 @@ export function RecentTransactionsCard({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const { t } = useLocalization();
   const cardRef = useWalkthroughTarget("recentTxCard");
 
@@ -141,7 +143,7 @@ export function RecentTransactionsCard({
                               : styles.expenseText),
                       ]}
                     >
-                      {formattedAmount}
+                      {isPrivate ? "••••••" : formattedAmount}
                     </Text>
                   </View>
                   <View style={styles.metaRow}>

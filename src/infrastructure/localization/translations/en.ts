@@ -1,4 +1,10 @@
 export const en = {
+  privacy: {
+    hideBalances: "Hide balances",
+    showBalances: "Show balances",
+    stealthMode: "Privacy mode",
+    stealthModeDescription: "Mask account balances and financial figures across the app",
+  },
   common: {
     cancel: "Cancel",
     close: "Close",
@@ -179,6 +185,15 @@ export const en = {
     restoreConfirmAction: "Restore",
   },
   settings: {
+    soundAndHapticsSection: "Sound & Haptics",
+    hapticsMaster: "Haptic Feedback",
+    hapticsMasterSubtitle: "Tactile vibrations during actions",
+    hapticsTransactions: "Record & Edit Transactions",
+    hapticsCalculator: "Calculator & Keypad Taps",
+    hapticsAlerts: "Budget & Goal Alerts",
+    hapticsDestructive: "Delete & Trash Actions",
+    soundOnSave: "Play Sound on Save",
+    soundOnSaveSubtitle: "Short chime when a transaction is recorded",
     generalSection: "GENERAL",
     profileSection: "PROFILE",
     nicknameTitle: "Nickname",
@@ -480,13 +495,19 @@ export const en = {
       general: "General",
     },
     v140: {
-      date: "November 4, 2026",
+      date: "November 5, 2026",
       newItem1:
         "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
       newItem2:
         "Toggle positive or negative amounts in schedules to easily record recurring refunds and income adjustments.",
       newItem3:
         "Prevent accidental data loss across forms with a confirmation prompt when leaving unsaved changes.",
+      newItem4:
+        "Instantly hide account balances and financial figures across the app with a single tap on the stealth eye toggle.",
+      newItem5:
+        "Customize tactile vibration feedback and optional sound chimes when recording expenses and tapping the keypad.",
+      newItem6:
+        "Quickly duplicate or delete transactions by swiping right or left directly on the ledger.",
       improveItem1:
         "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
       improveItem2:
@@ -497,6 +518,14 @@ export const en = {
         "Keep the Greeting and Date header always active on the dashboard while freely toggling other cards.",
       improveItem5:
         "Simplify creating pockets by removing the unused target amount field.",
+      improveItem6:
+        "Pick Today or Yesterday in one tap when recording expenses, or tap Calendar for custom dates.",
+      improveItem7:
+        "Pull down anywhere on the Dashboard, Transactions, Accounts, and other screens to instantly refresh your data.",
+      improveItem8:
+        "Enjoy a distraction-free note editor with a sleek color palette toolbar that never crowds your writing canvas.",
+      improveItem9:
+        "Discover clear, helpful empty states with one-tap action buttons across savings goals and ledgers.",
       fixItem1:
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
       fixItem2:
@@ -801,6 +830,9 @@ export const en = {
     recommendedBadge: "Recommended",
   },
   transactionForm: {
+    quickDateToday: "Today",
+    quickDateYesterday: "Yesterday",
+    quickDateCustom: "Calendar",
     customizeFieldsTitle: "Customize fields",
     customizeFieldsSubtitle:
       "Amount, account, category, and date always stay on the form.",
@@ -1751,6 +1783,8 @@ export const en = {
     },
   },
   transactions: {
+    swipeDelete: "Delete",
+    swipeDuplicate: "Duplicate",
     speedDialForm: "Manual Entry",
     speedDialChat: "Chat with Kai",
   },

@@ -18,6 +18,7 @@ import {
   Download,
   FolderDown,
   LayoutList,
+  Receipt,
   Rows3,
   Search,
   Share2,
@@ -39,7 +40,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ArrowLeftRight } from "lucide-react-native";
-import { useExperiencePreferences } from "@/modules/settings";
+import { triggerHaptic, useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
@@ -231,6 +232,19 @@ function TransactionsScreenContent({
 
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories, refresh: refreshCategories } = useCategories();
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      void refresh();
+      refreshAccounts();
+      void refreshCategories();
+      refreshPresets();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh, refreshAccounts, refreshCategories, refreshPresets]);
+
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const { labels: allLabels } = useLabels();
 
@@ -755,6 +769,7 @@ function TransactionsScreenContent({
     setInspectedTransaction(null);
     const deleted = await deleteTx(pendingDeleteId);
     if (deleted) {
+      triggerHaptic("medium", "destructive");
       refreshAccounts();
       setPendingDeleteId(null);
     }
@@ -852,6 +867,8 @@ function TransactionsScreenContent({
   return (
     <PageContainer
       contentContainerStyle={styles.pageContent}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
@@ -1231,6 +1248,13 @@ function TransactionsScreenContent({
           ListEmptyComponent={
             <View>
               <PageEmptyState
+                icon={
+                  activeFilterCount > 0 || searchQuery.length > 0 ? (
+                    <Search color={theme.colors.primary} size={32} />
+                  ) : (
+                    <Receipt color={theme.colors.primary} size={32} />
+                  )
+                }
                 actionLabel={
                   activeFilterCount > 0 || searchQuery.length > 0
                     ? "Clear Filters"
@@ -1272,6 +1296,7 @@ function TransactionsScreenContent({
               <View key={item.id}>
                 <TransactionRow
                   onDelete={handleDelete}
+                  onDuplicate={handleDuplicate}
                   onPress={(item) => setInspectedTransaction(item)}
                   transaction={item}
                   viewMode={viewMode}

@@ -4,6 +4,12 @@ import type {
 } from "@/infrastructure/localization/translations/en";
 
 export const fil = {
+  privacy: {
+    hideBalances: "Itago ang mga balanse",
+    showBalances: "Ipakita ang mga balanse",
+    stealthMode: "Privacy mode",
+    stealthModeDescription: "Itago ang mga balanse at halaga sa buong app",
+  },
   common: {
     cancel: "Kanselahin",
     close: "Isara",
@@ -172,6 +178,15 @@ export const fil = {
     restoreConfirmAction: "I-restore",
   },
   settings: {
+    soundAndHapticsSection: "Tunog at Haptics",
+    hapticsMaster: "Haptic Feedback",
+    hapticsMasterSubtitle: "Vibration kapag may aksyon sa app",
+    hapticsTransactions: "Magtala at Mag-edit ng Transaksyon",
+    hapticsCalculator: "Calculator at Keypad Taps",
+    hapticsAlerts: "Budget at Goal Alerts",
+    hapticsDestructive: "Pagbura at Trash Actions",
+    soundOnSave: "Magpatunog Kapag Nag-save",
+    soundOnSaveSubtitle: "Maikling tunog kapag naitala ang transaksyon",
     generalSection: "PANGKALAHATAN",
     profileSection: "PROFILE",
     nicknameTitle: "Palayaw (Nickname)",
@@ -478,13 +493,19 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v140: {
-      date: "Nobyembre 4, 2026",
+      date: "Nobyembre 5, 2026",
       newItem1:
         "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
       newItem2:
         "I-toggle ang positibo o negatibong halaga sa mga schedule upang madaling maitala ang mga refund at adjustment sa kita.",
       newItem3:
         "Iwasan ang aksidenteng pagkawala ng datos sa mga form gamit ang paalala kapag may hindi pa nai-save na pagbabago.",
+      newItem4:
+        "Mabilis na itago ang mga balanse at halaga sa buong app sa isang pindot lang sa stealth eye toggle.",
+      newItem5:
+        "I-customize ang vibration feedback at tunog kapag nagtatala ng transaksyon o gumagamit ng calculator.",
+      newItem6:
+        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakanan o pakaliwa sa talaan.",
       improveItem1:
         "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
       improveItem2:
@@ -495,6 +516,14 @@ export const fil = {
         "Panatilihing laging aktibo ang Pagbati at Petsa sa dashboard habang malayang inaayos ang ibang card.",
       improveItem5:
         "Gawing mas simple ang paggawa ng pockets sa pamamagitan ng pag-alis ng hindi ginagamit na target amount.",
+      improveItem6:
+        "Pumili ng Ngayong Araw o Kahapon sa isang pindot lang kapag nagtatala ng gastos, o gamitin ang Kalendaryo.",
+      improveItem7:
+        "Hilahin pababa ang Dashboard, Transactions, Accounts, at iba pang screen upang i-refresh ang datos.",
+      improveItem8:
+        "Mas malinis na note editor na may color palette toolbar sa ibaba upang hindi makasagabal sa pagsusulat.",
+      improveItem9:
+        "Mas madaling magsimula gamit ang mga bagong gabay at action buttons sa savings goals at talaan.",
       fixItem1:
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
       fixItem2:
@@ -801,6 +830,9 @@ export const fil = {
     recommendedBadge: "Inirerekomenda",
   },
   transactionForm: {
+    quickDateToday: "Ngayong Araw",
+    quickDateYesterday: "Kahapon",
+    quickDateCustom: "Kalendaryo",
     customizeFieldsTitle: "I-customize ang mga field",
     customizeFieldsSubtitle:
       "Laging nandiyan ang amount, account, category, at date sa form.",
@@ -1747,6 +1779,8 @@ export const fil = {
     },
   },
   transactions: {
+    swipeDelete: "Tanggalin",
+    swipeDuplicate: "Kopyahin",
     speedDialForm: "Manwal na Entry",
     speedDialChat: "Makipag-chat kay Kai",
   },

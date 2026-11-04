@@ -119,6 +119,16 @@ function NotesScreenContent({
     [measureTargetInAncestor],
   );
 
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh]);
+
   const walkthrough = useNotesWalkthrough({
     hasAnyNotes,
     hasNoteInList,
@@ -239,6 +249,8 @@ function NotesScreenContent({
     <PageContainer
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       contentContainerStyle={contentSpacing}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive

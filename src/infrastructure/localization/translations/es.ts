@@ -4,6 +4,12 @@ import type {
 } from "@/infrastructure/localization/translations/en";
 
 export const es = {
+  privacy: {
+    hideBalances: "Ocultar saldos",
+    showBalances: "Mostrar saldos",
+    stealthMode: "Modo de privacidad",
+    stealthModeDescription: "Ocultar saldos y cifras financieras en toda la app",
+  },
   common: {
     cancel: "Cancelar",
     close: "Cerrar",
@@ -172,6 +178,15 @@ export const es = {
     restoreConfirmAction: "Restaurar",
   },
   settings: {
+    soundAndHapticsSection: "Sonido y Vibración",
+    hapticsMaster: "Vibración Háptica",
+    hapticsMasterSubtitle: "Vibraciones táctiles durante acciones",
+    hapticsTransactions: "Registrar y Editar Transacciones",
+    hapticsCalculator: "Toques de Calculadora y Teclado",
+    hapticsAlerts: "Alertas de Presupuesto y Metas",
+    hapticsDestructive: "Acciones de Eliminar y Papelera",
+    soundOnSave: "Reproducir Sonido al Guardar",
+    soundOnSaveSubtitle: "Breve campanilla al registrar una transacción",
     generalSection: "GENERAL",
     profileSection: "PERFIL",
     nicknameTitle: "Apodo (Nickname)",
@@ -477,13 +492,19 @@ export const es = {
       general: "General",
     },
     v140: {
-      date: "4 de noviembre de 2026",
+      date: "5 de noviembre de 2026",
       newItem1:
         "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
       newItem2:
         "Alterna montos positivos o negativos en las programaciones para registrar fácilmente reembolsos y ajustes de ingresos.",
       newItem3:
         "Evita la pérdida accidental de datos en los formularios con un aviso de confirmación al salir con cambios sin guardar.",
+      newItem4:
+        "Oculta al instante los saldos y cifras financieras en toda la app con un solo toque en el icono de privacidad.",
+      newItem5:
+        "Personaliza la vibración táctil y el sonido de confirmación al registrar gastos y usar la calculadora.",
+      newItem6:
+        "Duplica o elimina transacciones rápidamente deslizando hacia la derecha o izquierda en la lista.",
       improveItem1:
         "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
       improveItem2:
@@ -494,6 +515,14 @@ export const es = {
         "Mantén el saludo y fecha siempre activos en el panel mientras personalizas libremente las demás tarjetas.",
       improveItem5:
         "Simplifica la creación de bolsillos eliminando el campo de monto objetivo sin uso.",
+      improveItem6:
+        "Elige Hoy o Ayer con un solo toque al registrar gastos, o toca Calendario para fechas personalizadas.",
+      improveItem7:
+        "Desliza hacia abajo en el Panel, Transacciones, Cuentas y otras pantallas para actualizar tus datos al instante.",
+      improveItem8:
+        "Disfruta de un editor de notas sin distracciones con una barra de colores que no estorba tu escritura.",
+      improveItem9:
+        "Estados vacíos claros y útiles con botones de acción directa en metas de ahorro y registros.",
       fixItem1:
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
       fixItem2:
@@ -799,6 +828,9 @@ export const es = {
     recommendedBadge: "Recomendado",
   },
   transactionForm: {
+    quickDateToday: "Hoy",
+    quickDateYesterday: "Ayer",
+    quickDateCustom: "Calendario",
     customizeFieldsTitle: "Personalizar campos",
     customizeFieldsSubtitle:
       "Importe, cuenta, categoría y fecha siempre permanecen en el formulario.",
@@ -1746,6 +1778,8 @@ export const es = {
     },
   },
   transactions: {
+    swipeDelete: "Eliminar",
+    swipeDuplicate: "Duplicar",
     speedDialForm: "Entrada Manual",
     speedDialChat: "Chatear con Kai",
   },

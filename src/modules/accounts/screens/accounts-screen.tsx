@@ -152,6 +152,17 @@ function AccountsScreenContent({
     [measureTargetInAncestor],
   );
 
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      data.refresh();
+      fundGroups.refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [data.refresh, fundGroups.refresh]);
+
   const walkthrough = useAccountsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
@@ -345,6 +356,8 @@ function AccountsScreenContent({
       contentContainerStyle={contentSpacing}
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }

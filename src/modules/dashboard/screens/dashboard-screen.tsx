@@ -192,6 +192,20 @@ function DashboardScreenContent() {
     [measureTargetInAncestor],
   );
 
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      refreshDashboard();
+      refreshAccounts();
+      void refreshCategories();
+      void refreshTransactions();
+      refreshPresets();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshTransactions, refreshPresets]);
+
   const walkthrough = useDashboardWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
@@ -519,6 +533,8 @@ function DashboardScreenContent() {
     <PageContainer
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }

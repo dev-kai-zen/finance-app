@@ -6,7 +6,7 @@ import type { AccountListItem } from "@/modules/accounts/types/account.types";
 import { localDateInput } from "@/modules/accounts/utils/account-input";
 import { AccountTypeBadge } from "@/modules/accounts/components/account-type-badge";
 import { useCurrencyPreferences } from "@/modules/currencies";
-import { useDefaultAccounts } from "@/modules/settings";
+import { useDefaultAccounts, usePrivacyMode } from "@/modules/settings";
 
 export function AccountRow({
   account,
@@ -18,6 +18,7 @@ export function AccountRow({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { defaultExpenseAccountId, defaultIncomeAccountId } = useDefaultAccounts();
+  const { isPrivate } = usePrivacyMode();
   const isLiability = account.accountType?.accountGroup === "liability";
   const isDefaultExpense = !account.isArchived && defaultExpenseAccountId === account.id;
   const isDefaultIncome = !account.isArchived && defaultIncomeAccountId === account.id;
@@ -25,7 +26,9 @@ export function AccountRow({
     account.currentBalanceMinorUnits !== undefined
       ? account.currentBalanceMinorUnits
       : account.openingBalanceMinorUnits;
-  const amount =
+  const amount = isPrivate
+    ? "••••••"
+    :
     account.currencyCode === "PHP"
       ? formatCurrency(displayBalance, "PHP")
       : `${displayBalance.toLocaleString()} ${account.currencyCode}`;
