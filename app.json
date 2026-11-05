@@ -23,6 +23,9 @@
         "com.android.vending.BILLING",
         "com.google.android.gms.permission.AD_ID"
       ],
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION"
+      ],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
       "versionCode": 11
