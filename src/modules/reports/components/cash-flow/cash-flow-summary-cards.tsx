@@ -9,6 +9,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 
@@ -27,6 +28,7 @@ export function CashFlowSummaryCards({
 }: CashFlowSummaryCardsProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const isNetPositive = netCashFlowMinorUnits >= 0;
 
@@ -42,7 +44,10 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={[styles.cardValue, styles.inflowValue]}>
-            {formatCurrency(totalInflowMinorUnits, currencyCode, true)}
+            {formatPrivacyAmount(
+              formatCurrency(totalInflowMinorUnits, currencyCode, true),
+              isPrivate,
+            )}
           </Text>
           <Text style={styles.cardSub}>Money in</Text>
         </View>
@@ -56,7 +61,10 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={[styles.cardValue, styles.outflowValue]}>
-            {formatCurrency(-totalOutflowMinorUnits, currencyCode, true)}
+            {formatPrivacyAmount(
+              formatCurrency(-totalOutflowMinorUnits, currencyCode, true),
+              isPrivate,
+            )}
           </Text>
           <Text style={styles.cardSub}>Money out</Text>
         </View>
@@ -80,7 +88,10 @@ export function CashFlowSummaryCards({
               },
             ]}
           >
-            {formatCurrency(netCashFlowMinorUnits, currencyCode, true)}{" "}
+            {formatPrivacyAmount(
+              formatCurrency(netCashFlowMinorUnits, currencyCode, true),
+              isPrivate,
+            )}{" "}
             {isNetPositive ? "▲" : "▼"}
           </Text>
           <Text style={styles.cardSub}>

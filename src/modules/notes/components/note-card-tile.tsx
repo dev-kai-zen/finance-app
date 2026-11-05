@@ -5,6 +5,7 @@ import { Image as ImageIcon, Pin } from "lucide-react-native";
 
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
+import { resolveHexColor, useHexColors } from "@/modules/hex-colors";
 import type { Note } from "../types/note.types";
 import { extractSnippet, formatRelativeDate } from "../utils/note-formatters";
 
@@ -21,15 +22,20 @@ export const NoteCardTile = memo(function NoteCardTile({
 }: NoteCardTileProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { colors: hexColorsList } = useHexColors();
 
   const hasAttachments = note.attachments.length > 0;
   const coverAttachment = hasAttachments ? note.attachments[0] : null;
   const hasCoverImage = Boolean(coverAttachment?.uri);
   const snippet = extractSnippet(note.content, hasCoverImage ? 45 : 80);
 
+  const resolvedColor = note.color
+    ? resolveHexColor(note.color, { colors: hexColorsList, theme })
+    : null;
+
   const dynamicCardStyle = {
-    borderColor: note.color ? note.color : theme.colors.border,
-    borderTopWidth: note.color ? 3.5 : 1,
+    borderColor: resolvedColor ?? theme.colors.border,
+    borderTopWidth: resolvedColor ? 3.5 : 1,
   };
 
   return (

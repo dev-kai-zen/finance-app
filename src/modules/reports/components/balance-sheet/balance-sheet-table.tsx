@@ -18,6 +18,7 @@ import { IconHelper } from "@/components/icon-helper";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type {
   BalanceSheetComparisonData,
@@ -41,6 +42,7 @@ export function BalanceSheetTable({
 }: BalanceSheetTableProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
@@ -104,12 +106,18 @@ export function BalanceSheetTable({
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
               <Text numberOfLines={1} style={styles.netWorthAmount}>
-                {formatCurrency(data.netWorth.prevMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(data.netWorth.prevMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
               <Text numberOfLines={1} style={styles.netWorthAmount}>
-                {formatCurrency(data.netWorth.currentMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(data.netWorth.currentMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.netWorthCol]}>
@@ -135,6 +143,7 @@ function GroupSection({
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const expanded = isExpanded(groupKey);
 
@@ -165,12 +174,18 @@ function GroupSection({
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.groupNumericText}>
-            {formatCurrency(groupNode.variance.prevMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(groupNode.variance.prevMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.groupNumericText}>
-            {formatCurrency(groupNode.variance.currentMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(groupNode.variance.currentMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
@@ -210,6 +225,7 @@ function AccountTypeSection({
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const typeKey = `type:${typeNode.id}`;
   const expanded = isExpanded(typeKey);
@@ -255,12 +271,18 @@ function AccountTypeSection({
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.typeNumericText}>
-            {formatCurrency(typeNode.variance.prevMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(typeNode.variance.prevMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.typeNumericText}>
-            {formatCurrency(typeNode.variance.currentMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(typeNode.variance.currentMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
@@ -293,6 +315,7 @@ function AccountRow({
   onToggleExpanded: (key: string) => void;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
   const accKey = `account:${accountNode.id}`;
   const hasPockets = accountNode.pocketEnabled && accountNode.pockets.length > 0;
   const expanded = hasPockets ? isExpanded(accKey) : false;
@@ -301,9 +324,12 @@ function AccountRow({
     <View style={styles.accountBlock}>
       <Pressable
         accessibilityRole={hasPockets ? "button" : "text"}
-        accessibilityLabel={`${accountNode.name}, Current: ${formatCurrency(
-          accountNode.variance.currentMinorUnits,
-          accountNode.currencyCode,
+        accessibilityLabel={`${accountNode.name}, Current: ${formatPrivacyAmount(
+          formatCurrency(
+            accountNode.variance.currentMinorUnits,
+            accountNode.currencyCode,
+          ),
+          isPrivate,
         )}`}
         onPress={() => {
           if (hasPockets) {
@@ -333,12 +359,18 @@ function AccountRow({
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.accountNumericText}>
-            {formatCurrency(accountNode.variance.prevMinorUnits, accountNode.currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(accountNode.variance.prevMinorUnits, accountNode.currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
           <Text numberOfLines={1} style={styles.accountNumericText}>
-            {formatCurrency(accountNode.variance.currentMinorUnits, accountNode.currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(accountNode.variance.currentMinorUnits, accountNode.currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
         <View style={styles.colNumeric}>
@@ -368,6 +400,7 @@ function PocketRow({
   currencyCode: string;
 }) {
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
   const isAvailable = pocketNode.id === "__available__";
 
   return (
@@ -386,12 +419,18 @@ function PocketRow({
       </View>
       <View style={styles.colNumeric}>
         <Text numberOfLines={1} style={styles.pocketNumericText}>
-          {formatCurrency(pocketNode.variance.prevMinorUnits, currencyCode)}
+          {formatPrivacyAmount(
+            formatCurrency(pocketNode.variance.prevMinorUnits, currencyCode),
+            isPrivate,
+          )}
         </Text>
       </View>
       <View style={styles.colNumeric}>
         <Text numberOfLines={1} style={styles.pocketNumericText}>
-          {formatCurrency(pocketNode.variance.currentMinorUnits, currencyCode)}
+          {formatPrivacyAmount(
+            formatCurrency(pocketNode.variance.currentMinorUnits, currencyCode),
+            isPrivate,
+          )}
         </Text>
       </View>
       <View style={styles.colNumeric}>

@@ -7,6 +7,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { Account } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
 import type { CalendarScheduleOccurrence } from "@/modules/scheduled-transactions";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import {
   formatFriendlyDate,
@@ -40,6 +41,7 @@ export function CalendarSchedulesTab({
 }: CalendarSchedulesTabProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
 
   const accountMap = useMemo(
     () => new Map(accounts.map((a) => [a.id, a])),
@@ -115,18 +117,16 @@ export function CalendarSchedulesTab({
                 ? categoryMap.get(item.categoryId)
                 : null;
 
-              const isExpense = item.transactionType === "expense";
-              const isIncome = item.transactionType === "income";
-
-              const signedAmount = isExpense
-                ? -item.amountMinorUnits
+              const isTransfer = item.transactionType === "transfer";
+              const signedAmount = isTransfer
+                ? Math.abs(item.amountMinorUnits)
                 : item.amountMinorUnits;
 
-              const amountColor = isIncome
-                ? theme.colors.success
-                : isExpense
-                  ? theme.colors.danger
-                  : theme.colors.textPrimary;
+              const amountColor = isTransfer
+                ? theme.colors.textPrimary
+                : signedAmount > 0
+                  ? theme.colors.success
+                  : theme.colors.danger;
 
               return (
                 <View key={item.id} style={styles.scheduleRow}>
@@ -164,10 +164,13 @@ export function CalendarSchedulesTab({
 
                   <View style={styles.rowRight}>
                     <Text style={[styles.amountText, { color: amountColor }]}>
-                      {formatCurrency(
-                        signedAmount,
-                        account?.currencyCode ?? "PHP",
-                        false,
+                      {formatPrivacyAmount(
+                        formatCurrency(
+                          signedAmount,
+                          account?.currencyCode ?? "PHP",
+                          signedAmount > 0 && !isTransfer,
+                        ),
+                        isPrivate,
                       )}
                     </Text>
 

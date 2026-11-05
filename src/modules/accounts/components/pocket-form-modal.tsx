@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import {
   ConfirmModal,
@@ -12,7 +12,6 @@ import type { AppTheme } from "@/constants/theme";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import type { AccountListItem, PocketListItem } from "@/modules/accounts/types/account.types";
 import { getPocketRestoreBlockReason } from "@/modules/accounts/services/pocket-rules";
-import { maintainingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -35,7 +34,6 @@ export function PocketFormModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [name, setName] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
@@ -50,32 +48,34 @@ export function PocketFormModal({
 
   const [isDefaultExpense, setIsDefaultExpense] = useState(false);
   const [isDefaultIncome, setIsDefaultIncome] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
 
   useEffect(() => {
     if (visible) {
-      setName(pocket?.name ?? "");
-      setTargetAmount(
-        maintainingAmountInput(
-          pocket?.targetAmountMinorUnits,
-          account?.currencyCode ?? "PHP",
-        ),
-      );
+      const initialName = pocket?.name ?? "";
+      const initialExpense =
+        pocket && account
+          ? defaultExpenseAccountId === account.id &&
+            defaultExpensePocketId === pocket.id
+          : false;
+      const initialIncome =
+        pocket && account
+          ? defaultIncomeAccountId === account.id &&
+            defaultIncomePocketId === pocket.id
+          : false;
+
+      setName(initialName);
       setConfirmArchive(false);
       setArchiveError(null);
       mutations.clearError();
-      if (pocket && account) {
-        setIsDefaultExpense(
-          defaultExpenseAccountId === account.id &&
-            defaultExpensePocketId === pocket.id,
-        );
-        setIsDefaultIncome(
-          defaultIncomeAccountId === account.id &&
-            defaultIncomePocketId === pocket.id,
-        );
-      } else {
-        setIsDefaultExpense(false);
-        setIsDefaultIncome(false);
-      }
+      setIsDefaultExpense(initialExpense);
+      setIsDefaultIncome(initialIncome);
+
+      initialSnapshotRef.current = JSON.stringify({
+        name: initialName,
+        isDefaultExpense: initialExpense,
+        isDefaultIncome: initialIncome,
+      });
     }
   }, [
     visible,
@@ -87,11 +87,21 @@ export function PocketFormModal({
     defaultIncomePocketId,
   ]);
 
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      name,
+      isDefaultExpense,
+      isDefaultIncome,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, name, isDefaultExpense, isDefaultIncome]);
+
   if (!visible || !account) return null;
 
   const save = async () => {
     const saved = await mutations.savePocket(
-      { accountId: account.id, name, targetAmount },
+      { accountId: account.id, name },
       pocket?.id,
     );
     if (saved) {
@@ -161,7 +171,9 @@ export function PocketFormModal({
       <FullScreenFormModal
         deleteAction={pocket?.isArchived ? "restore" : "delete"}
         deleteLabel={pocket?.isArchived ? "Restore pocket" : "Archive pocket"}
+        isDirty={isDirty}
         pending={mutations.pending}
+        saveDisabled={mutations.pending || !name.trim()}
         saveLabel="Save pocket"
         title={pocket ? "Edit Pocket" : "Add Pocket"}
         visible={visible}
@@ -211,13 +223,6 @@ export function PocketFormModal({
             onChangeText={setName}
             placeholder="e.g. Emergency Fund, Bills, Travel"
             value={name}
-          />
-          <AccountField
-            keyboardType="decimal-pad"
-            label="Target amount (optional)"
-            onChangeText={setTargetAmount}
-            placeholder="0.00"
-            value={targetAmount}
           />
 
           {pocket && !pocket.isArchived ? (

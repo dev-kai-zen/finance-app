@@ -5,7 +5,14 @@ export type SearchCategory =
   | "screen"
   | "setting"
   | "account"
-  | "category";
+  | "category"
+  | "transaction"
+  | "budget"
+  | "goal"
+  | "note"
+  | "schedule"
+  | "label"
+  | "pocket";
 
 export interface SearchCatalogItem {
   id: string;
@@ -45,7 +52,10 @@ export interface SearchCatalogItem {
     | "database"
     | "download"
     | "archive"
-    | "layout-grid";
+    | "layout-grid"
+    | "smartphone"
+    | "vibrate"
+    | "volume-2";
   iconColor?: string;
   route: string;
   targetId?: string;

@@ -162,23 +162,27 @@ export function HexColorFormModal({
             </Pressable>
           </View>
 
-          <KeyboardAwareForm style={styles.formScroll}>
-            {/* Color Preview & Swatch */}
-            <View style={styles.previewContainer}>
-              <View
-                style={[
-                  styles.previewSwatch,
-                  { backgroundColor: currentPreviewColor },
-                ]}
-              />
-              <View style={styles.previewInfo}>
-                <Text style={styles.previewName}>{name.trim() || "Color Preview"}</Text>
-                <Text style={styles.previewHex}>
-                  {isValidHex(hex) ? hex.toUpperCase() : "Enter valid hex code"}
-                </Text>
-              </View>
+          {/* Color Preview & Swatch (Pinned above scroll area so it stays visible while typing) */}
+          <View style={styles.previewContainer}>
+            <View
+              style={[
+                styles.previewSwatch,
+                { backgroundColor: currentPreviewColor },
+              ]}
+            />
+            <View style={styles.previewInfo}>
+              <Text style={styles.previewName}>{name.trim() || "Color Preview"}</Text>
+              <Text style={styles.previewHex}>
+                {isValidHex(hex) ? hex.toUpperCase() : "Enter valid hex code"}
+              </Text>
             </View>
+          </View>
 
+          <KeyboardAwareForm
+            bottomOffset={12}
+            showsVerticalScrollIndicator={false}
+            style={styles.formScroll}
+          >
             {/* Color Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>COLOR NAME</Text>
@@ -303,8 +307,8 @@ function createStyles(theme: AppTheme) {
       borderBottomWidth: 1,
       flexDirection: "row",
       justifyContent: "space-between",
-      marginBottom: theme.spacing.md,
-      paddingBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      paddingBottom: theme.spacing.sm,
     },
     modalTitle: {
       color: theme.colors.textPrimary,
@@ -321,7 +325,7 @@ function createStyles(theme: AppTheme) {
     },
     formScroll: {
       flexShrink: 1,
-      maxHeight: 380,
+      maxHeight: 320,
     },
     previewContainer: {
       alignItems: "center",
@@ -331,15 +335,16 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "row",
       gap: theme.spacing.md,
-      marginBottom: theme.spacing.lg,
-      padding: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
     },
     previewSwatch: {
       borderColor: theme.colors.borderStrong,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 2,
-      height: 48,
-      width: 48,
+      height: 40,
+      width: 40,
       ...theme.shadows.card,
     },
     previewInfo: {
@@ -357,7 +362,7 @@ function createStyles(theme: AppTheme) {
       fontVariant: ["tabular-nums"],
     },
     inputGroup: {
-      marginBottom: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
     },
     fieldLabel: {
       color: theme.colors.textSecondary,

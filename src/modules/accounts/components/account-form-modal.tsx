@@ -210,6 +210,7 @@ function AccountFormModalContent({
   } = useDefaultAccounts();
   const [isDefaultExpense, setIsDefaultExpense] = useState(false);
   const [isDefaultIncome, setIsDefaultIncome] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
 
   useEffect(() => {
     if (!visible) return;
@@ -268,6 +269,46 @@ function AccountFormModalContent({
       setAmountSign(defaultType?.accountGroup === "liability" ? "-" : "+");
       setKeywords([]);
     }
+    initialSnapshotRef.current = JSON.stringify({
+      value: {
+        name: account?.name ?? "",
+        note: account?.note ?? "",
+        iconKey: account?.iconKey ?? null,
+        accountTypeId: account?.accountTypeId ?? getDefaultAssetAccountTypeId(types),
+        currencyCode: nextCurrencyCode,
+        openingAmount,
+        openingDate: localDateInput(account?.openingBalanceAt),
+        hideFromSelection: account?.hideFromSelection ?? false,
+        hideFromReports: account?.hideFromReports ?? false,
+        pocketEnabled: account?.pocketEnabled ?? false,
+        maintainingAmount: maintainingAmountInput(
+          account?.maintainingBalanceMinorUnits,
+          nextCurrencyCode,
+        ),
+        creditCardDetails: account?.creditCardDetails
+          ? {
+              creditLimit: creditLimitInput(
+                account.creditCardDetails.creditLimitMinorUnits,
+                nextCurrencyCode,
+              ),
+              statementDay: String(account.creditCardDetails.statementDay),
+              paymentDueDay: String(account.creditCardDetails.paymentDueDay),
+            }
+          : undefined,
+      },
+      amountSign: account
+        ? resolveInitialAmountSign(
+            account.openingBalanceMinorUnits,
+            account.accountType?.accountGroup ??
+              types.find((t) => t.id === account.accountTypeId)?.accountGroup,
+          )
+        : types.find((type) => type.id === getDefaultAssetAccountTypeId(types))
+              ?.accountGroup === "liability"
+          ? "-"
+          : "+",
+      isDefaultExpense: account ? defaultExpenseAccountId === account.id : false,
+      isDefaultIncome: account ? defaultIncomeAccountId === account.id : false,
+    });
     setConfirmAction(null);
   }, [visible, account, types, preferences.defaultCurrency]);
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -580,6 +621,17 @@ function AccountFormModalContent({
     }
   };
 
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      value,
+      amountSign,
+      isDefaultExpense,
+      isDefaultIncome,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, value, amountSign, isDefaultExpense, isDefaultIncome]);
+
   const handleViewTransactions = () => {
     if (!account) {
       return;
@@ -600,6 +652,7 @@ function AccountFormModalContent({
         title={account ? "Edit Account" : "New Account"}
         titleAlign="left"
         visible={visible}
+        isDirty={isDirty}
         onClose={onClose}
         onDelete={
           account?.isArchived

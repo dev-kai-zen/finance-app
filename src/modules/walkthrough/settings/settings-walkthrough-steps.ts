@@ -50,6 +50,12 @@ export const SETTINGS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "settingsWalkthrough.stepKaiKnowledgeDesc",
   },
   {
+    id: "settingsGestures",
+    targetId: "settingsGestures",
+    titleKey: "settingsWalkthrough.stepGesturesTitle",
+    descKey: "settingsWalkthrough.stepGesturesDesc",
+  },
+  {
     id: "settingsDefaultExpense",
     targetId: "settingsDefaultExpense",
     titleKey: "settingsWalkthrough.stepDefaultExpenseTitle",

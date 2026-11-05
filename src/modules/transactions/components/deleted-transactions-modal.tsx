@@ -148,6 +148,9 @@ export function DeletedTransactionsModal({
           >
           {transactions.length === 0 ? (
             <View style={styles.emptyState}>
+              <View style={styles.emptyIconCircle}>
+                <Trash2 color={theme.colors.textMuted} size={32} />
+              </View>
               <Text style={styles.emptyTitle}>Trash is empty</Text>
               <Text style={styles.emptyDescription}>
                 Deleted transactions will appear here and can be restored.
@@ -440,6 +443,15 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       paddingHorizontal: theme.spacing.xl,
       paddingVertical: theme.spacing.xxxl,
+    },
+    emptyIconCircle: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.textMuted}18`,
+      borderRadius: 32,
+      height: 64,
+      justifyContent: "center",
+      marginBottom: theme.spacing.md,
+      width: 64,
     },
     emptyTitle: {
       color: theme.colors.textPrimary,

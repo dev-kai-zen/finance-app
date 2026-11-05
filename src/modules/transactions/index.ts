@@ -190,6 +190,10 @@ export const hasTransactions = deferFunction(
   () => require("./services/has-transactions.service").hasTransactions,
 ) as typeof import("./services/has-transactions.service").hasTransactions;
 
+export const getTransactionCount = deferFunction(
+  () => require("./services/get-transaction-count.service").getTransactionCount,
+) as typeof import("./services/get-transaction-count.service").getTransactionCount;
+
 export const clearTransactionWorkspace = deferFunction(
   () =>
     require("./services/workspace-transactions.service")

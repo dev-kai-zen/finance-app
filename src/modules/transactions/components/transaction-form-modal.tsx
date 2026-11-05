@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  Calendar,
   ChevronRight,
   Paperclip,
   Plus,
@@ -29,6 +30,7 @@ import {
   KeyboardAwareFormPreset,
   NotificationModal,
   ThemedSwitch,
+  UnsavedChangesModal,
 } from "@/components";
 import {
   DraggableTourChip,
@@ -44,6 +46,7 @@ import {
 } from "@/modules/walkthrough";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useRegisterActiveModal } from "@/hooks";
 import {
   AccountPickerModal,
   accountColor,
@@ -107,6 +110,7 @@ import type {
 } from "../types/transaction-preset.types";
 import { normalizeQuickPresetTransactionName } from "../services/save-transaction-preset.service";
 import { TransactionDateTimePickerModal } from "./transaction-date-time-picker-modal";
+import { triggerHaptic, playTransactionSavedSound } from "@/modules/settings";
 import { TransactionTypePicker } from "./transaction-type-picker";
 import { QuickPresetsModal } from "./quick-presets-modal";
 import { QuickPresetSuggestions } from "./quick-preset-suggestions";
@@ -212,6 +216,7 @@ export interface TransactionFormModalProps {
   pending?: boolean;
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
+  initialPreset?: TransactionPreset | null;
   isEditing?: boolean;
   initialType?: TransactionType;
   defaultExpenseAccountId?: string | null;
@@ -282,6 +287,7 @@ function TransactionFormModalInner({
   pending = false,
   error = null,
   initialTransaction = null,
+  initialPreset = null,
   isEditing = false,
   initialType,
   defaultExpenseAccountId: propsDefaultExpenseAccountId,
@@ -376,6 +382,40 @@ function TransactionFormModalInner({
     useState(false);
   const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
   const [dateTimePickerMode, setDateTimePickerMode] = useState<"date" | "time" | null>(null);
+  const isSameDay = useCallback((d1: Date, d2: Date) => {
+      return (
+        d1.getFullYear() === d2.getFullYear() &&
+        d1.getMonth() === d2.getMonth() &&
+        d1.getDate() === d2.getDate()
+      );
+    }, []);
+  
+    const { isToday, isYesterday, isCustom } = useMemo(() => {
+      const now = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+  
+      const todayMatch = isSameDay(occurredAt, now);
+      const yesterdayMatch = isSameDay(occurredAt, yesterday);
+      return {
+        isToday: todayMatch,
+        isYesterday: yesterdayMatch,
+        isCustom: !todayMatch && !yesterdayMatch,
+      };
+    }, [occurredAt, isSameDay]);
+  
+    const handleSelectToday = useCallback(() => {
+      const d = new Date();
+      d.setHours(occurredAt.getHours(), occurredAt.getMinutes(), occurredAt.getSeconds(), occurredAt.getMilliseconds());
+      setOccurredAt(d);
+    }, [occurredAt]);
+  
+    const handleSelectYesterday = useCallback(() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      d.setHours(occurredAt.getHours(), occurredAt.getMinutes(), occurredAt.getSeconds(), occurredAt.getMilliseconds());
+      setOccurredAt(d);
+    }, [occurredAt]);
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isTransferToAccountPickerOpen, setIsTransferToAccountPickerOpen] = useState(false);
   const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
@@ -535,7 +575,9 @@ function TransactionFormModalInner({
       return;
     }
 
-    const sessionKey = initialTransaction?.id ?? `__create__${initialType ?? "expense"}`;
+    const sessionKey =
+      initialTransaction?.id ??
+      (initialPreset ? `__preset__${initialPreset.id}` : `__create__${initialType ?? "expense"}`);
     if (formInitSessionRef.current === sessionKey) {
       return;
     }
@@ -608,7 +650,7 @@ function TransactionFormModalInner({
         }
         setSplitCategoryPickerLineKey(null);
         setOccurredAt(
-          initialTransaction.occurredAt
+          isEditing && initialTransaction.occurredAt
             ? new Date(initialTransaction.occurredAt)
             : getCurrentTransactionDate()
         );
@@ -1149,6 +1191,7 @@ function TransactionFormModalInner({
     Boolean(isEditing && initialTransaction?.note?.trim());
   const showSplitField = formFields.split || splitEnabled;
   const showQuickPresetsUi = formFields.quickPresets;
+  const showQuickDatesField = formFields.quickDates;
   const showExactTimeField = formFields.exactTime;
   const showInstallmentsUi =
     (formFields.installments || installmentEnabled) && showInstallmentSection;
@@ -1437,6 +1480,12 @@ function TransactionFormModalInner({
     setLocalError(null);
   };
 
+  useEffect(() => {
+    if (visible && initialPreset && !initialTransaction) {
+      applyQuickPreset(initialPreset);
+    }
+  }, [visible, initialPreset, initialTransaction]);
+
   const handleSave = async (
     bypassInput:
       | boolean
@@ -1557,6 +1606,8 @@ function TransactionFormModalInner({
             );
 
       if (success) {
+        triggerHaptic("success", "transactions");
+        void playTransactionSavedSound();
         onClose();
       }
     } else {
@@ -1735,6 +1786,8 @@ function TransactionFormModalInner({
             );
 
       if (success) {
+        triggerHaptic("success", "transactions");
+        void playTransactionSavedSound();
         onClose();
       }
     }
@@ -1780,11 +1833,95 @@ function TransactionFormModalInner({
     onClearError?.();
   };
 
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowUnsavedPrompt(false);
+    }
+  }, [visible]);
+
+  const isDirty = useMemo(() => {
+    if (!visible) return false;
+    const hasAttachmentChanges =
+      attachmentDraft.changes.added.length > 0 ||
+      attachmentDraft.changes.removedIds.length > 0;
+
+    if (isEditing && initialTransaction) {
+      const isNeg = initialTransaction.amountMinorUnits < 0;
+      const initialSign = isNeg ? "-" : "+";
+      const initialAbsAmount =
+        initialTransaction.originalAmountMinorUnits ??
+        Math.abs(initialTransaction.amountMinorUnits);
+      return (
+        mode !== initialTransaction.type ||
+        name.trim() !== (initialTransaction.name || "").trim() ||
+        amountSign !== initialSign ||
+        amountMinorUnits !== initialAbsAmount ||
+        selectedAccountId !== initialTransaction.accountId ||
+        (selectedPocketId ?? null) !== (initialTransaction.pocketId ?? null) ||
+        (mode === "transfer" &&
+          (transferToAccountId !== (initialTransaction.transferAccountId || "") ||
+            (transferToPocketId ?? null) !==
+              (initialTransaction.transferPocketId ?? null))) ||
+        (mode !== "transfer" &&
+          selectedCategoryId !== (initialTransaction.categoryId || "")) ||
+        note.trim() !== (initialTransaction.note || "").trim() ||
+        installmentEnabled ||
+        splitEnabled ||
+        feeEnabled ||
+        selectedLabelIds.length !== (initialTransaction.labels?.length ?? 0) ||
+        hasAttachmentChanges
+      );
+    }
+
+    return (
+      amountMinorUnits > 0 ||
+      name.trim().length > 0 ||
+      note.trim().length > 0 ||
+      selectedLabelIds.length > 0 ||
+      hasAttachmentChanges ||
+      installmentEnabled ||
+      splitEnabled ||
+      feeEnabled ||
+      saveAsQuickPreset
+    );
+  }, [
+    visible,
+    isEditing,
+    initialTransaction,
+    mode,
+    name,
+    amountSign,
+    amountMinorUnits,
+    selectedAccountId,
+    selectedPocketId,
+    transferToAccountId,
+    transferToPocketId,
+    selectedCategoryId,
+    note,
+    installmentEnabled,
+    splitEnabled,
+    feeEnabled,
+    selectedLabelIds,
+    attachmentDraft.changes,
+    saveAsQuickPreset,
+  ]);
+
+  const handleRequestClose = useCallback(() => {
+    if (pending) return;
+    if (isDirty) {
+      setShowUnsavedPrompt(true);
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose, pending]);
+
   return (
     <>
       <Modal
         animationType="slide"
-        onRequestClose={onClose}
+        onRequestClose={handleRequestClose}
         transparent
         visible={visible}
       >
@@ -1792,7 +1929,7 @@ function TransactionFormModalInner({
         <Pressable
           accessibilityLabel="Dismiss transaction form"
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleRequestClose}
           style={styles.backdrop}
         />
 
@@ -1814,7 +1951,7 @@ function TransactionFormModalInner({
               ref={closeRef}
               accessibilityLabel="Close form"
               accessibilityRole="button"
-              onPress={onClose}
+              onPress={handleRequestClose}
               style={styles.closeBtn}
             >
               <Text style={styles.closeBtnText}>✕</Text>
@@ -1977,23 +2114,98 @@ function TransactionFormModalInner({
                   ) : null}
                 </View>
               ) : null}
+              {/* Date & Time Row */}
               <View style={styles.dateTimeRow}>
-                <Pressable
-                  ref={dateRef}
-                  accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
-                  accessibilityRole="button"
-                  disabled={pending}
-                  onPress={() => setDateTimePickerMode("date")}
-                  style={({ pressed }) => [
-                    styles.dateTimeButton,
-                    pressed && styles.dateTimeButtonPressed,
-                    !showExactTimeField && styles.dateTimeButtonFull,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.dateTimeText}>
-                    {formatTransactionDate(occurredAt)}
-                  </Text>
-                </Pressable>
+                {showQuickDatesField ? (
+                  <View style={styles.quickDatePillsContainer}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateToday")}
+                      disabled={pending}
+                      onPress={handleSelectToday}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isToday && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.quickDatePillText,
+                          isToday && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {t("transactionForm.quickDateToday")}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateYesterday")}
+                      disabled={pending}
+                      onPress={handleSelectYesterday}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isYesterday && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.quickDatePillText,
+                          isYesterday && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {t("transactionForm.quickDateYesterday")}
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      ref={dateRef}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateCustom")}
+                      disabled={pending}
+                      onPress={() => setDateTimePickerMode("date")}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isCustom && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Calendar
+                        color={isCustom ? theme.colors.primary : theme.colors.textMuted}
+                        size={13}
+                      />
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.quickDatePillText,
+                          isCustom && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {isCustom ? formatTransactionDate(occurredAt) : t("transactionForm.quickDateCustom")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    ref={dateRef}
+                    accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
+                    accessibilityRole="button"
+                    disabled={pending}
+                    onPress={() => setDateTimePickerMode("date")}
+                    style={({ pressed }) => [
+                      styles.dateTimeButton,
+                      pressed && styles.dateTimeButtonPressed,
+                      !showExactTimeField && styles.dateTimeButtonFull,
+                    ]}
+                  >
+                    <Text numberOfLines={1} style={styles.dateTimeText}>
+                      {formatTransactionDate(occurredAt)}
+                    </Text>
+                  </Pressable>
+                )}
+
                 {showExactTimeField ? (
                   <>
                     <Text accessible={false} style={styles.dateTimeSeparator}>
@@ -2851,7 +3063,7 @@ function TransactionFormModalInner({
                 ref={cancelRef}
                 accessibilityLabel="Cancel"
                 accessibilityRole="button"
-                onPress={onClose}
+                onPress={handleRequestClose}
                 style={styles.cancelBtn}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -3254,11 +3466,28 @@ function TransactionFormModalInner({
         onStart={walkthroughIntro.handleStart}
         onSkip={walkthroughIntro.handleSkip}
       />
+
+      <UnsavedChangesModal
+        visible={showUnsavedPrompt}
+        pending={pending}
+        onSave={() => {
+          setShowUnsavedPrompt(false);
+          handleSave(false);
+        }}
+        onDiscard={() => {
+          setShowUnsavedPrompt(false);
+          onClose();
+        }}
+        onKeepEditing={() => {
+          setShowUnsavedPrompt(false);
+        }}
+      />
     </>
   );
 }
 
 export function TransactionFormModal(props: TransactionFormModalProps) {
+  useRegisterActiveModal(props.visible);
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
@@ -3731,6 +3960,47 @@ function createStyles(theme: AppTheme) {
       fontWeight: "500",
       paddingHorizontal: 14,
       paddingVertical: 12,
+    },
+        quickDatePillsContainer: {
+      flex: 1,
+      flexDirection: "row",
+      gap: 6,
+      alignItems: "center",
+    },
+    quickDatePillsRow: {
+      flexDirection: "row",
+      gap: 6,
+      marginBottom: theme.spacing.xs,
+    },
+    quickDatePill: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 999,
+      borderWidth: 1,
+      flex: 1,
+      flexDirection: "row",
+      gap: 4,
+      height: 28,
+      justifyContent: "center",
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    quickDatePillActive: {
+      backgroundColor: `${theme.colors.primary}18`,
+      borderColor: theme.colors.primary,
+    },
+    quickDatePillPressed: {
+      opacity: 0.8,
+    },
+    quickDatePillText: {
+      color: theme.colors.textSecondary,
+      fontSize: 11.5,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    quickDatePillTextActive: {
+      color: theme.colors.primary,
+      fontWeight: "700",
     },
     dateTimeRow: {
       alignItems: "center",

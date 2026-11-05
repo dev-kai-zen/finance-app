@@ -291,10 +291,7 @@ function postSnapshot(
         categoryId: snapshot.categoryId!,
         pocketId: snapshot.pocketId,
         type: snapshot.transactionType,
-        amountMinorUnits:
-          snapshot.transactionType === "expense"
-            ? -snapshot.amountMinorUnits
-            : snapshot.amountMinorUnits,
+        amountMinorUnits: snapshot.amountMinorUnits,
         name: snapshot.name,
         note: snapshot.note,
         occurredAt,

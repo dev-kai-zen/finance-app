@@ -22,7 +22,7 @@ import type {
   NetWorthHistory,
   NetWorthPeriod,
 } from "@/modules/dashboard/types/dashboard.types";
-import type { HomeExperienceMode } from "@/modules/settings";
+import { usePrivacyMode, type HomeExperienceMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 
@@ -65,7 +65,8 @@ export function DashboardNetWorthCard({
   const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
-  const [valuesVisible, setValuesVisible] = useState(true);
+  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const valuesVisible = !isPrivate;
   const [chartVisible, setChartVisible] = useState(true);
   const [displayModeSheetVisible, setDisplayModeSheetVisible] = useState(false);
   const trendIsPositive = (monthlyChangePercentage ?? 0) >= 0;
@@ -165,7 +166,7 @@ export function DashboardNetWorthCard({
             accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
             accessibilityRole="button"
             hitSlop={5}
-            onPress={() => setValuesVisible((current) => !current)}
+            onPress={togglePrivacyMode}
             style={({ pressed }) => [
               styles.iconButton,
               pressed && styles.buttonPressed,

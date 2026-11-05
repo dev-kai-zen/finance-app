@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { useCallback, useEffect, useState, type PropsWithChildren, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -11,6 +11,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, RotateCcw, Save, Trash2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { UnsavedChangesModal } from "./unsaved-changes-modal";
+import { useRegisterActiveModal } from "@/hooks";
 
 export interface FullScreenFormModalProps extends PropsWithChildren {
   visible: boolean;
@@ -29,6 +31,7 @@ export interface FullScreenFormModalProps extends PropsWithChildren {
   titleAlign?: "center" | "left";
   saveButtonRef?: React.Ref<View>;
   backButtonRef?: React.Ref<View>;
+  isDirty?: boolean;
 }
 
 export function FullScreenFormModal({
@@ -48,11 +51,29 @@ export function FullScreenFormModal({
   titleAlign = "center",
   saveButtonRef,
   backButtonRef,
+  isDirty = false,
   children,
 }: FullScreenFormModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+  useRegisterActiveModal(visible);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowUnsavedPrompt(false);
+    }
+  }, [visible]);
+
+  const handleRequestClose = useCallback(() => {
+    if (pending) return;
+    if (isDirty) {
+      setShowUnsavedPrompt(true);
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose, pending]);
 
   const defaultHeaderRight =
     onSave || onDelete ? (
@@ -103,54 +124,71 @@ export function FullScreenFormModal({
     );
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={() => {
-        if (!pending) onClose();
-      }}
-      visible={visible}
-    >
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <View ref={backButtonRef}>
-            <Pressable
-              accessibilityLabel="Go back"
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={onClose}
-              style={styles.backBtn}
-            >
-              <ChevronLeft color={theme.colors.textPrimary} size={24} />
-            </Pressable>
-          </View>
-
-          <View
-            style={[
-              styles.titleCol,
-              titleAlign === "left" && styles.titleColLeft,
-            ]}
-          >
-            {headerTitle ?? (
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.title,
-                  titleAlign === "left" && styles.titleLeft,
-                ]}
+    <>
+      <Modal
+        animationType="slide"
+        onRequestClose={handleRequestClose}
+        visible={visible}
+      >
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+          <View style={styles.header}>
+            <View ref={backButtonRef}>
+              <Pressable
+                accessibilityLabel="Go back"
+                accessibilityRole="button"
+                disabled={pending}
+                onPress={handleRequestClose}
+                style={styles.backBtn}
               >
-                {title}
-              </Text>
-            )}
+                <ChevronLeft color={theme.colors.textPrimary} size={24} />
+              </Pressable>
+            </View>
+
+            <View
+              style={[
+                styles.titleCol,
+                titleAlign === "left" && styles.titleColLeft,
+              ]}
+            >
+              {headerTitle ?? (
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.title,
+                    titleAlign === "left" && styles.titleLeft,
+                  ]}
+                >
+                  {title}
+                </Text>
+              )}
+            </View>
+
+            {headerRight ?? defaultHeaderRight}
           </View>
 
-          {headerRight ?? defaultHeaderRight}
+          <View style={[styles.body, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+            {children}
+          </View>
         </View>
+      </Modal>
 
-        <View style={[styles.body, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          {children}
-        </View>
-      </View>
-    </Modal>
+      <UnsavedChangesModal
+        visible={showUnsavedPrompt}
+        pending={pending}
+        saveDisabled={saveDisabled}
+        onSave={() => {
+          setShowUnsavedPrompt(false);
+          onSave?.();
+        }}
+        onDiscard={() => {
+          setShowUnsavedPrompt(false);
+          onClose();
+        }}
+        onKeepEditing={() => {
+          setShowUnsavedPrompt(false);
+        }}
+      />
+    </>
   );
 }
 

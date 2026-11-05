@@ -34,7 +34,7 @@ import {
   WalkthroughRegistryProvider,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { isProtectedCategoryId } from "../constants/categories.constants";
 import { CategoryGroupCard } from "../components/category-group-card";
 import { CategoryGroupModal } from "../components/category-group-modal";
@@ -45,7 +45,9 @@ import type { Category, CategoryType } from "../types/category.types";
 export function CategoriesScreen(props: {
   initialType?: CategoryType;
   initialView?: "group";
+  initialCategoryId?: string;
 }) {
+
   return (
     <WalkthroughRegistryProvider>
       <CategoriesScreenContent {...props} />
@@ -56,10 +58,15 @@ export function CategoriesScreen(props: {
 function CategoriesScreenContent({
   initialType,
   initialView,
+  initialCategoryId,
 }: {
   initialType?: CategoryType;
   initialView?: "group";
+  initialCategoryId?: string;
 }) {
+
+  const router = useRouter();
+  const handledCategoryIdRef = useRef<string | null>(null);
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
@@ -107,6 +114,34 @@ function CategoriesScreenContent({
       setIsGroupModalVisible(true);
     }
   }, [initialView]);
+
+  useEffect(() => {
+    if (!loading && initialCategoryId && handledCategoryIdRef.current !== initialCategoryId) {
+      const group = categories.find((c) => c.id === initialCategoryId);
+      if (group) {
+        handledCategoryIdRef.current = initialCategoryId;
+        setSelectedType(group.type);
+        setGroupToEdit(group);
+        setIsGroupModalVisible(true);
+        router.setParams({ categoryId: undefined });
+        return;
+      }
+      for (const parent of categories) {
+        const sub = parent.subcategories?.find((s) => s.id === initialCategoryId);
+        if (sub) {
+          handledCategoryIdRef.current = initialCategoryId;
+          setSelectedType(parent.type);
+          setParentForSub(parent);
+          setSubToEdit(sub);
+          setIsSubModalVisible(true);
+          router.setParams({ categoryId: undefined });
+          return;
+        }
+      }
+    } else if (!initialCategoryId) {
+      handledCategoryIdRef.current = null;
+    }
+  }, [categories, initialCategoryId, loading, router]);
 
   // Subcategory Modal State
   const [isSubModalVisible, setIsSubModalVisible] = useState(false);

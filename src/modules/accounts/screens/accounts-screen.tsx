@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, ScrollView, View } from "react-native";
-import { useRouter } from "expo-router";
+import { ActivityIndicator, DeviceEventEmitter, ScrollView, View } from "react-native";
+import { usePathname, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
@@ -61,6 +61,8 @@ type Overlay =
 
 export function AccountsScreen(props: {
   initialView?: "types" | "account" | "archived";
+  initialAccountId?: string;
+  initialPocketId?: string;
 }) {
   return (
     <WalkthroughRegistryProvider>
@@ -71,14 +73,33 @@ export function AccountsScreen(props: {
 
 function AccountsScreenContent({
   initialView,
+  initialAccountId,
+  initialPocketId,
 }: {
   initialView?: "types" | "account" | "archived";
+  initialAccountId?: string;
+  initialPocketId?: string;
 }) {
   const router = useRouter();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
+
+  const pathname = usePathname();
+  const isScreenActive = pathname.startsWith("/accounts");
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (isScreenActive) {
+          data.refresh();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [isScreenActive, data.refresh]);
   const fundGroups = useFundGroups();
   const mutations = useAccountMutations(data.refresh);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
@@ -92,6 +113,7 @@ function AccountsScreenContent({
     () => initialView === "archived",
   );
   const handledViewRef = useRef<string | null>(null);
+  const handledAccountIdRef = useRef<string | null>(null);
   const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
     string | null
   >(null);
@@ -136,6 +158,17 @@ function AccountsScreenContent({
     },
     [measureTargetInAncestor],
   );
+
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      data.refresh();
+      fundGroups.refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [data.refresh, fundGroups.refresh]);
 
   const walkthrough = useAccountsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
@@ -226,6 +259,28 @@ function AccountsScreenContent({
       handledViewRef.current = null;
     }
   }, [data.loading, handleOpenAddAccount, initialView, router]);
+
+  useEffect(() => {
+    if (!data.loading && initialAccountId && handledAccountIdRef.current !== initialAccountId) {
+      const foundAccount = data.accounts.find((a) => a.id === initialAccountId);
+      if (foundAccount) {
+        handledAccountIdRef.current = initialAccountId;
+        if (initialPocketId) {
+          setExpandedPocketAccountIds((prev) => new Set(prev).add(initialAccountId));
+          open({
+            kind: "pocket-form",
+            accountId: initialAccountId,
+            pocketId: initialPocketId,
+          });
+        } else {
+          open({ kind: "edit", id: foundAccount.id });
+        }
+        router.setParams({ accountId: undefined, pocketId: undefined });
+      }
+    } else if (!initialAccountId) {
+      handledAccountIdRef.current = null;
+    }
+  }, [data.accounts, data.loading, initialAccountId, initialPocketId, router]);
 
   const close = () => setOverlay(null);
   const selectedAccountId = overlay
@@ -330,6 +385,8 @@ function AccountsScreenContent({
       contentContainerStyle={contentSpacing}
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }

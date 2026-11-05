@@ -1,6 +1,7 @@
 import { PropsWithChildren, ReactNode } from "react";
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,7 +17,7 @@ import {
   LAYOUT_DIMENSIONS,
 } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 
 export interface PageContainerProps extends PropsWithChildren {
   header?: ReactNode;
@@ -27,6 +28,8 @@ export interface PageContainerProps extends PropsWithChildren {
   scrollEnabled?: boolean;
   scrollRef?: React.RefObject<ScrollView | null>;
   scrollContentRef?: React.RefObject<View | null>;
+  onRefresh?: () => Promise<void> | void;
+  refreshing?: boolean;
 }
 
 export function PageContainer({
@@ -39,7 +42,10 @@ export function PageContainer({
   scrollEnabled = true,
   scrollRef,
   scrollContentRef,
+  onRefresh,
+  refreshing,
 }: PageContainerProps) {
+  const theme = useAppTheme();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
@@ -86,6 +92,16 @@ export function PageContainer({
         scrollEnabled={scrollEnabled}
         showsVerticalScrollIndicator
         style={styles.scrollWrapper}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              colors={[theme.colors.primary]}
+              onRefresh={onRefresh}
+              refreshing={Boolean(refreshing)}
+              tintColor={theme.colors.primary}
+            />
+          ) : undefined
+        }
       >
         {innerContent}
       </ScrollView>
@@ -205,7 +221,13 @@ function createEmptyStyles(theme: AppTheme) {
       paddingVertical: theme.spacing.xxxl,
     },
     iconWrapper: {
-      marginBottom: theme.spacing.md,
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}12`,
+      borderRadius: 36,
+      height: 72,
+      justifyContent: "center",
+      marginBottom: theme.spacing.lg,
+      width: 72,
     },
     emptyTitle: {
       color: theme.colors.textPrimary,

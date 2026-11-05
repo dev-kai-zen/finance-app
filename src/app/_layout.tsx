@@ -47,6 +47,7 @@ function RootLayoutContent() {
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||
+    pathname.startsWith("/support") ||
     pathname.startsWith("/widgets") ||
     pathname.startsWith("/kai-knowledge") ||
     pathname.startsWith("/transactions/scheduled");
@@ -133,6 +134,13 @@ function RootLayoutContent() {
                         />
                         <Stack.Screen
                           name="reminder-settings"
+                          options={{
+                            presentation: "fullScreenModal",
+                            headerShown: false,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="support"
                           options={{
                             presentation: "fullScreenModal",
                             headerShown: false,

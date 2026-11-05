@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { Target } from "lucide-react-native";
 import {
+  AppButton,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
@@ -44,7 +45,10 @@ const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "completed", label: "Completed" },
 ];
 
-export function GoalsScreen(props?: { initialAction?: "new" }) {
+export function GoalsScreen(props?: {
+  initialAction?: "new";
+  initialGoalId?: string;
+}) {
   return (
     <WalkthroughRegistryProvider>
       <GoalsScreenContent {...props} />
@@ -53,9 +57,11 @@ export function GoalsScreen(props?: { initialAction?: "new" }) {
 }
 
 function GoalsScreenContent({
+  initialGoalId,
   initialAction,
 }: {
   initialAction?: "new";
+  initialGoalId?: string;
 }) {
   const router = useRouter();
   const theme = useAppTheme();
@@ -72,13 +78,25 @@ function GoalsScreenContent({
     saveGoal,
     deleteGoal,
     toggleStatus,
+    refresh,
   } = useGoals();
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh]);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
   const handledActionRef = useRef<string | null>(null);
+  const handledGoalIdRef = useRef<string | null>(null);
 
   // Walkthrough targets & coordination
   const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
@@ -169,6 +187,20 @@ function GoalsScreenContent({
     }
   }, [handleOpenCreate, initialAction, loading, router]);
 
+  useEffect(() => {
+    if (!loading && initialGoalId && handledGoalIdRef.current !== initialGoalId) {
+      const found = goals.find((g) => g.id === initialGoalId);
+      if (found) {
+        handledGoalIdRef.current = initialGoalId;
+        setGoalToEdit(found);
+        setIsFormOpen(true);
+        router.setParams({ goalId: undefined });
+      }
+    } else if (!initialGoalId) {
+      handledGoalIdRef.current = null;
+    }
+  }, [goals, initialGoalId, loading, router]);
+
   const handleOpenEdit = (goal: GoalWithProgress) => {
     setGoalToEdit(goal);
     setIsFormOpen(true);
@@ -211,6 +243,8 @@ function GoalsScreenContent({
     <PageContainer
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       contentContainerStyle={contentSpacing}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
@@ -312,6 +346,12 @@ function GoalsScreenContent({
               ? "Create your first goal, link it to an account, and monitor your savings journey with live balances and deadlines using the + button."
               : "Adjust your filter or create a new goal to track your progress."}
           </Text>
+          <View style={styles.emptyCtaWrap}>
+            <AppButton
+              label={"+ Create First Goal"}
+              onPress={handleOpenCreate}
+            />
+          </View>
         </View>
       ) : (
         <View style={styles.goalsList}>
@@ -478,6 +518,9 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderStyle: "dashed",
       marginVertical: theme.spacing.lg,
+    },
+    emptyCtaWrap: {
+      marginTop: theme.spacing.lg,
     },
     emptyIconCircle: {
       width: 72,

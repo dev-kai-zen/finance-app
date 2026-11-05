@@ -191,6 +191,7 @@ function ScheduledTransactionFormModalContent({
   const [toAccountId, setToAccountId] = useState<string | null>(null);
   const [toPocketId, setToPocketId] = useState<string | null>(null);
   const [amountMinorUnits, setAmountMinorUnits] = useState(0);
+  const [amountSign, setAmountSign] = useState<"+" | "-">("-");
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
@@ -209,6 +210,7 @@ function ScheduledTransactionFormModalContent({
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [dateTimePicker, setDateTimePicker] =
     useState<DateTimePickerTarget | null>(null);
+  const initialSnapshotRef = useRef<string>("");
   const [infoModal, setInfoModal] = useState<{
     title: string;
     message: string;
@@ -220,13 +222,17 @@ function ScheduledTransactionFormModalContent({
     const type = initialSchedule?.transactionType ?? "expense";
     setTransactionType(type);
 
+    let defaultResolvedAccountId = "";
+    let defaultResolvedPocketId: string | null = null;
     if (initialSchedule) {
       setAccountId(initialSchedule.accountId);
       setPocketId(initialSchedule.pocketId ?? null);
       setToAccountId(initialSchedule.toAccountId ?? null);
       setToPocketId(initialSchedule.toPocketId ?? null);
       setCategoryId(initialSchedule.categoryId ?? null);
-      setAmountMinorUnits(initialSchedule.amountMinorUnits);
+      const isNegative = initialSchedule.amountMinorUnits < 0;
+      setAmountSign(isNegative ? "-" : "+");
+      setAmountMinorUnits(Math.abs(initialSchedule.amountMinorUnits));
       setName(initialSchedule.name ?? "");
       setNote(initialSchedule.note ?? "");
       setFrequency(initialSchedule.frequency);
@@ -253,6 +259,8 @@ function ScheduledTransactionFormModalContent({
         defaultIncomeAccountId: effectiveDefaultIncomeAccountId,
         defaultIncomePocketId: effectiveDefaultIncomePocketId,
       });
+      defaultResolvedAccountId = resolved.accountId;
+      defaultResolvedPocketId = resolved.pocketId;
       setAccountId(resolved.accountId);
       setPocketId(resolved.pocketId);
       setToAccountId(null);
@@ -260,6 +268,7 @@ function ScheduledTransactionFormModalContent({
       setCategoryId(
         categories.find((item) => item.type === "expense")?.id ?? null,
       );
+      setAmountSign(type === "income" ? "+" : "-");
       setAmountMinorUnits(0);
       setName("");
       setNote("");
@@ -273,6 +282,27 @@ function ScheduledTransactionFormModalContent({
       setWeekendPolicy("next_weekday");
       setAutoPost(false);
     }
+    initialSnapshotRef.current = JSON.stringify({
+      transactionType: type,
+      accountId: initialSchedule ? initialSchedule.accountId : defaultResolvedAccountId,
+      pocketId: initialSchedule ? (initialSchedule.pocketId ?? null) : defaultResolvedPocketId,
+      toAccountId: initialSchedule ? (initialSchedule.toAccountId ?? null) : null,
+      toPocketId: initialSchedule ? (initialSchedule.toPocketId ?? null) : null,
+      categoryId: initialSchedule ? (initialSchedule.categoryId ?? null) : (categories.find((item) => item.type === "expense")?.id ?? null),
+      amountSign: initialSchedule ? (initialSchedule.amountMinorUnits < 0 ? "-" : "+") : (type === "income" ? "+" : "-"),
+      amountMinorUnits: initialSchedule ? Math.abs(initialSchedule.amountMinorUnits) : 0,
+      name: initialSchedule ? (initialSchedule.name ?? "") : "",
+      note: initialSchedule ? (initialSchedule.note ?? "") : "",
+      frequency: initialSchedule ? initialSchedule.frequency : "monthly",
+      intervalText: initialSchedule ? String(initialSchedule.intervalCount) : "1",
+      startsAtTime: Math.floor(start.getTime() / 60000),
+      endMode: initialSchedule ? initialSchedule.endMode : "never",
+      maxOccurrencesText: initialSchedule ? String(initialSchedule.maxOccurrences ?? 12) : "12",
+      endsOn: initialSchedule ? (initialSchedule.endsOn ?? dateKey(start)) : dateKey(start),
+      weekendAdjust: initialSchedule ? initialSchedule.weekendPolicy !== "exact" : false,
+      weekendPolicy: initialSchedule && initialSchedule.weekendPolicy !== "exact" ? initialSchedule.weekendPolicy : "next_weekday",
+      autoPost: initialSchedule ? initialSchedule.autoPost : false,
+    });
     setLocalError(null);
   }, [
     accounts,
@@ -324,6 +354,11 @@ function ScheduledTransactionFormModalContent({
 
   const chooseType = (value: ScheduledTransactionType) => {
     setTransactionType(value);
+    if (value === "expense") {
+      setAmountSign("-");
+    } else if (value === "income") {
+      setAmountSign("+");
+    }
     setCategoryId(
       value === "transfer"
         ? null
@@ -389,6 +424,53 @@ function ScheduledTransactionFormModalContent({
     setDateTimePicker(null);
   };
 
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      transactionType,
+      accountId,
+      pocketId,
+      toAccountId,
+      toPocketId,
+      categoryId,
+      amountSign,
+      amountMinorUnits,
+      name,
+      note,
+      frequency,
+      intervalText,
+      startsAtTime: Math.floor(startsAt.getTime() / 60000),
+      endMode,
+      maxOccurrencesText,
+      endsOn,
+      weekendAdjust,
+      weekendPolicy,
+      autoPost,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [
+    visible,
+    transactionType,
+    accountId,
+    pocketId,
+    toAccountId,
+    toPocketId,
+    categoryId,
+    amountSign,
+    amountMinorUnits,
+    name,
+    note,
+    frequency,
+    intervalText,
+    startsAt,
+    endMode,
+    maxOccurrencesText,
+    endsOn,
+    weekendAdjust,
+    weekendPolicy,
+    autoPost,
+  ]);
+
   const handleSave = () => {
     setLocalError(null);
     const intervalCount = Number(intervalText);
@@ -418,6 +500,13 @@ function ScheduledTransactionFormModalContent({
     const resolvedWeekendPolicy: ScheduleWeekendPolicy =
       frequency === "once" || !weekendAdjust ? "exact" : weekendPolicy;
 
+    const signedAmount =
+      transactionType === "transfer"
+        ? Math.abs(amountMinorUnits)
+        : amountSign === "-"
+          ? -Math.abs(amountMinorUnits)
+          : Math.abs(amountMinorUnits);
+
     const success = onSave(
       {
         transactionType,
@@ -426,7 +515,7 @@ function ScheduledTransactionFormModalContent({
         categoryId,
         toAccountId,
         toPocketId,
-        amountMinorUnits,
+        amountMinorUnits: signedAmount,
         name,
         note,
         frequency,
@@ -502,6 +591,7 @@ function ScheduledTransactionFormModalContent({
         saveLabel="Save schedule"
         title={initialSchedule ? "Edit Schedule" : "New Schedule"}
         visible={visible}
+        isDirty={isDirty}
       >
         <KeyboardAwareForm
           contentContainerStyle={styles.formContent}
@@ -540,14 +630,20 @@ function ScheduledTransactionFormModalContent({
                 amountSign={
                   transactionType === "transfer"
                     ? "transfer"
-                    : transactionType === "expense"
-                      ? "-"
-                      : "+"
+                    : amountSign
                 }
                 currencyCode={currencyCode}
                 label="Amount"
                 onOpenCalculator={() => setCalculatorOpen(true)}
-                showSignToggle={false}
+                showSignToggle={transactionType !== "transfer"}
+                onToggleSign={
+                  transactionType !== "transfer"
+                    ? () => {
+                        setLocalError(null);
+                        setAmountSign((prev) => (prev === "+" ? "-" : "+"));
+                      }
+                    : undefined
+                }
               />
             </View>
 
@@ -880,6 +976,10 @@ function ScheduledTransactionFormModalContent({
         initialMinorUnits={amountMinorUnits}
         onClose={() => setCalculatorOpen(false)}
         onConfirm={(value) => {
+          setLocalError(null);
+          if (transactionType === "income" && value < 0) {
+            setAmountSign("-");
+          }
           setAmountMinorUnits(Math.abs(value));
           setCalculatorOpen(false);
         }}

@@ -63,8 +63,10 @@ export function CreditCardMonitoringScreen() {
         <PageErrorState message={data.error} onRetry={data.refresh} />
       ) : data.cards.length === 0 ? (
         <PageEmptyState
+          actionLabel="+ Add Credit Card Account"
+          onAction={() => router.push("/accounts")}
           description="Create a Credit Card account to monitor billing cycles, installments, and utilization."
-          icon={<CreditCard color={theme.colors.textMuted} size={32} />}
+          icon={<CreditCard color={theme.colors.primary} size={32} />}
           title="No credit cards to monitor"
         />
       ) : (

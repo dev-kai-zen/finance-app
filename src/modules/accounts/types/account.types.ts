@@ -29,7 +29,6 @@ export type PocketListItem = Pocket & {
 export type PocketInput = {
   accountId: string;
   name: string;
-  targetAmount: string;
 };
 
 export type AccountListItem = Account & {

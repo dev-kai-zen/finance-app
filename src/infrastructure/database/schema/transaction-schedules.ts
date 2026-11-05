@@ -97,7 +97,14 @@ export const transactionSchedules = sqliteTable(
       "transaction_schedules_weekend_policy_check",
       sql`${table.weekendPolicy} in ('exact', 'next_weekday', 'previous_weekday', 'skip')`,
     ),
-    check("transaction_schedules_amount_check", sql`${table.amountMinorUnits} > 0`),
+    check(
+      "transaction_schedules_amount_check",
+      sql`${table.amountMinorUnits} != 0`,
+    ),
+    check(
+      "transaction_schedules_transfer_amount_check",
+      sql`${table.transactionType} != 'transfer' or ${table.amountMinorUnits} > 0`,
+    ),
     check(
       "transaction_schedules_interval_check",
       sql`${table.intervalCount} > 0`,

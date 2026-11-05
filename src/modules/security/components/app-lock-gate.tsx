@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { StyleSheet, View } from "react-native";
+import { Modal, StyleSheet, View } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useAppLock } from "../hooks/use-app-lock";
 import { LockScreen } from "./lock-screen";
@@ -24,9 +24,21 @@ export function AppLockGate({ children }: PropsWithChildren) {
     <View style={styles.container}>
       {children}
       {isLocked && (
-        <View style={[StyleSheet.absoluteFill, styles.overlay]}>
-          <LockScreen />
-        </View>
+        <Modal
+          animationType="fade"
+          hardwareAccelerated
+          onRequestClose={() => {
+            // Block hardware/gesture back button from dismissing the lock screen
+          }}
+          presentationStyle="fullScreen"
+          statusBarTranslucent
+          transparent={false}
+          visible={isLocked}
+        >
+          <View style={[styles.container, styles.overlay, { backgroundColor: theme.colors.background }]}>
+            <LockScreen />
+          </View>
+        </Modal>
       )}
     </View>
   );

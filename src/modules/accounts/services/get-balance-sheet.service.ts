@@ -18,7 +18,6 @@ import { compareAccountTypesForDisplay } from "../utils/account-type-order";
 export interface BalanceSheetPocketItem {
   id: string;
   name: string;
-  targetAmountMinorUnits: number | null;
   balanceMinorUnits: number;
 }
 
@@ -85,7 +84,6 @@ export function getBalanceSheet(
     list.push({
       id: pocket.id,
       name: pocket.name,
-      targetAmountMinorUnits: pocket.targetAmountMinorUnits,
       balanceMinorUnits: pocketDeltas[pocket.id] ?? 0,
     });
     pocketsByAccountId.set(pocket.accountId, list);

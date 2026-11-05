@@ -1,5 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
@@ -12,6 +22,8 @@ import {
   Cloud,
   Crown,
   Database,
+  Eye,
+  EyeOff,
   HardDrive,
   Heart,
   Info,
@@ -26,16 +38,20 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Smile,
+  Smartphone,
   Sparkles,
+  Star,
   Terminal,
   Trash2,
+  Vibrate,
+  Volume2,
 } from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
-import { AdBanner, useAdsDevMode } from "@/modules/ads";
+import { useAdsDevMode } from "@/modules/ads";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
@@ -47,6 +63,8 @@ import { ThemeSwatchPreview } from "@/modules/settings/components/theme-preset-c
 import { ResetDataModal } from "@/modules/settings/components/reset-data-modal";
 import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components/settings-default-account-picker-modal";
 import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-modal";
+import { GesturesSettingsModal, useQuickEntry } from "@/modules/gestures";
+import { useShakeActionSetting } from "../hooks/use-shake-action-setting";
 import {
   DraggableTourChip,
   SettingsWalkthroughOverlay,
@@ -62,8 +80,12 @@ import { useDefaultAccounts } from "../hooks/use-default-accounts";
 import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
+import { useSoundAndHaptics } from "../hooks/use-sound-and-haptics";
+import { usePrivacyMode } from "../hooks/use-privacy-mode";
 import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
+import { HapticFeedbackSettingsModal } from "../components/haptic-feedback-settings-modal";
+import { SoundEffectsSettingsModal } from "../components/sound-effects-settings-modal";
 import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
 import { useCurrencyPreferences } from "@/modules/currencies";
 
@@ -104,6 +126,13 @@ function SettingsScreenContent() {
   const { nickname, setNickname } = useUserNickname();
   const { mode: chatMode, setMode: setChatMode } = useChatTransactionMode();
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
+  const { shakeAction, setShakeAction } = useShakeActionSetting();
+  const soundAndHaptics = useSoundAndHaptics();
+  const privacyMode = usePrivacyMode();
+  const { triggerShakeAction } = useQuickEntry();
+  const [isGesturesModalOpen, setIsGesturesModalOpen] = useState(false);
+  const [isHapticsModalOpen, setIsHapticsModalOpen] = useState(false);
+  const [isSoundModalOpen, setIsSoundModalOpen] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
@@ -165,6 +194,14 @@ function SettingsScreenContent() {
             setIsVersionHistoryOpen(true);
           } else if (target === "settingsDeveloperMessage") {
             setIsDeveloperMessageOpen(true);
+          } else if (target === "settingsSupportDevelopment") {
+            router.navigate("/support" as any);
+          } else if (target === "settingsHaptics") {
+            setIsHapticsModalOpen(true);
+          } else if (target === "settingsSound") {
+            setIsSoundModalOpen(true);
+          } else if (target === "settingsGestures") {
+            setIsGesturesModalOpen(true);
           } else if (target === "settingsPro") {
             setIsPaywallOpen(true);
           }
@@ -181,7 +218,8 @@ function SettingsScreenContent() {
       clearTimeout(scrollTimer);
       clearTimeout(clearHighlightTimer);
     };
-  }, [target, openModal]);
+  }, [target, openModal, router]);
+
   const {
     isPro,
     isDevSimulated,
@@ -203,7 +241,6 @@ function SettingsScreenContent() {
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
-  const { isPromptDismissed } = experience;
 
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
@@ -214,6 +251,7 @@ function SettingsScreenContent() {
   const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
   const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
+  const gesturesRef = useWalkthroughTarget("settingsGestures");
   const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
   const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
   const hexColorsRef = useWalkthroughTarget("settingsHexColors");
@@ -228,7 +266,6 @@ function SettingsScreenContent() {
   const scrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
   const itemScrollY = useRef<Record<string, number>>({});
-  const didAutoStartWalkthroughRef = useRef(false);
 
   const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
     const offset = itemScrollY.current[targetId];
@@ -302,6 +339,7 @@ function SettingsScreenContent() {
       }
     >
       <View style={styles.container}>
+        {/* 1. Localization */}
         <View
           onLayout={(e) => {
             sectionOffsets.current["localization"] = e.nativeEvent.layout.y;
@@ -351,7 +389,7 @@ function SettingsScreenContent() {
                 itemScrollY.current["settingsCurrency"] =
                   (sectionOffsets.current["localization"] || 0) + e.nativeEvent.layout.y;
               }}
-              accessibilityLabel={t("settings.currencySetupAccessibility")}
+              accessibilityLabel={t("settingsWalkthrough.stepCurrencyTitle")}
               accessibilityRole="button"
               onPress={() => router.push("/currency-setup")}
               style={({ pressed }) => [
@@ -376,406 +414,14 @@ function SettingsScreenContent() {
           </View>
         </View>
 
-        <AdBanner
-          placement="settings"
-          variant="card"
-          style={{ marginBottom: theme.spacing.lg }}
-        />
-
-        <View
-          onLayout={(e) => {
-            sectionOffsets.current["general"] = e.nativeEvent.layout.y;
-          }}
-          style={styles.section}
-        >
-          <Text style={styles.sectionTitle}>
-            {t("settings.generalSection")}
-          </Text>
-          <View style={styles.card}>
-            <Pressable
-              ref={nicknameRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsNickname"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.nicknameTitle")}
-              accessibilityRole="button"
-              onPress={() => setIsNicknameModalOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsNickname" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Smile color={theme.colors.primary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.nicknameTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {nickname?.trim() || t("settings.nicknameNotSet")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={themeRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsTheme"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.themeAccessibility", {
-                theme: theme.name,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsThemePickerOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsTheme" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Palette color={theme.colors.primary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.themeTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>{themeValue}</Text>
-              </View>
-              <View style={styles.rowAccessory}>
-                <ThemeSwatchPreview preset={theme} />
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </View>
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={remindersRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsReminders"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.remindersAccessibility", {
-                defaultValue: "Configure reminder settings",
-              })}
-              accessibilityRole="button"
-              onPress={() => router.push("/reminder-settings")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsReminders" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Bell color={theme.colors.accent} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.remindersTitle", { defaultValue: "Reminders" })}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            {Platform.OS === "android" ? (
-              <>
-                <Pressable
-                  ref={widgetsRef as any}
-                  collapsable={false}
-                  onLayout={(e) => {
-                    itemScrollY.current["settingsWidgets"] =
-                      (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-                  }}
-                  accessibilityLabel={t("settings.widgetsAccessibility")}
-                  accessibilityRole="button"
-                  onPress={() => router.push("/widgets")}
-                  style={({ pressed }) => [
-                    styles.settingRow,
-                    highlightedTarget === "settingsWidgets" && styles.settingRowHighlighted,
-                    pressed && styles.settingRowPressed,
-                  ]}
-                >
-                  <View style={styles.iconContainer}>
-                    <LayoutGrid color={theme.colors.primary} size={20} />
-                  </View>
-                  <View style={styles.settingCopy}>
-                    <Text style={styles.settingLabel}>
-                      {t("settings.widgetsTitle")}
-                    </Text>
-                  </View>
-                  <ChevronRight color={theme.colors.textMuted} size={18} />
-                </Pressable>
-
-                <View style={styles.rowDivider} />
-              </>
-            ) : null}
-
-            <View
-              ref={guideHelperRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsGuideHelper"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              style={styles.toggleRow}
-            >
-              <View style={styles.iconContainer}>
-                <Sparkles color={theme.colors.accent} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.guideHelperTitle")}
-                </Text>
-              </View>
-              <ThemedSwitch
-                accessibilityLabel={t("settings.guideHelperTitle")}
-                onValueChange={(value) => experience.setGuideHelper(value)}
-                value={experience.guideHelperEnabled}
-              />
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            <View
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsQuickSearch"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              style={[
-                styles.toggleRow,
-                highlightedTarget === "settingsQuickSearch" && styles.settingRowHighlighted,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Search color={theme.colors.primary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.quickSearchTitle")}
-                </Text>
-              </View>
-              <ThemedSwitch
-                accessibilityLabel={t("settings.quickSearchTitle")}
-                onValueChange={(value) => experience.setGeneralSearch(value)}
-                value={experience.generalSearchEnabled}
-              />
-            </View>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={kaiKnowledgeRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsKaiKnowledge"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.kaiKnowledgeTitle")}
-              accessibilityRole="button"
-              onPress={() => router.push("/kai-knowledge")}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsKaiKnowledge" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Sparkles color={theme.colors.accent} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.kaiKnowledgeTitle")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              accessibilityLabel={t("settings.kaiChatModeTitle")}
-              accessibilityRole="button"
-              onPress={() => setIsChatSettingsOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <SlidersHorizontal color={theme.colors.accent} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.kaiChatModeTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {chatMode === "auto"
-                    ? t("chatWithKai.modeAutoTitle")
-                    : t("chatWithKai.modeReviewTitle")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={defaultExpenseRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsDefaultExpense"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.defaultExpenseAccessibility", {
-                account: expenseAccountName,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsExpensePickerOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsDefaultExpense" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <ArrowUpRight color={theme.colors.danger} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.defaultAccountExpenseLabel")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {expenseAccountName}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={defaultIncomeRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsDefaultIncome"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.defaultIncomeAccessibility", {
-                account: incomeAccountName,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsIncomePickerOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsDefaultIncome" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <ArrowDownLeft color={theme.colors.success} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.defaultAccountIncomeLabel")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {incomeAccountName}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={hexColorsRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsHexColors"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.hexColorsAccessibility", {
-                count: colors.length,
-              })}
-              accessibilityRole="button"
-              onPress={() => setIsHexColorsOpen(true)}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsHexColors" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Pipette color={theme.colors.primary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.hexColors")}
-                </Text>
-              </View>
-              <View style={styles.rowAccessory}>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>{colors.length}</Text>
-                </View>
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </View>
-            </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              ref={resetDataRef as any}
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsResetData"] =
-                  (sectionOffsets.current["general"] || 0) + e.nativeEvent.layout.y;
-              }}
-              accessibilityLabel={t("settings.resetDataAccessibility")}
-              accessibilityRole="button"
-              onPress={() => {
-                resetData.clearError();
-                setIsResetDataOpen(true);
-              }}
-              style={({ pressed }) => [
-                styles.settingRow,
-                highlightedTarget === "settingsResetData" && styles.settingRowHighlighted,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={[styles.iconContainer, styles.dangerIconContainer]}>
-                <Trash2 color={theme.colors.danger} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={[styles.settingLabel, styles.dangerLabel]}>
-                  {t("settings.resetData")}
-                </Text>
-              </View>
-              <ChevronRight color={theme.colors.textMuted} size={18} />
-            </Pressable>
-          </View>
-        </View>
-
+        {/* 2. Backup & Data */}
         <View
           onLayout={(e) => {
             sectionOffsets.current["backup"] = e.nativeEvent.layout.y;
           }}
           style={styles.section}
         >
-          <Text style={styles.sectionTitle}>{t("settings.backupSection")}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.backupDataSection")}</Text>
           <View style={styles.card}>
             <Pressable
               ref={localBackupRef as any}
@@ -840,6 +486,38 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={resetDataRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsResetData"] =
+                  (sectionOffsets.current["backup"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.resetDataAccessibility")}
+              accessibilityRole="button"
+              onPress={() => {
+                resetData.clearError();
+                setIsResetDataOpen(true);
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsResetData" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={[styles.iconContainer, styles.dangerIconContainer]}>
+                <Trash2 color={theme.colors.danger} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={[styles.settingLabel, styles.dangerLabel]}>
+                  {t("settings.resetData")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
           </View>
           {workspace.state.mode === "sample" ? (
             <View style={styles.card}>
@@ -860,6 +538,511 @@ function SettingsScreenContent() {
           ) : null}
         </View>
 
+        {/* 3. Appearance & Profile */}
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["appearance"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>
+            {t("settings.appearanceProfileSection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              ref={nicknameRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsNickname"] =
+                  (sectionOffsets.current["appearance"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.nicknameTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsNicknameModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsNickname" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Smile color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.nicknameTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {nickname?.trim() || t("settings.nicknameNotSet")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={themeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsTheme"] =
+                  (sectionOffsets.current["appearance"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.themeAccessibility", {
+                theme: theme.name,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsThemePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsTheme" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Palette color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.themeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>{themeValue}</Text>
+              </View>
+              <View style={styles.rowAccessory}>
+                <ThemeSwatchPreview preset={theme} />
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={hexColorsRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsHexColors"] =
+                  (sectionOffsets.current["appearance"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.hexColorsAccessibility", {
+                count: colors.length,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsHexColorsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsHexColors" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Pipette color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.hexColors")}
+                </Text>
+              </View>
+              <View style={styles.rowAccessory}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>{colors.length}</Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 4. Interactions & Feedback */}
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["interactions"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>
+            {t("settings.interactionsSection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              ref={gesturesRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGestures"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.gesturesAccessibility", {
+                action:
+                  shakeAction === "chat_with_kai"
+                    ? t("settings.shakeActionChatWithKai")
+                    : shakeAction === "manual_entry"
+                      ? t("settings.shakeActionManualEntry")
+                      : t("settings.shakeActionDisabled"),
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsGesturesModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsGestures" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Smartphone color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.gesturesTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {shakeAction === "chat_with_kai"
+                    ? `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionChatWithKai")}`
+                    : shakeAction === "manual_entry"
+                      ? `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionManualEntry")}`
+                      : `${t("settings.shakeGestureTitle")}: ${t("settings.shakeActionDisabled")}`}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <View
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsQuickSearch"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={[
+                styles.toggleRow,
+                highlightedTarget === "settingsQuickSearch" && styles.settingRowHighlighted,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Search color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.quickSearchTitle")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.quickSearchTitle")}
+                onValueChange={(value) => experience.setGeneralSearch(value)}
+                value={experience.generalSearchEnabled}
+              />
+            </View>
+
+            <View style={styles.rowDivider} />
+
+            <View
+              ref={guideHelperRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsGuideHelper"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={styles.toggleRow}
+            >
+              <View style={styles.iconContainer}>
+                <Sparkles color={theme.colors.accent} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.guideHelperTitle")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.guideHelperTitle")}
+                onValueChange={(value) => experience.setGuideHelper(value)}
+                value={experience.guideHelperEnabled}
+              />
+            </View>
+
+            <View style={styles.rowDivider} />
+
+            {/* Haptic Feedback Row -> opens modal */}
+            <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsHaptics"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.hapticsMaster")}
+              accessibilityRole="button"
+              onPress={() => setIsHapticsModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsHaptics" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Vibrate color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.hapticsMaster")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {soundAndHaptics.preferences.hapticsEnabled
+                    ? t("common.enabled")
+                    : t("common.disabled")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            {/* Sound Effects Row -> opens modal */}
+            <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsSound"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.soundMaster")}
+              accessibilityRole="button"
+              onPress={() => setIsSoundModalOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsSound" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Volume2 color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.soundMaster")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {soundAndHaptics.preferences.soundEnabled
+                    ? t("common.enabled")
+                    : t("common.disabled")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.kaiChatModeTitle")}
+              accessibilityRole="button"
+              onPress={() => setIsChatSettingsOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <SlidersHorizontal color={theme.colors.accent} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiChatModeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {chatMode === "auto"
+                    ? t("chatWithKai.modeAutoTitle")
+                    : t("chatWithKai.modeReviewTitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={kaiKnowledgeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsKaiKnowledge"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.kaiKnowledgeTitle")}
+              accessibilityRole="button"
+              onPress={() => router.push("/kai-knowledge")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsKaiKnowledge" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Sparkles color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.kaiKnowledgeTitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 5. Defaults & Preferences */}
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["defaults"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>
+            {t("settings.defaultsSection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              ref={defaultExpenseRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDefaultExpense"] =
+                  (sectionOffsets.current["defaults"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.defaultExpenseAccessibility", {
+                account: expenseAccountName,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsExpensePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsDefaultExpense" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <ArrowUpRight color={theme.colors.danger} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.defaultAccountExpenseLabel")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {expenseAccountName}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={defaultIncomeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDefaultIncome"] =
+                  (sectionOffsets.current["defaults"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.defaultIncomeAccessibility", {
+                account: incomeAccountName,
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsIncomePickerOpen(true)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsDefaultIncome" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <ArrowDownLeft color={theme.colors.success} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.defaultAccountIncomeLabel")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {incomeAccountName}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 6. Notifications & Widgets */}
+        <View
+          onLayout={(e) => {
+            sectionOffsets.current["notifications"] = e.nativeEvent.layout.y;
+          }}
+          style={styles.section}
+        >
+          <Text style={styles.sectionTitle}>
+            {t("settings.notificationsSection")}
+          </Text>
+          <View style={styles.card}>
+            <Pressable
+              ref={remindersRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsReminders"] =
+                  (sectionOffsets.current["notifications"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.remindersAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.push("/reminder-settings")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsReminders" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Bell color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.remindersTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.remindersDescription")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            {Platform.OS === "android" ? (
+              <>
+                <View style={styles.rowDivider} />
+
+                <Pressable
+                  ref={widgetsRef as any}
+                  collapsable={false}
+                  onLayout={(e) => {
+                    itemScrollY.current["settingsWidgets"] =
+                      (sectionOffsets.current["notifications"] || 0) + e.nativeEvent.layout.y;
+                  }}
+                  accessibilityLabel={t("settings.widgetsAccessibility")}
+                  accessibilityRole="button"
+                  onPress={() => router.push("/widgets")}
+                  style={({ pressed }) => [
+                    styles.settingRow,
+                    highlightedTarget === "settingsWidgets" && styles.settingRowHighlighted,
+                    pressed && styles.settingRowPressed,
+                  ]}
+                >
+                  <View style={styles.iconContainer}>
+                    <LayoutGrid color={theme.colors.primary} size={20} />
+                  </View>
+                  <View style={styles.settingCopy}>
+                    <Text style={styles.settingLabel}>
+                      {t("settings.widgetsTitle")}
+                    </Text>
+                    <Text style={styles.settingDescription}>
+                      {t("settings.widgetsDescription")}
+                    </Text>
+                  </View>
+                  <ChevronRight color={theme.colors.textMuted} size={18} />
+                </Pressable>
+              </>
+            ) : null}
+          </View>
+        </View>
+
+        {/* 7. Security & Privacy */}
         <View
           onLayout={(e) => {
             sectionOffsets.current["security"] = e.nativeEvent.layout.y;
@@ -907,10 +1090,46 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            {/* Stealth Mode (Hide Balances) Switch Row */}
+            <View
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsStealth"] =
+                  (sectionOffsets.current["security"] || 0) + e.nativeEvent.layout.y;
+              }}
+              style={[
+                styles.toggleRow,
+                highlightedTarget === "settingsStealth" && styles.settingRowHighlighted,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                {privacyMode.isPrivate ? (
+                  <EyeOff color={theme.colors.primary} size={20} />
+                ) : (
+                  <Eye color={theme.colors.primary} size={20} />
+                )}
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.stealthModeTitle")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.stealthModeDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.stealthModeTitle")}
+                onValueChange={(value) => privacyMode.setPrivacyMode(value)}
+                value={privacyMode.isPrivate}
+              />
+            </View>
           </View>
         </View>
 
-        {/* Kaizen Pro Section */}
+        {/* 8. Kaizen Pro */}
         <View
           onLayout={(e) => {
             sectionOffsets.current["pro"] = e.nativeEvent.layout.y;
@@ -926,6 +1145,7 @@ function SettingsScreenContent() {
                 itemScrollY.current["settingsPro"] =
                   (sectionOffsets.current["pro"] || 0) + e.nativeEvent.layout.y;
               }}
+              accessibilityLabel={isPro ? t("pro.proActive") : t("pro.sidebarTitle")}
               accessibilityRole="button"
               onPress={() => setIsPaywallOpen(true)}
               style={({ pressed }) => [
@@ -1087,6 +1307,38 @@ function SettingsScreenContent() {
               </Pressable>
               <View style={styles.rowDivider} />
               <Pressable
+                accessibilityLabel={t("settings.testShakeGestureDev")}
+                accessibilityRole="button"
+                onPress={() => {
+                  if (shakeAction === "disabled") {
+                    Alert.alert(
+                      t("settings.gesturesTitle"),
+                      t("settings.shakeDisabledAlert"),
+                    );
+                  } else {
+                    triggerShakeAction();
+                  }
+                }}
+                style={({ pressed }) => [
+                  styles.settingRow,
+                  pressed && styles.settingRowPressed,
+                ]}
+              >
+                <View style={styles.iconContainer}>
+                  <Smartphone color={theme.colors.warning} size={20} />
+                </View>
+                <View style={styles.settingCopy}>
+                  <Text style={styles.settingLabel}>
+                    {t("settings.testShakeGestureDev")}
+                  </Text>
+                  <Text style={styles.settingDescription}>
+                    {t("settings.testShakeGestureDevDescription")}
+                  </Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </Pressable>
+              <View style={styles.rowDivider} />
+              <Pressable
                 accessibilityLabel={t("settings.sqliteMonitor")}
                 accessibilityRole="button"
                 onPress={() => router.push("/monitor")}
@@ -1112,13 +1364,14 @@ function SettingsScreenContent() {
           </View>
         ) : null}
 
+        {/* 9. About & Support */}
         <View
           onLayout={(e) => {
             sectionOffsets.current["about"] = e.nativeEvent.layout.y;
           }}
           style={styles.section}
         >
-          <Text style={styles.sectionTitle}>{t("settings.aboutSection")}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.aboutSupportSection")}</Text>
           <View style={styles.card}>
             <Pressable
               ref={versionHistoryRef as any}
@@ -1173,6 +1426,37 @@ function SettingsScreenContent() {
                 </Text>
                 <Text style={styles.settingDescription}>
                   {t("settings.developerMessageSubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsSupportDevelopment"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.supportDevelopmentAccessibility")}
+              accessibilityRole="button"
+              onPress={() => router.navigate("/support" as any)}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsSupportDevelopment" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Star color="#F59E0B" size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.supportDevelopment")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.supportDevelopmentSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1302,6 +1586,24 @@ function SettingsScreenContent() {
         onOpenKnowledge={() => router.push("/kai-knowledge")}
         onSelectMode={setChatMode}
         visible={isChatSettingsOpen}
+      />
+
+      <GesturesSettingsModal
+        onClose={() => setIsGesturesModalOpen(false)}
+        onSelectShakeAction={setShakeAction}
+        onTestShake={() => triggerShakeAction()}
+        shakeAction={shakeAction}
+        visible={isGesturesModalOpen}
+      />
+
+      <HapticFeedbackSettingsModal
+        onClose={() => setIsHapticsModalOpen(false)}
+        visible={isHapticsModalOpen}
+      />
+
+      <SoundEffectsSettingsModal
+        onClose={() => setIsSoundModalOpen(false)}
+        visible={isSoundModalOpen}
       />
 
       {isExpensePickerOpen ? (

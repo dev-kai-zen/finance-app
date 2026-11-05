@@ -66,7 +66,10 @@ const FILTER_TABS: Array<{ key: FrequencyFilter; label: string }> = [
   { key: "yearly", label: "Yearly" },
 ];
 
-export function BudgetsScreen(props?: { initialAction?: "new" }) {
+export function BudgetsScreen(props?: {
+  initialAction?: "new";
+  initialCategoryId?: string;
+}) {
   return (
     <WalkthroughRegistryProvider>
       <BudgetsScreenContent {...props} />
@@ -75,9 +78,11 @@ export function BudgetsScreen(props?: { initialAction?: "new" }) {
 }
 
 function BudgetsScreenContent({
+  initialCategoryId,
   initialAction,
 }: {
   initialAction?: "new";
+  initialCategoryId?: string;
 }) {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -91,6 +96,7 @@ function BudgetsScreenContent({
   const [budgetToEdit, setBudgetToEdit] = useState<CategoryBudget | null>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<string | null>(null);
   const handledActionRef = useRef<string | null>(null);
+  const handledCategoryIdRef = useRef<string | null>(null);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const { preferences } = useCurrencyPreferences();
@@ -105,7 +111,18 @@ function BudgetsScreenContent({
     saveBudget,
     toggleBudget,
     deleteBudget,
+    refresh,
   } = useBudgets();
+
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refresh]);
 
   // Filtered list
   const filteredStatuses = useMemo(() => {
@@ -205,6 +222,21 @@ function BudgetsScreenContent({
     }
   }, [handleOpenCreate, initialAction, loading, router]);
 
+  useEffect(() => {
+    if (!loading && initialCategoryId && handledCategoryIdRef.current !== initialCategoryId) {
+      const found = budgets.find((b) => b.categoryId === initialCategoryId);
+      if (found) {
+        handledCategoryIdRef.current = initialCategoryId;
+        setSelectedFilter("all");
+        setBudgetToEdit(found);
+        setIsFormOpen(true);
+        router.setParams({ categoryId: undefined });
+      }
+    } else if (!initialCategoryId) {
+      handledCategoryIdRef.current = null;
+    }
+  }, [budgets, initialCategoryId, loading, router]);
+
   const handleOpenEdit = (status: BudgetStatus) => {
     setBudgetToEdit(status.budget);
     setIsFormOpen(true);
@@ -255,6 +287,8 @@ function BudgetsScreenContent({
 
   return (
     <PageContainer
+      onRefresh={handlePullRefresh}
+      refreshing={isPullRefreshing}
       scrollRef={scrollRef}
       scrollContentRef={scrollContentRef}
       contentContainerStyle={contentSpacing}

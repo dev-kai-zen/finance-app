@@ -9,6 +9,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 
@@ -29,6 +30,7 @@ export function NetWorthSummaryCards({
 }: NetWorthSummaryCardsProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const isGrowthPositive = periodChangeMinorUnits >= 0;
 
@@ -44,7 +46,10 @@ export function NetWorthSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={styles.cardValue}>
-            {formatCurrency(currentNetWorthMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(currentNetWorthMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
           <Text style={styles.cardSub}>Latest snapshot</Text>
         </View>
@@ -79,7 +84,10 @@ export function NetWorthSummaryCards({
               },
             ]}
           >
-            {formatCurrency(periodChangeMinorUnits, currencyCode, true)}{" "}
+            {formatPrivacyAmount(
+              formatCurrency(periodChangeMinorUnits, currencyCode, true),
+              isPrivate,
+            )}{" "}
             {isGrowthPositive ? "▲" : "▼"}
           </Text>
           <Text style={styles.cardSub}>
@@ -98,7 +106,10 @@ export function NetWorthSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={styles.cardValue}>
-            {formatCurrency(peakNetWorthMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(peakNetWorthMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
           <Text style={styles.cardSub}>Highest in period</Text>
         </View>
@@ -112,7 +123,10 @@ export function NetWorthSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={styles.cardValue}>
-            {formatCurrency(lowestNetWorthMinorUnits, currencyCode)}
+            {formatPrivacyAmount(
+              formatCurrency(lowestNetWorthMinorUnits, currencyCode),
+              isPrivate,
+            )}
           </Text>
           <Text style={styles.cardSub}>Lowest in period</Text>
         </View>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -142,6 +142,7 @@ function AccountTypeFormModalContent({
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const initialSnapshotRef = useRef<string>("");
 
   const isProtected = type ? isProtectedAccountType(type) : false;
 
@@ -153,28 +154,52 @@ function AccountTypeFormModalContent({
 
   useEffect(() => {
     if (visible) {
+      let initialName = "";
+      let initialAccountGroup: AccountGroup = initialGroup;
+      let initialIconKey = "landmark";
+      let initialHexColorsId = ACCOUNT_DEFAULT_COLOR_IDS[initialGroup];
+
       if (type) {
-        setName(type.name);
-        setAccountGroup(
-          type.accountGroup === "liability" ? "liability" : "asset",
-        );
-        setIconKey(type.iconKey ?? "landmark");
+        initialName = type.name;
+        initialAccountGroup =
+          type.accountGroup === "liability" ? "liability" : "asset";
+        initialIconKey = type.iconKey ?? "landmark";
         const match = hexColorsList.find(
           (c) =>
             c.id === type.hexColorsId ||
             c.hex.toUpperCase() === (type.color ?? "").toUpperCase(),
         );
-        setHexColorsId(match?.id ?? type.hexColorsId ?? "color_blue");
-      } else {
-        setName("");
-        setAccountGroup(initialGroup);
-        setIconKey("landmark");
-        setHexColorsId(ACCOUNT_DEFAULT_COLOR_IDS[initialGroup]);
+        initialHexColorsId = match?.id ?? type.hexColorsId ?? "color_blue";
       }
+
+      setName(initialName);
+      setAccountGroup(initialAccountGroup);
+      setIconKey(initialIconKey);
+      setHexColorsId(initialHexColorsId);
+
+      initialSnapshotRef.current = JSON.stringify({
+        name: initialName,
+        accountGroup: initialAccountGroup,
+        iconKey: initialIconKey,
+        hexColorsId: initialHexColorsId,
+      });
+
       setLocalError(null);
       setIsConfirmDeleteOpen(false);
     }
-  }, [visible, type, initialGroup, hexColorsList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, type, initialGroup]);
+
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      name,
+      accountGroup,
+      iconKey,
+      hexColorsId,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, name, accountGroup, iconKey, hexColorsId]);
 
   const selectedHexObj = hexColorsList.find((c) => c.id === hexColorsId);
   const currentColorHex = selectedHexObj?.hex ?? theme.colors.primary;
@@ -248,11 +273,13 @@ function AccountTypeFormModalContent({
     <>
       <FullScreenFormModal
         deleteDisabled={isProtected || !isEditing}
+        isDirty={isDirty}
         onClose={onClose}
         onDelete={isEditing && !isProtected ? handleDeleteTrigger : undefined}
         onSave={handleSave}
         pending={mutations.pending}
         saveButtonRef={saveTargetRef}
+        saveDisabled={mutations.pending || !name.trim()}
         title={isEditing ? "Edit Account Group" : "New Account Group"}
         titleAlign="left"
         visible={visible}

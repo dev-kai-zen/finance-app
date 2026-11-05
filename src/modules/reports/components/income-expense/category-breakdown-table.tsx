@@ -10,6 +10,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type {
   IncomeExpenseCategoryItem,
@@ -35,6 +36,7 @@ export function CategoryBreakdownTable({
 }: CategoryBreakdownTableProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
@@ -64,9 +66,9 @@ export function CategoryBreakdownTable({
             <Pressable
               key={item.categoryId}
               accessibilityRole="button"
-              accessibilityLabel={`${item.categoryName}, ${formatCurrency(
-                item.totalMinorUnits,
-                currencyCode,
+              accessibilityLabel={`${item.categoryName}, ${formatPrivacyAmount(
+                formatCurrency(item.totalMinorUnits, currencyCode),
+                isPrivate,
               )}, ${item.percentage}% of total`}
               onPress={() => {
                 if (isSelected) {
@@ -108,7 +110,10 @@ export function CategoryBreakdownTable({
                     {item.categoryName}
                   </Text>
                   <Text style={styles.amountText}>
-                    {formatCurrency(item.totalMinorUnits, currencyCode)}
+                    {formatPrivacyAmount(
+                      formatCurrency(item.totalMinorUnits, currencyCode),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
@@ -151,7 +156,10 @@ export function CategoryBreakdownTable({
           </Text>
         </View>
         <Text style={styles.footerTotalAmount}>
-          {formatCurrency(totalMinorUnits, currencyCode)}
+          {formatPrivacyAmount(
+            formatCurrency(totalMinorUnits, currencyCode),
+            isPrivate,
+          )}
         </Text>
       </View>
     </View>

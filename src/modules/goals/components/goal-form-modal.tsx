@@ -112,6 +112,7 @@ function GoalFormModalContent({
   const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
   const [focusedFieldType, setFocusedFieldType] = useState<
     "normal" | "description" | null
   >(null);
@@ -163,6 +164,25 @@ function GoalFormModalContent({
         setIconKey("target");
         setHexColorsId("color_blue");
       }
+      initialSnapshotRef.current = JSON.stringify({
+        name: initialGoal ? initialGoal.name : "",
+        note: initialGoal?.note || "",
+        targetAmountMinorUnits: initialGoal ? initialGoal.targetAmountMinorUnits : 1000000,
+        currencyCode: initialGoal ? (initialGoal.currencyCode || defaultCurrency) : defaultCurrency,
+        selectedAccountIds: initialGoal?.accountIds && initialGoal.accountIds.length > 0
+          ? initialGoal.accountIds
+          : initialGoal?.accountId
+            ? [initialGoal.accountId]
+            : [],
+        selectedPocketIds: initialGoal?.pocketIds && initialGoal.pocketIds.length > 0
+          ? initialGoal.pocketIds
+          : initialGoal?.pocketId
+            ? [initialGoal.pocketId]
+            : [],
+        targetDate: initialGoal?.targetDate ? initialGoal.targetDate.toISOString() : null,
+        iconKey: initialGoal?.iconKey || "target",
+        hexColorsId: initialGoal?.hexColorsId || "color_blue",
+      });
       setErrorMessage(null);
       setFocusedFieldType(null);
       setHelpTopic(null);
@@ -215,6 +235,22 @@ function GoalFormModalContent({
   const removePocket = (id: string) => {
     setSelectedPocketIds((prev) => prev.filter((pId) => pId !== id));
   };
+
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      name,
+      note,
+      targetAmountMinorUnits,
+      currencyCode,
+      selectedAccountIds,
+      selectedPocketIds,
+      targetDate: targetDate ? targetDate.toISOString() : null,
+      iconKey,
+      hexColorsId,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, name, note, targetAmountMinorUnits, currencyCode, selectedAccountIds, selectedPocketIds, targetDate, iconKey, hexColorsId]);
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -319,6 +355,7 @@ function GoalFormModalContent({
         title={initialGoal ? "Edit Goal" : "New Savings Goal"}
         titleAlign="left"
         visible={visible}
+        isDirty={isDirty}
       >
         <DraggableTourChip
           onPress={walkthrough.startWalkthrough}

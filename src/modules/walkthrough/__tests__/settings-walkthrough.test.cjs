@@ -22,8 +22,8 @@ const { en } = require("../../../infrastructure/localization/translations/en.ts"
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
 const { fil } = require("../../../infrastructure/localization/translations/fil.ts");
 
-test("settings walkthrough: defines all 18 steps in exact required sequence", () => {
-  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 18);
+test("settings walkthrough: defines all 19 steps in exact required sequence", () => {
+  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 19);
 
   const expectedSequence = [
     { targetId: "settingsLanguage", titleKey: "settingsWalkthrough.stepLanguageTitle" },
@@ -34,6 +34,7 @@ test("settings walkthrough: defines all 18 steps in exact required sequence", ()
     { targetId: "settingsWidgets", titleKey: "settingsWalkthrough.stepWidgetsTitle" },
     { targetId: "settingsGuideHelper", titleKey: "settingsWalkthrough.stepGuideHelperTitle" },
     { targetId: "settingsKaiKnowledge", titleKey: "settingsWalkthrough.stepKaiKnowledgeTitle" },
+    { targetId: "settingsGestures", titleKey: "settingsWalkthrough.stepGesturesTitle" },
     { targetId: "settingsDefaultExpense", titleKey: "settingsWalkthrough.stepDefaultExpenseTitle" },
     { targetId: "settingsDefaultIncome", titleKey: "settingsWalkthrough.stepDefaultIncomeTitle" },
     { targetId: "settingsHexColors", titleKey: "settingsWalkthrough.stepHexColorsTitle" },
@@ -54,7 +55,7 @@ test("settings walkthrough: defines all 18 steps in exact required sequence", ()
   });
 });
 
-test("settings walkthrough: translations exist for all 18 steps across en, es, and fil", () => {
+test("settings walkthrough: translations exist for all 19 steps across en, es, and fil", () => {
   const stepSuffixes = [
     "Language",
     "Currency",
@@ -64,6 +65,7 @@ test("settings walkthrough: translations exist for all 18 steps across en, es, a
     "Widgets",
     "GuideHelper",
     "KaiKnowledge",
+    "Gestures",
     "DefaultExpense",
     "DefaultIncome",
     "HexColors",

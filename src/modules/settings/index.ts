@@ -6,6 +6,8 @@ export function SettingsScreen() {
   return React.createElement(Screen);
 }
 export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
+export { HapticFeedbackSettingsModal } from "./components/haptic-feedback-settings-modal";
+export { SoundEffectsSettingsModal } from "./components/sound-effects-settings-modal";
 export {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -25,16 +27,49 @@ export {
 export type { ChatTransactionMode } from "./services/chat-transaction-mode.service";
 export { useDefaultAccounts } from "./hooks/use-default-accounts";
 export { useChatTransactionMode } from "./hooks/use-chat-transaction-mode";
+export { useShakeActionSetting } from "./hooks/use-shake-action-setting";
+export { usePrivacyMode } from "./hooks/use-privacy-mode";
+export { useSoundAndHaptics } from "./hooks/use-sound-and-haptics";
+export {
+  getSoundAndHapticsPreferences,
+  setSoundAndHapticsPreferences,
+  DEFAULT_SOUND_AND_HAPTICS_PREFERENCES,
+  triggerHaptic,
+  triggerSound,
+  playTransactionSavedSound,
+  testHapticFeedback,
+  testSoundPlayback,
+} from "./services/sound-and-haptics.service";
+export type {
+  SoundAndHapticsPreferences,
+  SoundSubToggles,
+  HapticCategory,
+  HapticType,
+} from "./services/sound-and-haptics.service";
+export {
+  getPrivacyModeSetting,
+  setPrivacyModeSetting,
+  formatPrivacyAmount,
+} from "./services/privacy-mode.service";
+export {
+  getShakeActionSetting,
+  setShakeActionSetting,
+  subscribeToShakeActionSetting,
+} from "./services/gesture-settings.service";
+export type { ShakeAction } from "./services/gesture-settings.service";
 export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
   CHAT_TRANSACTION_MODE_SETTING_KEY,
+  GESTURE_SHAKE_ACTION_SETTING_KEY,
   DASHBOARD_LAYOUT_SETTING_KEY,
   FORM_FIELD_SETTING_KEYS,
   NAV_VISIBILITY_SETTING_KEYS,
   NAV_HREF_BY_VISIBILITY_KEY,
   PROMPT_SETTING_KEYS,
   DEVELOPER_MODE_SETTING_KEY,
+  PRIVACY_MODE_SETTING_KEY,
+  SOUND_AND_HAPTICS_SETTING_KEY,
   USER_NICKNAME_SETTING_KEY,
   PRIVACY_POLICY_URL,
 } from "./constants/settings.constants";

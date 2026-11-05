@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,12 +12,17 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronLeft, Pin, Trash2 } from "lucide-react-native";
+import { Check, ChevronLeft, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
 
-import { ConfirmModal, NotificationModal } from "@/components";
+import { ConfirmModal, NotificationModal, UnsavedChangesModal } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
-import { NOTE_COLOR_PRESETS } from "../constants/notes.constants";
+import {
+  HexColorFormModal,
+  useHexColors,
+  type HexColorInput,
+} from "@/modules/hex-colors";
+import { isLightColor } from "@/utils/color-contrast";
 import { useNoteAttachments } from "../hooks/use-note-attachments";
 import type { Note, NoteAttachmentDraft } from "../types/note.types";
 import { NoteAttachmentsGrid } from "./note-attachments-grid";
@@ -56,6 +61,21 @@ export function NoteEditorModal({
   const [isPinned, setIsPinned] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+
+  useEffect(() => {
+    if (!visible) {
+      setShowUnsavedPrompt(false);
+    }
+  }, [visible]);
+
+  const {
+    colors: hexColorsList,
+    refresh: refreshHexColors,
+    addColor,
+  } = useHexColors();
 
   const {
     existingAttachments,
@@ -73,6 +93,8 @@ export function NoteEditorModal({
 
   useEffect(() => {
     if (visible) {
+      refreshHexColors();
+      setIsColorFormOpen(false);
       if (note) {
         setTitle(note.title);
         setContent(note.content);
@@ -86,9 +108,52 @@ export function NoteEditorModal({
         setIsPinned(false);
         resetAttachments([]);
       }
+      initialSnapshotRef.current = JSON.stringify({
+        title: note ? note.title : "",
+        content: note ? note.content : "",
+        color: note ? (note.color ?? null) : null,
+        isPinned: note ? note.isPinned : false,
+      });
       setValidationError(null);
     }
-  }, [visible, note]);
+  }, [visible, note, refreshHexColors]);
+
+  const handleSaveCustomColor = (input: HexColorInput) => {
+    const created = addColor(input);
+    setColor(created.hex);
+    return true;
+  };
+
+  const hasLegacyColor =
+    Boolean(color) &&
+    !hexColorsList.some(
+      (c) =>
+        c.hex.toUpperCase() === color!.toUpperCase() || c.id === color,
+    );
+
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      title,
+      content,
+      color,
+      isPinned,
+    });
+    return (
+      currentSnapshot !== initialSnapshotRef.current ||
+      drafts.length > 0 ||
+      removedAttachmentIds.length > 0
+    );
+  }, [visible, title, content, color, isPinned, drafts.length, removedAttachmentIds.length]);
+
+  const handleRequestClose = useCallback(() => {
+    if (saving || picking) return;
+    if (isDirty) {
+      setShowUnsavedPrompt(true);
+    } else {
+      onClose();
+    }
+  }, [isDirty, onClose, picking, saving]);
 
   const handleSave = async () => {
     const trimmedTitle = title.trim();
@@ -132,7 +197,7 @@ export function NoteEditorModal({
       <Modal
         animationType="slide"
         hardwareAccelerated
-        onRequestClose={onClose}
+        onRequestClose={handleRequestClose}
         presentationStyle="fullScreen"
         visible={visible}
       >
@@ -152,7 +217,7 @@ export function NoteEditorModal({
               accessibilityLabel="Go back"
               accessibilityRole="button"
               hitSlop={8}
-              onPress={onClose}
+              onPress={handleRequestClose}
               style={styles.headerButton}
             >
               <ChevronLeft color={theme.colors.textPrimary} size={24} />
@@ -231,47 +296,112 @@ export function NoteEditorModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Color Palette Chips */}
-            <View style={styles.colorPalette}>
-              {NOTE_COLOR_PRESETS.map((preset) => {
-                const isSelected = color === preset.value;
-                return (
+            {/* Color Palette (Placed above Note Title so it's always visible) */}
+            <View style={styles.topPaletteContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.paletteScrollContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {/* Default (no accent) */}
+                <Pressable
+                  accessibilityLabel="Default color (no accent)"
+                  accessibilityRole="button"
+                  onPress={() => setColor(null)}
+                  style={[
+                    styles.colorChip,
+                    {
+                      backgroundColor: theme.colors.surfaceMuted,
+                      borderColor:
+                        color === null
+                          ? theme.colors.primary
+                          : theme.colors.border,
+                      borderWidth: color === null ? 2.5 : 1,
+                    },
+                  ]}
+                >
+                  {color === null ? (
+                    <Check color={theme.colors.textPrimary} size={14} />
+                  ) : (
+                    <Slash color={theme.colors.textMuted} size={12} />
+                  )}
+                </Pressable>
+
+                {/* Hex colors from hex-colors repository */}
+                {hexColorsList.map((c) => {
+                  const isSelected =
+                    Boolean(color) &&
+                    (color === c.hex ||
+                      color === c.id ||
+                      color?.toUpperCase() === c.hex.toUpperCase());
+                  const light = isLightColor(c.hex);
+                  const checkColor = light ? "#0F172A" : "#FFFFFF";
+
+                  return (
+                    <Pressable
+                      key={c.id}
+                      accessibilityLabel={`Color ${c.name} (${c.hex})`}
+                      accessibilityRole="button"
+                      onPress={() => setColor(c.hex)}
+                      style={[
+                        styles.colorChip,
+                        {
+                          backgroundColor: c.hex,
+                          borderColor: isSelected
+                            ? theme.colors.primary
+                            : theme.colors.border,
+                          borderWidth: isSelected ? 2.5 : 1,
+                        },
+                      ]}
+                    >
+                      {isSelected ? <Check color={checkColor} size={14} /> : null}
+                    </Pressable>
+                  );
+                })}
+
+                {/* Legacy Note Color if not in the hexColorsList */}
+                {hasLegacyColor && color ? (
                   <Pressable
-                    key={preset.id}
-                    accessibilityLabel={`Color ${preset.label}`}
-                    onPress={() => setColor(preset.value)}
+                    accessibilityLabel={`Current note color (${color})`}
+                    accessibilityRole="button"
+                    onPress={() => setColor(color)}
                     style={[
                       styles.colorChip,
                       {
-                        backgroundColor: preset.value ?? theme.colors.surfaceMuted,
-                        borderColor: isSelected
-                          ? theme.colors.primary
-                          : preset.border,
-                        borderWidth: isSelected ? 2.5 : 1,
+                        backgroundColor: color,
+                        borderColor: theme.colors.primary,
+                        borderWidth: 2.5,
                       },
                     ]}
                   >
-                    {isSelected ? (
-                      <Check
-                        color={
-                          preset.value
-                            ? "#ffffff"
-                            : theme.colors.textPrimary
-                        }
-                        size={14}
-                      />
-                    ) : null}
+                    <Check
+                      color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
+                      size={14}
+                    />
                   </Pressable>
-                );
-              })}
+                ) : null}
+
+                {/* Add Custom Color (+) button */}
+                <Pressable
+                  accessibilityLabel="Add custom color"
+                  accessibilityRole="button"
+                  onPress={() => setIsColorFormOpen(true)}
+                  style={({ pressed }) => [
+                    styles.addColorChip,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Plus color={theme.colors.textSecondary} size={14} />
+                </Pressable>
+              </ScrollView>
             </View>
 
-            {/* Note Title Input */}
+            {/* Title Input */}
             <TextInput
               accessibilityLabel="Note title"
-              maxLength={120}
               onChangeText={setTitle}
-              placeholder="Note Title"
+              placeholder="Title"
               placeholderTextColor={theme.colors.textMuted}
               style={styles.titleInput}
               value={title}
@@ -326,6 +456,29 @@ export function NoteEditorModal({
         title="Notice"
         variant="error"
         visible={Boolean(validationError || attachmentError)}
+      />
+
+      <HexColorFormModal
+        initialColor={null}
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
+      />
+
+      <UnsavedChangesModal
+        visible={showUnsavedPrompt}
+        pending={saving}
+        onSave={() => {
+          setShowUnsavedPrompt(false);
+          void handleSave();
+        }}
+        onDiscard={() => {
+          setShowUnsavedPrompt(false);
+          onClose();
+        }}
+        onKeepEditing={() => {
+          setShowUnsavedPrompt(false);
+        }}
       />
     </>
   );
@@ -412,8 +565,22 @@ function createStyles(theme: AppTheme) {
       gap: theme.spacing.md,
       padding: theme.spacing.lg,
     },
-    colorPalette: {
+    buttonPressed: {
+      opacity: 0.7,
+    },
+    topPaletteContainer: {
+      paddingBottom: theme.spacing.xs,
+    },
+    paletteScrollContent: {
+      alignItems: "center",
       flexDirection: "row",
+      gap: theme.spacing.sm,
+      paddingVertical: 2,
+    },
+    colorPalette: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
       gap: theme.spacing.sm,
     },
     colorChip: {
@@ -422,6 +589,18 @@ function createStyles(theme: AppTheme) {
       height: 28,
       justifyContent: "center",
       width: 28,
+    },
+    addColorChip: {
+      alignItems: "center",
+      borderRadius: theme.borderRadius.round,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
+      height: 28,
+      justifyContent: "center",
+      width: 28,
+    },
+    addColorChipPressed: {
+      opacity: 0.7,
     },
     titleInput: {
       color: theme.colors.textPrimary,

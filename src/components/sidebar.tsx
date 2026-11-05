@@ -13,7 +13,7 @@ import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from "react-native";
-import { ChevronDown, Code, Crown, Mail } from "lucide-react-native";
+import { ChevronDown, Code, Crown, Heart, Mail } from "lucide-react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -319,21 +319,34 @@ export const Sidebar = memo(function Sidebar({
               );
             })}
 
-          {/* Send Feedback item */}
+          {/* Support & Feedback item */}
           <Pressable
-            accessibilityLabel={t("navigation.sendFeedback")}
+            accessibilityLabel={t("navigation.supportDevelopment")}
             accessibilityRole="button"
-            onPress={handleFeedbackPress}
+            onPress={() => handlePress("/support")}
             style={({ pressed }) => [
               styles.link,
+              isItemActive("/support") && styles.activeLink,
               pressed && styles.linkPressed,
             ]}
           >
             <View style={styles.iconContainer}>
-              <Mail color={theme.colors.textSecondary} size={18} />
+              <Heart
+                color={
+                  isItemActive("/support")
+                    ? theme.colors.primary
+                    : theme.colors.textSecondary
+                }
+                size={18}
+              />
             </View>
-            <Text style={styles.linkText}>
-              {t("navigation.sendFeedback")}
+            <Text
+              style={[
+                styles.linkText,
+                isItemActive("/support") && styles.activeLinkText,
+              ]}
+            >
+              {t("navigation.supportDevelopment")}
             </Text>
           </Pressable>
         </View>

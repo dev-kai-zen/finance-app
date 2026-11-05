@@ -27,5 +27,6 @@ export * from "./formatted-currency";
 export * from "./credit-utilization-ring";
 export * from "./calendar-picker";
 export * from "./modal-screen-header";
+export * from "./unsaved-changes-modal";
 export * from "./backup-schedule-options";
 export * from "./theme/app-theme-provider";

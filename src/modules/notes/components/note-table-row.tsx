@@ -11,6 +11,7 @@ import Animated, {
 
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
+import { resolveHexColor, useHexColors } from "@/modules/hex-colors";
 import type { Note } from "../types/note.types";
 import { extractSnippet, formatRelativeDate } from "../utils/note-formatters";
 
@@ -31,6 +32,11 @@ export const NoteTableRow = memo(function NoteTableRow({
 }: NoteTableRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { colors: hexColorsList } = useHexColors();
+
+  const resolvedColor = note.color
+    ? resolveHexColor(note.color, { colors: hexColorsList, theme })
+    : null;
 
   const translateX = useSharedValue(0);
   const startX = useSharedValue(0);
@@ -108,8 +114,8 @@ export const NoteTableRow = memo(function NoteTableRow({
             onPress={handleRowPress}
             style={({ pressed }) => [
               styles.row,
-              note.color
-                ? { borderLeftColor: note.color, borderLeftWidth: 3.5 }
+              resolvedColor
+                ? { borderLeftColor: resolvedColor, borderLeftWidth: 3.5 }
                 : null,
               pressed && styles.rowPressed,
             ]}

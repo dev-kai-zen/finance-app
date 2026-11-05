@@ -1,5 +1,5 @@
 import { Checkbox, Host } from "@expo/ui";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ChevronRight } from "lucide-react-native";
 import {
@@ -79,6 +79,7 @@ export function QuickPresetFormModal({
   const [accountPicker, setAccountPicker] = useState<"from" | "to" | null>(null);
   const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const initialSnapshotRef = useRef<string>("");
 
   useEffect(() => {
     if (!visible) return;
@@ -87,25 +88,80 @@ export function QuickPresetFormModal({
     const initialCategory = allCategories(categories).find(
       (category) => category.type === nextMode,
     );
-    setTransactionName(preset?.transactionName ?? "");
-    setMode(nextMode);
-    setAccountId(preset?.accountId ?? activeAccounts[0]?.id ?? "");
-    setPocketId(preset?.pocketId ?? null);
-    setCategoryId(preset?.categoryId ?? initialCategory?.id ?? "");
-    setToAccountId(
+    const initialName = preset?.transactionName ?? "";
+    const initialAccId = preset?.accountId ?? activeAccounts[0]?.id ?? "";
+    const initialPocId = preset?.pocketId ?? null;
+    const initialCatId = preset?.categoryId ?? initialCategory?.id ?? "";
+    const initialToAccId =
       preset?.toAccountId ??
-        activeAccounts.find(
-          (account) => account.id !== (preset?.accountId ?? activeAccounts[0]?.id),
-        )?.id ??
-        "",
-    );
-    setToPocketId(preset?.toPocketId ?? null);
-    setIncludeAmount(preset ? preset.amountMinorUnits !== null : true);
-    setAmountMinorUnits(Math.abs(preset?.amountMinorUnits ?? 0));
-    setAmountSign((preset?.amountMinorUnits ?? -1) < 0 ? "-" : "+");
-    setNote(preset?.note ?? "");
+      activeAccounts.find(
+        (account) => account.id !== (preset?.accountId ?? activeAccounts[0]?.id),
+      )?.id ??
+      "";
+    const initialToPocId = preset?.toPocketId ?? null;
+    const initialIncludeAmt = preset ? preset.amountMinorUnits !== null : true;
+    const initialAmt = Math.abs(preset?.amountMinorUnits ?? 0);
+    const initialSign = (preset?.amountMinorUnits ?? -1) < 0 ? "-" : "+";
+    const initialNote = preset?.note ?? "";
+
+    setTransactionName(initialName);
+    setMode(nextMode);
+    setAccountId(initialAccId);
+    setPocketId(initialPocId);
+    setCategoryId(initialCatId);
+    setToAccountId(initialToAccId);
+    setToPocketId(initialToPocId);
+    setIncludeAmount(initialIncludeAmt);
+    setAmountMinorUnits(initialAmt);
+    setAmountSign(initialSign);
+    setNote(initialNote);
     setLocalError(null);
+
+    initialSnapshotRef.current = JSON.stringify({
+      transactionName: initialName,
+      mode: nextMode,
+      accountId: initialAccId,
+      pocketId: initialPocId,
+      categoryId: initialCatId,
+      toAccountId: initialToAccId,
+      toPocketId: initialToPocId,
+      includeAmount: initialIncludeAmt,
+      amountMinorUnits: initialAmt,
+      amountSign: initialSign,
+      note: initialNote,
+    });
   }, [accounts, categories, preset, visible]);
+
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      transactionName,
+      mode,
+      accountId,
+      pocketId,
+      categoryId,
+      toAccountId,
+      toPocketId,
+      includeAmount,
+      amountMinorUnits,
+      amountSign,
+      note,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [
+    visible,
+    transactionName,
+    mode,
+    accountId,
+    pocketId,
+    categoryId,
+    toAccountId,
+    toPocketId,
+    includeAmount,
+    amountMinorUnits,
+    amountSign,
+    note,
+  ]);
 
   const selectedAccount = accounts.find((account) => account.id === accountId);
   const selectedPocket = pockets.find((pocket) => pocket.id === pocketId);
@@ -230,8 +286,14 @@ export function QuickPresetFormModal({
   return (
     <>
       <FullScreenFormModal
+        isDirty={isDirty}
         pending={pending}
-        saveDisabled={pending}
+        saveDisabled={
+          pending ||
+          !transactionName.trim() ||
+          !accountId ||
+          (includeAmount && amountMinorUnits <= 0)
+        }
         saveLabel={preset ? "Update Quick Preset" : "Create Quick Preset"}
         title={preset ? "Edit Quick Preset" : "New Quick Preset"}
         visible={visible}

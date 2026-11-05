@@ -358,7 +358,6 @@ function buildPocketComparisons(
     string,
     {
       name: string;
-      target: number | null;
       prevMinorUnits: number;
       currentMinorUnits: number;
     }
@@ -371,7 +370,6 @@ function buildPocketComparisons(
   if (prevAvailable !== 0 || currentAvailable !== 0 || !hideZeroBalances) {
     pocketMap.set("__available__", {
       name: "Available",
-      target: null,
       prevMinorUnits: prevAvailable,
       currentMinorUnits: currentAvailable,
     });
@@ -382,7 +380,6 @@ function buildPocketComparisons(
     for (const p of prevAccount.pockets) {
       pocketMap.set(p.id, {
         name: p.name,
-        target: p.targetAmountMinorUnits,
         prevMinorUnits: p.balanceMinorUnits,
         currentMinorUnits: 0,
       });
@@ -396,12 +393,10 @@ function buildPocketComparisons(
       if (existing) {
         existing.currentMinorUnits = p.balanceMinorUnits;
         if (p.name) existing.name = p.name;
-        if (p.targetAmountMinorUnits != null) existing.target = p.targetAmountMinorUnits;
       } else {
         pocketMap.set(p.id, {
           name: p.name,
-          target: p.targetAmountMinorUnits,
-          prevMinorUnits: 0,
+            prevMinorUnits: 0,
           currentMinorUnits: p.balanceMinorUnits,
         });
       }
@@ -425,7 +420,6 @@ function buildPocketComparisons(
     result.push({
       id,
       name: data.name,
-      targetAmountMinorUnits: data.target,
       variance,
     });
   }

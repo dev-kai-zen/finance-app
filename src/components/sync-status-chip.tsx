@@ -15,8 +15,9 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
+import { Cloud, CloudOff, Smartphone } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import { useLocalization } from "@/infrastructure/localization";
 import { useQuickSyncStatus } from "@/infrastructure/sync";
@@ -25,14 +26,17 @@ export interface SyncStatusChipProps {
   onPress?: () => void;
   label?: string;
   isOnline?: boolean;
+  compact?: boolean;
 }
 
 export function SyncStatusChip({
   onPress,
   label,
   isOnline,
+  compact = false,
 }: SyncStatusChipProps) {
   const router = useRouter();
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const quickSync = useQuickSyncStatus();
@@ -112,6 +116,39 @@ export function SyncStatusChip({
     }
   };
 
+  if (compact) {
+    let IconComponent = Smartphone;
+    let iconColor = theme.colors.textSecondary;
+    if (isError) {
+      IconComponent = CloudOff;
+      iconColor = theme.colors.danger;
+    } else if (isQuickSyncActive) {
+      IconComponent = Cloud;
+      iconColor = isSyncing
+        ? theme.colors.primary
+        : isWaitingNetwork
+          ? theme.colors.warning
+          : theme.colors.textSecondary;
+    }
+
+    return (
+      <Pressable
+        accessibilityLabel={t("sync.accessibility", { label: displayLabel })}
+        accessibilityRole="button"
+        onPress={handlePress}
+        style={({ pressed }) => [
+          styles.compactChip,
+          pressed && styles.chipPressed,
+        ]}
+      >
+        <IconComponent color={iconColor} size={16} />
+        <Animated.View
+          style={[styles.compactStatusDot, dotColorStyle, animatedDotStyle]}
+        />
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable
       accessibilityLabel={t("sync.accessibility", { label: displayLabel })}
@@ -150,6 +187,17 @@ function createStyles(theme: AppTheme) {
       height: LAYOUT_DIMENSIONS.syncChipHeight,
       paddingHorizontal: 10,
     },
+    compactChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 17,
+      borderWidth: 1,
+      height: 34,
+      justifyContent: "center",
+      position: "relative",
+      width: 34,
+    },
     chipPressed: {
       backgroundColor: theme.colors.surfaceElevated,
       borderColor: theme.colors.borderStrong,
@@ -158,6 +206,16 @@ function createStyles(theme: AppTheme) {
       borderRadius: 4,
       height: 7,
       width: 7,
+    },
+    compactStatusDot: {
+      borderColor: theme.colors.background,
+      borderRadius: 4,
+      borderWidth: 1.5,
+      bottom: 2,
+      height: 8,
+      position: "absolute",
+      right: 2,
+      width: 8,
     },
     dotOnline: {
       backgroundColor: theme.colors.success,

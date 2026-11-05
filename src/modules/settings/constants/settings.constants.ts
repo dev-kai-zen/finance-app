@@ -13,6 +13,11 @@ export const TRANSACTION_VIEW_MODE_SETTING_KEY =
 
 export const CHAT_TRANSACTION_MODE_SETTING_KEY = "chat.transactionMode";
 
+export const GESTURE_SHAKE_ACTION_SETTING_KEY = "gestures.shakeAction";
+
+export const PRIVACY_MODE_SETTING_KEY = "privacy_stealth_mode_enabled";
+export const SOUND_AND_HAPTICS_SETTING_KEY = "sound_and_haptics.preferences";
+
 export const DEVELOPER_MODE_SETTING_KEY = "developer.mode";
 
 export const EXPERIENCE_HOME_SETTING_KEY = "experience.home";
@@ -31,6 +36,7 @@ export const FORM_FIELD_SETTING_KEYS = {
   quickPresets: "form.quickPresets",
   exactTime: "form.exactTime",
   installments: "form.installments",
+  quickDates: "form.quickDates",
 } as const;
 
 export type FormFieldSettingKey =
@@ -93,6 +99,8 @@ export const PROMPT_SETTING_KEYS = {
   budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
   goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
   developerMessageSeen: "prompt.developerMessageSeen",
+  inAppReview10MilestoneDismissed: "prompt.inAppReview10MilestoneDismissed",
+  inAppReviewLastPromptedTimestamp: "prompt.inAppReviewLastPromptedTimestamp",
 } as const;
 
 export type PromptSettingKey = keyof typeof PROMPT_SETTING_KEYS;

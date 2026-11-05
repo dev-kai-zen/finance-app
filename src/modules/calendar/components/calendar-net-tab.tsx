@@ -13,6 +13,7 @@ import { IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { CategoryExpenseBreakdown } from "../hooks/use-calendar-data";
 import type { CalendarSummaryMetrics } from "../types/calendar.types";
@@ -31,7 +32,11 @@ export function CalendarNetTab({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
+
+  const maskAmount = (val: number, code: string = currencyCode, signed = false) =>
+    formatPrivacyAmount(formatCurrency(val, code, signed), isPrivate);
 
   const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
   const isOutflowPositive = metrics.totalOutflowMinorUnits >= 0;
@@ -85,7 +90,7 @@ export function CalendarNetTab({
               },
             ]}
           >
-            {formatCurrency(metrics.totalInflowMinorUnits, currencyCode, false)}
+            {maskAmount(metrics.totalInflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -124,7 +129,7 @@ export function CalendarNetTab({
               },
             ]}
           >
-            {formatCurrency(metrics.totalOutflowMinorUnits, currencyCode, false)}
+            {maskAmount(metrics.totalOutflowMinorUnits, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -181,7 +186,7 @@ export function CalendarNetTab({
             },
           ]}
         >
-          {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
+          {maskAmount(metrics.netCashflowMinorUnits, currencyCode, false)}
         </Text>
 
         {/* Inflow vs Outflow Visual Bar */}
@@ -277,7 +282,7 @@ export function CalendarNetTab({
 
                 <View style={styles.categoryRight}>
                   <Text style={styles.categoryAmount}>
-                    {formatCurrency(cat.totalMinorUnits, currencyCode)}
+                    {maskAmount(cat.totalMinorUnits, currencyCode)}
                   </Text>
                   <Text style={styles.categoryPercent}>{cat.percentage}%</Text>
                 </View>
@@ -332,7 +337,7 @@ export function CalendarNetTab({
               },
             ]}
           >
-            {formatCurrency(
+            {maskAmount(
               metrics.projectedMonthEndNetMinorUnits,
               currencyCode,
               false,

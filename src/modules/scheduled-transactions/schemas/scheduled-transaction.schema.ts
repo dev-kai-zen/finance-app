@@ -8,7 +8,10 @@ export const scheduledTransactionInputSchema = z
     categoryId: z.string().nullable().optional(),
     toAccountId: z.string().nullable().optional(),
     toPocketId: z.string().nullable().optional(),
-    amountMinorUnits: z.number().int().positive("Amount must be greater than zero."),
+    amountMinorUnits: z
+      .number()
+      .int()
+      .refine((val) => val !== 0, "Amount must not be zero."),
     name: z.string().max(100).nullable().optional(),
     note: z.string().max(200).nullable().optional(),
     frequency: z.enum(["once", "daily", "weekly", "monthly", "yearly"]),
@@ -27,6 +30,13 @@ export const scheduledTransactionInputSchema = z
   })
   .superRefine((value, context) => {
     if (value.transactionType === "transfer") {
+      if (value.amountMinorUnits <= 0) {
+        context.addIssue({
+          code: "custom",
+          path: ["amountMinorUnits"],
+          message: "Transfer amount must be greater than zero.",
+        });
+      }
       if (!value.toAccountId) {
         context.addIssue({
           code: "custom",

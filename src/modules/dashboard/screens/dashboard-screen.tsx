@@ -1,6 +1,6 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { DeviceEventEmitter, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SlidersHorizontal } from "lucide-react-native";
 import {
   ConfirmModal,
@@ -19,6 +19,10 @@ import {
   useUserNickname,
   type DashboardWidgetId,
 } from "@/modules/settings";
+import {
+  InAppReviewMilestoneModal,
+  useInAppReviewMilestone,
+} from "@/modules/support-development";
 import { DashboardGreetingCard } from "../components/dashboard-greeting-card";
 import { DashboardQuickActionsCard } from "../components/dashboard-quick-actions-card";
 import { DashboardCashflowCard } from "../components/dashboard-cashflow-card";
@@ -80,6 +84,7 @@ function DashboardScreenContent() {
     moveDashboardWidget,
     reorderDashboardWidgets,
     setShowGreetingQuote,
+    setQuoteColors,
     selectDashboardPreset,
     resetDashboardLayout,
     isPromptDismissed,
@@ -107,6 +112,22 @@ function DashboardScreenContent() {
     clearError: clearTransactionError,
     refresh: refreshTransactions,
   } = useTransactions();
+
+  const pathname = usePathname();
+  const isScreenActive = pathname === "/" || pathname === "";
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        if (isScreenActive) {
+          refreshDashboard();
+          void refreshTransactions();
+        }
+      },
+    );
+    return () => sub.remove();
+  }, [isScreenActive, refreshDashboard, refreshTransactions]);
   const {
     presets,
     archivedPresets,
@@ -171,6 +192,20 @@ function DashboardScreenContent() {
     [measureTargetInAncestor],
   );
 
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const handlePullRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      refreshDashboard();
+      refreshAccounts();
+      void refreshCategories();
+      void refreshTransactions();
+      refreshPresets();
+    } finally {
+      setTimeout(() => setIsPullRefreshing(false), 500);
+    }
+  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshTransactions, refreshPresets]);
+
   const walkthrough = useDashboardWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
@@ -182,6 +217,19 @@ function DashboardScreenContent() {
     prerequisitePromptKey: "developerMessageSeen",
     enabled: !isVersionHistoryPending,
     onStart: walkthrough.startWalkthrough,
+  });
+
+  const {
+    isReviewModalVisible,
+    handleRateNow,
+    handleMaybeLater,
+    handleNeverAskAgain,
+  } = useInAppReviewMilestone({
+    enabled:
+      !showCongratulationsModal &&
+      !walkthrough.isWalkthroughActive &&
+      !isVersionHistoryPending &&
+      !walkthroughIntro.canTrigger,
   });
 
   useEffect(() => {
@@ -399,6 +447,8 @@ function DashboardScreenContent() {
             key="greeting"
             nickname={nickname}
             showQuote={dashboardLayout.showGreetingQuote}
+            quoteBackgroundColor={dashboardLayout.quoteBackgroundColor}
+            quoteTextColor={dashboardLayout.quoteTextColor}
           />
         );
       case "netWorth":
@@ -483,6 +533,8 @@ function DashboardScreenContent() {
     <PageContainer
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
+      refreshing={isPullRefreshing}
+      onRefresh={handlePullRefresh}
       scrollEnabled={
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
@@ -564,6 +616,7 @@ function DashboardScreenContent() {
         onReset={resetDashboardLayout}
         onSelectPreset={selectDashboardPreset}
         onToggleQuote={setShowGreetingQuote}
+        onChangeQuoteColors={setQuoteColors}
         onToggleWidget={toggleDashboardWidget}
         visible={isCustomizeOpen}
       />
@@ -766,6 +819,13 @@ function DashboardScreenContent() {
           dismissPrompt("firstTransactionCelebrated");
           setShowCongratulationsModal(false);
         }}
+      />
+
+      <InAppReviewMilestoneModal
+        visible={isReviewModalVisible}
+        onRateNow={handleRateNow}
+        onMaybeLater={handleMaybeLater}
+        onNeverAskAgain={handleNeverAskAgain}
       />
     </PageContainer>
   );

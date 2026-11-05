@@ -5,6 +5,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type {
   IncomeExpenseCategoryItem,
@@ -47,6 +48,7 @@ export function CategoryDonutChart({
 }: CategoryDonutChartProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
@@ -149,7 +151,10 @@ export function CategoryDonutChart({
                 {selectedCategory.categoryName}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(selectedCategory.totalMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(selectedCategory.totalMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.centerMeta}>
                 {selectedCategory.percentage}% of total
@@ -161,7 +166,10 @@ export function CategoryDonutChart({
                 TOTAL {mode.toUpperCase()}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(totalMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(totalMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.centerMeta}>
                 {transactionCount} {transactionCount === 1 ? "transaction" : "transactions"}

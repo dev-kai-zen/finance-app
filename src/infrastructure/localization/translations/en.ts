@@ -1,5 +1,13 @@
 export const en = {
+  privacy: {
+    hideBalances: "Hide balances",
+    showBalances: "Show balances",
+    stealthMode: "Privacy mode",
+    stealthModeDescription: "Mask account balances and financial figures across the app",
+  },
   common: {
+    enabled: "Enabled",
+    disabled: "Disabled",
     cancel: "Cancel",
     close: "Close",
     delete: "Delete",
@@ -9,6 +17,14 @@ export const en = {
     search: "Search",
     skipForNow: "Skip for now",
     today: "Today",
+    unsavedChangesTitle: "Unsaved Changes",
+    unsavedChangesMessage:
+      "You have unsaved changes. What would you like to do before leaving?",
+    saveChanges: "Save Changes",
+    dontSave: "Don't Save",
+    keepEditing: "Keep Editing",
+    account: "Account",
+    uncategorized: "Uncategorized",
   },
   search: {
     openSearch: "Open search",
@@ -21,6 +37,25 @@ export const en = {
     sectionSettings: "SETTINGS & SECURITY",
     sectionAccounts: "ACCOUNTS",
     sectionCategories: "CATEGORIES",
+    sectionTransactions: "TRANSACTIONS",
+    sectionBudgets: "BUDGETS",
+    sectionGoals: "SAVINGS GOALS",
+    sectionNotes: "NOTES",
+    sectionSchedules: "SCHEDULED TRANSACTIONS",
+    sectionLabels: "LABELS & TAGS",
+    sectionPockets: "POCKETS",
+    settingStealthMode: "Privacy / Stealth Mode",
+    settingStealthModeDesc: "Hide or mask sensitive account balances and totals",
+    settingSoundHaptics: "Sound & Haptics Settings",
+    settingSoundHapticsDesc: "Configure tactile vibrations and audio chimes",
+    settingSupportDev: "Support Development",
+    settingSupportDevDesc: "Support the app with a tip or share feedback",
+    actionLocalBackup: "Local Backup & Restore",
+    actionLocalBackupDesc: "Export or restore SQLite database on local storage",
+    actionGoogleDriveSync: "Google Drive Cloud Backup",
+    actionGoogleDriveSyncDesc: "Secure cloud backup and restore via Google Drive",
+    actionManagePresets: "Quick Presets Management",
+    actionManagePresetsDesc: "Manage 1-tap template presets for transactions",
     suggestedTitle: "SUGGESTED SHORTCUTS",
     clearSearch: "Clear",
     itemSettingsBadge: "Settings",
@@ -113,6 +148,7 @@ export const en = {
     sqliteMonitor: "SQLite Monitor",
     settings: "Settings",
     sendFeedback: "Send Feedback",
+    supportDevelopment: "Support & Feedback",
     localBackup: "Local Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Language",
@@ -170,6 +206,32 @@ export const en = {
     restoreConfirmAction: "Restore",
   },
   settings: {
+    soundAndHapticsSection: "Sound & Haptics",
+    hapticsMaster: "Haptic Feedback",
+    hapticsMasterSubtitle: "Tactile vibrations during actions",
+    hapticsTransactions: "Record & Edit Transactions",
+    hapticsCalculator: "Calculator & Keypad Taps",
+    hapticsAlerts: "Budget & Goal Alerts",
+    hapticsDestructive: "Delete & Trash Actions",
+    hapticsDisabledHint: "Note: If touch vibration is disabled in your device's system settings, vibrations will not be felt.",
+    testHaptics: "Test Haptics",
+    testSound: "Test Sound",
+    soundMaster: "Sound Effects",
+    soundMasterSubtitle: "Audio chime for app actions",
+    soundTransactions: "Record & Edit Transactions",
+    soundCalculator: "Calculator & Keypad Taps",
+    soundAlerts: "Budget & Goal Alerts",
+    soundDestructive: "Delete & Trash Actions",
+    soundOnSave: "Play Sound on Save",
+    soundOnSaveSubtitle: "Short chime when a transaction is recorded",
+    backupDataSection: "BACKUP & DATA",
+    appearanceProfileSection: "APPEARANCE & PROFILE",
+    interactionsSection: "INTERACTIONS & FEEDBACK",
+    defaultsSection: "DEFAULTS & PREFERENCES",
+    notificationsSection: "NOTIFICATIONS & WIDGETS",
+    aboutSupportSection: "ABOUT & SUPPORT",
+    stealthModeTitle: "Stealth Mode (Hide Balances)",
+    stealthModeDescription: "Mask account balances and financial figures across screens",
     generalSection: "GENERAL",
     profileSection: "PROFILE",
     nicknameTitle: "Nickname",
@@ -211,6 +273,27 @@ export const en = {
       "Teach Kai keywords for actions, categories, and accounts",
     kaiChatModeTitle: "Chat with Kai Mode",
     kaiChatModeSubtitle: "Review first or auto-save",
+    gesturesTitle: "Gestures",
+    gesturesAccessibility: "Gestures: %{action}. Tap to configure.",
+    gesturesSubtitle: "Shake shortcuts & quick actions",
+    shakeGestureTitle: "Shake the Device",
+    shakeGestureDescription:
+      "Quickly shake your phone from any screen to open your selected quick action.",
+    shakeActionChatWithKai: "Chat with Kai",
+    shakeActionChatWithKaiDescription:
+      "Open AI assistant to record transactions with natural language",
+    shakeActionManualEntry: "Manual Entry",
+    shakeActionManualEntryDescription:
+      "Open the standard transaction form directly",
+    shakeActionDisabled: "Disabled",
+    shakeActionDisabledDescription:
+      "Do not trigger any action when device is shaken",
+    testShakeGesture: "Test Selected Action",
+    testShakeGestureDev: "Simulate Shake Gesture (Dev)",
+    testShakeGestureDevDescription:
+      "Trigger the configured shake action to test without physically shaking",
+    shakeDisabledAlert:
+      "Shake Gesture is currently disabled. Select Chat with Kai or Manual Entry to test.",
     defaultAccountsSection: "DEFAULT ACCOUNTS",
     expense: "Expense",
     income: "Income",
@@ -259,6 +342,10 @@ export const en = {
     developerMessageSubtitle:
       "A note from John Paul Arellano on our mission and financial literacy",
     developerMessageAccessibility: "Read message and goal from the developer",
+    supportDevelopment: "Support Development",
+    supportDevelopmentSubtitle:
+      "Rate Kaizen on Google Play, share with friends, or send feedback",
+    supportDevelopmentAccessibility: "Open support development options",
     privacy: "Privacy",
     privacySubtitle: "Read our privacy policy online",
     privacyAccessibility: "Open privacy policy website",
@@ -445,6 +532,47 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v140: {
+      date: "November 5, 2026",
+      newItem1:
+        "Shake your device to quickly launch Chat with Kai or transaction entry, with customizable shortcuts in Settings.",
+      newItem2:
+        "Toggle positive or negative amounts in schedules to easily record recurring refunds and income adjustments.",
+      newItem3:
+        "Prevent accidental data loss across forms with a confirmation prompt when leaving unsaved changes.",
+      newItem4:
+        "Instantly hide account balances and financial figures across the app with a single tap on the stealth eye toggle.",
+      newItem5:
+        "Customize tactile vibration feedback and optional sound chimes when recording expenses and tapping the keypad.",
+      newItem6:
+        "Quickly duplicate or delete transactions by swiping right or left directly on the ledger.",
+      improveItem1:
+        "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
+      improveItem2:
+        "Place note color swatches directly above the title for effortless visibility and coloring.",
+      improveItem3:
+        "Keep the Greeting and Date header always active on the dashboard while freely toggling other cards.",
+      improveItem4:
+        "Simplify creating pockets by removing the unused target amount field.",
+      improveItem5:
+        "Optionally show Quick Date pills (Today, Yesterday, Calendar) or classic date selector in transaction forms.",
+      improveItem6:
+        "Reorganize Settings into clean, intuitive sections for effortless navigation.",
+      improveItem7:
+        "Discover clear, helpful empty states with one-tap action buttons across savings goals and ledgers.",
+      improveItem8:
+        "Jump directly into matching records and prefilled filters when tapping search results.",
+      fixItem1:
+        "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
+      fixItem2:
+        "Fix bottom buttons in the tablet sidebar being partially obscured when three-button navigation is enabled.",
+      fixItem3:
+        "Fix missing Spanish and Filipino translations on dashboard recent transactions.",
+      fixItem4:
+        "Ensure stealth mode completely masks transaction group totals, balance sheet numbers, and report charts.",
+      fixItem5:
+        "Fix pull-to-refresh not responding on the transactions ledger.",
+    },
     v130: {
       date: "November 2, 2026",
       newItem1:
@@ -599,6 +727,41 @@ export const en = {
     actionFeedback: "Send Feedback",
     actionSupport: "Support via Pro",
   },
+  supportDevelopment: {
+    title: "Support Development",
+    subtitle: "Help Kaizen Finance grow and reach more people",
+    badge: "SUPPORT KAIZEN",
+    spreadSectionTitle: "SPREAD THE WORD",
+    directSectionTitle: "DIRECT SUPPORT",
+    feedbackSectionTitle: "GET IN TOUCH",
+    heroDescription:
+      "Kaizen Finance is crafted independently as a private, offline-first app. Your support keeps updates coming and helps us stay completely ad-free and tracking-free.",
+    proActiveBadge: "ACTIVE PRO SUPPORTER",
+    proActiveSubtitle:
+      "Thank you for backing Kaizen! All Pro features are unlocked.",
+    rateTitle: "Rate on Google Play",
+    rateSubtitle: "Leave a 5-star review to support an independent developer",
+    rateAction: "Rate Kaizen",
+    shareTitle: "Share with Friends",
+    shareSubtitle: "Help others track their finances offline & privately",
+    shareAction: "Share App",
+    shareMessage: "I've been using Kaizen Finance to track my income, expenses, and pockets offline and privately! Check it out:",
+    feedbackTitle: "Send Feedback & Suggestions",
+    feedbackSubtitle: "Tell us what you'd like to see next or report issues",
+    feedbackAction: "Send Feedback",
+    proTitle: "Upgrade to Kaizen Pro",
+    proSubtitle: "Unlock unlimited pockets, cloud backup, and all features",
+    proAction: "View Pro Options",
+  },
+  inAppReview: {
+    badge: "MILESTONE REACHED",
+    title: "10 Transactions Tracked! 🎉",
+    description:
+      "You're building consistent financial habits! If Kaizen is helping you keep tabs on your money, a quick rating on Google Play means the world to an independent developer.",
+    rateAction: "Rate Kaizen ⭐",
+    maybeLaterAction: "Maybe Later",
+    dontAskAgain: "Don't ask again",
+  },
   onboarding: {
     welcomeTitle: "Welcome to Kaizen Finance",
     welcomeDescription:
@@ -701,6 +864,9 @@ export const en = {
     recommendedBadge: "Recommended",
   },
   transactionForm: {
+    quickDateToday: "Today",
+    quickDateYesterday: "Yesterday",
+    quickDateCustom: "Calendar",
     customizeFieldsTitle: "Customize fields",
     customizeFieldsSubtitle:
       "Amount, account, category, and date always stay on the form.",
@@ -718,6 +884,7 @@ export const en = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Exact time",
+      quickDates: "Quick dates",
     },
   },
   dashboard: {
@@ -816,6 +983,7 @@ export const en = {
     presetMinimalistDesc:
       "Compact greeting, monthly cashflow, and recent transactions.",
     widgetGreetingTitle: "Greeting & Date",
+    alwaysActive: "Always active",
     widgetGreetingDesc:
       "Personal welcome header and optional daily inspiration quote.",
     widgetNetWorthTitle: "Net Worth & Balance",
@@ -835,6 +1003,11 @@ export const en = {
     showDailyQuoteTitle: "Show Daily Inspiration Quote",
     showDailyQuoteDesc:
       "Display a tap-to-shuffle financial quote inside the greeting card.",
+    quoteColorsTitle: "Quote Appearance",
+    quoteBgColor: "Background Color",
+    quoteTextColor: "Text Color",
+    themeDefault: "Default",
+    resetToDefault: "Reset Colors",
     cashflowCardTitle: "Monthly Cashflow",
     netCashflowLabel: "Net Cashflow",
     cashflowIncome: "Income",
@@ -858,6 +1031,13 @@ export const en = {
     quickActionIncome: "Income",
     quickActionTransfer: "Transfer",
     quickActionAi: "Ask Kai",
+    recentTransactionsTitle: "Recent Transactions",
+    viewAllTransactionsAccessibility: "View all transactions",
+    noRecentTransactions: "No transactions recorded yet.",
+    noRecentTransactionsHint: "Use the + button to record your first transaction.",
+    transferToAccount: "Transfer to %{account}",
+    transactionFallback: "Transaction",
+    viewTransactionAccessibility: "View transaction, %{title}",
   },
   calendar: {
     firstOfMonth: "1st of Month",
@@ -1353,6 +1533,9 @@ export const en = {
     stepKaiKnowledgeTitle: "Manage Kai Knowledge",
     stepKaiKnowledgeDesc:
       "Teach Kai custom keywords for your accounts and categories to make AI chat logging even smarter.",
+    stepGesturesTitle: "Gestures",
+    stepGesturesDesc:
+      "Configure physical device gestures like shaking your phone to quickly launch Chat with Kai or Manual Entry from anywhere in the app.",
     stepDefaultExpenseTitle: "Default Expense Account",
     stepDefaultExpenseDesc:
       "Set the preselected account and pocket automatically used when logging new expenses.",
@@ -1635,6 +1818,8 @@ export const en = {
     },
   },
   transactions: {
+    swipeDelete: "Delete",
+    swipeDuplicate: "Duplicate",
     speedDialForm: "Manual Entry",
     speedDialChat: "Chat with Kai",
   },

@@ -10,6 +10,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { IncomeExpenseMode } from "../../types/income-expense.types";
 import type { LabelsSummaryItem } from "../../types/labels-summary.types";
@@ -41,6 +42,7 @@ export function LabelsSummaryTable({
 }: LabelsSummaryTableProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
@@ -76,7 +78,10 @@ export function LabelsSummaryTable({
             <View style={styles.coverageCol}>
               <Text style={styles.coverageLabel}>TAGGED / LABELED</Text>
               <Text style={styles.coverageAmount}>
-                {formatCurrency(labeledMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(labeledMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.coverageMeta}>
                 {labeledPct}% ({labeledTransactionCount}{" "}
@@ -89,7 +94,10 @@ export function LabelsSummaryTable({
             <View style={styles.coverageCol}>
               <Text style={styles.coverageLabel}>UNLABELED</Text>
               <Text style={styles.coverageAmount}>
-                {formatCurrency(unlabeledMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(unlabeledMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.coverageMeta}>
                 {unlabeledPct}% ({unlabeledTransactionCount}{" "}
@@ -117,9 +125,9 @@ export function LabelsSummaryTable({
             <Pressable
               key={item.labelId}
               accessibilityRole="button"
-              accessibilityLabel={`${displayName}, ${formatCurrency(
-                item.totalMinorUnits,
-                currencyCode,
+              accessibilityLabel={`${displayName}, ${formatPrivacyAmount(
+                formatCurrency(item.totalMinorUnits, currencyCode),
+                isPrivate,
               )}, ${item.percentage}% of total`}
               onPress={() => {
                 if (isSelected) {
@@ -161,7 +169,10 @@ export function LabelsSummaryTable({
                     {displayName}
                   </Text>
                   <Text style={styles.amountText}>
-                    {formatCurrency(item.totalMinorUnits, currencyCode)}
+                    {formatPrivacyAmount(
+                      formatCurrency(item.totalMinorUnits, currencyCode),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
@@ -205,7 +216,10 @@ export function LabelsSummaryTable({
           </Text>
         </View>
         <Text style={styles.footerTotalAmount}>
-          {formatCurrency(totalMinorUnits, currencyCode)}
+          {formatPrivacyAmount(
+            formatCurrency(totalMinorUnits, currencyCode),
+            isPrivate,
+          )}
         </Text>
       </View>
     </View>

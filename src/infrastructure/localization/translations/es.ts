@@ -4,7 +4,15 @@ import type {
 } from "@/infrastructure/localization/translations/en";
 
 export const es = {
+  privacy: {
+    hideBalances: "Ocultar saldos",
+    showBalances: "Mostrar saldos",
+    stealthMode: "Modo de privacidad",
+    stealthModeDescription: "Ocultar saldos y cifras financieras en toda la app",
+  },
   common: {
+    enabled: "Activado",
+    disabled: "Desactivado",
     cancel: "Cancelar",
     close: "Cerrar",
     delete: "Eliminar",
@@ -14,6 +22,14 @@ export const es = {
     search: "Buscar",
     skipForNow: "Omitir por ahora",
     today: "Hoy",
+    unsavedChangesTitle: "Cambios sin guardar",
+    unsavedChangesMessage:
+      "Tienes cambios sin guardar. ¿Qué deseas hacer antes de salir?",
+    saveChanges: "Guardar cambios",
+    dontSave: "No guardar",
+    keepEditing: "Seguir editando",
+    account: "Cuenta",
+    uncategorized: "Sin categoría",
   },
   search: {
     openSearch: "Abrir búsqueda",
@@ -26,6 +42,25 @@ export const es = {
     sectionSettings: "AJUSTES Y SEGURIDAD",
     sectionAccounts: "CUENTAS",
     sectionCategories: "CATEGORÍAS",
+    sectionTransactions: "TRANSACCIONES",
+    sectionBudgets: "PRESUPUESTOS",
+    sectionGoals: "METAS DE AHORRO",
+    sectionNotes: "NOTAS",
+    sectionSchedules: "TRANSACCIONES PROGRAMADAS",
+    sectionLabels: "ETIQUETAS",
+    sectionPockets: "BOLSILLOS",
+    settingStealthMode: "Modo Privacidad / Sigilo",
+    settingStealthModeDesc: "Ocultar saldos y montos de cuentas",
+    settingSoundHaptics: "Ajustes de Sonido y Háptica",
+    settingSoundHapticsDesc: "Configurar vibraciones táctiles y sonidos",
+    settingSupportDev: "Apoyar el desarrollo",
+    settingSupportDevDesc: "Apoya la aplicación con una propina o reseña",
+    actionLocalBackup: "Copia de Seguridad y Restauración",
+    actionLocalBackupDesc: "Exportar o restaurar la base de datos localmente",
+    actionGoogleDriveSync: "Copia en la Nube con Google Drive",
+    actionGoogleDriveSyncDesc: "Copia de seguridad y sincronización en la nube",
+    actionManagePresets: "Gestión de Ajustes Rápidos",
+    actionManagePresetsDesc: "Gestionar plantillas de transacciones de un toque",
     suggestedTitle: "ACCESOS RÁPIDOS SUGERIDOS",
     clearSearch: "Borrar",
     itemSettingsBadge: "Ajuste",
@@ -105,6 +140,7 @@ export const es = {
     sqliteMonitor: "Monitor de SQLite",
     settings: "Configuración",
     sendFeedback: "Enviar comentarios",
+    supportDevelopment: "Apoyo y Comentarios",
     localBackup: "Copia de seguridad local",
     googleDriveBackup: "Copia de seguridad de Google Drive",
     language: "Idioma",
@@ -163,6 +199,32 @@ export const es = {
     restoreConfirmAction: "Restaurar",
   },
   settings: {
+    soundAndHapticsSection: "Sonido y Vibración",
+    hapticsMaster: "Vibración Háptica",
+    hapticsMasterSubtitle: "Vibraciones táctiles durante acciones",
+    hapticsTransactions: "Registrar y Editar Transacciones",
+    hapticsCalculator: "Toques de Calculadora y Teclado",
+    hapticsAlerts: "Alertas de Presupuesto y Metas",
+    hapticsDestructive: "Acciones de Eliminar y Papelera",
+    hapticsDisabledHint: "Nota: Si la vibración táctil está desactivada en los ajustes del sistema de tu teléfono, no se sentirá la háptica.",
+    testHaptics: "Probar háptica",
+    testSound: "Probar sonido",
+    soundMaster: "Efectos de sonido",
+    soundMasterSubtitle: "Campana de audio para acciones en la app",
+    soundTransactions: "Registrar y editar transacciones",
+    soundCalculator: "Toques de calculadora y teclado",
+    soundAlerts: "Alertas de presupuesto y metas",
+    soundDestructive: "Acciones de eliminación",
+    soundOnSave: "Reproducir Sonido al Guardar",
+    soundOnSaveSubtitle: "Breve campanilla al registrar una transacción",
+    backupDataSection: "COPIA DE SEGURIDAD Y DATOS",
+    appearanceProfileSection: "APARIENCIA Y PERFIL",
+    interactionsSection: "INTERACCIONES Y RESPUESTA",
+    defaultsSection: "VALORES PREDETERMINADOS",
+    notificationsSection: "NOTIFICACIONES Y WIDGETS",
+    aboutSupportSection: "ACERCA DE Y SOPORTE",
+    stealthModeTitle: "Modo Privacidad (Ocultar Saldos)",
+    stealthModeDescription: "Ocultar saldos de cuenta y cifras financieras en toda la app",
     generalSection: "GENERAL",
     profileSection: "PERFIL",
     nicknameTitle: "Apodo (Nickname)",
@@ -204,6 +266,27 @@ export const es = {
       "Enseña a Kai palabras clave para acciones, categorías y cuentas",
     kaiChatModeTitle: "Modo de Chat con Kai",
     kaiChatModeSubtitle: "Revisar primero o autoguardar",
+    gesturesTitle: "Gestos",
+    gesturesAccessibility: "Gestos: %{action}. Toca para configurar.",
+    gesturesSubtitle: "Atajos de agitación y acciones rápidas",
+    shakeGestureTitle: "Agitar el Dispositivo",
+    shakeGestureDescription:
+      "Agita rápidamente tu teléfono desde cualquier pantalla para abrir tu acción rápida seleccionada.",
+    shakeActionChatWithKai: "Chatear con Kai",
+    shakeActionChatWithKaiDescription:
+      "Abre el asistente de IA para registrar transacciones con lenguaje natural",
+    shakeActionManualEntry: "Entrada Manual",
+    shakeActionManualEntryDescription:
+      "Abre directamente el formulario estándar de transacciones",
+    shakeActionDisabled: "Desactivado",
+    shakeActionDisabledDescription:
+      "No activar ninguna acción cuando se agite el dispositivo",
+    testShakeGesture: "Probar Acción Seleccionada",
+    testShakeGestureDev: "Simular Gesto de Agitación (Dev)",
+    testShakeGestureDevDescription:
+      "Activa la acción de agitación configurada para probar sin agitar físicamente",
+    shakeDisabledAlert:
+      "El gesto de agitación está actualmente desactivado. Selecciona Chatear con Kai o Entrada Manual para probar.",
     defaultAccountsSection: "CUENTAS PREDETERMINADAS",
     expense: "Gastos",
     income: "Ingresos",
@@ -256,6 +339,10 @@ export const es = {
     developerMessageSubtitle:
       "Una carta de John Paul Arellano sobre nuestra misión y educación financiera",
     developerMessageAccessibility: "Leer mensaje y meta del desarrollador",
+    supportDevelopment: "Apoyar el Desarrollo",
+    supportDevelopmentSubtitle:
+      "Valora Kaizen en Google Play, comparte con amigos o envía comentarios",
+    supportDevelopmentAccessibility: "Abrir opciones de apoyo al desarrollo",
     privacy: "Privacidad",
     privacySubtitle: "Lee nuestra política de privacidad en línea",
     privacyAccessibility: "Abrir el sitio web de la política de privacidad",
@@ -442,6 +529,47 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v140: {
+      date: "5 de noviembre de 2026",
+      newItem1:
+        "Agita tu dispositivo para abrir rápidamente el Chat con Kai o el registro, con atajos configurables.",
+      newItem2:
+        "Alterna montos positivos o negativos en transacciones programadas para registrar reembolsos y ajustes.",
+      newItem3:
+        "Evita la pérdida accidental de datos con una confirmación al salir de formularios con cambios sin guardar.",
+      newItem4:
+        "Oculta al instante los saldos de cuentas en toda la app con un toque en el botón de modo sigilo.",
+      newItem5:
+        "Personaliza la vibración táctil y sonidos al registrar gastos y pulsar teclas numéricas.",
+      newItem6:
+        "Duplica o elimina transacciones rápidamente deslizando hacia la derecha o izquierda en el libro contable.",
+      improveItem1:
+        "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restaura los predeterminados.",
+      improveItem2:
+        "Coloca la paleta de colores de notas justo encima del título para una visibilidad y selección más fácil.",
+      improveItem3:
+        "Mantén el saludo y la fecha siempre visibles en el panel mientras ajustas libremente las demás tarjetas.",
+      improveItem4:
+        "Simplifica la creación de bolsillos eliminando el campo innecesario de monto objetivo.",
+      improveItem5:
+        "Muestra píldoras de fecha rápida (Hoy, Ayer, Calendario) o el selector clásico en el formulario de transacciones.",
+      improveItem6:
+        "Reorganiza Ajustes en secciones limpias e intuitivas para una navegación más rápida.",
+      improveItem7:
+        "Muestra estados vacíos útiles con botones de acción directa en metas de ahorro y registros.",
+      improveItem8:
+        "Accede directamente a los registros coincidentes y filtros precompletados al tocar los resultados de búsqueda.",
+      fixItem1:
+        "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
+      fixItem2:
+        "Corrige que los botones inferiores de la barra lateral en tabletas queden parcialmente tapados con la navegación de tres botones.",
+      fixItem3:
+        "Corregir las traducciones faltantes en español y filipino en las transacciones recientes del panel.",
+      fixItem4:
+        "Asegura que el modo sigilo oculte por completo subtotales de transacciones, balance general y gráficos.",
+      fixItem5:
+        "Corrige que el gesto de deslizar para refrescar no responda en la lista de transacciones.",
+    },
     v130: {
       date: "2 de noviembre de 2026",
       newItem1:
@@ -597,6 +725,41 @@ export const es = {
     actionFeedback: "Enviar comentarios",
     actionSupport: "Apoyar con Pro",
   },
+  supportDevelopment: {
+    title: "Apoyar el Desarrollo",
+    subtitle: "Ayuda a Kaizen Finance a crecer y llegar a más personas",
+    badge: "APOYAR A KAIZEN",
+    spreadSectionTitle: "DIFUNDE LA VOZ",
+    directSectionTitle: "APOYO DIRECTO",
+    feedbackSectionTitle: "PONTE EN CONTACTO",
+    heroDescription:
+      "Kaizen Finance se desarrolla de forma independiente como una app privada y sin conexión. Tu apoyo mantiene las actualizaciones constantes y nos ayuda a seguir sin anuncios ni rastreo.",
+    proActiveBadge: "COLABORADOR PRO ACTIVO",
+    proActiveSubtitle:
+      "¡Gracias por apoyar a Kaizen! Todas las funciones Pro están desbloqueadas.",
+    rateTitle: "Valorar en Google Play",
+    rateSubtitle: "Deja una reseña de 5 estrellas para apoyar a un desarrollador independiente",
+    rateAction: "Valorar Kaizen",
+    shareTitle: "Compartir con Amigos",
+    shareSubtitle: "Ayuda a otros a controlar sus finanzas sin conexión y de forma privada",
+    shareAction: "Compartir App",
+    shareMessage: "¡Estoy usando Kaizen Finance para controlar mis ingresos, gastos y bolsillos sin conexión y de forma privada! Pruébalo:",
+    feedbackTitle: "Enviar Comentarios y Sugerencias",
+    feedbackSubtitle: "Cuéntanos qué te gustaría ver a continuación o reporta problemas",
+    feedbackAction: "Enviar Comentarios",
+    proTitle: "Actualizar a Kaizen Pro",
+    proSubtitle: "Desbloquea bolsillos ilimitados, copia de seguridad en la nube y todas las funciones",
+    proAction: "Ver Opciones Pro",
+  },
+  inAppReview: {
+    badge: "HITO ALCANZADO",
+    title: "¡10 Transacciones Registradas! 🎉",
+    description:
+      "¡Estás construyendo hábitos financieros constantes! Si Kaizen te está ayudando a llevar el control de tu dinero, una breve valoración en Google Play significa mucho para un desarrollador independiente.",
+    rateAction: "Valorar Kaizen ⭐",
+    maybeLaterAction: "Quizás Más Tarde",
+    dontAskAgain: "No volver a preguntar",
+  },
   onboarding: {
     welcomeTitle: "Bienvenido a Kaizen Finance",
     welcomeDescription:
@@ -699,6 +862,9 @@ export const es = {
     recommendedBadge: "Recomendado",
   },
   transactionForm: {
+    quickDateToday: "Hoy",
+    quickDateYesterday: "Ayer",
+    quickDateCustom: "Calendario",
     customizeFieldsTitle: "Personalizar campos",
     customizeFieldsSubtitle:
       "Importe, cuenta, categoría y fecha siempre permanecen en el formulario.",
@@ -716,6 +882,7 @@ export const es = {
       note: "Nota",
       quickPresets: "Ajustes rápidos",
       exactTime: "Hora exacta",
+      quickDates: "Fechas rápidas",
     },
   },
   dashboard: {
@@ -811,6 +978,7 @@ export const es = {
     presetMinimalist: "Minimalista",
     presetMinimalistDesc: "Saludo compacto, flujo de caja mensual y transacciones recientes.",
     widgetGreetingTitle: "Saludo y Fecha",
+    alwaysActive: "Siempre activo",
     widgetGreetingDesc: "Encabezado de bienvenida y frase de inspiración diaria opcional.",
     widgetNetWorthTitle: "Patrimonio Neto y Saldo",
     widgetNetWorthDesc: "Gráfico de tendencia de saldo, activos y pasivos.",
@@ -824,6 +992,11 @@ export const es = {
     widgetRecentTxDesc: "Tus últimos ingresos, gastos y transferencias registrados.",
     showDailyQuoteTitle: "Mostrar Frase de Inspiración Diaria",
     showDailyQuoteDesc: "Muestra una cita financiera dentro de la tarjeta de saludo.",
+    quoteColorsTitle: "Apariencia de la Frase",
+    quoteBgColor: "Color de Fondo",
+    quoteTextColor: "Color de Texto",
+    themeDefault: "Predeterminado",
+    resetToDefault: "Restablecer Colores",
     cashflowCardTitle: "Flujo de Caja Mensual",
     netCashflowLabel: "Flujo Neto",
     cashflowIncome: "Ingresos",
@@ -847,6 +1020,13 @@ export const es = {
     quickActionIncome: "Ingreso",
     quickActionTransfer: "Transferir",
     quickActionAi: "Preguntar a Kai",
+    recentTransactionsTitle: "Transacciones recientes",
+    viewAllTransactionsAccessibility: "Ver todas las transacciones",
+    noRecentTransactions: "Aún no hay transacciones registradas.",
+    noRecentTransactionsHint: "Usa el botón + para registrar tu primera transacción.",
+    transferToAccount: "Transferencia a %{account}",
+    transactionFallback: "Transacción",
+    viewTransactionAccessibility: "Ver transacción, %{title}",
   },
   calendar: {
     firstOfMonth: "1.º del mes",
@@ -1347,6 +1527,9 @@ export const es = {
     stepKaiKnowledgeTitle: "Administrar conocimiento de Kai",
     stepKaiKnowledgeDesc:
       "Enséñale a Kai palabras clave para tus cuentas y categorías para que el registro por chat sea aún más inteligente.",
+    stepGesturesTitle: "Gestos",
+    stepGesturesDesc:
+      "Configura gestos físicos como agitar tu teléfono para abrir rápidamente el chat con Kai o la entrada manual desde cualquier pantalla.",
     stepDefaultExpenseTitle: "Cuenta de gastos predeterminada",
     stepDefaultExpenseDesc:
       "Establece la cuenta y bolsillo preseleccionados automáticamente al registrar nuevos gastos.",
@@ -1630,6 +1813,8 @@ export const es = {
     },
   },
   transactions: {
+    swipeDelete: "Eliminar",
+    swipeDuplicate: "Duplicar",
     speedDialForm: "Entrada Manual",
     speedDialChat: "Chatear con Kai",
   },

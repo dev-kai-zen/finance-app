@@ -12,6 +12,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { getContrastTextColor, isLightColor } from "@/utils/color-contrast";
 import {
   getRandomQuote,
   type MotivationalQuote,
@@ -20,11 +21,15 @@ import {
 export interface DashboardGreetingCardProps {
   nickname?: string | null;
   showQuote?: boolean;
+  quoteBackgroundColor?: string | null;
+  quoteTextColor?: string | null;
 }
 
 export function DashboardGreetingCard({
   nickname,
   showQuote = true,
+  quoteBackgroundColor,
+  quoteTextColor,
 }: DashboardGreetingCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -82,6 +87,28 @@ export function DashboardGreetingCard({
     };
   }, [nickname, t]);
 
+  const resolvedQuoteTextColor = useMemo(() => {
+    if (quoteBackgroundColor && quoteTextColor) {
+      const bgLight = isLightColor(quoteBackgroundColor);
+      const textLight = isLightColor(quoteTextColor);
+      if (bgLight === textLight) {
+        return getContrastTextColor(quoteBackgroundColor, {
+          darkText: theme.colors.textPrimary,
+          lightText: "#FFFFFF",
+        });
+      }
+      return quoteTextColor;
+    }
+    if (quoteTextColor) return quoteTextColor;
+    if (quoteBackgroundColor) {
+      return getContrastTextColor(quoteBackgroundColor, {
+        darkText: theme.colors.textPrimary,
+        lightText: "#FFFFFF",
+      });
+    }
+    return null;
+  }, [quoteTextColor, quoteBackgroundColor, theme.colors.textPrimary]);
+
   const formattedDate = useMemo(() => {
     try {
       return new Intl.DateTimeFormat(undefined, {
@@ -122,14 +149,52 @@ export function DashboardGreetingCard({
           onPress={handleShuffleQuote}
           style={({ pressed }) => [
             styles.quoteBox,
-            pressed && styles.quoteBoxPressed,
+            quoteBackgroundColor
+              ? {
+                  backgroundColor: quoteBackgroundColor,
+                  borderColor: `${quoteBackgroundColor}40`,
+                }
+              : null,
+            pressed &&
+              (quoteBackgroundColor
+                ? { opacity: 0.8 }
+                : styles.quoteBoxPressed),
           ]}
         >
-          <Quote color={theme.colors.primary} size={14} style={styles.quoteIcon} />
-          <Text style={styles.quoteText}>
-            “{quote.quote}” <Text style={styles.authorText}>— {quote.author}</Text>
+          <Quote
+            color={resolvedQuoteTextColor ?? theme.colors.primary}
+            size={14}
+            style={[
+              styles.quoteIcon,
+              resolvedQuoteTextColor ? { opacity: 0.9 } : null,
+            ]}
+          />
+          <Text
+            style={[
+              styles.quoteText,
+              resolvedQuoteTextColor ? { color: resolvedQuoteTextColor } : null,
+            ]}
+          >
+            “{quote.quote}”{" "}
+            <Text
+              style={[
+                styles.authorText,
+                resolvedQuoteTextColor
+                  ? { color: resolvedQuoteTextColor, opacity: 0.85 }
+                  : null,
+              ]}
+            >
+              — {quote.author}
+            </Text>
           </Text>
-          <Shuffle color={theme.colors.textMuted} size={13} style={styles.shuffleIcon} />
+          <Shuffle
+            color={resolvedQuoteTextColor ?? theme.colors.textMuted}
+            size={13}
+            style={[
+              styles.shuffleIcon,
+              resolvedQuoteTextColor ? { opacity: 0.8 } : null,
+            ]}
+          />
         </Pressable>
       ) : null}
     </View>

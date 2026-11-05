@@ -1,6 +1,13 @@
 import React, { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ArrowRightLeft, Paperclip } from "lucide-react-native";
+import { ArrowRightLeft, Copy, Paperclip, Trash2 } from "lucide-react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import { useLocalization } from "@/infrastructure/localization";
 
 import type { AppTheme } from "@/constants/theme";
 import { IconHelper } from "@/components";
@@ -8,6 +15,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
+import { usePrivacyMode } from "@/modules/settings";
 import { LabelBadge } from "@/modules/labels";
 import type { TransactionListItem } from "../types/transaction.types";
 import {
@@ -15,10 +23,13 @@ import {
   formatTransactionExchangeLabel,
 } from "../utils/format-transaction-exchange-label";
 
+const ACTION_WIDTH = 75;
+
 export interface TransactionRowProps {
   transaction: TransactionListItem;
   onPress?: (tx: TransactionListItem) => void;
   onDelete?: (id: string) => void;
+  onDuplicate?: (tx: TransactionListItem) => void;
   viewMode?: "compact" | "detailed";
 }
 
@@ -92,12 +103,74 @@ function withAlpha(color: string, alpha: number) {
 export function TransactionRow({
   transaction,
   onPress,
+  onDelete,
+  onDuplicate,
   viewMode = "compact",
 }: TransactionRowProps) {
   const theme = useAppTheme();
   const { preferences } = useCurrencyPreferences();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
+  const { t } = useLocalization();
   const isCompact = viewMode === "compact";
+
+  const translateX = useSharedValue(0);
+  const startX = useSharedValue(0);
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-10, 10])
+        .failOffsetY([-15, 15])
+        .onStart(() => {
+          startX.set(translateX.get());
+        })
+        .onUpdate((event) => {
+          const next = startX.get() + event.translationX;
+          const minX = onDelete ? -ACTION_WIDTH - 15 : 0;
+          const maxX = onDuplicate ? ACTION_WIDTH + 15 : 0;
+          translateX.set(Math.min(maxX, Math.max(minX, next)));
+        })
+        .onEnd((event) => {
+          const current = translateX.get();
+          if (current < -ACTION_WIDTH / 2 || event.velocityX < -400) {
+            translateX.set(
+              withSpring(-ACTION_WIDTH, { dampingRatio: 0.85, duration: 250 }),
+            );
+          } else if (current > ACTION_WIDTH / 2 || event.velocityX > 400) {
+            translateX.set(
+              withSpring(ACTION_WIDTH, { dampingRatio: 0.85, duration: 250 }),
+            );
+          } else {
+            translateX.set(
+              withSpring(0, { dampingRatio: 0.85, duration: 250 }),
+            );
+          }
+        }),
+    [startX, translateX, onDelete, onDuplicate],
+  );
+
+  const animatedRowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.get() }],
+  }));
+
+  const handleRowPress = () => {
+    if (Math.abs(translateX.get()) > 10) {
+      translateX.set(withSpring(0, { dampingRatio: 0.85, duration: 200 }));
+      return;
+    }
+    onPress?.(transaction);
+  };
+
+  const handleDeletePress = () => {
+    translateX.set(withSpring(0, { dampingRatio: 0.85, duration: 200 }));
+    onDelete?.(transaction.id);
+  };
+
+  const handleDuplicatePress = () => {
+    translateX.set(withSpring(0, { dampingRatio: 0.85, duration: 200 }));
+    onDuplicate?.(transaction);
+  };
 
   const isIncome = transaction.type === "income";
   const isTransfer = transaction.type === "transfer";
@@ -188,6 +261,9 @@ export function TransactionRow({
     false,
   );
 
+  const displayAmount = isPrivate ? "••••••" : formattedAmount;
+  const displaySourceBalance = isPrivate ? "••••••" : sourceBalance;
+
   if (isCompact) {
     const compactLocation = formatCompactLocation(
       transaction.accountName,
@@ -207,54 +283,94 @@ export function TransactionRow({
       : `${compactCategory}  ·  ${compactLocation}`;
 
     return (
-      <Pressable
-        accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
-        accessibilityRole="button"
-        onPress={() => onPress?.(transaction)}
-        style={({ pressed }) => [
-          styles.compactCard,
-          { borderColor: withAlpha(typeColor, 0.55) },
-          pressed && styles.txCardPressed,
-        ]}
-      >
-        <View style={styles.compactRow}>
-          <View style={styles.compactLeftCol}>
-            <View style={styles.compactTitleRow}>
-              <Text numberOfLines={1} style={styles.compactTitleText}>
-                {title}
-              </Text>
-              {transaction.attachmentCount > 0 ? (
-                <View style={styles.compactAttachmentBadge}>
-                  <Paperclip color={theme.colors.primary} size={11} />
-                </View>
-              ) : null}
-            </View>
-            <View style={styles.compactMetaRow}>
-              <IconHelper color={categoryColor} name={iconName} size={13} />
-              <Text numberOfLines={1} style={styles.compactMetaText}>
-                {compactMeta}
-              </Text>
-            </View>
-            {exchangeLabel ? (
-              <Text numberOfLines={1} style={styles.exchangeMetaText}>
-                {exchangeLabel}
-              </Text>
-            ) : null}
-          </View>
-
-          <View style={styles.compactRightCol}>
-            <Text
-              numberOfLines={1}
-              style={[styles.compactAmountText, { color: amountColor }]}
+      <View style={styles.swipeContainer}>
+        <View style={styles.swipeActionsContainer}>
+          {onDuplicate ? (
+            <Pressable
+              accessibilityLabel={`Duplicate ${title}`}
+              accessibilityRole="button"
+              onPress={handleDuplicatePress}
+              style={styles.duplicateActionButton}
             >
-              {formattedAmount}
-            </Text>
-            <Text numberOfLines={1} style={styles.compactBalanceText}>
-              {sourceBalance}
-            </Text>
-          </View>
+              <Copy color="#FFFFFF" size={17} />
+              <Text style={styles.swipeActionText}>
+                {t("transactions.swipeDuplicate", { defaultValue: "Duplicate" })}
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={{ width: ACTION_WIDTH }} />
+          )}
+
+          {onDelete ? (
+            <Pressable
+              accessibilityLabel={`Delete ${title}`}
+              accessibilityRole="button"
+              onPress={handleDeletePress}
+              style={styles.deleteActionButton}
+            >
+              <Trash2 color="#FFFFFF" size={17} />
+              <Text style={styles.swipeActionText}>
+                {t("transactions.swipeDelete", { defaultValue: "Delete" })}
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={{ width: ACTION_WIDTH }} />
+          )}
         </View>
-      </Pressable>
+
+        <GestureDetector gesture={panGesture}>
+          <Animated.View style={animatedRowStyle}>
+            <Pressable
+              accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
+              accessibilityRole="button"
+              onPress={handleRowPress}
+              style={({ pressed }) => [
+                styles.compactCard,
+                { borderColor: withAlpha(typeColor, 0.55) },
+                pressed && styles.txCardPressed,
+              ]}
+            >
+              <View style={styles.compactRow}>
+                <View style={styles.compactLeftCol}>
+                  <View style={styles.compactTitleRow}>
+                    <Text numberOfLines={1} style={styles.compactTitleText}>
+                      {title}
+                    </Text>
+                    {transaction.attachmentCount > 0 ? (
+                      <View style={styles.compactAttachmentBadge}>
+                        <Paperclip color={theme.colors.primary} size={11} />
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.compactMetaRow}>
+                    <IconHelper color={categoryColor} name={iconName} size={13} />
+                    <Text numberOfLines={1} style={styles.compactMetaText}>
+                      {compactMeta}
+                    </Text>
+                  </View>
+                  {exchangeLabel ? (
+                    <Text numberOfLines={1} style={styles.exchangeMetaText}>
+                      {exchangeLabel}
+                    </Text>
+                  ) : null}
+                </View>
+
+                <View style={styles.compactRightCol}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.compactAmountText, { color: amountColor }]}
+                  >
+                    {displayAmount}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.compactBalanceText}>
+                    {displaySourceBalance}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </GestureDetector>
+      </View>
     );
   }
 
@@ -280,12 +396,50 @@ export function TransactionRow({
       "PHP",
     false,
   );
+  const displayDestinationBalance = isPrivate ? "••••••" : destinationBalance;
 
   return (
-    <Pressable
-      accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
-      accessibilityRole="button"
-      onPress={() => onPress?.(transaction)}
+    <View style={styles.swipeContainer}>
+      <View style={styles.swipeActionsContainer}>
+        {onDuplicate ? (
+          <Pressable
+            accessibilityLabel={`Duplicate ${title}`}
+            accessibilityRole="button"
+            onPress={handleDuplicatePress}
+            style={styles.duplicateActionButton}
+          >
+            <Copy color="#FFFFFF" size={17} />
+            <Text style={styles.swipeActionText}>
+              {t("transactions.swipeDuplicate", { defaultValue: "Duplicate" })}
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: ACTION_WIDTH }} />
+        )}
+
+        {onDelete ? (
+          <Pressable
+            accessibilityLabel={`Delete ${title}`}
+            accessibilityRole="button"
+            onPress={handleDeletePress}
+            style={styles.deleteActionButton}
+          >
+            <Trash2 color="#FFFFFF" size={17} />
+            <Text style={styles.swipeActionText}>
+              {t("transactions.swipeDelete", { defaultValue: "Delete" })}
+            </Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: ACTION_WIDTH }} />
+        )}
+      </View>
+
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={animatedRowStyle}>
+          <Pressable
+            accessibilityLabel={`${title}, ${formattedAmount}${transaction.attachmentCount > 0 ? `, ${transaction.attachmentCount} attachments` : ""}`}
+            accessibilityRole="button"
+            onPress={handleRowPress}
       style={({ pressed }) => [
         styles.txCard,
         { borderColor: withAlpha(typeColor, 0.55) },
@@ -329,7 +483,7 @@ export function TransactionRow({
               numberOfLines={1}
               style={[styles.amountText, { color: amountColor }]}
             >
-              {formattedAmount}
+              {displayAmount}
             </Text>
           </View>
         </View>
@@ -346,7 +500,7 @@ export function TransactionRow({
           <View style={styles.detailLine}>
             <ArrowRightLeft color={theme.colors.info} size={15} />
             <Text style={styles.balanceText}>
-              Source Bal: {sourceBalance}
+              Source Bal: {displaySourceBalance}
             </Text>
           </View>
           <View style={styles.detailLine}>
@@ -354,7 +508,7 @@ export function TransactionRow({
               {destinationRoute}
             </Text>
             <Text style={styles.balanceText}>
-              Dest Bal: {destinationBalance}
+              Dest Bal: {displayDestinationBalance}
             </Text>
           </View>
           {transaction.transferFeeAmountMinorUnits ? (
@@ -379,7 +533,7 @@ export function TransactionRow({
             <Text numberOfLines={2} style={styles.detailLeft}>
               {sourceRoute}
             </Text>
-            <Text style={styles.balanceText}>Bal: {sourceBalance}</Text>
+            <Text style={styles.balanceText}>Bal: {displaySourceBalance}</Text>
           </View>
         </>
       )}
@@ -403,7 +557,10 @@ export function TransactionRow({
           ))}
         </View>
       ) : null}
-    </Pressable>
+          </Pressable>
+        </Animated.View>
+      </GestureDetector>
+    </View>
   );
 }
 
@@ -414,6 +571,41 @@ function createStyles(theme: AppTheme) {
       flexWrap: "wrap",
       gap: 4,
       marginTop: 2,
+    },
+        swipeContainer: {
+      position: "relative",
+      marginBottom: theme.spacing.sm,
+    },
+    swipeActionsContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "stretch",
+      borderRadius: theme.borderRadius.medium,
+      overflow: "hidden",
+    },
+    duplicateActionButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      justifyContent: "center",
+      width: ACTION_WIDTH,
+      gap: 3,
+    },
+    deleteActionButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.danger,
+      justifyContent: "center",
+      width: ACTION_WIDTH,
+      gap: 3,
+    },
+    swipeActionText: {
+      color: "#FFFFFF",
+      fontSize: 11,
+      fontWeight: "700",
     },
     txCard: {
       backgroundColor: theme.colors.surface,

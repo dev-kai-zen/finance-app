@@ -4,7 +4,15 @@ import type {
 } from "@/infrastructure/localization/translations/en";
 
 export const fil = {
+  privacy: {
+    hideBalances: "Itago ang mga balanse",
+    showBalances: "Ipakita ang mga balanse",
+    stealthMode: "Privacy mode",
+    stealthModeDescription: "Itago ang mga balanse at halaga sa buong app",
+  },
   common: {
+    enabled: "Naka-on",
+    disabled: "Naka-off",
     cancel: "Kanselahin",
     close: "Isara",
     delete: "Burahin",
@@ -14,6 +22,14 @@ export const fil = {
     search: "Maghanap",
     skipForNow: "Laktawan muna",
     today: "Ngayon",
+    unsavedChangesTitle: "Hindi Nai-save na Pagbabago",
+    unsavedChangesMessage:
+      "May mga pagbabago kang hindi pa nai-save. Ano ang nais mong gawin bago umalis?",
+    saveChanges: "I-save ang Pagbabago",
+    dontSave: "Huwag I-save",
+    keepEditing: "Ipagpatuloy ang Pag-edit",
+    account: "Account",
+    uncategorized: "Walang kategorya",
   },
   search: {
     openSearch: "Buksan ang paghahanap",
@@ -26,6 +42,25 @@ export const fil = {
     sectionSettings: "MGA SETTING AT SEGURIDAD",
     sectionAccounts: "MGA ACCOUNT",
     sectionCategories: "MGA KATEGORYA",
+    sectionTransactions: "MGA TRANSAKSYON",
+    sectionBudgets: "MGA BADYET",
+    sectionGoals: "MGA LAYUNIN SA PAG-IIPON",
+    sectionNotes: "MGA TALA",
+    sectionSchedules: "MGA NAKATAKDANG TRANSAKSYON",
+    sectionLabels: "MGA LABEL AT TAG",
+    sectionPockets: "MGA POCKET",
+    settingStealthMode: "Privacy / Stealth Mode",
+    settingStealthModeDesc: "Itago o takpan ang mga balanse ng account",
+    settingSoundHaptics: "Mga Setting ng Tunog at Haptics",
+    settingSoundHapticsDesc: "I-configure ang vibration at tunog sa app",
+    settingSupportDev: "Suportahan ang Pagbuo",
+    settingSupportDevDesc: "Suportahan ang app gamit ang tip o review",
+    actionLocalBackup: "Lokal na Backup at Restore",
+    actionLocalBackupDesc: "I-save o i-restore ang backup ng database sa device",
+    actionGoogleDriveSync: "Google Drive Cloud Backup",
+    actionGoogleDriveSyncDesc: "Ligtas na cloud backup at restore gamit ang Google Drive",
+    actionManagePresets: "Pamamahala ng Quick Presets",
+    actionManagePresetsDesc: "Pamahalaan ang 1-tap preset templates para sa transaksyon",
     suggestedTitle: "MGA IPINAPAYONG SHORTCUT",
     clearSearch: "Burahin",
     itemSettingsBadge: "Setting",
@@ -105,6 +140,7 @@ export const fil = {
     sqliteMonitor: "SQLite Monitor",
     settings: "Mga Setting",
     sendFeedback: "Magpadala ng Feedback",
+    supportDevelopment: "Suporta at Feedback",
     localBackup: "Lokal na Backup",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",
@@ -163,6 +199,32 @@ export const fil = {
     restoreConfirmAction: "I-restore",
   },
   settings: {
+    soundAndHapticsSection: "Tunog at Haptics",
+    hapticsMaster: "Haptic Feedback",
+    hapticsMasterSubtitle: "Vibration kapag may aksyon sa app",
+    hapticsTransactions: "Magtala at Mag-edit ng Transaksyon",
+    hapticsCalculator: "Calculator at Keypad Taps",
+    hapticsAlerts: "Budget at Goal Alerts",
+    hapticsDestructive: "Pagbura at Trash Actions",
+    hapticsDisabledHint: "Paalala: Kung naka-off ang vibration sa system settings ng iyong telepono, hindi mararamdaman ang haptics.",
+    testHaptics: "Subukan ang Haptics",
+    testSound: "Subukan ang Tunog",
+    soundMaster: "Mga Epekto ng Tunog",
+    soundMasterSubtitle: "Tunog para sa mga aksyon sa app",
+    soundTransactions: "Magtala at Magbago ng Transaksyon",
+    soundCalculator: "Mga Pindot sa Calculator at Keypad",
+    soundAlerts: "Mga Alerto sa Badyet at Layunin",
+    soundDestructive: "Mga Aksyon sa Pagbura at Pagtanggal",
+    soundOnSave: "Magpatunog Kapag Nag-save",
+    soundOnSaveSubtitle: "Maikling tunog kapag naitala ang transaksyon",
+    backupDataSection: "BACKUP AT DATOS",
+    appearanceProfileSection: "ITSURA AT PROFILE",
+    interactionsSection: "MGA INTERAKSYON AT FEEDBACK",
+    defaultsSection: "MGA DEFAULT AT PREPERENSYA",
+    notificationsSection: "MGA NOTIPIKASYON AT WIDGET",
+    aboutSupportSection: "TUNGKOL AT SUPORTA",
+    stealthModeTitle: "Stealth Mode (Itago ang Balanse)",
+    stealthModeDescription: "Itago ang mga balanse ng account at halaga sa buong app",
     generalSection: "PANGKALAHATAN",
     profileSection: "PROFILE",
     nicknameTitle: "Palayaw (Nickname)",
@@ -204,6 +266,27 @@ export const fil = {
       "Turuan si Kai ng mga keyword para sa aksyon, kategorya, at account",
     kaiChatModeTitle: "Paraan ng Kai Chat",
     kaiChatModeSubtitle: "Suriin muna o awtomatikong i-save",
+    gesturesTitle: "Mga Galaw",
+    gesturesAccessibility: "Mga Galaw: %{action}. I-tap upang i-configure.",
+    gesturesSubtitle: "Mga shortcut sa pag-alog at mabilisang aksyon",
+    shakeGestureTitle: "I-alog ang Device",
+    shakeGestureDescription:
+      "Mabilisang i-alog ang iyong telepono mula sa anumang screen upang buksan ang iyong napiling aksyon.",
+    shakeActionChatWithKai: "Makipag-usap kay Kai",
+    shakeActionChatWithKaiDescription:
+      "Buksan ang AI assistant upang magtala ng mga transaksyon gamit ang natural na salita",
+    shakeActionManualEntry: "Mano-manong Pag-enter",
+    shakeActionManualEntryDescription:
+      "Direktang buksan ang karaniwang form ng transaksyon",
+    shakeActionDisabled: "Naka-off",
+    shakeActionDisabledDescription:
+      "Huwag mag-trigger ng anumang aksyon kapag inalog ang device",
+    testShakeGesture: "Subukan ang Napiling Aksyon",
+    testShakeGestureDev: "Gayahin ang Pag-alog ng Device (Dev)",
+    testShakeGestureDevDescription:
+      "I-trigger ang naka-configure na aksyon sa pag-alog upang subukan nang hindi pisikal na inaalog",
+    shakeDisabledAlert:
+      "Kasalukuyang naka-off ang Shake Gesture. Pumili ng Makipag-usap kay Kai o Mano-manong Pag-enter upang subukan.",
     defaultAccountsSection: "MGA DEFAULT NA ACCOUNT",
     expense: "Gastos",
     income: "Kita",
@@ -256,6 +339,10 @@ export const fil = {
     developerMessageSubtitle:
       "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
     developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
+    supportDevelopment: "Suportahan ang Pagpapaunlad",
+    supportDevelopmentSubtitle:
+      "I-rate ang Kaizen sa Google Play, ibahagi sa mga kaibigan, o magpadala ng feedback",
+    supportDevelopmentAccessibility: "Buksan ang mga opsyon sa pagsuporta sa developer",
     privacy: "Privacy",
     privacySubtitle: "Basahin ang aming patakaran sa privacy online",
     privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
@@ -443,6 +530,47 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v140: {
+      date: "Nobyembre 5, 2026",
+      newItem1:
+        "Alugin ang iyong telepono para mabilisang buksan ang Chat kay Kai o pagtatala, may setting sa Gestures.",
+      newItem2:
+        "I-toggle ang positibo o negatibong halaga sa mga schedule upang madaling maitala ang mga refund at adjustment sa kita.",
+      newItem3:
+        "Iwasan ang aksidenteng pagkawala ng datos sa mga form gamit ang paalala kapag may hindi pa nai-save na pagbabago.",
+      newItem4:
+        "Mabilis na itago ang mga balanse at halaga sa buong app sa isang pindot lang sa stealth eye toggle.",
+      newItem5:
+        "I-customize ang vibration feedback at tunog kapag nagtatala ng transaksyon o gumagamit ng calculator.",
+      newItem6:
+        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakanan o pakaliwa sa talaan.",
+      improveItem1:
+        "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
+      improveItem2:
+        "Ilagay ang mga kulay ng tala sa itaas ng pamagat para madaling makita at mapalitan.",
+      improveItem3:
+        "Panatilihing laging aktibo ang Pagbati at Petsa sa dashboard habang malayang inaayos ang ibang card.",
+      improveItem4:
+        "Gawing mas simple ang paggawa ng pockets sa pamamagitan ng pag-alis ng hindi ginagamit na target amount.",
+      improveItem5:
+        "Paganahin ang Quick Date pills (Ngayon, Kahapon, Kalendaryo) o klasikong petsa sa pagtala ng transaksyon.",
+      improveItem6:
+        "Isaayos ang Settings sa malinaw at madaling puntahang mga grupo para sa mas mabilis na pag-navigate.",
+      improveItem7:
+        "Magpakita ng malilinaw na empty states na may aksyong pindutan sa mga layunin at talaan.",
+      improveItem8:
+        "Direktang pumunta sa mga tumutugmang tala at prefilled filter kapag pumipindot sa mga resulta ng paghahanap.",
+      fixItem1:
+        "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
+      fixItem2:
+        "Ayusin ang mga pindutan sa ibaba ng tablet sidebar na natatakpan kapag naka-enable ang three-button navigation.",
+      fixItem3:
+        "Ayusin ang nawawalang salin sa Filipino at Espanyol sa mga kamakailang transaksyon ng dashboard.",
+      fixItem4:
+        "Siguraduhing ganap na naitatago ng stealth mode ang mga kabuuang bilang sa ledger, balance sheet, at tsart.",
+      fixItem5:
+        "Ayusin ang pull-to-refresh na hindi gumagana sa talaan ng mga transaksyon.",
+    },
     v130: {
       date: "Nobyembre 2, 2026",
       newItem1:
@@ -598,6 +726,41 @@ export const fil = {
     actionFeedback: "Magpadala ng Feedback",
     actionSupport: "Suportahan gamit ang Pro",
   },
+  supportDevelopment: {
+    title: "Suportahan ang Pagpapaunlad",
+    subtitle: "Tulungang lumago ang Kaizen Finance at maabot ang mas maraming tao",
+    badge: "SUPORTAHAN ANG KAIZEN",
+    spreadSectionTitle: "IBAHAGI SA IBA",
+    directSectionTitle: "DIREKTONG SUPORTA",
+    feedbackSectionTitle: "MAKIPAG-UGNAYAN",
+    heroDescription:
+      "Ang Kaizen Finance ay independiyenteng binuo bilang isang pribado at offline-first na app. Ang iyong suporta ay nagpapanatili sa mga update at tumutulong sa aming manatiling walang ad at walang tracking.",
+    proActiveBadge: "AKTIBONG PRO SUPPORTER",
+    proActiveSubtitle:
+      "Salamat sa pagsuporta sa Kaizen! Naka-unlock ang lahat ng Pro features.",
+    rateTitle: "I-rate sa Google Play",
+    rateSubtitle: "Mag-iwan ng 5-star review para suportahan ang isang independent developer",
+    rateAction: "I-rate ang Kaizen",
+    shareTitle: "Ibahagi sa mga Kaibigan",
+    shareSubtitle: "Tulungan ang iba na subaybayan ang kanilang pera nang offline at pribado",
+    shareAction: "Ibahagi ang App",
+    shareMessage: "Ginagamit ko ang Kaizen Finance para subaybayan ang aking kita, gastusin, at pockets nang offline at pribado! Subukan ito:",
+    feedbackTitle: "Magpadala ng Feedback at Suhestiyon",
+    feedbackSubtitle: "Sabihin sa amin ang gusto mong makita o mag-ulat ng isyu",
+    feedbackAction: "Magpadala ng Feedback",
+    proTitle: "Mag-upgrade sa Kaizen Pro",
+    proSubtitle: "I-unlock ang walang limitasyong pockets, cloud backup, at lahat ng tampok",
+    proAction: "Tingnan ang Pro",
+  },
+  inAppReview: {
+    badge: "NAABOT NA MILESTONE",
+    title: "10 Transaksyon na ang Naitala! 🎉",
+    description:
+      "Bumubuo ka ng magandang gawi sa pananalapi! Kung nakatutulong ang Kaizen sa pagsubaybay ng iyong pera, ang mabilis na rating sa Google Play ay napakalaking tulong para sa isang independent developer.",
+    rateAction: "I-rate ang Kaizen ⭐",
+    maybeLaterAction: "Mamaya Na",
+    dontAskAgain: "Huwag nang itanong muli",
+  },
   onboarding: {
     welcomeTitle: "Maligayang pagdating sa Kaizen Finance",
     welcomeDescription:
@@ -701,6 +864,9 @@ export const fil = {
     recommendedBadge: "Inirerekomenda",
   },
   transactionForm: {
+    quickDateToday: "Ngayong Araw",
+    quickDateYesterday: "Kahapon",
+    quickDateCustom: "Kalendaryo",
     customizeFieldsTitle: "I-customize ang mga field",
     customizeFieldsSubtitle:
       "Laging nandiyan ang amount, account, category, at date sa form.",
@@ -718,6 +884,7 @@ export const fil = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Eksaktong oras",
+      quickDates: "Mga mabilisang petsa",
     },
   },
   dashboard: {
@@ -813,6 +980,7 @@ export const fil = {
     presetMinimalist: "Minimalist",
     presetMinimalistDesc: "Maikling pagbati, buwanang cashflow, at kamakailang transaksyon.",
     widgetGreetingTitle: "Pagbati at Petsa",
+    alwaysActive: "Palaging aktibo",
     widgetGreetingDesc: "Personal na pagbati at opsyonal na pang-araw-araw na quote.",
     widgetNetWorthTitle: "Net Worth at Balanse",
     widgetNetWorthDesc: "Chart ng balanse, kabuuang assets, at liabilities.",
@@ -826,6 +994,11 @@ export const fil = {
     widgetRecentTxDesc: "Ang iyong pinakahuling naitalang kita, gastos, at transfer.",
     showDailyQuoteTitle: "Ipakita ang Daily Inspiration Quote",
     showDailyQuoteDesc: "Magpakita ng financial quote sa loob ng greeting card.",
+    quoteColorsTitle: "Itsura ng Quote",
+    quoteBgColor: "Kulay ng Background",
+    quoteTextColor: "Kulay ng Text",
+    themeDefault: "Default",
+    resetToDefault: "I-reset ang Kulay",
     cashflowCardTitle: "Buwanang Cashflow",
     netCashflowLabel: "Net Cashflow",
     cashflowIncome: "Kita",
@@ -849,6 +1022,13 @@ export const fil = {
     quickActionIncome: "Kita",
     quickActionTransfer: "Lipat",
     quickActionAi: "Tanungin si Kai",
+    recentTransactionsTitle: "Mga Kamakailang Transaksyon",
+    viewAllTransactionsAccessibility: "Tingnan ang lahat ng transaksyon",
+    noRecentTransactions: "Wala pang naitalang transaksyon.",
+    noRecentTransactionsHint: "Gamitin ang + button upang itala ang iyong unang transaksyon.",
+    transferToAccount: "Paglipat sa %{account}",
+    transactionFallback: "Transaksyon",
+    viewTransactionAccessibility: "Tingnan ang transaksyon, %{title}",
   },
   calendar: {
     firstOfMonth: "Ika-1 ng Buwan",
@@ -1349,6 +1529,9 @@ export const fil = {
     stepKaiKnowledgeTitle: "Pamahalaan ang Kaalaman ni Kai",
     stepKaiKnowledgeDesc:
       "Turuan si Kai ng mga keyword para sa iyong mga account at kategorya upang mas maging matalino ang pag-chat.",
+    stepGesturesTitle: "Mga Galaw",
+    stepGesturesDesc:
+      "I-configure ang mga galaw tulad ng pag-alog ng iyong telepono upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter mula sa anumang screen.",
     stepDefaultExpenseTitle: "Default na Account para sa Gastos",
     stepDefaultExpenseDesc:
       "Itakda ang account at bulsa na awtomatikong gagamitin kapag nagtatala ng bagong gastos.",
@@ -1631,6 +1814,8 @@ export const fil = {
     },
   },
   transactions: {
+    swipeDelete: "Tanggalin",
+    swipeDuplicate: "Kopyahin",
     speedDialForm: "Manwal na Entry",
     speedDialChat: "Makipag-chat kay Kai",
   },

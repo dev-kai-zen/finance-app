@@ -157,6 +157,7 @@ function BudgetFormModalContent({
   );
 
   const frequencyScrollRef = useRef<ScrollView>(null);
+  const initialSnapshotRef = useRef<string>("");
 
   const frequencyOptions = useMemo(() => {
     const selected = FREQUENCY_OPTIONS.find((opt) => opt.key === frequency);
@@ -170,6 +171,7 @@ function BudgetFormModalContent({
   };
 
   useEffect(() => {
+    let defaultCategoryId = "";
     if (initialBudget) {
       setCategoryId(initialBudget.categoryId);
       setIsEnabled(initialBudget.isEnabled);
@@ -192,7 +194,8 @@ function BudgetFormModalContent({
       const availableExpense = categories.find(
         (c) => c.type === "expense" && !budgetedCategoryIds.has(c.id),
       );
-      setCategoryId(availableExpense?.id || "");
+      defaultCategoryId = availableExpense?.id || "";
+      setCategoryId(defaultCategoryId);
       setIsEnabled(true);
       setAmountCents(0);
       setFrequency("monthly");
@@ -201,6 +204,20 @@ function BudgetFormModalContent({
       setNotifyOnExceeded(false);
       setMonthlyTargets([]);
     }
+    initialSnapshotRef.current = JSON.stringify({
+      categoryId: initialBudget ? initialBudget.categoryId : defaultCategoryId,
+      isEnabled: initialBudget ? initialBudget.isEnabled : true,
+      amountMinorUnits: initialBudget ? initialBudget.amountMinorUnits : 0,
+      frequency: initialBudget ? initialBudget.frequency : "monthly",
+      allowRollover: initialBudget ? initialBudget.allowRollover : false,
+      rolloverMode: initialBudget ? initialBudget.rolloverMode : "positive_only",
+      notifyOnExceeded: initialBudget ? initialBudget.notifyOnExceeded : false,
+      monthlyTargets: initialBudget?.monthlyTargets?.map((t) => ({
+        year: t.year,
+        month: t.month,
+        amountMinorUnits: t.amountMinorUnits,
+      })) || [],
+    });
     setErrorNotification(null);
   }, [initialBudget, categories, existingBudgets, visible]);
 
@@ -308,6 +325,21 @@ function BudgetFormModalContent({
     }
   }, [visible, initialBudget, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
+  const isDirty = useMemo(() => {
+    if (!visible || !initialSnapshotRef.current) return false;
+    const currentSnapshot = JSON.stringify({
+      categoryId,
+      isEnabled,
+      amountMinorUnits,
+      frequency,
+      allowRollover,
+      rolloverMode,
+      notifyOnExceeded,
+      monthlyTargets,
+    });
+    return currentSnapshot !== initialSnapshotRef.current;
+  }, [visible, categoryId, isEnabled, amountMinorUnits, frequency, allowRollover, rolloverMode, notifyOnExceeded, monthlyTargets]);
+
   const handleDelete = () => {
     if (!initialBudget || !onDelete) return;
     void onDelete(initialBudget.id);
@@ -331,6 +363,7 @@ function BudgetFormModalContent({
         }
         titleAlign="left"
         visible={visible}
+        isDirty={isDirty}
         onClose={onClose}
         onDelete={initialBudget && onDelete ? handleDelete : undefined}
         onSave={() => void handleSave()}
