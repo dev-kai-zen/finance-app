@@ -3,6 +3,13 @@ import { SOUND_AND_HAPTICS_SETTING_KEY } from "../constants/settings.constants";
 import { getSettingByKey } from "../repositories/settings.repository";
 import { persistSettingsEntries } from "./persist-settings.service";
 
+export interface SoundSubToggles {
+  transactions: boolean;
+  calculator: boolean;
+  alerts: boolean;
+  destructive: boolean;
+}
+
 export interface SoundAndHapticsPreferences {
   hapticsEnabled: boolean;
   subToggles: {
@@ -11,7 +18,9 @@ export interface SoundAndHapticsPreferences {
     alerts: boolean;
     destructive: boolean;
   };
+  soundEnabled: boolean;
   soundOnSaveEnabled: boolean;
+  soundSubToggles: SoundSubToggles;
 }
 
 export const DEFAULT_SOUND_AND_HAPTICS_PREFERENCES: SoundAndHapticsPreferences = {
@@ -22,7 +31,14 @@ export const DEFAULT_SOUND_AND_HAPTICS_PREFERENCES: SoundAndHapticsPreferences =
     alerts: true,
     destructive: true,
   },
+  soundEnabled: false,
   soundOnSaveEnabled: false,
+  soundSubToggles: {
+    transactions: true,
+    calculator: true,
+    alerts: true,
+    destructive: true,
+  },
 };
 
 type SoundAndHapticsListener = (prefs: SoundAndHapticsPreferences) => void;
@@ -62,6 +78,7 @@ export function getSoundAndHapticsPreferences(
   }
   try {
     const parsed = JSON.parse(raw);
+    const isSoundEnabled = Boolean(parsed.soundEnabled ?? parsed.soundOnSaveEnabled);
     const result: SoundAndHapticsPreferences = {
       hapticsEnabled: Boolean(parsed.hapticsEnabled),
       subToggles: {
@@ -70,7 +87,14 @@ export function getSoundAndHapticsPreferences(
         alerts: parsed.subToggles?.alerts ?? true,
         destructive: parsed.subToggles?.destructive ?? true,
       },
-      soundOnSaveEnabled: Boolean(parsed.soundOnSaveEnabled),
+      soundEnabled: isSoundEnabled,
+      soundOnSaveEnabled: isSoundEnabled,
+      soundSubToggles: {
+        transactions: parsed.soundSubToggles?.transactions ?? true,
+        calculator: parsed.soundSubToggles?.calculator ?? true,
+        alerts: parsed.soundSubToggles?.alerts ?? true,
+        destructive: parsed.soundSubToggles?.destructive ?? true,
+      },
     };
     if (!context) cachedPreferences = result;
     return result;
@@ -84,13 +108,25 @@ export function setSoundAndHapticsPreferences(
   context?: DbContext,
   now = new Date(),
 ): void {
-  cachedPreferences = { ...preferences };
+  const isSoundEnabled = Boolean(preferences.soundEnabled ?? preferences.soundOnSaveEnabled);
+  const normalized: SoundAndHapticsPreferences = {
+    ...preferences,
+    soundEnabled: isSoundEnabled,
+    soundOnSaveEnabled: isSoundEnabled,
+    soundSubToggles: {
+      transactions: preferences.soundSubToggles?.transactions ?? true,
+      calculator: preferences.soundSubToggles?.calculator ?? true,
+      alerts: preferences.soundSubToggles?.alerts ?? true,
+      destructive: preferences.soundSubToggles?.destructive ?? true,
+    },
+  };
+  cachedPreferences = { ...normalized };
   persistSettingsEntries(
-    { [SOUND_AND_HAPTICS_SETTING_KEY]: JSON.stringify(preferences) },
+    { [SOUND_AND_HAPTICS_SETTING_KEY]: JSON.stringify(normalized) },
     context,
     now,
   );
-  notifyListeners(preferences);
+  notifyListeners(normalized);
 }
 
 export type HapticCategory =
@@ -141,22 +177,33 @@ export function triggerHaptic(
         void Haptics.selectionAsync();
         break;
     }
-  } catch {
-    // Graceful fallback if haptics fail or device does not support it
+  } catch (error) {
+    console.warn("[HapticsService] Haptic feedback execution failed:", error);
   }
 }
 
 let audioPlayerInstance: any = null;
 
-export async function playTransactionSavedSound(): Promise<void> {
+export async function triggerSound(
+  category: HapticCategory = "transactions",
+): Promise<void> {
   try {
     const prefs = getSoundAndHapticsPreferences();
-    if (!prefs.soundOnSaveEnabled) return;
+    if (!prefs.soundEnabled && !prefs.soundOnSaveEnabled) return;
+    if (!prefs.soundSubToggles[category]) return;
 
     const { Platform } = require("react-native");
     if (Platform.OS === "web") return;
 
-    const { createAudioPlayer } = await import("expo-audio");
+    const { createAudioPlayer, setAudioModeAsync } = await import("expo-audio");
+    try {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+      });
+    } catch {
+      // Ignore audio mode configuration error
+    }
+
     if (!audioPlayerInstance) {
       audioPlayerInstance = createAudioPlayer(
         require("../../../../assets/sounds/chime.wav"),
@@ -164,8 +211,51 @@ export async function playTransactionSavedSound(): Promise<void> {
     }
     audioPlayerInstance.seekTo(0);
     audioPlayerInstance.play();
-  } catch {
-    // Graceful fallback if audio is unsupported or fails to load
+  } catch (error) {
+    console.warn("[SoundService] Sound playback failed:", error);
+  }
+}
+
+export async function playTransactionSavedSound(): Promise<void> {
+  return triggerSound("transactions");
+}
+
+export function testHapticFeedback(): boolean {
+  try {
+    const Haptics = require("expo-haptics");
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    return true;
+  } catch (error) {
+    console.warn("[HapticsService] Test haptic failed:", error);
+    return false;
+  }
+}
+
+export async function testSoundPlayback(): Promise<boolean> {
+  try {
+    const { Platform } = require("react-native");
+    if (Platform.OS === "web") return false;
+
+    const { createAudioPlayer, setAudioModeAsync } = await import("expo-audio");
+    try {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+      });
+    } catch {
+      // Ignore audio mode configuration error
+    }
+
+    if (!audioPlayerInstance) {
+      audioPlayerInstance = createAudioPlayer(
+        require("../../../../assets/sounds/chime.wav"),
+      );
+    }
+    audioPlayerInstance.seekTo(0);
+    audioPlayerInstance.play();
+    return true;
+  } catch (error) {
+    console.warn("[SoundService] Test sound failed:", error);
+    return false;
   }
 }
 

@@ -4,7 +4,11 @@ import {
   getSoundAndHapticsPreferences,
   setSoundAndHapticsPreferences,
   subscribeToSoundAndHapticsPreferences,
+  testHapticFeedback,
+  testSoundPlayback,
+  type HapticCategory,
   type SoundAndHapticsPreferences,
+  type SoundSubToggles,
 } from "../services/sound-and-haptics.service";
 
 export function useSoundAndHaptics() {
@@ -45,16 +49,41 @@ export function useSoundAndHaptics() {
     [],
   );
 
-  const setSoundOnSaveEnabled = useCallback((enabled: boolean) => {
+  const setSoundEnabled = useCallback((enabled: boolean) => {
     const current = getSoundAndHapticsPreferences();
-    setSoundAndHapticsPreferences({ ...current, soundOnSaveEnabled: enabled });
+    setSoundAndHapticsPreferences({
+      ...current,
+      soundEnabled: enabled,
+      soundOnSaveEnabled: enabled,
+    });
   }, []);
+
+  const setSoundOnSaveEnabled = setSoundEnabled;
+
+  const setSoundSubToggle = useCallback(
+    (key: keyof SoundSubToggles, value: boolean) => {
+      const current = getSoundAndHapticsPreferences();
+      setSoundAndHapticsPreferences({
+        ...current,
+        soundSubToggles: {
+          ...current.soundSubToggles,
+          [key]: value,
+        },
+      });
+    },
+    [],
+  );
 
   return {
     preferences,
     setHapticsEnabled,
     setSubToggle,
+    setHapticSubToggle: setSubToggle,
+    setSoundEnabled,
     setSoundOnSaveEnabled,
+    setSoundSubToggle,
+    testHapticFeedback,
+    testSoundPlayback,
     updatePreferences,
   };
 }

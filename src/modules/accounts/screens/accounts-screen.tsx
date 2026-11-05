@@ -61,6 +61,8 @@ type Overlay =
 
 export function AccountsScreen(props: {
   initialView?: "types" | "account" | "archived";
+  initialAccountId?: string;
+  initialPocketId?: string;
 }) {
   return (
     <WalkthroughRegistryProvider>
@@ -71,8 +73,12 @@ export function AccountsScreen(props: {
 
 function AccountsScreenContent({
   initialView,
+  initialAccountId,
+  initialPocketId,
 }: {
   initialView?: "types" | "account" | "archived";
+  initialAccountId?: string;
+  initialPocketId?: string;
 }) {
   const router = useRouter();
   const theme = useAppTheme();
@@ -107,6 +113,7 @@ function AccountsScreenContent({
     () => initialView === "archived",
   );
   const handledViewRef = useRef<string | null>(null);
+  const handledAccountIdRef = useRef<string | null>(null);
   const [archivedRestorePocketError, setArchivedRestorePocketError] = useState<
     string | null
   >(null);
@@ -252,6 +259,28 @@ function AccountsScreenContent({
       handledViewRef.current = null;
     }
   }, [data.loading, handleOpenAddAccount, initialView, router]);
+
+  useEffect(() => {
+    if (!data.loading && initialAccountId && handledAccountIdRef.current !== initialAccountId) {
+      const foundAccount = data.accounts.find((a) => a.id === initialAccountId);
+      if (foundAccount) {
+        handledAccountIdRef.current = initialAccountId;
+        if (initialPocketId) {
+          setExpandedPocketAccountIds((prev) => new Set(prev).add(initialAccountId));
+          open({
+            kind: "pocket-form",
+            accountId: initialAccountId,
+            pocketId: initialPocketId,
+          });
+        } else {
+          open({ kind: "edit", id: foundAccount.id });
+        }
+        router.setParams({ accountId: undefined, pocketId: undefined });
+      }
+    } else if (!initialAccountId) {
+      handledAccountIdRef.current = null;
+    }
+  }, [data.accounts, data.loading, initialAccountId, initialPocketId, router]);
 
   const close = () => setOverlay(null);
   const selectedAccountId = overlay

@@ -11,6 +11,8 @@ export const fil = {
     stealthModeDescription: "Itago ang mga balanse at halaga sa buong app",
   },
   common: {
+    enabled: "Naka-on",
+    disabled: "Naka-off",
     cancel: "Kanselahin",
     close: "Isara",
     delete: "Burahin",
@@ -40,6 +42,25 @@ export const fil = {
     sectionSettings: "MGA SETTING AT SEGURIDAD",
     sectionAccounts: "MGA ACCOUNT",
     sectionCategories: "MGA KATEGORYA",
+    sectionTransactions: "MGA TRANSAKSYON",
+    sectionBudgets: "MGA BADYET",
+    sectionGoals: "MGA LAYUNIN SA PAG-IIPON",
+    sectionNotes: "MGA TALA",
+    sectionSchedules: "MGA NAKATAKDANG TRANSAKSYON",
+    sectionLabels: "MGA LABEL AT TAG",
+    sectionPockets: "MGA POCKET",
+    settingStealthMode: "Privacy / Stealth Mode",
+    settingStealthModeDesc: "Itago o takpan ang mga balanse ng account",
+    settingSoundHaptics: "Mga Setting ng Tunog at Haptics",
+    settingSoundHapticsDesc: "I-configure ang vibration at tunog sa app",
+    settingSupportDev: "Suportahan ang Pagbuo",
+    settingSupportDevDesc: "Suportahan ang app gamit ang tip o review",
+    actionLocalBackup: "Lokal na Backup at Restore",
+    actionLocalBackupDesc: "I-save o i-restore ang backup ng database sa device",
+    actionGoogleDriveSync: "Google Drive Cloud Backup",
+    actionGoogleDriveSyncDesc: "Ligtas na cloud backup at restore gamit ang Google Drive",
+    actionManagePresets: "Pamamahala ng Quick Presets",
+    actionManagePresetsDesc: "Pamahalaan ang 1-tap preset templates para sa transaksyon",
     suggestedTitle: "MGA IPINAPAYONG SHORTCUT",
     clearSearch: "Burahin",
     itemSettingsBadge: "Setting",
@@ -185,8 +206,25 @@ export const fil = {
     hapticsCalculator: "Calculator at Keypad Taps",
     hapticsAlerts: "Budget at Goal Alerts",
     hapticsDestructive: "Pagbura at Trash Actions",
+    hapticsDisabledHint: "Paalala: Kung naka-off ang vibration sa system settings ng iyong telepono, hindi mararamdaman ang haptics.",
+    testHaptics: "Subukan ang Haptics",
+    testSound: "Subukan ang Tunog",
+    soundMaster: "Mga Epekto ng Tunog",
+    soundMasterSubtitle: "Tunog para sa mga aksyon sa app",
+    soundTransactions: "Magtala at Magbago ng Transaksyon",
+    soundCalculator: "Mga Pindot sa Calculator at Keypad",
+    soundAlerts: "Mga Alerto sa Badyet at Layunin",
+    soundDestructive: "Mga Aksyon sa Pagbura at Pagtanggal",
     soundOnSave: "Magpatunog Kapag Nag-save",
     soundOnSaveSubtitle: "Maikling tunog kapag naitala ang transaksyon",
+    backupDataSection: "BACKUP AT DATOS",
+    appearanceProfileSection: "ITSURA AT PROFILE",
+    interactionsSection: "MGA INTERAKSYON AT FEEDBACK",
+    defaultsSection: "MGA DEFAULT AT PREPERENSYA",
+    notificationsSection: "MGA NOTIPIKASYON AT WIDGET",
+    aboutSupportSection: "TUNGKOL AT SUPORTA",
+    stealthModeTitle: "Stealth Mode (Itago ang Balanse)",
+    stealthModeDescription: "Itago ang mga balanse ng account at halaga sa buong app",
     generalSection: "PANGKALAHATAN",
     profileSection: "PROFILE",
     nicknameTitle: "Palayaw (Nickname)",
@@ -495,7 +533,7 @@ export const fil = {
     v140: {
       date: "Nobyembre 5, 2026",
       newItem1:
-        "I-alog ang iyong device mula sa anumang screen upang mabilisang buksan ang Chat kay Kai o Mano-manong Pag-enter.",
+        "Alugin ang iyong telepono para mabilisang buksan ang Chat kay Kai o pagtatala, may setting sa Gestures.",
       newItem2:
         "I-toggle ang positibo o negatibong halaga sa mga schedule upang madaling maitala ang mga refund at adjustment sa kita.",
       newItem3:
@@ -507,35 +545,31 @@ export const fil = {
       newItem6:
         "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakanan o pakaliwa sa talaan.",
       improveItem1:
-        "I-configure ang mga shortcut sa pag-alog o i-off ang mga ito anumang oras sa Mga Setting sa ilalim ng Mga Galaw.",
-      improveItem2:
         "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
+      improveItem2:
+        "Ilagay ang mga kulay ng tala sa itaas ng pamagat para madaling makita at mapalitan.",
       improveItem3:
-        "Pumili mula sa iyong shared palette o gumawa ng sariling kulay kapag sumusulat ng mga tala.",
-      improveItem4:
         "Panatilihing laging aktibo ang Pagbati at Petsa sa dashboard habang malayang inaayos ang ibang card.",
-      improveItem5:
+      improveItem4:
         "Gawing mas simple ang paggawa ng pockets sa pamamagitan ng pag-alis ng hindi ginagamit na target amount.",
+      improveItem5:
+        "Paganahin ang Quick Date pills (Ngayon, Kahapon, Kalendaryo) o klasikong petsa sa pagtala ng transaksyon.",
       improveItem6:
-        "Pumili ng Ngayong Araw o Kahapon sa isang pindot lang kapag nagtatala ng gastos, o gamitin ang Kalendaryo.",
+        "Isaayos ang Settings sa malinaw at madaling puntahang mga grupo para sa mas mabilis na pag-navigate.",
       improveItem7:
-        "Hilahin pababa ang Dashboard, Transactions, Accounts, at iba pang screen upang i-refresh ang datos.",
+        "Magpakita ng malilinaw na empty states na may aksyong pindutan sa mga layunin at talaan.",
       improveItem8:
-        "Mas malinis na note editor na may color palette toolbar sa ibaba upang hindi makasagabal sa pagsusulat.",
-      improveItem9:
-        "Mas madaling magsimula gamit ang mga bagong gabay at action buttons sa savings goals at talaan.",
+        "Direktang pumunta sa mga tumutugmang tala at prefilled filter kapag pumipindot sa mga resulta ng paghahanap.",
       fixItem1:
         "Ayusin ang mga icon at teksto sa dashboard na nagiging mahirap basahin kapag gumagamit ng sariling kulay.",
       fixItem2:
         "Ayusin ang mga pindutan sa ibaba ng tablet sidebar na natatakpan kapag naka-enable ang three-button navigation.",
       fixItem3:
-        "Pigilan ang shake gesture sa pagbubukas ng quick entry habang naka-lock ang app.",
-      fixItem4:
-        "Pigilan ang pagdoble ng screen kapag nag-shake habang nag-e-edit ng transaksyon o form.",
-      fixItem5:
-        "Pahusayin ang battery efficiency sa pamamagitan ng pag-pause agad ng sensor kapag pinaliit ang app.",
-      fixItem6:
         "Ayusin ang nawawalang salin sa Filipino at Espanyol sa mga kamakailang transaksyon ng dashboard.",
+      fixItem4:
+        "Siguraduhing ganap na naitatago ng stealth mode ang mga kabuuang bilang sa ledger, balance sheet, at tsart.",
+      fixItem5:
+        "Ayusin ang pull-to-refresh na hindi gumagana sa talaan ng mga transaksyon.",
     },
     v130: {
       date: "Nobyembre 2, 2026",
@@ -850,6 +884,7 @@ export const fil = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Eksaktong oras",
+      quickDates: "Mga mabilisang petsa",
     },
   },
   dashboard: {

@@ -21,6 +21,7 @@ import type {
   BalanceSheetData,
 } from "@/modules/accounts";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { CalendarMonth } from "../types/calendar.types";
 import { MONTH_NAMES, formatFriendlyDate } from "../utils/calendar-dates";
@@ -39,7 +40,14 @@ export function CalendarBalanceSheetTab({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
+
+  const maskCurrency = (
+    amount: number,
+    code: string = currencyCode,
+    signed = false,
+  ) => formatPrivacyAmount(formatCurrency(amount, code, signed), isPrivate);
 
   // Set of account IDs with expanded pockets
   const [expandedPockets, setExpandedPockets] = useState<Set<string>>(() => {
@@ -162,7 +170,7 @@ export function CalendarBalanceSheetTab({
             },
           ]}
         >
-          {formatCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
+          {maskCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
         </Text>
 
         <View style={styles.netWorthDivider} />
@@ -182,7 +190,7 @@ export function CalendarBalanceSheetTab({
                 },
               ]}
             >
-              {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
+              {maskCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
             </Text>
           </View>
 
@@ -202,7 +210,7 @@ export function CalendarBalanceSheetTab({
                 },
               ]}
             >
-              {formatCurrency(
+              {maskCurrency(
                 balanceSheet.liabilities.totalMinorUnits,
                 currencyCode,
                 false,
@@ -238,7 +246,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
+            {maskCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
           </Text>
         </View>
 
@@ -257,6 +265,7 @@ export function CalendarBalanceSheetTab({
                 styles,
                 currencyCode,
                 preferences.colorAmounts,
+                isPrivate,
               ),
             )}
           </View>
@@ -289,7 +298,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(
+            {maskCurrency(
               balanceSheet.liabilities.totalMinorUnits,
               currencyCode,
               false,
@@ -312,6 +321,7 @@ export function CalendarBalanceSheetTab({
                 styles,
                 currencyCode,
                 preferences.colorAmounts,
+                isPrivate,
               ),
             )}
           </View>
@@ -334,7 +344,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
+            {maskCurrency(balanceSheet.assets.totalMinorUnits, currencyCode, false)}
           </Text>
         </View>
         <View style={styles.summaryFooterRow}>
@@ -351,7 +361,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(
+            {maskCurrency(
               balanceSheet.liabilities.totalMinorUnits,
               currencyCode,
               false,
@@ -373,7 +383,7 @@ export function CalendarBalanceSheetTab({
               },
             ]}
           >
-            {formatCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
+            {maskCurrency(balanceSheet.netWorthMinorUnits, currencyCode, false)}
           </Text>
         </View>
       </View>
@@ -389,6 +399,7 @@ function renderAccountTypeGroup(
   styles: ReturnType<typeof createStyles>,
   currencyCode: string,
   colorAmounts: boolean,
+  isPrivate: boolean,
 ) {
   const isPositive = group.totalBalanceMinorUnits >= 0;
 
@@ -432,7 +443,10 @@ function renderAccountTypeGroup(
             },
           ]}
         >
-          {formatCurrency(group.totalBalanceMinorUnits, currencyCode, false)}
+          {formatPrivacyAmount(
+            formatCurrency(group.totalBalanceMinorUnits, currencyCode, false),
+            isPrivate,
+          )}
         </Text>
       </View>
 
@@ -446,6 +460,7 @@ function renderAccountTypeGroup(
             theme,
             styles,
             colorAmounts,
+            isPrivate,
           ),
         )}
       </View>
@@ -460,6 +475,7 @@ function renderAccountItem(
   theme: AppTheme,
   styles: ReturnType<typeof createStyles>,
   colorAmounts: boolean,
+  isPrivate: boolean,
 ) {
   const isPositive = account.balanceMinorUnits >= 0;
   const hasPockets = account.pockets.length > 0;
@@ -468,7 +484,7 @@ function renderAccountItem(
     <View key={account.id} style={styles.accountItemWrapper}>
       {/* Account Row */}
       <Pressable
-        accessibilityLabel={`${account.name}, balance ${formatCurrency(account.balanceMinorUnits, account.currencyCode, false)}`}
+        accessibilityLabel={`${account.name}, balance ${formatPrivacyAmount(formatCurrency(account.balanceMinorUnits, account.currencyCode, false), isPrivate)}`}
         accessibilityRole="button"
         disabled={!hasPockets}
         onPress={onTogglePockets}
@@ -515,7 +531,10 @@ function renderAccountItem(
             },
           ]}
         >
-          {formatCurrency(account.balanceMinorUnits, account.currencyCode, false)}
+          {formatPrivacyAmount(
+            formatCurrency(account.balanceMinorUnits, account.currencyCode, false),
+            isPrivate,
+          )}
         </Text>
       </Pressable>
 
@@ -544,10 +563,13 @@ function renderAccountItem(
                 },
               ]}
             >
-              {formatCurrency(
-                account.availableMinorUnits,
-                account.currencyCode,
-                false,
+              {formatPrivacyAmount(
+                formatCurrency(
+                  account.availableMinorUnits,
+                  account.currencyCode,
+                  false,
+                ),
+                isPrivate,
               )}
             </Text>
           </View>
@@ -577,10 +599,13 @@ function renderAccountItem(
                     },
                   ]}
                 >
-                  {formatCurrency(
-                    pocket.balanceMinorUnits,
-                    account.currencyCode,
-                    false,
+                  {formatPrivacyAmount(
+                    formatCurrency(
+                      pocket.balanceMinorUnits,
+                      account.currencyCode,
+                      false,
+                    ),
+                    isPrivate,
                   )}
                 </Text>
               </View>

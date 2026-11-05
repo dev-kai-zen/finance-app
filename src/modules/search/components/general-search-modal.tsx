@@ -49,6 +49,8 @@ import {
   Tags,
   Target,
   Trash2,
+  Vibrate,
+  Volume2,
   Wallet,
   X,
 } from "lucide-react-native";
@@ -131,6 +133,10 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <Smartphone color={color} size={size} />;
     case "layout-grid":
       return <LayoutGrid color={color} size={size} />;
+    case "vibrate":
+      return <Vibrate color={color} size={size} />;
+    case "volume-2":
+      return <Volume2 color={color} size={size} />;
     default:
       return <Plus color={color} size={size} />;
   }
@@ -147,7 +153,10 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
   const { isSearchOpen, closeSearch } = useSearch();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const { sections, totalResults, hasQuery } = useGeneralSearch(searchQuery);
+  const { sections, totalResults, hasQuery } = useGeneralSearch(
+    searchQuery,
+    isSearchOpen,
+  );
 
   const handleClose = useCallback(() => {
     Keyboard.dismiss();

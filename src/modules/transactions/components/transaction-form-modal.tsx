@@ -216,6 +216,7 @@ export interface TransactionFormModalProps {
   pending?: boolean;
   error?: string | null;
   initialTransaction?: TransactionListItem | null;
+  initialPreset?: TransactionPreset | null;
   isEditing?: boolean;
   initialType?: TransactionType;
   defaultExpenseAccountId?: string | null;
@@ -286,6 +287,7 @@ function TransactionFormModalInner({
   pending = false,
   error = null,
   initialTransaction = null,
+  initialPreset = null,
   isEditing = false,
   initialType,
   defaultExpenseAccountId: propsDefaultExpenseAccountId,
@@ -573,7 +575,9 @@ function TransactionFormModalInner({
       return;
     }
 
-    const sessionKey = initialTransaction?.id ?? `__create__${initialType ?? "expense"}`;
+    const sessionKey =
+      initialTransaction?.id ??
+      (initialPreset ? `__preset__${initialPreset.id}` : `__create__${initialType ?? "expense"}`);
     if (formInitSessionRef.current === sessionKey) {
       return;
     }
@@ -1187,6 +1191,7 @@ function TransactionFormModalInner({
     Boolean(isEditing && initialTransaction?.note?.trim());
   const showSplitField = formFields.split || splitEnabled;
   const showQuickPresetsUi = formFields.quickPresets;
+  const showQuickDatesField = formFields.quickDates;
   const showExactTimeField = formFields.exactTime;
   const showInstallmentsUi =
     (formFields.installments || installmentEnabled) && showInstallmentSection;
@@ -1474,6 +1479,12 @@ function TransactionFormModalInner({
     setIsQuickPresetsOpen(false);
     setLocalError(null);
   };
+
+  useEffect(() => {
+    if (visible && initialPreset && !initialTransaction) {
+      applyQuickPreset(initialPreset);
+    }
+  }, [visible, initialPreset, initialTransaction]);
 
   const handleSave = async (
     bypassInput:
@@ -1775,6 +1786,8 @@ function TransactionFormModalInner({
             );
 
       if (success) {
+        triggerHaptic("success", "transactions");
+        void playTransactionSavedSound();
         onClose();
       }
     }
@@ -2101,92 +2114,98 @@ function TransactionFormModalInner({
                   ) : null}
                 </View>
               ) : null}
-                            {/* Quick Date Selector Pills */}
-              <View style={styles.quickDatePillsRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("transactionForm.quickDateToday")}
-                  disabled={pending}
-                  onPress={handleSelectToday}
-                  style={({ pressed }) => [
-                    styles.quickDatePill,
-                    isToday && styles.quickDatePillActive,
-                    pressed && styles.quickDatePillPressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.quickDatePillText,
-                      isToday && styles.quickDatePillTextActive,
-                    ]}
-                  >
-                    {t("transactionForm.quickDateToday")}
-                  </Text>
-                </Pressable>
+              {/* Date & Time Row */}
+              <View style={styles.dateTimeRow}>
+                {showQuickDatesField ? (
+                  <View style={styles.quickDatePillsContainer}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateToday")}
+                      disabled={pending}
+                      onPress={handleSelectToday}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isToday && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.quickDatePillText,
+                          isToday && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {t("transactionForm.quickDateToday")}
+                      </Text>
+                    </Pressable>
 
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("transactionForm.quickDateYesterday")}
-                  disabled={pending}
-                  onPress={handleSelectYesterday}
-                  style={({ pressed }) => [
-                    styles.quickDatePill,
-                    isYesterday && styles.quickDatePillActive,
-                    pressed && styles.quickDatePillPressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.quickDatePillText,
-                      isYesterday && styles.quickDatePillTextActive,
-                    ]}
-                  >
-                    {t("transactionForm.quickDateYesterday")}
-                  </Text>
-                </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateYesterday")}
+                      disabled={pending}
+                      onPress={handleSelectYesterday}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isYesterday && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.quickDatePillText,
+                          isYesterday && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {t("transactionForm.quickDateYesterday")}
+                      </Text>
+                    </Pressable>
 
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={t("transactionForm.quickDateCustom")}
-                  disabled={pending}
-                  onPress={() => setDateTimePickerMode("date")}
-                  style={({ pressed }) => [
-                    styles.quickDatePill,
-                    isCustom && styles.quickDatePillActive,
-                    pressed && styles.quickDatePillPressed,
-                  ]}
-                >
-                  <Calendar
-                    color={isCustom ? theme.colors.primary : theme.colors.textMuted}
-                    size={13}
-                  />
-                  <Text
-                    style={[
-                      styles.quickDatePillText,
-                      isCustom && styles.quickDatePillTextActive,
+                    <Pressable
+                      ref={dateRef}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("transactionForm.quickDateCustom")}
+                      disabled={pending}
+                      onPress={() => setDateTimePickerMode("date")}
+                      style={({ pressed }) => [
+                        styles.quickDatePill,
+                        isCustom && styles.quickDatePillActive,
+                        pressed && styles.quickDatePillPressed,
+                      ]}
+                    >
+                      <Calendar
+                        color={isCustom ? theme.colors.primary : theme.colors.textMuted}
+                        size={13}
+                      />
+                      <Text
+                        numberOfLines={1}
+                        style={[
+                          styles.quickDatePillText,
+                          isCustom && styles.quickDatePillTextActive,
+                        ]}
+                      >
+                        {isCustom ? formatTransactionDate(occurredAt) : t("transactionForm.quickDateCustom")}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <Pressable
+                    ref={dateRef}
+                    accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
+                    accessibilityRole="button"
+                    disabled={pending}
+                    onPress={() => setDateTimePickerMode("date")}
+                    style={({ pressed }) => [
+                      styles.dateTimeButton,
+                      pressed && styles.dateTimeButtonPressed,
+                      !showExactTimeField && styles.dateTimeButtonFull,
                     ]}
                   >
-                    {isCustom ? formatTransactionDate(occurredAt) : t("transactionForm.quickDateCustom")}
-                  </Text>
-                </Pressable>
-              </View>
-<View style={styles.dateTimeRow}>
-                <Pressable
-                  ref={dateRef}
-                  accessibilityLabel={`Transaction date ${formatTransactionDate(occurredAt)}. Tap to change.`}
-                  accessibilityRole="button"
-                  disabled={pending}
-                  onPress={() => setDateTimePickerMode("date")}
-                  style={({ pressed }) => [
-                    styles.dateTimeButton,
-                    pressed && styles.dateTimeButtonPressed,
-                    !showExactTimeField && styles.dateTimeButtonFull,
-                  ]}
-                >
-                  <Text numberOfLines={1} style={styles.dateTimeText}>
-                    {formatTransactionDate(occurredAt)}
-                  </Text>
-                </Pressable>
+                    <Text numberOfLines={1} style={styles.dateTimeText}>
+                      {formatTransactionDate(occurredAt)}
+                    </Text>
+                  </Pressable>
+                )}
+
                 {showExactTimeField ? (
                   <>
                     <Text accessible={false} style={styles.dateTimeSeparator}>
@@ -3942,23 +3961,30 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
-        quickDatePillsRow: {
+        quickDatePillsContainer: {
+      flex: 1,
       flexDirection: "row",
-      gap: theme.spacing.xs,
+      gap: 6,
+      alignItems: "center",
+    },
+    quickDatePillsRow: {
+      flexDirection: "row",
+      gap: 6,
       marginBottom: theme.spacing.xs,
     },
     quickDatePill: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.small,
+      borderRadius: 999,
       borderWidth: 1,
       flex: 1,
       flexDirection: "row",
-      gap: 5,
-      height: 32,
+      gap: 4,
+      height: 28,
       justifyContent: "center",
-      paddingHorizontal: theme.spacing.xs,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
     },
     quickDatePillActive: {
       backgroundColor: `${theme.colors.primary}18`,
@@ -3969,7 +3995,7 @@ function createStyles(theme: AppTheme) {
     },
     quickDatePillText: {
       color: theme.colors.textSecondary,
-      fontSize: 12,
+      fontSize: 11.5,
       fontWeight: theme.typography.fontWeight.semibold,
     },
     quickDatePillTextActive: {

@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { VarianceValue } from "../../types/reports.types";
 
 interface BalanceSheetDiffCellProps {
@@ -7,7 +8,12 @@ interface BalanceSheetDiffCellProps {
 }
 
 export function BalanceSheetDiffCell({ variance }: BalanceSheetDiffCellProps) {
+  const { isPrivate } = usePrivacyMode();
   const hasSymbol = Boolean(variance.symbol);
+  const displayDiff = formatPrivacyAmount(
+    `${variance.formattedDiff}${hasSymbol ? ` ${variance.symbol}` : ""}`,
+    isPrivate,
+  );
 
   return (
     <View style={styles.container}>
@@ -15,8 +21,7 @@ export function BalanceSheetDiffCell({ variance }: BalanceSheetDiffCellProps) {
         numberOfLines={1}
         style={[styles.text, { color: variance.color }]}
       >
-        {variance.formattedDiff}
-        {hasSymbol ? ` ${variance.symbol}` : ""}
+        {displayDiff}
       </Text>
     </View>
   );

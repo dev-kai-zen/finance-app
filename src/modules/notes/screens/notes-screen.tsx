@@ -36,7 +36,10 @@ import { NoteTableRow } from "../components/note-table-row";
 import { useNotes } from "../hooks/use-notes";
 import type { Note, NoteAttachmentDraft } from "../types/note.types";
 
-export function NotesScreen(props?: { initialAction?: "new" }) {
+export function NotesScreen(props?: {
+  initialAction?: "new";
+  initialNoteId?: string;
+}) {
   return (
     <WalkthroughRegistryProvider>
       <NotesScreenContent {...props} />
@@ -45,9 +48,11 @@ export function NotesScreen(props?: { initialAction?: "new" }) {
 }
 
 function NotesScreenContent({
+  initialNoteId,
   initialAction,
 }: {
   initialAction?: "new";
+  initialNoteId?: string;
 }) {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -78,6 +83,7 @@ function NotesScreenContent({
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const [saving, setSaving] = useState(false);
   const handledActionRef = useRef<string | null>(null);
+  const handledNoteIdRef = useRef<string | null>(null);
 
   // Walkthrough targets & coordination
   const emptyCreateRef = useWalkthroughTarget("notesEmptyCreateButton");
@@ -183,6 +189,20 @@ function NotesScreenContent({
       handledActionRef.current = null;
     }
   }, [handleOpenNewNote, initialAction, loading, router]);
+
+  useEffect(() => {
+    if (!loading && initialNoteId && handledNoteIdRef.current !== initialNoteId) {
+      const found = notes.find((n) => n.id === initialNoteId);
+      if (found) {
+        handledNoteIdRef.current = initialNoteId;
+        setSelectedNote(found);
+        setEditorVisible(true);
+        router.setParams({ noteId: undefined });
+      }
+    } else if (!initialNoteId) {
+      handledNoteIdRef.current = null;
+    }
+  }, [initialNoteId, loading, notes, router]);
 
   const handleSelectNote = (note: Note) => {
     setSelectedNote(note);

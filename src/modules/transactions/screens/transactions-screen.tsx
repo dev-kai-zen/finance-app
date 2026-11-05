@@ -4,6 +4,7 @@ import {
   Alert,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   SectionList,
   StyleSheet,
@@ -40,7 +41,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ArrowLeftRight } from "lucide-react-native";
-import { triggerHaptic, useExperiencePreferences } from "@/modules/settings";
+import { triggerHaptic, useExperiencePreferences, usePrivacyMode } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
@@ -68,6 +69,8 @@ import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
+import { QuickPresetsModal } from "../components/quick-presets-modal";
+import type { TransactionPreset } from "../types/transaction-preset.types";
 import { TransactionSpeedDialFab } from "../components/transaction-speed-dial-fab";
 import {
   ChatWithKaiModal,
@@ -143,6 +146,7 @@ function initialFilterState(
   datePreset?: string,
   accountId?: string,
   initialType?: string,
+  initialLabelId?: string,
 ): TransactionFilterState {
   const filterType =
     initialType === "expense" || initialType === "income" || initialType === "transfer"
@@ -154,13 +158,14 @@ function initialFilterState(
     datePreset === "this_year"
       ? datePreset
       : "all";
-  if (!accountId && !categoryId && filterType === "all" && validPreset === "all") {
+  if (!accountId && !categoryId && !initialLabelId && filterType === "all" && validPreset === "all") {
     return DEFAULT_TRANSACTION_FILTERS;
   }
   return {
     ...DEFAULT_TRANSACTION_FILTERS,
     ...(accountId ? { accountIds: [accountId] } : {}),
     ...(categoryId ? { categoryIds: [categoryId] } : {}),
+    ...(initialLabelId ? { labelIds: [initialLabelId] } : {}),
     datePreset: validPreset,
     type: filterType,
   };
@@ -172,6 +177,9 @@ export interface TransactionsScreenProps {
   initialAccountId?: string;
   initialAction?: string;
   initialType?: string;
+  initialSearch?: string;
+  initialInspectId?: string;
+  initialLabelId?: string;
 }
 
 export function TransactionsScreen(props: TransactionsScreenProps = {}) {
@@ -188,6 +196,9 @@ function TransactionsScreenContent({
   initialAccountId,
   initialAction,
   initialType,
+  initialSearch,
+  initialInspectId,
+  initialLabelId,
 }: TransactionsScreenProps = {}) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -249,15 +260,14 @@ function TransactionsScreenContent({
   const { labels: allLabels } = useLabels();
 
   // Search & Filter state
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch ?? "");
   const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
     initialFilterState(
-
       initialAction !== "new" ? initialCategoryId : undefined,
       initialAction !== "new" ? initialDatePreset : undefined,
       initialAction !== "new" ? initialAccountId : undefined,
-
       initialAction !== "new" ? initialType : undefined,
+      initialAction !== "new" ? initialLabelId : undefined,
     ),
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
@@ -270,6 +280,7 @@ function TransactionsScreenContent({
   const fabRef = useRef<View>(null);
   const { registerTarget } = useWalkthroughRegistry();
   const { isPromptDismissed } = useExperiencePreferences();
+  const { isPrivate } = usePrivacyMode();
   const searchRef = useWalkthroughTarget("txSearch");
   const filterRef = useWalkthroughTarget("txFilter");
   const sortDateRef = useWalkthroughTarget("txSortDate");
@@ -319,17 +330,20 @@ function TransactionsScreenContent({
           initialDatePreset,
           initialAccountId,
           initialType,
+          initialLabelId,
         ),
       );
     } else if (
       initialAction !== "new" &&
-      (initialAccountId || initialCategoryId || initialDatePreset)
+      (initialAccountId || initialCategoryId || initialDatePreset || initialLabelId)
     ) {
       setFilterState(
         initialFilterState(
           initialCategoryId,
           initialDatePreset,
           initialAccountId,
+          undefined,
+          initialLabelId,
         ),
       );
     }
@@ -338,8 +352,30 @@ function TransactionsScreenContent({
     initialAction,
     initialCategoryId,
     initialDatePreset,
+    initialLabelId,
     initialType,
   ]);
+
+  useEffect(() => {
+    if (initialSearch !== undefined) {
+      setSearchQuery(initialSearch);
+    }
+  }, [initialSearch]);
+
+  const handledInspectIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (initialInspectId && handledInspectIdRef.current !== initialInspectId) {
+      const target = transactions.find((transaction) => transaction.id === initialInspectId);
+      if (target) {
+        handledInspectIdRef.current = initialInspectId;
+        setInspectedTransaction(target);
+        router.setParams({ inspectId: undefined });
+      }
+    } else if (!initialInspectId) {
+      handledInspectIdRef.current = null;
+    }
+  }, [initialInspectId, router, transactions]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -360,6 +396,8 @@ function TransactionsScreenContent({
     useState<TransactionListItem | null>(null);
   const [isEditingTransaction, setIsEditingTransaction] = useState(false);
   const [isTrashModalOpen, setIsTrashModalOpen] = useState(false);
+  const [isPresetsModalOpen, setIsPresetsModalOpen] = useState(false);
+  const [prefilledPreset, setPrefilledPreset] = useState<TransactionPreset | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
@@ -413,6 +451,17 @@ function TransactionsScreenContent({
       if (handledActionRef.current !== "chat") {
         handledActionRef.current = "chat";
         setIsChatModalOpen(true);
+        router.setParams({
+          action: undefined,
+          type: undefined,
+          source: undefined,
+        });
+      }
+    } else if (initialAction === "presets") {
+      if (handledActionRef.current !== "presets") {
+        handledActionRef.current = "presets";
+        clearError();
+        setIsPresetsModalOpen(true);
         router.setParams({
           action: undefined,
           type: undefined,
@@ -1244,6 +1293,15 @@ function TransactionsScreenContent({
         {/* Transactions Feed Grouped By Date */}
         <SectionList
           ref={sectionListRef}
+          alwaysBounceVertical
+          refreshControl={
+            <RefreshControl
+              colors={[theme.colors.primary]}
+              onRefresh={handlePullRefresh}
+              refreshing={isPullRefreshing}
+              tintColor={theme.colors.primary}
+            />
+          }
           ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
             <View>
@@ -1326,11 +1384,13 @@ function TransactionsScreenContent({
                           : null),
                   ]}
                 >
-                  {formatCurrency(
-                    section.netMinorUnits,
-                    section.currencyCode,
-                    true,
-                  )}
+                  {isPrivate
+                    ? "••••••"
+                    : formatCurrency(
+                        section.netMinorUnits,
+                        section.currencyCode,
+                        true,
+                      )}
                 </Text>
               ) : null}
               <View style={styles.dateCountBadge}>
@@ -1375,6 +1435,7 @@ function TransactionsScreenContent({
         error={error}
         isEditing={isEditingTransaction}
         initialTransaction={prefilledTransaction}
+        initialPreset={prefilledPreset}
         onClearError={clearError}
         onClearPresetError={clearPresetError}
         onClose={() => {
@@ -1382,6 +1443,7 @@ function TransactionsScreenContent({
           returnToChatOnFormCloseRef.current = false;
           setIsFormModalOpen(false);
           setPrefilledTransaction(null);
+          setPrefilledPreset(null);
           setIsEditingTransaction(false);
           setFormInitialType(undefined);
           setFormInitialAccountId(null);
@@ -1416,6 +1478,36 @@ function TransactionsScreenContent({
         onCategoriesChanged={() => void refreshCategories()}
         pending={pendingAction}
         visible={isFormModalOpen}
+      />
+
+      {/* Quick Presets Management Modal */}
+      <QuickPresetsModal
+        accounts={accounts}
+        categories={categories}
+        error={presetError}
+        loading={presetsLoading}
+        onClearError={clearPresetError}
+        onClose={() => setIsPresetsModalOpen(false)}
+        onDelete={deletePreset}
+        onArchive={archivePreset}
+        onRestore={restorePreset}
+        onPermanentlyDelete={permanentlyDeletePreset}
+        onReorder={reorderPresets}
+        onSave={savePreset}
+        onSelect={(preset) => {
+          setIsPresetsModalOpen(false);
+          setPrefilledTransaction(null);
+          setIsEditingTransaction(false);
+          setPrefilledPreset(preset);
+          setIsFormModalOpen(true);
+        }}
+        pending={presetPending}
+        pockets={pockets}
+        presets={presets}
+        archivedPresets={archivedPresets}
+        sortBy={presetSortBy}
+        onChangeSortBy={setPresetSortBy}
+        visible={isPresetsModalOpen}
       />
 
       {/* Transaction Details Inspector Modal */}

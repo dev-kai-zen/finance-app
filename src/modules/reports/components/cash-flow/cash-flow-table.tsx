@@ -10,6 +10,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { CashFlowRowItem } from "../../types/cash-flow.types";
@@ -36,6 +37,7 @@ export function CashFlowTable({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
@@ -117,7 +119,10 @@ export function CashFlowTable({
                       },
                     ]}
                   >
-                    {formatCurrency(row.inflowMinorUnits, currencyCode, true)}
+                    {formatPrivacyAmount(
+                      formatCurrency(row.inflowMinorUnits, currencyCode, true),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
@@ -131,7 +136,10 @@ export function CashFlowTable({
                       },
                     ]}
                   >
-                    {formatCurrency(-row.outflowMinorUnits, currencyCode, true)}
+                    {formatPrivacyAmount(
+                      formatCurrency(-row.outflowMinorUnits, currencyCode, true),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
@@ -147,7 +155,7 @@ export function CashFlowTable({
                       },
                     ]}
                   >
-                    {row.formattedNet} {row.symbol}
+                    {formatPrivacyAmount(`${row.formattedNet} ${row.symbol}`, isPrivate)}
                   </Text>
                 </View>
 
@@ -202,7 +210,10 @@ export function CashFlowTable({
                   },
                 ]}
               >
-                {formatCurrency(totalInflowMinorUnits, currencyCode, true)}
+                {formatPrivacyAmount(
+                  formatCurrency(totalInflowMinorUnits, currencyCode, true),
+                  isPrivate,
+                )}
               </Text>
             </View>
             <View style={[styles.colNumeric, styles.footerCol]}>
@@ -216,7 +227,10 @@ export function CashFlowTable({
                   },
                 ]}
               >
-                {formatCurrency(-totalOutflowMinorUnits, currencyCode, true)}
+                {formatPrivacyAmount(
+                  formatCurrency(-totalOutflowMinorUnits, currencyCode, true),
+                  isPrivate,
+                )}
               </Text>
             </View>
             <View style={[styles.colNet, styles.footerCol]}>
@@ -233,7 +247,10 @@ export function CashFlowTable({
                   },
                 ]}
               >
-                {formatCurrency(netCashFlowMinorUnits, currencyCode, true)}{" "}
+                {formatPrivacyAmount(
+                  formatCurrency(netCashFlowMinorUnits, currencyCode, true),
+                  isPrivate,
+                )}{" "}
                 {isNetPositive ? "▲" : "▼"}
               </Text>
             </View>

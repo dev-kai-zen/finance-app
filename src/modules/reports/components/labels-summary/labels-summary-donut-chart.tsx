@@ -5,6 +5,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { IncomeExpenseMode } from "../../types/income-expense.types";
 import type { LabelsSummaryItem } from "../../types/labels-summary.types";
@@ -45,6 +46,7 @@ export function LabelsSummaryDonutChart({
 }: LabelsSummaryDonutChartProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const resolveEntityColor = useResolveEntityColor();
 
@@ -155,7 +157,10 @@ export function LabelsSummaryDonutChart({
                   : `#${selectedLabel.labelName}`}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(selectedLabel.totalMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(selectedLabel.totalMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.centerMeta}>
                 {selectedLabel.percentage}% of total
@@ -167,7 +172,10 @@ export function LabelsSummaryDonutChart({
                 TOTAL {mode.toUpperCase()}
               </Text>
               <Text numberOfLines={1} style={styles.centerAmount}>
-                {formatCurrency(totalMinorUnits, currencyCode)}
+                {formatPrivacyAmount(
+                  formatCurrency(totalMinorUnits, currencyCode),
+                  isPrivate,
+                )}
               </Text>
               <Text style={styles.centerMeta}>
                 {transactionCount} {transactionCount === 1 ? "transaction" : "transactions"}

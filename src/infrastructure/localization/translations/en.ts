@@ -6,6 +6,8 @@ export const en = {
     stealthModeDescription: "Mask account balances and financial figures across the app",
   },
   common: {
+    enabled: "Enabled",
+    disabled: "Disabled",
     cancel: "Cancel",
     close: "Close",
     delete: "Delete",
@@ -35,6 +37,25 @@ export const en = {
     sectionSettings: "SETTINGS & SECURITY",
     sectionAccounts: "ACCOUNTS",
     sectionCategories: "CATEGORIES",
+    sectionTransactions: "TRANSACTIONS",
+    sectionBudgets: "BUDGETS",
+    sectionGoals: "SAVINGS GOALS",
+    sectionNotes: "NOTES",
+    sectionSchedules: "SCHEDULED TRANSACTIONS",
+    sectionLabels: "LABELS & TAGS",
+    sectionPockets: "POCKETS",
+    settingStealthMode: "Privacy / Stealth Mode",
+    settingStealthModeDesc: "Hide or mask sensitive account balances and totals",
+    settingSoundHaptics: "Sound & Haptics Settings",
+    settingSoundHapticsDesc: "Configure tactile vibrations and audio chimes",
+    settingSupportDev: "Support Development",
+    settingSupportDevDesc: "Support the app with a tip or share feedback",
+    actionLocalBackup: "Local Backup & Restore",
+    actionLocalBackupDesc: "Export or restore SQLite database on local storage",
+    actionGoogleDriveSync: "Google Drive Cloud Backup",
+    actionGoogleDriveSyncDesc: "Secure cloud backup and restore via Google Drive",
+    actionManagePresets: "Quick Presets Management",
+    actionManagePresetsDesc: "Manage 1-tap template presets for transactions",
     suggestedTitle: "SUGGESTED SHORTCUTS",
     clearSearch: "Clear",
     itemSettingsBadge: "Settings",
@@ -192,8 +213,25 @@ export const en = {
     hapticsCalculator: "Calculator & Keypad Taps",
     hapticsAlerts: "Budget & Goal Alerts",
     hapticsDestructive: "Delete & Trash Actions",
+    hapticsDisabledHint: "Note: If touch vibration is disabled in your device's system settings, vibrations will not be felt.",
+    testHaptics: "Test Haptics",
+    testSound: "Test Sound",
+    soundMaster: "Sound Effects",
+    soundMasterSubtitle: "Audio chime for app actions",
+    soundTransactions: "Record & Edit Transactions",
+    soundCalculator: "Calculator & Keypad Taps",
+    soundAlerts: "Budget & Goal Alerts",
+    soundDestructive: "Delete & Trash Actions",
     soundOnSave: "Play Sound on Save",
     soundOnSaveSubtitle: "Short chime when a transaction is recorded",
+    backupDataSection: "BACKUP & DATA",
+    appearanceProfileSection: "APPEARANCE & PROFILE",
+    interactionsSection: "INTERACTIONS & FEEDBACK",
+    defaultsSection: "DEFAULTS & PREFERENCES",
+    notificationsSection: "NOTIFICATIONS & WIDGETS",
+    aboutSupportSection: "ABOUT & SUPPORT",
+    stealthModeTitle: "Stealth Mode (Hide Balances)",
+    stealthModeDescription: "Mask account balances and financial figures across screens",
     generalSection: "GENERAL",
     profileSection: "PROFILE",
     nicknameTitle: "Nickname",
@@ -497,7 +535,7 @@ export const en = {
     v140: {
       date: "November 5, 2026",
       newItem1:
-        "Shake your device from anywhere in the app to quickly launch Chat with Kai or Manual Entry.",
+        "Shake your device to quickly launch Chat with Kai or transaction entry, with customizable shortcuts in Settings.",
       newItem2:
         "Toggle positive or negative amounts in schedules to easily record recurring refunds and income adjustments.",
       newItem3:
@@ -509,35 +547,31 @@ export const en = {
       newItem6:
         "Quickly duplicate or delete transactions by swiping right or left directly on the ledger.",
       improveItem1:
-        "Configure shake gesture shortcuts or turn them off anytime in Settings under Gestures.",
-      improveItem2:
         "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
+      improveItem2:
+        "Place note color swatches directly above the title for effortless visibility and coloring.",
       improveItem3:
-        "Choose from your shared color palette or create custom colors when writing notes.",
-      improveItem4:
         "Keep the Greeting and Date header always active on the dashboard while freely toggling other cards.",
-      improveItem5:
+      improveItem4:
         "Simplify creating pockets by removing the unused target amount field.",
+      improveItem5:
+        "Optionally show Quick Date pills (Today, Yesterday, Calendar) or classic date selector in transaction forms.",
       improveItem6:
-        "Pick Today or Yesterday in one tap when recording expenses, or tap Calendar for custom dates.",
+        "Reorganize Settings into clean, intuitive sections for effortless navigation.",
       improveItem7:
-        "Pull down anywhere on the Dashboard, Transactions, Accounts, and other screens to instantly refresh your data.",
-      improveItem8:
-        "Enjoy a distraction-free note editor with a sleek color palette toolbar that never crowds your writing canvas.",
-      improveItem9:
         "Discover clear, helpful empty states with one-tap action buttons across savings goals and ledgers.",
+      improveItem8:
+        "Jump directly into matching records and prefilled filters when tapping search results.",
       fixItem1:
         "Fix floating action button icons and custom dashboard text becoming unreadable when using custom colors.",
       fixItem2:
         "Fix bottom buttons in the tablet sidebar being partially obscured when three-button navigation is enabled.",
       fixItem3:
-        "Prevent shake gestures from launching quick entry while your device or app is locked.",
-      fixItem4:
-        "Prevent duplicate modal screens from opening when shaking while editing a transaction or form.",
-      fixItem5:
-        "Improve battery efficiency by pausing sensor listeners immediately when minimizing the app.",
-      fixItem6:
         "Fix missing Spanish and Filipino translations on dashboard recent transactions.",
+      fixItem4:
+        "Ensure stealth mode completely masks transaction group totals, balance sheet numbers, and report charts.",
+      fixItem5:
+        "Fix pull-to-refresh not responding on the transactions ledger.",
     },
     v130: {
       date: "November 2, 2026",
@@ -850,6 +884,7 @@ export const en = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Exact time",
+      quickDates: "Quick dates",
     },
   },
   dashboard: {

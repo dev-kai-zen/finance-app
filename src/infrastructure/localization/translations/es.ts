@@ -11,6 +11,8 @@ export const es = {
     stealthModeDescription: "Ocultar saldos y cifras financieras en toda la app",
   },
   common: {
+    enabled: "Activado",
+    disabled: "Desactivado",
     cancel: "Cancelar",
     close: "Cerrar",
     delete: "Eliminar",
@@ -40,6 +42,25 @@ export const es = {
     sectionSettings: "AJUSTES Y SEGURIDAD",
     sectionAccounts: "CUENTAS",
     sectionCategories: "CATEGORÍAS",
+    sectionTransactions: "TRANSACCIONES",
+    sectionBudgets: "PRESUPUESTOS",
+    sectionGoals: "METAS DE AHORRO",
+    sectionNotes: "NOTAS",
+    sectionSchedules: "TRANSACCIONES PROGRAMADAS",
+    sectionLabels: "ETIQUETAS",
+    sectionPockets: "BOLSILLOS",
+    settingStealthMode: "Modo Privacidad / Sigilo",
+    settingStealthModeDesc: "Ocultar saldos y montos de cuentas",
+    settingSoundHaptics: "Ajustes de Sonido y Háptica",
+    settingSoundHapticsDesc: "Configurar vibraciones táctiles y sonidos",
+    settingSupportDev: "Apoyar el desarrollo",
+    settingSupportDevDesc: "Apoya la aplicación con una propina o reseña",
+    actionLocalBackup: "Copia de Seguridad y Restauración",
+    actionLocalBackupDesc: "Exportar o restaurar la base de datos localmente",
+    actionGoogleDriveSync: "Copia en la Nube con Google Drive",
+    actionGoogleDriveSyncDesc: "Copia de seguridad y sincronización en la nube",
+    actionManagePresets: "Gestión de Ajustes Rápidos",
+    actionManagePresetsDesc: "Gestionar plantillas de transacciones de un toque",
     suggestedTitle: "ACCESOS RÁPIDOS SUGERIDOS",
     clearSearch: "Borrar",
     itemSettingsBadge: "Ajuste",
@@ -185,8 +206,25 @@ export const es = {
     hapticsCalculator: "Toques de Calculadora y Teclado",
     hapticsAlerts: "Alertas de Presupuesto y Metas",
     hapticsDestructive: "Acciones de Eliminar y Papelera",
+    hapticsDisabledHint: "Nota: Si la vibración táctil está desactivada en los ajustes del sistema de tu teléfono, no se sentirá la háptica.",
+    testHaptics: "Probar háptica",
+    testSound: "Probar sonido",
+    soundMaster: "Efectos de sonido",
+    soundMasterSubtitle: "Campana de audio para acciones en la app",
+    soundTransactions: "Registrar y editar transacciones",
+    soundCalculator: "Toques de calculadora y teclado",
+    soundAlerts: "Alertas de presupuesto y metas",
+    soundDestructive: "Acciones de eliminación",
     soundOnSave: "Reproducir Sonido al Guardar",
     soundOnSaveSubtitle: "Breve campanilla al registrar una transacción",
+    backupDataSection: "COPIA DE SEGURIDAD Y DATOS",
+    appearanceProfileSection: "APARIENCIA Y PERFIL",
+    interactionsSection: "INTERACCIONES Y RESPUESTA",
+    defaultsSection: "VALORES PREDETERMINADOS",
+    notificationsSection: "NOTIFICACIONES Y WIDGETS",
+    aboutSupportSection: "ACERCA DE Y SOPORTE",
+    stealthModeTitle: "Modo Privacidad (Ocultar Saldos)",
+    stealthModeDescription: "Ocultar saldos de cuenta y cifras financieras en toda la app",
     generalSection: "GENERAL",
     profileSection: "PERFIL",
     nicknameTitle: "Apodo (Nickname)",
@@ -494,47 +532,43 @@ export const es = {
     v140: {
       date: "5 de noviembre de 2026",
       newItem1:
-        "Agita tu dispositivo desde cualquier pantalla para abrir rápidamente el chat con Kai o la entrada manual.",
+        "Agita tu dispositivo para abrir rápidamente el Chat con Kai o el registro, con atajos configurables.",
       newItem2:
-        "Alterna montos positivos o negativos en las programaciones para registrar fácilmente reembolsos y ajustes de ingresos.",
+        "Alterna montos positivos o negativos en transacciones programadas para registrar reembolsos y ajustes.",
       newItem3:
-        "Evita la pérdida accidental de datos en los formularios con un aviso de confirmación al salir con cambios sin guardar.",
+        "Evita la pérdida accidental de datos con una confirmación al salir de formularios con cambios sin guardar.",
       newItem4:
-        "Oculta al instante los saldos y cifras financieras en toda la app con un solo toque en el icono de privacidad.",
+        "Oculta al instante los saldos de cuentas en toda la app con un toque en el botón de modo sigilo.",
       newItem5:
-        "Personaliza la vibración táctil y el sonido de confirmación al registrar gastos y usar la calculadora.",
+        "Personaliza la vibración táctil y sonidos al registrar gastos y pulsar teclas numéricas.",
       newItem6:
-        "Duplica o elimina transacciones rápidamente deslizando hacia la derecha o izquierda en la lista.",
+        "Duplica o elimina transacciones rápidamente deslizando hacia la derecha o izquierda en el libro contable.",
       improveItem1:
-        "Configura los atajos de gestos de agitación o desactívalos en cualquier momento en Ajustes bajo Gestos.",
+        "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restaura los predeterminados.",
       improveItem2:
-        "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restablécelos a los predeterminados.",
+        "Coloca la paleta de colores de notas justo encima del título para una visibilidad y selección más fácil.",
       improveItem3:
-        "Elige de tu paleta compartida o crea colores personalizados al escribir notas.",
+        "Mantén el saludo y la fecha siempre visibles en el panel mientras ajustas libremente las demás tarjetas.",
       improveItem4:
-        "Mantén el saludo y fecha siempre activos en el panel mientras personalizas libremente las demás tarjetas.",
+        "Simplifica la creación de bolsillos eliminando el campo innecesario de monto objetivo.",
       improveItem5:
-        "Simplifica la creación de bolsillos eliminando el campo de monto objetivo sin uso.",
+        "Muestra píldoras de fecha rápida (Hoy, Ayer, Calendario) o el selector clásico en el formulario de transacciones.",
       improveItem6:
-        "Elige Hoy o Ayer con un solo toque al registrar gastos, o toca Calendario para fechas personalizadas.",
+        "Reorganiza Ajustes en secciones limpias e intuitivas para una navegación más rápida.",
       improveItem7:
-        "Desliza hacia abajo en el Panel, Transacciones, Cuentas y otras pantallas para actualizar tus datos al instante.",
+        "Muestra estados vacíos útiles con botones de acción directa en metas de ahorro y registros.",
       improveItem8:
-        "Disfruta de un editor de notas sin distracciones con una barra de colores que no estorba tu escritura.",
-      improveItem9:
-        "Estados vacíos claros y útiles con botones de acción directa en metas de ahorro y registros.",
+        "Accede directamente a los registros coincidentes y filtros precompletados al tocar los resultados de búsqueda.",
       fixItem1:
         "Corrige los íconos del botón flotante y el texto del panel que se volvían ilegibles al usar colores personalizados.",
       fixItem2:
         "Corrige que los botones inferiores de la barra lateral en tabletas queden parcialmente tapados con la navegación de tres botones.",
       fixItem3:
-        "Evitar que los gestos de sacudida activen la entrada rápida mientras la aplicación está bloqueada.",
-      fixItem4:
-        "Evitar que se abran pantallas duplicadas al sacudir mientras se edita una transacción o formulario.",
-      fixItem5:
-        "Mejorar la eficiencia de la batería pausando los sensores inmediatamente al minimizar la aplicación.",
-      fixItem6:
         "Corregir las traducciones faltantes en español y filipino en las transacciones recientes del panel.",
+      fixItem4:
+        "Asegura que el modo sigilo oculte por completo subtotales de transacciones, balance general y gráficos.",
+      fixItem5:
+        "Corrige que el gesto de deslizar para refrescar no responda en la lista de transacciones.",
     },
     v130: {
       date: "2 de noviembre de 2026",
@@ -848,6 +882,7 @@ export const es = {
       note: "Nota",
       quickPresets: "Ajustes rápidos",
       exactTime: "Hora exacta",
+      quickDates: "Fechas rápidas",
     },
   },
   dashboard: {

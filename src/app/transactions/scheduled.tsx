@@ -7,7 +7,10 @@ import { useLocalization } from "@/infrastructure/localization";
 import { ScheduledTransactionsScreen } from "@/modules/scheduled-transactions";
 
 export default function ScheduledTransactionsRoute() {
-  const { action } = useLocalSearchParams<{ action?: string }>();
+  const { action, scheduleId } = useLocalSearchParams<{
+    action?: string;
+    scheduleId?: string;
+  }>();
   const theme = useAppTheme();
   const { t } = useLocalization();
   const [helpVisible, setHelpVisible] = useState(false);
@@ -34,6 +37,11 @@ export default function ScheduledTransactionsRoute() {
       />
       <ScheduledTransactionsScreen
         initialAction={action === "new" ? "new" : undefined}
+        initialScheduleId={
+          typeof scheduleId === "string" && scheduleId.length > 0
+            ? scheduleId
+            : undefined
+        }
       />
     </View>
   );
@@ -44,4 +52,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-

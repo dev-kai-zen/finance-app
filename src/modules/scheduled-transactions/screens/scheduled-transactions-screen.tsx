@@ -40,6 +40,7 @@ import {
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
@@ -69,7 +70,10 @@ const SCHEDULE_FILTER_OPTIONS: ReadonlyArray<{
   { label: "Archived", value: "archived" },
 ];
 
-export function ScheduledTransactionsScreen(props?: { initialAction?: "new" }) {
+export function ScheduledTransactionsScreen(props?: {
+  initialAction?: "new";
+  initialScheduleId?: string;
+}) {
   return (
     <WalkthroughRegistryProvider>
       <ScheduledTransactionsScreenContent {...props} />
@@ -78,9 +82,11 @@ export function ScheduledTransactionsScreen(props?: { initialAction?: "new" }) {
 }
 
 function ScheduledTransactionsScreenContent({
+  initialScheduleId,
   initialAction,
 }: {
   initialAction?: "new";
+  initialScheduleId?: string;
 }) {
   const router = useRouter();
   const theme = useAppTheme();
@@ -107,6 +113,7 @@ function ScheduledTransactionsScreenContent({
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [formVisible, setFormVisible] = useState(false);
   const handledActionRef = useRef<string | null>(null);
+  const handledScheduleIdRef = useRef<string | null>(null);
   const [editingSchedule, setEditingSchedule] =
     useState<ScheduledTransaction | null>(null);
   const [pendingEnd, setPendingEnd] =
@@ -134,6 +141,7 @@ function ScheduledTransactionsScreenContent({
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
+  const { isPrivate } = usePrivacyMode();
   const [showCongrats, setShowCongrats] = useState(false);
 
   const searchContext = useMemo((): ScheduleListSearchContext => {
@@ -268,6 +276,20 @@ function ScheduledTransactionsScreenContent({
       handledActionRef.current = null;
     }
   }, [initialAction, loading, openNew, router]);
+
+  useEffect(() => {
+    if (!loading && initialScheduleId && handledScheduleIdRef.current !== initialScheduleId) {
+      const found = schedules.find((s) => s.id === initialScheduleId);
+      if (found) {
+        handledScheduleIdRef.current = initialScheduleId;
+        setEditingSchedule(found);
+        setFormVisible(true);
+        router.setParams({ scheduleId: undefined });
+      }
+    } else if (!initialScheduleId) {
+      handledScheduleIdRef.current = null;
+    }
+  }, [initialScheduleId, loading, schedules, router]);
 
   const openEdit = (schedule: ScheduledTransaction) => {
     setEditingSchedule(schedule);
@@ -539,10 +561,13 @@ function ScheduledTransactionsScreenContent({
                           : styles.amountExpense,
                     ]}
                   >
-                    {formatCurrency(
-                      signedAmount,
-                      source?.currencyCode ?? "PHP",
-                      signedAmount > 0 && !isTransfer,
+                    {formatPrivacyAmount(
+                      formatCurrency(
+                        signedAmount,
+                        source?.currencyCode ?? "PHP",
+                        signedAmount > 0 && !isTransfer,
+                      ),
+                      isPrivate,
                     )}
                   </Text>
                 </View>

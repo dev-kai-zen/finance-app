@@ -10,6 +10,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { NetWorthPoint } from "../../types/net-worth-growth.types";
@@ -27,6 +28,7 @@ export function NetWorthHistoryTable({
 }: NetWorthHistoryTableProps) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
   const { width } = useWindowDimensions();
   const isNarrow = width < 560;
@@ -80,7 +82,7 @@ export function NetWorthHistoryTable({
               <Pressable
                 key={row.date.getTime()}
                 accessibilityRole="button"
-                accessibilityLabel={`${row.label}: Net Worth ${row.formattedNetWorth}, Change ${row.formattedDiff}`}
+                accessibilityLabel={`${row.label}: Net Worth ${formatPrivacyAmount(row.formattedNetWorth, isPrivate)}, Change ${formatPrivacyAmount(row.formattedDiff, isPrivate)}`}
                 onPress={() => {
                   onSelectPointIndex(isSelected ? null : originalIndex);
                 }}
@@ -98,19 +100,25 @@ export function NetWorthHistoryTable({
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.assetAmount}>
-                    {formatCurrency(row.totalAssetsMinorUnits, currencyCode)}
+                    {formatPrivacyAmount(
+                      formatCurrency(row.totalAssetsMinorUnits, currencyCode),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
                 <View style={styles.colNumeric}>
                   <Text numberOfLines={1} style={styles.debtAmount}>
-                    {formatCurrency(Math.abs(row.totalLiabilitiesMinorUnits), currencyCode)}
+                    {formatPrivacyAmount(
+                      formatCurrency(Math.abs(row.totalLiabilitiesMinorUnits), currencyCode),
+                      isPrivate,
+                    )}
                   </Text>
                 </View>
 
                 <View style={styles.colNet}>
                   <Text numberOfLines={1} style={styles.netWorthAmount}>
-                    {row.formattedNetWorth}
+                    {formatPrivacyAmount(row.formattedNetWorth, isPrivate)}
                   </Text>
                 </View>
 
@@ -119,7 +127,7 @@ export function NetWorthHistoryTable({
                     numberOfLines={1}
                     style={[styles.changeText, { color: row.color }]}
                   >
-                    {row.formattedDiff} {row.symbol}
+                    {formatPrivacyAmount(`${row.formattedDiff} ${row.symbol}`, isPrivate)}
                   </Text>
                 </View>
               </Pressable>

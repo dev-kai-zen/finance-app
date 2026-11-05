@@ -6,6 +6,8 @@ export function SettingsScreen() {
   return React.createElement(Screen);
 }
 export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
+export { HapticFeedbackSettingsModal } from "./components/haptic-feedback-settings-modal";
+export { SoundEffectsSettingsModal } from "./components/sound-effects-settings-modal";
 export {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -33,10 +35,14 @@ export {
   setSoundAndHapticsPreferences,
   DEFAULT_SOUND_AND_HAPTICS_PREFERENCES,
   triggerHaptic,
+  triggerSound,
   playTransactionSavedSound,
+  testHapticFeedback,
+  testSoundPlayback,
 } from "./services/sound-and-haptics.service";
 export type {
   SoundAndHapticsPreferences,
+  SoundSubToggles,
   HapticCategory,
   HapticType,
 } from "./services/sound-and-haptics.service";

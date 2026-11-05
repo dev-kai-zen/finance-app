@@ -11,6 +11,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type {
   CalendarSummaryMetrics,
@@ -31,7 +32,11 @@ export function CalendarSummaryRibbon({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const currencyCode = preferences.defaultCurrency;
+
+  const maskAmount = (val: number, showSign = false) =>
+    isPrivate ? "••••••" : formatCurrency(val, currencyCode, showSign);
 
   if (activeTab === "transactions") {
     const isInflowPositive = metrics.totalInflowMinorUnits >= 0;
@@ -60,7 +65,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.totalInflowMinorUnits, currencyCode, false)}
+            {maskAmount(metrics.totalInflowMinorUnits, false)}
           </Text>
         </View>
 
@@ -86,7 +91,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.totalOutflowMinorUnits, currencyCode, false)}
+            {maskAmount(metrics.totalOutflowMinorUnits, false)}
           </Text>
         </View>
 
@@ -112,7 +117,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
+            {maskAmount(metrics.netCashflowMinorUnits, false)}
           </Text>
         </View>
       </View>
@@ -150,7 +155,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(assets, currencyCode, false)}
+            {maskAmount(assets, false)}
           </Text>
         </View>
 
@@ -178,7 +183,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(liabilities, currencyCode, false)}
+            {maskAmount(liabilities, false)}
           </Text>
         </View>
 
@@ -204,7 +209,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(netWorth, currencyCode, false)}
+            {maskAmount(netWorth, false)}
           </Text>
         </View>
       </View>
@@ -227,7 +232,7 @@ export function CalendarSummaryRibbon({
               },
             ]}
           >
-            {formatCurrency(metrics.schedulesTotalDueMinorUnits, currencyCode)}
+            {maskAmount(metrics.schedulesTotalDueMinorUnits)}
           </Text>
         </View>
 
@@ -272,7 +277,7 @@ export function CalendarSummaryRibbon({
             },
           ]}
         >
-          {formatCurrency(metrics.netCashflowMinorUnits, currencyCode, false)}
+          {maskAmount(metrics.netCashflowMinorUnits, false)}
         </Text>
       </View>
 
@@ -300,7 +305,7 @@ export function CalendarSummaryRibbon({
                 },
               ]}
             >
-              {formatCurrency(metrics.projectedMonthEndNetMinorUnits, currencyCode, false)}
+              {maskAmount(metrics.projectedMonthEndNetMinorUnits, false)}
             </Text>
           </View>
         </>

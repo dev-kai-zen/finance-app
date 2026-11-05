@@ -7,6 +7,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { Account } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
 import type { CalendarScheduleOccurrence } from "@/modules/scheduled-transactions";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import {
   formatFriendlyDate,
@@ -40,6 +41,7 @@ export function CalendarSchedulesTab({
 }: CalendarSchedulesTabProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
 
   const accountMap = useMemo(
     () => new Map(accounts.map((a) => [a.id, a])),
@@ -162,10 +164,13 @@ export function CalendarSchedulesTab({
 
                   <View style={styles.rowRight}>
                     <Text style={[styles.amountText, { color: amountColor }]}>
-                      {formatCurrency(
-                        signedAmount,
-                        account?.currencyCode ?? "PHP",
-                        signedAmount > 0 && !isTransfer,
+                      {formatPrivacyAmount(
+                        formatCurrency(
+                          signedAmount,
+                          account?.currencyCode ?? "PHP",
+                          signedAmount > 0 && !isTransfer,
+                        ),
+                        isPrivate,
                       )}
                     </Text>
 

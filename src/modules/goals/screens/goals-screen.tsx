@@ -45,7 +45,10 @@ const FILTER_TABS: Array<{ key: GoalFilter; label: string }> = [
   { key: "completed", label: "Completed" },
 ];
 
-export function GoalsScreen(props?: { initialAction?: "new" }) {
+export function GoalsScreen(props?: {
+  initialAction?: "new";
+  initialGoalId?: string;
+}) {
   return (
     <WalkthroughRegistryProvider>
       <GoalsScreenContent {...props} />
@@ -54,9 +57,11 @@ export function GoalsScreen(props?: { initialAction?: "new" }) {
 }
 
 function GoalsScreenContent({
+  initialGoalId,
   initialAction,
 }: {
   initialAction?: "new";
+  initialGoalId?: string;
 }) {
   const router = useRouter();
   const theme = useAppTheme();
@@ -91,6 +96,7 @@ function GoalsScreenContent({
   const [goalToEdit, setGoalToEdit] = useState<GoalWithProgress | null>(null);
   const [goalToDelete, setGoalToDelete] = useState<GoalWithProgress | null>(null);
   const handledActionRef = useRef<string | null>(null);
+  const handledGoalIdRef = useRef<string | null>(null);
 
   // Walkthrough targets & coordination
   const totalTargetRef = useWalkthroughTarget("goalTotalTargetCard");
@@ -180,6 +186,20 @@ function GoalsScreenContent({
       handledActionRef.current = null;
     }
   }, [handleOpenCreate, initialAction, loading, router]);
+
+  useEffect(() => {
+    if (!loading && initialGoalId && handledGoalIdRef.current !== initialGoalId) {
+      const found = goals.find((g) => g.id === initialGoalId);
+      if (found) {
+        handledGoalIdRef.current = initialGoalId;
+        setGoalToEdit(found);
+        setIsFormOpen(true);
+        router.setParams({ goalId: undefined });
+      }
+    } else if (!initialGoalId) {
+      handledGoalIdRef.current = null;
+    }
+  }, [goals, initialGoalId, loading, router]);
 
   const handleOpenEdit = (goal: GoalWithProgress) => {
     setGoalToEdit(goal);

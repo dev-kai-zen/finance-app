@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
-import { triggerHaptic } from "@/modules/settings";
+import { triggerHaptic, triggerSound } from "@/modules/settings";
 import { CURRENCY_SYMBOLS, getCurrencyMinorUnitExponent } from "@/utils/currency";
 
 export interface AmountCalculatorModalProps {
@@ -199,6 +199,7 @@ export function AmountCalculatorModal({
 
   const handleKeyPress = (key: string) => {
     triggerHaptic("light", "calculator");
+    void triggerSound("calculator");
     if (key === "C") {
       setExpression("");
       return;

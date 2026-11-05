@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronLeft, Palette, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
+import { Check, ChevronLeft, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
 
 import { ConfirmModal, NotificationModal, UnsavedChangesModal } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -62,7 +62,6 @@ export function NoteEditorModal({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
-  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const initialSnapshotRef = useRef<string>("");
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
 
@@ -297,44 +296,8 @@ export function NoteEditorModal({
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            {/* Title Input */}
-            <TextInput
-              accessibilityLabel="Note title"
-              onChangeText={setTitle}
-              placeholder="Title"
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.titleInput}
-              value={title}
-            />
-
-            {/* Content Input */}
-            <TextInput
-              accessibilityLabel="Note content"
-              multiline
-              onChangeText={setContent}
-              placeholder="Write your thoughts, financial goals, checklist, or receipt notes here..."
-              placeholderTextColor={theme.colors.textMuted}
-              scrollEnabled={false}
-              style={styles.contentInput}
-              textAlignVertical="top"
-              value={content}
-            />
-
-            {/* Photo Attachments Grid */}
-            <NoteAttachmentsGrid
-              drafts={drafts}
-              existingAttachments={existingAttachments}
-              onPickCamera={pickFromCamera}
-              onPickLibrary={pickFromLibrary}
-              onRemoveDraft={removeDraft}
-              onRemoveExisting={markExistingAttachmentForRemoval}
-              picking={picking}
-            />
-          </ScrollView>
-
-          {/* Color Palette Drawer (Option B: single horizontal row) */}
-          {isPaletteOpen ? (
-            <View style={styles.paletteDrawer}>
+            {/* Color Palette (Placed above Note Title so it's always visible) */}
+            <View style={styles.topPaletteContainer}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -433,41 +396,41 @@ export function NoteEditorModal({
                 </Pressable>
               </ScrollView>
             </View>
-          ) : null}
 
-          {/* Bottom Toolbar */}
-          <View style={[styles.bottomToolbar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-            <Pressable
-              accessibilityLabel="Note color palette"
-              accessibilityRole="button"
-              onPress={() => setIsPaletteOpen((prev) => !prev)}
-              style={({ pressed }) => [
-                styles.toolbarButton,
-                isPaletteOpen && styles.toolbarButtonActive,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Palette
-                color={
-                  color
-                    ? color
-                    : isPaletteOpen
-                      ? theme.colors.primary
-                      : theme.colors.textSecondary
-                }
-                size={20}
-              />
-            </Pressable>
+            {/* Title Input */}
+            <TextInput
+              accessibilityLabel="Note title"
+              onChangeText={setTitle}
+              placeholder="Title"
+              placeholderTextColor={theme.colors.textMuted}
+              style={styles.titleInput}
+              value={title}
+            />
 
-            {color ? (
-              <View
-                style={[
-                  styles.activeColorBadge,
-                  { backgroundColor: color },
-                ]}
-              />
-            ) : null}
-          </View>
+            {/* Content Input */}
+            <TextInput
+              accessibilityLabel="Note content"
+              multiline
+              onChangeText={setContent}
+              placeholder="Write your thoughts, financial goals, checklist, or receipt notes here..."
+              placeholderTextColor={theme.colors.textMuted}
+              scrollEnabled={false}
+              style={styles.contentInput}
+              textAlignVertical="top"
+              value={content}
+            />
+
+            {/* Photo Attachments Grid */}
+            <NoteAttachmentsGrid
+              drafts={drafts}
+              existingAttachments={existingAttachments}
+              onPickCamera={pickFromCamera}
+              onPickLibrary={pickFromLibrary}
+              onRemoveDraft={removeDraft}
+              onRemoveExisting={markExistingAttachmentForRemoval}
+              picking={picking}
+            />
+          </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
 
@@ -605,44 +568,14 @@ function createStyles(theme: AppTheme) {
     buttonPressed: {
       opacity: 0.7,
     },
-    paletteDrawer: {
-      backgroundColor: theme.colors.surfaceMuted,
-      borderTopColor: theme.colors.border,
-      borderTopWidth: 1,
-      paddingVertical: theme.spacing.xs,
+    topPaletteContainer: {
+      paddingBottom: theme.spacing.xs,
     },
     paletteScrollContent: {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-    },
-    bottomToolbar: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderTopColor: theme.colors.border,
-      borderTopWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.sm,
-      paddingHorizontal: theme.spacing.md,
-      paddingTop: 8,
-    },
-    toolbarButton: {
-      alignItems: "center",
-      borderRadius: theme.borderRadius.medium,
-      height: 38,
-      justifyContent: "center",
-      width: 38,
-    },
-    toolbarButtonActive: {
-      backgroundColor: `${theme.colors.primary}18`,
-    },
-    activeColorBadge: {
-      borderColor: theme.colors.border,
-      borderRadius: 6,
-      borderWidth: 1,
-      height: 12,
-      width: 12,
+      paddingVertical: 2,
     },
     colorPalette: {
       alignItems: "center",
