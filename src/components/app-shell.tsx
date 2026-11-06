@@ -23,6 +23,7 @@ type Translate = ReturnType<typeof useLocalization>["t"];
 function getScreenTitle(pathname: string, t: Translate): string {
   if (pathname.startsWith("/google-drive-backup"))
     return t("navigation.googleDriveBackup");
+  if (pathname.startsWith("/data-import")) return t("dataImport.title");
   if (pathname.startsWith("/local-backup"))
     return t("navigation.localBackup");
   if (pathname.startsWith("/currency-setup"))
@@ -107,6 +108,7 @@ export function AppShell({
   const isFullScreenModal =
     pathname.startsWith("/language") ||
     pathname.startsWith("/currency-setup") ||
+    pathname.startsWith("/data-import") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||

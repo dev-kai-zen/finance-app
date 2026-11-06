@@ -316,6 +316,13 @@
       "when": 1793005005000,
       "tag": "0044_remove_pocket_target_amount",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1793934862089,
+      "tag": "0045_add_csv_import_history",
+      "breakpoints": true
     }
   ]
 }

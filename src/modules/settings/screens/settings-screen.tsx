@@ -424,6 +424,22 @@ function SettingsScreenContent() {
           <Text style={styles.sectionTitle}>{t("settings.backupDataSection")}</Text>
           <View style={styles.card}>
             <Pressable
+              accessibilityLabel={t("dataImport.title")}
+              accessibilityRole="button"
+              onPress={() => router.push("/data-import")}
+              style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+            >
+              <View style={styles.iconContainer}>
+                <Database color={theme.colors.textSecondary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>{t("dataImport.title")}</Text>
+                <Text style={styles.settingDescription}>{t("dataImport.settingsDescription")}</Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+            <View style={styles.rowDivider} />
+            <Pressable
               ref={localBackupRef as any}
               collapsable={false}
               onLayout={(e) => {

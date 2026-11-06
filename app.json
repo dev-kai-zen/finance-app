@@ -3,7 +3,7 @@
     "name": "Kaizen Finance",
     "slug": "finance-app",
     "scheme": "finance-app",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/kaizen-finance-app-logo.png",
     "userInterfaceStyle": "automatic",
@@ -26,7 +26,7 @@
       "blockedPermissions": ["android.permission.ACTIVITY_RECOGNITION"],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 12
+      "versionCode": 13
     },
     "web": {
       "favicon": "./assets/kaizen-finance-app-logo.png"

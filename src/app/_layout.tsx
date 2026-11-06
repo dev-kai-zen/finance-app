@@ -44,6 +44,7 @@ function RootLayoutContent() {
   const usesNativeHeader =
     pathname.startsWith("/language") ||
     pathname.startsWith("/currency-setup") ||
+    pathname.startsWith("/data-import") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||
@@ -118,6 +119,7 @@ function RootLayoutContent() {
                             headerShown: false,
                           }}
                         />
+                        <Stack.Screen name="data-import" options={{ presentation: "fullScreenModal", headerShown: false }} />
                         <Stack.Screen
                           name="local-backup"
                           options={{

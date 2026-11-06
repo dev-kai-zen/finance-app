@@ -7,3 +7,5 @@ export {
   inspectDatabaseBackup,
   readDatabaseBackup,
 } from "./utils/backup-format";
+
+export { createLocalBackup } from "./services/create-local-backup.service";
