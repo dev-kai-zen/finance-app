@@ -20,8 +20,8 @@ export function ImportChip({ label, tone }: { label: string; tone: keyof typeof 
     <Text style={{ color: "#FFFFFF", fontSize: theme.typography.fontSize.xs, fontWeight: "700" }}>{label}</Text>
   </View>;
 }
-export function ImportFieldButton({ label, value, onPress, disabled, hideLabel = false }: {
-  label: string; value: string; onPress: () => void; disabled?: boolean; hideLabel?: boolean;
+export function ImportFieldButton({ label, value, onPress, disabled, hideLabel = false, tone }: {
+  label: string; value: string; onPress: () => void; disabled?: boolean; hideLabel?: boolean; tone?: "ready" | "optional";
 }) {
   const theme = useAppTheme();
   return <View style={{ gap: theme.spacing.xs }}>
@@ -29,21 +29,21 @@ export function ImportFieldButton({ label, value, onPress, disabled, hideLabel =
     <Pressable accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} accessibilityState={{ disabled: !!disabled }} disabled={disabled}
       onPress={() => { Keyboard.dismiss(); onPress(); }}
       style={({ pressed }) => ({ minHeight: 48, flexDirection: "row", alignItems: "center", gap: theme.spacing.sm, padding: theme.spacing.md,
-        borderWidth: 1, borderColor: disabled ? theme.colors.border : theme.colors.borderStrong, borderRadius: theme.borderRadius.medium,
-        backgroundColor: theme.colors.surface, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 })}>
-      <Text style={{ flex: 1, color: theme.colors.textPrimary, fontSize: theme.typography.fontSize.base }}>{value}</Text>
-      <ChevronDown color={theme.colors.textPrimary} size={18} />
+        borderWidth: 1, borderColor: tone ? CHIP_COLORS[tone] : disabled ? theme.colors.border : theme.colors.borderStrong, borderRadius: theme.borderRadius.medium,
+        backgroundColor: tone ? CHIP_COLORS[tone] : theme.colors.surface, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 })}>
+      <Text style={{ flex: 1, color: tone ? "#FFFFFF" : theme.colors.textPrimary, fontSize: theme.typography.fontSize.base }}>{value}</Text>
+      <ChevronDown color={tone ? "#FFFFFF" : theme.colors.textPrimary} size={18} />
     </Pressable>
   </View>;
 }
-export function ImportSelect({ label, value, items, onChange, disabled, hideLabel }: {
-  label: string; value: string; items: { value: string; label: string }[]; onChange: (value: string) => void; disabled?: boolean; hideLabel?: boolean;
+export function ImportSelect({ label, value, items, onChange, disabled, hideLabel, tone }: {
+  label: string; value: string; items: { value: string; label: string }[]; onChange: (value: string) => void; disabled?: boolean; hideLabel?: boolean; tone?: "ready" | "optional";
 }) {
   const theme = useAppTheme(), { t } = useLocalization();
   const [visible, setVisible] = useState(false), [query, setQuery] = useState("");
   const filtered = items.filter((item) => item.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   return <>
-    <ImportFieldButton label={label} value={items.find((item) => item.value === value)?.label ?? t("dataImport.choose")} disabled={disabled} hideLabel={hideLabel} onPress={() => { setQuery(""); setVisible(true); }} />
+    <ImportFieldButton label={label} value={items.find((item) => item.value === value)?.label ?? t("dataImport.choose")} disabled={disabled} hideLabel={hideLabel} tone={tone} onPress={() => { setQuery(""); setVisible(true); }} />
     <FullScreenFormModal visible={visible && !disabled} title={label} onClose={() => setVisible(false)}>
       <KeyboardAwareForm contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.sm }}>
         {items.length > 8 && <ImportInput label={t("dataImport.ui.searchOptions")} value={query} onChange={setQuery} />}

@@ -41,6 +41,8 @@ export const en = {
     },
 
     wizard: {
+      columnDateFormat: "Format: %{format}",
+      dateFormatMismatch: "The format does not match. We match it using the first data row. Check the dates before importing.",
       resume: "Continue setting up this file",
       accountChoiceHelp: "This account choice applies to all entries from the same account in your file.",
       categoryChoiceHelp: "This category choice applies to entries with the same category in your file.",
@@ -783,6 +785,7 @@ export const en = {
       general: "General",
     },
     v150: {
+      improveItem5: "Improve column matching with clear colors and early date format warnings.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",

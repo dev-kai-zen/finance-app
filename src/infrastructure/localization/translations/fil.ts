@@ -46,6 +46,8 @@ export const fil = {
     },
 
     wizard: {
+      columnDateFormat: "Format: %{format}",
+      dateFormatMismatch: "Hindi tugma ang format. Itinutugma namin ito gamit ang unang hanay ng datos. Suriin ang mga petsa bago mag-import.",
       resume: "Ipagpatuloy ang paghahanda ng file",
       accountChoiceHelp: "Para sa lahat ng tala mula sa parehong account sa file ang pagpiling ito.",
       categoryChoiceHelp: "Para sa mga talang may parehong kategorya sa file ang pagpiling ito.",
@@ -781,6 +783,7 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v150: {
+      improveItem5: "Pagandahin ang pagtutugma ng mga column gamit ang malinaw na kulay at babala sa format ng petsa.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",

@@ -19,7 +19,7 @@ import { ImportReviewEntry } from "../components/import-review-entry";
 import { ImportHelpModal } from "../components/import-help-modal";
 import { useDataImport } from "../hooks/use-data-import";
 import type { ImportField, ImportReviewGroup, ImportTransactionType } from "../types/import.types";
-import { suggestColumns } from "../utils/csv";
+import { parseImportDate, suggestColumns } from "../utils/csv";
 import { cellValue } from "../utils/import-preview";
 import { filterReviewRows, importDateValidation, importFieldRequired, reviewGroupCounts } from "../utils/import-review";
 import { importTypeValues, importSteps, previousImportStep, requiredImportColumns, transferFileSummary } from "../utils/import-wizard";
@@ -42,6 +42,19 @@ export function DataImportScreen() {
   const types = state.file && state.options.kind === "transactions" ? importTypeValues(state.file.document, state.options) : [];
   const unknownTypes = types.filter((entry) => !["expense", "income", "transfer", "exclude"].includes(entry.mapped));
   const dates = state.file ? importDateValidation(state.file.document, state.options) : null;
+  const dateField = state.options.kind === "accounts" ? "balanceDate" : "date";
+  const dateIndex = state.options.columns[dateField];
+  const firstDate = dateIndex === undefined ? "" : state.file?.document.rows[0]?.cells[dateIndex] ?? "";
+  const [dateWarning, setDateWarning] = useState<{ value: string; format: string; matched: boolean } | null>(null);
+  useEffect(() => {
+    if (state.step !== "columns" || !firstDate.trim()) return;
+    try { parseImportDate(firstDate, state.options.dateFormat); return; } catch { /* Try other supported formats. */ }
+    const inferred = (["ymd", "dmy", "mdy"] as const).find((format) => {
+      try { parseImportDate(firstDate, format); return true; } catch { return false; }
+    });
+    setDateWarning({ value: firstDate, format: inferred ?? state.options.dateFormat, matched: !!inferred });
+    if (inferred) state.patch({ dateFormat: inferred, accounts: {}, categories: {}, decisions: {} });
+  }, [firstDate, state.options.dateFormat, state.step]);
   const [showOptional, setShowOptional] = useState(false);
   const [pendingBack, setPendingBack] = useState<(() => void) | null>(null);
   const dirty = !!state.file && state.step !== "done";
@@ -79,11 +92,12 @@ export function DataImportScreen() {
     const index = state.options.columns[field];
     const sample = index === undefined ? "" : state.file?.document.rows.find((r) => r.cells[index])?.cells[index] ?? "";
     return <View key={field} style={styles.mappingRow}>
-      <View style={[styles.mappingName, { gap: theme.spacing.xs }]}><Text style={styles.label}>{t(`dataImport.fields.${field}`)}</Text><ImportChip label={t(importFieldRequired(field, state.options) ? "dataImport.ui.required" : "dataImport.ui.optional")} tone={importFieldRequired(field, state.options) ? "required" : "optional"} /></View>
+      <View style={[styles.mappingName, { gap: theme.spacing.xs }]}><Text style={styles.label}>{t(`dataImport.fields.${field}`)}</Text>{(field === "date" || field === "balanceDate") && <Text style={styles.example}>{t("dataImport.wizard.columnDateFormat", { format: t(`dataImport.formats.${state.options.dateFormat}`) })}</Text>}<ImportChip label={t(importFieldRequired(field, state.options) ? "dataImport.ui.required" : "dataImport.ui.optional")} tone={importFieldRequired(field, state.options) ? "required" : "optional"} /></View>
       <View style={styles.mappingValue}>
-        <ImportSelect hideLabel label={t(`dataImport.fields.${field}`)} value={String(index ?? -1)} disabled={state.busy}
+        <ImportSelect hideLabel label={t(`dataImport.fields.${field}`)} value={String(index ?? -1)} disabled={state.busy} tone={index === undefined ? "optional" : "ready"}
           items={[{ value: "-1", label: t("dataImport.unmapped") }, ...(state.file?.document.headers.map((name, i) => ({ value: String(i), label: name })) ?? [])]}
           onChange={(value) => mapColumn(field, value)} />
+        {field === dateField && dateWarning?.value === firstDate && dateWarning.format === state.options.dateFormat && <Text accessibilityLiveRegion="polite" style={[styles.example, { color: "#B45309" }]}>{"\u26A0 "}{t(dateWarning.matched ? "dataImport.wizard.dateFormatMismatch" : "dataImport.errors.date")}</Text>}
         {!!sample && <Text selectable style={styles.example}>{t("dataImport.wizard.example", { value: sample.slice(0, 80) })}</Text>}
       </View>
     </View>;

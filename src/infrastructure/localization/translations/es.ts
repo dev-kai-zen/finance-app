@@ -46,6 +46,8 @@ export const es = {
     },
 
     wizard: {
+      columnDateFormat: "Formato: %{format}",
+      dateFormatMismatch: "El formato no coincide. Lo identificamos usando la primera fila de datos. Revisa las fechas antes de importar.",
       resume: "Continuar preparando este archivo",
       accountChoiceHelp: "Esta cuenta se usar\u00e1 para todos los registros de la misma cuenta del archivo.",
       categoryChoiceHelp: "Esta categor\u00eda se usar\u00e1 para los registros con la misma categor\u00eda del archivo.",
@@ -780,6 +782,7 @@ export const es = {
       general: "General",
     },
     v150: {
+      improveItem5: "Mejora la correspondencia de columnas con colores claros y avisos sobre el formato de fecha.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",
