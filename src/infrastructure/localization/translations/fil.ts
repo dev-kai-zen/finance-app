@@ -142,6 +142,7 @@ export const fil = {
     sendFeedback: "Magpadala ng Feedback",
     supportDevelopment: "Suporta at Feedback",
     localBackup: "Lokal na Backup",
+    dataImport: "Mag-import ng data",
     googleDriveBackup: "Google Drive Backup",
     language: "Wika",
     currencySetup: "Setup ng Currency",
@@ -307,6 +308,11 @@ export const fil = {
     googleDrive: "Google Drive",
     googleDriveDescription:
       "Kumonekta, gumawa, o mag-restore ng cloud backup",
+    importData: "Mag-import ng data",
+    importDataDesc: "Magpasok ng mga account at kasaysayan ng transaksyon mula sa CSV file",
+    importDataAccessibility: "Magpasok ng mga account at kasaysayan ng transaksyon mula sa CSV file",
+    importDataWebNotice: "Available ang pag-import ng data sa app sa telepono.",
+    importDataPersonalWorkspaceNotice: "Available lamang ang pag-import ng data sa iyong personal na workspace. Lumipat muna sa iyong personal na workspace.",
     backupPaused: "Naka-pause ang backup",
     backupPausedDescription:
       "Pansamantala ang mga sample record at hindi ina-upload sa Google Drive. Magsimula ng personal na workspace para paganahin ang backup.",

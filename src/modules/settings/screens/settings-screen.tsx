@@ -24,6 +24,7 @@ import {
   Database,
   Eye,
   EyeOff,
+  FileSpreadsheet,
   HardDrive,
   Heart,
   Info,
@@ -324,6 +325,24 @@ function SettingsScreenContent() {
         mode: t(theme.mode === "light" ? "settings.light" : "settings.dark"),
       })}`;
 
+  const handleOpenImportData = () => {
+    if (Platform.OS === "web") {
+      Alert.alert(
+        t("settings.importData"),
+        t("settings.importDataWebNotice"),
+      );
+      return;
+    }
+    if (workspace.state.status !== "completed" || workspace.state.mode !== "personal") {
+      Alert.alert(
+        t("settings.importData"),
+        t("settings.importDataPersonalWorkspaceNotice"),
+      );
+      return;
+    }
+    router.push("/data-import");
+  };
+
   return (
     <PageContainer
       scrollRef={scrollRef}
@@ -483,6 +502,31 @@ function SettingsScreenContent() {
                     </View>
                   )}
                 </View>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={t("settings.importDataAccessibility")}
+              accessibilityRole="button"
+              onPress={handleOpenImportData}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <FileSpreadsheet color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.importData")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.importDataDesc")}
+                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>

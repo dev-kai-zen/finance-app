@@ -10,6 +10,11 @@ export const AccountPickerModal = deferComponent(
   "AccountPickerModal",
 ) as typeof import("./components/account-picker-modal").AccountPickerModal;
 
+export const AccountTypePickerModal = deferComponent(
+  () => require("./components/account-type-picker-modal").AccountTypePickerModal,
+  "AccountTypePickerModal",
+) as typeof import("./components/account-type-picker-modal").AccountTypePickerModal;
+
 export const MaintainingBalanceWarningModal = deferComponent(
   () =>
     require("./components/maintaining-balance-warning-modal")
@@ -78,6 +83,18 @@ export const requireAccount = deferFunction(
 export const savePocket = deferFunction(
   () => require("./services/save-pocket.service").savePocket,
 ) as typeof import("./services/save-pocket.service").savePocket;
+
+export const saveAccount = deferFunction(
+  () => require("./services/save-account.service").saveAccount,
+) as typeof import("./services/save-account.service").saveAccount;
+
+export const saveAccountInContext = deferFunction(
+  () => require("./services/save-account.service").saveAccountInContext,
+) as typeof import("./services/save-account.service").saveAccountInContext;
+
+export const getAccountTypes = deferFunction(
+  () => require("./services/get-account-types.service").getAccountTypes,
+) as typeof import("./services/get-account-types.service").getAccountTypes;
 
 export const clearAccountWorkspace = deferFunction(
   () =>

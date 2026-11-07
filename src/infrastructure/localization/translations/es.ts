@@ -142,6 +142,7 @@ export const es = {
     sendFeedback: "Enviar comentarios",
     supportDevelopment: "Apoyo y Comentarios",
     localBackup: "Copia de seguridad local",
+    dataImport: "Importar datos",
     googleDriveBackup: "Copia de seguridad de Google Drive",
     language: "Idioma",
     currencySetup: "Configuración de moneda",
@@ -308,6 +309,11 @@ export const es = {
     googleDrive: "Google Drive",
     googleDriveDescription:
       "Conectar, crear o restaurar una copia en la nube",
+    importData: "Importar datos",
+    importDataDesc: "Trae cuentas e historial de transacciones desde un archivo CSV",
+    importDataAccessibility: "Trae cuentas e historial de transacciones desde un archivo CSV",
+    importDataWebNotice: "La importación de datos está disponible en la aplicación móvil.",
+    importDataPersonalWorkspaceNotice: "La importación de datos solo está disponible en su espacio de trabajo personal. Cambie a su espacio de trabajo personal primero.",
     backupPaused: "Copia de seguridad en pausa",
     backupPausedDescription:
       "Los registros de ejemplo son temporales y no se suben a Google Drive. Inicia un espacio de trabajo personal para activar la copia de seguridad.",

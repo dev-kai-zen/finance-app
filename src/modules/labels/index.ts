@@ -9,6 +9,7 @@ export { useLabels } from "./hooks/use-labels";
 export { useLabelMutations } from "./hooks/use-label-mutations";
 
 // Services (Public cross-module interface)
+export { getLabels } from "./services/get-labels.service";
 export { createLabel } from "./services/create-label.service";
 export { updateLabel } from "./services/update-label.service";
 export { deleteLabel } from "./services/delete-label.service";

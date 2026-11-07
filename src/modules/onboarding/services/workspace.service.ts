@@ -47,6 +47,15 @@ export function initializeWorkspaceState(): WorkspaceState {
   return readWorkspaceStateFromDatabase();
 }
 
+export function getWorkspaceState(context: DbContext = db): WorkspaceState {
+  return readWorkspaceStateFromDatabase(context);
+}
+
+export function isPersonalWorkspace(context: DbContext = db): boolean {
+  const state = readWorkspaceStateFromDatabase(context);
+  return state.status === "completed" && state.mode === "personal";
+}
+
 /**
  * After a backup restore replaces the local database, align onboarding workspace
  * state with the restored data so the app exits Get Started when appropriate.

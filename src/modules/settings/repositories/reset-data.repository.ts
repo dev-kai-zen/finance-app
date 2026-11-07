@@ -20,6 +20,8 @@ import {
   goalPockets,
   goals,
   hexColors,
+  importBatches,
+  importedSourceIdentities,
   labels,
   noteAttachments,
   notes,
@@ -42,6 +44,9 @@ export function deleteAllUserData(context: DbContext): void {
   context.delete(transactionSchedulePostings).run();
   context.delete(transactionScheduleOccurrences).run();
   context.delete(transactionSchedules).run();
+
+  context.delete(importedSourceIdentities).run();
+  context.delete(importBatches).run();
 
   context.delete(transactionAttachments).run();
   context.delete(transactionLabels).run();

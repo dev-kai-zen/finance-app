@@ -1,4 +1,4 @@
-import { db } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
 import { accountInputSchema, type AccountInput } from "@/modules/accounts/schemas/account.schema";
 import { findAccountsByAccountTypeId, insertAccount, newAccountRecordId, updateAccountRecord } from "@/modules/accounts/repositories/accounts.repository";
 import {
@@ -26,9 +26,13 @@ function normalizeCurrencyCode(code: string): string {
   return code.trim().toUpperCase();
 }
 
-export function saveAccount(input: AccountInput, id?: string): string {
+export function saveAccountInContext(
+  input: AccountInput,
+  id?: string,
+  context: DbContext = db,
+): string {
   const value = accountInputSchema.parse(input);
-  return db.transaction((tx) => {
+  const execute = (tx: DbContext): string => {
     const existing = id ? requireAccount(id, tx) : null;
     let currencyCode: string;
     if (existing) {
@@ -162,5 +166,18 @@ export function saveAccount(input: AccountInput, id?: string): string {
 
     reconcileCreditCardBillingInContext(new Date(), tx);
     return accountId;
-  });
+  };
+
+  if (context === db) {
+    return db.transaction(execute);
+  }
+  return execute(context);
+}
+
+export function saveAccount(
+  input: AccountInput,
+  id?: string,
+  context?: DbContext,
+): string {
+  return saveAccountInContext(input, id, context ?? db);
 }

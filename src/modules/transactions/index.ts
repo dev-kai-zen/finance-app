@@ -79,9 +79,21 @@ export const createTransaction = deferFunction(
   () => require("./services/create-transaction.service").createTransaction,
 ) as typeof import("./services/create-transaction.service").createTransaction;
 
+export const createTransactionInContext = deferFunction(
+  () => require("./services/create-transaction.service").createTransactionInContext,
+) as typeof import("./services/create-transaction.service").createTransactionInContext;
+
 export const createTransfer = deferFunction(
   () => require("./services/create-transfer.service").createTransfer,
 ) as typeof import("./services/create-transfer.service").createTransfer;
+
+export const createTransferInContext = deferFunction(
+  () => require("./services/create-transfer.service").createTransferInContext,
+) as typeof import("./services/create-transfer.service").createTransferInContext;
+
+export const findSimilarTransaction = deferFunction(
+  () => require("./services/find-similar-transaction.service").findSimilarTransaction,
+) as typeof import("./services/find-similar-transaction.service").findSimilarTransaction;
 
 export const recordTransactionInContext = deferFunction(
   () =>
