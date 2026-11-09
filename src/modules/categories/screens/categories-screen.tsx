@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -15,6 +15,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { IconHelper } from "@/components/icon-helper";
 import { InfoModal } from "@/components/info-modal";
 import { NotificationModal } from "@/components/notification-modal";
+import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -24,7 +25,6 @@ import { useLocalization } from "@/infrastructure/localization";
 import { Tags } from "lucide-react-native";
 import {
   CategoriesWalkthroughOverlay,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useCategoriesWalkthrough,
   useWalkthroughIntro,
@@ -236,6 +236,16 @@ function CategoriesScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "categoriesWalkthroughDismissed",
     enabled: hasExistingTransactions !== null,
@@ -317,19 +327,14 @@ function CategoriesScreenContent({
   };
 
   return (
-    <PageContainer
-      scrollContentRef={scrollContentRef}
-      scrollRef={scrollRef}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        scrollContentRef={scrollContentRef}
+        scrollRef={scrollRef}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+      >
       <View style={styles.container}>
         {/* Category type chips */}
         <View collapsable={false} ref={typeToggleRef} style={styles.tabRow}>
@@ -661,12 +666,29 @@ function CategoriesScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.md,
       paddingTop: theme.spacing.sm,

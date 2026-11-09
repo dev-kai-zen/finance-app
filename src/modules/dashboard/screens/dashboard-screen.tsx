@@ -540,7 +540,8 @@ function DashboardScreenContent() {
   };
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      <PageContainer
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       refreshing={isPullRefreshing}
@@ -831,12 +832,29 @@ function DashboardScreenContent() {
         onMaybeLater={handleMaybeLater}
         onNeverAskAgain={handleNeverAskAgain}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.lg,
       paddingBottom: 80,

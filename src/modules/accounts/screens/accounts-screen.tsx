@@ -5,6 +5,7 @@ import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
+import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -14,7 +15,6 @@ import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
-  DraggableTourChip,
   WalkthroughIntroModal,
   AccountsWalkthroughOverlay,
   useAccountsWalkthrough,
@@ -173,6 +173,16 @@ function AccountsScreenContent({
   const walkthrough = useAccountsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "accountsWalkthroughDismissed",
@@ -392,22 +402,16 @@ function AccountsScreenContent({
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
       floatingAction={
-        <>
-          <FloatingActionButton
-            accessibilityLabel="Open accounts menu"
-            fabRef={fabRef}
-            onPress={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              setFabSheetOpen(true);
-            }}
-          />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
+        <FloatingActionButton
+          accessibilityLabel="Open accounts menu"
+          fabRef={fabRef}
+          onPress={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            setFabSheetOpen(true);
+          }}
+        />
       }
     >
       <AccountError message={data.error} />

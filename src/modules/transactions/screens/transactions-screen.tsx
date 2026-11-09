@@ -35,6 +35,7 @@ import {
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -46,7 +47,6 @@ import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
-  DraggableTourChip,
   WalkthroughIntroModal,
   TransactionsWalkthroughOverlay,
   useTransactionsWalkthrough,
@@ -307,6 +307,16 @@ function TransactionsScreenContent({
   const walkthrough = useTransactionsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "transactionsWalkthroughDismissed",
@@ -914,15 +924,15 @@ function TransactionsScreenContent({
   );
 
   return (
-    <PageContainer
-      contentContainerStyle={styles.pageContent}
-      refreshing={isPullRefreshing}
-      onRefresh={handlePullRefresh}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        contentContainerStyle={styles.pageContent}
+        refreshing={isPullRefreshing}
+        onRefresh={handlePullRefresh}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
           <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
@@ -939,12 +949,7 @@ function TransactionsScreenContent({
               setIsChatModalOpen(true);
             }}
           />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
+        }
       scrollable={false}
     >
       <View style={styles.container}>
@@ -1646,12 +1651,29 @@ function TransactionsScreenContent({
           handleOpenNewTransaction();
         }}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     pageContent: {
       flex: 1,
       paddingBottom: 0,

@@ -72,16 +72,16 @@ export function WalkthroughIntroModal({
         <View style={[styles.card, isDesktop && styles.cardDesktop]}>
           {/* Close Button in corner */}
           <Pressable
-            accessibilityLabel={t("common.close", { defaultValue: "Close" })}
+            accessibilityLabel="Close dialog"
             accessibilityRole="button"
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={onSkip}
             style={({ pressed }) => [
               styles.closeBtn,
               pressed && styles.closeBtnPressed,
             ]}
           >
-            <X color={theme.colors.textMuted} size={18} />
+            <X color={theme.colors.textSecondary} size={18} />
           </Pressable>
 
           {/* Header Icon Circle */}
@@ -171,18 +171,21 @@ function createStyles(theme: AppTheme) {
     },
     closeBtn: {
       alignItems: "center",
-      backgroundColor: `${theme.colors.textSecondary}14`,
-      borderRadius: 16,
-      height: 32,
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 18,
+      borderWidth: 1,
+      height: 36,
       justifyContent: "center",
       position: "absolute",
       right: 14,
       top: 14,
-      width: 32,
+      width: 36,
       zIndex: 10,
     },
     closeBtnPressed: {
-      backgroundColor: `${theme.colors.textSecondary}28`,
+      backgroundColor: theme.colors.border,
+      opacity: 0.8,
     },
     iconCircle: {
       alignItems: "center",

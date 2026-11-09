@@ -328,11 +328,11 @@ export function NetWorthChart({
                   <Pressable
                     accessibilityLabel="Close tooltip"
                     accessibilityRole="button"
-                    hitSlop={8}
+                    hitSlop={12}
                     onPress={() => setSelectedPointIndex(null)}
                     style={styles.tooltipCloseBtn}
                   >
-                    <X color={theme.colors.textMuted} size={12} />
+                    <X color={theme.colors.textSecondary} size={11} />
                   </Pressable>
                 </View>
 
@@ -533,7 +533,12 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.bold,
     },
     tooltipCloseBtn: {
-      padding: 2,
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: 10,
+      height: 18,
+      justifyContent: "center",
+      width: 18,
     },
     tooltipRow: {
       alignItems: "center",

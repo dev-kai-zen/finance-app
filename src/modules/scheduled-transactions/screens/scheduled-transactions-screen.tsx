@@ -17,6 +17,7 @@ import {
   PageContainer,
   PageEmptyState,
   PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -28,7 +29,6 @@ import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { Repeat } from "lucide-react-native";
 import {
-  DraggableTourChip,
   FirstScheduleCongratulationsModal,
   ScheduledTransactionsWalkthroughOverlay,
   WalkthroughIntroModal,
@@ -351,6 +351,16 @@ function ScheduledTransactionsScreenContent({
     onStart: walkthrough.startWalkthrough,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   useEffect(() => {
     if (!loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
@@ -378,7 +388,11 @@ function ScheduledTransactionsScreenContent({
   }));
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
+      ) : null}
+      <PageContainer
       contentContainerStyle={contentSpacing}
       floatingAction={
         <FloatingActionButton
@@ -774,11 +788,6 @@ function ScheduledTransactionsScreenContent({
         visible={paywallVisible}
       />
 
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
-      />
-
       <WalkthroughIntroModal
         visible={walkthroughIntro.isIntroVisible}
         title={t("scheduledTransactionsWalkthrough.introTitle")}
@@ -810,11 +819,20 @@ function ScheduledTransactionsScreenContent({
         visible={showCongrats}
       />
     </PageContainer>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     content: {
       gap: theme.spacing.md,
       paddingBottom: 80,

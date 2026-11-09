@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -48,6 +48,7 @@ import {
 } from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
+import { useHeaderWalkthroughAction } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
@@ -66,7 +67,6 @@ import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-m
 import { GesturesSettingsModal, useQuickEntry } from "@/modules/gestures";
 import { useShakeActionSetting } from "../hooks/use-shake-action-setting";
 import {
-  DraggableTourChip,
   SettingsWalkthroughOverlay,
   WalkthroughIntroModal,
   useSettingsWalkthrough,
@@ -286,6 +286,16 @@ function SettingsScreenContent() {
     onStart: walkthrough.startWalkthrough,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   useEffect(() => {
     if (walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
@@ -325,19 +335,16 @@ function SettingsScreenContent() {
       })}`;
 
   return (
-    <PageContainer
-      scrollRef={scrollRef}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <DraggableTourChip
-          defaultPlacement="top-left"
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
+      ) : null}
+      <PageContainer
+        scrollRef={scrollRef}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+      >
       <View style={styles.container}>
         {/* 1. Localization */}
         <View
@@ -1691,11 +1698,20 @@ function SettingsScreenContent() {
         onSkip={walkthrough.skipWalkthrough}
       />
     </PageContainer>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.xl,
       paddingTop: theme.spacing.lg,

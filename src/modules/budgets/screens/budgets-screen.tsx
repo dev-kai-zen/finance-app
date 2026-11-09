@@ -19,6 +19,7 @@ import {
   NotificationModal,
   PageContainer,
   PageEmptyState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -31,7 +32,6 @@ import { PieChart } from "lucide-react-native";
 import {
   BudgetCongratulationsModal,
   BudgetsWalkthroughOverlay,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useBudgetsWalkthrough,
   useWalkthroughIntro,
@@ -176,6 +176,16 @@ function BudgetsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "budgetsWalkthroughDismissed",
     onStart: walkthrough.startWalkthrough,
@@ -286,31 +296,26 @@ function BudgetsScreenContent({
   }));
 
   return (
-    <PageContainer
-      onRefresh={handlePullRefresh}
-      refreshing={isPullRefreshing}
-      scrollRef={scrollRef}
-      scrollContentRef={scrollContentRef}
-      contentContainerStyle={contentSpacing}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
-          {budgets.length > 0 ? (
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        onRefresh={handlePullRefresh}
+        refreshing={isPullRefreshing}
+        scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
+        contentContainerStyle={contentSpacing}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
+          budgets.length > 0 ? (
             <FloatingActionButton
               accessibilityLabel="Set new category budget"
               fabRef={fabRef}
               onPress={handleOpenCreate}
             />
-          ) : null}
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
-    >
+          ) : undefined
+        }
+      >
       <View style={styles.container}>
         {loading ? (
           <View style={styles.loadingBox}>
@@ -579,12 +584,29 @@ function BudgetsScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       flex: 1,
     },

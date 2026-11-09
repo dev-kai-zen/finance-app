@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   ConfirmModal,
   PageContainer,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -19,7 +20,6 @@ import { useLocalization } from "@/infrastructure/localization";
 import { Calendar as CalendarIcon } from "lucide-react-native";
 import {
   CalendarWalkthroughOverlay,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useCalendarWalkthrough,
   useWalkthroughIntro,
@@ -182,6 +182,16 @@ function CalendarScreenContent() {
     onScrollToTarget: handleScrollToTarget,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "calendarWalkthroughDismissed",
     onStart: walkthrough.startWalkthrough,
@@ -256,19 +266,14 @@ function CalendarScreenContent() {
           : scopedTransactions.length;
 
   return (
-    <PageContainer
-      scrollContentRef={scrollContentRef}
-      scrollRef={scrollRef}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        scrollContentRef={scrollContentRef}
+        scrollRef={scrollRef}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+      >
       <View style={styles.content}>
         {/* 1. Month Navigation Header */}
         <CalendarMonthHeader
@@ -484,12 +489,29 @@ function CalendarScreenContent() {
         visible={walkthrough.isWalkthroughActive}
       />
 
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     content: {
       gap: theme.spacing.md,
       paddingTop: theme.spacing.sm,
