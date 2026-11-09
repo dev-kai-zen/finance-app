@@ -1,6 +1,7 @@
 import type { AccountMapping, CsvDocument, ImportCatalog, ImportOptions } from "../types/import.types";
 import { normalizeImportName, parseImportDate } from "./csv";
 import { applyImportEdits, cellValue, sourceAccountNames, sourceCategories } from "./import-preview";
+import { matchCategoryWithKnowledge } from "@/modules/chat-with-kai";
 
 /** Prepare suggestions only; all new records still require review before saving. */
 export function prepareImportMappings(document: CsvDocument, options: ImportOptions, catalog: ImportCatalog): ImportOptions {
@@ -38,8 +39,23 @@ export function prepareImportMappings(document: CsvDocument, options: ImportOpti
     if (categories[category.key] !== undefined) continue;
     const parent = catalog.categories.find((c) => !c.parentId && c.type === category.type && normalizeImportName(c.name) === normalizeImportName(category.parent));
     const matches = catalog.categories.filter((c) => c.type === category.type && normalizeImportName(c.name) === normalizeImportName(category.name) && c.parentId === (category.parent ? parent?.id : null));
-    if (matches.length === 1) categories[category.key] = matches[0].id;
-    else categories[category.key] = catalog.fallbackCategoryIds?.[category.type] ?? "";
+    if (matches.length === 1) {
+      categories[category.key] = matches[0].id;
+      continue;
+    }
+
+    const query = [category.name, category.parent].filter(Boolean).join(" ");
+    if (query && catalog.pickerCategories && catalog.pickerCategories.length > 0) {
+      try {
+        const matched = matchCategoryWithKnowledge(query, catalog.pickerCategories, category.type, catalog.categoryKeywordsMap);
+        if (matched.category) {
+          categories[category.key] = matched.category.id;
+          continue;
+        }
+      } catch { /* Fall back safely if knowledge matcher is unavailable. */ }
+    }
+
+    categories[category.key] = catalog.fallbackCategoryIds?.[category.type] ?? "";
   }
   return { ...options, accounts, categories };
 }

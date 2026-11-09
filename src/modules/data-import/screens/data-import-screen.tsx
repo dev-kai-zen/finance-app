@@ -20,6 +20,7 @@ import { ImportHelpModal } from "../components/import-help-modal";
 import { useDataImport } from "../hooks/use-data-import";
 import type { ImportField, ImportReviewGroup, ImportTransactionType } from "../types/import.types";
 import { parseImportDate, suggestColumns } from "../utils/csv";
+import { validateColumnSample } from "../utils/validate-column-sample";
 import { cellValue } from "../utils/import-preview";
 import { filterReviewRows, importDateValidation, importFieldRequired, reviewGroupCounts } from "../utils/import-review";
 import { importTypeValues, importSteps, previousImportStep, requiredImportColumns, transferFileSummary } from "../utils/import-wizard";
@@ -90,14 +91,52 @@ export function DataImportScreen() {
   };
   const columnRow = (field: ImportField) => {
     const index = state.options.columns[field];
-    const sample = index === undefined ? "" : state.file?.document.rows.find((r) => r.cells[index])?.cells[index] ?? "";
+    const sample = index === undefined ? "" : state.file?.document.rows.find((r) => r.cells[index]?.trim())?.cells[index]?.trim() ?? "";
+    const validation = index !== undefined && sample ? validateColumnSample(field, sample, state.options, state.catalog) : null;
+    const formatLabel = (field === "date" || field === "balanceDate")
+      ? t("dataImport.wizard.formatExpectedDate", { format: t(`dataImport.formats.${state.options.dateFormat}`) })
+      : (field === "amount" || field === "debit" || field === "credit")
+      ? t("dataImport.wizard.formatExpectedNumber")
+      : field === "time"
+      ? t("dataImport.wizard.formatExpectedTime")
+      : field === "currency"
+      ? t("dataImport.wizard.formatExpectedCurrency")
+      : null;
+
     return <View key={field} style={styles.mappingRow}>
-      <View style={[styles.mappingName, { gap: theme.spacing.xs }]}><Text style={styles.label}>{t(`dataImport.fields.${field}`)}</Text>{(field === "date" || field === "balanceDate") && <Text style={styles.example}>{t("dataImport.wizard.columnDateFormat", { format: t(`dataImport.formats.${state.options.dateFormat}`) })}</Text>}<ImportChip label={t(importFieldRequired(field, state.options) ? "dataImport.ui.required" : "dataImport.ui.optional")} tone={importFieldRequired(field, state.options) ? "required" : "optional"} /></View>
+      <View style={[styles.mappingName, { gap: theme.spacing.xs }]}>
+        <Text style={styles.label}>{t(`dataImport.fields.${field}`)}</Text>
+        {!!formatLabel && <Text style={styles.example}>{formatLabel}</Text>}
+        <ImportChip label={t(importFieldRequired(field, state.options) ? "dataImport.ui.required" : "dataImport.ui.optional")} tone={importFieldRequired(field, state.options) ? "required" : "optional"} />
+      </View>
       <View style={styles.mappingValue}>
         <ImportSelect hideLabel label={t(`dataImport.fields.${field}`)} value={String(index ?? -1)} disabled={state.busy} tone={index === undefined ? "optional" : "ready"}
           items={[{ value: "-1", label: t("dataImport.unmapped") }, ...(state.file?.document.headers.map((name, i) => ({ value: String(i), label: name })) ?? [])]}
           onChange={(value) => mapColumn(field, value)} />
-        {field === dateField && dateWarning?.value === firstDate && dateWarning.format === state.options.dateFormat && <Text accessibilityLiveRegion="polite" style={[styles.example, { color: "#B45309" }]}>{"\u26A0 "}{t(dateWarning.matched ? "dataImport.wizard.dateFormatMismatch" : "dataImport.errors.date")}</Text>}
+        {validation && (
+          <Text accessibilityLiveRegion="polite" style={[styles.example, { color: "#B45309" }]}>
+            {"\u26A0 "}{t(validation.warningKey, validation.warningParams)}
+          </Text>
+        )}
+        {validation?.suggestedFormat && (
+          <ImportAction
+            size="small"
+            variant="secondary"
+            label={`${t("dataImport.wizard.switchTo")} ${t(`dataImport.formats.${validation.suggestedFormat}`)}`}
+            onPress={() => state.patch({ dateFormat: validation.suggestedFormat, accounts: {}, categories: {}, decisions: {} })}
+            disabled={state.busy}
+          />
+        )}
+        {validation?.suggestedDecimal && (
+          <ImportAction
+            size="small"
+            variant="secondary"
+            label={`${t("dataImport.wizard.switchTo")} ${validation.suggestedDecimal === "." ? "1,234.56" : "1.234,56"}`}
+            onPress={() => state.patch({ decimal: validation.suggestedDecimal, accounts: {}, categories: {}, decisions: {} })}
+            disabled={state.busy}
+          />
+        )}
+        {field === dateField && !validation && dateWarning?.value === firstDate && dateWarning.format === state.options.dateFormat && <Text accessibilityLiveRegion="polite" style={[styles.example, { color: "#B45309" }]}>{"\u26A0 "}{t(dateWarning.matched ? "dataImport.wizard.dateFormatMismatch" : "dataImport.errors.date")}</Text>}
         {!!sample && <Text selectable style={styles.example}>{t("dataImport.wizard.example", { value: sample.slice(0, 80) })}</Text>}
       </View>
     </View>;

@@ -268,6 +268,19 @@ test("unknown and missing categories use the correct Other category, while exact
   assert.equal(prepared.categories[categoryMappingKey("expense", "Food")], "food");
   Object.assign(s.options, prepared); assert.equal(s.preview().ready, true);
 });
+test("Kai Knowledge auto-matches category keywords (like Food -> Food & Dining) when no exact name match exists", () => {
+  const { prepareImportMappings } = require("../utils/prepare-import-mappings.ts");
+  const s = setup("Date,Type,Amount,Account,Category\n2026-01-02,expense,150,Cash,Food\n2026-01-03,expense,50,Cash,Coffee");
+  s.options.categories = {};
+  s.data.pickerCategories = [
+    { id: "cat_exp_food", name: "Food & Dining", type: "expense", parentId: null },
+    { id: "cat_sub_food_coffee", name: "Coffee & Cafes", type: "expense", parentId: "cat_exp_food" },
+  ];
+  s.data.categories = [...s.data.pickerCategories];
+  const prepared = prepareImportMappings(s.document, s.options, s.data);
+  assert.equal(prepared.categories[categoryMappingKey("expense", "Food")], "cat_exp_food");
+  assert.equal(prepared.categories[categoryMappingKey("expense", "Coffee")], "cat_sub_food_coffee");
+});
 test("review filters scale to 1,000 rows and keep previous imports out of the ready group", () => {
   const { reviewGroupCounts, filterReviewRows } = require("../utils/import-review.ts");
   const rows = Array.from({ length: 1000 }, (_, i) => ({ number: i + 2, cells: ["Cash", `Lunch ${i}`], skip: i < 100, repeated: i < 20, duplicate: false, sourceKey: String(i), issue: i >= 100 && i < 150 ? "amount" : undefined }));

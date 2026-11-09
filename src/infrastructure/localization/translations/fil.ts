@@ -47,7 +47,27 @@ export const fil = {
 
     wizard: {
       columnDateFormat: "Format: %{format}",
+      formatExpectedDate: "Format: Petsa (%{format})",
+      formatExpectedNumber: "Format: Numero",
+      formatExpectedTime: "Format: Oras",
+      formatExpectedCurrency: "Format: Currency code",
       dateFormatMismatch: "Hindi tugma ang format. Itinutugma namin ito gamit ang unang hanay ng datos. Suriin ang mga petsa bago mag-import.",
+      formatMismatchDate: "Hindi tugma ang format: Inaasahang petsa (%{format}). Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchAmount: "Hindi tugma ang format: Inaasahang numerong halaga. Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchDecimal: "Hindi tugma ang decimal: Mukhang \"%{char}\" ang ginagamit sa Hilera 1.",
+      formatMismatchDebitCredit: "Dapat positibong numero ang Debit/Credit. Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchTime: "Hindi tugma ang format: Inaasahang oras (hal. 14:30 o 2:30 PM). Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchCurrency: "Hindi tugma ang format: Inaasahang 3-titik na code ng currency (hal. USD, PHP). Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchType: "Hindi tugma ang format: Inaasahang uri ng transaksyon. Halaga sa Hilera 1: \"%{value}\"",
+      formatMismatchAccount: "Babala: Ang halaga sa Hilera 1 (\"%{value}\") ay mukhang numero o petsa, hindi pangalan ng account.",
+      formatMismatchCategory: "Babala: Ang halaga sa Hilera 1 (\"%{value}\") ay mukhang halaga o petsa, hindi pangalan ng kategorya.",
+      switchTo: "Lumipat sa",
+      newAccountTitle: "Gumawa ng Bagong Account",
+      newAccountSubtitle: "Gagawa ang Kaizen ng account na ito bago i-import ang iyong mga transaksyon.",
+      fromYourFile: "Mula sa iyong file",
+      matchKaizenCategory: "Itugma sa Kaizen Category na ito",
+      matchedViaKai: "Itinugma gamit ang Kaalaman ni Kai",
+      categoryTypeMismatchNotice: "Karaniwang kategorya ng gastos ang \"%{name}\" sa Kaizen, ngunit kita ang tala na ito. Maaari mo itong itugma sa kategorya ng kita o gumawa ng bago.",
       resume: "Ipagpatuloy ang paghahanda ng file",
       accountChoiceHelp: "Para sa lahat ng tala mula sa parehong account sa file ang pagpiling ito.",
       categoryChoiceHelp: "Para sa mga talang may parehong kategorya sa file ang pagpiling ito.",
@@ -210,7 +230,7 @@ export const fil = {
     },
     "fields": {
       "date": "Petsa",
-      "time": "Oras (opsyonal)",
+      "time": "Oras",
       "amount": "Halaga",
       "debit": "Perang palabas (debit)",
       "credit": "Perang papasok (credit)",
@@ -226,7 +246,8 @@ export const fil = {
       "sourceId": "Orihinal na ID ng tala",
       "accountType": "Uri ng account",
       "openingBalance": "Panimulang balanse",
-      "balanceDate": "Petsa ng balanse"
+      "balanceDate": "Petsa ng balanse",
+      "openingDate": "Petsa ng pagbukas"
     },
     "errors": {
       type: "Pumili ng Kita, Gastos, o Paglipat para sa talang ito.",
@@ -783,7 +804,9 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v150: {
-      improveItem5: "Pagandahin ang pagtutugma ng mga column gamit ang malinaw na kulay at babala sa format ng petsa.",
+      improveItem5: "Pagandahin ang pagtutugma ng column gamit ang gabay sa format, babala sa unang row, at mabilisang paglipat ng format.",
+      improveItem6: "Kusang itugma ang mga kategorya gamit ang kaalaman ni Kai at mas malinaw na detalye ng file.",
+      improveItem7: "Padaliin ang paggawa ng bagong account sa pag-import na may nakalaang detalye at petsa ng pagbukas.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",

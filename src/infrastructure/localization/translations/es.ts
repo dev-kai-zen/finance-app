@@ -47,7 +47,27 @@ export const es = {
 
     wizard: {
       columnDateFormat: "Formato: %{format}",
+      formatExpectedDate: "Formato: Fecha (%{format})",
+      formatExpectedNumber: "Formato: Número",
+      formatExpectedTime: "Formato: Hora",
+      formatExpectedCurrency: "Formato: Código de moneda",
       dateFormatMismatch: "El formato no coincide. Lo identificamos usando la primera fila de datos. Revisa las fechas antes de importar.",
+      formatMismatchDate: "El formato no coincide: Fecha esperada (%{format}). Valor de fila 1: \"%{value}\"",
+      formatMismatchAmount: "El formato no coincide: Cantidad numérica esperada. Valor de fila 1: \"%{value}\"",
+      formatMismatchDecimal: "Discrepancia en decimal: La fila 1 parece usar \"%{char}\" como separador decimal.",
+      formatMismatchDebitCredit: "El débito/crédito debe ser un número positivo. Valor de fila 1: \"%{value}\"",
+      formatMismatchTime: "El formato no coincide: Hora esperada (ej. 14:30 o 2:30 PM). Valor de fila 1: \"%{value}\"",
+      formatMismatchCurrency: "El formato no coincide: Código de divisa de 3 letras esperado (ej. USD, PHP). Valor de fila 1: \"%{value}\"",
+      formatMismatchType: "El formato no coincide: Tipo de transacción esperado. Valor de fila 1: \"%{value}\"",
+      formatMismatchAccount: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de cuenta.",
+      formatMismatchCategory: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de categoría.",
+      switchTo: "Cambiar a",
+      newAccountTitle: "Crear nueva cuenta",
+      newAccountSubtitle: "Kaizen creará esta cuenta antes de importar tus transacciones.",
+      fromYourFile: "De tu archivo",
+      matchKaizenCategory: "Coincidir con esta categoría de Kaizen",
+      matchedViaKai: "Coincidencia mediante conocimiento de Kai",
+      categoryTypeMismatchNotice: "\"%{name}\" suele ser una categoría de gastos en Kaizen, pero esta fila está clasificada como ingreso. Puedes asignarla a una categoría de ingresos o crear una nueva.",
       resume: "Continuar preparando este archivo",
       accountChoiceHelp: "Esta cuenta se usar\u00e1 para todos los registros de la misma cuenta del archivo.",
       categoryChoiceHelp: "Esta categor\u00eda se usar\u00e1 para los registros con la misma categor\u00eda del archivo.",
@@ -210,7 +230,7 @@ export const es = {
     },
     "fields": {
       "date": "Fecha",
-      "time": "Hora (opcional)",
+      "time": "Hora",
       "amount": "Importe",
       "debit": "Salida de dinero (d\u00e9bito)",
       "credit": "Entrada de dinero (cr\u00e9dito)",
@@ -226,7 +246,8 @@ export const es = {
       "sourceId": "ID del registro original",
       "accountType": "Tipo de cuenta",
       "openingBalance": "Saldo inicial",
-      "balanceDate": "Fecha del saldo"
+      "balanceDate": "Fecha del saldo",
+      "openingDate": "Fecha de apertura"
     },
     "errors": {
       type: "Elige Ingreso, Gasto o Transferencia para este registro.",
@@ -782,7 +803,9 @@ export const es = {
       general: "General",
     },
     v150: {
-      improveItem5: "Mejora la correspondencia de columnas con colores claros y avisos sobre el formato de fecha.",
+      improveItem5: "Mejora la correspondencia de columnas con guías de formato, avisos en la primera fila y cambio rápido de formato.",
+      improveItem6: "Asigna categorías automáticamente con el conocimiento de Kai y revisa detalles claros de tu archivo.",
+      improveItem7: "Facilita la creación de cuentas nuevas al importar con una sección dedicada y fecha de apertura.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",

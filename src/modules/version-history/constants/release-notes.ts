@@ -12,7 +12,15 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       },
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: ["versionHistory.v150.improveItem1", "versionHistory.v150.improveItem2", "versionHistory.v150.improveItem3", "versionHistory.v150.improveItem4", "versionHistory.v150.improveItem5"],
+        itemKeys: [
+          "versionHistory.v150.improveItem1",
+          "versionHistory.v150.improveItem2",
+          "versionHistory.v150.improveItem3",
+          "versionHistory.v150.improveItem4",
+          "versionHistory.v150.improveItem5",
+          "versionHistory.v150.improveItem6",
+          "versionHistory.v150.improveItem7",
+        ],
       },
       {
         categoryKey: "versionHistory.categories.fix",

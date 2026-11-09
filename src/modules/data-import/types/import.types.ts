@@ -45,6 +45,7 @@ export interface ImportCatalog {
   pickerAccountTypes?: AccountType[];
   pickerCategories?: Category[];
   fallbackCategoryIds?: Record<"expense" | "income", string>;
+  categoryKeywordsMap?: Map<string, string>;
   accounts: ImportAccount[];
   accountTypes: { id: string; name: string; creditCard: boolean }[];
   categories: ImportCategory[];

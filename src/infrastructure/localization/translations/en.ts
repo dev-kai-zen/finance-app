@@ -42,7 +42,27 @@ export const en = {
 
     wizard: {
       columnDateFormat: "Format: %{format}",
+      formatExpectedDate: "Format: Date (%{format})",
+      formatExpectedNumber: "Format: Number",
+      formatExpectedTime: "Format: Time",
+      formatExpectedCurrency: "Format: Currency code",
       dateFormatMismatch: "The format does not match. We match it using the first data row. Check the dates before importing.",
+      formatMismatchDate: "Format doesn't match: Expected date (%{format}). Row 1 value: \"%{value}\"",
+      formatMismatchAmount: "Format doesn't match: Expected numeric amount. Row 1 value: \"%{value}\"",
+      formatMismatchDecimal: "Decimal format mismatch: Row 1 appears to use \"%{char}\" as decimal separator.",
+      formatMismatchDebitCredit: "Debit/Credit must be a positive number. Row 1 value: \"%{value}\"",
+      formatMismatchTime: "Format doesn't match: Expected time (e.g. 14:30 or 2:30 PM). Row 1 value: \"%{value}\"",
+      formatMismatchCurrency: "Format doesn't match: Expected 3-letter currency code (e.g. USD, PHP). Row 1 value: \"%{value}\"",
+      formatMismatchType: "Format doesn't match: Expected transaction type. Row 1 value: \"%{value}\"",
+      formatMismatchAccount: "Warning: Row 1 value (\"%{value}\") looks like an amount or date, not an account name.",
+      formatMismatchCategory: "Warning: Row 1 value (\"%{value}\") looks like an amount or date, not a category name.",
+      switchTo: "Switch to",
+      newAccountTitle: "Create New Account",
+      newAccountSubtitle: "Kaizen will create this account before importing your transactions.",
+      fromYourFile: "From your file",
+      matchKaizenCategory: "Match this Kaizen Category",
+      matchedViaKai: "Matched via Kai Knowledge",
+      categoryTypeMismatchNotice: "\"%{name}\" is typically an expense category in Kaizen, but this row is classified as income. You can map it to an income category or create a new one.",
       resume: "Continue setting up this file",
       accountChoiceHelp: "This account choice applies to all entries from the same account in your file.",
       categoryChoiceHelp: "This category choice applies to entries with the same category in your file.",
@@ -205,7 +225,7 @@ export const en = {
     },
     "fields": {
       "date": "Date",
-      "time": "Time (optional)",
+      "time": "Time",
       "amount": "Amount",
       "debit": "Money out (debit)",
       "credit": "Money in (credit)",
@@ -221,7 +241,8 @@ export const en = {
       "sourceId": "Original record ID",
       "accountType": "Account type",
       "openingBalance": "Opening balance",
-      "balanceDate": "Balance date"
+      "balanceDate": "Balance date",
+      "openingDate": "Opening date"
     },
     "errors": {
       type: "Choose Expense, Income or Transfer for this entry.",
@@ -785,7 +806,9 @@ export const en = {
       general: "General",
     },
     v150: {
-      improveItem5: "Improve column matching with clear colors and early date format warnings.",
+      improveItem5: "Improve column matching with format hints, first-row warnings, and one-tap format switching.",
+      improveItem6: "Automatically match categories using Kai's knowledge and review clearer side-by-side file details.",
+      improveItem7: "Streamline adding new accounts during import with dedicated settings and opening date.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
