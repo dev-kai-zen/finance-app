@@ -29,4 +29,5 @@ export * from "./calendar-picker";
 export * from "./modal-screen-header";
 export * from "./unsaved-changes-modal";
 export * from "./backup-schedule-options";
+export * from "./app-shell-header-context";
 export * from "./theme/app-theme-provider";

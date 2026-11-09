@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, DeviceEventEmitter, ScrollView, View } from "react-native";
+import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer } from "@/components/page-container";
@@ -381,7 +381,8 @@ function AccountsScreenContent({
   }));
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      <PageContainer
       contentContainerStyle={contentSpacing}
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
@@ -700,5 +701,24 @@ function AccountsScreenContent({
         }}
       />
     </PageContainer>
-  );
-}
+
+        {walkthroughIntro.isWaitingForIntro ? (
+          <View
+            pointerEvents="auto"
+            style={styles.interactionBlocker}
+          />
+        ) : null}
+      </View>
+    );
+  }
+
+const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+  },
+  interactionBlocker: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "transparent",
+    zIndex: 99999,
+  },
+});

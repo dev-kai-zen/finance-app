@@ -256,6 +256,7 @@ export function DashboardNetWorthCard({
           </View>
 
           <NetWorthChart
+            currencyCode={currencyCode}
             points={history[period]}
             valuesVisible={valuesVisible}
           />

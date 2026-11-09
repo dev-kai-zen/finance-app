@@ -7,6 +7,7 @@ import {
   PageContainer,
   PageErrorState,
   PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -52,7 +53,6 @@ import {
   useWalkthroughTarget,
   DashboardWalkthroughOverlay,
   DashboardCongratulationsModal,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useDashboardWalkthrough,
   useWalkthroughIntro,
@@ -209,6 +209,16 @@ function DashboardScreenContent() {
   const walkthrough = useDashboardWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const isVersionHistoryPending = useIsVersionHistoryPending();
 
@@ -539,28 +549,22 @@ function DashboardScreenContent() {
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
       floatingAction={
-        <>
-          <TransactionSpeedDialFab
-            accessibilityLabel="Record new transaction"
-            fabRef={fabRef}
-            onPressForm={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              handleOpenTransactionModal("expense");
-            }}
-            onPressChat={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              setIsChatModalOpen(true);
-            }}
-          />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
+        <TransactionSpeedDialFab
+          accessibilityLabel="Record new transaction"
+          fabRef={fabRef}
+          onPressForm={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            handleOpenTransactionModal("expense");
+          }}
+          onPressChat={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            setIsChatModalOpen(true);
+          }}
+        />
       }
     >
       <View style={styles.container}>

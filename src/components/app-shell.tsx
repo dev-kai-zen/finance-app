@@ -8,9 +8,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname } from "expo-router";
-import { Eye, EyeOff } from "lucide-react-native";
+import { Eye, EyeOff, Sparkles } from "lucide-react-native";
 import { Sidebar } from "./sidebar";
 import { SyncStatusChip } from "./sync-status-chip";
+import { useAppShellHeaderContext } from "./app-shell-header-context";
 import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -95,8 +96,9 @@ export function AppShell({
   const styles = useThemeStyles(createStyles);
   const pathname = usePathname();
   const { t } = useLocalization();
-  const { generalSearchEnabled } = useExperiencePreferences();
+  const { generalSearchEnabled, guideHelperEnabled } = useExperiencePreferences();
   const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const { walkthroughAction } = useAppShellHeaderContext();
   const screenTitle = getScreenTitle(pathname, t);
   const isSettingsScreen = pathname.startsWith("/settings");
   const handleSettingsTitlePress =
@@ -149,6 +151,22 @@ export function AppShell({
               />
             </View>
             <View style={styles.topBarRightGroup}>
+                {guideHelperEnabled && walkthroughAction && (
+                  <Pressable
+                    accessibilityLabel={t("dashboard.walkthroughChip", {
+                      defaultValue: "Guide",
+                    })}
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    onPress={walkthroughAction.onStart}
+                    style={({ pressed }) => [
+                      styles.headerIconButton,
+                      pressed && styles.headerIconButtonPressed,
+                    ]}
+                  >
+                    <Sparkles color="#00A3FF" size={19} />
+                  </Pressable>
+                )}
                 <Pressable
                   accessibilityLabel={
                     isPrivate
@@ -214,6 +232,22 @@ export function AppShell({
               </View>
 
               <View style={styles.topBarRightGroup}>
+                {guideHelperEnabled && walkthroughAction && (
+                  <Pressable
+                    accessibilityLabel={t("dashboard.walkthroughChip", {
+                      defaultValue: "Guide",
+                    })}
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    onPress={walkthroughAction.onStart}
+                    style={({ pressed }) => [
+                      styles.headerIconButton,
+                      pressed && styles.headerIconButtonPressed,
+                    ]}
+                  >
+                    <Sparkles color="#00A3FF" size={19} />
+                  </Pressable>
+                )}
                 <Pressable
                   accessibilityLabel={
                     isPrivate
