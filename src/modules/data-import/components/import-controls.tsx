@@ -36,22 +36,56 @@ export function ImportFieldButton({ label, value, onPress, disabled, hideLabel =
     </Pressable>
   </View>;
 }
+export interface ImportSelectItem {
+  value: string;
+  label: string;
+  sublabel?: string;
+  disabled?: boolean;
+}
+
 export function ImportSelect({ label, value, items, onChange, disabled, hideLabel, tone }: {
-  label: string; value: string; items: { value: string; label: string }[]; onChange: (value: string) => void; disabled?: boolean; hideLabel?: boolean; tone?: "ready" | "optional";
+  label: string; value: string; items: ImportSelectItem[]; onChange: (value: string) => void; disabled?: boolean; hideLabel?: boolean; tone?: "ready" | "optional";
 }) {
   const theme = useAppTheme(), { t } = useLocalization();
   const [visible, setVisible] = useState(false), [query, setQuery] = useState("");
-  const filtered = items.filter((item) => item.label.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
+  const trimmed = query.trim().toLocaleLowerCase();
+  const filtered = items.filter((item) =>
+    item.label.toLocaleLowerCase().includes(trimmed) ||
+    (item.sublabel ? item.sublabel.toLocaleLowerCase().includes(trimmed) : false)
+  );
   return <>
     <ImportFieldButton label={label} value={items.find((item) => item.value === value)?.label ?? t("dataImport.choose")} disabled={disabled} hideLabel={hideLabel} tone={tone} onPress={() => { setQuery(""); setVisible(true); }} />
     <FullScreenFormModal visible={visible && !disabled} title={label} onClose={() => setVisible(false)}>
       <KeyboardAwareForm contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.sm }}>
         {items.length > 8 && <ImportInput label={t("dataImport.ui.searchOptions")} value={query} onChange={setQuery} />}
         {!filtered.length && <Text style={{ color: theme.colors.textSecondary }}>{t("dataImport.ui.noResults")}</Text>}
-        {filtered.map((item) => <Pressable key={item.value} accessibilityRole="button" accessibilityState={{ selected: value === item.value }}
-          onPress={() => { onChange(item.value); setVisible(false); }}
-          style={{ minHeight: 48, padding: theme.spacing.lg, flexDirection: "row", gap: theme.spacing.md, alignItems: "center", borderBottomWidth: 1, borderColor: theme.colors.border, backgroundColor: value === item.value ? theme.colors.surfaceMuted : theme.colors.surface }}>
-          <Text style={{ flex: 1, color: theme.colors.textPrimary, fontSize: theme.typography.fontSize.base }}>{item.label}</Text>
+        {filtered.map((item) => <Pressable key={item.value} accessibilityRole="button"
+          accessibilityState={{ selected: value === item.value, disabled: !!item.disabled }}
+          disabled={item.disabled}
+          onPress={() => { if (item.disabled) return; onChange(item.value); setVisible(false); }}
+          style={{
+            minHeight: 48,
+            padding: theme.spacing.lg,
+            flexDirection: "row",
+            gap: theme.spacing.md,
+            alignItems: "center",
+            borderBottomWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: value === item.value ? theme.colors.surfaceMuted : theme.colors.surface,
+            opacity: item.disabled ? 0.45 : 1,
+          }}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={{
+              color: item.disabled ? theme.colors.textSecondary : theme.colors.textPrimary,
+              fontSize: theme.typography.fontSize.base,
+              fontWeight: value === item.value ? "600" : "normal",
+            }}>{item.label}</Text>
+            {!!item.sublabel && <Text style={{
+              color: item.disabled ? theme.colors.textMuted : theme.colors.textSecondary,
+              fontSize: theme.typography.fontSize.xs,
+              fontStyle: "italic",
+            }}>{item.sublabel}</Text>}
+          </View>
           {value === item.value && <Check size={20} color={theme.colors.primary} />}
         </Pressable>)}
       </KeyboardAwareForm>

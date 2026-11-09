@@ -61,6 +61,7 @@ export const fil = {
       formatMismatchType: "Hindi tugma ang format: Inaasahang uri ng transaksyon. Halaga sa Hilera 1: \"%{value}\"",
       formatMismatchAccount: "Babala: Ang halaga sa Hilera 1 (\"%{value}\") ay mukhang numero o petsa, hindi pangalan ng account.",
       formatMismatchCategory: "Babala: Ang halaga sa Hilera 1 (\"%{value}\") ay mukhang halaga o petsa, hindi pangalan ng kategorya.",
+      alreadyUsedIn: "Nagamit na sa %{field}",
       switchTo: "Lumipat sa",
       newAccountTitle: "Gumawa ng Bagong Account",
       newAccountSubtitle: "Gagawa ang Kaizen ng account na ito bago i-import ang iyong mga transaksyon.",

@@ -71,9 +71,14 @@ export function DataImportScreen() {
   const optionalFields: ImportField[] = state.options.kind === "accounts" ? ["note", "sourceId"] : ["time", "note", "labels", "subcategory", "sourceId"];
   const mapColumn = (field: ImportField, value: string) => {
     const columns = { ...state.options.columns };
-    // A column can represent one field. Move it instead of creating a hidden conflict.
-    for (const existing of Object.keys(columns) as ImportField[]) if (columns[existing] === Number(value)) delete columns[existing];
-    if (value === "-1") delete columns[field]; else columns[field] = Number(value);
+    if (value === "-1") {
+      delete columns[field];
+    } else {
+      const colIndex = Number(value);
+      const usedByField = (Object.keys(columns) as ImportField[]).find((f) => columns[f] === colIndex && f !== field);
+      if (usedByField) return;
+      columns[field] = colIndex;
+    }
     state.patch({ columns, accounts: {}, categories: {}, decisions: {} });
   };
   const columnRow = (field: ImportField) => {
@@ -90,6 +95,23 @@ export function DataImportScreen() {
       ? t("dataImport.wizard.formatExpectedCurrency")
       : null;
 
+    const items = [
+      { value: "-1", label: t("dataImport.unmapped") },
+      ...(state.file?.document.headers.map((name, i) => {
+        const usedByField = (Object.keys(state.options.columns) as ImportField[]).find(
+          (other) => state.options.columns[other] === i && other !== field
+        );
+        return {
+          value: String(i),
+          label: name,
+          disabled: !!usedByField,
+          sublabel: usedByField
+            ? t("dataImport.wizard.alreadyUsedIn", { field: t(`dataImport.fields.${usedByField}`) })
+            : undefined,
+        };
+      }) ?? []),
+    ];
+
     return <View key={field} style={styles.mappingRow}>
       <View style={[styles.mappingName, { gap: theme.spacing.xs }]}>
         <Text style={styles.label}>{t(`dataImport.fields.${field}`)}</Text>
@@ -98,7 +120,7 @@ export function DataImportScreen() {
       </View>
       <View style={styles.mappingValue}>
         <ImportSelect hideLabel label={t(`dataImport.fields.${field}`)} value={String(index ?? -1)} disabled={state.busy} tone={index === undefined ? "optional" : "ready"}
-          items={[{ value: "-1", label: t("dataImport.unmapped") }, ...(state.file?.document.headers.map((name, i) => ({ value: String(i), label: name })) ?? [])]}
+          items={items}
           onChange={(value) => mapColumn(field, value)} />
         {validation && (
           <Text accessibilityLiveRegion="polite" style={[styles.example, { color: "#B45309" }]}>

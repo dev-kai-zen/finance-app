@@ -61,6 +61,7 @@ export const es = {
       formatMismatchType: "El formato no coincide: Tipo de transacción esperado. Valor de fila 1: \"%{value}\"",
       formatMismatchAccount: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de cuenta.",
       formatMismatchCategory: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de categoría.",
+      alreadyUsedIn: "Ya se usa en %{field}",
       switchTo: "Cambiar a",
       newAccountTitle: "Crear nueva cuenta",
       newAccountSubtitle: "Kaizen creará esta cuenta antes de importar tus transacciones.",

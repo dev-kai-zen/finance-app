@@ -56,6 +56,7 @@ export const en = {
       formatMismatchType: "Format doesn't match: Expected transaction type. Row 1 value: \"%{value}\"",
       formatMismatchAccount: "Warning: Row 1 value (\"%{value}\") looks like an amount or date, not an account name.",
       formatMismatchCategory: "Warning: Row 1 value (\"%{value}\") looks like an amount or date, not a category name.",
+      alreadyUsedIn: "Already used in %{field}",
       switchTo: "Switch to",
       newAccountTitle: "Create New Account",
       newAccountSubtitle: "Kaizen will create this account before importing your transactions.",
