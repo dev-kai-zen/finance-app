@@ -111,3 +111,4 @@ export const GUIDED_SETUP_STRATEGY = "guided";
 export const USER_NICKNAME_SETTING_KEY = "user_nickname";
 
 export const PRIVACY_POLICY_URL = "https://www.kaizenfinanceapp.com/privacy";
+export const TERMS_URL = "https://www.kaizenfinanceapp.com/terms";

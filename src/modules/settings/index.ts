@@ -72,6 +72,7 @@ export {
   SOUND_AND_HAPTICS_SETTING_KEY,
   USER_NICKNAME_SETTING_KEY,
   PRIVACY_POLICY_URL,
+  TERMS_URL,
 } from "./constants/settings.constants";
 export type {
   NavVisibilityKey,

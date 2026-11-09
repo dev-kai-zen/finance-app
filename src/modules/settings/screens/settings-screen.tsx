@@ -24,6 +24,7 @@ import {
   Database,
   Eye,
   EyeOff,
+  FileText,
   HardDrive,
   Heart,
   Info,
@@ -86,7 +87,7 @@ import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { HapticFeedbackSettingsModal } from "../components/haptic-feedback-settings-modal";
 import { SoundEffectsSettingsModal } from "../components/sound-effects-settings-modal";
-import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
+import { PRIVACY_POLICY_URL, TERMS_URL } from "../constants/settings.constants";
 import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
@@ -1515,6 +1516,41 @@ function SettingsScreenContent() {
                 </Text>
                 <Text style={styles.settingDescription}>
                   {t("settings.privacySubtitle")}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsTerms"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.termsAccessibility")}
+              accessibilityRole="link"
+              onPress={() => {
+                void Linking.openURL(TERMS_URL).catch(() => {
+                  Alert.alert("Error", t("settings.termsOpenError"));
+                });
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsTerms" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <FileText color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.terms")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.termsSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />

@@ -399,6 +399,7 @@ export const en = {
       "Read a personal message and note from the creator",
     settingPrivacyPolicyDesc:
       "Review our offline-first privacy policy and commitment",
+    settingTermsDesc: "Read the terms for using Kaizen Finance",
     settingRestorePurchasesDesc:
       "Restore your active Kaizen Pro lifetime license",
     settingQuickSearchDesc:
@@ -624,6 +625,10 @@ export const en = {
     privacySubtitle: "Read our privacy policy online",
     privacyAccessibility: "Open privacy policy website",
     privacyOpenError: "Could not open privacy policy website.",
+    terms: "Terms",
+    termsSubtitle: "Read the terms for using Kaizen Finance",
+    termsAccessibility: "Open terms of service website",
+    termsOpenError: "Could not open terms of service website.",
     appVersion: "App Version",
     buildReleased: "Released",
     buildDevelopment: "Development",
@@ -812,6 +817,7 @@ export const en = {
       improveItem7: "Streamline adding new accounts during import with dedicated settings and opening date.",
       improveItem8: "Tap or drag along the net worth chart to view exact balances and dates with touch tooltips.",
       improveItem9: "Improve walkthrough tours with high-contrast buttons, dedicated close buttons, and touch protection.",
+      improveItem10: "Open the app terms from Settings, next to the privacy policy.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
