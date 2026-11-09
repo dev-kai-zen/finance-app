@@ -41,9 +41,11 @@ export function validateColumnSample(
         }
       });
 
+      const formatLabel = options.dateFormat === "ymd" ? "YYYY-MM-DD" : options.dateFormat === "dmy" ? "DD/MM/YYYY" : "MM/DD/YYYY";
+
       return {
         warningKey: "dataImport.wizard.formatMismatchDate",
-        warningParams: { format: options.dateFormat.toUpperCase(), value: trimmed.slice(0, 50) },
+        warningParams: { format: formatLabel, value: trimmed.slice(0, 50) },
         suggestedFormat: inferred,
       };
     }

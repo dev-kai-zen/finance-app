@@ -76,6 +76,7 @@ export function ImportReviewEntry({ row, state, wide = false }: { row: ImportPre
       </View>
     </View>
     <FullScreenFormModal visible={editing} title={t("dataImport.row", { number: row.number })} onClose={() => setEditing(false)}
+      headerRight={<View />}
       onSave={apply} saveLabel={t("dataImport.ui.applyCorrections")} saveDisabled={state.options.kind === "transactions" && !["expense", "income", "transfer"].includes(entryType)} pending={state.busy} isDirty={dirty}>
       <KeyboardAwareForm contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}>
         <Text style={{ color: theme.colors.textSecondary }}>{t("dataImport.ui.draftOnly")}</Text>

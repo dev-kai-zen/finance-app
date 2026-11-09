@@ -6,7 +6,7 @@ import { commitImport } from "../services/commit-import.service";
 import { downloadImportTemplate, pickImportFile, shareImportTemplate } from "../services/import-files.service";
 import { listImportHistory } from "../repositories/imports.repository";
 import type { AccountMapping, ImportCatalog, ImportKind, ImportOptions, ImportStep, ImportTransactionType } from "../types/import.types";
-import { ImportValidationError, suggestColumns } from "../utils/csv";
+import { ImportValidationError, parseImportDate, suggestColumns } from "../utils/csv";
 import { buildImportPreview, sourceAccountNames, sourceCategories } from "../utils/import-preview";
 
 import { prepareImportMappings } from "../utils/prepare-import-mappings";
@@ -50,7 +50,27 @@ export function useDataImport() {
     catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, patch,
     reload: () => run(async () => { refresh(); }),
     chooseKind: (kind: ImportKind) => { if (!busy) { setOptions(defaults(kind, defaultCurrency)); setFile(null); } },
-    pick: () => run(async () => { const picked = await pickImportFile(); if (picked) { refresh(); setFile(picked); setOptions({ ...defaults(options.kind, defaultCurrency), columns: suggestColumns(picked.document.headers) }); setStep("columns"); } }),
+    pick: () => run(async () => {
+      const picked = await pickImportFile();
+      if (picked) {
+        refresh();
+        setFile(picked);
+        const columns = suggestColumns(picked.document.headers);
+        let dateFormat: "ymd" | "dmy" | "mdy" = "ymd";
+        const dateCol = options.kind === "accounts" ? columns.balanceDate : columns.date;
+        if (dateCol !== undefined) {
+          const sample = picked.document.rows.find((r) => r.cells[dateCol]?.trim())?.cells[dateCol]?.trim();
+          if (sample) {
+            const matched = (["ymd", "dmy", "mdy"] as const).find((fmt) => {
+              try { parseImportDate(sample, fmt); return true; } catch { return false; }
+            });
+            if (matched) dateFormat = matched;
+          }
+        }
+        setOptions({ ...defaults(options.kind, defaultCurrency), columns, dateFormat });
+        setStep("columns");
+      }
+    }),
     template: () => run(() => shareImportTemplate(options.kind)),
     downloadTemplate: () => run(async () => { setSavedTemplate(await downloadImportTemplate(options.kind)); }),
     matching,

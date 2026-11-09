@@ -74,17 +74,6 @@ export function ImportCategoryCard({ category, state }: { category: ImportState[
   const selected = state.catalog?.categories.find((c) => c.id === id);
   const isFallback = id && id === state.catalog?.fallbackCategoryIds?.[category.type];
 
-  const kaiMatch = useMemo(() => {
-    if (!state.catalog?.pickerCategories || state.catalog.pickerCategories.length === 0) return null;
-    const query = [category.name, category.parent].filter(Boolean).join(" ");
-    if (!query) return null;
-    try {
-      return matchCategoryWithKnowledge(query, state.catalog.pickerCategories, category.type, state.catalog.categoryKeywordsMap);
-    } catch {
-      return null;
-    }
-  }, [category.name, category.parent, category.type, state.catalog]);
-
   const isTypeConflict = useMemo(() => {
     if (category.type !== "income" || !state.catalog?.pickerCategories || state.catalog.pickerCategories.length === 0) return false;
     const query = [category.name, category.parent].filter(Boolean).join(" ");
@@ -97,7 +86,6 @@ export function ImportCategoryCard({ category, state }: { category: ImportState[
     }
   }, [category.name, category.parent, category.type, state.catalog]);
 
-  const isMatchedByKai = !!kaiMatch?.category && kaiMatch.category.id === id;
   const typeColor = category.type === "income" ? "#10B981" : "#EF4444";
   const typeBg = category.type === "income" ? "rgba(16, 185, 129, 0.12)" : "rgba(239, 68, 68, 0.12)";
 
@@ -131,18 +119,9 @@ export function ImportCategoryCard({ category, state }: { category: ImportState[
     <View style={{ height: 1, backgroundColor: theme.colors.border }} />
 
     <View style={{ gap: theme.spacing.xs }}>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary }}>
-          {t("dataImport.wizard.matchKaizenCategory")}
-        </Text>
-        {isMatchedByKai && (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: "600", color: theme.colors.primary }}>
-              {"✨ "}{t("dataImport.wizard.matchedViaKai")}
-            </Text>
-          </View>
-        )}
-      </View>
+      <Text style={{ fontSize: 13, fontWeight: "600", color: theme.colors.textPrimary }}>
+        {t("dataImport.wizard.matchKaizenCategory")}
+      </Text>
 
       <ImportFieldButton label={t("dataImport.wizard.saveToCategory")} value={isFallback
         ? t(category.type === "expense" ? "dataImport.ui.otherExpense" : "dataImport.ui.otherIncome")
