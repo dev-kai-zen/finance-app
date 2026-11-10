@@ -841,6 +841,7 @@ export const en = {
       fixItem4: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem5: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem6: "Prevent version history from showing while the app is locked.",
+      fixItem7: "Fix section titles in the developer note overlapping card borders on smaller screens.",
       improveItem2: "Follow numbered import steps with clear column matching, helpful examples, and easier corrections.",
       improveItem3: "Edit entries during import review and see clearer buttons and account choices.",
       fixItem2: "Fix matching transfers from separate account entries and unreadable text in import messages.",
