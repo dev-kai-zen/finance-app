@@ -26,6 +26,7 @@ Module._load = function (request, ...args) {
   if (request === "expo-sharing") return { isAvailableAsync: async () => available, shareAsync: async (uri, options) => { shared = { uri, options }; assert.ok(files.has(uri)); } };
   if (request === "expo-crypto") return { randomUUID: () => `${++sequence}-unique-identifier` };
   if (request === "expo-document-picker") return {};
+  if (request === "@/modules/security") return { appLockLifecycle: { withLockSuspended: async (fn) => fn() } };
   return load.call(this, request, ...args);
 };
 require.extensions[".ts"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {

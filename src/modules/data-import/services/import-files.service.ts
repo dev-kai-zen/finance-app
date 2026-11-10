@@ -2,12 +2,19 @@ import * as DocumentPicker from "expo-document-picker";
 import { randomUUID } from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
+import { appLockLifecycle } from "@/modules/security";
 import { MAX_IMPORT_BYTES, type ImportKind } from "../types/import.types";
 import { ImportValidationError, parseCsv } from "../utils/csv";
 import { importDigest } from "../utils/import-preview";
 
 export async function pickImportFile() {
-  const picked = await DocumentPicker.getDocumentAsync({ type: ["text/*", "application/csv", "application/vnd.ms-excel", "application/octet-stream"], copyToCacheDirectory: true, multiple: false });
+  const picked = await appLockLifecycle.withLockSuspended(async () => {
+    return await DocumentPicker.getDocumentAsync({
+      type: ["text/*", "application/csv", "application/vnd.ms-excel", "application/octet-stream"],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+  });
   if (picked.canceled) return null;
   const asset = picked.assets[0];
   try {
@@ -38,13 +45,17 @@ export async function shareImportTemplate(kind: ImportKind): Promise<void> {
   file.write(importTemplateContents(kind));
   // Android resolves when the target app opens, before it necessarily reads the
   // attachment. Leave this unique cache file available for the receiving app.
-  await Sharing.shareAsync(file.uri, { mimeType: "text/csv", UTI: "public.comma-separated-values-text" });
+  await appLockLifecycle.withLockSuspended(async () => {
+    await Sharing.shareAsync(file.uri, { mimeType: "text/csv", UTI: "public.comma-separated-values-text" });
+  });
 }
 
 export async function downloadImportTemplate(kind: ImportKind): Promise<string | null> {
   let directory: Directory;
   try {
-    directory = await Directory.pickDirectoryAsync();
+    directory = await appLockLifecycle.withLockSuspended(async () => {
+      return await Directory.pickDirectoryAsync();
+    });
   } catch (error) {
     if (error instanceof Error && /cancel|dismiss/i.test(`${error.name} ${error.message}`)) return null;
     throw error;

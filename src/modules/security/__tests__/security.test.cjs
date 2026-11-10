@@ -17,6 +17,7 @@ const secureStorageMock = new Map();
 let mockBiometricsHardware = true;
 let mockBiometricsEnrolled = true;
 let mockBiometricPromptSuccess = true;
+let appStateListeners = [];
 
 Module._resolveFilename = function (request, parent, ...rest) {
   return originalResolve.call(
@@ -32,7 +33,14 @@ Module._load = function (request, parent, ...rest) {
     return {
       Platform: { OS: "ios" },
       AppState: {
-        addEventListener: () => ({ remove: () => {} }),
+        addEventListener: (event, cb) => {
+          appStateListeners.push(cb);
+          return {
+            remove: () => {
+              appStateListeners = appStateListeners.filter((l) => l !== cb);
+            },
+          };
+        },
       },
       StyleSheet: {
         create: (s) => s,
@@ -214,6 +222,60 @@ test("security: appLockLifecycle manages lock state and subscription", async () 
   assert.equal(latestLocked, false);
 
   unsubscribe();
+});
+
+test("security: appLockLifecycle suspends lock during external operations and suppresses lock on active return", async () => {
+  await setPassword("testPass123");
+  await appLockLifecycle.initialize();
+  appLockLifecycle.unlock();
+  assert.equal(appLockLifecycle.getIsLocked(), false);
+  assert.equal(appLockLifecycle.isSuspended(), false);
+
+  // When suspended (e.g. system share or image picker is open)
+  let ranAction = false;
+  await appLockLifecycle.withLockSuspended(async () => {
+    ranAction = true;
+    assert.equal(appLockLifecycle.isSuspended(), true);
+
+    // Simulate backgrounding during picker
+    for (const listener of appStateListeners) {
+      await listener("background");
+    }
+
+    // Simulate returning to active while still in operation
+    for (const listener of appStateListeners) {
+      await listener("active");
+    }
+
+    // App should NOT be locked!
+    assert.equal(appLockLifecycle.getIsLocked(), false);
+  });
+
+  assert.equal(ranAction, true);
+  // Post-suspension grace period is active
+  assert.equal(appLockLifecycle.isSuspended(), true);
+
+  // Returning to active within grace period still suppresses lock
+  for (const listener of appStateListeners) {
+    await listener("active");
+  }
+  assert.equal(appLockLifecycle.getIsLocked(), false);
+
+  // After resetting suspension, leaving the app and returning DOES lock
+  appLockLifecycle.resetSuspension();
+  assert.equal(appLockLifecycle.isSuspended(), false);
+
+  for (const listener of appStateListeners) {
+    await listener("background");
+  }
+  for (const listener of appStateListeners) {
+    await listener("active");
+  }
+  // Now it locks
+  assert.equal(appLockLifecycle.getIsLocked(), true);
+
+  // Clean up
+  appLockLifecycle.unlock();
 });
 
 test("security (Option 1): resetPasswordWithBiometrics resets password without current password when biometric succeeds", async () => {

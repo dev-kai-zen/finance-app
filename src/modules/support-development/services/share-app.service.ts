@@ -1,5 +1,6 @@
 import { Platform, Share } from "react-native";
 
+import { appLockLifecycle } from "@/modules/security";
 import { STORE_URL_WEB } from "../constants/support-development.constants";
 
 export interface ShareAppOptions {
@@ -15,24 +16,26 @@ export async function shareApp(options?: ShareAppOptions): Promise<boolean> {
     : baseMessage;
 
   try {
-    const result = await Share.share(
-      Platform.select({
-        ios: {
-          title: options?.title ?? "Kaizen Finance",
-          message: baseMessage,
-          url: STORE_URL_WEB,
+    return await appLockLifecycle.withLockSuspended(async () => {
+      const result = await Share.share(
+        Platform.select({
+          ios: {
+            title: options?.title ?? "Kaizen Finance",
+            message: baseMessage,
+            url: STORE_URL_WEB,
+          },
+          default: {
+            title: options?.title ?? "Kaizen Finance",
+            message: fullMessage,
+          },
+        }),
+        {
+          dialogTitle: options?.title ?? "Share Kaizen Finance",
         },
-        default: {
-          title: options?.title ?? "Kaizen Finance",
-          message: fullMessage,
-        },
-      }),
-      {
-        dialogTitle: options?.title ?? "Share Kaizen Finance",
-      },
-    );
+      );
 
-    return result.action === Share.sharedAction;
+      return result.action === Share.sharedAction;
+    });
   } catch {
     return false;
   }

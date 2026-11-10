@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { randomUUID } from "expo-crypto";
 import * as Sharing from "expo-sharing";
 
+import { appLockLifecycle } from "@/modules/security";
 import type {
   TransactionAttachment,
   TransactionAttachmentChanges,
@@ -385,9 +386,11 @@ async function performShare(
   if (!(await Sharing.isAvailableAsync())) {
     throw new Error("Opening attachments is not available on this device.");
   }
-  await Sharing.shareAsync(uri, {
-    dialogTitle: item.name,
-    mimeType: item.mimeType,
+  await appLockLifecycle.withLockSuspended(async () => {
+    await Sharing.shareAsync(uri, {
+      dialogTitle: item.name,
+      mimeType: item.mimeType,
+    });
   });
 }
 
