@@ -817,6 +817,7 @@ export const es = {
       improveItem10: "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
       improveItem11: "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
       improveItem12: "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
+      improveItem13: "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",
@@ -829,7 +830,7 @@ export const es = {
       newItem3: "Descarga plantillas CSV directamente a una carpeta de tu dispositivo.",
       improveItem1: "Consulta las instrucciones de importaci\u00f3n desde el bot\u00f3n de ayuda junto al t\u00edtulo.",
       fixItem1: "Corrige los archivos CSV adjuntos en correos y el regreso desde el historial de importaciones.",
-      "date": "9 de noviembre de 2026",
+      "date": "10 de noviembre de 2026",
       "newItem1": "Importa cuentas y transacciones desde archivos CSV con asignación guiada de cuentas y categor?as.",
       "newItem2": "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar."
     },

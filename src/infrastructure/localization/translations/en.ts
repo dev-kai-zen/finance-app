@@ -820,6 +820,7 @@ export const en = {
       improveItem10: "Open the app terms from Settings, next to the privacy policy.",
       improveItem11: "Simplify transaction date entry with a unified calendar and time selector.",
       improveItem12: "Rename the credit card monitoring screen title to Credit Cards for clearer navigation.",
+      improveItem13: "Filter credit card billed items by statement cutoff date and view full statement activities in a dedicated screen.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
@@ -832,7 +833,7 @@ export const en = {
       newItem3: "Download CSV templates directly to a folder on your device.",
       improveItem1: "Access import instructions from the help button beside the title.",
       fixItem1: "Fix attaching CSV templates to emails and returning from import history.",
-      "date": "November 9, 2026",
+      "date": "November 10, 2026",
       "newItem1": "Import accounts and transaction history from CSV files with guided account and category matching.",
       "newItem2": "Review balances, check similar records, and save a safety backup before importing."
     },

@@ -71,6 +71,12 @@ export const CreditLimitWarningModal = deferComponent(
   "CreditLimitWarningModal",
 ) as typeof import("./components/credit-limit-warning-modal").CreditLimitWarningModal;
 
+export const CreditCardActivityModal = deferComponent(
+  () =>
+    require("./components/credit-card-activity-modal").CreditCardActivityModal,
+  "CreditCardActivityModal",
+) as typeof import("./components/credit-card-activity-modal").CreditCardActivityModal;
+
 export const checkCreditLimitExceeded = deferFunction(
   () =>
     require("./services/check-credit-limit-exceeded.service")
@@ -106,3 +112,11 @@ export {
   CreditCardUnbilledComputation,
   CreditCardUtilizationComputation,
 } from "./utils/credit-card-computations";
+export {
+  formatBillPillDate,
+  formatBillPillLabel,
+  getStatementDisplayItems,
+  getStatementPaymentStatus,
+  type StatementDisplayItem,
+  type StatementPaymentStatus,
+} from "./utils/statement-activity";

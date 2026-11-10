@@ -818,6 +818,7 @@ export const fil = {
       improveItem10: "Buksan ang mga tuntunin ng app sa Settings, katabi ng patakaran sa privacy.",
       improveItem11: "Padaliin ang pagpili ng petsa ng transaksyon gamit ang kalendaryo at tagapili ng oras.",
       improveItem12: "Palitan ang pamagat ng screen ng credit card tungo sa Mga Credit Card para sa mas malinaw na nabigasyon.",
+      improveItem13: "I-filter ang mga nasingil na bayarin sa credit card ayon sa petsa ng statement at tingnan ang buong talaan nang maayos.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",
@@ -830,7 +831,7 @@ export const fil = {
       newItem3: "I-download ang mga CSV template nang direkta sa folder sa iyong device.",
       improveItem1: "Basahin ang gabay sa pag-import gamit ang help button sa tabi ng pamagat.",
       fixItem1: "Ayusin ang pag-attach ng CSV template sa email at pagbabalik mula sa kasaysayan ng import.",
-      "date": "Nobyembre 9, 2026",
+      "date": "Nobyembre 10, 2026",
       "newItem1": "Mag-import ng mga account at transaksyon mula sa CSV na may gabay sa pagtutugma ng account at kategorya.",
       "newItem2": "Suriin ang balanse at magkakatulad na tala, at gumawa ng safety backup bago mag-import."
     },
