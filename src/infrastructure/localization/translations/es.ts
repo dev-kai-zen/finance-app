@@ -815,6 +815,8 @@ export const es = {
       improveItem8: "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
       improveItem9: "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
       improveItem10: "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
+      improveItem11: "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
+      improveItem12: "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",
@@ -1164,9 +1166,6 @@ export const es = {
     recommendedBadge: "Recomendado",
   },
   transactionForm: {
-    quickDateToday: "Hoy",
-    quickDateYesterday: "Ayer",
-    quickDateCustom: "Calendario",
     customizeFieldsTitle: "Personalizar campos",
     customizeFieldsSubtitle:
       "Importe, cuenta, categoría y fecha siempre permanecen en el formulario.",
@@ -1184,7 +1183,6 @@ export const es = {
       note: "Nota",
       quickPresets: "Ajustes rápidos",
       exactTime: "Hora exacta",
-      quickDates: "Fechas rápidas",
     },
   },
   dashboard: {

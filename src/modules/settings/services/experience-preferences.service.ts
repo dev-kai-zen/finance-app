@@ -83,7 +83,6 @@ export interface TransactionFormFieldPreferences {
   quickPresets: boolean;
   exactTime: boolean;
   installments: boolean;
-  quickDates: boolean;
 }
 
 export interface NavVisibilityPreferences {
@@ -254,10 +253,6 @@ export function getTransactionFormFieldPreferences(
     installments: parseStoredBoolean(
       map[FORM_FIELD_SETTING_KEYS.installments],
       missingDefault,
-    ),
-    quickDates: parseStoredBoolean(
-      map[FORM_FIELD_SETTING_KEYS.quickDates],
-      true,
     ),
   };
 }

@@ -21,7 +21,6 @@ const LOCKED_FIELDS = [
 ] as const;
 
 const OPTIONAL_FIELDS: FormFieldPreferenceKey[] = [
-  "quickDates",
   "exactTime",
   "quickPresets",
   "transactionName",

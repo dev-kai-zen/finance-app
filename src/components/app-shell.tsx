@@ -42,7 +42,7 @@ function getScreenTitle(pathname: string, t: Translate): string {
     return t("navigation.transactions");
   if (pathname.startsWith("/calendar")) return t("navigation.calendar");
   if (pathname.startsWith("/credit-cards"))
-    return t("navigation.creditCardMonitoring");
+    return t("navigation.creditCards");
   if (pathname.startsWith("/categories")) return t("navigation.categories");
   if (pathname.startsWith("/budgets")) return t("navigation.budgets");
   if (pathname.startsWith("/goals")) return t("navigation.goals");

@@ -36,7 +36,6 @@ export const FORM_FIELD_SETTING_KEYS = {
   quickPresets: "form.quickPresets",
   exactTime: "form.exactTime",
   installments: "form.installments",
-  quickDates: "form.quickDates",
 } as const;
 
 export type FormFieldSettingKey =

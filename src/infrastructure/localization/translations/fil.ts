@@ -816,6 +816,8 @@ export const fil = {
       improveItem8: "I-tap o i-drag sa net worth chart upang makita ang eksaktong balanse at petsa gamit ang mga tooltip.",
       improveItem9: "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, close icon, at proteksyon sa pagpindot.",
       improveItem10: "Buksan ang mga tuntunin ng app sa Settings, katabi ng patakaran sa privacy.",
+      improveItem11: "Padaliin ang pagpili ng petsa ng transaksyon gamit ang kalendaryo at tagapili ng oras.",
+      improveItem12: "Palitan ang pamagat ng screen ng credit card tungo sa Mga Credit Card para sa mas malinaw na nabigasyon.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",
@@ -1166,9 +1168,6 @@ export const fil = {
     recommendedBadge: "Inirerekomenda",
   },
   transactionForm: {
-    quickDateToday: "Ngayong Araw",
-    quickDateYesterday: "Kahapon",
-    quickDateCustom: "Kalendaryo",
     customizeFieldsTitle: "I-customize ang mga field",
     customizeFieldsSubtitle:
       "Laging nandiyan ang amount, account, category, at date sa form.",
@@ -1186,7 +1185,6 @@ export const fil = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Eksaktong oras",
-      quickDates: "Mga mabilisang petsa",
     },
   },
   dashboard: {

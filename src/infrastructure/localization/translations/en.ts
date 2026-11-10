@@ -818,6 +818,8 @@ export const en = {
       improveItem8: "Tap or drag along the net worth chart to view exact balances and dates with touch tooltips.",
       improveItem9: "Improve walkthrough tours with high-contrast buttons, dedicated close buttons, and touch protection.",
       improveItem10: "Open the app terms from Settings, next to the privacy policy.",
+      improveItem11: "Simplify transaction date entry with a unified calendar and time selector.",
+      improveItem12: "Rename the credit card monitoring screen title to Credit Cards for clearer navigation.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
@@ -1166,9 +1168,6 @@ export const en = {
     recommendedBadge: "Recommended",
   },
   transactionForm: {
-    quickDateToday: "Today",
-    quickDateYesterday: "Yesterday",
-    quickDateCustom: "Calendar",
     customizeFieldsTitle: "Customize fields",
     customizeFieldsSubtitle:
       "Amount, account, category, and date always stay on the form.",
@@ -1186,7 +1185,6 @@ export const en = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Exact time",
-      quickDates: "Quick dates",
     },
   },
   dashboard: {
