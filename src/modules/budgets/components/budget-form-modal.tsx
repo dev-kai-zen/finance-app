@@ -13,6 +13,7 @@ import {
   AmountCalculatorModal,
   FullScreenFormModal,
   HelpIconButton,
+  HorizontalScrollView,
   IconHelper,
   InfoModal,
   NotificationModal,
@@ -461,11 +462,9 @@ function BudgetFormModalContent({
               <WalkthroughTarget id="budgetFormFrequency">
                 <View style={styles.section}>
                   <Text style={styles.fieldLabel}>FREQUENCY</Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     ref={frequencyScrollRef}
                     contentContainerStyle={styles.frequencyRow}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {frequencyOptions.map((opt) => {
                       const isSelected = frequency === opt.key;
@@ -490,7 +489,7 @@ function BudgetFormModalContent({
                         </Pressable>
                       );
                     })}
-                  </ScrollView>
+                  </HorizontalScrollView>
                   <Text style={styles.frequencyHelpText}>
                     {FREQUENCY_DESCRIPTIONS[frequency]}
                   </Text>

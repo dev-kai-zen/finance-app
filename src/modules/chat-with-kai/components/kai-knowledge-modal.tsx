@@ -35,7 +35,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { ConfirmModal, IconHelper } from "@/components";
+import { ConfirmModal, HorizontalScrollView, IconHelper } from "@/components";
 import { useCategories, type Category } from "@/modules/categories";
 import { useAccounts, type AccountListItem } from "@/modules/accounts";
 import type { TransactionType } from "@/modules/transactions";
@@ -862,9 +862,7 @@ export function KaiKnowledgeModal({
         </View>
 
         {/* Top 4-Tab Segmented Control */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <HorizontalScrollView
           style={styles.tabBarScroll}
           contentContainerStyle={styles.tabBarScrollContent}
         >
@@ -988,7 +986,7 @@ export function KaiKnowledgeModal({
               {t("chatWithKai.tabMerchants")}
             </Text>
           </Pressable>
-        </ScrollView>
+        </HorizontalScrollView>
 
         {/* Fixed Non-Scrolling Screen Body */}
         <View style={styles.mainBodyContainer}>

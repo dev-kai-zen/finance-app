@@ -30,4 +30,5 @@ export * from "./modal-screen-header";
 export * from "./unsaved-changes-modal";
 export * from "./backup-schedule-options";
 export * from "./app-shell-header-context";
+export * from "./horizontal-scroll-view";
 export * from "./theme/app-theme-provider";

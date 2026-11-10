@@ -428,6 +428,8 @@ export const fil = {
       "Ipakita o itago ang opsyonal na menu items. Puwede mong baguhin ang mga ito anumang oras.",
     resetSimpleMenu: "Ibalik sa simpleng menu",
     scrollDown: "Mag-scroll pababa para sa higit pang mga item",
+    scrollLeft: "Mag-scroll pakaliwa para sa higit pang mga item",
+    scrollRight: "Mag-scroll pakanan para sa higit pang mga item",
   },
   brand: {
     tagline: "Patuloy na pagpapabuti ng pananalapi",
@@ -829,6 +831,7 @@ export const fil = {
       improveItem11: "Padaliin ang pagpili ng petsa ng transaksyon gamit ang kalendaryo at tagapili ng oras.",
       improveItem12: "Palitan ang pamagat ng screen ng credit card tungo sa Mga Credit Card para sa mas malinaw na nabigasyon.",
       improveItem13: "I-filter ang mga nasingil na bayarin sa credit card ayon sa petsa ng statement at tingnan ang buong talaan nang maayos.",
+      improveItem14: "Magpakita ng madaling arrow buttons para mag-scroll nang maayos sa pahigang tabs at chips kapag may nakatagong item.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",

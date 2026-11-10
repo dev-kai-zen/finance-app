@@ -8,7 +8,7 @@ import {
   Layers3,
   RotateCcw,
 } from "lucide-react-native";
-import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
+import { CreditUtilizationRing, HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -216,10 +216,8 @@ export function CreditCardMonitoringCard({
         {card.statements.length > 0 ? (
           <>
             {/* Horizontal statement filter pills */}
-            <ScrollView
+            <HorizontalScrollView
               contentContainerStyle={styles.statementPillsContent}
-              horizontal
-              showsHorizontalScrollIndicator={false}
               style={styles.statementPillsScroll}
             >
               {card.statements.map((statement, index) => {
@@ -293,7 +291,7 @@ export function CreditCardMonitoringCard({
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </HorizontalScrollView>
 
             {/* Selected statement summary card */}
             {activeStatement ? (

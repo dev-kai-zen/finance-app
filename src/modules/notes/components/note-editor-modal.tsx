@@ -14,7 +14,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Check, ChevronLeft, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
 
-import { ConfirmModal, NotificationModal, UnsavedChangesModal } from "@/components";
+import {
+  ConfirmModal,
+  HorizontalScrollView,
+  NotificationModal,
+  UnsavedChangesModal,
+} from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
 import {
@@ -298,9 +303,7 @@ export function NoteEditorModal({
           >
             {/* Color Palette (Placed above Note Title so it's always visible) */}
             <View style={styles.topPaletteContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
+              <HorizontalScrollView
                 contentContainerStyle={styles.paletteScrollContent}
                 keyboardShouldPersistTaps="handled"
               >
@@ -394,7 +397,7 @@ export function NoteEditorModal({
                 >
                   <Plus color={theme.colors.textSecondary} size={14} />
                 </Pressable>
-              </ScrollView>
+              </HorizontalScrollView>
             </View>
 
             {/* Title Input */}

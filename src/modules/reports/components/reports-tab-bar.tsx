@@ -1,12 +1,12 @@
 import React from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { Crown } from "lucide-react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useProStatus } from "@/modules/pro";
@@ -24,9 +24,7 @@ export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+      <HorizontalScrollView
         contentContainerStyle={styles.scrollContent}
       >
         {REPORT_TABS.map((tab) => {
@@ -74,7 +72,7 @@ export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
             </Pressable>
           );
         })}
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 }

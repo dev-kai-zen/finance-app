@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  HorizontalScrollView,
   IconHelper,
   InfoModal,
   SortableListModal,
@@ -480,10 +481,8 @@ export function CustomizeDashboardModal({
                   <Text style={styles.colorPickerLabel}>
                     {t("dashboard.quoteBgColor")}
                   </Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     contentContainerStyle={styles.swatchesScroll}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {/* Default (Theme) chip */}
                     <Pressable
@@ -576,7 +575,7 @@ export function CustomizeDashboardModal({
                         strokeWidth={2.5}
                       />
                     </Pressable>
-                  </ScrollView>
+                  </HorizontalScrollView>
                 </View>
 
                 {/* Text Color Swatches */}
@@ -584,10 +583,8 @@ export function CustomizeDashboardModal({
                   <Text style={styles.colorPickerLabel}>
                     {t("dashboard.quoteTextColor")}
                   </Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     contentContainerStyle={styles.swatchesScroll}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {/* Default (Theme) chip */}
                     <Pressable
@@ -679,7 +676,7 @@ export function CustomizeDashboardModal({
                         strokeWidth={2.5}
                       />
                     </Pressable>
-                  </ScrollView>
+                  </HorizontalScrollView>
                 </View>
               </View>
             ) : null}

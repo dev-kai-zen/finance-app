@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { Calendar, Check, ChevronDown, X } from "lucide-react-native";
+import { HorizontalScrollView } from "@/components";
 import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -55,9 +55,7 @@ export function CashFlowFilterBar({
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+      <HorizontalScrollView
         contentContainerStyle={styles.scrollContent}
       >
         <Pressable
@@ -75,7 +73,7 @@ export function CashFlowFilterBar({
           </Text>
           <ChevronDown size={14} color={styles.accentIcon.color} />
         </Pressable>
-      </ScrollView>
+      </HorizontalScrollView>
 
       {/* Preset Modal */}
       <Modal

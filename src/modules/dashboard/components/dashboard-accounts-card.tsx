@@ -1,7 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRight } from "lucide-react-native";
 
-import { IconHelper } from "@/components";
+import { HorizontalScrollView, IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -47,11 +47,7 @@ export function DashboardAccountsCard({
       {activeAccounts.length === 0 ? (
         <Text style={styles.emptyText}>{t("dashboard.noAccountsYet")}</Text>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.strip}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
+        <HorizontalScrollView contentContainerStyle={styles.strip}>
           {activeAccounts.map((acc) => {
             const color = resolveEntityColor(
               acc.accountType?.color ?? acc.accountType?.hexColorsId,
@@ -110,7 +106,7 @@ export function DashboardAccountsCard({
               </Pressable>
             );
           })}
-        </ScrollView>
+        </HorizontalScrollView>
       )}
     </View>
   );

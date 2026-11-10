@@ -1,12 +1,12 @@
 import React from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -46,8 +46,7 @@ export function NetWorthHistoryTable({
         </View>
       ) : null}
 
-      <ScrollView
-        horizontal
+      <HorizontalScrollView
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={styles.horizontalScrollContent}
       >
@@ -134,7 +133,7 @@ export function NetWorthHistoryTable({
             );
           })}
         </View>
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 }

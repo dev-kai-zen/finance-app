@@ -436,6 +436,8 @@ export const en = {
       "Show or hide optional menu items. You can change these anytime.",
     resetSimpleMenu: "Reset to simple menu",
     scrollDown: "Scroll down for more items",
+    scrollLeft: "Scroll left for more items",
+    scrollRight: "Scroll right for more items",
   },
   brand: {
     tagline: "Continuous financial improvement",
@@ -831,6 +833,7 @@ export const en = {
       improveItem11: "Simplify transaction date entry with a unified calendar and time selector.",
       improveItem12: "Rename the credit card monitoring screen title to Credit Cards for clearer navigation.",
       improveItem13: "Filter credit card billed items by statement cutoff date and view full statement activities in a dedicated screen.",
+      improveItem14: "Show handy arrow buttons to smoothly scroll horizontal tabs, chips, and lists when more items are hidden.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",

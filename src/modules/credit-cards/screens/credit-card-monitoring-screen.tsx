@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { CreditCard } from "lucide-react-native";
 import {
+  HorizontalScrollView,
   PageContainer,
   PageEmptyState,
   PageErrorState,
@@ -105,10 +106,8 @@ export function CreditCardMonitoringScreen() {
           </View>
 
           <View style={styles.chipsSection}>
-            <ScrollView
+            <HorizontalScrollView
               contentContainerStyle={styles.chipsScrollContent}
-              horizontal
-              showsHorizontalScrollIndicator={false}
             >
               {data.cards.map((card) => {
                 const isSelected = card.accountId === activeAccountId;
@@ -162,7 +161,7 @@ export function CreditCardMonitoringScreen() {
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </HorizontalScrollView>
           </View>
 
           {selectedCard ? (

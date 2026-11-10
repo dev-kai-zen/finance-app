@@ -428,6 +428,8 @@ export const es = {
       "Mostrar u ocultar elementos opcionales del menú. Puedes cambiarlos cuando quieras.",
     resetSimpleMenu: "Restablecer menú simple",
     scrollDown: "Desplazar hacia abajo para ver más elementos",
+    scrollLeft: "Desplazar hacia la izquierda para ver más elementos",
+    scrollRight: "Desplazar hacia la derecha para ver más elementos",
   },
   brand: {
     tagline: "Mejora financiera continua",
@@ -828,6 +830,7 @@ export const es = {
       improveItem11: "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
       improveItem12: "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
       improveItem13: "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
+      improveItem14: "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",

@@ -25,7 +25,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { IconHelper } from "@/components/icon-helper";
+import { HorizontalScrollView, IconHelper } from "@/components";
 import type { Category } from "@/modules/categories";
 import type { CategoryKeywordItem } from "../types/chat-with-kai.types";
 import {
@@ -217,10 +217,8 @@ export function CategoryKeywordsManagerModal({
         >
           {/* Categories Selector Carousel */}
           <View style={styles.categoryPillsContainer}>
-            <ScrollView
+            <HorizontalScrollView
               contentContainerStyle={styles.categoryPillsContent}
-              horizontal
-              showsHorizontalScrollIndicator={false}
             >
               {categories.map((cat) => {
                 const isSelected = cat.id === selectedCategoryId;
@@ -257,7 +255,7 @@ export function CategoryKeywordsManagerModal({
                   </Pressable>
                 );
               })}
-            </ScrollView>
+            </HorizontalScrollView>
           </View>
 
           {/* Active Category Header */}

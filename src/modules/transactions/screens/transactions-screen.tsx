@@ -33,6 +33,7 @@ import {
   ActionBottomSheet,
   ConfirmModal,
   FloatingActionButton,
+  HorizontalScrollView,
   PageContainer,
   PageEmptyState,
   useHeaderWalkthroughAction,
@@ -1144,9 +1145,7 @@ function TransactionsScreenContent({
         </View>
 
         {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
+          <HorizontalScrollView
             contentContainerStyle={styles.activeFiltersRow}
             style={styles.activeFiltersScroll}
           >
@@ -1292,7 +1291,7 @@ function TransactionsScreenContent({
             >
               <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
             </Pressable>
-          </ScrollView>
+          </HorizontalScrollView>
         )}
 
         {/* Transactions Feed Grouped By Date */}

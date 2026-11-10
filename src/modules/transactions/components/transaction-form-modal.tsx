@@ -25,6 +25,7 @@ import { KeyboardStickyView } from "react-native-keyboard-controller";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
+  HorizontalScrollView,
   IconHelper,
   KeyboardAwareFormPreset,
   NotificationModal,
@@ -1922,11 +1923,9 @@ function TransactionFormModalInner({
             </Pressable>
           </View>
 
-          <ScrollView
+          <HorizontalScrollView
             contentContainerStyle={styles.topActionsContent}
-            horizontal
             keyboardShouldPersistTaps="handled"
-            showsHorizontalScrollIndicator={false}
             style={styles.topActionsScroll}
           >
             {!isEditing && showQuickPresetsUi ? (
@@ -1965,7 +1964,7 @@ function TransactionFormModalInner({
               <SlidersHorizontal color={theme.colors.primary} size={16} />
               <Text style={styles.customizeFieldsButtonText}>Customize fields</Text>
             </Pressable>
-          </ScrollView>
+          </HorizontalScrollView>
 
           <View ref={typePickerRef} style={styles.typePickerSpacing}>
             <TransactionTypePicker

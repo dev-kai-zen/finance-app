@@ -16,6 +16,7 @@ import {
 import {
   ConfirmModal,
   FloatingActionButton,
+  HorizontalScrollView,
   NotificationModal,
   PageContainer,
   PageEmptyState,
@@ -442,10 +443,8 @@ function BudgetsScreenContent({
 
             {/* Frequency Filter Tabs */}
             <View collapsable={false} ref={frequencyTabsRef}>
-              <ScrollView
+              <HorizontalScrollView
                 contentContainerStyle={styles.filterScroll}
-                horizontal
-                showsHorizontalScrollIndicator={false}
               >
                 {FILTER_TABS.map((tab) => {
                   const active = selectedFilter === tab.key;
@@ -470,7 +469,7 @@ function BudgetsScreenContent({
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </HorizontalScrollView>
             </View>
 
             {/* List of Category Budgets */}

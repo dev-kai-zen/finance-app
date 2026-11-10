@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import {
+  HorizontalScrollView,
   InfoModal,
   NotificationModal,
   PageContainer,
@@ -215,10 +216,8 @@ export function SqliteMonitorScreen() {
             <Text style={styles.consoleTitle}>EXECUTE RAW SQL QUERY</Text>
 
             {/* Presets */}
-            <ScrollView
+            <HorizontalScrollView
               contentContainerStyle={styles.presetsScroll}
-              horizontal
-              showsHorizontalScrollIndicator={false}
             >
               {QUERY_PRESETS.map((p) => (
                 <Pressable
@@ -231,7 +230,7 @@ export function SqliteMonitorScreen() {
                   <Text style={styles.presetText}>{p.label}</Text>
                 </Pressable>
               ))}
-            </ScrollView>
+            </HorizontalScrollView>
 
             {/* SQL Input */}
             <TextInput
