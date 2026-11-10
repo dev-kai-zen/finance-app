@@ -746,6 +746,16 @@ export const es = {
     helpTitle: "Acerca de las transacciones programadas",
     helpMessage:
       "Configura ingresos, gastos o transferencias recurrentes. Elige si cada ocurrencia se registra automáticamente o espera tu confirmación. Los elementos vencidos o fallidos aparecen en Necesita atención; puedes pausar, finalizar o archivar programaciones sin eliminar las transacciones ya registradas.",
+    advancePost: "Publicar por adelantado",
+    advancePostTitle: "Publicar calendario por adelantado",
+    advancePostDesc:
+      "Registra esta transacción programada antes de tiempo. La próxima fecha avanzará al siguiente ciclo recurrente.",
+    advancePostDateLabel: "Fecha de transacción",
+    advancePostCurrentDate: "Fecha programada actual",
+    advancePostNextDate: "Fecha del siguiente ciclo",
+    advancePostCompletes: "Última ocurrencia (el calendario se completará)",
+    advancePostConfirm: "Publicar por adelantado",
+    today: "Hoy",
   },
   themePicker: {
     closeAccessibility: "Cerrar selector de tema",
@@ -832,7 +842,8 @@ export const es = {
       fixItem1: "Corrige los archivos CSV adjuntos en correos y el regreso desde el historial de importaciones.",
       "date": "10 de noviembre de 2026",
       "newItem1": "Importa cuentas y transacciones desde archivos CSV con asignación guiada de cuentas y categor?as.",
-      "newItem2": "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar."
+      "newItem2": "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar.",
+      "newItem5": "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo."
     },
     v140: {
       date: "5 de noviembre de 2026",

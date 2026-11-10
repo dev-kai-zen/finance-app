@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   CalendarClock,
+  FastForward,
   Pause,
   Play,
   RotateCcw,
@@ -42,6 +43,7 @@ import {
 } from "@/modules/walkthrough";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
+import { AdvancePostModal } from "../components/advance-post-modal";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
 import { useScheduledTransactions } from "../hooks/use-scheduled-transactions";
@@ -108,6 +110,7 @@ function ScheduledTransactionsScreenContent({
     restore,
     postOccurrence,
     skipOccurrence,
+    advancePost,
     scheduleIdsWithPostings,
   } = useScheduledTransactions();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
@@ -115,6 +118,8 @@ function ScheduledTransactionsScreenContent({
   const handledActionRef = useRef<string | null>(null);
   const handledScheduleIdRef = useRef<string | null>(null);
   const [editingSchedule, setEditingSchedule] =
+    useState<ScheduledTransaction | null>(null);
+  const [advancePostTarget, setAdvancePostTarget] =
     useState<ScheduledTransaction | null>(null);
   const [pendingEnd, setPendingEnd] =
     useState<ScheduledTransaction | null>(null);
@@ -298,6 +303,13 @@ function ScheduledTransactionsScreenContent({
 
   const handlePost = (occurrence: ScheduleOccurrence) => {
     if (postOccurrence(occurrence.id)) refreshAccounts();
+  };
+
+  const handleAdvancePost = (transactionDate: Date) => {
+    if (!advancePostTarget) return;
+    const targetId = advancePostTarget.id;
+    setAdvancePostTarget(null);
+    advancePost(targetId, transactionDate);
   };
 
   const setFilterSelected = (
@@ -507,6 +519,11 @@ function ScheduledTransactionsScreenContent({
             const signedAmount = isTransfer
               ? Math.abs(schedule.amountMinorUnits)
               : schedule.amountMinorUnits;
+            const canAdvancePost =
+              !schedule.archivedAt &&
+              schedule.status === "active" &&
+              schedule.nextEffectiveAt !== null &&
+              schedule.nextEffectiveAt.getTime() > Date.now();
 
             return (
               <View
@@ -558,12 +575,31 @@ function ScheduledTransactionsScreenContent({
                       {formatScheduleRecurrence(schedule)} ·{" "}
                       {schedule.autoPost ? "Auto-post" : "Confirm each"}
                     </Text>
-                    <Text style={styles.nextText}>
-                      {schedule.nextEffectiveAt
-                        ? "Next: " +
-                          schedule.nextEffectiveAt.toLocaleString()
-                        : "No future occurrences"}
-                    </Text>
+                    <View style={styles.nextRow}>
+                      <Text style={styles.nextText}>
+                        {schedule.nextEffectiveAt
+                          ? "Next: " +
+                            schedule.nextEffectiveAt.toLocaleString()
+                          : "No future occurrences"}
+                      </Text>
+                      {canAdvancePost ? (
+                        <Pressable
+                          accessibilityLabel={t(
+                            "scheduledTransactions.advancePost",
+                          )}
+                          onPress={() => setAdvancePostTarget(schedule)}
+                          style={styles.advancePostChip}
+                        >
+                          <FastForward
+                            color={theme.colors.primary}
+                            size={12}
+                          />
+                          <Text style={styles.advancePostChipText}>
+                            {t("scheduledTransactions.advancePost")}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
                   <Text
                     style={[
@@ -672,6 +708,23 @@ function ScheduledTransactionsScreenContent({
           })
         )}
       </View>
+
+      <AdvancePostModal
+        category={categories.find(
+          (c) => c.id === advancePostTarget?.categoryId,
+        )}
+        destinationAccount={accounts.find(
+          (a) => a.id === advancePostTarget?.toAccountId,
+        )}
+        onClose={() => setAdvancePostTarget(null)}
+        onConfirm={handleAdvancePost}
+        pending={pending}
+        schedule={advancePostTarget}
+        sourceAccount={accounts.find(
+          (a) => a.id === advancePostTarget?.accountId,
+        )}
+        visible={Boolean(advancePostTarget)}
+      />
 
       <ScheduledTransactionFormModal
         accounts={accounts}
@@ -917,11 +970,35 @@ function createStyles(theme: AppTheme) {
       lineHeight: 20,
       marginTop: 2,
     },
+    nextRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
+      justifyContent: "space-between",
+      marginTop: theme.spacing.xs,
+    },
     nextText: {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
-      marginTop: theme.spacing.xs,
+    },
+    advancePostChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary + "14",
+      borderColor: theme.colors.primary + "35",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    advancePostChipText: {
+      color: theme.colors.primary,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.medium,
+      lineHeight: 14,
     },
     failureText: {
       color: theme.colors.danger,

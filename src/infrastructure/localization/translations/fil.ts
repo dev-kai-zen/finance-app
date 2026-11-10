@@ -746,6 +746,16 @@ export const fil = {
     helpTitle: "Tungkol sa Naka-iskedyul na mga Transaksyon",
     helpMessage:
       "Mag-set up ng umuulit na kita, gastos, o transfer. Piliin kung awtomatikong i-po-post ang bawat occurrence o hihintayin ang iyong kumpirmasyon. Ang due o failed na item ay lalabas sa Needs attention; maaari mong i-pause, tapusin, o i-archive ang mga iskedyul nang hindi tinatanggal ang mga transaksyong na-post na.",
+    advancePost: "I-post nang Pauna",
+    advancePostTitle: "Paunang I-post ang Iskedyul",
+    advancePostDesc:
+      "Itala ang nakaiskedyul na transaksyong ito bago ang takdang petsa. Ang susunod na petsa ay uusad sa susunod na siklo.",
+    advancePostDateLabel: "Petsa ng Transaksyon",
+    advancePostCurrentDate: "Kasalukuyang nakatakdang petsa",
+    advancePostNextDate: "Petsa ng susunod na siklo",
+    advancePostCompletes: "Huling transaksyon (makukumpleto ang iskedyul)",
+    advancePostConfirm: "I-post nang Pauna",
+    today: "Ngayon",
   },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
@@ -833,7 +843,8 @@ export const fil = {
       fixItem1: "Ayusin ang pag-attach ng CSV template sa email at pagbabalik mula sa kasaysayan ng import.",
       "date": "Nobyembre 10, 2026",
       "newItem1": "Mag-import ng mga account at transaksyon mula sa CSV na may gabay sa pagtutugma ng account at kategorya.",
-      "newItem2": "Suriin ang balanse at magkakatulad na tala, at gumawa ng safety backup bago mag-import."
+      "newItem2": "Suriin ang balanse at magkakatulad na tala, at gumawa ng safety backup bago mag-import.",
+      "newItem5": "Magdagdag ng paunang pag-post para maitala nang maaga ang mga nakaiskedyul na transaksyon at ilipat sa susunod na siklo."
     },
     v140: {
       date: "Nobyembre 5, 2026",

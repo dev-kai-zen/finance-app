@@ -14,6 +14,7 @@ import {
   restoreScheduledTransaction,
   setScheduledTransactionPaused,
 } from "../services/manage-scheduled-transaction.service";
+import { advancePostScheduledTransaction } from "../services/advance-post-schedule.service";
 import {
   postScheduledOccurrence,
   processDueSchedules,
@@ -127,6 +128,12 @@ export function useScheduledTransactions() {
     [runMutation],
   );
 
+  const advancePost = useCallback(
+    (id: string, transactionDate?: Date): boolean =>
+      runMutation(() => advancePostScheduledTransaction(id, { transactionDate })),
+    [runMutation],
+  );
+
   return {
     schedules,
     occurrences,
@@ -144,5 +151,6 @@ export function useScheduledTransactions() {
     restore,
     postOccurrence,
     skipOccurrence,
+    advancePost,
   };
 }

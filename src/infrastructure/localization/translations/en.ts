@@ -750,6 +750,16 @@ export const en = {
     helpTitle: "About Scheduled Transactions",
     helpMessage:
       "Set up recurring income, expenses, or transfers. Choose whether each occurrence posts automatically or waits for your confirmation. Due or failed items appear under Needs attention; you can pause, end, or archive schedules without removing transactions already posted.",
+    advancePost: "Advance Post",
+    advancePostTitle: "Advance Post Schedule",
+    advancePostDesc:
+      "Record this scheduled transaction ahead of time. The next trigger date will advance to the following recurring cycle.",
+    advancePostDateLabel: "Transaction Date",
+    advancePostCurrentDate: "Current scheduled date",
+    advancePostNextDate: "Next cycle date",
+    advancePostCompletes: "Final occurrence (schedule will complete)",
+    advancePostConfirm: "Advance Post",
+    today: "Today",
   },
   themePicker: {
     closeAccessibility: "Close theme picker",
@@ -835,7 +845,8 @@ export const en = {
       fixItem1: "Fix attaching CSV templates to emails and returning from import history.",
       "date": "November 10, 2026",
       "newItem1": "Import accounts and transaction history from CSV files with guided account and category matching.",
-      "newItem2": "Review balances, check similar records, and save a safety backup before importing."
+      "newItem2": "Review balances, check similar records, and save a safety backup before importing.",
+      "newItem5": "Add advance posting to record upcoming scheduled transactions early and automatically advance to the next cycle."
     },
     v140: {
       date: "November 5, 2026",

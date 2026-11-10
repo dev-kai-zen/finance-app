@@ -26,7 +26,7 @@ import {
   serializeScheduleTemplateSnapshot,
 } from "../utils/schedule-template-snapshot";
 
-function parseTemplateSnapshot(raw: string): ScheduledTemplateSnapshot {
+export function parseTemplateSnapshot(raw: string): ScheduledTemplateSnapshot {
   const parsed = JSON.parse(raw) as ScheduledTemplateSnapshot & {
     amountCents?: number;
   };
@@ -253,7 +253,7 @@ export function skipScheduledOccurrence(
   });
 }
 
-function postSnapshot(
+export function postSnapshot(
   snapshot: ScheduledTemplateSnapshot,
   occurrenceId: string,
   occurredAt: Date,
@@ -302,7 +302,7 @@ function postSnapshot(
   insertSchedulePosting(occurrenceId, result.id, now, context);
 }
 
-function resolveRecordedOccurrence(
+export function resolveRecordedOccurrence(
   scheduleId: string,
   occurrence: Pick<CalculatedScheduleOccurrence, "sequenceNumber" | "nominalAt">,
   context: DbContext,
@@ -331,7 +331,7 @@ function recordedOccurrenceProcessingStatus(
       : "skipped";
 }
 
-function advanceSchedule(
+export function advanceSchedule(
   schedule: ScheduledTransaction,
   sequenceNumber: number,
   now: Date,
