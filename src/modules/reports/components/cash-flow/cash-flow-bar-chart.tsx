@@ -23,7 +23,7 @@ const CHART_HEIGHT = 180;
 const PLOT_TOP = 20;
 const PLOT_BOTTOM = 28;
 const PLOT_LEFT = 40;
-const PLOT_RIGHT = 12;
+const PLOT_RIGHT = 18;
 
 export function CashFlowBarChart({
   periods,
@@ -68,7 +68,7 @@ export function CashFlowBarChart({
   const barWidth = Math.max(4, Math.min(18, (slotWidth - 8) / 2));
 
   return (
-    <View style={styles.container} onLayout={handleLayout}>
+    <View style={styles.container}>
       {/* Chart Legend & Highlight header */}
       <View style={styles.legendRow}>
         <View style={styles.legendLeft}>
@@ -92,8 +92,9 @@ export function CashFlowBarChart({
       </View>
 
       {/* Svg Chart */}
-      {containerWidth > 0 ? (
-        <Svg width={containerWidth} height={CHART_HEIGHT}>
+      <View style={styles.chartWrapper} onLayout={handleLayout}>
+        {containerWidth > 0 ? (
+          <Svg width={containerWidth} height={CHART_HEIGHT}>
           {/* Baseline Zero Line */}
           <Line
             x1={PLOT_LEFT}
@@ -220,6 +221,7 @@ export function CashFlowBarChart({
           })}
         </Svg>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -241,6 +243,9 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       backgroundColor: theme.colors.surface,
+    },
+    chartWrapper: {
+      width: "100%",
     },
     legendRow: {
       flexDirection: "row",

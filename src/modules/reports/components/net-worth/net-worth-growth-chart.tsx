@@ -31,7 +31,7 @@ const CHART_HEIGHT = 190;
 const PLOT_TOP = 20;
 const PLOT_BOTTOM = 28;
 const PLOT_LEFT = 42;
-const PLOT_RIGHT = 14;
+const PLOT_RIGHT = 22;
 
 export function NetWorthGrowthChart({
   points,
@@ -113,7 +113,7 @@ export function NetWorthGrowthChart({
       : "";
 
   return (
-    <View style={styles.container} onLayout={handleLayout}>
+    <View style={styles.container}>
       {/* Legend & Detail Header */}
       <View style={styles.legendRow}>
         <View style={styles.legendLeft}>
@@ -140,8 +140,9 @@ export function NetWorthGrowthChart({
         )}
       </View>
 
-      {containerWidth > 0 ? (
-        <Svg width={containerWidth} height={CHART_HEIGHT}>
+      <View style={styles.chartWrapper} onLayout={handleLayout}>
+        {containerWidth > 0 ? (
+          <Svg width={containerWidth} height={CHART_HEIGHT}>
           <Defs>
             <LinearGradient id="nwGradient" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0%" stopColor={styles.primaryCurve.color} stopOpacity="0.3" />
@@ -249,7 +250,7 @@ export function NetWorthGrowthChart({
                 />
 
                 {/* X Axis Month Label */}
-                {shouldShowXLabel(idx, points.length) ? (
+                {shouldShowXLabel(idx, points.length, isSelected) ? (
                   <SvgText
                     x={coord.x}
                     y={CHART_HEIGHT - 8}
@@ -270,6 +271,7 @@ export function NetWorthGrowthChart({
           })}
         </Svg>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -281,10 +283,17 @@ function buildLinePath(coords: Array<{ x: number; y: number }>): string {
     .join(" ");
 }
 
-function shouldShowXLabel(index: number, total: number): boolean {
+function shouldShowXLabel(
+  index: number,
+  total: number,
+  isSelected: boolean = false,
+): boolean {
+  if (isSelected) return true;
   if (total <= 6) return true;
-  if (total <= 12) return index % 2 === 0 || index === total - 1;
-  return index % 3 === 0 || index === total - 1;
+  if (index === total - 1) return true;
+  if (index === total - 2) return false;
+  if (total <= 12) return index % 2 === (total % 2 === 1 ? 0 : 1);
+  return index % 3 === (total % 3 === 1 ? 0 : 1);
 }
 
 function formatShortK(cents: number): string {
@@ -304,6 +313,9 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       backgroundColor: theme.colors.surface,
+    },
+    chartWrapper: {
+      width: "100%",
     },
     legendRow: {
       flexDirection: "row",

@@ -31,7 +31,7 @@ const CHART_HEIGHT = 160;
 const PLOT_TOP = 10;
 const PLOT_BOTTOM = 26;
 const PLOT_LEFT = 44;
-const PLOT_RIGHT = 6;
+const PLOT_RIGHT = 24;
 const TOOLTIP_WIDTH = 190;
 
 export function NetWorthChart({
@@ -218,7 +218,14 @@ export function NetWorthChart({
             {points.map((point, index) => {
               const x = xForIndex(index);
               const isSelected = index === selectedPointIndex;
-              const showLabel = points.length <= 6 || index % 2 === 1;
+              const isLastPoint = index === points.length - 1;
+              const isSecondToLast = index === points.length - 2;
+              const showLabel =
+                isSelected ||
+                points.length <= 6 ||
+                isLastPoint ||
+                (!isSecondToLast &&
+                  index % 2 === (points.length % 2 === 1 ? 0 : 1));
 
               return (
                 <G key={`${point.date.getTime()}-${index}`}>

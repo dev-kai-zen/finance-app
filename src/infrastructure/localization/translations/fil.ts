@@ -841,6 +841,7 @@ export const fil = {
       fixItem6: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
       fixItem7: "Ayusin ang mga pamagat sa mensahe ng developer upang hindi lumagpas sa mga card.",
       fixItem8: "Iwasan ang pag-lock ng app habang nagse-share ng file o pumipili ng litrato.",
+      fixItem9: "Ayusin ang espasyo ng chart upang ganap na makita ang mga buwan at halaga nang hindi napuputol.",
       improveItem2: "Sundan ang mga hakbang sa import na may malinaw na pagtutugma, halimbawa, at pagwawasto.",
       improveItem3: "Baguhin ang mga tala habang sinusuri ang import at gumamit ng mas malinaw na mga button.",
       fixItem2: "Ayusin ang pagtutugma ng paglipat sa magkahiwalay na account at maling teksto sa import.",
