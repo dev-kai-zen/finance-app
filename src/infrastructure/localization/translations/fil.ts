@@ -832,6 +832,7 @@ export const fil = {
       improveItem12: "Palitan ang pamagat ng screen ng credit card tungo sa Mga Credit Card para sa mas malinaw na nabigasyon.",
       improveItem13: "I-filter ang mga nasingil na bayarin sa credit card ayon sa petsa ng statement at tingnan ang buong talaan nang maayos.",
       improveItem14: "Magpakita ng madaling arrow buttons para mag-scroll nang maayos sa pahigang tabs at chips kapag may nakatagong item.",
+      improveItem15: "Padaliin ang pagkumpirma sa pag-reset ng data sa pag-type ng RESET sa halip na pangalan ng app.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app bago mag-import.",
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",
@@ -1885,9 +1886,9 @@ export const fil = {
       "Permanenteng buburahin nito ang iyong mga account, transaksyon, badyet, layunin, tala, setting, attachment, at mga lokal na backup na pinamamahalaan ng app mula sa device na ito.",
     externalNote:
       "Hindi mabubura ang mga file sa Google Drive. Idi-disconnect ng device na ito ang Google Drive at i-clear ang Quick Sync settings.",
-    confirmationInstruction: "I-type ang KAIZEN para kumpirmahin",
+    confirmationInstruction: "I-type ang RESET para kumpirmahin",
     confirmationAccessibility:
-      "I-type ang KAIZEN para kumpirmahin ang pag-reset ng lahat ng data",
+      "I-type ang RESET para kumpirmahin ang pag-reset ng lahat ng data",
     deleteAll: "Burahin ang lahat ng data",
   },
   security: {
@@ -1971,7 +1972,7 @@ export const fil = {
     emergencyResetConfirmTitle: "I-reset ang Lahat ng Data?",
     emergencyResetConfirmDesc:
       "Permanenteng buburahin nito ang lahat ng iyong financial data at aalisin ang lock ng app. Hindi na ito maibabalik.",
-    emergencyResetInstruction: "I-type ang KAIZEN para kumpirmahin ang pag-reset",
+    emergencyResetInstruction: "I-type ang RESET para kumpirmahin ang pag-reset",
     emergencyResetAction: "Burahin Lahat at I-unlock",
     resetSuccessfulUnlocking: "Matagumpay na na-update ang password. Nag-a-unlock...",
     setNewPasswordTitle: "Magtakda ng Bagong Password",

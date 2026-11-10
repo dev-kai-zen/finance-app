@@ -33,7 +33,7 @@ import {
   setPassword,
 } from "../services/security-state.service";
 
-const CONFIRMATION_PHRASE = "KAIZEN";
+const CONFIRMATION_PHRASE = "RESET";
 
 type ModalStage = "options" | "new_password" | "confirm_reset";
 
@@ -147,7 +147,7 @@ export function ForgotPasswordModal({
   };
 
   const handleConfirmEmergencyReset = async () => {
-    if (resetInput.trim() !== CONFIRMATION_PHRASE) {
+    if (resetInput.trim().toUpperCase() !== CONFIRMATION_PHRASE) {
       return;
     }
 
@@ -518,13 +518,17 @@ export function ForgotPasswordModal({
                 <Pressable
                   accessibilityLabel={t("security.emergencyResetAction")}
                   accessibilityRole="button"
-                  disabled={busy || resetInput.trim() !== CONFIRMATION_PHRASE}
+                  disabled={
+                    busy || resetInput.trim().toUpperCase() !== CONFIRMATION_PHRASE
+                  }
                   onPress={handleConfirmEmergencyReset}
                   style={({ pressed }) => [
                     styles.submitBtn,
                     styles.dangerBtn,
                     pressed && styles.submitBtnPressed,
-                    (busy || resetInput.trim() !== CONFIRMATION_PHRASE) &&
+                    (busy ||
+                      resetInput.trim().toUpperCase() !==
+                        CONFIRMATION_PHRASE) &&
                       styles.actionBtnDisabled,
                   ]}
                 >

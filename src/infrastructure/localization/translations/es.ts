@@ -831,6 +831,7 @@ export const es = {
       improveItem12: "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
       improveItem13: "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
       improveItem14: "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
+      improveItem15: "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
       newItem4: "Asigna los tipos de transacci\u00f3n de otras aplicaciones antes de importar registros.",
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",
@@ -1884,9 +1885,9 @@ export const es = {
       "Esto elimina permanentemente de este dispositivo tus cuentas, transacciones, presupuestos, objetivos, notas, configuraciones, archivos adjuntos y copias locales administradas por la aplicación.",
     externalNote:
       "Los archivos ya guardados en Google Drive no se eliminan. Este dispositivo se desconecta de Google Drive y borra la configuración de Quick Sync.",
-    confirmationInstruction: "Escribe KAIZEN para confirmar",
+    confirmationInstruction: "Escribe RESET para confirmar",
     confirmationAccessibility:
-      "Escribe KAIZEN para confirmar el restablecimiento de todos los datos",
+      "Escribe RESET para confirmar el restablecimiento de todos los datos",
     deleteAll: "Eliminar todos los datos",
   },
   security: {
@@ -1970,7 +1971,7 @@ export const es = {
     emergencyResetConfirmTitle: "¿Restablecer todos los datos?",
     emergencyResetConfirmDesc:
       "Esto eliminará permanentemente todos tus datos financieros y quitará el bloqueo. Esta acción no se puede deshacer.",
-    emergencyResetInstruction: "Escribe KAIZEN para confirmar el restablecimiento",
+    emergencyResetInstruction: "Escribe RESET para confirmar el restablecimiento",
     emergencyResetAction: "Borrar todo y desbloquear",
     resetSuccessfulUnlocking: "Contraseña actualizada. Desbloqueando...",
     setNewPasswordTitle: "Nueva contraseña",

@@ -834,6 +834,7 @@ export const en = {
       improveItem12: "Rename the credit card monitoring screen title to Credit Cards for clearer navigation.",
       improveItem13: "Filter credit card billed items by statement cutoff date and view full statement activities in a dedicated screen.",
       improveItem14: "Show handy arrow buttons to smoothly scroll horizontal tabs, chips, and lists when more items are hidden.",
+      improveItem15: "Simplify data reset confirmation by typing RESET instead of the app name.",
       newItem4: "Match transaction types from other apps before importing records.",
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
@@ -1889,8 +1890,8 @@ export const en = {
       "This permanently deletes your accounts, transactions, budgets, goals, notes, settings, attachments, and app-managed local backups from this device.",
     externalNote:
       "Files already saved in Google Drive are not deleted. This device disconnects from Google Drive and clears Quick Sync settings.",
-    confirmationInstruction: "Type KAIZEN to confirm",
-    confirmationAccessibility: "Type KAIZEN to confirm resetting all data",
+    confirmationInstruction: "Type RESET to confirm",
+    confirmationAccessibility: "Type RESET to confirm resetting all data",
     deleteAll: "Delete all data",
   },
   security: {
@@ -1972,7 +1973,7 @@ export const en = {
     emergencyResetConfirmTitle: "Emergency Reset All Data?",
     emergencyResetConfirmDesc:
       "This will permanently delete all your financial data and remove the app lock. This action cannot be undone.",
-    emergencyResetInstruction: "Type KAIZEN to confirm reset",
+    emergencyResetInstruction: "Type RESET to confirm reset",
     emergencyResetAction: "Erase All Data & Unlock",
     resetSuccessfulUnlocking: "Password updated successfully. Unlocking...",
     setNewPasswordTitle: "Set New Password",
