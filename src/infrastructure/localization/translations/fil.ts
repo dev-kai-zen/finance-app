@@ -821,6 +821,7 @@ export const fil = {
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",
       fixItem4: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem5: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
+      fixItem6: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
       improveItem2: "Sundan ang mga hakbang sa import na may malinaw na pagtutugma, halimbawa, at pagwawasto.",
       improveItem3: "Baguhin ang mga tala habang sinusuri ang import at gumamit ng mas malinaw na mga button.",
       fixItem2: "Ayusin ang pagtutugma ng paglipat sa magkahiwalay na account at maling teksto sa import.",
