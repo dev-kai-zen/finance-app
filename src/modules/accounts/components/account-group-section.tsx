@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -50,6 +51,7 @@ export function AccountGroupSection({
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const sectionRef = useWalkthroughTarget(walkthroughTargetId ?? null);
   const grouped = accounts.filter(
     (a) => a.accountType?.accountGroup === group,
@@ -159,7 +161,7 @@ export function AccountGroupSection({
           variant="title"
         />
       ) : (
-        <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
+        <Text style={styles.fallbackTotal}>{formatPrivacyAmount(formatOpeningTotal(groupTotal), isPrivate)}</Text>
       )}
     </View>
   );

@@ -820,6 +820,7 @@ export const fil = {
       improveItem4: "Gamitin ang pamilyar na mga picker, malinaw na badge, at paghahanap sa pagsusuri ng import.",
       fixItem3: "Panatilihing hindi kasama ang na-import na habang sa preview lamang inilalapat ang pagwawasto.",
       fixItem4: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
+      fixItem5: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       improveItem2: "Sundan ang mga hakbang sa import na may malinaw na pagtutugma, halimbawa, at pagwawasto.",
       improveItem3: "Baguhin ang mga tala habang sinusuri ang import at gumamit ng mas malinaw na mga button.",
       fixItem2: "Ayusin ang pagtutugma ng paglipat sa magkahiwalay na account at maling teksto sa import.",

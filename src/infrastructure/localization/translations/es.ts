@@ -819,6 +819,7 @@ export const es = {
       improveItem4: "Revisa importaciones con selectores conocidos, etiquetas claras y grupos con b\u00fasqueda.",
       fixItem3: "Conserva excluidos los registros ya importados y aplica correcciones solo a la vista previa.",
       fixItem4: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
+      fixItem5: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       improveItem2: "Sigue pasos numerados para importar con columnas claras, ejemplos y correcciones sencillas.",
       improveItem3: "Edita registros durante la revisi\u00f3n y usa botones y opciones de cuenta m\u00e1s claros.",
       fixItem2: "Corrige las transferencias entre registros de cuentas separadas y textos ilegibles al importar.",

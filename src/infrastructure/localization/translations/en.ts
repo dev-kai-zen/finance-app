@@ -822,6 +822,7 @@ export const en = {
       improveItem4: "Use familiar pickers, clear badges, and searchable groups to review imports.",
       fixItem3: "Keep previous imports excluded while saving corrections only in the import preview.",
       fixItem4: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
+      fixItem5: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       improveItem2: "Follow numbered import steps with clear column matching, helpful examples, and easier corrections.",
       improveItem3: "Edit entries during import review and see clearer buttons and account choices.",
       fixItem2: "Fix matching transfers from separate account entries and unreadable text in import messages.",

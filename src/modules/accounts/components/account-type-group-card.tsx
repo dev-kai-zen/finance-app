@@ -11,6 +11,7 @@ import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -60,6 +61,7 @@ export function AccountTypeGroupCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
 
   const rawColor = accountType.color ?? accountType.hexColorsId ?? null;
   const primaryColor = accountColor(theme, rawColor);
@@ -150,7 +152,7 @@ export function AccountTypeGroupCard({
               variant="body"
             />
           ) : (
-            <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
+            <Text style={styles.fallbackTotal}>{formatPrivacyAmount(formatOpeningTotal(groupTotal), isPrivate)}</Text>
           )}
         </View>
       </View>
@@ -217,27 +219,37 @@ export function AccountTypeGroupCard({
                       <View style={styles.creditCardMetrics}>
                         <Text style={styles.creditCardMetric}>
                           Billed{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.billedMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.billedMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                         <Text style={styles.creditCardMetric}>
                           Unbilled{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.unbilledMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.unbilledMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                         <Text style={styles.creditCardOutstanding}>
                           Outstanding{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.outstandingMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.outstandingMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                       </View>
                       <CreditUtilizationRing
+                        isPrivate={isPrivate}
                         percent={account.creditCardMonitoring.utilizationPercent}
                         size={42}
                       />
@@ -290,7 +302,7 @@ export function AccountTypeGroupCard({
                   </View>
 
                   <View
-                    accessibilityLabel={`Available balance ${formatCurrency(available, account.currencyCode)}`}
+                    accessibilityLabel={`Available balance ${formatPrivacyAmount(formatCurrency(available, account.currencyCode), isPrivate)}`}
                     style={styles.pocketRow}
                   >
                     <View style={styles.mainPocketIcon}>
@@ -307,7 +319,7 @@ export function AccountTypeGroupCard({
                   {accountPockets.map((pocket) => (
                     <Pressable
                       key={pocket.id}
-                      accessibilityLabel={`${pocket.name}, ${formatCurrency(pocket.currentBalanceMinorUnits, account.currencyCode)}. Edit pocket.`}
+                      accessibilityLabel={`${pocket.name}, ${formatPrivacyAmount(formatCurrency(pocket.currentBalanceMinorUnits, account.currencyCode), isPrivate)}. Edit pocket.`}
                       accessibilityRole="button"
                       onPress={() => onEditPocket(pocket)}
                       style={({ pressed }) => [
