@@ -846,6 +846,7 @@ export const en = {
       fixItem4: "Fix section titles in the developer note overlapping card borders on smaller screens.",
       fixItem5: "Prevent app lock from triggering when sharing files or selecting photos.",
       fixItem6: "Fix chart spacing so month labels and recent amounts are fully visible without getting cut off.",
+      fixItem7: "Hide account balances, top spending amounts, and category percentages when privacy mode is active.",
     },
     v140: {
       date: "November 5, 2026",

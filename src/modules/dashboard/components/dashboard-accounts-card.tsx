@@ -7,6 +7,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { usePrivacyMode } from "@/modules/settings";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { AccountWithBalance } from "../types/dashboard.types";
@@ -25,6 +26,7 @@ export function DashboardAccountsCard({
   const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const cardRef = useWalkthroughTarget("accountsCard");
 
   const activeAccounts = accounts.filter((a) => !a.isArchived);
@@ -63,6 +65,14 @@ export function DashboardAccountsCard({
               <Pressable
                 key={acc.id}
                 accessibilityRole="button"
+                accessibilityLabel={
+                  isPrivate
+                    ? `${acc.name}, ${acc.accountType?.name ?? ""}`
+                    : `${acc.name}, ${acc.accountType?.name ?? ""}, ${formatCurrency(
+                        acc.currentBalanceMinorUnits,
+                        acc.currencyCode,
+                      )}`
+                }
                 onPress={onViewAll}
                 style={({ pressed }) => [
                   styles.accountPill,
@@ -96,14 +106,17 @@ export function DashboardAccountsCard({
                   numberOfLines={1}
                   style={[
                     styles.accountBalance,
-                    preferences.colorAmounts &&
+                    !isPrivate &&
+                      preferences.colorAmounts &&
                       (isPositive ? styles.positiveText : styles.negativeText),
                   ]}
                 >
-                  {formatCurrency(
-                    acc.currentBalanceMinorUnits,
-                    acc.currencyCode,
-                  )}
+                  {isPrivate
+                    ? "••••••"
+                    : formatCurrency(
+                        acc.currentBalanceMinorUnits,
+                        acc.currencyCode,
+                      )}
                 </Text>
               </Pressable>
             );

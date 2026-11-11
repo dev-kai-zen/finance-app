@@ -6,6 +6,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { usePrivacyMode } from "@/modules/settings";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { CategorySpendingItem } from "../types/dashboard.types";
@@ -27,6 +28,7 @@ export function DashboardTopCategoriesCard({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
+  const { isPrivate } = usePrivacyMode();
   const cardRef = useWalkthroughTarget("topCategoriesCard");
 
   const topItems = categories.slice(0, 5);
@@ -68,6 +70,11 @@ export function DashboardTopCategoriesCard({
             return (
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel={
+                  isPrivate
+                    ? item.categoryName
+                    : `${item.categoryName}, ${formatCurrency(item.totalMinorUnits, currencyCode)}, ${item.percentage}%`
+                }
                 disabled={!onPressCategory}
                 key={item.categoryId}
                 onPress={() => onPressCategory?.(item.categoryId)}
@@ -94,7 +101,9 @@ export function DashboardTopCategoriesCard({
                       {item.categoryName}
                     </Text>
                     <Text style={styles.amountText}>
-                      {formatCurrency(item.totalMinorUnits, currencyCode)}
+                      {isPrivate
+                        ? "••••••"
+                        : formatCurrency(item.totalMinorUnits, currencyCode)}
                     </Text>
                   </View>
 
@@ -105,12 +114,16 @@ export function DashboardTopCategoriesCard({
                           styles.barFill,
                           {
                             backgroundColor: catColor,
-                            width: `${Math.max(4, Math.min(100, item.percentage))}%`,
+                            width: isPrivate
+                              ? "0%"
+                              : `${Math.max(4, Math.min(100, item.percentage))}%`,
                           },
                         ]}
                       />
                     </View>
-                    <Text style={styles.percentText}>{item.percentage}%</Text>
+                    <Text style={styles.percentText}>
+                      {isPrivate ? "••%" : `${item.percentage}%`}
+                    </Text>
                   </View>
                 </View>
               </Pressable>

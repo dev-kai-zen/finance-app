@@ -844,6 +844,7 @@ export const fil = {
       fixItem4: "Ayusin ang mga pamagat sa mensahe ng developer upang hindi lumagpas sa mga card.",
       fixItem5: "Iwasan ang pag-lock ng app habang nagse-share ng file o pumipili ng litrato.",
       fixItem6: "Ayusin ang espasyo ng chart upang ganap na makita ang mga buwan at halaga nang hindi napuputol.",
+      fixItem7: "Itago ang mga balanse ng account, halaga ng gastusin, at porsyento ng kategorya kapag naka-on ang privacy mode.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
