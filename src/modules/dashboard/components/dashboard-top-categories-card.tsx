@@ -6,6 +6,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { CategorySpendingItem } from "../types/dashboard.types";
 
@@ -26,11 +27,12 @@ export function DashboardTopCategoriesCard({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
+  const cardRef = useWalkthroughTarget("topCategoriesCard");
 
   const topItems = categories.slice(0, 5);
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>
           {t("dashboard.topCategoriesCardTitle")}

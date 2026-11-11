@@ -835,6 +835,8 @@ export const es = {
       improveItem6: "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
       improveItem7: "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
       improveItem8: "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
+      improveItem9: "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
+      improveItem10: "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -1242,6 +1244,9 @@ export const es = {
     walkthroughBack: "Atrás",
     walkthroughStartTx: "Toca + para empezar",
     walkthroughStepCount: "Paso %{current} de %{total}",
+    stepGreetingTitle: "Saludo e Inspiración Diaria",
+    stepGreetingDesc:
+      "Comienza tu día con un saludo personalizado y consejos financieros. Toca el icono de aleatorio para ver una nueva frase.",
     stepNetWorthTitle: "Patrimonio neto",
     stepNetWorthDesc:
       "Esta tarjeta te muestra un resumen financiero completo: calcula tu patrimonio neto total (activos menos pasivos) y el historial de balance.",
@@ -1254,9 +1259,18 @@ export const es = {
     stepSettingsModalTitle: "Opciones de visualización",
     stepSettingsModalDesc:
       "En el modo Simple, verás etiquetas claras sobre dinero y gasto. En el modo Detallado, activos y pasivos completos. ¡Cambia cuando quieras!",
-    stepEyeTitle: "Ocultar saldos",
-    stepEyeDesc:
-      "Toca el ojo para ocultar o mostrar los importes (••••••) cuando uses la app en lugares públicos.",
+    stepQuickActionsTitle: "Acciones Rápidas",
+    stepQuickActionsDesc:
+      "Registra un gasto, ingreso, transferencia entre cuentas o consulta con Kai en un solo toque.",
+    stepCashflowTitle: "Flujo Mensual",
+    stepCashflowDesc:
+      "Monitorea tus ingresos frente a gastos del mes y revisa tu porcentaje de ahorro de un vistazo.",
+    stepAccountsTitle: "Resumen de Cuentas",
+    stepAccountsDesc:
+      "Revisa tus cuentas activas y saldos en tiempo real. Toca Ver todas para gestionar tus cuentas.",
+    stepTopCategoriesTitle: "Categorías Principales de Gasto",
+    stepTopCategoriesDesc:
+      "Observa en qué gastas tu dinero con barras de progreso por categoría. Toca cualquier categoría para ver sus transacciones.",
     stepRecentTxTitle: "Transacciones recientes",
     stepRecentTxDesc:
       "Tus gastos, ingresos y transferencias más recientes aparecen aquí. Toca cualquiera para ver detalles o editar.",

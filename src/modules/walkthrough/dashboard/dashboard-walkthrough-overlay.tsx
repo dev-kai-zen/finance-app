@@ -63,17 +63,27 @@ export function DashboardWalkthroughOverlay({
 
   if (
     step.id === "collapseIcon" ||
-    step.id === "settingsIcon" ||
-    step.id === "eyeIcon"
+    step.id === "settingsIcon"
   ) {
     cutoutPadding = 6;
     cutoutRadius = 24;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;
-  } else if (step.id === "netWorthCard" || step.id === "recentTxCard") {
+  } else if (
+    step.id === "netWorthCard" ||
+    step.id === "recentTxCard" ||
+    step.id === "greetingCard" ||
+    step.id === "quickActionsCard" ||
+    step.id === "cashflowCard" ||
+    step.id === "accountsCard" ||
+    step.id === "topCategoriesCard"
+  ) {
     cutoutPadding = 4;
     cutoutRadius = theme.borderRadius.large;
+  } else if (step.id === "customizeHomeButton") {
+    cutoutPadding = 4;
+    cutoutRadius = 20;
   }
 
   const cutoutX = targetLayout

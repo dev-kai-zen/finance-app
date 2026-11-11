@@ -25,7 +25,10 @@ export {
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";
 export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulations-modal";
 export { useDashboardWalkthrough } from "./dashboard/use-dashboard-walkthrough";
-export { DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard/dashboard-walkthrough-steps";
+export {
+  DASHBOARD_WALKTHROUGH_STEPS,
+  getDashboardWalkthroughSteps,
+} from "./dashboard/dashboard-walkthrough-steps";
 
 export { AccountsWalkthroughOverlay } from "./accounts/accounts-walkthrough-overlay";
 export { useAccountsWalkthrough } from "./accounts/use-accounts-walkthrough";

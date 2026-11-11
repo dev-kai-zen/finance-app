@@ -3,8 +3,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ChevronDown,
   ChevronUp,
-  Eye,
-  EyeOff,
   LayoutGrid,
   Settings2,
   SlidersHorizontal,
@@ -60,12 +58,11 @@ export function DashboardNetWorthCard({
   const cardRef = useWalkthroughTarget("netWorthCard");
   const collapseRef = useWalkthroughTarget("collapseIcon");
   const settingsRef = useWalkthroughTarget("settingsIcon");
-  const eyeRef = useWalkthroughTarget("eyeIcon");
 
   const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
-  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const { isPrivate } = usePrivacyMode();
   const valuesVisible = !isPrivate;
   const [chartVisible, setChartVisible] = useState(true);
   const [displayModeSheetVisible, setDisplayModeSheetVisible] = useState(false);
@@ -160,24 +157,6 @@ export function DashboardNetWorthCard({
               <Settings2 color={theme.colors.textSecondary} size={20} />
             </Pressable>
           ) : null}
-          <Pressable
-            ref={eyeRef as any}
-            collapsable={false}
-            accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
-            accessibilityRole="button"
-            hitSlop={5}
-            onPress={togglePrivacyMode}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            {valuesVisible ? (
-              <Eye color={theme.colors.textSecondary} size={20} />
-            ) : (
-              <EyeOff color={theme.colors.textSecondary} size={20} />
-            )}
-          </Pressable>
         </View>
       </View>
 

@@ -207,6 +207,7 @@ function DashboardScreenContent() {
   }, [refreshDashboard, refreshAccounts, refreshCategories, refreshTransactions, refreshPresets]);
 
   const walkthrough = useDashboardWalkthrough({
+    layout: dashboardLayout,
     onScrollToTarget: handleScrollToTarget,
   });
 

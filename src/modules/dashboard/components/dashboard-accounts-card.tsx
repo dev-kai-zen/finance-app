@@ -7,6 +7,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { AccountWithBalance } from "../types/dashboard.types";
 
@@ -24,11 +25,12 @@ export function DashboardAccountsCard({
   const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const cardRef = useWalkthroughTarget("accountsCard");
 
   const activeAccounts = accounts.filter((a) => !a.isArchived);
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>{t("dashboard.accountsCardTitle")}</Text>
         <Pressable

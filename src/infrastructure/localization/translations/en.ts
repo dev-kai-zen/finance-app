@@ -838,6 +838,8 @@ export const en = {
       improveItem6: "Filter credit card billed items by statement cutoff date and view full statement activities in a dedicated screen.",
       improveItem7: "Show handy arrow buttons to smoothly scroll horizontal tabs, chips, and lists when more items are hidden.",
       improveItem8: "Simplify data reset confirmation by typing RESET instead of the app name.",
+      improveItem9: "Update the dashboard walkthrough to dynamically highlight active cards in your customized order.",
+      improveItem10: "Streamline the net worth card by using the main privacy button in the top navigation bar.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -1244,6 +1246,9 @@ export const en = {
     walkthroughBack: "Back",
     walkthroughStartTx: "Tap + below to start",
     walkthroughStepCount: "Step %{current} of %{total}",
+    stepGreetingTitle: "Greeting & Daily Quote",
+    stepGreetingDesc:
+      "Start your day with a personalized greeting and daily inspirational financial wisdom. Tap the shuffle icon anytime for a fresh quote.",
     stepNetWorthTitle: "Net Worth Overview",
     stepNetWorthDesc:
       "This card gives you a complete financial snapshot—calculating your total net worth (assets minus liabilities) and tracking your balance history.",
@@ -1256,9 +1261,18 @@ export const en = {
     stepSettingsModalTitle: "Display Mode Options",
     stepSettingsModalDesc:
       "In Simple mode, friendly labels focus on cash and current spending. In Detailed mode, you see full assets and liabilities. Switch anytime!",
-    stepEyeTitle: "Privacy Masking",
-    stepEyeDesc:
-      "Tap the eye icon to quickly hide or reveal your balance amounts (••••••), ideal for using the app in public.",
+    stepQuickActionsTitle: "Quick Actions",
+    stepQuickActionsDesc:
+      "Quickly record an expense, log income, transfer funds between accounts, or chat with Kai in a single tap.",
+    stepCashflowTitle: "Monthly Cashflow",
+    stepCashflowDesc:
+      "Track your monthly income, expenses, and net savings rate at a glance. Tap any section to jump straight into detailed reports or transactions.",
+    stepAccountsTitle: "Accounts Snapshot",
+    stepAccountsDesc:
+      "View your active accounts and their current balances. Tap View all to manage your accounts, pockets, and fund groups.",
+    stepTopCategoriesTitle: "Top Spending Categories",
+    stepTopCategoriesDesc:
+      "See where your money goes this month with visual category progress bars. Tap any category to inspect matching transactions.",
     stepRecentTxTitle: "Recent Transactions",
     stepRecentTxDesc:
       "Your latest spending, income, and transfers appear here. Tap any item to inspect its details, attachments, or edit.",

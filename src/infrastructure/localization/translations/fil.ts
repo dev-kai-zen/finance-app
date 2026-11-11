@@ -836,6 +836,8 @@ export const fil = {
       improveItem6: "I-filter ang mga nasingil na bayarin sa credit card ayon sa petsa ng statement at tingnan ang buong talaan nang maayos.",
       improveItem7: "Magpakita ng madaling arrow buttons para mag-scroll nang maayos sa pahigang tabs at chips kapag may nakatagong item.",
       improveItem8: "Padaliin ang pagkumpirma sa pag-reset ng data sa pag-type ng RESET sa halip na pangalan ng app.",
+      improveItem9: "I-update ang walkthrough ng dashboard upang kusa nitong itampok ang mga aktibong card ayon sa iyong pagkakaayos.",
+      improveItem10: "Gawing mas malinis ang card ng net worth gamit ang pangunahing privacy button sa itaas na nabigasyon.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
@@ -1244,6 +1246,9 @@ export const fil = {
     walkthroughBack: "Bumalik",
     walkthroughStartTx: "I-tap ang + sa ibaba para magsimula",
     walkthroughStepCount: "Hakbang %{current} ng %{total}",
+    stepGreetingTitle: "Pagbati at Kasabihan",
+    stepGreetingDesc:
+      "Simulan ang araw na may personal na pagbati at gabay pinansyal. I-tap ang shuffle icon anumang oras para sa bagong kasabihan.",
     stepNetWorthTitle: "Kabuuang Net Worth",
     stepNetWorthDesc:
       "Ipinapakita rito ang iyong kabuuang financial snapshot—kinakalkula ang net worth (assets bawas liabilities) at ang history ng balance.",
@@ -1256,9 +1261,18 @@ export const fil = {
     stepSettingsModalTitle: "Mga Opsyon sa Display",
     stepSettingsModalDesc:
       "Sa Simple mode, madaling basahin ang pera at gastusin. Sa Detalyado, buo ang assets at liabilities. Malilipat mo ito anumang oras!",
-    stepEyeTitle: "Itago ang Halaga",
-    stepEyeDesc:
-      "I-tap ang mata para itago o ipakita ang iyong mga halaga (••••••) kapag may ibang kasama o nasa publiko.",
+    stepQuickActionsTitle: "Mabilisang Aksyon",
+    stepQuickActionsDesc:
+      "Magtala ng gastos, kita, paglipat sa pagitan ng mga account, o makipag-usap kay Kai sa isang pindot lang.",
+    stepCashflowTitle: "Buwanang Daloy ng Pera",
+    stepCashflowDesc:
+      "Subaybayan ang iyong buwanang kita laban sa gastos at makita ang iyong antas ng naipon sa isang sulyap.",
+    stepAccountsTitle: "Pangkalahatang-ideya ng mga Account",
+    stepAccountsDesc:
+      "Tingnan ang iyong mga aktibong account at kasalukuyang balanse. I-tap ang Tingnan Lahat para pamahalaan ang iyong mga account.",
+    stepTopCategoriesTitle: "Nangungunang Kategorya ng Gastos",
+    stepTopCategoriesDesc:
+      "Alamin kung saan napupunta ang iyong pera gamit ang visual progress bar. I-tap ang anumang kategorya upang makita ang mga transaksyon.",
     stepRecentTxTitle: "Kamakailang Transaksyon",
     stepRecentTxDesc:
       "Lalabas dito ang iyong mga bagong gastos, kita, at transfers. I-tap ang alinman para tingnan ang detalye o i-edit.",
