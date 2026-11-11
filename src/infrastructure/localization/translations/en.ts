@@ -849,6 +849,7 @@ export const en = {
       fixItem6: "Fix chart spacing so month labels and recent amounts are fully visible without getting cut off.",
       fixItem7: "Hide account balances, top spending amounts, and category percentages when privacy mode is active.",
       fixItem8: "Fix month selection on the net worth chart so tapping any month highlights that specific point.",
+      fixItem9: "Fix the Top Spending card's View all button to open this month's spending transactions.",
     },
     v140: {
       date: "November 5, 2026",

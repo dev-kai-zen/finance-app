@@ -14,6 +14,7 @@ import type { CategorySpendingItem } from "../types/dashboard.types";
 export interface DashboardTopCategoriesCardProps {
   categories: CategorySpendingItem[];
   currencyCode?: string;
+  onViewAll?: () => void;
   onViewCategories?: () => void;
   onPressCategory?: (categoryId: string) => void;
 }
@@ -21,6 +22,7 @@ export interface DashboardTopCategoriesCardProps {
 export function DashboardTopCategoriesCard({
   categories,
   currencyCode = "PHP",
+  onViewAll,
   onViewCategories,
   onPressCategory,
 }: DashboardTopCategoriesCardProps) {
@@ -32,6 +34,7 @@ export function DashboardTopCategoriesCard({
   const cardRef = useWalkthroughTarget("topCategoriesCard");
 
   const topItems = categories.slice(0, 5);
+  const handleViewAll = onViewAll ?? onViewCategories;
 
   return (
     <View ref={cardRef} collapsable={false} style={styles.card}>
@@ -39,10 +42,10 @@ export function DashboardTopCategoriesCard({
         <Text style={styles.title}>
           {t("dashboard.topCategoriesCardTitle")}
         </Text>
-        {onViewCategories ? (
+        {handleViewAll ? (
           <Pressable
             accessibilityRole="button"
-            onPress={onViewCategories}
+            onPress={handleViewAll}
             style={({ pressed }) => [
               styles.viewAllButton,
               pressed && styles.pressed,

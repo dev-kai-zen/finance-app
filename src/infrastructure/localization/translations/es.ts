@@ -846,6 +846,7 @@ export const es = {
       fixItem6: "Corrige el espaciado de los gráficos para que los meses y montos sean totalmente visibles sin cortarse.",
       fixItem7: "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
       fixItem8: "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
+      fixItem9: "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
     },
     v140: {
       date: "5 de noviembre de 2026",

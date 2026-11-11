@@ -524,7 +524,11 @@ function DashboardScreenContent() {
             key="topCategories"
             categories={summary.topSpendingCategories}
             currencyCode={currencyPreferences.defaultCurrency}
-            onViewCategories={() => router.navigate("/categories" as any)}
+            onViewAll={() =>
+              router.navigate(
+                "/transactions?type=expense&datePreset=this_month" as any,
+              )
+            }
             onPressCategory={(categoryId) =>
               router.navigate(
                 `/transactions?categoryId=${encodeURIComponent(categoryId)}&datePreset=this_month` as any,

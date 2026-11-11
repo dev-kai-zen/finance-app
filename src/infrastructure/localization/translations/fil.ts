@@ -847,6 +847,7 @@ export const fil = {
       fixItem6: "Ayusin ang espasyo ng chart upang ganap na makita ang mga buwan at halaga nang hindi napuputol.",
       fixItem7: "Itago ang mga balanse ng account, halaga ng gastusin, at porsyento ng kategorya kapag naka-on ang privacy mode.",
       fixItem8: "Ayusin ang pagpili ng buwan sa net worth chart upang itampok ang eksaktong buwang pinindot.",
+      fixItem9: "Ayusin ang View all button sa card ng Top Spending upang buksan ang mga gastusin ngayong buwan.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
