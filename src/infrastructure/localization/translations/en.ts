@@ -847,6 +847,7 @@ export const en = {
       fixItem5: "Prevent app lock from triggering when sharing files or selecting photos.",
       fixItem6: "Fix chart spacing so month labels and recent amounts are fully visible without getting cut off.",
       fixItem7: "Hide account balances, top spending amounts, and category percentages when privacy mode is active.",
+      fixItem8: "Fix month selection on the net worth chart so tapping any month highlights that specific point.",
     },
     v140: {
       date: "November 5, 2026",

@@ -844,6 +844,7 @@ export const es = {
       fixItem5: "Evita que la aplicación se bloquee al compartir archivos o seleccionar fotos.",
       fixItem6: "Corrige el espaciado de los gráficos para que los meses y montos sean totalmente visibles sin cortarse.",
       fixItem7: "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
+      fixItem8: "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
     },
     v140: {
       date: "5 de noviembre de 2026",

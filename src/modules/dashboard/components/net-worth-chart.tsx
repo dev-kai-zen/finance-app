@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   View,
+  type GestureResponderEvent,
   type LayoutChangeEvent,
 } from "react-native";
 import Svg, {
@@ -47,6 +48,16 @@ export function NetWorthChart({
   );
   const selectedPointIndexRef = useRef<number | null>(null);
   selectedPointIndexRef.current = selectedPointIndex;
+  const chartWrapperRef = useRef<View>(null);
+  const chartPageXRef = useRef<number | null>(null);
+
+  const measureChartPosition = () => {
+    chartWrapperRef.current?.measure((_x, _y, _width, _height, pageX) => {
+      if (typeof pageX === "number") {
+        chartPageXRef.current = pageX;
+      }
+    });
+  };
 
   useEffect(() => {
     setSelectedPointIndex(null);
@@ -94,6 +105,17 @@ export function NetWorthChart({
     return closestIndex;
   };
 
+  const getTouchX = (evt: GestureResponderEvent) => {
+    if (
+      typeof evt.nativeEvent.pageX === "number" &&
+      chartPageXRef.current !== null &&
+      chartPageXRef.current > 0
+    ) {
+      return evt.nativeEvent.pageX - chartPageXRef.current;
+    }
+    return evt.nativeEvent.locationX;
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -104,7 +126,8 @@ export function NetWorthChart({
         );
       },
       onPanResponderGrant: (evt) => {
-        const closest = getClosestIndex(evt.nativeEvent.locationX);
+        measureChartPosition();
+        const closest = getClosestIndex(getTouchX(evt));
         if (selectedPointIndexRef.current === closest) {
           setSelectedPointIndex(null);
         } else {
@@ -112,7 +135,7 @@ export function NetWorthChart({
         }
       },
       onPanResponderMove: (evt) => {
-        const closest = getClosestIndex(evt.nativeEvent.locationX);
+        const closest = getClosestIndex(getTouchX(evt));
         setSelectedPointIndex(closest);
       },
     }),
@@ -140,8 +163,14 @@ export function NetWorthChart({
       onLayout={handleLayout}
     >
       {width > 0 ? (
-        <View style={styles.chartWrapper} {...panResponder.panHandlers}>
-          <Svg height={CHART_HEIGHT} width={width}>
+        <View
+          ref={chartWrapperRef}
+          collapsable={false}
+          style={styles.chartWrapper}
+          onLayout={() => measureChartPosition()}
+          {...panResponder.panHandlers}
+        >
+          <Svg height={CHART_HEIGHT} width={width} pointerEvents="none">
             {ticks.map((tick) => {
               const y = yForValue(tick);
               return (
