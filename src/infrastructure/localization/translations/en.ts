@@ -840,6 +840,7 @@ export const en = {
       improveItem8: "Simplify data reset confirmation by typing RESET instead of the app name.",
       improveItem9: "Update the dashboard walkthrough to dynamically highlight active cards in your customized order.",
       improveItem10: "Streamline the net worth card by using the main privacy button in the top navigation bar.",
+      improveItem11: "Open an account's details and settings directly when tapping its card on the dashboard.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

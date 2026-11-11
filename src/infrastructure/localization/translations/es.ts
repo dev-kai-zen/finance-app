@@ -837,6 +837,7 @@ export const es = {
       improveItem8: "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
       improveItem9: "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
       improveItem10: "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
+      improveItem11: "Abre los detalles y ajustes de una cuenta directamente al tocar su tarjeta en el panel principal.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

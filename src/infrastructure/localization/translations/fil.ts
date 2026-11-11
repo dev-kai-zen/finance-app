@@ -838,6 +838,7 @@ export const fil = {
       improveItem8: "Padaliin ang pagkumpirma sa pag-reset ng data sa pag-type ng RESET sa halip na pangalan ng app.",
       improveItem9: "I-update ang walkthrough ng dashboard upang kusa nitong itampok ang mga aktibong card ayon sa iyong pagkakaayos.",
       improveItem10: "Gawing mas malinis ang card ng net worth gamit ang pangunahing privacy button sa itaas na nabigasyon.",
+      improveItem11: "Direktang buksan ang mga detalye at setting ng account kapag pinindot ang card nito sa dashboard.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

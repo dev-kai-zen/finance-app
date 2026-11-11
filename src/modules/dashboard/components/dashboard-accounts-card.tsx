@@ -15,11 +15,13 @@ import type { AccountWithBalance } from "../types/dashboard.types";
 export interface DashboardAccountsCardProps {
   accounts: AccountWithBalance[];
   onViewAll: () => void;
+  onPressAccount?: (accountId: string) => void;
 }
 
 export function DashboardAccountsCard({
   accounts,
   onViewAll,
+  onPressAccount,
 }: DashboardAccountsCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -73,7 +75,9 @@ export function DashboardAccountsCard({
                         acc.currencyCode,
                       )}`
                 }
-                onPress={onViewAll}
+                onPress={() =>
+                  onPressAccount ? onPressAccount(acc.id) : onViewAll()
+                }
                 style={({ pressed }) => [
                   styles.accountPill,
                   pressed && styles.pressed,

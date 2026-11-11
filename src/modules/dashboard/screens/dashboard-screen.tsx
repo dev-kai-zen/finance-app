@@ -511,6 +511,11 @@ function DashboardScreenContent() {
             key="accountsStrip"
             accounts={summary.accountsWithBalances}
             onViewAll={() => router.navigate("/accounts" as any)}
+            onPressAccount={(accountId) =>
+              router.navigate(
+                `/accounts?accountId=${encodeURIComponent(accountId)}` as any,
+              )
+            }
           />
         );
       case "topCategories":
