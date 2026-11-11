@@ -850,6 +850,8 @@ export const en = {
       fixItem7: "Hide account balances, top spending amounts, and category percentages when privacy mode is active.",
       fixItem8: "Fix month selection on the net worth chart so tapping any month highlights that specific point.",
       fixItem9: "Fix the Top Spending card's View all button to open this month's spending transactions.",
+      fixItem10:
+        "Fix visual glitch and unintended circle animation when enabling toggles across forms and settings.",
     },
     v140: {
       date: "November 5, 2026",

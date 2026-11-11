@@ -847,6 +847,8 @@ export const es = {
       fixItem7: "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
       fixItem8: "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
       fixItem9: "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
+      fixItem10:
+        "Corrige el fallo visual y la animación circular no deseada al activar interruptores en formularios y ajustes.",
     },
     v140: {
       date: "5 de noviembre de 2026",
