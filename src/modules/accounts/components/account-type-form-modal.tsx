@@ -302,11 +302,13 @@ function AccountTypeFormModalContent({
                 ref={nameRef as never}
                 editable={!mutations.pending && !isProtected}
                 maxLength={60}
+                multiline={false}
+                numberOfLines={1}
                 onChangeText={(text) => {
                   setName(text);
                   if (localError) setLocalError(null);
                 }}
-                placeholder="e.g. Bank Accounts, Investments, Credit Cards..."
+                placeholder="e.g. Bank Accounts, Savings"
                 placeholderTextColor={theme.colors.textMuted}
                 style={[
                   styles.textInput,

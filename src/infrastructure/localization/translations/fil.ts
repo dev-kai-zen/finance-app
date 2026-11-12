@@ -842,6 +842,7 @@ export const fil = {
       improveItem12: "Panatilihing nakikita ang pinakahuling balanse kapag nag-e-edit ng account kahit naka-on ang privacy mode.",
       improveItem13: "Pagsama-samahin ang limit at statement ng credit card sa iisang maayos na card sa setup ng account.",
       improveItem14: "Ipakita ang mga balanse ng mga naka-archive na account at pocket kahit naka-on ang privacy mode.",
+      improveItem15: "Pinaikli ang halimbawa ng pangalan ng grupo ng account upang manatiling maayos sa isang linya.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
