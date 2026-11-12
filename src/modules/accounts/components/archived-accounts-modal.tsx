@@ -150,7 +150,11 @@ export function ArchivedAccountsModal({
               <View style={styles.listContainer}>
                 {accounts.map((account) => (
                   <View key={account.id} style={styles.listItem}>
-                    <AccountRow account={account} onPress={() => onSelectAccount(account)} />
+                    <AccountRow
+                      account={account}
+                      ignorePrivacy
+                      onPress={() => onSelectAccount(account)}
+                    />
                     <View style={styles.actionRow}>
                       {account.isDeletable && onPermanentDeleteAccount ? (
                         <Pressable
@@ -230,6 +234,7 @@ export function ArchivedAccountsModal({
                       <AccountAmountText
                         amountMinorUnits={pocket.currentBalanceMinorUnits}
                         currencyCode={currencyCode}
+                        ignorePrivacy
                         variant="body"
                       />
                     </Pressable>

@@ -11,9 +11,11 @@ import { useDefaultAccounts, usePrivacyMode } from "@/modules/settings";
 export function AccountRow({
   account,
   onPress,
+  ignorePrivacy = false,
 }: {
   account: AccountListItem;
   onPress: () => void;
+  ignorePrivacy?: boolean;
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
@@ -26,7 +28,8 @@ export function AccountRow({
     account.currentBalanceMinorUnits !== undefined
       ? account.currentBalanceMinorUnits
       : account.openingBalanceMinorUnits;
-  const amount = isPrivate
+  const shouldHide = isPrivate && !ignorePrivacy;
+  const amount = shouldHide
     ? "••••••"
     :
     account.currencyCode === "PHP"
