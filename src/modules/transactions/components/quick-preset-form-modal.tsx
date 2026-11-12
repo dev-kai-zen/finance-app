@@ -10,6 +10,14 @@ import {
   KeyboardAwareForm,
   NotificationModal,
 } from "@/components";
+import {
+  DraggableTourChip,
+  PresetFormWalkthroughOverlay,
+  usePresetFormWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -50,7 +58,16 @@ function allCategories(categories: Category[]): Category[] {
   ]);
 }
 
-export function QuickPresetFormModal({
+export function QuickPresetFormModal(props: QuickPresetFormModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <QuickPresetFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function QuickPresetFormModalContent({
   visible,
   preset = null,
   accounts,
@@ -64,6 +81,8 @@ export function QuickPresetFormModal({
 }: QuickPresetFormModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = usePresetFormWalkthrough();
+  const saveRef = useWalkthroughTarget("presetFormSave");
   const [transactionName, setTransactionName] = useState("");
   const [mode, setMode] = useState<TransactionType>("expense");
   const [accountId, setAccountId] = useState("");
@@ -288,6 +307,7 @@ export function QuickPresetFormModal({
       <FullScreenFormModal
         isDirty={isDirty}
         pending={pending}
+        saveButtonRef={saveRef}
         saveDisabled={
           pending ||
           !transactionName.trim() ||
@@ -304,93 +324,104 @@ export function QuickPresetFormModal({
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.tabBar}>
-            {(["expense", "income", "transfer"] as const).map((value) => {
-              const active = mode === value;
-              const label = value[0].toUpperCase() + value.slice(1);
-              const activeColor =
-                value === "expense"
-                  ? theme.colors.danger
-                  : value === "income"
-                    ? theme.colors.success
-                    : theme.colors.info;
+          <WalkthroughTarget id="presetFormType">
+            <View style={styles.tabBar}>
+              {(["expense", "income", "transfer"] as const).map((value) => {
+                const active = mode === value;
+                const label = value[0].toUpperCase() + value.slice(1);
+                const activeColor =
+                  value === "expense"
+                    ? theme.colors.danger
+                    : value === "income"
+                      ? theme.colors.success
+                      : theme.colors.info;
 
-              return (
-                <Pressable
-                  key={value}
-                  accessibilityLabel={`Switch to ${label}`}
-                  accessibilityRole="button"
-                  disabled={pending}
-                  onPress={() => changeMode(value)}
-                  style={[
-                    styles.tabItem,
-                    active && styles.tabItemActive,
-                    active && { backgroundColor: activeColor },
-                  ]}
-                >
-                  <Text
+                return (
+                  <Pressable
+                    key={value}
+                    accessibilityLabel={`Switch to ${label}`}
+                    accessibilityRole="button"
+                    disabled={pending}
+                    onPress={() => changeMode(value)}
                     style={[
-                      styles.tabText,
-                      active && styles.tabTextActive,
+                      styles.tabItem,
+                      active && styles.tabItemActive,
+                      active && { backgroundColor: activeColor },
                     ]}
                   >
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Text
+                      style={[
+                        styles.tabText,
+                        active && styles.tabTextActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </WalkthroughTarget>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>TRANSACTION NAME</Text>
-            <TextInput
-              maxLength={100}
-              onChangeText={(value) => {
-                clearFormError();
-                setTransactionName(value);
-              }}
-              placeholder="Name"
-              placeholderTextColor={theme.colors.textSecondary}
-              style={styles.nameInput}
-              value={transactionName}
-            />
-          </View>
-
-          <View style={styles.includeAmountPanel}>
-            <Host matchContents style={styles.nativeControl}>
-              <Checkbox
-                disabled={pending}
-                label="Include amount"
-                onValueChange={(value) => {
-                  clearFormError();
-                  setIncludeAmount(value);
-                }}
-                value={includeAmount}
-              />
-            </Host>
-          </View>
-
-          {includeAmount ? (
+          <WalkthroughTarget id="presetFormName">
             <View style={styles.inputGroup}>
-              <AmountCalculatorField
-                amountMinorUnits={amountMinorUnits}
-                amountSign={mode === "transfer" ? "transfer" : amountSign}
-                currencyCode={currencyCode}
-                disabled={pending}
-                label="Amount"
-                showSignToggle={true}
-                onOpenCalculator={() => setCalculatorOpen(true)}
-                onToggleSign={
-                  mode === "transfer"
-                    ? undefined
-                    : () => {
-                        clearFormError();
-                        setAmountSign((value) => (value === "+" ? "-" : "+"));
-                      }
-                }
+              <Text style={styles.fieldLabel}>TRANSACTION NAME</Text>
+              <TextInput
+                maxLength={100}
+                onChangeText={(value) => {
+                  clearFormError();
+                  setTransactionName(value);
+                }}
+                placeholder="Name"
+                placeholderTextColor={theme.colors.textSecondary}
+                style={styles.nameInput}
+                value={transactionName}
               />
             </View>
-          ) : null}
+          </WalkthroughTarget>
+
+          <WalkthroughTarget id="presetFormAmount">
+            <View>
+              <View style={styles.includeAmountPanel}>
+                <Host matchContents style={styles.nativeControl}>
+                  <Checkbox
+                    disabled={pending}
+                    label="Include amount"
+                    onValueChange={(value) => {
+                      clearFormError();
+                      setIncludeAmount(value);
+                    }}
+                    value={includeAmount}
+                  />
+                </Host>
+              </View>
+
+              {includeAmount ? (
+                <View style={styles.inputGroup}>
+                  <AmountCalculatorField
+                    amountMinorUnits={amountMinorUnits}
+                    amountSign={mode === "transfer" ? "transfer" : amountSign}
+                    currencyCode={currencyCode}
+                    disabled={pending}
+                    label="Amount"
+                    showSignToggle={true}
+                    onOpenCalculator={() => setCalculatorOpen(true)}
+                    onToggleSign={
+                      mode === "transfer"
+                        ? undefined
+                        : () => {
+                            clearFormError();
+                            setAmountSign((value) => (value === "+" ? "-" : "+"));
+                          }
+                    }
+                  />
+                </View>
+              ) : null}
+            </View>
+          </WalkthroughTarget>
+
+          <WalkthroughTarget id="presetFormDetails">
+            <View>
 
           <View style={styles.inputGroup}>
             {mode === "transfer" ? (
@@ -561,6 +592,8 @@ export function QuickPresetFormModal({
               </Pressable>
             </View>
           )}
+          </View>
+          </WalkthroughTarget>
 
           <View style={styles.inputGroup}>
             <Text style={styles.fieldLabel}>NOTE</Text>
@@ -579,6 +612,22 @@ export function QuickPresetFormModal({
             />
           </View>
         </KeyboardAwareForm>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <PresetFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       <AmountCalculatorModal

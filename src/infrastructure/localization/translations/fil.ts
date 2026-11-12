@@ -857,6 +857,7 @@ export const fil = {
       improveItem24: "Magpakita ng floating scroll down arrow sa mga scrollable na sheet at form kapag may mga nakatagong item sa ibaba.",
       improveItem25: "Gawing mas simple ang customize fields sheet sa pamamagitan ng pag-alis ng paulit-ulit na paglalarawan para sa mga laging bukas na field.",
       improveItem26: "I-update ang select labels modal na may chip para sa pamamahala ng mga label at pabilog na close button.",
+      improveItem27: "Magdagdag ng naililipat na gabay na chip sa mga modal at sheet para sa mabilisang walkthrough.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
@@ -1633,6 +1634,122 @@ export const fil = {
     stepSaveTitle: "I-save ang Iskedyul",
     stepSaveDesc:
       "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
+  },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Uri ng Grupo",
+    stepGroupTypeDesc:
+      "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
+    stepNameTitle: "Pangalan ng Kategorya",
+    stepNameDesc:
+      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
+    stepIconTitle: "Icon ng Kategorya",
+    stepIconDesc:
+      "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",
+    stepColorTitle: "Kulay ng Tema",
+    stepColorDesc:
+      "Pumili ng natatanging kulay para sa mga tsart at mabilis na pagkilala.",
+    stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
+    stepCustomColorDesc:
+      "Maglagay ng sariling hex color code upang personal na iayon ang iyong mga kategorya.",
+    stepCancelTitle: "Kanselahin",
+    stepCancelDesc:
+      "Ibasura ang mga pagbabago at bumalik nang hindi gumagawa ng kategorya.",
+    stepSaveTitle: "Gumawa ng Kategorya",
+    stepSaveDesc:
+      "I-save at simulan ang paggamit sa bagong kategorya para sa mga transaksyon at badyet.",
+  },
+  pocketFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Pocket",
+    stepNameDesc:
+      "Magbigay ng malinaw na pangalan para sa pocket, tulad ng Emergency Fund o Bakasyon.",
+    stepDefaultExpenseTitle: "Default para sa Gastusin",
+    stepDefaultExpenseDesc:
+      "Kapag pinagana, ang mga bagong gastusin sa account na ito ay awtomatikong gagamit sa pocket na ito.",
+    stepDefaultIncomeTitle: "Default para sa Kita",
+    stepDefaultIncomeDesc:
+      "Kapag pinagana, ang mga kita sa account na ito ay awtomatikong mapupunta sa pocket na ito.",
+    stepSaveTitle: "I-save ang Pocket",
+    stepSaveDesc:
+      "I-save at simulan ang paggamit ng pocket na ito sa iyong account.",
+  },
+  presetFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Preset",
+    stepNameDesc:
+      "Maglagay ng pangalan para sa preset, tulad ng Pang-araw-araw na Kape o Pamasahe.",
+    stepTypeTitle: "Uri ng Transaksyon",
+    stepTypeDesc:
+      "Pumili kung ito ay para sa gastusin o kita.",
+    stepAmountTitle: "Halaga ng Preset",
+    stepAmountDesc:
+      "Maaari kang maglagay ng nakapirming halaga na kusa nang mapupuno.",
+    stepDetailsTitle: "Kategorya at Account",
+    stepDetailsDesc:
+      "Ikabit ang kategorya at account para sa napakabilis na pagtatala.",
+    stepSaveTitle: "I-save ang Preset",
+    stepSaveDesc:
+      "I-save upang magamit agad ang shortcut sa transaction form.",
+  },
+  noteEditorWalkthrough: {
+    stepTitleTitle: "Pamagat ng Tala",
+    stepTitleDesc:
+      "Maglagay ng maikling pamagat para sa iyong pinansyal na tala o paalala.",
+    stepContentTitle: "Nilalaman ng Tala",
+    stepContentDesc:
+      "Isulat ang mga detalye, plano sa pera, o listahan.",
+    stepColorTitle: "Kulay ng Tala",
+    stepColorDesc:
+      "Pumili ng kulay upang pangkatin ang iyong mga kaugnay na tala.",
+    stepPinTitle: "I-pin sa Itaas",
+    stepPinDesc:
+      "Panatilihin ang mahahalagang tala sa pinakatuktok para mabilis makita.",
+    stepAttachmentsTitle: "Mga Kalakip na Larawan",
+    stepAttachmentsDesc:
+      "Maglakip ng litrato ng resibo, invoice, o warranty sa talang ito.",
+    stepSaveTitle: "I-save ang Tala",
+    stepSaveDesc:
+      "I-tap ang checkmark upang i-save ang tala sa iyong device.",
+  },
+  customizeDashboardWalkthrough: {
+    stepPreviewTitle: "Preview ng Dashboard",
+    stepPreviewDesc:
+      "Tingnan ang mga pagbabago habang inaayos mo ang iyong mga card.",
+    stepCardsTitle: "Mga Card at Widget",
+    stepCardsDesc:
+      "I-on o i-off at i-drag upang baguhin ang pagkakasunod-sunod ng mga widget.",
+    stepDoneTitle: "Tapos Na",
+    stepDoneDesc:
+      "I-save ang iyong mga pagbabago at bumalik sa iyong dashboard.",
+  },
+  txFilterWalkthrough: {
+    stepDateTitle: "Saklaw ng Petsa",
+    stepDateDesc:
+      "Salain ang mga transaksyon ayon sa araw, linggo, buwan, o sariling saklaw ng petsa.",
+    stepTypeTitle: "Mga Uri ng Transaksyon",
+    stepTypeDesc:
+      "Piliin kung gastusin, kita, o transfer ang nais makita.",
+    stepAccountsTitle: "Mga Account at Kategorya",
+    stepAccountsDesc:
+      "Pumili ng isa o maraming account at kategorya upang paliitin ang listahan.",
+    stepAmountTitle: "Saklaw ng Halaga",
+    stepAmountDesc:
+      "Maglagay ng pinakamababa at pinakamataas na halaga upang mahanap ang transaksyon.",
+    stepApplyTitle: "Ilapat ang Salain",
+    stepApplyDesc:
+      "Ilapat ang mga filter upang makita agad ang mga napiling transaksyon.",
+  },
+  dataImportWalkthrough: {
+    stepFileTitle: "Pumili ng File",
+    stepFileDesc:
+      "Pumili ng CSV, OFX, o QFX bank statement file mula sa iyong device.",
+    stepMappingTitle: "Pagmamapa ng Kolum",
+    stepMappingDesc:
+      "Itugma ang mga kolum ng iyong file (petsa, halaga, payee, at tala) sa mga field ng app.",
+    stepAccountTitle: "Napiling Account",
+    stepAccountDesc:
+      "Piliin kung saang account mapupunta ang mga inangkat na transaksyon.",
+    stepReviewTitle: "Pagsusuri at Pag-import",
+    stepReviewDesc:
+      "Suriin ang mga transaksyon, ayusin ang kategorya, at ligtas na i-import ang mga ito.",
   },
   budgetFormWalkthrough: {
     introTitle: "Bagong Badyet sa Kategorya",

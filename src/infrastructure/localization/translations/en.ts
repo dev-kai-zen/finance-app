@@ -859,6 +859,7 @@ export const en = {
       improveItem24: "Show a floating scroll down arrow across scrollable sheets and forms when items are hidden below.",
       improveItem25: "Simplify the customize fields sheet by removing repetitive descriptions for always-on fields.",
       improveItem26: "Update the select labels modal with a dedicated manage labels chip and a circular close button.",
+      improveItem27: "Add draggable tour guide chips to all form modals and sheets for instant, on-demand walkthroughs.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -1639,6 +1640,122 @@ export const en = {
     stepSaveTitle: "Save Schedule",
     stepSaveDesc:
       "Tap to save and activate your recurring scheduled transaction.",
+  },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Group Type",
+    stepGroupTypeDesc:
+      "Choose whether this category tracks Expenses (spending) or Income (earnings).",
+    stepNameTitle: "Category Name",
+    stepNameDesc:
+      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
+    stepIconTitle: "Category Icon",
+    stepIconDesc:
+      "Pick an intuitive icon to visually represent this category across transactions and reports.",
+    stepColorTitle: "Theme Color",
+    stepColorDesc:
+      "Choose a distinctive accent color for charts, badges, and quick identification.",
+    stepCustomColorTitle: "Add Custom Color",
+    stepCustomColorDesc:
+      "Pick or enter any custom hex color code to perfectly personalize your categories.",
+    stepCancelTitle: "Cancel",
+    stepCancelDesc:
+      "Discard changes and return without creating a category.",
+    stepSaveTitle: "Create Category",
+    stepSaveDesc:
+      "Save and activate your new category to use in transactions and budgets.",
+  },
+  pocketFormWalkthrough: {
+    stepNameTitle: "Pocket Name",
+    stepNameDesc:
+      "Give this pocket or envelope a clear sub-account name, such as Emergency Fund, Vacation, or Tax Reserve.",
+    stepDefaultExpenseTitle: "Default for Expenses",
+    stepDefaultExpenseDesc:
+      "When enabled, expense transactions created for this account will automatically choose this pocket.",
+    stepDefaultIncomeTitle: "Default for Income",
+    stepDefaultIncomeDesc:
+      "When enabled, income deposits for this account will automatically route into this pocket.",
+    stepSaveTitle: "Save Pocket",
+    stepSaveDesc:
+      "Save and activate this pocket under your account to start managing isolated balances.",
+  },
+  presetFormWalkthrough: {
+    stepNameTitle: "Preset Name",
+    stepNameDesc:
+      "Enter a descriptive title for this quick preset, like Daily Coffee or Subway Pass.",
+    stepTypeTitle: "Transaction Type",
+    stepTypeDesc:
+      "Choose whether this preset is for recurring expenses or income.",
+    stepAmountTitle: "Pre-filled Amount",
+    stepAmountDesc:
+      "Optionally set a fixed amount to automatically fill in when tapping this preset.",
+    stepDetailsTitle: "Category & Account",
+    stepDetailsDesc:
+      "Attach a default category and payment account for lightning-fast 1-tap logging.",
+    stepSaveTitle: "Save Quick Preset",
+    stepSaveDesc:
+      "Save to immediately display this shortcut on your Transaction form for instant entry.",
+  },
+  noteEditorWalkthrough: {
+    stepTitleTitle: "Note Title",
+    stepTitleDesc:
+      "Add a concise title to organize your financial thoughts, receipts, or reminders.",
+    stepContentTitle: "Note Content",
+    stepContentDesc:
+      "Write down detailed notes, financial plans, checklists, or transaction summaries.",
+    stepColorTitle: "Color Coding",
+    stepColorDesc:
+      "Pick an accent color to visually group related notes in your notebook.",
+    stepPinTitle: "Pin to Top",
+    stepPinDesc:
+      "Keep your most important financial notes pinned right at the very top.",
+    stepAttachmentsTitle: "Attachments",
+    stepAttachmentsDesc:
+      "Attach photos of receipts, invoices, warranties, or documents directly to this note.",
+    stepSaveTitle: "Save Note",
+    stepSaveDesc:
+      "Tap the checkmark to save your note securely in your local database.",
+  },
+  customizeDashboardWalkthrough: {
+    stepPreviewTitle: "Dashboard Preview",
+    stepPreviewDesc:
+      "See live updates as you toggle and reorder your cards.",
+    stepCardsTitle: "Cards & Widgets",
+    stepCardsDesc:
+      "Toggle visibility and drag to rearrange the order of widgets on your home screen.",
+    stepDoneTitle: "Done",
+    stepDoneDesc:
+      "Save your layout preferences and return to your customized dashboard.",
+  },
+  txFilterWalkthrough: {
+    stepDateTitle: "Date Range",
+    stepDateDesc:
+      "Filter transactions by day, week, month, quarter, year, or custom date ranges.",
+    stepTypeTitle: "Transaction Types",
+    stepTypeDesc:
+      "Filter by Expense, Income, or Transfer records.",
+    stepAccountsTitle: "Accounts & Categories",
+    stepAccountsDesc:
+      "Select one or multiple accounts and categories to narrow down your view.",
+    stepAmountTitle: "Amount Limits",
+    stepAmountDesc:
+      "Set minimum and maximum amount thresholds to pinpoint specific transactions.",
+    stepApplyTitle: "Apply Filters",
+    stepApplyDesc:
+      "Apply your filters to view refined transaction lists instantly.",
+  },
+  dataImportWalkthrough: {
+    stepFileTitle: "Select File",
+    stepFileDesc:
+      "Choose a CSV, OFX, or QFX bank statement file from your device.",
+    stepMappingTitle: "Column Mapping",
+    stepMappingDesc:
+      "Match your bank file's date, amount, payee, and notes columns with app fields.",
+    stepAccountTitle: "Target Account",
+    stepAccountDesc:
+      "Select which account these imported transactions belong to.",
+    stepReviewTitle: "Review & Commit",
+    stepReviewDesc:
+      "Inspect imported transactions, adjust categories or tags, and safely commit them.",
   },
   budgetFormWalkthrough: {
     introTitle: "New Category Budget",

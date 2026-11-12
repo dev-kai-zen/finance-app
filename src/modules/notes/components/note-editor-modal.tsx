@@ -20,6 +20,13 @@ import {
   NotificationModal,
   UnsavedChangesModal,
 } from "@/components";
+import {
+  DraggableTourChip,
+  NoteEditorWalkthroughOverlay,
+  useNoteEditorWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AppTheme } from "@/constants/theme";
 import {
@@ -48,7 +55,16 @@ export interface NoteEditorModalProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-export function NoteEditorModal({
+export function NoteEditorModal(props: NoteEditorModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <NoteEditorModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function NoteEditorModalContent({
   visible,
   note,
   saving = false,
@@ -59,6 +75,7 @@ export function NoteEditorModal({
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = useNoteEditorWalkthrough();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -236,26 +253,28 @@ export function NoteEditorModal({
 
             <View style={styles.headerRight}>
               {/* Pin Toggle */}
-              <Pressable
-                accessibilityLabel="Pin note"
-                accessibilityRole="button"
-                hitSlop={8}
-                onPress={() => setIsPinned((prev) => !prev)}
-                style={[
-                  styles.pinButton,
-                  isPinned && styles.pinButtonActive,
-                ]}
-              >
-                <Pin
-                  color={
-                    isPinned
-                      ? theme.colors.primary
-                      : theme.colors.textSecondary
-                  }
-                  fill={isPinned ? theme.colors.primary : "none"}
-                  size={18}
-                />
-              </Pressable>
+              <WalkthroughTarget id="noteEditorPin">
+                <Pressable
+                  accessibilityLabel="Pin note"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setIsPinned((prev) => !prev)}
+                  style={[
+                    styles.pinButton,
+                    isPinned && styles.pinButtonActive,
+                  ]}
+                >
+                  <Pin
+                    color={
+                      isPinned
+                        ? theme.colors.primary
+                        : theme.colors.textSecondary
+                    }
+                    fill={isPinned ? theme.colors.primary : "none"}
+                    size={18}
+                  />
+                </Pressable>
+              </WalkthroughTarget>
 
               {note && onDelete ? (
                 <Pressable
@@ -273,25 +292,27 @@ export function NoteEditorModal({
               ) : null}
 
               {/* Save Button */}
-              <Pressable
-                accessibilityLabel="Save note"
-                accessibilityRole="button"
-                disabled={saving || picking}
-                onPress={handleSave}
-                style={[
-                  styles.saveButton,
-                  (saving || picking) && styles.disabledButton,
-                ]}
-              >
-                {saving ? (
-                  <ActivityIndicator color={theme.colors.onPrimary} size="small" />
-                ) : (
-                  <>
-                    <Check color={theme.colors.onPrimary} size={16} />
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  </>
-                )}
-              </Pressable>
+              <WalkthroughTarget id="noteEditorSave">
+                <Pressable
+                  accessibilityLabel="Save note"
+                  accessibilityRole="button"
+                  disabled={saving || picking}
+                  onPress={handleSave}
+                  style={[
+                    styles.saveButton,
+                    (saving || picking) && styles.disabledButton,
+                  ]}
+                >
+                  {saving ? (
+                    <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                  ) : (
+                    <>
+                      <Check color={theme.colors.onPrimary} size={16} />
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    </>
+                  )}
+                </Pressable>
+              </WalkthroughTarget>
             </View>
           </View>
 
@@ -302,7 +323,8 @@ export function NoteEditorModal({
             showsVerticalScrollIndicator={false}
           >
             {/* Color Palette (Placed above Note Title so it's always visible) */}
-            <View style={styles.topPaletteContainer}>
+            <WalkthroughTarget id="noteEditorColor">
+              <View style={styles.topPaletteContainer}>
               <HorizontalScrollView
                 contentContainerStyle={styles.paletteScrollContent}
                 keyboardShouldPersistTaps="handled"
@@ -399,8 +421,10 @@ export function NoteEditorModal({
                 </Pressable>
               </HorizontalScrollView>
             </View>
+          </WalkthroughTarget>
 
-            {/* Title Input */}
+          {/* Title Input */}
+          <WalkthroughTarget id="noteEditorTitle">
             <TextInput
               accessibilityLabel="Note title"
               onChangeText={setTitle}
@@ -409,8 +433,10 @@ export function NoteEditorModal({
               style={styles.titleInput}
               value={title}
             />
+          </WalkthroughTarget>
 
-            {/* Content Input */}
+          {/* Content Input */}
+          <WalkthroughTarget id="noteEditorContent">
             <TextInput
               accessibilityLabel="Note content"
               multiline
@@ -422,8 +448,10 @@ export function NoteEditorModal({
               textAlignVertical="top"
               value={content}
             />
+          </WalkthroughTarget>
 
-            {/* Photo Attachments Grid */}
+          {/* Photo Attachments Grid */}
+          <WalkthroughTarget id="noteEditorAttachments">
             <NoteAttachmentsGrid
               drafts={drafts}
               existingAttachments={existingAttachments}
@@ -433,7 +461,24 @@ export function NoteEditorModal({
               onRemoveExisting={markExistingAttachmentForRemoval}
               picking={picking}
             />
-          </ScrollView>
+          </WalkthroughTarget>
+        </ScrollView>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <NoteEditorWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
         </KeyboardAvoidingView>
       </Modal>
 

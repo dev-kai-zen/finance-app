@@ -7,6 +7,14 @@ import {
   NotificationModal,
   ThemedSwitch,
 } from "@/components";
+import {
+  DraggableTourChip,
+  PocketFormWalkthroughOverlay,
+  usePocketFormWalkthrough,
+  useWalkthroughTarget,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import { AccountField } from "@/modules/accounts/components/account-ui";
 import type { AppTheme } from "@/constants/theme";
 import type { AccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
@@ -16,7 +24,23 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useDefaultAccounts } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 
-export function PocketFormModal({
+export function PocketFormModal(props: {
+  visible: boolean;
+  account: AccountListItem | null;
+  pocket?: PocketListItem;
+  mutations: AccountMutations;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  if (!props.visible || !props.account) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <PocketFormModalContent {...props} account={props.account} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function PocketFormModalContent({
   visible,
   account,
   pocket,
@@ -25,7 +49,7 @@ export function PocketFormModal({
   onSaved,
 }: {
   visible: boolean;
-  account: AccountListItem | null;
+  account: AccountListItem;
   pocket?: PocketListItem;
   mutations: AccountMutations;
   onClose: () => void;
@@ -33,6 +57,8 @@ export function PocketFormModal({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = usePocketFormWalkthrough();
+  const saveRef = useWalkthroughTarget("pocketFormSave");
   const [name, setName] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -173,6 +199,7 @@ export function PocketFormModal({
         deleteLabel={pocket?.isArchived ? "Restore pocket" : "Archive pocket"}
         isDirty={isDirty}
         pending={mutations.pending}
+        saveButtonRef={saveRef}
         saveDisabled={mutations.pending || !name.trim()}
         saveLabel="Save pocket"
         title={pocket ? "Edit Pocket" : "Add Pocket"}
@@ -216,43 +243,65 @@ export function PocketFormModal({
             ) : null}
           </View>
 
-          <AccountField
-            autoCapitalize="words"
-            label="Pocket name"
-            maxLength={60}
-            onChangeText={setName}
-            placeholder="e.g. Emergency Fund, Bills, Travel"
-            value={name}
-          />
+          <WalkthroughTarget id="pocketFormName">
+            <AccountField
+              autoCapitalize="words"
+              label="Pocket name"
+              maxLength={60}
+              onChangeText={setName}
+              placeholder="e.g. Emergency Fund, Bills, Travel"
+              value={name}
+            />
+          </WalkthroughTarget>
 
           {pocket && !pocket.isArchived ? (
             <>
-              <View style={styles.toggleRow}>
-                <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Expense</Text>
+              <WalkthroughTarget id="pocketFormDefaultExpense">
+                <View style={styles.toggleRow}>
+                  <View style={styles.toggleCopy}>
+                    <Text style={styles.toggleLabel}>Default for Expense</Text>
+                  </View>
+                  <ThemedSwitch
+                    accessibilityLabel="Default for Expense"
+                    disabled={mutations.pending}
+                    onValueChange={setIsDefaultExpense}
+                    value={isDefaultExpense}
+                  />
                 </View>
-                <ThemedSwitch
-                  accessibilityLabel="Default for Expense"
-                  disabled={mutations.pending}
-                  onValueChange={setIsDefaultExpense}
-                  value={isDefaultExpense}
-                />
-              </View>
+              </WalkthroughTarget>
 
-              <View style={styles.toggleRow}>
-                <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleLabel}>Default for Income</Text>
+              <WalkthroughTarget id="pocketFormDefaultIncome">
+                <View style={styles.toggleRow}>
+                  <View style={styles.toggleCopy}>
+                    <Text style={styles.toggleLabel}>Default for Income</Text>
+                  </View>
+                  <ThemedSwitch
+                    accessibilityLabel="Default for Income"
+                    disabled={mutations.pending}
+                    onValueChange={setIsDefaultIncome}
+                    value={isDefaultIncome}
+                  />
                 </View>
-                <ThemedSwitch
-                  accessibilityLabel="Default for Income"
-                  disabled={mutations.pending}
-                  onValueChange={setIsDefaultIncome}
-                  value={isDefaultIncome}
-                />
-              </View>
+              </WalkthroughTarget>
             </>
           ) : null}
         </KeyboardAwareForm>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <PocketFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       <ConfirmModal

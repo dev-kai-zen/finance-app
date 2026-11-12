@@ -42,6 +42,13 @@ import {
   useHexColors,
   type HexColorInput,
 } from "@/modules/hex-colors";
+import {
+  CustomizeDashboardWalkthroughOverlay,
+  DraggableTourChip,
+  useCustomizeDashboardWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import type {
   DashboardLayoutPreferences,
   DashboardLayoutPresetId,
@@ -108,7 +115,16 @@ const WIDGET_METADATA: Record<
   },
 };
 
-export function CustomizeDashboardModal({
+export function CustomizeDashboardModal(props: CustomizeDashboardModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <CustomizeDashboardModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CustomizeDashboardModalContent({
   visible,
   layout,
   onClose,
@@ -125,6 +141,7 @@ export function CustomizeDashboardModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const walkthrough = useCustomizeDashboardWalkthrough();
 
   const { colors: savedColors, addColor } = useHexColors();
   const {
@@ -255,17 +272,19 @@ export function CustomizeDashboardModal({
                 <CircleHelp color={theme.colors.textSecondary} size={18} />
               </Pressable>
             </View>
-            <Pressable
-              accessibilityLabel={t("common.close")}
-              accessibilityRole="button"
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <X color={theme.colors.textSecondary} size={20} />
-            </Pressable>
+            <WalkthroughTarget id="customizeDashDone">
+              <Pressable
+                accessibilityLabel={t("common.close")}
+                accessibilityRole="button"
+                onPress={onClose}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <X color={theme.colors.textSecondary} size={20} />
+              </Pressable>
+            </WalkthroughTarget>
           </View>
 
           <View style={styles.scrollWrapper}>
@@ -276,35 +295,38 @@ export function CustomizeDashboardModal({
               {...scrollProps}
             >
             {/* 1-Tap Quick Layout Presets (Minimalist) */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t("dashboard.quickPresetsLabel")}
-              </Text>
-              <View style={styles.presetsGrid}>
-                {presets.map(({ id, title, Icon }) => (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="button"
-                    onPress={() => onSelectPreset(id)}
-                    style={({ pressed }) => [
-                      styles.presetCard,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <View style={styles.presetIconWrap}>
-                      <Icon color={theme.colors.primary} size={15} />
-                    </View>
-                    <Text numberOfLines={1} style={styles.presetTitle}>
-                      {title}
-                    </Text>
-                  </Pressable>
-                ))}
+            <WalkthroughTarget id="customizeDashPreview">
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>
+                  {t("dashboard.quickPresetsLabel")}
+                </Text>
+                <View style={styles.presetsGrid}>
+                  {presets.map(({ id, title, Icon }) => (
+                    <Pressable
+                      key={id}
+                      accessibilityRole="button"
+                      onPress={() => onSelectPreset(id)}
+                      style={({ pressed }) => [
+                        styles.presetCard,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <View style={styles.presetIconWrap}>
+                        <Icon color={theme.colors.primary} size={15} />
+                      </View>
+                      <Text numberOfLines={1} style={styles.presetTitle}>
+                        {title}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
+            </WalkthroughTarget>
 
             {/* Dashboard Cards & Order (Minimalist + Categories-style Reorder) */}
-            <View style={styles.section}>
-              <View style={styles.sectionTitleRow}>
+            <WalkthroughTarget id="customizeDashCards">
+              <View style={styles.section}>
+                <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionLabel}>
                   {t("dashboard.sectionsOrderLabel")}
                 </Text>
@@ -405,6 +427,7 @@ export function CustomizeDashboardModal({
                 value={layout.showGreetingQuote}
               />
             </View>
+            </WalkthroughTarget>
 
             {/* Quote Appearance & Custom Colors */}
             {layout.showGreetingQuote ? (
@@ -696,6 +719,22 @@ export function CustomizeDashboardModal({
               bottomOffset={4}
             />
           </View>
+
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+
+          <CustomizeDashboardWalkthroughOverlay
+            onNext={walkthrough.nextStep}
+            onPrev={walkthrough.prevStep}
+            onSkip={walkthrough.skipWalkthrough}
+            step={walkthrough.currentStep}
+            stepIndex={walkthrough.activeStepIndex}
+            targetLayout={walkthrough.activeTargetLayout}
+            totalSteps={walkthrough.totalSteps}
+            visible={walkthrough.isWalkthroughActive}
+          />
         </View>
       </View>
 

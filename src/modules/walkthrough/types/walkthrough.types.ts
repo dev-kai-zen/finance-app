@@ -163,7 +163,40 @@ export type WalkthroughTargetId =
   | "goalFormAccentColor"
   | "goalFormColor"
   | "goalFormNotes"
-  | "goalFormSave";
+  | "goalFormSave"
+  // Pocket Form
+  | "pocketFormName"
+  | "pocketFormDefaultExpense"
+  | "pocketFormDefaultIncome"
+  | "pocketFormSave"
+  // Quick Preset Form
+  | "presetFormName"
+  | "presetFormType"
+  | "presetFormAmount"
+  | "presetFormDetails"
+  | "presetFormSave"
+  // Note Editor
+  | "noteEditorTitle"
+  | "noteEditorContent"
+  | "noteEditorColor"
+  | "noteEditorPin"
+  | "noteEditorAttachments"
+  | "noteEditorSave"
+  // Customize Dashboard
+  | "customizeDashPreview"
+  | "customizeDashCards"
+  | "customizeDashDone"
+  // Transaction Filter
+  | "txFilterDate"
+  | "txFilterType"
+  | "txFilterAccounts"
+  | "txFilterAmount"
+  | "txFilterApply"
+  // Data Import
+  | "importStepFile"
+  | "importStepMapping"
+  | "importStepAccount"
+  | "importStepReview";
 
 export type WalkthroughStepId = WalkthroughTargetId;
 

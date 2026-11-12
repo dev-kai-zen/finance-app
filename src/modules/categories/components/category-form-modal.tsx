@@ -21,6 +21,13 @@ import {
   NotificationModal,
 } from "@/components";
 import { HexColorFormModal, useHexColors, type HexColorInput } from "@/modules/hex-colors";
+import {
+  CategoryFormWalkthroughOverlay,
+  DraggableTourChip,
+  useCategoryFormWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import { CATEGORY_COLOR_KEYS } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
@@ -37,7 +44,18 @@ export interface CategoryFormModalProps {
   onClearError: () => void;
 }
 
-export function CategoryFormModal({
+export function CategoryFormModal(props: CategoryFormModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return (
+    <WalkthroughRegistryProvider>
+      <CategoryFormModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CategoryFormModalContent({
   visible,
   onClose,
   onSave,
@@ -49,15 +67,12 @@ export function CategoryFormModal({
   error = null,
   onClearError,
 }: CategoryFormModalProps) {
-  if (!visible) {
-    return null;
-  }
-
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = useCategoryFormWalkthrough();
   const { addColor } = useHexColors();
 
   const isSubcategory = Boolean(categoryToEdit?.parentId || initialParentId);
@@ -193,7 +208,8 @@ export function CategoryFormModal({
             {/* Category Type Toggle */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>GROUP TYPE</Text>
-              <View style={styles.typeSegment}>
+              <WalkthroughTarget id="catFormType">
+                <View style={styles.typeSegment}>
                   <Pressable
                     accessibilityLabel="Expense category"
                     accessibilityRole="button"
@@ -236,12 +252,14 @@ export function CategoryFormModal({
                     </Text>
                   </Pressable>
                 </View>
+              </WalkthroughTarget>
             </View>
 
             {/* Category Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CATEGORY NAME</Text>
-              <TextInput
+              <WalkthroughTarget id="catFormName">
+                <TextInput
                   accessibilityLabel="Category name"
                   autoFocus={!categoryToEdit}
                   maxLength={50}
@@ -251,12 +269,14 @@ export function CategoryFormModal({
                   style={styles.textInput}
                   value={name}
                 />
+              </WalkthroughTarget>
             </View>
 
             {/* Icon Selector */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>CATEGORY ICON</Text>
-              <Pressable
+              <WalkthroughTarget id="catFormIcon">
+                <Pressable
                   accessibilityLabel="Choose category icon"
                   accessibilityRole="button"
                   onPress={() => setIsIconPickerOpen(true)}
@@ -284,12 +304,14 @@ export function CategoryFormModal({
                   </View>
                   <ChevronRight color={theme.colors.textMuted} size={18} />
                 </Pressable>
+              </WalkthroughTarget>
             </View>
 
             {/* Color Selector */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>THEME COLOR</Text>
-              <View style={styles.colorPalette}>
+              <WalkthroughTarget id="catFormColor">
+                <View style={styles.colorPalette}>
                   {CATEGORY_COLOR_KEYS.map((colKey) => {
                     const hex = theme.colors.categorical[colKey];
                     const isSelected = selectedColor === colKey;
@@ -328,7 +350,8 @@ export function CategoryFormModal({
                       </Pressable>
                     );
                   })}
-                  <Pressable
+                  <WalkthroughTarget id="catFormCustomColor">
+                    <Pressable
                       accessibilityLabel="Add custom color"
                       accessibilityRole="button"
                       onPress={() => setIsColorFormOpen(true)}
@@ -344,13 +367,16 @@ export function CategoryFormModal({
                         strokeWidth={2.5}
                       />
                     </Pressable>
+                  </WalkthroughTarget>
                 </View>
+              </WalkthroughTarget>
             </View>
           </KeyboardAwareForm>
 
           {/* Action Buttons */}
           <View style={styles.footerRow}>
-            <Pressable
+            <WalkthroughTarget id="catFormCancel" style={{ flex: 1 }}>
+              <Pressable
                 accessibilityLabel="Cancel"
                 accessibilityRole="button"
                 onPress={onClose}
@@ -358,8 +384,10 @@ export function CategoryFormModal({
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </Pressable>
+            </WalkthroughTarget>
 
-            <Pressable
+            <WalkthroughTarget id="catFormCreate" style={{ flex: 2 }}>
+              <Pressable
                 accessibilityLabel={
                   pending
                     ? "Saving..."
@@ -391,7 +419,24 @@ export function CategoryFormModal({
                         : "Create Category"}
                 </Text>
               </Pressable>
+            </WalkthroughTarget>
           </View>
+
+          <DraggableTourChip
+            onPress={walkthrough.startWalkthrough}
+            visible={!walkthrough.isWalkthroughActive}
+          />
+
+          <CategoryFormWalkthroughOverlay
+            onNext={walkthrough.nextStep}
+            onPrev={walkthrough.prevStep}
+            onSkip={walkthrough.skipWalkthrough}
+            step={walkthrough.currentStep}
+            stepIndex={walkthrough.activeStepIndex}
+            targetLayout={walkthrough.activeTargetLayout}
+            totalSteps={walkthrough.totalSteps}
+            visible={walkthrough.isWalkthroughActive}
+          />
         </View>
       </KeyboardAvoidingView>
 

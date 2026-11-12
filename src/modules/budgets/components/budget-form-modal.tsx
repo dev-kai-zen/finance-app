@@ -620,6 +620,22 @@ function BudgetFormModalContent({
               </WalkthroughTarget>
           </View>
         </ScrollView>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <BudgetFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       {/* Category Picker Submodal */}
@@ -666,22 +682,6 @@ function BudgetFormModalContent({
         onClose={() => setInfoModal(null)}
         title={infoModal?.title ?? ""}
         visible={infoModal !== null}
-      />
-
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
-      />
-
-      <BudgetFormWalkthroughOverlay
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
-        step={walkthrough.currentStep}
-        stepIndex={walkthrough.activeStepIndex}
-        targetLayout={walkthrough.activeTargetLayout}
-        totalSteps={walkthrough.totalSteps}
-        visible={walkthrough.isWalkthroughActive}
       />
 
       <WalkthroughIntroModal

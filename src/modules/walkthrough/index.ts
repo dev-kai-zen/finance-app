@@ -107,6 +107,43 @@ export { SettingsWalkthroughOverlay } from "./settings/settings-walkthrough-over
 export { useSettingsWalkthrough } from "./settings/use-settings-walkthrough";
 export { SETTINGS_WALKTHROUGH_STEPS } from "./settings/settings-walkthrough-steps";
 
+export {
+  ModalWalkthroughOverlay,
+  type ModalWalkthroughOverlayProps,
+} from "./components/modal-walkthrough-overlay";
+export {
+  useModalWalkthrough,
+  type UseModalWalkthroughOptions,
+} from "./hooks/use-modal-walkthrough";
+
+export { CategoryFormWalkthroughOverlay } from "./categories/category-form-walkthrough-overlay";
+export { useCategoryFormWalkthrough } from "./categories/use-category-form-walkthrough";
+export { CATEGORY_FORM_WALKTHROUGH_STEPS } from "./categories/category-form-walkthrough-steps";
+
+export { PocketFormWalkthroughOverlay } from "./accounts/pocket-form-walkthrough-overlay";
+export { usePocketFormWalkthrough } from "./accounts/use-pocket-form-walkthrough";
+export { POCKET_FORM_WALKTHROUGH_STEPS } from "./accounts/pocket-form-walkthrough-steps";
+
+export { PresetFormWalkthroughOverlay } from "./transactions/preset-form-walkthrough-overlay";
+export { usePresetFormWalkthrough } from "./transactions/use-preset-form-walkthrough";
+export { PRESET_FORM_WALKTHROUGH_STEPS } from "./transactions/preset-form-walkthrough-steps";
+
+export { NoteEditorWalkthroughOverlay } from "./notes/note-editor-walkthrough-overlay";
+export { useNoteEditorWalkthrough } from "./notes/use-note-editor-walkthrough";
+export { NOTE_EDITOR_WALKTHROUGH_STEPS } from "./notes/note-editor-walkthrough-steps";
+
+export { CustomizeDashboardWalkthroughOverlay } from "./dashboard/customize-dashboard-walkthrough-overlay";
+export { useCustomizeDashboardWalkthrough } from "./dashboard/use-customize-dashboard-walkthrough";
+export { CUSTOMIZE_DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard/customize-dashboard-walkthrough-steps";
+
+export { TxFilterWalkthroughOverlay } from "./transactions/tx-filter-walkthrough-overlay";
+export { useTxFilterWalkthrough } from "./transactions/use-tx-filter-walkthrough";
+export { TX_FILTER_WALKTHROUGH_STEPS } from "./transactions/tx-filter-walkthrough-steps";
+
+export { DataImportWalkthroughOverlay } from "./data-import/data-import-walkthrough-overlay";
+export { useDataImportWalkthrough } from "./data-import/use-data-import-walkthrough";
+export { DATA_IMPORT_WALKTHROUGH_STEPS } from "./data-import/data-import-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

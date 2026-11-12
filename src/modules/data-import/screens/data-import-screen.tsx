@@ -35,6 +35,13 @@ import {
 } from "../components/import-matching-cards";
 import { ImportReviewEntry } from "../components/import-review-entry";
 import { ImportHelpModal } from "../components/import-help-modal";
+import {
+  DataImportWalkthroughOverlay,
+  DraggableTourChip,
+  useDataImportWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import { useDataImport } from "../hooks/use-data-import";
 import type {
   ImportField,
@@ -65,9 +72,18 @@ type Item = {
   index: number;
 };
 export function DataImportScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <DataImportScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function DataImportScreenContent() {
   const state = useDataImport(),
     theme = useAppTheme(),
     styles = useThemeStyles(createStyles);
+  const walkthrough = useDataImportWalkthrough();
   const { t, activeLanguage } = useLocalization(),
     router = useRouter(),
     navigation = useNavigation(),
@@ -411,13 +427,19 @@ export function DataImportScreen() {
         </View>
       );
     }
-    if (item.kind === "account")
-      return (
+    if (item.kind === "account") {
+      const card = (
         <ImportAccountCard
           name={state.accountNames[item.index]}
           state={state}
         />
       );
+      return item.index === 0 ? (
+        <WalkthroughTarget id="importStepAccount">{card}</WalkthroughTarget>
+      ) : (
+        card
+      );
+    }
     if (item.kind === "category")
       return (
         <ImportCategoryCard
@@ -425,14 +447,20 @@ export function DataImportScreen() {
           state={state}
         />
       );
-    if (item.kind === "row")
-      return (
+    if (item.kind === "row") {
+      const entry = (
         <ImportReviewEntry
           row={state.preview!.rows[item.index]}
           state={state}
           wide={wide}
         />
       );
+      return item.index === 0 ? (
+        <WalkthroughTarget id="importStepReview">{entry}</WalkthroughTarget>
+      ) : (
+        entry
+      );
+    }
     const batch = state.history[item.index];
     let summary: {
       accounts?: { name: string; currency: string; balance: number }[];
@@ -567,17 +595,19 @@ export function DataImportScreen() {
           {!personalWorkspace && (
             <Text style={styles.body}>{t("dataImport.personalOnly")}</Text>
           )}
-          <ImportAction
-            label={t("dataImport.pickFile")}
-            onPress={state.pick}
-            disabled={
-              state.busy ||
-              state.loading ||
-              !state.catalog ||
-              Platform.OS === "web" ||
-              !personalWorkspace
-            }
-          />
+          <WalkthroughTarget id="importStepFile">
+            <ImportAction
+              label={t("dataImport.pickFile")}
+              onPress={state.pick}
+              disabled={
+                state.busy ||
+                state.loading ||
+                !state.catalog ||
+                Platform.OS === "web" ||
+                !personalWorkspace
+              }
+            />
+          </WalkthroughTarget>
           {Platform.OS === "web" && (
             <Text style={styles.body}>{t("dataImport.nativeOnly")}</Text>
           )}
@@ -610,7 +640,7 @@ export function DataImportScreen() {
         </>
       )}
       {state.step === "columns" && (
-        <>
+        <WalkthroughTarget id="importStepMapping">
           <View style={styles.card}>
             <Text style={styles.label}>
               {t("dataImport.wizard.formatsTitle")}
@@ -845,7 +875,7 @@ export function DataImportScreen() {
               {optionalFields.map(columnRow)}
             </View>
           )}
-        </>
+        </WalkthroughTarget>
       )}
       {state.step === "columns" && types.length > 0 && (
         <Text style={styles.label}>{t("dataImport.ui.typeMappingTitle")}</Text>
@@ -1232,6 +1262,22 @@ export function DataImportScreen() {
           state.restart();
           pendingBack?.();
         }}
+      />
+
+      <DraggableTourChip
+        onPress={walkthrough.startWalkthrough}
+        visible={!walkthrough.isWalkthroughActive}
+      />
+
+      <DataImportWalkthroughOverlay
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
       />
     </View>
   );

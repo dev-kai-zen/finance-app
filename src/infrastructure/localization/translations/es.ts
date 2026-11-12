@@ -856,6 +856,7 @@ export const es = {
       improveItem24: "Muestra una flecha flotante hacia abajo en formularios y hojas cuando hay elementos ocultos.",
       improveItem25: "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
       improveItem26: "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
+      improveItem27: "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -1631,6 +1632,122 @@ export const es = {
     stepSaveTitle: "Guardar programación",
     stepSaveDesc:
       "Toca para guardar y activar tu transacción programada recurrente.",
+  },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Tipo de grupo",
+    stepGroupTypeDesc:
+      "Elige si esta categoría registrará Gastos o Ingresos.",
+    stepNameTitle: "Nombre de categoría",
+    stepNameDesc:
+      "Ingresa un nombre claro, como Comestibles, Restaurantes o Trabajo independiente.",
+    stepIconTitle: "Ícono de categoría",
+    stepIconDesc:
+      "Elige un ícono intuitivo para identificar esta categoría en transacciones e informes.",
+    stepColorTitle: "Color del tema",
+    stepColorDesc:
+      "Selecciona un color distintivo para gráficos, insignias e identificación visual.",
+    stepCustomColorTitle: "Agregar color personalizado",
+    stepCustomColorDesc:
+      "Ingresa cualquier código hexadecimal personalizado para personalizar tus categorías.",
+    stepCancelTitle: "Cancelar",
+    stepCancelDesc:
+      "Descarta los cambios y regresa sin crear la categoría.",
+    stepSaveTitle: "Crear categoría",
+    stepSaveDesc:
+      "Guarda y activa tu nueva categoría para utilizarla en transacciones y presupuestos.",
+  },
+  pocketFormWalkthrough: {
+    stepNameTitle: "Nombre del bolsillo",
+    stepNameDesc:
+      "Asigna un nombre claro a este bolsillo o sobre, como Fondo de emergencia o Vacaciones.",
+    stepDefaultExpenseTitle: "Predeterminado para gastos",
+    stepDefaultExpenseDesc:
+      "Cuando esté activo, los gastos de esta cuenta seleccionarán automáticamente este bolsillo.",
+    stepDefaultIncomeTitle: "Predeterminado para ingresos",
+    stepDefaultIncomeDesc:
+      "Cuando esté activo, los ingresos de esta cuenta se dirigirán automáticamente a este bolsillo.",
+    stepSaveTitle: "Guardar bolsillo",
+    stepSaveDesc:
+      "Guarda y activa este bolsillo en tu cuenta para gestionar saldos separados.",
+  },
+  presetFormWalkthrough: {
+    stepNameTitle: "Nombre del preajuste",
+    stepNameDesc:
+      "Ingresa un nombre para este preajuste rápido, como Café diario o Transporte.",
+    stepTypeTitle: "Tipo de transacción",
+    stepTypeDesc:
+      "Elige si este preajuste es para gastos o ingresos.",
+    stepAmountTitle: "Monto predeterminado",
+    stepAmountDesc:
+      "Establece un monto fijo para completarlo automáticamente con un toque.",
+    stepDetailsTitle: "Categoría y cuenta",
+    stepDetailsDesc:
+      "Vincula una categoría y cuenta predeterminada para registrar al instante.",
+    stepSaveTitle: "Guardar preajuste",
+    stepSaveDesc:
+      "Guarda para mostrar este atajo en el formulario de transacciones.",
+  },
+  noteEditorWalkthrough: {
+    stepTitleTitle: "Título de la nota",
+    stepTitleDesc:
+      "Añade un título breve para organizar tus notas financieras o recordatorios.",
+    stepContentTitle: "Contenido de la nota",
+    stepContentDesc:
+      "Escribe notas detalladas, planes financieros o listas de verificación.",
+    stepColorTitle: "Código de color",
+    stepColorDesc:
+      "Elige un color para organizar visualmente notas relacionadas.",
+    stepPinTitle: "Fijar al principio",
+    stepPinDesc:
+      "Mantén tus notas más importantes fijadas en la parte superior.",
+    stepAttachmentsTitle: "Archivos adjuntos",
+    stepAttachmentsDesc:
+      "Adjunta fotos de recibos, facturas o garantías directamente a esta nota.",
+    stepSaveTitle: "Guardar nota",
+    stepSaveDesc:
+      "Toca la marca de verificación para guardar tu nota de forma segura.",
+  },
+  customizeDashboardWalkthrough: {
+    stepPreviewTitle: "Vista previa del panel",
+    stepPreviewDesc:
+      "Mira los cambios en vivo mientras ajustas y reordenas tus tarjetas.",
+    stepCardsTitle: "Tarjetas y widgets",
+    stepCardsDesc:
+      "Activa, desactiva y arrastra para cambiar el orden de las tarjetas en tu pantalla de inicio.",
+    stepDoneTitle: "Listo",
+    stepDoneDesc:
+      "Guarda tus preferencias de diseño y regresa a tu panel personalizado.",
+  },
+  txFilterWalkthrough: {
+    stepDateTitle: "Rango de fechas",
+    stepDateDesc:
+      "Filtra transacciones por día, semana, mes o rango personalizado.",
+    stepTypeTitle: "Tipos de transacción",
+    stepTypeDesc:
+      "Filtra por gastos, ingresos o transferencias.",
+    stepAccountsTitle: "Cuentas y categorías",
+    stepAccountsDesc:
+      "Selecciona cuentas y categorías específicas para filtrar tu lista.",
+    stepAmountTitle: "Límites de monto",
+    stepAmountDesc:
+      "Establece montos mínimos y máximos para encontrar transacciones específicas.",
+    stepApplyTitle: "Aplicar filtros",
+    stepApplyDesc:
+      "Aplica los filtros para ver la lista de transacciones refinada al instante.",
+  },
+  dataImportWalkthrough: {
+    stepFileTitle: "Seleccionar archivo",
+    stepFileDesc:
+      "Elige un archivo de extracto bancario CSV, OFX o QFX de tu dispositivo.",
+    stepMappingTitle: "Mapeo de columnas",
+    stepMappingDesc:
+      "Haz coincidir las columnas de tu archivo con los campos correspondientes.",
+    stepAccountTitle: "Cuenta de destino",
+    stepAccountDesc:
+      "Selecciona a qué cuenta pertenecen estas transacciones importadas.",
+    stepReviewTitle: "Revisar e importar",
+    stepReviewDesc:
+      "Revisa las transacciones, ajusta categorías o etiquetas e impórtalas con seguridad.",
   },
   budgetFormWalkthrough: {
     introTitle: "Nuevo Presupuesto por Categoría",
