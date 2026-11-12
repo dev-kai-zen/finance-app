@@ -1013,6 +1013,7 @@ function AccountFormModalContent({
               <AccountAmountText
                 amountMinorUnits={account.currentBalanceMinorUnits}
                 currencyCode={account.currencyCode}
+                ignorePrivacy
                 variant="title"
               />
               <Pressable

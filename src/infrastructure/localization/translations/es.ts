@@ -838,6 +838,7 @@ export const es = {
       improveItem9: "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
       improveItem10: "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
       improveItem11: "Abre los detalles y ajustes de una cuenta directamente al tocar su tarjeta en el panel principal.",
+      improveItem12: "Mantén visible el saldo más reciente al editar una cuenta, incluso con el modo de privacidad activado.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
