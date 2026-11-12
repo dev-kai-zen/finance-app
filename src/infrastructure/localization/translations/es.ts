@@ -850,6 +850,7 @@ export const es = {
       improveItem18: "Muestra un modal de confirmación en la app al guardar datos de transacciones exportados en el dispositivo.",
       improveItem19: "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
       improveItem20: "Ubica el botón de borrar todos los filtros al principio de los filtros activos para acceder de inmediato sin desplazarse.",
+      improveItem21: "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

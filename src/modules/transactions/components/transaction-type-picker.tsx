@@ -17,7 +17,7 @@ const TRANSACTION_TYPES: ReadonlyArray<{
 }> = [
   { label: "Expense", value: "expense" },
   { label: "Income", value: "income" },
-  { label: "Fund Transfer", value: "transfer" },
+  { label: "Transfer", value: "transfer" },
 ];
 
 export function TransactionTypePicker({
