@@ -26,6 +26,7 @@ import {
   HorizontalScrollView,
   IconHelper,
   InfoModal,
+  ScrollDownIndicator,
   SortableListModal,
   ThemedSwitch,
   type SortableItem,
@@ -33,6 +34,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import { isLightColor } from "@/utils/color-contrast";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import {
@@ -125,7 +127,12 @@ export function CustomizeDashboardModal({
   const { t } = useLocalization();
 
   const { colors: savedColors, addColor } = useHexColors();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const {
+    scrollRef: scrollViewRef,
+    canScrollDown,
+    scrollToNext,
+    scrollProps,
+  } = useScrollDownIndicator<ScrollView>();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isReorderOpen, setIsReorderOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
@@ -261,11 +268,13 @@ export function CustomizeDashboardModal({
             </Pressable>
           </View>
 
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollViewRef}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+              {...scrollProps}
+            >
             {/* 1-Tap Quick Layout Presets (Minimalist) */}
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>
@@ -680,7 +689,13 @@ export function CustomizeDashboardModal({
                 </View>
               </View>
             ) : null}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
         </View>
       </View>
 
@@ -734,6 +749,10 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.lg,
       width: "100%",
       ...theme.shadows.modal,
+    },
+    scrollWrapper: {
+      flexShrink: 1,
+      position: "relative",
     },
     sheetWide: {
       alignSelf: "center",

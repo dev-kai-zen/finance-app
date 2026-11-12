@@ -853,6 +853,8 @@ export const es = {
       improveItem21: "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
       improveItem22: "Mueve la explicación de la comisión de transferencia a un modal de ayuda para mantener el formulario limpio.",
       improveItem23: "Alinea el botón de nueva etiqueta junto a las etiquetas activas y actualiza el botón de cierre.",
+      improveItem24: "Muestra una flecha flotante hacia abajo en formularios y hojas cuando hay elementos ocultos.",
+      improveItem25: "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

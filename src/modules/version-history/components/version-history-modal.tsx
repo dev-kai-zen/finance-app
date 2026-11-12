@@ -9,9 +9,11 @@ import {
   View,
 } from "react-native";
 import { AppButton } from "@/components/app-button";
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import { APP_BRAND } from "@/constants/brand";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-history.types";
@@ -27,6 +29,8 @@ export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistory
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   return (
     <Modal
@@ -63,51 +67,60 @@ export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistory
           </View>
 
           {/* Scrollable Body */}
-          <ScrollView
-            contentContainerStyle={styles.bodyScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={true}
-            style={styles.bodyScrollView}
-          >
-            {blocks.length === 0 ? (
-              <Text style={styles.emptyMessage}>{t("versionHistory.empty")}</Text>
-            ) : (
-              blocks.map((block) => (
-                <View key={block.version} style={styles.block}>
-                  <View style={styles.versionHeaderRow}>
-                    <View style={styles.versionBadge}>
-                      <Text style={styles.versionBadgeText}>v{block.version}</Text>
-                    </View>
-                    {block.dateKey ? (
-                      <Text style={styles.versionDateText}>{t(block.dateKey)}</Text>
-                    ) : null}
-                  </View>
-                  {block.titleKey ? (
-                    <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
-                  ) : null}
-
-                  {block.sections.map((section, sectionIdx) => (
-                    <View
-                      key={`${section.categoryKey}-${sectionIdx}`}
-                      style={styles.section}
-                    >
-                      <Text style={styles.categoryTitle}>
-                        {t(section.categoryKey)}
-                      </Text>
-                      <View style={styles.itemList}>
-                        {section.itemKeys.map((itemKey) => (
-                          <View key={itemKey} style={styles.itemRow}>
-                            <Text style={styles.bullet}>•</Text>
-                            <Text style={styles.itemText}>{t(itemKey)}</Text>
-                          </View>
-                        ))}
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              contentContainerStyle={styles.bodyScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={true}
+              style={styles.bodyScrollView}
+              {...scrollProps}
+            >
+              {blocks.length === 0 ? (
+                <Text style={styles.emptyMessage}>{t("versionHistory.empty")}</Text>
+              ) : (
+                blocks.map((block) => (
+                  <View key={block.version} style={styles.block}>
+                    <View style={styles.versionHeaderRow}>
+                      <View style={styles.versionBadge}>
+                        <Text style={styles.versionBadgeText}>v{block.version}</Text>
                       </View>
+                      {block.dateKey ? (
+                        <Text style={styles.versionDateText}>{t(block.dateKey)}</Text>
+                      ) : null}
                     </View>
-                  ))}
-                </View>
-              ))
-            )}
-          </ScrollView>
+                    {block.titleKey ? (
+                      <Text style={styles.blockTitle}>{t(block.titleKey)}</Text>
+                    ) : null}
+
+                    {block.sections.map((section, sectionIdx) => (
+                      <View
+                        key={`${section.categoryKey}-${sectionIdx}`}
+                        style={styles.section}
+                      >
+                        <Text style={styles.categoryTitle}>
+                          {t(section.categoryKey)}
+                        </Text>
+                        <View style={styles.itemList}>
+                          {section.itemKeys.map((itemKey) => (
+                            <View key={itemKey} style={styles.itemRow}>
+                              <Text style={styles.bullet}>•</Text>
+                              <Text style={styles.itemText}>{t(itemKey)}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                ))
+              )}
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={8}
+            />
+          </View>
 
           {/* Fixed Footer */}
           <View style={styles.footer}>
@@ -206,6 +219,12 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.medium,
+    },
+    scrollWrapper: {
+      flexGrow: 1,
+      flexShrink: 1,
+      position: "relative",
+      width: "100%",
     },
     bodyScrollView: {
       flexGrow: 1,

@@ -6,12 +6,13 @@ import {
   Text,
   View,
 } from "react-native";
-import { ConfirmModal, IconHelper, InfoModal, NotificationModal } from "@/components";
+import { ConfirmModal, IconHelper, InfoModal, NotificationModal, ScrollDownIndicator } from "@/components";
 import { Layers } from "lucide-react-native";
 import { useLocalization } from "@/infrastructure/localization";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
@@ -78,6 +79,9 @@ function AccountTypeManagerContent({
   const activeColor = group === "asset" ? theme.colors.success : theme.colors.danger;
 
   const scrollRef = useRef<ScrollView>(null);
+  const { canScrollDown, scrollToNext, scrollProps } = useScrollDownIndicator({
+    ref: scrollRef,
+  });
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
@@ -210,14 +214,16 @@ function AccountTypeManagerContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <ScrollView
-          ref={scrollRef}
-          scrollEnabled={
-            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-          }
-        >
-          <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
-          <View ref={pickerRef} collapsable={false} style={styles.segmentRow}>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            ref={scrollRef}
+            scrollEnabled={
+              walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+            }
+            {...scrollProps}
+          >
+            <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
+            <View ref={pickerRef} collapsable={false} style={styles.segmentRow}>
               {(["asset", "liability"] as const).map((item) => (
                 <Pressable
                   key={item}
@@ -331,6 +337,12 @@ function AccountTypeManagerContent({
           )}
           </View>
         </ScrollView>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={8}
+        />
+      </View>
         <AccountGroupSetupWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}
           stepIndex={walkthrough.activeStepIndex}
@@ -382,6 +394,10 @@ function AccountTypeManagerContent({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     formContent: {
       gap: theme.spacing.md,
       padding: theme.spacing.lg,

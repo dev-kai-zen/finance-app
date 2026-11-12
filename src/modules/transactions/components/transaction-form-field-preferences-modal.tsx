@@ -3,7 +3,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Crown } from "lucide-react-native";
 
 import { ThemedSwitch } from "@/components/themed-switch";
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
@@ -80,6 +82,8 @@ export function TransactionFormFieldPreferencesModal({
   const { formFields, setFormField } = useExperiencePreferences();
   const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
     useProGuard();
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   const labelForOptional = (field: FormFieldPreferenceKey) =>
     t(`transactionForm.fields.${field}` as never);
@@ -144,56 +148,62 @@ export function TransactionFormFieldPreferencesModal({
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
           </View>
-          <Text style={styles.subtitle}>
-            {t("transactionForm.customizeFieldsSubtitle")}
-          </Text>
 
-          <ScrollView
-            contentContainerStyle={styles.list}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {LOCKED_FIELDS.map((field) => (
-              <View key={field} style={styles.row}>
-                <View style={styles.rowCopy}>
-                  <Text style={styles.rowLabel}>
-                    {t(`transactionForm.fields.${field}` as never)}
-                  </Text>
-                  <Text style={styles.rowHint}>
-                    {t("transactionForm.alwaysOn")}
-                  </Text>
-                </View>
-              </View>
-            ))}
-
-            {OPTIONAL_FIELDS.map((field) => {
-              const isFieldPro = PRO_FORM_FIELDS.has(field);
-              return (
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              contentContainerStyle={styles.list}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              {...scrollProps}
+            >
+              {LOCKED_FIELDS.map((field) => (
                 <View key={field} style={styles.row}>
-                  <View style={styles.labelRow}>
+                  <View style={styles.rowCopy}>
                     <Text style={styles.rowLabel}>
-                      {labelForOptional(field)}
+                      {t(`transactionForm.fields.${field}` as never)}
                     </Text>
-                    {isFieldPro && !isPro && (
-                      <View style={styles.proChip}>
-                        <Crown color="#D97706" size={10} />
-                        <Text style={styles.proChipText}>PRO</Text>
-                      </View>
-                    )}
+                    <Text style={styles.rowHint}>
+                      {t("transactionForm.alwaysOn")}
+                    </Text>
                   </View>
-                  <ThemedSwitch
-                    accessibilityLabel={labelForOptional(field)}
-                    onValueChange={(value) => handleToggleField(field, value)}
-                    value={
-                      formFields[
-                        field as keyof TransactionFormFieldPreferences
-                      ]
-                    }
-                  />
                 </View>
-              );
-            })}
-          </ScrollView>
+              ))}
+
+              {OPTIONAL_FIELDS.map((field) => {
+                const isFieldPro = PRO_FORM_FIELDS.has(field);
+                return (
+                  <View key={field} style={styles.row}>
+                    <View style={styles.labelRow}>
+                      <Text style={styles.rowLabel}>
+                        {labelForOptional(field)}
+                      </Text>
+                      {isFieldPro && !isPro && (
+                        <View style={styles.proChip}>
+                          <Crown color="#D97706" size={10} />
+                          <Text style={styles.proChipText}>PRO</Text>
+                        </View>
+                      )}
+                    </View>
+                    <ThemedSwitch
+                      accessibilityLabel={labelForOptional(field)}
+                      onValueChange={(value) => handleToggleField(field, value)}
+                      value={
+                        formFields[
+                          field as keyof TransactionFormFieldPreferences
+                        ]
+                      }
+                    />
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
         </View>
       </View>
 
@@ -247,10 +257,9 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 18,
     },
-    subtitle: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      lineHeight: theme.typography.lineHeight.sm,
+    scrollWrapper: {
+      flexShrink: 1,
+      position: "relative",
     },
     list: {
       gap: theme.spacing.xs,

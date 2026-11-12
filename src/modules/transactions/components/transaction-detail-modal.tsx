@@ -11,8 +11,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { IconHelper } from "@/components";
+import { IconHelper, ScrollDownIndicator } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatCurrency } from "@/utils/currency";
@@ -52,6 +53,8 @@ export function TransactionDetailModal({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const [attachmentManagerOpen, setAttachmentManagerOpen] = useState(false);
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
   const attachmentState = useTransactionAttachments(
     transaction?.id,
     visible && attachmentManagerOpen,
@@ -190,7 +193,13 @@ export function TransactionDetailModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollBody}
+              {...scrollProps}
+            >
             {/* Amount Hero Card */}
             <View style={styles.heroCard}>
               <View
@@ -407,7 +416,13 @@ export function TransactionDetailModal({
                 />
               </Pressable>
             </View>
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
 
           {/* Action Buttons Footer (Kaizen Design) */}
           <View style={styles.footerRow}>
@@ -530,9 +545,12 @@ function createStyles(theme: AppTheme) {
       fontSize: 16,
       fontWeight: "bold",
     },
-    scrollBody: {
+    scrollWrapper: {
+      flexShrink: 1,
       marginBottom: 16,
+      position: "relative",
     },
+    scrollBody: {},
     heroCard: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,

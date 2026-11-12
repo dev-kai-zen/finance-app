@@ -16,8 +16,10 @@ import {
   IconPickerModal,
   KeyboardAwareForm,
   NotificationModal,
+  ScrollDownIndicator,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
@@ -77,6 +79,9 @@ function AccountTypeFormModalContent({
   const styles = useThemeStyles(createStyles);
   const { isPromptDismissed } = useExperiencePreferences();
   const scrollRef = useRef<ScrollView>(null);
+  const { canScrollDown, scrollToNext, scrollProps } = useScrollDownIndicator({
+    ref: scrollRef,
+  });
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
@@ -288,12 +293,14 @@ function AccountTypeFormModalContent({
           onPress={walkthrough.startWalkthrough}
           visible={!walkthrough.isWalkthroughActive}
         />
-        <KeyboardAwareForm
-          ref={scrollRef}
-          scrollEnabled={
-            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-          }
-        >
+        <View style={styles.scrollWrapper}>
+          <KeyboardAwareForm
+            ref={scrollRef}
+            scrollEnabled={
+              walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+            }
+            {...scrollProps}
+          >
           <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           {/* Group Name Field */}
             <View style={styles.inputGroup}>
@@ -493,6 +500,12 @@ function AccountTypeFormModalContent({
           ) : null}
           </View>
         </KeyboardAwareForm>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={8}
+        />
+      </View>
         <AccountTypeFormWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}
           stepIndex={walkthrough.activeStepIndex}
@@ -569,6 +582,10 @@ function AccountTypeFormModalContent({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     formContent: {
       gap: theme.spacing.lg,
       paddingHorizontal: theme.spacing.lg,

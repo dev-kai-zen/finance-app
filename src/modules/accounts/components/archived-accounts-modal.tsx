@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Archive, Folder, Info, RotateCcw, Trash2 } from "lucide-react-native";
-import { ConfirmModal, FullScreenFormModal, NotificationModal } from "@/components";
+import { ConfirmModal, FullScreenFormModal, NotificationModal, ScrollDownIndicator } from "@/components";
 import { getPocketRestoreBlockReason } from "@/modules/accounts/services/pocket-rules";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountAmountText } from "@/modules/accounts/components/account-amount-text";
@@ -47,6 +48,8 @@ export function ArchivedAccountsModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const [tab, setTab] = useState<ArchivedTab>("accounts");
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
   const [restoreAccountTarget, setRestoreAccountTarget] = useState<AccountListItem | null>(
     null,
   );
@@ -99,12 +102,15 @@ export function ArchivedAccountsModal({
         visible={visible}
         onClose={onClose}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.tabRow}>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            {...scrollProps}
+          >
+            <View style={styles.tabRow}>
             <Pressable
               accessibilityLabel="Archived accounts"
               accessibilityRole="button"
@@ -276,7 +282,13 @@ export function ArchivedAccountsModal({
             </View>
           )}
         </ScrollView>
-      </FullScreenFormModal>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={8}
+        />
+      </View>
+    </FullScreenFormModal>
 
       <ConfirmModal
         confirmLabel="Restore"
@@ -362,6 +374,10 @@ export function ArchivedAccountsModal({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     scrollContent: {
       gap: theme.spacing.lg,
       padding: theme.spacing.lg,

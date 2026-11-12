@@ -11,8 +11,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Calendar, Check, ChevronDown, ChevronUp } from "lucide-react-native";
 import { DatePickerModal } from "@/components/date-picker-modal";
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountListItem } from "@/modules/accounts";
 import { LabelBadge, useLabels } from "@/modules/labels";
@@ -96,6 +98,8 @@ export function TransactionFilterModal({
     "from" | "to" | null
   >(null);
   const { activeLabels } = useLabels({ includeArchived: false });
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   // Sync with prop when opened
   React.useEffect(() => {
@@ -210,7 +214,13 @@ export function TransactionFilterModal({
             </View>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollBody}
+              {...scrollProps}
+            >
             {/* Transaction Type Filter */}
             <View style={styles.filterGroup}>
               <Text style={styles.groupTitle}>TRANSACTION TYPE</Text>
@@ -486,7 +496,13 @@ export function TransactionFilterModal({
                 ) : null}
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
 
           {/* Footer */}
           <View style={styles.footerRow}>
@@ -619,9 +635,12 @@ function createStyles(theme: AppTheme) {
       fontSize: 16,
       fontWeight: "bold",
     },
-    scrollBody: {
+    scrollWrapper: {
+      flexShrink: 1,
       marginBottom: 16,
+      position: "relative",
     },
+    scrollBody: {},
     filterGroup: {
       marginBottom: 18,
     },

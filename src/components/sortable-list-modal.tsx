@@ -36,9 +36,11 @@ import {
   GripVertical,
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { FullScreenFormModal } from "./full-screen-form-modal";
 import { IconHelper } from "./icon-helper";
+import { ScrollDownIndicator } from "./scroll-down-indicator";
 
 const ROW_REORDER_LAYOUT = LinearTransition.duration(180).reduceMotion(
   ReduceMotion.System,
@@ -80,6 +82,8 @@ export function SortableListModal({
   const destinationIndex = useSharedValue(-1);
   const dragTranslationY = useSharedValue(0);
   const pendingDropReset = useRef(false);
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   useEffect(() => {
     if (visible) {
@@ -190,10 +194,12 @@ export function SortableListModal({
     >
       <GestureHandlerRootView style={styles.scrollArea}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           style={styles.scrollArea}
+          {...scrollProps}
         >
           <Text style={styles.instructionText}>
             {showAlphabetizeAction
@@ -234,6 +240,11 @@ export function SortableListModal({
             />
           ))}
         </ScrollView>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={12}
+        />
       </GestureHandlerRootView>
     </FullScreenFormModal>
   );
@@ -504,6 +515,7 @@ function createStyles(theme: AppTheme) {
     },
     scrollArea: {
       flex: 1,
+      position: "relative",
     },
     scrollContent: {
       gap: theme.spacing.xs,

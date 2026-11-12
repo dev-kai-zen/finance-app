@@ -31,6 +31,7 @@ import {
   InfoModal,
   KeyboardAwareFormPreset,
   NotificationModal,
+  ScrollDownIndicator,
   ThemedSwitch,
   UnsavedChangesModal,
 } from "@/components";
@@ -49,6 +50,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useRegisterActiveModal } from "@/hooks";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import {
   AccountPickerModal,
   accountColor,
@@ -1185,6 +1187,9 @@ function TransactionFormModalInner({
   const formScrollRef = useRef<React.ComponentRef<typeof KeyboardAwareFormPreset>>(
     null,
   );
+  const { canScrollDown, scrollToNext, scrollProps } = useScrollDownIndicator({
+    ref: formScrollRef,
+  });
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
@@ -1978,17 +1983,19 @@ function TransactionFormModalInner({
             />
           </View>
 
-          <KeyboardAwareFormPreset
-            ref={formScrollRef}
-            contentContainerStyle={styles.formScrollContent}
-            multilineFocused={focusedFieldType === "description"}
-            preset="transactionSheet"
-            scrollEnabled={
-              walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-            }
-            showsVerticalScrollIndicator={false}
-            style={styles.formScroll}
-          >
+          <View style={styles.formScrollWrapper}>
+            <KeyboardAwareFormPreset
+              ref={formScrollRef}
+              contentContainerStyle={styles.formScrollContent}
+              multilineFocused={focusedFieldType === "description"}
+              preset="transactionSheet"
+              scrollEnabled={
+                walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+              }
+              showsVerticalScrollIndicator={false}
+              style={styles.formScroll}
+              {...scrollProps}
+            >
             <View ref={scrollContentRef} collapsable={false}>
             <View style={styles.nameDateGroup}>
               {showTransactionNameField || showAttachmentsField ? (
@@ -2948,8 +2955,14 @@ function TransactionFormModalInner({
             ) : null}
             </View>
           </KeyboardAwareFormPreset>
+          <ScrollDownIndicator
+            visible={canScrollDown}
+            onPress={scrollToNext}
+            bottomOffset={6}
+          />
+        </View>
 
-          {/* Action Buttons */}
+        {/* Action Buttons */}
           <KeyboardStickyView
             offset={{
               closed: 0,
@@ -3500,6 +3513,10 @@ function createStyles(theme: AppTheme) {
     },
     typePickerSpacing: {
       marginBottom: 16,
+    },
+    formScrollWrapper: {
+      flex: 1,
+      position: "relative",
     },
     formScroll: {
       flex: 1,

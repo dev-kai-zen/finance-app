@@ -26,10 +26,12 @@ import {
   FullScreenFormModal,
   IconHelper,
   InfoModal,
-  ScreenTitleWithHelp,
   NotificationModal,
+  ScreenTitleWithHelp,
+  ScrollDownIndicator,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
@@ -88,6 +90,8 @@ export function FundGroupsModal({
   const [ruleInfoVisible, setRuleInfoVisible] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [proModalVisible, setProModalVisible] = useState(false);
+  const editorScroll = useScrollDownIndicator<ScrollView>();
+  const managerScroll = useScrollDownIndicator<ScrollView>();
 
   useEffect(() => {
     if (!visible) {
@@ -393,11 +397,14 @@ export function FundGroupsModal({
         onSave={editor ? save : undefined}
       >
         {editor ? (
-          <ScrollView
-            contentContainerStyle={styles.editorContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={editorScroll.scrollRef}
+              contentContainerStyle={styles.editorContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              {...editorScroll.scrollProps}
+            >
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Group Name</Text>
               <TextInput
@@ -714,12 +721,21 @@ export function FundGroupsModal({
                 </View>
               ))
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={editorScroll.canScrollDown}
+              onPress={editorScroll.scrollToNext}
+              bottomOffset={8}
+            />
+          </View>
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.managerContent}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={managerScroll.scrollRef}
+              contentContainerStyle={styles.managerContent}
+              showsVerticalScrollIndicator={false}
+              {...managerScroll.scrollProps}
+            >
             {loading ? (
               <ActivityIndicator
                 accessibilityLabel="Loading Fund Groups"
@@ -876,7 +892,13 @@ export function FundGroupsModal({
                 })}
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={managerScroll.canScrollDown}
+              onPress={managerScroll.scrollToNext}
+              bottomOffset={8}
+            />
+          </View>
         )}
       </FullScreenFormModal>
 
@@ -925,6 +947,10 @@ export function FundGroupsModal({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     managerContent: {
       gap: theme.spacing.lg,
       padding: theme.spacing.lg,

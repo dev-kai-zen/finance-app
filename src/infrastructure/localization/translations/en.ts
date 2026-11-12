@@ -856,6 +856,8 @@ export const en = {
       improveItem21: "Simplify the transaction type picker by renaming Fund Transfer to Transfer for cleaner balance.",
       improveItem22: "Move the transfer fee explanation to a helper icon modal to keep the form clean and compact.",
       improveItem23: "Align the New label button beside the active labels section and update the close button.",
+      improveItem24: "Show a floating scroll down arrow across scrollable sheets and forms when items are hidden below.",
+      improveItem25: "Simplify the customize fields sheet by removing repetitive descriptions for always-on fields.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
