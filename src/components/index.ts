@@ -23,6 +23,7 @@ export * from "./themed-switch";
 export * from "./confirm-modal";
 export * from "./info-modal";
 export * from "./notification-modal";
+export * from "./app-toast";
 export * from "./formatted-currency";
 export * from "./credit-utilization-ring";
 export * from "./calendar-picker";

@@ -13,6 +13,7 @@ import {
 } from "lucide-react-native";
 
 import {
+  AppToast,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
@@ -51,7 +52,10 @@ import type {
   ScheduleOccurrence,
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
-import { formatScheduleRecurrence } from "../utils/recurrence";
+import {
+  calculateScheduleOccurrence,
+  formatScheduleRecurrence,
+} from "../utils/recurrence";
 import {
   DEFAULT_SCHEDULE_LIST_FILTERS,
   filterSchedulesBySearch,
@@ -132,6 +136,14 @@ function ScheduledTransactionsScreenContent({
     ReadonlySet<ScheduleListFilter>
   >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
   const [searchQuery, setSearchQuery] = useState("");
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    message: string;
+    description?: string;
+  }>({
+    visible: false,
+    message: "",
+  });
 
   const searchRef = useWalkthroughTarget("scheduledSearch");
   const filterRef = useWalkthroughTarget("scheduledFilter");
@@ -305,9 +317,35 @@ function ScheduledTransactionsScreenContent({
 
   const handleAdvancePost = (transactionDate: Date) => {
     if (!advancePostTarget) return;
-    const targetId = advancePostTarget.id;
+    const target = advancePostTarget;
     setAdvancePostTarget(null);
-    advancePost(targetId, transactionDate);
+    const success = advancePost(target.id, transactionDate);
+    if (success) {
+      refreshAccounts();
+      const nextOccurrence = calculateScheduleOccurrence(
+        target,
+        target.nextOccurrenceNumber + 1,
+      );
+      const nextDate = nextOccurrence
+        ? nextOccurrence.effectiveAt ?? nextOccurrence.nominalAt
+        : null;
+
+      const description = nextDate
+        ? t("scheduledTransactions.advancePostToastNext", {
+            date: nextDate.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+          })
+        : t("scheduledTransactions.advancePostToastCompleted");
+
+      setToastState({
+        visible: true,
+        message: t("scheduledTransactions.advancePostToastTitle"),
+        description,
+      });
+    }
   };
 
   const setFilterSelected = (
@@ -865,6 +903,15 @@ function ScheduledTransactionsScreenContent({
           walkthrough.startWalkthrough();
         }}
         visible={showCongrats}
+      />
+
+      <AppToast
+        description={toastState.description}
+        message={toastState.message}
+        onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
+        position="top"
+        variant="success"
+        visible={toastState.visible}
       />
     </PageContainer>
     </View>

@@ -757,6 +757,9 @@ export const fil = {
     advancePostNextDate: "Petsa ng susunod na siklo",
     advancePostCompletes: "Huling transaksyon (makukumpleto ang iskedyul)",
     advancePostConfirm: "I-post nang Pauna",
+    advancePostToastTitle: "Nai-post nang mas maaga ang transaksyon",
+    advancePostToastNext: "Inilipat ang susunod na iskedyul sa %{date}.",
+    advancePostToastCompleted: "Kumpleto na ang iskedyul na ito.",
     today: "Ngayon",
   },
   themePicker: {
@@ -844,6 +847,7 @@ export const fil = {
       improveItem14: "Ipakita ang mga balanse ng mga naka-archive na account at pocket kahit naka-on ang privacy mode.",
       improveItem15: "Pinaikli ang halimbawa ng pangalan ng grupo ng account upang manatiling maayos sa isang linya.",
       improveItem16: "Panatilihing nakikita ang mga halaga sa mga naka-iskedyul na transaksyon kahit naka-on ang privacy mode.",
+      improveItem17: "Magpakita ng toast notification kasama ang petsa ng susunod na siklo kapag nag-advance post ng transaksyon.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

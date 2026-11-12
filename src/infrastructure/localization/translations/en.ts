@@ -761,6 +761,9 @@ export const en = {
     advancePostNextDate: "Next cycle date",
     advancePostCompletes: "Final occurrence (schedule will complete)",
     advancePostConfirm: "Advance Post",
+    advancePostToastTitle: "Scheduled transaction advance posted",
+    advancePostToastNext: "Next schedule automatically moved to %{date}.",
+    advancePostToastCompleted: "This scheduled transaction is now completed.",
     today: "Today",
   },
   themePicker: {
@@ -846,6 +849,7 @@ export const en = {
       improveItem14: "Display balances for archived accounts and pockets even when privacy mode is turned on.",
       improveItem15: "Shorten the account group name example to keep the placeholder clean on a single line.",
       improveItem16: "Keep transaction amounts visible in scheduled transactions even when privacy mode is turned on.",
+      improveItem17: "Show a toast notification with the next cycle date when advance posting a scheduled transaction.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

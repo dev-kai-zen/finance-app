@@ -757,6 +757,9 @@ export const es = {
     advancePostNextDate: "Fecha del siguiente ciclo",
     advancePostCompletes: "Última ocurrencia (el calendario se completará)",
     advancePostConfirm: "Publicar por adelantado",
+    advancePostToastTitle: "Transacción programada registrada por adelantado",
+    advancePostToastNext: "La próxima fecha programada se trasladó al %{date}.",
+    advancePostToastCompleted: "Esta programación ha finalizado.",
     today: "Hoy",
   },
   themePicker: {
@@ -843,6 +846,7 @@ export const es = {
       improveItem14: "Muestra los saldos de cuentas y apartados archivados incluso con el modo de privacidad activado.",
       improveItem15: "Acorta el ejemplo de nombre de grupo de cuentas para mantener el texto en una sola línea.",
       improveItem16: "Mantén visibles los montos en las transacciones programadas incluso con el modo de privacidad activado.",
+      improveItem17: "Muestra una notificación toast con la próxima fecha recurrente al adelantar una transacción programada.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
