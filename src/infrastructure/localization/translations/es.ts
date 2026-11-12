@@ -848,6 +848,7 @@ export const es = {
       improveItem16: "Mantén visibles los montos en las transacciones programadas incluso con el modo de privacidad activado.",
       improveItem17: "Muestra una notificación toast con la próxima fecha recurrente al adelantar una transacción programada.",
       improveItem18: "Muestra un modal de confirmación en la app al guardar datos de transacciones exportados en el dispositivo.",
+      improveItem19: "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

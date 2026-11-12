@@ -849,6 +849,7 @@ export const fil = {
       improveItem16: "Panatilihing nakikita ang mga halaga sa mga naka-iskedyul na transaksyon kahit naka-on ang privacy mode.",
       improveItem17: "Magpakita ng toast notification kasama ang petsa ng susunod na siklo kapag nag-advance post ng transaksyon.",
       improveItem18: "Magpakita ng in-app confirmation modal kapag nagse-save ng na-export na transaksyon sa device.",
+      improveItem19: "Gawing multi-select dropdown list ang filter ng mga label sa transaksyon katulad ng sa account.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

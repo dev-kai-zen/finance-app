@@ -91,6 +91,7 @@ export function TransactionFilterModal({
 
   const [localFilters, setLocalFilters] = useState<TransactionFilterState>(filters);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [labelDropdownOpen, setLabelDropdownOpen] = useState(false);
   const [customDatePickerTarget, setCustomDatePickerTarget] = useState<
     "from" | "to" | null
   >(null);
@@ -101,6 +102,7 @@ export function TransactionFilterModal({
     if (visible) {
       setLocalFilters(filters);
       setAccountDropdownOpen(false);
+      setLabelDropdownOpen(false);
       setCustomDatePickerTarget(null);
     }
   }, [visible, filters]);
@@ -121,6 +123,8 @@ export function TransactionFilterModal({
 
   const handleReset = () => {
     setLocalFilters(DEFAULT_TRANSACTION_FILTERS);
+    setAccountDropdownOpen(false);
+    setLabelDropdownOpen(false);
   };
 
   const handleApply = () => {
@@ -143,6 +147,16 @@ export function TransactionFilterModal({
       : selectedAccountNames.length <= 2
         ? selectedAccountNames.join(", ")
         : `${selectedAccountNames.length} accounts selected`;
+
+  const selectedLabelNames = activeLabels
+    .filter((lbl) => localFilters.labelIds?.includes(lbl.id))
+    .map((lbl) => lbl.name);
+  const labelSelectionLabel =
+    selectedLabelNames.length === 0
+      ? "All labels"
+      : selectedLabelNames.length <= 2
+        ? selectedLabelNames.join(", ")
+        : `${selectedLabelNames.length} labels selected`;
 
   return (
     <Modal
@@ -291,7 +305,10 @@ export function TransactionFilterModal({
                 accessibilityLabel={`Account filter: ${accountSelectionLabel}`}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: accountDropdownOpen }}
-                onPress={() => setAccountDropdownOpen((open) => !open)}
+                onPress={() => {
+                  setAccountDropdownOpen((open) => !open);
+                  setLabelDropdownOpen(false);
+                }}
                 style={({ pressed }) => [
                   styles.accountDropdownTrigger,
                   pressed && styles.accountDropdownPressed,
@@ -371,40 +388,102 @@ export function TransactionFilterModal({
             {activeLabels.length > 0 && (
               <View style={styles.filterGroup}>
                 <Text style={styles.groupTitle}>LABELS</Text>
-                <View style={styles.labelsWrap}>
-                  {activeLabels.map((lbl) => {
-                    const isSelected = localFilters.labelIds?.includes(lbl.id);
-                    return (
-                      <Pressable
-                        key={lbl.id}
-                        onPress={() =>
-                          setLocalFilters((prev) => {
-                            const current = prev.labelIds ?? [];
-                            return {
-                              ...prev,
-                              labelIds: isSelected
-                                ? current.filter((id) => id !== lbl.id)
-                                : [...current, lbl.id],
-                            };
-                          })
-                        }
-                        style={[
-                          styles.labelFilterChip,
-                          isSelected && styles.labelFilterChipSelected,
-                        ]}
-                      >
-                        <LabelBadge label={lbl} size="md" />
-                        {isSelected && (
-                          <Check
-                            size={14}
-                            color={theme.colors.primary}
-                            strokeWidth={3}
-                          />
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                <Pressable
+                  accessibilityLabel={`Labels filter: ${labelSelectionLabel}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: labelDropdownOpen }}
+                  onPress={() => {
+                    setLabelDropdownOpen((open) => !open);
+                    setAccountDropdownOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.accountDropdownTrigger,
+                    pressed && styles.accountDropdownPressed,
+                  ]}
+                >
+                  <Text numberOfLines={1} style={styles.accountDropdownText}>
+                    {labelSelectionLabel}
+                  </Text>
+                  {labelDropdownOpen ? (
+                    <ChevronUp color={theme.colors.textSecondary} size={18} />
+                  ) : (
+                    <ChevronDown color={theme.colors.textSecondary} size={18} />
+                  )}
+                </Pressable>
+
+                {labelDropdownOpen ? (
+                  <ScrollView
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={activeLabels.length > 5}
+                    style={styles.accountOptionsList}
+                  >
+                    <Pressable
+                      accessibilityLabel="All Labels"
+                      accessibilityRole="checkbox"
+                      accessibilityState={{
+                        checked:
+                          !localFilters.labelIds ||
+                          localFilters.labelIds.length === 0,
+                      }}
+                      onPress={() =>
+                        setLocalFilters((prev) => ({ ...prev, labelIds: [] }))
+                      }
+                      style={[
+                        styles.accountOption,
+                        (!localFilters.labelIds ||
+                          localFilters.labelIds.length === 0) &&
+                          styles.accountOptionActive,
+                      ]}
+                    >
+                      <Text style={styles.accountOptionText}>All Labels</Text>
+                      {!localFilters.labelIds ||
+                      localFilters.labelIds.length === 0 ? (
+                        <Check
+                          color={theme.colors.primary}
+                          size={17}
+                          strokeWidth={2.5}
+                        />
+                      ) : null}
+                    </Pressable>
+
+                    {activeLabels.map((lbl) => {
+                      const active =
+                        localFilters.labelIds?.includes(lbl.id) ?? false;
+                      return (
+                        <Pressable
+                          key={lbl.id}
+                          accessibilityLabel={`Filter label ${lbl.name}`}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: active }}
+                          onPress={() =>
+                            setLocalFilters((prev) => {
+                              const current = prev.labelIds ?? [];
+                              return {
+                                ...prev,
+                                labelIds: active
+                                  ? current.filter((id) => id !== lbl.id)
+                                  : [...current, lbl.id],
+                              };
+                            })
+                          }
+                          style={[
+                            styles.accountOption,
+                            active && styles.accountOptionActive,
+                          ]}
+                        >
+                          <LabelBadge label={lbl} size="md" />
+                          {active ? (
+                            <Check
+                              color={theme.colors.primary}
+                              size={17}
+                              strokeWidth={2.5}
+                            />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
               </View>
             )}
           </ScrollView>
@@ -664,26 +743,6 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "500",
       paddingRight: theme.spacing.sm,
-    },
-    labelsWrap: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.sm,
-    },
-    labelFilterChip: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.round,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 6,
-      paddingHorizontal: theme.spacing.xs,
-      paddingVertical: 2,
-    },
-    labelFilterChipSelected: {
-      backgroundColor: `${theme.colors.primary}15`,
-      borderColor: theme.colors.primary,
     },
     footerRow: {
       flexDirection: "row",
