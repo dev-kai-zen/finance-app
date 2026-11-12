@@ -858,6 +858,7 @@ export const en = {
       improveItem23: "Align the New label button beside the active labels section and update the close button.",
       improveItem24: "Show a floating scroll down arrow across scrollable sheets and forms when items are hidden below.",
       improveItem25: "Simplify the customize fields sheet by removing repetitive descriptions for always-on fields.",
+      improveItem26: "Update the select labels modal with a dedicated manage labels chip and a circular close button.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

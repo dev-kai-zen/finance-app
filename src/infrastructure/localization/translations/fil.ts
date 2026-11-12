@@ -856,6 +856,7 @@ export const fil = {
       improveItem23: "Ihanay ang New label button sa tabi ng mga aktibong label at gawing pabilog ang close button.",
       improveItem24: "Magpakita ng floating scroll down arrow sa mga scrollable na sheet at form kapag may mga nakatagong item sa ibaba.",
       improveItem25: "Gawing mas simple ang customize fields sheet sa pamamagitan ng pag-alis ng paulit-ulit na paglalarawan para sa mga laging bukas na field.",
+      improveItem26: "I-update ang select labels modal na may chip para sa pamamahala ng mga label at pabilog na close button.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
