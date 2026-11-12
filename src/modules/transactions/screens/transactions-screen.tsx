@@ -19,6 +19,7 @@ import {
   FolderDown,
   LayoutList,
   Receipt,
+  RotateCcw,
   Rows3,
   Search,
   Share2,
@@ -1158,6 +1159,19 @@ function TransactionsScreenContent({
             contentContainerStyle={styles.activeFiltersRow}
             style={styles.activeFiltersScroll}
           >
+            <Pressable
+              accessibilityLabel="Clear all filters"
+              accessibilityRole="button"
+              onPress={handleClearFilters}
+              style={({ pressed }) => [
+                styles.clearAllFiltersChip,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <RotateCcw color={theme.colors.textSecondary} size={12} />
+              <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
+            </Pressable>
+
             {searchQuery.trim().length > 0 ? (
               <Pressable
                 style={styles.activeFilterChip}
@@ -1292,14 +1306,6 @@ function TransactionsScreenContent({
                 </Pressable>
               );
             })}
-
-            <Pressable
-              style={styles.clearAllFiltersChip}
-              onPress={handleClearFilters}
-              accessibilityRole="button"
-            >
-              <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
-            </Pressable>
           </HorizontalScrollView>
         )}
 
@@ -1937,6 +1943,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
       paddingHorizontal: 10,
       paddingVertical: 4,
     },

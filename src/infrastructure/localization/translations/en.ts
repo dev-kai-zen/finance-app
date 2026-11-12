@@ -852,6 +852,7 @@ export const en = {
       improveItem17: "Show a toast notification with the next cycle date when advance posting a scheduled transaction.",
       improveItem18: "Show an in-app confirmation modal when saving exported transaction data to the device.",
       improveItem19: "Update the transaction label filter to a multi-select dropdown list matching the account filter.",
+      improveItem20: "Position the Clear all filter button at the front of active filters so it is immediately accessible without scrolling.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
