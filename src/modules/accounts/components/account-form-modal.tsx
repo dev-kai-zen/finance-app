@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { ChevronRight, Crown, LayoutList, Lock, Trash2, Wallet } from "lucide-react-native";
+import { ChevronRight, CreditCard, Crown, LayoutList, Lock, Trash2, Wallet } from "lucide-react-native";
 import { useLocalization } from "@/infrastructure/localization";
 import {
   AmountCalculatorField,
@@ -923,8 +923,11 @@ function AccountFormModalContent({
             </Pressable>
 
           {isCreditCardType ? (
-            <View style={styles.creditCardSection}>
-              <Text style={styles.sectionTitle}>Credit Card Details</Text>
+            <View style={styles.creditCardCard}>
+              <View style={styles.creditCardHeader}>
+                <CreditCard color={typeColor || theme.colors.primary} size={18} />
+                <Text style={styles.sectionTitle}>Credit Card Details</Text>
+              </View>
               <AmountCalculatorField
                 amountMinorUnits={creditLimitMinorUnits}
                 amountUnset={creditLimitUnset}
@@ -1386,9 +1389,19 @@ function createStyles(theme: AppTheme) {
       fontSize: 12,
       fontWeight: "600",
     },
-    creditCardSection: {
+    creditCardCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.md,
+      padding: theme.spacing.lg,
+      ...theme.shadows.card,
+    },
+    creditCardHeader: {
+      alignItems: "center",
+      flexDirection: "row",
       gap: theme.spacing.sm,
-      marginTop: theme.spacing.sm,
     },
     sectionTitle: {
       color: theme.colors.textPrimary,
