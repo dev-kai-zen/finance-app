@@ -880,7 +880,7 @@ export const en = {
       newItem5:
         "Customize tactile vibration feedback and optional sound chimes when recording expenses and tapping the keypad.",
       newItem6:
-        "Quickly duplicate or delete transactions by swiping right or left directly on the ledger.",
+        "Quickly duplicate or delete transactions by swiping left on any row to reveal actions.",
       improveItem1:
         "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
       improveItem2:

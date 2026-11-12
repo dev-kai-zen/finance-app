@@ -878,7 +878,7 @@ export const fil = {
       newItem5:
         "I-customize ang vibration feedback at tunog kapag nagtatala ng transaksyon o gumagamit ng calculator.",
       newItem6:
-        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakanan o pakaliwa sa talaan.",
+        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakaliwa sa talaan upang makita ang mga aksyon.",
       improveItem1:
         "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
       improveItem2:

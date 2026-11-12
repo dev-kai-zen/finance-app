@@ -877,7 +877,7 @@ export const es = {
       newItem5:
         "Personaliza la vibración táctil y sonidos al registrar gastos y pulsar teclas numéricas.",
       newItem6:
-        "Duplica o elimina transacciones rápidamente deslizando hacia la derecha o izquierda en el libro contable.",
+        "Duplica o elimina transacciones rápidamente deslizando hacia la izquierda en cualquier fila para ver las opciones.",
       improveItem1:
         "Personaliza la frase diaria del panel con colores de fondo y texto personalizados o restaura los predeterminados.",
       improveItem2:

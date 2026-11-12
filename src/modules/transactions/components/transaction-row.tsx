@@ -117,6 +117,9 @@ export function TransactionRow({
   const translateX = useSharedValue(0);
   const startX = useSharedValue(0);
 
+  const totalActionsWidth =
+    (onDuplicate ? ACTION_WIDTH : 0) + (onDelete ? ACTION_WIDTH : 0);
+
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -126,20 +129,29 @@ export function TransactionRow({
           startX.set(translateX.get());
         })
         .onUpdate((event) => {
+          if (totalActionsWidth === 0) return;
           const next = startX.get() + event.translationX;
-          const minX = onDelete ? -ACTION_WIDTH - 15 : 0;
-          const maxX = onDuplicate ? ACTION_WIDTH + 15 : 0;
+          const minX = -totalActionsWidth - 15;
+          const maxX = 0;
           translateX.set(Math.min(maxX, Math.max(minX, next)));
         })
         .onEnd((event) => {
+          if (totalActionsWidth === 0) {
+            translateX.set(0);
+            return;
+          }
           const current = translateX.get();
-          if (current < -ACTION_WIDTH / 2 || event.velocityX < -400) {
+          if (event.velocityX < -400) {
             translateX.set(
-              withSpring(-ACTION_WIDTH, { dampingRatio: 0.85, duration: 250 }),
+              withSpring(-totalActionsWidth, { dampingRatio: 0.85, duration: 250 }),
             );
-          } else if (current > ACTION_WIDTH / 2 || event.velocityX > 400) {
+          } else if (event.velocityX > 400) {
             translateX.set(
-              withSpring(ACTION_WIDTH, { dampingRatio: 0.85, duration: 250 }),
+              withSpring(0, { dampingRatio: 0.85, duration: 250 }),
+            );
+          } else if (current < -totalActionsWidth / 2) {
+            translateX.set(
+              withSpring(-totalActionsWidth, { dampingRatio: 0.85, duration: 250 }),
             );
           } else {
             translateX.set(
@@ -147,7 +159,7 @@ export function TransactionRow({
             );
           }
         }),
-    [startX, translateX, onDelete, onDuplicate],
+    [startX, translateX, totalActionsWidth],
   );
 
   const animatedRowStyle = useAnimatedStyle(() => ({
@@ -264,6 +276,48 @@ export function TransactionRow({
   const displayAmount = isPrivate ? "••••••" : formattedAmount;
   const displaySourceBalance = isPrivate ? "••••••" : sourceBalance;
 
+  const renderSwipeActions = () => {
+    if (totalActionsWidth === 0) return null;
+
+    return (
+      <View style={styles.swipeActionsContainer}>
+        {onDuplicate ? (
+          <Pressable
+            accessibilityLabel={`Duplicate ${title}`}
+            accessibilityRole="button"
+            onPress={handleDuplicatePress}
+            style={({ pressed }) => [
+              styles.duplicateActionButton,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Copy color="#FFFFFF" size={17} />
+            <Text numberOfLines={1} style={styles.swipeActionText}>
+              {t("transactions.swipeDuplicate", { defaultValue: "Duplicate" })}
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {onDelete ? (
+          <Pressable
+            accessibilityLabel={`Delete ${title}`}
+            accessibilityRole="button"
+            onPress={handleDeletePress}
+            style={({ pressed }) => [
+              styles.deleteActionButton,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <Trash2 color="#FFFFFF" size={17} />
+            <Text numberOfLines={1} style={styles.swipeActionText}>
+              {t("transactions.swipeDelete", { defaultValue: "Delete" })}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  };
+
   if (isCompact) {
     const compactLocation = formatCompactLocation(
       transaction.accountName,
@@ -284,39 +338,7 @@ export function TransactionRow({
 
     return (
       <View style={styles.swipeContainer}>
-        <View style={styles.swipeActionsContainer}>
-          {onDuplicate ? (
-            <Pressable
-              accessibilityLabel={`Duplicate ${title}`}
-              accessibilityRole="button"
-              onPress={handleDuplicatePress}
-              style={styles.duplicateActionButton}
-            >
-              <Copy color="#FFFFFF" size={17} />
-              <Text style={styles.swipeActionText}>
-                {t("transactions.swipeDuplicate", { defaultValue: "Duplicate" })}
-              </Text>
-            </Pressable>
-          ) : (
-            <View style={{ width: ACTION_WIDTH }} />
-          )}
-
-          {onDelete ? (
-            <Pressable
-              accessibilityLabel={`Delete ${title}`}
-              accessibilityRole="button"
-              onPress={handleDeletePress}
-              style={styles.deleteActionButton}
-            >
-              <Trash2 color="#FFFFFF" size={17} />
-              <Text style={styles.swipeActionText}>
-                {t("transactions.swipeDelete", { defaultValue: "Delete" })}
-              </Text>
-            </Pressable>
-          ) : (
-            <View style={{ width: ACTION_WIDTH }} />
-          )}
-        </View>
+        {renderSwipeActions()}
 
         <GestureDetector gesture={panGesture}>
           <Animated.View style={animatedRowStyle}>
@@ -400,39 +422,7 @@ export function TransactionRow({
 
   return (
     <View style={styles.swipeContainer}>
-      <View style={styles.swipeActionsContainer}>
-        {onDuplicate ? (
-          <Pressable
-            accessibilityLabel={`Duplicate ${title}`}
-            accessibilityRole="button"
-            onPress={handleDuplicatePress}
-            style={styles.duplicateActionButton}
-          >
-            <Copy color="#FFFFFF" size={17} />
-            <Text style={styles.swipeActionText}>
-              {t("transactions.swipeDuplicate", { defaultValue: "Duplicate" })}
-            </Text>
-          </Pressable>
-        ) : (
-          <View style={{ width: ACTION_WIDTH }} />
-        )}
-
-        {onDelete ? (
-          <Pressable
-            accessibilityLabel={`Delete ${title}`}
-            accessibilityRole="button"
-            onPress={handleDeletePress}
-            style={styles.deleteActionButton}
-          >
-            <Trash2 color="#FFFFFF" size={17} />
-            <Text style={styles.swipeActionText}>
-              {t("transactions.swipeDelete", { defaultValue: "Delete" })}
-            </Text>
-          </Pressable>
-        ) : (
-          <View style={{ width: ACTION_WIDTH }} />
-        )}
-      </View>
+      {renderSwipeActions()}
 
       <GestureDetector gesture={panGesture}>
         <Animated.View style={animatedRowStyle}>
@@ -583,7 +573,7 @@ function createStyles(theme: AppTheme) {
       right: 0,
       bottom: 0,
       flexDirection: "row",
-      justifyContent: "space-between",
+      justifyContent: "flex-end",
       alignItems: "stretch",
       borderRadius: theme.borderRadius.medium,
       overflow: "hidden",
