@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Keyboard,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -132,8 +133,7 @@ export function HexColorFormModal({
     <>
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       <KeyboardAvoidingView
-        automaticOffset
-        behavior="height"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
       >
         <Pressable
@@ -179,7 +179,7 @@ export function HexColorFormModal({
           </View>
 
           <KeyboardAwareForm
-            bottomOffset={12}
+            bottomOffset={80}
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
@@ -288,7 +288,7 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       flexDirection: "column",
       flexShrink: 1,
-      maxHeight: "90%",
+      maxHeight: "85%",
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
       width: "100%",
@@ -325,7 +325,7 @@ function createStyles(theme: AppTheme) {
     },
     formScroll: {
       flexShrink: 1,
-      maxHeight: 320,
+      maxHeight: 340,
     },
     previewContainer: {
       alignItems: "center",

@@ -854,6 +854,8 @@ export const fil = {
       fixItem9: "Ayusin ang View all button sa card ng Top Spending upang buksan ang mga gastusin ngayong buwan.",
       fixItem10:
         "Ayusin ang visual glitch at hindi inaasahang circle animation kapag binubuksan ang mga toggle sa mga form at setting.",
+      fixItem11:
+        "Panatilihing nakikita ang mga field ng kulay sa itaas ng keyboard kapag gumagawa ng sariling kulay.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

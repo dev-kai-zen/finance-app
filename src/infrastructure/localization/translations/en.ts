@@ -856,6 +856,8 @@ export const en = {
       fixItem9: "Fix the Top Spending card's View all button to open this month's spending transactions.",
       fixItem10:
         "Fix visual glitch and unintended circle animation when enabling toggles across forms and settings.",
+      fixItem11:
+        "Keep the color name and hex code fields visible above the keyboard when creating custom colors.",
     },
     v140: {
       date: "November 5, 2026",

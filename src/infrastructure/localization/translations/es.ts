@@ -853,6 +853,8 @@ export const es = {
       fixItem9: "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
       fixItem10:
         "Corrige el fallo visual y la animación circular no deseada al activar interruptores en formularios y ajustes.",
+      fixItem11:
+        "Mantén visibles los campos de color encima del teclado al crear colores personalizados.",
     },
     v140: {
       date: "5 de noviembre de 2026",
