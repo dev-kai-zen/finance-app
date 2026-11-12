@@ -845,6 +845,7 @@ export const en = {
       improveItem13: "Group credit card limit and statement settings into a distinct card in account setup.",
       improveItem14: "Display balances for archived accounts and pockets even when privacy mode is turned on.",
       improveItem15: "Shorten the account group name example to keep the placeholder clean on a single line.",
+      improveItem16: "Keep transaction amounts visible in scheduled transactions even when privacy mode is turned on.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

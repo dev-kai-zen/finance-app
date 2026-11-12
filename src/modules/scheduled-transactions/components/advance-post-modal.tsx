@@ -21,7 +21,6 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { AccountListItem } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { TransactionDateTimePickerModal } from "@/modules/transactions";
 import { formatCurrency } from "@/utils/currency";
 import type { ScheduledTransaction } from "../types/scheduled-transaction.types";
@@ -61,7 +60,6 @@ export function AdvancePostModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-  const { isPrivate } = usePrivacyMode();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
@@ -179,13 +177,10 @@ export function AdvancePostModal({
                         : styles.amountExpense,
                   ]}
                 >
-                  {formatPrivacyAmount(
-                    formatCurrency(
-                      signedAmount,
-                      sourceAccount?.currencyCode ?? "PHP",
-                      signedAmount > 0 && !isTransfer,
-                    ),
-                    isPrivate,
+                  {formatCurrency(
+                    signedAmount,
+                    sourceAccount?.currencyCode ?? "PHP",
+                    signedAmount > 0 && !isTransfer,
                   )}
                 </Text>
               </View>

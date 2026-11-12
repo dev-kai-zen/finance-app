@@ -41,7 +41,6 @@ import {
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { AdvancePostModal } from "../components/advance-post-modal";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
@@ -146,7 +145,6 @@ function ScheduledTransactionsScreenContent({
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
-  const { isPrivate } = usePrivacyMode();
   const [showCongrats, setShowCongrats] = useState(false);
 
   const searchContext = useMemo((): ScheduleListSearchContext => {
@@ -611,13 +609,10 @@ function ScheduledTransactionsScreenContent({
                           : styles.amountExpense,
                     ]}
                   >
-                    {formatPrivacyAmount(
-                      formatCurrency(
-                        signedAmount,
-                        source?.currencyCode ?? "PHP",
-                        signedAmount > 0 && !isTransfer,
-                      ),
-                      isPrivate,
+                    {formatCurrency(
+                      signedAmount,
+                      source?.currencyCode ?? "PHP",
+                      signedAmount > 0 && !isTransfer,
                     )}
                   </Text>
                 </View>
