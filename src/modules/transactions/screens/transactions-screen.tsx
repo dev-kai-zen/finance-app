@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   RefreshControl,
@@ -34,6 +33,7 @@ import {
   ConfirmModal,
   FloatingActionButton,
   HorizontalScrollView,
+  InfoModal,
   PageContainer,
   PageEmptyState,
   useHeaderWalkthroughAction,
@@ -412,6 +412,11 @@ function TransactionsScreenContent({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
+  const [exportNotice, setExportNotice] = useState<{
+    title: string;
+    message: string;
+    variant?: "info" | "success" | "error";
+  } | null>(null);
   const handledActionRef = useRef<string | null>(null);
   const returnToChatOnFormCloseRef = useRef(false);
 
@@ -858,12 +863,14 @@ function TransactionsScreenContent({
         if (error instanceof TransactionCsvExportCancelledError) {
           return;
         }
-        Alert.alert(
-          "Export failed",
-          error instanceof Error
-            ? error.message
-            : "Unable to export transactions.",
-        );
+        setExportNotice({
+          title: t("transactions.exportFailedTitle"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("transactions.exportFailedMessage"),
+          variant: "error",
+        });
       } finally {
         setExportingCsv(false);
       }
@@ -872,10 +879,11 @@ function TransactionsScreenContent({
 
   const handleOpenExportCsv = () => {
     if (filteredTransactions.length === 0) {
-      Alert.alert(
-        "Nothing to export",
-        "Adjust your filters or record transactions first.",
-      );
+      setExportNotice({
+        title: t("transactions.exportEmptyTitle"),
+        message: t("transactions.exportEmptyMessage"),
+        variant: "info",
+      });
       return;
     }
 
@@ -886,10 +894,11 @@ function TransactionsScreenContent({
     setExportCsvSheetOpen(false);
     runCsvExport(async (rows) => {
       const { fileName } = await saveTransactionsCsvToDevice(rows);
-      Alert.alert(
-        "Saved to device",
-        `${fileName} was saved to the folder you selected.`,
-      );
+      setExportNotice({
+        title: t("transactions.exportSavedTitle"),
+        message: t("transactions.exportSavedMessage", { fileName }),
+        variant: "info",
+      });
     });
   };
 
@@ -1624,6 +1633,15 @@ function TransactionsScreenContent({
         onClose={() => setExportCsvSheetOpen(false)}
         title="Export CSV"
         visible={exportCsvSheetOpen}
+      />
+
+      <InfoModal
+        buttonLabel={t("common.ok")}
+        message={exportNotice?.message ?? ""}
+        onClose={() => setExportNotice(null)}
+        title={exportNotice?.title ?? ""}
+        variant={exportNotice?.variant ?? "info"}
+        visible={Boolean(exportNotice)}
       />
 
       <WalkthroughIntroModal
