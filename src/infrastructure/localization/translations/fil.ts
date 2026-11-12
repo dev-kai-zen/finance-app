@@ -853,6 +853,7 @@ export const fil = {
       improveItem20: "Ilagay ang Clear all filter button sa unahan ng mga aktibong filter upang madali itong mapindot nang hindi nag-i-scroll.",
       improveItem21: "Gawing mas simple ang transaction type picker sa pamamagitan ng pagpapalit ng Fund Transfer sa Transfer.",
       improveItem22: "Ilipat ang paliwanag sa bayad sa paglilipat sa isang helper icon modal upang mapanatiling malinis ang form.",
+      improveItem23: "Ihanay ang New label button sa tabi ng mga aktibong label at gawing pabilog ang close button.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

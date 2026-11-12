@@ -855,6 +855,7 @@ export const en = {
       improveItem20: "Position the Clear all filter button at the front of active filters so it is immediately accessible without scrolling.",
       improveItem21: "Simplify the transaction type picker by renaming Fund Transfer to Transfer for cleaner balance.",
       improveItem22: "Move the transfer fee explanation to a helper icon modal to keep the form clean and compact.",
+      improveItem23: "Align the New label button beside the active labels section and update the close button.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

@@ -127,26 +127,18 @@ export function LabelsManagerModal({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Manage Labels</Text>
-            <View style={styles.headerActions}>
-              <Pressable
-                onPress={handleNew}
-                style={styles.addBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Create New Label"
-              >
-                <Plus size={16} color="#FFFFFF" />
-                <Text style={styles.addBtnText}>New</Text>
-              </Pressable>
-              <Pressable
-                onPress={onClose}
-                hitSlop={8}
-                style={styles.closeBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <X size={20} color={theme.colors.textMuted} />
-              </Pressable>
-            </View>
+            <Pressable
+              accessibilityLabel="Close"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <X color={theme.colors.textSecondary} size={18} />
+            </Pressable>
           </View>
 
           {/* Filter Bar with Checkbox */}
@@ -198,15 +190,42 @@ export function LabelsManagerModal({
                 <Text style={styles.emptySubtitle}>
                   Create labels to tag and organize transactions.
                 </Text>
+                <Pressable
+                  accessibilityLabel="Create New Label"
+                  accessibilityRole="button"
+                  onPress={handleNew}
+                  style={({ pressed }) => [
+                    styles.addBtn,
+                    { marginTop: theme.spacing.md },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <Plus color={theme.colors.onPrimary} size={14} />
+                  <Text style={styles.addBtnText}>New Label</Text>
+                </Pressable>
               </View>
             ) : (
               <>
                 {/* Active Section */}
                 {activeLabels.length > 0 ? (
                   <View style={styles.section}>
-                    <Text style={styles.sectionHeader}>
-                      Active Labels ({activeLabels.length})
-                    </Text>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionHeader}>
+                        Active Labels ({activeLabels.length})
+                      </Text>
+                      <Pressable
+                        accessibilityLabel="Create New Label"
+                        accessibilityRole="button"
+                        onPress={handleNew}
+                        style={({ pressed }) => [
+                          styles.addBtn,
+                          pressed && { opacity: 0.8 },
+                        ]}
+                      >
+                        <Plus color={theme.colors.onPrimary} size={14} />
+                        <Text style={styles.addBtnText}>New</Text>
+                      </Pressable>
+                    </View>
                     {activeLabels.map((lbl) => (
                       <View key={lbl.id} style={styles.row}>
                         <View style={styles.rowLeft}>
@@ -253,10 +272,43 @@ export function LabelsManagerModal({
                   <View style={styles.emptyContainer}>
                     <Text style={styles.emptyTitle}>All labels are archived</Text>
                     <Text style={styles.emptySubtitle}>
-                      Check "Show archived" above to view or restore them.
+                      Check "Show archived" above to view or restore them, or create a new active label.
                     </Text>
+                    <Pressable
+                      accessibilityLabel="Create New Label"
+                      accessibilityRole="button"
+                      onPress={handleNew}
+                      style={({ pressed }) => [
+                        styles.addBtn,
+                        { marginTop: theme.spacing.md },
+                        pressed && { opacity: 0.8 },
+                      ]}
+                    >
+                      <Plus color={theme.colors.onPrimary} size={14} />
+                      <Text style={styles.addBtnText}>New Label</Text>
+                    </Pressable>
                   </View>
-                ) : null}
+                ) : (
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionHeader}>
+                        Active Labels (0)
+                      </Text>
+                      <Pressable
+                        accessibilityLabel="Create New Label"
+                        accessibilityRole="button"
+                        onPress={handleNew}
+                        style={({ pressed }) => [
+                          styles.addBtn,
+                          pressed && { opacity: 0.8 },
+                        ]}
+                      >
+                        <Plus color={theme.colors.onPrimary} size={14} />
+                        <Text style={styles.addBtnText}>New</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
 
                 {/* Archived Section */}
                 {showArchived && (
@@ -440,10 +492,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    headerActions: {
+    sectionHeaderRow: {
       alignItems: "center",
       flexDirection: "row",
-      gap: theme.spacing.sm,
+      justifyContent: "space-between",
     },
     addBtn: {
       alignItems: "center",
@@ -452,7 +504,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: 4,
       paddingHorizontal: theme.spacing.md,
-      paddingVertical: 6,
+      paddingVertical: 5,
     },
     addBtnText: {
       color: theme.colors.onPrimary,
@@ -460,7 +512,12 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
     },
     closeBtn: {
-      padding: theme.spacing.xs,
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
     },
     list: {
       flex: 1,
