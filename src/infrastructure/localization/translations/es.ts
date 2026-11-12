@@ -851,6 +851,7 @@ export const es = {
       improveItem19: "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
       improveItem20: "Ubica el botón de borrar todos los filtros al principio de los filtros activos para acceder de inmediato sin desplazarse.",
       improveItem21: "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
+      improveItem22: "Mueve la explicación de la comisión de transferencia a un modal de ayuda para mantener el formulario limpio.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -2167,6 +2168,8 @@ export const es = {
     exportEmptyMessage: "Ajusta tus filtros o registra transacciones primero.",
     exportFailedTitle: "Error al exportar",
     exportFailedMessage: "No se pudieron exportar las transacciones.",
+    transferFeeTitle: "Comisión de transferencia",
+    transferFeeHelpMessage: "Deduce una comisión de transacción instantánea (ej. InstaPay, GCash, cargos bancarios).",
   },
   chatWithKai: {
     modalTitle: "Chatear con Kai",

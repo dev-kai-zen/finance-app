@@ -854,6 +854,7 @@ export const en = {
       improveItem19: "Update the transaction label filter to a multi-select dropdown list matching the account filter.",
       improveItem20: "Position the Clear all filter button at the front of active filters so it is immediately accessible without scrolling.",
       improveItem21: "Simplify the transaction type picker by renaming Fund Transfer to Transfer for cleaner balance.",
+      improveItem22: "Move the transfer fee explanation to a helper icon modal to keep the form clean and compact.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -2172,6 +2173,8 @@ export const en = {
     exportEmptyMessage: "Adjust your filters or record transactions first.",
     exportFailedTitle: "Export failed",
     exportFailedMessage: "Unable to export transactions.",
+    transferFeeTitle: "Transfer Fee",
+    transferFeeHelpMessage: "Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges).",
   },
   chatWithKai: {
     modalTitle: "Chat with Kai",

@@ -25,8 +25,10 @@ import { KeyboardStickyView } from "react-native-keyboard-controller";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
+  HelpIconButton,
   HorizontalScrollView,
   IconHelper,
+  InfoModal,
   KeyboardAwareFormPreset,
   NotificationModal,
   ThemedSwitch,
@@ -454,6 +456,7 @@ function TransactionFormModalInner({
   const [isFeeCalculatorOpen, setIsFeeCalculatorOpen] = useState(false);
   const [isFeeAccountPickerOpen, setIsFeeAccountPickerOpen] = useState(false);
   const [isFeeCategoryPickerOpen, setIsFeeCategoryPickerOpen] = useState(false);
+  const [isTransferFeeHelpOpen, setIsTransferFeeHelpOpen] = useState(false);
   const [pendingBudgetWarning, setPendingBudgetWarning] = useState<BudgetCheckResult | null>(null);
   const [isBudgetWarningOpen, setIsBudgetWarningOpen] = useState(false);
   const [pendingCreditLimitWarning, setPendingCreditLimitWarning] =
@@ -2354,11 +2357,17 @@ function TransactionFormModalInner({
                 </View>
                 <View style={styles.transferFeePanel}>
                   <View style={styles.transferFeeHeader}>
-                    <View style={styles.transferFeeHeaderText}>
-                      <Text style={styles.transferFeeTitle}>Transfer Fee</Text>
-                      <Text style={styles.transferFeeDescription}>
-                        Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges)
+                    <View style={styles.transferFeeTitleRow}>
+                      <Text style={styles.transferFeeTitle}>
+                        {t("transactions.transferFeeTitle", {
+                          defaultValue: "Transfer Fee",
+                        })}
                       </Text>
+                      <HelpIconButton
+                        accessibilityHint="Explains transfer fee"
+                        accessibilityLabel="Transfer fee info"
+                        onPress={() => setIsTransferFeeHelpOpen(true)}
+                      />
                     </View>
                     <ThemedSwitch
                       accessibilityLabel="Add transfer fee"
@@ -3318,6 +3327,17 @@ function TransactionFormModalInner({
         visible={visible && Boolean(displayError)}
       />
 
+      <InfoModal
+        buttonLabel={t("common.ok", { defaultValue: "OK" })}
+        message={t("transactions.transferFeeHelpMessage", {
+          defaultValue:
+            "Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges).",
+        })}
+        onClose={() => setIsTransferFeeHelpOpen(false)}
+        title={t("transactions.transferFeeTitle", { defaultValue: "Transfer Fee" })}
+        visible={visible && isTransferFeeHelpOpen}
+      />
+
       <CreditLimitWarningModal
         onCancel={handleCancelCreditLimit}
         onProceed={handleProceedCreditLimit}
@@ -3812,19 +3832,15 @@ function createStyles(theme: AppTheme) {
       gap: 12,
       justifyContent: "space-between",
     },
-    transferFeeHeaderText: {
-      flex: 1,
+    transferFeeTitleRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
     },
     transferFeeTitle: {
       color: theme.colors.textPrimary,
       fontSize: 14,
       fontWeight: "700",
-    },
-    transferFeeDescription: {
-      color: theme.colors.textSecondary,
-      fontSize: 12,
-      lineHeight: 17,
-      marginTop: 3,
     },
     transferFeeBody: {
       gap: 12,

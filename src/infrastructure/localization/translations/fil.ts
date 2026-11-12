@@ -852,6 +852,7 @@ export const fil = {
       improveItem19: "Gawing multi-select dropdown list ang filter ng mga label sa transaksyon katulad ng sa account.",
       improveItem20: "Ilagay ang Clear all filter button sa unahan ng mga aktibong filter upang madali itong mapindot nang hindi nag-i-scroll.",
       improveItem21: "Gawing mas simple ang transaction type picker sa pamamagitan ng pagpapalit ng Fund Transfer sa Transfer.",
+      improveItem22: "Ilipat ang paliwanag sa bayad sa paglilipat sa isang helper icon modal upang mapanatiling malinis ang form.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
@@ -2168,6 +2169,8 @@ export const fil = {
     exportEmptyMessage: "Baguhin ang iyong mga filter o magtala muna ng mga transaksyon.",
     exportFailedTitle: "Nabigo ang pag-export",
     exportFailedMessage: "Hindi ma-export ang mga transaksyon.",
+    transferFeeTitle: "Bayad sa Paglilipat",
+    transferFeeHelpMessage: "Magbawas ng agarang bayad sa transaksyon (hal. InstaPay, GCash, bank charges).",
   },
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",
