@@ -25,6 +25,7 @@ import {
 
 import {
   AppButton,
+  AppToast,
   BackupScheduleOptions,
   ConfirmModal,
   InfoModal,
@@ -46,6 +47,7 @@ import type {
 } from "@/modules/local-backup/types/backup.types";
 import { useWorkspace } from "@/modules/onboarding";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
+import { formatBackupScheduleTimeDisplay } from "@/utils/backup-schedule";
 
 export function LocalBackupScreen() {
   const { width } = useWindowDimensions();
@@ -68,6 +70,15 @@ export function LocalBackupScreen() {
   const [deleteCandidate, setDeleteCandidate] =
     useState<LocalBackupFile | null>(null);
   const [storageHelpVisible, setStorageHelpVisible] = useState(false);
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    message: string;
+    description?: string;
+    variant?: "success" | "error" | "info" | "warning";
+  }>({
+    visible: false,
+    message: "",
+  });
 
   const busy = backup.operation !== "idle" && backup.operation !== "loading";
   const personalWorkspace = workspace.state.mode === "personal";
@@ -105,17 +116,53 @@ export function LocalBackupScreen() {
     void backup.restoreBackup(restoreCandidate, null);
   };
 
-  const updateAutomaticSchedule = (
+  const updateAutomaticSchedule = async (
     patch: Partial<AutomaticBackupConfig>,
   ) => {
     if (!isPro) {
       setProModalVisible(true);
       return;
     }
-    void backup.updateAutomaticConfig({
+    const nextConfig = {
       ...backup.config,
       ...patch,
-    });
+    };
+    const ok = await backup.updateAutomaticConfig(nextConfig);
+    if (ok) {
+      const frequencyLabel =
+        nextConfig.frequency === "daily"
+          ? "daily"
+          : nextConfig.frequency === "weekly"
+            ? "weekly"
+            : "monthly";
+
+      if (patch.frequency !== undefined) {
+        setToastState({
+          visible: true,
+          message: "Backup frequency updated",
+          description: `Automatic ${frequencyLabel} backups scheduled.`,
+          variant: "success",
+        });
+      } else if (patch.enabled !== undefined) {
+        setToastState({
+          visible: true,
+          message: patch.enabled
+            ? "Automatic backups enabled"
+            : "Automatic backups turned off",
+          description: patch.enabled
+            ? `Set to ${frequencyLabel} backups.`
+            : undefined,
+          variant: "success",
+        });
+      } else {
+        setToastState({
+          visible: true,
+          message: "Backup schedule updated",
+          description: `Scheduled for ${formatBackupScheduleTimeDisplay(nextConfig.timeOfDay)}.`,
+          variant: "success",
+        });
+      }
+    }
   };
 
   return (
@@ -417,6 +464,15 @@ export function LocalBackupScreen() {
         visible={proModalVisible}
       />
     </PageContainer>
+    <AppToast
+      description={toastState.description}
+      duration={2500}
+      message={toastState.message}
+      onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
+      position="top"
+      variant={toastState.variant ?? "success"}
+      visible={toastState.visible}
+    />
     </View>
   );
 }

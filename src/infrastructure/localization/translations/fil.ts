@@ -863,6 +863,7 @@ export const fil = {
       improveItem28: "Magpakita ng kumpirmasyon bago umalis kapag may hindi pa nai-save na pagbabago sa pag-aayos ng kategorya.",
       improveItem29: "Ilagay ang field ng tala sa ilalim ng pamagat ng layunin sa form ng ipon para sa mas madaling pagtatala.",
       improveItem30: "Gawing mas simple ang screen ng Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na paglalarawan at pag-ayos ng label ng tema.",
+      improveItem31: "Magpakita ng mabilisang toast notification sa halip na popup modal kapag ina-update ang dalas ng lokal na backup.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

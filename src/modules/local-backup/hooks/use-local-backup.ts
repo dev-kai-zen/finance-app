@@ -134,21 +134,17 @@ export function useLocalBackup() {
   );
 
   const updateAutomaticConfig = useCallback(
-    async (nextConfig: AutomaticBackupConfig): Promise<void> => {
+    async (nextConfig: AutomaticBackupConfig): Promise<boolean> => {
       setOperation("configuring");
       setNotice(null);
       try {
         await configureAutomaticLocalBackup(nextConfig);
         setConfig(nextConfig);
         await refresh();
-        setNotice({
-          variant: "success",
-          message: nextConfig.enabled
-            ? `Automatic ${nextConfig.frequency} backups are enabled. They run when the app becomes active and a backup is due.`
-            : "Automatic backups are off.",
-        });
+        return true;
       } catch (error) {
         setNotice({ variant: "error", message: getErrorMessage(error) });
+        return false;
       } finally {
         setOperation("idle");
       }
