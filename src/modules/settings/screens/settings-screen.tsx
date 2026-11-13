@@ -442,7 +442,6 @@ function SettingsScreenContent() {
               </View>
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>{t("dataImport.title")}</Text>
-                <Text style={styles.settingDescription}>{t("dataImport.settingsDescription")}</Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1021,9 +1020,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.remindersTitle")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.remindersDescription")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1054,9 +1050,6 @@ function SettingsScreenContent() {
                   <View style={styles.settingCopy}>
                     <Text style={styles.settingLabel}>
                       {t("settings.widgetsTitle")}
-                    </Text>
-                    <Text style={styles.settingDescription}>
-                      {t("settings.widgetsDescription")}
                     </Text>
                   </View>
                   <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1139,9 +1132,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.stealthModeTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.stealthModeDescription")}
                 </Text>
               </View>
               <ThemedSwitch
@@ -1257,9 +1247,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>{t("settings.developerMode")}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.developerModeDescription")}
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel={t("settings.developerMode")}
@@ -1274,9 +1261,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Simulate Pro Version</Text>
-                  <Text style={styles.settingDescription}>
-                    Test Free vs Pro features locally without real Play store purchases
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Simulate Pro Version"
@@ -1291,9 +1275,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Force Google Test Ads</Text>
-                  <Text style={styles.settingDescription}>
-                    Use official Google sample banner ad units to safely verify banner display
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Force Google Test Ads"
@@ -1323,9 +1304,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Reset Pro Status (Dev)</Text>
-                  <Text style={styles.settingDescription}>
-                    Clear cached purchase and return to Free tier to retest the buy button
-                  </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
@@ -1355,9 +1333,6 @@ function SettingsScreenContent() {
                   <Text style={styles.settingLabel}>
                     {t("settings.testShakeGestureDev")}
                   </Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.testShakeGestureDevDescription")}
-                  </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
@@ -1377,9 +1352,6 @@ function SettingsScreenContent() {
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.sqliteMonitor")}
-                  </Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.sqliteMonitorDescription")}
                   </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1448,9 +1420,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.developerMessage")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.developerMessageSubtitle")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1478,9 +1447,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.supportDevelopment")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.supportDevelopmentSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1514,9 +1480,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.privacy")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.privacySubtitle")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1548,9 +1511,6 @@ function SettingsScreenContent() {
               <View style={styles.settingCopy}>
                 <Text style={styles.settingLabel}>
                   {t("settings.terms")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.termsSubtitle")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
