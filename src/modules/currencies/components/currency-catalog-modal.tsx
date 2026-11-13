@@ -473,10 +473,14 @@ function createStyles(theme: AppTheme) {
     content: {
       gap: theme.spacing.md,
       paddingBottom: theme.spacing.xxl,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
     },
     editorContent: {
       gap: theme.spacing.lg,
       paddingBottom: theme.spacing.xxl,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.lg,
     },
     headerAddBtn: {
       alignItems: "center",

@@ -896,6 +896,8 @@ export const en = {
         "Color net worth growth chart details by positive or negative change, respecting neutral colors and privacy mode.",
       fixItem20:
         "Fix issue where the header walkthrough guide on Reports incorrectly triggered the Goals tour.",
+      fixItem21:
+        "Fix missing screen padding in the currency catalog and add currency form.",
     },
     v140: {
       date: "November 5, 2026",

@@ -894,6 +894,8 @@ export const fil = {
         "Kulayan ang detalye ng net worth chart ayon sa positibo o negatibong pagbabago, at igalang ang neutral na kulay at privacy mode.",
       fixItem20:
         "Ayusin ang isyu kung saan ang gabay ng walkthrough sa Reports ay nagbukas ng gabay ng Goals.",
+      fixItem21:
+        "Ayusin ang kulang na espasyo sa mga gilid ng catalog ng currency at form sa pagdagdag ng currency.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

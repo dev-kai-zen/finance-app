@@ -893,6 +893,8 @@ export const es = {
         "Colorea los detalles del gráfico de patrimonio según el cambio positivo o negativo, respetando colores neutros y modo de privacidad.",
       fixItem20:
         "Corrige el problema por el cual la guía de Informes abría de forma incorrecta el recorrido de Metas.",
+      fixItem21:
+        "Corrige la falta de espaciado en los bordes del catálogo de monedas y el formulario de añadir moneda.",
     },
     v140: {
       date: "5 de noviembre de 2026",
