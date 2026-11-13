@@ -412,18 +412,9 @@ function AccountsScreenContent({
     open({ kind: "pocket-form", accountId: account.id });
   };
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
-  const managementActions = useThemeStyles((theme) => ({
-    flexDirection: "row" as const,
-    flexWrap: "wrap" as const,
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  }));
-  const searchSpacing = useThemeStyles((theme) => ({
-    marginBottom: theme.spacing.sm,
-  }));
+  const { contentSpacing, managementActions, searchSpacing } = useThemeStyles(
+    createAccountsLayoutStyles,
+  );
 
   return (
     <View style={styles.screenWrapper}>
@@ -759,6 +750,21 @@ function AccountsScreenContent({
       </View>
     );
   }
+
+const createAccountsLayoutStyles = (theme: { spacing: { lg: number; md: number; sm: number } }) => ({
+  contentSpacing: {
+    paddingTop: theme.spacing.lg,
+  },
+  managementActions: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  searchSpacing: {
+    marginBottom: theme.spacing.sm,
+  },
+});
 
 const styles = StyleSheet.create({
   screenWrapper: {

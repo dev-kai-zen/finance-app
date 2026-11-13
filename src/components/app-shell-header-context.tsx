@@ -12,37 +12,53 @@ export interface HeaderWalkthroughAction {
   isActive?: boolean;
 }
 
-interface AppShellHeaderContextValue {
-  walkthroughAction: HeaderWalkthroughAction | null;
-  setWalkthroughAction: (action: HeaderWalkthroughAction | null) => void;
-}
+type SetWalkthroughAction = (action: HeaderWalkthroughAction | null) => void;
 
-const AppShellHeaderContext = createContext<AppShellHeaderContextValue>({
-  walkthroughAction: null,
-  setWalkthroughAction: () => {},
-});
+const AppShellHeaderStateContext =
+  createContext<HeaderWalkthroughAction | null>(null);
+
+const AppShellHeaderDispatchContext = createContext<SetWalkthroughAction>(
+  () => {},
+);
 
 export function AppShellHeaderProvider({ children }: PropsWithChildren) {
-  const [walkthroughAction, setWalkthroughAction] =
+  const [walkthroughAction, setWalkthroughActionState] =
     useState<HeaderWalkthroughAction | null>(null);
 
+  const setWalkthroughAction = useCallback<SetWalkthroughAction>((next) => {
+    setWalkthroughActionState((prev) => {
+      if (prev === next) return prev;
+      if (
+        prev &&
+        next &&
+        prev.onStart === next.onStart &&
+        prev.isActive === next.isActive
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
+
   return (
-    <AppShellHeaderContext.Provider
-      value={{ walkthroughAction, setWalkthroughAction }}
-    >
-      {children}
-    </AppShellHeaderContext.Provider>
+    <AppShellHeaderDispatchContext.Provider value={setWalkthroughAction}>
+      <AppShellHeaderStateContext.Provider value={walkthroughAction}>
+        {children}
+      </AppShellHeaderStateContext.Provider>
+    </AppShellHeaderDispatchContext.Provider>
   );
 }
 
 export function useAppShellHeaderContext() {
-  return useContext(AppShellHeaderContext);
+  const walkthroughAction = useContext(AppShellHeaderStateContext);
+  const setWalkthroughAction = useContext(AppShellHeaderDispatchContext);
+  return { walkthroughAction, setWalkthroughAction };
 }
 
 export function useHeaderWalkthroughAction(
   action: HeaderWalkthroughAction | null,
 ) {
-  const { setWalkthroughAction } = useAppShellHeaderContext();
+  const setWalkthroughAction = useContext(AppShellHeaderDispatchContext);
 
   useFocusEffect(
     useCallback(() => {

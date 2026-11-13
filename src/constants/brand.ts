@@ -1,5 +1,13 @@
+function resolveBrandLogo() {
+  try {
+    return require("../../assets/kaizen-finance-app-logo.png");
+  } catch {
+    return null;
+  }
+}
+
 export const APP_BRAND = {
   name: "Kaizen Finance",
   tagline: "Continuous financial improvement",
-  logo: require("../../assets/kaizen-finance-app-logo.png"),
+  logo: resolveBrandLogo(),
 } as const;

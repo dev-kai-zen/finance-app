@@ -339,9 +339,8 @@ function SidebarLink({ label, icon, active, onPress, badge }: SidebarLinkProps) 
  * Geometric, crisp micro-icons that follow theme semantic tokens directly without third-party frameworks.
  */
 function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolean }) {
-  const iconColor = useThemeStyles((theme) =>
-    active ? theme.colors.primary : theme.colors.textSecondary,
-  );
+  const theme = useAppTheme();
+  const iconColor = active ? theme.colors.primary : theme.colors.textSecondary;
 
   const iconNameMap: Record<NavItemConfig["icon"], string> = {
     dashboard: "layout-dashboard",

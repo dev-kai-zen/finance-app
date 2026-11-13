@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   calculateTransactionStats,
@@ -25,9 +25,31 @@ import type {
 } from "../types/transaction.types";
 import type { TransactionPresetSubmission } from "../types/transaction-preset.types";
 
-export function useTransactions(initialFilter?: TransactionFilter) {
+export interface UseTransactionsOptions {
+  initialFilter?: TransactionFilter;
+  skipQuery?: boolean;
+}
+
+function isUseTransactionsOptions(
+  value: TransactionFilter | UseTransactionsOptions | undefined,
+): value is UseTransactionsOptions {
+  return Boolean(
+    value && ("skipQuery" in value || "initialFilter" in value),
+  );
+}
+
+export function useTransactions(
+  filterOrOptions?: TransactionFilter | UseTransactionsOptions,
+) {
+  const skipQuery = isUseTransactionsOptions(filterOrOptions)
+    ? Boolean(filterOrOptions.skipQuery)
+    : false;
+  const resolvedInitialFilter = isUseTransactionsOptions(filterOrOptions)
+    ? filterOrOptions.initialFilter
+    : filterOrOptions;
+
   const [filter, setFilter] = useState<TransactionFilter>(
-    initialFilter ?? { type: "all" },
+    resolvedInitialFilter ?? { type: "all" },
   );
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
   const [deletedTransactions, setDeletedTransactions] = useState<
@@ -39,11 +61,14 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     netCashflowMinorUnits: 0,
     transactionCount: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipQuery);
   const [pendingAction, setPendingAction] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
+    if (skipQuery) {
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
@@ -58,11 +83,7 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  }, [filter, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {

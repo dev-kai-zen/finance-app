@@ -29,7 +29,14 @@ export interface DeletedTransactionsModalProps {
   onRestore: (id: string) => Promise<boolean | void> | void;
 }
 
-export function DeletedTransactionsModal({
+export function DeletedTransactionsModal(props: DeletedTransactionsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <DeletedTransactionsModalContent {...props} />;
+}
+
+function DeletedTransactionsModalContent({
   visible,
   transactions,
   pending = false,

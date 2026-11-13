@@ -1,4 +1,5 @@
-import type { DbContext } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import { isDevModeAllowed } from "@/utils/dev-mode";
 import {
   DASHBOARD_LAYOUT_SETTING_KEY,
@@ -98,6 +99,68 @@ export interface NavVisibilityPreferences {
 type ExperienceListener = () => void;
 const listeners = new Set<ExperienceListener>();
 
+const ALL_EXPERIENCE_SETTING_KEYS: string[] = [
+  ONBOARDING_SETUP_STRATEGY_KEY,
+  DEVELOPER_MODE_SETTING_KEY,
+  EXPERIENCE_HOME_SETTING_KEY,
+  GUIDE_HELPER_SETTING_KEY,
+  GENERAL_SEARCH_SETTING_KEY,
+  DASHBOARD_LAYOUT_SETTING_KEY,
+  ...Object.values(FORM_FIELD_SETTING_KEYS),
+  ...Object.values(NAV_VISIBILITY_SETTING_KEYS),
+  ...Object.values(PROMPT_SETTING_KEYS),
+];
+
+export interface ExperiencePreferencesSnapshot {
+  developerMode: boolean;
+  guideHelperEnabled: boolean;
+  generalSearchEnabled: boolean;
+  homeMode: HomeExperienceMode;
+  dashboardLayout: DashboardLayoutPreferences;
+  formFields: TransactionFormFieldPreferences;
+  navVisibility: NavVisibilityPreferences;
+  hiddenNavHrefs: string[];
+}
+
+let cachedSettingsDb: unknown = null;
+let cachedSettingsMap: Record<string, string> | null = null;
+let cachedSnapshot: ExperiencePreferencesSnapshot | null = null;
+
+export function invalidateExperiencePreferencesCache(): void {
+  cachedSettingsMap = null;
+  cachedSnapshot = null;
+}
+
+subscribeToDatabaseReplacement(invalidateExperiencePreferencesCache);
+
+function getExperienceSettingsMap(
+  context?: DbContext,
+): Record<string, string> {
+  if (context) {
+    return getSettingsByKey(ALL_EXPERIENCE_SETTING_KEYS, context);
+  }
+  const currentDb = db;
+  if (cachedSettingsMap !== null && cachedSettingsDb === currentDb) {
+    return cachedSettingsMap;
+  }
+  const map = getSettingsByKey(ALL_EXPERIENCE_SETTING_KEYS);
+  cachedSettingsDb = currentDb;
+  cachedSettingsMap = map;
+  cachedSnapshot = null;
+  return map;
+}
+
+function getExperienceSettingValue(
+  key: string,
+  context?: DbContext,
+): string | null {
+  if (context) {
+    return getSettingByKey(key, context);
+  }
+  const map = getExperienceSettingsMap();
+  return map[key] ?? null;
+}
+
 export function subscribeToExperiencePreferences(
   listener: ExperienceListener,
 ): () => void {
@@ -108,6 +171,7 @@ export function subscribeToExperiencePreferences(
 }
 
 function notifyListeners(): void {
+  invalidateExperiencePreferencesCache();
   listeners.forEach((listener) => {
     try {
       listener();
@@ -118,7 +182,7 @@ function notifyListeners(): void {
 }
 
 export function isGuidedWorkspace(context?: DbContext): boolean {
-  const strategy = getSettingByKey(
+  const strategy = getExperienceSettingValue(
     ONBOARDING_SETUP_STRATEGY_KEY,
     context,
   );
@@ -142,7 +206,9 @@ export function getDeveloperModeEnabled(context?: DbContext): boolean {
   if (!isDevModeAllowed()) {
     return false;
   }
-  return getSettingByKey(DEVELOPER_MODE_SETTING_KEY, context) === "true";
+  return (
+    getExperienceSettingValue(DEVELOPER_MODE_SETTING_KEY, context) === "true"
+  );
 }
 
 export function setDeveloperModeEnabled(
@@ -162,7 +228,7 @@ export function setDeveloperModeEnabled(
 }
 
 export function getHomeExperienceMode(context?: DbContext): HomeExperienceMode {
-  const raw = getSettingByKey(EXPERIENCE_HOME_SETTING_KEY, context);
+  const raw = getExperienceSettingValue(EXPERIENCE_HOME_SETTING_KEY, context);
   if (raw === "simple" || raw === "detailed") return raw;
   return isGuidedWorkspace(context) ? "simple" : "detailed";
 }
@@ -179,7 +245,7 @@ export function setHomeExperienceMode(
 }
 
 export function getGuideHelperEnabled(context?: DbContext): boolean {
-  const raw = getSettingByKey(GUIDE_HELPER_SETTING_KEY, context);
+  const raw = getExperienceSettingValue(GUIDE_HELPER_SETTING_KEY, context);
   return parseStoredBoolean(raw, true);
 }
 
@@ -197,7 +263,7 @@ export function setGuideHelperEnabled(
 }
 
 export function getGeneralSearchEnabled(context?: DbContext): boolean {
-  const raw = getSettingByKey(GENERAL_SEARCH_SETTING_KEY, context);
+  const raw = getExperienceSettingValue(GENERAL_SEARCH_SETTING_KEY, context);
   return parseStoredBoolean(raw, true);
 }
 
@@ -219,15 +285,16 @@ export function isTransactionFormFieldEnabled(
   context?: DbContext,
 ): boolean {
   const key = FORM_FIELD_SETTING_KEYS[field];
-  const raw = getSettingByKey(key, context);
+  const raw = getExperienceSettingValue(key, context);
   return parseStoredBoolean(raw, missingDefaultForGuided(context));
 }
 
 export function getTransactionFormFieldPreferences(
   context?: DbContext,
 ): TransactionFormFieldPreferences {
-  const keys = Object.values(FORM_FIELD_SETTING_KEYS);
-  const map = getSettingsByKey(keys, context);
+  const map = context
+    ? getSettingsByKey(Object.values(FORM_FIELD_SETTING_KEYS), context)
+    : getExperienceSettingsMap();
   const missingDefault = missingDefaultForGuided(context);
 
   return {
@@ -290,15 +357,16 @@ export function isNavItemVisible(
   context?: DbContext,
 ): boolean {
   const key = NAV_VISIBILITY_SETTING_KEYS[navKey];
-  const raw = getSettingByKey(key, context);
+  const raw = getExperienceSettingValue(key, context);
   return parseStoredBoolean(raw, missingDefaultForGuided(context));
 }
 
 export function getNavVisibilityPreferences(
   context?: DbContext,
 ): NavVisibilityPreferences {
-  const keys = Object.values(NAV_VISIBILITY_SETTING_KEYS);
-  const map = getSettingsByKey(keys, context);
+  const map = context
+    ? getSettingsByKey(Object.values(NAV_VISIBILITY_SETTING_KEYS), context)
+    : getExperienceSettingsMap();
   const missingDefault = missingDefaultForGuided(context);
 
   return {
@@ -369,7 +437,7 @@ export function isPromptDismissed(
   context?: DbContext,
 ): boolean {
   return (
-    getSettingByKey(PROMPT_SETTING_KEYS[promptKey], context) === "true"
+    getExperienceSettingValue(PROMPT_SETTING_KEYS[promptKey], context) === "true"
   );
 }
 
@@ -397,7 +465,7 @@ function isValidWidgetId(value: unknown): value is DashboardWidgetId {
 export function getDashboardLayoutPreferences(
   context?: DbContext,
 ): DashboardLayoutPreferences {
-  const raw = getSettingByKey(DASHBOARD_LAYOUT_SETTING_KEY, context);
+  const raw = getExperienceSettingValue(DASHBOARD_LAYOUT_SETTING_KEY, context);
   if (!raw) {
     return DEFAULT_DASHBOARD_LAYOUT;
   }
@@ -545,4 +613,26 @@ export function applyDashboardLayoutPreset(
   }
   setDashboardLayoutPreferences(nextLayout, context);
   return nextLayout;
+}
+
+export function getExperiencePreferencesSnapshot(
+  context?: DbContext,
+): ExperiencePreferencesSnapshot {
+  if (!context && cachedSnapshot !== null && cachedSettingsDb === db) {
+    return cachedSnapshot;
+  }
+  const snapshot: ExperiencePreferencesSnapshot = {
+    developerMode: getDeveloperModeEnabled(context),
+    guideHelperEnabled: getGuideHelperEnabled(context),
+    generalSearchEnabled: getGeneralSearchEnabled(context),
+    homeMode: getHomeExperienceMode(context),
+    dashboardLayout: getDashboardLayoutPreferences(context),
+    formFields: getTransactionFormFieldPreferences(context),
+    navVisibility: getNavVisibilityPreferences(context),
+    hiddenNavHrefs: getHiddenNavHrefs(context),
+  };
+  if (!context) {
+    cachedSnapshot = snapshot;
+  }
+  return snapshot;
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { getDashboardSummary } from "../repositories/dashboard.repository";
@@ -22,10 +22,6 @@ export function useDashboard() {
       setLoading(false);
     }
   }, [preferences.defaultCurrency]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   useFocusEffect(
     useCallback(() => {

@@ -111,7 +111,7 @@ function DashboardScreenContent() {
     error: transactionError,
     clearError: clearTransactionError,
     refresh: refreshTransactions,
-  } = useTransactions();
+  } = useTransactions({ skipQuery: true });
 
   const pathname = usePathname();
   const isScreenActive = pathname === "/" || pathname === "";

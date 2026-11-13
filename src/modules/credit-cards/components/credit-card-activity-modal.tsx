@@ -60,7 +60,14 @@ function formatDate(value: string | null): string {
   });
 }
 
-export function CreditCardActivityModal({
+export function CreditCardActivityModal(props: CreditCardActivityModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <CreditCardActivityModalContent {...props} />;
+}
+
+function CreditCardActivityModalContent({
   visible,
   onClose,
   title,

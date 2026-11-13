@@ -83,6 +83,34 @@ function ScreenTitle({
   );
 }
 
+function HeaderWalkthroughButton({
+  enabled,
+  label,
+  buttonStyle,
+  pressedStyle,
+}: {
+  enabled: boolean;
+  label: string;
+  buttonStyle: object;
+  pressedStyle: object;
+}) {
+  const { walkthroughAction } = useAppShellHeaderContext();
+  if (!enabled || !walkthroughAction) {
+    return null;
+  }
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      onPress={walkthroughAction.onStart}
+      style={({ pressed }) => [buttonStyle, pressed && pressedStyle]}
+    >
+      <Sparkles color="#00A3FF" size={19} />
+    </Pressable>
+  );
+}
+
 export function AppShell({
   children,
   banner,
@@ -98,7 +126,9 @@ export function AppShell({
   const { t } = useLocalization();
   const { generalSearchEnabled, guideHelperEnabled } = useExperiencePreferences();
   const { isPrivate, togglePrivacyMode } = usePrivacyMode();
-  const { walkthroughAction } = useAppShellHeaderContext();
+  const walkthroughLabel = t("dashboard.walkthroughChip", {
+    defaultValue: "Guide",
+  });
   const screenTitle = getScreenTitle(pathname, t);
   const isSettingsScreen = pathname.startsWith("/settings");
   const handleSettingsTitlePress =
@@ -151,22 +181,12 @@ export function AppShell({
               />
             </View>
             <View style={styles.topBarRightGroup}>
-                {guideHelperEnabled && walkthroughAction && (
-                  <Pressable
-                    accessibilityLabel={t("dashboard.walkthroughChip", {
-                      defaultValue: "Guide",
-                    })}
-                    accessibilityRole="button"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    onPress={walkthroughAction.onStart}
-                    style={({ pressed }) => [
-                      styles.headerIconButton,
-                      pressed && styles.headerIconButtonPressed,
-                    ]}
-                  >
-                    <Sparkles color="#00A3FF" size={19} />
-                  </Pressable>
-                )}
+                <HeaderWalkthroughButton
+                  buttonStyle={styles.headerIconButton}
+                  enabled={guideHelperEnabled}
+                  label={walkthroughLabel}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
                 <Pressable
                   accessibilityLabel={
                     isPrivate
@@ -232,22 +252,12 @@ export function AppShell({
               </View>
 
               <View style={styles.topBarRightGroup}>
-                {guideHelperEnabled && walkthroughAction && (
-                  <Pressable
-                    accessibilityLabel={t("dashboard.walkthroughChip", {
-                      defaultValue: "Guide",
-                    })}
-                    accessibilityRole="button"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    onPress={walkthroughAction.onStart}
-                    style={({ pressed }) => [
-                      styles.headerIconButton,
-                      pressed && styles.headerIconButtonPressed,
-                    ]}
-                  >
-                    <Sparkles color="#00A3FF" size={19} />
-                  </Pressable>
-                )}
+                <HeaderWalkthroughButton
+                  buttonStyle={styles.headerIconButton}
+                  enabled={guideHelperEnabled}
+                  label={walkthroughLabel}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
                 <Pressable
                   accessibilityLabel={
                     isPrivate

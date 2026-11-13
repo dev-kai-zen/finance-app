@@ -927,6 +927,8 @@ export const es = {
         "Alinea el interruptor de frase de inspiración diaria en la personalización del panel con los demás botones.",
       fixItem26:
         "Mantén los campos de nombre de color y código hexadecimal completamente visibles sobre el teclado virtual.",
+      fixItem27:
+        "Corrige la lentitud al cambiar de pantalla para que navegar entre secciones, listas y formularios sea rápido y fluido.",
     },
     v140: {
       date: "5 de noviembre de 2026",

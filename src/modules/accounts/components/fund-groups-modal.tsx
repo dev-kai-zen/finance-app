@@ -56,16 +56,7 @@ type EditorState = {
   value: FundGroupInput;
 };
 
-export function FundGroupsModal({
-  visible,
-  groups,
-  accounts,
-  pockets,
-  loading,
-  loadError,
-  onClose,
-  onRefresh,
-}: {
+export interface FundGroupsModalProps {
   visible: boolean;
   groups: FundGroupListItem[];
   accounts: AccountListItem[];
@@ -74,7 +65,25 @@ export function FundGroupsModal({
   loadError: string | null;
   onClose: () => void;
   onRefresh: () => void;
-}) {
+}
+
+export function FundGroupsModal(props: FundGroupsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <FundGroupsModalContent {...props} />;
+}
+
+function FundGroupsModalContent({
+  visible,
+  groups,
+  accounts,
+  pockets,
+  loading,
+  loadError,
+  onClose,
+  onRefresh,
+}: FundGroupsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();

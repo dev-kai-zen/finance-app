@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { memo, useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRightLeft, Copy, Paperclip, Trash2 } from "lucide-react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -100,7 +100,7 @@ function withAlpha(color: string, alpha: number) {
   return color;
 }
 
-export function TransactionRow({
+export const TransactionRow = memo(function TransactionRow({
   transaction,
   onPress,
   onDelete,
@@ -552,7 +552,7 @@ export function TransactionRow({
       </GestureDetector>
     </View>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

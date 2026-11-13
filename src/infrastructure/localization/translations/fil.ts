@@ -1104,6 +1104,8 @@ export const fil = {
         "I-pantay ang toggle ng daily inspiration quote sa customization ng dashboard sa iba pang switch ng card.",
       fixItem26:
         "Panatilihing buong nakikita ang mga input field ng pangalan ng kulay at hex code sa itaas ng virtual keyboard.",
+      fixItem27:
+        "Ayusin ang mabagal na paglipat ng screen upang maging mabilis at maayos ang pagbubukas ng mga pahina, listahan, at form.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

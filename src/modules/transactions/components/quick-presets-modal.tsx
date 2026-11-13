@@ -83,7 +83,14 @@ function formatLastUsed(date: Date | null): string {
   })}`;
 }
 
-export function QuickPresetsModal({
+export function QuickPresetsModal(props: QuickPresetsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <QuickPresetsModalContent {...props} />;
+}
+
+function QuickPresetsModalContent({
   visible,
   presets,
   archivedPresets,

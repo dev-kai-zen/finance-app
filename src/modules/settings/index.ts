@@ -1,13 +1,27 @@
 import React from "react";
+import { deferComponent } from "@/utils/deferred-module";
 
 export function SettingsScreen() {
   const { SettingsScreen: Screen } =
     require("./screens/settings-screen") as typeof import("./screens/settings-screen");
   return React.createElement(Screen);
 }
-export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
-export { HapticFeedbackSettingsModal } from "./components/haptic-feedback-settings-modal";
-export { SoundEffectsSettingsModal } from "./components/sound-effects-settings-modal";
+export const KaiChatSettingsModal = deferComponent(
+  () => require("./components/kai-chat-settings-modal").KaiChatSettingsModal,
+  "KaiChatSettingsModal",
+) as typeof import("./components/kai-chat-settings-modal").KaiChatSettingsModal;
+export const HapticFeedbackSettingsModal = deferComponent(
+  () =>
+    require("./components/haptic-feedback-settings-modal")
+      .HapticFeedbackSettingsModal,
+  "HapticFeedbackSettingsModal",
+) as typeof import("./components/haptic-feedback-settings-modal").HapticFeedbackSettingsModal;
+export const SoundEffectsSettingsModal = deferComponent(
+  () =>
+    require("./components/sound-effects-settings-modal")
+      .SoundEffectsSettingsModal,
+  "SoundEffectsSettingsModal",
+) as typeof import("./components/sound-effects-settings-modal").SoundEffectsSettingsModal;
 export {
   getDefaultAccounts,
   setDefaultExpenseAccount,

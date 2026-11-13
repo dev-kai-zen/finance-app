@@ -29,7 +29,14 @@ export interface ArchivedAccountsModalProps {
   onDismissRestorePocketError?: () => void;
 }
 
-export function ArchivedAccountsModal({
+export function ArchivedAccountsModal(props: ArchivedAccountsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <ArchivedAccountsModalContent {...props} />;
+}
+
+function ArchivedAccountsModalContent({
   visible,
   accounts,
   pockets,

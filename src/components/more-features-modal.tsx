@@ -31,13 +31,22 @@ const MORE_FEATURE_ROWS: Array<{
   { key: "notes", labelKey: "settings.navNotes", icon: "notebook-pen" },
 ];
 
-export function MoreFeaturesModal({
-  visible,
-  onClose,
-}: {
+export interface MoreFeaturesModalProps {
   visible: boolean;
   onClose: () => void;
-}) {
+}
+
+export function MoreFeaturesModal(props: MoreFeaturesModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <MoreFeaturesModalContent {...props} />;
+}
+
+function MoreFeaturesModalContent({
+  visible,
+  onClose,
+}: MoreFeaturesModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);

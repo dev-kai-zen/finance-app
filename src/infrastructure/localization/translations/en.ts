@@ -930,6 +930,8 @@ export const en = {
         "Align the daily inspiration quote toggle in dashboard customization with the other card switches.",
       fixItem26:
         "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
+      fixItem27:
+        "Fix slow screen transitions so navigating across tabs, lists, and forms feels fast and smooth.",
     },
     v140: {
       date: "November 5, 2026",

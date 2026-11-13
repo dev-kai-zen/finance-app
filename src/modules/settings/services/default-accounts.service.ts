@@ -1,4 +1,5 @@
-import type { DbContext } from "@/infrastructure/database/client";
+import { db, type DbContext } from "@/infrastructure/database/client";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import { DEFAULT_ACCOUNT_SETTINGS_KEYS } from "../constants/settings.constants";
 import {
   getSettingsByKey,
@@ -15,6 +16,15 @@ export interface DefaultAccountsConfig {
 type DefaultAccountsListener = () => void;
 const listeners = new Set<DefaultAccountsListener>();
 
+let cachedDefaultsDb: unknown = null;
+let cachedDefaults: DefaultAccountsConfig | null = null;
+
+function invalidateDefaultAccountsCache(): void {
+  cachedDefaults = null;
+}
+
+subscribeToDatabaseReplacement(invalidateDefaultAccountsCache);
+
 export function subscribeToDefaultAccounts(
   listener: DefaultAccountsListener,
 ): () => void {
@@ -25,6 +35,7 @@ export function subscribeToDefaultAccounts(
 }
 
 function notifyListeners(): void {
+  invalidateDefaultAccountsCache();
   listeners.forEach((listener) => {
     try {
       listener();
@@ -37,6 +48,9 @@ function notifyListeners(): void {
 export function getDefaultAccounts(
   context?: DbContext,
 ): DefaultAccountsConfig {
+  if (!context && cachedDefaults !== null && cachedDefaultsDb === db) {
+    return cachedDefaults;
+  }
   const keys = [
     DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultExpenseAccountId,
     DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultExpensePocketId,
@@ -45,7 +59,7 @@ export function getDefaultAccounts(
   ];
   const map = getSettingsByKey(keys, context);
 
-  return {
+  const result: DefaultAccountsConfig = {
     defaultExpenseAccountId:
       map[DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultExpenseAccountId] ?? null,
     defaultExpensePocketId:
@@ -55,6 +69,11 @@ export function getDefaultAccounts(
     defaultIncomePocketId:
       map[DEFAULT_ACCOUNT_SETTINGS_KEYS.defaultIncomePocketId] ?? null,
   };
+  if (!context) {
+    cachedDefaultsDb = db;
+    cachedDefaults = result;
+  }
+  return result;
 }
 
 export function setDefaultExpenseAccount(

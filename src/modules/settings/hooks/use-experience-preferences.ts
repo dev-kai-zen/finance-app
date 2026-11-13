@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
 
 import {
   applyDashboardLayoutPreset,
@@ -7,12 +6,7 @@ import {
   DEFAULT_DASHBOARD_LAYOUT,
   getDashboardLayoutPreferences,
   getDeveloperModeEnabled,
-  getGuideHelperEnabled,
-  getGeneralSearchEnabled,
-  getHiddenNavHrefs,
-  getHomeExperienceMode,
-  getNavVisibilityPreferences,
-  getTransactionFormFieldPreferences,
+  getExperiencePreferencesSnapshot,
   isDevModeAllowed,
   isPromptDismissed,
   isTransactionFormFieldEnabled,
@@ -29,9 +23,9 @@ import {
   type DashboardLayoutPreferences,
   type DashboardLayoutPresetId,
   type DashboardWidgetId,
+  type ExperiencePreferencesSnapshot,
   type FormFieldPreferenceKey,
   type HomeExperienceMode,
-  type NavVisibilityPreferences,
   type TransactionFormFieldPreferences,
 } from "../services/experience-preferences.service";
 import type { NavVisibilityKey } from "../constants/settings.constants";
@@ -40,28 +34,8 @@ const DEVELOPER_TAP_TARGET = 10;
 const DEVELOPER_TAP_RESET_MS = 2000;
 
 export function useExperiencePreferences() {
-  const [developerMode, setDeveloperModeState] = useState(() =>
-    getDeveloperModeEnabled(),
-  );
-  const [guideHelperEnabled, setGuideHelperEnabledState] = useState(() =>
-    getGuideHelperEnabled(),
-  );
-  const [generalSearchEnabled, setGeneralSearchEnabledState] = useState(() =>
-    getGeneralSearchEnabled(),
-  );
-  const [homeMode, setHomeModeState] = useState<HomeExperienceMode>(() =>
-    getHomeExperienceMode(),
-  );
-  const [dashboardLayout, setDashboardLayoutState] =
-    useState<DashboardLayoutPreferences>(() => getDashboardLayoutPreferences());
-  const [formFields, setFormFieldsState] =
-    useState<TransactionFormFieldPreferences>(() =>
-      getTransactionFormFieldPreferences(),
-    );
-  const [navVisibility, setNavVisibilityState] =
-    useState<NavVisibilityPreferences>(() => getNavVisibilityPreferences());
-  const [hiddenNavHrefs, setHiddenNavHrefs] = useState<string[]>(() =>
-    getHiddenNavHrefs(),
+  const [snapshot, setSnapshot] = useState<ExperiencePreferencesSnapshot>(() =>
+    getExperiencePreferencesSnapshot(),
   );
   const [developerUnlockNotice, setDeveloperUnlockNotice] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -70,26 +44,14 @@ export function useExperiencePreferences() {
   const lastTapAtRef = useRef(0);
 
   const refresh = useCallback(() => {
-    setDeveloperModeState(getDeveloperModeEnabled());
-    setGuideHelperEnabledState(getGuideHelperEnabled());
-    setGeneralSearchEnabledState(getGeneralSearchEnabled());
-    setHomeModeState(getHomeExperienceMode());
-    setDashboardLayoutState(getDashboardLayoutPreferences());
-    setFormFieldsState(getTransactionFormFieldPreferences());
-    setNavVisibilityState(getNavVisibilityPreferences());
-    setHiddenNavHrefs(getHiddenNavHrefs());
+    const next = getExperiencePreferencesSnapshot();
+    setSnapshot((prev) => (prev === next ? prev : next));
     setRevision((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
     return subscribeToExperiencePreferences(refresh);
   }, [refresh]);
-
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh]),
-  );
 
   const setDeveloperMode = useCallback(
     (enabled: boolean) => {
@@ -292,18 +254,18 @@ export function useExperiencePreferences() {
 
   return {
     isDevModeAllowed: isDevModeAllowed(),
-    developerMode,
-    guideHelperEnabled,
+    developerMode: snapshot.developerMode,
+    guideHelperEnabled: snapshot.guideHelperEnabled,
     setGuideHelper,
-    generalSearchEnabled,
+    generalSearchEnabled: snapshot.generalSearchEnabled,
     setGeneralSearch,
     developerUnlockNotice,
     dismissDeveloperUnlockNotice,
     registerSettingsTitleTap,
     setDeveloperMode,
-    homeMode,
+    homeMode: snapshot.homeMode,
     setHomeMode,
-    dashboardLayout,
+    dashboardLayout: snapshot.dashboardLayout,
     updateDashboardLayout,
     toggleDashboardWidget,
     moveDashboardWidget,
@@ -312,13 +274,13 @@ export function useExperiencePreferences() {
     setQuoteColors,
     selectDashboardPreset,
     resetDashboardLayout,
-    formFields,
+    formFields: snapshot.formFields,
     setFormField,
     setFormFields,
     isFormFieldEnabled,
-    navVisibility,
+    navVisibility: snapshot.navVisibility,
     setNavVisible,
-    hiddenNavHrefs,
+    hiddenNavHrefs: snapshot.hiddenNavHrefs,
     dismissPrompt,
     isPromptDismissed: isPromptDismissedState,
     applyGuidedDefaults: applyGuidedWorkspaceSimpleDefaults,

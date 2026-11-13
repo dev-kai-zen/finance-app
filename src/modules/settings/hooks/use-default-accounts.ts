@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { resolveAccountLocation } from "@/modules/accounts";
 import {
@@ -25,7 +25,8 @@ export function useDefaultAccounts() {
 
   const refresh = useCallback(() => {
     try {
-      setDefaults(getDefaultAccounts());
+      const next = getDefaultAccounts();
+      setDefaults((prev) => (prev === next ? prev : next));
     } catch {
       // Ignore read errors during DB transitions
     }
@@ -35,39 +36,16 @@ export function useDefaultAccounts() {
     return subscribeToDefaultAccounts(refresh);
   }, [refresh]);
 
-  const [displayRevision, setDisplayRevision] = useState(0);
+  const [, setDisplayRevision] = useState(0);
+  const needsLocationResolutionRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-      setDisplayRevision((value) => value + 1);
+      if (needsLocationResolutionRef.current) {
+        setDisplayRevision((value) => value + 1);
+      }
     }, [refresh]),
-  );
-
-  const expenseLocation = useMemo(
-    () =>
-      resolveAccountLocation(
-        defaults.defaultExpenseAccountId,
-        defaults.defaultExpensePocketId,
-      ),
-    [
-      defaults.defaultExpenseAccountId,
-      defaults.defaultExpensePocketId,
-      displayRevision,
-    ],
-  );
-
-  const incomeLocation = useMemo(
-    () =>
-      resolveAccountLocation(
-        defaults.defaultIncomeAccountId,
-        defaults.defaultIncomePocketId,
-      ),
-    [
-      defaults.defaultIncomeAccountId,
-      defaults.defaultIncomePocketId,
-      displayRevision,
-    ],
   );
 
   const setExpenseAccount = useCallback(
@@ -99,8 +77,20 @@ export function useDefaultAccounts() {
     defaultExpensePocketId: defaults.defaultExpensePocketId,
     defaultIncomeAccountId: defaults.defaultIncomeAccountId,
     defaultIncomePocketId: defaults.defaultIncomePocketId,
-    expenseLocation,
-    incomeLocation,
+    get expenseLocation() {
+      needsLocationResolutionRef.current = true;
+      return resolveAccountLocation(
+        defaults.defaultExpenseAccountId,
+        defaults.defaultExpensePocketId,
+      );
+    },
+    get incomeLocation() {
+      needsLocationResolutionRef.current = true;
+      return resolveAccountLocation(
+        defaults.defaultIncomeAccountId,
+        defaults.defaultIncomePocketId,
+      );
+    },
     setExpenseAccount,
     setIncomeAccount,
     refresh,

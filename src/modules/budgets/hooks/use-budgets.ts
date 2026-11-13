@@ -27,7 +27,9 @@ import type {
 
 export type { BudgetsSummary };
 
-export function useBudgets(referenceDate: Date = new Date()) {
+export function useBudgets(referenceDate?: Date) {
+  const defaultReferenceDate = useMemo(() => new Date(), []);
+  const effectiveReferenceDate = referenceDate ?? defaultReferenceDate;
   const { categories, loading: categoriesLoading } = useCategories();
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -86,7 +88,7 @@ export function useBudgets(referenceDate: Date = new Date()) {
         category,
         childCategories: category.subcategories || [],
         activeBudgetCategoryIds,
-        referenceDate,
+        referenceDate: effectiveReferenceDate,
         context: db,
       });
 
@@ -103,7 +105,7 @@ export function useBudgets(referenceDate: Date = new Date()) {
       }
       return b.percentage - a.percentage;
     });
-  }, [budgets, flatCategoriesMap, referenceDate]);
+  }, [budgets, flatCategoriesMap, effectiveReferenceDate]);
 
   // Summary calculations
   const summary = useMemo<BudgetsSummary>(() => {

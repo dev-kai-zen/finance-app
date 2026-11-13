@@ -1,3 +1,4 @@
+import { type PropsWithChildren } from "react";
 import { LogBox, StyleSheet } from "react-native";
 import { Stack, usePathname } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -38,8 +39,10 @@ LogBox.ignoreLogs([
   "Can't perform a React state update on a component that hasn't mounted yet",
 ]);
 
-function RootLayoutContent() {
-  const { theme } = useThemeContext();
+function RouteAwareSafeAreaView({
+  backgroundColor,
+  children,
+}: PropsWithChildren<{ backgroundColor: string }>) {
   const pathname = usePathname();
   const usesNativeHeader =
     pathname.startsWith("/language") ||
@@ -54,6 +57,19 @@ function RootLayoutContent() {
     pathname.startsWith("/transactions/scheduled");
 
   return (
+    <SafeAreaView
+      edges={usesNativeHeader ? [] : ["top"]}
+      style={[styles.safeAreaBoundary, { backgroundColor }]}
+    >
+      {children}
+    </SafeAreaView>
+  );
+}
+
+function RootLayoutContent() {
+  const { theme } = useThemeContext();
+
+  return (
     <SafeAreaProvider
       style={[styles.rootLayer, { backgroundColor: theme.colors.background }]}
     >
@@ -64,12 +80,8 @@ function RootLayoutContent() {
             <CurrencyPreferencesProvider>
               <WorkspaceProvider>
                 <HexColorsProvider>
-                  <SafeAreaView
-                    edges={usesNativeHeader ? [] : ["top"]}
-                    style={[
-                      styles.safeAreaBoundary,
-                      { backgroundColor: theme.colors.background },
-                    ]}
+                  <RouteAwareSafeAreaView
+                    backgroundColor={theme.colors.background}
                   >
                     <AppLockGate>
                       <OnboardingGate>
@@ -179,7 +191,7 @@ function RootLayoutContent() {
                       </DeveloperMessageGate>
                     </OnboardingGate>
                   </AppLockGate>
-                </SafeAreaView>
+                  </RouteAwareSafeAreaView>
                 </HexColorsProvider>
               </WorkspaceProvider>
             </CurrencyPreferencesProvider>
