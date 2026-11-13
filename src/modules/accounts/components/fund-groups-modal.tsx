@@ -411,7 +411,7 @@ export function FundGroupsModal({
                 accessibilityLabel="Fund Group name"
                 editable={!mutations.pending}
                 maxLength={100}
-                placeholder="Microbusiness"
+                placeholder="Available Cash"
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
                 value={editor.value.name}
@@ -761,7 +761,7 @@ export function FundGroupsModal({
                 </View>
                 <Text style={styles.emptyTitle}>No Fund Groups yet</Text>
                 <Text style={styles.emptyText}>
-                  Create a group such as Microbusiness, then select its accounts or pockets.
+                  Create a group such as Available Cash, then select its accounts or pockets.
                 </Text>
                 <Pressable
                   accessibilityRole="button"
