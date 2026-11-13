@@ -883,6 +883,10 @@ export const es = {
         "Estandariza el tamaño de las muestras de color para que los colores seleccionados sean prominentes y los no seleccionados compactos.",
       fixItem16:
         "Oculta las metas, saldos, progreso y recomendaciones mensuales de ahorro cuando el modo de privacidad está activado.",
+      fixItem17:
+        "Oculta las tasas de ahorro e indicadores de progreso en el informe de flujo de caja cuando el modo de privacidad está activado.",
+      fixItem18:
+        "Colorea los detalles del gráfico de flujo de caja según el neto positivo o negativo, respetando colores neutros y modo de privacidad.",
     },
     v140: {
       date: "5 de noviembre de 2026",

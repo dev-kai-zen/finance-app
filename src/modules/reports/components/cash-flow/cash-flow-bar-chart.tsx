@@ -8,7 +8,9 @@ import {
 } from "react-native";
 import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { CashFlowRowItem } from "../../types/cash-flow.types";
@@ -30,7 +32,10 @@ export function CashFlowBarChart({
   selectedPeriodKey,
   onSelectPeriod,
 }: CashFlowBarChartProps) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
+  const { preferences } = useCurrencyPreferences();
   const [containerWidth, setContainerWidth] = useState(0);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -39,6 +44,11 @@ export function CashFlowBarChart({
   };
 
   const selectedPeriod = periods.find((p) => p.periodKey === selectedPeriodKey);
+  const netColor = selectedPeriod
+    ? !preferences.colorAmounts || isPrivate
+      ? theme.colors.textPrimary
+      : selectedPeriod.color
+    : theme.colors.textPrimary;
 
   // If no periods or empty
   if (periods.length === 0) {
@@ -83,8 +93,14 @@ export function CashFlowBarChart({
         </View>
 
         {selectedPeriod ? (
-          <Text style={styles.selectedDetailText}>
-            {selectedPeriod.periodLabel}: Net {selectedPeriod.formattedNet} {selectedPeriod.symbol}
+          <Text style={styles.selectedDetailLabel}>
+            {selectedPeriod.periodLabel}: Net{" "}
+            <Text style={[styles.selectedDetailAmount, { color: netColor }]}>
+              {formatPrivacyAmount(
+                `${selectedPeriod.formattedNet} ${selectedPeriod.symbol}`.trim(),
+                isPrivate,
+              )}
+            </Text>
           </Text>
         ) : (
           <Text style={styles.hintText}>Tap a month to inspect</Text>
@@ -278,10 +294,15 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
       color: theme.colors.textSecondary,
     },
-    selectedDetailText: {
+    selectedDetailLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.textSecondary,
+    },
+    selectedDetailAmount: {
       fontSize: 12,
       fontWeight: "700",
-      color: theme.colors.primary,
+      fontVariant: ["tabular-nums"],
     },
     hintText: {
       fontSize: 11,

@@ -884,6 +884,10 @@ export const fil = {
         "I-standardize ang laki ng color swatch upang mas malinaw ang napiling kulay at mas maliit ang hindi napili.",
       fixItem16:
         "Itago ang mga target, balanse, progreso, at buwanang rekomendasyon ng layunin sa ipon kapag naka-on ang privacy mode.",
+      fixItem17:
+        "Itago ang savings rate at progress indicator sa Cash Flow report kapag naka-on ang privacy mode.",
+      fixItem18:
+        "Kulayan ang detalye ng cash flow chart ayon sa positibo o negatibong net, at igalang ang neutral na kulay at privacy mode.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
