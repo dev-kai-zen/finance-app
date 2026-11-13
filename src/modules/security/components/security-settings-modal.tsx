@@ -182,27 +182,25 @@ export function SecuritySettingsModal({
                 <Text style={styles.headerTitle}>
                   {t("security.menuTitle")}
                 </Text>
-              </View>
-              <View style={styles.headerRightActions}>
                 <Pressable
                   accessibilityLabel="Security info"
                   accessibilityRole="button"
                   hitSlop={8}
                   onPress={() => setInfoModalVisible(true)}
-                  style={styles.closeButton}
+                  style={styles.infoButton}
                 >
-                  <Info color={theme.colors.textMuted} size={20} />
-                </Pressable>
-                <Pressable
-                  accessibilityLabel={t("common.close")}
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={onClose}
-                  style={styles.closeButton}
-                >
-                  <X color={theme.colors.textMuted} size={20} />
+                  <Info color={theme.colors.textMuted} size={18} />
                 </Pressable>
               </View>
+              <Pressable
+                accessibilityLabel={t("common.close")}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={onClose}
+                style={styles.closeButton}
+              >
+                <X color={theme.colors.textMuted} size={20} />
+              </Pressable>
             </View>
 
             <ScrollView
@@ -447,6 +445,7 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
+      flexShrink: 1,
     },
     iconCircle: {
       alignItems: "center",
@@ -461,10 +460,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
     },
-    headerRightActions: {
+    infoButton: {
       alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.xs,
+      justifyContent: "center",
+      padding: theme.spacing.xs,
     },
     closeButton: {
       padding: theme.spacing.xs,
