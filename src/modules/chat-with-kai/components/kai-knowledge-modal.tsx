@@ -16,9 +16,7 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
-  ChevronLeft,
   ChevronRight,
-  HelpCircle,
   Pencil,
   Plus,
   RotateCcw,
@@ -34,7 +32,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { ConfirmModal, HorizontalScrollView, IconHelper } from "@/components";
+import { ConfirmModal, HorizontalScrollView, IconHelper, ModalScreenHeader } from "@/components";
 import { useCategories, type Category } from "@/modules/categories";
 import { useAccounts, type AccountListItem } from "@/modules/accounts";
 import type { TransactionType } from "@/modules/transactions";
@@ -822,38 +820,18 @@ export function KaiKnowledgeModal({
         style={[
           styles.fullScreenContainer,
           {
-            paddingTop: insets.top,
             paddingBottom: Math.max(insets.bottom, 12),
           },
         ]}
       >
-        {/* Top Header: ChevronLeft + Left-aligned Title + Right Help Button */}
-        <View style={styles.topHeader}>
-          <View style={styles.headerLeftGroup}>
-            <Pressable
-              accessibilityLabel="Back"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.backBtn}
-            >
-              <ChevronLeft color={theme.colors.textPrimary} size={24} />
-            </Pressable>
-            <Text numberOfLines={1} style={styles.topTitle}>
-              {t("chatWithKai.knowledgeHubTitle")}
-            </Text>
-          </View>
-
-          <Pressable
-            accessibilityLabel={t("chatWithKai.helpModalTitle")}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => setHelpModalVisible(true)}
-            style={styles.helpBtn}
-          >
-            <HelpCircle color={theme.colors.primary} size={22} />
-          </Pressable>
-        </View>
+        <ModalScreenHeader
+          backAccessibilityLabel={t("common.goBack")}
+          helpAccessibilityHint={t("chatWithKai.helpModalTitle")}
+          helpAccessibilityLabel={t("chatWithKai.helpModalTitle")}
+          onPressBack={onClose}
+          onPressHelp={() => setHelpModalVisible(true)}
+          title={t("chatWithKai.knowledgeHubTitle")}
+        />
 
         {/* Top 4-Tab Segmented Control */}
         <HorizontalScrollView
@@ -2326,45 +2304,6 @@ const createStyles = (theme: AppTheme) =>
     fullScreenContainer: {
       flex: 1,
       backgroundColor: theme.colors.background,
-    },
-    topHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
-    },
-    headerLeftGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      flex: 1,
-      marginRight: 12,
-      gap: 8,
-    },
-    backBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 10,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.colors.surfaceElevated,
-    },
-    topTitle: {
-      fontSize: 17,
-      fontWeight: "700",
-      color: theme.colors.textPrimary,
-      flex: 1,
-    },
-    helpBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 10,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: `${theme.colors.primary}15`,
     },
     tabBarScroll: {
       flexGrow: 0,
