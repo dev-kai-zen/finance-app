@@ -881,6 +881,8 @@ export const en = {
         "Hide credit card utilization ring, due amounts, and card chip balances when privacy mode is enabled.",
       fixItem14:
         "Center rollover behavior options and label in the category budget form.",
+      fixItem15:
+        "Standardize color picker swatch sizing so selected colors are prominent and unselected colors remain compact.",
     },
     v140: {
       date: "November 5, 2026",

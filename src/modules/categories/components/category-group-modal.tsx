@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { Check, ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -325,11 +325,17 @@ export function CategoryGroupModal({
                       style={[
                         styles.colorSwatch,
                         { backgroundColor: c.hex },
-                        isSelected && styles.colorSwatchSelected,
+                        isSelected
+                          ? styles.colorSwatchSelected
+                          : styles.colorSwatchUnselected,
                       ]}
                     >
                       {isSelected ? (
-                        <Text style={styles.colorCheckMark}>✓</Text>
+                        <Check
+                          color={theme.colors.textInverse}
+                          size={20}
+                          strokeWidth={3}
+                        />
                       ) : null}
                     </Pressable>
                   );
@@ -344,7 +350,7 @@ export function CategoryGroupModal({
                     pressed && styles.addColorSwatchPressed,
                   ]}
                 >
-                  <Plus color={theme.colors.primary} size={22} strokeWidth={2.5} />
+                  <Plus color={theme.colors.primary} size={18} strokeWidth={2.5} />
                 </Pressable>
               </View>
             </View>
@@ -637,33 +643,34 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
-      borderRadius: 18,
-      height: 36,
       justifyContent: "center",
-      width: 36,
+    },
+    colorSwatchUnselected: {
+      borderRadius: 15,
+      height: 30,
+      opacity: 0.85,
+      width: 30,
     },
     colorSwatchSelected: {
-      borderColor: theme.colors.surface,
-      borderWidth: 3,
+      borderColor: theme.colors.textInverse,
+      borderRadius: 22,
+      borderWidth: 2.5,
+      height: 44,
+      width: 44,
       ...theme.shadows.card,
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 18,
+      borderRadius: 15,
       borderStyle: "dashed",
-      borderWidth: 2,
-      height: 36,
+      borderWidth: 1.5,
+      height: 30,
       justifyContent: "center",
-      width: 36,
+      width: 30,
     },
     addColorSwatchPressed: {
       opacity: 0.65,
       transform: [{ scale: 0.96 }],
-    },
-    colorCheckMark: {
-      color: theme.colors.textInverse,
-      fontSize: 14,
-      fontWeight: "bold",
     },
     footerRow: {
       flexDirection: "row",

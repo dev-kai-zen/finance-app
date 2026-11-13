@@ -879,6 +879,8 @@ export const fil = {
         "Itago ang utilization ring, mga babayaring halaga, at mga balanse sa chip ng card kapag naka-on ang privacy mode.",
       fixItem14:
         "I-gitna ang mga opsyon at label ng rollover behavior sa form ng category budget.",
+      fixItem15:
+        "I-standardize ang laki ng color swatch upang mas malinaw ang napiling kulay at mas maliit ang hindi napili.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

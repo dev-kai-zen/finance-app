@@ -878,6 +878,8 @@ export const es = {
         "Oculta el anillo de utilización, los montos vencidos y los saldos de tarjetas cuando el modo de privacidad está activado.",
       fixItem14:
         "Centra las opciones y etiqueta de comportamiento de rollover en el formulario de presupuesto por categoría.",
+      fixItem15:
+        "Estandariza el tamaño de las muestras de color para que los colores seleccionados sean prominentes y los no seleccionados compactos.",
     },
     v140: {
       date: "5 de noviembre de 2026",

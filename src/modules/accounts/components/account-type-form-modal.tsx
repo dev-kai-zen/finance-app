@@ -478,7 +478,7 @@ function AccountTypeFormModalContent({
                   >
                     <Plus
                       color={theme.colors.primary}
-                      size={22}
+                      size={18}
                       strokeWidth={2.5}
                     />
                   </Pressable>
@@ -732,12 +732,12 @@ function createStyles(theme: AppTheme) {
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 22,
+      borderRadius: 15,
       borderStyle: "dashed",
-      borderWidth: 2,
-      height: 44,
+      borderWidth: 1.5,
+      height: 30,
       justifyContent: "center",
-      width: 44,
+      width: 30,
     },
     addColorSwatchPressed: {
       opacity: 0.65,
