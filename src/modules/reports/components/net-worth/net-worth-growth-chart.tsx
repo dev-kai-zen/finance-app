@@ -16,7 +16,9 @@ import Svg, {
   Text as SvgText,
 } from "react-native-svg";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { NetWorthPoint } from "../../types/net-worth-growth.types";
@@ -38,7 +40,10 @@ export function NetWorthGrowthChart({
   selectedPointIndex,
   onSelectPointIndex,
 }: NetWorthGrowthChartProps) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
+  const { preferences } = useCurrencyPreferences();
   const [containerWidth, setContainerWidth] = useState(0);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -50,6 +55,12 @@ export function NetWorthGrowthChart({
     selectedPointIndex !== null && points[selectedPointIndex]
       ? points[selectedPointIndex]
       : null;
+
+  const netColor = selectedPoint
+    ? !preferences.colorAmounts || isPrivate
+      ? theme.colors.textPrimary
+      : selectedPoint.color
+    : theme.colors.textPrimary;
 
   if (points.length === 0) {
     return (
@@ -132,8 +143,14 @@ export function NetWorthGrowthChart({
         </View>
 
         {selectedPoint ? (
-          <Text style={styles.selectedDetailText}>
-            {selectedPoint.label}: {selectedPoint.formattedNetWorth} {selectedPoint.symbol}
+          <Text style={styles.selectedDetailLabel}>
+            {selectedPoint.label}:{" "}
+            <Text style={[styles.selectedDetailAmount, { color: netColor }]}>
+              {formatPrivacyAmount(
+                `${selectedPoint.formattedNetWorth} ${selectedPoint.symbol}`.trim(),
+                isPrivate,
+              )}
+            </Text>
           </Text>
         ) : (
           <Text style={styles.hintText}>Tap point to inspect</Text>
@@ -351,10 +368,15 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
       color: theme.colors.textSecondary,
     },
-    selectedDetailText: {
+    selectedDetailLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.textSecondary,
+    },
+    selectedDetailAmount: {
       fontSize: 12,
       fontWeight: "700",
-      color: theme.colors.primary,
+      fontVariant: ["tabular-nums"],
     },
     hintText: {
       fontSize: 11,

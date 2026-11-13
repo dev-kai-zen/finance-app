@@ -890,6 +890,8 @@ export const en = {
         "Hide savings rates and progress indicators in Cash Flow reports when privacy mode is active.",
       fixItem18:
         "Color cash flow chart details by positive or negative net, respecting neutral colors and privacy mode.",
+      fixItem19:
+        "Color net worth growth chart details by positive or negative change, respecting neutral colors and privacy mode.",
     },
     v140: {
       date: "November 5, 2026",

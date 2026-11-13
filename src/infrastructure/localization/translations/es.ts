@@ -887,6 +887,8 @@ export const es = {
         "Oculta las tasas de ahorro e indicadores de progreso en el informe de flujo de caja cuando el modo de privacidad está activado.",
       fixItem18:
         "Colorea los detalles del gráfico de flujo de caja según el neto positivo o negativo, respetando colores neutros y modo de privacidad.",
+      fixItem19:
+        "Colorea los detalles del gráfico de patrimonio según el cambio positivo o negativo, respetando colores neutros y modo de privacidad.",
     },
     v140: {
       date: "5 de noviembre de 2026",

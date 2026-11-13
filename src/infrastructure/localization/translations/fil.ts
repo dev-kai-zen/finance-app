@@ -888,6 +888,8 @@ export const fil = {
         "Itago ang savings rate at progress indicator sa Cash Flow report kapag naka-on ang privacy mode.",
       fixItem18:
         "Kulayan ang detalye ng cash flow chart ayon sa positibo o negatibong net, at igalang ang neutral na kulay at privacy mode.",
+      fixItem19:
+        "Kulayan ang detalye ng net worth chart ayon sa positibo o negatibong pagbabago, at igalang ang neutral na kulay at privacy mode.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

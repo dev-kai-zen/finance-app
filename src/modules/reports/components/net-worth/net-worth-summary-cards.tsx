@@ -77,21 +77,23 @@ export function NetWorthSummaryCards({
             numberOfLines={1}
             style={[
               styles.cardValue,
-              preferences.colorAmounts && {
-                color: isGrowthPositive
-                  ? REPORT_COLORS.positiveGreen
-                  : REPORT_COLORS.negativeRed,
-              },
+              preferences.colorAmounts &&
+                !isPrivate && {
+                  color: isGrowthPositive
+                    ? REPORT_COLORS.positiveGreen
+                    : REPORT_COLORS.negativeRed,
+                },
             ]}
           >
             {formatPrivacyAmount(
-              formatCurrency(periodChangeMinorUnits, currencyCode, true),
+              `${formatCurrency(periodChangeMinorUnits, currencyCode, true)} ${isGrowthPositive ? "▲" : "▼"}`,
               isPrivate,
-            )}{" "}
-            {isGrowthPositive ? "▲" : "▼"}
+            )}
           </Text>
           <Text style={styles.cardSub}>
-            {periodChangePercentage !== null
+            {isPrivate
+              ? "••••••"
+              : periodChangePercentage !== null
               ? `${periodChangePercentage >= 0 ? "+" : ""}${periodChangePercentage}% growth`
               : "Baseline"}
           </Text>
