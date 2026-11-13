@@ -832,6 +832,7 @@ export const fil = {
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app at kusang itugma ang mga kategorya gamit ang kaalaman ni Kai.",
       newItem5: "Magdagdag ng paunang pag-post para maitala nang maaga ang mga nakaiskedyul na transaksyon at ilipat sa susunod na siklo.",
       newItem6: "Magdagdag ng interactive na walkthrough tour para sa Credit Cards upang masubaybayan ang billing cycles, cutoffs, utilization, at hulugan.",
+      newItem7: "Magdagdag ng interactive na gabay sa Reports upang suriin ang mga kategorya, visual chart, at filter ng petsa.",
       improveItem1: "I-tap o i-drag sa net worth chart upang makita ang eksaktong balanse at petsa gamit ang mga tooltip.",
       improveItem2: "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, close icon, at proteksyon sa pagpindot.",
       improveItem3: "Buksan ang mga tuntunin ng app sa Settings, katabi ng patakaran sa privacy.",
@@ -890,6 +891,8 @@ export const fil = {
         "Kulayan ang detalye ng cash flow chart ayon sa positibo o negatibong net, at igalang ang neutral na kulay at privacy mode.",
       fixItem19:
         "Kulayan ang detalye ng net worth chart ayon sa positibo o negatibong pagbabago, at igalang ang neutral na kulay at privacy mode.",
+      fixItem20:
+        "Ayusin ang isyu kung saan ang gabay ng walkthrough sa Reports ay nagbukas ng gabay ng Goals.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2014,6 +2017,24 @@ export const fil = {
     stepUnbilledTitle: "Unbilled na mga Gastos",
     stepUnbilledDesc:
       "Suriin ang mga pagbili sa kasalukuyang billing cycle bago dumating ang iyong susunod na cutoff date.",
+  },
+  reportsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Reports!",
+    introSubtitle: "Mga pananaw at pagsusuri sa pananalapi",
+    introMessage:
+      "Tuklasin ang iyong kita, gastusin, cash flow, at paglago ng net worth gamit ang mga interactive na chart at detalyadong talaan. Nais mo ba ng mabilisang gabay?",
+    stepTabBarTitle: "Mga Kategorya ng Report",
+    stepTabBarDesc:
+      "Madaling lumipat sa pagitan ng Income & Expense, Balance Sheet, Cash Flow, Net Worth Growth, at Labels Summary.",
+    stepFilterBarTitle: "Saklaw ng Petsa at Filter",
+    stepFilterBarDesc:
+      "I-filter ang mga report ayon sa Buwan, Quarter, Year-to-Date, o magtakda ng sariling petsa para suriin ang iyong pananalapi.",
+    stepChartTitle: "Interactive na Visual Chart",
+    stepChartDesc:
+      "Pindutin ang mga slice o bar upang suriin ang mga detalyadong halaga, may kulay na balanse ng net, at direksyon ng paglago.",
+    stepBreakdownTableTitle: "Detalyadong Talaan",
+    stepBreakdownTableDesc:
+      "Suriin ang mga detalyadong kabuuan ng bawat kategorya at buwanang kasaysayan sa mga talaan.",
   },
   settingsWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Setting!",

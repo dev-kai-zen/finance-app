@@ -152,6 +152,13 @@ export { DataImportWalkthroughOverlay } from "./data-import/data-import-walkthro
 export { useDataImportWalkthrough } from "./data-import/use-data-import-walkthrough";
 export { DATA_IMPORT_WALKTHROUGH_STEPS } from "./data-import/data-import-walkthrough-steps";
 
+export { ReportsWalkthroughOverlay } from "./reports/reports-walkthrough-overlay";
+export { useReportsWalkthrough } from "./reports/use-reports-walkthrough";
+export {
+  REPORTS_WALKTHROUGH_STEPS,
+  getReportsWalkthroughSteps,
+} from "./reports/reports-walkthrough-steps";
+
 export type {
   LayoutRect,
   WalkthroughStep,

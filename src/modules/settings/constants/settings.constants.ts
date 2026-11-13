@@ -80,6 +80,7 @@ export const PROMPT_SETTING_KEYS = {
   goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
   notesWalkthroughDismissed: "prompt.notesWalkthroughDismissed",
   creditCardsWalkthroughDismissed: "prompt.creditCardsWalkthroughDismissed",
+  reportsWalkthroughDismissed: "prompt.reportsWalkthroughDismissed",
   settingsWalkthroughDismissed: "prompt.settingsWalkthroughDismissed",
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",

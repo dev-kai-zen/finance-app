@@ -831,6 +831,7 @@ export const es = {
       newItem4: "Asigna tipos de transacción de otras aplicaciones y empareja categorías automáticamente con el conocimiento de Kai.",
       newItem5: "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo.",
       newItem6: "Añade un recorrido interactivo para Tarjetas de Crédito para explorar ciclos de facturación, fechas de corte, utilización y cuotas.",
+      newItem7: "Añade un recorrido interactivo para Informes para explorar desgloses de categorías, gráficos y filtros de fechas.",
       improveItem1: "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
       improveItem2: "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
       improveItem3: "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
@@ -889,6 +890,8 @@ export const es = {
         "Colorea los detalles del gráfico de flujo de caja según el neto positivo o negativo, respetando colores neutros y modo de privacidad.",
       fixItem19:
         "Colorea los detalles del gráfico de patrimonio según el cambio positivo o negativo, respetando colores neutros y modo de privacidad.",
+      fixItem20:
+        "Corrige el problema por el cual la guía de Informes abría de forma incorrecta el recorrido de Metas.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -2012,6 +2015,24 @@ export const es = {
     stepUnbilledTitle: "Compras sin facturar",
     stepUnbilledDesc:
       "Revisa los cargos realizados durante el ciclo de facturación actual antes de la fecha de corte.",
+  },
+  reportsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Informes!",
+    introSubtitle: "Perspectivas y análisis financiero",
+    introMessage:
+      "Explora tus ingresos, gastos, flujo de caja y crecimiento del patrimonio con gráficos interactivos y tablas detalladas. ¿Deseas un recorrido rápido?",
+    stepTabBarTitle: "Categorías de informes",
+    stepTabBarDesc:
+      "Alterna fácilmente entre Ingresos y gastos, Balance general, Flujo de caja, Patrimonio neto y Resumen de etiquetas.",
+    stepFilterBarTitle: "Rango de fechas y filtros",
+    stepFilterBarDesc:
+      "Filtra informes por Mes, Trimestre, Año a la fecha o elige fechas personalizadas para examinar tus finanzas.",
+    stepChartTitle: "Gráficos visuales interactivos",
+    stepChartDesc:
+      "Toca las barras o secciones para inspeccionar montos detallados, balances netos coloreados y tendencias de crecimiento.",
+    stepBreakdownTableTitle: "Desglose detallado",
+    stepBreakdownTableDesc:
+      "Revisa totales por categoría y datos históricos mensuales en tablas detalladas con desplazamiento.",
   },
   settingsWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Ajustes!",

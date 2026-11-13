@@ -82,6 +82,12 @@ export type WalkthroughTargetId =
   | "creditCardDueInstallments"
   | "creditCardStatements"
   | "creditCardUnbilled"
+  // Reports
+  | "reportsTabBar"
+  | "reportsFilterBar"
+  | "reportsSummaryCards"
+  | "reportsChart"
+  | "reportsBreakdownTable"
   // Accounts Form & Groups
   | "accountFormName"
   | "accountFormNote"

@@ -834,6 +834,7 @@ export const en = {
       newItem4: "Match transaction types from other apps and automatically match categories using Kai's knowledge.",
       newItem5: "Add advance posting to record upcoming scheduled transactions early and automatically advance to the next cycle.",
       newItem6: "Add an interactive walkthrough tour for Credit Cards to explore billing cycles, cutoffs, utilization, and installments.",
+      newItem7: "Add an interactive walkthrough tour for Reports to explore category breakdowns, visual charts, and date filters.",
       improveItem1: "Tap or drag along the net worth chart to view exact balances and dates with touch tooltips.",
       improveItem2: "Improve walkthrough tours with high-contrast buttons, dedicated close buttons, and touch protection.",
       improveItem3: "Open the app terms from Settings, next to the privacy policy.",
@@ -892,6 +893,8 @@ export const en = {
         "Color cash flow chart details by positive or negative net, respecting neutral colors and privacy mode.",
       fixItem19:
         "Color net worth growth chart details by positive or negative change, respecting neutral colors and privacy mode.",
+      fixItem20:
+        "Fix issue where the header walkthrough guide on Reports incorrectly triggered the Goals tour.",
     },
     v140: {
       date: "November 5, 2026",
@@ -2018,6 +2021,24 @@ export const en = {
     stepUnbilledTitle: "Unbilled Purchases",
     stepUnbilledDesc:
       "Review card charges made in the current billing cycle before your next statement cutoff.",
+  },
+  reportsWalkthrough: {
+    introTitle: "Welcome to Reports!",
+    introSubtitle: "Financial insights and analytics",
+    introMessage:
+      "Explore your income, expenses, cash flow, and net worth growth with interactive charts and itemized breakdowns. Would you like a quick walkthrough?",
+    stepTabBarTitle: "Report Categories",
+    stepTabBarDesc:
+      "Easily switch between Income & Expense, Balance Sheet, Cash Flow, Net Worth Growth, and Labels Summary.",
+    stepFilterBarTitle: "Date Range & Filters",
+    stepFilterBarDesc:
+      "Filter reports by Month, Quarter, Year-to-Date, or choose custom date ranges to inspect your finances.",
+    stepChartTitle: "Interactive Visual Charts",
+    stepChartDesc:
+      "Tap slices or bars to inspect detailed period totals, color-coded net balances, and growth trends.",
+    stepBreakdownTableTitle: "Itemized Breakdown",
+    stepBreakdownTableDesc:
+      "Review itemized category totals and monthly historical data in detailed, scrollable tables.",
   },
   settingsWalkthrough: {
     introTitle: "Welcome to Settings!",

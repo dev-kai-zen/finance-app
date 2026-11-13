@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useNetWorthGrowthReport } from "../../hooks/use-net-worth-growth-report";
 import { NetWorthFilterBar } from "./net-worth-filter-bar";
 import { NetWorthGrowthChart } from "./net-worth-growth-chart";
@@ -22,18 +23,20 @@ export function NetWorthGrowthReport() {
 
   return (
     <View style={styles.container}>
-      <NetWorthFilterBar
-        preset={preset}
-        onSelectPreset={(p) => {
-          setPreset(p);
-          setSelectedPointIndex(null);
-        }}
-        range={range}
-        customDateA={customDateA}
-        customDateB={customDateB}
-        onChangeCustomDateA={setCustomDateA}
-        onChangeCustomDateB={setCustomDateB}
-      />
+      <WalkthroughTarget id="reportsFilterBar">
+        <NetWorthFilterBar
+          preset={preset}
+          onSelectPreset={(p) => {
+            setPreset(p);
+            setSelectedPointIndex(null);
+          }}
+          range={range}
+          customDateA={customDateA}
+          customDateB={customDateB}
+          onChangeCustomDateA={setCustomDateA}
+          onChangeCustomDateB={setCustomDateB}
+        />
+      </WalkthroughTarget>
 
       <NetWorthSummaryCards
         currentNetWorthMinorUnits={data.currentNetWorthMinorUnits}
@@ -43,17 +46,21 @@ export function NetWorthGrowthReport() {
         lowestNetWorthMinorUnits={data.lowestNetWorthMinorUnits}
       />
 
-      <NetWorthGrowthChart
-        points={data.points}
-        selectedPointIndex={selectedPointIndex}
-        onSelectPointIndex={setSelectedPointIndex}
-      />
+      <WalkthroughTarget id="reportsChart">
+        <NetWorthGrowthChart
+          points={data.points}
+          selectedPointIndex={selectedPointIndex}
+          onSelectPointIndex={setSelectedPointIndex}
+        />
+      </WalkthroughTarget>
 
-      <NetWorthHistoryTable
-        points={data.points}
-        selectedPointIndex={selectedPointIndex}
-        onSelectPointIndex={setSelectedPointIndex}
-      />
+      <WalkthroughTarget id="reportsBreakdownTable">
+        <NetWorthHistoryTable
+          points={data.points}
+          selectedPointIndex={selectedPointIndex}
+          onSelectPointIndex={setSelectedPointIndex}
+        />
+      </WalkthroughTarget>
     </View>
   );
 }
