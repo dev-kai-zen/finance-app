@@ -72,7 +72,14 @@ interface TransactionFormFieldPreferencesModalProps {
   onClose: () => void;
 }
 
-export function TransactionFormFieldPreferencesModal({
+export function TransactionFormFieldPreferencesModal(
+  props: TransactionFormFieldPreferencesModalProps,
+) {
+  if (!props.visible) return null;
+  return <TransactionFormFieldPreferencesModalContent {...props} />;
+}
+
+function TransactionFormFieldPreferencesModalContent({
   visible,
   onClose,
 }: TransactionFormFieldPreferencesModalProps) {

@@ -538,7 +538,7 @@ function TransactionFilterModalContent({
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
-            <WalkthroughTarget id="txFilterApply">
+            <WalkthroughTarget id="txFilterApply" style={styles.footerBtnWrapper}>
               <Pressable
                 accessibilityLabel="Apply Filters"
                 accessibilityRole="button"
@@ -824,13 +824,17 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "600",
     },
+    footerBtnWrapper: {
+      flex: 1,
+    },
     applyBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
       borderRadius: 12,
-      flex: 2,
+      flex: 1,
       height: 46,
       justifyContent: "center",
+      width: "100%",
     },
     applyBtnText: {
       color: theme.colors.onPrimary,

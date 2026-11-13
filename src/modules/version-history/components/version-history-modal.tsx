@@ -24,7 +24,12 @@ interface VersionHistoryModalProps {
   onClose: () => void;
 }
 
-export function VersionHistoryModal({ blocks, visible, onClose }: VersionHistoryModalProps) {
+export function VersionHistoryModal(props: VersionHistoryModalProps) {
+  if (!props.visible) return null;
+  return <VersionHistoryModalContent {...props} />;
+}
+
+function VersionHistoryModalContent({ blocks, visible, onClose }: VersionHistoryModalProps) {
   const { width } = useWindowDimensions();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);

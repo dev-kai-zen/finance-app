@@ -65,8 +65,18 @@ export function useScrollDownIndicator<T extends ScrollableInstance = any>(
     (event: LayoutChangeEvent) => {
       const visibleHeight = event.nativeEvent.layout.height;
       scrollLayoutRef.current.visibleHeight = visibleHeight;
-      const { scrollY, contentHeight } = scrollLayoutRef.current;
-      checkCanScrollDown(scrollY, visibleHeight, contentHeight);
+      const { contentHeight } = scrollLayoutRef.current;
+      if (visibleHeight > 0 && contentHeight > 0) {
+        scrollLayoutRef.current.scrollY = Math.min(
+          scrollLayoutRef.current.scrollY,
+          Math.max(0, contentHeight - visibleHeight),
+        );
+      }
+      checkCanScrollDown(
+        scrollLayoutRef.current.scrollY,
+        visibleHeight,
+        contentHeight,
+      );
       onLayout?.(event);
     },
     [checkCanScrollDown, onLayout],
@@ -75,8 +85,18 @@ export function useScrollDownIndicator<T extends ScrollableInstance = any>(
   const handleContentSizeChange = useCallback(
     (w: number, contentHeight: number) => {
       scrollLayoutRef.current.contentHeight = contentHeight;
-      const { scrollY, visibleHeight } = scrollLayoutRef.current;
-      checkCanScrollDown(scrollY, visibleHeight, contentHeight);
+      const { visibleHeight } = scrollLayoutRef.current;
+      if (visibleHeight > 0 && contentHeight > 0) {
+        scrollLayoutRef.current.scrollY = Math.min(
+          scrollLayoutRef.current.scrollY,
+          Math.max(0, contentHeight - visibleHeight),
+        );
+      }
+      checkCanScrollDown(
+        scrollLayoutRef.current.scrollY,
+        visibleHeight,
+        contentHeight,
+      );
       onContentSizeChange?.(w, contentHeight);
     },
     [checkCanScrollDown, onContentSizeChange],
@@ -85,13 +105,16 @@ export function useScrollDownIndicator<T extends ScrollableInstance = any>(
   const scrollToNext = useCallback(
     (step?: number) => {
       const { scrollY, visibleHeight, contentHeight } = scrollLayoutRef.current;
-      const delta = step ?? scrollStep;
+      const delta =
+        typeof step === "number" && Number.isFinite(step) ? step : scrollStep;
       const targetY = Math.min(
         scrollY + delta,
         Math.max(0, contentHeight - visibleHeight),
       );
       const instance = scrollRef.current;
       if (!instance) return;
+      scrollLayoutRef.current.scrollY = targetY;
+      checkCanScrollDown(targetY, visibleHeight, contentHeight);
       if (typeof instance.scrollTo === "function") {
         instance.scrollTo({ y: targetY, animated: true });
       } else if (typeof instance.scrollToOffset === "function") {
@@ -100,7 +123,7 @@ export function useScrollDownIndicator<T extends ScrollableInstance = any>(
         instance.scrollToPosition(0, targetY, true);
       }
     },
-    [scrollRef, scrollStep],
+    [checkCanScrollDown, scrollRef, scrollStep],
   );
 
   return {

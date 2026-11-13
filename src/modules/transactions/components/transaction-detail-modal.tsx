@@ -36,7 +36,12 @@ export interface TransactionDetailModalProps {
   onAttachmentsChanged?: () => void;
 }
 
-export function TransactionDetailModal({
+export function TransactionDetailModal(props: TransactionDetailModalProps) {
+  if (!props.visible || !props.transaction) return null;
+  return <TransactionDetailModalContent {...props} />;
+}
+
+function TransactionDetailModalContent({
   visible,
   onClose,
   transaction,

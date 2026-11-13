@@ -50,7 +50,7 @@ export function ScrollDownIndicator({
         accessibilityLabel={accessibilityLabel ?? t("navigation.scrollDown")}
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-        onPress={onPress}
+        onPress={() => onPress()}
         style={({ pressed }) => [
           styles.button,
           size !== 30

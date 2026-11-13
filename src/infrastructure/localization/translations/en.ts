@@ -887,6 +887,8 @@ export const en = {
       improveItem38: "Add quick custom hex color creation in Theme Studio and harmonize color picker swatches across all screens without layout jumps.",
       improveItem39: "Standardize help and info icons across all screens using question marks for interactive explanations and info marks for callout notices.",
       improveItem40: "Toggle expanded and collapsed account group views and set your default preference in Settings.",
+      improveItem41: "Combine transaction Date and Amount sort buttons with direction arrows to toggle sort order on tap.",
+      improveItem42: "Standardize the Quick Presets screen with a floating add button at the bottom corner.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -932,6 +934,8 @@ export const en = {
         "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
       fixItem27:
         "Fix slow screen transitions so navigating across tabs, lists, and forms feels fast and smooth.",
+      fixItem28:
+        "Equalize Cancel and Apply Filters button widths and fix floating scroll down arrows across modals.",
     },
     v140: {
       date: "November 5, 2026",
@@ -1884,10 +1888,10 @@ export const en = {
       "Open advanced filters to narrow down transactions by date range, account, category, type (income, expense, transfer), or tags.",
     stepSortDateTitle: "Sort by Date",
     stepSortDateDesc:
-      "Sort your transaction history chronologically by transaction date.",
+      "Sort transactions by date from latest to oldest by default, and tap again to switch to oldest first.",
     stepSortAmountTitle: "Sort by Amount",
     stepSortAmountDesc:
-      "Order transactions by monetary value to immediately highlight your largest or smallest transactions.",
+      "Sort transactions by amount from highest to lowest, and tap again to switch to lowest first.",
     stepSortOrderTitle: "Sort Order",
     stepSortOrderDesc:
       "Toggle between descending (newest/highest first) and ascending (oldest/lowest first) sorting order.",

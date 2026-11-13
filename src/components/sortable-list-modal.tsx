@@ -64,7 +64,12 @@ export interface SortableListModalProps {
   isDirty?: boolean;
 }
 
-export function SortableListModal({
+export function SortableListModal(props: SortableListModalProps) {
+  if (!props.visible) return null;
+  return <SortableListModalContent {...props} />;
+}
+
+function SortableListModalContent({
   visible,
   onClose,
   title,

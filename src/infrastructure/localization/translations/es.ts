@@ -884,6 +884,8 @@ export const es = {
       improveItem38: "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
       improveItem39: "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
       improveItem40: "Alterna vistas expandidas y colapsadas de grupos de cuentas y define tu preferencia predeterminada en Configuración.",
+      improveItem41: "Combina los botones de ordenar por Fecha y Monto con flechas para cambiar el orden al tocar.",
+      improveItem42: "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -929,6 +931,8 @@ export const es = {
         "Mantén los campos de nombre de color y código hexadecimal completamente visibles sobre el teclado virtual.",
       fixItem27:
         "Corrige la lentitud al cambiar de pantalla para que navegar entre secciones, listas y formularios sea rápido y fluido.",
+      fixItem28:
+        "Iguala el ancho de los botones Cancelar y Aplicar filtros y corrige las flechas de desplazamiento en ventanas.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -1878,10 +1882,10 @@ export const es = {
       "Abre los filtros avanzados para acotar por rango de fechas, cuenta, categoría, tipo o etiquetas.",
     stepSortDateTitle: "Ordenar por fecha",
     stepSortDateDesc:
-      "Ordena tu historial cronológicamente por la fecha de transacción.",
+      "Ordena por fecha de más reciente a más antigua por defecto, y toca de nuevo para invertir el orden.",
     stepSortAmountTitle: "Ordenar por monto",
     stepSortAmountDesc:
-      "Ordena las transacciones por valor monetario para identificar rápidamente tus gastos más altos o más bajos.",
+      "Ordena por monto de mayor a menor, y toca de nuevo para mostrar primero los montos más bajos.",
     stepSortOrderTitle: "Sentido de ordenación",
     stepSortOrderDesc:
       "Alterna entre orden descendente (más recientes/altos primero) y ascendente (más antiguos/bajos primero).",

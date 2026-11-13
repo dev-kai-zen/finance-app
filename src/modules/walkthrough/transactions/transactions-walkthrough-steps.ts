@@ -26,12 +26,6 @@ export const TRANSACTIONS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "transactionsWalkthrough.stepSortAmountDesc",
   },
   {
-    id: "txSortOrder",
-    targetId: "txSortOrder",
-    titleKey: "transactionsWalkthrough.stepSortOrderTitle",
-    descKey: "transactionsWalkthrough.stepSortOrderDesc",
-  },
-  {
     id: "txViewMode",
     targetId: "txViewMode",
     titleKey: "transactionsWalkthrough.stepViewModeTitle",

@@ -1052,6 +1052,10 @@ export const fil = {
         "I-standardize ang mga icon ng tulong at impormasyon sa lahat ng screen gamit ang question mark para sa gabay at info mark para sa mga paunawa.",
       improveItem40:
         "I-toggle ang naka-expand at naka-collapse na view ng mga grupo ng account at itakda ang iyong default na preference sa Mga Setting.",
+      improveItem41:
+        "Pagsamahin ang mga button sa pag-sort ng Petsa at Halaga na may arrow para magpalit ng pagkakasunod-sunod.",
+      improveItem42:
+        "I-standardize ang screen ng Quick Presets gamit ang lumulutang na add button sa ibabang sulok.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1106,6 +1110,8 @@ export const fil = {
         "Panatilihing buong nakikita ang mga input field ng pangalan ng kulay at hex code sa itaas ng virtual keyboard.",
       fixItem27:
         "Ayusin ang mabagal na paglipat ng screen upang maging mabilis at maayos ang pagbubukas ng mga pahina, listahan, at form.",
+      fixItem28:
+        "Ipantay ang lapad ng Cancel at Apply Filters at ayusin ang lumulutang na scroll down arrow sa mga modal.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2066,10 +2072,10 @@ export const fil = {
       "Buksan ang mga advanced filter para limitahan ayon sa petsa, account, kategorya, uri, o tags.",
     stepSortDateTitle: "I-sort ayon sa Petsa",
     stepSortDateDesc:
-      "Iayos ang iyong kasaysayan ng transaksyon ayon sa petsa ng transaksyon.",
+      "I-sort ayon sa petsa mula pinakabago hanggang pinakaluma, at pindutin muli para unahin ang pinakaluma.",
     stepSortAmountTitle: "I-sort ayon sa Halaga",
     stepSortAmountDesc:
-      "Ayusin ang mga tala ayon sa halaga ng pera para agad makita ang pinakamalaki o pinakamaliit na gastusin.",
+      "I-sort ayon sa halaga mula pinakamalaki hanggang pinakamaliit, at pindutin muli para unahin ang pinakamaliit.",
     stepSortOrderTitle: "Direksyon ng Pag-sort",
     stepSortOrderDesc:
       "Magpalit sa pagitan ng pababa (pinakabago/pinakamalaki muna) at pataas (pinakaluma/pinakamaliit muna).",

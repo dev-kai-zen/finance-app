@@ -288,7 +288,6 @@ function TransactionsScreenContent({
   const filterRef = useWalkthroughTarget("txFilter");
   const sortDateRef = useWalkthroughTarget("txSortDate");
   const sortAmountRef = useWalkthroughTarget("txSortAmount");
-  const sortOrderRef = useWalkthroughTarget("txSortOrder");
   const viewModeRef = useWalkthroughTarget("txViewMode");
   const scheduledRef = useWalkthroughTarget("txScheduled");
   const trashRef = useWalkthroughTarget("txTrash");
@@ -909,10 +908,16 @@ function TransactionsScreenContent({
     runCsvExport((rows) => shareTransactionsCsv(rows));
   };
 
-  const toggleSortOrder = () => {
+  const handleSelectSortField = (field: "date" | "amount") => {
     setFilterState((prev) => ({
       ...prev,
-      sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
+      sortBy: field,
+      sortOrder:
+        prev.sortBy === field
+          ? prev.sortOrder === "desc"
+            ? "asc"
+            : "desc"
+          : "desc",
     }));
   };
 
@@ -1051,40 +1056,70 @@ function TransactionsScreenContent({
             <Pressable
               ref={sortDateRef as never}
               collapsable={false}
-              accessibilityLabel="Sort by date"
-                onPress={() =>
-                  setFilterState((prev) => ({ ...prev, sortBy: "date" }))
-                }
-                style={[styles.sortPill, filterState.sortBy === "date" && styles.sortPillActive]}
+              accessibilityLabel={`Sort by date, ${
+                filterState.sortBy === "date"
+                  ? filterState.sortOrder === "desc"
+                    ? "latest to oldest"
+                    : "oldest to latest"
+                  : "tap to sort latest to oldest"
+              }`}
+              accessibilityRole="button"
+              onPress={() => handleSelectSortField("date")}
+              style={[
+                styles.sortPill,
+                filterState.sortBy === "date" && styles.sortPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortPillText,
+                  filterState.sortBy === "date" && styles.sortPillTextActive,
+                ]}
               >
-                <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
-              </Pressable>
+                Date
+              </Text>
+              {filterState.sortBy === "date" ? (
+                filterState.sortOrder === "asc" ? (
+                  <ArrowUp color={theme.colors.success} size={14} />
+                ) : (
+                  <ArrowDown color={theme.colors.success} size={14} />
+                )
+              ) : null}
+            </Pressable>
 
             <Pressable
               ref={sortAmountRef as never}
               collapsable={false}
-              accessibilityLabel="Sort by amount"
-                onPress={() =>
-                  setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
-                }
-                style={[styles.sortPill, filterState.sortBy === "amount" && styles.sortPillActive]}
+              accessibilityLabel={`Sort by amount, ${
+                filterState.sortBy === "amount"
+                  ? filterState.sortOrder === "desc"
+                    ? "highest to lowest"
+                    : "lowest to highest"
+                  : "tap to sort highest to lowest"
+              }`}
+              accessibilityRole="button"
+              onPress={() => handleSelectSortField("amount")}
+              style={[
+                styles.sortPill,
+                filterState.sortBy === "amount" && styles.sortPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortPillText,
+                  filterState.sortBy === "amount" && styles.sortPillTextActive,
+                ]}
               >
-                <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
-              </Pressable>
-
-            <Pressable
-              ref={sortOrderRef as never}
-              collapsable={false}
-              accessibilityLabel={`Sort order ${filterState.sortOrder}`}
-                onPress={toggleSortOrder}
-                style={styles.sortOrderButton}
-              >
-                {filterState.sortOrder === "asc" ? (
-                  <ArrowUp color={theme.colors.success} size={16} />
+                Amount
+              </Text>
+              {filterState.sortBy === "amount" ? (
+                filterState.sortOrder === "asc" ? (
+                  <ArrowUp color={theme.colors.success} size={14} />
                 ) : (
-                  <ArrowDown color={theme.colors.success} size={16} />
-                )}
-              </Pressable>
+                  <ArrowDown color={theme.colors.success} size={14} />
+                )
+              ) : null}
+            </Pressable>
 
             <Pressable
               ref={viewModeRef as never}
@@ -1859,6 +1894,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 5,
@@ -1873,7 +1910,6 @@ function createStyles(theme: AppTheme) {
     },
     sortPillTextActive: {
       color: theme.colors.success,
-      flex: 1,
     },
     sortOrderButton: {
       alignItems: "center",
