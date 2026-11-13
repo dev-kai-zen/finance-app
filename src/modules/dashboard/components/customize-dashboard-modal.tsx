@@ -419,9 +419,11 @@ function CustomizeDashboardModalContent({
               <View style={styles.widgetIconBox}>
                 <Quote color={theme.colors.primary} size={18} />
               </View>
-              <Text numberOfLines={1} style={styles.widgetTitle}>
-                {t("dashboard.showDailyQuoteTitle")}
-              </Text>
+              <View style={styles.widgetTitleContainer}>
+                <Text numberOfLines={1} style={styles.widgetTitle}>
+                  {t("dashboard.showDailyQuoteTitle")}
+                </Text>
+              </View>
               <ThemedSwitch
                 accessibilityLabel={t("dashboard.showDailyQuoteTitle")}
                 onValueChange={handleToggleQuote}

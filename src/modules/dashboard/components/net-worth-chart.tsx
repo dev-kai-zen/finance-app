@@ -52,9 +52,9 @@ export function NetWorthChart({
   const chartPageXRef = useRef<number | null>(null);
 
   const measureChartPosition = () => {
-    chartWrapperRef.current?.measure((_x, _y, _width, _height, pageX) => {
-      if (typeof pageX === "number") {
-        chartPageXRef.current = pageX;
+    chartWrapperRef.current?.measureInWindow((x) => {
+      if (typeof x === "number") {
+        chartPageXRef.current = x;
       }
     });
   };
@@ -106,6 +106,9 @@ export function NetWorthChart({
   };
 
   const getTouchX = (evt: GestureResponderEvent) => {
+    if (typeof evt.nativeEvent.locationX === "number") {
+      return evt.nativeEvent.locationX;
+    }
     if (
       typeof evt.nativeEvent.pageX === "number" &&
       chartPageXRef.current !== null &&
@@ -113,7 +116,7 @@ export function NetWorthChart({
     ) {
       return evt.nativeEvent.pageX - chartPageXRef.current;
     }
-    return evt.nativeEvent.locationX;
+    return 0;
   };
 
   const panResponder = useRef(
@@ -170,7 +173,8 @@ export function NetWorthChart({
           onLayout={() => measureChartPosition()}
           {...panResponder.panHandlers}
         >
-          <Svg height={CHART_HEIGHT} width={width} pointerEvents="none">
+          <View pointerEvents="none">
+            <Svg height={CHART_HEIGHT} width={width}>
             {ticks.map((tick) => {
               const y = yForValue(tick);
               return (
@@ -338,6 +342,7 @@ export function NetWorthChart({
               );
             })}
           </Svg>
+          </View>
 
           {/* Touch-to-Inspect Tooltip Card */}
           {activePoint && selectedPointIndex !== null ? (

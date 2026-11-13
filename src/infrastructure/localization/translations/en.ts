@@ -914,6 +914,8 @@ export const en = {
         "Fix Google Drive Quick Sync so switching accounts automatically re-links to the new account's backup.",
       fixItem24:
         "Prevent transaction group errors by restricting transfer type conversions when editing existing transactions.",
+      fixItem25:
+        "Align the daily inspiration quote toggle in dashboard customization with the other card switches.",
     },
     v140: {
       date: "November 5, 2026",

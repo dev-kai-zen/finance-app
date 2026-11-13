@@ -911,6 +911,8 @@ export const es = {
         "Corrige Quick Sync en Google Drive para que cambiar de cuenta vincule automáticamente la copia de la nueva cuenta.",
       fixItem24:
         "Evite errores al restringir el cambio de tipo de transferencia al editar registros existentes.",
+      fixItem25:
+        "Alinea el interruptor de frase de inspiración diaria en la personalización del panel con los demás botones.",
     },
     v140: {
       date: "5 de noviembre de 2026",
