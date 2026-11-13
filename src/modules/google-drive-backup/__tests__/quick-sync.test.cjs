@@ -80,6 +80,7 @@ const { drizzle } = require("drizzle-orm/expo-sqlite");
 const schema = require("@/infrastructure/database/schema");
 const {
   getQuickSyncConfig,
+  resetQuickSyncLocalMetadata,
   saveQuickSyncConfig,
   subscribeToQuickSyncSettings,
 } = require("@/infrastructure/sync/quick-sync-settings.repository");
@@ -289,4 +290,24 @@ test("quick sync: state broadcasts runtime status and disabled state", () => {
   setQuickSyncRuntimeStatus("synced");
   state = getQuickSyncState();
   assert.equal(state.status, "synced");
+});
+
+test("quick sync: preserves accountEmail and resetQuickSyncLocalMetadata clears cloud link", () => {
+  saveQuickSyncConfig({
+    fileId: "file-account-1",
+    accountEmail: "account1@gmail.com",
+    lastSyncedAt: new Date().toISOString(),
+  });
+
+  let config = getQuickSyncConfig();
+  assert.equal(config.fileId, "file-account-1");
+  assert.equal(config.accountEmail, "account1@gmail.com");
+  assert.ok(config.lastSyncedAt);
+
+  resetQuickSyncLocalMetadata();
+
+  config = getQuickSyncConfig();
+  assert.equal(config.fileId, null);
+  assert.equal(config.accountEmail, null);
+  assert.equal(config.lastSyncedAt, null);
 });

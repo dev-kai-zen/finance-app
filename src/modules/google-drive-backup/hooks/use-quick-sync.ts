@@ -24,6 +24,6 @@ export function useQuickSync() {
     setEnabled: setQuickSyncEnabled,
     setNetworkPreference: setQuickSyncNetworkPreference,
     triggerSync: () => triggerQuickSync({ immediate: true }),
-    restoreFromQuickSync: () => restoreQuickSyncBackup(),
+    restoreFromQuickSync: (fileId?: string) => restoreQuickSyncBackup(fileId),
   };
 }

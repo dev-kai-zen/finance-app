@@ -5,6 +5,7 @@ export interface QuickSyncConfig {
   network: QuickSyncNetworkPreference;
   lastSyncedAt: string | null;
   fileId: string | null;
+  accountEmail?: string | null;
 }
 
 export type QuickSyncStatus =
@@ -21,5 +22,6 @@ export interface QuickSyncState {
   networkPreference: QuickSyncNetworkPreference;
   lastSyncedAt: string | null;
   fileId: string | null;
+  accountEmail?: string | null;
   lastError: string | null;
 }

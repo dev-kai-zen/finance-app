@@ -59,12 +59,20 @@ export function GoogleDriveBackupPanel() {
   const [quickSyncPromptVisible, setQuickSyncPromptVisible] = useState(false);
   const [confirmQuickSyncRestore, setConfirmQuickSyncRestore] = useState(false);
   const quickSyncPromptShownRef = useRef(false);
+  const lastUserEmailRef = useRef<string | null>(null);
   const busy = backup.operation !== "idle";
 
   useEffect(() => {
     if (!backup.user) {
       setQuickSyncBackup(null);
+      quickSyncPromptShownRef.current = false;
+      lastUserEmailRef.current = null;
       return;
+    }
+
+    if (lastUserEmailRef.current !== backup.user.email) {
+      quickSyncPromptShownRef.current = false;
+      lastUserEmailRef.current = backup.user.email;
     }
 
     let active = true;
@@ -143,6 +151,9 @@ export function GoogleDriveBackupPanel() {
 
   const confirmGoogleDriveDisconnect = () => {
     setConfirmDisconnect(false);
+    setQuickSyncBackup(null);
+    quickSyncPromptShownRef.current = false;
+    lastUserEmailRef.current = null;
     void backup.disconnect();
   };
 
@@ -410,7 +421,7 @@ export function GoogleDriveBackupPanel() {
         onCancel={() => setConfirmQuickSyncRestore(false)}
         onConfirm={() => {
           setConfirmQuickSyncRestore(false);
-          void backup.restoreQuickSync();
+          void backup.restoreQuickSync(quickSyncBackup?.id);
         }}
         pending={backup.operation === "restoring"}
         title={t("googleDriveBackup.restoreQuickSyncConfirmTitle")}

@@ -908,6 +908,8 @@ export const en = {
         "Fix missing screen padding in the currency catalog and add currency form.",
       fixItem22:
         "Fix walkthrough scrolling so menu options never get cut off or hidden behind the navigation header.",
+      fixItem23:
+        "Fix Google Drive Quick Sync so switching accounts automatically re-links to the new account's backup.",
     },
     v140: {
       date: "November 5, 2026",

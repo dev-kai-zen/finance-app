@@ -905,6 +905,8 @@ export const es = {
         "Corrige la falta de espaciado en los bordes del catálogo de monedas y el formulario de añadir moneda.",
       fixItem22:
         "Corrige el desplazamiento de la guía para que las opciones del menú no queden cortadas o detrás de la cabecera.",
+      fixItem23:
+        "Corrige Quick Sync en Google Drive para que cambiar de cuenta vincule automáticamente la copia de la nueva cuenta.",
     },
     v140: {
       date: "5 de noviembre de 2026",

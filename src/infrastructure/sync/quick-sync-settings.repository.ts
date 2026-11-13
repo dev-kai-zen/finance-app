@@ -11,12 +11,14 @@ export const QUICK_SYNC_ENABLED_KEY = "quick_sync_enabled";
 export const QUICK_SYNC_NETWORK_KEY = "quick_sync_network";
 export const QUICK_SYNC_LAST_SYNCED_AT_KEY = "quick_sync_last_synced_at";
 export const QUICK_SYNC_FILE_ID_KEY = "quick_sync_file_id";
+export const QUICK_SYNC_ACCOUNT_EMAIL_KEY = "quick_sync_account_email";
 
 export const QUICK_SYNC_SETTINGS_KEYS = [
   QUICK_SYNC_ENABLED_KEY,
   QUICK_SYNC_NETWORK_KEY,
   QUICK_SYNC_LAST_SYNCED_AT_KEY,
   QUICK_SYNC_FILE_ID_KEY,
+  QUICK_SYNC_ACCOUNT_EMAIL_KEY,
 ] as const;
 
 type SettingsListener = () => void;
@@ -53,6 +55,7 @@ export function getQuickSyncConfig(context: DbContext = db): QuickSyncConfig {
     network: normalizeNetworkPreference(values[QUICK_SYNC_NETWORK_KEY]),
     lastSyncedAt: values[QUICK_SYNC_LAST_SYNCED_AT_KEY] || null,
     fileId: values[QUICK_SYNC_FILE_ID_KEY] || null,
+    accountEmail: values[QUICK_SYNC_ACCOUNT_EMAIL_KEY] || null,
   };
 }
 
@@ -75,6 +78,9 @@ export function saveQuickSyncConfig(
   if (patch.fileId !== undefined) {
     entries[QUICK_SYNC_FILE_ID_KEY] = patch.fileId;
   }
+  if (patch.accountEmail !== undefined) {
+    entries[QUICK_SYNC_ACCOUNT_EMAIL_KEY] = patch.accountEmail;
+  }
 
   Object.entries(entries).forEach(([key, value]) => {
     if (value === null || value === "") {
@@ -92,6 +98,17 @@ export function saveQuickSyncConfig(
   });
 
   notifySettingsChange();
+}
+
+export function resetQuickSyncLocalMetadata(context: DbContext = db): void {
+  saveQuickSyncConfig(
+    {
+      fileId: null,
+      lastSyncedAt: null,
+      accountEmail: null,
+    },
+    context,
+  );
 }
 
 function normalizeNetworkPreference(
