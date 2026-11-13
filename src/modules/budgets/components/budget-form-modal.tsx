@@ -812,6 +812,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "600",
       marginBottom: theme.spacing.xs,
+      textAlign: "center",
     },
     segmentedRow: {
       backgroundColor: theme.colors.background,
@@ -826,6 +827,8 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       borderRadius: theme.borderRadius.small,
       flex: 1,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.xs,
       paddingVertical: 8,
     },
     segmentButtonActive: {
@@ -835,6 +838,7 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 11,
       fontWeight: "600",
+      textAlign: "center",
     },
     segmentButtonTextActive: {
       color: theme.colors.onPrimary,

@@ -876,6 +876,8 @@ export const es = {
         "Corrige el error por el cual la guía de Ajustes aparecía de forma incorrecta en la pantalla de Tarjetas de Crédito.",
       fixItem13:
         "Oculta el anillo de utilización, los montos vencidos y los saldos de tarjetas cuando el modo de privacidad está activado.",
+      fixItem14:
+        "Centra las opciones y etiqueta de comportamiento de rollover en el formulario de presupuesto por categoría.",
     },
     v140: {
       date: "5 de noviembre de 2026",

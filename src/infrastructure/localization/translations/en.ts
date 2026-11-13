@@ -879,6 +879,8 @@ export const en = {
         "Fix issue where the header walkthrough guide from Settings incorrectly appeared on the Credit Cards screen.",
       fixItem13:
         "Hide credit card utilization ring, due amounts, and card chip balances when privacy mode is enabled.",
+      fixItem14:
+        "Center rollover behavior options and label in the category budget form.",
     },
     v140: {
       date: "November 5, 2026",

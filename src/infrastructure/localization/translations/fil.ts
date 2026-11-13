@@ -877,6 +877,8 @@ export const fil = {
         "Ayusin ang isyu kung saan ang gabay ng walkthrough mula sa Settings ay lumilitaw sa screen ng Credit Cards.",
       fixItem13:
         "Itago ang utilization ring, mga babayaring halaga, at mga balanse sa chip ng card kapag naka-on ang privacy mode.",
+      fixItem14:
+        "I-gitna ang mga opsyon at label ng rollover behavior sa form ng category budget.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
