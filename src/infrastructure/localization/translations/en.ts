@@ -869,6 +869,7 @@ export const en = {
       improveItem31: "Show a quick toast notification instead of a popup modal when updating the local backup frequency.",
       improveItem32: "Replace the Google Drive check icon and disconnect button with an account disconnect chip.",
       improveItem33: "Show a smooth skeleton placeholder while connecting to Google Drive instead of a loading spinner.",
+      improveItem34: "Standardize Restore Defaults and confirmation dialogs with themed in-app modals.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

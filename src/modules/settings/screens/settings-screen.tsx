@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -49,7 +48,7 @@ import {
 } from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
-import { useHeaderWalkthroughAction } from "@/components";
+import { AppToast, NotificationModal, useHeaderWalkthroughAction } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
@@ -138,6 +137,19 @@ function SettingsScreenContent() {
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
+  const [notificationModal, setNotificationModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    variant: "info" | "success" | "warning" | "error";
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info",
+  });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"info" | "success" | "warning" | "error">("info");
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -1198,17 +1210,26 @@ function SettingsScreenContent() {
               onPress={async () => {
                 const res = await restorePurchases();
                 if (res.success && res.restored) {
-                  Alert.alert(
-                    t("pro.restoreSuccessTitle"),
-                    t("pro.restoreSuccessMsg"),
-                  );
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreSuccessTitle"),
+                    message: t("pro.restoreSuccessMsg"),
+                    variant: "success",
+                  });
                 } else if (res.success && !res.restored) {
-                  Alert.alert(
-                    t("pro.restoreNotFoundTitle"),
-                    t("pro.restoreNotFoundMsg"),
-                  );
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreNotFoundTitle"),
+                    message: t("pro.restoreNotFoundMsg"),
+                    variant: "info",
+                  });
                 } else if (!res.success && res.error) {
-                  Alert.alert(t("pro.restoreErrorTitle"), res.error);
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreErrorTitle"),
+                    message: res.error,
+                    variant: "error",
+                  });
                 }
               }}
               style={({ pressed }) => [
@@ -1288,10 +1309,8 @@ function SettingsScreenContent() {
                 accessibilityRole="button"
                 onPress={() => {
                   void resetProStatus().then(() => {
-                    Alert.alert(
-                      "Pro Status Reset",
-                      "Pro status has been cleared back to the Free tier for testing.",
-                    );
+                    setToastType("success");
+                    setToastMessage("Pro status has been cleared back to the Free tier for testing.");
                   });
                 }}
                 style={({ pressed }) => [
@@ -1313,10 +1332,12 @@ function SettingsScreenContent() {
                 accessibilityRole="button"
                 onPress={() => {
                   if (shakeAction === "disabled") {
-                    Alert.alert(
-                      t("settings.gesturesTitle"),
-                      t("settings.shakeDisabledAlert"),
-                    );
+                    setNotificationModal({
+                      visible: true,
+                      title: t("settings.gesturesTitle"),
+                      message: t("settings.shakeDisabledAlert"),
+                      variant: "info",
+                    });
                   } else {
                     triggerShakeAction();
                   }
@@ -1464,7 +1485,8 @@ function SettingsScreenContent() {
               accessibilityRole="link"
               onPress={() => {
                 void Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
-                  Alert.alert("Error", t("settings.privacyOpenError"));
+                  setToastType("error");
+                  setToastMessage(t("settings.privacyOpenError"));
                 });
               }}
               style={({ pressed }) => [
@@ -1496,7 +1518,8 @@ function SettingsScreenContent() {
               accessibilityRole="link"
               onPress={() => {
                 void Linking.openURL(TERMS_URL).catch(() => {
-                  Alert.alert("Error", t("settings.termsOpenError"));
+                  setToastType("error");
+                  setToastMessage(t("settings.termsOpenError"));
                 });
               }}
               style={({ pressed }) => [
@@ -1692,6 +1715,21 @@ function SettingsScreenContent() {
         onNext={walkthrough.nextStep}
         onPrev={walkthrough.prevStep}
         onSkip={walkthrough.skipWalkthrough}
+      />
+
+      <NotificationModal
+        message={notificationModal.message}
+        onClose={() => setNotificationModal((prev) => ({ ...prev, visible: false }))}
+        title={notificationModal.title}
+        variant={notificationModal.variant}
+        visible={notificationModal.visible}
+      />
+
+      <AppToast
+        message={toastMessage ?? ""}
+        onClose={() => setToastMessage(null)}
+        variant={toastType}
+        visible={Boolean(toastMessage)}
       />
     </PageContainer>
     </View>

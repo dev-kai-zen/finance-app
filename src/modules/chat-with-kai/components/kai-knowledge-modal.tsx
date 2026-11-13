@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -248,6 +247,9 @@ export function KaiKnowledgeModal({
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+
+  // Reset defaults confirmation state
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
 
   // Ref to track if modal just opened to prevent unwanted resets
   const prevVisibleRef = useRef(false);
@@ -787,33 +789,25 @@ export function KaiKnowledgeModal({
   };
 
   // Reset actions to default
-  const handleResetActionKeywords = async () => {
-    Alert.alert(
-      t("chatWithKai.resetDefaults"),
-      t("chatWithKai.resetDefaultsConfirm"),
-      [
-        { text: t("chatWithKai.cancel"), style: "cancel" },
-        {
-          text: t("chatWithKai.resetDefaults"),
-          style: "destructive",
-          onPress: async () => {
-            setProcessing(true);
-            try {
-              await resetToDefaultActionKeywords();
-              const actRows = await listActionKeywords();
-              setActionKeywords(actRows);
-              onKeywordsUpdated?.();
-            } catch (err: any) {
-              setErrorMessage(
-                err?.message ?? "Failed to reset action keywords.",
-              );
-            } finally {
-              setProcessing(false);
-            }
-          },
-        },
-      ],
-    );
+  const handleResetActionKeywords = () => {
+    setResetConfirmVisible(true);
+  };
+
+  const handleConfirmResetActionKeywords = async () => {
+    setProcessing(true);
+    try {
+      await resetToDefaultActionKeywords();
+      const actRows = await listActionKeywords();
+      setActionKeywords(actRows);
+      onKeywordsUpdated?.();
+      setResetConfirmVisible(false);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message ?? "Failed to reset action keywords.",
+      );
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -2280,6 +2274,21 @@ export function KaiKnowledgeModal({
             </View>
           </View>
         </Modal>
+
+        {/* RESTORE DEFAULTS CONFIRMATION MODAL */}
+        <ConfirmModal
+          cancelLabel={t("chatWithKai.cancel")}
+          confirmLabel={t("chatWithKai.resetDefaults")}
+          message={t("chatWithKai.resetDefaultsConfirm")}
+          onCancel={() => {
+            if (!processing) setResetConfirmVisible(false);
+          }}
+          onConfirm={handleConfirmResetActionKeywords}
+          pending={processing}
+          title={t("chatWithKai.resetDefaults")}
+          variant="restore"
+          visible={resetConfirmVisible}
+        />
 
         {/* DELETE CONFIRMATION MODAL */}
         <ConfirmModal

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Modal,
   Platform,
@@ -25,7 +24,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { HorizontalScrollView, IconHelper } from "@/components";
+import { ConfirmModal, HorizontalScrollView, IconHelper } from "@/components";
 import type { Category } from "@/modules/categories";
 import type { CategoryKeywordItem } from "../types/chat-with-kai.types";
 import {
@@ -64,6 +63,7 @@ export function CategoryKeywordsManagerModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
 
   useEffect(() => {
     if (initialCategoryId) {
@@ -134,27 +134,19 @@ export function CategoryKeywordsManagerModal({
   };
 
   const handleResetDefaults = () => {
-    Alert.alert(
-      t("chatWithKai.resetDefaults"),
-      t("chatWithKai.resetDefaultsConfirm"),
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: t("chatWithKai.resetDefaults"),
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await resetToDefaultCategoryKeywords();
-              await loadKeywords();
-              onKeywordsChanged?.();
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-    );
+    setResetConfirmVisible(true);
+  };
+
+  const handleConfirmResetDefaults = async () => {
+    setLoading(true);
+    try {
+      await resetToDefaultCategoryKeywords();
+      await loadKeywords();
+      onKeywordsChanged?.();
+      setResetConfirmVisible(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
@@ -362,6 +354,21 @@ export function CategoryKeywordsManagerModal({
             )}
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* RESTORE DEFAULTS CONFIRMATION MODAL */}
+        <ConfirmModal
+          cancelLabel={t("chatWithKai.cancel")}
+          confirmLabel={t("chatWithKai.resetDefaults")}
+          message={t("chatWithKai.resetDefaultsConfirm")}
+          onCancel={() => {
+            if (!loading) setResetConfirmVisible(false);
+          }}
+          onConfirm={handleConfirmResetDefaults}
+          pending={loading}
+          title={t("chatWithKai.resetDefaults")}
+          variant="restore"
+          visible={resetConfirmVisible}
+        />
       </View>
     </Modal>
   );

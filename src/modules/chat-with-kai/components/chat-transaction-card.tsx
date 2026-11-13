@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   StyleSheet,
   Text,
@@ -21,7 +20,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { IconHelper } from "@/components";
+import { ConfirmModal, IconHelper } from "@/components";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { formatCurrency } from "@/utils/currency";
 import type { ParsedTransactionProposal } from "../types/chat-with-kai.types";
@@ -47,6 +46,7 @@ export function ChatTransactionCard({
   const resolveEntityColor = useResolveEntityColor();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const saved = Boolean(proposal.isSaved);
   const isDeleted = Boolean(proposal.isDeleted);
@@ -74,25 +74,18 @@ export function ChatTransactionCard({
 
   const handleDeletePress = () => {
     if (deleting || !onDelete) return;
-    Alert.alert(
-      t("chatWithKai.deleteConfirmTitle"),
-      t("chatWithKai.deleteConfirmMessage"),
-      [
-        { text: t("chatWithKai.cancel"), style: "cancel" },
-        {
-          text: t("chatWithKai.deleteButton"),
-          style: "destructive",
-          onPress: async () => {
-            setDeleting(true);
-            try {
-              await onDelete(proposal);
-            } finally {
-              setDeleting(false);
-            }
-          },
-        },
-      ],
-    );
+    setDeleteConfirmVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!onDelete) return;
+    setDeleting(true);
+    try {
+      await onDelete(proposal);
+      setDeleteConfirmVisible(false);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const accountGroupLabel =
@@ -375,6 +368,20 @@ export function ChatTransactionCard({
           </Pressable>
         </View>
       )}
+
+      <ConfirmModal
+        cancelLabel={t("chatWithKai.cancel")}
+        confirmLabel={t("chatWithKai.deleteButton")}
+        message={t("chatWithKai.deleteConfirmMessage")}
+        onCancel={() => {
+          if (!deleting) setDeleteConfirmVisible(false);
+        }}
+        onConfirm={handleConfirmDelete}
+        pending={deleting}
+        title={t("chatWithKai.deleteConfirmTitle")}
+        variant="destructive"
+        visible={deleteConfirmVisible}
+      />
     </View>
   );
 }

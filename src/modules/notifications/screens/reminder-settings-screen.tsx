@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -24,7 +23,7 @@ import {
   Target,
 } from "lucide-react-native";
 
-import { AppButton, ModalScreenHeader, ThemedSwitch } from "@/components";
+import { AppButton, ModalScreenHeader, NotificationModal, ThemedSwitch } from "@/components";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -56,6 +55,17 @@ export function ReminderSettingsScreen() {
 
   const [activePicker, setActivePicker] = useState<ActivePickerTarget>(null);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [noticeModal, setNoticeModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    variant: "info" | "success" | "warning" | "error";
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info",
+  });
 
   const handleToggleProSetting = (
     key: keyof ReminderSettings,
@@ -117,10 +127,13 @@ export function ReminderSettingsScreen() {
 
   const handleSendTest = async () => {
     if (Platform.OS === "web") {
-      Alert.alert(
-        "Notice",
-        "Notifications are only supported on physical devices and mobile simulators.",
-      );
+      setNoticeModal({
+        visible: true,
+        title: "Notice",
+        message:
+          "Notifications are only supported on physical devices and mobile simulators.",
+        variant: "info",
+      });
       return;
     }
 
@@ -128,15 +141,21 @@ export function ReminderSettingsScreen() {
     try {
       const sent = await sendTestNotification();
       if (sent) {
-        Alert.alert(
-          "Test Sent",
-          "A test reminder notification was scheduled! You should receive it in a few seconds.",
-        );
+        setNoticeModal({
+          visible: true,
+          title: "Test Sent",
+          message:
+            "A test reminder notification was scheduled! You should receive it in a few seconds.",
+          variant: "success",
+        });
       } else {
-        Alert.alert(
-          "Permission Required",
-          "Notifications are disabled. Please enable notifications in your device settings to receive reminders.",
-        );
+        setNoticeModal({
+          visible: true,
+          title: "Permission Required",
+          message:
+            "Notifications are disabled. Please enable notifications in your device settings to receive reminders.",
+          variant: "warning",
+        });
       }
     } finally {
       setIsSendingTest(false);
@@ -652,6 +671,14 @@ export function ReminderSettingsScreen() {
         featureTitle={guardMeta?.featureTitle}
         onClose={closePaywall}
         visible={paywallVisible}
+      />
+
+      <NotificationModal
+        message={noticeModal.message}
+        onClose={() => setNoticeModal((prev) => ({ ...prev, visible: false }))}
+        title={noticeModal.title}
+        variant={noticeModal.variant}
+        visible={noticeModal.visible}
       />
     </View>
   );
