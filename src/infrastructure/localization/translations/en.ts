@@ -871,6 +871,7 @@ export const en = {
       improveItem33: "Show a smooth skeleton placeholder while connecting to Google Drive instead of a loading spinner.",
       improveItem34: "Standardize Restore Defaults and confirmation dialogs with themed in-app modals.",
       improveItem35: "Position the security info button next to the Password & Fingerprint title for clearer access.",
+      improveItem36: "Streamline SQLite Monitor layout and show a progress modal while database vacuuming is in progress.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

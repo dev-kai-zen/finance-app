@@ -868,6 +868,7 @@ export const es = {
       improveItem33: "Muestra un marcador de posición esqueleto fluido mientras se conecta a Google Drive en lugar de una rueda de carga.",
       improveItem34: "Estandariza los diálogos de restauración y confirmación con modales temáticos integrados.",
       improveItem35: "Coloca el botón de información de seguridad junto al título de Contraseña y Huella para un acceso más claro.",
+      improveItem36: "Optimiza el diseño del monitor SQLite y muestra un modal de progreso durante la limpieza de la base de datos.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

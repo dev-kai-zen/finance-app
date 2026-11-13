@@ -869,6 +869,7 @@ export const fil = {
       improveItem33: "Magpakita ng makinis na skeleton placeholder habang kumokonekta sa Google Drive sa halip na loading spinner.",
       improveItem34: "I-standardize ang mga diyalogo sa pag-restore at pagkumpirma gamit ang mga may temang in-app modal.",
       improveItem35: "Ilagay ang button ng impormasyon sa seguridad katabi ng pamagat ng Password at Fingerprint para sa mas malinaw na pag-access.",
+      improveItem36: "I-streamline ang layout ng SQLite Monitor at magpakita ng progress modal habang nagva-vacuum ng database.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",

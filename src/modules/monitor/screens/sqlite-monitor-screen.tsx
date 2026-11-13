@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "expo-router";
 import {
+  ActivityIndicator,
   Modal,
   Platform,
   Pressable,
@@ -23,7 +24,7 @@ import { useExperiencePreferences } from "@/modules/settings";
 import { isTabletOrDesktop } from "@/constants/layout";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { MonitorQueryResultGrid } from "../components/monitor-query-result-grid";
 import { useMonitor } from "../hooks/use-monitor";
 import type { MonitorTab } from "../types/monitor.types";
@@ -43,6 +44,7 @@ export function SqliteMonitorScreen() {
   const { developerMode, isDevModeAllowed } = useExperiencePreferences();
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
   const {
@@ -61,6 +63,7 @@ export function SqliteMonitorScreen() {
   const [activeTab, setActiveTab] = useState<MonitorTab>("tables");
   const [customQuery, setCustomQuery] = useState("SELECT * FROM accounts LIMIT 20;");
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
+  const [isVacuuming, setIsVacuuming] = useState(false);
   const [vacuumResult, setVacuumResult] = useState<{
     title: string;
     message: string;
@@ -84,19 +87,25 @@ export function SqliteMonitorScreen() {
   };
 
   const handleVacuum = async () => {
-    const res = await vacuum();
-    if (res.success) {
-      setVacuumResult({
-        title: "SQLite Vacuum",
-        message: "Database vacuumed successfully. Unused pages reclaimed.",
-        variant: "success",
-      });
-    } else {
-      setVacuumResult({
-        title: "Vacuum Failed",
-        message: res.error ?? "Failed to vacuum SQLite database.",
-        variant: "error",
-      });
+    if (isVacuuming) return;
+    setIsVacuuming(true);
+    try {
+      const res = await vacuum();
+      if (res.success) {
+        setVacuumResult({
+          title: "SQLite Vacuum",
+          message: "Database vacuumed successfully. Unused pages reclaimed.",
+          variant: "success",
+        });
+      } else {
+        setVacuumResult({
+          title: "Vacuum Failed",
+          message: res.error ?? "Failed to vacuum SQLite database.",
+          variant: "error",
+        });
+      }
+    } finally {
+      setIsVacuuming(false);
     }
   };
 
@@ -117,11 +126,9 @@ export function SqliteMonitorScreen() {
         <PageHeader
           breadcrumb="Kaizen Finance / Developer Tools"
           primaryAction={{
-            label: "⚡ VACUUM DB",
+            label: isVacuuming ? "⚡ VACUUMING..." : "⚡ VACUUM DB",
             onPress: handleVacuum,
           }}
-          subtitle="Real-time SQLite table browser, schema inspector, and query console."
-          title="SQLite Monitor"
         />
       }
     >
@@ -327,6 +334,26 @@ export function SqliteMonitorScreen() {
           </View>
         )}
       </View>
+
+      {/* Vacuum In-Progress Modal */}
+      <Modal
+        animationType="fade"
+        onRequestClose={() => {}}
+        transparent
+        visible={isVacuuming}
+      >
+        <View style={styles.vacuumOverlay}>
+          <View style={styles.vacuumCard}>
+            <View style={styles.vacuumIconContainer}>
+              <ActivityIndicator color={theme.colors.primary} size="large" />
+            </View>
+            <Text style={styles.vacuumModalTitle}>Vacuuming Database</Text>
+            <Text style={styles.vacuumModalMessage}>
+              Reclaiming unused pages and defragmenting database tables. Please wait...
+            </Text>
+          </View>
+        </View>
+      </Modal>
 
       <InfoModal
         buttonLabel="OK"
@@ -775,6 +802,46 @@ function createStyles(theme: AppTheme) {
     },
     modalTableScroll: {
       flex: 1,
+    },
+    vacuumOverlay: {
+      alignItems: "center",
+      backgroundColor: theme.colors.overlay,
+      flex: 1,
+      justifyContent: "center",
+      padding: theme.spacing.lg,
+    },
+    vacuumCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      maxWidth: 360,
+      padding: theme.spacing.xl,
+      width: "100%",
+      ...theme.shadows.card,
+    },
+    vacuumIconContainer: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}18`,
+      borderRadius: theme.borderRadius.round,
+      height: 56,
+      justifyContent: "center",
+      marginBottom: theme.spacing.md,
+      width: 56,
+    },
+    vacuumModalTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+      marginBottom: theme.spacing.xs,
+      textAlign: "center",
+    },
+    vacuumModalMessage: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: 20,
+      textAlign: "center",
     },
   });
 }
