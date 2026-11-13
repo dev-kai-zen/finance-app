@@ -13,6 +13,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import {
@@ -44,6 +45,7 @@ function CreditCardMonitoringScreenContent() {
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
   const { isPro } = useProStatus();
   const [proModalVisible, setProModalVisible] = useState(false);
   const data = useCreditCardMonitoring();
@@ -181,9 +183,12 @@ function CreditCardMonitoringScreenContent() {
                   !preferences.colorAmounts && { color: theme.colors.textPrimary },
                 ]}
               >
-                {formatCurrency(
-                  data.dueThisMonthMinorUnits,
-                  preferences.defaultCurrency,
+                {formatPrivacyAmount(
+                  formatCurrency(
+                    data.dueThisMonthMinorUnits,
+                    preferences.defaultCurrency,
+                  ),
+                  isPrivate,
                 )}
               </Text>
             </View>
@@ -196,9 +201,12 @@ function CreditCardMonitoringScreenContent() {
                     !preferences.colorAmounts && { color: theme.colors.textPrimary },
                   ]}
                 >
-                  {formatCurrency(
-                    data.overdueMinorUnits,
-                    preferences.defaultCurrency,
+                  {formatPrivacyAmount(
+                    formatCurrency(
+                      data.overdueMinorUnits,
+                      preferences.defaultCurrency,
+                    ),
+                    isPrivate,
                   )}
                 </Text>
               </View>
@@ -252,9 +260,12 @@ function CreditCardMonitoringScreenContent() {
                           isSelected && styles.activeChipBadgeText,
                         ]}
                       >
-                        {formatCurrency(
-                          card.outstandingMinorUnits,
-                          card.currencyCode,
+                        {formatPrivacyAmount(
+                          formatCurrency(
+                            card.outstandingMinorUnits,
+                            card.currencyCode,
+                          ),
+                          isPrivate,
                         )}
                       </Text>
                     </View>

@@ -876,6 +876,8 @@ export const en = {
         "Keep the color name and hex code fields visible above the keyboard when creating custom colors.",
       fixItem12:
         "Fix issue where the header walkthrough guide from Settings incorrectly appeared on the Credit Cards screen.",
+      fixItem13:
+        "Hide credit card utilization ring, due amounts, and card chip balances when privacy mode is enabled.",
     },
     v140: {
       date: "November 5, 2026",

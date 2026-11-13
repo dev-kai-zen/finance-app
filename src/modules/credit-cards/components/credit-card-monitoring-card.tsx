@@ -148,7 +148,10 @@ export function CreditCardMonitoringCard({
             limit
           </Text>
         </View>
-        <CreditUtilizationRing percent={card.utilizationPercent} />
+        <CreditUtilizationRing
+          isPrivate={isPrivate}
+          percent={card.utilizationPercent}
+        />
       </View>
 
       <View ref={metricsRef} style={styles.metrics}>

@@ -873,6 +873,8 @@ export const es = {
         "Mantén visibles los campos de color encima del teclado al crear colores personalizados.",
       fixItem12:
         "Corrige el error por el cual la guía de Ajustes aparecía de forma incorrecta en la pantalla de Tarjetas de Crédito.",
+      fixItem13:
+        "Oculta el anillo de utilización, los montos vencidos y los saldos de tarjetas cuando el modo de privacidad está activado.",
     },
     v140: {
       date: "5 de noviembre de 2026",
