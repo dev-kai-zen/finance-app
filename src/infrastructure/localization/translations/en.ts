@@ -874,6 +874,7 @@ export const en = {
       improveItem36: "Streamline SQLite Monitor layout and show a progress modal while database vacuuming is in progress.",
       improveItem37: "Standardize Manage Kai Knowledge screen header with the app's unified navigation back button.",
       improveItem38: "Add quick custom hex color creation in Theme Studio and harmonize color picker swatches across all screens without layout jumps.",
+      improveItem39: "Standardize help and info icons across all screens using question marks for interactive explanations and info marks for callout notices.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

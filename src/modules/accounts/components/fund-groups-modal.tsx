@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   Archive,
   Check,
   ChevronDown,
@@ -24,6 +23,7 @@ import {
 import {
   ConfirmModal,
   FullScreenFormModal,
+  HelpIconButton,
   IconHelper,
   InfoModal,
   NotificationModal,
@@ -434,19 +434,13 @@ export function FundGroupsModal({
             <View style={styles.selectionHeader}>
               <View style={styles.selectionTitleRow}>
                 <Text style={styles.fieldLabel}>Accounts &amp; pockets</Text>
-                <Pressable
+                <HelpIconButton
                   accessibilityHint="Displays the rule for selecting accounts and pockets"
                   accessibilityLabel="Selection rule information"
-                  accessibilityRole="button"
-                  hitSlop={8}
+                  color={theme.colors.textSecondary}
                   onPress={() => setRuleInfoVisible(true)}
-                  style={({ pressed }) => [
-                    styles.infoIconButton,
-                    pressed && styles.infoIconButtonPressed,
-                  ]}
-                >
-                  <AlertCircle color={theme.colors.textSecondary} size={15} />
-                </Pressable>
+                  size={15}
+                />
               </View>
               <Text style={styles.selectionCount}>{memberSelectionSummary}</Text>
             </View>

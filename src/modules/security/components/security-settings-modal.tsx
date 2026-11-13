@@ -11,13 +11,12 @@ import {
   ChevronRight,
   Crown,
   Fingerprint,
-  Info,
   KeyRound,
   ShieldCheck,
   X,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { InfoModal } from "@/components";
+import { HelpIconButton, InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -182,15 +181,12 @@ export function SecuritySettingsModal({
                 <Text style={styles.headerTitle}>
                   {t("security.menuTitle")}
                 </Text>
-                <Pressable
-                  accessibilityLabel="Security info"
-                  accessibilityRole="button"
-                  hitSlop={8}
+                <HelpIconButton
+                  accessibilityLabel={t("security.menuTitle")}
+                  color={theme.colors.textMuted}
                   onPress={() => setInfoModalVisible(true)}
-                  style={styles.infoButton}
-                >
-                  <Info color={theme.colors.textMuted} size={18} />
-                </Pressable>
+                  size={18}
+                />
               </View>
               <Pressable
                 accessibilityLabel={t("common.close")}

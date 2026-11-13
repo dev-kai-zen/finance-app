@@ -871,6 +871,7 @@ export const es = {
       improveItem36: "Optimiza el diseño del monitor SQLite y muestra un modal de progreso durante la limpieza de la base de datos.",
       improveItem37: "Estandariza el encabezado de Administrar Conocimiento de Kai con el botón de retroceso unificado de la app.",
       improveItem38: "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
+      improveItem39: "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
