@@ -906,6 +906,8 @@ export const en = {
         "Fix issue where the header walkthrough guide on Reports incorrectly triggered the Goals tour.",
       fixItem21:
         "Fix missing screen padding in the currency catalog and add currency form.",
+      fixItem22:
+        "Fix walkthrough scrolling so menu options never get cut off or hidden behind the navigation header.",
     },
     v140: {
       date: "November 5, 2026",

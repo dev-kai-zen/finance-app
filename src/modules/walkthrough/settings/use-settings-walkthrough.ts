@@ -36,15 +36,19 @@ export function useSettingsWalkthrough({
     useState<LayoutRect | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timer2Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
   const measurementGenerationRef = useRef(0);
 
   const currentStep: WalkthroughStep | undefined = steps[activeStepIndex];
 
+  const clearTimers = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (timer2Ref.current) clearTimeout(timer2Ref.current);
+  }, []);
+
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+      clearTimers();
 
       const generation = ++measurementGenerationRef.current;
 
@@ -73,10 +77,13 @@ export function useSettingsWalkthrough({
 
         timerRef.current = setTimeout(() => {
           void applyLayout();
+          timer2Ref.current = setTimeout(() => {
+            void applyLayout();
+          }, 250);
         }, 350);
       })();
     },
-    [insets, measureTarget, onScrollToTarget, windowHeight],
+    [clearTimers, insets, measureTarget, onScrollToTarget, windowHeight],
   );
 
   const startWalkthrough = useCallback(() => {
@@ -85,18 +92,18 @@ export function useSettingsWalkthrough({
   }, []);
 
   const skipWalkthrough = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    clearTimers();
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("settingsWalkthroughDismissed");
-  }, [dismissPrompt]);
+  }, [clearTimers, dismissPrompt]);
 
   const completeWalkthrough = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+    clearTimers();
     setIsWalkthroughActive(false);
     setActiveTargetLayout(null);
     dismissPrompt("settingsWalkthroughDismissed");
-  }, [dismissPrompt]);
+  }, [clearTimers, dismissPrompt]);
 
   const nextStep = useCallback(() => {
     if (activeStepIndex >= steps.length - 1) {
@@ -120,9 +127,9 @@ export function useSettingsWalkthrough({
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimers();
     };
-  }, []);
+  }, [clearTimers]);
 
   return {
     isWalkthroughActive,

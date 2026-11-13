@@ -904,6 +904,8 @@ export const fil = {
         "Ayusin ang isyu kung saan ang gabay ng walkthrough sa Reports ay nagbukas ng gabay ng Goals.",
       fixItem21:
         "Ayusin ang kulang na espasyo sa mga gilid ng catalog ng currency at form sa pagdagdag ng currency.",
+      fixItem22:
+        "Ayusin ang pag-scroll sa walkthrough upang hindi maputol o matakpan sa likod ng header ang mga menu.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

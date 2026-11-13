@@ -903,6 +903,8 @@ export const es = {
         "Corrige el problema por el cual la guía de Informes abría de forma incorrecta el recorrido de Metas.",
       fixItem21:
         "Corrige la falta de espaciado en los bordes del catálogo de monedas y el formulario de añadir moneda.",
+      fixItem22:
+        "Corrige el desplazamiento de la guía para que las opciones del menú no queden cortadas o detrás de la cabecera.",
     },
     v140: {
       date: "5 de noviembre de 2026",

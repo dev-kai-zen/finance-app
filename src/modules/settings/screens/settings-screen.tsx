@@ -71,6 +71,7 @@ import {
   WalkthroughIntroModal,
   useSettingsWalkthrough,
   useWalkthroughIntro,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -162,6 +163,11 @@ function SettingsScreenContent() {
   }>();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [highlightedTarget, setHighlightedTarget] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const itemScrollY = useRef<Record<string, number>>({});
   const handledTargetRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -178,8 +184,12 @@ function SettingsScreenContent() {
 
     setHighlightedTarget(target);
 
-    const scrollTimer = setTimeout(() => {
-      const offset = itemScrollY.current[target];
+    const scrollTimer = setTimeout(async () => {
+      const layout = await measureTargetInAncestor(
+        target as WalkthroughTargetId,
+        scrollContentRef,
+      );
+      const offset = layout ? layout.y : itemScrollY.current[target];
       if (offset !== undefined) {
         scrollRef.current?.scrollTo({
           y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
@@ -276,19 +286,24 @@ function SettingsScreenContent() {
   const restorePurchasesRef = useWalkthroughTarget("settingsRestorePurchases");
   const versionHistoryRef = useWalkthroughTarget("settingsVersionHistory");
 
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionOffsets = useRef<Record<string, number>>({});
-  const itemScrollY = useRef<Record<string, number>>({});
-
-  const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
-    const offset = itemScrollY.current[targetId];
-    if (offset !== undefined) {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
-        animated: true,
-      });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        const y = layout ? layout.y : itemScrollY.current[targetId];
+        if (y !== undefined) {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+            animated: true,
+          });
+        }
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useSettingsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
@@ -354,6 +369,7 @@ function SettingsScreenContent() {
       ) : null}
       <PageContainer
         scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
         scrollEnabled={
           walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
         }
@@ -1704,17 +1720,6 @@ function SettingsScreenContent() {
         icon={<SettingsIcon color={theme.colors.primary} size={32} />}
         onStart={walkthroughIntro.handleStart}
         onSkip={walkthroughIntro.handleSkip}
-      />
-
-      <SettingsWalkthroughOverlay
-        visible={walkthrough.isWalkthroughActive}
-        stepIndex={walkthrough.activeStepIndex}
-        totalSteps={walkthrough.totalSteps}
-        step={walkthrough.currentStep}
-        targetLayout={walkthrough.activeTargetLayout}
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
       />
 
       <NotificationModal
