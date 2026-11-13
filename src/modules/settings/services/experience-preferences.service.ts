@@ -535,11 +535,10 @@ export function setDashboardLayoutPreferences(
   notifyListeners();
 }
 
-export function applyDashboardLayoutPreset(
+export function resolveDashboardLayoutPreset(
   presetId: DashboardLayoutPresetId,
-  context?: DbContext,
+  current: DashboardLayoutPreferences,
 ): DashboardLayoutPreferences {
-  const current = getDashboardLayoutPreferences(context);
   let nextLayout: DashboardLayoutPreferences;
   switch (presetId) {
     case "cashflowFocus":
@@ -611,6 +610,15 @@ export function applyDashboardLayoutPreset(
       };
       break;
   }
+  return nextLayout;
+}
+
+export function applyDashboardLayoutPreset(
+  presetId: DashboardLayoutPresetId,
+  context?: DbContext,
+): DashboardLayoutPreferences {
+  const current = getDashboardLayoutPreferences(context);
+  const nextLayout = resolveDashboardLayoutPreset(presetId, current);
   setDashboardLayoutPreferences(nextLayout, context);
   return nextLayout;
 }

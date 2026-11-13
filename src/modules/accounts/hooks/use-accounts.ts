@@ -6,8 +6,15 @@ import { listAccountTypes } from "@/modules/accounts/repositories/account-types.
 import { accountErrorMessage } from "@/modules/accounts/schemas/account.schema";
 import type { AccountListItem, AccountType, PocketListItem } from "@/modules/accounts/types/account.types";
 import { getCreditCardMonitoring } from "@/modules/credit-cards";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 
-export function useAccounts() {
+export type UseAccountsOptions = {
+  /** When false, skips billing reconciliation during reads (faster for Home / Search). */
+  includeCreditCardMonitoring?: boolean;
+};
+
+export function useAccounts(options?: UseAccountsOptions) {
+  const includeCreditCardMonitoring = options?.includeCreditCardMonitoring !== false;
   const [data, setData] = useState<{
     accounts: AccountListItem[];
     pockets: PocketListItem[];
@@ -17,47 +24,57 @@ export function useAccounts() {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
   const refresh = useCallback(() => {
-    if (!hasLoadedOnceRef.current) {
-      setLoading(true);
-    }
-    try {
-      const monitoring = getCreditCardMonitoring();
-      const monitoringByAccountId = new Map(
-        monitoring.cards.map((card) => [card.accountId, card]),
-      );
-      const accounts = getAccountsWithBalances().map((account) => {
-        const card = monitoringByAccountId.get(account.id);
-        return {
-          ...account,
-          creditCardMonitoring: card
-            ? {
-                billedMinorUnits: card.billedMinorUnits,
-                unbilledMinorUnits: card.unbilledMinorUnits,
-                outstandingMinorUnits: card.outstandingMinorUnits,
-                utilizationPercent: card.utilizationPercent,
-              }
-            : null,
-        };
-      });
-      setData({
-        accounts,
-        pockets: getPocketsWithBalances(),
-        types: listAccountTypes(),
-      });
-      setError(null);
-    } catch (cause) {
-      setError(accountErrorMessage(cause));
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
-  }, []);
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        try {
+          let accounts: AccountListItem[];
+          if (includeCreditCardMonitoring) {
+            const monitoring = getCreditCardMonitoring();
+            const monitoringByAccountId = new Map(
+              monitoring.cards.map((card) => [card.accountId, card]),
+            );
+            accounts = getAccountsWithBalances().map((account) => {
+              const card = monitoringByAccountId.get(account.id);
+              return {
+                ...account,
+                creditCardMonitoring: card
+                  ? {
+                      billedMinorUnits: card.billedMinorUnits,
+                      unbilledMinorUnits: card.unbilledMinorUnits,
+                      outstandingMinorUnits: card.outstandingMinorUnits,
+                      utilizationPercent: card.utilizationPercent,
+                    }
+                  : null,
+              };
+            });
+          } else {
+            accounts = getAccountsWithBalances().map((account) => ({
+              ...account,
+              creditCardMonitoring: null,
+            }));
+          }
+          setData({
+            accounts,
+            pockets: getPocketsWithBalances(),
+            types: listAccountTypes(),
+          });
+          setError(null);
+        } catch (cause) {
+          setError(accountErrorMessage(cause));
+        }
+      },
+    );
+  }, [includeCreditCardMonitoring]);
   useFocusEffect(
     useCallback(() => {
-      const frameId = requestAnimationFrame(() => {
-        refresh();
-      });
-      return () => cancelAnimationFrame(frameId);
+      refresh();
     }, [refresh]),
   );
   return { ...data, loading, error, refresh };

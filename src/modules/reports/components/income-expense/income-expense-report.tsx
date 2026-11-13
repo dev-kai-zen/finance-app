@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { PageLoadingState } from "@/components/page-container";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useIncomeExpenseReport } from "../../hooks/use-income-expense-report";
 import { CategoryBreakdownTable } from "./category-breakdown-table";
@@ -18,6 +19,7 @@ export function IncomeExpenseReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedCategoryId,
     setSelectedCategoryId,
   } = useIncomeExpenseReport();
@@ -44,6 +46,10 @@ export function IncomeExpenseReport() {
         />
       </WalkthroughTarget>
 
+      {reportLoading ? (
+        <PageLoadingState message="Loading report..." variant="cards" />
+      ) : (
+        <>
       <WalkthroughTarget id="reportsChart">
         <CategoryDonutChart
           categories={data.categories}
@@ -65,6 +71,8 @@ export function IncomeExpenseReport() {
           onSelectCategory={setSelectedCategoryId}
         />
       </WalkthroughTarget>
+        </>
+      )}
     </View>
   );
 }

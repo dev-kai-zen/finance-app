@@ -109,6 +109,7 @@ export {
   ALL_DASHBOARD_WIDGET_IDS,
   DEFAULT_DASHBOARD_LAYOUT,
   applyDashboardLayoutPreset,
+  resolveDashboardLayoutPreset,
   applyGuidedWorkspaceSimpleDefaults,
   getDashboardLayoutPreferences,
   getDeveloperModeEnabled,

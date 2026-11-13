@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
 import { listCategories } from "../repositories/categories.repository";
 import { saveCategory as saveCategoryService } from "../services/save-category.service";
@@ -35,10 +36,9 @@ export function useCategories() {
   }, []);
 
   useEffect(() => {
-    const frameId = requestAnimationFrame(() => {
+    scheduleAfterPaint(() => {
       void refresh();
     });
-    return () => cancelAnimationFrame(frameId);
   }, [refresh]);
 
   const save = useCallback(

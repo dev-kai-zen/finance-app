@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Platform } from "react-native";
+import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { addDatabaseChangeListener } from "expo-sqlite";
 import { initializeProStatus, subscribeToProStatus } from "@/modules/pro";
 import { updateDataWidgets } from "../services/widget-snapshot.service";
@@ -27,9 +28,10 @@ export function WidgetSyncProcessor(): null {
       return;
     }
 
-    // Trigger an initial refresh on app startup once Pro status is initialized
-    void initializeProStatus().then(() => {
-      void updateDataWidgets();
+    const cancelInitial = scheduleAfterInteractions(() => {
+      void initializeProStatus().then(() => {
+        void updateDataWidgets();
+      });
     });
 
     // React immediately whenever Pro status changes (e.g. purchase, restore, dev simulation)
@@ -52,6 +54,7 @@ export function WidgetSyncProcessor(): null {
     });
 
     return () => {
+      cancelInitial();
       unsubscribePro();
       subscription.remove();
       if (debounceTimerRef.current) {

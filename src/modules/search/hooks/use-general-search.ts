@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
@@ -20,7 +21,7 @@ import type {
 
 export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { t } = useLocalization();
-  const accountsHook = useAccounts();
+  const accountsHook = useAccounts({ includeCreditCardMonitoring: false });
   const categoriesHook = useCategories();
   const transactionsHook = useTransactions();
   const budgetsHook = useBudgets();
@@ -39,7 +40,10 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { labels, refresh: refreshLabels } = labelsHook;
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      return;
+    }
+    scheduleAfterPaint(() => {
       void refreshAccounts?.();
       void refreshCategories?.();
       void refreshTransactions?.();
@@ -48,7 +52,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
       void refreshNotes?.();
       void refreshSchedules?.();
       void refreshLabels?.();
-    }
+    });
   }, [
     isOpen,
     refreshAccounts,

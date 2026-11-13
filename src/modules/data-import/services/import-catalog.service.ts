@@ -8,7 +8,11 @@ import { listImportedSourceKeys } from "../repositories/imports.repository";
 import type { ImportCatalog } from "../types/import.types";
 import { transactionFingerprint } from "../utils/csv";
 
-export function getImportCatalog(context: DbContext = db): ImportCatalog {
+export function getImportCatalog(
+  context: DbContext = db,
+  options?: { includeFingerprints?: boolean },
+): ImportCatalog {
+  const includeFingerprints = options?.includeFingerprints !== false;
   const accountCatalog = getAccountImportCatalog(context);
   const categoryCatalog = getCategoryImportCatalog(context);
   let categoryKeywordsMap: Map<string, string> | undefined;
@@ -24,7 +28,19 @@ export function getImportCatalog(context: DbContext = db): ImportCatalog {
     pickerCategories: categoryCatalog,
     categoryKeywordsMap,
     fallbackCategoryIds: DEFAULT_OTHERS_CATEGORY_IDS,
-    currencies: getImportCurrencies(context), sourceKeys: listImportedSourceKeys(context),
-    fingerprints: getTransactionImportCatalog(context).map((t) => transactionFingerprint(t.type, t.accountId, t.toAccountId, t.date, t.amount, t.name)),
+    currencies: getImportCurrencies(context),
+    sourceKeys: listImportedSourceKeys(context),
+    fingerprints: includeFingerprints
+      ? getTransactionImportCatalog(context).map((t) =>
+          transactionFingerprint(
+            t.type,
+            t.accountId,
+            t.toAccountId,
+            t.date,
+            t.amount,
+            t.name,
+          ),
+        )
+      : [],
   };
 }

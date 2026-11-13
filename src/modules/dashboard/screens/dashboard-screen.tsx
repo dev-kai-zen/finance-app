@@ -1,4 +1,4 @@
-import { useFocusEffect, usePathname, useRouter } from "expo-router";
+import { useFocusEffect, useIsFocused, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeviceEventEmitter, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SlidersHorizontal } from "lucide-react-native";
@@ -80,13 +80,7 @@ function DashboardScreenContent() {
   const {
     homeMode,
     dashboardLayout,
-    toggleDashboardWidget,
-    moveDashboardWidget,
-    reorderDashboardWidgets,
-    setShowGreetingQuote,
-    setQuoteColors,
-    selectDashboardPreset,
-    resetDashboardLayout,
+    updateDashboardLayout,
     isPromptDismissed,
     setHomeMode,
     dismissPrompt,
@@ -99,7 +93,9 @@ function DashboardScreenContent() {
     error: dashboardError,
     refresh: refreshDashboard,
   } = useDashboard();
-  const { accounts, pockets, types, refresh: refreshAccounts } = useAccounts();
+  const { accounts, pockets, types, refresh: refreshAccounts } = useAccounts({
+    includeCreditCardMonitoring: false,
+  });
   const { categories, refresh: refreshCategories } = useCategories();
   const {
     recordTransaction,
@@ -113,8 +109,7 @@ function DashboardScreenContent() {
     refresh: refreshTransactions,
   } = useTransactions({ skipQuery: true });
 
-  const pathname = usePathname();
-  const isScreenActive = pathname === "/" || pathname === "";
+  const isScreenActive = useIsFocused();
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
@@ -148,6 +143,7 @@ function DashboardScreenContent() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const frozenDashboardLayoutRef = useRef(dashboardLayout);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [onChatEditSaved, setOnChatEditSaved] = useState<
     ((data?: ChatSavedTransactionResult) => void) | null
@@ -265,12 +261,6 @@ function DashboardScreenContent() {
     walkthroughIntro.canTrigger,
     walkthroughIntro.triggerIfFirstTime,
   ]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshCategories();
-    }, [refreshCategories]),
-  );
 
   const manualSetupSteps = [
     {
@@ -443,11 +433,20 @@ function DashboardScreenContent() {
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
 
+  const layoutForHome = isCustomizeOpen
+    ? frozenDashboardLayoutRef.current
+    : dashboardLayout;
+
   const visibleWidgets = useMemo<DashboardWidgetId[]>(() => {
-    const hiddenSet = new Set(dashboardLayout.hidden);
-    const list = dashboardLayout.order.filter((id) => !hiddenSet.has(id));
+    const hiddenSet = new Set(layoutForHome.hidden);
+    const list = layoutForHome.order.filter((id) => !hiddenSet.has(id));
     return list.length > 0 ? list : ["netWorth", "recentTransactions"];
-  }, [dashboardLayout.hidden, dashboardLayout.order]);
+  }, [layoutForHome.hidden, layoutForHome.order]);
+
+  const openCustomizeHome = useCallback(() => {
+    frozenDashboardLayoutRef.current = dashboardLayout;
+    setIsCustomizeOpen(true);
+  }, [dashboardLayout]);
 
   const renderWidget = (widgetId: DashboardWidgetId) => {
     if (!summary) return null;
@@ -457,9 +456,9 @@ function DashboardScreenContent() {
           <DashboardGreetingCard
             key="greeting"
             nickname={nickname}
-            showQuote={dashboardLayout.showGreetingQuote}
-            quoteBackgroundColor={dashboardLayout.quoteBackgroundColor}
-            quoteTextColor={dashboardLayout.quoteTextColor}
+            showQuote={layoutForHome.showGreetingQuote}
+            quoteBackgroundColor={layoutForHome.quoteBackgroundColor}
+            quoteTextColor={layoutForHome.quoteTextColor}
           />
         );
       case "netWorth":
@@ -474,7 +473,7 @@ function DashboardScreenContent() {
               summary.monthlyCashflow.totalOutflowMinorUnits
             }
             netWorthMinorUnits={netWorth}
-            onCustomizeDashboard={() => setIsCustomizeOpen(true)}
+            onCustomizeDashboard={openCustomizeHome}
             onHomeModeChange={setHomeMode}
             totalAssetsMinorUnits={assets}
             totalLiabilitiesMinorUnits={liabilities}
@@ -609,7 +608,7 @@ function DashboardScreenContent() {
               collapsable={false}
               accessibilityLabel={t("dashboard.customizeHome")}
               accessibilityRole="button"
-              onPress={() => setIsCustomizeOpen(true)}
+              onPress={openCustomizeHome}
               style={({ pressed }) => [
                 styles.customizeHomeBtn,
                 pressed && styles.customizeHomeBtnPressed,
@@ -627,13 +626,7 @@ function DashboardScreenContent() {
       <CustomizeDashboardModal
         layout={dashboardLayout}
         onClose={() => setIsCustomizeOpen(false)}
-        onMoveWidget={moveDashboardWidget}
-        onReorderWidgets={reorderDashboardWidgets}
-        onReset={resetDashboardLayout}
-        onSelectPreset={selectDashboardPreset}
-        onToggleQuote={setShowGreetingQuote}
-        onChangeQuoteColors={setQuoteColors}
-        onToggleWidget={toggleDashboardWidget}
+        onSaveLayout={updateDashboardLayout}
         visible={isCustomizeOpen}
       />
 

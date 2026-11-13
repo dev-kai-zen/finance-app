@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getIncomeExpenseReport } from "../services/get-income-expense-report.service";
 import type {
   IncomeExpenseMode,
@@ -8,6 +9,19 @@ import type {
 } from "../types/income-expense.types";
 import { getIncomeExpenseDateRange } from "../utils/income-expense-dates";
 import { toDateKey } from "../utils/reports-dates";
+
+const EMPTY_REPORT: IncomeExpenseReportData = {
+  mode: "expense",
+  range: {
+    preset: "this-month",
+    startDate: new Date(0),
+    endDate: new Date(0),
+    label: "",
+  },
+  totalMinorUnits: 0,
+  transactionCount: 0,
+  categories: [],
+};
 
 export function useIncomeExpenseReport() {
   const { preferences } = useCurrencyPreferences();
@@ -22,6 +36,9 @@ export function useIncomeExpenseReport() {
   const [customDateB, setCustomDateB] = useState<string>(() => toDateKey(now));
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [data, setData] = useState<IncomeExpenseReportData>(EMPTY_REPORT);
+  const [reportLoading, setReportLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const range = useMemo(() => {
     return getIncomeExpenseDateRange(preset, {
@@ -30,8 +47,19 @@ export function useIncomeExpenseReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  const data: IncomeExpenseReportData = useMemo(() => {
-    return getIncomeExpenseReport(mode, range);
+  useEffect(() => {
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading: setReportLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        setData(getIncomeExpenseReport(mode, range));
+      },
+    );
   }, [mode, range, preferences.defaultCurrency]);
 
   return {
@@ -45,6 +73,7 @@ export function useIncomeExpenseReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedCategoryId,
     setSelectedCategoryId,
   };

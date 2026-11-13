@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View } from "react-native";
-import { usePathname, useRouter } from "expo-router";
+import { useIsFocused, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
 import { PageContainer, PageLoadingState } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
@@ -89,8 +89,7 @@ function AccountsScreenContent({
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
 
-  const pathname = usePathname();
-  const isScreenActive = pathname.startsWith("/accounts");
+  const isScreenActive = useIsFocused();
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(

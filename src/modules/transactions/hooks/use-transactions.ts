@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import {
   calculateTransactionStats,
   listTransactions,
@@ -70,23 +71,28 @@ export function useTransactions(
     if (skipQuery) {
       return;
     }
-    try {
-      if (!hasLoadedOnceRef.current) {
-        setLoading(true);
-      }
-      setError(null);
-      const list = listTransactions(filter);
-      const deletedList = listDeletedTransactions();
-      const computedStats = calculateTransactionStats();
-      setTransactions(list);
-      setDeletedTransactions(deletedList);
-      setStats(computedStats);
-    } catch (err: any) {
-      setError(err?.message || "Failed to load transactions.");
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        try {
+          setError(null);
+          const list = listTransactions(filter);
+          const deletedList = listDeletedTransactions();
+          const computedStats = calculateTransactionStats();
+          setTransactions(list);
+          setDeletedTransactions(deletedList);
+          setStats(computedStats);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load transactions.");
+        }
+      },
+    );
   }, [filter, skipQuery]);
 
   useFocusEffect(
@@ -94,10 +100,7 @@ export function useTransactions(
       if (skipQuery) {
         return;
       }
-      const frameId = requestAnimationFrame(() => {
-        refresh();
-      });
-      return () => cancelAnimationFrame(frameId);
+      refresh();
     }, [refresh, skipQuery]),
   );
 

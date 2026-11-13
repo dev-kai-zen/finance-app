@@ -190,9 +190,17 @@ export function getCategorySpendingBreakdown(
   return items.sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
 }
 
+const EMPTY_NET_WORTH_HISTORY: NetWorthHistory = {
+  "1M": [],
+  "3M": [],
+  "6M": [],
+  "1Y": [],
+};
+
 export function getDashboardSummary(
   context: DbContext = db,
   targetDate: Date = new Date(),
+  options?: { includeNetWorthHistory?: boolean },
 ): DashboardSummary {
   const accountsWithBalances = getAccountDynamicBalances(context);
   const activeAccounts = accountsWithBalances.filter(
@@ -229,11 +237,10 @@ export function getDashboardSummary(
     targetDate,
   );
   const recentTransactions = getRecentTransactions(5, context);
-  const netWorthHistory = getNetWorthHistory(
-    accountsWithBalances,
-    context,
-    targetDate,
-  );
+  const includeHistory = options?.includeNetWorthHistory !== false;
+  const netWorthHistory = includeHistory
+    ? getNetWorthHistory(accountsWithBalances, context, targetDate)
+    : EMPTY_NET_WORTH_HISTORY;
   const monthlyPoints = netWorthHistory["1Y"];
   const currentPoint = monthlyPoints.at(-1);
   const previousMonthPoint = monthlyPoints.at(-2);

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { getImportCatalog } from "../services/import-catalog.service";
 import { commitImport } from "../services/commit-import.service";
@@ -25,12 +26,29 @@ export function useDataImport() {
   const [savedTemplate, setSavedTemplate] = useState<string | null>(null);
   const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
   const locked = useRef(false);
-  const refresh = () => { setCatalog(getImportCatalog()); setHistory(listImportHistory()); };
+  const refresh = (includeFingerprints = false) => {
+    setCatalog(getImportCatalog(undefined, { includeFingerprints }));
+    setHistory(listImportHistory());
+  };
   useEffect(() => {
-    try { refresh(); } catch { setError("load"); } finally { setLoading(false); }
+    scheduleAfterPaint(() => {
+      try {
+        refresh(false);
+      } catch {
+        setError("load");
+      } finally {
+        setLoading(false);
+      }
+    });
     return subscribeToDatabaseReplacement(() => {
-      setFile(null); setStep("file"); setResult(null);
-      try { refresh(); } catch { setError("load"); }
+      setFile(null);
+      setStep("file");
+      setResult(null);
+      try {
+        refresh(false);
+      } catch {
+        setError("load");
+      }
     });
   }, []);
   const run = async (operation: () => Promise<void>) => {
@@ -48,12 +66,15 @@ export function useDataImport() {
   };
   return {
     catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, patch,
-    reload: () => run(async () => { refresh(); }),
+    reload: () =>
+      run(async () => {
+        refresh(Boolean(file));
+      }),
     chooseKind: (kind: ImportKind) => { if (!busy) { setOptions(defaults(kind, defaultCurrency)); setFile(null); } },
     pick: () => run(async () => {
       const picked = await pickImportFile();
       if (picked) {
-        refresh();
+        refresh(true);
         setFile(picked);
         const columns = suggestColumns(picked.document.headers);
         let dateFormat: "ymd" | "dmy" | "mdy" = "ymd";
@@ -104,7 +125,11 @@ export function useDataImport() {
       const saved = await commitImport(file.document, options, file.hash, file.name, preview.signature);
       setResult(saved); setStep("done"); setFile(null);
       // Saving succeeded even if refreshing a presentation query subsequently fails.
-      try { refresh(); } catch { setError("load"); }
+      try {
+        refresh(false);
+      } catch {
+        setError("load");
+      }
     }),
     restart: () => { if (!busy) { setFile(null); setResult(null); setOptions(defaults(options.kind, defaultCurrency)); setStep("file"); setError(null); } },
     accountNames: file ? sourceAccountNames(file.document, options) : [],

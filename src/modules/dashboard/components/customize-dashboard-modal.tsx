@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CircleHelp,
@@ -50,26 +50,19 @@ import {
   WalkthroughRegistryProvider,
   WalkthroughTarget,
 } from "@/modules/walkthrough";
-import type {
-  DashboardLayoutPreferences,
-  DashboardLayoutPresetId,
-  DashboardWidgetId,
+import {
+  DEFAULT_DASHBOARD_LAYOUT,
+  resolveDashboardLayoutPreset,
+  type DashboardLayoutPreferences,
+  type DashboardLayoutPresetId,
+  type DashboardWidgetId,
 } from "@/modules/settings";
 
 export interface CustomizeDashboardModalProps {
   visible: boolean;
   layout: DashboardLayoutPreferences;
   onClose: () => void;
-  onToggleWidget: (widgetId: DashboardWidgetId, visible: boolean) => void;
-  onMoveWidget?: (widgetId: DashboardWidgetId, direction: "up" | "down") => void;
-  onReorderWidgets?: (orderedIds: DashboardWidgetId[]) => void;
-  onToggleQuote: (showQuote: boolean) => void;
-  onChangeQuoteColors?: (
-    quoteBackgroundColor: string | null,
-    quoteTextColor: string | null,
-  ) => void;
-  onSelectPreset: (presetId: DashboardLayoutPresetId) => void;
-  onReset: () => void;
+  onSaveLayout: (layout: DashboardLayoutPreferences) => void;
 }
 
 const QUICK_NEUTRAL_SWATCHES = [
@@ -129,12 +122,7 @@ function CustomizeDashboardModalContent({
   visible,
   layout,
   onClose,
-  onToggleWidget,
-  onReorderWidgets,
-  onToggleQuote,
-  onChangeQuoteColors,
-  onSelectPreset,
-  onReset,
+  onSaveLayout,
 }: CustomizeDashboardModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -157,9 +145,48 @@ function CustomizeDashboardModalContent({
   const [colorPickerTarget, setColorPickerTarget] = useState<
     "background" | "text"
   >("background");
+  const [draftLayout, setDraftLayout] =
+    useState<DashboardLayoutPreferences>(layout);
+  const wasVisibleRef = useRef(false);
+
+  useEffect(() => {
+    if (visible && !wasVisibleRef.current) {
+      setDraftLayout(layout);
+    }
+    wasVisibleRef.current = visible;
+  }, [visible, layout]);
+
+  const handleDismiss = () => {
+    onSaveLayout(draftLayout);
+    onClose();
+  };
+
+  const toggleDraftWidget = (widgetId: DashboardWidgetId, isVisible: boolean) => {
+    if (widgetId === "greeting") return;
+    setDraftLayout((prev) => {
+      const hiddenSet = new Set(prev.hidden.filter((id) => id !== "greeting"));
+      if (isVisible) {
+        hiddenSet.delete(widgetId);
+      } else {
+        hiddenSet.add(widgetId);
+      }
+      return { ...prev, hidden: Array.from(hiddenSet) };
+    });
+  };
+
+  const applyDraftQuoteColors = (
+    quoteBackgroundColor: string | null,
+    quoteTextColor: string | null,
+  ) => {
+    setDraftLayout((prev) => ({
+      ...prev,
+      quoteBackgroundColor,
+      quoteTextColor,
+    }));
+  };
 
   const handleToggleQuote = (val: boolean) => {
-    onToggleQuote(val);
+    setDraftLayout((prev) => ({ ...prev, showGreetingQuote: val }));
     if (val) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -180,9 +207,12 @@ function CustomizeDashboardModalContent({
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
     if (colorPickerTarget === "background") {
-      onChangeQuoteColors?.(created.hex, layout.quoteTextColor ?? null);
+      applyDraftQuoteColors(created.hex, draftLayout.quoteTextColor ?? null);
     } else {
-      onChangeQuoteColors?.(layout.quoteBackgroundColor ?? null, created.hex);
+      applyDraftQuoteColors(
+        draftLayout.quoteBackgroundColor ?? null,
+        created.hex,
+      );
     }
     setIsColorFormOpen(false);
     return true;
@@ -190,7 +220,7 @@ function CustomizeDashboardModalContent({
 
   const sortableItems = useMemo<SortableItem[]>(
     () =>
-      layout.order.map((widgetId) => {
+      draftLayout.order.map((widgetId) => {
         const meta = WIDGET_METADATA[widgetId];
         return {
           id: widgetId,
@@ -199,12 +229,12 @@ function CustomizeDashboardModalContent({
           color: theme.colors.primary,
         };
       }),
-    [layout.order, t, theme.colors.primary],
+    [draftLayout.order, t, theme.colors.primary],
   );
 
   if (!visible) return null;
 
-  const hiddenSet = new Set(layout.hidden);
+  const hiddenSet = new Set(draftLayout.hidden);
 
   const presets: Array<{
     id: DashboardLayoutPresetId;
@@ -236,7 +266,7 @@ function CustomizeDashboardModalContent({
   return (
     <Modal
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleDismiss}
       transparent
       visible={visible}
     >
@@ -244,7 +274,7 @@ function CustomizeDashboardModalContent({
         <Pressable
           accessibilityLabel={t("common.close")}
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleDismiss}
           style={styles.backdrop}
         />
 
@@ -277,7 +307,7 @@ function CustomizeDashboardModalContent({
               <Pressable
                 accessibilityLabel={t("common.close")}
                 accessibilityRole="button"
-                onPress={onClose}
+                onPress={handleDismiss}
                 style={({ pressed }) => [
                   styles.closeButton,
                   pressed && styles.pressed,
@@ -306,7 +336,11 @@ function CustomizeDashboardModalContent({
                     <Pressable
                       key={id}
                       accessibilityRole="button"
-                      onPress={() => onSelectPreset(id)}
+                      onPress={() =>
+                        setDraftLayout((prev) =>
+                          resolveDashboardLayoutPreset(id, prev),
+                        )
+                      }
                       style={({ pressed }) => [
                         styles.presetCard,
                         pressed && styles.pressed,
@@ -351,7 +385,7 @@ function CustomizeDashboardModalContent({
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    onPress={onReset}
+                    onPress={() => setDraftLayout(DEFAULT_DASHBOARD_LAYOUT)}
                     style={({ pressed }) => [
                       styles.resetBtn,
                       pressed && styles.pressed,
@@ -366,7 +400,7 @@ function CustomizeDashboardModalContent({
               </View>
 
               <View style={styles.widgetList}>
-                {layout.order.map((widgetId) => {
+                {draftLayout.order.map((widgetId) => {
                   const meta = WIDGET_METADATA[widgetId];
                   const isGreeting = widgetId === "greeting";
                   const isVisible = isGreeting || !hiddenSet.has(widgetId);
@@ -405,7 +439,7 @@ function CustomizeDashboardModalContent({
                       <ThemedSwitch
                         accessibilityLabel={t(meta.titleKey as never)}
                         disabled={isGreeting}
-                        onValueChange={(val) => onToggleWidget(widgetId, val)}
+                        onValueChange={(val) => toggleDraftWidget(widgetId, val)}
                         value={isVisible}
                       />
                     </View>
@@ -427,13 +461,13 @@ function CustomizeDashboardModalContent({
               <ThemedSwitch
                 accessibilityLabel={t("dashboard.showDailyQuoteTitle")}
                 onValueChange={handleToggleQuote}
-                value={layout.showGreetingQuote}
+                value={draftLayout.showGreetingQuote}
               />
             </View>
             </WalkthroughTarget>
 
             {/* Quote Appearance & Custom Colors */}
-            {layout.showGreetingQuote ? (
+            {draftLayout.showGreetingQuote ? (
               <View style={styles.quoteConfigCard}>
                 <View style={styles.quoteConfigHeader}>
                   <View style={styles.quoteConfigHeaderLeft}>
@@ -442,14 +476,14 @@ function CustomizeDashboardModalContent({
                       {t("dashboard.quoteColorsTitle")}
                     </Text>
                   </View>
-                  {(layout.quoteBackgroundColor !== null &&
-                    layout.quoteBackgroundColor !== undefined) ||
-                  (layout.quoteTextColor !== null &&
-                    layout.quoteTextColor !== undefined) ? (
+                  {(draftLayout.quoteBackgroundColor !== null &&
+                    draftLayout.quoteBackgroundColor !== undefined) ||
+                  (draftLayout.quoteTextColor !== null &&
+                    draftLayout.quoteTextColor !== undefined) ? (
                     <Pressable
                       accessibilityLabel={t("dashboard.resetToDefault")}
                       accessibilityRole="button"
-                      onPress={() => onChangeQuoteColors?.(null, null)}
+                      onPress={() => applyDraftQuoteColors(null, null)}
                       style={({ pressed }) => [
                         styles.resetColorsButton,
                         pressed && styles.pressed,
@@ -467,10 +501,10 @@ function CustomizeDashboardModalContent({
                 <View
                   style={[
                     styles.previewQuoteBox,
-                    layout.quoteBackgroundColor
+                    draftLayout.quoteBackgroundColor
                       ? {
-                          backgroundColor: layout.quoteBackgroundColor,
-                          borderColor: `${layout.quoteBackgroundColor}40`,
+                          backgroundColor: draftLayout.quoteBackgroundColor,
+                          borderColor: `${draftLayout.quoteBackgroundColor}40`,
                         }
                       : {
                           backgroundColor: `${theme.colors.primary}08`,
@@ -479,16 +513,16 @@ function CustomizeDashboardModalContent({
                   ]}
                 >
                   <Quote
-                    color={layout.quoteTextColor ?? theme.colors.primary}
+                    color={draftLayout.quoteTextColor ?? theme.colors.primary}
                     size={14}
-                    style={{ opacity: layout.quoteTextColor ? 0.9 : 0.75 }}
+                    style={{ opacity: draftLayout.quoteTextColor ? 0.9 : 0.75 }}
                   />
                   <Text
                     numberOfLines={2}
                     style={[
                       styles.previewQuoteText,
-                      layout.quoteTextColor
-                        ? { color: layout.quoteTextColor }
+                      draftLayout.quoteTextColor
+                        ? { color: draftLayout.quoteTextColor }
                         : { color: theme.colors.textPrimary },
                     ]}
                   >
@@ -496,8 +530,8 @@ function CustomizeDashboardModalContent({
                     <Text
                       style={[
                         styles.previewAuthorText,
-                        layout.quoteTextColor
-                          ? { color: layout.quoteTextColor, opacity: 0.85 }
+                        draftLayout.quoteTextColor
+                          ? { color: draftLayout.quoteTextColor, opacity: 0.85 }
                           : { color: theme.colors.textSecondary },
                       ]}
                     >
@@ -505,9 +539,9 @@ function CustomizeDashboardModalContent({
                     </Text>
                   </Text>
                   <Shuffle
-                    color={layout.quoteTextColor ?? theme.colors.textMuted}
+                    color={draftLayout.quoteTextColor ?? theme.colors.textMuted}
                     size={13}
-                    style={{ opacity: layout.quoteTextColor ? 0.8 : 0.6 }}
+                    style={{ opacity: draftLayout.quoteTextColor ? 0.8 : 0.6 }}
                   />
                 </View>
 
@@ -524,20 +558,20 @@ function CustomizeDashboardModalContent({
                       accessibilityLabel={t("dashboard.themeDefault")}
                       accessibilityRole="button"
                       onPress={() =>
-                        onChangeQuoteColors?.(
+                        applyDraftQuoteColors(
                           null,
-                          layout.quoteTextColor ?? null,
+                          draftLayout.quoteTextColor ?? null,
                         )
                       }
                       style={[
                         styles.defaultChip,
-                        !layout.quoteBackgroundColor &&
+                        !draftLayout.quoteBackgroundColor &&
                           styles.defaultChipSelected,
                       ]}
                     >
                       <Sparkles
                         color={
-                          !layout.quoteBackgroundColor
+                          !draftLayout.quoteBackgroundColor
                             ? theme.colors.primary
                             : theme.colors.textMuted
                         }
@@ -546,7 +580,7 @@ function CustomizeDashboardModalContent({
                       <Text
                         style={[
                           styles.defaultChipText,
-                          !layout.quoteBackgroundColor &&
+                          !draftLayout.quoteBackgroundColor &&
                             styles.defaultChipTextSelected,
                         ]}
                       >
@@ -556,7 +590,7 @@ function CustomizeDashboardModalContent({
 
                     {availableColors.map((color) => {
                       const isSelected =
-                        layout.quoteBackgroundColor?.toLowerCase() ===
+                        draftLayout.quoteBackgroundColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
                       return (
@@ -565,9 +599,9 @@ function CustomizeDashboardModalContent({
                           accessibilityLabel={color.name}
                           accessibilityRole="button"
                           onPress={() =>
-                            onChangeQuoteColors?.(
+                            applyDraftQuoteColors(
                               color.hex,
-                              layout.quoteTextColor ?? null,
+                              draftLayout.quoteTextColor ?? null,
                             )
                           }
                           style={[
@@ -621,19 +655,19 @@ function CustomizeDashboardModalContent({
                       accessibilityLabel={t("dashboard.themeDefault")}
                       accessibilityRole="button"
                       onPress={() =>
-                        onChangeQuoteColors?.(
-                          layout.quoteBackgroundColor ?? null,
+                        applyDraftQuoteColors(
+                          draftLayout.quoteBackgroundColor ?? null,
                           null,
                         )
                       }
                       style={[
                         styles.defaultChip,
-                        !layout.quoteTextColor && styles.defaultChipSelected,
+                        !draftLayout.quoteTextColor && styles.defaultChipSelected,
                       ]}
                     >
                       <Sparkles
                         color={
-                          !layout.quoteTextColor
+                          !draftLayout.quoteTextColor
                             ? theme.colors.primary
                             : theme.colors.textMuted
                         }
@@ -642,7 +676,7 @@ function CustomizeDashboardModalContent({
                       <Text
                         style={[
                           styles.defaultChipText,
-                          !layout.quoteTextColor &&
+                          !draftLayout.quoteTextColor &&
                             styles.defaultChipTextSelected,
                         ]}
                       >
@@ -652,7 +686,7 @@ function CustomizeDashboardModalContent({
 
                     {availableColors.map((color) => {
                       const isSelected =
-                        layout.quoteTextColor?.toLowerCase() ===
+                        draftLayout.quoteTextColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
                       return (
@@ -661,8 +695,8 @@ function CustomizeDashboardModalContent({
                           accessibilityLabel={color.name}
                           accessibilityRole="button"
                           onPress={() =>
-                            onChangeQuoteColors?.(
-                              layout.quoteBackgroundColor ?? null,
+                            applyDraftQuoteColors(
+                              draftLayout.quoteBackgroundColor ?? null,
                               color.hex,
                             )
                           }
@@ -735,7 +769,10 @@ function CustomizeDashboardModalContent({
         items={sortableItems}
         onClose={() => setIsReorderOpen(false)}
         onSave={(orderedIds) => {
-          onReorderWidgets?.(orderedIds as DashboardWidgetId[]);
+          setDraftLayout((prev) => ({
+            ...prev,
+            order: orderedIds as DashboardWidgetId[],
+          }));
         }}
         showAlphabetizeAction={false}
         title={t("dashboard.reorderCardsTitle")}

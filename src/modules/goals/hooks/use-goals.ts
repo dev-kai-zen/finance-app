@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { goalErrorMessage } from "../schemas/goal.schema";
 import { deleteGoal as deleteGoalService } from "../services/delete-goal.service";
 import { getGoalsWithProgress } from "../services/get-goals-with-progress.service";
@@ -30,28 +31,30 @@ export function useGoals() {
   const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    if (!hasLoadedOnceRef.current) {
-      setLoading(true);
-    }
-    try {
-      const data = getGoalsWithProgress();
-      setGoals(data.goals);
-      setSummary(data.summary);
-      setError(null);
-    } catch (cause) {
-      setError(goalErrorMessage(cause));
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        try {
+          const data = getGoalsWithProgress();
+          setGoals(data.goals);
+          setSummary(data.summary);
+          setError(null);
+        } catch (cause) {
+          setError(goalErrorMessage(cause));
+        }
+      },
+    );
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      const frameId = requestAnimationFrame(() => {
-        refresh();
-      });
-      return () => cancelAnimationFrame(frameId);
+      refresh();
     }, [refresh]),
   );
 

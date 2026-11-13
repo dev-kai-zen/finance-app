@@ -1,5 +1,6 @@
-import React, { forwardRef, useEffect } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   type SwitchProps,
@@ -14,7 +15,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
-export type ThemedSwitchProps = SwitchProps;
+export type ThemedSwitchProps = SwitchProps & {
+  /** When true for 150ms+, shows a small spinner on the thumb (slow saves only). */
+  pending?: boolean;
+};
 
 const TRACK_WIDTH = 48;
 const TRACK_HEIGHT = 28;
@@ -33,11 +37,13 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
       thumbColor,
       trackColor,
       value,
+      pending = false,
     },
     ref,
   ) {
     const theme = useAppTheme();
     const isChecked = Boolean(value);
+    const [showPendingSpinner, setShowPendingSpinner] = useState(false);
 
     const offTrackColor = String(trackColor?.false ?? theme.colors.borderStrong);
     const onTrackColor = String(
@@ -62,6 +68,15 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
       });
     }, [isChecked, progress]);
 
+    useEffect(() => {
+      if (!pending) {
+        setShowPendingSpinner(false);
+        return;
+      }
+      const timer = setTimeout(() => setShowPendingSpinner(true), 150);
+      return () => clearTimeout(timer);
+    }, [pending]);
+
     const animatedTrackStyle = useAnimatedStyle(() => {
       const backgroundColor = interpolateColor(
         progress.value,
@@ -79,7 +94,12 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
 
     const handlePress = () => {
       if (disabled) return;
-      onValueChange?.(!isChecked);
+      const nextChecked = !isChecked;
+      progress.value = withTiming(nextChecked ? 1 : 0, {
+        duration: 180,
+        easing: Easing.bezier(0.23, 1, 0.32, 1),
+      });
+      onValueChange?.(nextChecked);
     };
 
     return (
@@ -102,7 +122,11 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
               { backgroundColor: resolvedThumbColor },
               animatedThumbStyle,
             ]}
-          />
+          >
+            {showPendingSpinner ? (
+              <ActivityIndicator color={theme.colors.primary} size="small" />
+            ) : null}
+          </Animated.View>
         </Animated.View>
       </Pressable>
     );
@@ -128,6 +152,8 @@ const styles = StyleSheet.create({
     width: THUMB_SIZE,
     height: THUMB_SIZE,
     borderRadius: THUMB_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.2,

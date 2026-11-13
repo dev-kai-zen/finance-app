@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   formatPrivacyAmount,
   getPrivacyModeSetting,
@@ -18,11 +19,20 @@ export function usePrivacyMode() {
   }, []);
 
   const togglePrivacyMode = useCallback(() => {
-    setPrivacyModeSetting(!getPrivacyModeSetting());
+    setIsPrivate((prev) => {
+      const next = !prev;
+      scheduleAfterPaint(() => {
+        setPrivacyModeSetting(next);
+      });
+      return next;
+    });
   }, []);
 
   const setPrivacyMode = useCallback((val: boolean) => {
-    setPrivacyModeSetting(val);
+    setIsPrivate(val);
+    scheduleAfterPaint(() => {
+      setPrivacyModeSetting(val);
+    });
   }, []);
 
   const formatPrivacy = useCallback(

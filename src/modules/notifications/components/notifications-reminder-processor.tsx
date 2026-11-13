@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { useRouter } from "expo-router";
+import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { syncAllReminders } from "../services/sync-all-reminders.service";
 import { subscribeToNotificationResponses } from "../services/notification-navigation.service";
 
@@ -8,13 +9,11 @@ export function NotificationsReminderProcessor() {
   const router = useRouter();
 
   useEffect(() => {
-    // 1. Initial reminder synchronization
-    syncAllReminders();
+    const cancelInitial = scheduleAfterInteractions(() => syncAllReminders());
 
-    // 2. Refresh reminders whenever app comes to foreground
     const appStateSub = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        syncAllReminders();
+        scheduleAfterInteractions(() => syncAllReminders());
       }
     });
 
@@ -28,6 +27,7 @@ export function NotificationsReminderProcessor() {
     });
 
     return () => {
+      cancelInitial();
       appStateSub.remove();
       unsubscribeResponses();
     };

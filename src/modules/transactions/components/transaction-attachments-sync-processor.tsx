@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { AppState } from "react-native";
+import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 
 import { triggerTransactionAttachmentSync } from "../services/transaction-attachments.service";
 
@@ -14,7 +15,7 @@ export function TransactionAttachmentsSyncProcessor() {
       });
     };
 
-    runWhenOnline();
+    const cancelInitial = scheduleAfterInteractions(runWhenOnline);
     const interval = setInterval(runWhenOnline, SYNC_INTERVAL_MS);
     const networkSubscription = NetInfo.addEventListener((state) => {
       if (state.isConnected) triggerTransactionAttachmentSync();
@@ -22,11 +23,14 @@ export function TransactionAttachmentsSyncProcessor() {
     const appStateSubscription = AppState.addEventListener(
       "change",
       (state) => {
-        if (state === "active") runWhenOnline();
+        if (state === "active") {
+          scheduleAfterInteractions(runWhenOnline);
+        }
       },
     );
 
     return () => {
+      cancelInitial();
       clearInterval(interval);
       networkSubscription();
       appStateSubscription.remove();

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   applyDashboardLayoutPreset,
   applyGuidedWorkspaceSimpleDefaults,
   DEFAULT_DASHBOARD_LAYOUT,
-  getDashboardLayoutPreferences,
   getDeveloperModeEnabled,
   getExperiencePreferencesSnapshot,
   isDevModeAllowed,
@@ -33,6 +33,13 @@ import type { NavVisibilityKey } from "../constants/settings.constants";
 const DEVELOPER_TAP_TARGET = 10;
 const DEVELOPER_TAP_RESET_MS = 2000;
 
+function patchSnapshot(
+  prev: ExperiencePreferencesSnapshot,
+  patch: Partial<ExperiencePreferencesSnapshot>,
+): ExperiencePreferencesSnapshot {
+  return { ...prev, ...patch };
+}
+
 export function useExperiencePreferences() {
   const [snapshot, setSnapshot] = useState<ExperiencePreferencesSnapshot>(() =>
     getExperiencePreferencesSnapshot(),
@@ -55,24 +62,33 @@ export function useExperiencePreferences() {
 
   const setDeveloperMode = useCallback(
     (enabled: boolean) => {
-      setDeveloperModeEnabled(enabled);
-      refresh();
+      setSnapshot((prev) => patchSnapshot(prev, { developerMode: enabled }));
+      scheduleAfterPaint(() => {
+        setDeveloperModeEnabled(enabled);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const setGuideHelper = useCallback(
     (enabled: boolean) => {
-      setGuideHelperEnabled(enabled);
-      refresh();
+      setSnapshot((prev) => patchSnapshot(prev, { guideHelperEnabled: enabled }));
+      scheduleAfterPaint(() => {
+        setGuideHelperEnabled(enabled);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const setGeneralSearch = useCallback(
     (enabled: boolean) => {
-      setGeneralSearchEnabled(enabled);
-      refresh();
+      setSnapshot((prev) => patchSnapshot(prev, { generalSearchEnabled: enabled }));
+      scheduleAfterPaint(() => {
+        setGeneralSearchEnabled(enabled);
+        refresh();
+      });
     },
     [refresh],
   );
@@ -91,9 +107,11 @@ export function useExperiencePreferences() {
     if (tapCountRef.current >= DEVELOPER_TAP_TARGET) {
       tapCountRef.current = 0;
       if (!getDeveloperModeEnabled()) {
-        setDeveloperModeEnabled(true);
-        setDeveloperUnlockNotice(true);
-        refresh();
+        scheduleAfterPaint(() => {
+          setDeveloperModeEnabled(true);
+          setDeveloperUnlockNotice(true);
+          refresh();
+        });
       }
     }
   }, [refresh]);
@@ -104,40 +122,52 @@ export function useExperiencePreferences() {
 
   const setFormField = useCallback(
     (field: FormFieldPreferenceKey, enabled: boolean) => {
-      setTransactionFormFieldEnabled(field, enabled);
-      refresh();
+      scheduleAfterPaint(() => {
+        setTransactionFormFieldEnabled(field, enabled);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const setFormFields = useCallback(
     (partial: Partial<TransactionFormFieldPreferences>) => {
-      setTransactionFormFieldPreferences(partial);
-      refresh();
+      scheduleAfterPaint(() => {
+        setTransactionFormFieldPreferences(partial);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const setNavVisible = useCallback(
     (navKey: NavVisibilityKey, visible: boolean) => {
-      setNavItemVisible(navKey, visible);
-      refresh();
+      scheduleAfterPaint(() => {
+        setNavItemVisible(navKey, visible);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const setHomeMode = useCallback(
     (mode: HomeExperienceMode) => {
-      setHomeExperienceMode(mode);
-      refresh();
+      setSnapshot((prev) => patchSnapshot(prev, { homeMode: mode }));
+      scheduleAfterPaint(() => {
+        setHomeExperienceMode(mode);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const updateDashboardLayout = useCallback(
     (next: DashboardLayoutPreferences) => {
-      setDashboardLayoutPreferences(next);
-      refresh();
+      setSnapshot((prev) => patchSnapshot(prev, { dashboardLayout: next }));
+      scheduleAfterPaint(() => {
+        setDashboardLayoutPreferences(next);
+        refresh();
+      });
     },
     [refresh],
   );
@@ -145,98 +175,134 @@ export function useExperiencePreferences() {
   const toggleDashboardWidget = useCallback(
     (widgetId: DashboardWidgetId, visible: boolean) => {
       if (widgetId === "greeting") {
-        // Greeting & Date is always active as the primary dashboard header
         return;
       }
-      const current = getDashboardLayoutPreferences();
-      const hiddenSet = new Set(current.hidden.filter((id) => id !== "greeting"));
-      if (visible) {
-        hiddenSet.delete(widgetId);
-      } else {
-        hiddenSet.add(widgetId);
-      }
-      setDashboardLayoutPreferences({
-        ...current,
-        hidden: Array.from(hiddenSet),
+      setSnapshot((prev) => {
+        const current = prev.dashboardLayout;
+        const hiddenSet = new Set(current.hidden.filter((id) => id !== "greeting"));
+        if (visible) {
+          hiddenSet.delete(widgetId);
+        } else {
+          hiddenSet.add(widgetId);
+        }
+        const nextLayout: DashboardLayoutPreferences = {
+          ...current,
+          hidden: Array.from(hiddenSet),
+        };
+        scheduleAfterPaint(() => {
+          setDashboardLayoutPreferences(nextLayout);
+          refresh();
+        });
+        return patchSnapshot(prev, { dashboardLayout: nextLayout });
       });
-      refresh();
     },
     [refresh],
   );
 
   const moveDashboardWidget = useCallback(
     (widgetId: DashboardWidgetId, direction: "up" | "down") => {
-      const current = getDashboardLayoutPreferences();
-      const index = current.order.indexOf(widgetId);
-      if (index === -1) return;
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= current.order.length) return;
-      const nextOrder = [...current.order];
-      const [item] = nextOrder.splice(index, 1);
-      nextOrder.splice(targetIndex, 0, item);
-      setDashboardLayoutPreferences({
-        ...current,
-        order: nextOrder,
+      setSnapshot((prev) => {
+        const current = prev.dashboardLayout;
+        const index = current.order.indexOf(widgetId);
+        if (index === -1) return prev;
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= current.order.length) return prev;
+        const nextOrder = [...current.order];
+        const [item] = nextOrder.splice(index, 1);
+        nextOrder.splice(targetIndex, 0, item);
+        const nextLayout: DashboardLayoutPreferences = {
+          ...current,
+          order: nextOrder,
+        };
+        scheduleAfterPaint(() => {
+          setDashboardLayoutPreferences(nextLayout);
+          refresh();
+        });
+        return patchSnapshot(prev, { dashboardLayout: nextLayout });
       });
-      refresh();
     },
     [refresh],
   );
 
   const reorderDashboardWidgets = useCallback(
     (orderedIds: DashboardWidgetId[]) => {
-      const current = getDashboardLayoutPreferences();
-      setDashboardLayoutPreferences({
-        ...current,
-        order: orderedIds,
+      setSnapshot((prev) => {
+        const current = prev.dashboardLayout;
+        const nextLayout: DashboardLayoutPreferences = {
+          ...current,
+          order: orderedIds,
+        };
+        scheduleAfterPaint(() => {
+          setDashboardLayoutPreferences(nextLayout);
+          refresh();
+        });
+        return patchSnapshot(prev, { dashboardLayout: nextLayout });
       });
-      refresh();
     },
     [refresh],
   );
 
   const setShowGreetingQuote = useCallback(
     (showGreetingQuote: boolean) => {
-      const current = getDashboardLayoutPreferences();
-      setDashboardLayoutPreferences({
-        ...current,
-        showGreetingQuote,
+      setSnapshot((prev) => {
+        const nextLayout: DashboardLayoutPreferences = {
+          ...prev.dashboardLayout,
+          showGreetingQuote,
+        };
+        scheduleAfterPaint(() => {
+          setDashboardLayoutPreferences(nextLayout);
+          refresh();
+        });
+        return patchSnapshot(prev, { dashboardLayout: nextLayout });
       });
-      refresh();
     },
     [refresh],
   );
 
   const setQuoteColors = useCallback(
     (quoteBackgroundColor: string | null, quoteTextColor: string | null) => {
-      const current = getDashboardLayoutPreferences();
-      setDashboardLayoutPreferences({
-        ...current,
-        quoteBackgroundColor,
-        quoteTextColor,
+      setSnapshot((prev) => {
+        const nextLayout: DashboardLayoutPreferences = {
+          ...prev.dashboardLayout,
+          quoteBackgroundColor,
+          quoteTextColor,
+        };
+        scheduleAfterPaint(() => {
+          setDashboardLayoutPreferences(nextLayout);
+          refresh();
+        });
+        return patchSnapshot(prev, { dashboardLayout: nextLayout });
       });
-      refresh();
     },
     [refresh],
   );
 
   const selectDashboardPreset = useCallback(
     (presetId: DashboardLayoutPresetId) => {
-      applyDashboardLayoutPreset(presetId);
-      refresh();
+      scheduleAfterPaint(() => {
+        applyDashboardLayoutPreset(presetId);
+        refresh();
+      });
     },
     [refresh],
   );
 
   const resetDashboardLayout = useCallback(() => {
-    setDashboardLayoutPreferences(DEFAULT_DASHBOARD_LAYOUT);
-    refresh();
+    setSnapshot((prev) =>
+      patchSnapshot(prev, { dashboardLayout: DEFAULT_DASHBOARD_LAYOUT }),
+    );
+    scheduleAfterPaint(() => {
+      setDashboardLayoutPreferences(DEFAULT_DASHBOARD_LAYOUT);
+      refresh();
+    });
   }, [refresh]);
 
   const dismissPrompt = useCallback(
     (promptKey: Parameters<typeof setPromptDismissed>[0]) => {
-      setPromptDismissed(promptKey, true);
-      refresh();
+      scheduleAfterPaint(() => {
+        setPromptDismissed(promptKey, true);
+        refresh();
+      });
     },
     [refresh],
   );

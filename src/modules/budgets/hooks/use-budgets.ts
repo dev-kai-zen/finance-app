@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
 import { useCategories, type Category } from "@/modules/categories";
 import {
@@ -55,10 +56,9 @@ export function useBudgets(referenceDate?: Date) {
   }, []);
 
   useEffect(() => {
-    const frameId = requestAnimationFrame(() => {
+    scheduleAfterPaint(() => {
       void refresh();
     });
-    return () => cancelAnimationFrame(frameId);
   }, [refresh]);
 
   // Flatten categories map for quick category lookup

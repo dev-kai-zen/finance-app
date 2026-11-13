@@ -13,6 +13,7 @@ import { usePreventRemove } from "expo-router/react-navigation";
 import { useNavigation, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareForm } from "@/components/keyboard-aware-form";
+import { DeferredScreenBody } from "@/components/deferred-screen-body";
 import { FullScreenFormModal } from "@/components/full-screen-form-modal";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { ModalScreenHeader } from "@/components/modal-screen-header";
@@ -72,10 +73,25 @@ type Item = {
   index: number;
 };
 export function DataImportScreen() {
+  const { t } = useLocalization();
+  const router = useRouter();
+
   return (
-    <WalkthroughRegistryProvider>
-      <DataImportScreenContent />
-    </WalkthroughRegistryProvider>
+    <DeferredScreenBody
+      header={
+        <ModalScreenHeader
+          backAccessibilityLabel={t("dataImport.back")}
+          onPressBack={() => router.back()}
+          title={t("dataImport.title")}
+        />
+      }
+      loadingMessage={t("dataImport.title")}
+      loadingVariant="cards"
+    >
+      <WalkthroughRegistryProvider>
+        <DataImportScreenContent />
+      </WalkthroughRegistryProvider>
+    </DeferredScreenBody>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 
+import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { processDueSchedules } from "../services/process-due-schedules.service";
 
 export function ScheduledTransactionsProcessor() {
@@ -16,11 +17,16 @@ export function ScheduledTransactionsProcessor() {
       }
     };
 
-    process();
+    const cancelInitial = scheduleAfterInteractions(process);
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") process();
+      if (state === "active") {
+        scheduleAfterInteractions(process);
+      }
     });
-    return () => subscription.remove();
+    return () => {
+      cancelInitial();
+      subscription.remove();
+    };
   }, []);
 
   return null;
