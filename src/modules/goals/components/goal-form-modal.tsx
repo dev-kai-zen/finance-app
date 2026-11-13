@@ -32,7 +32,11 @@ import {
   type HexColor,
   type HexColorInput,
 } from "@/modules/hex-colors";
-import { useExperiencePreferences } from "@/modules/settings";
+import {
+  formatPrivacyAmount,
+  useExperiencePreferences,
+  usePrivacyMode,
+} from "@/modules/settings";
 import {
   DraggableTourChip,
   GoalFormWalkthroughOverlay,
@@ -94,6 +98,7 @@ function GoalFormModalContent({
   const { accounts, pockets } = useAccounts();
   const { preferences } = useCurrencyPreferences();
   const defaultCurrency = preferences.defaultCurrency || "PHP";
+  const { isPrivate } = usePrivacyMode();
   const {
     colors: hexColorsList,
     addColor,
@@ -401,6 +406,24 @@ function GoalFormModalContent({
             </View>
           </WalkthroughTarget>
 
+          {/* Optional Notes */}
+          <WalkthroughTarget id="goalFormNotes">
+            <View style={styles.formField}>
+              <Text style={styles.label}>Note</Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                onBlur={() => setFocusedFieldType(null)}
+                onChangeText={setNote}
+                onFocus={() => setFocusedFieldType("description")}
+                placeholder="Add note..."
+                placeholderTextColor={theme.colors.textMuted}
+                style={[styles.input, styles.textArea]}
+                value={note}
+              />
+            </View>
+          </WalkthroughTarget>
+
           {/* Target Amount */}
           <WalkthroughTarget id="goalFormAmount">
             <View style={styles.formField}>
@@ -439,7 +462,10 @@ function GoalFormModalContent({
                           : `${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`}
                     </Text>
                     <Text style={styles.accountsCardHeaderBalance}>
-                      {formatCurrency(totalLinkedBalance, currencyCode)}
+                      {formatPrivacyAmount(
+                        formatCurrency(totalLinkedBalance, currencyCode),
+                        isPrivate,
+                      )}
                     </Text>
                   </View>
 
@@ -452,7 +478,10 @@ function GoalFormModalContent({
                             {account.name}
                           </Text>
                           <Text style={styles.accountChipBalance}>
-                            ({formatCurrency(account.currentBalanceMinorUnits, account.currencyCode)})
+                            ({formatPrivacyAmount(
+                              formatCurrency(account.currentBalanceMinorUnits, account.currencyCode),
+                              isPrivate,
+                            )})
                           </Text>
                         </View>
                         <Pressable
@@ -476,7 +505,10 @@ function GoalFormModalContent({
                               {pocket.name}
                             </Text>
                             <Text style={styles.accountChipBalance}>
-                              ({parent?.name ? `${parent.name} • ` : ""}{formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP")})
+                              ({parent?.name ? `${parent.name} • ` : ""}{formatPrivacyAmount(
+                                formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP"),
+                                isPrivate,
+                              )})
                             </Text>
                           </View>
                           <Pressable
@@ -660,24 +692,6 @@ function GoalFormModalContent({
               </WalkthroughTarget>
             </View>
           </View>
-
-          {/* Optional Notes */}
-          <WalkthroughTarget id="goalFormNotes">
-            <View style={styles.formField}>
-              <Text style={styles.label}>Note</Text>
-              <TextInput
-                multiline
-                numberOfLines={3}
-                onBlur={() => setFocusedFieldType(null)}
-                onChangeText={setNote}
-                onFocus={() => setFocusedFieldType("description")}
-                placeholder="Add note..."
-                placeholderTextColor={theme.colors.textMuted}
-                style={[styles.input, styles.textArea]}
-                value={note}
-              />
-            </View>
-          </WalkthroughTarget>
           </View>
         </KeyboardAwareFormPreset>
         <GoalFormWalkthroughOverlay

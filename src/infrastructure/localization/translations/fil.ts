@@ -860,6 +860,7 @@ export const fil = {
       improveItem26: "I-update ang select labels modal na may chip para sa pamamahala ng mga label at pabilog na close button.",
       improveItem27: "Magdagdag ng naililipat na gabay na chip sa mga modal at sheet para sa mabilisang walkthrough.",
       improveItem28: "Magpakita ng kumpirmasyon bago umalis kapag may hindi pa nai-save na pagbabago sa pag-aayos ng kategorya.",
+      improveItem29: "Ilagay ang field ng tala sa ilalim ng pamagat ng layunin sa form ng ipon para sa mas madaling pagtatala.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
@@ -881,6 +882,8 @@ export const fil = {
         "I-gitna ang mga opsyon at label ng rollover behavior sa form ng category budget.",
       fixItem15:
         "I-standardize ang laki ng color swatch upang mas malinaw ang napiling kulay at mas maliit ang hindi napili.",
+      fixItem16:
+        "Itago ang mga target, balanse, progreso, at buwanang rekomendasyon ng layunin sa ipon kapag naka-on ang privacy mode.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

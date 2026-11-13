@@ -859,6 +859,7 @@ export const es = {
       improveItem26: "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
       improveItem27: "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
       improveItem28: "Muestra un aviso de confirmación al salir de la pantalla de reordenar categorías con cambios sin guardar.",
+      improveItem29: "Ubica el campo de notas justo debajo del título de la meta en el formulario de metas de ahorro para facilitar la anotación.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -880,6 +881,8 @@ export const es = {
         "Centra las opciones y etiqueta de comportamiento de rollover en el formulario de presupuesto por categoría.",
       fixItem15:
         "Estandariza el tamaño de las muestras de color para que los colores seleccionados sean prominentes y los no seleccionados compactos.",
+      fixItem16:
+        "Oculta las metas, saldos, progreso y recomendaciones mensuales de ahorro cuando el modo de privacidad está activado.",
     },
     v140: {
       date: "5 de noviembre de 2026",

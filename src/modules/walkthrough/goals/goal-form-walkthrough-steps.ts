@@ -8,6 +8,12 @@ export const GOAL_FORM_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "goalFormWalkthrough.stepTitleDesc",
   },
   {
+    id: "goalFormNotes",
+    targetId: "goalFormNotes",
+    titleKey: "goalFormWalkthrough.stepNotesTitle",
+    descKey: "goalFormWalkthrough.stepNotesDesc",
+  },
+  {
     id: "goalFormAmount",
     targetId: "goalFormAmount",
     titleKey: "goalFormWalkthrough.stepTargetAmountTitle",
@@ -36,12 +42,6 @@ export const GOAL_FORM_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     targetId: "goalFormColor",
     titleKey: "goalFormWalkthrough.stepAccentColorTitle",
     descKey: "goalFormWalkthrough.stepAccentColorDesc",
-  },
-  {
-    id: "goalFormNotes",
-    targetId: "goalFormNotes",
-    titleKey: "goalFormWalkthrough.stepNotesTitle",
-    descKey: "goalFormWalkthrough.stepNotesDesc",
   },
   {
     id: "goalFormSave",

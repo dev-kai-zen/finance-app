@@ -4,6 +4,7 @@ import { CheckCircle2, Target, TrendingUp } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalSummaryStats } from "../types/goal.types";
 
@@ -21,6 +22,7 @@ export function GoalSummaryHeader({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
 
   const {
     totalTargetMinorUnits,
@@ -42,12 +44,14 @@ export function GoalSummaryHeader({
           <View>
             <Text style={styles.heroSubheading}>TOTAL TARGET</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.heroTargetAmount}>
-              {formatCurrency(totalTargetMinorUnits, currencyCode)}
+              {formatPrivacyAmount(formatCurrency(totalTargetMinorUnits, currencyCode), isPrivate)}
             </Text>
           </View>
           <View style={styles.percentageBadge}>
             <TrendingUp color={theme.colors.primary} size={16} />
-            <Text style={styles.percentageText}>{clampedProgress}%</Text>
+            <Text style={styles.percentageText}>
+              {isPrivate ? "••%" : `${clampedProgress}%`}
+            </Text>
           </View>
         </View>
 
@@ -57,7 +61,7 @@ export function GoalSummaryHeader({
             style={[
               styles.progressFill,
               {
-                width: `${clampedProgress}%`,
+                width: isPrivate ? "0%" : `${clampedProgress}%`,
                 backgroundColor:
                   clampedProgress >= 100
                     ? theme.colors.success
@@ -79,13 +83,13 @@ export function GoalSummaryHeader({
                 },
               ]}
             >
-              {formatCurrency(totalSavedMinorUnits, currencyCode)}
+              {formatPrivacyAmount(formatCurrency(totalSavedMinorUnits, currencyCode), isPrivate)}
             </Text>
           </View>
           <View style={styles.alignRight}>
             <Text style={styles.statLabel}>Remaining shortfall</Text>
             <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={styles.statValueRemaining}>
-              {formatCurrency(remaining, currencyCode)}
+              {formatPrivacyAmount(formatCurrency(remaining, currencyCode), isPrivate)}
             </Text>
           </View>
         </View>

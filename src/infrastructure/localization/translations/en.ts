@@ -862,6 +862,7 @@ export const en = {
       improveItem26: "Update the select labels modal with a dedicated manage labels chip and a circular close button.",
       improveItem27: "Add draggable tour guide chips to all form modals and sheets for instant, on-demand walkthroughs.",
       improveItem28: "Show a confirmation prompt when leaving the category reorder screen with unsaved changes.",
+      improveItem29: "Place the note field right below the goal title in the savings goal form for easier note-taking.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -883,6 +884,8 @@ export const en = {
         "Center rollover behavior options and label in the category budget form.",
       fixItem15:
         "Standardize color picker swatch sizing so selected colors are prominent and unselected colors remain compact.",
+      fixItem16:
+        "Hide savings goal targets, balances, progress, and monthly pace recommendations when privacy mode is active.",
     },
     v140: {
       date: "November 5, 2026",
