@@ -729,6 +729,7 @@ export const es = {
     restoreQuickSyncConfirmTitle: "¿Restaurar Quick Sync?",
     restoreQuickSyncConfirmMessage:
       "Esto reemplaza todos los datos locales con tu archivo Quick Sync y vuelve a activar Quick Sync en este dispositivo.",
+    disconnectAction: "Desconectar",
   },
   language: {
     helpTitle: "Acerca del idioma",
@@ -863,6 +864,7 @@ export const es = {
       improveItem29: "Ubica el campo de notas justo debajo del título de la meta en el formulario de metas de ahorro para facilitar la anotación.",
       improveItem30: "Simplifica la pantalla de Configuración eliminando descripciones redundantes y optimizando la etiqueta del tema.",
       improveItem31: "Muestra una notificación rápida en lugar de un modal emergente al actualizar la frecuencia de copia de seguridad local.",
+      improveItem32: "Reemplaza el icono de verificación de Google Drive y el botón por un chip de desconexión.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

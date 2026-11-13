@@ -733,6 +733,7 @@ export const en = {
     restoreQuickSyncConfirmTitle: "Restore Quick Sync?",
     restoreQuickSyncConfirmMessage:
       "This replaces all local data with your Quick Sync file and turns Quick Sync back on for this device.",
+    disconnectAction: "Disconnect",
   },
   language: {
     helpTitle: "About Language",
@@ -866,6 +867,7 @@ export const en = {
       improveItem29: "Place the note field right below the goal title in the savings goal form for easier note-taking.",
       improveItem30: "Simplify the Settings screen by removing redundant descriptions and streamlining the theme label.",
       improveItem31: "Show a quick toast notification instead of a popup modal when updating the local backup frequency.",
+      improveItem32: "Replace the Google Drive check icon and disconnect button with an account disconnect chip.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

@@ -8,14 +8,12 @@ import {
   View,
 } from "react-native";
 import {
-  CheckCircle2,
   ChevronRight,
   Cloud,
   CloudDownload,
   CloudUpload,
   Crown,
   FolderOpen,
-  LogOut,
   ShieldAlert,
   Zap,
 } from "lucide-react-native";
@@ -23,7 +21,6 @@ import { resolveGoogleDriveQuickSyncBackupFile } from "@/infrastructure/sync";
 import { withGoogleDriveAccessToken } from "@/modules/google-drive-backup/services/google-drive-auth.service";
 
 import {
-  AppButton,
   ConfirmModal,
   NotificationModal,
   PageLoadingState,
@@ -198,7 +195,22 @@ export function GoogleDriveBackupPanel() {
               </Text>
             </View>
             {backup.user ? (
-              <CheckCircle2 color={theme.colors.success} size={20} />
+              <Pressable
+                accessibilityLabel={t("googleDriveBackup.disconnectAction")}
+                accessibilityRole="button"
+                disabled={busy}
+                hitSlop={8}
+                onPress={() => setConfirmDisconnect(true)}
+                style={({ pressed }) => [
+                  styles.disconnectChip,
+                  pressed && styles.disconnectChipPressed,
+                  busy && styles.disabled,
+                ]}
+              >
+                <Text style={styles.disconnectChipText}>
+                  {t("googleDriveBackup.disconnectAction")}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
 
@@ -347,16 +359,6 @@ export function GoogleDriveBackupPanel() {
         {backup.user ? <ScheduledBackupCard /> : null}
 
         {backup.user ? <QuickSyncCard /> : null}
-
-        {backup.user ? (
-          <AppButton
-            disabled={busy}
-            label="Disconnect"
-            leading={<LogOut color={theme.colors.onDanger} size={18} />}
-            onPress={() => setConfirmDisconnect(true)}
-            variant="destructive"
-          />
-        ) : null}
       </View>
       )}
 
@@ -370,7 +372,7 @@ export function GoogleDriveBackupPanel() {
       />
 
       <ConfirmModal
-        confirmLabel="Disconnect"
+        confirmLabel={t("googleDriveBackup.disconnectAction")}
         message="Disconnect this Google account from Kaizen Finance? Existing backups will remain in Google Drive."
         onCancel={() => setConfirmDisconnect(false)}
         onConfirm={confirmGoogleDriveDisconnect}
@@ -516,6 +518,25 @@ function createStyles(theme: AppTheme) {
     copy: {
       flex: 1,
       gap: 2,
+    },
+    disconnectChip: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}14`,
+      borderColor: `${theme.colors.danger}35`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+    },
+    disconnectChipPressed: {
+      backgroundColor: `${theme.colors.danger}25`,
+    },
+    disconnectChipText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      lineHeight: theme.typography.lineHeight.xs,
     },
     title: {
       color: theme.colors.textPrimary,
