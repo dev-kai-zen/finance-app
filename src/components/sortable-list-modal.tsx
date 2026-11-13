@@ -61,6 +61,7 @@ export interface SortableListModalProps {
   items: SortableItem[];
   onSave: (orderedIds: string[]) => Promise<void> | void;
   showAlphabetizeAction?: boolean;
+  isDirty?: boolean;
 }
 
 export function SortableListModal({
@@ -71,6 +72,7 @@ export function SortableListModal({
   items: initialItems,
   onSave,
   showAlphabetizeAction = true,
+  isDirty: externalIsDirty,
 }: SortableListModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -82,18 +84,24 @@ export function SortableListModal({
   const destinationIndex = useSharedValue(-1);
   const dragTranslationY = useSharedValue(0);
   const pendingDropReset = useRef(false);
+  const initialOrderRef = useRef<string[]>([]);
+  const wasVisibleRef = useRef(false);
   const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
     useScrollDownIndicator<ScrollView>();
 
   useEffect(() => {
     if (visible) {
-      setItems([...initialItems]);
+      if (!wasVisibleRef.current) {
+        initialOrderRef.current = initialItems.map((item) => item.id);
+        setItems([...initialItems]);
+      }
       setRowHeight(0);
       setDraggingItemId(null);
       activeIndex.set(-1);
       destinationIndex.set(-1);
       dragTranslationY.set(0);
     }
+    wasVisibleRef.current = visible;
   }, [
     activeIndex,
     destinationIndex,
@@ -101,6 +109,15 @@ export function SortableListModal({
     visible,
     initialItems,
   ]);
+
+  const isDirty = useMemo(() => {
+    if (externalIsDirty !== undefined) return externalIsDirty;
+    if (!visible || initialOrderRef.current.length === 0) return false;
+    if (items.length !== initialOrderRef.current.length) return false;
+    return items.some(
+      (item, index) => item.id !== initialOrderRef.current[index],
+    );
+  }, [externalIsDirty, items, visible]);
 
   useLayoutEffect(() => {
     if (!pendingDropReset.current) return;
@@ -182,6 +199,7 @@ export function SortableListModal({
 
   return (
     <FullScreenFormModal
+      isDirty={isDirty}
       pending={saving}
       saveLabel="Save order"
       title={title}

@@ -861,6 +861,7 @@ export const en = {
       improveItem25: "Simplify the customize fields sheet by removing repetitive descriptions for always-on fields.",
       improveItem26: "Update the select labels modal with a dedicated manage labels chip and a circular close button.",
       improveItem27: "Add draggable tour guide chips to all form modals and sheets for instant, on-demand walkthroughs.",
+      improveItem28: "Show a confirmation prompt when leaving the category reorder screen with unsaved changes.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",

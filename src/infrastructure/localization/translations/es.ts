@@ -858,6 +858,7 @@ export const es = {
       improveItem25: "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
       improveItem26: "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
       improveItem27: "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
+      improveItem28: "Muestra un aviso de confirmación al salir de la pantalla de reordenar categorías con cambios sin guardar.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

@@ -522,7 +522,6 @@ function CategoriesScreenContent({
           }))}
           onClose={() => setReorderGroupsVisible(false)}
           onSave={async (orderedIds) => {
-            setReorderGroupsVisible(false);
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${selectedType === "expense" ? "Expense" : "Income"} Groups`}
@@ -545,8 +544,6 @@ function CategoriesScreenContent({
             setGroupForSubReorder(null);
           }}
           onSave={async (orderedIds) => {
-            setReorderSubsVisible(false);
-            setGroupForSubReorder(null);
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${groupForSubReorder.name} Subcategories`}
