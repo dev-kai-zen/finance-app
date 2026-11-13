@@ -23,7 +23,6 @@ import { withGoogleDriveAccessToken } from "@/modules/google-drive-backup/servic
 import {
   ConfirmModal,
   NotificationModal,
-  PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -32,6 +31,7 @@ import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
+import { GoogleDriveSkeleton } from "@/modules/google-drive-backup/components/google-drive-skeleton";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
@@ -164,11 +164,7 @@ export function GoogleDriveBackupPanel() {
   return (
     <>
       {showBootstrapLoading ? (
-        <View style={styles.container}>
-          <View style={[styles.card, styles.loadingCard]}>
-            <PageLoadingState message={t("googleDriveBackup.loading")} />
-          </View>
-        </View>
+        <GoogleDriveSkeleton />
       ) : (
       <View style={styles.container}>
         <View style={styles.card}>
@@ -495,9 +491,6 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
       overflow: "hidden",
       ...theme.shadows.card,
-    },
-    loadingCard: {
-      minHeight: 180,
     },
     statusRow: {
       alignItems: "center",

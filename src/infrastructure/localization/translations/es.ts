@@ -865,6 +865,7 @@ export const es = {
       improveItem30: "Simplifica la pantalla de Configuración eliminando descripciones redundantes y optimizando la etiqueta del tema.",
       improveItem31: "Muestra una notificación rápida en lugar de un modal emergente al actualizar la frecuencia de copia de seguridad local.",
       improveItem32: "Reemplaza el icono de verificación de Google Drive y el botón por un chip de desconexión.",
+      improveItem33: "Muestra un marcador de posición esqueleto fluido mientras se conecta a Google Drive en lugar de una rueda de carga.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",

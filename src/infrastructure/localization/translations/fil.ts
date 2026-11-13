@@ -866,6 +866,7 @@ export const fil = {
       improveItem30: "Gawing mas simple ang screen ng Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na paglalarawan at pag-ayos ng label ng tema.",
       improveItem31: "Magpakita ng mabilisang toast notification sa halip na popup modal kapag ina-update ang dalas ng lokal na backup.",
       improveItem32: "Palitan ang Google Drive check icon at disconnect button ng isang disconnect chip sa account.",
+      improveItem33: "Magpakita ng makinis na skeleton placeholder habang kumokonekta sa Google Drive sa halip na loading spinner.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
