@@ -11,6 +11,9 @@ export type DefaultAccountSettingKey =
 export const TRANSACTION_VIEW_MODE_SETTING_KEY =
   "transaction_list_view_mode";
 
+export const ACCOUNTS_GROUP_VIEW_MODE_SETTING_KEY =
+  "accounts_group_view_mode";
+
 export const CHAT_TRANSACTION_MODE_SETTING_KEY = "chat.transactionMode";
 
 export const GESTURE_SHAKE_ACTION_SETTING_KEY = "gestures.shakeAction";

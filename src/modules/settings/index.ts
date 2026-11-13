@@ -20,6 +20,11 @@ export {
 } from "./services/transaction-view-mode.service";
 export type { TransactionViewMode } from "./services/transaction-view-mode.service";
 export {
+  getAccountsGroupViewMode,
+  setAccountsGroupViewMode,
+} from "./services/accounts-group-view-mode.service";
+export type { AccountsGroupViewMode } from "./services/accounts-group-view-mode.service";
+export {
   getChatTransactionMode,
   setChatTransactionMode,
   subscribeToChatTransactionMode,
@@ -60,6 +65,7 @@ export type { ShakeAction } from "./services/gesture-settings.service";
 export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
+  ACCOUNTS_GROUP_VIEW_MODE_SETTING_KEY,
   CHAT_TRANSACTION_MODE_SETTING_KEY,
   GESTURE_SHAKE_ACTION_SETTING_KEY,
   DASHBOARD_LAYOUT_SETTING_KEY,

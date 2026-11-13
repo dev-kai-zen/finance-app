@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import {
@@ -28,6 +28,7 @@ import {
   Heart,
   Info,
   Languages,
+  Layers,
   LayoutGrid,
   Palette,
   Pipette,
@@ -88,6 +89,11 @@ import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { HapticFeedbackSettingsModal } from "../components/haptic-feedback-settings-modal";
 import { SoundEffectsSettingsModal } from "../components/sound-effects-settings-modal";
 import { PRIVACY_POLICY_URL, TERMS_URL } from "../constants/settings.constants";
+import {
+  getAccountsGroupViewMode,
+  setAccountsGroupViewMode,
+  type AccountsGroupViewMode,
+} from "../services/accounts-group-view-mode.service";
 import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
@@ -264,6 +270,36 @@ function SettingsScreenContent() {
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
+
+  const [accountsGroupViewMode, setAccountsGroupViewModeState] =
+    useState<AccountsGroupViewMode>(() => {
+      try {
+        return getAccountsGroupViewMode();
+      } catch {
+        return "expanded";
+      }
+    });
+
+  useFocusEffect(
+    useCallback(() => {
+      try {
+        setAccountsGroupViewModeState(getAccountsGroupViewMode());
+      } catch {
+        // Ignore
+      }
+    }, []),
+  );
+
+  const handleToggleAccountsGroupViewMode = useCallback(() => {
+    const nextMode =
+      accountsGroupViewMode === "expanded" ? "collapsed" : "expanded";
+    setAccountsGroupViewModeState(nextMode);
+    try {
+      setAccountsGroupViewMode(nextMode);
+    } catch {
+      // Ignore
+    }
+  }, [accountsGroupViewMode]);
 
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
@@ -1010,6 +1046,40 @@ function SettingsScreenContent() {
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              accessibilityLabel={`${t("settings.defaultAccountGroupsViewLabel")}: ${accountsGroupViewMode === "collapsed" ? t("settings.accountsGroupViewCollapsed") : t("settings.accountsGroupViewExpanded")}`}
+              accessibilityRole="button"
+              onPress={handleToggleAccountsGroupViewMode}
+              style={({ pressed }) => [
+                styles.settingRow,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Layers color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.defaultAccountGroupsViewLabel")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.defaultAccountGroupsViewDescription")}
+                </Text>
+              </View>
+              <View style={styles.rowAccessory}>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>
+                    {accountsGroupViewMode === "collapsed"
+                      ? t("settings.accountsGroupViewCollapsed")
+                      : t("settings.accountsGroupViewExpanded")}
+                  </Text>
+                </View>
+                <ChevronRight color={theme.colors.textMuted} size={18} />
+              </View>
             </Pressable>
           </View>
         </View>

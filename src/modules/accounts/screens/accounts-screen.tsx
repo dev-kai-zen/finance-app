@@ -24,6 +24,7 @@ import {
 } from "@/modules/walkthrough";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
+import { AccountGroupsViewChip } from "@/modules/accounts/components/account-groups-view-chip";
 import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
@@ -42,12 +43,14 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
+import { useAccountsGroupViewMode } from "@/modules/accounts/hooks/use-accounts-group-view-mode";
 import { useFundGroups } from "@/modules/accounts/hooks/use-fund-groups";
 import type {
   AccountListItem,
   AccountType,
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
+import type { AccountsGroupViewMode } from "@/modules/settings";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { AdBanner } from "@/modules/ads";
 
@@ -121,6 +124,38 @@ function AccountsScreenContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
     () => new Set(),
+  );
+
+  const { viewMode, setViewMode } = useAccountsGroupViewMode();
+  const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
+
+  const handleToggleGlobalViewMode = useCallback(
+    (nextMode: AccountsGroupViewMode) => {
+      setGroupOverrides({});
+      setViewMode(nextMode);
+    },
+    [setViewMode],
+  );
+
+  const isGroupCollapsed = useCallback(
+    (groupId: string) => {
+      if (groupId in groupOverrides) {
+        return groupOverrides[groupId];
+      }
+      return viewMode === "collapsed";
+    },
+    [groupOverrides, viewMode],
+  );
+
+  const handleToggleGroupCollapse = useCallback(
+    (groupId: string) => {
+      setGroupOverrides((prev) => {
+        const currentlyCollapsed =
+          groupId in prev ? prev[groupId] : viewMode === "collapsed";
+        return { ...prev, [groupId]: !currentlyCollapsed };
+      });
+    },
+    [viewMode],
   );
 
   const scrollRef = useRef<ScrollView>(null);
@@ -387,7 +422,7 @@ function AccountsScreenContent({
     marginBottom: theme.spacing.md,
   }));
   const searchSpacing = useThemeStyles((theme) => ({
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
   }));
 
   return (
@@ -449,6 +484,11 @@ function AccountsScreenContent({
             onChangeText={setSearchQuery}
           />
 
+          <AccountGroupsViewChip
+            viewMode={viewMode}
+            onToggle={handleToggleGlobalViewMode}
+          />
+
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
               {filteredActive.some(
@@ -461,6 +501,8 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
+                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({
@@ -492,6 +534,8 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
+                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({

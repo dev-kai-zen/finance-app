@@ -60,6 +60,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
           "versionHistory.v150.improveItem37",
           "versionHistory.v150.improveItem38",
           "versionHistory.v150.improveItem39",
+          "versionHistory.v150.improveItem40",
         ],
       },
       {
@@ -90,6 +91,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
           "versionHistory.v150.fixItem23",
           "versionHistory.v150.fixItem24",
           "versionHistory.v150.fixItem25",
+          "versionHistory.v150.fixItem26",
         ],
       },
     ],

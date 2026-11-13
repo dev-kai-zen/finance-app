@@ -305,6 +305,12 @@ export const fil = {
     account: "Account",
     uncategorized: "Walang kategorya",
   },
+  accounts: {
+    expand: "I-expand",
+    collapse: "I-collapse",
+    expandAll: "I-expand Lahat",
+    collapseAll: "I-collapse Lahat",
+  },
   search: {
     openSearch: "Buksan ang paghahanap",
     searchPlaceholder: "Maghanap...",
@@ -515,6 +521,11 @@ export const fil = {
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Default na Account (Gastos)",
     defaultAccountIncomeLabel: "Default na Account (Kita)",
+    defaultAccountGroupsViewLabel: "Default na View ng Account Groups",
+    defaultAccountGroupsViewDescription:
+      "Piliin kung magsisimulang naka-expand o naka-collapse ang account groups",
+    accountsGroupViewExpanded: "Naka-expand",
+    accountsGroupViewCollapsed: "Naka-collapse",
     resetDataAccessibility:
       "I-reset ang lahat ng app data. I-tap para magpatuloy.",
     languageSection: "WIKA",
@@ -873,6 +884,7 @@ export const fil = {
       improveItem37: "I-standardize ang header ng Manage Kai Knowledge gamit ang pinag-isang navigation back button ng app.",
       improveItem38: "Magdagdag ng mabilisang paggawa ng custom hex color sa Theme Studio at pag-isahin ang mga color swatch sa lahat ng screen nang walang layout jumps.",
       improveItem39: "I-standardize ang mga icon ng tulong at impormasyon sa lahat ng screen gamit ang question mark para sa gabay at info mark para sa mga paunawa.",
+      improveItem40: "I-toggle ang naka-expand at naka-collapse na view ng mga grupo ng account at itakda ang iyong default na preference sa Mga Setting.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
@@ -914,6 +926,8 @@ export const fil = {
         "Pigilan ang mga error sa pamamagitan ng paghihigpit sa pagpapalit ng uri ng transfer habang nag-e-edit ng mga tala.",
       fixItem25:
         "I-pantay ang toggle ng daily inspiration quote sa customization ng dashboard sa iba pang switch ng card.",
+      fixItem26:
+        "Panatilihing buong nakikita ang mga input field ng pangalan ng kulay at hex code sa itaas ng virtual keyboard.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

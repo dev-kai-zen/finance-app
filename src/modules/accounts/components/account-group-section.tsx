@@ -35,6 +35,8 @@ export function AccountGroupSection({
   expandedPocketAccountIds,
   pockets,
   walkthroughTargetId,
+  isGroupCollapsed,
+  onToggleGroupCollapse,
 }: {
   group: AccountGroup;
   accounts: AccountListItem[];
@@ -48,6 +50,8 @@ export function AccountGroupSection({
   expandedPocketAccountIds: ReadonlySet<string>;
   pockets: PocketListItem[];
   walkthroughTargetId?: WalkthroughTargetId;
+  isGroupCollapsed?: (groupId: string) => boolean;
+  onToggleGroupCollapse?: (groupId: string) => void;
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
@@ -180,6 +184,12 @@ export function AccountGroupSection({
         accountType={typeGroups[0].accountType}
         accounts={typeGroups[0].accounts}
         expandedPocketAccountIds={expandedPocketAccountIds}
+        isCollapsed={isGroupCollapsed?.(typeGroups[0].accountType.id)}
+        onToggleCollapse={
+          onToggleGroupCollapse
+            ? () => onToggleGroupCollapse(typeGroups[0].accountType.id)
+            : undefined
+        }
         pockets={pockets}
         onAddPocket={onAddPocket}
         onEditType={onEditType}
@@ -204,6 +214,12 @@ export function AccountGroupSection({
             accountType={typeGroup.accountType}
             accounts={typeGroup.accounts}
             expandedPocketAccountIds={expandedPocketAccountIds}
+            isCollapsed={isGroupCollapsed?.(typeGroup.accountType.id)}
+            onToggleCollapse={
+              onToggleGroupCollapse
+                ? () => onToggleGroupCollapse(typeGroup.accountType.id)
+                : undefined
+            }
             pockets={pockets}
             onAddPocket={onAddPocket}
             onEditType={onEditType}

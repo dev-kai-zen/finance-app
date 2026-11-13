@@ -86,6 +86,10 @@ const {
   setTransactionViewMode,
 } = require("@/modules/settings/services/transaction-view-mode.service");
 const {
+  getAccountsGroupViewMode,
+  setAccountsGroupViewMode,
+} = require("@/modules/settings/services/accounts-group-view-mode.service");
+const {
   deleteAllUserData,
 } = require("@/modules/settings/repositories/reset-data.repository");
 
@@ -219,6 +223,26 @@ test("transaction view mode falls back to compact for an invalid stored value", 
     .run("transaction_list_view_mode", "grid", Date.now());
 
   assert.equal(getTransactionViewMode(database), "compact");
+});
+
+test("accounts group view mode defaults to expanded and persists user changes", () => {
+  assert.equal(getAccountsGroupViewMode(database), "expanded");
+
+  setAccountsGroupViewMode("collapsed", database);
+  assert.equal(getAccountsGroupViewMode(database), "collapsed");
+
+  setAccountsGroupViewMode("expanded", database);
+  assert.equal(getAccountsGroupViewMode(database), "expanded");
+});
+
+test("accounts group view mode falls back to expanded for an invalid stored value", () => {
+  sqlite
+    .prepare(
+      "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)",
+    )
+    .run("accounts_group_view_mode", "unknown_mode", Date.now());
+
+  assert.equal(getAccountsGroupViewMode(database), "expanded");
 });
 
 test("sets and retrieves default expense and income accounts and pockets", () => {

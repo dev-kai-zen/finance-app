@@ -305,6 +305,12 @@ export const es = {
     account: "Cuenta",
     uncategorized: "Sin categoría",
   },
+  accounts: {
+    expand: "Expandir",
+    collapse: "Colapsar",
+    expandAll: "Expandir todo",
+    collapseAll: "Colapsar todo",
+  },
   search: {
     openSearch: "Abrir búsqueda",
     searchPlaceholder: "Buscar...",
@@ -515,6 +521,11 @@ export const es = {
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Cuenta predeterminada (Gastos)",
     defaultAccountIncomeLabel: "Cuenta predeterminada (Ingresos)",
+    defaultAccountGroupsViewLabel: "Vista predeterminada de grupos de cuentas",
+    defaultAccountGroupsViewDescription:
+      "Elige si los grupos de cuentas inician expandidos o colapsados",
+    accountsGroupViewExpanded: "Expandido",
+    accountsGroupViewCollapsed: "Colapsado",
     resetDataAccessibility:
       "Restablecer todos los datos de la app. Toca para continuar.",
     languageSection: "IDIOMA",
@@ -872,6 +883,7 @@ export const es = {
       improveItem37: "Estandariza el encabezado de Administrar Conocimiento de Kai con el botón de retroceso unificado de la app.",
       improveItem38: "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
       improveItem39: "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
+      improveItem40: "Alterna vistas expandidas y colapsadas de grupos de cuentas y define tu preferencia predeterminada en Configuración.",
       fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
       fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
@@ -913,6 +925,8 @@ export const es = {
         "Evite errores al restringir el cambio de tipo de transferencia al editar registros existentes.",
       fixItem25:
         "Alinea el interruptor de frase de inspiración diaria en la personalización del panel con los demás botones.",
+      fixItem26:
+        "Mantén los campos de nombre de color y código hexadecimal completamente visibles sobre el teclado virtual.",
     },
     v140: {
       date: "5 de noviembre de 2026",

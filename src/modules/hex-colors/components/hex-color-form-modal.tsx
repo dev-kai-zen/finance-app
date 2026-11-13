@@ -133,7 +133,8 @@ export function HexColorFormModal({
     <>
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        automaticOffset
+        behavior="height"
         style={styles.overlay}
       >
         <Pressable
@@ -162,27 +163,27 @@ export function HexColorFormModal({
             </Pressable>
           </View>
 
-          {/* Color Preview & Swatch (Pinned above scroll area so it stays visible while typing) */}
-          <View style={styles.previewContainer}>
-            <View
-              style={[
-                styles.previewSwatch,
-                { backgroundColor: currentPreviewColor },
-              ]}
-            />
-            <View style={styles.previewInfo}>
-              <Text style={styles.previewName}>{name.trim() || "Color Preview"}</Text>
-              <Text style={styles.previewHex}>
-                {isValidHex(hex) ? hex.toUpperCase() : "Enter valid hex code"}
-              </Text>
-            </View>
-          </View>
-
           <KeyboardAwareForm
-            bottomOffset={80}
+            bottomOffset={24}
             showsVerticalScrollIndicator={false}
             style={styles.formScroll}
           >
+            {/* Color Preview & Swatch */}
+            <View style={styles.previewContainer}>
+              <View
+                style={[
+                  styles.previewSwatch,
+                  { backgroundColor: currentPreviewColor },
+                ]}
+              />
+              <View style={styles.previewInfo}>
+                <Text style={styles.previewName}>{name.trim() || "Color Preview"}</Text>
+                <Text style={styles.previewHex}>
+                  {isValidHex(hex) ? hex.toUpperCase() : "Enter valid hex code"}
+                </Text>
+              </View>
+            </View>
+
             {/* Color Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>COLOR NAME</Text>
@@ -287,7 +288,7 @@ function createStyles(theme: AppTheme) {
       borderTopRightRadius: 24,
       borderWidth: 1,
       flexDirection: "column",
-      flexShrink: 1,
+      height: "80%",
       maxHeight: "85%",
       paddingHorizontal: theme.spacing.lg,
       paddingTop: theme.spacing.md,
@@ -297,6 +298,7 @@ function createStyles(theme: AppTheme) {
     sheetDesktop: {
       alignSelf: "center",
       borderRadius: 24,
+      height: "auto",
       marginBottom: "auto",
       marginTop: "auto",
       maxWidth: 440,
@@ -324,8 +326,8 @@ function createStyles(theme: AppTheme) {
       width: 32,
     },
     formScroll: {
-      flexShrink: 1,
-      maxHeight: 340,
+      flex: 1,
+      minHeight: 0,
     },
     previewContainer: {
       alignItems: "center",

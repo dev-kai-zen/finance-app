@@ -300,6 +300,12 @@ export const en = {
     account: "Account",
     uncategorized: "Uncategorized",
   },
+  accounts: {
+    expand: "Expand",
+    collapse: "Collapse",
+    expandAll: "Expand All",
+    collapseAll: "Collapse All",
+  },
   search: {
     openSearch: "Open search",
     searchPlaceholder: "Search...",
@@ -523,6 +529,11 @@ export const en = {
     themeTitle: "Theme",
     defaultAccountExpenseLabel: "Default Account (Expense)",
     defaultAccountIncomeLabel: "Default Account (Income)",
+    defaultAccountGroupsViewLabel: "Account Groups Default View",
+    defaultAccountGroupsViewDescription:
+      "Choose whether account groups start expanded or collapsed",
+    accountsGroupViewExpanded: "Expanded",
+    accountsGroupViewCollapsed: "Collapsed",
     resetDataAccessibility: "Reset all app data. Tap to continue.",
     languageSection: "LANGUAGE",
     languageTitle: "Language",
@@ -875,6 +886,7 @@ export const en = {
       improveItem37: "Standardize Manage Kai Knowledge screen header with the app's unified navigation back button.",
       improveItem38: "Add quick custom hex color creation in Theme Studio and harmonize color picker swatches across all screens without layout jumps.",
       improveItem39: "Standardize help and info icons across all screens using question marks for interactive explanations and info marks for callout notices.",
+      improveItem40: "Toggle expanded and collapsed account group views and set your default preference in Settings.",
       fixItem1: "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2: "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
       fixItem3: "Prevent version history from showing while the app is locked.",
@@ -916,6 +928,8 @@ export const en = {
         "Prevent transaction group errors by restricting transfer type conversions when editing existing transactions.",
       fixItem25:
         "Align the daily inspiration quote toggle in dashboard customization with the other card switches.",
+      fixItem26:
+        "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
     },
     v140: {
       date: "November 5, 2026",
