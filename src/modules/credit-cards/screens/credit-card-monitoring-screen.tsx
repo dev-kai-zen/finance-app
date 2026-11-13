@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { CreditCard } from "lucide-react-native";
@@ -8,17 +8,37 @@ import {
   PageEmptyState,
   PageErrorState,
   PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useLocalization } from "@/infrastructure/localization";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
+import {
+  CreditCardsWalkthroughOverlay,
+  useCreditCardsWalkthrough,
+  useWalkthroughIntro,
+  useWalkthroughRegistry,
+  useWalkthroughTarget,
+  WalkthroughIntroModal,
+  WalkthroughRegistryProvider,
+  WALKTHROUGH_SCROLL_TOP_OFFSET,
+  type WalkthroughTargetId,
+} from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import { CreditCardMonitoringCard } from "../components/credit-card-monitoring-card";
 import { useCreditCardMonitoring } from "../hooks/use-credit-card-monitoring";
 
 export function CreditCardMonitoringScreen() {
+  return (
+    <WalkthroughRegistryProvider>
+      <CreditCardMonitoringScreenContent />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CreditCardMonitoringScreenContent() {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -28,6 +48,39 @@ export function CreditCardMonitoringScreen() {
   const [proModalVisible, setProModalVisible] = useState(false);
   const data = useCreditCardMonitoring();
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+
+  const emptyAddRef = useWalkthroughTarget("creditCardEmptyAddButton");
+  const dueSummaryRef = useWalkthroughTarget(
+    data.cards.length > 0 ? "creditCardDueSummary" : null,
+  );
+  const accountChipsRef = useWalkthroughTarget(
+    data.cards.length > 0 ? "creditCardAccountChips" : null,
+  );
+
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        if (!layout) {
+          return;
+        }
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, layout.y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+          animated: true,
+        });
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -56,8 +109,54 @@ export function CreditCardMonitoringScreen() {
   const selectedCard =
     data.cards.find((c) => c.accountId === activeAccountId) ?? data.cards[0] ?? null;
 
+  const hasCards = data.cards.length > 0;
+  const hasUnbilledActivity = (selectedCard?.unbilledItems.length ?? 0) > 0;
+
+  const walkthrough = useCreditCardsWalkthrough({
+    hasCards,
+    hasUnbilledActivity,
+    onScrollToTarget: handleScrollToTarget,
+  });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.isWalkthroughActive, walkthrough.startWalkthrough],
+    ),
+  );
+
+  const walkthroughIntro = useWalkthroughIntro({
+    promptKey: "creditCardsWalkthroughDismissed",
+    onStart: walkthrough.startWalkthrough,
+    enabled: isPro,
+  });
+
+  useEffect(() => {
+    if (!data.loading && isPro && walkthroughIntro.canTrigger) {
+      const timer = setTimeout(() => {
+        walkthroughIntro.triggerIfFirstTime();
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [
+    data.loading,
+    isPro,
+    walkthroughIntro.canTrigger,
+    walkthroughIntro.triggerIfFirstTime,
+  ]);
+
   return (
-    <PageContainer contentContainerStyle={styles.content}>
+    <PageContainer
+      contentContainerStyle={styles.content}
+      scrollContentRef={scrollContentRef}
+      scrollEnabled={
+        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+      }
+      scrollRef={scrollRef}
+    >
       {data.loading ? (
         <PageLoadingState message="Preparing credit-card billing..." />
       ) : data.error ? (
@@ -65,6 +164,7 @@ export function CreditCardMonitoringScreen() {
       ) : data.cards.length === 0 ? (
         <PageEmptyState
           actionLabel="+ Add Credit Card Account"
+          actionRef={emptyAddRef}
           onAction={() => router.push("/accounts")}
           description="Create a Credit Card account to monitor billing cycles, installments, and utilization."
           icon={<CreditCard color={theme.colors.primary} size={32} />}
@@ -72,7 +172,7 @@ export function CreditCardMonitoringScreen() {
         />
       ) : (
         <>
-          <View style={styles.summary}>
+          <View ref={dueSummaryRef} style={styles.summary}>
             <View>
               <Text style={styles.summaryLabel}>DUE THIS MONTH</Text>
               <Text
@@ -105,7 +205,7 @@ export function CreditCardMonitoringScreen() {
             ) : null}
           </View>
 
-          <View style={styles.chipsSection}>
+          <View ref={accountChipsRef} style={styles.chipsSection}>
             <HorizontalScrollView
               contentContainerStyle={styles.chipsScrollContent}
             >
@@ -179,6 +279,36 @@ export function CreditCardMonitoringScreen() {
         onClose={handleClose}
         visible={proModalVisible}
       />
+
+      <WalkthroughIntroModal
+        icon={<CreditCard color={theme.colors.primary} size={32} />}
+        message={t("creditCardsWalkthrough.introMessage")}
+        onSkip={walkthroughIntro.handleSkip}
+        onStart={walkthroughIntro.handleStart}
+        subtitle={t("creditCardsWalkthrough.introSubtitle")}
+        title={t("creditCardsWalkthrough.introTitle")}
+        visible={walkthroughIntro.isIntroVisible}
+      />
+
+      {/* Credit Cards Walkthrough Overlay */}
+      <CreditCardsWalkthroughOverlay
+        onEmptyAddPress={() => {
+          walkthrough.completeWalkthrough();
+          router.push("/accounts");
+        }}
+        onNext={walkthrough.nextStep}
+        onPrev={walkthrough.prevStep}
+        onSkip={walkthrough.skipWalkthrough}
+        step={walkthrough.currentStep}
+        stepIndex={walkthrough.activeStepIndex}
+        targetLayout={walkthrough.activeTargetLayout}
+        totalSteps={walkthrough.totalSteps}
+        visible={walkthrough.isWalkthroughActive}
+      />
+
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
+      ) : null}
     </PageContainer>
   );
 }
@@ -277,6 +407,11 @@ function createStyles(theme: AppTheme) {
     activeChipBadgeText: {
       color: theme.colors.onPrimary,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 999,
     },
   });
 }

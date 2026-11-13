@@ -830,6 +830,7 @@ export const es = {
       newItem3: "Descarga plantillas CSV directamente a una carpeta de tu dispositivo.",
       newItem4: "Asigna tipos de transacción de otras aplicaciones y empareja categorías automáticamente con el conocimiento de Kai.",
       newItem5: "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo.",
+      newItem6: "Añade un recorrido interactivo para Tarjetas de Crédito para explorar ciclos de facturación, fechas de corte, utilización y cuotas.",
       improveItem1: "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
       improveItem2: "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
       improveItem3: "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
@@ -870,6 +871,8 @@ export const es = {
         "Corrige el fallo visual y la animación circular no deseada al activar interruptores en formularios y ajustes.",
       fixItem11:
         "Mantén visibles los campos de color encima del teclado al crear colores personalizados.",
+      fixItem12:
+        "Corrige el error por el cual la guía de Ajustes aparecía de forma incorrecta en la pantalla de Tarjetas de Crédito.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -1963,6 +1966,36 @@ export const es = {
     stepFabTitle: "Agregar nueva nota",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva nota con archivos adjuntos, etiquetas de color y opciones para fijar.",
+  },
+  creditCardsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Tarjetas de Crédito!",
+    introSubtitle: "Monitoreo inteligente de tarjetas",
+    introMessage:
+      "Monitorea ciclos de facturación, fechas de corte, límites de crédito y cuotas activas en un solo lugar. ¿Deseas un recorrido rápido?",
+    stepEmptyAddTitle: "Agregar tarjeta de crédito",
+    stepEmptyAddDesc:
+      "Toca aquí para crear una cuenta de tarjeta de crédito y controlar ciclos de facturación, cuotas y límites.",
+    stepDueSummaryTitle: "Resumen de pagos vencidos",
+    stepDueSummaryDesc:
+      "Consulta los pagos totales que vencen este mes en todas tus tarjetas, junto con alertas de saldos vencidos.",
+    stepAccountChipsTitle: "Selector de tarjetas",
+    stepAccountChipsDesc:
+      "Toca cualquier tarjeta para consultar sus saldos individuales, estados de cuenta y utilización de crédito.",
+    stepLimitUtilizationTitle: "Límite y utilización de crédito",
+    stepLimitUtilizationDesc:
+      "Controla tu límite de crédito asignado y el anillo de utilización en tiempo real para cuidar tu historial.",
+    stepMetricsTitle: "Actividad facturada y no facturada",
+    stepMetricsDesc:
+      "Supervisa el saldo facturado, los cargos no facturados del ciclo actual y la deuda pendiente total.",
+    stepDueInstallmentsTitle: "Vencimiento y cuotas",
+    stepDueInstallmentsDesc:
+      "Revisa la próxima fecha de pago, el monto adeudado y la cantidad de planes de cuotas activos.",
+    stepStatementsTitle: "Estados de cuenta y facturación",
+    stepStatementsDesc:
+      "Explora los estados de cuenta generados, revisa su estado pagado o vencido y consulta las compras desglosadas.",
+    stepUnbilledTitle: "Compras sin facturar",
+    stepUnbilledDesc:
+      "Revisa los cargos realizados durante el ciclo de facturación actual antes de la fecha de corte.",
   },
   settingsWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Ajustes!",

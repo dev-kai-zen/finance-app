@@ -1,10 +1,11 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
-  useEffect,
   useState,
   type PropsWithChildren,
 } from "react";
+import { useFocusEffect } from "expo-router";
 
 export interface HeaderWalkthroughAction {
   onStart: () => void;
@@ -43,11 +44,13 @@ export function useHeaderWalkthroughAction(
 ) {
   const { setWalkthroughAction } = useAppShellHeaderContext();
 
-  useEffect(() => {
-    setWalkthroughAction(action);
-    return () => {
-      setWalkthroughAction(null);
-    };
-  }, [action, setWalkthroughAction]);
+  useFocusEffect(
+    useCallback(() => {
+      setWalkthroughAction(action);
+      return () => {
+        setWalkthroughAction(null);
+      };
+    }, [action, setWalkthroughAction]),
+  );
 }
 

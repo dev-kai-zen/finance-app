@@ -14,6 +14,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import type {
   CreditCardActivityItem,
   CreditCardMonitoringItem,
@@ -52,6 +53,14 @@ export function CreditCardMonitoringCard({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+
+  const limitUtilizationRef = useWalkthroughTarget("creditCardLimitUtilization");
+  const metricsRef = useWalkthroughTarget("creditCardMetrics");
+  const dueInstallmentsRef = useWalkthroughTarget("creditCardDueInstallments");
+  const statementsRef = useWalkthroughTarget("creditCardStatements");
+  const unbilledRef = useWalkthroughTarget(
+    card.unbilledItems.length > 0 ? "creditCardUnbilled" : null,
+  );
 
   const [selectedStatementId, setSelectedStatementId] = useState<string | null>(
     null,
@@ -128,7 +137,7 @@ export function CreditCardMonitoringCard({
 
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
+      <View ref={limitUtilizationRef} style={styles.header}>
         <View style={styles.titleColumn}>
           <Text style={styles.title}>{card.accountName}</Text>
           <Text style={styles.limit}>
@@ -142,7 +151,7 @@ export function CreditCardMonitoringCard({
         <CreditUtilizationRing percent={card.utilizationPercent} />
       </View>
 
-      <View style={styles.metrics}>
+      <View ref={metricsRef} style={styles.metrics}>
         <Metric
           isPrivate={isPrivate}
           label="Billed"
@@ -160,49 +169,51 @@ export function CreditCardMonitoringCard({
         />
       </View>
 
-      <View style={styles.detailRow}>
-        <CalendarClock color={theme.colors.textSecondary} size={17} />
-        <View style={styles.detailText}>
-          <Text style={styles.detailLabel}>Next due</Text>
-          <Text style={styles.detailValue}>{formatDate(card.nextDueOn)}</Text>
-        </View>
-        <Text
-          style={[
-            styles.dueAmount,
-            !preferences.colorAmounts && { color: theme.colors.textPrimary },
-          ]}
-        >
-          {formatPrivacyAmount(
-            formatCurrency(card.dueThisMonthMinorUnits, card.currencyCode),
-            isPrivate,
-          )}
-        </Text>
-      </View>
-
-      <View style={styles.detailRow}>
-        <Layers3 color={theme.colors.textSecondary} size={17} />
-        <View style={styles.detailText}>
-          <Text style={styles.detailLabel}>Active installments</Text>
-          <Text style={styles.detailValue}>
-            {card.activeInstallmentCount}
+      <View ref={dueInstallmentsRef}>
+        <View style={styles.detailRow}>
+          <CalendarClock color={theme.colors.textSecondary} size={17} />
+          <View style={styles.detailText}>
+            <Text style={styles.detailLabel}>Next due</Text>
+            <Text style={styles.detailValue}>{formatDate(card.nextDueOn)}</Text>
+          </View>
+          <Text
+            style={[
+              styles.dueAmount,
+              !preferences.colorAmounts && { color: theme.colors.textPrimary },
+            ]}
+          >
+            {formatPrivacyAmount(
+              formatCurrency(card.dueThisMonthMinorUnits, card.currencyCode),
+              isPrivate,
+            )}
           </Text>
         </View>
-        <Text
-          style={[
-            styles.available,
-            !preferences.colorAmounts && { color: theme.colors.textSecondary },
-          ]}
-        >
-          {formatPrivacyAmount(
-            formatCurrency(card.availableCreditMinorUnits, card.currencyCode),
-            isPrivate,
-          )}{" "}
-          available
-        </Text>
+
+        <View style={styles.detailRow}>
+          <Layers3 color={theme.colors.textSecondary} size={17} />
+          <View style={styles.detailText}>
+            <Text style={styles.detailLabel}>Active installments</Text>
+            <Text style={styles.detailValue}>
+              {card.activeInstallmentCount}
+            </Text>
+          </View>
+          <Text
+            style={[
+              styles.available,
+              !preferences.colorAmounts && { color: theme.colors.textSecondary },
+            ]}
+          >
+            {formatPrivacyAmount(
+              formatCurrency(card.availableCreditMinorUnits, card.currencyCode),
+              isPrivate,
+            )}{" "}
+            available
+          </Text>
+        </View>
       </View>
 
       {/* Billed Statements Filter & Items Section */}
-      <View style={styles.activitySection}>
+      <View ref={statementsRef} style={styles.activitySection}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.activityTitle}>Billed statements</Text>
           {activeStatement && activeStatementItems.length > 0 ? (
@@ -392,7 +403,7 @@ export function CreditCardMonitoringCard({
 
       {/* Unbilled Activity Section */}
       {card.unbilledItems.length > 0 ? (
-        <View style={styles.activitySection}>
+        <View ref={unbilledRef} style={styles.activitySection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.activityTitle}>Unbilled activity</Text>
             <Text style={styles.activityItemCount}>

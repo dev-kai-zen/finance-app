@@ -831,6 +831,7 @@ export const fil = {
       newItem3: "I-download ang mga CSV template nang direkta sa folder sa iyong device.",
       newItem4: "Itugma ang mga uri ng transaksyon mula sa ibang app at kusang itugma ang mga kategorya gamit ang kaalaman ni Kai.",
       newItem5: "Magdagdag ng paunang pag-post para maitala nang maaga ang mga nakaiskedyul na transaksyon at ilipat sa susunod na siklo.",
+      newItem6: "Magdagdag ng interactive na walkthrough tour para sa Credit Cards upang masubaybayan ang billing cycles, cutoffs, utilization, at hulugan.",
       improveItem1: "I-tap o i-drag sa net worth chart upang makita ang eksaktong balanse at petsa gamit ang mga tooltip.",
       improveItem2: "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, close icon, at proteksyon sa pagpindot.",
       improveItem3: "Buksan ang mga tuntunin ng app sa Settings, katabi ng patakaran sa privacy.",
@@ -871,6 +872,8 @@ export const fil = {
         "Ayusin ang visual glitch at hindi inaasahang circle animation kapag binubuksan ang mga toggle sa mga form at setting.",
       fixItem11:
         "Panatilihing nakikita ang mga field ng kulay sa itaas ng keyboard kapag gumagawa ng sariling kulay.",
+      fixItem12:
+        "Ayusin ang isyu kung saan ang gabay ng walkthrough mula sa Settings ay lumilitaw sa screen ng Credit Cards.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -1965,6 +1968,36 @@ export const fil = {
     stepFabTitle: "Magdagdag ng Bagong Tala",
     stepFabDesc:
       "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
+  },
+  creditCardsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Credit Cards!",
+    introSubtitle: "Matalinong pagsubaybay sa credit card",
+    introMessage:
+      "Subaybayan ang billing cycles, statement cutoffs, credit limits, at active installments sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
+    stepEmptyAddTitle: "Magdagdag ng Credit Card",
+    stepEmptyAddDesc:
+      "Pindutin ito upang gumawa ng credit card account para masubaybayan ang billing cycles, hulugan, at credit limits.",
+    stepDueSummaryTitle: "Buod ng Babayarin",
+    stepDueSummaryDesc:
+      "Tingnan ang kabuuang bayarin sa lahat ng credit cards ngayong buwan, kasama ang anumang past due na balanse.",
+    stepAccountChipsTitle: "Pagpili ng Card",
+    stepAccountChipsDesc:
+      "Pindutin ang alinmang card upang makita ang indibidwal na balanse, detalye ng statement, at credit utilization.",
+    stepLimitUtilizationTitle: "Credit Limit at Paggamit",
+    stepLimitUtilizationDesc:
+      "Bantayan ang iyong credit limit at real-time utilization ring upang mapanatiling malusog ang credit standing.",
+    stepMetricsTitle: "Billed vs Unbilled Activity",
+    stepMetricsDesc:
+      "Subaybayan ang na-bill na statement balance, mga kasalukuyang bayarin, at ang kabuuang natitirang utang.",
+    stepDueInstallmentsTitle: "Petsa ng Bayaran at Hulugan",
+    stepDueInstallmentsDesc:
+      "Alamin ang darating na takdang petsa ng bayaran, babayarang halaga, at bilang ng aktibong installment plans.",
+    stepStatementsTitle: "Billed Statements at Kasaysayan",
+    stepStatementsDesc:
+      "Tingnan ang bawat billing statement, suriin kung bayad na o overdue, at basahin ang bawat transaksyon.",
+    stepUnbilledTitle: "Unbilled na mga Gastos",
+    stepUnbilledDesc:
+      "Suriin ang mga pagbili sa kasalukuyang billing cycle bago dumating ang iyong susunod na cutoff date.",
   },
   settingsWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Setting!",

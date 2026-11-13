@@ -833,6 +833,7 @@ export const en = {
       newItem3: "Download CSV templates directly to a folder on your device.",
       newItem4: "Match transaction types from other apps and automatically match categories using Kai's knowledge.",
       newItem5: "Add advance posting to record upcoming scheduled transactions early and automatically advance to the next cycle.",
+      newItem6: "Add an interactive walkthrough tour for Credit Cards to explore billing cycles, cutoffs, utilization, and installments.",
       improveItem1: "Tap or drag along the net worth chart to view exact balances and dates with touch tooltips.",
       improveItem2: "Improve walkthrough tours with high-contrast buttons, dedicated close buttons, and touch protection.",
       improveItem3: "Open the app terms from Settings, next to the privacy policy.",
@@ -873,6 +874,8 @@ export const en = {
         "Fix visual glitch and unintended circle animation when enabling toggles across forms and settings.",
       fixItem11:
         "Keep the color name and hex code fields visible above the keyboard when creating custom colors.",
+      fixItem12:
+        "Fix issue where the header walkthrough guide from Settings incorrectly appeared on the Credit Cards screen.",
     },
     v140: {
       date: "November 5, 2026",
@@ -1969,6 +1972,36 @@ export const en = {
     stepFabTitle: "Add New Note",
     stepFabDesc:
       "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
+  },
+  creditCardsWalkthrough: {
+    introTitle: "Welcome to Credit Cards!",
+    introSubtitle: "Smart credit card monitoring",
+    introMessage:
+      "Monitor billing cycles, statement cutoffs, credit limits, and active installments all in one place. Would you like a quick walkthrough?",
+    stepEmptyAddTitle: "Add Credit Card",
+    stepEmptyAddDesc:
+      "Tap here to create a Credit Card account to track billing cycles, installments, and credit limits.",
+    stepDueSummaryTitle: "Payment Due Summary",
+    stepDueSummaryDesc:
+      "View total payments due across all credit cards this month, along with any past-due alerts.",
+    stepAccountChipsTitle: "Card Switcher",
+    stepAccountChipsDesc:
+      "Tap any credit card chip to inspect individual balances, statement details, and credit utilization.",
+    stepLimitUtilizationTitle: "Credit Limit & Utilization",
+    stepLimitUtilizationDesc:
+      "Keep track of your assigned credit limit and real-time utilization ring to preserve your credit score.",
+    stepMetricsTitle: "Billed vs Unbilled Activity",
+    stepMetricsDesc:
+      "Monitor your billed statement balance, current cycle unbilled charges, and total outstanding debt.",
+    stepDueInstallmentsTitle: "Due Date & Installments",
+    stepDueInstallmentsDesc:
+      "See your upcoming statement due date, due amount, and the number of active installment plans.",
+    stepStatementsTitle: "Billed Statements & History",
+    stepStatementsDesc:
+      "Browse generated statements, view paid or overdue status, and inspect itemized billed purchases.",
+    stepUnbilledTitle: "Unbilled Purchases",
+    stepUnbilledDesc:
+      "Review card charges made in the current billing cycle before your next statement cutoff.",
   },
   settingsWalkthrough: {
     introTitle: "Welcome to Settings!",

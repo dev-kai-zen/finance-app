@@ -73,6 +73,15 @@ export type WalkthroughTargetId =
   | "settingsPro"
   | "settingsRestorePurchases"
   | "settingsVersionHistory"
+  // Credit Cards
+  | "creditCardEmptyAddButton"
+  | "creditCardDueSummary"
+  | "creditCardAccountChips"
+  | "creditCardLimitUtilization"
+  | "creditCardMetrics"
+  | "creditCardDueInstallments"
+  | "creditCardStatements"
+  | "creditCardUnbilled"
   // Accounts Form & Groups
   | "accountFormName"
   | "accountFormNote"
