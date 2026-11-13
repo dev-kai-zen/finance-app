@@ -5,6 +5,7 @@ import {
   Crown,
   Moon,
   Palette,
+  Plus,
   SlidersHorizontal,
   Smartphone,
   Sparkles,
@@ -43,7 +44,13 @@ import {
 } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { writeSavedCustomThemeConfig } from "@/infrastructure/preferences/theme-preference.storage";
-import { useHexColors } from "@/modules/hex-colors";
+import {
+  HexColorFormModal,
+  findHexColorByHex,
+  useHexColors,
+  type HexColor,
+  type HexColorInput,
+} from "@/modules/hex-colors";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
 import {
   FinanceThemePreview,
@@ -157,12 +164,17 @@ export function ThemePickerModal({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { isPro } = useProStatus();
-  const { colors: savedHexColors } = useHexColors();
+  const { colors: savedHexColors, addColor } = useHexColors();
 
   const [activeTab, setActiveTab] = useState<ThemeModalTab>("presets");
   const [modeFilter, setModeFilter] = useState<PresetModeFilter>("all");
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [paletteGridWidth, setPaletteGridWidth] = useState(0);
+
+  const [isColorFormOpen, setIsColorFormOpen] = useState(false);
+  const [colorFormTarget, setColorFormTarget] = useState<"primary" | "accent">(
+    "primary",
+  );
 
   const [draftConfig, setDraftConfig] =
     useState<CustomThemeConfig>(customThemeConfig);
@@ -267,6 +279,69 @@ export function ThemePickerModal({
     setAccentInput(hex);
     setDraftConfig((prev) => ({ ...prev, accentHex: hex }));
   };
+
+  const handleOpenAddColor = (target: "primary" | "accent") => {
+    setColorFormTarget(target);
+    if (target === "primary" && isValidHexColor(primaryInput)) {
+      setDraftConfig((prev) => ({
+        ...prev,
+        primaryHex: normalizeHexColor(primaryInput, prev.primaryHex),
+      }));
+    } else if (target === "accent" && isValidHexColor(accentInput)) {
+      setDraftConfig((prev) => ({
+        ...prev,
+        accentHex: normalizeHexColor(accentInput, prev.accentHex),
+      }));
+    }
+    setIsColorFormOpen(true);
+  };
+
+  const handleSaveCustomColor = (input: HexColorInput): boolean => {
+    try {
+      const created = addColor(input);
+      const chosenHex = (created?.hex ?? input.hex).toUpperCase();
+      if (colorFormTarget === "primary") {
+        setDraftConfig((prev) => ({ ...prev, primaryHex: chosenHex }));
+        setPrimaryInput(chosenHex);
+      } else {
+        setDraftConfig((prev) => ({ ...prev, accentHex: chosenHex }));
+        setAccentInput(chosenHex);
+      }
+      return true;
+    } catch (err: unknown) {
+      const formattedHex = input.hex.trim().startsWith("#")
+        ? input.hex.trim().toUpperCase()
+        : `#${input.hex.trim().toUpperCase()}`;
+      const existing = findHexColorByHex(formattedHex);
+      if (existing) {
+        const hex = existing.hex.toUpperCase();
+        if (colorFormTarget === "primary") {
+          setDraftConfig((prev) => ({ ...prev, primaryHex: hex }));
+          setPrimaryInput(hex);
+        } else {
+          setDraftConfig((prev) => ({ ...prev, accentHex: hex }));
+          setAccentInput(hex);
+        }
+        return true;
+      }
+      throw err;
+    }
+  };
+
+  const initialFormColor: HexColor = useMemo(() => {
+    const targetHex =
+      colorFormTarget === "primary"
+        ? draftConfig.primaryHex
+        : draftConfig.accentHex;
+    return {
+      id: `temp_${colorFormTarget}`,
+      name: "",
+      hex: targetHex.toUpperCase(),
+      isSystem: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }, [colorFormTarget, draftConfig.primaryHex, draftConfig.accentHex]);
 
   const handleApplyCustomTheme = () => {
     writeSavedCustomThemeConfig(draftConfig);
@@ -730,23 +805,40 @@ export function ThemePickerModal({
                       </Text>
                     )}
                   </View>
-                  <View style={styles.hexInputContainer}>
-                    <View
-                      style={[
-                        styles.hexPreviewDot,
-                        { backgroundColor: draftConfig.primaryHex },
+                  <View style={styles.hexInputWrapper}>
+                    <View style={styles.hexInputContainer}>
+                      <View
+                        style={[
+                          styles.hexPreviewDot,
+                          { backgroundColor: draftConfig.primaryHex },
+                        ]}
+                      />
+                      <TextInput
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                        maxLength={7}
+                        onChangeText={handlePrimaryHexChange}
+                        placeholder="#10B981"
+                        placeholderTextColor={theme.colors.textMuted}
+                        style={styles.hexInput}
+                        value={primaryInput}
+                      />
+                    </View>
+                    <Pressable
+                      accessibilityLabel="Add custom hex color"
+                      accessibilityRole="button"
+                      onPress={() => handleOpenAddColor("primary")}
+                      style={({ pressed }) => [
+                        styles.hexAddIconButton,
+                        pressed && styles.hexAddIconButtonPressed,
                       ]}
-                    />
-                    <TextInput
-                      autoCapitalize="characters"
-                      autoCorrect={false}
-                      maxLength={7}
-                      onChangeText={handlePrimaryHexChange}
-                      placeholder="#10B981"
-                      placeholderTextColor={theme.colors.textMuted}
-                      style={styles.hexInput}
-                      value={primaryInput}
-                    />
+                    >
+                      <Plus
+                        color={theme.colors.primary}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
                   </View>
                 </View>
 
@@ -781,6 +873,21 @@ export function ThemePickerModal({
                       </Pressable>
                     );
                   })}
+                  <Pressable
+                    accessibilityLabel="Add custom color"
+                    accessibilityRole="button"
+                    onPress={() => handleOpenAddColor("primary")}
+                    style={({ pressed }) => [
+                      styles.addColorSwatchButton,
+                      pressed && styles.addColorSwatchButtonPressed,
+                    ]}
+                  >
+                    <Plus
+                      color={theme.colors.primary}
+                      size={16}
+                      strokeWidth={2.5}
+                    />
+                  </Pressable>
                 </View>
 
                 {/* Interactive Shade Strip for Primary Color */}
@@ -850,23 +957,40 @@ export function ThemePickerModal({
                       </Text>
                     )}
                   </View>
-                  <View style={styles.hexInputContainer}>
-                    <View
-                      style={[
-                        styles.hexPreviewDot,
-                        { backgroundColor: draftConfig.accentHex },
+                  <View style={styles.hexInputWrapper}>
+                    <View style={styles.hexInputContainer}>
+                      <View
+                        style={[
+                          styles.hexPreviewDot,
+                          { backgroundColor: draftConfig.accentHex },
+                        ]}
+                      />
+                      <TextInput
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                        maxLength={7}
+                        onChangeText={handleAccentHexChange}
+                        placeholder="#F59E0B"
+                        placeholderTextColor={theme.colors.textMuted}
+                        style={styles.hexInput}
+                        value={accentInput}
+                      />
+                    </View>
+                    <Pressable
+                      accessibilityLabel="Add custom hex color"
+                      accessibilityRole="button"
+                      onPress={() => handleOpenAddColor("accent")}
+                      style={({ pressed }) => [
+                        styles.hexAddIconButton,
+                        pressed && styles.hexAddIconButtonPressed,
                       ]}
-                    />
-                    <TextInput
-                      autoCapitalize="characters"
-                      autoCorrect={false}
-                      maxLength={7}
-                      onChangeText={handleAccentHexChange}
-                      placeholder="#F59E0B"
-                      placeholderTextColor={theme.colors.textMuted}
-                      style={styles.hexInput}
-                      value={accentInput}
-                    />
+                    >
+                      <Plus
+                        color={theme.colors.accent}
+                        size={16}
+                        strokeWidth={2.5}
+                      />
+                    </Pressable>
                   </View>
                 </View>
 
@@ -901,6 +1025,21 @@ export function ThemePickerModal({
                       </Pressable>
                     );
                   })}
+                  <Pressable
+                    accessibilityLabel="Add custom color"
+                    accessibilityRole="button"
+                    onPress={() => handleOpenAddColor("accent")}
+                    style={({ pressed }) => [
+                      styles.addColorSwatchButton,
+                      pressed && styles.addColorSwatchButtonPressed,
+                    ]}
+                  >
+                    <Plus
+                      color={theme.colors.accent}
+                      size={16}
+                      strokeWidth={2.5}
+                    />
+                  </Pressable>
                 </View>
 
                 {/* Interactive Shade Strip for Accent Color */}
@@ -991,6 +1130,13 @@ export function ThemePickerModal({
       <ProPaywallModal
         onClose={() => setPaywallOpen(false)}
         visible={paywallOpen}
+      />
+
+      <HexColorFormModal
+        initialColor={initialFormColor}
+        onClose={() => setIsColorFormOpen(false)}
+        onSave={handleSaveCustomColor}
+        visible={isColorFormOpen}
       />
     </Modal>
   );
@@ -1355,6 +1501,11 @@ function createStyles(theme: AppTheme) {
       flex: 1,
       gap: 2,
     },
+    hexInputWrapper: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 6,
+    },
     hexInputContainer: {
       alignItems: "center",
       backgroundColor: theme.colors.background,
@@ -1365,6 +1516,20 @@ function createStyles(theme: AppTheme) {
       gap: 6,
       paddingHorizontal: 8,
       paddingVertical: 4,
+    },
+    hexAddIconButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      height: 28,
+      justifyContent: "center",
+      width: 28,
+    },
+    hexAddIconButtonPressed: {
+      backgroundColor: theme.colors.surface,
+      opacity: 0.7,
     },
     hexPreviewDot: {
       borderColor: theme.colors.borderStrong,
@@ -1399,6 +1564,20 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
       transform: [{ scale: 1.06 }],
+    },
+    addColorSwatchButton: {
+      alignItems: "center",
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderStyle: "dashed",
+      borderWidth: 1.5,
+      height: 34,
+      justifyContent: "center",
+      width: 34,
+    },
+    addColorSwatchButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      opacity: 0.6,
     },
     selectedColorNamePill: {
       color: theme.colors.primary,

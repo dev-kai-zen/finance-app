@@ -340,14 +340,15 @@ function NoteEditorModalContent({
                       backgroundColor: theme.colors.surfaceMuted,
                       borderColor:
                         color === null
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                      borderWidth: color === null ? 2.5 : 1,
+                          ? theme.colors.textPrimary
+                          : "rgba(255,255,255,0.25)",
+                      borderWidth: color === null ? 2.5 : 1.5,
+                      transform: color === null ? [{ scale: 1.06 }] : undefined,
                     },
                   ]}
                 >
                   {color === null ? (
-                    <Check color={theme.colors.textPrimary} size={14} />
+                    <Check color={theme.colors.textPrimary} size={14} strokeWidth={3} />
                   ) : (
                     <Slash color={theme.colors.textMuted} size={12} />
                   )}
@@ -374,13 +375,16 @@ function NoteEditorModalContent({
                         {
                           backgroundColor: c.hex,
                           borderColor: isSelected
-                            ? theme.colors.primary
-                            : theme.colors.border,
-                          borderWidth: isSelected ? 2.5 : 1,
+                            ? theme.colors.textPrimary
+                            : "rgba(255,255,255,0.25)",
+                          borderWidth: isSelected ? 2.5 : 1.5,
+                          transform: isSelected ? [{ scale: 1.06 }] : undefined,
                         },
                       ]}
                     >
-                      {isSelected ? <Check color={checkColor} size={14} /> : null}
+                      {isSelected ? (
+                        <Check color={checkColor} size={14} strokeWidth={3} />
+                      ) : null}
                     </Pressable>
                   );
                 })}
@@ -395,14 +399,16 @@ function NoteEditorModalContent({
                       styles.colorChip,
                       {
                         backgroundColor: color,
-                        borderColor: theme.colors.primary,
+                        borderColor: theme.colors.textPrimary,
                         borderWidth: 2.5,
+                        transform: [{ scale: 1.06 }],
                       },
                     ]}
                   >
                     <Check
                       color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
                       size={14}
+                      strokeWidth={3}
                     />
                   </Pressable>
                 ) : null}
@@ -417,7 +423,7 @@ function NoteEditorModalContent({
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Plus color={theme.colors.textSecondary} size={14} />
+                  <Plus color={theme.colors.primary} size={16} strokeWidth={2.5} />
                 </Pressable>
               </HorizontalScrollView>
             </View>
@@ -634,18 +640,19 @@ function createStyles(theme: AppTheme) {
     colorChip: {
       alignItems: "center",
       borderRadius: theme.borderRadius.round,
-      height: 28,
+      height: 34,
       justifyContent: "center",
-      width: 28,
+      width: 34,
     },
     addColorChip: {
       alignItems: "center",
+      borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 28,
+      height: 34,
       justifyContent: "center",
-      width: 28,
+      width: 34,
     },
     addColorChipPressed: {
       opacity: 0.7,

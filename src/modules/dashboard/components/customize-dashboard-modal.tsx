@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import {
+  Check,
   CircleHelp,
   LayoutGrid,
   Plus,
@@ -574,15 +575,10 @@ function CustomizeDashboardModalContent({
                           ]}
                         >
                           {isSelected ? (
-                            <View
-                              style={[
-                                styles.colorCheckDot,
-                                {
-                                  backgroundColor: light
-                                    ? "#0F172A"
-                                    : "#FFFFFF",
-                                },
-                              ]}
+                            <Check
+                              color={light ? "#0F172A" : "#FFFFFF"}
+                              size={14}
+                              strokeWidth={3}
                             />
                           ) : null}
                         </Pressable>
@@ -675,15 +671,10 @@ function CustomizeDashboardModalContent({
                           ]}
                         >
                           {isSelected ? (
-                            <View
-                              style={[
-                                styles.colorCheckDot,
-                                {
-                                  backgroundColor: light
-                                    ? "#0F172A"
-                                    : "#FFFFFF",
-                                },
-                              ]}
+                            <Check
+                              color={light ? "#0F172A" : "#FFFFFF"}
+                              size={14}
+                              strokeWidth={3}
                             />
                           ) : null}
                         </Pressable>
@@ -1071,17 +1062,17 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
-      borderColor: theme.colors.border,
+      borderColor: "rgba(255,255,255,0.25)",
       borderRadius: theme.borderRadius.round,
       borderWidth: 1.5,
-      height: 32,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     colorSwatchSelected: {
       borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
-      transform: [{ scale: 1.08 }],
+      transform: [{ scale: 1.06 }],
     },
     colorCheckDot: {
       borderRadius: 3,
@@ -1094,9 +1085,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 32,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     pressed: {
       opacity: 0.75,

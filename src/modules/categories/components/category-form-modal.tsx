@@ -332,8 +332,8 @@ function CategoryFormModalContent({
                       >
                         {isSelected ? (
                           <Check
-                            color={theme.colors.textInverse}
-                            size={20}
+                            color="#FFFFFF"
+                            size={14}
                             strokeWidth={3}
                           />
                         ) : null}
@@ -358,8 +358,8 @@ function CategoryFormModalContent({
                       >
                         {isSelected ? (
                           <Check
-                            color={theme.colors.textInverse}
-                            size={20}
+                            color="#FFFFFF"
+                            size={14}
                             strokeWidth={3}
                           />
                         ) : null}
@@ -379,7 +379,7 @@ function CategoryFormModalContent({
                     >
                       <Plus
                         color={theme.colors.primary}
-                        size={18}
+                        size={16}
                         strokeWidth={2.5}
                       />
                     </Pressable>
@@ -633,30 +633,27 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
+      borderColor: "rgba(255,255,255,0.25)",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
+      width: 34,
     },
-    colorSwatchUnselected: {
-      borderRadius: 15,
-      height: 30,
-      opacity: 0.85,
-      width: 30,
-    },
+    colorSwatchUnselected: {},
     colorSwatchSelected: {
-      borderColor: theme.colors.textInverse,
-      borderRadius: 22,
+      borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
-      height: 44,
-      width: 44,
-      ...theme.shadows.card,
+      transform: [{ scale: 1.06 }],
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 15,
+      borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 30,
+      height: 34,
       justifyContent: "center",
-      width: 30,
+      width: 34,
     },
     addColorSwatchPressed: {
       opacity: 0.6,

@@ -871,6 +871,7 @@ export const fil = {
       improveItem35: "Ilagay ang button ng impormasyon sa seguridad katabi ng pamagat ng Password at Fingerprint para sa mas malinaw na pag-access.",
       improveItem36: "I-streamline ang layout ng SQLite Monitor at magpakita ng progress modal habang nagva-vacuum ng database.",
       improveItem37: "I-standardize ang header ng Manage Kai Knowledge gamit ang pinag-isang navigation back button ng app.",
+      improveItem38: "Magdagdag ng mabilisang paggawa ng custom hex color sa Theme Studio at pag-isahin ang mga color swatch sa lahat ng screen nang walang layout jumps.",
       fixItem1: "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2: "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
       fixItem3: "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
