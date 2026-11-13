@@ -933,6 +933,8 @@ export const es = {
         "Corrige la lentitud al cambiar de pantalla para que navegar entre secciones, listas y formularios sea rápido y fluido.",
       fixItem28:
         "Iguala el ancho de los botones Cancelar y Aplicar filtros y corrige las flechas de desplazamiento en ventanas.",
+      fixItem29:
+        "Corrige un error por el cual abrir Informes desde el menú cerraba la aplicación de forma inesperada.",
     },
     v140: {
       date: "5 de noviembre de 2026",

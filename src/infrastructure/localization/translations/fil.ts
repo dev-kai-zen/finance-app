@@ -1112,6 +1112,8 @@ export const fil = {
         "Ayusin ang mabagal na paglipat ng screen upang maging mabilis at maayos ang pagbubukas ng mga pahina, listahan, at form.",
       fixItem28:
         "Ipantay ang lapad ng Cancel at Apply Filters at ayusin ang lumulutang na scroll down arrow sa mga modal.",
+      fixItem29:
+        "Ayusin ang isyu kung saan ang pagbubukas ng Reports mula sa menu ay nagdulot ng biglaang pagsasara ng app.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

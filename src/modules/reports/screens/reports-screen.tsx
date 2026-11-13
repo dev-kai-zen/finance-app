@@ -6,10 +6,12 @@ import React, {
   useState,
 } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import { BarChart3 } from "lucide-react-native";
 import { PageContainer, PageLoadingState } from "@/components";
 import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { ProGate } from "@/modules/pro";
 import { AdBanner } from "@/modules/ads";
 import {
@@ -18,6 +20,8 @@ import {
   useWalkthroughIntro,
   useWalkthroughRegistry,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
+  WalkthroughIntroModal,
+  WalkthroughRegistryProvider,
   WalkthroughTarget,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
@@ -30,7 +34,17 @@ import { ReportsTabBar } from "../components/reports-tab-bar";
 import type { ReportTabKey } from "../types/reports.types";
 
 export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
+  return (
+    <WalkthroughRegistryProvider>
+      <ReportsScreenContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [activeTab, setActiveTab] = useState<ReportTabKey>(
     () => props?.initialTab ?? "income-expense",
   );
@@ -100,7 +114,7 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [walkthroughIntro]);
+  }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   return (
     <>
@@ -158,6 +172,16 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
         )}
       </PageContainer>
 
+      <WalkthroughIntroModal
+        visible={walkthroughIntro.isIntroVisible}
+        title={t("reportsWalkthrough.introTitle")}
+        subtitle={t("reportsWalkthrough.introSubtitle")}
+        message={t("reportsWalkthrough.introMessage")}
+        icon={<BarChart3 color={theme.colors.primary} size={32} />}
+        onStart={walkthroughIntro.handleStart}
+        onSkip={walkthroughIntro.handleSkip}
+      />
+
       <ReportsWalkthroughOverlay
         visible={walkthrough.isWalkthroughActive}
         stepIndex={walkthrough.activeStepIndex}
@@ -168,12 +192,24 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
         onPrev={walkthrough.prevStep}
         onSkip={walkthrough.skipWalkthrough}
       />
+
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
     </>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     pageContent: {
       paddingHorizontal: 0,
       paddingBottom: 32,

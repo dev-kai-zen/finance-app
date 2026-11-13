@@ -936,6 +936,8 @@ export const en = {
         "Fix slow screen transitions so navigating across tabs, lists, and forms feels fast and smooth.",
       fixItem28:
         "Equalize Cancel and Apply Filters button widths and fix floating scroll down arrows across modals.",
+      fixItem29:
+        "Resolve an issue where opening Reports from the navigation menu caused the app to close unexpectedly.",
     },
     v140: {
       date: "November 5, 2026",
