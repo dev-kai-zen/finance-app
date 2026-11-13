@@ -400,3 +400,30 @@ test("transactions: calculates stats where transfer fee counts toward outflow", 
   assert.equal(totalOutflow, 2500); // Only the fee is counted as cash outflow!
   assert.equal(groupedTransferIds.size, 1);
 });
+
+test("transactions: transfer records are linked by transaction_group_id and distinguished from standalone transactions", () => {
+  const db = setupTestDb();
+  const now = Date.now();
+  const groupId = "grp_transfer_test";
+
+  const insertStmt = db.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, amount_minor_units, note, occurred_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  insertStmt.run("tx_expense", "acc_1", "cat_groceries", null, "expense", -5000, "Lunch", now, now, now);
+  insertStmt.run("tx_out", "acc_1", null, groupId, "transfer", -10000, "Transfer out", now, now, now);
+  insertStmt.run("tx_in", "acc_2", null, groupId, "transfer", 10000, "Transfer in", now, now, now);
+
+  const expense = db.prepare("SELECT * FROM transactions WHERE id = 'tx_expense'").get();
+  assert.equal(expense.transaction_group_id, null);
+  assert.equal(expense.type, "expense");
+
+  const transferOut = db.prepare("SELECT * FROM transactions WHERE id = 'tx_out'").get();
+  assert.equal(transferOut.transaction_group_id, groupId);
+  assert.equal(transferOut.type, "transfer");
+
+  const transferIn = db.prepare("SELECT * FROM transactions WHERE id = 'tx_in'").get();
+  assert.equal(transferIn.transaction_group_id, groupId);
+  assert.equal(transferIn.type, "transfer");
+});

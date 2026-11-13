@@ -909,6 +909,8 @@ export const es = {
         "Corrige el desplazamiento de la guía para que las opciones del menú no queden cortadas o detrás de la cabecera.",
       fixItem23:
         "Corrige Quick Sync en Google Drive para que cambiar de cuenta vincule automáticamente la copia de la nueva cuenta.",
+      fixItem24:
+        "Evite errores al restringir el cambio de tipo de transferencia al editar registros existentes.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -2378,6 +2380,9 @@ export const es = {
     exportFailedMessage: "No se pudieron exportar las transacciones.",
     transferFeeTitle: "Comisión de transferencia",
     transferFeeHelpMessage: "Deduce una comisión de transacción instantánea (ej. InstaPay, GCash, cargos bancarios).",
+    transferTypeLockedHint: "El tipo de transferencia no se puede cambiar.",
+    cannotConvertToTransfer: "No se puede convertir una transacción existente en una transferencia.",
+    cannotConvertFromTransfer: "No se puede convertir una transferencia existente en un ingreso o gasto.",
   },
   chatWithKai: {
     modalTitle: "Chatear con Kai",

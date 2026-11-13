@@ -336,6 +336,13 @@ function TransactionFormModalInner({
       ? propsDefaultIncomePocketId
       : defaultAccounts.defaultIncomePocketId;
 
+  const isEditingTransfer = Boolean(
+    isEditing && initialTransaction?.type === "transfer",
+  );
+  const isEditingNonTransfer = Boolean(
+    isEditing && initialTransaction && initialTransaction.type !== "transfer",
+  );
+
   const [mode, setMode] = useState<TransactionType>("expense");
   const [name, setName] = useState<string>("");
   const [amountSign, setAmountSign] = useState<"+" | "-">("-");
@@ -866,6 +873,12 @@ function TransactionFormModalInner({
 
   // When mode changes, switch default category, sign, and default account
   const handleModeChange = (newMode: TransactionType) => {
+    if (isEditingTransfer && newMode !== "transfer") {
+      return;
+    }
+    if (isEditingNonTransfer && newMode === "transfer") {
+      return;
+    }
     setMode(newMode);
     setLocalError(null);
     if (newMode === "expense") {
@@ -1138,7 +1151,7 @@ function TransactionFormModalInner({
     () => accounts.filter((account) => !account.isArchived).length,
     [accounts],
   );
-  const allowTransfer = activeAccountCount >= 2;
+  const allowTransfer = activeAccountCount >= 2 && !isEditingNonTransfer;
 
   useEffect(() => {
     if (!allowTransfer && mode === "transfer") {
@@ -1511,6 +1524,18 @@ function TransactionFormModalInner({
     const transactionOccurredAt = new Date(occurredAt);
 
     if (mode === "transfer") {
+      if (
+        isEditing &&
+        (!initialTransaction?.transactionGroupId ||
+          initialTransaction.type !== "transfer")
+      ) {
+        setLocalError(
+          t("transactions.cannotConvertToTransfer", {
+            defaultValue: "Cannot convert an existing transaction to a transfer.",
+          }),
+        );
+        return;
+      }
       if (!transferToAccountId) {
         setLocalError("Please select a destination account.");
         return;
@@ -1584,6 +1609,14 @@ function TransactionFormModalInner({
         onClose();
       }
     } else {
+      if (isEditing && initialTransaction?.type === "transfer") {
+        setLocalError(
+          t("transactions.cannotConvertFromTransfer", {
+            defaultValue: "Cannot convert an existing transfer to an income or expense.",
+          }),
+        );
+        return;
+      }
       const activeSplit = splitEnabled && canUseSplit;
       if (!activeSplit && !selectedCategoryId) {
         setLocalError("Please select a category.");
@@ -1977,10 +2010,17 @@ function TransactionFormModalInner({
           <View ref={typePickerRef} style={styles.typePickerSpacing}>
             <TransactionTypePicker
               allowTransfer={allowTransfer}
-              disabled={pending}
+              disabled={pending || isEditingTransfer}
               onChange={handleModeChange}
               value={mode}
             />
+            {isEditingTransfer ? (
+              <Text style={styles.typeLockedHint}>
+                {t("transactions.transferTypeLockedHint", {
+                  defaultValue: "Transfer type cannot be changed.",
+                })}
+              </Text>
+            ) : null}
           </View>
 
           <View style={styles.formScrollWrapper}>
@@ -3513,6 +3553,12 @@ function createStyles(theme: AppTheme) {
     },
     typePickerSpacing: {
       marginBottom: 16,
+    },
+    typeLockedHint: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      marginTop: 6,
+      textAlign: "center",
     },
     formScrollWrapper: {
       flex: 1,

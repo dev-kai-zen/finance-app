@@ -912,6 +912,8 @@ export const en = {
         "Fix walkthrough scrolling so menu options never get cut off or hidden behind the navigation header.",
       fixItem23:
         "Fix Google Drive Quick Sync so switching accounts automatically re-links to the new account's backup.",
+      fixItem24:
+        "Prevent transaction group errors by restricting transfer type conversions when editing existing transactions.",
     },
     v140: {
       date: "November 5, 2026",
@@ -2383,6 +2385,9 @@ export const en = {
     exportFailedMessage: "Unable to export transactions.",
     transferFeeTitle: "Transfer Fee",
     transferFeeHelpMessage: "Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges).",
+    transferTypeLockedHint: "Transfer type cannot be changed.",
+    cannotConvertToTransfer: "Cannot convert an existing transaction to a transfer.",
+    cannotConvertFromTransfer: "Cannot convert an existing transfer to an income or expense.",
   },
   chatWithKai: {
     modalTitle: "Chat with Kai",

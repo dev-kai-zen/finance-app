@@ -910,6 +910,8 @@ export const fil = {
         "Ayusin ang pag-scroll sa walkthrough upang hindi maputol o matakpan sa likod ng header ang mga menu.",
       fixItem23:
         "Ayusin ang Quick Sync sa Google Drive upang ang pagpalit ng account ay awtomatikong mag-ugnay sa backup ng bagong account.",
+      fixItem24:
+        "Pigilan ang mga error sa pamamagitan ng paghihigpit sa pagpapalit ng uri ng transfer habang nag-e-edit ng mga tala.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2379,6 +2381,9 @@ export const fil = {
     exportFailedMessage: "Hindi ma-export ang mga transaksyon.",
     transferFeeTitle: "Bayad sa Paglilipat",
     transferFeeHelpMessage: "Magbawas ng agarang bayad sa transaksyon (hal. InstaPay, GCash, bank charges).",
+    transferTypeLockedHint: "Hindi maaaring baguhin ang uri ng transfer.",
+    cannotConvertToTransfer: "Hindi maaaring i-convert ang kasalukuyang transaksyon sa isang transfer.",
+    cannotConvertFromTransfer: "Hindi maaaring i-convert ang kasalukuyang transfer sa kita o gastos.",
   },
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",
