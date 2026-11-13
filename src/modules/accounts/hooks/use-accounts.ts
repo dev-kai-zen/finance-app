@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { getAccountsWithBalances } from "@/modules/accounts/services/get-accounts-with-balances.service";
 import { getPocketsWithBalances } from "@/modules/accounts/services/get-pockets-with-balances.service";
@@ -15,8 +15,11 @@ export function useAccounts() {
   }>({ accounts: [], pockets: [], types: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
   const refresh = useCallback(() => {
-    setLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
     try {
       const monitoring = getCreditCardMonitoring();
       const monitoringByAccountId = new Map(
@@ -45,9 +48,17 @@ export function useAccounts() {
     } catch (cause) {
       setError(accountErrorMessage(cause));
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
-  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
+  useFocusEffect(
+    useCallback(() => {
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
+    }, [refresh]),
+  );
   return { ...data, loading, error, refresh };
 }

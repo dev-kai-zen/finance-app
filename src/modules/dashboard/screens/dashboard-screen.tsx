@@ -590,6 +590,7 @@ function DashboardScreenContent() {
           ) : (
             <PageLoadingState
               message={loading ? "Loading your dashboard..." : "Preparing dashboard..."}
+              variant="dashboard"
             />
           )
         ) : (

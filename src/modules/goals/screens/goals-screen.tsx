@@ -14,6 +14,7 @@ import {
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
+  PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
@@ -331,9 +332,7 @@ function GoalsScreenContent({
 
       {/* Main Content Area */}
       {loading && goals.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={theme.colors.primary} size="large" />
-        </View>
+        <PageLoadingState message="Loading goals..." variant="cards" />
       ) : filteredGoals.length === 0 ? (
         <View style={styles.emptyStateContainer}>
           <View style={styles.emptyIconCircle}>

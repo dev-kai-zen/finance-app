@@ -8,7 +8,11 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { PageContainer, PageEmptyState } from "@/components/page-container";
+import {
+  PageContainer,
+  PageEmptyState,
+  PageLoadingState,
+} from "@/components/page-container";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import { ActionBottomSheet } from "@/components/action-bottom-sheet";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -442,10 +446,7 @@ function CategoriesScreenContent({
         </View>
 
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-            <Text style={styles.loadingText}>Loading categories from SQLite...</Text>
-          </View>
+          <PageLoadingState message="Loading categories..." variant="cards" />
         ) : currentCategories.length === 0 ? (
           <PageEmptyState
             actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}

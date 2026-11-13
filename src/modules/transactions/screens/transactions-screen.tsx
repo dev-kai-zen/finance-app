@@ -37,6 +37,7 @@ import {
   InfoModal,
   PageContainer,
   PageEmptyState,
+  PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
@@ -1323,38 +1324,45 @@ function TransactionsScreenContent({
           }
           ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
-            <View>
-              <PageEmptyState
-                icon={
-                  activeFilterCount > 0 || searchQuery.length > 0 ? (
-                    <Search color={theme.colors.primary} size={32} />
-                  ) : (
-                    <Receipt color={theme.colors.primary} size={32} />
-                  )
-                }
-                actionLabel={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? "Clear Filters"
-                    : "+ Record First Transaction"
-                }
-                description={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? "No transaction records match your search or filter criteria."
-                    : "Your transaction history is empty. Start recording your expenses, income, or transfers."
-                }
-                onAction={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? handleClearFilters
-                    : handleOpenNewTransaction
-                }
-                title="No Transactions Found"
+            loading ? (
+              <PageLoadingState
+                message="Loading transactions..."
+                variant="list"
               />
-              <AdBanner
-                placement="transactions"
-                variant="card"
-                style={{ marginTop: theme.spacing.md }}
-              />
-            </View>
+            ) : (
+              <View>
+                <PageEmptyState
+                  icon={
+                    activeFilterCount > 0 || searchQuery.length > 0 ? (
+                      <Search color={theme.colors.primary} size={32} />
+                    ) : (
+                      <Receipt color={theme.colors.primary} size={32} />
+                    )
+                  }
+                  actionLabel={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? "Clear Filters"
+                      : "+ Record First Transaction"
+                  }
+                  description={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? "No transaction records match your search or filter criteria."
+                      : "Your transaction history is empty. Start recording your expenses, income, or transfers."
+                  }
+                  onAction={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? handleClearFilters
+                      : handleOpenNewTransaction
+                  }
+                  title="No Transactions Found"
+                />
+                <AdBanner
+                  placement="transactions"
+                  variant="card"
+                  style={{ marginTop: theme.spacing.md }}
+                />
+              </View>
+            )
           }
           contentContainerStyle={[
             styles.listContentContainer,

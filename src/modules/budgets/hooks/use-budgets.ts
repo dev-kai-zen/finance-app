@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "@/infrastructure/database/client";
 import { useCategories, type Category } from "@/modules/categories";
 import {
@@ -35,10 +35,13 @@ export function useBudgets(referenceDate?: Date) {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const list = await listCategoryBudgets(db);
       setBudgets(list);
@@ -46,12 +49,16 @@ export function useBudgets(referenceDate?: Date) {
       console.error("[useBudgets] Failed to load budgets:", err);
       setError(err?.message ?? "Failed to load budgets.");
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const frameId = requestAnimationFrame(() => {
+      void refresh();
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [refresh]);
 
   // Flatten categories map for quick category lookup

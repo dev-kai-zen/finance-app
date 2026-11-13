@@ -10,7 +10,11 @@ import { useFocusEffect, useRouter } from "expo-router";
 
 import { ConfirmModal, useHeaderWalkthroughAction } from "@/components";
 import { FloatingActionButton } from "@/components/floating-action-button";
-import { PageContainer, PageEmptyState } from "@/components/page-container";
+import {
+  PageContainer,
+  PageEmptyState,
+  PageLoadingState,
+} from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -297,9 +301,7 @@ function NotesScreenContent({
       >
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-          </View>
+          <PageLoadingState message="Loading notes..." variant="cards" />
         ) : hasNoNotes && !isSearchActive ? (
           /* Empty state when user hasn't created any notes yet */
           <PageEmptyState

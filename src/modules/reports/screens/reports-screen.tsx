@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { PageContainer } from "@/components";
+import { PageContainer, PageLoadingState } from "@/components";
 import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -34,9 +34,17 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
   const [activeTab, setActiveTab] = useState<ReportTabKey>(
     () => props?.initialTab ?? "income-expense",
   );
+  const [isReady, setIsReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
+
+  useEffect(() => {
+    const frameId = requestAnimationFrame(() => {
+      setIsReady(true);
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, []);
 
   React.useEffect(() => {
     if (props?.initialTab) {
@@ -106,40 +114,48 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
           <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
         </WalkthroughTarget>
 
-        {activeTab === "income-expense" ? (
+        {!isReady ? (
+          <View style={styles.skeletonWrapper}>
+            <PageLoadingState message="Loading reports..." variant="cards" />
+          </View>
+        ) : (
           <>
-            <IncomeExpenseReport />
-            <AdBanner
-              placement="reports"
-              variant="card"
-              style={{ marginHorizontal: 16, marginTop: 16 }}
-            />
+            {activeTab === "income-expense" ? (
+              <>
+                <IncomeExpenseReport />
+                <AdBanner
+                  placement="reports"
+                  variant="card"
+                  style={{ marginHorizontal: 16, marginTop: 16 }}
+                />
+              </>
+            ) : null}
+
+            {activeTab === "balance-sheet" ? (
+              <ProGate mode="blur">
+                <BalanceSheetReport />
+              </ProGate>
+            ) : null}
+
+            {activeTab === "cash-flow" ? (
+              <ProGate mode="blur">
+                <CashFlowReport />
+              </ProGate>
+            ) : null}
+
+            {activeTab === "net-worth" ? (
+              <ProGate mode="blur">
+                <NetWorthGrowthReport />
+              </ProGate>
+            ) : null}
+
+            {activeTab === "labels-summary" ? (
+              <ProGate mode="blur">
+                <LabelsSummaryReport />
+              </ProGate>
+            ) : null}
           </>
-        ) : null}
-
-        {activeTab === "balance-sheet" ? (
-          <ProGate mode="blur">
-            <BalanceSheetReport />
-          </ProGate>
-        ) : null}
-
-        {activeTab === "cash-flow" ? (
-          <ProGate mode="blur">
-            <CashFlowReport />
-          </ProGate>
-        ) : null}
-
-        {activeTab === "net-worth" ? (
-          <ProGate mode="blur">
-            <NetWorthGrowthReport />
-          </ProGate>
-        ) : null}
-
-        {activeTab === "labels-summary" ? (
-          <ProGate mode="blur">
-            <LabelsSummaryReport />
-          </ProGate>
-        ) : null}
+        )}
       </PageContainer>
 
       <ReportsWalkthroughOverlay
@@ -156,11 +172,14 @@ export function ReportsScreen(props?: { initialTab?: ReportTabKey }) {
   );
 }
 
-function createStyles(_theme: AppTheme) {
+function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     pageContent: {
       paddingHorizontal: 0,
       paddingBottom: 32,
+    },
+    skeletonWrapper: {
+      paddingHorizontal: theme.spacing.lg,
     },
   });
 }

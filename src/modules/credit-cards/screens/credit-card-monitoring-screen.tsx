@@ -160,7 +160,10 @@ function CreditCardMonitoringScreenContent() {
       scrollRef={scrollRef}
     >
       {data.loading ? (
-        <PageLoadingState message="Preparing credit-card billing..." />
+        <PageLoadingState
+          message="Preparing credit-card billing..."
+          variant="cards"
+        />
       ) : data.error ? (
         <PageErrorState message={data.error} onRetry={data.refresh} />
       ) : data.cards.length === 0 ? (

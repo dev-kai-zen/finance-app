@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View } from "react-native";
 import { usePathname, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
-import { PageContainer } from "@/components/page-container";
+import { PageContainer, PageLoadingState } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
 import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
@@ -446,12 +446,7 @@ function AccountsScreenContent({
       ) : null}
 
       {data.loading ? (
-        <ActivityIndicator
-          accessibilityLabel="Loading accounts"
-          color={theme.colors.primary}
-          size="large"
-          style={{ marginVertical: 32 }}
-        />
+        <PageLoadingState message="Loading accounts" variant="cards" />
       ) : (
         <>
           <View style={managementActions}>

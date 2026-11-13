@@ -20,6 +20,7 @@ import {
   NotificationModal,
   PageContainer,
   PageEmptyState,
+  PageLoadingState,
   useHeaderWalkthroughAction,
 } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
@@ -319,10 +320,7 @@ function BudgetsScreenContent({
       >
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-            <Text style={styles.loadingText}>Loading budgets from SQLite...</Text>
-          </View>
+          <PageLoadingState message="Loading budgets..." variant="cards" />
         ) : budgets.length === 0 ? (
           <PageEmptyState
             actionLabel="+ Set Your First Category Budget"

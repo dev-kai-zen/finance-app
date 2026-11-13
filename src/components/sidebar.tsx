@@ -78,12 +78,24 @@ export const Sidebar = memo(function Sidebar({
     scrollProps,
   } = useScrollDownIndicator<ScrollView>();
 
-  const handlePress = (href: string) => {
-    router.navigate(href as any);
-    if (onNavigate) {
-      onNavigate();
-    }
-  };
+  const handlePress = useCallback(
+    (href: string) => {
+      if (onNavigate) {
+        onNavigate();
+      }
+      const isExactSameRoute =
+        href === "/"
+          ? pathname === "/" || pathname === ""
+          : pathname === href;
+      if (isExactSameRoute) {
+        return;
+      }
+      requestAnimationFrame(() => {
+        router.navigate(href as any);
+      });
+    },
+    [onNavigate, pathname, router],
+  );
 
   const handleFeedbackPress = useCallback(() => {
     if (onNavigate) {

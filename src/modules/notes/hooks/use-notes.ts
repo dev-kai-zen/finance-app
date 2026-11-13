@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   DEFAULT_NOTE_SORT_OPTION,
@@ -25,26 +25,38 @@ export function useNotes() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<NoteSortOption>(DEFAULT_NOTE_SORT_OPTION);
   const [viewMode, setViewMode] = useState<NoteViewMode>(DEFAULT_NOTE_VIEW_MODE);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
+      const trimmedSearch = search.trim();
       const items = listNotes({
-        search: search.trim().length > 0 ? search : undefined,
+        search: trimmedSearch.length > 0 ? search : undefined,
         sortBy,
       });
       setNotes(items);
-      setHasAnyNotes(listNotes({ sortBy }).length > 0);
+      setHasAnyNotes(
+        trimmedSearch.length > 0
+          ? listNotes({ sortBy }).length > 0
+          : items.length > 0,
+      );
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load notes.");
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, [search, sortBy]);
 
   useEffect(() => {
-    refresh();
+    const frameId = requestAnimationFrame(() => {
+      refresh();
+    });
+    return () => cancelAnimationFrame(frameId);
   }, [refresh]);
 
   const createNote = useCallback(

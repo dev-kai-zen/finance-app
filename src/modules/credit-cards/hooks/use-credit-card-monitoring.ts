@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { getCreditCardMonitoring } from "../services/get-credit-card-monitoring.service";
@@ -15,8 +15,11 @@ export function useCreditCardMonitoring() {
   const [data, setData] = useState(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
   const refresh = useCallback(() => {
-    setLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
     try {
       setData(getCreditCardMonitoring());
       setError(null);
@@ -27,9 +30,17 @@ export function useCreditCardMonitoring() {
           : "Unable to load credit-card monitoring.",
       );
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, [preferences.defaultCurrency]);
-  useFocusEffect(useCallback(() => refresh(), [refresh]));
+  useFocusEffect(
+    useCallback(() => {
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
+    }, [refresh]),
+  );
   return { ...data, loading, error, refresh };
 }

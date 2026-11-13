@@ -1,6 +1,6 @@
-import { PropsWithChildren, ReactNode } from "react";
+import { PropsWithChildren, ReactNode, useEffect, useRef } from "react";
 import {
-  ActivityIndicator,
+  Animated,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -49,9 +49,7 @@ export function PageContainer({
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
-  const horizontalPadding = useThemeStyles((theme) =>
-    getResponsiveGutter(width, theme.spacing),
-  );
+  const horizontalPadding = getResponsiveGutter(width, theme.spacing);
 
   const containerPaddingStyle: ViewStyle = {
     paddingHorizontal: horizontalPadding,
@@ -148,18 +146,147 @@ export function PageEmptyState({
   );
 }
 
+export type PageLoadingSkeletonVariant =
+  | "cards"
+  | "list"
+  | "dashboard"
+  | "grid";
+
 export interface PageLoadingStateProps {
   message?: string;
+  variant?: PageLoadingSkeletonVariant;
 }
 
-export function PageLoadingState({ message = "Loading..." }: PageLoadingStateProps) {
+export function PageLoadingState({
+  message = "Loading...",
+  variant = "cards",
+}: PageLoadingStateProps) {
   const styles = useThemeStyles(createLoadingStyles);
+  const pulseAnim = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.85,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0.45,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
 
   return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator color={styles.indicator.color} size="large" />
-      <Text style={styles.loadingMessage}>{message}</Text>
-    </View>
+    <Animated.View
+      accessibilityLabel={message}
+      accessibilityRole="progressbar"
+      style={[styles.loadingContainer, { opacity: pulseAnim }]}
+    >
+      {variant === "dashboard" ? (
+        <>
+          <View style={styles.heroCard}>
+            <View style={[styles.bone, styles.boneLabelSm]} />
+            <View style={[styles.bone, styles.boneHeroTitle]} />
+            <View style={styles.metricRow}>
+              <View style={[styles.bone, styles.boneMetricPill]} />
+              <View style={[styles.bone, styles.boneMetricPill]} />
+            </View>
+          </View>
+          <View style={styles.twoColRow}>
+            <View style={styles.halfCard}>
+              <View style={[styles.bone, styles.boneLabelSm]} />
+              <View style={[styles.bone, styles.boneValueMd]} />
+            </View>
+            <View style={styles.halfCard}>
+              <View style={[styles.bone, styles.boneLabelSm]} />
+              <View style={[styles.bone, styles.boneValueMd]} />
+            </View>
+          </View>
+          {[0, 1, 2].map((index) => (
+            <View key={index} style={styles.listRowCard}>
+              <View style={[styles.bone, styles.boneAvatar]} />
+              <View style={styles.listRowBody}>
+                <View style={[styles.bone, styles.boneLinePrimary]} />
+                <View style={[styles.bone, styles.boneLineSecondary]} />
+              </View>
+              <View style={[styles.bone, styles.boneAmount]} />
+            </View>
+          ))}
+        </>
+      ) : variant === "list" ? (
+        <>
+          {[0, 1, 2, 3, 4].map((index) => (
+            <View key={index} style={styles.listRowCard}>
+              <View style={[styles.bone, styles.boneAvatar]} />
+              <View style={styles.listRowBody}>
+                <View style={[styles.bone, styles.boneLinePrimary]} />
+                <View style={[styles.bone, styles.boneLineSecondary]} />
+              </View>
+              <View style={[styles.bone, styles.boneAmount]} />
+            </View>
+          ))}
+        </>
+      ) : variant === "grid" ? (
+        <>
+          <View style={styles.gridCard}>
+            <View style={[styles.bone, styles.boneLinePrimary]} />
+            <View style={styles.gridRow}>
+              {[0, 1, 2, 3, 4, 5, 6].map((col) => (
+                <View key={col} style={[styles.bone, styles.boneGridCell]} />
+              ))}
+            </View>
+            <View style={styles.gridRow}>
+              {[0, 1, 2, 3, 4, 5, 6].map((col) => (
+                <View key={col} style={[styles.bone, styles.boneGridCell]} />
+              ))}
+            </View>
+            <View style={styles.gridRow}>
+              {[0, 1, 2, 3, 4, 5, 6].map((col) => (
+                <View key={col} style={[styles.bone, styles.boneGridCell]} />
+              ))}
+            </View>
+          </View>
+          {[0, 1].map((index) => (
+            <View key={index} style={styles.listRowCard}>
+              <View style={[styles.bone, styles.boneAvatar]} />
+              <View style={styles.listRowBody}>
+                <View style={[styles.bone, styles.boneLinePrimary]} />
+                <View style={[styles.bone, styles.boneLineSecondary]} />
+              </View>
+              <View style={[styles.bone, styles.boneAmount]} />
+            </View>
+          ))}
+        </>
+      ) : (
+        <>
+          <View style={styles.heroCard}>
+            <View style={[styles.bone, styles.boneLabelSm]} />
+            <View style={[styles.bone, styles.boneValueMd]} />
+            <View style={[styles.bone, styles.boneProgressBar]} />
+          </View>
+          {[0, 1, 2].map((index) => (
+            <View key={index} style={styles.cardSkeleton}>
+              <View style={styles.cardHeaderRow}>
+                <View style={[styles.bone, styles.boneAvatar]} />
+                <View style={styles.listRowBody}>
+                  <View style={[styles.bone, styles.boneLinePrimary]} />
+                  <View style={[styles.bone, styles.boneLineSecondary]} />
+                </View>
+                <View style={[styles.bone, styles.boneAmount]} />
+              </View>
+              <View style={[styles.bone, styles.boneProgressBar]} />
+            </View>
+          ))}
+        </>
+      )}
+    </Animated.View>
   );
 }
 
@@ -252,18 +379,122 @@ function createEmptyStyles(theme: AppTheme) {
 function createLoadingStyles(theme: AppTheme) {
   return StyleSheet.create({
     loadingContainer: {
-      alignItems: "center",
       flex: 1,
-      justifyContent: "center",
-      padding: theme.spacing.xxl,
+      gap: theme.spacing.md,
+      paddingVertical: theme.spacing.lg,
+      width: "100%",
     },
-    indicator: {
-      color: theme.colors.primary,
+    bone: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.small,
     },
-    loadingMessage: {
-      color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.sm,
-      marginTop: theme.spacing.md,
+    heroCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.lg,
+    },
+    twoColRow: {
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    halfCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flex: 1,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+    },
+    metricRow: {
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      marginTop: theme.spacing.xs,
+    },
+    cardSkeleton: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    cardHeaderRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    listRowCard: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm + 2,
+    },
+    listRowBody: {
+      flex: 1,
+      gap: 6,
+    },
+    gridCard: {
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      gap: theme.spacing.sm,
+      padding: theme.spacing.md,
+    },
+    gridRow: {
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    boneGridCell: {
+      borderRadius: theme.borderRadius.small,
+      flex: 1,
+      height: 36,
+    },
+    boneAvatar: {
+      borderRadius: 20,
+      height: 40,
+      width: 40,
+    },
+    boneLabelSm: {
+      height: 12,
+      width: "32%",
+    },
+    boneHeroTitle: {
+      height: 28,
+      width: "58%",
+    },
+    boneValueMd: {
+      height: 22,
+      width: "52%",
+    },
+    boneMetricPill: {
+      flex: 1,
+      height: 32,
+    },
+    boneLinePrimary: {
+      height: 14,
+      width: "62%",
+    },
+    boneLineSecondary: {
+      height: 11,
+      width: "40%",
+    },
+    boneAmount: {
+      height: 16,
+      width: 68,
+    },
+    boneProgressBar: {
+      height: 8,
+      width: "100%",
     },
   });
 }

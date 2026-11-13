@@ -53,22 +53,41 @@ export function useCalendarData() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
 
-  const { transactions, refresh: refreshTransactions } = useTransactions();
-  const { categories } = useCategories();
-  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const {
+    transactions,
+    loading: transactionsLoading,
+    refresh: refreshTransactions,
+  } = useTransactions();
+  const { categories, loading: categoriesLoading } = useCategories();
+  const {
+    accounts,
+    pockets,
+    loading: accountsLoading,
+    refresh: refreshAccounts,
+  } = useAccounts();
+  const {
+    loading: schedulesLoading,
     refresh: refreshSchedules,
     postOccurrence,
     skipOccurrence,
   } = useScheduledTransactions();
 
+  const loading =
+    transactionsLoading ||
+    categoriesLoading ||
+    accountsLoading ||
+    schedulesLoading;
+
   const exchangeRates = useMemo(() => {
+    if (loading && accounts.length === 0) {
+      return new Map<string, number>();
+    }
     try {
       return getExchangeRateMap(DEFAULT_BASE_CURRENCY);
     } catch {
       return new Map<string, number>();
     }
-  }, [accounts]);
+  }, [accounts, loading]);
   const accountCurrencyMap = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.currencyCode])),
     [accounts],
@@ -108,6 +127,9 @@ export function useCalendarData() {
 
   // Compute schedule occurrences for this month
   const monthScheduleOccurrences = useMemo(() => {
+    if (loading && transactions.length === 0) {
+      return [];
+    }
     try {
       return getCalendarScheduleOccurrences({
         startDate: monthDateRange.startDate,
@@ -116,7 +138,7 @@ export function useCalendarData() {
     } catch {
       return [];
     }
-  }, [monthDateRange, transactions]);
+  }, [loading, monthDateRange, transactions]);
 
   // Group transactions by dateKey (YYYY-MM-DD)
   const transactionsByDateKey = useMemo(() => {
@@ -231,6 +253,51 @@ export function useCalendarData() {
     convertToDefaultCurrency,
   ]);
 
+  // Compute live Balance Sheet data once for both summaryMetrics and the balance sheet tab
+  const balanceSheetCutoffDate = useMemo(() => {
+    if (selectedDay) {
+      const parts = parseDateKey(selectedDay);
+      return new Date(parts.year, parts.month, parts.day, 23, 59, 59, 999);
+    }
+    return new Date(
+      activeMonth.year,
+      activeMonth.month + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+  }, [selectedDay, activeMonth]);
+
+  const balanceSheetData = useMemo<BalanceSheetData>(() => {
+    if (loading && accounts.length === 0) {
+      return {
+        cutoffDate: balanceSheetCutoffDate,
+        assets: { totalMinorUnits: 0, accountTypes: [] },
+        liabilities: { totalMinorUnits: 0, accountTypes: [] },
+        netWorthMinorUnits: 0,
+      };
+    }
+    try {
+      return getBalanceSheet(balanceSheetCutoffDate);
+    } catch {
+      return {
+        cutoffDate: balanceSheetCutoffDate,
+        assets: { totalMinorUnits: 0, accountTypes: [] },
+        liabilities: { totalMinorUnits: 0, accountTypes: [] },
+        netWorthMinorUnits: 0,
+      };
+    }
+  }, [
+    balanceSheetCutoffDate,
+    loading,
+    transactions,
+    accounts,
+    pockets,
+    preferences.defaultCurrency,
+  ]);
+
   // Summary Metrics for the current scope (selectedDay OR activeMonth)
   const summaryMetrics = useMemo<CalendarSummaryMetrics>(() => {
     let inflow = 0;
@@ -305,37 +372,6 @@ export function useCalendarData() {
     const projectedMonthEndNet =
       monthActualNet + monthPendingInflows - monthPendingOutflows;
 
-    // Compute cutoff date for Balance Sheet
-    // If selectedDay: end of that selected day (23:59:59.999)
-    // If no selectedDay: end of activeMonth (last day of month 23:59:59.999)
-    const cutoffDate = selectedDay
-      ? (() => {
-          const parts = parseDateKey(selectedDay);
-          return new Date(parts.year, parts.month, parts.day, 23, 59, 59, 999);
-        })()
-      : new Date(
-          activeMonth.year,
-          activeMonth.month + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
-        );
-
-    let bsAssets = 0;
-    let bsLiabilities = 0;
-    let bsNetWorth = 0;
-
-    try {
-      const bs = getBalanceSheet(cutoffDate);
-      bsAssets = bs.assets.totalMinorUnits;
-      bsLiabilities = bs.liabilities.totalMinorUnits;
-      bsNetWorth = bs.netWorthMinorUnits;
-    } catch {
-      // Graceful fallback
-    }
-
     return {
       totalInflowMinorUnits: inflow,
       totalOutflowMinorUnits: outflow,
@@ -346,57 +382,19 @@ export function useCalendarData() {
       schedulesPostedCount: postedCount,
       savingsRatePercent: savingsRate,
       projectedMonthEndNetMinorUnits: projectedMonthEndNet,
-      balanceSheetAssetsMinorUnits: bsAssets,
-      balanceSheetLiabilitiesMinorUnits: bsLiabilities,
-      balanceSheetNetWorthMinorUnits: bsNetWorth,
+      balanceSheetAssetsMinorUnits: balanceSheetData.assets.totalMinorUnits,
+      balanceSheetLiabilitiesMinorUnits:
+        balanceSheetData.liabilities.totalMinorUnits,
+      balanceSheetNetWorthMinorUnits: balanceSheetData.netWorthMinorUnits,
     };
   }, [
     scopedTransactions,
     scopedSchedules,
     monthScheduleOccurrences,
     activeMonthTransactions,
-    selectedDay,
-    activeMonth,
-    accounts,
-    pockets,
+    balanceSheetData,
     accountCurrencyMap,
     convertToDefaultCurrency,
-  ]);
-
-  // Compute live Balance Sheet data for the balance sheet tab
-  const balanceSheetCutoffDate = useMemo(() => {
-    if (selectedDay) {
-      const parts = parseDateKey(selectedDay);
-      return new Date(parts.year, parts.month, parts.day, 23, 59, 59, 999);
-    }
-    return new Date(
-      activeMonth.year,
-      activeMonth.month + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
-  }, [selectedDay, activeMonth]);
-
-  const balanceSheetData = useMemo<BalanceSheetData>(() => {
-    try {
-      return getBalanceSheet(balanceSheetCutoffDate);
-    } catch {
-      return {
-        cutoffDate: balanceSheetCutoffDate,
-        assets: { totalMinorUnits: 0, accountTypes: [] },
-        liabilities: { totalMinorUnits: 0, accountTypes: [] },
-        netWorthMinorUnits: 0,
-      };
-    }
-  }, [
-    balanceSheetCutoffDate,
-    transactions,
-    accounts,
-    pockets,
-    preferences.defaultCurrency,
   ]);
 
   // Top spending categories breakdown for current scope
@@ -487,6 +485,7 @@ export function useCalendarData() {
     activeMonth,
     selectedDay,
     activeTab,
+    loading,
     gridCells,
     scopedTransactions,
     scopedSchedules,

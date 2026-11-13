@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { goalErrorMessage } from "../schemas/goal.schema";
 import { deleteGoal as deleteGoalService } from "../services/delete-goal.service";
@@ -27,9 +27,12 @@ export function useGoals() {
   const [filter, setFilter] = useState<GoalFilter>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    setLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
     try {
       const data = getGoalsWithProgress();
       setGoals(data.goals);
@@ -38,13 +41,17 @@ export function useGoals() {
     } catch (cause) {
       setError(goalErrorMessage(cause));
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
     }, [refresh]),
   );
 

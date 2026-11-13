@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import {
@@ -36,9 +36,12 @@ export function useScheduledTransactions() {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    setLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
     try {
       processDueSchedules();
       setSchedules(listScheduledTransactions({ includeArchived: true }));
@@ -48,13 +51,17 @@ export function useScheduledTransactions() {
     } catch (cause) {
       setError(scheduledTransactionErrorMessage(cause));
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
     }, [refresh]),
   );
 

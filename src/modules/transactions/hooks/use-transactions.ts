@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import {
   calculateTransactionStats,
@@ -64,13 +64,16 @@ export function useTransactions(
   const [loading, setLoading] = useState(!skipQuery);
   const [pendingAction, setPendingAction] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
     if (skipQuery) {
       return;
     }
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const list = listTransactions(filter);
       const deletedList = listDeletedTransactions();
@@ -81,14 +84,21 @@ export function useTransactions(
     } catch (err: any) {
       setError(err?.message || "Failed to load transactions.");
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, [filter, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh]),
+      if (skipQuery) {
+        return;
+      }
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
+    }, [refresh, skipQuery]),
   );
 
   const clearError = useCallback(() => {
