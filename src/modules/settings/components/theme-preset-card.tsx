@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Check, Crown } from "lucide-react-native";
 import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import {
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 
 export interface ThemePresetCardProps {
   preset: AppTheme;
@@ -18,6 +20,7 @@ export interface ThemePresetCardProps {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   isProLocked?: boolean;
+  isApplying?: boolean;
 }
 
 export const ThemePresetCard = memo(function ThemePresetCard({
@@ -26,23 +29,35 @@ export const ThemePresetCard = memo(function ThemePresetCard({
   onPress,
   style,
   isProLocked,
+  isApplying,
 }: ThemePresetCardProps) {
   const activeTheme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   return (
     <Pressable
       accessibilityLabel={`${preset.name}, ${preset.mode} theme. ${preset.description}`}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected: selected || isApplying }}
+      disabled={isApplying}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        selected && styles.cardSelected,
+        (selected || isApplying) && styles.cardSelected,
         pressed && styles.cardPressed,
         style,
       ]}
     >
+      {isApplying ? (
+        <View style={styles.applyingOverlay}>
+          <ActivityIndicator color={activeTheme.colors.primary} size="small" />
+          <Text style={styles.applyingText}>
+            {t("themePicker.applyingTheme", { defaultValue: "Applying Theme..." })}
+          </Text>
+        </View>
+      ) : null}
+
       <View style={styles.titleRow}>
         <View style={styles.nameRow}>
           <Text style={styles.name}>
@@ -59,10 +74,12 @@ export const ThemePresetCard = memo(function ThemePresetCard({
         <View
           style={[
             styles.selection,
-            selected && styles.selectionSelected,
+            (selected || isApplying) && styles.selectionSelected,
           ]}
         >
-          {selected ? (
+          {isApplying ? (
+            <ActivityIndicator color={activeTheme.colors.onPrimary} size="small" />
+          ) : selected ? (
             <Check color={activeTheme.colors.onPrimary} size={14} strokeWidth={3} />
           ) : null}
         </View>
@@ -337,6 +354,22 @@ function createStyles(theme: AppTheme) {
     selectionSelected: {
       backgroundColor: theme.colors.primary,
       borderColor: theme.colors.primary,
+    },
+    applyingOverlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.large,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      zIndex: 10,
+      opacity: 0.95,
+    },
+    applyingText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.3,
     },
     swatches: {
       alignItems: "center",

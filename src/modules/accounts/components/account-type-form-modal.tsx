@@ -24,7 +24,6 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  DraggableTourChip,
   AccountTypeFormWalkthroughOverlay,
   useAccountTypeFormWalkthrough,
   WalkthroughIntroModal,
@@ -289,10 +288,6 @@ function AccountTypeFormModalContent({
         titleAlign="left"
         visible={visible}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
         <View style={styles.scrollWrapper}>
           <KeyboardAwareForm
             ref={scrollRef}

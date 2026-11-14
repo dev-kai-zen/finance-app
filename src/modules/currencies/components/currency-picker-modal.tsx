@@ -13,6 +13,7 @@ import { X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useCurrencies } from "../hooks/use-currencies";
 
 export function CurrencyPickerModal({
@@ -35,6 +36,19 @@ export function CurrencyPickerModal({
   const insets = useSafeAreaInsets();
   const { currencies, loading } = useCurrencies();
   const [search, setSearch] = useState("");
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
+
+  const handleSelect = (code: string) => {
+    if (pendingCode !== null) return;
+    setPendingCode(code);
+    scheduleAfterPaint(() => {
+      onSelect(code);
+      onClose();
+      scheduleAfterPaint(() => {
+        setPendingCode(null);
+      });
+    });
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -86,16 +100,15 @@ export function CurrencyPickerModal({
               <Text style={styles.muted}>No currencies found.</Text>
             ) : (
               filtered.map((currency) => {
+                const effectiveSelectedCode = (pendingCode ?? selectedCode).trim().toUpperCase();
                 const selected =
-                  currency.code.toUpperCase() === selectedCode.trim().toUpperCase();
+                  currency.code.toUpperCase() === effectiveSelectedCode;
                 return (
                   <Pressable
                     key={currency.code}
                     accessibilityRole="button"
-                    onPress={() => {
-                      onSelect(currency.code);
-                      onClose();
-                    }}
+                    disabled={pendingCode !== null}
+                    onPress={() => handleSelect(currency.code)}
                     style={({ pressed }) => [
                       styles.row,
                       selected && styles.rowSelected,

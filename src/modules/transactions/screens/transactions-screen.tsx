@@ -317,14 +317,12 @@ function TransactionsScreenContent({
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
-      const atBottom =
-        contentOffset.y > 300 &&
-        contentOffset.y + layoutMeasurement.height >= contentSize.height - 180;
+      const { contentOffset } = event.nativeEvent;
+      const shouldShow = contentOffset.y > 350;
 
-      if (atBottom !== showScrollToTopRef.current) {
-        showScrollToTopRef.current = atBottom;
-        setShowScrollToTop(atBottom);
+      if (shouldShow !== showScrollToTopRef.current) {
+        showScrollToTopRef.current = shouldShow;
+        setShowScrollToTop(shouldShow);
       }
     },
     [],

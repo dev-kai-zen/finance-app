@@ -38,7 +38,6 @@ import {
   usePrivacyMode,
 } from "@/modules/settings";
 import {
-  DraggableTourChip,
   GoalFormWalkthroughOverlay,
   useGoalFormWalkthrough,
   WalkthroughIntroModal,
@@ -362,10 +361,6 @@ function GoalFormModalContent({
         visible={visible}
         isDirty={isDirty}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
         <KeyboardAwareFormPreset
           ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}

@@ -36,7 +36,6 @@ import {
   UnsavedChangesModal,
 } from "@/components";
 import {
-  DraggableTourChip,
   TransactionFormWalkthroughOverlay,
   useTransactionFormWalkthrough,
   WalkthroughIntroModal,
@@ -3035,11 +3034,6 @@ function TransactionFormModalInner({
               </Pressable>
             </View>
           </KeyboardStickyView>
-
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
 
           <TransactionFormWalkthroughOverlay
             onNext={walkthrough.nextStep}

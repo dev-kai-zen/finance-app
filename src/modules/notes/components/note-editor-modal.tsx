@@ -21,7 +21,6 @@ import {
   UnsavedChangesModal,
 } from "@/components";
 import {
-  DraggableTourChip,
   NoteEditorWalkthroughOverlay,
   useNoteEditorWalkthrough,
   WalkthroughRegistryProvider,
@@ -469,11 +468,6 @@ function NoteEditorModalContent({
             />
           </WalkthroughTarget>
         </ScrollView>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <NoteEditorWalkthroughOverlay
           onNext={walkthrough.nextStep}

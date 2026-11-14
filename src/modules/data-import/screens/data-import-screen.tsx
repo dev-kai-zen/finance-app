@@ -38,7 +38,6 @@ import { ImportReviewEntry } from "../components/import-review-entry";
 import { ImportHelpModal } from "../components/import-help-modal";
 import {
   DataImportWalkthroughOverlay,
-  DraggableTourChip,
   useDataImportWalkthrough,
   WalkthroughRegistryProvider,
   WalkthroughTarget,
@@ -1261,9 +1260,12 @@ export function DataImportScreenContent() {
         cancelLabel={t("dataImport.cancel")}
         pending={state.busy}
         onCancel={() => setConfirm(false)}
-        onConfirm={() => {
-          setConfirm(false);
-          void state.commit();
+        onConfirm={async () => {
+          try {
+            await state.commit();
+          } finally {
+            setConfirm(false);
+          }
         }}
       />
       <ConfirmModal
@@ -1278,11 +1280,6 @@ export function DataImportScreenContent() {
           state.restart();
           pendingBack?.();
         }}
-      />
-
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
       />
 
       <DataImportWalkthroughOverlay

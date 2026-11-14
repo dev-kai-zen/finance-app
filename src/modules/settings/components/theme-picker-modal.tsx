@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react-native";
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -45,6 +46,7 @@ import {
 import { useLocalization } from "@/infrastructure/localization";
 import { triggerHaptic } from "../services/sound-and-haptics.service";
 import { writeSavedCustomThemeConfig } from "@/infrastructure/preferences/theme-preference.storage";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   HexColorFormModal,
   findHexColorByHex,
@@ -171,6 +173,14 @@ export function ThemePickerModal({
   const [modeFilter, setModeFilter] = useState<PresetModeFilter>("all");
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [paletteGridWidth, setPaletteGridWidth] = useState(0);
+  const [applyingThemeId, setApplyingThemeId] = useState<string | null>(null);
+  const [isApplyingCustom, setIsApplyingCustom] = useState(false);
+
+  useEffect(() => {
+    if (applyingThemeId && selectedThemeId === applyingThemeId) {
+      setApplyingThemeId(null);
+    }
+  }, [applyingThemeId, selectedThemeId]);
 
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [colorFormTarget, setColorFormTarget] = useState<"primary" | "accent">(
@@ -252,8 +262,12 @@ export function ThemePickerModal({
       setPaywallOpen(true);
       return;
     }
+    if (applyingThemeId || (!isFollowingSystem && selectedThemeId === themeId)) {
+      return;
+    }
     triggerHaptic();
-    requestAnimationFrame(() => {
+    setApplyingThemeId(themeId);
+    scheduleAfterPaint(() => {
       onSelectTheme(themeId);
     });
   };
@@ -353,7 +367,17 @@ export function ThemePickerModal({
       setPaywallOpen(true);
       return;
     }
-    setCustomTheme(draftConfig);
+    if (isApplyingCustom) {
+      return;
+    }
+    setIsApplyingCustom(true);
+    triggerHaptic();
+    scheduleAfterPaint(() => {
+      setCustomTheme(draftConfig);
+      scheduleAfterPaint(() => {
+        setIsApplyingCustom(false);
+      });
+    });
   };
 
   const isCustomActive =
@@ -632,11 +656,13 @@ export function ThemePickerModal({
                     ]}
                   >
                     <ThemePresetCard
+                      isApplying={applyingThemeId === preset.id}
                       isProLocked={!isPro && !isFreeThemePreset(preset.id)}
                       onPress={() => handleSelectTheme(preset.id)}
                       preset={preset}
                       selected={
-                        !isFollowingSystem && preset.id === selectedThemeId
+                        !isFollowingSystem &&
+                        (preset.id === selectedThemeId || applyingThemeId === preset.id)
                       }
                       style={styles.cardFill}
                     />
@@ -1099,32 +1125,51 @@ export function ThemePickerModal({
               {/* Apply CTA */}
               <Pressable
                 accessibilityRole="button"
+                disabled={isApplyingCustom}
                 onPress={handleApplyCustomTheme}
                 style={({ pressed }) => [
                   styles.applyCustomButton,
                   !isPro && styles.applyCustomButtonPro,
-                  pressed && styles.pressed,
+                  (pressed || isApplyingCustom) && styles.pressed,
                 ]}
               >
-                {!isPro ? (
-                  <Crown color="#FFFFFF" size={18} />
+                {isApplyingCustom ? (
+                  <>
+                    <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                    <Text
+                      style={[
+                        styles.applyCustomButtonText,
+                        !isPro && styles.applyCustomButtonTextPro,
+                      ]}
+                    >
+                      {t("themePicker.applyingTheme", {
+                        defaultValue: "Applying Theme...",
+                      })}
+                    </Text>
+                  </>
                 ) : (
-                  <Check
-                    color={theme.colors.onPrimary}
-                    size={18}
-                    strokeWidth={2.5}
-                  />
+                  <>
+                    {!isPro ? (
+                      <Crown color="#FFFFFF" size={18} />
+                    ) : (
+                      <Check
+                        color={theme.colors.onPrimary}
+                        size={18}
+                        strokeWidth={2.5}
+                      />
+                    )}
+                    <Text
+                      style={[
+                        styles.applyCustomButtonText,
+                        !isPro && styles.applyCustomButtonTextPro,
+                      ]}
+                    >
+                      {isPro
+                        ? t("themePicker.applyCustomTheme")
+                        : t("themePicker.unlockCustomThemePro")}
+                    </Text>
+                  </>
                 )}
-                <Text
-                  style={[
-                    styles.applyCustomButtonText,
-                    !isPro && styles.applyCustomButtonTextPro,
-                  ]}
-                >
-                  {isPro
-                    ? t("themePicker.applyCustomTheme")
-                    : t("themePicker.unlockCustomThemePro")}
-                </Text>
               </Pressable>
             </ScrollView>
           )}

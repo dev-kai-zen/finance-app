@@ -23,7 +23,6 @@ import {
 import { HexColorFormModal, useHexColors, type HexColorInput } from "@/modules/hex-colors";
 import {
   CategoryFormWalkthroughOverlay,
-  DraggableTourChip,
   useCategoryFormWalkthrough,
   WalkthroughRegistryProvider,
   WalkthroughTarget,
@@ -438,11 +437,6 @@ function CategoryFormModalContent({
             </WalkthroughTarget>
           </View>
         </View>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <CategoryFormWalkthroughOverlay
           onNext={walkthrough.nextStep}

@@ -17,7 +17,6 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  DraggableTourChip,
   AccountGroupSetupWalkthroughOverlay,
   useAccountGroupSetupWalkthrough,
   WalkthroughIntroModal,
@@ -210,10 +209,6 @@ function AccountTypeManagerContent({
         visible
         onClose={onClose}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
         <View style={styles.scrollWrapper}>
           <ScrollView
             ref={scrollRef}

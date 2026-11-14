@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -24,6 +25,8 @@ import {
   SUPPORTED_LANGUAGES,
   useLocalization,
 } from "@/infrastructure/localization";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
+import { triggerHaptic } from "@/modules/settings/services/sound-and-haptics.service";
 
 type LanguageListItem =
   | { kind: "system"; key: "system" }
@@ -72,8 +75,19 @@ export function LanguageScreen({
       : languages;
   }, [query, t]);
 
+  const [pendingLanguage, setPendingLanguage] =
+    useState<LanguagePreference | null>(null);
+
   const selectLanguage = (next: LanguagePreference) => {
-    if (next !== preference) setLanguagePreference(next);
+    if (next === preference || pendingLanguage !== null) return;
+    setPendingLanguage(next);
+    triggerHaptic();
+    scheduleAfterPaint(() => {
+      setLanguagePreference(next);
+      scheduleAfterPaint(() => {
+        setPendingLanguage(null);
+      });
+    });
   };
 
   return (
@@ -140,9 +154,13 @@ export function LanguageScreen({
         keyboardShouldPersistTaps="handled"
         renderItem={({ item }) => {
           const isSystem = item.kind === "system";
-          const selected = isSystem
-            ? preference === "system"
-            : preference === item.language.code;
+          const itemPref: LanguagePreference = isSystem ? "system" : item.language.code;
+          const isPending = pendingLanguage === itemPref;
+          const selected = pendingLanguage !== null
+            ? isPending
+            : isSystem
+              ? preference === "system"
+              : preference === item.language.code;
           const label = isSystem
             ? t("language.systemDefault")
             : item.language.englishName;
@@ -163,8 +181,9 @@ export function LanguageScreen({
               }
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
+              disabled={pendingLanguage !== null}
               onPress={() =>
-                selectLanguage(isSystem ? "system" : item.language.code)
+                selectLanguage(itemPref)
               }
               style={({ pressed }) => [
                 styles.languageRow,
@@ -191,7 +210,9 @@ export function LanguageScreen({
                   selected && styles.selectionIndicatorSelected,
                 ]}
               >
-                {selected ? (
+                {isPending ? (
+                  <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                ) : selected ? (
                   <Check
                     color={theme.colors.onPrimary}
                     size={15}

@@ -929,6 +929,7 @@ export const fil = {
     accentUsedFor:
       "Ginagamit sa: Kai AI assistant badges & sparkles, pangalawang sukatan sa ulat (savings rate), at mga notification icon.",
     applyCustomTheme: "Gamitin ang Custom Theme",
+    applyingTheme: "Inilalapat ang Tema...",
     unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
     customShadeLabel: "I-adjust ang Tingkad at Liwanag",
   },
@@ -1069,7 +1070,7 @@ export const fil = {
       improveItem48:
         "Sundan ang gabay sa Mga Setting mula itaas pababa na sumasaklaw sa lahat ng opsyon.",
       improveItem49:
-        "Pindutin ang lumulutang na dobleng palasong button sa ibaba ng listahan ng transaksyon upang maayos na bumalik sa itaas.",
+        "Pindutin ang lumulutang na dobleng palasong button tuwing may transaksyon sa itaas upang maayos na bumalik sa tuktok.",
       improveItem50:
         "Gawing bilugan ang mga kanto ng aksyon kapag nag-swipe pakaliwa upang kopyahin ang transaksyon tulad sa Mga Tala.",
       improveItem51:
@@ -1141,13 +1142,15 @@ export const fil = {
       fixItem32:
         "Gawing mas maayos ang Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na switch habang nananatiling naka-save ang view ng account groups.",
       fixItem33:
-        "Ipakita nang maayos ang lumulutang na chip ng gabay sa loob ng mga sheet ng Kategorya at Filter ng Transaksyon.",
+        "Alisin ang mga lumulutang na chip ng gabay sa mga form sheet para sa mas malinis at walang abalang pagtatala.",
       fixItem34:
         "Ipakita lamang ang mga hakbang sa default na account kapag nag-e-edit ng kasalukuyang bulsa.",
       fixItem35:
-        "Magpalit ng tema ng kulay nang mabilis at maayos nang hindi nagla-lag o humihinto ang screen.",
+        "Magpakita ng agarang pahiwatig at loading indicator kapag nagpapalit ng tema o sariling estilo nang hindi nagla-lag ang screen.",
       fixItem36:
         "Pindutin ang anumang tsart ng net worth upang buksan ang buong screen na inspektor na may maayos na pagpili ng buwan.",
+      fixItem37:
+        "Ayusin ang pagtigil at magpakita ng mabilis na pahiwatig kapag nagpapalit ng tab sa mga ulat, petsa, wika, at pananalapi.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

@@ -28,7 +28,6 @@ import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   BudgetFormWalkthroughOverlay,
-  DraggableTourChip,
   useBudgetFormWalkthrough,
   WalkthroughIntroModal,
   useWalkthroughIntro,
@@ -620,11 +619,6 @@ function BudgetFormModalContent({
               </WalkthroughTarget>
           </View>
         </ScrollView>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <BudgetFormWalkthroughOverlay
           onNext={walkthrough.nextStep}

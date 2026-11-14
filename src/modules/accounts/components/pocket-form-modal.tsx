@@ -8,7 +8,6 @@ import {
   ThemedSwitch,
 } from "@/components";
 import {
-  DraggableTourChip,
   PocketFormWalkthroughOverlay,
   usePocketFormWalkthrough,
   useWalkthroughTarget,
@@ -287,11 +286,6 @@ function PocketFormModalContent({
             </>
           ) : null}
         </KeyboardAwareForm>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <PocketFormWalkthroughOverlay
           onNext={walkthrough.nextStep}

@@ -897,6 +897,7 @@ export const en = {
     accentUsedFor:
       "Applied to: Kai AI assistant badges & sparkles, secondary report metrics (savings rate & ratios), and notification icons.",
     applyCustomTheme: "Apply Custom Theme",
+    applyingTheme: "Applying Theme...",
     unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
     customShadeLabel: "Fine-tune Tone & Brightness",
   },
@@ -1036,7 +1037,7 @@ export const en = {
       improveItem48:
         "Follow the Settings guided tour smoothly in top-to-bottom order covering all menu options.",
       improveItem49:
-        "Tap a floating double-arrow button at the bottom of the transaction list to smoothly return to the top.",
+        "Tap a floating double-arrow button whenever transactions are scrolled above to smoothly return to the top.",
       improveItem50:
         "Round the card corners when swiping left to duplicate transactions for a cohesive look matching Notes.",
       improveItem51:
@@ -1107,13 +1108,15 @@ export const en = {
       fixItem32:
         "Declutter the Settings menu by removing redundant toggles while keeping your account group view saved.",
       fixItem33:
-        "Display the floating tour guide chip properly inside Category and Transaction Filter sheets.",
+        "Remove intrusive floating guide chips across form sheets for a cleaner, distraction-free input experience.",
       fixItem34:
         "Present default account walkthrough steps only when editing an existing pocket.",
       fixItem35:
-        "Switch color themes instantaneously and smoothly without screen freezing or delay.",
+        "Show live applying feedback and loading indicator when switching color themes or custom styles without screen freezing.",
       fixItem36:
         "Tap any net worth chart to open a full-screen inspector with smooth month selection and clear figures.",
+      fixItem37:
+        "Resolve freezing and show immediate feedback when switching report tabs, dates, languages, and currencies.",
     },
     v140: {
       date: "November 5, 2026",

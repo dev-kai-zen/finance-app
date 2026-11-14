@@ -11,7 +11,6 @@ import {
   NotificationModal,
 } from "@/components";
 import {
-  DraggableTourChip,
   PresetFormWalkthroughOverlay,
   usePresetFormWalkthrough,
   useWalkthroughTarget,
@@ -612,11 +611,6 @@ function QuickPresetFormModalContent({
             />
           </View>
         </KeyboardAwareForm>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <PresetFormWalkthroughOverlay
           onNext={walkthrough.nextStep}

@@ -45,7 +45,6 @@ import {
 } from "@/modules/hex-colors";
 import {
   CustomizeDashboardWalkthroughOverlay,
-  DraggableTourChip,
   useCustomizeDashboardWalkthrough,
   WalkthroughRegistryProvider,
   WalkthroughTarget,
@@ -747,11 +746,6 @@ function CustomizeDashboardModalContent({
             />
           </View>
         </View>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <CustomizeDashboardWalkthroughOverlay
           onNext={walkthrough.nextStep}

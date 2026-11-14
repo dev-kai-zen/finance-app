@@ -77,40 +77,49 @@ export function useBudgets(referenceDate?: Date) {
   }, [categories]);
 
   // Calculate statuses for all budgets
-  const budgetStatuses = useMemo<BudgetStatus[]>(() => {
-    if (!budgets.length || !flatCategoriesMap.size) return [];
+  const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([]);
 
-    const activeBudgetCategoryIds = new Set(
-      budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
-    );
-
-    const statuses: BudgetStatus[] = [];
-
-    for (const budget of budgets) {
-      const category = flatCategoriesMap.get(budget.categoryId);
-      if (!category) continue;
-
-      const status = calculateCategoryBudgetStatus({
-        budget,
-        category,
-        childCategories: category.subcategories || [],
-        activeBudgetCategoryIds,
-        referenceDate: effectiveReferenceDate,
-        context: db,
-      });
-
-      statuses.push(status);
+  useEffect(() => {
+    if (!budgets.length || !flatCategoriesMap.size) {
+      setBudgetStatuses([]);
+      return;
     }
 
-    // Sort by status: exceeded first, then near limit, then by percentage descending
-    return statuses.sort((a, b) => {
-      if (a.isExceeded !== b.isExceeded) {
-        return a.isExceeded ? -1 : 1;
+    scheduleAfterPaint(() => {
+      const activeBudgetCategoryIds = new Set(
+        budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
+      );
+
+      const statuses: BudgetStatus[] = [];
+
+      for (const budget of budgets) {
+        const category = flatCategoriesMap.get(budget.categoryId);
+        if (!category) continue;
+
+        const status = calculateCategoryBudgetStatus({
+          budget,
+          category,
+          childCategories: category.subcategories || [],
+          activeBudgetCategoryIds,
+          referenceDate: effectiveReferenceDate,
+          context: db,
+        });
+
+        statuses.push(status);
       }
-      if (a.isNearLimit !== b.isNearLimit) {
-        return a.isNearLimit ? -1 : 1;
-      }
-      return b.percentage - a.percentage;
+
+      // Sort by status: exceeded first, then near limit, then by percentage descending
+      statuses.sort((a, b) => {
+        if (a.isExceeded !== b.isExceeded) {
+          return a.isExceeded ? -1 : 1;
+        }
+        if (a.isNearLimit !== b.isNearLimit) {
+          return a.isNearLimit ? -1 : 1;
+        }
+        return b.percentage - a.percentage;
+      });
+
+      setBudgetStatuses(statuses);
     });
   }, [budgets, flatCategoriesMap, effectiveReferenceDate]);
 

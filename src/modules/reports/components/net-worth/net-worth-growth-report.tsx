@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { NetWorthInspectModal } from "@/components";
+import { NetWorthInspectModal, PageLoadingState } from "@/components";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { usePrivacyMode } from "@/modules/settings";
@@ -21,6 +21,7 @@ export function NetWorthGrowthReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedPointIndex,
     setSelectedPointIndex,
   } = useNetWorthGrowthReport();
@@ -47,30 +48,36 @@ export function NetWorthGrowthReport() {
         />
       </WalkthroughTarget>
 
-      <NetWorthSummaryCards
-        currentNetWorthMinorUnits={data.currentNetWorthMinorUnits}
-        periodChangeMinorUnits={data.periodChangeMinorUnits}
-        periodChangePercentage={data.periodChangePercentage}
-        peakNetWorthMinorUnits={data.peakNetWorthMinorUnits}
-        lowestNetWorthMinorUnits={data.lowestNetWorthMinorUnits}
-      />
+      {reportLoading ? (
+        <PageLoadingState message="Loading report..." variant="cards" />
+      ) : (
+        <>
+          <NetWorthSummaryCards
+            currentNetWorthMinorUnits={data.currentNetWorthMinorUnits}
+            periodChangeMinorUnits={data.periodChangeMinorUnits}
+            periodChangePercentage={data.periodChangePercentage}
+            peakNetWorthMinorUnits={data.peakNetWorthMinorUnits}
+            lowestNetWorthMinorUnits={data.lowestNetWorthMinorUnits}
+          />
 
-      <WalkthroughTarget id="reportsChart">
-        <NetWorthGrowthChart
-          onPressChart={() => setInspectModalVisible(true)}
-          onSelectPointIndex={setSelectedPointIndex}
-          points={data.points}
-          selectedPointIndex={selectedPointIndex}
-        />
-      </WalkthroughTarget>
+          <WalkthroughTarget id="reportsChart">
+            <NetWorthGrowthChart
+              onPressChart={() => setInspectModalVisible(true)}
+              onSelectPointIndex={setSelectedPointIndex}
+              points={data.points}
+              selectedPointIndex={selectedPointIndex}
+            />
+          </WalkthroughTarget>
 
-      <WalkthroughTarget id="reportsBreakdownTable">
-        <NetWorthHistoryTable
-          onSelectPointIndex={setSelectedPointIndex}
-          points={data.points}
-          selectedPointIndex={selectedPointIndex}
-        />
-      </WalkthroughTarget>
+          <WalkthroughTarget id="reportsBreakdownTable">
+            <NetWorthHistoryTable
+              onSelectPointIndex={setSelectedPointIndex}
+              points={data.points}
+              selectedPointIndex={selectedPointIndex}
+            />
+          </WalkthroughTarget>
+        </>
+      )}
 
       <NetWorthInspectModal
         currencyCode={preferences.defaultCurrency ?? "PHP"}

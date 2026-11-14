@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getLabelsSummaryReport } from "../services/get-labels-summary-report.service";
 import type {
   IncomeExpenseMode,
@@ -8,6 +9,23 @@ import type {
 import type { LabelsSummaryReportData } from "../types/labels-summary.types";
 import { getIncomeExpenseDateRange } from "../utils/income-expense-dates";
 import { toDateKey } from "../utils/reports-dates";
+
+const EMPTY_LABELS_REPORT: LabelsSummaryReportData = {
+  mode: "expense",
+  range: {
+    preset: "this-month",
+    startDate: new Date(0),
+    endDate: new Date(0),
+    label: "",
+  },
+  totalMinorUnits: 0,
+  labeledMinorUnits: 0,
+  unlabeledMinorUnits: 0,
+  transactionCount: 0,
+  labeledTransactionCount: 0,
+  unlabeledTransactionCount: 0,
+  labels: [],
+};
 
 export function useLabelsSummaryReport() {
   const { preferences } = useCurrencyPreferences();
@@ -22,6 +40,9 @@ export function useLabelsSummaryReport() {
   const [customDateB, setCustomDateB] = useState<string>(() => toDateKey(now));
 
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null);
+  const [data, setData] = useState<LabelsSummaryReportData>(EMPTY_LABELS_REPORT);
+  const [reportLoading, setReportLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const range = useMemo(() => {
     return getIncomeExpenseDateRange(preset, {
@@ -30,8 +51,19 @@ export function useLabelsSummaryReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  const data: LabelsSummaryReportData = useMemo(() => {
-    return getLabelsSummaryReport(mode, range);
+  useEffect(() => {
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading: setReportLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        setData(getLabelsSummaryReport(mode, range));
+      },
+    );
   }, [mode, range, preferences.defaultCurrency]);
 
   return {
@@ -45,6 +77,7 @@ export function useLabelsSummaryReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedLabelId,
     setSelectedLabelId,
   };

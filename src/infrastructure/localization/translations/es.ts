@@ -915,6 +915,7 @@ export const es = {
     accentUsedFor:
       "Aplicado a: Destacados del asistente Kai AI, métricas secundarias en informes (tasa de ahorro) y alertas de notificación.",
     applyCustomTheme: "Aplicar Tema Personalizado",
+    applyingTheme: "Aplicando tema...",
     unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
     customShadeLabel: "Ajustar brillo y tonalidad",
   },
@@ -1055,7 +1056,7 @@ export const es = {
       improveItem48:
         "Sigue la guía paso a paso de Ajustes en orden de arriba a abajo cubriendo todas las opciones.",
       improveItem49:
-        "Toca el botón flotante de doble flecha hacia arriba al final de la lista de transacciones para volver arriba.",
+        "Toca el botón flotante de doble flecha siempre que haya transacciones ocultas arriba para volver al inicio.",
       improveItem50:
         "Redondea las esquinas de acción al deslizar a la izquierda para duplicar transacciones al igual que en Notas.",
       improveItem51:
@@ -1127,13 +1128,15 @@ export const es = {
       fixItem32:
         "Simplifica el menú de Ajustes eliminando opciones redundantes mientras se guarda tu vista de grupos de cuentas.",
       fixItem33:
-        "Muestra la ficha flotante de guía correctamente dentro de las hojas de Categoría y Filtro de Transacciones.",
+        "Elimina las fichas flotantes de guía en los formularios para una experiencia de entrada más limpia y sin distracciones.",
       fixItem34:
         "Presenta los pasos de guía de cuentas predeterminadas solo al editar un bolsillo existente.",
       fixItem35:
-        "Cambia los temas de color de forma instantánea y fluida sin pausas ni demoras en la pantalla.",
+        "Muestra una confirmación en vivo e indicador de carga al cambiar temas de color o estilos personalizados sin pausas.",
       fixItem36:
         "Toca cualquier gráfico de patrimonio neto para abrir un inspector a pantalla completa con selección fluida de meses.",
+      fixItem37:
+        "Resuelve bloqueos y muestra respuesta inmediata al cambiar de pestañas en informes, fechas, idiomas y monedas.",
     },
     v140: {
       date: "5 de noviembre de 2026",

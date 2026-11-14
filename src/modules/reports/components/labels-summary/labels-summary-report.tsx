@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { PageLoadingState } from "@/components/page-container";
 import { useLabelsSummaryReport } from "../../hooks/use-labels-summary-report";
 import { IncomeExpenseFilterBar } from "../income-expense/income-expense-filter-bar";
 import { LabelsSummaryDonutChart } from "./labels-summary-donut-chart";
@@ -17,6 +18,7 @@ export function LabelsSummaryReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedLabelId,
     setSelectedLabelId,
   } = useLabelsSummaryReport();
@@ -41,27 +43,33 @@ export function LabelsSummaryReport() {
         onChangeCustomDateB={setCustomDateB}
       />
 
-      <LabelsSummaryDonutChart
-        labels={data.labels}
-        totalMinorUnits={data.totalMinorUnits}
-        transactionCount={data.transactionCount}
-        mode={mode}
-        selectedLabelId={selectedLabelId}
-        onSelectLabel={setSelectedLabelId}
-      />
+      {reportLoading ? (
+        <PageLoadingState message="Loading report..." variant="cards" />
+      ) : (
+        <>
+          <LabelsSummaryDonutChart
+            labels={data.labels}
+            totalMinorUnits={data.totalMinorUnits}
+            transactionCount={data.transactionCount}
+            mode={mode}
+            selectedLabelId={selectedLabelId}
+            onSelectLabel={setSelectedLabelId}
+          />
 
-      <LabelsSummaryTable
-        labels={data.labels}
-        totalMinorUnits={data.totalMinorUnits}
-        labeledMinorUnits={data.labeledMinorUnits}
-        unlabeledMinorUnits={data.unlabeledMinorUnits}
-        transactionCount={data.transactionCount}
-        labeledTransactionCount={data.labeledTransactionCount}
-        unlabeledTransactionCount={data.unlabeledTransactionCount}
-        mode={mode}
-        selectedLabelId={selectedLabelId}
-        onSelectLabel={setSelectedLabelId}
-      />
+          <LabelsSummaryTable
+            labels={data.labels}
+            totalMinorUnits={data.totalMinorUnits}
+            labeledMinorUnits={data.labeledMinorUnits}
+            unlabeledMinorUnits={data.unlabeledMinorUnits}
+            transactionCount={data.transactionCount}
+            labeledTransactionCount={data.labeledTransactionCount}
+            unlabeledTransactionCount={data.unlabeledTransactionCount}
+            mode={mode}
+            selectedLabelId={selectedLabelId}
+            onSelectLabel={setSelectedLabelId}
+          />
+        </>
+      )}
     </View>
   );
 }

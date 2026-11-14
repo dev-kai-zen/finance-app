@@ -31,7 +31,6 @@ import {
 } from "@/modules/currencies";
 import {
   WalkthroughRegistryProvider,
-  DraggableTourChip,
   AccountFormWalkthroughOverlay,
   useAccountFormWalkthrough,
   WalkthroughIntroModal,
@@ -667,10 +666,6 @@ function AccountFormModalContent({
         }
         onSave={handleSave}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
         <KeyboardAwareForm
           ref={scrollRef}
           scrollEnabled={

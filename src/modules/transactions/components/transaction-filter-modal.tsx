@@ -13,7 +13,6 @@ import { Calendar, Check, ChevronDown, ChevronUp } from "lucide-react-native";
 import { DatePickerModal } from "@/components/date-picker-modal";
 import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import {
-  DraggableTourChip,
   TxFilterWalkthroughOverlay,
   useTxFilterWalkthrough,
   WalkthroughRegistryProvider,
@@ -550,11 +549,6 @@ function TransactionFilterModalContent({
             </WalkthroughTarget>
           </View>
         </View>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <TxFilterWalkthroughOverlay
           onNext={walkthrough.nextStep}
