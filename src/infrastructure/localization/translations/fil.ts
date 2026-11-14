@@ -1058,6 +1058,8 @@ export const fil = {
         "I-standardize ang screen ng Quick Presets gamit ang lumulutang na add button sa ibabang sulok.",
       improveItem43:
         "Magpakita ng loading indicator sa privacy eye button habang itinatago o ipinapakita ang mga halaga.",
+      improveItem44:
+        "Magpakita ng agarang transition sa mga switch na may micro loading indicator habang nag-a-update.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -2315,7 +2317,7 @@ export const fil = {
       "Permanenteng burahin ang lahat ng lokal na transaksyon, account, at setting para magsimula muli.",
     stepLocalBackupTitle: "Lokal na Backup ng Device",
     stepLocalBackupDesc:
-      "Mag-export at mag-import ng buong SQLite database backup direkta sa storage ng iyong device.",
+      "Mag-export at mag-import ng naka-encrypt na kumpletong backup ng data direkta sa storage ng iyong device.",
     stepGoogleDriveTitle: "Google Drive Cloud Backup",
     stepGoogleDriveDesc:
       "Ligtas na i-sync ang iyong data sa Google Drive para sa awtomatikong cloud backup.",

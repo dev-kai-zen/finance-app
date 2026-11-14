@@ -607,15 +607,6 @@ function createStyles(theme: AppTheme) {
     container: {
       flex: 1,
     },
-    loadingBox: {
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: theme.spacing.xl * 2,
-    },
-    loadingText: {
-      color: theme.colors.textSecondary,
-      marginTop: theme.spacing.md,
-    },
     summaryCard: {
       backgroundColor: theme.colors.surface,
       borderColor: theme.colors.border,

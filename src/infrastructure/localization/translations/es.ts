@@ -1044,6 +1044,8 @@ export const es = {
         "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
       improveItem43:
         "Muestra un indicador de carga en el botón de privacidad mientras se ocultan o muestran los montos.",
+      improveItem44:
+        "Muestra una transición inmediata en los interruptores con un micro indicador de carga mientras se actualiza.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -2300,7 +2302,7 @@ export const es = {
       "Borra permanentemente todas las transacciones, cuentas y configuraciones para reiniciar.",
     stepLocalBackupTitle: "Copia de seguridad local",
     stepLocalBackupDesc:
-      "Exporta e importa copias de seguridad de la base de datos SQLite en tu dispositivo.",
+      "Exporta e importa copias de seguridad encriptadas directamente en el almacenamiento de tu dispositivo.",
     stepGoogleDriveTitle: "Copia en Google Drive",
     stepGoogleDriveDesc:
       "Sincroniza tus datos de forma segura en Google Drive para copias automáticas en la nube.",

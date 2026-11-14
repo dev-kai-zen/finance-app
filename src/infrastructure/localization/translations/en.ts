@@ -412,7 +412,7 @@ export const en = {
     settingSupportDev: "Support Development",
     settingSupportDevDesc: "Support the app with a tip or share feedback",
     actionLocalBackup: "Local Backup & Restore",
-    actionLocalBackupDesc: "Export or restore SQLite database on local storage",
+    actionLocalBackupDesc: "Export or restore local database backup on device storage",
     actionGoogleDriveSync: "Google Drive Cloud Backup",
     actionGoogleDriveSyncDesc:
       "Secure cloud backup and restore via Google Drive",
@@ -1025,6 +1025,8 @@ export const en = {
         "Standardize the Quick Presets screen with a floating add button at the bottom corner.",
       improveItem43:
         "Show a loading indicator on the privacy eye button while masking or unmasking sensitive numbers.",
+      improveItem44:
+        "Show an instant toggle transition with a micro loader inside the switch circle while updating.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -2271,7 +2273,7 @@ export const en = {
       "Permanently erase all local transactions, accounts, and settings to start with a fresh slate.",
     stepLocalBackupTitle: "Local Device Backup",
     stepLocalBackupDesc:
-      "Export and import encrypted full SQLite database backups directly to your device storage.",
+      "Export and import encrypted full data backups directly to your device storage.",
     stepGoogleDriveTitle: "Google Drive Cloud Backup",
     stepGoogleDriveDesc:
       "Safely sync your financial data to your private Google Drive for automated multi-device cloud backups.",

@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   Modal,
   Pressable,
@@ -349,10 +350,7 @@ export function LocalBackupScreen() {
             </View>
 
             {backup.operation === "loading" ? (
-              <View style={styles.loadingCard}>
-                <ActivityIndicator color={theme.colors.primary} />
-                <Text style={styles.rowDescription}>Loading backups…</Text>
-              </View>
+              <BackupListSkeleton />
             ) : backup.backups.length === 0 ? (
               <View style={styles.emptyCard}>
                 <FileArchive color={theme.colors.textMuted} size={28} />
@@ -474,6 +472,54 @@ export function LocalBackupScreen() {
       visible={toastState.visible}
     />
     </View>
+  );
+}
+
+function BackupListSkeleton() {
+  const styles = useThemeStyles(createSkeletonStyles);
+  const pulseAnim = useRef(new Animated.Value(0.45)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 0.85,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0.45,
+          duration: 650,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
+
+  return (
+    <Animated.View
+      accessibilityLabel="Loading backups..."
+      accessibilityRole="progressbar"
+      style={[styles.skeletonList, { opacity: pulseAnim }]}
+    >
+      {[0, 1, 2].map((idx) => (
+        <View key={idx} style={styles.skeletonRow}>
+          <View style={styles.skeletonMain}>
+            <View style={[styles.bone, styles.boneIcon]} />
+            <View style={styles.skeletonCopy}>
+              <View style={[styles.bone, styles.boneTitle]} />
+              <View style={[styles.bone, styles.boneSubtitle]} />
+            </View>
+          </View>
+          <View style={styles.skeletonActions}>
+            <View style={[styles.bone, styles.boneAction]} />
+            <View style={[styles.bone, styles.boneAction]} />
+          </View>
+        </View>
+      ))}
+    </Animated.View>
   );
 }
 
@@ -801,18 +847,6 @@ function createStyles(theme: AppTheme) {
     },
     pressed: { backgroundColor: theme.colors.surfaceMuted, opacity: 0.78 },
     disabled: { opacity: 0.4 },
-    loadingCard: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.large,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: theme.spacing.md,
-      justifyContent: "center",
-      minHeight: 100,
-      padding: theme.spacing.lg,
-    },
     emptyCard: {
       alignItems: "center",
       backgroundColor: theme.colors.surface,
@@ -969,6 +1003,62 @@ function createStyles(theme: AppTheme) {
       fontSize: 8,
       fontWeight: "800",
       letterSpacing: 0.3,
+    },
+  });
+}
+
+function createSkeletonStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    skeletonList: {
+      gap: theme.spacing.sm,
+      width: "100%",
+    },
+    skeletonRow: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderCurve: "continuous",
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      gap: theme.spacing.md,
+      minHeight: 76,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+    },
+    skeletonMain: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    skeletonCopy: {
+      flex: 1,
+      gap: theme.spacing.xs,
+    },
+    skeletonActions: {
+      alignSelf: "flex-end",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    bone: {
+      backgroundColor: theme.colors.borderStrong ?? theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+    },
+    boneIcon: {
+      borderRadius: theme.borderRadius.medium,
+      height: 40,
+      width: 40,
+    },
+    boneTitle: {
+      height: 14,
+      width: "65%",
+    },
+    boneSubtitle: {
+      height: 11,
+      width: "40%",
+    },
+    boneAction: {
+      borderRadius: theme.borderRadius.medium,
+      height: 36,
+      width: 36,
     },
   });
 }

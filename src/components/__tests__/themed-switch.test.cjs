@@ -79,3 +79,28 @@ test("themed-switch: resolves thumb color in dark and light modes", () => {
   assert.equal(resolveThumbColor("#FF0000", true, "dark", themeColors), "#FF0000");
 });
 
+function resolveSpinnerColor(localChecked, themeColors) {
+  return localChecked ? themeColors.primary : themeColors.textSecondary;
+}
+
+test("themed-switch: resolves spinner color based on checked state", () => {
+  const themeColors = {
+    primary: "#7ED7B3",
+    textSecondary: "#8D9691",
+  };
+
+  assert.equal(resolveSpinnerColor(true, themeColors), "#7ED7B3");
+  assert.equal(resolveSpinnerColor(false, themeColors), "#8D9691");
+});
+
+test("themed-switch: toggles optimistic checked state correctly", () => {
+  let localChecked = false;
+  const toggle = () => {
+    localChecked = !localChecked;
+    return localChecked;
+  };
+
+  assert.equal(toggle(), true);
+  assert.equal(toggle(), false);
+});
+

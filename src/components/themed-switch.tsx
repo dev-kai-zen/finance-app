@@ -15,9 +15,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useAppTheme } from "@/hooks/use-app-theme";
 
-export type ThemedSwitchProps = SwitchProps & {
-  /** When true for 150ms+, shows a small spinner on the thumb (slow saves only). */
+export type ThemedSwitchProps = Omit<SwitchProps, "onValueChange"> & {
+  /** When true, shows a small spinner on the thumb. */
   pending?: boolean;
+  onValueChange?: (val: boolean) => void | Promise<void>;
 };
 
 const TRACK_WIDTH = 48;
@@ -42,8 +43,12 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
     ref,
   ) {
     const theme = useAppTheme();
-    const isChecked = Boolean(value);
-    const [showPendingSpinner, setShowPendingSpinner] = useState(false);
+    const [localChecked, setLocalChecked] = useState(Boolean(value));
+    const [isToggling, setIsToggling] = useState(false);
+
+    useEffect(() => {
+      setLocalChecked(Boolean(value));
+    }, [value]);
 
     const offTrackColor = String(trackColor?.false ?? theme.colors.borderStrong);
     const onTrackColor = String(
@@ -59,23 +64,21 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
           : theme.colors.surfaceElevated
         : "#FFFFFF");
 
-    const progress = useSharedValue(isChecked ? 1 : 0);
+    const progress = useSharedValue(Boolean(value) ? 1 : 0);
 
     useEffect(() => {
-      progress.value = withTiming(isChecked ? 1 : 0, {
+      progress.value = withTiming(localChecked ? 1 : 0, {
         duration: 180,
         easing: Easing.bezier(0.23, 1, 0.32, 1),
       });
-    }, [isChecked, progress]);
+    }, [localChecked, progress]);
 
-    useEffect(() => {
-      if (!pending) {
-        setShowPendingSpinner(false);
-        return;
-      }
-      const timer = setTimeout(() => setShowPendingSpinner(true), 150);
-      return () => clearTimeout(timer);
-    }, [pending]);
+    const showSpinner = pending || isToggling;
+
+    const resolvedSpinnerColor =
+      localChecked
+        ? theme.colors.primary
+        : theme.colors.textSecondary;
 
     const animatedTrackStyle = useAnimatedStyle(() => {
       const backgroundColor = interpolateColor(
@@ -93,13 +96,26 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
     });
 
     const handlePress = () => {
-      if (disabled) return;
-      const nextChecked = !isChecked;
-      progress.value = withTiming(nextChecked ? 1 : 0, {
-        duration: 180,
-        easing: Easing.bezier(0.23, 1, 0.32, 1),
-      });
-      onValueChange?.(nextChecked);
+      if (disabled || isToggling) return;
+      const nextChecked = !localChecked;
+      setLocalChecked(nextChecked);
+      setIsToggling(true);
+
+      const result = onValueChange?.(nextChecked);
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        (result as Promise<unknown>)
+          .catch((err) => {
+            console.error("[ThemedSwitch] onValueChange error:", err);
+            setLocalChecked(!nextChecked);
+          })
+          .finally(() => {
+            setIsToggling(false);
+          });
+      } else {
+        setTimeout(() => {
+          setIsToggling(false);
+        }, 220);
+      }
     };
 
     return (
@@ -107,7 +123,7 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
         ref={ref}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="switch"
-        accessibilityState={{ checked: isChecked, disabled: Boolean(disabled) }}
+        accessibilityState={{ checked: localChecked, disabled: Boolean(disabled) }}
         accessible={true}
         disabled={disabled}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -123,8 +139,12 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
               animatedThumbStyle,
             ]}
           >
-            {showPendingSpinner ? (
-              <ActivityIndicator color={theme.colors.primary} size="small" />
+            {showSpinner ? (
+              <ActivityIndicator
+                color={resolvedSpinnerColor}
+                size="small"
+                style={styles.thumbSpinner}
+              />
             ) : null}
           </Animated.View>
         </Animated.View>
@@ -159,5 +179,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+  },
+  thumbSpinner: {
+    transform: [{ scale: 0.62 }],
   },
 });
