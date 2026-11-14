@@ -1023,6 +1023,8 @@ export const en = {
         "Combine transaction Date and Amount sort buttons with direction arrows to toggle sort order on tap.",
       improveItem42:
         "Standardize the Quick Presets screen with a floating add button at the bottom corner.",
+      improveItem43:
+        "Show a loading indicator on the privacy eye button while masking or unmasking sensitive numbers.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:

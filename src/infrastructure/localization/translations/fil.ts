@@ -1056,6 +1056,8 @@ export const fil = {
         "Pagsamahin ang mga button sa pag-sort ng Petsa at Halaga na may arrow para magpalit ng pagkakasunod-sunod.",
       improveItem42:
         "I-standardize ang screen ng Quick Presets gamit ang lumulutang na add button sa ibabang sulok.",
+      improveItem43:
+        "Magpakita ng loading indicator sa privacy eye button habang itinatago o ipinapakita ang mga halaga.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:

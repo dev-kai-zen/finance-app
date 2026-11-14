@@ -1,5 +1,13 @@
-import { type PropsWithChildren, type ReactNode, useState } from "react";
 import {
+  type PropsWithChildren,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -111,6 +119,63 @@ function HeaderWalkthroughButton({
   );
 }
 
+function HeaderPrivacyButton({
+  buttonStyle,
+  pressedStyle,
+  iconColor,
+}: {
+  buttonStyle: object;
+  pressedStyle: object;
+  iconColor: string;
+}) {
+  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const [isPending, setIsPending] = useState(false);
+  const isMountedRef = useRef(true);
+  const { t } = useLocalization();
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    if (isPending) return;
+    setIsPending(true);
+    togglePrivacyMode(() => {
+      if (isMountedRef.current) {
+        setIsPending(false);
+      }
+    });
+  }, [isPending, togglePrivacyMode]);
+
+  return (
+    <Pressable
+      accessibilityLabel={
+        isPrivate ? t("privacy.showBalances") : t("privacy.hideBalances")
+      }
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isPending, busy: isPending }}
+      disabled={isPending}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      onPress={handleToggle}
+      style={({ pressed }) => [
+        buttonStyle,
+        pressed && !isPending && pressedStyle,
+      ]}
+    >
+      {isPending ? (
+        <ActivityIndicator color={iconColor} size="small" />
+      ) : isPrivate ? (
+        <EyeOff color={iconColor} size={19} />
+      ) : (
+        <Eye color={iconColor} size={19} />
+      )}
+    </Pressable>
+  );
+}
+
 export function AppShell({
   children,
   banner,
@@ -125,7 +190,6 @@ export function AppShell({
   const pathname = usePathname();
   const { t } = useLocalization();
   const { generalSearchEnabled, guideHelperEnabled } = useExperiencePreferences();
-  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
   const walkthroughLabel = t("dashboard.walkthroughChip", {
     defaultValue: "Guide",
   });
@@ -187,26 +251,11 @@ export function AppShell({
                   label={walkthroughLabel}
                   pressedStyle={styles.headerIconButtonPressed}
                 />
-                <Pressable
-                  accessibilityLabel={
-                    isPrivate
-                      ? t("privacy.showBalances")
-                      : t("privacy.hideBalances")
-                  }
-                  accessibilityRole="button"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={togglePrivacyMode}
-                  style={({ pressed }) => [
-                    styles.headerIconButton,
-                    pressed && styles.headerIconButtonPressed,
-                  ]}
-                >
-                  {isPrivate ? (
-                    <EyeOff color={styles.headerIconColor.color} size={19} />
-                  ) : (
-                    <Eye color={styles.headerIconColor.color} size={19} />
-                  )}
-                </Pressable>
+                <HeaderPrivacyButton
+                  buttonStyle={styles.headerIconButton}
+                  iconColor={styles.headerIconColor.color}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
               {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
               <SyncStatusChip />
             </View>
@@ -258,26 +307,11 @@ export function AppShell({
                   label={walkthroughLabel}
                   pressedStyle={styles.headerIconButtonPressed}
                 />
-                <Pressable
-                  accessibilityLabel={
-                    isPrivate
-                      ? t("privacy.showBalances")
-                      : t("privacy.hideBalances")
-                  }
-                  accessibilityRole="button"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={togglePrivacyMode}
-                  style={({ pressed }) => [
-                    styles.headerIconButton,
-                    pressed && styles.headerIconButtonPressed,
-                  ]}
-                >
-                  {isPrivate ? (
-                    <EyeOff color={styles.headerIconColor.color} size={19} />
-                  ) : (
-                    <Eye color={styles.headerIconColor.color} size={19} />
-                  )}
-                </Pressable>
+                <HeaderPrivacyButton
+                  buttonStyle={styles.headerIconButton}
+                  iconColor={styles.headerIconColor.color}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
                 {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
                 <SyncStatusChip compact />
               </View>

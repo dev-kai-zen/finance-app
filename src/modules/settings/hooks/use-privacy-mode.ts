@@ -18,20 +18,26 @@ export function usePrivacyMode() {
     });
   }, []);
 
-  const togglePrivacyMode = useCallback(() => {
+  const togglePrivacyMode = useCallback((onComplete?: () => void) => {
     setIsPrivate((prev) => {
       const next = !prev;
       scheduleAfterPaint(() => {
         setPrivacyModeSetting(next);
+        requestAnimationFrame(() => {
+          onComplete?.();
+        });
       });
       return next;
     });
   }, []);
 
-  const setPrivacyMode = useCallback((val: boolean) => {
+  const setPrivacyMode = useCallback((val: boolean, onComplete?: () => void) => {
     setIsPrivate(val);
     scheduleAfterPaint(() => {
       setPrivacyModeSetting(val);
+      requestAnimationFrame(() => {
+        onComplete?.();
+      });
     });
   }, []);
 

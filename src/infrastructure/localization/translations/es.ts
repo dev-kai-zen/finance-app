@@ -1042,6 +1042,8 @@ export const es = {
         "Combina los botones de ordenar por Fecha y Monto con flechas para cambiar el orden al tocar.",
       improveItem42:
         "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
+      improveItem43:
+        "Muestra un indicador de carga en el botón de privacidad mientras se ocultan o muestran los montos.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
