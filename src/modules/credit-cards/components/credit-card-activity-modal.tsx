@@ -19,7 +19,6 @@ import {
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 
 export interface CreditCardActivityModalItem {
@@ -79,7 +78,6 @@ function CreditCardActivityModalContent({
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { isPrivate } = usePrivacyMode();
   const [search, setSearch] = useState("");
 
   const handleClose = () => {
@@ -199,12 +197,9 @@ function CreditCardActivityModalContent({
               <View style={styles.summaryMetricItem}>
                 <Text style={styles.summaryMetricLabel}>Total Billed</Text>
                 <Text style={styles.summaryMetricValue}>
-                  {formatPrivacyAmount(
-                    formatCurrency(
-                      statementSummary.issuedAmountMinorUnits,
-                      currencyCode,
-                    ),
-                    isPrivate,
+                  {formatCurrency(
+                    statementSummary.issuedAmountMinorUnits,
+                    currencyCode,
                   )}
                 </Text>
               </View>
@@ -218,12 +213,9 @@ function CreditCardActivityModalContent({
                       : styles.summaryRemainingPaid,
                   ]}
                 >
-                  {formatPrivacyAmount(
-                    formatCurrency(
-                      statementSummary.remainingAmountMinorUnits,
-                      currencyCode,
-                    ),
-                    isPrivate,
+                  {formatCurrency(
+                    statementSummary.remainingAmountMinorUnits,
+                    currencyCode,
                   )}
                 </Text>
               </View>
@@ -330,7 +322,7 @@ function CreditCardActivityModalContent({
                     isCredit && styles.itemCreditAmount,
                   ]}
                 >
-                  {formatPrivacyAmount(amountText, isPrivate)}
+                  {amountText}
                 </Text>
               </View>
             );

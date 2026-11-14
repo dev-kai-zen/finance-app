@@ -1060,6 +1060,12 @@ export const fil = {
         "Magpakita ng loading indicator sa privacy eye button habang itinatago o ipinapakita ang mga halaga.",
       improveItem44:
         "Magpakita ng agarang transition sa mga switch na may micro loading indicator habang nag-a-update.",
+      improveItem45:
+        "Magpakita ng skeleton placeholder habang nag-aayos ng mga transaksyon ayon sa petsa o halaga.",
+      improveItem46:
+        "Magdagdag ng anino at divider sa ilalim ng sidebar search box at animated indicator para sa napiling screen.",
+      improveItem47:
+        "Maglagay ng pabilog na close button at loading indicator sa mga toggle sa More Features menu.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1118,6 +1124,8 @@ export const fil = {
         "Ipantay ang lapad ng Cancel at Apply Filters at ayusin ang lumulutang na scroll down arrow sa mga modal.",
       fixItem29:
         "Ayusin ang isyu kung saan ang pagbubukas ng Reports mula sa menu ay nagdulot ng biglaang pagsasara ng app.",
+      fixItem30:
+        "Panatilihing nakikita ang mga halaga ng billed items kapag sinusuri ang mga statement ng credit card kahit naka-on ang privacy mode.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

@@ -275,6 +275,16 @@ function TransactionsScreenContent({
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
   const [renderedLimit, setRenderedLimit] = useState(TRANSACTIONS_PAGE_SIZE);
+  const [isSorting, setIsSorting] = useState(false);
+  const sortingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (sortingTimerRef.current) {
+        clearTimeout(sortingTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setRenderedLimit(TRANSACTIONS_PAGE_SIZE);
@@ -621,8 +631,22 @@ function TransactionsScreenContent({
         const valB = Math.abs(b.amountMinorUnits);
         return filterState.sortOrder === "asc" ? valA - valB : valB - valA;
       } else {
-        const timeA = new Date(a.occurredAt ?? 0).getTime();
-        const timeB = new Date(b.occurredAt ?? 0).getTime();
+        const timeA =
+          typeof a.occurredAt === "number"
+            ? a.occurredAt
+            : a.occurredAt instanceof Date
+              ? a.occurredAt.getTime()
+              : a.occurredAt
+                ? Date.parse(a.occurredAt) || 0
+                : 0;
+        const timeB =
+          typeof b.occurredAt === "number"
+            ? b.occurredAt
+            : b.occurredAt instanceof Date
+              ? b.occurredAt.getTime()
+              : b.occurredAt
+                ? Date.parse(b.occurredAt) || 0
+                : 0;
         return filterState.sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       }
     });
@@ -908,18 +932,27 @@ function TransactionsScreenContent({
     runCsvExport((rows) => shareTransactionsCsv(rows));
   };
 
-  const handleSelectSortField = (field: "date" | "amount") => {
-    setFilterState((prev) => ({
-      ...prev,
-      sortBy: field,
-      sortOrder:
-        prev.sortBy === field
-          ? prev.sortOrder === "desc"
-            ? "asc"
-            : "desc"
-          : "desc",
-    }));
-  };
+  const handleSelectSortField = useCallback((field: "date" | "amount") => {
+    if (sortingTimerRef.current) {
+      clearTimeout(sortingTimerRef.current);
+    }
+    setIsSorting(true);
+    sortingTimerRef.current = setTimeout(() => {
+      setFilterState((prev) => ({
+        ...prev,
+        sortBy: field,
+        sortOrder:
+          prev.sortBy === field
+            ? prev.sortOrder === "desc"
+              ? "asc"
+              : "desc"
+            : "desc",
+      }));
+      requestAnimationFrame(() => {
+        setIsSorting(false);
+      });
+    }, 100);
+  }, []);
 
   const handleClearFilters = () => {
     setSearchQuery("");
@@ -1346,6 +1379,14 @@ function TransactionsScreenContent({
         )}
 
         {/* Transactions Feed Grouped By Date */}
+        {isSorting ? (
+          <View style={styles.sortingSkeletonContainer}>
+            <PageLoadingState
+              message="Sorting transactions..."
+              variant="list"
+            />
+          </View>
+        ) : (
         <SectionList
           ref={sectionListRef}
           alwaysBounceVertical
@@ -1483,6 +1524,7 @@ function TransactionsScreenContent({
             ) : null
           }
         />
+        )}
       </View>
 
       {/* Transaction & Transfer Form Modal */}
@@ -1751,6 +1793,11 @@ function createStyles(theme: AppTheme) {
     },
     sectionList: {
       flex: 1,
+    },
+    sortingSkeletonContainer: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.xs,
+      paddingTop: theme.spacing.xs,
     },
     listContentContainer: {
       flexGrow: 1,

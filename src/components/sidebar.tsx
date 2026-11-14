@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, { FadeInLeft, FadeOutLeft } from "react-native-reanimated";
 import { ChevronDown, Code, Crown, Heart, Mail } from "lucide-react-native";
 import { APP_BRAND } from "@/constants/brand";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
@@ -334,8 +335,16 @@ function SidebarLink({ label, icon, active, onPress, badge }: SidebarLinkProps) 
         styles.link,
         active && styles.activeLink,
         pressed && !active && styles.linkPressed,
+        pressed && styles.linkPressedMotion,
       ]}
     >
+      {active ? (
+        <Animated.View
+          entering={FadeInLeft.duration(180)}
+          exiting={FadeOutLeft.duration(120)}
+          style={styles.activeIndicator}
+        />
+      ) : null}
       <View style={styles.iconContainer}>
         <NavIcon active={active} type={icon} />
       </View>
@@ -543,6 +552,26 @@ function createStyles(theme: AppTheme) {
     sidebarSearchWrapper: {
       paddingBottom: theme.spacing.sm,
       paddingHorizontal: theme.spacing.xs,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: theme.mode === "dark" ? 0.3 : 0.05,
+      shadowRadius: 3,
+      elevation: 2,
+      zIndex: 1,
+    },
+    activeIndicator: {
+      position: "absolute",
+      left: 3,
+      top: 8,
+      bottom: 8,
+      width: 3.5,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: theme.colors.primary,
+    },
+    linkPressedMotion: {
+      transform: [{ scale: 0.985 }],
     },
     scrollWrapper: {
       flex: 1,

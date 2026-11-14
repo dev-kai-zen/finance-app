@@ -1027,6 +1027,12 @@ export const en = {
         "Show a loading indicator on the privacy eye button while masking or unmasking sensitive numbers.",
       improveItem44:
         "Show an instant toggle transition with a micro loader inside the switch circle while updating.",
+      improveItem45:
+        "Show a smooth skeleton placeholder when changing transaction sorting by date or amount.",
+      improveItem46:
+        "Add a subtle divider shadow below the sidebar search box and an animated indicator for the active screen.",
+      improveItem47:
+        "Add a circular close button and loading indicator on feature toggles in the More Features menu.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -1084,6 +1090,8 @@ export const en = {
         "Equalize Cancel and Apply Filters button widths and fix floating scroll down arrows across modals.",
       fixItem29:
         "Resolve an issue where opening Reports from the navigation menu caused the app to close unexpectedly.",
+      fixItem30:
+        "Keep billed item amounts and details visible when reviewing credit card statements even if privacy mode is active.",
     },
     v140: {
       date: "November 5, 2026",

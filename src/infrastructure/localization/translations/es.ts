@@ -1046,6 +1046,12 @@ export const es = {
         "Muestra un indicador de carga en el botón de privacidad mientras se ocultan o muestran los montos.",
       improveItem44:
         "Muestra una transición inmediata en los interruptores con un micro indicador de carga mientras se actualiza.",
+      improveItem45:
+        "Mostrar un esqueleto de carga al cambiar el orden de las transacciones por fecha o monto.",
+      improveItem46:
+        "Agregar una sombra y divisor debajo del buscador lateral y un indicador animado para la pantalla activa.",
+      improveItem47:
+        "Agregar un botón circular de cierre e indicador de carga en las opciones del menú Más Funciones.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -1104,6 +1110,8 @@ export const es = {
         "Iguala el ancho de los botones Cancelar y Aplicar filtros y corrige las flechas de desplazamiento en ventanas.",
       fixItem29:
         "Corrige un error por el cual abrir Informes desde el menú cerraba la aplicación de forma inesperada.",
+      fixItem30:
+        "Mantener visibles los montos y detalles al revisar los estados de cuenta de tarjetas de crédito incluso con el modo de privacidad activo.",
     },
     v140: {
       date: "5 de noviembre de 2026",

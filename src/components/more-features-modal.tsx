@@ -1,4 +1,5 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 
@@ -52,8 +53,21 @@ function MoreFeaturesModalContent({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const experience = useExperiencePreferences();
+  const [pendingKeys, setPendingKeys] = useState<Partial<Record<NavVisibilityKey, boolean>>>({});
   const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
     useScrollDownIndicator<ScrollView>();
+
+  const handleToggle = useCallback(
+    (key: NavVisibilityKey, nextValue: boolean) => {
+      if (pendingKeys[key]) return;
+      setPendingKeys((prev) => ({ ...prev, [key]: true }));
+      experience.setNavVisible(key, nextValue);
+      setTimeout(() => {
+        setPendingKeys((prev) => ({ ...prev, [key]: false }));
+      }, 400);
+    },
+    [experience, pendingKeys],
+  );
 
   const handleResetSimpleMenu = () => {
     applyGuidedWorkspaceSimpleDefaults(db);
@@ -72,8 +86,17 @@ function MoreFeaturesModalContent({
               </Text>
               <Text style={styles.subtitle}>{t("navigation.moreFeaturesDescription")}</Text>
             </View>
-            <Pressable accessibilityLabel={t("common.close")} onPress={onClose} style={styles.closeBtn}>
-              <X color={theme.colors.textSecondary} size={22} />
+            <Pressable
+              accessibilityLabel={t("common.close")}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <X color={theme.colors.textSecondary} size={18} />
             </Pressable>
           </View>
           <View style={styles.scrollWrapper}>
@@ -86,13 +109,15 @@ function MoreFeaturesModalContent({
             >
               {MORE_FEATURE_ROWS.map((row) => {
                 const isVisible = experience.navVisibility[row.key];
+                const isPending = Boolean(pendingKeys[row.key]);
                 return (
                   <View key={row.key} style={styles.row}>
                     <Pressable
                       accessibilityLabel={t(row.labelKey as never)}
                       accessibilityRole="checkbox"
-                      accessibilityState={{ checked: isVisible }}
-                      onPress={() => experience.setNavVisible(row.key, !isVisible)}
+                      accessibilityState={{ checked: isVisible, disabled: isPending }}
+                      disabled={isPending}
+                      onPress={() => handleToggle(row.key, !isVisible)}
                       style={styles.rowContent}
                     >
                       <View style={styles.iconContainer}>
@@ -110,7 +135,9 @@ function MoreFeaturesModalContent({
                     </Pressable>
                     <ThemedSwitch
                       accessibilityLabel={t(row.labelKey as never)}
-                      onValueChange={(value) => experience.setNavVisible(row.key, value)}
+                      disabled={isPending}
+                      onValueChange={(value) => handleToggle(row.key, value)}
+                      pending={isPending}
                       value={isVisible}
                     />
                   </View>
@@ -167,7 +194,14 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
-    closeBtn: { padding: theme.spacing.xs },
+    closeBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
     scrollWrapper: {
       flexShrink: 1,
       position: "relative",
