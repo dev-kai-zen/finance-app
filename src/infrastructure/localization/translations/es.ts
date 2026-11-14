@@ -1132,6 +1132,8 @@ export const es = {
         "Presenta los pasos de guía de cuentas predeterminadas solo al editar un bolsillo existente.",
       fixItem35:
         "Cambia los temas de color de forma instantánea y fluida sin pausas ni demoras en la pantalla.",
+      fixItem36:
+        "Toca cualquier gráfico de patrimonio neto para abrir un inspector a pantalla completa con selección fluida de meses.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -2859,5 +2861,18 @@ export const es = {
       "Se ha descargado una nueva versión de Kaizen. Reinicia ahora para completar la actualización.",
     restartToApply: "Reiniciar",
     later: "Más tarde",
+  },
+  netWorthInspect: {
+    title: "Historial de patrimonio neto",
+    growthTitle: "Crecimiento del patrimonio neto",
+    tapToInspect: "Toca el gráfico para inspeccionar",
+    inspectHint: "Toca o desliza por los meses para ver los detalles",
+    latestRecord: "Registro más reciente",
+    vsPrevious: "vs mes anterior",
+    noPriorData: "Registro inicial",
+    netWorth: "Patrimonio neto",
+    assets: "Activos totales",
+    liabilities: "Pasivos totales",
+    noData: "No hay datos históricos disponibles",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

@@ -1,31 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
-  PanResponder,
   Pressable,
   StyleSheet,
   Text,
   View,
-  type GestureResponderEvent,
   type LayoutChangeEvent,
 } from "react-native";
 import Svg, {
   Circle,
+  Defs,
   G,
   Line,
+  LinearGradient,
   Path,
+  Stop,
   Text as SvgText,
 } from "react-native-svg";
-import { X } from "lucide-react-native";
+import { Maximize2 } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import type { NetWorthHistoryPoint } from "@/modules/dashboard/types/dashboard.types";
-import { formatCurrency } from "@/utils/currency";
 
 interface NetWorthChartProps {
   points: NetWorthHistoryPoint[];
   valuesVisible: boolean;
   currencyCode?: string;
+  onPressChart?: () => void;
 }
 
 const CHART_HEIGHT = 160;
@@ -33,35 +35,17 @@ const PLOT_TOP = 10;
 const PLOT_BOTTOM = 26;
 const PLOT_LEFT = 44;
 const PLOT_RIGHT = 24;
-const TOOLTIP_WIDTH = 190;
 
 export function NetWorthChart({
   points,
   valuesVisible,
   currencyCode = "PHP",
+  onPressChart,
 }: NetWorthChartProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const [width, setWidth] = useState(0);
-  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
-    null,
-  );
-  const selectedPointIndexRef = useRef<number | null>(null);
-  selectedPointIndexRef.current = selectedPointIndex;
-  const chartWrapperRef = useRef<View>(null);
-  const chartPageXRef = useRef<number | null>(null);
-
-  const measureChartPosition = () => {
-    chartWrapperRef.current?.measureInWindow((x) => {
-      if (typeof x === "number") {
-        chartPageXRef.current = x;
-      }
-    });
-  };
-
-  useEffect(() => {
-    setSelectedPointIndex(null);
-  }, [points]);
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const nextWidth = Math.round(event.nativeEvent.layout.width);
@@ -86,64 +70,6 @@ export function NetWorthChart({
   const yForValue = (value: number) =>
     PLOT_TOP + ((max - value) / Math.max(1, max - min)) * plotHeight;
 
-  const getClosestIndex = (locationX: number) => {
-    if (points.length === 0 || width <= 0) return 0;
-    const clampedX = Math.max(
-      PLOT_LEFT,
-      Math.min(width - PLOT_RIGHT, locationX),
-    );
-    let closestIndex = 0;
-    let minDistance = Infinity;
-    for (let i = 0; i < points.length; i++) {
-      const px = xForIndex(i);
-      const dist = Math.abs(px - clampedX);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestIndex = i;
-      }
-    }
-    return closestIndex;
-  };
-
-  const getTouchX = (evt: GestureResponderEvent) => {
-    if (typeof evt.nativeEvent.locationX === "number") {
-      return evt.nativeEvent.locationX;
-    }
-    if (
-      typeof evt.nativeEvent.pageX === "number" &&
-      chartPageXRef.current !== null &&
-      chartPageXRef.current > 0
-    ) {
-      return evt.nativeEvent.pageX - chartPageXRef.current;
-    }
-    return 0;
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return (
-          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) &&
-          Math.abs(gestureState.dx) > 4
-        );
-      },
-      onPanResponderGrant: (evt) => {
-        measureChartPosition();
-        const closest = getClosestIndex(getTouchX(evt));
-        if (selectedPointIndexRef.current === closest) {
-          setSelectedPointIndex(null);
-        } else {
-          setSelectedPointIndex(closest);
-        }
-      },
-      onPanResponderMove: (evt) => {
-        const closest = getClosestIndex(getTouchX(evt));
-        setSelectedPointIndex(closest);
-      },
-    }),
-  ).current;
-
   const netWorthPath = buildPath(points, xForIndex, (point) =>
     yForValue(point.netWorthMinorUnits),
   );
@@ -154,10 +80,11 @@ export function NetWorthChart({
     yForValue(Math.abs(point.totalLiabilitiesMinorUnits)),
   );
 
-  const activePoint =
-    selectedPointIndex !== null && selectedPointIndex < points.length
-      ? points[selectedPointIndex]
-      : null;
+  const zeroY = yForValue(0);
+  const areaPath =
+    points.length > 0
+      ? `${netWorthPath} L ${xForIndex(points.length - 1)} ${zeroY} L ${xForIndex(0)} ${zeroY} Z`
+      : "";
 
   return (
     <View
@@ -166,15 +93,32 @@ export function NetWorthChart({
       onLayout={handleLayout}
     >
       {width > 0 ? (
-        <View
-          ref={chartWrapperRef}
-          collapsable={false}
-          style={styles.chartWrapper}
-          onLayout={() => measureChartPosition()}
-          {...panResponder.panHandlers}
+        <Pressable
+          accessibilityHint="Opens full screen inspection view"
+          accessibilityLabel="Inspect net worth chart"
+          accessibilityRole="button"
+          onPress={onPressChart}
+          style={({ pressed }) => [
+            styles.chartWrapper,
+            pressed && styles.chartWrapperPressed,
+          ]}
         >
-          <View pointerEvents="none">
-            <Svg height={CHART_HEIGHT} width={width}>
+          <Svg height={CHART_HEIGHT} width={width}>
+            <Defs>
+              <LinearGradient id="inlineNwGrad" x1="0" x2="0" y1="0" y2="1">
+                <Stop
+                  offset="0%"
+                  stopColor={theme.colors.info}
+                  stopOpacity="0.18"
+                />
+                <Stop
+                  offset="100%"
+                  stopColor={theme.colors.info}
+                  stopOpacity="0.0"
+                />
+              </LinearGradient>
+            </Defs>
+
             {ticks.map((tick) => {
               const y = yForValue(tick);
               return (
@@ -210,51 +154,46 @@ export function NetWorthChart({
               y2={PLOT_TOP + plotHeight}
             />
 
+            {/* Area Fill under Net Worth */}
+            {areaPath ? <Path d={areaPath} fill="url(#inlineNwGrad)" /> : null}
+
+            {/* Assets line */}
             <Path
               d={assetsPath}
               fill="none"
               stroke={theme.colors.success}
+              strokeDasharray="4 3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2.25}
+              strokeWidth={2}
             />
+
+            {/* Liabilities line */}
             <Path
               d={liabilitiesPath}
               fill="none"
               stroke={theme.colors.danger}
+              strokeDasharray="3 3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2.25}
+              strokeWidth={2}
             />
+
+            {/* Net Worth line */}
             <Path
               d={netWorthPath}
               fill="none"
               stroke={theme.colors.info}
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2.25}
+              strokeWidth={2.5}
             />
-
-            {/* Active Point Indicator Guideline */}
-            {selectedPointIndex !== null && activePoint ? (
-              <Line
-                stroke={theme.colors.primary}
-                strokeDasharray="3 3"
-                strokeWidth={1.5}
-                x1={xForIndex(selectedPointIndex)}
-                x2={xForIndex(selectedPointIndex)}
-                y1={PLOT_TOP}
-                y2={PLOT_TOP + plotHeight}
-              />
-            ) : null}
 
             {points.map((point, index) => {
               const x = xForIndex(index);
-              const isSelected = index === selectedPointIndex;
               const isLastPoint = index === points.length - 1;
               const isSecondToLast = index === points.length - 2;
               const showLabel =
-                isSelected ||
                 points.length <= 6 ||
                 isLastPoint ||
                 (!isSecondToLast &&
@@ -262,75 +201,45 @@ export function NetWorthChart({
 
               return (
                 <G key={`${point.date.getTime()}-${index}`}>
-                  {/* Assets Point Marker */}
-                  {isSelected ? (
-                    <Circle
-                      cx={x}
-                      cy={yForValue(point.totalAssetsMinorUnits)}
-                      fill="none"
-                      r={7}
-                      stroke={theme.colors.success}
-                      strokeWidth={1.5}
-                    />
-                  ) : null}
+                  {/* Assets Marker */}
                   <Circle
                     cx={x}
                     cy={yForValue(point.totalAssetsMinorUnits)}
                     fill={theme.colors.success}
-                    r={isSelected ? 4.5 : 3}
+                    r={3}
                     stroke={theme.colors.surface}
-                    strokeWidth={isSelected ? 2 : 1.5}
+                    strokeWidth={1.5}
                   />
 
-                  {/* Liabilities Point Marker */}
-                  {isSelected ? (
-                    <Circle
-                      cx={x}
-                      cy={yForValue(Math.abs(point.totalLiabilitiesMinorUnits))}
-                      fill="none"
-                      r={7}
-                      stroke={theme.colors.danger}
-                      strokeWidth={1.5}
-                    />
-                  ) : null}
+                  {/* Liabilities Marker */}
                   <Circle
                     cx={x}
                     cy={yForValue(Math.abs(point.totalLiabilitiesMinorUnits))}
                     fill={theme.colors.danger}
-                    r={isSelected ? 4.5 : 3}
+                    r={3}
                     stroke={theme.colors.surface}
-                    strokeWidth={isSelected ? 2 : 1.5}
+                    strokeWidth={1.5}
                   />
 
-                  {/* Net Worth Point Marker */}
-                  {isSelected ? (
-                    <Circle
-                      cx={x}
-                      cy={yForValue(point.netWorthMinorUnits)}
-                      fill={`${theme.colors.info}25`}
-                      r={9}
-                      stroke={theme.colors.info}
-                      strokeWidth={1.5}
-                    />
-                  ) : null}
+                  {/* Net Worth Marker */}
                   <Circle
                     cx={x}
                     cy={yForValue(point.netWorthMinorUnits)}
                     fill={theme.colors.info}
-                    r={isSelected ? 5 : 3.5}
+                    r={isLastPoint ? 4.5 : 3.5}
                     stroke={theme.colors.surface}
-                    strokeWidth={isSelected ? 2 : 1.5}
+                    strokeWidth={1.5}
                   />
 
                   {showLabel ? (
                     <SvgText
                       fill={
-                        isSelected
+                        isLastPoint
                           ? theme.colors.textPrimary
                           : theme.colors.textSecondary
                       }
-                      fontSize={isSelected ? 11 : 10}
-                      fontWeight={isSelected ? "bold" : "normal"}
+                      fontSize={10}
+                      fontWeight={isLastPoint ? "bold" : "normal"}
                       textAnchor="middle"
                       x={x}
                       y={CHART_HEIGHT - 6}
@@ -342,101 +251,15 @@ export function NetWorthChart({
               );
             })}
           </Svg>
+
+          {/* Inspect Badge Hint */}
+          <View pointerEvents="none" style={styles.inspectBadge}>
+            <Maximize2 color={theme.colors.primary} size={11} />
+            <Text style={styles.inspectBadgeText}>
+              {t("netWorthInspect.tapToInspect")}
+            </Text>
           </View>
-
-          {/* Touch-to-Inspect Tooltip Card */}
-          {activePoint && selectedPointIndex !== null ? (
-            <View
-              pointerEvents="box-none"
-              style={[
-                styles.tooltipWrapper,
-                {
-                  left: Math.max(
-                    PLOT_LEFT,
-                    Math.min(
-                      width - TOOLTIP_WIDTH - PLOT_RIGHT,
-                      xForIndex(selectedPointIndex) - TOOLTIP_WIDTH / 2,
-                    ),
-                  ),
-                },
-              ]}
-            >
-              <View style={styles.tooltipCard}>
-                <View style={styles.tooltipHeader}>
-                  <Text style={styles.tooltipDate}>
-                    {formatPointDate(activePoint)}
-                  </Text>
-                  <Pressable
-                    accessibilityLabel="Close tooltip"
-                    accessibilityRole="button"
-                    hitSlop={12}
-                    onPress={() => setSelectedPointIndex(null)}
-                    style={styles.tooltipCloseBtn}
-                  >
-                    <X color={theme.colors.textSecondary} size={11} />
-                  </Pressable>
-                </View>
-
-                <View style={styles.tooltipRow}>
-                  <View
-                    style={[
-                      styles.tooltipDot,
-                      { backgroundColor: theme.colors.info },
-                    ]}
-                  />
-                  <Text style={styles.tooltipLabel}>Net Worth:</Text>
-                  <Text
-                    style={[styles.tooltipValue, { color: theme.colors.info }]}
-                  >
-                    {valuesVisible
-                      ? formatCurrency(
-                          activePoint.netWorthMinorUnits,
-                          currencyCode,
-                        )
-                      : "••••••"}
-                  </Text>
-                </View>
-
-                <View style={styles.tooltipBreakdown}>
-                  <View style={styles.tooltipSubItem}>
-                    <View
-                      style={[
-                        styles.tooltipMiniDot,
-                        { backgroundColor: theme.colors.success },
-                      ]}
-                    />
-                    <Text style={styles.tooltipSubLabel}>Assets:</Text>
-                    <Text style={styles.tooltipSubValue}>
-                      {valuesVisible
-                        ? formatCurrency(
-                            activePoint.totalAssetsMinorUnits,
-                            currencyCode,
-                          )
-                        : "••••••"}
-                    </Text>
-                  </View>
-                  <View style={styles.tooltipSubItem}>
-                    <View
-                      style={[
-                        styles.tooltipMiniDot,
-                        { backgroundColor: theme.colors.danger },
-                      ]}
-                    />
-                    <Text style={styles.tooltipSubLabel}>Liab:</Text>
-                    <Text style={styles.tooltipSubValue}>
-                      {valuesVisible
-                        ? formatCurrency(
-                            activePoint.totalLiabilitiesMinorUnits,
-                            currencyCode,
-                          )
-                        : "••••••"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          ) : null}
-        </View>
+        </Pressable>
       ) : null}
 
       <View style={styles.legend}>
@@ -456,21 +279,6 @@ function LegendItem({ color, label }: { color: string; label: string }) {
       <Text style={styles.legendText}>{label}</Text>
     </View>
   );
-}
-
-function formatPointDate(point: NetWorthHistoryPoint): string {
-  if (point.date instanceof Date && !isNaN(point.date.getTime())) {
-    try {
-      return point.date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return point.label;
-    }
-  }
-  return point.label;
 }
 
 function buildPath(
@@ -542,102 +350,40 @@ function createStyles(theme: AppTheme) {
     chartWrapper: {
       position: "relative",
       width: "100%",
+      borderRadius: 12,
     },
-    tooltipWrapper: {
+    chartWrapperPressed: {
+      opacity: 0.85,
+    },
+    inspectBadge: {
       position: "absolute",
-      top: 0,
-      width: TOOLTIP_WIDTH,
-      zIndex: 20,
-    },
-    tooltipCard: {
-      backgroundColor: theme.colors.surface,
-      borderColor: theme.colors.borderStrong,
-      borderRadius: theme.borderRadius.medium,
+      top: 6,
+      right: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: `${theme.colors.surfaceElevated}E6`,
       borderWidth: 1,
-      elevation: 6,
-      gap: 3,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 6,
-      ...theme.shadows.card,
+      borderColor: `${theme.colors.primary}30`,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 12,
     },
-    tooltipHeader: {
-      alignItems: "center",
-      borderBottomColor: theme.colors.border,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      paddingBottom: 3,
-    },
-    tooltipDate: {
-      color: theme.colors.textPrimary,
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.bold,
-    },
-    tooltipCloseBtn: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: 10,
-      height: 18,
-      justifyContent: "center",
-      width: 18,
-    },
-    tooltipRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 5,
-    },
-    tooltipDot: {
-      borderRadius: 3,
-      height: 6,
-      width: 6,
-    },
-    tooltipLabel: {
-      color: theme.colors.textSecondary,
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.medium,
-    },
-    tooltipValue: {
-      fontSize: 11,
-      fontWeight: theme.typography.fontWeight.bold,
-      marginLeft: "auto",
-    },
-    tooltipBreakdown: {
-      flexDirection: "row",
-      gap: 6,
-      justifyContent: "space-between",
-      marginTop: 2,
-    },
-    tooltipSubItem: {
-      alignItems: "center",
-      flexDirection: "row",
-      gap: 3,
-    },
-    tooltipMiniDot: {
-      borderRadius: 2,
-      height: 5,
-      width: 5,
-    },
-    tooltipSubLabel: {
-      color: theme.colors.textMuted,
-      fontSize: 9,
-    },
-    tooltipSubValue: {
-      color: theme.colors.textSecondary,
-      fontSize: 9,
-      fontWeight: theme.typography.fontWeight.semibold,
+    inspectBadgeText: {
+      fontSize: 10,
+      fontWeight: "600",
+      color: theme.colors.primary,
     },
     legend: {
-      alignItems: "center",
       flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.md,
       justifyContent: "center",
-      paddingTop: theme.spacing.xs,
+      gap: 16,
+      marginTop: 8,
     },
     legendItem: {
-      alignItems: "center",
       flexDirection: "row",
-      gap: theme.spacing.xs,
+      alignItems: "center",
+      gap: 6,
     },
     legendDot: {
       borderRadius: 4,
@@ -646,8 +392,8 @@ function createStyles(theme: AppTheme) {
     },
     legendText: {
       color: theme.colors.textSecondary,
-      fontSize: theme.typography.fontSize.xs,
-      fontWeight: theme.typography.fontWeight.semibold,
+      fontSize: 12,
+      fontWeight: "500",
     },
   });
 }

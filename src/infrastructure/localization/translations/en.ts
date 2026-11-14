@@ -1112,6 +1112,8 @@ export const en = {
         "Present default account walkthrough steps only when editing an existing pocket.",
       fixItem35:
         "Switch color themes instantaneously and smoothly without screen freezing or delay.",
+      fixItem36:
+        "Tap any net worth chart to open a full-screen inspector with smooth month selection and clear figures.",
     },
     v140: {
       date: "November 5, 2026",
@@ -2819,6 +2821,19 @@ export const en = {
       "A new version of Kaizen has finished downloading. Restart now to complete the update.",
     restartToApply: "Restart",
     later: "Later",
+  },
+  netWorthInspect: {
+    title: "Net Worth History",
+    growthTitle: "Net Worth Growth",
+    tapToInspect: "Tap chart to inspect",
+    inspectHint: "Tap or drag across months to inspect details",
+    latestRecord: "Latest Record",
+    vsPrevious: "vs previous month",
+    noPriorData: "Initial record",
+    netWorth: "Net Worth",
+    assets: "Total Assets",
+    liabilities: "Total Liabilities",
+    noData: "No historical data available",
   },
 } as const;
 

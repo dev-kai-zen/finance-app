@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { NetWorthInspectModal } from "@/components";
+import { useLocalization } from "@/infrastructure/localization";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { usePrivacyMode } from "@/modules/settings";
 import { WalkthroughTarget } from "@/modules/walkthrough";
 import { useNetWorthGrowthReport } from "../../hooks/use-net-worth-growth-report";
 import { NetWorthFilterBar } from "./net-worth-filter-bar";
@@ -20,6 +24,11 @@ export function NetWorthGrowthReport() {
     selectedPointIndex,
     setSelectedPointIndex,
   } = useNetWorthGrowthReport();
+
+  const [inspectModalVisible, setInspectModalVisible] = useState(false);
+  const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
+  const { t } = useLocalization();
 
   return (
     <View style={styles.container}>
@@ -48,19 +57,30 @@ export function NetWorthGrowthReport() {
 
       <WalkthroughTarget id="reportsChart">
         <NetWorthGrowthChart
+          onPressChart={() => setInspectModalVisible(true)}
+          onSelectPointIndex={setSelectedPointIndex}
           points={data.points}
           selectedPointIndex={selectedPointIndex}
-          onSelectPointIndex={setSelectedPointIndex}
         />
       </WalkthroughTarget>
 
       <WalkthroughTarget id="reportsBreakdownTable">
         <NetWorthHistoryTable
+          onSelectPointIndex={setSelectedPointIndex}
           points={data.points}
           selectedPointIndex={selectedPointIndex}
-          onSelectPointIndex={setSelectedPointIndex}
         />
       </WalkthroughTarget>
+
+      <NetWorthInspectModal
+        currencyCode={preferences.defaultCurrency ?? "PHP"}
+        initialPointIndex={selectedPointIndex}
+        onClose={() => setInspectModalVisible(false)}
+        points={data.points}
+        title={t("netWorthInspect.growthTitle")}
+        valuesVisible={!isPrivate}
+        visible={inspectModalVisible}
+      />
     </View>
   );
 }

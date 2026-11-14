@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -15,8 +16,10 @@ import Svg, {
   Stop,
   Text as SvgText,
 } from "react-native-svg";
+import { Maximize2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -27,6 +30,7 @@ interface NetWorthGrowthChartProps {
   points: NetWorthPoint[];
   selectedPointIndex: number | null;
   onSelectPointIndex: (index: number | null) => void;
+  onPressChart?: () => void;
 }
 
 const CHART_HEIGHT = 190;
@@ -39,9 +43,11 @@ export function NetWorthGrowthChart({
   points,
   selectedPointIndex,
   onSelectPointIndex,
+  onPressChart,
 }: NetWorthGrowthChartProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const { isPrivate } = usePrivacyMode();
   const { preferences } = useCurrencyPreferences();
   const [containerWidth, setContainerWidth] = useState(0);
@@ -153,142 +159,169 @@ export function NetWorthGrowthChart({
             </Text>
           </Text>
         ) : (
-          <Text style={styles.hintText}>Tap point to inspect</Text>
+          <Text style={styles.hintText}>
+            {t("netWorthInspect.tapToInspect")}
+          </Text>
         )}
       </View>
 
-      <View style={styles.chartWrapper} onLayout={handleLayout}>
+      <Pressable
+        accessibilityHint="Opens full screen inspection view"
+        accessibilityLabel="Inspect net worth chart"
+        accessibilityRole="button"
+        onLayout={handleLayout}
+        onPress={onPressChart}
+        style={({ pressed }) => [
+          styles.chartWrapper,
+          pressed && styles.chartWrapperPressed,
+        ]}
+      >
         {containerWidth > 0 ? (
-          <Svg width={containerWidth} height={CHART_HEIGHT}>
-          <Defs>
-            <LinearGradient id="nwGradient" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={styles.primaryCurve.color} stopOpacity="0.3" />
-              <Stop offset="100%" stopColor={styles.primaryCurve.color} stopOpacity="0.0" />
-            </LinearGradient>
-          </Defs>
-
-          {/* Grid lines */}
-          <Line
-            x1={PLOT_LEFT}
-            y1={zeroY}
-            x2={containerWidth - PLOT_RIGHT}
-            y2={zeroY}
-            stroke={styles.gridLine.borderColor}
-            strokeWidth={1}
-          />
-          <Line
-            x1={PLOT_LEFT}
-            y1={PLOT_TOP}
-            x2={containerWidth - PLOT_RIGHT}
-            y2={PLOT_TOP}
-            stroke={styles.gridLine.borderColor}
-            strokeWidth={1}
-            strokeDasharray="4, 4"
-          />
-
-          {/* Y Axis text */}
-          <SvgText
-            x={PLOT_LEFT - 6}
-            y={PLOT_TOP + 4}
-            fontSize={9}
-            fill={styles.axisText.color}
-            textAnchor="end"
-          >
-            {formatShortK(scaleMax)}
-          </SvgText>
-          <SvgText
-            x={PLOT_LEFT - 6}
-            y={zeroY + 3}
-            fontSize={9}
-            fill={styles.axisText.color}
-            textAnchor="end"
-          >
-            {formatShortK(scaleMin)}
-          </SvgText>
-
-          {/* Area Fill */}
-          {areaPath ? <Path d={areaPath} fill="url(#nwGradient)" /> : null}
-
-          {/* Assets Line (Green) */}
-          <Path
-            d={assetsPath}
-            stroke={REPORT_COLORS.positiveGreen}
-            strokeWidth={2}
-            strokeDasharray="4, 3"
-            fill="none"
-          />
-
-          {/* Liabilities Line (Red) */}
-          <Path
-            d={liabPath}
-            stroke={REPORT_COLORS.negativeRed}
-            strokeWidth={1.5}
-            strokeDasharray="3, 3"
-            fill="none"
-          />
-
-          {/* Net Worth Line (Primary Solid) */}
-          <Path
-            d={netWorthPath}
-            stroke={styles.primaryCurve.color}
-            strokeWidth={3}
-            fill="none"
-          />
-
-          {/* Points on Net Worth Line */}
-          {netWorthCoords.map((coord, idx) => {
-            const isSelected = idx === selectedPointIndex;
-            const pt = points[idx];
-
-            return (
-              <G key={pt.label + idx}>
-                {isSelected ? (
-                  <Line
-                    x1={coord.x}
-                    y1={PLOT_TOP}
-                    x2={coord.x}
-                    y2={PLOT_TOP + plotHeight}
-                    stroke={styles.primaryCurve.color}
-                    strokeWidth={1}
-                    strokeDasharray="3, 3"
+          <>
+            <Svg width={containerWidth} height={CHART_HEIGHT}>
+              <Defs>
+                <LinearGradient id="nwGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop
+                    offset="0%"
+                    stopColor={styles.primaryCurve.color}
+                    stopOpacity="0.3"
                   />
-                ) : null}
+                  <Stop
+                    offset="100%"
+                    stopColor={styles.primaryCurve.color}
+                    stopOpacity="0.0"
+                  />
+                </LinearGradient>
+              </Defs>
 
-                <Circle
-                  cx={coord.x}
-                  cy={coord.y}
-                  r={isSelected ? 6 : 4}
-                  fill={styles.primaryCurve.color}
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
-                  onPress={() => {
-                    onSelectPointIndex(isSelected ? null : idx);
-                  }}
-                />
+              {/* Grid lines */}
+              <Line
+                stroke={styles.gridLine.borderColor}
+                strokeWidth={1}
+                x1={PLOT_LEFT}
+                x2={containerWidth - PLOT_RIGHT}
+                y1={zeroY}
+                y2={zeroY}
+              />
+              <Line
+                stroke={styles.gridLine.borderColor}
+                strokeDasharray="4, 4"
+                strokeWidth={1}
+                x1={PLOT_LEFT}
+                x2={containerWidth - PLOT_RIGHT}
+                y1={PLOT_TOP}
+                y2={PLOT_TOP}
+              />
 
-                {/* X Axis Month Label */}
-                {shouldShowXLabel(idx, points.length, isSelected) ? (
-                  <SvgText
-                    x={coord.x}
-                    y={CHART_HEIGHT - 8}
-                    fontSize={10}
-                    fontWeight={isSelected ? "bold" : "normal"}
-                    fill={
-                      isSelected
-                        ? styles.selectedAxisText.color
-                        : styles.axisText.color
-                    }
-                    textAnchor="middle"
-                  >
-                    {pt.label.split(" ")[0]}
-                  </SvgText>
-                ) : null}
-              </G>
-            );
-          })}
-        </Svg>
-      ) : null}
-      </View>
+              {/* Y Axis text */}
+              <SvgText
+                fill={styles.axisText.color}
+                fontSize={9}
+                textAnchor="end"
+                x={PLOT_LEFT - 6}
+                y={PLOT_TOP + 4}
+              >
+                {formatShortK(scaleMax)}
+              </SvgText>
+              <SvgText
+                fill={styles.axisText.color}
+                fontSize={9}
+                textAnchor="end"
+                x={PLOT_LEFT - 6}
+                y={zeroY + 3}
+              >
+                {formatShortK(scaleMin)}
+              </SvgText>
+
+              {/* Area Fill */}
+              {areaPath ? <Path d={areaPath} fill="url(#nwGradient)" /> : null}
+
+              {/* Assets Line (Green) */}
+              <Path
+                d={assetsPath}
+                fill="none"
+                stroke={REPORT_COLORS.positiveGreen}
+                strokeDasharray="4, 3"
+                strokeWidth={2}
+              />
+
+              {/* Liabilities Line (Red) */}
+              <Path
+                d={liabPath}
+                fill="none"
+                stroke={REPORT_COLORS.negativeRed}
+                strokeDasharray="3, 3"
+                strokeWidth={1.5}
+              />
+
+              {/* Net Worth Line (Primary Solid) */}
+              <Path
+                d={netWorthPath}
+                fill="none"
+                stroke={styles.primaryCurve.color}
+                strokeWidth={3}
+              />
+
+              {/* Points on Net Worth Line */}
+              {netWorthCoords.map((coord, idx) => {
+                const isSelected = idx === selectedPointIndex;
+                const pt = points[idx];
+
+                return (
+                  <G key={pt.label + idx}>
+                    {isSelected ? (
+                      <Line
+                        stroke={styles.primaryCurve.color}
+                        strokeDasharray="3, 3"
+                        strokeWidth={1}
+                        x1={coord.x}
+                        x2={coord.x}
+                        y1={PLOT_TOP}
+                        y2={PLOT_TOP + plotHeight}
+                      />
+                    ) : null}
+
+                    <Circle
+                      cx={coord.x}
+                      cy={coord.y}
+                      fill={styles.primaryCurve.color}
+                      r={isSelected ? 6 : 4}
+                      stroke="#FFFFFF"
+                      strokeWidth={2}
+                    />
+
+                    {/* X Axis Month Label */}
+                    {shouldShowXLabel(idx, points.length, isSelected) ? (
+                      <SvgText
+                        fill={
+                          isSelected
+                            ? styles.selectedAxisText.color
+                            : styles.axisText.color
+                        }
+                        fontSize={10}
+                        fontWeight={isSelected ? "bold" : "normal"}
+                        textAnchor="middle"
+                        x={coord.x}
+                        y={CHART_HEIGHT - 8}
+                      >
+                        {pt.label.split(" ")[0]}
+                      </SvgText>
+                    ) : null}
+                  </G>
+                );
+              })}
+            </Svg>
+
+            {/* Inspect Badge Hint */}
+            <View pointerEvents="none" style={styles.inspectBadge}>
+              <Maximize2 color={theme.colors.primary} size={11} />
+              <Text style={styles.inspectBadgeText}>
+                {t("netWorthInspect.tapToInspect")}
+              </Text>
+            </View>
+          </>
+        ) : null}
+      </Pressable>
     </View>
   );
 }
@@ -333,6 +366,29 @@ function createStyles(theme: AppTheme) {
     },
     chartWrapper: {
       width: "100%",
+      position: "relative",
+    },
+    chartWrapperPressed: {
+      opacity: 0.85,
+    },
+    inspectBadge: {
+      position: "absolute",
+      top: 4,
+      right: 4,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: `${theme.colors.surfaceElevated}E6`,
+      borderWidth: 1,
+      borderColor: `${theme.colors.primary}30`,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 12,
+    },
+    inspectBadgeText: {
+      fontSize: 10,
+      fontWeight: "600",
+      color: theme.colors.primary,
     },
     legendRow: {
       flexDirection: "row",

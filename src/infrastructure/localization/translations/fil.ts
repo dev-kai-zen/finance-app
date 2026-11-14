@@ -1146,6 +1146,8 @@ export const fil = {
         "Ipakita lamang ang mga hakbang sa default na account kapag nag-e-edit ng kasalukuyang bulsa.",
       fixItem35:
         "Magpalit ng tema ng kulay nang mabilis at maayos nang hindi nagla-lag o humihinto ang screen.",
+      fixItem36:
+        "Pindutin ang anumang tsart ng net worth upang buksan ang buong screen na inspektor na may maayos na pagpili ng buwan.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2882,5 +2884,18 @@ export const fil = {
       "Matagumpay na na-download ang bagong bersyon ng Kaizen. I-restart ngayon upang makumpleto ang update.",
     restartToApply: "I-restart",
     later: "Mamaya",
+  },
+  netWorthInspect: {
+    title: "Kasaysayan ng Net Worth",
+    growthTitle: "Paglago ng Net Worth",
+    tapToInspect: "Pindutin ang tsart para suriin",
+    inspectHint: "Pindutin o i-drag sa mga buwan para makita ang mga detalye",
+    latestRecord: "Pinakabagong Tala",
+    vsPrevious: "kumpara sa nakaraang buwan",
+    noPriorData: "Unang tala",
+    netWorth: "Kabuuang Net Worth",
+    assets: "Kabuuang Ari-arian",
+    liabilities: "Kabuuang Utang",
+    noData: "Walang available na kasaysayan",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

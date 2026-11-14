@@ -10,7 +10,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react-native";
-import { ActionBottomSheet } from "@/components";
+import { ActionBottomSheet, NetWorthInspectModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -66,6 +66,7 @@ export function DashboardNetWorthCard({
   const valuesVisible = !isPrivate;
   const [chartVisible, setChartVisible] = useState(true);
   const [displayModeSheetVisible, setDisplayModeSheetVisible] = useState(false);
+  const [inspectModalVisible, setInspectModalVisible] = useState(false);
   const trendIsPositive = (monthlyChangePercentage ?? 0) >= 0;
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
   const privateValue = "••••••";
@@ -236,6 +237,7 @@ export function DashboardNetWorthCard({
 
           <NetWorthChart
             currencyCode={currencyCode}
+            onPressChart={() => setInspectModalVisible(true)}
             points={history[period]}
             valuesVisible={valuesVisible}
           />
@@ -321,7 +323,19 @@ export function DashboardNetWorthCard({
           visible={displayModeSheetVisible}
         />
       ) : null}
-      </View>
+
+      <NetWorthInspectModal
+        activePeriod={period}
+        currencyCode={currencyCode}
+        onClose={() => setInspectModalVisible(false)}
+        onSelectPeriod={(p) => setPeriod(p as NetWorthPeriod)}
+        periods={PERIODS}
+        points={history[period]}
+        title={simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
+        valuesVisible={valuesVisible}
+        visible={inspectModalVisible}
+      />
+    </View>
   );
 }
 
