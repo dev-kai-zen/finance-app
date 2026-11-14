@@ -26,7 +26,7 @@
       "blockedPermissions": ["android.permission.ACTIVITY_RECOGNITION"],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 13
+      "versionCode": 14
     },
     "web": {
       "favicon": "./assets/kaizen-finance-app-logo.png"
