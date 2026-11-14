@@ -27,6 +27,7 @@ import {
   IconHelper,
   InfoModal,
   NotificationModal,
+  PageLoadingState,
   ScreenTitleWithHelp,
   ScrollDownIndicator,
 } from "@/components";
@@ -740,12 +741,7 @@ function FundGroupsModalContent({
               {...managerScroll.scrollProps}
             >
             {loading ? (
-              <ActivityIndicator
-                accessibilityLabel="Loading Fund Groups"
-                color={theme.colors.primary}
-                size="large"
-                style={styles.loading}
-              />
+              <PageLoadingState message="Loading fund groups..." variant="cards" />
             ) : loadError ? (
               <View style={styles.emptyCard}>
                 <Text selectable style={styles.errorText}>{loadError}</Text>

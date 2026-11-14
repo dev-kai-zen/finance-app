@@ -231,7 +231,7 @@ export function AppShell({
             },
           ]}
         >
-          <Sidebar hiddenHrefs={hiddenNavHrefs} />
+          <Sidebar currentPathname={pathname} hiddenHrefs={hiddenNavHrefs} />
         </View>
 
         {/* Desktop Page Area */}
@@ -344,7 +344,11 @@ export function AppShell({
               },
             ]}
           >
-            <Sidebar hiddenHrefs={hiddenNavHrefs} onNavigate={closeDrawer} />
+            <Sidebar
+              currentPathname={pathname}
+              hiddenHrefs={hiddenNavHrefs}
+              onNavigate={closeDrawer}
+            />
           </View>
         </View>
       )}

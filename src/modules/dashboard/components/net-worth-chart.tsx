@@ -21,13 +21,17 @@ import { Maximize2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import type { NetWorthHistoryPoint } from "@/modules/dashboard/types/dashboard.types";
+import type {
+  NetWorthHistoryPoint,
+  NetWorthPeriod,
+} from "@/modules/dashboard/types/dashboard.types";
 
 interface NetWorthChartProps {
   points: NetWorthHistoryPoint[];
   valuesVisible: boolean;
   currencyCode?: string;
   onPressChart?: () => void;
+  period?: NetWorthPeriod;
 }
 
 const CHART_HEIGHT = 160;
@@ -41,6 +45,7 @@ export function NetWorthChart({
   valuesVisible,
   currencyCode = "PHP",
   onPressChart,
+  period,
 }: NetWorthChartProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -193,11 +198,18 @@ export function NetWorthChart({
               const x = xForIndex(index);
               const isLastPoint = index === points.length - 1;
               const isSecondToLast = index === points.length - 2;
+              const m = point.date.getMonth();
+              const isQuarterly =
+                m === 0 || m === 3 || m === 6 || m === 8 || m === 11;
               const showLabel =
-                points.length <= 6 ||
-                isLastPoint ||
-                (!isSecondToLast &&
-                  index % 2 === (points.length % 2 === 1 ? 0 : 1));
+                period === "1W"
+                  ? true
+                  : period === "1Y"
+                    ? isQuarterly
+                    : points.length <= 6 ||
+                      isLastPoint ||
+                      (!isSecondToLast &&
+                        index % 2 === (points.length % 2 === 1 ? 0 : 1));
 
               return (
                 <G key={`${point.date.getTime()}-${index}`}>

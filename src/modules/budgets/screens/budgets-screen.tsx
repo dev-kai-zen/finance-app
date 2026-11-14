@@ -132,6 +132,27 @@ function BudgetsScreenContent({
     return budgetStatuses.filter((s) => s.budget.frequency === selectedFilter);
   }, [budgetStatuses, selectedFilter]);
 
+  const countsByFilter = useMemo(() => {
+    const counts: Record<FrequencyFilter, number> = {
+      all: budgetStatuses.length,
+      daily: 0,
+      weekly: 0,
+      biweekly: 0,
+      semi_monthly: 0,
+      monthly: 0,
+      quarterly: 0,
+      custom_monthly: 0,
+      yearly: 0,
+    };
+    for (const s of budgetStatuses) {
+      const freq = s.budget.frequency;
+      if (freq in counts) {
+        counts[freq] = (counts[freq] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [budgetStatuses]);
+
   // Walkthrough targets & coordination
   const emptyCreateRef = useWalkthroughTarget("budgetEmptyCreateButton");
   const totalActiveCardRef = useWalkthroughTarget("budgetTotalActiveCard");
@@ -293,9 +314,7 @@ function BudgetsScreenContent({
   const overallClampedProgress = Math.min(summary.overallPercentage, 100);
   const isOverallExceeded = summary.totalSpentCents > summary.totalBudgetedCents;
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
+  const contentSpacing = useThemeStyles(createContentSpacingStyles);
 
   return (
     <View style={styles.screenWrapper}>
@@ -440,12 +459,13 @@ function BudgetsScreenContent({
             </View>
 
             {/* Frequency Filter Tabs */}
-            <View collapsable={false} ref={frequencyTabsRef}>
+            <View collapsable={false} ref={frequencyTabsRef} style={styles.frequencyTabsContainer}>
               <HorizontalScrollView
                 contentContainerStyle={styles.filterScroll}
               >
                 {FILTER_TABS.map((tab) => {
                   const active = selectedFilter === tab.key;
+                  const count = countsByFilter[tab.key] ?? 0;
                   return (
                     <Pressable
                       key={tab.key}
@@ -464,6 +484,21 @@ function BudgetsScreenContent({
                       >
                         {tab.label}
                       </Text>
+                      <View
+                        style={[
+                          styles.countBadge,
+                          active && styles.countBadgeActive,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.countBadgeText,
+                            active && styles.countBadgeTextActive,
+                          ]}
+                        >
+                          {count}
+                        </Text>
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -594,6 +629,10 @@ function BudgetsScreenContent({
   );
 }
 
+const createContentSpacingStyles = (theme: AppTheme) => ({
+  paddingTop: theme.spacing.lg,
+});
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
@@ -710,9 +749,11 @@ function createStyles(theme: AppTheme) {
       height: 24,
       width: 1,
     },
+    frequencyTabsContainer: {
+      marginBottom: theme.spacing.md,
+    },
     filterScroll: {
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.md,
       paddingVertical: 2,
     },
     filterTab: {
@@ -720,8 +761,11 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
     },
     filterTabActive: {
       backgroundColor: theme.colors.primary,
@@ -733,6 +777,26 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
     },
     filterTabTextActive: {
+      color: theme.colors.onPrimary,
+    },
+    countBadge: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      minWidth: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countBadgeActive: {
+      backgroundColor: "rgba(255, 255, 255, 0.25)",
+    },
+    countBadgeText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: theme.colors.textSecondary,
+    },
+    countBadgeTextActive: {
       color: theme.colors.onPrimary,
     },
     budgetList: {

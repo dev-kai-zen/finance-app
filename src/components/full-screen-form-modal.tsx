@@ -48,7 +48,7 @@ export function FullScreenFormModal({
   pending = false,
   headerRight,
   headerTitle,
-  titleAlign = "center",
+  titleAlign = "left",
   saveButtonRef,
   backButtonRef,
   isDirty = false,

@@ -43,7 +43,12 @@ export interface SubcategoryModalProps {
   onClearError: () => void;
 }
 
-export function SubcategoryModal({
+export function SubcategoryModal(props: SubcategoryModalProps) {
+  if (!props.visible) return null;
+  return <SubcategoryModalContent {...props} />;
+}
+
+function SubcategoryModalContent({
   visible,
   onClose,
   parentCategory,
@@ -61,13 +66,19 @@ export function SubcategoryModal({
 
   const {
     colors: hexColorsList,
-    refresh: refreshHexColors,
     addColor,
   } = useHexColors();
 
-  const [name, setName] = useState("");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
-  const [selectedIcon, setSelectedIcon] = useState<string>("tag");
+  const [name, setName] = useState(() => subcategoryToEdit?.name ?? "");
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () =>
+      subcategoryToEdit?.hexColorsId ??
+      parentCategory?.hexColorsId ??
+      "color_slate",
+  );
+  const [selectedIcon, setSelectedIcon] = useState<string>(
+    () => subcategoryToEdit?.icon ?? "tag",
+  );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -82,12 +93,6 @@ export function SubcategoryModal({
 
   const selectedHexObj = hexColorsList.find((entry) => entry.id === hexColorsId);
   const categoricalColor = selectedHexObj?.hex ?? theme.colors.primary;
-
-  useEffect(() => {
-    if (visible) {
-      refreshHexColors();
-    }
-  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (!visible) return;
@@ -413,21 +418,25 @@ export function SubcategoryModal({
         </View>
       </KeyboardAvoidingView>
 
-      <IconPickerModal
-        onClose={() => setIsIconPickerOpen(false)}
-        onSelectIcon={(iconKey) => {
-          setSelectedIcon(iconKey);
-          setIsIconPickerOpen(false);
-        }}
-        selectedIcon={selectedIcon}
-        visible={isIconPickerOpen}
-      />
+      {isIconPickerOpen ? (
+        <IconPickerModal
+          onClose={() => setIsIconPickerOpen(false)}
+          onSelectIcon={(iconKey) => {
+            setSelectedIcon(iconKey);
+            setIsIconPickerOpen(false);
+          }}
+          selectedIcon={selectedIcon}
+          visible={isIconPickerOpen}
+        />
+      ) : null}
 
-      <HexColorFormModal
-        onClose={() => setIsColorFormOpen(false)}
-        onSave={handleSaveCustomColor}
-        visible={isColorFormOpen}
-      />
+      {isColorFormOpen ? (
+        <HexColorFormModal
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
+        />
+      ) : null}
 
       <NotificationModal
         message={displayError ?? ""}

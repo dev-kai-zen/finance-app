@@ -1063,6 +1063,10 @@ export const es = {
         "Convierte el divisor de búsqueda de la barra lateral en una línea plana simple como en el menú Más Funciones.",
       improveItem52:
         "Unifica las tarjetas de guía con un botón claro de Omitir en los formularios modales.",
+      improveItem53:
+        "Muestra una vista semanal de 7 días y una vista anual histórica en el gráfico de patrimonio neto.",
+      improveItem54:
+        "Muestra insignias con el recuento de presupuestos en los filtros de frecuencia.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -1137,6 +1141,12 @@ export const es = {
         "Toca cualquier gráfico de patrimonio neto para abrir un inspector a pantalla completa con selección fluida de meses.",
       fixItem37:
         "Resuelve bloqueos y muestra respuesta inmediata al cambiar de pestañas en informes, fechas, idiomas y monedas.",
+      fixItem38:
+        "Abre formularios de categorías, metas, presupuestos y cuentas al instante sin pausas ni parpadeos.",
+      fixItem39:
+        "Aclara el mensaje de seguridad de la copia de seguridad local para archivos guardados en el dispositivo.",
+      fixItem40:
+        "Centra verticalmente las flechas flotantes de desplazamiento en las barras de filtros horizontales.",
     },
     v140: {
       date: "5 de noviembre de 2026",

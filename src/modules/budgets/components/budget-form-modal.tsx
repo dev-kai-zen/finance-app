@@ -84,7 +84,7 @@ export function BudgetFormModal(props: BudgetFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <BudgetFormModalContent {...props} />
+      <BudgetFormModalContent key={props.initialBudget?.id ?? "new-budget"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -107,16 +107,35 @@ function BudgetFormModalContent({
   const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
     useProGuard();
 
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [isEnabled, setIsEnabled] = useState<boolean>(true);
-  const [amountMinorUnits, setAmountCents] = useState<number>(0);
-  const [frequency, setFrequency] = useState<BudgetFrequency>("monthly");
-  const [allowRollover, setAllowRollover] = useState<boolean>(false);
-  const [rolloverMode, setRolloverMode] =
-    useState<BudgetRolloverMode>("positive_only");
-  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(false);
-  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(
-    [],
+  const [categoryId, setCategoryId] = useState<string>(
+    () => initialBudget?.categoryId ?? "",
+  );
+  const [isEnabled, setIsEnabled] = useState<boolean>(
+    () => initialBudget?.isEnabled ?? true,
+  );
+  const [amountMinorUnits, setAmountCents] = useState<number>(
+    () => initialBudget?.amountMinorUnits ?? 0,
+  );
+  const [frequency, setFrequency] = useState<BudgetFrequency>(
+    () => initialBudget?.frequency ?? "monthly",
+  );
+  const [allowRollover, setAllowRollover] = useState<boolean>(
+    () => initialBudget?.allowRollover ?? false,
+  );
+  const [rolloverMode, setRolloverMode] = useState<BudgetRolloverMode>(
+    () => initialBudget?.rolloverMode ?? "positive_only",
+  );
+  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(
+    () => initialBudget?.notifyOnExceeded ?? false,
+  );
+  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(() =>
+    initialBudget?.monthlyTargets && initialBudget.monthlyTargets.length > 0
+      ? initialBudget.monthlyTargets.map((t) => ({
+          year: t.year,
+          month: t.month,
+          amountMinorUnits: t.amountMinorUnits,
+        }))
+      : [],
   );
   const [infoModal, setInfoModal] = useState<{
     title: string;

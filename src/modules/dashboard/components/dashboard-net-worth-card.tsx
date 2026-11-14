@@ -24,7 +24,7 @@ import { usePrivacyMode, type HomeExperienceMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 
-const PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
+const PERIODS: NetWorthPeriod[] = ["1W", "3M", "6M", "1Y", "ALL"];
 
 export interface DashboardNetWorthCardProps {
   netWorthMinorUnits: number;
@@ -238,6 +238,7 @@ export function DashboardNetWorthCard({
           <NetWorthChart
             currencyCode={currencyCode}
             onPressChart={() => setInspectModalVisible(true)}
+            period={period}
             points={history[period]}
             valuesVisible={valuesVisible}
           />

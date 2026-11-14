@@ -1077,6 +1077,10 @@ export const fil = {
         "Gawing simpleng linyang divider ang pagitan sa paghahanap sa sidebar katulad sa menu ng Higit Pang Mga Tampok.",
       improveItem52:
         "Pag-isahin ang mga card ng gabay na may malinaw na pindutang Laktawan sa mga modal form.",
+      improveItem53:
+        "Ipakita ang 7-araw na lingguhang view at all-time taunang view sa net worth chart.",
+      improveItem54:
+        "Ipakita ang bilang ng mga budget item sa mga frequency filter chip.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1151,6 +1155,12 @@ export const fil = {
         "Pindutin ang anumang tsart ng net worth upang buksan ang buong screen na inspektor na may maayos na pagpili ng buwan.",
       fixItem37:
         "Ayusin ang pagtigil at magpakita ng mabilis na pahiwatig kapag nagpapalit ng tab sa mga ulat, petsa, wika, at pananalapi.",
+      fixItem38:
+        "Agad na buksan ang mga form ng kategorya, goal, budget, at account nang walang pagkaantala o pagkurap.",
+      fixItem39:
+        "Linawin ang paalala sa seguridad ng offline local backup para sa mga na-save na file sa device.",
+      fixItem40:
+        "Igitna nang patayo ang mga lumulutang na scroll arrow sa mga horizontal filter bar.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

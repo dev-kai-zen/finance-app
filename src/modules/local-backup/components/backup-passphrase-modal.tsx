@@ -183,7 +183,7 @@ export function BackupPassphraseModal({
 
           <Text style={styles.warning}>
             {mode === "create" && protection === "none"
-              ? "This backup will not be encrypted. Keep the file and your Google account secure."
+              ? "This backup will not be encrypted. Keep the file and your device secure."
               : "Kaizen Finance cannot recover a forgotten password."}
           </Text>
 

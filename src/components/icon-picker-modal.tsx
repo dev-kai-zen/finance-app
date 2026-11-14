@@ -36,7 +36,12 @@ export interface IconPickerModalProps {
   title?: string;
 }
 
-export function IconPickerModal({
+export function IconPickerModal(props: IconPickerModalProps) {
+  if (!props.visible) return null;
+  return <IconPickerModalContent {...props} />;
+}
+
+function IconPickerModalContent({
   visible,
   onClose,
   selectedIcon,

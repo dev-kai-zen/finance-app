@@ -56,13 +56,16 @@ const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
 export interface SidebarProps {
   onNavigate?: () => void;
   hiddenHrefs?: string[];
+  currentPathname?: string;
 }
 
 export const Sidebar = memo(function Sidebar({
   onNavigate,
   hiddenHrefs = [],
+  currentPathname,
 }: SidebarProps) {
-  const pathname = usePathname();
+  const routerPathname = usePathname();
+  const pathname = currentPathname ?? routerPathname;
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -339,11 +342,7 @@ function SidebarLink({ label, icon, active, onPress, badge }: SidebarLinkProps) 
       ]}
     >
       {active ? (
-        <Animated.View
-          entering={FadeInLeft.duration(180)}
-          exiting={FadeOutLeft.duration(120)}
-          style={styles.activeIndicator}
-        />
+        <View style={styles.activeIndicator} />
       ) : null}
       <View style={styles.iconContainer}>
         <NavIcon active={active} type={icon} />

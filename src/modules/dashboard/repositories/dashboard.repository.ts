@@ -24,7 +24,7 @@ import type {
   NetWorthPeriod,
 } from "../types/dashboard.types";
 
-const NET_WORTH_PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
+const NET_WORTH_PERIODS: NetWorthPeriod[] = ["1W", "3M", "6M", "1Y", "ALL"];
 
 export function getAccountDynamicBalances(
   context: DbContext = db,
@@ -191,10 +191,11 @@ export function getCategorySpendingBreakdown(
 }
 
 const EMPTY_NET_WORTH_HISTORY: NetWorthHistory = {
-  "1M": [],
+  "1W": [],
   "3M": [],
   "6M": [],
   "1Y": [],
+  ALL: [],
 };
 
 export function getDashboardSummary(
@@ -279,7 +280,7 @@ export function getNetWorthHistory(
   const cutoffsByPeriod = Object.fromEntries(
     NET_WORTH_PERIODS.map((period) => [
       period,
-      getPeriodCutoffDates(period, targetDate),
+      getPeriodCutoffDates(period, targetDate, accountsWithBalances),
     ]),
   ) as Record<NetWorthPeriod, Date[]>;
 
@@ -357,10 +358,14 @@ function calculateNetWorthPoint(
 
   return {
     date,
-    label: date.toLocaleDateString(undefined, {
-      month: "short",
-      ...(period === "1M" ? { day: "numeric" } : {}),
-    }),
+    label:
+      period === "1W"
+        ? date.toLocaleDateString(undefined, { weekday: "short" })
+        : period === "ALL"
+          ? String(date.getFullYear())
+          : date.toLocaleDateString(undefined, {
+              month: "short",
+            }),
     netWorthMinorUnits:
       totalAssetsMinorUnits + totalLiabilitiesMinorUnits,
     totalAssetsMinorUnits,
@@ -371,13 +376,57 @@ function calculateNetWorthPoint(
 function getPeriodCutoffDates(
   period: NetWorthPeriod,
   targetDate: Date,
+  accountsWithBalances: AccountWithBalance[] = [],
 ): Date[] {
-  if (period === "1M") {
-    return [28, 21, 14, 7, 0].map((daysAgo) => {
+  if (period === "1W") {
+    return [6, 5, 4, 3, 2, 1, 0].map((daysAgo) => {
       const date = new Date(targetDate);
       date.setDate(date.getDate() - daysAgo);
       date.setHours(23, 59, 59, 999);
       return date;
+    });
+  }
+
+  if (period === "ALL") {
+    const validOpeningYears = accountsWithBalances
+      .map((a) => a.openingBalanceAt.getFullYear())
+      .filter((y) => !isNaN(y) && y > 1970 && y <= targetDate.getFullYear());
+    const minYear =
+      validOpeningYears.length > 0
+        ? Math.min(...validOpeningYears)
+        : targetDate.getFullYear() - 2;
+    const currentYear = targetDate.getFullYear();
+    const yearSpan = currentYear - minYear;
+
+    if (yearSpan >= 2) {
+      const dates: Date[] = [];
+      for (let y = minYear; y < currentYear; y++) {
+        dates.push(new Date(y, 11, 31, 23, 59, 59, 999));
+      }
+      const current = new Date(targetDate);
+      current.setHours(23, 59, 59, 999);
+      dates.push(current);
+      return dates;
+    }
+
+    return Array.from({ length: 8 }, (_, index) => {
+      const quartersAgo = 7 - index;
+      if (quartersAgo === 0) {
+        const current = new Date(targetDate);
+        current.setHours(23, 59, 59, 999);
+        return current;
+      }
+      const quarterMonth =
+        Math.floor(targetDate.getMonth() / 3) * 3 - quartersAgo * 3;
+      return new Date(
+        targetDate.getFullYear(),
+        quarterMonth + 3,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
     });
   }
 

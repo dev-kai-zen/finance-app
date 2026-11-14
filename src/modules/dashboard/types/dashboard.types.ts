@@ -22,7 +22,7 @@ export interface MonthlyCashflow {
   monthLabel: string;
 }
 
-export type NetWorthPeriod = "1M" | "3M" | "6M" | "1Y";
+export type NetWorthPeriod = "1W" | "3M" | "6M" | "1Y" | "ALL";
 
 export interface NetWorthHistoryPoint {
   date: Date;

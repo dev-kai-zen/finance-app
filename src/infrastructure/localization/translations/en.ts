@@ -1044,6 +1044,10 @@ export const en = {
         "Clean up the sidebar search divider into a simple, flat line matching the More Features menu.",
       improveItem52:
         "Unify walkthrough guide cards with a clear Skip button across modal forms.",
+      improveItem53:
+        "Show a 7-day weekly view and all-time yearly view on the net worth chart.",
+      improveItem54:
+        "Display budget item count badges directly on frequency filter chips.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -1117,6 +1121,12 @@ export const en = {
         "Tap any net worth chart to open a full-screen inspector with smooth month selection and clear figures.",
       fixItem37:
         "Resolve freezing and show immediate feedback when switching report tabs, dates, languages, and currencies.",
+      fixItem38:
+        "Open category, goal, budget, and account forms instantly without pause or blank flickering.",
+      fixItem39:
+        "Clarify offline local backup security guidance for saved device files.",
+      fixItem40:
+        "Center floating scroll arrows vertically across horizontal filter bars.",
     },
     v140: {
       date: "November 5, 2026",

@@ -60,7 +60,7 @@ export function AccountTypeFormModal(props: AccountTypeFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <AccountTypeFormModalContent {...props} />
+      <AccountTypeFormModalContent key={props.type?.id ?? "new-type"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -134,14 +134,24 @@ function AccountTypeFormModalContent({
   }, [visible, isEditing, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
   const {
     colors: hexColorsList,
-    refresh: refreshHexColors,
     addColor,
   } = useHexColors();
 
-  const [name, setName] = useState("");
-  const [accountGroup, setAccountGroup] = useState<AccountGroup>("asset");
-  const [iconKey, setIconKey] = useState("landmark");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
+  const [name, setName] = useState(() => type?.name ?? "");
+  const [accountGroup, setAccountGroup] = useState<AccountGroup>(() =>
+    type
+      ? type.accountGroup === "liability"
+        ? "liability"
+        : "asset"
+      : initialGroup,
+  );
+  const [iconKey, setIconKey] = useState(() => type?.iconKey ?? "landmark");
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () =>
+      type?.hexColorsId ??
+      ACCOUNT_DEFAULT_COLOR_IDS[initialGroup] ??
+      "color_blue",
+  );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -149,12 +159,6 @@ function AccountTypeFormModalContent({
   const initialSnapshotRef = useRef<string>("");
 
   const isProtected = type ? isProtectedAccountType(type) : false;
-
-  useEffect(() => {
-    if (visible) {
-      refreshHexColors();
-    }
-  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (visible) {

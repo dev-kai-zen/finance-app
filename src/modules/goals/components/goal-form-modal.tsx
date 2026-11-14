@@ -79,7 +79,7 @@ export function GoalFormModal(props: GoalFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <GoalFormModalContent {...props} />
+      <GoalFormModalContent key={props.initialGoal?.id ?? "new-goal"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -101,19 +101,40 @@ function GoalFormModalContent({
   const {
     colors: hexColorsList,
     addColor,
-    refresh: refreshHexColors,
   } = useHexColors();
 
   // Form State
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const [targetAmountMinorUnits, setTargetAmountMinorUnits] = useState(0);
-  const [currencyCode, setCurrencyCode] = useState(defaultCurrency);
-  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
-  const [selectedPocketIds, setSelectedPocketIds] = useState<string[]>([]);
-  const [targetDate, setTargetDate] = useState<Date | null>(null);
-  const [iconKey, setIconKey] = useState<string>("target");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
+  const [name, setName] = useState(() => initialGoal?.name ?? "");
+  const [note, setNote] = useState(() => initialGoal?.note ?? "");
+  const [targetAmountMinorUnits, setTargetAmountMinorUnits] = useState(
+    () => initialGoal?.targetAmountMinorUnits ?? 0,
+  );
+  const [currencyCode, setCurrencyCode] = useState(
+    () => initialGoal?.currencyCode || defaultCurrency,
+  );
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>(() =>
+    initialGoal?.accountIds && initialGoal.accountIds.length > 0
+      ? initialGoal.accountIds
+      : initialGoal?.accountId
+        ? [initialGoal.accountId]
+        : [],
+  );
+  const [selectedPocketIds, setSelectedPocketIds] = useState<string[]>(() =>
+    initialGoal?.pocketIds && initialGoal.pocketIds.length > 0
+      ? initialGoal.pocketIds
+      : initialGoal?.pocketId
+        ? [initialGoal.pocketId]
+        : [],
+  );
+  const [targetDate, setTargetDate] = useState<Date | null>(
+    () => initialGoal?.targetDate || null,
+  );
+  const [iconKey, setIconKey] = useState<string>(
+    () => initialGoal?.iconKey || "target",
+  );
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () => initialGoal?.hexColorsId || "color_blue",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const initialSnapshotRef = useRef<string>("");
@@ -134,7 +155,6 @@ function GoalFormModalContent({
 
   useEffect(() => {
     if (visible) {
-      refreshHexColors();
       if (initialGoal) {
         setName(initialGoal.name);
         setNote(initialGoal.note || "");
@@ -191,7 +211,7 @@ function GoalFormModalContent({
       setFocusedFieldType(null);
       setHelpTopic(null);
     }
-  }, [visible, initialGoal, refreshHexColors]);
+  }, [visible, initialGoal]);
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);

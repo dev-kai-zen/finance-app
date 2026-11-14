@@ -312,19 +312,6 @@ function NetWorthInspectModalContent({
               {headerTitle}
             </Text>
           </View>
-
-          <Pressable
-            accessibilityLabel="Close"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.headerButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <X color={theme.colors.textSecondary} size={22} />
-          </Pressable>
         </View>
 
         {/* Optional Period Pills Bar */}
@@ -499,9 +486,11 @@ function NetWorthInspectModalContent({
                       );
 
                       const showLabel = shouldShowLabel(
+                        pt,
                         idx,
                         points.length,
                         isSelected,
+                        activePeriod,
                       );
 
                       return (
@@ -835,10 +824,18 @@ function buildLinePath(coords: Array<{ x: number; y: number }>): string {
 }
 
 function shouldShowLabel(
+  point: NetWorthInspectPoint,
   index: number,
   total: number,
   isSelected: boolean,
+  period?: string,
 ): boolean {
+  if (period === "1W") return true;
+  if (period === "1Y") {
+    const m = point.date.getMonth();
+    return m === 0 || m === 3 || m === 6 || m === 8 || m === 11;
+  }
+  if (period === "ALL") return true;
   if (isSelected) return true;
   if (total <= 6) return true;
   if (index === total - 1) return true;
@@ -917,12 +914,12 @@ function createStyles(theme: AppTheme) {
     header: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
       backgroundColor: theme.colors.surface,
+      gap: theme.spacing.xs,
     },
     headerButton: {
       padding: 6,
@@ -936,14 +933,15 @@ function createStyles(theme: AppTheme) {
     },
     headerTitleContainer: {
       flex: 1,
-      alignItems: "center",
+      minWidth: 0,
       justifyContent: "center",
-      paddingHorizontal: 8,
+      marginLeft: theme.spacing.xs,
     },
     headerTitle: {
-      fontSize: 17,
+      fontSize: 18,
       fontWeight: "700",
       color: theme.colors.textPrimary,
+      textAlign: "left",
     },
     periodSelector: {
       flexDirection: "row",

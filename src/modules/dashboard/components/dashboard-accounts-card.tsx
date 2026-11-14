@@ -173,7 +173,7 @@ function createStyles(theme: AppTheme) {
     },
     strip: {
       gap: theme.spacing.sm,
-      paddingTop: 2,
+      paddingVertical: 2,
     },
     accountPill: {
       backgroundColor: theme.colors.background,
