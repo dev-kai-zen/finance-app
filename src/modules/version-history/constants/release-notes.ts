@@ -186,9 +186,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.new",
-        itemKeys: [
-          "versionHistory.v121.newItem1",
-        ],
+        itemKeys: ["versionHistory.v121.newItem1"],
       },
       {
         categoryKey: "versionHistory.categories.improve",
@@ -247,9 +245,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: [
-          "versionHistory.v111.quickActionsItem1",
-        ],
+        itemKeys: ["versionHistory.v111.quickActionsItem1"],
       },
     ],
   },
@@ -259,15 +255,11 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.new",
-        itemKeys: [
-          "versionHistory.v110.searchItem1",
-        ],
+        itemKeys: ["versionHistory.v110.searchItem1"],
       },
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: [
-          "versionHistory.v110.updateItem1",
-        ],
+        itemKeys: ["versionHistory.v110.updateItem1"],
       },
     ],
   },
@@ -306,27 +298,19 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       },
       {
         categoryKey: "versionHistory.categories.scheduledTransactions",
-        itemKeys: [
-          "versionHistory.v100.scheduledItem1",
-        ],
+        itemKeys: ["versionHistory.v100.scheduledItem1"],
       },
       {
         categoryKey: "versionHistory.categories.creditCards",
-        itemKeys: [
-          "versionHistory.v100.creditCardsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.creditCardsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.goals",
-        itemKeys: [
-          "versionHistory.v100.goalsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.goalsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.reports",
-        itemKeys: [
-          "versionHistory.v100.reportsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.reportsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.security",
@@ -337,11 +321,8 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       },
       {
         categoryKey: "versionHistory.categories.backup",
-        itemKeys: [
-          "versionHistory.v100.backupItem1",
-        ],
+        itemKeys: ["versionHistory.v100.backupItem1"],
       },
     ],
   },
 ];
-

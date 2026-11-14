@@ -9,40 +9,48 @@ export const es = {
       asset: "Activo",
       liability: "Pasivo",
       transferCounts: "Salidas: %{outgoing} | Entradas: %{incoming}",
-      transferMismatch: "No hay un par de salida y entrada. Revisa la opci\u00f3n de transferencia.",
-      amountHelp: "Usa una columna si todos los importes aparecen juntos. Usa columnas separadas si gastos e ingresos aparecen en columnas distintas, como D\u00e9bito y Cr\u00e9dito.",
-      "required": "Obligatorio",
-      "optional": "Opcional",
-      "ready": "Listo para importar",
-      "attention": "Necesita atenci\u00f3n",
-      "excluded": "Se excluir\u00e1",
-      "previouslyImported": "Importado anteriormente",
-      "details": "Detalles",
-      "repeatHelp": "Este registro se guard\u00f3 en una importaci\u00f3n anterior completada. Se excluir\u00e1 para evitar duplicados, incluso si eliminaste la transacci\u00f3n original.",
-      "draftOnly": "Solo vista previa. Los registros se guardan al pulsar Importar registros.",
-      "applyCorrections": "Aplicar correcciones",
-      "searchOptions": "Buscar opciones",
-      "searchEntries": "Buscar registros",
-      "noResults": "No hay registros. Prueba otro filtro o b\u00fasqueda.",
-      "fileName": "Archivo: %{name}",
-      "rowCount": "N.\u00ba de filas: %{count}",
-      "interpretedDate": "Fecha interpretada: %{date}",
-      "validFormat": "Formato v\u00e1lido",
-      "invalidFormat": "Formato no v\u00e1lido",
-      "invalidDates": "%{count} fechas necesitan atenci\u00f3n.",
-      "viewBalances": "Ver saldos y totales",
-      "status": "Estado",
-      "importCount": "Importar %{count} registros",
-      "mapUnknownTypes": "Elige c\u00f3mo tratar %{count} tipos de transacci\u00f3n desconocidos.",
-      "typeMappingTitle": "Asigna tus tipos de transacci\u00f3n",
-      "treatAs": "Usar en Kaizen como",
-      "preserveBalance": "El saldo inicial existente se conservar\u00e1.",
-      "otherExpense": "Otros gastos",
-      "otherIncome": "Otros ingresos",
-      "noCategory": "Sin categor\u00eda en el archivo",
-      "accountsHelp": "Elige una cuenta de activo o pasivo. Las tarjetas de cr\u00e9dito a\u00fan no se pueden importar. Revisa el saldo inicial de las cuentas nuevas.",
-      "categoriesHelp": "Las categor\u00edas coincidentes ya est\u00e1n seleccionadas. Los registros sin coincidencia usan Otros gastos u Otros ingresos. Puedes cambiarlo en el selector.",
-      "reviewHelp": "Puedes importar cuando todos los registros incluidos est\u00e9n listos. Los excluidos o ya importados no se a\u00f1adir\u00e1n. Dos filas pueden combinarse en una transferencia."
+      transferMismatch:
+        "No hay un par de salida y entrada. Revisa la opci\u00f3n de transferencia.",
+      amountHelp:
+        "Usa una columna si todos los importes aparecen juntos. Usa columnas separadas si gastos e ingresos aparecen en columnas distintas, como D\u00e9bito y Cr\u00e9dito.",
+      required: "Obligatorio",
+      optional: "Opcional",
+      ready: "Listo para importar",
+      attention: "Necesita atenci\u00f3n",
+      excluded: "Se excluir\u00e1",
+      previouslyImported: "Importado anteriormente",
+      details: "Detalles",
+      repeatHelp:
+        "Este registro se guard\u00f3 en una importaci\u00f3n anterior completada. Se excluir\u00e1 para evitar duplicados, incluso si eliminaste la transacci\u00f3n original.",
+      draftOnly:
+        "Solo vista previa. Los registros se guardan al pulsar Importar registros.",
+      applyCorrections: "Aplicar correcciones",
+      searchOptions: "Buscar opciones",
+      searchEntries: "Buscar registros",
+      noResults: "No hay registros. Prueba otro filtro o b\u00fasqueda.",
+      fileName: "Archivo: %{name}",
+      rowCount: "N.\u00ba de filas: %{count}",
+      interpretedDate: "Fecha interpretada: %{date}",
+      validFormat: "Formato v\u00e1lido",
+      invalidFormat: "Formato no v\u00e1lido",
+      invalidDates: "%{count} fechas necesitan atenci\u00f3n.",
+      viewBalances: "Ver saldos y totales",
+      status: "Estado",
+      importCount: "Importar %{count} registros",
+      mapUnknownTypes:
+        "Elige c\u00f3mo tratar %{count} tipos de transacci\u00f3n desconocidos.",
+      typeMappingTitle: "Asigna tus tipos de transacci\u00f3n",
+      treatAs: "Usar en Kaizen como",
+      preserveBalance: "El saldo inicial existente se conservar\u00e1.",
+      otherExpense: "Otros gastos",
+      otherIncome: "Otros ingresos",
+      noCategory: "Sin categor\u00eda en el archivo",
+      accountsHelp:
+        "Elige una cuenta de activo o pasivo. Las tarjetas de cr\u00e9dito a\u00fan no se pueden importar. Revisa el saldo inicial de las cuentas nuevas.",
+      categoriesHelp:
+        "Las categor\u00edas coincidentes ya est\u00e1n seleccionadas. Los registros sin coincidencia usan Otros gastos u Otros ingresos. Puedes cambiarlo en el selector.",
+      reviewHelp:
+        "Puedes importar cuando todos los registros incluidos est\u00e9n listos. Los excluidos o ya importados no se a\u00f1adir\u00e1n. Dos filas pueden combinarse en una transferencia.",
     },
 
     wizard: {
@@ -51,238 +59,312 @@ export const es = {
       formatExpectedNumber: "Formato: Número",
       formatExpectedTime: "Formato: Hora",
       formatExpectedCurrency: "Formato: Código de moneda",
-      dateFormatMismatch: "El formato no coincide. Lo identificamos usando la primera fila de datos. Revisa las fechas antes de importar.",
-      formatMismatchDate: "El formato no coincide: Fecha esperada (%{format}). Valor de fila 1: \"%{value}\"",
-      formatMismatchAmount: "El formato no coincide: Cantidad numérica esperada. Valor de fila 1: \"%{value}\"",
-      formatMismatchDecimal: "Discrepancia en decimal: La fila 1 parece usar \"%{char}\" como separador decimal.",
-      formatMismatchDebitCredit: "El débito/crédito debe ser un número positivo. Valor de fila 1: \"%{value}\"",
-      formatMismatchTime: "El formato no coincide: Hora esperada (ej. 14:30 o 2:30 PM). Valor de fila 1: \"%{value}\"",
-      formatMismatchCurrency: "El formato no coincide: Código de divisa de 3 letras esperado (ej. USD, PHP). Valor de fila 1: \"%{value}\"",
-      formatMismatchType: "El formato no coincide: Tipo de transacción esperado. Valor de fila 1: \"%{value}\"",
-      formatMismatchAccount: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de cuenta.",
-      formatMismatchCategory: "Advertencia: El valor de la fila 1 (\"%{value}\") parece una cantidad o fecha, no un nombre de categoría.",
+      dateFormatMismatch:
+        "El formato no coincide. Lo identificamos usando la primera fila de datos. Revisa las fechas antes de importar.",
+      formatMismatchDate:
+        'El formato no coincide: Fecha esperada (%{format}). Valor de fila 1: "%{value}"',
+      formatMismatchAmount:
+        'El formato no coincide: Cantidad numérica esperada. Valor de fila 1: "%{value}"',
+      formatMismatchDecimal:
+        'Discrepancia en decimal: La fila 1 parece usar "%{char}" como separador decimal.',
+      formatMismatchDebitCredit:
+        'El débito/crédito debe ser un número positivo. Valor de fila 1: "%{value}"',
+      formatMismatchTime:
+        'El formato no coincide: Hora esperada (ej. 14:30 o 2:30 PM). Valor de fila 1: "%{value}"',
+      formatMismatchCurrency:
+        'El formato no coincide: Código de divisa de 3 letras esperado (ej. USD, PHP). Valor de fila 1: "%{value}"',
+      formatMismatchType:
+        'El formato no coincide: Tipo de transacción esperado. Valor de fila 1: "%{value}"',
+      formatMismatchAccount:
+        'Advertencia: El valor de la fila 1 ("%{value}") parece una cantidad o fecha, no un nombre de cuenta.',
+      formatMismatchCategory:
+        'Advertencia: El valor de la fila 1 ("%{value}") parece una cantidad o fecha, no un nombre de categoría.',
       alreadyUsedIn: "Ya se usa en %{field}",
       switchTo: "Cambiar a",
       newAccountTitle: "Crear nueva cuenta",
-      newAccountSubtitle: "Kaizen creará esta cuenta antes de importar tus transacciones.",
+      newAccountSubtitle:
+        "Kaizen creará esta cuenta antes de importar tus transacciones.",
       fromYourFile: "De tu archivo",
       matchKaizenCategory: "Coincidir con esta categoría de Kaizen",
       matchedViaKai: "Coincidencia mediante conocimiento de Kai",
-      categoryTypeMismatchNotice: "\"%{name}\" suele ser una categoría de gastos en Kaizen, pero esta fila está clasificada como ingreso. Puedes asignarla a una categoría de ingresos o crear una nueva.",
+      categoryTypeMismatchNotice:
+        '"%{name}" suele ser una categoría de gastos en Kaizen, pero esta fila está clasificada como ingreso. Puedes asignarla a una categoría de ingresos o crear una nueva.',
       resume: "Continuar preparando este archivo",
-      accountChoiceHelp: "Esta cuenta se usar\u00e1 para todos los registros de la misma cuenta del archivo.",
-      categoryChoiceHelp: "Esta categor\u00eda se usar\u00e1 para los registros con la misma categor\u00eda del archivo.",
+      accountChoiceHelp:
+        "Esta cuenta se usar\u00e1 para todos los registros de la misma cuenta del archivo.",
+      categoryChoiceHelp:
+        "Esta categor\u00eda se usar\u00e1 para los registros con la misma categor\u00eda del archivo.",
       fileRows: "%{count} registros del archivo",
-      "step": "Paso %{current} de %{total}",
-      "columnsTitle": "Prepara tu archivo",
-      "columnsDescription": "En este paso, revisa el formato de fechas e importes y asigna las columnas de tu archivo.",
-      "accountsTitle": "Asigna tus cuentas",
-      "accountsDescription": "Elige a qu\u00e9 cuenta de Kaizen pertenece cada cuenta del archivo. Usa una existente o crea una nueva.",
-      "categoriesTitle": "Asigna tus categor\u00edas",
-      "categoriesDescription": "Elige c\u00f3mo agrupar ingresos y gastos. Conserva las categor\u00edas del archivo o usa las de Kaizen.",
-      "reviewTitle": "Revisa antes de importar",
-      "reviewDescription": "Revisa los resultados y saldos. Puedes editar o excluir registros antes de guardar. Todav\u00eda no se ha importado nada.",
-      "fromFile": "En tu archivo: %{name}",
-      "saveToAccount": "Guardar estos registros en",
-      "saveToCategory": "Usar esta categor\u00eda de Kaizen",
-      "example": "Ejemplo de tu archivo: %{value}",
-      "dateExample": "La primera fecha se interpretar\u00e1 como %{value}.",
-      "startHelp": "Elige un archivo exportado de tu aplicaci\u00f3n anterior o banco. Te guiaremos por cada paso antes de guardar.",
-      "needTemplate": "\u00bfNecesitas un archivo de ejemplo?",
-      "formatsTitle": "Revisa fechas y n\u00fameros",
-      "amountLayout": "\u00bfD\u00f3nde est\u00e1n los importes en tu archivo?",
-      "oneAmount": "Una columna de importes",
-      "oneAmountHelp": "Por ejemplo: Amount contiene -150 para gastos y 2000 para ingresos. Una columna de tipo tambi\u00e9n puede distinguirlos.",
-      "twoAmounts": "Columnas separadas para salidas y entradas",
-      "twoAmountsHelp": "Por ejemplo: Debit contiene 150 para gastos y Credit contiene 2000 para ingresos. Asigna una o ambas columnas abajo.",
-      "mappingTitle": "Asigna las columnas del archivo",
-      "mappingHelp": "Para cada dato de la izquierda, elige la columna del archivo que lo contiene. Hemos sugerido las coincidencias posibles.",
-      "appColumn": "Lo que necesita Kaizen",
-      "fileColumn": "Columna de tu archivo",
-      "fallbackAccount": "Nombre de cuenta para este archivo",
-      "accountExample": "Por ejemplo: Efectivo o Ahorros",
-      "fallbackAccountHelp": "No hay una columna de cuenta seleccionada. Escribe un nombre para estos registros; elegir\u00e1s la cuenta de Kaizen en el siguiente paso.",
-      "transfersTitle": "Dinero movido entre tus cuentas",
-      "transferDetected": "El archivo contiene %{count} registros de transferencias. Elige el ejemplo que se parezca a tu archivo.",
-      "transferOnce": "Cada transferencia aparece una vez",
-      "transferOnceHelp": "Ejemplo: Ahorros a Efectivo, 300.00. Asigna las columnas de cuenta y cuenta de destino arriba.",
-      "transferTwice": "Cada transferencia aparece dos veces",
-      "transferTwiceHelp": "Ejemplo: Ahorros muestra -300.00 y Efectivo +300.00. Combinamos la salida y la entrada en una transferencia.",
-      "transferMismatch": "Faltan importes negativos de salida o positivos de entrada. Prueba la primera opci\u00f3n o corrige los registros durante la revisi\u00f3n.",
-      "transferCounts": "Hay %{outgoing} salidas y %{incoming} entradas. Solo se combinan coincidencias \u00fanicas con la misma fecha e importe.",
-      "transferHelp": "Una transferencia mueve dinero entre tus propias cuentas, como Ahorros a Efectivo. No cuenta como ingreso ni gasto.\n\nElige una vez si hay un registro con ambas cuentas. Elige dos veces si hay un registro negativo en una cuenta y uno positivo en la otra. Deben coincidir fecha, importe y moneda. Las coincidencias dudosas aparecer\u00e1n para revisarlas.",
-      "showOptional": "M\u00e1s detalles (opcional)",
-      "hideOptional": "Ocultar detalles opcionales",
-      "optionalHelp": "Estos datos son opcionales. Puedes dejarlos como est\u00e1n si tu archivo no contiene m\u00e1s informaci\u00f3n.",
-      "sourceLabel": "Nombre de la aplicaci\u00f3n anterior o banco (opcional)",
-      "sourceExample": "Por ejemplo: Wallet o tu banco",
-      "sourceHelp": "Es solo una etiqueta para recordar de d\u00f3nde vino el archivo. Escribe Wallet si lo exportaste de Wallet, o el nombre de tu banco. No nos conectamos a esa aplicaci\u00f3n ni al banco.\n\nCSV es el formato del archivo, no el nombre del banco. D\u00e9jalo vac\u00edo si no lo sabes. Si escribes un nombre, usa el mismo la pr\u00f3xima vez para reconocer registros ya importados.",
-      "noAccounts": "Vuelve y selecciona una columna de cuenta o escribe un nombre de cuenta para el archivo.",
-      "noCategories": "No hay categor\u00edas de ingresos o gastos para asignar. Puedes continuar con la revisi\u00f3n.",
-      "findings": "Lo que encontramos",
-      "readyCount": "%{count} registros listos para importar.",
-      "excludedCount": "Se excluir\u00e1n %{count} registros del archivo.",
-      "fixCount": "%{count} registros del archivo necesitan atenci\u00f3n.",
-      "fixHelp": "Los registros con problemas aparecen primero. Elige Editar este registro para corregirlos, o Excluir.",
-      "projectedBalances": "Tus saldos despu\u00e9s de importar",
-      "before": "Saldo actual o inicial: %{amount}",
-      "after": "Despu\u00e9s de importar: %{amount}",
-      "nextAccounts": "Continuar con las cuentas",
-      "nextCategories": "Continuar con las categor\u00edas",
-      "nextReview": "Continuar con la revisi\u00f3n",
-      "previous": "Paso anterior",
-      "missingColumns": "Selecciona una columna o introduce un valor para: %{fields}.",
-      "cannotImport": "Corrige o excluye los registros con problemas para habilitar la importaci\u00f3n.",
-      "nothingToImport": "No hay registros nuevos listos para importar.",
-      "editEntry": "Editar este registro",
-      "editHelp": "Los cambios solo afectan a esta importaci\u00f3n. El archivo original se conserva. Revisa tambi\u00e9n la cuenta y categor\u00eda elegidas.",
-      "applyChanges": "Aplicar cambios y revisar de nuevo",
-      "transferTo": "Transferir a: %{account}",
-      "issueActions": {
+      step: "Paso %{current} de %{total}",
+      columnsTitle: "Prepara tu archivo",
+      columnsDescription:
+        "En este paso, revisa el formato de fechas e importes y asigna las columnas de tu archivo.",
+      accountsTitle: "Asigna tus cuentas",
+      accountsDescription:
+        "Elige a qu\u00e9 cuenta de Kaizen pertenece cada cuenta del archivo. Usa una existente o crea una nueva.",
+      categoriesTitle: "Asigna tus categor\u00edas",
+      categoriesDescription:
+        "Elige c\u00f3mo agrupar ingresos y gastos. Conserva las categor\u00edas del archivo o usa las de Kaizen.",
+      reviewTitle: "Revisa antes de importar",
+      reviewDescription:
+        "Revisa los resultados y saldos. Puedes editar o excluir registros antes de guardar. Todav\u00eda no se ha importado nada.",
+      fromFile: "En tu archivo: %{name}",
+      saveToAccount: "Guardar estos registros en",
+      saveToCategory: "Usar esta categor\u00eda de Kaizen",
+      example: "Ejemplo de tu archivo: %{value}",
+      dateExample: "La primera fecha se interpretar\u00e1 como %{value}.",
+      startHelp:
+        "Elige un archivo exportado de tu aplicaci\u00f3n anterior o banco. Te guiaremos por cada paso antes de guardar.",
+      needTemplate: "\u00bfNecesitas un archivo de ejemplo?",
+      formatsTitle: "Revisa fechas y n\u00fameros",
+      amountLayout: "\u00bfD\u00f3nde est\u00e1n los importes en tu archivo?",
+      oneAmount: "Una columna de importes",
+      oneAmountHelp:
+        "Por ejemplo: Amount contiene -150 para gastos y 2000 para ingresos. Una columna de tipo tambi\u00e9n puede distinguirlos.",
+      twoAmounts: "Columnas separadas para salidas y entradas",
+      twoAmountsHelp:
+        "Por ejemplo: Debit contiene 150 para gastos y Credit contiene 2000 para ingresos. Asigna una o ambas columnas abajo.",
+      mappingTitle: "Asigna las columnas del archivo",
+      mappingHelp:
+        "Para cada dato de la izquierda, elige la columna del archivo que lo contiene. Hemos sugerido las coincidencias posibles.",
+      appColumn: "Lo que necesita Kaizen",
+      fileColumn: "Columna de tu archivo",
+      fallbackAccount: "Nombre de cuenta para este archivo",
+      accountExample: "Por ejemplo: Efectivo o Ahorros",
+      fallbackAccountHelp:
+        "No hay una columna de cuenta seleccionada. Escribe un nombre para estos registros; elegir\u00e1s la cuenta de Kaizen en el siguiente paso.",
+      transfersTitle: "Dinero movido entre tus cuentas",
+      transferDetected:
+        "El archivo contiene %{count} registros de transferencias. Elige el ejemplo que se parezca a tu archivo.",
+      transferOnce: "Cada transferencia aparece una vez",
+      transferOnceHelp:
+        "Ejemplo: Ahorros a Efectivo, 300.00. Asigna las columnas de cuenta y cuenta de destino arriba.",
+      transferTwice: "Cada transferencia aparece dos veces",
+      transferTwiceHelp:
+        "Ejemplo: Ahorros muestra -300.00 y Efectivo +300.00. Combinamos la salida y la entrada en una transferencia.",
+      transferMismatch:
+        "Faltan importes negativos de salida o positivos de entrada. Prueba la primera opci\u00f3n o corrige los registros durante la revisi\u00f3n.",
+      transferCounts:
+        "Hay %{outgoing} salidas y %{incoming} entradas. Solo se combinan coincidencias \u00fanicas con la misma fecha e importe.",
+      transferHelp:
+        "Una transferencia mueve dinero entre tus propias cuentas, como Ahorros a Efectivo. No cuenta como ingreso ni gasto.\n\nElige una vez si hay un registro con ambas cuentas. Elige dos veces si hay un registro negativo en una cuenta y uno positivo en la otra. Deben coincidir fecha, importe y moneda. Las coincidencias dudosas aparecer\u00e1n para revisarlas.",
+      showOptional: "M\u00e1s detalles (opcional)",
+      hideOptional: "Ocultar detalles opcionales",
+      optionalHelp:
+        "Estos datos son opcionales. Puedes dejarlos como est\u00e1n si tu archivo no contiene m\u00e1s informaci\u00f3n.",
+      sourceLabel: "Nombre de la aplicaci\u00f3n anterior o banco (opcional)",
+      sourceExample: "Por ejemplo: Wallet o tu banco",
+      sourceHelp:
+        "Es solo una etiqueta para recordar de d\u00f3nde vino el archivo. Escribe Wallet si lo exportaste de Wallet, o el nombre de tu banco. No nos conectamos a esa aplicaci\u00f3n ni al banco.\n\nCSV es el formato del archivo, no el nombre del banco. D\u00e9jalo vac\u00edo si no lo sabes. Si escribes un nombre, usa el mismo la pr\u00f3xima vez para reconocer registros ya importados.",
+      noAccounts:
+        "Vuelve y selecciona una columna de cuenta o escribe un nombre de cuenta para el archivo.",
+      noCategories:
+        "No hay categor\u00edas de ingresos o gastos para asignar. Puedes continuar con la revisi\u00f3n.",
+      findings: "Lo que encontramos",
+      readyCount: "%{count} registros listos para importar.",
+      excludedCount: "Se excluir\u00e1n %{count} registros del archivo.",
+      fixCount: "%{count} registros del archivo necesitan atenci\u00f3n.",
+      fixHelp:
+        "Los registros con problemas aparecen primero. Elige Editar este registro para corregirlos, o Excluir.",
+      projectedBalances: "Tus saldos despu\u00e9s de importar",
+      before: "Saldo actual o inicial: %{amount}",
+      after: "Despu\u00e9s de importar: %{amount}",
+      nextAccounts: "Continuar con las cuentas",
+      nextCategories: "Continuar con las categor\u00edas",
+      nextReview: "Continuar con la revisi\u00f3n",
+      previous: "Paso anterior",
+      missingColumns:
+        "Selecciona una columna o introduce un valor para: %{fields}.",
+      cannotImport:
+        "Corrige o excluye los registros con problemas para habilitar la importaci\u00f3n.",
+      nothingToImport: "No hay registros nuevos listos para importar.",
+      editEntry: "Editar este registro",
+      editHelp:
+        "Los cambios solo afectan a esta importaci\u00f3n. El archivo original se conserva. Revisa tambi\u00e9n la cuenta y categor\u00eda elegidas.",
+      applyChanges: "Aplicar cambios y revisar de nuevo",
+      transferTo: "Transferir a: %{account}",
+      issueActions: {
         type: "Elige un tipo abajo o excluye el registro.",
-        "columns": "Vuelve a la preparaci\u00f3n y revisa la columna elegida para cada dato.",
-        "date": "Edita la fecha u hora abajo, o vuelve para cambiar el formato.",
-        "amount": "Edita el importe. Revisa si los decimales usan coma o punto.",
-        "account": "Elige una cuenta abajo. Si es nueva, selecciona el tipo y revisa el saldo inicial.",
-        "category": "Elige una categor\u00eda de ingreso o gasto abajo.",
-        "currency": "Revisa la moneda del registro y la cuenta. Deben usar la misma.",
-        "unsupported": "Excluye este registro y a\u00f1\u00e1delo manualmente despu\u00e9s de importar.",
-        "transfer": "Revisa ambas cuentas, importes y fechas. Tambi\u00e9n puedes volver y cambiar la opci\u00f3n de transferencia.",
-        "balance": "Cambia la fecha del saldo inicial de la cuenta nueva, elige otra cuenta o excluye el registro.",
-        "name": "Acorta el nombre, descripci\u00f3n, nota o etiqueta afectada abajo.",
-        "duplicate": "Excluye el registro o confirma que es una compra distinta que debe importarse."
-      }
+        columns:
+          "Vuelve a la preparaci\u00f3n y revisa la columna elegida para cada dato.",
+        date: "Edita la fecha u hora abajo, o vuelve para cambiar el formato.",
+        amount: "Edita el importe. Revisa si los decimales usan coma o punto.",
+        account:
+          "Elige una cuenta abajo. Si es nueva, selecciona el tipo y revisa el saldo inicial.",
+        category: "Elige una categor\u00eda de ingreso o gasto abajo.",
+        currency:
+          "Revisa la moneda del registro y la cuenta. Deben usar la misma.",
+        unsupported:
+          "Excluye este registro y a\u00f1\u00e1delo manualmente despu\u00e9s de importar.",
+        transfer:
+          "Revisa ambas cuentas, importes y fechas. Tambi\u00e9n puedes volver y cambiar la opci\u00f3n de transferencia.",
+        balance:
+          "Cambia la fecha del saldo inicial de la cuenta nueva, elige otra cuenta o excluye el registro.",
+        name: "Acorta el nombre, descripci\u00f3n, nota o etiqueta afectada abajo.",
+        duplicate:
+          "Excluye el registro o confirma que es una compra distinta que debe importarse.",
+      },
     },
 
     help: "Acerca de la importaci\u00f3n de datos",
     closeHelp: "Entendido",
     downloadTemplate: "Descargar plantilla CSV",
     templateSaved: "Se guard\u00f3 %{fileName} en la carpeta seleccionada.",
-    personalOnly: "Cambia a tu espacio personal antes de importar tus registros.",
-    "title": "Importar datos",
-    "settingsDescription": "Trae cuentas e historial de transacciones desde un archivo CSV",
-    "intro": "Trae tus cuentas y transacciones a Kaizen. Asigna las columnas, revisa los registros y confirma los saldos antes de guardar.",
-    "limits": "CSV, TSV o texto UTF-8: hasta 2 MB y 1.000 registros. Tarjetas de crédito, divisas distintas, divisiones, bolsillos, comisiones, cuotas y programaciones requieren configuración aparte.",
-    "kind": "¿Qué quieres importar?",
-    "transactions": "Historial de transacciones",
-    "accounts": "Solo cuentas",
-    "pickFile": "Elegir archivo CSV",
-    "template": "Compartir plantilla CSV",
-    "history": "Historial de importaciones",
-    "nativeOnly": "Importa desde la aplicación Android o iOS. Se requiere una copia de seguridad local.",
-    "columnsHelp": "Asigna cada campo a una columna. Los nombres incluyen ejemplos. Deja Importe sin asignar al usar Débito y Crédito. Los tipos deben ser income, expense o transfer; sin tipo, se usa el signo del importe o las columnas de débito/crédito.",
-    "source": "Aplicación o banco de origen (usa el mismo nombre en futuras importaciones)",
-    "dateFormat": "Formato de fecha del archivo",
-    "decimal": "Formato numérico",
-    "defaultCurrency": "Moneda si falta en el archivo",
-    "defaultAccount": "Nombre de cuenta si falta en el archivo",
-    "transferMode": "¿Cómo se registran las transferencias?",
-    "singleTransfer": "Una fila positiva: cuenta de origen → destino",
-    "pairedTransfer": "Dos filas: salida negativa + entrada positiva",
-    "unmapped": "Sin asignar",
-    "choose": "Elegir…",
-    "next": "Asignar cuentas y categorías",
-    "matchingHelp": "Elige cuentas y categorías existentes o crea nuevas. Revisa el saldo inicial de cada cuenta nueva. Las etiquetas se asignan por nombre o se crean automáticamente.",
-    "matchAccount": "Cuenta de destino",
-    "createAccount": "Crear una cuenta nueva",
-    "matchCategory": "Categoría de destino",
-    "createCategory": "Crear esta categoría",
-    "missingCategory": "Falta categoría",
-    "existingBalance": "Cuenta existente: el saldo inicial se conserva. La importación de solo cuentas no actualiza cuentas existentes.",
-    "balanceDateInput": "Fecha del saldo (AAAA-MM-DD)",
-    "openingHelp": "Para el historial, introduce el saldo anterior a la primera transacción. Para solo cuentas, usa el saldo de esta fecha. Cero es una sugerencia; compruébalo con tus registros anteriores.",
-    "preview": "Revisar importación",
-    "editColumns": "Editar columnas y formatos",
-    "review": "Revisar registros y saldos",
-    "reviewCounts": "%{accepted} listos · %{skipped} excluidos · %{errors} requieren atención",
-    "reviewHelp": "Los saldos previstos incluyen solo registros aceptados. Corrige o excluye cada problema. Las transferencias se cuentan una vez y no afectan ingresos ni gastos.",
-    "confirm": "Importar registros",
-    "confirmHelp": "¿Guardar los registros revisados y las nuevas cuentas, categorías y etiquetas? Primero se creará una copia de seguridad local. Los datos se añadirán al espacio actual.",
-    "editMatches": "Editar cuentas y categorías asignadas",
-    "row": "Fila %{number}",
-    "repeated": "Ya importado — excluido",
-    "excluded": "Excluido por ti",
-    "accepted": "Listo para importar",
-    "duplicateAccepted": "Registro similar — elegiste importarlo",
-    "include": "Incluir este registro",
-    "exclude": "Excluir",
-    "keepDuplicate": "Importar el registro similar de todos modos",
-    "counts": "%{imported} importados · %{skipped} excluidos",
-    "excludedRows": "Filas excluidas: %{rows}",
-    "complete": "Importación completada",
-    "recovery": "Se guardó una copia de seguridad antes de importar. Puedes restaurarla desde Copia local. Restaurar sustituye los datos, incluidos los cambios posteriores a la copia.",
-    "another": "Iniciar otra importación",
-    "emptyHistory": "Aún no hay importaciones completadas. Aquí aparecen las 30 más recientes.",
-    "working": "Procesando… Mantén esta pantalla abierta.",
-    "reload": "Recargar datos",
-    "cancel": "Cancelar",
-    "back": "Volver",
-    "leave": "Salir de la importación",
-    "leaveHelp": "¿Descartar el borrador? Los registros solo se guardan al confirmar la importación.",
-    "formats": {
-      "ymd": "YYYY-MM-DD",
-      "dmy": "DD/MM/YYYY",
-      "mdy": "MM/DD/YYYY"
+    personalOnly:
+      "Cambia a tu espacio personal antes de importar tus registros.",
+    title: "Importar datos",
+    settingsDescription:
+      "Trae cuentas e historial de transacciones desde un archivo CSV",
+    intro:
+      "Trae tus cuentas y transacciones a Kaizen. Asigna las columnas, revisa los registros y confirma los saldos antes de guardar.",
+    limits:
+      "CSV, TSV o texto UTF-8: hasta 2 MB y 1.000 registros. Tarjetas de crédito, divisas distintas, divisiones, bolsillos, comisiones, cuotas y programaciones requieren configuración aparte.",
+    kind: "¿Qué quieres importar?",
+    transactions: "Historial de transacciones",
+    accounts: "Solo cuentas",
+    pickFile: "Elegir archivo CSV",
+    template: "Compartir plantilla CSV",
+    history: "Historial de importaciones",
+    nativeOnly:
+      "Importa desde la aplicación Android o iOS. Se requiere una copia de seguridad local.",
+    columnsHelp:
+      "Asigna cada campo a una columna. Los nombres incluyen ejemplos. Deja Importe sin asignar al usar Débito y Crédito. Los tipos deben ser income, expense o transfer; sin tipo, se usa el signo del importe o las columnas de débito/crédito.",
+    source:
+      "Aplicación o banco de origen (usa el mismo nombre en futuras importaciones)",
+    dateFormat: "Formato de fecha del archivo",
+    decimal: "Formato numérico",
+    defaultCurrency: "Moneda si falta en el archivo",
+    defaultAccount: "Nombre de cuenta si falta en el archivo",
+    transferMode: "¿Cómo se registran las transferencias?",
+    singleTransfer: "Una fila positiva: cuenta de origen → destino",
+    pairedTransfer: "Dos filas: salida negativa + entrada positiva",
+    unmapped: "Sin asignar",
+    choose: "Elegir…",
+    next: "Asignar cuentas y categorías",
+    matchingHelp:
+      "Elige cuentas y categorías existentes o crea nuevas. Revisa el saldo inicial de cada cuenta nueva. Las etiquetas se asignan por nombre o se crean automáticamente.",
+    matchAccount: "Cuenta de destino",
+    createAccount: "Crear una cuenta nueva",
+    matchCategory: "Categoría de destino",
+    createCategory: "Crear esta categoría",
+    missingCategory: "Falta categoría",
+    existingBalance:
+      "Cuenta existente: el saldo inicial se conserva. La importación de solo cuentas no actualiza cuentas existentes.",
+    balanceDateInput: "Fecha del saldo (AAAA-MM-DD)",
+    openingHelp:
+      "Para el historial, introduce el saldo anterior a la primera transacción. Para solo cuentas, usa el saldo de esta fecha. Cero es una sugerencia; compruébalo con tus registros anteriores.",
+    preview: "Revisar importación",
+    editColumns: "Editar columnas y formatos",
+    review: "Revisar registros y saldos",
+    reviewCounts:
+      "%{accepted} listos · %{skipped} excluidos · %{errors} requieren atención",
+    reviewHelp:
+      "Los saldos previstos incluyen solo registros aceptados. Corrige o excluye cada problema. Las transferencias se cuentan una vez y no afectan ingresos ni gastos.",
+    confirm: "Importar registros",
+    confirmHelp:
+      "¿Guardar los registros revisados y las nuevas cuentas, categorías y etiquetas? Primero se creará una copia de seguridad local. Los datos se añadirán al espacio actual.",
+    editMatches: "Editar cuentas y categorías asignadas",
+    row: "Fila %{number}",
+    repeated: "Ya importado — excluido",
+    excluded: "Excluido por ti",
+    accepted: "Listo para importar",
+    duplicateAccepted: "Registro similar — elegiste importarlo",
+    include: "Incluir este registro",
+    exclude: "Excluir",
+    keepDuplicate: "Importar el registro similar de todos modos",
+    counts: "%{imported} importados · %{skipped} excluidos",
+    excludedRows: "Filas excluidas: %{rows}",
+    complete: "Importación completada",
+    recovery:
+      "Se guardó una copia de seguridad antes de importar. Puedes restaurarla desde Copia local. Restaurar sustituye los datos, incluidos los cambios posteriores a la copia.",
+    another: "Iniciar otra importación",
+    emptyHistory:
+      "Aún no hay importaciones completadas. Aquí aparecen las 30 más recientes.",
+    working: "Procesando… Mantén esta pantalla abierta.",
+    reload: "Recargar datos",
+    cancel: "Cancelar",
+    back: "Volver",
+    leave: "Salir de la importación",
+    leaveHelp:
+      "¿Descartar el borrador? Los registros solo se guardan al confirmar la importación.",
+    formats: {
+      ymd: "YYYY-MM-DD",
+      dmy: "DD/MM/YYYY",
+      mdy: "MM/DD/YYYY",
     },
-    "types": {
-      "income": "Ingreso",
-      "expense": "Gasto",
-      "transfer": "Transferencia"
+    types: {
+      income: "Ingreso",
+      expense: "Gasto",
+      transfer: "Transferencia",
     },
-    "fields": {
-      "date": "Fecha",
-      "time": "Hora",
-      "amount": "Importe",
-      "debit": "Salida de dinero (d\u00e9bito)",
-      "credit": "Entrada de dinero (cr\u00e9dito)",
-      "type": "Tipo de registro",
-      "account": "Nombre de cuenta",
-      "toAccount": "Cuenta de destino de transferencia",
-      "currency": "Código de moneda",
-      "category": "Categoría",
-      "subcategory": "Subcategoría",
-      "name": "Descripción",
-      "note": "Nota",
-      "labels": "Etiquetas (separadas por punto y coma)",
-      "sourceId": "ID del registro original",
-      "accountType": "Tipo de cuenta",
-      "openingBalance": "Saldo inicial",
-      "balanceDate": "Fecha del saldo",
-      "openingDate": "Fecha de apertura"
+    fields: {
+      date: "Fecha",
+      time: "Hora",
+      amount: "Importe",
+      debit: "Salida de dinero (d\u00e9bito)",
+      credit: "Entrada de dinero (cr\u00e9dito)",
+      type: "Tipo de registro",
+      account: "Nombre de cuenta",
+      toAccount: "Cuenta de destino de transferencia",
+      currency: "Código de moneda",
+      category: "Categoría",
+      subcategory: "Subcategoría",
+      name: "Descripción",
+      note: "Nota",
+      labels: "Etiquetas (separadas por punto y coma)",
+      sourceId: "ID del registro original",
+      accountType: "Tipo de cuenta",
+      openingBalance: "Saldo inicial",
+      balanceDate: "Fecha del saldo",
+      openingDate: "Fecha de apertura",
     },
-    "errors": {
+    errors: {
       type: "Elige Ingreso, Gasto o Transferencia para este registro.",
       workspace: "Cambia a tu espacio personal antes de importar.",
-      "fileSize": "Elige un archivo de hasta 2 MB.",
-      "rowLimit": "Importa como máximo 1.000 registros a la vez.",
-      "encoding": "Guarda el archivo como texto UTF-8 e inténtalo de nuevo.",
-      "csv": "Las comillas del CSV no son válidas. Revisa el archivo.",
-      "headers": "Usa encabezados únicos y no vacíos y al menos una fila de datos.",
-      "fileType": "Elige un archivo CSV, TSV o de texto.",
-      "sharing": "No se pueden compartir archivos en este dispositivo.",
-      "columns": "Revisa las columnas elegidas y el n\u00famero de valores de este registro.",
-      "date": "Revisa fecha, hora y formato. El año debe estar entre 1900 y 2200.",
-      "amount": "Revisa el importe y el formato. Usa un valor distinto de cero y los decimales correctos.",
-      "account": "Elige una cuenta y tipo válidos. Asigna las cuentas existentes según nombre y moneda.",
-      "category": "Elige una categoría de ingreso o gasto, o un nombre de hasta 50 caracteres.",
-      "currency": "La moneda debe coincidir con ambas cuentas y estar activa en la configuración.",
-      "unsupported": "Este registro necesita una función aún no compatible con la importación CSV. Exclúyelo o prepáralo de nuevo.",
-      "transfer": "Esta transferencia a\u00fan no coincide. Revisa las cuentas, importes, fechas y opci\u00f3n de transferencia.",
-      "balance": "La transacción es anterior al saldo inicial. Revisa el período y el saldo de apertura.",
-      "name": "Revisa la longitud: cuenta 100, descripción 200, nota 1.000, etiqueta 100 caracteres.",
-      "duplicate": "Revisa el registro similar o ID repetido. Exclúyelo o confirma una compra similar legítima.",
-      "busy": "Ya hay una importación en curso.",
-      "changed": "Los datos cambiaron desde la vista previa. Recarga y revisa los saldos antes de importar.",
-      "backup": "No se pudo guardar la copia de seguridad. Revisa el almacenamiento. No se importaron registros.",
-      "load": "No se pudieron cargar los datos. Intenta recargarlos.",
-      "failed": "No se pudo completar la acción. Se conserva el borrador para revisarlo e intentarlo de nuevo."
-    }
+      fileSize: "Elige un archivo de hasta 2 MB.",
+      rowLimit: "Importa como máximo 1.000 registros a la vez.",
+      encoding: "Guarda el archivo como texto UTF-8 e inténtalo de nuevo.",
+      csv: "Las comillas del CSV no son válidas. Revisa el archivo.",
+      headers:
+        "Usa encabezados únicos y no vacíos y al menos una fila de datos.",
+      fileType: "Elige un archivo CSV, TSV o de texto.",
+      sharing: "No se pueden compartir archivos en este dispositivo.",
+      columns:
+        "Revisa las columnas elegidas y el n\u00famero de valores de este registro.",
+      date: "Revisa fecha, hora y formato. El año debe estar entre 1900 y 2200.",
+      amount:
+        "Revisa el importe y el formato. Usa un valor distinto de cero y los decimales correctos.",
+      account:
+        "Elige una cuenta y tipo válidos. Asigna las cuentas existentes según nombre y moneda.",
+      category:
+        "Elige una categoría de ingreso o gasto, o un nombre de hasta 50 caracteres.",
+      currency:
+        "La moneda debe coincidir con ambas cuentas y estar activa en la configuración.",
+      unsupported:
+        "Este registro necesita una función aún no compatible con la importación CSV. Exclúyelo o prepáralo de nuevo.",
+      transfer:
+        "Esta transferencia a\u00fan no coincide. Revisa las cuentas, importes, fechas y opci\u00f3n de transferencia.",
+      balance:
+        "La transacción es anterior al saldo inicial. Revisa el período y el saldo de apertura.",
+      name: "Revisa la longitud: cuenta 100, descripción 200, nota 1.000, etiqueta 100 caracteres.",
+      duplicate:
+        "Revisa el registro similar o ID repetido. Exclúyelo o confirma una compra similar legítima.",
+      busy: "Ya hay una importación en curso.",
+      changed:
+        "Los datos cambiaron desde la vista previa. Recarga y revisa los saldos antes de importar.",
+      backup:
+        "No se pudo guardar la copia de seguridad. Revisa el almacenamiento. No se importaron registros.",
+      load: "No se pudieron cargar los datos. Intenta recargarlos.",
+      failed:
+        "No se pudo completar la acción. Se conserva el borrador para revisarlo e intentarlo de nuevo.",
+    },
   },
   privacy: {
     hideBalances: "Ocultar saldos",
     showBalances: "Mostrar saldos",
     stealthMode: "Modo de privacidad",
-    stealthModeDescription: "Ocultar saldos y cifras financieras en toda la app",
+    stealthModeDescription:
+      "Ocultar saldos y cifras financieras en toda la app",
   },
   common: {
     enabled: "Activado",
@@ -340,7 +422,8 @@ export const es = {
     actionGoogleDriveSync: "Copia en la Nube con Google Drive",
     actionGoogleDriveSyncDesc: "Copia de seguridad y sincronización en la nube",
     actionManagePresets: "Gestión de Ajustes Rápidos",
-    actionManagePresetsDesc: "Gestionar plantillas de transacciones de un toque",
+    actionManagePresetsDesc:
+      "Gestionar plantillas de transacciones de un toque",
     suggestedTitle: "ACCESOS RÁPIDOS SUGERIDOS",
     clearSearch: "Borrar",
     itemSettingsBadge: "Ajuste",
@@ -367,41 +450,57 @@ export const es = {
     actionAddCreditCard: "Añadir Tarjeta de Crédito",
     actionAddCreditCardDesc: "Crear una cuenta de tarjeta para seguimiento",
     actionTransactionsTrash: "Papelera de Transacciones",
-    actionTransactionsTrashDesc: "Ver, restaurar o eliminar permanentemente transacciones borradas",
+    actionTransactionsTrashDesc:
+      "Ver, restaurar o eliminar permanentemente transacciones borradas",
     actionExportTransactionsCsv: "Exportar Transacciones (CSV)",
-    actionExportTransactionsCsvDesc: "Guardar o compartir registros de transacciones como hoja de cálculo CSV",
+    actionExportTransactionsCsvDesc:
+      "Guardar o compartir registros de transacciones como hoja de cálculo CSV",
     actionArchivedAccounts: "Cuentas y Bolsillos Archivados",
-    actionArchivedAccountsDesc: "Ver y restaurar cuentas y bolsillos ocultos o archivados",
+    actionArchivedAccountsDesc:
+      "Ver y restaurar cuentas y bolsillos ocultos o archivados",
     actionChatWithKai: "Chatear con Kai",
-    actionChatWithKaiDesc: "Usa el chat de IA para registrar transacciones rápidamente en lenguaje natural",
+    actionChatWithKaiDesc:
+      "Usa el chat de IA para registrar transacciones rápidamente en lenguaje natural",
     actionManageAccountTypes: "Administrar Tipos de Cuenta",
-    actionManageAccountTypesDesc: "Personalizar tipos de cuentas de banco, efectivo, billetera y tarjeta",
+    actionManageAccountTypesDesc:
+      "Personalizar tipos de cuentas de banco, efectivo, billetera y tarjeta",
     screenTransactionsExpense: "Transacciones (Gastos)",
-    screenTransactionsExpenseDesc: "Ver historial de todos los gastos registrados",
+    screenTransactionsExpenseDesc:
+      "Ver historial de todos los gastos registrados",
     screenTransactionsIncome: "Transacciones (Ingresos)",
-    screenTransactionsIncomeDesc: "Ver historial de todos los ingresos registrados",
+    screenTransactionsIncomeDesc:
+      "Ver historial de todos los ingresos registrados",
     screenTransactionsTransfer: "Transacciones (Transferencias)",
-    screenTransactionsTransferDesc: "Ver historial de todas las transferencias de cuentas",
+    screenTransactionsTransferDesc:
+      "Ver historial de todas las transferencias de cuentas",
     screenCategoriesExpense: "Categorías de Gastos",
     screenCategoriesExpenseDesc: "Gestionar y organizar categorías de gastos",
     screenCategoriesIncome: "Categorías de Ingresos",
     screenCategoriesIncomeDesc: "Gestionar y organizar categorías de ingresos",
     screenReportIncomeExpense: "Informe de Ingresos y Gastos",
-    screenReportIncomeExpenseDesc: "Analizar la diferencia de ingresos versus gastos y ganancias netas",
+    screenReportIncomeExpenseDesc:
+      "Analizar la diferencia de ingresos versus gastos y ganancias netas",
     screenReportCashFlow: "Informe de Flujo de Caja",
     screenReportCashFlowDesc: "Analizar entradas y salidas totales de dinero",
     screenReportBalanceSheet: "Comparación de Balance General",
-    screenReportBalanceSheetDesc: "Comparar activos y pasivos a lo largo del tiempo",
+    screenReportBalanceSheetDesc:
+      "Comparar activos y pasivos a lo largo del tiempo",
     screenReportNetWorth: "Crecimiento del Patrimonio Neto",
-    screenReportNetWorthDesc: "Seguir la salud financiera y el patrimonio acumulado",
+    screenReportNetWorthDesc:
+      "Seguir la salud financiera y el patrimonio acumulado",
     screenReportLabelsSummary: "Resumen de Etiquetas",
-    screenReportLabelsSummaryDesc: "Ver desglose de transacciones agrupadas por etiquetas",
+    screenReportLabelsSummaryDesc:
+      "Ver desglose de transacciones agrupadas por etiquetas",
     settingNicknameDesc: "Configura tu apodo y saludo de perfil",
-    settingDeveloperMessageDesc: "Lee un mensaje personal del creador de la app",
-    settingPrivacyPolicyDesc: "Revisa nuestra política de privacidad y compromiso offline",
+    settingDeveloperMessageDesc:
+      "Lee un mensaje personal del creador de la app",
+    settingPrivacyPolicyDesc:
+      "Revisa nuestra política de privacidad y compromiso offline",
     settingTermsDesc: "Lee los términos de uso de Kaizen Finance",
-    settingRestorePurchasesDesc: "Restaura tu licencia de por vida de Kaizen Pro",
-    settingQuickSearchDesc: "Configurar el botón de búsqueda en cabecera y barra lateral",
+    settingRestorePurchasesDesc:
+      "Restaura tu licencia de por vida de Kaizen Pro",
+    settingQuickSearchDesc:
+      "Configurar el botón de búsqueda en cabecera y barra lateral",
     settingSqliteMonitorDesc: "Inspeccionar tablas y diagnósticos de SQLite",
     guidesToSetting: "Guía al ajuste",
   },
@@ -489,7 +588,8 @@ export const es = {
     hapticsCalculator: "Toques de Calculadora y Teclado",
     hapticsAlerts: "Alertas de Presupuesto y Metas",
     hapticsDestructive: "Acciones de Eliminar y Papelera",
-    hapticsDisabledHint: "Nota: Si la vibración táctil está desactivada en los ajustes del sistema de tu teléfono, no se sentirá la háptica.",
+    hapticsDisabledHint:
+      "Nota: Si la vibración táctil está desactivada en los ajustes del sistema de tu teléfono, no se sentirá la háptica.",
     testHaptics: "Probar háptica",
     testSound: "Probar sonido",
     soundMaster: "Efectos de sonido",
@@ -507,14 +607,16 @@ export const es = {
     notificationsSection: "NOTIFICACIONES Y WIDGETS",
     aboutSupportSection: "ACERCA DE Y SOPORTE",
     stealthModeTitle: "Modo Privacidad (Ocultar Saldos)",
-    stealthModeDescription: "Ocultar saldos de cuenta y cifras financieras en toda la app",
+    stealthModeDescription:
+      "Ocultar saldos de cuenta y cifras financieras en toda la app",
     generalSection: "GENERAL",
     profileSection: "PERFIL",
     nicknameTitle: "Apodo (Nickname)",
     nicknameDescription: "Nombre personalizado mostrado en tu panel",
     nicknameNotSet: "No configurado",
     editNicknameTitle: "Editar apodo",
-    editNicknamePrompt: "Introduce el nombre con el que te gustaría que te llamemos en el panel.",
+    editNicknamePrompt:
+      "Introduce el nombre con el que te gustaría que te llamemos en el panel.",
     nicknameSave: "Guardar",
     nicknameCancel: "Cancelar",
     localizationSection: "LOCALIZACIÓN",
@@ -531,8 +633,7 @@ export const es = {
     languageSection: "IDIOMA",
     languageTitle: "Idioma",
     languageSystemValue: "Predeterminado del sistema · %{language}",
-    languageAccessibility:
-      "Idioma actual: %{language}. Toca para cambiarlo.",
+    languageAccessibility: "Idioma actual: %{language}. Toca para cambiarlo.",
     currencySection: "MONEDA Y NÚMEROS",
     currencySetup: "Configuración de moneda",
     currencySetupDescription: "Moneda, signos, decimales y colores de importes",
@@ -541,7 +642,8 @@ export const es = {
     remindersDescription: "Registro diario y alertas de facturas por vencer",
     remindersAccessibility: "Configurar recordatorios",
     widgetsTitle: "Widgets de Pantalla de Inicio",
-    widgetsDescription: "Agrega acciones rápidas y resúmenes de dinero a tu pantalla de inicio",
+    widgetsDescription:
+      "Agrega acciones rápidas y resúmenes de dinero a tu pantalla de inicio",
     widgetsAccessibility: "Abrir galería de widgets",
     guideHelperTitle: "Asistente de guía",
     guideHelperDescription:
@@ -591,11 +693,9 @@ export const es = {
     localBackupAccessibility: "Administrar copias de seguridad locales",
     localBackupDescription:
       "Crear, exportar o restaurar una copia en el dispositivo",
-    googleDriveAccessibility:
-      "Administrar copias de seguridad de Google Drive",
+    googleDriveAccessibility: "Administrar copias de seguridad de Google Drive",
     googleDrive: "Google Drive",
-    googleDriveDescription:
-      "Conectar, crear o restaurar una copia en la nube",
+    googleDriveDescription: "Conectar, crear o restaurar una copia en la nube",
     backupPaused: "Copia de seguridad en pausa",
     backupPausedDescription:
       "Los registros de ejemplo son temporales y no se suben a Google Drive. Inicia un espacio de trabajo personal para activar la copia de seguridad.",
@@ -634,7 +734,8 @@ export const es = {
     privacy: "Privacidad",
     privacySubtitle: "Lee nuestra política de privacidad en línea",
     privacyAccessibility: "Abrir el sitio web de la política de privacidad",
-    privacyOpenError: "No se pudo abrir el sitio web de la política de privacidad.",
+    privacyOpenError:
+      "No se pudo abrir el sitio web de la política de privacidad.",
     terms: "Términos",
     termsSubtitle: "Lee los términos de uso de Kaizen Finance",
     termsAccessibility: "Abrir el sitio web de los términos",
@@ -650,9 +751,11 @@ export const es = {
     developerMode: "Modo desarrollador",
     developerModeDescription: "Mostrar SQLite Monitor en el menú de navegación",
     sqliteMonitor: "SQLite Monitor",
-    sqliteMonitorDescription: "Explorar tablas y ejecutar SQL en este dispositivo",
+    sqliteMonitorDescription:
+      "Explorar tablas y ejecutar SQL en este dispositivo",
     moreToolsSection: "MÁS HERRAMIENTAS",
-    moreToolsDescription: "Mostrar pantallas extra en el menú cuando las necesites",
+    moreToolsDescription:
+      "Mostrar pantallas extra en el menú cuando las necesites",
     navCalendar: "Calendario",
     navCreditCards: "Tarjetas de crédito",
     navCategories: "Categorías",
@@ -693,14 +796,16 @@ export const es = {
     usageReasonGoals: "%{count} meta(s)",
     usageReasonTransactions: "%{count} transacción(es)",
     usageReasonExchangeRates: "Ajustes de tipos de cambio (%{count})",
-    usageReasonDefault: "Tu moneda predeterminada para totales y cuentas nuevas",
+    usageReasonDefault:
+      "Tu moneda predeterminada para totales y cuentas nuevas",
     fieldCode: "Código de moneda",
     codeAlreadyInUse: "Este código de moneda ya está en uso.",
     fieldName: "Nombre",
     fieldNamePlaceholder: "Dólar canadiense",
     fieldSymbol: "Símbolo",
     fieldDecimalPlaces: "Decimales",
-    fieldDecimalPlacesHint: "Número entero de 0 a 3 (p. ej., 2 para céntimos, 0 para yen, 3 para dinar).",
+    fieldDecimalPlacesHint:
+      "Número entero de 0 a 3 (p. ej., 2 para céntimos, 0 para yen, 3 para dinar).",
     builtinEditHint:
       "Monedas integradas: solo puedes cambiar los decimales antes de usarlas.",
     deleteTitle: "Eliminar moneda",
@@ -716,8 +821,7 @@ export const es = {
       "Elige la moneda para los totales combinados y las cuentas nuevas.",
     searchCurrencies: "Buscar por nombre o código de moneda",
     noCurrenciesFound: "No hay monedas que coincidan con la búsqueda.",
-    negativeNumberDescription:
-      "Elige cómo se muestran los importes negativos.",
+    negativeNumberDescription: "Elige cómo se muestran los importes negativos.",
     decimalFormatDescription:
       "Elige el formato de los separadores de miles y decimales.",
     helpTitle: "Acerca de la configuración de moneda",
@@ -786,7 +890,8 @@ export const es = {
     tabPresets: "Paletas",
     tabCustomStudio: "Estudio Personalizado",
     customBannerTitle: "Estudio de Tema Personalizado",
-    customBannerSubtitle: "Diseña tu propia combinación de colores y tinte de superficie.",
+    customBannerSubtitle:
+      "Diseña tu propia combinación de colores y tinte de superficie.",
     customBannerActive: "Tu tema de color personalizado está activo.",
     customizeAction: "Personalizar",
     filterAll: "Todos",
@@ -803,10 +908,12 @@ export const es = {
     tintRich: "Intenso",
     primaryColorLabel: "Color Principal",
     primaryColorHint: "Botones, pestañas activas y resaltados principales.",
-    primaryUsedFor: "Aplicado a: Botones de acción (Guardar/Agregar), pestañas activas, botón flotante (+), chips seleccionados y barras de progreso.",
+    primaryUsedFor:
+      "Aplicado a: Botones de acción (Guardar/Agregar), pestañas activas, botón flotante (+), chips seleccionados y barras de progreso.",
     accentColorLabel: "Color de Acento",
     accentColorHint: "Resaltados secundarios, insignias y gráficos.",
-    accentUsedFor: "Aplicado a: Destacados del asistente Kai AI, métricas secundarias en informes (tasa de ahorro) y alertas de notificación.",
+    accentUsedFor:
+      "Aplicado a: Destacados del asistente Kai AI, métricas secundarias en informes (tasa de ahorro) y alertas de notificación.",
     applyCustomTheme: "Aplicar Tema Personalizado",
     unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
     customShadeLabel: "Ajustar brillo y tonalidad",
@@ -837,64 +944,122 @@ export const es = {
     },
     v150: {
       date: "10 de noviembre de 2026",
-      newItem1: "Importa cuentas y transacciones desde archivos CSV con asignación guiada de cuentas y categorías.",
-      newItem2: "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar.",
-      newItem3: "Descarga plantillas CSV directamente a una carpeta de tu dispositivo.",
-      newItem4: "Asigna tipos de transacción de otras aplicaciones y empareja categorías automáticamente con el conocimiento de Kai.",
-      newItem5: "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo.",
-      newItem6: "Añade un recorrido interactivo para Tarjetas de Crédito para explorar ciclos de facturación, fechas de corte, utilización y cuotas.",
-      newItem7: "Añade un recorrido interactivo para Informes para explorar desgloses de categorías, gráficos y filtros de fechas.",
-      improveItem1: "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
-      improveItem2: "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
-      improveItem3: "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
-      improveItem4: "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
-      improveItem5: "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
-      improveItem6: "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
-      improveItem7: "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
-      improveItem8: "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
-      improveItem9: "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
-      improveItem10: "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
-      improveItem11: "Abre los detalles y ajustes de una cuenta directamente al tocar su tarjeta en el panel principal.",
-      improveItem12: "Mantén visible el saldo más reciente al editar una cuenta, incluso con el modo de privacidad activado.",
-      improveItem13: "Agrupa el límite y las fechas de facturación de la tarjeta en una tarjeta dedicada en la configuración de la cuenta.",
-      improveItem14: "Muestra los saldos de cuentas y apartados archivados incluso con el modo de privacidad activado.",
-      improveItem15: "Acorta el ejemplo de nombre de grupo de cuentas para mantener el texto en una sola línea.",
-      improveItem16: "Mantén visibles los montos en las transacciones programadas incluso con el modo de privacidad activado.",
-      improveItem17: "Muestra una notificación toast con la próxima fecha recurrente al adelantar una transacción programada.",
-      improveItem18: "Muestra un modal de confirmación en la app al guardar datos de transacciones exportados en el dispositivo.",
-      improveItem19: "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
-      improveItem20: "Ubica el botón de borrar todos los filtros al principio de los filtros activos para acceder de inmediato sin desplazarse.",
-      improveItem21: "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
-      improveItem22: "Mueve la explicación de la comisión de transferencia a un modal de ayuda para mantener el formulario limpio.",
-      improveItem23: "Alinea el botón de nueva etiqueta junto a las etiquetas activas y actualiza el botón de cierre.",
-      improveItem24: "Muestra una flecha flotante hacia abajo en formularios y hojas cuando hay elementos ocultos.",
-      improveItem25: "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
-      improveItem26: "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
-      improveItem27: "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
-      improveItem28: "Muestra un aviso de confirmación al salir de la pantalla de reordenar categorías con cambios sin guardar.",
-      improveItem29: "Ubica el campo de notas justo debajo del título de la meta en el formulario de metas de ahorro para facilitar la anotación.",
-      improveItem30: "Simplifica la pantalla de Configuración eliminando descripciones redundantes y optimizando la etiqueta del tema.",
-      improveItem31: "Muestra una notificación rápida en lugar de un modal emergente al actualizar la frecuencia de copia de seguridad local.",
-      improveItem32: "Reemplaza el icono de verificación de Google Drive y el botón por un chip de desconexión.",
-      improveItem33: "Muestra un marcador de posición esqueleto fluido mientras se conecta a Google Drive en lugar de una rueda de carga.",
-      improveItem34: "Estandariza los diálogos de restauración y confirmación con modales temáticos integrados.",
-      improveItem35: "Coloca el botón de información de seguridad junto al título de Contraseña y Huella para un acceso más claro.",
-      improveItem36: "Optimiza el diseño del monitor SQLite y muestra un modal de progreso durante la limpieza de la base de datos.",
-      improveItem37: "Estandariza el encabezado de Administrar Conocimiento de Kai con el botón de retroceso unificado de la app.",
-      improveItem38: "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
-      improveItem39: "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
-      improveItem40: "Alterna vistas expandidas y colapsadas de grupos de cuentas y define tu preferencia predeterminada en Configuración.",
-      improveItem41: "Combina los botones de ordenar por Fecha y Monto con flechas para cambiar el orden al tocar.",
-      improveItem42: "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
-      fixItem1: "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
-      fixItem2: "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
-      fixItem3: "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
-      fixItem4: "Corrige los títulos en la nota del desarrollador para que no se desborden de sus tarjetas.",
-      fixItem5: "Evita que la aplicación se bloquee al compartir archivos o seleccionar fotos.",
-      fixItem6: "Corrige el espaciado de los gráficos para que los meses y montos sean totalmente visibles sin cortarse.",
-      fixItem7: "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
-      fixItem8: "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
-      fixItem9: "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
+      newItem1:
+        "Importa cuentas y transacciones desde archivos CSV con asignación guiada de cuentas y categorías.",
+      newItem2:
+        "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar.",
+      newItem3:
+        "Descarga plantillas CSV directamente a una carpeta de tu dispositivo.",
+      newItem4:
+        "Asigna tipos de transacción de otras aplicaciones y empareja categorías automáticamente con el conocimiento de Kai.",
+      newItem5:
+        "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo.",
+      newItem6:
+        "Añade un recorrido interactivo para Tarjetas de Crédito para explorar ciclos de facturación, fechas de corte, utilización y cuotas.",
+      newItem7:
+        "Añade un recorrido interactivo para Informes para explorar desgloses de categorías, gráficos y filtros de fechas.",
+      improveItem1:
+        "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
+      improveItem2:
+        "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
+      improveItem3:
+        "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
+      improveItem4:
+        "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
+      improveItem5:
+        "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
+      improveItem6:
+        "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
+      improveItem7:
+        "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
+      improveItem8:
+        "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
+      improveItem9:
+        "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
+      improveItem10:
+        "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
+      improveItem11:
+        "Abre los detalles y ajustes de una cuenta directamente al tocar su tarjeta en el panel principal.",
+      improveItem12:
+        "Mantén visible el saldo más reciente al editar una cuenta, incluso con el modo de privacidad activado.",
+      improveItem13:
+        "Agrupa el límite y las fechas de facturación de la tarjeta en una tarjeta dedicada en la configuración de la cuenta.",
+      improveItem14:
+        "Muestra los saldos de cuentas y apartados archivados incluso con el modo de privacidad activado.",
+      improveItem15:
+        "Acorta el ejemplo de nombre de grupo de cuentas para mantener el texto en una sola línea.",
+      improveItem16:
+        "Mantén visibles los montos en las transacciones programadas incluso con el modo de privacidad activado.",
+      improveItem17:
+        "Muestra una notificación toast con la próxima fecha recurrente al adelantar una transacción programada.",
+      improveItem18:
+        "Muestra un modal de confirmación en la app al guardar datos de transacciones exportados en el dispositivo.",
+      improveItem19:
+        "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
+      improveItem20:
+        "Ubica el botón de borrar todos los filtros al principio de los filtros activos para acceder de inmediato sin desplazarse.",
+      improveItem21:
+        "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
+      improveItem22:
+        "Mueve la explicación de la comisión de transferencia a un modal de ayuda para mantener el formulario limpio.",
+      improveItem23:
+        "Alinea el botón de nueva etiqueta junto a las etiquetas activas y actualiza el botón de cierre.",
+      improveItem24:
+        "Muestra una flecha flotante hacia abajo en formularios y hojas cuando hay elementos ocultos.",
+      improveItem25:
+        "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
+      improveItem26:
+        "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
+      improveItem27:
+        "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
+      improveItem28:
+        "Muestra un aviso de confirmación al salir de la pantalla de reordenar categorías con cambios sin guardar.",
+      improveItem29:
+        "Ubica el campo de notas justo debajo del título de la meta en el formulario de metas de ahorro para facilitar la anotación.",
+      improveItem30:
+        "Simplifica la pantalla de Configuración eliminando descripciones redundantes y optimizando la etiqueta del tema.",
+      improveItem31:
+        "Muestra una notificación rápida en lugar de un modal emergente al actualizar la frecuencia de copia de seguridad local.",
+      improveItem32:
+        "Reemplaza el icono de verificación de Google Drive y el botón por un chip de desconexión.",
+      improveItem33:
+        "Muestra un marcador de posición esqueleto fluido mientras se conecta a Google Drive en lugar de una rueda de carga.",
+      improveItem34:
+        "Estandariza los diálogos de restauración y confirmación con modales temáticos integrados.",
+      improveItem35:
+        "Coloca el botón de información de seguridad junto al título de Contraseña y Huella para un acceso más claro.",
+      improveItem36:
+        "Optimiza el diseño del monitor SQLite y muestra un modal de progreso durante la limpieza de la base de datos.",
+      improveItem37:
+        "Estandariza el encabezado de Administrar Conocimiento de Kai con el botón de retroceso unificado de la app.",
+      improveItem38:
+        "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
+      improveItem39:
+        "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
+      improveItem40:
+        "Alterna vistas expandidas y colapsadas de grupos de cuentas y define tu preferencia predeterminada en Configuración.",
+      improveItem41:
+        "Combina los botones de ordenar por Fecha y Monto con flechas para cambiar el orden al tocar.",
+      improveItem42:
+        "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
+      fixItem1:
+        "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
+      fixItem2:
+        "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
+      fixItem3:
+        "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
+      fixItem4:
+        "Corrige los títulos en la nota del desarrollador para que no se desborden de sus tarjetas.",
+      fixItem5:
+        "Evita que la aplicación se bloquee al compartir archivos o seleccionar fotos.",
+      fixItem6:
+        "Corrige el espaciado de los gráficos para que los meses y montos sean totalmente visibles sin cortarse.",
+      fixItem7:
+        "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
+      fixItem8:
+        "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
+      fixItem9:
+        "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
       fixItem10:
         "Corrige el fallo visual y la animación circular no deseada al activar interruptores en formularios y ajustes.",
       fixItem11:
@@ -1048,7 +1213,7 @@ export const es = {
       improveItem2:
         "Accede directamente a transferencias, informes y chat con IA desde la Búsqueda rápida.",
       improveItem3:
-        "Toca \"Omitir por ahora\" en las pantallas de celebración de metas y presupuestos para volver más rápido al panel.",
+        'Toca "Omitir por ahora" en las pantallas de celebración de metas y presupuestos para volver más rápido al panel.',
       fixItem1:
         "Disfruta de un desplazamiento más rápido y fluido al revisar tu historial de transacciones.",
       fixItem2:
@@ -1085,8 +1250,7 @@ export const es = {
         "Adjunta fotos de recibos y filtra transacciones por fecha o cuenta.",
       calendarItem1:
         "Visualiza tus gastos diarios y próximos pagos en un calendario intuitivo.",
-      calendarItem2:
-        "Se corrigieron errores al seleccionar fechas.",
+      calendarItem2: "Se corrigieron errores al seleccionar fechas.",
       budgetsItem1:
         "Define límites de gasto mensuales por categoría para mantener tus finanzas bajo control.",
       budgetsItem2:
@@ -1101,8 +1265,7 @@ export const es = {
         "Consulta gráficos claros y resúmenes visuales de tus hábitos de gasto y patrimonio neto.",
       securityItem1:
         "100% offline-first: todos tus datos financieros permanecen privados en tu dispositivo.",
-      securityItem2:
-        "Bloquea la aplicación con huella digital, Face ID o PIN.",
+      securityItem2: "Bloquea la aplicación con huella digital, Face ID o PIN.",
       backupItem1:
         "Exporta e importa archivos de respaldo de forma segura o sincroniza con Google Drive.",
     },
@@ -1145,17 +1308,22 @@ export const es = {
     proActiveSubtitle:
       "¡Gracias por apoyar a Kaizen! Todas las funciones Pro están desbloqueadas.",
     rateTitle: "Valorar en Google Play",
-    rateSubtitle: "Deja una reseña de 5 estrellas para apoyar a un desarrollador independiente",
+    rateSubtitle:
+      "Deja una reseña de 5 estrellas para apoyar a un desarrollador independiente",
     rateAction: "Valorar Kaizen",
     shareTitle: "Compartir con Amigos",
-    shareSubtitle: "Ayuda a otros a controlar sus finanzas sin conexión y de forma privada",
+    shareSubtitle:
+      "Ayuda a otros a controlar sus finanzas sin conexión y de forma privada",
     shareAction: "Compartir App",
-    shareMessage: "¡Estoy usando Kaizen Finance para controlar mis ingresos, gastos y bolsillos sin conexión y de forma privada! Pruébalo:",
+    shareMessage:
+      "¡Estoy usando Kaizen Finance para controlar mis ingresos, gastos y bolsillos sin conexión y de forma privada! Pruébalo:",
     feedbackTitle: "Enviar Comentarios y Sugerencias",
-    feedbackSubtitle: "Cuéntanos qué te gustaría ver a continuación o reporta problemas",
+    feedbackSubtitle:
+      "Cuéntanos qué te gustaría ver a continuación o reporta problemas",
     feedbackAction: "Enviar Comentarios",
     proTitle: "Actualizar a Kaizen Pro",
-    proSubtitle: "Desbloquea bolsillos ilimitados, copia de seguridad en la nube y todas las funciones",
+    proSubtitle:
+      "Desbloquea bolsillos ilimitados, copia de seguridad en la nube y todas las funciones",
     proAction: "Ver Opciones Pro",
   },
   inAppReview: {
@@ -1173,7 +1341,8 @@ export const es = {
       "Un lugar tranquilo para registrar entradas, salidas y lo que te queda.",
     welcomePoint1: "Registra gastos e ingresos con unos toques",
     welcomePoint2: "Mira cuánto tienes y cuánto gastaste este mes",
-    welcomePoint3: "Tus datos están en este dispositivo y funcionan sin conexión",
+    welcomePoint3:
+      "Tus datos están en este dispositivo y funcionan sin conexión",
     getStarted: "Empezar",
     restoreBackup: "Restaurar una copia de seguridad",
     seeExample: "Ver un espacio de ejemplo",
@@ -1385,28 +1554,38 @@ export const es = {
     sectionsOrderLabel: "Tarjetas y Orden del Panel",
     resetLayout: "Restablecer",
     presetCashflowFocus: "Enfoque en Flujo de Caja",
-    presetCashflowFocusDesc: "Prioriza ingresos mensuales, gastos y categorías principales.",
+    presetCashflowFocusDesc:
+      "Prioriza ingresos mensuales, gastos y categorías principales.",
     presetWealthOverview: "Patrimonio y Saldos",
-    presetWealthOverviewDesc: "Destaca patrimonio neto, saldos de cuentas y flujo de caja.",
+    presetWealthOverviewDesc:
+      "Destaca patrimonio neto, saldos de cuentas y flujo de caja.",
     presetCompleteView: "Vista Completa",
-    presetCompleteViewDesc: "Muestra las 6 tarjetas financieras en tu pantalla de inicio.",
+    presetCompleteViewDesc:
+      "Muestra las 6 tarjetas financieras en tu pantalla de inicio.",
     presetMinimalist: "Minimalista",
-    presetMinimalistDesc: "Saludo compacto, flujo de caja mensual y transacciones recientes.",
+    presetMinimalistDesc:
+      "Saludo compacto, flujo de caja mensual y transacciones recientes.",
     widgetGreetingTitle: "Saludo y Fecha",
     alwaysActive: "Siempre activo",
-    widgetGreetingDesc: "Encabezado de bienvenida y frase de inspiración diaria opcional.",
+    widgetGreetingDesc:
+      "Encabezado de bienvenida y frase de inspiración diaria opcional.",
     widgetNetWorthTitle: "Patrimonio Neto y Saldo",
     widgetNetWorthDesc: "Gráfico de tendencia de saldo, activos y pasivos.",
     widgetCashflowTitle: "Flujo de Caja Mensual",
-    widgetCashflowDesc: "Barra de ingresos vs. gastos de este mes y tasa de ahorro.",
+    widgetCashflowDesc:
+      "Barra de ingresos vs. gastos de este mes y tasa de ahorro.",
     widgetAccountsTitle: "Franja de Cuentas",
-    widgetAccountsDesc: "Tarjetas horizontales rápidas con los saldos de tus cuentas activas.",
+    widgetAccountsDesc:
+      "Tarjetas horizontales rápidas con los saldos de tus cuentas activas.",
     widgetTopCategoriesTitle: "Principales Categorías de Gasto",
-    widgetTopCategoriesDesc: "Adónde fue tu dinero este mes con barras de progreso.",
+    widgetTopCategoriesDesc:
+      "Adónde fue tu dinero este mes con barras de progreso.",
     widgetRecentTxTitle: "Transacciones Recientes",
-    widgetRecentTxDesc: "Tus últimos ingresos, gastos y transferencias registrados.",
+    widgetRecentTxDesc:
+      "Tus últimos ingresos, gastos y transferencias registrados.",
     showDailyQuoteTitle: "Mostrar Frase de Inspiración Diaria",
-    showDailyQuoteDesc: "Muestra una cita financiera dentro de la tarjeta de saludo.",
+    showDailyQuoteDesc:
+      "Muestra una cita financiera dentro de la tarjeta de saludo.",
     quoteColorsTitle: "Apariencia de la Frase",
     quoteBgColor: "Color de Fondo",
     quoteTextColor: "Color de Texto",
@@ -1438,7 +1617,8 @@ export const es = {
     recentTransactionsTitle: "Transacciones recientes",
     viewAllTransactionsAccessibility: "Ver todas las transacciones",
     noRecentTransactions: "Aún no hay transacciones registradas.",
-    noRecentTransactionsHint: "Usa el botón + para registrar tu primera transacción.",
+    noRecentTransactionsHint:
+      "Usa el botón + para registrar tu primera transacción.",
     transferToAccount: "Transferencia a %{account}",
     transactionFallback: "Transacción",
     viewTransactionAccessibility: "Ver transacción, %{title}",
@@ -1617,8 +1797,7 @@ export const es = {
     stepSaveDesc:
       "Guarda tu transacción de inmediato en tu libro contable local.",
     stepCloseTitle: "Cerrar formulario",
-    stepCloseDesc:
-      "Cierra este modal cuando hayas terminado o desees salir.",
+    stepCloseDesc: "Cierra este modal cuando hayas terminado o desees salir.",
   },
   scheduledTransactionsWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Programados!",
@@ -1700,8 +1879,7 @@ export const es = {
   },
   categoryFormWalkthrough: {
     stepGroupTypeTitle: "Tipo de grupo",
-    stepGroupTypeDesc:
-      "Elige si esta categoría registrará Gastos o Ingresos.",
+    stepGroupTypeDesc: "Elige si esta categoría registrará Gastos o Ingresos.",
     stepNameTitle: "Nombre de categoría",
     stepNameDesc:
       "Ingresa un nombre claro, como Comestibles, Restaurantes o Trabajo independiente.",
@@ -1715,8 +1893,7 @@ export const es = {
     stepCustomColorDesc:
       "Ingresa cualquier código hexadecimal personalizado para personalizar tus categorías.",
     stepCancelTitle: "Cancelar",
-    stepCancelDesc:
-      "Descarta los cambios y regresa sin crear la categoría.",
+    stepCancelDesc: "Descarta los cambios y regresa sin crear la categoría.",
     stepSaveTitle: "Crear categoría",
     stepSaveDesc:
       "Guarda y activa tu nueva categoría para utilizarla en transacciones y presupuestos.",
@@ -1740,8 +1917,7 @@ export const es = {
     stepNameDesc:
       "Ingresa un nombre para este preajuste rápido, como Café diario o Transporte.",
     stepTypeTitle: "Tipo de transacción",
-    stepTypeDesc:
-      "Elige si este preajuste es para gastos o ingresos.",
+    stepTypeDesc: "Elige si este preajuste es para gastos o ingresos.",
     stepAmountTitle: "Monto predeterminado",
     stepAmountDesc:
       "Establece un monto fijo para completarlo automáticamente con un toque.",
@@ -1788,8 +1964,7 @@ export const es = {
     stepDateDesc:
       "Filtra transacciones por día, semana, mes o rango personalizado.",
     stepTypeTitle: "Tipos de transacción",
-    stepTypeDesc:
-      "Filtra por gastos, ingresos o transferencias.",
+    stepTypeDesc: "Filtra por gastos, ingresos o transferencias.",
     stepAccountsTitle: "Cuentas y categorías",
     stepAccountsDesc:
       "Selecciona cuentas y categorías específicas para filtrar tu lista.",
@@ -2141,8 +2316,7 @@ export const es = {
       "Consulta qué cambió en cada versión de la app, incluidas nuevas funciones, correcciones y mejoras.",
   },
   resetData: {
-    dismissAccessibility:
-      "Cerrar confirmación de restablecimiento de datos",
+    dismissAccessibility: "Cerrar confirmación de restablecimiento de datos",
     title: "¿Restablecer todos los datos?",
     message:
       "Esto elimina permanentemente de este dispositivo tus cuentas, transacciones, presupuestos, objetivos, notas, configuraciones, archivos adjuntos y copias locales administradas por la aplicación.",
@@ -2156,7 +2330,8 @@ export const es = {
   security: {
     menuTitle: "Contraseña y huella digital",
     appLockedTitle: "Kaizen Finance",
-    enterPasswordToUnlock: "Ingresa tu contraseña para desbloquear la aplicación",
+    enterPasswordToUnlock:
+      "Ingresa tu contraseña para desbloquear la aplicación",
     enterPasswordOrBiometrics:
       "Usa %{biometric} o ingresa tu contraseña para desbloquear",
     unlockWithBiometric: "Desbloquear con %{biometric}",
@@ -2234,7 +2409,8 @@ export const es = {
     emergencyResetConfirmTitle: "¿Restablecer todos los datos?",
     emergencyResetConfirmDesc:
       "Esto eliminará permanentemente todos tus datos financieros y quitará el bloqueo. Esta acción no se puede deshacer.",
-    emergencyResetInstruction: "Escribe RESET para confirmar el restablecimiento",
+    emergencyResetInstruction:
+      "Escribe RESET para confirmar el restablecimiento",
     emergencyResetAction: "Borrar todo y desbloquear",
     resetSuccessfulUnlocking: "Contraseña actualizada. Desbloqueando...",
     setNewPasswordTitle: "Nueva contraseña",
@@ -2264,7 +2440,8 @@ export const es = {
     launchPromoPrice: "₱199",
     launchDiscountBadge: "60% OFF",
     launchSavingsText: "AHORRA ₱300",
-    launchSubtext: "Pago único · Acceso de por vida · Actualizaciones para siempre",
+    launchSubtext:
+      "Pago único · Acceso de por vida · Actualizaciones para siempre",
     launchUpgradeBtn: "Aprovechar Oferta (%{price})",
     featureModalUpgradeBtn: "Aprovechar Oferta (%{price}) · 60% OFF",
     exploreAllFeatures: "Ver Todas las Funciones Pro →",
@@ -2298,14 +2475,17 @@ export const es = {
     restorePurchases: "Restaurar Compras",
     restoring: "Restaurando...",
     restoreSuccessTitle: "Compras Restauradas",
-    restoreSuccessMsg: "¡Tu estado Pro de por vida ha sido restaurado exitosamente!",
+    restoreSuccessMsg:
+      "¡Tu estado Pro de por vida ha sido restaurado exitosamente!",
     restoreNotFoundTitle: "Sin Compras Encontradas",
     restoreNotFoundMsg:
       "No encontramos una compra activa de Lifetime Pro para la cuenta actualmente activa en tu Google Play Store.\n\nConsejo: Las compras se vinculan a tu cuenta de Google Play Store. Si compraste con otra cuenta, abre la app de Google Play Store, cambia de cuenta en el icono de perfil y vuelve a intentar restaurar.",
     restoreErrorTitle: "Fallo al Restaurar",
-    restoreErrorMsg: "No se pudieron restaurar las compras. Por favor intenta de nuevo.",
+    restoreErrorMsg:
+      "No se pudieron restaurar las compras. Por favor intenta de nuevo.",
     purchaseSuccessTitle: "¡Bienvenido a Pro!",
-    purchaseSuccessMsg: "¡Gracias por apoyar a Kaizen Finance! Todas las funciones Pro ya están desbloqueadas.",
+    purchaseSuccessMsg:
+      "¡Gracias por apoyar a Kaizen Finance! Todas las funciones Pro ya están desbloqueadas.",
     disclaimer:
       "El pago se cargará a tu cuenta de Google Play al confirmar la compra. Esta es una compra única no consumible sin tarifas recurrentes.",
     reportsLockedTitle: "¿Listo para una Claridad Financiera Total?",
@@ -2403,10 +2583,13 @@ export const es = {
     exportFailedTitle: "Error al exportar",
     exportFailedMessage: "No se pudieron exportar las transacciones.",
     transferFeeTitle: "Comisión de transferencia",
-    transferFeeHelpMessage: "Deduce una comisión de transacción instantánea (ej. InstaPay, GCash, cargos bancarios).",
+    transferFeeHelpMessage:
+      "Deduce una comisión de transacción instantánea (ej. InstaPay, GCash, cargos bancarios).",
     transferTypeLockedHint: "El tipo de transferencia no se puede cambiar.",
-    cannotConvertToTransfer: "No se puede convertir una transacción existente en una transferencia.",
-    cannotConvertFromTransfer: "No se puede convertir una transferencia existente en un ingreso o gasto.",
+    cannotConvertToTransfer:
+      "No se puede convertir una transacción existente en una transferencia.",
+    cannotConvertFromTransfer:
+      "No se puede convertir una transferencia existente en un ingreso o gasto.",
   },
   chatWithKai: {
     modalTitle: "Chatear con Kai",
@@ -2415,45 +2598,58 @@ export const es = {
     settingsSubtitle: "Configura el comportamiento al registrar transacciones",
     modeSectionTitle: "MODO DE REGISTRO DE TRANSACCIONES",
     modeReviewTitle: "Revisar Primero",
-    modeReviewDesc: "Kai prepara un borrador para que lo revises y confirmes antes de guardar.",
+    modeReviewDesc:
+      "Kai prepara un borrador para que lo revises y confirmes antes de guardar.",
     modeReviewPill: "Editar · Guardar",
     modeAutoTitle: "Guardado Automático",
-    modeAutoDesc: "Kai registra transacciones al instante mientras chateas. Puedes editar o eliminar en cualquier momento.",
+    modeAutoDesc:
+      "Kai registra transacciones al instante mientras chateas. Puedes editar o eliminar en cualquier momento.",
     modeAutoPill: "Editar · Eliminar",
     recordedBadge: "Registrado",
     tapToEdit: "Tocar para Editar",
     deleteButton: "Eliminar",
     deleteConfirmTitle: "¿Eliminar Transacción?",
-    deleteConfirmMessage: "¿Estás seguro de que deseas eliminar esta transacción registrada?",
+    deleteConfirmMessage:
+      "¿Estás seguro de que deseas eliminar esta transacción registrada?",
     deletedBadge: "Eliminado",
     deletedNotice: "La transacción fue eliminada",
     manageKnowledgeLink: "Administrar Palabras Clave",
     inputPlaceholder: "ej. Gasté 500 en almuerzo en McDonald's de mi billetera",
     sectionTitle: "Palabras clave (Conocimiento de Kai)",
-    bannerCategory: "Las palabras clave introducidas aquí enseñan a Kai a reconocer automáticamente esta categoría al registrar transacciones por chat.",
-    bannerAccount: "Las palabras clave introducidas aquí enseñan a Kai a reconocer automáticamente esta cuenta al registrar transacciones por chat.",
+    bannerCategory:
+      "Las palabras clave introducidas aquí enseñan a Kai a reconocer automáticamente esta categoría al registrar transacciones por chat.",
+    bannerAccount:
+      "Las palabras clave introducidas aquí enseñan a Kai a reconocer automáticamente esta cuenta al registrar transacciones por chat.",
     manageKeywords: "Palabras Clave de Reconocimiento",
-    manageKeywordsSubtitle: "Asigna palabras clave a categorías para un reconocimiento preciso",
+    manageKeywordsSubtitle:
+      "Asigna palabras clave a categorías para un reconocimiento preciso",
     manageKeywordsAction: "Administrar Palabras Clave",
     addKeywordPlaceholder: "Agregar palabra clave (ej. boba, grab, netflix)...",
-    addKeywordPlaceholderCategory: "Añadir palabra clave (ej. supermercado, café, uber)...",
-    addKeywordPlaceholderAccount: "Añadir palabra clave (ej. nómina, billetera, banco)...",
+    addKeywordPlaceholderCategory:
+      "Añadir palabra clave (ej. supermercado, café, uber)...",
+    addKeywordPlaceholderAccount:
+      "Añadir palabra clave (ej. nómina, billetera, banco)...",
     addKeywordButton: "Agregar",
     keywordAdded: "Palabra clave agregada con éxito",
     keywordDeleted: "Palabra clave eliminada",
     keywordDuplicateInList: "La palabra clave '%{keyword}' ya está en la lista",
-    keywordAlreadyExists: "La palabra clave '%{keyword}' ya está asignada a '%{entity}'",
+    keywordAlreadyExists:
+      "La palabra clave '%{keyword}' ya está asignada a '%{entity}'",
     resetDefaults: "Restaurar Predeterminados",
-    resetDefaultsConfirm: "¿Estás seguro de que deseas restaurar las palabras clave predeterminadas?",
+    resetDefaultsConfirm:
+      "¿Estás seguro de que deseas restaurar las palabras clave predeterminadas?",
     noKeywordsYet: "Aún no se han añadido palabras clave.",
     filterCategory: "Seleccionar Categoría",
     knowledgeHubTitle: "Administrar Conocimiento de Kai",
-    knowledgeHubSubtitle: "Enseña a Kai a reconocer acciones, categorías y cuentas",
+    knowledgeHubSubtitle:
+      "Enseña a Kai a reconocer acciones, categorías y cuentas",
     selectorTitle: "Palabras clave (Conocimiento de Kai)",
     selectorSubtitle: "%{count} palabras clave",
     selectorSubtitleSingle: "1 palabra clave",
-    selectorSaveFirstCategory: "Guarda la categoría primero para añadir palabras clave",
-    selectorSaveFirstAccount: "Guarda la cuenta primero para añadir palabras clave",
+    selectorSaveFirstCategory:
+      "Guarda la categoría primero para añadir palabras clave",
+    selectorSaveFirstAccount:
+      "Guarda la cuenta primero para añadir palabras clave",
     tabActions: "Acciones",
     tabCategories: "Categorías",
     tabAccounts: "Cuentas",
@@ -2464,10 +2660,13 @@ export const es = {
     actionIncome: "Ingreso",
     actionTransfer: "Transferencia",
     actionExpenseDescription: "Palabras que indican gasto o salida de dinero",
-    actionIncomeDescription: "Palabras que indican recepción de dinero o ingresos",
-    actionTransferDescription: "Palabras que indican movimiento de dinero entre cuentas",
+    actionIncomeDescription:
+      "Palabras que indican recepción de dinero o ingresos",
+    actionTransferDescription:
+      "Palabras que indican movimiento de dinero entre cuentas",
     searchPlaceholder: "Buscar...",
-    addActionPlaceholder: "Añadir palabra de acción (ej. compré, pagué, transferí)...",
+    addActionPlaceholder:
+      "Añadir palabra de acción (ej. compré, pagué, transferí)...",
     tableHeaderKeyword: "Palabra clave",
     tableHeaderLanguage: "Idioma",
     tableHeaderActions: "Acciones",
@@ -2487,9 +2686,12 @@ export const es = {
     changeCategory: "Cambiar Categoría",
     changeAccount: "Cambiar Cuenta",
     changeMerchant: "Cambiar Comercio",
-    selectCategoryPrompt: "Selecciona una categoría para ver y administrar sus palabras clave.",
-    selectAccountPrompt: "Selecciona una cuenta para ver y administrar sus palabras clave.",
-    selectMerchantPrompt: "Selecciona un comercio para ver y administrar sus palabras clave de reconocimiento.",
+    selectCategoryPrompt:
+      "Selecciona una categoría para ver y administrar sus palabras clave.",
+    selectAccountPrompt:
+      "Selecciona una cuenta para ver y administrar sus palabras clave.",
+    selectMerchantPrompt:
+      "Selecciona un comercio para ver y administrar sus palabras clave de reconocimiento.",
     addKeywordPlaceholderMerchant: "Añadir alias (ej. mcdo, sbux, 711)...",
     addMerchantPlaceholder: "Nombre del comercio (ej. Starbucks, Shell)...",
     defaultCategory: "Categoría Predeterminada",
@@ -2502,27 +2704,36 @@ export const es = {
     editMerchantTitle: "Editar Comercio",
     addMerchantTitle: "Añadir Comercio",
     deleteMerchantTitle: "Eliminar Comercio",
-    deleteMerchantConfirm: "¿Estás seguro de que deseas eliminar '%{name}' y todas sus palabras clave de reconocimiento?",
+    deleteMerchantConfirm:
+      "¿Estás seguro de que deseas eliminar '%{name}' y todas sus palabras clave de reconocimiento?",
     deleteMerchantKeywordTitle: "Eliminar Palabra Clave",
-    deleteMerchantKeywordConfirm: "¿Estás seguro de que deseas eliminar esta palabra clave?",
+    deleteMerchantKeywordConfirm:
+      "¿Estás seguro de que deseas eliminar esta palabra clave?",
     deleteKeywordTitle: "Eliminar Palabra Clave",
     deleteKeywordConfirm: "¿Estás seguro de que deseas eliminar '%{keyword}'?",
     deleteBtn: "Eliminar",
-    noKeywordsMatching: "No se encontraron palabras clave que coincidan con \"%{query}\"",
+    noKeywordsMatching:
+      'No se encontraron palabras clave que coincidan con "%{query}"',
     helpModalTitle: "Acerca del Conocimiento de Kai",
     helpModalSubtitle: "Cómo reconoce Kai tus mensajes",
     helpActionsTitle: "Palabras Clave de Acción",
-    helpActionsDesc: "Enséñale a Kai qué verbos representan gastos (Expense), ingresos (Income) o transferencias entre cuentas (Transfer).",
+    helpActionsDesc:
+      "Enséñale a Kai qué verbos representan gastos (Expense), ingresos (Income) o transferencias entre cuentas (Transfer).",
     helpCategoriesTitle: "Reconocimiento de Categorías",
-    helpCategoriesDesc: "Agrega palabras clave para aplicaciones, tiendas, servicios o marcas (ej. Netflix, Grab, Starbucks). Al mencionarlas en el chat, Kai seleccionará automáticamente la categoría adecuada.",
+    helpCategoriesDesc:
+      "Agrega palabras clave para aplicaciones, tiendas, servicios o marcas (ej. Netflix, Grab, Starbucks). Al mencionarlas en el chat, Kai seleccionará automáticamente la categoría adecuada.",
     helpAccountsTitle: "Reconocimiento de Cuentas",
-    helpAccountsDesc: "Kai busca y coincide automáticamente con el Nombre de tu Cuenta de forma predeterminada (ej. 'usando BDO' o 'desde GCash'). Solo necesitas agregar palabras clave para apodos o abreviaturas (ej. 'billetera' para 'Billetera Efectivo', o 'nómina' para 'BPI Ahorros').",
+    helpAccountsDesc:
+      "Kai busca y coincide automáticamente con el Nombre de tu Cuenta de forma predeterminada (ej. 'usando BDO' o 'desde GCash'). Solo necesitas agregar palabras clave para apodos o abreviaturas (ej. 'billetera' para 'Billetera Efectivo', o 'nómina' para 'BPI Ahorros').",
     helpMerchantsTitle: "Reconocimiento de Comercios y Valores Predeterminados",
-    helpMerchantsDesc: "Añade tiendas, restaurantes o servicios. Kai reconoce sus nombres y alias, rellenando automáticamente su categoría y cuenta de pago predeterminadas si no las especificaste en el chat.",
+    helpMerchantsDesc:
+      "Añade tiendas, restaurantes o servicios. Kai reconoce sus nombres y alias, rellenando automáticamente su categoría y cuenta de pago predeterminadas si no las especificaste en el chat.",
     helpLanguagesTitle: "Soporte Multi-idioma",
-    helpLanguagesDesc: "Kai comprende el chat cotidiano en inglés, filipino y español. Escribe con naturalidad como 'gasté 200 en almuerzo desde bdo' o 'pagué 500 de luz con gcash'.",
+    helpLanguagesDesc:
+      "Kai comprende el chat cotidiano en inglés, filipino y español. Escribe con naturalidad como 'gasté 200 en almuerzo desde bdo' o 'pagué 500 de luz con gcash'.",
     helpClose: "Entendido",
-    unknownAccountError: "No pude encontrar una cuenta que coincida con '%{account}'. Por favor verifica el nombre de tu cuenta o agrégala en Conocimiento de Kai.",
+    unknownAccountError:
+      "No pude encontrar una cuenta que coincida con '%{account}'. Por favor verifica el nombre de tu cuenta o agrégala en Conocimiento de Kai.",
     pickerSelectCategory: "Seleccionar Categoría",
     pickerSelectAccount: "Seleccionar Cuenta",
     pickerSelectMerchant: "Seleccionar Comercio",
@@ -2543,8 +2754,10 @@ export const es = {
   widgetGallery: {
     title: "Widgets de Pantalla de Inicio",
     introTitle: "Agrega Kaizen a tu pantalla de inicio",
-    introSubtitle: "Toca Agregar en cualquier widget y confirma. Después puedes moverlo o cambiar su tamaño.",
-    unsupportedPlatform: "Los widgets de pantalla de inicio solo están disponibles en Android por ahora.",
+    introSubtitle:
+      "Toca Agregar en cualquier widget y confirma. Después puedes moverlo o cambiar su tamaño.",
+    unsupportedPlatform:
+      "Los widgets de pantalla de inicio solo están disponibles en Android por ahora.",
     quickActionsSection: "Acciones Rápidas",
     insightsSection: "Resumen de Dinero",
     addButton: "Agregar",
@@ -2552,10 +2765,12 @@ export const es = {
     unlockButton: "Desbloquear",
     addedBadge: "En pantalla de inicio",
     addAccessibility: "Agregar el widget %{widget} a la pantalla de inicio",
-    proFeatureDescription: "Mejora a Pro para ver tu flujo de caja, patrimonio neto y presupuesto en tu pantalla de inicio.",
+    proFeatureDescription:
+      "Mejora a Pro para ver tu flujo de caja, patrimonio neto y presupuesto en tu pantalla de inicio.",
     manualHelpLink: "¿No se puede agregar? Agrégalo manualmente",
     manualStepsTitle: "Agregar un widget manualmente",
-    manualStepsMessage: "1. Ve a tu pantalla de inicio y mantén presionado un espacio vacío.\n2. Toca Widgets.\n3. Busca Kaizen Finance.\n4. Mantén presionado un widget y arrástralo a su lugar.",
+    manualStepsMessage:
+      "1. Ve a tu pantalla de inicio y mantén presionado un espacio vacío.\n2. Toca Widgets.\n3. Busca Kaizen Finance.\n4. Mantén presionado un widget y arrástralo a su lugar.",
     manualStepsClose: "Entendido",
     quickExpenseTitle: "Gasto Rápido",
     quickExpenseDescription: "Registra un gasto con un toque.",
@@ -2568,7 +2783,8 @@ export const es = {
     tripleActionTitle: "Gasto, Ingreso y Transferencia",
     tripleActionDescription: "Una barra para los tres tipos de transacción.",
     monthlyCashflowTitle: "Flujo de Caja Mensual",
-    monthlyCashflowDescription: "Ve los ingresos, gastos y ahorros del mes de un vistazo.",
+    monthlyCashflowDescription:
+      "Ve los ingresos, gastos y ahorros del mes de un vistazo.",
     netWorthTitle: "Vistazo al Patrimonio",
     netWorthDescription: "Sigue tu patrimonio neto total, activos y deudas.",
     monthlyBudgetTitle: "Progreso del Presupuesto Mensual",
