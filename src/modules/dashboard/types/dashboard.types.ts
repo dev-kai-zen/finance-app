@@ -35,7 +35,10 @@ export interface NetWorthHistoryPoint {
 export type NetWorthHistory = Record<
   NetWorthPeriod,
   NetWorthHistoryPoint[]
->;
+> & {
+  byYear?: Record<number, NetWorthHistoryPoint[]>;
+  availableYears?: number[];
+};
 
 export interface DashboardSummary {
   netWorthMinorUnits: number;

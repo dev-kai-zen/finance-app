@@ -52,8 +52,7 @@ export const ThemedSwitch = forwardRef<View, ThemedSwitchProps>(
 
     const offTrackColor = String(trackColor?.false ?? theme.colors.borderStrong);
     const onTrackColor = String(
-      trackColor?.true ??
-        (disabled ? theme.colors.borderStrong : theme.colors.primary),
+      trackColor?.true ?? theme.colors.primary,
     );
 
     const resolvedThumbColor =

@@ -53,20 +53,14 @@ function MoreFeaturesModalContent({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const experience = useExperiencePreferences();
-  const [pendingKeys, setPendingKeys] = useState<Partial<Record<NavVisibilityKey, boolean>>>({});
   const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
     useScrollDownIndicator<ScrollView>();
 
   const handleToggle = useCallback(
     (key: NavVisibilityKey, nextValue: boolean) => {
-      if (pendingKeys[key]) return;
-      setPendingKeys((prev) => ({ ...prev, [key]: true }));
       experience.setNavVisible(key, nextValue);
-      setTimeout(() => {
-        setPendingKeys((prev) => ({ ...prev, [key]: false }));
-      }, 400);
     },
-    [experience, pendingKeys],
+    [experience],
   );
 
   const handleResetSimpleMenu = () => {
@@ -109,14 +103,12 @@ function MoreFeaturesModalContent({
             >
               {MORE_FEATURE_ROWS.map((row) => {
                 const isVisible = experience.navVisibility[row.key];
-                const isPending = Boolean(pendingKeys[row.key]);
                 return (
                   <View key={row.key} style={styles.row}>
                     <Pressable
                       accessibilityLabel={t(row.labelKey as never)}
                       accessibilityRole="checkbox"
-                      accessibilityState={{ checked: isVisible, disabled: isPending }}
-                      disabled={isPending}
+                      accessibilityState={{ checked: isVisible }}
                       onPress={() => handleToggle(row.key, !isVisible)}
                       style={styles.rowContent}
                     >
@@ -135,9 +127,7 @@ function MoreFeaturesModalContent({
                     </Pressable>
                     <ThemedSwitch
                       accessibilityLabel={t(row.labelKey as never)}
-                      disabled={isPending}
                       onValueChange={(value) => handleToggle(row.key, value)}
-                      pending={isPending}
                       value={isVisible}
                     />
                   </View>

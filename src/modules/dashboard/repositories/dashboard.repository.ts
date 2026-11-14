@@ -284,11 +284,35 @@ export function getNetWorthHistory(
     ]),
   ) as Record<NetWorthPeriod, Date[]>;
 
+  const validOpeningYears = accountsWithBalances
+    .map((a) => a.openingBalanceAt.getFullYear())
+    .filter((y) => !isNaN(y) && y > 1970 && y <= targetDate.getFullYear());
+  const minYear =
+    validOpeningYears.length > 0
+      ? Math.min(...validOpeningYears)
+      : targetDate.getFullYear();
+  const currentYear = targetDate.getFullYear();
+  const availableYears: number[] = [];
+  for (let y = currentYear; y >= minYear; y--) {
+    availableYears.push(y);
+  }
+
+  const cutoffsByYear: Record<number, Date[]> = {};
+  for (const yr of availableYears) {
+    cutoffsByYear[yr] = getYearCutoffDates(yr, targetDate);
+  }
+
+  const allPeriodCutoffs = NET_WORTH_PERIODS.flatMap(
+    (period) => cutoffsByPeriod[period],
+  );
+  const allYearCutoffs = availableYears.flatMap((yr) => cutoffsByYear[yr]);
+
   const uniqueCutoffs = Array.from(
     new Map(
-      NET_WORTH_PERIODS.flatMap((period) => cutoffsByPeriod[period]).map(
-        (date) => [date.getTime(), date],
-      ),
+      [...allPeriodCutoffs, ...allYearCutoffs].map((date) => [
+        date.getTime(),
+        date,
+      ]),
     ).values(),
   ).sort((a, b) => a.getTime() - b.getTime());
   const deltasAtCutoffs = getAccountBalanceDeltasAtDates(
@@ -302,7 +326,7 @@ export function getNetWorthHistory(
     ]),
   );
 
-  return Object.fromEntries(
+  const baseHistory = Object.fromEntries(
     NET_WORTH_PERIODS.map((period) => [
       period,
       cutoffsByPeriod[period].map((date) =>
@@ -316,7 +340,44 @@ export function getNetWorthHistory(
         ),
       ),
     ]),
-  ) as NetWorthHistory;
+  ) as Record<NetWorthPeriod, NetWorthHistoryPoint[]>;
+
+  const byYear: Record<number, NetWorthHistoryPoint[]> = {};
+  for (const yr of availableYears) {
+    byYear[yr] = cutoffsByYear[yr].map((date) =>
+      calculateNetWorthPoint(
+        accountsWithBalances,
+        date,
+        deltasByCutoff.get(date.getTime()) ?? {},
+        "1Y",
+        ratesMap,
+        homeCurrency,
+      ),
+    );
+  }
+
+  return {
+    ...baseHistory,
+    byYear,
+    availableYears,
+  };
+}
+
+function getYearCutoffDates(year: number, targetDate: Date): Date[] {
+  const currentYear = targetDate.getFullYear();
+  if (year > currentYear) return [];
+  const maxMonth = year === currentYear ? targetDate.getMonth() : 11;
+  const dates: Date[] = [];
+  for (let m = 0; m <= maxMonth; m++) {
+    if (year === currentYear && m === maxMonth) {
+      const d = new Date(targetDate);
+      d.setHours(23, 59, 59, 999);
+      dates.push(d);
+    } else {
+      dates.push(new Date(year, m + 1, 0, 23, 59, 59, 999));
+    }
+  }
+  return dates;
 }
 
 function calculateNetWorthPoint(

@@ -63,6 +63,9 @@ export interface NetWorthInspectModalProps {
   activePeriod?: string;
   onSelectPeriod?: (period: string) => void;
   initialPointIndex?: number | null;
+  availableYears?: number[];
+  selectedYear?: number | "all";
+  onSelectYear?: (year: number | "all") => void;
 }
 
 const CHART_HEIGHT = 220;
@@ -82,6 +85,9 @@ export function NetWorthInspectModal({
   activePeriod,
   onSelectPeriod,
   initialPointIndex,
+  availableYears,
+  selectedYear,
+  onSelectYear,
 }: NetWorthInspectModalProps) {
   useRegisterActiveModal(visible);
 
@@ -91,12 +97,15 @@ export function NetWorthInspectModal({
   return (
     <NetWorthInspectModalContent
       activePeriod={activePeriod}
+      availableYears={availableYears}
       currencyCode={currencyCode}
       initialPointIndex={initialPointIndex}
       onClose={onClose}
       onSelectPeriod={onSelectPeriod}
+      onSelectYear={onSelectYear}
       periods={periods}
       points={points}
+      selectedYear={selectedYear}
       title={title}
       valuesVisible={valuesVisible}
       visible={visible}
@@ -115,6 +124,9 @@ function NetWorthInspectModalContent({
   activePeriod,
   onSelectPeriod,
   initialPointIndex,
+  availableYears,
+  selectedYear,
+  onSelectYear,
 }: NetWorthInspectModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -349,6 +361,65 @@ function NetWorthInspectModalContent({
           </View>
         ) : null}
 
+        {/* Optional Year Selector when activePeriod === "ALL" */}
+        {activePeriod === "ALL" &&
+        availableYears &&
+        availableYears.length > 0 &&
+        onSelectYear ? (
+          <View style={styles.yearSelectorRow}>
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedYear === "all" }}
+              onPress={() => {
+                triggerHaptic("light");
+                onSelectYear("all");
+              }}
+              style={({ pressed }) => [
+                styles.yearPill,
+                selectedYear === "all" && styles.yearPillSelected,
+                pressed && selectedYear !== "all" && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.yearPillText,
+                  selectedYear === "all" && styles.yearPillTextSelected,
+                ]}
+              >
+                All Years
+              </Text>
+            </Pressable>
+            {availableYears.map((yr) => {
+              const isYrSelected = selectedYear === yr;
+              return (
+                <Pressable
+                  key={yr}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isYrSelected }}
+                  onPress={() => {
+                    triggerHaptic("light");
+                    onSelectYear(yr);
+                  }}
+                  style={({ pressed }) => [
+                    styles.yearPill,
+                    isYrSelected && styles.yearPillSelected,
+                    pressed && !isYrSelected && styles.buttonPressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.yearPillText,
+                      isYrSelected && styles.yearPillTextSelected,
+                    ]}
+                  >
+                    {yr}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -491,6 +562,7 @@ function NetWorthInspectModalContent({
                         points.length,
                         isSelected,
                         activePeriod,
+                        selectedYear,
                       );
 
                       return (
@@ -829,9 +901,10 @@ function shouldShowLabel(
   total: number,
   isSelected: boolean,
   period?: string,
+  selectedYear?: number | "all",
 ): boolean {
   if (period === "1W") return true;
-  if (period === "1Y") {
+  if (period === "1Y" || (period === "ALL" && selectedYear !== "all")) {
     const m = point.date.getMonth();
     return m === 0 || m === 3 || m === 6 || m === 8 || m === 11;
   }
@@ -972,6 +1045,40 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
     },
     periodTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: "700",
+    },
+    yearSelectorRow: {
+      flexDirection: "row",
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      gap: 6,
+      flexWrap: "wrap",
+    },
+    yearPill: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceElevated,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 28,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    yearPillSelected: {
+      backgroundColor: `${theme.colors.primary}18`,
+      borderColor: theme.colors.primary,
+    },
+    yearPillText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    yearPillTextSelected: {
       color: theme.colors.primary,
       fontWeight: "700",
     },

@@ -1081,6 +1081,8 @@ export const fil = {
         "Ipakita ang 7-araw na lingguhang view at all-time taunang view sa net worth chart.",
       improveItem54:
         "Ipakita ang bilang ng mga budget item sa mga frequency filter chip.",
+      improveItem55:
+        "I-filter ang kasaysayan ng net worth ayon sa partikular na taon kapag tinitingnan ang all-time na progreso.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1161,6 +1163,8 @@ export const fil = {
         "Linawin ang paalala sa seguridad ng offline local backup para sa mga na-save na file sa device.",
       fixItem40:
         "Igitna nang patayo ang mga lumulutang na scroll arrow sa mga horizontal filter bar.",
+      fixItem41:
+        "Ayusin ang mga toggle ng tampok sa Higit Pang Mga Tampok upang maging mabilis at maayos ang pag-on o pag-off.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

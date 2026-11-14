@@ -28,7 +28,10 @@ import {
   type HomeExperienceMode,
   type TransactionFormFieldPreferences,
 } from "../services/experience-preferences.service";
-import type { NavVisibilityKey } from "../constants/settings.constants";
+import {
+  NAV_HREF_BY_VISIBILITY_KEY,
+  type NavVisibilityKey,
+} from "../constants/settings.constants";
 
 const DEVELOPER_TAP_TARGET = 10;
 const DEVELOPER_TAP_RESET_MS = 2000;
@@ -142,6 +145,18 @@ export function useExperiencePreferences() {
 
   const setNavVisible = useCallback(
     (navKey: NavVisibilityKey, visible: boolean) => {
+      setSnapshot((prev) => {
+        const nextNav = { ...prev.navVisibility, [navKey]: visible };
+        const nextHidden = (
+          Object.keys(NAV_HREF_BY_VISIBILITY_KEY) as NavVisibilityKey[]
+        )
+          .filter((k) => (k === navKey ? !visible : !prev.navVisibility[k]))
+          .map((k) => NAV_HREF_BY_VISIBILITY_KEY[k]);
+        return patchSnapshot(prev, {
+          navVisibility: nextNav,
+          hiddenNavHrefs: nextHidden,
+        });
+      });
       scheduleAfterPaint(() => {
         setNavItemVisible(navKey, visible);
         refresh();

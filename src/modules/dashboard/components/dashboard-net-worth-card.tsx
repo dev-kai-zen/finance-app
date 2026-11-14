@@ -62,6 +62,7 @@ export function DashboardNetWorthCard({
   const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
   const { isPrivate } = usePrivacyMode();
   const valuesVisible = !isPrivate;
   const [chartVisible, setChartVisible] = useState(true);
@@ -70,6 +71,22 @@ export function DashboardNetWorthCard({
   const trendIsPositive = (monthlyChangePercentage ?? 0) >= 0;
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
   const privateValue = "••••••";
+
+  const availableYears = history.availableYears ?? [];
+  const activePoints = useMemo(() => {
+    if (
+      period === "ALL" &&
+      selectedYear !== "all" &&
+      typeof selectedYear === "number" &&
+      history.byYear?.[selectedYear]
+    ) {
+      return history.byYear[selectedYear];
+    }
+    return history[period] ?? [];
+  }, [history, period, selectedYear]);
+
+  const effectivePeriod: NetWorthPeriod =
+    period === "ALL" && selectedYear !== "all" ? "1Y" : period;
 
   const displayModeItems = useMemo(() => {
     const items = [
@@ -215,7 +232,12 @@ export function DashboardNetWorthCard({
                   accessibilityLabel={`Show ${option} net worth history`}
                   accessibilityRole="tab"
                   accessibilityState={{ selected }}
-                  onPress={() => setPeriod(option)}
+                  onPress={() => {
+                    setPeriod(option);
+                    if (option !== "ALL") {
+                      setSelectedYear("all");
+                    }
+                  }}
                   style={({ pressed }) => [
                     styles.periodButton,
                     selected && styles.periodButtonSelected,
@@ -235,11 +257,61 @@ export function DashboardNetWorthCard({
             })}
           </View>
 
+          {/* Sub-selector for Year when ALL is active */}
+          {period === "ALL" && availableYears.length > 0 ? (
+            <View style={styles.yearSelectorRow}>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: selectedYear === "all" }}
+                onPress={() => setSelectedYear("all")}
+                style={({ pressed }) => [
+                  styles.yearPill,
+                  selectedYear === "all" && styles.yearPillSelected,
+                  pressed && selectedYear !== "all" && styles.buttonPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.yearPillText,
+                    selectedYear === "all" && styles.yearPillTextSelected,
+                  ]}
+                >
+                  All Years
+                </Text>
+              </Pressable>
+              {availableYears.map((yr) => {
+                const isYrSelected = selectedYear === yr;
+                return (
+                  <Pressable
+                    key={yr}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isYrSelected }}
+                    onPress={() => setSelectedYear(yr)}
+                    style={({ pressed }) => [
+                      styles.yearPill,
+                      isYrSelected && styles.yearPillSelected,
+                      pressed && !isYrSelected && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.yearPillText,
+                        isYrSelected && styles.yearPillTextSelected,
+                      ]}
+                    >
+                      {yr}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+
           <NetWorthChart
             currencyCode={currencyCode}
             onPressChart={() => setInspectModalVisible(true)}
-            period={period}
-            points={history[period]}
+            period={effectivePeriod}
+            points={activePoints}
             valuesVisible={valuesVisible}
           />
         </>
@@ -329,12 +401,20 @@ export function DashboardNetWorthCard({
         activePeriod={period}
         currencyCode={currencyCode}
         onClose={() => setInspectModalVisible(false)}
-        onSelectPeriod={(p) => setPeriod(p as NetWorthPeriod)}
+        onSelectPeriod={(p) => {
+          setPeriod(p as NetWorthPeriod);
+          if (p !== "ALL") {
+            setSelectedYear("all");
+          }
+        }}
         periods={PERIODS}
-        points={history[period]}
+        points={activePoints}
         title={simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
         valuesVisible={valuesVisible}
         visible={inspectModalVisible}
+        availableYears={availableYears}
+        selectedYear={selectedYear}
+        onSelectYear={setSelectedYear}
       />
     </View>
   );
@@ -456,6 +536,37 @@ function createStyles(theme: AppTheme) {
     },
     periodTextSelected: {
       color: theme.colors.onPrimary,
+    },
+    yearSelectorRow: {
+      alignSelf: "flex-end",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xxs,
+      marginTop: theme.spacing.xs,
+    },
+    yearPill: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 24,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+    },
+    yearPillSelected: {
+      backgroundColor: `${theme.colors.primary}22`,
+      borderColor: theme.colors.primary,
+    },
+    yearPillText: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    yearPillTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     breakdownRow: {
       flexDirection: "row",

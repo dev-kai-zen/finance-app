@@ -1048,6 +1048,8 @@ export const en = {
         "Show a 7-day weekly view and all-time yearly view on the net worth chart.",
       improveItem54:
         "Display budget item count badges directly on frequency filter chips.",
+      improveItem55:
+        "Filter net worth history by specific years when viewing all-time progress.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -1127,6 +1129,8 @@ export const en = {
         "Clarify offline local backup security guidance for saved device files.",
       fixItem40:
         "Center floating scroll arrows vertically across horizontal filter bars.",
+      fixItem41:
+        "Fix feature toggles in More Features so enabling or disabling features is immediate and responsive.",
     },
     v140: {
       date: "November 5, 2026",

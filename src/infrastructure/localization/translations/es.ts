@@ -1067,6 +1067,8 @@ export const es = {
         "Muestra una vista semanal de 7 días y una vista anual histórica en el gráfico de patrimonio neto.",
       improveItem54:
         "Muestra insignias con el recuento de presupuestos en los filtros de frecuencia.",
+      improveItem55:
+        "Filtra el historial de patrimonio neto por años específicos al ver el progreso histórico.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -1147,6 +1149,8 @@ export const es = {
         "Aclara el mensaje de seguridad de la copia de seguridad local para archivos guardados en el dispositivo.",
       fixItem40:
         "Centra verticalmente las flechas flotantes de desplazamiento en las barras de filtros horizontales.",
+      fixItem41:
+        "Corrige los interruptores en Más Funciones para que activar o desactivar funciones sea inmediato y fluido.",
     },
     v140: {
       date: "5 de noviembre de 2026",
