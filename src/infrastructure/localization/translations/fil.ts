@@ -960,211 +960,75 @@ export const fil = {
     v150: {
       date: "Nobyembre 10, 2026",
       newItem1:
-        "Mag-import ng mga account at transaksyon mula sa CSV na may gabay sa pagtutugma ng account at kategorya.",
+        "Mag-import ng mga account at kasaysayan ng transaksyon mula sa mga CSV file na may gabay sa pagtutugma.",
       newItem2:
-        "Suriin ang balanse at magkakatulad na tala, at gumawa ng safety backup bago mag-import.",
+        "Suriin ang mga balanse, maghanap ng magkakaparehong tala, at gumawa ng safety backup bago mag-import.",
       newItem3:
-        "I-download ang mga CSV template nang direkta sa folder sa iyong device.",
+        "I-download ang mga halimbawang CSV template nang direkta sa iyong device para sa madaling pag-format.",
       newItem4:
-        "Itugma ang mga uri ng transaksyon mula sa ibang app at kusang itugma ang mga kategorya gamit ang kaalaman ni Kai.",
+        "Magdagdag ng paunang pag-post upang maitala nang maaga ang mga nakaiskedyul na transaksyon patungo sa susunod na siklo.",
       newItem5:
-        "Magdagdag ng paunang pag-post para maitala nang maaga ang mga nakaiskedyul na transaksyon at ilipat sa susunod na siklo.",
-      newItem6:
-        "Magdagdag ng interactive na walkthrough tour para sa Credit Cards upang masubaybayan ang billing cycles, cutoffs, utilization, at hulugan.",
-      newItem7:
-        "Magdagdag ng interactive na gabay sa Reports upang suriin ang mga kategorya, visual chart, at filter ng petsa.",
+        "Magdagdag ng mga interactive na walkthrough tour para sa Credit Cards at Reports upang galugarin ang mga feature at chart.",
       improveItem1:
-        "I-tap o i-drag sa net worth chart upang makita ang eksaktong balanse at petsa gamit ang mga tooltip.",
+        "Palawakin ang Net Worth gamit ang full-screen inspector, 7-araw at taunang view, mga tooltip, at filter ng taon.",
       improveItem2:
-        "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, close icon, at proteksyon sa pagpindot.",
+        "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, malinaw na Skip option, at maayos na hakbang.",
       improveItem3:
-        "Buksan ang mga tuntunin ng app sa Settings, katabi ng patakaran sa privacy.",
+        "Gawing mas simple ang pagtala ng transaksyon gamit ang pinag-isang petsa at oras, at pinadaling transfer options.",
       improveItem4:
-        "Padaliin ang pagpili ng petsa ng transaksyon gamit ang kalendaryo at tagapili ng oras.",
+        "Pahusayin ang mga filter ng transaksyon gamit ang multi-select label dropdown at madaling ma-access na Clear All button.",
       improveItem5:
-        "Palitan ang pamagat ng screen ng credit card tungo sa Mga Credit Card para sa mas malinaw na nabigasyon.",
+        "Magdagdag ng tap-to-reverse sorting na may skeleton loading, return-to-top button, at bilugang swipe action cards.",
       improveItem6:
-        "I-filter ang mga nasingil na bayarin sa credit card ayon sa petsa ng statement at tingnan ang buong talaan nang maayos.",
+        "Pahusayin ang Credit Cards gamit ang mga filter ng cutoff date, review ng aktibidad, at maayos na mga setting.",
       improveItem7:
-        "Magpakita ng madaling arrow buttons para mag-scroll nang maayos sa pahigang tabs at chips kapag may nakatagong item.",
+        "Buksan ang mga detalye ng account mula sa dashboard at panatilihing nakikita ang balanse habang nag-e-edit.",
       improveItem8:
-        "Padaliin ang pagkumpirma sa pag-reset ng data sa pag-type ng RESET sa halip na pangalan ng app.",
+        "Magpakita ng toast notification at panatilihing nakikita ang halaga kapag nag-e-edit ng mga iskedyul.",
       improveItem9:
-        "I-update ang walkthrough ng dashboard upang kusa nitong itampok ang mga aktibong card ayon sa iyong pagkakaayos.",
+        "Gawing mas maayos ang privacy button sa itaas na may interactive na loading indicator.",
       improveItem10:
-        "Gawing mas malinis ang card ng net worth gamit ang pangunahing privacy button sa itaas na nabigasyon.",
+        "Gawing mas simple ang Settings, i-standardize ang mga kumpirmasyon, at kumpirmahin ang pag-reset sa pag-type ng RESET.",
       improveItem11:
-        "Direktang buksan ang mga detalye at setting ng account kapag pinindot ang card nito sa dashboard.",
+        "I-toggle ang expanded o collapsed view ng account groups at itakda ang iyong default na nais sa Settings.",
       improveItem12:
-        "Panatilihing nakikita ang pinakahuling balanse kapag nag-e-edit ng account kahit naka-on ang privacy mode.",
+        "Gumawa ng mga custom hex color sa Theme Studio na may maayos at magkatugmang swatches sa bawat screen.",
       improveItem13:
-        "Pagsama-samahin ang limit at statement ng credit card sa iisang maayos na card sa setup ng account.",
+        "Gawing mas maayos ang Google Drive connection gamit ang disconnect chip, skeleton loader, at backup toast feedback.",
       improveItem14:
-        "Ipakita ang mga balanse ng mga naka-archive na account at pocket kahit naka-on ang privacy mode.",
+        "Magdagdag ng mga arrow button, floating scroll indicator, at makikinis na animation sa mga switch.",
       improveItem15:
-        "Pinaikli ang halimbawa ng pangalan ng grupo ng account upang manatiling maayos sa isang linya.",
+        "Gawing simpleng flat line ang divider sa sidebar search na may indicator para sa aktibong screen.",
       improveItem16:
-        "Panatilihing nakikita ang mga halaga sa mga naka-iskedyul na transaksyon kahit naka-on ang privacy mode.",
+        "I-standardize ang mga help at info icon sa lahat ng screen at magpakita ng count badges sa mga budget chip.",
       improveItem17:
-        "Magpakita ng toast notification kasama ang petsa ng susunod na siklo kapag nag-advance post ng transaksyon.",
+        "Ilagay ang field ng tala sa ilalim ng pamagat ng goal at magpakita ng kumpirmasyon sa unsaved category changes.",
       improveItem18:
-        "Magpakita ng in-app confirmation modal kapag nagse-save ng na-export na transaksyon sa device.",
-      improveItem19:
-        "Gawing multi-select dropdown list ang filter ng mga label sa transaksyon katulad ng sa account.",
-      improveItem20:
-        "Ilagay ang Clear all filter button sa unahan ng mga aktibong filter upang madali itong mapindot nang hindi nag-i-scroll.",
-      improveItem21:
-        "Gawing mas simple ang transaction type picker sa pamamagitan ng pagpapalit ng Fund Transfer sa Transfer.",
-      improveItem22:
-        "Ilipat ang paliwanag sa bayad sa paglilipat sa isang helper icon modal upang mapanatiling malinis ang form.",
-      improveItem23:
-        "Ihanay ang New label button sa tabi ng mga aktibong label at gawing pabilog ang close button.",
-      improveItem24:
-        "Magpakita ng floating scroll down arrow sa mga scrollable na sheet at form kapag may mga nakatagong item sa ibaba.",
-      improveItem25:
-        "Gawing mas simple ang customize fields sheet sa pamamagitan ng pag-alis ng paulit-ulit na paglalarawan para sa mga laging bukas na field.",
-      improveItem26:
-        "I-update ang select labels modal na may chip para sa pamamahala ng mga label at pabilog na close button.",
-      improveItem27:
-        "Magdagdag ng naililipat na gabay na chip sa mga modal at sheet para sa mabilisang walkthrough.",
-      improveItem28:
-        "Magpakita ng kumpirmasyon bago umalis kapag may hindi pa nai-save na pagbabago sa pag-aayos ng kategorya.",
-      improveItem29:
-        "Ilagay ang field ng tala sa ilalim ng pamagat ng layunin sa form ng ipon para sa mas madaling pagtatala.",
-      improveItem30:
-        "Gawing mas simple ang screen ng Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na paglalarawan at pag-ayos ng label ng tema.",
-      improveItem31:
-        "Magpakita ng mabilisang toast notification sa halip na popup modal kapag ina-update ang dalas ng lokal na backup.",
-      improveItem32:
-        "Palitan ang Google Drive check icon at disconnect button ng isang disconnect chip sa account.",
-      improveItem33:
-        "Magpakita ng makinis na skeleton placeholder habang kumokonekta sa Google Drive sa halip na loading spinner.",
-      improveItem34:
-        "I-standardize ang mga diyalogo sa pag-restore at pagkumpirma gamit ang mga may temang in-app modal.",
-      improveItem35:
-        "Ilagay ang button ng impormasyon sa seguridad katabi ng pamagat ng Password at Fingerprint para sa mas malinaw na pag-access.",
-      improveItem36:
-        "I-streamline ang layout ng SQLite Monitor at magpakita ng progress modal habang nagva-vacuum ng database.",
-      improveItem37:
-        "I-standardize ang header ng Manage Kai Knowledge gamit ang pinag-isang navigation back button ng app.",
-      improveItem38:
-        "Magdagdag ng mabilisang paggawa ng custom hex color sa Theme Studio at pag-isahin ang mga color swatch sa lahat ng screen nang walang layout jumps.",
-      improveItem39:
-        "I-standardize ang mga icon ng tulong at impormasyon sa lahat ng screen gamit ang question mark para sa gabay at info mark para sa mga paunawa.",
-      improveItem40:
-        "I-toggle ang naka-expand at naka-collapse na view ng mga grupo ng account at itakda ang iyong default na preference sa Mga Setting.",
-      improveItem41:
-        "Pagsamahin ang mga button sa pag-sort ng Petsa at Halaga na may arrow para magpalit ng pagkakasunod-sunod.",
-      improveItem42:
-        "I-standardize ang screen ng Quick Presets gamit ang lumulutang na add button sa ibabang sulok.",
-      improveItem43:
-        "Magpakita ng loading indicator sa privacy eye button habang itinatago o ipinapakita ang mga halaga.",
-      improveItem44:
-        "Magpakita ng agarang transition sa mga switch na may micro loading indicator habang nag-a-update.",
-      improveItem45:
-        "Magpakita ng skeleton placeholder habang nag-aayos ng mga transaksyon ayon sa petsa o halaga.",
-      improveItem46:
-        "Magdagdag ng anino at divider sa ilalim ng sidebar search box at animated indicator para sa napiling screen.",
-      improveItem47:
-        "Maglagay ng pabilog na close button at loading indicator sa mga toggle sa More Features menu.",
-      improveItem48:
-        "Sundan ang gabay sa Mga Setting mula itaas pababa na sumasaklaw sa lahat ng opsyon.",
-      improveItem49:
-        "Pindutin ang lumulutang na dobleng palasong button tuwing may transaksyon sa itaas upang maayos na bumalik sa tuktok.",
-      improveItem50:
-        "Gawing bilugan ang mga kanto ng aksyon kapag nag-swipe pakaliwa upang kopyahin ang transaksyon tulad sa Mga Tala.",
-      improveItem51:
-        "Gawing simpleng linyang divider ang pagitan sa paghahanap sa sidebar katulad sa menu ng Higit Pang Mga Tampok.",
-      improveItem52:
-        "Pag-isahin ang mga card ng gabay na may malinaw na pindutang Laktawan sa mga modal form.",
-      improveItem53:
-        "Ipakita ang 7-araw na lingguhang view at all-time taunang view sa net worth chart.",
-      improveItem54:
-        "Ipakita ang bilang ng mga budget item sa mga frequency filter chip.",
-      improveItem55:
-        "I-filter ang kasaysayan ng net worth ayon sa partikular na taon kapag tinitingnan ang all-time na progreso.",
+        "Ayusin ang ayos ng SQLite Monitor at magpakita ng progress modal habang isinasagawa ang database vacuuming.",
       fixItem1:
-        "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
+        "Siguraduhing ganap na itinatago ng privacy mode ang mga balanse, paggamit ng credit card, at mga numero ng ulat.",
       fixItem2:
-        "Itago ang mga halaga ng credit card at porsyento kapag naka-on ang privacy mode.",
+        "Panatilihing nakikita ang mga halaga kapag sinusuri ang mga statement ng credit card kahit naka-on ang privacy mode.",
       fixItem3:
-        "Pigilan ang paglabas ng kasaysayan ng bersyon habang naka-lock ang app.",
+        "Ayusin ang mga gabay sa walkthrough upang hindi magpatong-patong ang mga button o mag-trigger ng maling tour.",
       fixItem4:
-        "Ayusin ang mga pamagat sa mensahe ng developer upang hindi lumagpas sa mga card.",
+        "Pigilan ang app lock habang pumipili ng larawan o nagbabahagi ng file, at panatilihing naka-lock ang version history.",
       fixItem5:
-        "Iwasan ang pag-lock ng app habang nagse-share ng file o pumipili ng litrato.",
+        "Pabilisin ang paglipat ng screen at alisin ang pagka-freeze kapag nagpapalit ng tab, petsa, wika, o tema.",
       fixItem6:
-        "Ayusin ang espasyo ng chart upang ganap na makita ang mga buwan at halaga nang hindi napuputol.",
+        "Ayusin ang biglaang pagsasara ng app kapag binubuksan ang Reports at tiyaking mabilis bumukas ang mga form.",
       fixItem7:
-        "Itago ang mga balanse ng account, halaga ng gastusin, at porsyento ng kategorya kapag naka-on ang privacy mode.",
+        "Pigilan ang error sa pagpapalit ng uri ng transfer sa mga transaksyon at ayusin ang shortcut sa Top Spending.",
       fixItem8:
-        "Ayusin ang pagpili ng buwan sa net worth chart upang itampok ang eksaktong buwang pinindot.",
+        "Panatilihing nakikita ang mga input field ng kulay at hex code sa ibabaw ng virtual keyboard.",
       fixItem9:
-        "Ayusin ang View all button sa card ng Top Spending upang buksan ang mga gastusin ngayong buwan.",
+        "Ayusin ang pagpili ng buwan sa net worth chart at kulayan ang growth chart ayon sa pagtaas o pagbaba.",
       fixItem10:
-        "Ayusin ang visual glitch at hindi inaasahang circle animation kapag binubuksan ang mga toggle sa mga form at setting.",
+        "Ayusin ang pagpapalit ng Google Drive account para awtomatikong mag-relink at linawin ang gabay sa backup.",
       fixItem11:
-        "Panatilihing nakikita ang mga field ng kulay sa itaas ng keyboard kapag gumagawa ng sariling kulay.",
+        "Ayusin ang animation ng mga toggle switch at ihanay ang mga switch sa dashboard at mga setting.",
       fixItem12:
-        "Ayusin ang isyu kung saan ang gabay ng walkthrough mula sa Settings ay lumilitaw sa screen ng Credit Cards.",
-      fixItem13:
-        "Itago ang utilization ring, mga babayaring halaga, at mga balanse sa chip ng card kapag naka-on ang privacy mode.",
-      fixItem14:
-        "I-gitna ang mga opsyon at label ng rollover behavior sa form ng category budget.",
-      fixItem15:
-        "I-standardize ang laki ng color swatch upang mas malinaw ang napiling kulay at mas maliit ang hindi napili.",
-      fixItem16:
-        "Itago ang mga target, balanse, progreso, at buwanang rekomendasyon ng layunin sa ipon kapag naka-on ang privacy mode.",
-      fixItem17:
-        "Itago ang savings rate at progress indicator sa Cash Flow report kapag naka-on ang privacy mode.",
-      fixItem18:
-        "Kulayan ang detalye ng cash flow chart ayon sa positibo o negatibong net, at igalang ang neutral na kulay at privacy mode.",
-      fixItem19:
-        "Kulayan ang detalye ng net worth chart ayon sa positibo o negatibong pagbabago, at igalang ang neutral na kulay at privacy mode.",
-      fixItem20:
-        "Ayusin ang isyu kung saan ang gabay ng walkthrough sa Reports ay nagbukas ng gabay ng Goals.",
-      fixItem21:
-        "Ayusin ang kulang na espasyo sa mga gilid ng catalog ng currency at form sa pagdagdag ng currency.",
-      fixItem22:
-        "Ayusin ang pag-scroll sa walkthrough upang hindi maputol o matakpan sa likod ng header ang mga menu.",
-      fixItem23:
-        "Ayusin ang Quick Sync sa Google Drive upang ang pagpalit ng account ay awtomatikong mag-ugnay sa backup ng bagong account.",
-      fixItem24:
-        "Pigilan ang mga error sa pamamagitan ng paghihigpit sa pagpapalit ng uri ng transfer habang nag-e-edit ng mga tala.",
-      fixItem25:
-        "I-pantay ang toggle ng daily inspiration quote sa customization ng dashboard sa iba pang switch ng card.",
-      fixItem26:
-        "Panatilihing buong nakikita ang mga input field ng pangalan ng kulay at hex code sa itaas ng virtual keyboard.",
-      fixItem27:
-        "Ayusin ang mabagal na paglipat ng screen upang maging mabilis at maayos ang pagbubukas ng mga pahina, listahan, at form.",
-      fixItem28:
-        "Ipantay ang lapad ng Cancel at Apply Filters at ayusin ang lumulutang na scroll down arrow sa mga modal.",
-      fixItem29:
-        "Ayusin ang isyu kung saan ang pagbubukas ng Reports mula sa menu ay nagdulot ng biglaang pagsasara ng app.",
-      fixItem30:
-        "Panatilihing nakikita ang mga halaga ng billed items kapag sinusuri ang mga statement ng credit card kahit naka-on ang privacy mode.",
-      fixItem31:
-        "Magpakita agad ng abiso kapag binabago ang dalas ng lokal na backup nang hindi nagla-lag ang screen.",
-      fixItem32:
-        "Gawing mas maayos ang Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na switch habang nananatiling naka-save ang view ng account groups.",
-      fixItem33:
-        "Alisin ang mga lumulutang na chip ng gabay sa mga form sheet para sa mas malinis at walang abalang pagtatala.",
-      fixItem34:
-        "Ipakita lamang ang mga hakbang sa default na account kapag nag-e-edit ng kasalukuyang bulsa.",
-      fixItem35:
-        "Magpakita ng agarang pahiwatig at loading indicator kapag nagpapalit ng tema o sariling estilo nang hindi nagla-lag ang screen.",
-      fixItem36:
-        "Pindutin ang anumang tsart ng net worth upang buksan ang buong screen na inspektor na may maayos na pagpili ng buwan.",
-      fixItem37:
-        "Ayusin ang pagtigil at magpakita ng mabilis na pahiwatig kapag nagpapalit ng tab sa mga ulat, petsa, wika, at pananalapi.",
-      fixItem38:
-        "Agad na buksan ang mga form ng kategorya, goal, budget, at account nang walang pagkaantala o pagkurap.",
-      fixItem39:
-        "Linawin ang paalala sa seguridad ng offline local backup para sa mga na-save na file sa device.",
-      fixItem40:
-        "Igitna nang patayo ang mga lumulutang na scroll arrow sa mga horizontal filter bar.",
-      fixItem41:
-        "Ayusin ang mga toggle ng tampok sa Higit Pang Mga Tampok upang maging mabilis at maayos ang pag-on o pag-off.",
+        "Ayusin ang layout spacing, border overlap, at padding sa mga chart card, developer note, at form ng pera.",
     },
     v140: {
       date: "Nobyembre 5, 2026",

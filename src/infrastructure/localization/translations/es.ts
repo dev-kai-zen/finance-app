@@ -946,211 +946,75 @@ export const es = {
     v150: {
       date: "10 de noviembre de 2026",
       newItem1:
-        "Importa cuentas y transacciones desde archivos CSV con asignación guiada de cuentas y categorías.",
+        "Importa cuentas e historial de transacciones desde archivos CSV con asignación guiada de cuentas y categorías.",
       newItem2:
-        "Revisa saldos y registros similares, y guarda una copia de seguridad antes de importar.",
+        "Revisa saldos, detecta duplicados y crea una copia de seguridad antes de aplicar los datos CSV importados.",
       newItem3:
-        "Descarga plantillas CSV directamente a una carpeta de tu dispositivo.",
+        "Descarga plantillas CSV de muestra directamente a tu dispositivo para formatear datos fácilmente.",
       newItem4:
-        "Asigna tipos de transacción de otras aplicaciones y empareja categorías automáticamente con el conocimiento de Kai.",
+        "Añade publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar al siguiente ciclo.",
       newItem5:
-        "Agregue publicación anticipada para registrar transacciones programadas antes de tiempo y avanzar automáticamente al siguiente ciclo.",
-      newItem6:
-        "Añade un recorrido interactivo para Tarjetas de Crédito para explorar ciclos de facturación, fechas de corte, utilización y cuotas.",
-      newItem7:
-        "Añade un recorrido interactivo para Informes para explorar desgloses de categorías, gráficos y filtros de fechas.",
+        "Añade recorridos interactivos para Tarjetas de Crédito e Informes para explorar ciclos de facturación y gráficos.",
       improveItem1:
-        "Toca o desliza a lo largo del gráfico de patrimonio neto para ver saldos exactos y fechas.",
+        "Amplía el Patrimonio Neto con un inspector de pantalla completa, vistas de 7 días y anuales, y filtros por año.",
       improveItem2:
-        "Mejora los recorridos guiados con botones de alto contraste, icono de cierre dedicado y protección táctil.",
+        "Mejora los recorridos guiados con botones de alto contraste, opción de Omitir clara y secuencia de pasos fluida.",
       improveItem3:
-        "Abre los términos de la app en Ajustes, junto a la política de privacidad.",
+        "Simplifica el registro de transacciones con un selector unificado de fecha y hora, y opciones de transferencia claras.",
       improveItem4:
-        "Simplifica el registro de fechas en transacciones con un selector unificado de calendario y hora.",
+        "Mejora los filtros de transacciones con desplegable de etiquetas múltiple y botón de Borrar Todo al frente.",
       improveItem5:
-        "Actualiza el título de la pantalla a Tarjetas de crédito para mayor claridad.",
+        "Añade ordenación con un toque y carga esqueleto, botón para volver arriba y tarjetas redondeadas al deslizar.",
       improveItem6:
-        "Filtra los cargos facturados de la tarjeta por fecha de estado de cuenta y consulta toda la actividad fácilmente.",
+        "Mejora Tarjetas de Crédito con filtros por fecha de corte, revisión de actividad y ajustes organizados.",
       improveItem7:
-        "Muestra prácticos botones de flecha para desplazarse suavemente por pestañas y listas horizontales con elementos ocultos.",
+        "Abre los detalles de cuenta desde las tarjetas del panel y mantén visibles los saldos al editar en modo privado.",
       improveItem8:
-        "Simplifica la confirmación de restablecimiento de datos escribiendo RESET en lugar del nombre de la app.",
+        "Muestra notificaciones de ciclo y mantén visibles los importes al editar transacciones programadas en modo privado.",
       improveItem9:
-        "Actualiza el recorrido del panel para resaltar dinámicamente las tarjetas activas en tu orden personalizado.",
+        "Optimiza el botón de privacidad de la barra superior con un estado de carga interactivo.",
       improveItem10:
-        "Simplifica la tarjeta de patrimonio neto utilizando el botón principal de privacidad en la barra superior.",
+        "Simplifica los menús de Ajustes, estandariza los diálogos de confirmación y confirma el restablecimiento escribiendo RESET.",
       improveItem11:
-        "Abre los detalles y ajustes de una cuenta directamente al tocar su tarjeta en el panel principal.",
+        "Alterna vistas expandidas y contraídas de grupos de cuentas y define tu preferencia predeterminada en Ajustes.",
       improveItem12:
-        "Mantén visible el saldo más reciente al editar una cuenta, incluso con el modo de privacidad activado.",
+        "Crea colores hexadecimales personalizados en Theme Studio con muestras armonizadas en todas las pantallas.",
       improveItem13:
-        "Agrupa el límite y las fechas de facturación de la tarjeta en una tarjeta dedicada en la configuración de la cuenta.",
+        "Optimiza la conexión con Google Drive con un chip para desconectar, marcador esqueleto y avisos de copia.",
       improveItem14:
-        "Muestra los saldos de cuentas y apartados archivados incluso con el modo de privacidad activado.",
+        "Añade botones de flecha horizontales, indicadores flotantes de desplazamiento y transiciones en interruptores.",
       improveItem15:
-        "Acorta el ejemplo de nombre de grupo de cuentas para mantener el texto en una sola línea.",
+        "Limpia el divisor de búsqueda de la barra lateral en una línea plana con indicador animado de pantalla activa.",
       improveItem16:
-        "Mantén visibles los montos en las transacciones programadas incluso con el modo de privacidad activado.",
+        "Estandariza los iconos de ayuda e información en las pantallas y muestra insignias de conteo en presupuestos.",
       improveItem17:
-        "Muestra una notificación toast con la próxima fecha recurrente al adelantar una transacción programada.",
+        "Coloca el campo de notas debajo del título de la meta y solicita confirmación al salir con cambios sin guardar.",
       improveItem18:
-        "Muestra un modal de confirmación en la app al guardar datos de transacciones exportados en el dispositivo.",
-      improveItem19:
-        "Actualiza el filtro de etiquetas de transacciones a una lista desplegable de selección múltiple igual al de cuentas.",
-      improveItem20:
-        "Ubica el botón de borrar todos los filtros al principio de los filtros activos para acceder de inmediato sin desplazarse.",
-      improveItem21:
-        "Simplifica el selector de tipo de transacción renombrando Transferencia de fondos a Transferir.",
-      improveItem22:
-        "Mueve la explicación de la comisión de transferencia a un modal de ayuda para mantener el formulario limpio.",
-      improveItem23:
-        "Alinea el botón de nueva etiqueta junto a las etiquetas activas y actualiza el botón de cierre.",
-      improveItem24:
-        "Muestra una flecha flotante hacia abajo en formularios y hojas cuando hay elementos ocultos.",
-      improveItem25:
-        "Simplifica la hoja de personalizar campos eliminando descripciones repetitivas de campos siempre activos.",
-      improveItem26:
-        "Actualiza el modal de selección de etiquetas con un chip para gestionar etiquetas y un botón de cierre circular.",
-      improveItem27:
-        "Agrega chips de guía arrastrables a todos los modales y formularios para recorridos guiados al instante.",
-      improveItem28:
-        "Muestra un aviso de confirmación al salir de la pantalla de reordenar categorías con cambios sin guardar.",
-      improveItem29:
-        "Ubica el campo de notas justo debajo del título de la meta en el formulario de metas de ahorro para facilitar la anotación.",
-      improveItem30:
-        "Simplifica la pantalla de Configuración eliminando descripciones redundantes y optimizando la etiqueta del tema.",
-      improveItem31:
-        "Muestra una notificación rápida en lugar de un modal emergente al actualizar la frecuencia de copia de seguridad local.",
-      improveItem32:
-        "Reemplaza el icono de verificación de Google Drive y el botón por un chip de desconexión.",
-      improveItem33:
-        "Muestra un marcador de posición esqueleto fluido mientras se conecta a Google Drive en lugar de una rueda de carga.",
-      improveItem34:
-        "Estandariza los diálogos de restauración y confirmación con modales temáticos integrados.",
-      improveItem35:
-        "Coloca el botón de información de seguridad junto al título de Contraseña y Huella para un acceso más claro.",
-      improveItem36:
-        "Optimiza el diseño del monitor SQLite y muestra un modal de progreso durante la limpieza de la base de datos.",
-      improveItem37:
-        "Estandariza el encabezado de Administrar Conocimiento de Kai con el botón de retroceso unificado de la app.",
-      improveItem38:
-        "Agrega creación rápida de colores hexadecimales en Theme Studio y armoniza las muestras de color en todas las pantallas sin saltos de diseño.",
-      improveItem39:
-        "Estandariza los íconos de ayuda e información en todas las pantallas usando signos de interrogación para explicaciones y notas informativas para avisos.",
-      improveItem40:
-        "Alterna vistas expandidas y colapsadas de grupos de cuentas y define tu preferencia predeterminada en Configuración.",
-      improveItem41:
-        "Combina los botones de ordenar por Fecha y Monto con flechas para cambiar el orden al tocar.",
-      improveItem42:
-        "Estandariza la pantalla de Ajustes Rápidos con un botón flotante para agregar en la esquina inferior.",
-      improveItem43:
-        "Muestra un indicador de carga en el botón de privacidad mientras se ocultan o muestran los montos.",
-      improveItem44:
-        "Muestra una transición inmediata en los interruptores con un micro indicador de carga mientras se actualiza.",
-      improveItem45:
-        "Mostrar un esqueleto de carga al cambiar el orden de las transacciones por fecha o monto.",
-      improveItem46:
-        "Agregar una sombra y divisor debajo del buscador lateral y un indicador animado para la pantalla activa.",
-      improveItem47:
-        "Agregar un botón circular de cierre e indicador de carga en las opciones del menú Más Funciones.",
-      improveItem48:
-        "Sigue la guía paso a paso de Ajustes en orden de arriba a abajo cubriendo todas las opciones.",
-      improveItem49:
-        "Toca el botón flotante de doble flecha siempre que haya transacciones ocultas arriba para volver al inicio.",
-      improveItem50:
-        "Redondea las esquinas de acción al deslizar a la izquierda para duplicar transacciones al igual que en Notas.",
-      improveItem51:
-        "Convierte el divisor de búsqueda de la barra lateral en una línea plana simple como en el menú Más Funciones.",
-      improveItem52:
-        "Unifica las tarjetas de guía con un botón claro de Omitir en los formularios modales.",
-      improveItem53:
-        "Muestra una vista semanal de 7 días y una vista anual histórica en el gráfico de patrimonio neto.",
-      improveItem54:
-        "Muestra insignias con el recuento de presupuestos en los filtros de frecuencia.",
-      improveItem55:
-        "Filtra el historial de patrimonio neto por años específicos al ver el progreso histórico.",
+        "Organiza el diseño de SQLite Monitor y muestra un modal de progreso mientras se optimiza la base de datos.",
       fixItem1:
-        "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
+        "Garantiza que el modo privado oculte correctamente saldos, uso de tarjetas de crédito, metas y cifras de informes.",
       fixItem2:
-        "Oculta los montos y el porcentaje de tarjetas de crédito cuando el modo de privacidad está activado.",
+        "Mantén visibles los importes y detalles al revisar estados de cuenta de tarjeta de crédito incluso en modo privado.",
       fixItem3:
-        "Evita que el historial de versiones se muestre mientras la aplicación está bloqueada.",
+        "Corrige las superposiciones de recorridos para que no se superpongan botones ni se active la guía incorrecta.",
       fixItem4:
-        "Corrige los títulos en la nota del desarrollador para que no se desborden de sus tarjetas.",
+        "Evita que el bloqueo de la app se active al seleccionar fotos o compartir archivos, y protege el historial de versiones.",
       fixItem5:
-        "Evita que la aplicación se bloquee al compartir archivos o seleccionar fotos.",
+        "Optimiza las transiciones de navegación y elimina bloqueos al cambiar de pestañas, fechas, idiomas y temas.",
       fixItem6:
-        "Corrige el espaciado de los gráficos para que los meses y montos sean totalmente visibles sin cortarse.",
+        "Resuelve el cierre inesperado al abrir Informes y asegura que los formularios modales se abran de inmediato.",
       fixItem7:
-        "Oculta los saldos de cuentas, montos de gasto principal y porcentajes de categoría al activar el modo de privacidad.",
+        "Evita errores de grupo restringiendo cambios en transferencias y corrige los accesos rápidos de Mayor Gasto.",
       fixItem8:
-        "Corrige la selección de meses en el gráfico de patrimonio neto para resaltar el punto exacto seleccionado.",
+        "Mantén los campos de nombre de color y código hexadecimal visibles sobre el teclado virtual.",
       fixItem9:
-        "Corrige el botón Ver todo en Más gastos del mes para abrir las transacciones de gastos de este mes.",
+        "Corrige la selección de mes en el gráfico de patrimonio neto y colorea según cambios positivos o negativos.",
       fixItem10:
-        "Corrige el fallo visual y la animación circular no deseada al activar interruptores en formularios y ajustes.",
+        "Corrige el cambio de cuenta en Google Drive para revincular copias y aclara las pautas de seguridad sin conexión.",
       fixItem11:
-        "Mantén visibles los campos de color encima del teclado al crear colores personalizados.",
+        "Corrige las animaciones de los interruptores y alinea los controles en el panel y en ajustes.",
       fixItem12:
-        "Corrige el error por el cual la guía de Ajustes aparecía de forma incorrecta en la pantalla de Tarjetas de Crédito.",
-      fixItem13:
-        "Oculta el anillo de utilización, los montos vencidos y los saldos de tarjetas cuando el modo de privacidad está activado.",
-      fixItem14:
-        "Centra las opciones y etiqueta de comportamiento de rollover en el formulario de presupuesto por categoría.",
-      fixItem15:
-        "Estandariza el tamaño de las muestras de color para que los colores seleccionados sean prominentes y los no seleccionados compactos.",
-      fixItem16:
-        "Oculta las metas, saldos, progreso y recomendaciones mensuales de ahorro cuando el modo de privacidad está activado.",
-      fixItem17:
-        "Oculta las tasas de ahorro e indicadores de progreso en el informe de flujo de caja cuando el modo de privacidad está activado.",
-      fixItem18:
-        "Colorea los detalles del gráfico de flujo de caja según el neto positivo o negativo, respetando colores neutros y modo de privacidad.",
-      fixItem19:
-        "Colorea los detalles del gráfico de patrimonio según el cambio positivo o negativo, respetando colores neutros y modo de privacidad.",
-      fixItem20:
-        "Corrige el problema por el cual la guía de Informes abría de forma incorrecta el recorrido de Metas.",
-      fixItem21:
-        "Corrige la falta de espaciado en los bordes del catálogo de monedas y el formulario de añadir moneda.",
-      fixItem22:
-        "Corrige el desplazamiento de la guía para que las opciones del menú no queden cortadas o detrás de la cabecera.",
-      fixItem23:
-        "Corrige Quick Sync en Google Drive para que cambiar de cuenta vincule automáticamente la copia de la nueva cuenta.",
-      fixItem24:
-        "Evite errores al restringir el cambio de tipo de transferencia al editar registros existentes.",
-      fixItem25:
-        "Alinea el interruptor de frase de inspiración diaria en la personalización del panel con los demás botones.",
-      fixItem26:
-        "Mantén los campos de nombre de color y código hexadecimal completamente visibles sobre el teclado virtual.",
-      fixItem27:
-        "Corrige la lentitud al cambiar de pantalla para que navegar entre secciones, listas y formularios sea rápido y fluido.",
-      fixItem28:
-        "Iguala el ancho de los botones Cancelar y Aplicar filtros y corrige las flechas de desplazamiento en ventanas.",
-      fixItem29:
-        "Corrige un error por el cual abrir Informes desde el menú cerraba la aplicación de forma inesperada.",
-      fixItem30:
-        "Mantener visibles los montos y detalles al revisar los estados de cuenta de tarjetas de crédito incluso con el modo de privacidad activo.",
-      fixItem31:
-        "Muestra una confirmación rápida al cambiar la frecuencia de copia de seguridad local sin pausar la pantalla.",
-      fixItem32:
-        "Simplifica el menú de Ajustes eliminando opciones redundantes mientras se guarda tu vista de grupos de cuentas.",
-      fixItem33:
-        "Elimina las fichas flotantes de guía en los formularios para una experiencia de entrada más limpia y sin distracciones.",
-      fixItem34:
-        "Presenta los pasos de guía de cuentas predeterminadas solo al editar un bolsillo existente.",
-      fixItem35:
-        "Muestra una confirmación en vivo e indicador de carga al cambiar temas de color o estilos personalizados sin pausas.",
-      fixItem36:
-        "Toca cualquier gráfico de patrimonio neto para abrir un inspector a pantalla completa con selección fluida de meses.",
-      fixItem37:
-        "Resuelve bloqueos y muestra respuesta inmediata al cambiar de pestañas en informes, fechas, idiomas y monedas.",
-      fixItem38:
-        "Abre formularios de categorías, metas, presupuestos y cuentas al instante sin pausas ni parpadeos.",
-      fixItem39:
-        "Aclara el mensaje de seguridad de la copia de seguridad local para archivos guardados en el dispositivo.",
-      fixItem40:
-        "Centra verticalmente las flechas flotantes de desplazamiento en las barras de filtros horizontales.",
-      fixItem41:
-        "Corrige los interruptores en Más Funciones para que activar o desactivar funciones sea inmediato y fluido.",
+        "Corrige espaciados, bordes y márgenes en tarjetas de gráficos, notas de desarrollador y formularios de divisas.",
     },
     v140: {
       date: "5 de noviembre de 2026",

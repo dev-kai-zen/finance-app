@@ -930,207 +930,73 @@ export const en = {
       newItem1:
         "Import accounts and transaction history from CSV files with guided account and category matching.",
       newItem2:
-        "Review balances, check similar records, and save a safety backup before importing.",
-      newItem3: "Download CSV templates directly to a folder on your device.",
+        "Review balances, detect duplicates, and create a safety backup before applying imported CSV data.",
+      newItem3:
+        "Download sample CSV templates directly to your device for easy data formatting.",
       newItem4:
-        "Match transaction types from other apps and automatically match categories using Kai's knowledge.",
-      newItem5:
         "Add advance posting to record upcoming scheduled transactions early and automatically advance to the next cycle.",
-      newItem6:
-        "Add an interactive walkthrough tour for Credit Cards to explore billing cycles, cutoffs, utilization, and installments.",
-      newItem7:
-        "Add an interactive walkthrough tour for Reports to explore category breakdowns, visual charts, and date filters.",
+      newItem5:
+        "Add interactive walkthrough tours for Credit Cards and Reports to explore billing cycles, cutoffs, and visual charts.",
       improveItem1:
-        "Tap or drag along the net worth chart to view exact balances and dates with touch tooltips.",
+        "Expand Net Worth with a full-screen inspector, 7-day and yearly views, touch tooltips, and year filters.",
       improveItem2:
-        "Improve walkthrough tours with high-contrast buttons, dedicated close buttons, and touch protection.",
+        "Enhance walkthrough tours with high-contrast buttons, a clear Skip option, and a smooth step sequence.",
       improveItem3:
-        "Open the app terms from Settings, next to the privacy policy.",
+        "Streamline transaction entry with a unified date-time picker, simplified transfer options, and compact field customization.",
       improveItem4:
-        "Simplify transaction date entry with a unified calendar and time selector.",
+        "Improve transaction filters with a multi-select label dropdown, front-aligned Clear All button, and balanced action buttons.",
       improveItem5:
-        "Rename the credit card monitoring screen title to Credit Cards for clearer navigation.",
+        "Add tap-to-reverse sorting with skeleton loading, a return-to-top button, and rounded swipe action cards.",
       improveItem6:
-        "Filter credit card billed items by statement cutoff date and view full statement activities in a dedicated screen.",
+        "Enhance Credit Cards with statement cutoff filters, dedicated activity review, and organized setup settings.",
       improveItem7:
-        "Show handy arrow buttons to smoothly scroll horizontal tabs, chips, and lists when more items are hidden.",
+        "Open account details directly from dashboard cards and keep editing balances visible when privacy mode is enabled.",
       improveItem8:
-        "Simplify data reset confirmation by typing RESET instead of the app name.",
+        "Show cycle toast notifications and keep amounts visible when editing scheduled transactions in privacy mode.",
       improveItem9:
-        "Update the dashboard walkthrough to dynamically highlight active cards in your customized order.",
+        "Streamline the top navigation privacy button with an interactive loading state.",
       improveItem10:
-        "Streamline the net worth card by using the main privacy button in the top navigation bar.",
+        "Simplify Settings menus, standardize confirmation dialogs, and confirm data resets by typing RESET.",
       improveItem11:
-        "Open an account's details and settings directly when tapping its card on the dashboard.",
-      improveItem12:
-        "Keep the latest balance visible when editing an account, even with privacy mode turned on.",
-      improveItem13:
-        "Group credit card limit and statement settings into a distinct card in account setup.",
-      improveItem14:
-        "Display balances for archived accounts and pockets even when privacy mode is turned on.",
-      improveItem15:
-        "Shorten the account group name example to keep the placeholder clean on a single line.",
-      improveItem16:
-        "Keep transaction amounts visible in scheduled transactions even when privacy mode is turned on.",
-      improveItem17:
-        "Show a toast notification with the next cycle date when advance posting a scheduled transaction.",
-      improveItem18:
-        "Show an in-app confirmation modal when saving exported transaction data to the device.",
-      improveItem19:
-        "Update the transaction label filter to a multi-select dropdown list matching the account filter.",
-      improveItem20:
-        "Position the Clear all filter button at the front of active filters so it is immediately accessible without scrolling.",
-      improveItem21:
-        "Simplify the transaction type picker by renaming Fund Transfer to Transfer for cleaner balance.",
-      improveItem22:
-        "Move the transfer fee explanation to a helper icon modal to keep the form clean and compact.",
-      improveItem23:
-        "Align the New label button beside the active labels section and update the close button.",
-      improveItem24:
-        "Show a floating scroll down arrow across scrollable sheets and forms when items are hidden below.",
-      improveItem25:
-        "Simplify the customize fields sheet by removing repetitive descriptions for always-on fields.",
-      improveItem26:
-        "Update the select labels modal with a dedicated manage labels chip and a circular close button.",
-      improveItem27:
-        "Add draggable tour guide chips to all form modals and sheets for instant, on-demand walkthroughs.",
-      improveItem28:
-        "Show a confirmation prompt when leaving the category reorder screen with unsaved changes.",
-      improveItem29:
-        "Place the note field right below the goal title in the savings goal form for easier note-taking.",
-      improveItem30:
-        "Simplify the Settings screen by removing redundant descriptions and streamlining the theme label.",
-      improveItem31:
-        "Show a quick toast notification instead of a popup modal when updating the local backup frequency.",
-      improveItem32:
-        "Replace the Google Drive check icon and disconnect button with an account disconnect chip.",
-      improveItem33:
-        "Show a smooth skeleton placeholder while connecting to Google Drive instead of a loading spinner.",
-      improveItem34:
-        "Standardize Restore Defaults and confirmation dialogs with themed in-app modals.",
-      improveItem35:
-        "Position the security info button next to the Password & Fingerprint title for clearer access.",
-      improveItem36:
-        "Streamline SQLite Monitor layout and show a progress modal while database vacuuming is in progress.",
-      improveItem37:
-        "Standardize Manage Kai Knowledge screen header with the app's unified navigation back button.",
-      improveItem38:
-        "Add quick custom hex color creation in Theme Studio and harmonize color picker swatches across all screens without layout jumps.",
-      improveItem39:
-        "Standardize help and info icons across all screens using question marks for interactive explanations and info marks for callout notices.",
-      improveItem40:
         "Toggle expanded and collapsed account group views and set your default preference in Settings.",
-      improveItem41:
-        "Combine transaction Date and Amount sort buttons with direction arrows to toggle sort order on tap.",
-      improveItem42:
-        "Standardize the Quick Presets screen with a floating add button at the bottom corner.",
-      improveItem43:
-        "Show a loading indicator on the privacy eye button while masking or unmasking sensitive numbers.",
-      improveItem44:
-        "Show an instant toggle transition with a micro loader inside the switch circle while updating.",
-      improveItem45:
-        "Show a smooth skeleton placeholder when changing transaction sorting by date or amount.",
-      improveItem46:
-        "Add a subtle divider shadow below the sidebar search box and an animated indicator for the active screen.",
-      improveItem47:
-        "Add a circular close button and loading indicator on feature toggles in the More Features menu.",
-      improveItem48:
-        "Follow the Settings guided tour smoothly in top-to-bottom order covering all menu options.",
-      improveItem49:
-        "Tap a floating double-arrow button whenever transactions are scrolled above to smoothly return to the top.",
-      improveItem50:
-        "Round the card corners when swiping left to duplicate transactions for a cohesive look matching Notes.",
-      improveItem51:
-        "Clean up the sidebar search divider into a simple, flat line matching the More Features menu.",
-      improveItem52:
-        "Unify walkthrough guide cards with a clear Skip button across modal forms.",
-      improveItem53:
-        "Show a 7-day weekly view and all-time yearly view on the net worth chart.",
-      improveItem54:
-        "Display budget item count badges directly on frequency filter chips.",
-      improveItem55:
-        "Filter net worth history by specific years when viewing all-time progress.",
+      improveItem12:
+        "Create custom hex colors in Theme Studio with harmonized, jump-free swatches across all screens.",
+      improveItem13:
+        "Streamline Google Drive connection with a disconnect chip, skeleton placeholder, and backup frequency toast feedback.",
+      improveItem14:
+        "Add smooth horizontal arrow buttons, floating scroll indicators, and micro loader transitions on feature toggles.",
+      improveItem15:
+        "Clean up the sidebar search divider into a flat line with an animated indicator for the active screen.",
+      improveItem16:
+        "Standardize help and info icons across screens and display count badges on budget frequency chips.",
+      improveItem17:
+        "Place the note field right below the goal title and prompt for confirmation when leaving unsaved category changes.",
+      improveItem18:
+        "Streamline SQLite Monitor layout and show a progress modal while database vacuuming is in progress.",
       fixItem1:
-        "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
+        "Ensure privacy mode consistently masks balances, credit card utilization, savings goals, and report figures across all screens.",
       fixItem2:
-        "Hide credit card billed, unbilled, and outstanding amounts when privacy mode is active.",
-      fixItem3: "Prevent version history from showing while the app is locked.",
-      fixItem4:
-        "Fix section titles in the developer note overlapping card borders on smaller screens.",
-      fixItem5:
-        "Prevent app lock from triggering when sharing files or selecting photos.",
-      fixItem6:
-        "Fix chart spacing so month labels and recent amounts are fully visible without getting cut off.",
-      fixItem7:
-        "Hide account balances, top spending amounts, and category percentages when privacy mode is active.",
-      fixItem8:
-        "Fix month selection on the net worth chart so tapping any month highlights that specific point.",
-      fixItem9:
-        "Fix the Top Spending card's View all button to open this month's spending transactions.",
-      fixItem10:
-        "Fix visual glitch and unintended circle animation when enabling toggles across forms and settings.",
-      fixItem11:
-        "Keep the color name and hex code fields visible above the keyboard when creating custom colors.",
-      fixItem12:
-        "Fix issue where the header walkthrough guide from Settings incorrectly appeared on the Credit Cards screen.",
-      fixItem13:
-        "Hide credit card utilization ring, due amounts, and card chip balances when privacy mode is enabled.",
-      fixItem14:
-        "Center rollover behavior options and label in the category budget form.",
-      fixItem15:
-        "Standardize color picker swatch sizing so selected colors are prominent and unselected colors remain compact.",
-      fixItem16:
-        "Hide savings goal targets, balances, progress, and monthly pace recommendations when privacy mode is active.",
-      fixItem17:
-        "Hide savings rates and progress indicators in Cash Flow reports when privacy mode is active.",
-      fixItem18:
-        "Color cash flow chart details by positive or negative net, respecting neutral colors and privacy mode.",
-      fixItem19:
-        "Color net worth growth chart details by positive or negative change, respecting neutral colors and privacy mode.",
-      fixItem20:
-        "Fix issue where the header walkthrough guide on Reports incorrectly triggered the Goals tour.",
-      fixItem21:
-        "Fix missing screen padding in the currency catalog and add currency form.",
-      fixItem22:
-        "Fix walkthrough scrolling so menu options never get cut off or hidden behind the navigation header.",
-      fixItem23:
-        "Fix Google Drive Quick Sync so switching accounts automatically re-links to the new account's backup.",
-      fixItem24:
-        "Prevent transaction group errors by restricting transfer type conversions when editing existing transactions.",
-      fixItem25:
-        "Align the daily inspiration quote toggle in dashboard customization with the other card switches.",
-      fixItem26:
-        "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
-      fixItem27:
-        "Fix slow screen transitions so navigating across tabs, lists, and forms feels fast and smooth.",
-      fixItem28:
-        "Equalize Cancel and Apply Filters button widths and fix floating scroll down arrows across modals.",
-      fixItem29:
-        "Resolve an issue where opening Reports from the navigation menu caused the app to close unexpectedly.",
-      fixItem30:
         "Keep billed item amounts and details visible when reviewing credit card statements even if privacy mode is active.",
-      fixItem31:
-        "Show quick toast feedback immediately when changing local backup frequency without screen freezing.",
-      fixItem32:
-        "Declutter the Settings menu by removing redundant toggles while keeping your account group view saved.",
-      fixItem33:
-        "Remove intrusive floating guide chips across form sheets for a cleaner, distraction-free input experience.",
-      fixItem34:
-        "Present default account walkthrough steps only when editing an existing pocket.",
-      fixItem35:
-        "Show live applying feedback and loading indicator when switching color themes or custom styles without screen freezing.",
-      fixItem36:
-        "Tap any net worth chart to open a full-screen inspector with smooth month selection and clear figures.",
-      fixItem37:
-        "Resolve freezing and show immediate feedback when switching report tabs, dates, languages, and currencies.",
-      fixItem38:
-        "Open category, goal, budget, and account forms instantly without pause or blank flickering.",
-      fixItem39:
-        "Clarify offline local backup security guidance for saved device files.",
-      fixItem40:
-        "Center floating scroll arrows vertically across horizontal filter bars.",
-      fixItem41:
-        "Fix feature toggles in More Features so enabling or disabling features is immediate and responsive.",
+      fixItem3:
+        "Fix tour guide overlays and dock header buttons properly so walkthroughs never overlap or trigger the wrong screen guide.",
+      fixItem4:
+        "Prevent app lock from triggering during photo selection or file sharing, and keep version history locked when protected.",
+      fixItem5:
+        "Optimize navigation transitions and eliminate freezing when switching tabs, dates, languages, and themes.",
+      fixItem6:
+        "Resolve an unexpected app closure when opening Reports and ensure all modal forms open instantly without flickering.",
+      fixItem7:
+        "Prevent transaction group errors by restricting transfer type conversions and fix Top Spending shortcuts.",
+      fixItem8:
+        "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
+      fixItem9:
+        "Fix month selection on the net worth chart and color-code growth charts by positive or negative change.",
+      fixItem10:
+        "Fix Google Drive account switching to auto-relink backups and clarify offline backup security guidance.",
+      fixItem11:
+        "Fix toggle switch animations and align custom card switches across dashboard and settings.",
+      fixItem12:
+        "Fix layout spacing, border overlaps, and missing padding across chart cards, developer notes, and currency forms.",
     },
     v140: {
       date: "November 5, 2026",
