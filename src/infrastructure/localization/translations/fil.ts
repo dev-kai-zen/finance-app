@@ -1066,6 +1066,8 @@ export const fil = {
         "Magdagdag ng anino at divider sa ilalim ng sidebar search box at animated indicator para sa napiling screen.",
       improveItem47:
         "Maglagay ng pabilog na close button at loading indicator sa mga toggle sa More Features menu.",
+      improveItem48:
+        "Sundan ang gabay sa Mga Setting mula itaas pababa na sumasaklaw sa lahat ng opsyon.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1126,6 +1128,10 @@ export const fil = {
         "Ayusin ang isyu kung saan ang pagbubukas ng Reports mula sa menu ay nagdulot ng biglaang pagsasara ng app.",
       fixItem30:
         "Panatilihing nakikita ang mga halaga ng billed items kapag sinusuri ang mga statement ng credit card kahit naka-on ang privacy mode.",
+      fixItem31:
+        "Magpakita agad ng abiso kapag binabago ang dalas ng lokal na backup nang hindi nagla-lag ang screen.",
+      fixItem32:
+        "Gawing mas maayos ang Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na switch habang nananatiling naka-save ang view ng account groups.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2341,6 +2347,36 @@ export const fil = {
     stepVersionHistoryTitle: "Kasaysayan ng Bersyon",
     stepVersionHistoryDesc:
       "Tingnan ang mga pagbabago sa bawat bersyon ng app, kasama ang mga bagong tampok, pag-aayos, at pagpapabuti.",
+    stepDataImportTitle: "Mag-import ng Data",
+    stepDataImportDesc:
+      "Mag-import ng mga panlabas na transaksyon at file sa pananalapi sa iyong lokal na ledger.",
+    stepQuickSearchTitle: "Mabilis na Paghahanap",
+    stepQuickSearchDesc:
+      "I-enable ang shortcut sa pangkalahatang paghahanap upang mabilis na mahanap ang mga account, kategorya, at talaan.",
+    stepHapticsTitle: "Haptic Feedback",
+    stepHapticsDesc:
+      "I-configure ang vibration feedback sa bawat pagpindot ng button at paglalagay sa keypad.",
+    stepSoundTitle: "Sound Effects",
+    stepSoundDesc:
+      "I-toggle ang mga kaaya-ayang tunog kapag nagtatala ng transaksyon o gumagawa ng aksyon.",
+    stepKaiChatModeTitle: "Mode ng Chat kay Kai",
+    stepKaiChatModeDesc:
+      "Pumili sa pagitan ng Auto Mode para agad itala o Review Mode para suriin muna bago i-save.",
+    stepDeveloperMessageTitle: "Mensahe ng Developer at Layunin",
+    stepDeveloperMessageDesc:
+      "Basahin ang personal na kwento, pananaw, at pangunahing layunin sa likod ng Kaizen Finance.",
+    stepSupportDevelopmentTitle: "Suportahan ang Pag-develop",
+    stepSupportDevelopmentDesc:
+      "Suportahan ang patuloy na pag-develop at mga darating na update para sa Kaizen Finance.",
+    stepPrivacyTitle: "Patakaran sa Privacy",
+    stepPrivacyDesc:
+      "Suriin ang aming pangako sa privacy at pagpapanatili ng iyong data sa iyong device lamang.",
+    stepTermsTitle: "Mga Tuntunin ng Serbisyo",
+    stepTermsDesc:
+      "Tingnan ang mga tuntunin at kundisyon na namamahala sa paggamit at mga serbisyo ng app.",
+    stepAppVersionTitle: "Bersyon ng App",
+    stepAppVersionDesc:
+      "Tingnan ang kasalukuyang naka-install na bersyon ng app at impormasyon ng release.",
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",

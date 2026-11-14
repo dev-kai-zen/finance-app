@@ -1033,6 +1033,8 @@ export const en = {
         "Add a subtle divider shadow below the sidebar search box and an animated indicator for the active screen.",
       improveItem47:
         "Add a circular close button and loading indicator on feature toggles in the More Features menu.",
+      improveItem48:
+        "Follow the Settings guided tour smoothly in top-to-bottom order covering all menu options.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -1092,6 +1094,10 @@ export const en = {
         "Resolve an issue where opening Reports from the navigation menu caused the app to close unexpectedly.",
       fixItem30:
         "Keep billed item amounts and details visible when reviewing credit card statements even if privacy mode is active.",
+      fixItem31:
+        "Show quick toast feedback immediately when changing local backup frequency without screen freezing.",
+      fixItem32:
+        "Declutter the Settings menu by removing redundant toggles while keeping your account group view saved.",
     },
     v140: {
       date: "November 5, 2026",
@@ -2297,6 +2303,36 @@ export const en = {
     stepVersionHistoryTitle: "Version History",
     stepVersionHistoryDesc:
       "Browse what changed in every version of the app, including new features, fixes, and improvements.",
+    stepDataImportTitle: "Import Data",
+    stepDataImportDesc:
+      "Import external transactions and financial files into your local ledger.",
+    stepQuickSearchTitle: "Quick Search",
+    stepQuickSearchDesc:
+      "Enable global search shortcut to instantly search accounts, categories, and entries.",
+    stepHapticsTitle: "Haptic Feedback",
+    stepHapticsDesc:
+      "Configure vibration feedback intensity for button clicks and numpad entries.",
+    stepSoundTitle: "Sound Effects",
+    stepSoundDesc:
+      "Toggle auditory sound effects when completing transactions and actions.",
+    stepKaiChatModeTitle: "Chat with Kai Mode",
+    stepKaiChatModeDesc:
+      "Choose between Auto Mode to log entries immediately or Review Mode to inspect first.",
+    stepDeveloperMessageTitle: "Developer Message & Goal",
+    stepDeveloperMessageDesc:
+      "Read the personal story, vision, and core purpose behind Kaizen Finance.",
+    stepSupportDevelopmentTitle: "Support Development",
+    stepSupportDevelopmentDesc:
+      "Support future development and updates for Kaizen Finance.",
+    stepPrivacyTitle: "Privacy Policy",
+    stepPrivacyDesc:
+      "Review our commitment to privacy and keeping your financial data exclusively on your device.",
+    stepTermsTitle: "Terms of Service",
+    stepTermsDesc:
+      "View the terms and conditions governing the usage and services of the application.",
+    stepAppVersionTitle: "App Version",
+    stepAppVersionDesc:
+      "Check your installed build number, release tag, and environment details.",
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",

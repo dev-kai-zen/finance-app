@@ -83,17 +83,11 @@ import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
 import { useSoundAndHaptics } from "../hooks/use-sound-and-haptics";
-import { usePrivacyMode } from "../hooks/use-privacy-mode";
 import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { HapticFeedbackSettingsModal } from "../components/haptic-feedback-settings-modal";
 import { SoundEffectsSettingsModal } from "../components/sound-effects-settings-modal";
 import { PRIVACY_POLICY_URL, TERMS_URL } from "../constants/settings.constants";
-import {
-  getAccountsGroupViewMode,
-  setAccountsGroupViewMode,
-  type AccountsGroupViewMode,
-} from "../services/accounts-group-view-mode.service";
 import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
@@ -135,7 +129,6 @@ function SettingsScreenContent() {
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const { shakeAction, setShakeAction } = useShakeActionSetting();
   const soundAndHaptics = useSoundAndHaptics();
-  const privacyMode = usePrivacyMode();
   const { triggerShakeAction } = useQuickEntry();
   const [isGesturesModalOpen, setIsGesturesModalOpen] = useState(false);
   const [isHapticsModalOpen, setIsHapticsModalOpen] = useState(false);
@@ -231,6 +224,8 @@ function SettingsScreenContent() {
             setIsSoundModalOpen(true);
           } else if (target === "settingsGestures") {
             setIsGesturesModalOpen(true);
+          } else if (target === "settingsKaiChatMode") {
+            setIsChatSettingsOpen(true);
           } else if (target === "settingsPro") {
             setIsPaywallOpen(true);
           }
@@ -271,56 +266,36 @@ function SettingsScreenContent() {
   const resetData = useResetData();
   const experience = useExperiencePreferences();
 
-  const [accountsGroupViewMode, setAccountsGroupViewModeState] =
-    useState<AccountsGroupViewMode>(() => {
-      try {
-        return getAccountsGroupViewMode();
-      } catch {
-        return "expanded";
-      }
-    });
-
-  useFocusEffect(
-    useCallback(() => {
-      try {
-        setAccountsGroupViewModeState(getAccountsGroupViewMode());
-      } catch {
-        // Ignore
-      }
-    }, []),
-  );
-
-  const handleToggleAccountsGroupViewMode = useCallback(() => {
-    const nextMode =
-      accountsGroupViewMode === "expanded" ? "collapsed" : "expanded";
-    setAccountsGroupViewModeState(nextMode);
-    try {
-      setAccountsGroupViewMode(nextMode);
-    } catch {
-      // Ignore
-    }
-  }, [accountsGroupViewMode]);
-
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
   const currencyRef = useWalkthroughTarget("settingsCurrency");
-  const nicknameRef = useWalkthroughTarget("settingsNickname");
-  const themeRef = useWalkthroughTarget("settingsTheme");
-  const remindersRef = useWalkthroughTarget("settingsReminders");
-  const widgetsRef = useWalkthroughTarget("settingsWidgets");
-  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
-  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
-  const gesturesRef = useWalkthroughTarget("settingsGestures");
-  const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
-  const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
-  const hexColorsRef = useWalkthroughTarget("settingsHexColors");
-  const resetDataRef = useWalkthroughTarget("settingsResetData");
+  const dataImportRef = useWalkthroughTarget("settingsDataImport");
   const localBackupRef = useWalkthroughTarget("settingsLocalBackup");
   const googleDriveRef = useWalkthroughTarget("settingsGoogleDrive");
+  const resetDataRef = useWalkthroughTarget("settingsResetData");
+  const nicknameRef = useWalkthroughTarget("settingsNickname");
+  const themeRef = useWalkthroughTarget("settingsTheme");
+  const hexColorsRef = useWalkthroughTarget("settingsHexColors");
+  const gesturesRef = useWalkthroughTarget("settingsGestures");
+  const quickSearchRef = useWalkthroughTarget("settingsQuickSearch");
+  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
+  const hapticsRef = useWalkthroughTarget("settingsHaptics");
+  const soundRef = useWalkthroughTarget("settingsSound");
+  const kaiChatModeRef = useWalkthroughTarget("settingsKaiChatMode");
+  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
+  const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
+  const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
+  const remindersRef = useWalkthroughTarget("settingsReminders");
+  const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const securityRef = useWalkthroughTarget("settingsSecurity");
   const proRef = useWalkthroughTarget("settingsPro");
   const restorePurchasesRef = useWalkthroughTarget("settingsRestorePurchases");
   const versionHistoryRef = useWalkthroughTarget("settingsVersionHistory");
+  const developerMessageRef = useWalkthroughTarget("settingsDeveloperMessage");
+  const supportDevelopmentRef = useWalkthroughTarget("settingsSupportDevelopment");
+  const privacyRef = useWalkthroughTarget("settingsPrivacy");
+  const termsRef = useWalkthroughTarget("settingsTerms");
+  const appVersionRef = useWalkthroughTarget("settingsAppVersion");
 
   const handleScrollToTarget = useCallback(
     (targetId: WalkthroughTargetId) => {
@@ -496,10 +471,20 @@ function SettingsScreenContent() {
           <Text style={styles.sectionTitle}>{t("settings.backupDataSection")}</Text>
           <View style={styles.card}>
             <Pressable
+              ref={dataImportRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDataImport"] =
+                  (sectionOffsets.current["backup"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("dataImport.title")}
               accessibilityRole="button"
               onPress={() => router.push("/data-import")}
-              style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsDataImport" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
             >
               <View style={styles.iconContainer}>
                 <Database color={theme.colors.textSecondary} size={20} />
@@ -794,6 +779,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <View
+              ref={quickSearchRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsQuickSearch"] =
@@ -828,7 +814,10 @@ function SettingsScreenContent() {
                 itemScrollY.current["settingsGuideHelper"] =
                   (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
               }}
-              style={styles.toggleRow}
+              style={[
+                styles.toggleRow,
+                highlightedTarget === "settingsGuideHelper" && styles.settingRowHighlighted,
+              ]}
             >
               <View style={styles.iconContainer}>
                 <Sparkles color={theme.colors.accent} size={20} />
@@ -849,6 +838,7 @@ function SettingsScreenContent() {
 
             {/* Haptic Feedback Row -> opens modal */}
             <Pressable
+              ref={hapticsRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsHaptics"] =
@@ -883,6 +873,7 @@ function SettingsScreenContent() {
 
             {/* Sound Effects Row -> opens modal */}
             <Pressable
+              ref={soundRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsSound"] =
@@ -916,11 +907,18 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={kaiChatModeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsKaiChatMode"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.kaiChatModeTitle")}
               accessibilityRole="button"
               onPress={() => setIsChatSettingsOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsKaiChatMode" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -1047,40 +1045,6 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            <Pressable
-              accessibilityLabel={`${t("settings.defaultAccountGroupsViewLabel")}: ${accountsGroupViewMode === "collapsed" ? t("settings.accountsGroupViewCollapsed") : t("settings.accountsGroupViewExpanded")}`}
-              accessibilityRole="button"
-              onPress={handleToggleAccountsGroupViewMode}
-              style={({ pressed }) => [
-                styles.settingRow,
-                pressed && styles.settingRowPressed,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                <Layers color={theme.colors.primary} size={20} />
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.defaultAccountGroupsViewLabel")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.defaultAccountGroupsViewDescription")}
-                </Text>
-              </View>
-              <View style={styles.rowAccessory}>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countBadgeText}>
-                    {accountsGroupViewMode === "collapsed"
-                      ? t("settings.accountsGroupViewCollapsed")
-                      : t("settings.accountsGroupViewExpanded")}
-                  </Text>
-                </View>
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </View>
-            </Pressable>
           </View>
         </View>
 
@@ -1205,39 +1169,6 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            {/* Stealth Mode (Hide Balances) Switch Row */}
-            <View
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsStealth"] =
-                  (sectionOffsets.current["security"] || 0) + e.nativeEvent.layout.y;
-              }}
-              style={[
-                styles.toggleRow,
-                highlightedTarget === "settingsStealth" && styles.settingRowHighlighted,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                {privacyMode.isPrivate ? (
-                  <EyeOff color={theme.colors.primary} size={20} />
-                ) : (
-                  <Eye color={theme.colors.primary} size={20} />
-                )}
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.stealthModeTitle")}
-                </Text>
-              </View>
-              <ThemedSwitch
-                accessibilityLabel={t("settings.stealthModeTitle")}
-                onValueChange={(value) => privacyMode.setPrivacyMode(value)}
-                value={privacyMode.isPrivate}
-              />
-            </View>
           </View>
         </View>
 
@@ -1506,6 +1437,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={developerMessageRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsDeveloperMessage"] =
@@ -1534,6 +1466,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={supportDevelopmentRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsSupportDevelopment"] =
@@ -1562,6 +1495,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={privacyRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsPrivacy"] =
@@ -1595,6 +1529,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={termsRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsTerms"] =
@@ -1628,12 +1563,18 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={appVersionRef as any}
               collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsAppVersion"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={`${t("settings.appVersion")}: ${appVersionSummary}`}
               accessibilityRole="button"
               onPress={() => setIsVersionHistoryOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsAppVersion" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >

@@ -90,7 +90,7 @@ export function AppToast({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [visible, duration, onClose, anim]);
+  }, [visible, message, description, duration, onClose, anim]);
 
   if (!shouldRender) return null;
 

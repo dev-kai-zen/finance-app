@@ -22,29 +22,39 @@ const { en } = require("../../../infrastructure/localization/translations/en.ts"
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
 const { fil } = require("../../../infrastructure/localization/translations/fil.ts");
 
-test("settings walkthrough: defines all 19 steps in exact required sequence", () => {
-  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 19);
+test("settings walkthrough: defines all 29 steps in exact required sequence", () => {
+  assert.equal(SETTINGS_WALKTHROUGH_STEPS.length, 29);
 
   const expectedSequence = [
     { targetId: "settingsLanguage", titleKey: "settingsWalkthrough.stepLanguageTitle" },
     { targetId: "settingsCurrency", titleKey: "settingsWalkthrough.stepCurrencyTitle" },
-    { targetId: "settingsNickname", titleKey: "settingsWalkthrough.stepNicknameTitle" },
-    { targetId: "settingsTheme", titleKey: "settingsWalkthrough.stepThemeTitle" },
-    { targetId: "settingsReminders", titleKey: "settingsWalkthrough.stepRemindersTitle" },
-    { targetId: "settingsWidgets", titleKey: "settingsWalkthrough.stepWidgetsTitle" },
-    { targetId: "settingsGuideHelper", titleKey: "settingsWalkthrough.stepGuideHelperTitle" },
-    { targetId: "settingsKaiKnowledge", titleKey: "settingsWalkthrough.stepKaiKnowledgeTitle" },
-    { targetId: "settingsGestures", titleKey: "settingsWalkthrough.stepGesturesTitle" },
-    { targetId: "settingsDefaultExpense", titleKey: "settingsWalkthrough.stepDefaultExpenseTitle" },
-    { targetId: "settingsDefaultIncome", titleKey: "settingsWalkthrough.stepDefaultIncomeTitle" },
-    { targetId: "settingsHexColors", titleKey: "settingsWalkthrough.stepHexColorsTitle" },
-    { targetId: "settingsResetData", titleKey: "settingsWalkthrough.stepResetDataTitle" },
+    { targetId: "settingsDataImport", titleKey: "settingsWalkthrough.stepDataImportTitle" },
     { targetId: "settingsLocalBackup", titleKey: "settingsWalkthrough.stepLocalBackupTitle" },
     { targetId: "settingsGoogleDrive", titleKey: "settingsWalkthrough.stepGoogleDriveTitle" },
+    { targetId: "settingsResetData", titleKey: "settingsWalkthrough.stepResetDataTitle" },
+    { targetId: "settingsNickname", titleKey: "settingsWalkthrough.stepNicknameTitle" },
+    { targetId: "settingsTheme", titleKey: "settingsWalkthrough.stepThemeTitle" },
+    { targetId: "settingsHexColors", titleKey: "settingsWalkthrough.stepHexColorsTitle" },
+    { targetId: "settingsGestures", titleKey: "settingsWalkthrough.stepGesturesTitle" },
+    { targetId: "settingsQuickSearch", titleKey: "settingsWalkthrough.stepQuickSearchTitle" },
+    { targetId: "settingsGuideHelper", titleKey: "settingsWalkthrough.stepGuideHelperTitle" },
+    { targetId: "settingsHaptics", titleKey: "settingsWalkthrough.stepHapticsTitle" },
+    { targetId: "settingsSound", titleKey: "settingsWalkthrough.stepSoundTitle" },
+    { targetId: "settingsKaiChatMode", titleKey: "settingsWalkthrough.stepKaiChatModeTitle" },
+    { targetId: "settingsKaiKnowledge", titleKey: "settingsWalkthrough.stepKaiKnowledgeTitle" },
+    { targetId: "settingsDefaultExpense", titleKey: "settingsWalkthrough.stepDefaultExpenseTitle" },
+    { targetId: "settingsDefaultIncome", titleKey: "settingsWalkthrough.stepDefaultIncomeTitle" },
+    { targetId: "settingsReminders", titleKey: "settingsWalkthrough.stepRemindersTitle" },
+    { targetId: "settingsWidgets", titleKey: "settingsWalkthrough.stepWidgetsTitle" },
     { targetId: "settingsSecurity", titleKey: "settingsWalkthrough.stepSecurityTitle" },
     { targetId: "settingsPro", titleKey: "settingsWalkthrough.stepProTitle" },
     { targetId: "settingsRestorePurchases", titleKey: "settingsWalkthrough.stepRestorePurchasesTitle" },
     { targetId: "settingsVersionHistory", titleKey: "settingsWalkthrough.stepVersionHistoryTitle" },
+    { targetId: "settingsDeveloperMessage", titleKey: "settingsWalkthrough.stepDeveloperMessageTitle" },
+    { targetId: "settingsSupportDevelopment", titleKey: "settingsWalkthrough.stepSupportDevelopmentTitle" },
+    { targetId: "settingsPrivacy", titleKey: "settingsWalkthrough.stepPrivacyTitle" },
+    { targetId: "settingsTerms", titleKey: "settingsWalkthrough.stepTermsTitle" },
+    { targetId: "settingsAppVersion", titleKey: "settingsWalkthrough.stepAppVersionTitle" },
   ];
 
   expectedSequence.forEach((expected, index) => {
@@ -55,27 +65,37 @@ test("settings walkthrough: defines all 19 steps in exact required sequence", ()
   });
 });
 
-test("settings walkthrough: translations exist for all 19 steps across en, es, and fil", () => {
+test("settings walkthrough: translations exist for all 29 steps across en, es, and fil", () => {
   const stepSuffixes = [
     "Language",
     "Currency",
-    "Nickname",
-    "Theme",
-    "Reminders",
-    "Widgets",
-    "GuideHelper",
-    "KaiKnowledge",
-    "Gestures",
-    "DefaultExpense",
-    "DefaultIncome",
-    "HexColors",
-    "ResetData",
+    "DataImport",
     "LocalBackup",
     "GoogleDrive",
+    "ResetData",
+    "Nickname",
+    "Theme",
+    "HexColors",
+    "Gestures",
+    "QuickSearch",
+    "GuideHelper",
+    "Haptics",
+    "Sound",
+    "KaiChatMode",
+    "KaiKnowledge",
+    "DefaultExpense",
+    "DefaultIncome",
+    "Reminders",
+    "Widgets",
     "Security",
     "Pro",
     "RestorePurchases",
     "VersionHistory",
+    "DeveloperMessage",
+    "SupportDevelopment",
+    "Privacy",
+    "Terms",
+    "AppVersion",
   ];
 
   for (const suffix of stepSuffixes) {

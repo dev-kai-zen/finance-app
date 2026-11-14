@@ -1052,6 +1052,8 @@ export const es = {
         "Agregar una sombra y divisor debajo del buscador lateral y un indicador animado para la pantalla activa.",
       improveItem47:
         "Agregar un botón circular de cierre e indicador de carga en las opciones del menú Más Funciones.",
+      improveItem48:
+        "Sigue la guía paso a paso de Ajustes en orden de arriba a abajo cubriendo todas las opciones.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -1112,6 +1114,10 @@ export const es = {
         "Corrige un error por el cual abrir Informes desde el menú cerraba la aplicación de forma inesperada.",
       fixItem30:
         "Mantener visibles los montos y detalles al revisar los estados de cuenta de tarjetas de crédito incluso con el modo de privacidad activo.",
+      fixItem31:
+        "Muestra una confirmación rápida al cambiar la frecuencia de copia de seguridad local sin pausar la pantalla.",
+      fixItem32:
+        "Simplifica el menú de Ajustes eliminando opciones redundantes mientras se guarda tu vista de grupos de cuentas.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -2326,6 +2332,36 @@ export const es = {
     stepVersionHistoryTitle: "Historial de versiones",
     stepVersionHistoryDesc:
       "Consulta qué cambió en cada versión de la app, incluidas nuevas funciones, correcciones y mejoras.",
+    stepDataImportTitle: "Importar datos",
+    stepDataImportDesc:
+      "Importa transacciones y archivos financieros externos a tu registro local.",
+    stepQuickSearchTitle: "Búsqueda rápida",
+    stepQuickSearchDesc:
+      "Activa el acceso directo de búsqueda global para encontrar cuentas, categorías y registros rápidamente.",
+    stepHapticsTitle: "Respuesta háptica",
+    stepHapticsDesc:
+      "Configura la vibración táctil al pulsar botones y registrar entradas en el teclado.",
+    stepSoundTitle: "Efectos de sonido",
+    stepSoundDesc:
+      "Activa efectos de sonido agradables al registrar transacciones y completar acciones.",
+    stepKaiChatModeTitle: "Modo de chat con Kai",
+    stepKaiChatModeDesc:
+      "Elige entre Modo Automático para registrar al instante o Modo Revisión para inspeccionar antes de guardar.",
+    stepDeveloperMessageTitle: "Mensaje del desarrollador y meta",
+    stepDeveloperMessageDesc:
+      "Lee la historia personal, la visión y el propósito central detrás de Kaizen Finance.",
+    stepSupportDevelopmentTitle: "Apoyar el desarrollo",
+    stepSupportDevelopmentDesc:
+      "Apoya el desarrollo continuo y las futuras actualizaciones de Kaizen Finance.",
+    stepPrivacyTitle: "Política de privacidad",
+    stepPrivacyDesc:
+      "Revisa nuestro compromiso de privacidad y mantenimiento de tus datos exclusivamente en tu dispositivo.",
+    stepTermsTitle: "Términos de servicio",
+    stepTermsDesc:
+      "Consulta los términos y condiciones que rigen el uso y los servicios de la aplicación.",
+    stepAppVersionTitle: "Versión de la app",
+    stepAppVersionDesc:
+      "Comprueba el número de compilación instalado, la etiqueta de versión y los detalles del entorno.",
   },
   resetData: {
     dismissAccessibility: "Cerrar confirmación de restablecimiento de datos",

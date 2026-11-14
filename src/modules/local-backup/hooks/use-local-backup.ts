@@ -135,21 +135,15 @@ export function useLocalBackup() {
 
   const updateAutomaticConfig = useCallback(
     async (nextConfig: AutomaticBackupConfig): Promise<boolean> => {
-      setOperation("configuring");
-      setNotice(null);
       try {
         await configureAutomaticLocalBackup(nextConfig);
         setConfig(nextConfig);
-        await refresh();
         return true;
-      } catch (error) {
-        setNotice({ variant: "error", message: getErrorMessage(error) });
+      } catch {
         return false;
-      } finally {
-        setOperation("idle");
       }
     },
-    [refresh],
+    [],
   );
 
   return {

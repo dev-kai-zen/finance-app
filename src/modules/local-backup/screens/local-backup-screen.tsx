@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -48,7 +48,10 @@ import type {
 } from "@/modules/local-backup/types/backup.types";
 import { useWorkspace } from "@/modules/onboarding";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
-import { formatBackupScheduleTimeDisplay } from "@/utils/backup-schedule";
+import {
+  BACKUP_SCHEDULE_WEEKDAY_LABELS,
+  formatBackupScheduleTimeDisplay,
+} from "@/utils/backup-schedule";
 
 export function LocalBackupScreen() {
   const { width } = useWindowDimensions();
@@ -80,6 +83,10 @@ export function LocalBackupScreen() {
     visible: false,
     message: "",
   });
+
+  const handleCloseToast = useCallback(() => {
+    setToastState((prev) => ({ ...prev, visible: false }));
+  }, []);
 
   const busy = backup.operation !== "idle" && backup.operation !== "loading";
   const personalWorkspace = workspace.state.mode === "personal";
@@ -129,14 +136,14 @@ export function LocalBackupScreen() {
       ...patch,
     };
     const ok = await backup.updateAutomaticConfig(nextConfig);
-    if (ok) {
-      const frequencyLabel =
-        nextConfig.frequency === "daily"
-          ? "daily"
-          : nextConfig.frequency === "weekly"
-            ? "weekly"
-            : "monthly";
+    const frequencyLabel =
+      nextConfig.frequency === "daily"
+        ? "daily"
+        : nextConfig.frequency === "weekly"
+          ? "weekly"
+          : "monthly";
 
+    if (ok) {
       if (patch.frequency !== undefined) {
         setToastState({
           visible: true,
@@ -155,6 +162,22 @@ export function LocalBackupScreen() {
             : undefined,
           variant: "success",
         });
+      } else if (patch.weekday !== undefined) {
+        const weekdayLabel =
+          BACKUP_SCHEDULE_WEEKDAY_LABELS[nextConfig.weekday] ?? "Sunday";
+        setToastState({
+          visible: true,
+          message: "Backup schedule updated",
+          description: `Scheduled weekly on ${weekdayLabel}.`,
+          variant: "success",
+        });
+      } else if (patch.dayOfMonth !== undefined) {
+        setToastState({
+          visible: true,
+          message: "Backup schedule updated",
+          description: `Scheduled monthly on day ${nextConfig.dayOfMonth}.`,
+          variant: "success",
+        });
       } else {
         setToastState({
           visible: true,
@@ -163,6 +186,12 @@ export function LocalBackupScreen() {
           variant: "success",
         });
       }
+    } else {
+      setToastState({
+        visible: true,
+        message: "Backup schedule update failed",
+        variant: "error",
+      });
     }
   };
 
@@ -466,7 +495,7 @@ export function LocalBackupScreen() {
       description={toastState.description}
       duration={2500}
       message={toastState.message}
-      onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
+      onClose={handleCloseToast}
       position="top"
       variant={toastState.variant ?? "success"}
       visible={toastState.visible}
