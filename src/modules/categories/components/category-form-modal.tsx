@@ -437,23 +437,23 @@ function CategoryFormModalContent({
               </Pressable>
             </WalkthroughTarget>
           </View>
-
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-
-          <CategoryFormWalkthroughOverlay
-            onNext={walkthrough.nextStep}
-            onPrev={walkthrough.prevStep}
-            onSkip={walkthrough.skipWalkthrough}
-            step={walkthrough.currentStep}
-            stepIndex={walkthrough.activeStepIndex}
-            targetLayout={walkthrough.activeTargetLayout}
-            totalSteps={walkthrough.totalSteps}
-            visible={walkthrough.isWalkthroughActive}
-          />
         </View>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <CategoryFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </KeyboardAvoidingView>
 
       <HexColorFormModal

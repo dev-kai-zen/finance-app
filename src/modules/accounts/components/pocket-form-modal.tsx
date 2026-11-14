@@ -57,7 +57,8 @@ function PocketFormModalContent({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const walkthrough = usePocketFormWalkthrough();
+  const isEditing = Boolean(pocket && !pocket.isArchived);
+  const walkthrough = usePocketFormWalkthrough({ isEditing });
   const saveRef = useWalkthroughTarget("pocketFormSave");
   const [name, setName] = useState("");
   const [confirmArchive, setConfirmArchive] = useState(false);

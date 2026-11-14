@@ -746,23 +746,23 @@ function CustomizeDashboardModalContent({
               bottomOffset={4}
             />
           </View>
-
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-
-          <CustomizeDashboardWalkthroughOverlay
-            onNext={walkthrough.nextStep}
-            onPrev={walkthrough.prevStep}
-            onSkip={walkthrough.skipWalkthrough}
-            step={walkthrough.currentStep}
-            stepIndex={walkthrough.activeStepIndex}
-            targetLayout={walkthrough.activeTargetLayout}
-            totalSteps={walkthrough.totalSteps}
-            visible={walkthrough.isWalkthroughActive}
-          />
         </View>
+
+        <DraggableTourChip
+          onPress={walkthrough.startWalkthrough}
+          visible={!walkthrough.isWalkthroughActive}
+        />
+
+        <CustomizeDashboardWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </View>
 
       <SortableListModal

@@ -1035,6 +1035,14 @@ export const en = {
         "Add a circular close button and loading indicator on feature toggles in the More Features menu.",
       improveItem48:
         "Follow the Settings guided tour smoothly in top-to-bottom order covering all menu options.",
+      improveItem49:
+        "Tap a floating double-arrow button at the bottom of the transaction list to smoothly return to the top.",
+      improveItem50:
+        "Round the card corners when swiping left to duplicate transactions for a cohesive look matching Notes.",
+      improveItem51:
+        "Clean up the sidebar search divider into a simple, flat line matching the More Features menu.",
+      improveItem52:
+        "Unify walkthrough guide cards with a clear Skip button across modal forms.",
       fixItem1:
         "Dock walkthrough guide buttons into the top header across screens to eliminate button overlap.",
       fixItem2:
@@ -1098,6 +1106,12 @@ export const en = {
         "Show quick toast feedback immediately when changing local backup frequency without screen freezing.",
       fixItem32:
         "Declutter the Settings menu by removing redundant toggles while keeping your account group view saved.",
+      fixItem33:
+        "Display the floating tour guide chip properly inside Category and Transaction Filter sheets.",
+      fixItem34:
+        "Present default account walkthrough steps only when editing an existing pocket.",
+      fixItem35:
+        "Switch color themes instantaneously and smoothly without screen freezing or delay.",
     },
     v140: {
       date: "November 5, 2026",
@@ -2585,6 +2599,7 @@ export const en = {
     },
   },
   transactions: {
+    scrollToTop: "Scroll to top",
     swipeDelete: "Delete",
     swipeDuplicate: "Duplicate",
     speedDialForm: "Manual Entry",

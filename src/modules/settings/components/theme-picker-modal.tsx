@@ -43,6 +43,7 @@ import {
   useThemeStyles,
 } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { triggerHaptic } from "../services/sound-and-haptics.service";
 import { writeSavedCustomThemeConfig } from "@/infrastructure/preferences/theme-preference.storage";
 import {
   HexColorFormModal,
@@ -251,7 +252,10 @@ export function ThemePickerModal({
       setPaywallOpen(true);
       return;
     }
-    onSelectTheme(themeId);
+    triggerHaptic();
+    requestAnimationFrame(() => {
+      onSelectTheme(themeId);
+    });
   };
 
   const handlePrimaryHexChange = (text: string) => {

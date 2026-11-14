@@ -552,14 +552,8 @@ function createStyles(theme: AppTheme) {
     sidebarSearchWrapper: {
       paddingBottom: theme.spacing.sm,
       paddingHorizontal: theme.spacing.xs,
-      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomWidth: 1,
       borderBottomColor: theme.colors.border,
-      shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: theme.mode === "dark" ? 0.3 : 0.05,
-      shadowRadius: 3,
-      elevation: 2,
-      zIndex: 1,
     },
     activeIndicator: {
       position: "absolute",

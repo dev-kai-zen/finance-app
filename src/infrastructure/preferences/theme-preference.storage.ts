@@ -100,14 +100,20 @@ export function writeThemeSelection(selection: ThemeSelection): void {
     // Theme changes remain usable in memory if KV storage is unavailable.
   }
 
-  upsertSettingRowInDb(THEME_SELECTION_KEY, serializedSelection);
-  if (selection.kind === "custom") {
-    upsertSettingRowInDb(
-      CUSTOM_THEME_CONFIG_KEY,
-      JSON.stringify(selection.config),
-    );
-  }
-  queueDebouncedQuickSync([THEME_SELECTION_KEY, CUSTOM_THEME_CONFIG_KEY]);
+  queueMicrotask(() => {
+    try {
+      upsertSettingRowInDb(THEME_SELECTION_KEY, serializedSelection);
+      if (selection.kind === "custom") {
+        upsertSettingRowInDb(
+          CUSTOM_THEME_CONFIG_KEY,
+          JSON.stringify(selection.config),
+        );
+      }
+      queueDebouncedQuickSync([THEME_SELECTION_KEY, CUSTOM_THEME_CONFIG_KEY]);
+    } catch {
+      // Ignore background persistence errors
+    }
+  });
 }
 
 export function readSavedCustomThemeConfig(): CustomThemeConfig {
@@ -146,6 +152,12 @@ export function writeSavedCustomThemeConfig(config: CustomThemeConfig): void {
   } catch {
     // Ignore KV storage write failure
   }
-  upsertSettingRowInDb(CUSTOM_THEME_CONFIG_KEY, serialized);
-  queueDebouncedQuickSync([CUSTOM_THEME_CONFIG_KEY]);
+  queueMicrotask(() => {
+    try {
+      upsertSettingRowInDb(CUSTOM_THEME_CONFIG_KEY, serialized);
+      queueDebouncedQuickSync([CUSTOM_THEME_CONFIG_KEY]);
+    } catch {
+      // Ignore background persistence errors
+    }
+  });
 }

@@ -13,11 +13,18 @@ Module._resolveFilename = function (request, parent, ...args) {
 };
 const jsx = (type, props) => ({ type, props });
 Module._load = function (request, ...args) {
-  if (request === "react") return { useEffect: () => {}, useState: (initial) => {
-    const index = hookIndex++;
-    if (!Object.hasOwn(hooks, index)) hooks[index] = typeof initial === "function" ? initial() : initial;
-    return [hooks[index], (value) => { hooks[index] = typeof value === "function" ? value(hooks[index]) : value; }];
-  } };
+  if (request === "react") return {
+    createContext: () => ({ Provider: "Provider" }),
+    useCallback: (fn) => fn,
+    useEffect: () => {},
+    useMemo: (fn) => fn(),
+    useRef: (val) => ({ current: val }),
+    useState: (initial) => {
+      const index = hookIndex++;
+      if (!Object.hasOwn(hooks, index)) hooks[index] = typeof initial === "function" ? initial() : initial;
+      return [hooks[index], (value) => { hooks[index] = typeof value === "function" ? value(hooks[index]) : value; }];
+    },
+  };
   if (request === "react/jsx-runtime") return { jsx, jsxs: jsx, Fragment: "Fragment" };
   if (request === "react-native") return { View: "View", Text: "Text", Pressable: "Pressable", ActivityIndicator: "ActivityIndicator", FlatList: "FlatList", KeyboardAvoidingView: "KeyboardAvoidingView", Platform: { OS: "android" }, StyleSheet: { create: (styles) => styles }, useWindowDimensions: () => ({ width: 390 }) };
   if (request === "expo-router/react-navigation") return { usePreventRemove: (condition, handler) => { prevented = condition; callback = handler; } };
@@ -29,6 +36,7 @@ Module._load = function (request, ...args) {
   if (request === "@/modules/categories") return { CategoryPickerModal: "CategoryPickerModal" };
   if (request === "@/modules/onboarding") return { useWorkspace: () => ({ state: { mode: "personal" } }) };
   if (request === "../hooks/use-data-import") return { useDataImport: () => state };
+  if (request === "@/modules/walkthrough") return { DraggableTourChip: "DraggableTourChip", DataImportWalkthroughOverlay: "DataImportWalkthroughOverlay", useDataImportWalkthrough: () => ({ isWalkthroughActive: false, startWalkthrough: () => {} }), WalkthroughRegistryProvider: ({ children }) => children, WalkthroughTarget: ({ children }) => children, useWalkthroughTarget: () => ({ current: null }) };
   if (request.startsWith("@/components/")) {
     const names = { "app-button": "AppButton", "confirm-modal": "ConfirmModal", "info-modal": "InfoModal", "modal-screen-header": "ModalScreenHeader", "full-screen-form-modal": "FullScreenFormModal", "keyboard-aware-form": "KeyboardAwareForm", "date-picker-modal": "DatePickerModal", "screen-title-with-help": "HelpIconButton" };
     const name = names[request.split("/").pop()]; return { [name]: name };
@@ -39,7 +47,7 @@ Module._load = function (request, ...args) {
 require.extensions[".ts"] = require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX }, fileName: filename,
 }).outputText, filename);
-const { DataImportScreen } = require("../screens/data-import-screen.tsx");
+const { DataImportScreenContent: DataImportScreen } = require("../screens/data-import-screen.tsx");
 const { ImportReviewEntry } = require("../components/import-review-entry.tsx");
 beforeEach(() => {
   steps = []; routerBack = 0; hooks = []; hookIndex = 0;

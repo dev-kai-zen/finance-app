@@ -305,6 +305,7 @@ export const TransactionRow = memo(function TransactionRow({
             onPress={handleDeletePress}
             style={({ pressed }) => [
               styles.deleteActionButton,
+              !onDuplicate && styles.singleActionLeftRounded,
               pressed && { opacity: 0.8 },
             ]}
           >
@@ -581,6 +582,8 @@ function createStyles(theme: AppTheme) {
     duplicateActionButton: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
+      borderBottomLeftRadius: theme.borderRadius.medium,
+      borderTopLeftRadius: theme.borderRadius.medium,
       justifyContent: "center",
       width: ACTION_WIDTH,
       gap: 3,
@@ -591,6 +594,10 @@ function createStyles(theme: AppTheme) {
       justifyContent: "center",
       width: ACTION_WIDTH,
       gap: 3,
+    },
+    singleActionLeftRounded: {
+      borderBottomLeftRadius: theme.borderRadius.medium,
+      borderTopLeftRadius: theme.borderRadius.medium,
     },
     swipeActionText: {
       color: "#FFFFFF",

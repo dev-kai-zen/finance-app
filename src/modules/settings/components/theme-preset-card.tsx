@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Check, Crown } from "lucide-react-native";
 import {
   Pressable,
@@ -19,7 +20,7 @@ export interface ThemePresetCardProps {
   isProLocked?: boolean;
 }
 
-export function ThemePresetCard({
+export const ThemePresetCard = memo(function ThemePresetCard({
   preset,
   selected,
   onPress,
@@ -93,7 +94,7 @@ export function ThemePresetCard({
       </View>
     </Pressable>
   );
-}
+});
 
 export function ThemeSwatchPreview({ preset }: { preset: AppTheme }) {
   return (

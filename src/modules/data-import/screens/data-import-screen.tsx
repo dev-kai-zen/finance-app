@@ -95,7 +95,7 @@ export function DataImportScreen() {
   );
 }
 
-function DataImportScreenContent() {
+export function DataImportScreenContent() {
   const state = useDataImport(),
     theme = useAppTheme(),
     styles = useThemeStyles(createStyles);

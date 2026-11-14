@@ -1054,6 +1054,14 @@ export const es = {
         "Agregar un botón circular de cierre e indicador de carga en las opciones del menú Más Funciones.",
       improveItem48:
         "Sigue la guía paso a paso de Ajustes en orden de arriba a abajo cubriendo todas las opciones.",
+      improveItem49:
+        "Toca el botón flotante de doble flecha hacia arriba al final de la lista de transacciones para volver arriba.",
+      improveItem50:
+        "Redondea las esquinas de acción al deslizar a la izquierda para duplicar transacciones al igual que en Notas.",
+      improveItem51:
+        "Convierte el divisor de búsqueda de la barra lateral en una línea plana simple como en el menú Más Funciones.",
+      improveItem52:
+        "Unifica las tarjetas de guía con un botón claro de Omitir en los formularios modales.",
       fixItem1:
         "Mueve el botón de guía a la cabecera en las pantallas para evitar la superposición de botones.",
       fixItem2:
@@ -1118,6 +1126,12 @@ export const es = {
         "Muestra una confirmación rápida al cambiar la frecuencia de copia de seguridad local sin pausar la pantalla.",
       fixItem32:
         "Simplifica el menú de Ajustes eliminando opciones redundantes mientras se guarda tu vista de grupos de cuentas.",
+      fixItem33:
+        "Muestra la ficha flotante de guía correctamente dentro de las hojas de Categoría y Filtro de Transacciones.",
+      fixItem34:
+        "Presenta los pasos de guía de cuentas predeterminadas solo al editar un bolsillo existente.",
+      fixItem35:
+        "Cambia los temas de color de forma instantánea y fluida sin pausas ni demoras en la pantalla.",
     },
     v140: {
       date: "5 de noviembre de 2026",
@@ -2620,6 +2634,7 @@ export const es = {
     },
   },
   transactions: {
+    scrollToTop: "Desplazar al principio",
     swipeDelete: "Eliminar",
     swipeDuplicate: "Duplicar",
     speedDialForm: "Entrada Manual",

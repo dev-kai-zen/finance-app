@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import Svg, { Defs, Mask, Rect } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
 
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -185,13 +185,18 @@ export function ModalWalkthroughOverlay({
               </View>
 
               <Pressable
-                accessibilityLabel="Close walkthrough"
+                accessibilityLabel={t("dashboard.walkthroughSkip")}
                 accessibilityRole="button"
                 hitSlop={8}
                 onPress={onSkip}
-                style={styles.skipIconBtn}
+                style={({ pressed }) => [
+                  styles.skipBtn,
+                  pressed && styles.skipBtnPressed,
+                ]}
               >
-                <X color={theme.colors.textMuted} size={18} />
+                <Text style={styles.skipBtnText}>
+                  {t("dashboard.walkthroughSkip")}
+                </Text>
               </Pressable>
             </View>
 
@@ -286,10 +291,18 @@ function createStyles(theme: AppTheme) {
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.3,
     },
-    skipIconBtn: {
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 4,
+    skipBtn: {
+      borderRadius: 6,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    skipBtnPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+    },
+    skipBtnText: {
+      color: theme.colors.textMuted,
+      fontSize: 13,
+      fontWeight: theme.typography.fontWeight.medium,
     },
     cardTitle: {
       color: theme.colors.textPrimary,

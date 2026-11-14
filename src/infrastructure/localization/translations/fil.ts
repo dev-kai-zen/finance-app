@@ -1068,6 +1068,14 @@ export const fil = {
         "Maglagay ng pabilog na close button at loading indicator sa mga toggle sa More Features menu.",
       improveItem48:
         "Sundan ang gabay sa Mga Setting mula itaas pababa na sumasaklaw sa lahat ng opsyon.",
+      improveItem49:
+        "Pindutin ang lumulutang na dobleng palasong button sa ibaba ng listahan ng transaksyon upang maayos na bumalik sa itaas.",
+      improveItem50:
+        "Gawing bilugan ang mga kanto ng aksyon kapag nag-swipe pakaliwa upang kopyahin ang transaksyon tulad sa Mga Tala.",
+      improveItem51:
+        "Gawing simpleng linyang divider ang pagitan sa paghahanap sa sidebar katulad sa menu ng Higit Pang Mga Tampok.",
+      improveItem52:
+        "Pag-isahin ang mga card ng gabay na may malinaw na pindutang Laktawan sa mga modal form.",
       fixItem1:
         "I-dock ang guide button sa header ng mga screen upang maiwasan ang pagpapatong ng mga button.",
       fixItem2:
@@ -1132,6 +1140,12 @@ export const fil = {
         "Magpakita agad ng abiso kapag binabago ang dalas ng lokal na backup nang hindi nagla-lag ang screen.",
       fixItem32:
         "Gawing mas maayos ang Mga Setting sa pamamagitan ng pag-alis ng mga paulit-ulit na switch habang nananatiling naka-save ang view ng account groups.",
+      fixItem33:
+        "Ipakita nang maayos ang lumulutang na chip ng gabay sa loob ng mga sheet ng Kategorya at Filter ng Transaksyon.",
+      fixItem34:
+        "Ipakita lamang ang mga hakbang sa default na account kapag nag-e-edit ng kasalukuyang bulsa.",
+      fixItem35:
+        "Magpalit ng tema ng kulay nang mabilis at maayos nang hindi nagla-lag o humihinto ang screen.",
     },
     v140: {
       date: "Nobyembre 5, 2026",
@@ -2634,6 +2648,7 @@ export const fil = {
     },
   },
   transactions: {
+    scrollToTop: "Mag-scroll sa itaas",
     swipeDelete: "Tanggalin",
     swipeDuplicate: "Kopyahin",
     speedDialForm: "Manwal na Entry",

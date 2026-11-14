@@ -130,7 +130,11 @@ export { CATEGORY_FORM_WALKTHROUGH_STEPS } from "./categories/category-form-walk
 
 export { PocketFormWalkthroughOverlay } from "./accounts/pocket-form-walkthrough-overlay";
 export { usePocketFormWalkthrough } from "./accounts/use-pocket-form-walkthrough";
-export { POCKET_FORM_WALKTHROUGH_STEPS } from "./accounts/pocket-form-walkthrough-steps";
+export {
+  getPocketFormWalkthroughSteps,
+  POCKET_FORM_WALKTHROUGH_STEPS,
+  type PocketFormWalkthroughOptions,
+} from "./accounts/pocket-form-walkthrough-steps";
 
 export { PresetFormWalkthroughOverlay } from "./transactions/preset-form-walkthrough-overlay";
 export { usePresetFormWalkthrough } from "./transactions/use-preset-form-walkthrough";

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   RefreshControl,
@@ -15,6 +17,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarClock,
+  ChevronsUp,
   Download,
   FolderDown,
   LayoutList,
@@ -309,6 +312,38 @@ function TransactionsScreenContent({
   }, [registerTarget]);
 
   const sectionListRef = useRef<SectionList<any>>(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const showScrollToTopRef = useRef(false);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+      const atBottom =
+        contentOffset.y > 300 &&
+        contentOffset.y + layoutMeasurement.height >= contentSize.height - 180;
+
+      if (atBottom !== showScrollToTopRef.current) {
+        showScrollToTopRef.current = atBottom;
+        setShowScrollToTop(atBottom);
+      }
+    },
+    [],
+  );
+
+  const handleScrollToTop = useCallback(() => {
+    triggerHaptic();
+    const scrollResponder = sectionListRef.current?.getScrollResponder();
+    if (scrollResponder?.scrollTo) {
+      scrollResponder.scrollTo({ y: 0, animated: true });
+    } else {
+      sectionListRef.current?.scrollToLocation({
+        sectionIndex: 0,
+        itemIndex: 0,
+        viewOffset: 0,
+        animated: true,
+      });
+    }
+  }, []);
 
   const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
     if (targetId === "txFab") {
@@ -1510,6 +1545,8 @@ function TransactionsScreenContent({
           windowSize={7}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
+          onScroll={handleScroll}
+          scrollEventThrottle={32}
           ListFooterComponent={
             hasMoreTransactions ? (
               <View style={styles.loadMoreFooter}>
@@ -1525,6 +1562,35 @@ function TransactionsScreenContent({
           }
         />
         )}
+
+        {showScrollToTop ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.scrollToTopContainer,
+              { bottom: Math.max(insets.bottom, 16) + 24 },
+            ]}
+          >
+            <Pressable
+              accessibilityLabel={t("transactions.scrollToTop", {
+                defaultValue: "Scroll to top",
+              })}
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={handleScrollToTop}
+              style={({ pressed }) => [
+                styles.scrollToTopButton,
+                pressed && styles.scrollToTopButtonPressed,
+              ]}
+            >
+              <ChevronsUp
+                color={theme.colors.primary}
+                size={22}
+                strokeWidth={2.5}
+              />
+            </Pressable>
+          </View>
+        ) : null}
       </View>
 
       {/* Transaction & Transfer Form Modal */}
@@ -2058,6 +2124,33 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: theme.spacing.md,
+    },
+    scrollToTopContainer: {
+      alignItems: "center",
+      alignSelf: "center",
+      justifyContent: "center",
+      pointerEvents: "box-none",
+      position: "absolute",
+      zIndex: 50,
+    },
+    scrollToTopButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: 22,
+      borderWidth: 1.5,
+      elevation: 6,
+      height: 44,
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      width: 44,
+    },
+    scrollToTopButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      transform: [{ scale: 0.92 }],
     },
   });
 }
