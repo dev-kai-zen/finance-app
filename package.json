@@ -1,12 +1,16 @@
 {
   "$schema": "./schemas/package.schema.json",
   "name": "finance-app",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "main": "index.js",
   "dependencies": {
     "@expo/ui": "~57.0.21",
     "@noble/hashes": "^2.4.0",
     "@react-native-community/netinfo": "12.0.1",
+    "@react-native-firebase/analytics": "^27.1.1",
+    "@react-native-firebase/app": "^27.1.1",
+    "@react-native-firebase/crashlytics": "^27.1.1",
+    "@react-native-firebase/perf": "^27.1.1",
     "babel-preset-expo": "~57.0.0",
     "drizzle-orm": "^0.45.2",
     "expo": "~57.0.25",

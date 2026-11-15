@@ -48,6 +48,13 @@ export { useDefaultAccounts } from "./hooks/use-default-accounts";
 export { useChatTransactionMode } from "./hooks/use-chat-transaction-mode";
 export { useShakeActionSetting } from "./hooks/use-shake-action-setting";
 export { usePrivacyMode } from "./hooks/use-privacy-mode";
+export { useTelemetryPrivacy } from "./hooks/use-telemetry-privacy";
+export {
+  getTelemetryPrivacySettings,
+  initializeTelemetrySettings,
+  setUsageAnalyticsSetting,
+  setCrashReportsSetting,
+} from "./services/telemetry-settings.service";
 export { useSoundAndHaptics } from "./hooks/use-sound-and-haptics";
 export {
   getSoundAndHapticsPreferences,

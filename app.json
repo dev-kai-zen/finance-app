@@ -3,7 +3,7 @@
     "name": "Kaizen Finance",
     "slug": "finance-app",
     "scheme": "finance-app",
-    "version": "1.5.1",
+    "version": "1.6.0",
     "orientation": "portrait",
     "icon": "./assets/kaizen-finance-app-logo.png",
     "userInterfaceStyle": "automatic",
@@ -26,12 +26,17 @@
       "blockedPermissions": ["android.permission.ACTIVITY_RECOGNITION"],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 15
+      "versionCode": 16,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/kaizen-finance-app-logo.png"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/crashlytics",
+      "@react-native-firebase/perf",
+      "@react-native-firebase/analytics",
       "expo-router",
       "expo-sqlite",
       [

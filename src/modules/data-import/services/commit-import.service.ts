@@ -12,6 +12,7 @@ import { ImportValidationError, normalizeImportName } from "../utils/csv";
 import { buildImportPreview, cellValue } from "../utils/import-preview";
 import { getImportCatalog } from "./import-catalog.service";
 import { getCurrencyMinorUnitExponent } from "@/utils/currency";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
 let importing = false;
 function decimalAmount(amount: number, currency: string): string {
@@ -31,7 +32,7 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
     if (!preview.ready || preview.signature !== signature) throw new ImportValidationError("changed");
     try { await createLocalBackup(null, "safety"); }
     catch { throw new ImportValidationError("backup"); }
-    return db.transaction((tx) => {
+    const committed = db.transaction((tx) => {
       if (!isPersonalWorkspace(tx)) throw new ImportValidationError("workspace");
       const fresh = buildImportPreview(document, draft, getImportCatalog(tx), fileHash);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");
@@ -83,5 +84,16 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
       });
       return { imported: fresh.accepted, skipped: fresh.skipped, batchId };
     });
-  } finally { importing = false; }
+
+    const bracket =
+      committed.imported < 100
+        ? "under_100"
+        : committed.imported <= 1000
+          ? "100_to_1000"
+          : "over_1000";
+    logTelemetryEvent("csv_import_completed", { bracket, success: true });
+    return committed;
+  } finally {
+    importing = false;
+  }
 }

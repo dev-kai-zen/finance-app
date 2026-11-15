@@ -4,6 +4,7 @@ import * as Sharing from "expo-sharing";
 
 import { appLockLifecycle } from "@/modules/security";
 import type { TransactionListItem } from "@/modules/transactions/types/transaction.types";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 import {
   buildTransactionsCsv,
   createTransactionsCsvFileName,
@@ -81,6 +82,13 @@ export async function shareTransactionsCsv(
         mimeType: CSV_MIME_TYPE,
       });
     });
+    const bracket =
+      rows.length < 100
+        ? "under_100"
+        : rows.length <= 1000
+          ? "100_to_1000"
+          : "over_1000";
+    logTelemetryEvent("csv_export_generated", { format: "csv", bracket });
   } finally {
     if (file.exists) {
       file.delete();
@@ -110,6 +118,14 @@ export async function saveTransactionsCsvToDevice(
 
   const destination = directory.createFile(fileName, CSV_MIME_TYPE);
   destination.write(bytes);
+
+  const bracket =
+    rows.length < 100
+      ? "under_100"
+      : rows.length <= 1000
+        ? "100_to_1000"
+        : "over_1000";
+  logTelemetryEvent("csv_export_generated", { format: "csv", bracket });
 
   return { fileName };
 }

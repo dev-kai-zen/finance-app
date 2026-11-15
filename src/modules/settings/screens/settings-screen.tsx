@@ -13,9 +13,11 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import {
+  Activity,
   ArrowDownLeft,
   ArrowUpRight,
   Bell,
+  Bug,
   ChevronRight,
   CircleDollarSign,
   Cloud,
@@ -67,6 +69,7 @@ import { SettingsDefaultAccountPickerModal } from "@/modules/settings/components
 import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-modal";
 import { GesturesSettingsModal, useQuickEntry } from "@/modules/gestures";
 import { useShakeActionSetting } from "../hooks/use-shake-action-setting";
+import { useTelemetryPrivacy } from "../hooks/use-telemetry-privacy";
 import {
   SettingsWalkthroughOverlay,
   WalkthroughIntroModal,
@@ -265,6 +268,7 @@ function SettingsScreenContent() {
   const security = useSecuritySettings();
   const resetData = useResetData();
   const experience = useExperiencePreferences();
+  const telemetry = useTelemetryPrivacy();
 
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
@@ -1169,7 +1173,52 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <View style={styles.settingRow}>
+              <View style={styles.iconContainer}>
+                <Activity color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.usageAnalytics")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.usageAnalyticsDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.usageAnalytics")}
+                onValueChange={(val) => telemetry.setUsageAnalytics(val)}
+                value={telemetry.usageAnalyticsEnabled}
+              />
+            </View>
+
+            <View style={styles.rowDivider} />
+
+            <View style={styles.settingRow}>
+              <View style={styles.iconContainer}>
+                <Bug color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.crashReports")}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  {t("settings.crashReportsDescription")}
+                </Text>
+              </View>
+              <ThemedSwitch
+                accessibilityLabel={t("settings.crashReports")}
+                onValueChange={(val) => telemetry.setCrashReports(val)}
+                value={telemetry.crashReportsEnabled}
+              />
+            </View>
           </View>
+          <Text style={[styles.sectionHint, { marginTop: 4, marginHorizontal: 4 }]}>
+            {t("settings.privacyDataGuarantee")}
+          </Text>
         </View>
 
         {/* 8. Kaizen Pro */}

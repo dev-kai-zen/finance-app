@@ -702,6 +702,14 @@ export const en = {
     securityMenuSubtitleNotConfigured: "Not set · Tap to set up",
     securityMenuAccessibility:
       "Open security settings. Configure password and biometric unlock.",
+    usageAnalytics: "Share Anonymous Usage Analytics",
+    usageAnalyticsDescription:
+      "Share feature usage patterns to help improve Kaizen. Never collects amounts, notes, or balances.",
+    crashReports: "Crash & Diagnostic Reports",
+    crashReportsDescription:
+      "Automatically report app crashes and speed issues to help us fix bugs quickly.",
+    privacyDataGuarantee:
+      "100% Offline-First: Financial figures, account numbers, transactions, and notes remain private on your device and are never transmitted.",
     dangerZone: "DANGER ZONE",
     resetData: "Reset Data",
     resetDataDescription:
@@ -924,6 +932,15 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v160: {
+      date: "November 15, 2026",
+      newItem1:
+        "Add anonymous usage analytics and crash reporting controls to keep Kaizen fast and reliable.",
+      improveItem1:
+        "Enhance app stability with automated technical error detection and responsiveness monitoring.",
+      fixItem1:
+        "Ensure all financial tracking remains completely offline and private on your device.",
     },
     v151: {
       date: "November 15, 2026",

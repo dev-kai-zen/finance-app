@@ -1,6 +1,7 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { upsertCategoryBudgetInContext } from "../repositories/category-budgets.repository";
 import type { CategoryBudget, CategoryBudgetInput } from "../types/budget.types";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
 export function saveCategoryBudget(
   input: CategoryBudgetInput,
@@ -24,7 +25,15 @@ export function saveCategoryBudget(
     }
   }
 
-  return context === db
-    ? db.transaction((tx) => upsertCategoryBudgetInContext(input, tx))
-    : upsertCategoryBudgetInContext(input, context);
+  const result =
+    context === db
+      ? db.transaction((tx) => upsertCategoryBudgetInContext(input, tx))
+      : upsertCategoryBudgetInContext(input, context);
+
+  logTelemetryEvent("budget_created", {
+    period: "monthly",
+    has_limit: true,
+  });
+
+  return result;
 }
