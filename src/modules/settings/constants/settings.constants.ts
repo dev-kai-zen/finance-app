@@ -19,6 +19,8 @@ export const CHAT_TRANSACTION_MODE_SETTING_KEY = "chat.transactionMode";
 export const GESTURE_SHAKE_ACTION_SETTING_KEY = "gestures.shakeAction";
 
 export const PRIVACY_MODE_SETTING_KEY = "privacy_stealth_mode_enabled";
+export const USAGE_ANALYTICS_SETTING_KEY = "privacy.usageAnalyticsEnabled";
+export const CRASH_REPORTS_SETTING_KEY = "privacy.crashReportsEnabled";
 export const SOUND_AND_HAPTICS_SETTING_KEY = "sound_and_haptics.preferences";
 
 export const DEVELOPER_MODE_SETTING_KEY = "developer.mode";

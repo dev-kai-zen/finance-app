@@ -10,6 +10,7 @@ import type {
   ProPurchaseResult,
   ProRestoreResult,
 } from "../types/pro.types";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
 let isConfigured = false;
 let cachedCurrentPackage: PurchasesPackage | null = null;
@@ -160,6 +161,9 @@ export async function purchaseLifetimePackage(): Promise<ProPurchaseResult> {
     const hasEntitlement = hasProEntitlement(customerInfo);
 
     if (hasEntitlement) {
+      logTelemetryEvent("pro_purchase_completed", {
+        product_id: cachedCurrentPackage?.product.identifier ?? "lifetime",
+      });
       return { success: true, isPro: true };
     }
 
@@ -201,6 +205,10 @@ export async function restorePurchasesFromStore(): Promise<ProRestoreResult> {
   try {
     const customerInfo: CustomerInfo = await Purchases.restorePurchases();
     const hasEntitlement = hasProEntitlement(customerInfo);
+
+    logTelemetryEvent("pro_purchase_restored", {
+      success: hasEntitlement,
+    });
 
     return {
       success: true,

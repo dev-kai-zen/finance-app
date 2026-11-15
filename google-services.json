@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "646850612746",
+    "project_id": "kaizen-finance-production",
+    "storage_bucket": "kaizen-finance-production.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:646850612746:android:77f99c22925fb0bf8459f3",
+        "android_client_info": {
+          "package_name": "com.kaizen.finance.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcrh1BVcFQUudnMv223hjdivTBzWhLq9s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

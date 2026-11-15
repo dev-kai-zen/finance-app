@@ -724,6 +724,14 @@ export const fil = {
       "Hindi pa naka-set · I-tap para i-set up",
     securityMenuAccessibility:
       "Buksan ang mga setting ng seguridad. I-configure ang password at biometric unlock.",
+    usageAnalytics: "Ibahagi ang Hindi Kilalang Analytics sa Paggamit",
+    usageAnalyticsDescription:
+      "Ibahagi ang mga pattern sa paggamit ng feature para mapaganda ang Kaizen. Hindi kailanman kinokolekta ang halaga, tala, o balanse.",
+    crashReports: "Mga Ulat sa Pag-crash at Diagnostic",
+    crashReportsDescription:
+      "Awtomatikong iulat ang mga pag-crash at isyu sa bilis para mabilis nating maayos ang mga bug.",
+    privacyDataGuarantee:
+      "100% Offline-First: Ang mga halaga sa pananalapi, numero ng account, transaksyon, at tala ay nananatiling pribado sa iyong device at hindi ipinapadala.",
     dangerZone: "DELIKADONG ZONE",
     resetData: "I-reset ang Data",
     resetDataDescription:
@@ -956,6 +964,13 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v160: {
+      date: "Nobyembre 15, 2026",
+      newItem1:
+        "Magdagdag ng mga kontrol sa anonymous analytics at crash reporting upang mapanatiling mabilis at maaasahan ang Kaizen.",
+      improveItem1:
+        "Pagandahin ang katatagan ng app gamit ang awtomatikong pagtuklas ng error at bilis ng pagtugon.",
     },
     v151: {
       date: "Nobyembre 15, 2026",

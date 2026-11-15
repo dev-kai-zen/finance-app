@@ -8,6 +8,7 @@ import {
 } from "../repositories/goals.repository";
 import { goalInputSchema } from "../schemas/goal.schema";
 import type { Goal, GoalInput } from "../types/goal.types";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
 export function saveGoal(
   input: GoalInput,
@@ -94,5 +95,10 @@ export function saveGoal(
   if (!created) {
     throw new Error("Failed to load created goal.");
   }
+
+  logTelemetryEvent("goal_created", {
+    has_target_date: Boolean(validated.targetDate),
+  });
+
   return created;
 }

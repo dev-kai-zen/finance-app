@@ -715,6 +715,14 @@ export const es = {
     securityMenuSubtitleNotConfigured: "No configurada · Toca para configurar",
     securityMenuAccessibility:
       "Abrir ajustes de seguridad. Configurar contraseña y desbloqueo biométrico.",
+    usageAnalytics: "Compartir análisis de uso anónimos",
+    usageAnalyticsDescription:
+      "Comparte patrones de uso de funciones para ayudar a mejorar Kaizen. Nunca recopila montos, notas ni saldos.",
+    crashReports: "Informes de fallos y diagnóstico",
+    crashReportsDescription:
+      "Informa automáticamente de bloqueos y problemas de velocidad para ayudarnos a corregir errores rápidamente.",
+    privacyDataGuarantee:
+      "100% Offline-First: Las cifras financieras, números de cuenta, transacciones y notas permanecen privados en tu dispositivo y nunca se transmiten.",
     dangerZone: "ZONA DE PELIGRO",
     resetData: "Restablecer datos",
     resetDataDescription:
@@ -942,6 +950,13 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v160: {
+      date: "15 de noviembre de 2026",
+      newItem1:
+        "Añade controles de análisis anónimos e informes de fallos para mantener Kaizen rápido y fiable.",
+      improveItem1:
+        "Mejora la estabilidad de la aplicación con detección técnica de errores y supervisión del rendimiento.",
     },
     v151: {
       date: "15 de noviembre de 2026",

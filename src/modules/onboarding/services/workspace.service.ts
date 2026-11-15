@@ -22,6 +22,7 @@ import {
   setDefaultIncomeAccount,
 } from "@/modules/settings/services/default-accounts.service";
 import { setUserNickname } from "@/modules/settings/services/user-profile.service";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 import {
   clearCustomWorkspaceCategories,
   prepareWorkspaceCategories,
@@ -240,6 +241,11 @@ function saveCompletedSettings(
     now,
   );
   invalidateExperiencePreferencesCache();
+  if (mode === "personal") {
+    logTelemetryEvent("onboarding_completed", {
+      setup_strategy: setupStrategy ?? "personal",
+    });
+  }
 }
 
 function completedState(

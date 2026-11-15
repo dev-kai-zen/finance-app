@@ -27,6 +27,7 @@ import {
   checkAndNotifyCreditLimit,
   checkAndNotifyGoalMilestones,
 } from "@/modules/notifications";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 
 export type RecordTransactionCommand =
   | {
@@ -79,6 +80,21 @@ export async function recordTransaction(
       }
       void checkAndNotifyGoalMilestones();
     }
+
+    logTelemetryEvent("transaction_created", {
+      type: command.kind === "transfer" ? "transfer" : command.input.type,
+      has_category:
+        command.kind === "transaction" ? Boolean(command.input.categoryId) : false,
+      has_labels:
+        command.kind === "transaction"
+          ? Boolean(command.input.labelIds?.length)
+          : false,
+      has_attachments: Boolean(attachmentChanges?.added?.length),
+      is_split:
+        command.kind === "transaction"
+          ? Boolean(command.input.splitEntries?.length)
+          : false,
+    });
 
     return committed.result;
   } catch (error) {

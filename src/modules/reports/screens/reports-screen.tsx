@@ -14,6 +14,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ProGate } from "@/modules/pro";
 import { AdBanner } from "@/modules/ads";
+import { logTelemetryEvent } from "@/infrastructure/telemetry";
 import {
   ReportsWalkthroughOverlay,
   useReportsWalkthrough,
@@ -65,6 +66,12 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
       setActiveTab(props.initialTab);
     }
   }, [props?.initialTab]);
+
+  useEffect(() => {
+    logTelemetryEvent("report_viewed", {
+      report_type: activeTab,
+    });
+  }, [activeTab]);
 
   const handleScrollToTarget = useCallback(
     (targetId: WalkthroughTargetId) => {
