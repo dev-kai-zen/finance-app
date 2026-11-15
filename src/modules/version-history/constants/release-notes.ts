@@ -14,10 +14,6 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
         categoryKey: "versionHistory.categories.improve",
         itemKeys: ["versionHistory.v160.improveItem1"],
       },
-      {
-        categoryKey: "versionHistory.categories.fix",
-        itemKeys: ["versionHistory.v160.fixItem1"],
-      },
     ],
   },
   {

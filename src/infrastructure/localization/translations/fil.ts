@@ -971,8 +971,6 @@ export const fil = {
         "Magdagdag ng mga kontrol sa anonymous analytics at crash reporting upang mapanatiling mabilis at maaasahan ang Kaizen.",
       improveItem1:
         "Pagandahin ang katatagan ng app gamit ang awtomatikong pagtuklas ng error at bilis ng pagtugon.",
-      fixItem1:
-        "Tiyaking ang lahat ng pagsubaybay sa pananalapi ay nananatiling ganap na offline at pribado sa iyong device.",
     },
     v151: {
       date: "Nobyembre 15, 2026",

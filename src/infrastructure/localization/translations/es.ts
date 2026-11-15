@@ -957,8 +957,6 @@ export const es = {
         "Añade controles de análisis anónimos e informes de fallos para mantener Kaizen rápido y fiable.",
       improveItem1:
         "Mejora la estabilidad de la aplicación con detección técnica de errores y supervisión del rendimiento.",
-      fixItem1:
-        "Garantiza que todo el seguimiento financiero permanezca completamente fuera de línea y privado en tu dispositivo.",
     },
     v151: {
       date: "15 de noviembre de 2026",

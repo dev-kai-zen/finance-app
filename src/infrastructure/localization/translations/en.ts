@@ -939,8 +939,6 @@ export const en = {
         "Add anonymous usage analytics and crash reporting controls to keep Kaizen fast and reliable.",
       improveItem1:
         "Enhance app stability with automated technical error detection and responsiveness monitoring.",
-      fixItem1:
-        "Ensure all financial tracking remains completely offline and private on your device.",
     },
     v151: {
       date: "November 15, 2026",
