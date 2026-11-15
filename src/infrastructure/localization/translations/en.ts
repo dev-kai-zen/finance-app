@@ -412,7 +412,8 @@ export const en = {
     settingSupportDev: "Support Development",
     settingSupportDevDesc: "Support the app with a tip or share feedback",
     actionLocalBackup: "Local Backup & Restore",
-    actionLocalBackupDesc: "Export or restore local database backup on device storage",
+    actionLocalBackupDesc:
+      "Export or restore local database backup on device storage",
     actionGoogleDriveSync: "Google Drive Cloud Backup",
     actionGoogleDriveSyncDesc:
       "Secure cloud backup and restore via Google Drive",
@@ -932,6 +933,11 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v161: {
+      date: "November 15, 2026",
+      fixItem1:
+        "Fix an issue where the app could unexpectedly close on launch after a fresh install.",
     },
     v160: {
       date: "November 15, 2026",

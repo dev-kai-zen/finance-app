@@ -49,6 +49,7 @@ export { useChatTransactionMode } from "./hooks/use-chat-transaction-mode";
 export { useShakeActionSetting } from "./hooks/use-shake-action-setting";
 export { usePrivacyMode } from "./hooks/use-privacy-mode";
 export { useTelemetryPrivacy } from "./hooks/use-telemetry-privacy";
+export { TelemetryProcessor } from "./components/telemetry-processor";
 export {
   getTelemetryPrivacySettings,
   initializeTelemetrySettings,

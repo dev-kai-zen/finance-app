@@ -965,6 +965,11 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v161: {
+      date: "Nobyembre 15, 2026",
+      fixItem1:
+        "Ayusin ang isyu kung saan maaaring biglang magsara ang app pagkabukas matapos ang bagong install.",
+    },
     v160: {
       date: "Nobyembre 15, 2026",
       newItem1:

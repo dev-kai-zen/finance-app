@@ -951,6 +951,11 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v161: {
+      date: "15 de noviembre de 2026",
+      fixItem1:
+        "Solucionar un problema por el cual la aplicación podía cerrarse inesperadamente al abrirse tras una instalación nueva.",
+    },
     v160: {
       date: "15 de noviembre de 2026",
       newItem1:

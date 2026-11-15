@@ -1,4 +1,5 @@
 import type { DbContext } from "@/infrastructure/database/client";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import {
   syncTelemetryConsent,
   type TelemetryPrivacyPreferences,
@@ -16,6 +17,10 @@ type TelemetrySettingsListener = (prefs: TelemetryPrivacyPreferences) => void;
 const listeners = new Set<TelemetrySettingsListener>();
 
 let cachedPreferences: TelemetryPrivacyPreferences | null = null;
+
+subscribeToDatabaseReplacement(() => {
+  cachedPreferences = null;
+});
 
 export function subscribeToTelemetrySettings(
   listener: TelemetrySettingsListener,
@@ -43,25 +48,33 @@ export function getTelemetryPrivacySettings(
     return cachedPreferences;
   }
 
-  const entries = getSettingsByKey(
-    [USAGE_ANALYTICS_SETTING_KEY, CRASH_REPORTS_SETTING_KEY],
-    context,
-  );
+  try {
+    const entries = getSettingsByKey(
+      [USAGE_ANALYTICS_SETTING_KEY, CRASH_REPORTS_SETTING_KEY],
+      context,
+    );
 
-  const usageVal = entries[USAGE_ANALYTICS_SETTING_KEY];
-  const crashVal = entries[CRASH_REPORTS_SETTING_KEY];
+    const usageVal = entries[USAGE_ANALYTICS_SETTING_KEY];
+    const crashVal = entries[CRASH_REPORTS_SETTING_KEY];
 
-  const preferences: TelemetryPrivacyPreferences = {
-    // Default to true if not explicitly set
-    usageAnalyticsEnabled: usageVal !== undefined ? usageVal === "true" : true,
-    crashReportsEnabled: crashVal !== undefined ? crashVal === "true" : true,
-  };
+    const preferences: TelemetryPrivacyPreferences = {
+      // Default to true if not explicitly set
+      usageAnalyticsEnabled: usageVal !== undefined ? usageVal === "true" : true,
+      crashReportsEnabled: crashVal !== undefined ? crashVal === "true" : true,
+    };
 
-  if (!context) {
-    cachedPreferences = preferences;
+    if (!context) {
+      cachedPreferences = preferences;
+    }
+
+    return preferences;
+  } catch {
+    // Return default preferences safely if database is not migrated yet or query fails
+    return {
+      usageAnalyticsEnabled: true,
+      crashReportsEnabled: true,
+    };
   }
-
-  return preferences;
 }
 
 export function initializeTelemetrySettings(context?: DbContext): void {

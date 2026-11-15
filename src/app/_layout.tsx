@@ -31,16 +31,10 @@ import { registerWidgets, WidgetSyncProcessor } from "@/modules/widgets";
 import { InAppUpdateProcessor } from "@/modules/app-updates";
 import { initializeAdsSdk } from "@/modules/ads";
 import { CrashBoundary } from "@/components/crash-boundary";
-import { logTelemetryEvent } from "@/infrastructure/telemetry";
-import { initializeTelemetrySettings } from "@/modules/settings";
+import { TelemetryProcessor } from "@/modules/settings";
 
 registerWidgets();
 void initializeAdsSdk();
-initializeTelemetrySettings();
-logTelemetryEvent("app_launched", {
-  is_first_launch: false,
-  app_version: "1.6.0",
-});
 
 
 LogBox.ignoreLogs([
@@ -57,6 +51,7 @@ function RootLayoutContent() {
       <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
       <KeyboardProvider>
         <DatabaseProvider>
+          <TelemetryProcessor />
           <LocalizationProvider>
             <CurrencyPreferencesProvider>
               <WorkspaceProvider>
