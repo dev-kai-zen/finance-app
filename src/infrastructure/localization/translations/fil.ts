@@ -957,6 +957,11 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v151: {
+      date: "Nobyembre 15, 2026",
+      improveItem1:
+        "Pakinisin ang mga layout ng screen at pagbutihin ang scrolling sa Mga Badyet, Kategorya, Kalendaryo, at Layunin.",
+    },
     v150: {
       date: "Nobyembre 10, 2026",
       newItem1:

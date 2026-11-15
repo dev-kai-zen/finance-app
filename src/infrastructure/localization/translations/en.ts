@@ -925,6 +925,11 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v151: {
+      date: "November 15, 2026",
+      improveItem1:
+        "Polish screen layouts and smooth scrolling performance across Budgets, Categories, Calendar, and Goals.",
+    },
     v150: {
       date: "November 10, 2026",
       newItem1:

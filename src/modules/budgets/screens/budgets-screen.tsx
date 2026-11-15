@@ -26,6 +26,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AdBanner } from "@/modules/ads";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -341,13 +342,20 @@ function BudgetsScreenContent({
         {loading ? (
           <PageLoadingState message="Loading budgets..." variant="cards" />
         ) : budgets.length === 0 ? (
-          <PageEmptyState
-            actionLabel="+ Set Your First Category Budget"
-            actionRef={emptyCreateRef}
-            description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
-            onAction={handleOpenCreate}
-            title="No Budgets Configured"
-          />
+          <View>
+            <PageEmptyState
+              actionLabel="+ Set Your First Category Budget"
+              actionRef={emptyCreateRef}
+              description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
+              onAction={handleOpenCreate}
+              title="No Budgets Configured"
+            />
+            <AdBanner
+              placement="budgets"
+              variant="card"
+              style={{ marginTop: theme.spacing.md }}
+            />
+          </View>
         ) : (
           <>
             {/* Overview Summary Card */}
@@ -517,20 +525,28 @@ function BudgetsScreenContent({
                 style={[styles.budgetList, isDesktop && styles.budgetListDesktop]}
               >
                 {filteredStatuses.map((status, index) => (
-                  <BudgetCard
-                    key={status.budget.id}
-                    onPress={() => handleOpenEdit(status)}
-                    onToggle={(val) => toggleBudget(status.budget.id, val)}
-                    onViewTransactions={() =>
-                      router.push(
-                        `/transactions?categoryId=${encodeURIComponent(
-                          status.budget.categoryId,
-                        )}&datePreset=this_month` as any,
-                      )
-                    }
-                    status={status}
-                    toggleRef={index === 0 ? firstItemToggleRef : undefined}
-                  />
+                  <View key={status.budget.id}>
+                    <BudgetCard
+                      onPress={() => handleOpenEdit(status)}
+                      onToggle={(val) => toggleBudget(status.budget.id, val)}
+                      onViewTransactions={() =>
+                        router.push(
+                          `/transactions?categoryId=${encodeURIComponent(
+                            status.budget.categoryId,
+                          )}&datePreset=this_month` as any,
+                        )
+                      }
+                      status={status}
+                      toggleRef={index === 0 ? firstItemToggleRef : undefined}
+                    />
+                    {index === 0 ? (
+                      <AdBanner
+                        placement="budgets"
+                        variant="card"
+                        style={{ marginVertical: theme.spacing.sm }}
+                      />
+                    ) : null}
+                  </View>
                 ))}
               </View>
             )}

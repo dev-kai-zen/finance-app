@@ -9,6 +9,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AdBanner } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
@@ -326,6 +327,12 @@ function CalendarScreenContent() {
               schedulesRef={schedulesTabRef}
               transactionCount={scopedTransactions.length}
               transactionsRef={transactionsTabRef}
+            />
+
+            <AdBanner
+              placement="calendar"
+              variant="card"
+              style={{ marginVertical: theme.spacing.sm }}
             />
 
             {/* 6. Active Tab Content */}

@@ -943,6 +943,11 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v151: {
+      date: "15 de noviembre de 2026",
+      improveItem1:
+        "Mejora el diseño de las pantallas y la fluidez del desplazamiento en Presupuestos, Categorías, Calendario y Metas.",
+    },
     v150: {
       date: "10 de noviembre de 2026",
       newItem1:
