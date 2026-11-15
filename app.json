@@ -26,7 +26,7 @@
       "blockedPermissions": ["android.permission.ACTIVITY_RECOGNITION"],
       "predictiveBackGestureEnabled": false,
       "package": "com.kaizen.finance.app",
-      "versionCode": 16,
+      "versionCode": 17,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
