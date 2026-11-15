@@ -1,5 +1,6 @@
 import type { DbContext } from "@/infrastructure/database/client";
 import { db } from "@/infrastructure/database/client";
+import { subscribeToDatabaseReplacement } from "@/infrastructure/database/database-replacement";
 import { getAccountsWithBalances } from "@/modules/accounts";
 import { getAccountLedgerTransactions } from "@/modules/transactions";
 import {
@@ -373,6 +374,14 @@ function reconcileAccount(
   }
 }
 
+let lastReconciledCalendarDate: string | null = null;
+let lastReconciledDb: unknown = null;
+
+subscribeToDatabaseReplacement(() => {
+  lastReconciledCalendarDate = null;
+  lastReconciledDb = null;
+});
+
 export function reconcileCreditCardBillingInContext(
   today: Date,
   context: DbContext,
@@ -381,8 +390,18 @@ export function reconcileCreditCardBillingInContext(
     (account) => account.creditCardDetails,
   );
   for (const card of cards) reconcileAccount(card, today, context);
+  lastReconciledCalendarDate = toCalendarDate(today);
+  lastReconciledDb = db;
 }
 
 export function reconcileCreditCardBilling(today = new Date()): void {
   db.transaction((tx) => reconcileCreditCardBillingInContext(today, tx));
+}
+
+export function ensureCreditCardBillingReconciled(today = new Date()): void {
+  const todayOn = toCalendarDate(today);
+  if (lastReconciledDb === db && lastReconciledCalendarDate === todayOn) {
+    return;
+  }
+  reconcileCreditCardBilling(today);
 }

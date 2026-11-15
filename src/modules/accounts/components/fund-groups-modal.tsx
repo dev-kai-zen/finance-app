@@ -1,5 +1,4 @@
 import {
-  AlertCircle,
   Archive,
   Check,
   ChevronDown,
@@ -24,12 +23,16 @@ import {
 import {
   ConfirmModal,
   FullScreenFormModal,
+  HelpIconButton,
   IconHelper,
   InfoModal,
-  ScreenTitleWithHelp,
   NotificationModal,
+  PageLoadingState,
+  ScreenTitleWithHelp,
+  ScrollDownIndicator,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
@@ -54,16 +57,7 @@ type EditorState = {
   value: FundGroupInput;
 };
 
-export function FundGroupsModal({
-  visible,
-  groups,
-  accounts,
-  pockets,
-  loading,
-  loadError,
-  onClose,
-  onRefresh,
-}: {
+export interface FundGroupsModalProps {
   visible: boolean;
   groups: FundGroupListItem[];
   accounts: AccountListItem[];
@@ -72,7 +66,25 @@ export function FundGroupsModal({
   loadError: string | null;
   onClose: () => void;
   onRefresh: () => void;
-}) {
+}
+
+export function FundGroupsModal(props: FundGroupsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <FundGroupsModalContent {...props} />;
+}
+
+function FundGroupsModalContent({
+  visible,
+  groups,
+  accounts,
+  pockets,
+  loading,
+  loadError,
+  onClose,
+  onRefresh,
+}: FundGroupsModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
@@ -88,6 +100,8 @@ export function FundGroupsModal({
   const [ruleInfoVisible, setRuleInfoVisible] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
   const [proModalVisible, setProModalVisible] = useState(false);
+  const editorScroll = useScrollDownIndicator<ScrollView>();
+  const managerScroll = useScrollDownIndicator<ScrollView>();
 
   useEffect(() => {
     if (!visible) {
@@ -393,18 +407,21 @@ export function FundGroupsModal({
         onSave={editor ? save : undefined}
       >
         {editor ? (
-          <ScrollView
-            contentContainerStyle={styles.editorContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={editorScroll.scrollRef}
+              contentContainerStyle={styles.editorContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              {...editorScroll.scrollProps}
+            >
             <View style={styles.fieldGroup}>
               <Text style={styles.fieldLabel}>Group Name</Text>
               <TextInput
                 accessibilityLabel="Fund Group name"
                 editable={!mutations.pending}
                 maxLength={100}
-                placeholder="Microbusiness"
+                placeholder="Available Cash"
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
                 value={editor.value.name}
@@ -427,19 +444,13 @@ export function FundGroupsModal({
             <View style={styles.selectionHeader}>
               <View style={styles.selectionTitleRow}>
                 <Text style={styles.fieldLabel}>Accounts &amp; pockets</Text>
-                <Pressable
+                <HelpIconButton
                   accessibilityHint="Displays the rule for selecting accounts and pockets"
                   accessibilityLabel="Selection rule information"
-                  accessibilityRole="button"
-                  hitSlop={8}
+                  color={theme.colors.textSecondary}
                   onPress={() => setRuleInfoVisible(true)}
-                  style={({ pressed }) => [
-                    styles.infoIconButton,
-                    pressed && styles.infoIconButtonPressed,
-                  ]}
-                >
-                  <AlertCircle color={theme.colors.textSecondary} size={15} />
-                </Pressable>
+                  size={15}
+                />
               </View>
               <Text style={styles.selectionCount}>{memberSelectionSummary}</Text>
             </View>
@@ -714,19 +725,23 @@ export function FundGroupsModal({
                 </View>
               ))
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={editorScroll.canScrollDown}
+              onPress={editorScroll.scrollToNext}
+              bottomOffset={8}
+            />
+          </View>
         ) : (
-          <ScrollView
-            contentContainerStyle={styles.managerContent}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={managerScroll.scrollRef}
+              contentContainerStyle={styles.managerContent}
+              showsVerticalScrollIndicator={false}
+              {...managerScroll.scrollProps}
+            >
             {loading ? (
-              <ActivityIndicator
-                accessibilityLabel="Loading Fund Groups"
-                color={theme.colors.primary}
-                size="large"
-                style={styles.loading}
-              />
+              <PageLoadingState message="Loading fund groups..." variant="cards" />
             ) : loadError ? (
               <View style={styles.emptyCard}>
                 <Text selectable style={styles.errorText}>{loadError}</Text>
@@ -745,7 +760,7 @@ export function FundGroupsModal({
                 </View>
                 <Text style={styles.emptyTitle}>No Fund Groups yet</Text>
                 <Text style={styles.emptyText}>
-                  Create a group such as Microbusiness, then select its accounts or pockets.
+                  Create a group such as Available Cash, then select its accounts or pockets.
                 </Text>
                 <Pressable
                   accessibilityRole="button"
@@ -876,7 +891,13 @@ export function FundGroupsModal({
                 })}
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={managerScroll.canScrollDown}
+              onPress={managerScroll.scrollToNext}
+              bottomOffset={8}
+            />
+          </View>
         )}
       </FullScreenFormModal>
 
@@ -925,6 +946,10 @@ export function FundGroupsModal({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     managerContent: {
       gap: theme.spacing.lg,
       padding: theme.spacing.lg,

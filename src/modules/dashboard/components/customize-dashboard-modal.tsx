@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Check,
   CircleHelp,
   LayoutGrid,
   Plus,
@@ -23,8 +24,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  HorizontalScrollView,
   IconHelper,
   InfoModal,
+  ScrollDownIndicator,
   SortableListModal,
   ThemedSwitch,
   type SortableItem,
@@ -32,6 +35,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import { isLightColor } from "@/utils/color-contrast";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import {
@@ -39,26 +43,25 @@ import {
   useHexColors,
   type HexColorInput,
 } from "@/modules/hex-colors";
-import type {
-  DashboardLayoutPreferences,
-  DashboardLayoutPresetId,
-  DashboardWidgetId,
+import {
+  CustomizeDashboardWalkthroughOverlay,
+  useCustomizeDashboardWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
+import {
+  DEFAULT_DASHBOARD_LAYOUT,
+  resolveDashboardLayoutPreset,
+  type DashboardLayoutPreferences,
+  type DashboardLayoutPresetId,
+  type DashboardWidgetId,
 } from "@/modules/settings";
 
 export interface CustomizeDashboardModalProps {
   visible: boolean;
   layout: DashboardLayoutPreferences;
   onClose: () => void;
-  onToggleWidget: (widgetId: DashboardWidgetId, visible: boolean) => void;
-  onMoveWidget?: (widgetId: DashboardWidgetId, direction: "up" | "down") => void;
-  onReorderWidgets?: (orderedIds: DashboardWidgetId[]) => void;
-  onToggleQuote: (showQuote: boolean) => void;
-  onChangeQuoteColors?: (
-    quoteBackgroundColor: string | null,
-    quoteTextColor: string | null,
-  ) => void;
-  onSelectPreset: (presetId: DashboardLayoutPresetId) => void;
-  onReset: () => void;
+  onSaveLayout: (layout: DashboardLayoutPreferences) => void;
 }
 
 const QUICK_NEUTRAL_SWATCHES = [
@@ -105,16 +108,20 @@ const WIDGET_METADATA: Record<
   },
 };
 
-export function CustomizeDashboardModal({
+export function CustomizeDashboardModal(props: CustomizeDashboardModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <CustomizeDashboardModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function CustomizeDashboardModalContent({
   visible,
   layout,
   onClose,
-  onToggleWidget,
-  onReorderWidgets,
-  onToggleQuote,
-  onChangeQuoteColors,
-  onSelectPreset,
-  onReset,
+  onSaveLayout,
 }: CustomizeDashboardModalProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -122,18 +129,63 @@ export function CustomizeDashboardModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const walkthrough = useCustomizeDashboardWalkthrough();
 
   const { colors: savedColors, addColor } = useHexColors();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const {
+    scrollRef: scrollViewRef,
+    canScrollDown,
+    scrollToNext,
+    scrollProps,
+  } = useScrollDownIndicator<ScrollView>();
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isReorderOpen, setIsReorderOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [colorPickerTarget, setColorPickerTarget] = useState<
     "background" | "text"
   >("background");
+  const [draftLayout, setDraftLayout] =
+    useState<DashboardLayoutPreferences>(layout);
+  const wasVisibleRef = useRef(false);
+
+  useEffect(() => {
+    if (visible && !wasVisibleRef.current) {
+      setDraftLayout(layout);
+    }
+    wasVisibleRef.current = visible;
+  }, [visible, layout]);
+
+  const handleDismiss = () => {
+    onSaveLayout(draftLayout);
+    onClose();
+  };
+
+  const toggleDraftWidget = (widgetId: DashboardWidgetId, isVisible: boolean) => {
+    if (widgetId === "greeting") return;
+    setDraftLayout((prev) => {
+      const hiddenSet = new Set(prev.hidden.filter((id) => id !== "greeting"));
+      if (isVisible) {
+        hiddenSet.delete(widgetId);
+      } else {
+        hiddenSet.add(widgetId);
+      }
+      return { ...prev, hidden: Array.from(hiddenSet) };
+    });
+  };
+
+  const applyDraftQuoteColors = (
+    quoteBackgroundColor: string | null,
+    quoteTextColor: string | null,
+  ) => {
+    setDraftLayout((prev) => ({
+      ...prev,
+      quoteBackgroundColor,
+      quoteTextColor,
+    }));
+  };
 
   const handleToggleQuote = (val: boolean) => {
-    onToggleQuote(val);
+    setDraftLayout((prev) => ({ ...prev, showGreetingQuote: val }));
     if (val) {
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -154,9 +206,12 @@ export function CustomizeDashboardModal({
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
     if (colorPickerTarget === "background") {
-      onChangeQuoteColors?.(created.hex, layout.quoteTextColor ?? null);
+      applyDraftQuoteColors(created.hex, draftLayout.quoteTextColor ?? null);
     } else {
-      onChangeQuoteColors?.(layout.quoteBackgroundColor ?? null, created.hex);
+      applyDraftQuoteColors(
+        draftLayout.quoteBackgroundColor ?? null,
+        created.hex,
+      );
     }
     setIsColorFormOpen(false);
     return true;
@@ -164,7 +219,7 @@ export function CustomizeDashboardModal({
 
   const sortableItems = useMemo<SortableItem[]>(
     () =>
-      layout.order.map((widgetId) => {
+      draftLayout.order.map((widgetId) => {
         const meta = WIDGET_METADATA[widgetId];
         return {
           id: widgetId,
@@ -173,12 +228,12 @@ export function CustomizeDashboardModal({
           color: theme.colors.primary,
         };
       }),
-    [layout.order, t, theme.colors.primary],
+    [draftLayout.order, t, theme.colors.primary],
   );
 
   if (!visible) return null;
 
-  const hiddenSet = new Set(layout.hidden);
+  const hiddenSet = new Set(draftLayout.hidden);
 
   const presets: Array<{
     id: DashboardLayoutPresetId;
@@ -210,7 +265,7 @@ export function CustomizeDashboardModal({
   return (
     <Modal
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleDismiss}
       transparent
       visible={visible}
     >
@@ -218,7 +273,7 @@ export function CustomizeDashboardModal({
         <Pressable
           accessibilityLabel={t("common.close")}
           accessibilityRole="button"
-          onPress={onClose}
+          onPress={handleDismiss}
           style={styles.backdrop}
         />
 
@@ -247,54 +302,65 @@ export function CustomizeDashboardModal({
                 <CircleHelp color={theme.colors.textSecondary} size={18} />
               </Pressable>
             </View>
-            <Pressable
-              accessibilityLabel={t("common.close")}
-              accessibilityRole="button"
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <X color={theme.colors.textSecondary} size={20} />
-            </Pressable>
+            <WalkthroughTarget id="customizeDashDone">
+              <Pressable
+                accessibilityLabel={t("common.close")}
+                accessibilityRole="button"
+                onPress={handleDismiss}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <X color={theme.colors.textSecondary} size={20} />
+              </Pressable>
+            </WalkthroughTarget>
           </View>
 
-          <ScrollView
-            ref={scrollViewRef}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollViewRef}
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+              {...scrollProps}
+            >
             {/* 1-Tap Quick Layout Presets (Minimalist) */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t("dashboard.quickPresetsLabel")}
-              </Text>
-              <View style={styles.presetsGrid}>
-                {presets.map(({ id, title, Icon }) => (
-                  <Pressable
-                    key={id}
-                    accessibilityRole="button"
-                    onPress={() => onSelectPreset(id)}
-                    style={({ pressed }) => [
-                      styles.presetCard,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <View style={styles.presetIconWrap}>
-                      <Icon color={theme.colors.primary} size={15} />
-                    </View>
-                    <Text numberOfLines={1} style={styles.presetTitle}>
-                      {title}
-                    </Text>
-                  </Pressable>
-                ))}
+            <WalkthroughTarget id="customizeDashPreview">
+              <View style={styles.section}>
+                <Text style={styles.sectionLabel}>
+                  {t("dashboard.quickPresetsLabel")}
+                </Text>
+                <View style={styles.presetsGrid}>
+                  {presets.map(({ id, title, Icon }) => (
+                    <Pressable
+                      key={id}
+                      accessibilityRole="button"
+                      onPress={() =>
+                        setDraftLayout((prev) =>
+                          resolveDashboardLayoutPreset(id, prev),
+                        )
+                      }
+                      style={({ pressed }) => [
+                        styles.presetCard,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <View style={styles.presetIconWrap}>
+                        <Icon color={theme.colors.primary} size={15} />
+                      </View>
+                      <Text numberOfLines={1} style={styles.presetTitle}>
+                        {title}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
+            </WalkthroughTarget>
 
             {/* Dashboard Cards & Order (Minimalist + Categories-style Reorder) */}
-            <View style={styles.section}>
-              <View style={styles.sectionTitleRow}>
+            <WalkthroughTarget id="customizeDashCards">
+              <View style={styles.section}>
+                <View style={styles.sectionTitleRow}>
                 <Text style={styles.sectionLabel}>
                   {t("dashboard.sectionsOrderLabel")}
                 </Text>
@@ -318,7 +384,7 @@ export function CustomizeDashboardModal({
                   </Pressable>
                   <Pressable
                     accessibilityRole="button"
-                    onPress={onReset}
+                    onPress={() => setDraftLayout(DEFAULT_DASHBOARD_LAYOUT)}
                     style={({ pressed }) => [
                       styles.resetBtn,
                       pressed && styles.pressed,
@@ -333,7 +399,7 @@ export function CustomizeDashboardModal({
               </View>
 
               <View style={styles.widgetList}>
-                {layout.order.map((widgetId) => {
+                {draftLayout.order.map((widgetId) => {
                   const meta = WIDGET_METADATA[widgetId];
                   const isGreeting = widgetId === "greeting";
                   const isVisible = isGreeting || !hiddenSet.has(widgetId);
@@ -372,7 +438,7 @@ export function CustomizeDashboardModal({
                       <ThemedSwitch
                         accessibilityLabel={t(meta.titleKey as never)}
                         disabled={isGreeting}
-                        onValueChange={(val) => onToggleWidget(widgetId, val)}
+                        onValueChange={(val) => toggleDraftWidget(widgetId, val)}
                         value={isVisible}
                       />
                     </View>
@@ -386,18 +452,21 @@ export function CustomizeDashboardModal({
               <View style={styles.widgetIconBox}>
                 <Quote color={theme.colors.primary} size={18} />
               </View>
-              <Text numberOfLines={1} style={styles.widgetTitle}>
-                {t("dashboard.showDailyQuoteTitle")}
-              </Text>
+              <View style={styles.widgetTitleContainer}>
+                <Text numberOfLines={1} style={styles.widgetTitle}>
+                  {t("dashboard.showDailyQuoteTitle")}
+                </Text>
+              </View>
               <ThemedSwitch
                 accessibilityLabel={t("dashboard.showDailyQuoteTitle")}
                 onValueChange={handleToggleQuote}
-                value={layout.showGreetingQuote}
+                value={draftLayout.showGreetingQuote}
               />
             </View>
+            </WalkthroughTarget>
 
             {/* Quote Appearance & Custom Colors */}
-            {layout.showGreetingQuote ? (
+            {draftLayout.showGreetingQuote ? (
               <View style={styles.quoteConfigCard}>
                 <View style={styles.quoteConfigHeader}>
                   <View style={styles.quoteConfigHeaderLeft}>
@@ -406,14 +475,14 @@ export function CustomizeDashboardModal({
                       {t("dashboard.quoteColorsTitle")}
                     </Text>
                   </View>
-                  {(layout.quoteBackgroundColor !== null &&
-                    layout.quoteBackgroundColor !== undefined) ||
-                  (layout.quoteTextColor !== null &&
-                    layout.quoteTextColor !== undefined) ? (
+                  {(draftLayout.quoteBackgroundColor !== null &&
+                    draftLayout.quoteBackgroundColor !== undefined) ||
+                  (draftLayout.quoteTextColor !== null &&
+                    draftLayout.quoteTextColor !== undefined) ? (
                     <Pressable
                       accessibilityLabel={t("dashboard.resetToDefault")}
                       accessibilityRole="button"
-                      onPress={() => onChangeQuoteColors?.(null, null)}
+                      onPress={() => applyDraftQuoteColors(null, null)}
                       style={({ pressed }) => [
                         styles.resetColorsButton,
                         pressed && styles.pressed,
@@ -431,10 +500,10 @@ export function CustomizeDashboardModal({
                 <View
                   style={[
                     styles.previewQuoteBox,
-                    layout.quoteBackgroundColor
+                    draftLayout.quoteBackgroundColor
                       ? {
-                          backgroundColor: layout.quoteBackgroundColor,
-                          borderColor: `${layout.quoteBackgroundColor}40`,
+                          backgroundColor: draftLayout.quoteBackgroundColor,
+                          borderColor: `${draftLayout.quoteBackgroundColor}40`,
                         }
                       : {
                           backgroundColor: `${theme.colors.primary}08`,
@@ -443,16 +512,16 @@ export function CustomizeDashboardModal({
                   ]}
                 >
                   <Quote
-                    color={layout.quoteTextColor ?? theme.colors.primary}
+                    color={draftLayout.quoteTextColor ?? theme.colors.primary}
                     size={14}
-                    style={{ opacity: layout.quoteTextColor ? 0.9 : 0.75 }}
+                    style={{ opacity: draftLayout.quoteTextColor ? 0.9 : 0.75 }}
                   />
                   <Text
                     numberOfLines={2}
                     style={[
                       styles.previewQuoteText,
-                      layout.quoteTextColor
-                        ? { color: layout.quoteTextColor }
+                      draftLayout.quoteTextColor
+                        ? { color: draftLayout.quoteTextColor }
                         : { color: theme.colors.textPrimary },
                     ]}
                   >
@@ -460,8 +529,8 @@ export function CustomizeDashboardModal({
                     <Text
                       style={[
                         styles.previewAuthorText,
-                        layout.quoteTextColor
-                          ? { color: layout.quoteTextColor, opacity: 0.85 }
+                        draftLayout.quoteTextColor
+                          ? { color: draftLayout.quoteTextColor, opacity: 0.85 }
                           : { color: theme.colors.textSecondary },
                       ]}
                     >
@@ -469,9 +538,9 @@ export function CustomizeDashboardModal({
                     </Text>
                   </Text>
                   <Shuffle
-                    color={layout.quoteTextColor ?? theme.colors.textMuted}
+                    color={draftLayout.quoteTextColor ?? theme.colors.textMuted}
                     size={13}
-                    style={{ opacity: layout.quoteTextColor ? 0.8 : 0.6 }}
+                    style={{ opacity: draftLayout.quoteTextColor ? 0.8 : 0.6 }}
                   />
                 </View>
 
@@ -480,30 +549,28 @@ export function CustomizeDashboardModal({
                   <Text style={styles.colorPickerLabel}>
                     {t("dashboard.quoteBgColor")}
                   </Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     contentContainerStyle={styles.swatchesScroll}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {/* Default (Theme) chip */}
                     <Pressable
                       accessibilityLabel={t("dashboard.themeDefault")}
                       accessibilityRole="button"
                       onPress={() =>
-                        onChangeQuoteColors?.(
+                        applyDraftQuoteColors(
                           null,
-                          layout.quoteTextColor ?? null,
+                          draftLayout.quoteTextColor ?? null,
                         )
                       }
                       style={[
                         styles.defaultChip,
-                        !layout.quoteBackgroundColor &&
+                        !draftLayout.quoteBackgroundColor &&
                           styles.defaultChipSelected,
                       ]}
                     >
                       <Sparkles
                         color={
-                          !layout.quoteBackgroundColor
+                          !draftLayout.quoteBackgroundColor
                             ? theme.colors.primary
                             : theme.colors.textMuted
                         }
@@ -512,7 +579,7 @@ export function CustomizeDashboardModal({
                       <Text
                         style={[
                           styles.defaultChipText,
-                          !layout.quoteBackgroundColor &&
+                          !draftLayout.quoteBackgroundColor &&
                             styles.defaultChipTextSelected,
                         ]}
                       >
@@ -522,7 +589,7 @@ export function CustomizeDashboardModal({
 
                     {availableColors.map((color) => {
                       const isSelected =
-                        layout.quoteBackgroundColor?.toLowerCase() ===
+                        draftLayout.quoteBackgroundColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
                       return (
@@ -531,9 +598,9 @@ export function CustomizeDashboardModal({
                           accessibilityLabel={color.name}
                           accessibilityRole="button"
                           onPress={() =>
-                            onChangeQuoteColors?.(
+                            applyDraftQuoteColors(
                               color.hex,
-                              layout.quoteTextColor ?? null,
+                              draftLayout.quoteTextColor ?? null,
                             )
                           }
                           style={[
@@ -543,15 +610,10 @@ export function CustomizeDashboardModal({
                           ]}
                         >
                           {isSelected ? (
-                            <View
-                              style={[
-                                styles.colorCheckDot,
-                                {
-                                  backgroundColor: light
-                                    ? "#0F172A"
-                                    : "#FFFFFF",
-                                },
-                              ]}
+                            <Check
+                              color={light ? "#0F172A" : "#FFFFFF"}
+                              size={14}
+                              strokeWidth={3}
                             />
                           ) : null}
                         </Pressable>
@@ -576,7 +638,7 @@ export function CustomizeDashboardModal({
                         strokeWidth={2.5}
                       />
                     </Pressable>
-                  </ScrollView>
+                  </HorizontalScrollView>
                 </View>
 
                 {/* Text Color Swatches */}
@@ -584,29 +646,27 @@ export function CustomizeDashboardModal({
                   <Text style={styles.colorPickerLabel}>
                     {t("dashboard.quoteTextColor")}
                   </Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     contentContainerStyle={styles.swatchesScroll}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {/* Default (Theme) chip */}
                     <Pressable
                       accessibilityLabel={t("dashboard.themeDefault")}
                       accessibilityRole="button"
                       onPress={() =>
-                        onChangeQuoteColors?.(
-                          layout.quoteBackgroundColor ?? null,
+                        applyDraftQuoteColors(
+                          draftLayout.quoteBackgroundColor ?? null,
                           null,
                         )
                       }
                       style={[
                         styles.defaultChip,
-                        !layout.quoteTextColor && styles.defaultChipSelected,
+                        !draftLayout.quoteTextColor && styles.defaultChipSelected,
                       ]}
                     >
                       <Sparkles
                         color={
-                          !layout.quoteTextColor
+                          !draftLayout.quoteTextColor
                             ? theme.colors.primary
                             : theme.colors.textMuted
                         }
@@ -615,7 +675,7 @@ export function CustomizeDashboardModal({
                       <Text
                         style={[
                           styles.defaultChipText,
-                          !layout.quoteTextColor &&
+                          !draftLayout.quoteTextColor &&
                             styles.defaultChipTextSelected,
                         ]}
                       >
@@ -625,7 +685,7 @@ export function CustomizeDashboardModal({
 
                     {availableColors.map((color) => {
                       const isSelected =
-                        layout.quoteTextColor?.toLowerCase() ===
+                        draftLayout.quoteTextColor?.toLowerCase() ===
                         color.hex.toLowerCase();
                       const light = isLightColor(color.hex);
                       return (
@@ -634,8 +694,8 @@ export function CustomizeDashboardModal({
                           accessibilityLabel={color.name}
                           accessibilityRole="button"
                           onPress={() =>
-                            onChangeQuoteColors?.(
-                              layout.quoteBackgroundColor ?? null,
+                            applyDraftQuoteColors(
+                              draftLayout.quoteBackgroundColor ?? null,
                               color.hex,
                             )
                           }
@@ -646,15 +706,10 @@ export function CustomizeDashboardModal({
                           ]}
                         >
                           {isSelected ? (
-                            <View
-                              style={[
-                                styles.colorCheckDot,
-                                {
-                                  backgroundColor: light
-                                    ? "#0F172A"
-                                    : "#FFFFFF",
-                                },
-                              ]}
+                            <Check
+                              color={light ? "#0F172A" : "#FFFFFF"}
+                              size={14}
+                              strokeWidth={3}
                             />
                           ) : null}
                         </Pressable>
@@ -679,19 +734,39 @@ export function CustomizeDashboardModal({
                         strokeWidth={2.5}
                       />
                     </Pressable>
-                  </ScrollView>
+                  </HorizontalScrollView>
                 </View>
               </View>
             ) : null}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
         </View>
+
+        <CustomizeDashboardWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </View>
 
       <SortableListModal
         items={sortableItems}
         onClose={() => setIsReorderOpen(false)}
         onSave={(orderedIds) => {
-          onReorderWidgets?.(orderedIds as DashboardWidgetId[]);
+          setDraftLayout((prev) => ({
+            ...prev,
+            order: orderedIds as DashboardWidgetId[],
+          }));
         }}
         showAlphabetizeAction={false}
         title={t("dashboard.reorderCardsTitle")}
@@ -737,6 +812,10 @@ function createStyles(theme: AppTheme) {
       paddingTop: theme.spacing.lg,
       width: "100%",
       ...theme.shadows.modal,
+    },
+    scrollWrapper: {
+      flexShrink: 1,
+      position: "relative",
     },
     sheetWide: {
       alignSelf: "center",
@@ -1016,17 +1095,17 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
-      borderColor: theme.colors.border,
+      borderColor: "rgba(255,255,255,0.25)",
       borderRadius: theme.borderRadius.round,
       borderWidth: 1.5,
-      height: 32,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     colorSwatchSelected: {
       borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
-      transform: [{ scale: 1.08 }],
+      transform: [{ scale: 1.06 }],
     },
     colorCheckDot: {
       borderRadius: 3,
@@ -1039,9 +1118,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 32,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     pressed: {
       opacity: 0.75,

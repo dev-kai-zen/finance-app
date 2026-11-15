@@ -28,6 +28,7 @@ export function getQuickSyncState(): QuickSyncState {
     networkPreference: config.network,
     lastSyncedAt: config.lastSyncedAt,
     fileId: config.fileId,
+    accountEmail: config.accountEmail ?? null,
     lastError: lastErrorMessage,
   };
 }

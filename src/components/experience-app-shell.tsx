@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 import { NotificationModal } from "@/components/notification-modal";
 import { AppShell } from "@/components/app-shell";
+import { AppShellHeaderProvider } from "@/components/app-shell-header-context";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { GeneralSearchModal, SearchProvider } from "@/modules/search";
@@ -22,18 +23,20 @@ export function ExperienceAppShell({
   return (
     <SearchProvider>
       <QuickEntryProvider>
-      <AppShell
-        banner={banner}
-        hiddenNavHrefs={hiddenNavHrefs}
-        onSettingsTitlePress={
-          experience.isDevModeAllowed
-            ? experience.registerSettingsTitleTap
-            : undefined
-        }
-      >
-        {children}
-      </AppShell>
-      <GeneralSearchModal />
+        <AppShellHeaderProvider>
+          <AppShell
+            banner={banner}
+            hiddenNavHrefs={hiddenNavHrefs}
+            onSettingsTitlePress={
+              experience.isDevModeAllowed
+                ? experience.registerSettingsTitleTap
+                : undefined
+            }
+          >
+            {children}
+          </AppShell>
+        </AppShellHeaderProvider>
+        <GeneralSearchModal />
       {experience.isDevModeAllowed && (
         <NotificationModal
           message={t("settings.developerModeEnabledMessage")}

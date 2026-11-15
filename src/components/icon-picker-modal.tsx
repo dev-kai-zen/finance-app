@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Crown } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { HorizontalScrollView } from "./horizontal-scroll-view";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -35,7 +36,12 @@ export interface IconPickerModalProps {
   title?: string;
 }
 
-export function IconPickerModal({
+export function IconPickerModal(props: IconPickerModalProps) {
+  if (!props.visible) return null;
+  return <IconPickerModalContent {...props} />;
+}
+
+function IconPickerModalContent({
   visible,
   onClose,
   selectedIcon,
@@ -265,10 +271,8 @@ export function IconPickerModal({
 
           {pickerScope === "recommended" ? (
             <View style={styles.categoryScrollContainer}>
-              <ScrollView
+              <HorizontalScrollView
                 contentContainerStyle={styles.categoryScroll}
-                horizontal
-                showsHorizontalScrollIndicator={false}
               >
                 {ICON_CATEGORIES.map((cat) => {
                   const isCatSelected = selectedCategory === cat.id;
@@ -308,7 +312,7 @@ export function IconPickerModal({
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </HorizontalScrollView>
             </View>
           ) : (
             <Text style={styles.allIconsHint}>

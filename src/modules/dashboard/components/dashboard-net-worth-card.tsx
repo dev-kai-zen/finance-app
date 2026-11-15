@@ -3,8 +3,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   ChevronDown,
   ChevronUp,
-  Eye,
-  EyeOff,
   LayoutGrid,
   Settings2,
   SlidersHorizontal,
@@ -12,7 +10,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react-native";
-import { ActionBottomSheet } from "@/components";
+import { ActionBottomSheet, NetWorthInspectModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -26,7 +24,7 @@ import { usePrivacyMode, type HomeExperienceMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { useWalkthroughTarget } from "@/modules/walkthrough";
 
-const PERIODS: NetWorthPeriod[] = ["1M", "3M", "6M", "1Y"];
+const PERIODS: NetWorthPeriod[] = ["1W", "3M", "6M", "1Y", "ALL"];
 
 export interface DashboardNetWorthCardProps {
   netWorthMinorUnits: number;
@@ -60,18 +58,35 @@ export function DashboardNetWorthCard({
   const cardRef = useWalkthroughTarget("netWorthCard");
   const collapseRef = useWalkthroughTarget("collapseIcon");
   const settingsRef = useWalkthroughTarget("settingsIcon");
-  const eyeRef = useWalkthroughTarget("eyeIcon");
 
   const simpleHomeLabels = homeMode === "simple";
   const isPositive = netWorthMinorUnits >= 0;
   const [period, setPeriod] = useState<NetWorthPeriod>("6M");
-  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const { isPrivate } = usePrivacyMode();
   const valuesVisible = !isPrivate;
   const [chartVisible, setChartVisible] = useState(true);
   const [displayModeSheetVisible, setDisplayModeSheetVisible] = useState(false);
+  const [inspectModalVisible, setInspectModalVisible] = useState(false);
   const trendIsPositive = (monthlyChangePercentage ?? 0) >= 0;
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
   const privateValue = "••••••";
+
+  const availableYears = history.availableYears ?? [];
+  const activePoints = useMemo(() => {
+    if (
+      period === "ALL" &&
+      selectedYear !== "all" &&
+      typeof selectedYear === "number" &&
+      history.byYear?.[selectedYear]
+    ) {
+      return history.byYear[selectedYear];
+    }
+    return history[period] ?? [];
+  }, [history, period, selectedYear]);
+
+  const effectivePeriod: NetWorthPeriod =
+    period === "ALL" && selectedYear !== "all" ? "1Y" : period;
 
   const displayModeItems = useMemo(() => {
     const items = [
@@ -160,24 +175,6 @@ export function DashboardNetWorthCard({
               <Settings2 color={theme.colors.textSecondary} size={20} />
             </Pressable>
           ) : null}
-          <Pressable
-            ref={eyeRef as any}
-            collapsable={false}
-            accessibilityLabel={valuesVisible ? "Hide net worth values" : "Show net worth values"}
-            accessibilityRole="button"
-            hitSlop={5}
-            onPress={togglePrivacyMode}
-            style={({ pressed }) => [
-              styles.iconButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            {valuesVisible ? (
-              <Eye color={theme.colors.textSecondary} size={20} />
-            ) : (
-              <EyeOff color={theme.colors.textSecondary} size={20} />
-            )}
-          </Pressable>
         </View>
       </View>
 
@@ -235,7 +232,12 @@ export function DashboardNetWorthCard({
                   accessibilityLabel={`Show ${option} net worth history`}
                   accessibilityRole="tab"
                   accessibilityState={{ selected }}
-                  onPress={() => setPeriod(option)}
+                  onPress={() => {
+                    setPeriod(option);
+                    if (option !== "ALL") {
+                      setSelectedYear("all");
+                    }
+                  }}
                   style={({ pressed }) => [
                     styles.periodButton,
                     selected && styles.periodButtonSelected,
@@ -255,8 +257,61 @@ export function DashboardNetWorthCard({
             })}
           </View>
 
+          {/* Sub-selector for Year when ALL is active */}
+          {period === "ALL" && availableYears.length > 0 ? (
+            <View style={styles.yearSelectorRow}>
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityState={{ selected: selectedYear === "all" }}
+                onPress={() => setSelectedYear("all")}
+                style={({ pressed }) => [
+                  styles.yearPill,
+                  selectedYear === "all" && styles.yearPillSelected,
+                  pressed && selectedYear !== "all" && styles.buttonPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.yearPillText,
+                    selectedYear === "all" && styles.yearPillTextSelected,
+                  ]}
+                >
+                  All Years
+                </Text>
+              </Pressable>
+              {availableYears.map((yr) => {
+                const isYrSelected = selectedYear === yr;
+                return (
+                  <Pressable
+                    key={yr}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isYrSelected }}
+                    onPress={() => setSelectedYear(yr)}
+                    style={({ pressed }) => [
+                      styles.yearPill,
+                      isYrSelected && styles.yearPillSelected,
+                      pressed && !isYrSelected && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.yearPillText,
+                        isYrSelected && styles.yearPillTextSelected,
+                      ]}
+                    >
+                      {yr}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+
           <NetWorthChart
-            points={history[period]}
+            currencyCode={currencyCode}
+            onPressChart={() => setInspectModalVisible(true)}
+            period={effectivePeriod}
+            points={activePoints}
             valuesVisible={valuesVisible}
           />
         </>
@@ -341,7 +396,27 @@ export function DashboardNetWorthCard({
           visible={displayModeSheetVisible}
         />
       ) : null}
-      </View>
+
+      <NetWorthInspectModal
+        activePeriod={period}
+        currencyCode={currencyCode}
+        onClose={() => setInspectModalVisible(false)}
+        onSelectPeriod={(p) => {
+          setPeriod(p as NetWorthPeriod);
+          if (p !== "ALL") {
+            setSelectedYear("all");
+          }
+        }}
+        periods={PERIODS}
+        points={activePoints}
+        title={simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
+        valuesVisible={valuesVisible}
+        visible={inspectModalVisible}
+        availableYears={availableYears}
+        selectedYear={selectedYear}
+        onSelectYear={setSelectedYear}
+      />
+    </View>
   );
 }
 
@@ -461,6 +536,37 @@ function createStyles(theme: AppTheme) {
     },
     periodTextSelected: {
       color: theme.colors.onPrimary,
+    },
+    yearSelectorRow: {
+      alignSelf: "flex-end",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xxs,
+      marginTop: theme.spacing.xs,
+    },
+    yearPill: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 24,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: 2,
+    },
+    yearPillSelected: {
+      backgroundColor: `${theme.colors.primary}22`,
+      borderColor: theme.colors.primary,
+    },
+    yearPillText: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    yearPillTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: theme.typography.fontWeight.bold,
     },
     breakdownRow: {
       flexDirection: "row",

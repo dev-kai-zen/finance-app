@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -17,9 +16,7 @@ import {
   ArrowDownLeft,
   ArrowLeftRight,
   ArrowUpRight,
-  ChevronLeft,
   ChevronRight,
-  HelpCircle,
   Pencil,
   Plus,
   RotateCcw,
@@ -35,7 +32,7 @@ import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { ConfirmModal, IconHelper } from "@/components";
+import { ConfirmModal, HorizontalScrollView, IconHelper, ModalScreenHeader } from "@/components";
 import { useCategories, type Category } from "@/modules/categories";
 import { useAccounts, type AccountListItem } from "@/modules/accounts";
 import type { TransactionType } from "@/modules/transactions";
@@ -248,6 +245,9 @@ export function KaiKnowledgeModal({
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+
+  // Reset defaults confirmation state
+  const [resetConfirmVisible, setResetConfirmVisible] = useState(false);
 
   // Ref to track if modal just opened to prevent unwanted resets
   const prevVisibleRef = useRef(false);
@@ -787,33 +787,25 @@ export function KaiKnowledgeModal({
   };
 
   // Reset actions to default
-  const handleResetActionKeywords = async () => {
-    Alert.alert(
-      t("chatWithKai.resetDefaults"),
-      t("chatWithKai.resetDefaultsConfirm"),
-      [
-        { text: t("chatWithKai.cancel"), style: "cancel" },
-        {
-          text: t("chatWithKai.resetDefaults"),
-          style: "destructive",
-          onPress: async () => {
-            setProcessing(true);
-            try {
-              await resetToDefaultActionKeywords();
-              const actRows = await listActionKeywords();
-              setActionKeywords(actRows);
-              onKeywordsUpdated?.();
-            } catch (err: any) {
-              setErrorMessage(
-                err?.message ?? "Failed to reset action keywords.",
-              );
-            } finally {
-              setProcessing(false);
-            }
-          },
-        },
-      ],
-    );
+  const handleResetActionKeywords = () => {
+    setResetConfirmVisible(true);
+  };
+
+  const handleConfirmResetActionKeywords = async () => {
+    setProcessing(true);
+    try {
+      await resetToDefaultActionKeywords();
+      const actRows = await listActionKeywords();
+      setActionKeywords(actRows);
+      onKeywordsUpdated?.();
+      setResetConfirmVisible(false);
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message ?? "Failed to reset action keywords.",
+      );
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -828,43 +820,21 @@ export function KaiKnowledgeModal({
         style={[
           styles.fullScreenContainer,
           {
-            paddingTop: insets.top,
             paddingBottom: Math.max(insets.bottom, 12),
           },
         ]}
       >
-        {/* Top Header: ChevronLeft + Left-aligned Title + Right Help Button */}
-        <View style={styles.topHeader}>
-          <View style={styles.headerLeftGroup}>
-            <Pressable
-              accessibilityLabel="Back"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.backBtn}
-            >
-              <ChevronLeft color={theme.colors.textPrimary} size={24} />
-            </Pressable>
-            <Text numberOfLines={1} style={styles.topTitle}>
-              {t("chatWithKai.knowledgeHubTitle")}
-            </Text>
-          </View>
-
-          <Pressable
-            accessibilityLabel={t("chatWithKai.helpModalTitle")}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => setHelpModalVisible(true)}
-            style={styles.helpBtn}
-          >
-            <HelpCircle color={theme.colors.primary} size={22} />
-          </Pressable>
-        </View>
+        <ModalScreenHeader
+          backAccessibilityLabel={t("common.goBack")}
+          helpAccessibilityHint={t("chatWithKai.helpModalTitle")}
+          helpAccessibilityLabel={t("chatWithKai.helpModalTitle")}
+          onPressBack={onClose}
+          onPressHelp={() => setHelpModalVisible(true)}
+          title={t("chatWithKai.knowledgeHubTitle")}
+        />
 
         {/* Top 4-Tab Segmented Control */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
+        <HorizontalScrollView
           style={styles.tabBarScroll}
           contentContainerStyle={styles.tabBarScrollContent}
         >
@@ -988,7 +958,7 @@ export function KaiKnowledgeModal({
               {t("chatWithKai.tabMerchants")}
             </Text>
           </Pressable>
-        </ScrollView>
+        </HorizontalScrollView>
 
         {/* Fixed Non-Scrolling Screen Body */}
         <View style={styles.mainBodyContainer}>
@@ -2283,6 +2253,21 @@ export function KaiKnowledgeModal({
           </View>
         </Modal>
 
+        {/* RESTORE DEFAULTS CONFIRMATION MODAL */}
+        <ConfirmModal
+          cancelLabel={t("chatWithKai.cancel")}
+          confirmLabel={t("chatWithKai.resetDefaults")}
+          message={t("chatWithKai.resetDefaultsConfirm")}
+          onCancel={() => {
+            if (!processing) setResetConfirmVisible(false);
+          }}
+          onConfirm={handleConfirmResetActionKeywords}
+          pending={processing}
+          title={t("chatWithKai.resetDefaults")}
+          variant="restore"
+          visible={resetConfirmVisible}
+        />
+
         {/* DELETE CONFIRMATION MODAL */}
         <ConfirmModal
           cancelLabel={t("chatWithKai.cancel")}
@@ -2319,45 +2304,6 @@ const createStyles = (theme: AppTheme) =>
     fullScreenContainer: {
       flex: 1,
       backgroundColor: theme.colors.background,
-    },
-    topHeader: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      backgroundColor: theme.colors.surface,
-    },
-    headerLeftGroup: {
-      flexDirection: "row",
-      alignItems: "center",
-      flex: 1,
-      marginRight: 12,
-      gap: 8,
-    },
-    backBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 10,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.colors.surfaceElevated,
-    },
-    topTitle: {
-      fontSize: 17,
-      fontWeight: "700",
-      color: theme.colors.textPrimary,
-      flex: 1,
-    },
-    helpBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 10,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: `${theme.colors.primary}15`,
     },
     tabBarScroll: {
       flexGrow: 0,

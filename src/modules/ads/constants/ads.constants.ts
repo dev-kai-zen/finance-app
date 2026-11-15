@@ -10,6 +10,58 @@ export const ADMOB_TEST_UNIT_IDS = {
   IOS_BANNER: "ca-app-pub-3940256099942544/2934735716",
 } as const;
 
+function getAndroidPlacementUnitId(placement: AdBannerPlacement): string | undefined {
+  switch (placement) {
+    case "dashboard":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_DASHBOARD;
+    case "transactions":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_TRANSACTIONS;
+    case "accounts":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_ACCOUNTS;
+    case "reports":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_REPORTS;
+    case "budgets":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_BUDGETS;
+    case "categories":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_CATEGORIES;
+    case "calendar":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_CALENDAR;
+    case "goals":
+      return (
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_GOAL ||
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_GOALS
+      );
+    default:
+      return undefined;
+  }
+}
+
+function getIosPlacementUnitId(placement: AdBannerPlacement): string | undefined {
+  switch (placement) {
+    case "dashboard":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_DASHBOARD;
+    case "transactions":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_TRANSACTIONS;
+    case "accounts":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_ACCOUNTS;
+    case "reports":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_REPORTS;
+    case "budgets":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_BUDGETS;
+    case "categories":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_CATEGORIES;
+    case "calendar":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_CALENDAR;
+    case "goals":
+      return (
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_GOAL ||
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_GOALS
+      );
+    default:
+      return undefined;
+  }
+}
+
 /**
  * Returns the Banner Ad Unit ID based on platform, placement, and environment.
  * If running in development (__DEV__) or if production credentials are not configured,
@@ -25,17 +77,25 @@ export function getBannerAdUnitId(
   }
 
   if (Platform.OS === "android") {
-    const customUnit = process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID;
-    if (customUnit && customUnit.trim().length > 0) {
-      return customUnit.trim();
+    const placementUnit = getAndroidPlacementUnitId(placement);
+    if (placementUnit && placementUnit.trim().length > 0) {
+      return placementUnit.trim();
+    }
+    const defaultUnit = process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID;
+    if (defaultUnit && defaultUnit.trim().length > 0) {
+      return defaultUnit.trim();
     }
     return TestIds.BANNER;
   }
 
   if (Platform.OS === "ios") {
-    const customUnit = process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS;
-    if (customUnit && customUnit.trim().length > 0) {
-      return customUnit.trim();
+    const placementUnit = getIosPlacementUnitId(placement);
+    if (placementUnit && placementUnit.trim().length > 0) {
+      return placementUnit.trim();
+    }
+    const defaultUnit = process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS;
+    if (defaultUnit && defaultUnit.trim().length > 0) {
+      return defaultUnit.trim();
     }
     return TestIds.BANNER;
   }

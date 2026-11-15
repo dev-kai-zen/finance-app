@@ -2,6 +2,7 @@ import { randomUUID } from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 
+import { appLockLifecycle } from "@/modules/security";
 import type { TransactionListItem } from "@/modules/transactions/types/transaction.types";
 import {
   buildTransactionsCsv,
@@ -74,9 +75,11 @@ export async function shareTransactionsCsv(
   const file = writeCsvCacheFile(bytes, name);
 
   try {
-    await Sharing.shareAsync(file.uri, {
-      dialogTitle: "Export transactions",
-      mimeType: CSV_MIME_TYPE,
+    await appLockLifecycle.withLockSuspended(async () => {
+      await Sharing.shareAsync(file.uri, {
+        dialogTitle: "Export transactions",
+        mimeType: CSV_MIME_TYPE,
+      });
     });
   } finally {
     if (file.exists) {
@@ -95,7 +98,9 @@ export async function saveTransactionsCsvToDevice(
 
   let directory: Directory;
   try {
-    directory = await Directory.pickDirectoryAsync();
+    directory = await appLockLifecycle.withLockSuspended(async () => {
+      return await Directory.pickDirectoryAsync();
+    });
   } catch (error) {
     if (isPickerCancelledError(error)) {
       throw new TransactionCsvExportCancelledError();

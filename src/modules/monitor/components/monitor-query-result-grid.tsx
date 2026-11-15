@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 
@@ -42,8 +43,7 @@ export function MonitorQueryResultGrid({
   }
 
   return (
-    <ScrollView
-      horizontal
+    <HorizontalScrollView
       nestedScrollEnabled
       showsHorizontalScrollIndicator
       style={styles.horizontalScroll}
@@ -83,7 +83,7 @@ export function MonitorQueryResultGrid({
           )}
         </ScrollView>
       </View>
-    </ScrollView>
+    </HorizontalScrollView>
   );
 }
 

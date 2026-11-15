@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getNetWorthGrowthReport } from "../services/get-net-worth-growth-report.service";
 import type {
   NetWorthGrowthDateRange,
@@ -8,6 +9,22 @@ import type {
 } from "../types/net-worth-growth.types";
 import { getNetWorthDateRange } from "../utils/net-worth-dates";
 import { toDateKey } from "../utils/reports-dates";
+
+const EMPTY_NET_WORTH_REPORT: NetWorthGrowthReportData = {
+  range: {
+    preset: "1y",
+    startDate: new Date(0),
+    endDate: new Date(0),
+    label: "",
+  },
+  currentNetWorthMinorUnits: 0,
+  startingNetWorthMinorUnits: 0,
+  periodChangeMinorUnits: 0,
+  periodChangePercentage: null,
+  peakNetWorthMinorUnits: 0,
+  lowestNetWorthMinorUnits: 0,
+  points: [],
+};
 
 export function useNetWorthGrowthReport() {
   const { preferences } = useCurrencyPreferences();
@@ -21,6 +38,9 @@ export function useNetWorthGrowthReport() {
   const [customDateB, setCustomDateB] = useState<string>(() => toDateKey(now));
 
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
+  const [data, setData] = useState<NetWorthGrowthReportData>(EMPTY_NET_WORTH_REPORT);
+  const [reportLoading, setReportLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const range: NetWorthGrowthDateRange = useMemo(() => {
     return getNetWorthDateRange(preset, {
@@ -29,8 +49,19 @@ export function useNetWorthGrowthReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  const data: NetWorthGrowthReportData = useMemo(() => {
-    return getNetWorthGrowthReport(range);
+  useEffect(() => {
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading: setReportLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        setData(getNetWorthGrowthReport(range));
+      },
+    );
   }, [range, preferences.defaultCurrency]);
 
   return {
@@ -42,6 +73,7 @@ export function useNetWorthGrowthReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedPointIndex,
     setSelectedPointIndex,
   };

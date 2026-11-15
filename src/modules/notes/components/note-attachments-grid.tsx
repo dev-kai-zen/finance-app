@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Camera, Crown, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
-import { ActionBottomSheet } from "@/components";
+import { ActionBottomSheet, HorizontalScrollView } from "@/components";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -108,10 +108,8 @@ export function NoteAttachmentsGrid({
           </Text>
         </Pressable>
       ) : (
-        <ScrollView
+        <HorizontalScrollView
           contentContainerStyle={styles.scrollList}
-          horizontal
-          showsHorizontalScrollIndicator={false}
         >
           {/* Existing attachments */}
           {existingAttachments.map((attachment) => (
@@ -180,7 +178,7 @@ export function NoteAttachmentsGrid({
               </Pressable>
             </View>
           ))}
-        </ScrollView>
+        </HorizontalScrollView>
       )}
 
       {/* Action bottom sheet for Camera / Gallery */}

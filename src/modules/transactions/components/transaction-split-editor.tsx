@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight, Info, Plus, Trash2 } from "lucide-react-native";
+import { ChevronRight, Plus, Trash2 } from "lucide-react-native";
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
+  HelpIconButton,
   IconHelper,
   InfoModal,
   ThemedSwitch,
@@ -97,16 +98,13 @@ export function TransactionSplitEditor({
         <View style={styles.headerText}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>Split by category</Text>
-            <Pressable
+            <HelpIconButton
               accessibilityHint="Shows explanation of split transactions"
               accessibilityLabel="Split by category info"
-              accessibilityRole="button"
-              hitSlop={8}
+              color={theme.colors.textMuted}
               onPress={() => setShowInfoModal(true)}
-              style={styles.infoButton}
-            >
-              <Info color={theme.colors.textMuted} size={15} />
-            </Pressable>
+              size={15}
+            />
           </View>
         </View>
         <ThemedSwitch

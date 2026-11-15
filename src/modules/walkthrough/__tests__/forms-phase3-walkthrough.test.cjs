@@ -76,12 +76,12 @@ test("Budget Form Walkthrough: includes 7 steps in exact requested order", () =>
 test("Goal Form Walkthrough: includes 8 steps in exact requested order", () => {
   const expectedTargetIds = [
     "goalFormTitle",
+    "goalFormNotes",
     "goalFormAmount",
     "goalFormLinked",
     "goalFormDate",
     "goalFormIcon",
     "goalFormColor",
-    "goalFormNotes",
     "goalFormSave",
   ];
 

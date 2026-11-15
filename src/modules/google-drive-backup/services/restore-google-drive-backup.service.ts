@@ -11,7 +11,10 @@ import {
 } from "@/infrastructure/sync";
 import { finalizeRestoredWorkspace } from "@/modules/onboarding";
 import { readDatabaseBackup } from "@/modules/local-backup";
-import { withGoogleDriveAccessToken } from "./google-drive-auth.service";
+import {
+  restoreGoogleDriveSession,
+  withGoogleDriveAccessToken,
+} from "./google-drive-auth.service";
 
 let restoreNotice: string | null = null;
 
@@ -30,13 +33,29 @@ export async function restoreGoogleDriveBackup(
   setTimeout(announceDatabaseReplacement, 0);
 }
 
-export async function restoreQuickSyncBackup(): Promise<void> {
+export async function restoreQuickSyncBackup(
+  explicitFileId?: string,
+): Promise<void> {
   const config = getQuickSyncConfig();
-  let resolvedFileId = config.fileId;
+  const currentUser = await restoreGoogleDriveSession().catch(() => null);
+  let resolvedFileId = explicitFileId ?? config.fileId;
   let resolvedModifiedTime: string | null = null;
+
   const archive = await withGoogleDriveAccessToken(async (accessToken) => {
-    let fileId = config.fileId;
-    if (!fileId) {
+    let fileIdToDownload = explicitFileId;
+
+    if (!fileIdToDownload) {
+      const isAccountMatch =
+        !config.accountEmail || config.accountEmail === currentUser?.email;
+
+      if (config.fileId && isAccountMatch) {
+        try {
+          return await downloadGoogleDriveBackupFile(accessToken, config.fileId);
+        } catch {
+          // File may no longer exist in Drive; fall back to resolving active quick sync file
+        }
+      }
+
       const quickSyncFile: GoogleDriveBackupFile | null =
         await resolveGoogleDriveQuickSyncBackupFile(accessToken);
       if (!quickSyncFile) {
@@ -44,9 +63,10 @@ export async function restoreQuickSyncBackup(): Promise<void> {
       }
       resolvedFileId = quickSyncFile.id;
       resolvedModifiedTime = quickSyncFile.modifiedTime;
-      fileId = quickSyncFile.id;
+      fileIdToDownload = quickSyncFile.id;
     }
-    return downloadGoogleDriveBackupFile(accessToken, fileId);
+
+    return downloadGoogleDriveBackupFile(accessToken, fileIdToDownload);
   });
 
   const backup = await readDatabaseBackup(archive, null);
@@ -57,6 +77,7 @@ export async function restoreQuickSyncBackup(): Promise<void> {
     saveQuickSyncConfig({
       enabled: true,
       fileId: resolvedFileId,
+      accountEmail: currentUser?.email ?? null,
       lastSyncedAt: resolvedModifiedTime ?? new Date().toISOString(),
     });
   }

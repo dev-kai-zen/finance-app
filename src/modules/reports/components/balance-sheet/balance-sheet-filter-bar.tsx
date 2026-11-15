@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { HorizontalScrollView } from "@/components";
 import {
   Calendar,
   ChevronDown,
@@ -64,9 +64,7 @@ export function BalanceSheetFilterBar({
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+      <HorizontalScrollView
         contentContainerStyle={styles.scrollContent}
       >
         {/* Preset Selector Chip */}
@@ -129,7 +127,7 @@ export function BalanceSheetFilterBar({
             {hideZeroBalances ? "Zero Balances: Hidden" : "Zero Balances: Visible"}
           </Text>
         </Pressable>
-      </ScrollView>
+      </HorizontalScrollView>
 
       {/* Preset Picker Modal */}
       <PresetPickerModal

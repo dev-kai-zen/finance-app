@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getCashFlowReport } from "../services/get-cash-flow-report.service";
 import type {
   CashFlowDateRange,
@@ -8,6 +9,21 @@ import type {
 } from "../types/cash-flow.types";
 import { getCashFlowDateRange } from "../utils/cash-flow-dates";
 import { toDateKey } from "../utils/reports-dates";
+
+const EMPTY_CASH_FLOW_REPORT: CashFlowReportData = {
+  range: {
+    preset: "6m",
+    startDate: new Date(0),
+    endDate: new Date(0),
+    label: "",
+  },
+  totalInflowMinorUnits: 0,
+  totalOutflowMinorUnits: 0,
+  netCashFlowMinorUnits: 0,
+  averageMonthlyNetMinorUnits: 0,
+  overallSavingsRatePercentage: 0,
+  periods: [],
+};
 
 export function useCashFlowReport() {
   const { preferences } = useCurrencyPreferences();
@@ -21,6 +37,9 @@ export function useCashFlowReport() {
   const [customDateB, setCustomDateB] = useState<string>(() => toDateKey(now));
 
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string | null>(null);
+  const [data, setData] = useState<CashFlowReportData>(EMPTY_CASH_FLOW_REPORT);
+  const [reportLoading, setReportLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   const range: CashFlowDateRange = useMemo(() => {
     return getCashFlowDateRange(preset, {
@@ -29,8 +48,19 @@ export function useCashFlowReport() {
     });
   }, [preset, customDateA, customDateB]);
 
-  const data: CashFlowReportData = useMemo(() => {
-    return getCashFlowReport(range);
+  useEffect(() => {
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading: setReportLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        setData(getCashFlowReport(range));
+      },
+    );
   }, [range, preferences.defaultCurrency]);
 
   return {
@@ -42,6 +72,7 @@ export function useCashFlowReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     selectedPeriodKey,
     setSelectedPeriodKey,
   };

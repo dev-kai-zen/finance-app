@@ -11,8 +11,16 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Calendar, Check, ChevronDown, ChevronUp } from "lucide-react-native";
 import { DatePickerModal } from "@/components/date-picker-modal";
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
+import {
+  TxFilterWalkthroughOverlay,
+  useTxFilterWalkthrough,
+  WalkthroughRegistryProvider,
+  WalkthroughTarget,
+} from "@/modules/walkthrough";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { AccountListItem } from "@/modules/accounts";
 import { LabelBadge, useLabels } from "@/modules/labels";
@@ -76,7 +84,16 @@ const DATE_OPTIONS: { key: DatePreset; label: string }[] = [
   { key: "custom", label: "Custom Dates" },
 ];
 
-export function TransactionFilterModal({
+export function TransactionFilterModal(props: TransactionFilterModalProps) {
+  if (!props.visible) return null;
+  return (
+    <WalkthroughRegistryProvider>
+      <TransactionFilterModalContent {...props} />
+    </WalkthroughRegistryProvider>
+  );
+}
+
+function TransactionFilterModalContent({
   visible,
   onClose,
   filters,
@@ -88,19 +105,24 @@ export function TransactionFilterModal({
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const walkthrough = useTxFilterWalkthrough();
 
   const [localFilters, setLocalFilters] = useState<TransactionFilterState>(filters);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [labelDropdownOpen, setLabelDropdownOpen] = useState(false);
   const [customDatePickerTarget, setCustomDatePickerTarget] = useState<
     "from" | "to" | null
   >(null);
   const { activeLabels } = useLabels({ includeArchived: false });
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   // Sync with prop when opened
   React.useEffect(() => {
     if (visible) {
       setLocalFilters(filters);
       setAccountDropdownOpen(false);
+      setLabelDropdownOpen(false);
       setCustomDatePickerTarget(null);
     }
   }, [visible, filters]);
@@ -121,6 +143,8 @@ export function TransactionFilterModal({
 
   const handleReset = () => {
     setLocalFilters(DEFAULT_TRANSACTION_FILTERS);
+    setAccountDropdownOpen(false);
+    setLabelDropdownOpen(false);
   };
 
   const handleApply = () => {
@@ -143,6 +167,16 @@ export function TransactionFilterModal({
       : selectedAccountNames.length <= 2
         ? selectedAccountNames.join(", ")
         : `${selectedAccountNames.length} accounts selected`;
+
+  const selectedLabelNames = activeLabels
+    .filter((lbl) => localFilters.labelIds?.includes(lbl.id))
+    .map((lbl) => lbl.name);
+  const labelSelectionLabel =
+    selectedLabelNames.length === 0
+      ? "All labels"
+      : selectedLabelNames.length <= 2
+        ? selectedLabelNames.join(", ")
+        : `${selectedLabelNames.length} labels selected`;
 
   return (
     <Modal
@@ -196,102 +230,116 @@ export function TransactionFilterModal({
             </View>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollBody}>
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              showsVerticalScrollIndicator={false}
+              style={styles.scrollBody}
+              {...scrollProps}
+            >
             {/* Transaction Type Filter */}
-            <View style={styles.filterGroup}>
-              <Text style={styles.groupTitle}>TRANSACTION TYPE</Text>
-              <View style={styles.pillGrid}>
-                {TYPE_OPTIONS.map((opt) => {
-                  const active = localFilters.type === opt.key;
-                  return (
-                    <Pressable
-                      key={opt.key}
-                      accessibilityLabel={`Type ${opt.label}`}
-                      accessibilityRole="button"
-                      onPress={() =>
-                        setLocalFilters((prev) => ({ ...prev, type: opt.key }))
-                      }
-                      style={[styles.pill, active && styles.pillActive]}
-                    >
-                      <Text
-                        style={[styles.pillText, active && styles.pillTextActive]}
+            <WalkthroughTarget id="txFilterType">
+              <View style={styles.filterGroup}>
+                <Text style={styles.groupTitle}>TRANSACTION TYPE</Text>
+                <View style={styles.pillGrid}>
+                  {TYPE_OPTIONS.map((opt) => {
+                    const active = localFilters.type === opt.key;
+                    return (
+                      <Pressable
+                        key={opt.key}
+                        accessibilityLabel={`Type ${opt.label}`}
+                        accessibilityRole="button"
+                        onPress={() =>
+                          setLocalFilters((prev) => ({ ...prev, type: opt.key }))
+                        }
+                        style={[styles.pill, active && styles.pillActive]}
                       >
-                        {opt.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                        <Text
+                          style={[styles.pillText, active && styles.pillTextActive]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </View>
-            </View>
+            </WalkthroughTarget>
 
             {/* Date Range Filter */}
-            <View style={styles.filterGroup}>
-              <Text style={styles.groupTitle}>DATE RANGE</Text>
-              <View style={styles.pillGrid}>
-                {DATE_OPTIONS.map((opt) => {
-                  const active = localFilters.datePreset === opt.key;
-                  return (
-                    <Pressable
-                      key={opt.key}
-                      accessibilityLabel={`Date ${opt.label}`}
-                      accessibilityRole="button"
-                      onPress={() => selectDatePreset(opt.key)}
-                      style={[styles.pill, active && styles.pillActive]}
-                    >
-                      <Text
-                        style={[styles.pillText, active && styles.pillTextActive]}
+            <WalkthroughTarget id="txFilterDate">
+              <View style={styles.filterGroup}>
+                <Text style={styles.groupTitle}>DATE RANGE</Text>
+                <View style={styles.pillGrid}>
+                  {DATE_OPTIONS.map((opt) => {
+                    const active = localFilters.datePreset === opt.key;
+                    return (
+                      <Pressable
+                        key={opt.key}
+                        accessibilityLabel={`Date ${opt.label}`}
+                        accessibilityRole="button"
+                        onPress={() => selectDatePreset(opt.key)}
+                        style={[styles.pill, active && styles.pillActive]}
                       >
-                        {opt.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {localFilters.datePreset === "custom" &&
-              localFilters.customDateFrom &&
-              localFilters.customDateTo ? (
-                <View style={styles.customDateBox}>
-                  <Text style={styles.customDateHint}>
-                    Pick one day or a range (inclusive).
-                  </Text>
-                  <View style={styles.customDateRow}>
-                    <Pressable
-                      accessibilityLabel="Select start date"
-                      accessibilityRole="button"
-                      onPress={() => setCustomDatePickerTarget("from")}
-                      style={styles.dateChip}
-                    >
-                      <Calendar color={theme.colors.primary} size={15} />
-                      <Text style={styles.dateChipText}>
-                        From{" "}
-                        {formatTransactionFilterDate(localFilters.customDateFrom)}
-                      </Text>
-                    </Pressable>
-                    <Text style={styles.customDateSeparator}>to</Text>
-                    <Pressable
-                      accessibilityLabel="Select end date"
-                      accessibilityRole="button"
-                      onPress={() => setCustomDatePickerTarget("to")}
-                      style={styles.dateChip}
-                    >
-                      <Calendar color={theme.colors.primary} size={15} />
-                      <Text style={styles.dateChipText}>
-                        To {formatTransactionFilterDate(localFilters.customDateTo)}
-                      </Text>
-                    </Pressable>
-                  </View>
+                        <Text
+                          style={[styles.pillText, active && styles.pillTextActive]}
+                        >
+                          {opt.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
                 </View>
-              ) : null}
-            </View>
+                {localFilters.datePreset === "custom" &&
+                localFilters.customDateFrom &&
+                localFilters.customDateTo ? (
+                  <View style={styles.customDateBox}>
+                    <Text style={styles.customDateHint}>
+                      Pick one day or a range (inclusive).
+                    </Text>
+                    <View style={styles.customDateRow}>
+                      <Pressable
+                        accessibilityLabel="Select start date"
+                        accessibilityRole="button"
+                        onPress={() => setCustomDatePickerTarget("from")}
+                        style={styles.dateChip}
+                      >
+                        <Calendar color={theme.colors.primary} size={15} />
+                        <Text style={styles.dateChipText}>
+                          From{" "}
+                          {formatTransactionFilterDate(localFilters.customDateFrom)}
+                        </Text>
+                      </Pressable>
+                      <Text style={styles.customDateSeparator}>to</Text>
+                      <Pressable
+                        accessibilityLabel="Select end date"
+                        accessibilityRole="button"
+                        onPress={() => setCustomDatePickerTarget("to")}
+                        style={styles.dateChip}
+                      >
+                        <Calendar color={theme.colors.primary} size={15} />
+                        <Text style={styles.dateChipText}>
+                          To {formatTransactionFilterDate(localFilters.customDateTo)}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            </WalkthroughTarget>
 
             {/* Account Filter */}
-            <View style={styles.filterGroup}>
+            <WalkthroughTarget id="txFilterAccounts">
+              <View style={styles.filterGroup}>
               <Text style={styles.groupTitle}>ACCOUNT</Text>
               <Pressable
                 accessibilityLabel={`Account filter: ${accountSelectionLabel}`}
                 accessibilityRole="button"
                 accessibilityState={{ expanded: accountDropdownOpen }}
-                onPress={() => setAccountDropdownOpen((open) => !open)}
+                onPress={() => {
+                  setAccountDropdownOpen((open) => !open);
+                  setLabelDropdownOpen(false);
+                }}
                 style={({ pressed }) => [
                   styles.accountDropdownTrigger,
                   pressed && styles.accountDropdownPressed,
@@ -366,48 +414,117 @@ export function TransactionFilterModal({
                 </ScrollView>
               ) : null}
             </View>
+            </WalkthroughTarget>
 
             {/* Labels Section */}
             {activeLabels.length > 0 && (
               <View style={styles.filterGroup}>
                 <Text style={styles.groupTitle}>LABELS</Text>
-                <View style={styles.labelsWrap}>
-                  {activeLabels.map((lbl) => {
-                    const isSelected = localFilters.labelIds?.includes(lbl.id);
-                    return (
-                      <Pressable
-                        key={lbl.id}
-                        onPress={() =>
-                          setLocalFilters((prev) => {
-                            const current = prev.labelIds ?? [];
-                            return {
-                              ...prev,
-                              labelIds: isSelected
-                                ? current.filter((id) => id !== lbl.id)
-                                : [...current, lbl.id],
-                            };
-                          })
-                        }
-                        style={[
-                          styles.labelFilterChip,
-                          isSelected && styles.labelFilterChipSelected,
-                        ]}
-                      >
-                        <LabelBadge label={lbl} size="md" />
-                        {isSelected && (
-                          <Check
-                            size={14}
-                            color={theme.colors.primary}
-                            strokeWidth={3}
-                          />
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                <Pressable
+                  accessibilityLabel={`Labels filter: ${labelSelectionLabel}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: labelDropdownOpen }}
+                  onPress={() => {
+                    setLabelDropdownOpen((open) => !open);
+                    setAccountDropdownOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.accountDropdownTrigger,
+                    pressed && styles.accountDropdownPressed,
+                  ]}
+                >
+                  <Text numberOfLines={1} style={styles.accountDropdownText}>
+                    {labelSelectionLabel}
+                  </Text>
+                  {labelDropdownOpen ? (
+                    <ChevronUp color={theme.colors.textSecondary} size={18} />
+                  ) : (
+                    <ChevronDown color={theme.colors.textSecondary} size={18} />
+                  )}
+                </Pressable>
+
+                {labelDropdownOpen ? (
+                  <ScrollView
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={activeLabels.length > 5}
+                    style={styles.accountOptionsList}
+                  >
+                    <Pressable
+                      accessibilityLabel="All Labels"
+                      accessibilityRole="checkbox"
+                      accessibilityState={{
+                        checked:
+                          !localFilters.labelIds ||
+                          localFilters.labelIds.length === 0,
+                      }}
+                      onPress={() =>
+                        setLocalFilters((prev) => ({ ...prev, labelIds: [] }))
+                      }
+                      style={[
+                        styles.accountOption,
+                        (!localFilters.labelIds ||
+                          localFilters.labelIds.length === 0) &&
+                          styles.accountOptionActive,
+                      ]}
+                    >
+                      <Text style={styles.accountOptionText}>All Labels</Text>
+                      {!localFilters.labelIds ||
+                      localFilters.labelIds.length === 0 ? (
+                        <Check
+                          color={theme.colors.primary}
+                          size={17}
+                          strokeWidth={2.5}
+                        />
+                      ) : null}
+                    </Pressable>
+
+                    {activeLabels.map((lbl) => {
+                      const active =
+                        localFilters.labelIds?.includes(lbl.id) ?? false;
+                      return (
+                        <Pressable
+                          key={lbl.id}
+                          accessibilityLabel={`Filter label ${lbl.name}`}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: active }}
+                          onPress={() =>
+                            setLocalFilters((prev) => {
+                              const current = prev.labelIds ?? [];
+                              return {
+                                ...prev,
+                                labelIds: active
+                                  ? current.filter((id) => id !== lbl.id)
+                                  : [...current, lbl.id],
+                              };
+                            })
+                          }
+                          style={[
+                            styles.accountOption,
+                            active && styles.accountOptionActive,
+                          ]}
+                        >
+                          <LabelBadge label={lbl} size="md" />
+                          {active ? (
+                            <Check
+                              color={theme.colors.primary}
+                              size={17}
+                              strokeWidth={2.5}
+                            />
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                ) : null}
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
 
           {/* Footer */}
           <View style={styles.footerRow}>
@@ -420,16 +537,29 @@ export function TransactionFilterModal({
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
-            <Pressable
-              accessibilityLabel="Apply Filters"
-              accessibilityRole="button"
-              onPress={handleApply}
-              style={styles.applyBtn}
-            >
-              <Text style={styles.applyBtnText}>Apply Filters</Text>
-            </Pressable>
+            <WalkthroughTarget id="txFilterApply" style={styles.footerBtnWrapper}>
+              <Pressable
+                accessibilityLabel="Apply Filters"
+                accessibilityRole="button"
+                onPress={handleApply}
+                style={styles.applyBtn}
+              >
+                <Text style={styles.applyBtnText}>Apply Filters</Text>
+              </Pressable>
+            </WalkthroughTarget>
           </View>
         </View>
+
+        <TxFilterWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </View>
 
       <DatePickerModal
@@ -540,9 +670,12 @@ function createStyles(theme: AppTheme) {
       fontSize: 16,
       fontWeight: "bold",
     },
-    scrollBody: {
+    scrollWrapper: {
+      flexShrink: 1,
       marginBottom: 16,
+      position: "relative",
     },
+    scrollBody: {},
     filterGroup: {
       marginBottom: 18,
     },
@@ -665,26 +798,6 @@ function createStyles(theme: AppTheme) {
       fontWeight: "500",
       paddingRight: theme.spacing.sm,
     },
-    labelsWrap: {
-      flexDirection: "row",
-      flexWrap: "wrap",
-      gap: theme.spacing.sm,
-    },
-    labelFilterChip: {
-      alignItems: "center",
-      backgroundColor: theme.colors.surfaceMuted,
-      borderColor: theme.colors.border,
-      borderRadius: theme.borderRadius.round,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 6,
-      paddingHorizontal: theme.spacing.xs,
-      paddingVertical: 2,
-    },
-    labelFilterChipSelected: {
-      backgroundColor: `${theme.colors.primary}15`,
-      borderColor: theme.colors.primary,
-    },
     footerRow: {
       flexDirection: "row",
       gap: 10,
@@ -705,13 +818,17 @@ function createStyles(theme: AppTheme) {
       fontSize: 14,
       fontWeight: "600",
     },
+    footerBtnWrapper: {
+      flex: 1,
+    },
     applyBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
       borderRadius: 12,
-      flex: 2,
+      flex: 1,
       height: 46,
       justifyContent: "center",
+      width: "100%",
     },
     applyBtnText: {
       color: theme.colors.onPrimary,

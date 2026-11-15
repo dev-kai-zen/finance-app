@@ -8,7 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Check, Plus, Search, Settings2, X } from "lucide-react-native";
+import { Check, Plus, Search, Tag, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import type { AppTheme } from "@/constants/theme";
@@ -122,26 +122,34 @@ export function LabelPickerModal({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <View style={styles.headerActions}>
-              <Pressable
-                onPress={() => setManagerVisible(true)}
-                hitSlop={8}
-                style={styles.iconBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Manage Labels"
-              >
-                <Settings2 size={20} color={theme.colors.textMuted} />
-              </Pressable>
-              <Pressable
-                onPress={onClose}
-                hitSlop={8}
-                style={styles.iconBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              >
-                <X size={20} color={theme.colors.textMuted} />
-              </Pressable>
-            </View>
+            <Pressable
+              onPress={onClose}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.closeButton,
+                pressed && styles.closeButtonPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <X size={18} color={theme.colors.textSecondary} />
+            </Pressable>
+          </View>
+
+          {/* Manage Labels Chip */}
+          <View style={styles.chipRow}>
+            <Pressable
+              onPress={() => setManagerVisible(true)}
+              style={({ pressed }) => [
+                styles.manageChip,
+                pressed && styles.manageChipPressed,
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Manage Labels"
+            >
+              <Tag size={13} color={theme.colors.textSecondary} />
+              <Text style={styles.manageChipText}>Manage Labels</Text>
+            </Pressable>
           </View>
 
           {/* Search bar */}
@@ -293,13 +301,42 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.semibold,
     },
-    headerActions: {
+    closeButton: {
       alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.sm,
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
     },
-    iconBtn: {
-      padding: theme.spacing.xs,
+    closeButtonPressed: {
+      opacity: 0.7,
+    },
+    chipRow: {
+      flexDirection: "row",
+      marginHorizontal: theme.spacing.lg,
+      marginTop: theme.spacing.md,
+    },
+    manageChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 6,
+    },
+    manageChipPressed: {
+      backgroundColor: theme.colors.surfaceElevated,
+      borderColor: theme.colors.borderStrong,
+    },
+    manageChipText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      letterSpacing: 0.2,
     },
     searchContainer: {
       alignItems: "center",
@@ -310,7 +347,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       gap: theme.spacing.sm,
       marginHorizontal: theme.spacing.lg,
-      marginTop: theme.spacing.md,
+      marginTop: theme.spacing.sm,
       paddingHorizontal: theme.spacing.md,
       paddingVertical: theme.spacing.xs + 2,
     },

@@ -6,20 +6,23 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 export interface CreditUtilizationRingProps {
   percent: number;
   size?: number;
+  isPrivate?: boolean;
 }
 
 export function CreditUtilizationRing({
   percent,
   size = 88,
+  isPrivate = false,
 }: CreditUtilizationRingProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const strokeWidth = size >= 80 ? 9 : 6;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const renderedPercent = Math.min(100, Math.max(0, percent));
-  const color =
-    percent >= 90
+  const renderedPercent = isPrivate ? 0 : Math.min(100, Math.max(0, percent));
+  const color = isPrivate
+    ? theme.colors.textMuted
+    : percent >= 90
       ? theme.colors.danger
       : percent >= 70
         ? theme.colors.warning
@@ -27,7 +30,11 @@ export function CreditUtilizationRing({
 
   return (
     <View
-      accessibilityLabel={`${Math.round(percent)} percent of credit limit used`}
+      accessibilityLabel={
+        isPrivate
+          ? "Credit limit utilization hidden"
+          : `${Math.round(percent)} percent of credit limit used`
+      }
       style={{ height: size, width: size }}
     >
       <Svg height={size} width={size}>
@@ -61,12 +68,14 @@ export function CreditUtilizationRing({
           style={[
             styles.percent,
             size < 80 && styles.percentCompact,
-            { color },
+            { color: isPrivate ? theme.colors.textMuted : color },
           ]}
         >
-          {Math.round(percent)}%
+          {isPrivate ? "••%" : `${Math.round(percent)}%`}
         </Text>
-        {size >= 80 ? <Text style={styles.used}>used</Text> : null}
+        {size >= 80 ? (
+          <Text style={styles.used}>{isPrivate ? "hidden" : "used"}</Text>
+        ) : null}
       </View>
     </View>
   );

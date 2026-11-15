@@ -1,9 +1,363 @@
 export const en = {
+  dataImport: {
+    ui: {
+      asset: "Asset",
+      liability: "Liability",
+      transferCounts: "Money out: %{outgoing} | Money in: %{incoming}",
+      transferMismatch:
+        "No outgoing/incoming pair found. Check the transfer option.",
+      amountHelp:
+        "Use one column when all amounts appear together. Use separate columns when spending and income appear in different columns, such as Debit and Credit.",
+      required: "Required",
+      optional: "Optional",
+      ready: "Ready to import",
+      attention: "Needs attention",
+      excluded: "Will be left out",
+      previouslyImported: "Previously imported",
+      details: "Details",
+      repeatHelp:
+        "This entry was saved in a completed earlier import. It will be left out to avoid adding it twice, even if you later deleted the original transaction.",
+      draftOnly: "Preview only. Records are saved when you tap Import records.",
+      applyCorrections: "Apply corrections",
+      searchOptions: "Search options",
+      searchEntries: "Search entries",
+      noResults: "No entries found. Try another filter or search.",
+      fileName: "File: %{name}",
+      rowCount: "No. of rows: %{count}",
+      interpretedDate: "Interpreted date: %{date}",
+      validFormat: "Valid format",
+      invalidFormat: "Invalid format",
+      invalidDates: "%{count} dates need attention.",
+      viewBalances: "View balances and totals",
+      status: "Status",
+      importCount: "Import %{count} records",
+      mapUnknownTypes:
+        "Choose how to treat %{count} unrecognized transaction types.",
+      typeMappingTitle: "Match your transaction types",
+      treatAs: "Use in Kaizen",
+      preserveBalance: "The existing starting balance will stay unchanged.",
+      otherExpense: "Other Expense",
+      otherIncome: "Other Income",
+      noCategory: "No category in your file",
+      accountsHelp:
+        "Choose an asset or liability account. Credit card imports are not supported yet. For new accounts, check the starting balance before importing.",
+      categoriesHelp:
+        "Matching categories are preselected. Unmatched entries use Other Expense or Other Income. Use the category picker to change the choice.",
+      reviewHelp:
+        "Import is available when every included entry is ready. Entries you leave out and previously imported entries will not be added. Transfers may combine two file rows into one record.",
+    },
+
+    wizard: {
+      columnDateFormat: "Format: %{format}",
+      formatExpectedDate: "Format: Date (%{format})",
+      formatExpectedNumber: "Format: Number",
+      formatExpectedTime: "Format: Time",
+      formatExpectedCurrency: "Format: Currency code",
+      dateFormatMismatch:
+        "The format does not match. We match it using the first data row. Check the dates before importing.",
+      formatMismatchDate:
+        'Format doesn\'t match: Expected date (%{format}). Row 1 value: "%{value}"',
+      formatMismatchAmount:
+        'Format doesn\'t match: Expected numeric amount. Row 1 value: "%{value}"',
+      formatMismatchDecimal:
+        'Decimal format mismatch: Row 1 appears to use "%{char}" as decimal separator.',
+      formatMismatchDebitCredit:
+        'Debit/Credit must be a positive number. Row 1 value: "%{value}"',
+      formatMismatchTime:
+        'Format doesn\'t match: Expected time (e.g. 14:30 or 2:30 PM). Row 1 value: "%{value}"',
+      formatMismatchCurrency:
+        'Format doesn\'t match: Expected 3-letter currency code (e.g. USD, PHP). Row 1 value: "%{value}"',
+      formatMismatchType:
+        'Format doesn\'t match: Expected transaction type. Row 1 value: "%{value}"',
+      formatMismatchAccount:
+        'Warning: Row 1 value ("%{value}") looks like an amount or date, not an account name.',
+      formatMismatchCategory:
+        'Warning: Row 1 value ("%{value}") looks like an amount or date, not a category name.',
+      alreadyUsedIn: "Already used in %{field}",
+      switchTo: "Switch to",
+      newAccountTitle: "Create New Account",
+      newAccountSubtitle:
+        "Kaizen will create this account before importing your transactions.",
+      fromYourFile: "From your file",
+      matchKaizenCategory: "Match this Kaizen Category",
+      matchedViaKai: "Matched via Kai Knowledge",
+      categoryTypeMismatchNotice:
+        '"%{name}" is typically an expense category in Kaizen, but this row is classified as income. You can map it to an income category or create a new one.',
+      resume: "Continue setting up this file",
+      accountChoiceHelp:
+        "This account choice applies to all entries from the same account in your file.",
+      categoryChoiceHelp:
+        "This category choice applies to entries with the same category in your file.",
+      fileRows: "%{count} file entries",
+      step: "Step %{current} of %{total}",
+      columnsTitle: "Set up your file",
+      columnsDescription:
+        "In this step, check how dates and amounts are written, then match the columns in your file.",
+      accountsTitle: "Match your accounts",
+      accountsDescription:
+        "Choose where each account from your file belongs in Kaizen. Use an existing account or set up a new one.",
+      categoriesTitle: "Match your categories",
+      categoriesDescription:
+        "Choose how to group income and spending. You can keep categories from your file or use existing Kaizen categories.",
+      reviewTitle: "Review before importing",
+      reviewDescription:
+        "Check the findings and balances below. You can edit entries or leave them out before saving. Nothing has been imported yet.",
+      fromFile: "In your file: %{name}",
+      saveToAccount: "Save these entries to",
+      saveToCategory: "Use this Kaizen category",
+      example: "Example from your file: %{value}",
+      dateExample: "The first date will be read as %{value}.",
+      startHelp:
+        "Choose a file exported from your old app or bank. We will guide you through each step before saving anything.",
+      needTemplate: "Need an example file?",
+      formatsTitle: "Check dates and numbers",
+      amountLayout: "Where are the amounts in your file?",
+      oneAmount: "One column for amounts",
+      oneAmountHelp:
+        "For example: Amount contains -150 for spending and 2000 for income. A separate type column can also tell us which is which.",
+      twoAmounts: "Separate columns for money out and money in",
+      twoAmountsHelp:
+        "For example: Debit contains 150 for spending, and Credit contains 2000 for income. Match either or both columns below.",
+      mappingTitle: "Match the file columns",
+      mappingHelp:
+        "For each item on the left, choose the column that contains it in your file. We have suggested matches where possible.",
+      appColumn: "What Kaizen needs",
+      fileColumn: "Column in your file",
+      fallbackAccount: "Account name for this file",
+      accountExample: "For example: Cash or BPI Savings",
+      fallbackAccountHelp:
+        "Your file has no account column selected. Enter a name for these entries; you will choose the matching Kaizen account in the next step.",
+      transfersTitle: "Money moved between your accounts",
+      transferDetected:
+        "Your file contains %{count} transfer entries. Choose the example that looks like your file.",
+      transferOnce: "Each transfer appears once",
+      transferOnceHelp:
+        "Example: Savings to Cash, 300.00. Match the account and destination account columns above.",
+      transferTwice: "Each transfer appears twice",
+      transferTwiceHelp:
+        "Example: Savings shows -300.00 and Cash shows +300.00. We combine the outgoing and incoming entries into one transfer.",
+      transferMismatch:
+        "This file does not contain both negative outgoing and positive incoming transfer amounts. Try the first option, or correct the entries during review.",
+      transferCounts:
+        "Found %{outgoing} outgoing and %{incoming} incoming entries. Only unique matches with the same date and amount can be combined.",
+      transferHelp:
+        "A transfer moves money between accounts you own, such as Savings to Cash. It should not count as income or spending.\n\nChoose once if your file has one entry with both accounts. Choose twice if it has a negative entry in one account and a positive entry in the other. Both entries must have the same date, amount, and currency. Unclear matches will be shown for review.",
+      showOptional: "More details (optional)",
+      hideOptional: "Hide optional details",
+      optionalHelp:
+        "These details are optional. You can leave them as they are unless your file includes more information.",
+      sourceLabel: "Name of your old app or bank (optional)",
+      sourceExample: "For example: Wallet or BPI",
+      sourceHelp:
+        "This is only a label to remember where the file came from. For example, enter Wallet for an export from Wallet, or BPI for a bank file. We do not connect to the app or bank.\n\nCSV is the file format, not the name of your bank. Leave this blank if you are unsure. If you add a name, use the same one next time to help recognize previously imported entries.",
+      noAccounts:
+        "Go back and select an account column or enter an account name for the file.",
+      noCategories:
+        "There are no income or spending categories to match. You can continue to review.",
+      findings: "What we found",
+      readyCount: "%{count} entries are ready to import.",
+      excludedCount: "%{count} file entries will be left out.",
+      fixCount: "%{count} file entries need attention.",
+      fixHelp:
+        "Entries needing attention appear first. Open Edit this entry to correct the details, or choose Leave out.",
+      projectedBalances: "Your balances after this import",
+      before: "Current or starting balance: %{amount}",
+      after: "After importing: %{amount}",
+      nextAccounts: "Continue to accounts",
+      nextCategories: "Continue to categories",
+      nextReview: "Continue to review",
+      previous: "Previous step",
+      missingColumns: "Select a file column or enter a value for: %{fields}.",
+      cannotImport:
+        "Correct the entries needing attention, or leave them out, to enable importing.",
+      nothingToImport: "There are no new entries ready to import.",
+      editEntry: "Edit this entry",
+      editHelp:
+        "Changes here affect this import only. Your original file stays unchanged. Check the account and category choices as well.",
+      applyChanges: "Apply changes and check again",
+      transferTo: "Transfer to: %{account}",
+      issueActions: {
+        type: "Choose a type below, or leave this entry out.",
+        columns:
+          "Return to file setup to check which column is selected for each item.",
+        date: "Edit the date or time below, or go back to change the date format.",
+        amount:
+          "Edit the amount below. Check whether your file uses a comma or a dot for decimals.",
+        account:
+          "Choose an account below. For a new account, select its type and check the starting balance.",
+        category: "Choose an income or spending category below.",
+        currency:
+          "Check the currency in this entry and the selected account. Both must use the same currency.",
+        unsupported:
+          "Leave this entry out and add it manually after importing the supported entries.",
+        transfer:
+          "Check both account entries, the amounts, and dates. You can also go back to change the transfer option.",
+        balance:
+          "Change the new account starting date below, choose another account, or leave this entry out.",
+        name: "Shorten the affected name, description, note, or label below.",
+        duplicate:
+          "Leave this entry out, or confirm it is a separate purchase that should be imported.",
+      },
+    },
+
+    help: "About importing data",
+    closeHelp: "Got it",
+    downloadTemplate: "Download CSV template",
+    templateSaved: "Saved %{fileName} to the folder you selected.",
+    personalOnly:
+      "Switch to your personal workspace before importing your records.",
+    title: "Import data",
+    settingsDescription:
+      "Bring accounts and transaction history from a CSV file",
+    intro:
+      "Bring your accounts and transaction history into Kaizen. Match your file columns, review records, then confirm the balances before saving.",
+    limits:
+      "CSV, TSV, or UTF-8 text files: up to 2 MB and 1,000 records. Credit cards, foreign-currency records, splits, pockets, fees, installments, and schedules need separate setup.",
+    kind: "What would you like to import?",
+    transactions: "Transaction history",
+    accounts: "Accounts only",
+    pickFile: "Choose CSV file",
+    template: "Share CSV template",
+    history: "Import history",
+    nativeOnly:
+      "Import files using the Android or iOS app. A local safety backup is required.",
+    columnsHelp:
+      "Match each field to one column. Examples appear beside the column names. Leave Amount unmapped when using Debit and Credit. Transaction types must be income, expense, or transfer; without a type, signed amounts or debit/credit columns determine it.",
+    source: "Source app or bank (use the same name for future imports)",
+    dateFormat: "Date format in the file",
+    decimal: "Number format",
+    defaultCurrency: "Currency when missing from the file",
+    defaultAccount: "Account name when missing from the file",
+    transferMode: "How are transfers recorded?",
+    singleTransfer: "One positive row: source account → destination account",
+    pairedTransfer: "Two signed rows: negative outgoing + positive incoming",
+    unmapped: "Not mapped",
+    choose: "Choose…",
+    next: "Match accounts and categories",
+    matchingHelp:
+      "Choose existing accounts and categories, or create new ones. Review the opening balance of every new account. Labels are matched by name or created automatically.",
+    matchAccount: "Destination account",
+    createAccount: "Create a new account",
+    matchCategory: "Destination category",
+    createCategory: "Create this category",
+    missingCategory: "Missing category",
+    existingBalance:
+      "Existing account: its opening balance stays unchanged. Account-only imports cannot update existing accounts.",
+    balanceDateInput: "Balance date (YYYY-MM-DD)",
+    openingHelp:
+      "For history, enter the balance immediately before the first imported transaction. For accounts only, enter the balance on this date. Zero is a suggestion; verify it against your old records.",
+    preview: "Review import",
+    editColumns: "Edit columns and formats",
+    review: "Review records and balances",
+    reviewCounts:
+      "%{accepted} ready · %{skipped} excluded · %{errors} need attention",
+    reviewHelp:
+      "Projected balances include accepted records only. Resolve or explicitly exclude every problem row. Transfers are counted once and do not affect income or expense totals.",
+    confirm: "Import records",
+    confirmHelp:
+      "Save the reviewed records and any new accounts, categories, and labels? A local safety backup will be created first. Importing adds data to your current workspace.",
+    editMatches: "Edit account and category matches",
+    row: "Row %{number}",
+    repeated: "Already imported — excluded",
+    excluded: "Excluded by you",
+    accepted: "Ready to import",
+    duplicateAccepted: "Similar record — you chose to import it",
+    include: "Include this entry",
+    exclude: "Leave out",
+    keepDuplicate: "Import similar record anyway",
+    counts: "%{imported} imported · %{skipped} excluded",
+    excludedRows: "Excluded file rows: %{rows}",
+    complete: "Import completed",
+    recovery:
+      "A safety backup was saved before importing. Restore it from Local Backup if needed. Restoring replaces your data, including changes made after the backup.",
+    another: "Start another import",
+    emptyHistory:
+      "No completed imports yet. The most recent 30 imports appear here.",
+    working: "Working… Please keep this screen open.",
+    reload: "Reload data",
+    cancel: "Cancel",
+    back: "Go back",
+    leave: "Leave import",
+    leaveHelp:
+      "Discard this import draft? Records are saved only after you confirm the import.",
+    formats: {
+      ymd: "YYYY-MM-DD",
+      dmy: "DD/MM/YYYY",
+      mdy: "MM/DD/YYYY",
+    },
+    types: {
+      income: "Income",
+      expense: "Expense",
+      transfer: "Transfer",
+    },
+    fields: {
+      date: "Date",
+      time: "Time",
+      amount: "Amount",
+      debit: "Money out (debit)",
+      credit: "Money in (credit)",
+      type: "Type of entry",
+      account: "Account name",
+      toAccount: "Destination account for transfers",
+      currency: "Currency code",
+      category: "Category",
+      subcategory: "Subcategory",
+      name: "Description",
+      note: "Note",
+      labels: "Labels (separated by semicolons)",
+      sourceId: "Original record ID",
+      accountType: "Account type",
+      openingBalance: "Opening balance",
+      balanceDate: "Balance date",
+      openingDate: "Opening date",
+    },
+    errors: {
+      type: "Choose Expense, Income or Transfer for this entry.",
+      workspace: "Switch to your personal workspace before importing.",
+      fileSize: "Choose a file no larger than 2 MB.",
+      rowLimit: "Import at most 1,000 records at a time.",
+      encoding: "Save the file as UTF-8 text, then try again.",
+      csv: "The file has invalid CSV quoting. Check the file and try again.",
+      headers:
+        "Use a header row with unique, nonempty column names and at least one data row.",
+      fileType: "Choose a CSV, TSV, or text file.",
+      sharing: "File sharing is unavailable on this device.",
+      columns:
+        "Check the selected columns and the number of values in this entry.",
+      date: "Check the date, time, and selected date format. Dates must be from 1900 through 2200.",
+      amount:
+        "Check the amount and number format. Use a nonzero amount with the correct currency decimal places.",
+      account:
+        "Choose a valid account and type. Match existing names and currencies instead of creating duplicates.",
+      category:
+        "Choose an income or expense category, or provide a category name of up to 50 characters.",
+      currency:
+        "The record currency must match both accounts and be active in your currency settings.",
+      unsupported:
+        "This record needs a feature that CSV import does not support yet. Exclude it or prepare a supported record.",
+      transfer:
+        "This transfer cannot be matched yet. Check the accounts, amounts, dates, and the transfer option.",
+      balance:
+        "The transaction is before the account opening balance date. Check the history range and starting balance.",
+      name: "Check the name and note lengths: account 100, description 200, note 1,000, label 100 characters.",
+      duplicate:
+        "A similar record or repeated source ID needs review. Exclude it or confirm a legitimate similar purchase.",
+      busy: "An import is already running.",
+      changed:
+        "Your data changed since the preview. Reload data and review the balances again before importing.",
+      backup:
+        "The safety backup could not be saved. Check device storage and try again. No records were imported.",
+      load: "Could not load import data. Reload to try again.",
+      failed:
+        "Could not complete this action. Your draft is kept so you can review it and try again.",
+    },
+  },
   privacy: {
     hideBalances: "Hide balances",
     showBalances: "Show balances",
     stealthMode: "Privacy mode",
-    stealthModeDescription: "Mask account balances and financial figures across the app",
+    stealthModeDescription:
+      "Mask account balances and financial figures across the app",
   },
   common: {
     enabled: "Enabled",
@@ -26,6 +380,12 @@ export const en = {
     account: "Account",
     uncategorized: "Uncategorized",
   },
+  accounts: {
+    expand: "Expand",
+    collapse: "Collapse",
+    expandAll: "Expand All",
+    collapseAll: "Collapse All",
+  },
   search: {
     openSearch: "Open search",
     searchPlaceholder: "Search...",
@@ -45,15 +405,17 @@ export const en = {
     sectionLabels: "LABELS & TAGS",
     sectionPockets: "POCKETS",
     settingStealthMode: "Privacy / Stealth Mode",
-    settingStealthModeDesc: "Hide or mask sensitive account balances and totals",
+    settingStealthModeDesc:
+      "Hide or mask sensitive account balances and totals",
     settingSoundHaptics: "Sound & Haptics Settings",
     settingSoundHapticsDesc: "Configure tactile vibrations and audio chimes",
     settingSupportDev: "Support Development",
     settingSupportDevDesc: "Support the app with a tip or share feedback",
     actionLocalBackup: "Local Backup & Restore",
-    actionLocalBackupDesc: "Export or restore SQLite database on local storage",
+    actionLocalBackupDesc: "Export or restore local database backup on device storage",
     actionGoogleDriveSync: "Google Drive Cloud Backup",
-    actionGoogleDriveSyncDesc: "Secure cloud backup and restore via Google Drive",
+    actionGoogleDriveSyncDesc:
+      "Secure cloud backup and restore via Google Drive",
     actionManagePresets: "Quick Presets Management",
     actionManagePresetsDesc: "Manage 1-tap template presets for transactions",
     suggestedTitle: "SUGGESTED SHORTCUTS",
@@ -125,6 +487,7 @@ export const en = {
       "Read a personal message and note from the creator",
     settingPrivacyPolicyDesc:
       "Review our offline-first privacy policy and commitment",
+    settingTermsDesc: "Read the terms for using Kaizen Finance",
     settingRestorePurchasesDesc:
       "Restore your active Kaizen Pro lifetime license",
     settingQuickSearchDesc:
@@ -161,6 +524,8 @@ export const en = {
       "Show or hide optional menu items. You can change these anytime.",
     resetSimpleMenu: "Reset to simple menu",
     scrollDown: "Scroll down for more items",
+    scrollLeft: "Scroll left for more items",
+    scrollRight: "Scroll right for more items",
   },
   brand: {
     tagline: "Continuous financial improvement",
@@ -213,7 +578,8 @@ export const en = {
     hapticsCalculator: "Calculator & Keypad Taps",
     hapticsAlerts: "Budget & Goal Alerts",
     hapticsDestructive: "Delete & Trash Actions",
-    hapticsDisabledHint: "Note: If touch vibration is disabled in your device's system settings, vibrations will not be felt.",
+    hapticsDisabledHint:
+      "Note: If touch vibration is disabled in your device's system settings, vibrations will not be felt.",
     testHaptics: "Test Haptics",
     testSound: "Test Sound",
     soundMaster: "Sound Effects",
@@ -231,7 +597,8 @@ export const en = {
     notificationsSection: "NOTIFICATIONS & WIDGETS",
     aboutSupportSection: "ABOUT & SUPPORT",
     stealthModeTitle: "Stealth Mode (Hide Balances)",
-    stealthModeDescription: "Mask account balances and financial figures across screens",
+    stealthModeDescription:
+      "Mask account balances and financial figures across screens",
     generalSection: "GENERAL",
     profileSection: "PROFILE",
     nicknameTitle: "Nickname",
@@ -246,6 +613,11 @@ export const en = {
     themeTitle: "Theme",
     defaultAccountExpenseLabel: "Default Account (Expense)",
     defaultAccountIncomeLabel: "Default Account (Income)",
+    defaultAccountGroupsViewLabel: "Account Groups Default View",
+    defaultAccountGroupsViewDescription:
+      "Choose whether account groups start expanded or collapsed",
+    accountsGroupViewExpanded: "Expanded",
+    accountsGroupViewCollapsed: "Collapsed",
     resetDataAccessibility: "Reset all app data. Tap to continue.",
     languageSection: "LANGUAGE",
     languageTitle: "Language",
@@ -318,7 +690,7 @@ export const en = {
     appearanceSection: "THEME & COLOR PRESETS",
     themeAccessibility: "Current theme: %{theme}. Tap to change.",
     followingAppearance: "Following device appearance",
-    paletteSaved: "%{mode} palette - saved on this device",
+    paletteSaved: "%{mode} Theme",
     light: "Light",
     dark: "Dark",
     sourceManagementSection: "SOURCE MANAGEMENT",
@@ -350,6 +722,10 @@ export const en = {
     privacySubtitle: "Read our privacy policy online",
     privacyAccessibility: "Open privacy policy website",
     privacyOpenError: "Could not open privacy policy website.",
+    terms: "Terms",
+    termsSubtitle: "Read the terms for using Kaizen Finance",
+    termsAccessibility: "Open terms of service website",
+    termsOpenError: "Could not open terms of service website.",
     appVersion: "App Version",
     buildReleased: "Released",
     buildDevelopment: "Development",
@@ -452,6 +828,7 @@ export const en = {
     restoreQuickSyncConfirmTitle: "Restore Quick Sync?",
     restoreQuickSyncConfirmMessage:
       "This replaces all local data with your Quick Sync file and turns Quick Sync back on for this device.",
+    disconnectAction: "Disconnect",
   },
   language: {
     helpTitle: "About Language",
@@ -471,6 +848,19 @@ export const en = {
     helpTitle: "About Scheduled Transactions",
     helpMessage:
       "Set up recurring income, expenses, or transfers. Choose whether each occurrence posts automatically or waits for your confirmation. Due or failed items appear under Needs attention; you can pause, end, or archive schedules without removing transactions already posted.",
+    advancePost: "Advance Post",
+    advancePostTitle: "Advance Post Schedule",
+    advancePostDesc:
+      "Record this scheduled transaction ahead of time. The next trigger date will advance to the following recurring cycle.",
+    advancePostDateLabel: "Transaction Date",
+    advancePostCurrentDate: "Current scheduled date",
+    advancePostNextDate: "Next cycle date",
+    advancePostCompletes: "Final occurrence (schedule will complete)",
+    advancePostConfirm: "Advance Post",
+    advancePostToastTitle: "Scheduled transaction advance posted",
+    advancePostToastNext: "Next schedule automatically moved to %{date}.",
+    advancePostToastCompleted: "This scheduled transaction is now completed.",
+    today: "Today",
   },
   themePicker: {
     closeAccessibility: "Close theme picker",
@@ -500,11 +890,14 @@ export const en = {
     tintRich: "Rich",
     primaryColorLabel: "Primary Brand Color",
     primaryColorHint: "Buttons, active tabs, and primary highlights.",
-    primaryUsedFor: "Applied to: Action buttons (Save/Add), active navigation tabs, floating action button (+), selected chips, budget & goal progress bars.",
+    primaryUsedFor:
+      "Applied to: Action buttons (Save/Add), active navigation tabs, floating action button (+), selected chips, budget & goal progress bars.",
     accentColorLabel: "Accent Color",
     accentColorHint: "Secondary highlights, badges, and chart spikes.",
-    accentUsedFor: "Applied to: Kai AI assistant badges & sparkles, secondary report metrics (savings rate & ratios), and notification icons.",
+    accentUsedFor:
+      "Applied to: Kai AI assistant badges & sparkles, secondary report metrics (savings rate & ratios), and notification icons.",
     applyCustomTheme: "Apply Custom Theme",
+    applyingTheme: "Applying Theme...",
     unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
     customShadeLabel: "Fine-tune Tone & Brightness",
   },
@@ -532,6 +925,84 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v151: {
+      date: "November 15, 2026",
+      improveItem1:
+        "Polish screen layouts and smooth scrolling performance across Budgets, Categories, Calendar, and Goals.",
+    },
+    v150: {
+      date: "November 10, 2026",
+      newItem1:
+        "Import accounts and transaction history from CSV files with guided account and category matching.",
+      newItem2:
+        "Review balances, detect duplicates, and create a safety backup before applying imported CSV data.",
+      newItem3:
+        "Download sample CSV templates directly to your device for easy data formatting.",
+      newItem4:
+        "Add advance posting to record upcoming scheduled transactions early and automatically advance to the next cycle.",
+      newItem5:
+        "Add interactive walkthrough tours for Credit Cards and Reports to explore billing cycles, cutoffs, and visual charts.",
+      improveItem1:
+        "Expand Net Worth with a full-screen inspector, 7-day and yearly views, touch tooltips, and year filters.",
+      improveItem2:
+        "Enhance walkthrough tours with high-contrast buttons, a clear Skip option, and a smooth step sequence.",
+      improveItem3:
+        "Streamline transaction entry with a unified date-time picker, simplified transfer options, and compact field customization.",
+      improveItem4:
+        "Improve transaction filters with a multi-select label dropdown, front-aligned Clear All button, and balanced action buttons.",
+      improveItem5:
+        "Add tap-to-reverse sorting with skeleton loading, a return-to-top button, and rounded swipe action cards.",
+      improveItem6:
+        "Enhance Credit Cards with statement cutoff filters, dedicated activity review, and organized setup settings.",
+      improveItem7:
+        "Open account details directly from dashboard cards and keep editing balances visible when privacy mode is enabled.",
+      improveItem8:
+        "Show cycle toast notifications and keep amounts visible when editing scheduled transactions in privacy mode.",
+      improveItem9:
+        "Streamline the top navigation privacy button with an interactive loading state.",
+      improveItem10:
+        "Simplify Settings menus, standardize confirmation dialogs, and confirm data resets by typing RESET.",
+      improveItem11:
+        "Toggle expanded and collapsed account group views and set your default preference in Settings.",
+      improveItem12:
+        "Create custom hex colors in Theme Studio with harmonized, jump-free swatches across all screens.",
+      improveItem13:
+        "Streamline Google Drive connection with a disconnect chip, skeleton placeholder, and backup frequency toast feedback.",
+      improveItem14:
+        "Add smooth horizontal arrow buttons, floating scroll indicators, and micro loader transitions on feature toggles.",
+      improveItem15:
+        "Clean up the sidebar search divider into a flat line with an animated indicator for the active screen.",
+      improveItem16:
+        "Standardize help and info icons across screens and display count badges on budget frequency chips.",
+      improveItem17:
+        "Place the note field right below the goal title and prompt for confirmation when leaving unsaved category changes.",
+      improveItem18:
+        "Streamline SQLite Monitor layout and show a progress modal while database vacuuming is in progress.",
+      fixItem1:
+        "Ensure privacy mode consistently masks balances, credit card utilization, savings goals, and report figures across all screens.",
+      fixItem2:
+        "Keep billed item amounts and details visible when reviewing credit card statements even if privacy mode is active.",
+      fixItem3:
+        "Fix tour guide overlays and dock header buttons properly so walkthroughs never overlap or trigger the wrong screen guide.",
+      fixItem4:
+        "Prevent app lock from triggering during photo selection or file sharing, and keep version history locked when protected.",
+      fixItem5:
+        "Optimize navigation transitions and eliminate freezing when switching tabs, dates, languages, and themes.",
+      fixItem6:
+        "Resolve an unexpected app closure when opening Reports and ensure all modal forms open instantly without flickering.",
+      fixItem7:
+        "Prevent transaction group errors by restricting transfer type conversions and fix Top Spending shortcuts.",
+      fixItem8:
+        "Keep custom color name and hex code input fields fully visible above the virtual keyboard.",
+      fixItem9:
+        "Fix month selection on the net worth chart and color-code growth charts by positive or negative change.",
+      fixItem10:
+        "Fix Google Drive account switching to auto-relink backups and clarify offline backup security guidance.",
+      fixItem11:
+        "Fix toggle switch animations and align custom card switches across dashboard and settings.",
+      fixItem12:
+        "Fix layout spacing, border overlaps, and missing padding across chart cards, developer notes, and currency forms.",
+    },
     v140: {
       date: "November 5, 2026",
       newItem1:
@@ -545,7 +1016,7 @@ export const en = {
       newItem5:
         "Customize tactile vibration feedback and optional sound chimes when recording expenses and tapping the keypad.",
       newItem6:
-        "Quickly duplicate or delete transactions by swiping right or left directly on the ledger.",
+        "Quickly duplicate or delete transactions by swiping left on any row to reveal actions.",
       improveItem1:
         "Personalize your daily dashboard quote with custom background and text colors or reset to theme default.",
       improveItem2:
@@ -599,8 +1070,7 @@ export const en = {
         "Improve currency setup sheets with on-demand helper information and cleaner option lists.",
       fixItem1:
         "Fix overlapping badges and cut-off text in the navigation menu and summary cards.",
-      fixItem2:
-        "Fix startup and screen loading reliability across the app.",
+      fixItem2: "Fix startup and screen loading reliability across the app.",
       fixItem3:
         "Fix Quick Actions on Home opening Expense instead of Income or Transfer.",
       fixItem4:
@@ -745,7 +1215,8 @@ export const en = {
     shareTitle: "Share with Friends",
     shareSubtitle: "Help others track their finances offline & privately",
     shareAction: "Share App",
-    shareMessage: "I've been using Kaizen Finance to track my income, expenses, and pockets offline and privately! Check it out:",
+    shareMessage:
+      "I've been using Kaizen Finance to track my income, expenses, and pockets offline and privately! Check it out:",
     feedbackTitle: "Send Feedback & Suggestions",
     feedbackSubtitle: "Tell us what you'd like to see next or report issues",
     feedbackAction: "Send Feedback",
@@ -864,9 +1335,6 @@ export const en = {
     recommendedBadge: "Recommended",
   },
   transactionForm: {
-    quickDateToday: "Today",
-    quickDateYesterday: "Yesterday",
-    quickDateCustom: "Calendar",
     customizeFieldsTitle: "Customize fields",
     customizeFieldsSubtitle:
       "Amount, account, category, and date always stay on the form.",
@@ -884,7 +1352,6 @@ export const en = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Exact time",
-      quickDates: "Quick dates",
     },
   },
   dashboard: {
@@ -935,6 +1402,9 @@ export const en = {
     walkthroughBack: "Back",
     walkthroughStartTx: "Tap + below to start",
     walkthroughStepCount: "Step %{current} of %{total}",
+    stepGreetingTitle: "Greeting & Daily Quote",
+    stepGreetingDesc:
+      "Start your day with a personalized greeting and daily inspirational financial wisdom. Tap the shuffle icon anytime for a fresh quote.",
     stepNetWorthTitle: "Net Worth Overview",
     stepNetWorthDesc:
       "This card gives you a complete financial snapshot—calculating your total net worth (assets minus liabilities) and tracking your balance history.",
@@ -947,9 +1417,18 @@ export const en = {
     stepSettingsModalTitle: "Display Mode Options",
     stepSettingsModalDesc:
       "In Simple mode, friendly labels focus on cash and current spending. In Detailed mode, you see full assets and liabilities. Switch anytime!",
-    stepEyeTitle: "Privacy Masking",
-    stepEyeDesc:
-      "Tap the eye icon to quickly hide or reveal your balance amounts (••••••), ideal for using the app in public.",
+    stepQuickActionsTitle: "Quick Actions",
+    stepQuickActionsDesc:
+      "Quickly record an expense, log income, transfer funds between accounts, or chat with Kai in a single tap.",
+    stepCashflowTitle: "Monthly Cashflow",
+    stepCashflowDesc:
+      "Track your monthly income, expenses, and net savings rate at a glance. Tap any section to jump straight into detailed reports or transactions.",
+    stepAccountsTitle: "Accounts Snapshot",
+    stepAccountsDesc:
+      "View your active accounts and their current balances. Tap View all to manage your accounts, pockets, and fund groups.",
+    stepTopCategoriesTitle: "Top Spending Categories",
+    stepTopCategoriesDesc:
+      "See where your money goes this month with visual category progress bars. Tap any category to inspect matching transactions.",
     stepRecentTxTitle: "Recent Transactions",
     stepRecentTxDesc:
       "Your latest spending, income, and transfers appear here. Tap any item to inspect its details, attachments, or edit.",
@@ -1034,7 +1513,8 @@ export const en = {
     recentTransactionsTitle: "Recent Transactions",
     viewAllTransactionsAccessibility: "View all transactions",
     noRecentTransactions: "No transactions recorded yet.",
-    noRecentTransactionsHint: "Use the + button to record your first transaction.",
+    noRecentTransactionsHint:
+      "Use the + button to record your first transaction.",
     transferToAccount: "Transfer to %{account}",
     transactionFallback: "Transaction",
     viewTransactionAccessibility: "View transaction, %{title}",
@@ -1291,6 +1771,119 @@ export const en = {
     stepSaveDesc:
       "Tap to save and activate your recurring scheduled transaction.",
   },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Group Type",
+    stepGroupTypeDesc:
+      "Choose whether this category tracks Expenses (spending) or Income (earnings).",
+    stepNameTitle: "Category Name",
+    stepNameDesc:
+      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
+    stepIconTitle: "Category Icon",
+    stepIconDesc:
+      "Pick an intuitive icon to visually represent this category across transactions and reports.",
+    stepColorTitle: "Theme Color",
+    stepColorDesc:
+      "Choose a distinctive accent color for charts, badges, and quick identification.",
+    stepCustomColorTitle: "Add Custom Color",
+    stepCustomColorDesc:
+      "Pick or enter any custom hex color code to perfectly personalize your categories.",
+    stepCancelTitle: "Cancel",
+    stepCancelDesc: "Discard changes and return without creating a category.",
+    stepSaveTitle: "Create Category",
+    stepSaveDesc:
+      "Save and activate your new category to use in transactions and budgets.",
+  },
+  pocketFormWalkthrough: {
+    stepNameTitle: "Pocket Name",
+    stepNameDesc:
+      "Give this pocket or envelope a clear sub-account name, such as Emergency Fund, Vacation, or Tax Reserve.",
+    stepDefaultExpenseTitle: "Default for Expenses",
+    stepDefaultExpenseDesc:
+      "When enabled, expense transactions created for this account will automatically choose this pocket.",
+    stepDefaultIncomeTitle: "Default for Income",
+    stepDefaultIncomeDesc:
+      "When enabled, income deposits for this account will automatically route into this pocket.",
+    stepSaveTitle: "Save Pocket",
+    stepSaveDesc:
+      "Save and activate this pocket under your account to start managing isolated balances.",
+  },
+  presetFormWalkthrough: {
+    stepNameTitle: "Preset Name",
+    stepNameDesc:
+      "Enter a descriptive title for this quick preset, like Daily Coffee or Subway Pass.",
+    stepTypeTitle: "Transaction Type",
+    stepTypeDesc:
+      "Choose whether this preset is for recurring expenses or income.",
+    stepAmountTitle: "Pre-filled Amount",
+    stepAmountDesc:
+      "Optionally set a fixed amount to automatically fill in when tapping this preset.",
+    stepDetailsTitle: "Category & Account",
+    stepDetailsDesc:
+      "Attach a default category and payment account for lightning-fast 1-tap logging.",
+    stepSaveTitle: "Save Quick Preset",
+    stepSaveDesc:
+      "Save to immediately display this shortcut on your Transaction form for instant entry.",
+  },
+  noteEditorWalkthrough: {
+    stepTitleTitle: "Note Title",
+    stepTitleDesc:
+      "Add a concise title to organize your financial thoughts, receipts, or reminders.",
+    stepContentTitle: "Note Content",
+    stepContentDesc:
+      "Write down detailed notes, financial plans, checklists, or transaction summaries.",
+    stepColorTitle: "Color Coding",
+    stepColorDesc:
+      "Pick an accent color to visually group related notes in your notebook.",
+    stepPinTitle: "Pin to Top",
+    stepPinDesc:
+      "Keep your most important financial notes pinned right at the very top.",
+    stepAttachmentsTitle: "Attachments",
+    stepAttachmentsDesc:
+      "Attach photos of receipts, invoices, warranties, or documents directly to this note.",
+    stepSaveTitle: "Save Note",
+    stepSaveDesc:
+      "Tap the checkmark to save your note securely in your local database.",
+  },
+  customizeDashboardWalkthrough: {
+    stepPreviewTitle: "Dashboard Preview",
+    stepPreviewDesc: "See live updates as you toggle and reorder your cards.",
+    stepCardsTitle: "Cards & Widgets",
+    stepCardsDesc:
+      "Toggle visibility and drag to rearrange the order of widgets on your home screen.",
+    stepDoneTitle: "Done",
+    stepDoneDesc:
+      "Save your layout preferences and return to your customized dashboard.",
+  },
+  txFilterWalkthrough: {
+    stepDateTitle: "Date Range",
+    stepDateDesc:
+      "Filter transactions by day, week, month, quarter, year, or custom date ranges.",
+    stepTypeTitle: "Transaction Types",
+    stepTypeDesc: "Filter by Expense, Income, or Transfer records.",
+    stepAccountsTitle: "Accounts & Categories",
+    stepAccountsDesc:
+      "Select one or multiple accounts and categories to narrow down your view.",
+    stepAmountTitle: "Amount Limits",
+    stepAmountDesc:
+      "Set minimum and maximum amount thresholds to pinpoint specific transactions.",
+    stepApplyTitle: "Apply Filters",
+    stepApplyDesc:
+      "Apply your filters to view refined transaction lists instantly.",
+  },
+  dataImportWalkthrough: {
+    stepFileTitle: "Select File",
+    stepFileDesc:
+      "Choose a CSV, OFX, or QFX bank statement file from your device.",
+    stepMappingTitle: "Column Mapping",
+    stepMappingDesc:
+      "Match your bank file's date, amount, payee, and notes columns with app fields.",
+    stepAccountTitle: "Target Account",
+    stepAccountDesc:
+      "Select which account these imported transactions belong to.",
+    stepReviewTitle: "Review & Commit",
+    stepReviewDesc:
+      "Inspect imported transactions, adjust categories or tags, and safely commit them.",
+  },
   budgetFormWalkthrough: {
     introTitle: "New Category Budget",
     introSubtitle: "Set smart spending limits",
@@ -1359,10 +1952,10 @@ export const en = {
       "Open advanced filters to narrow down transactions by date range, account, category, type (income, expense, transfer), or tags.",
     stepSortDateTitle: "Sort by Date",
     stepSortDateDesc:
-      "Sort your transaction history chronologically by transaction date.",
+      "Sort transactions by date from latest to oldest by default, and tap again to switch to oldest first.",
     stepSortAmountTitle: "Sort by Amount",
     stepSortAmountDesc:
-      "Order transactions by monetary value to immediately highlight your largest or smallest transactions.",
+      "Sort transactions by amount from highest to lowest, and tap again to switch to lowest first.",
     stepSortOrderTitle: "Sort Order",
     stepSortOrderDesc:
       "Toggle between descending (newest/highest first) and ascending (oldest/lowest first) sorting order.",
@@ -1504,6 +2097,54 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to create a new note with rich attachments, color tags, and pinning options.",
   },
+  creditCardsWalkthrough: {
+    introTitle: "Welcome to Credit Cards!",
+    introSubtitle: "Smart credit card monitoring",
+    introMessage:
+      "Monitor billing cycles, statement cutoffs, credit limits, and active installments all in one place. Would you like a quick walkthrough?",
+    stepEmptyAddTitle: "Add Credit Card",
+    stepEmptyAddDesc:
+      "Tap here to create a Credit Card account to track billing cycles, installments, and credit limits.",
+    stepDueSummaryTitle: "Payment Due Summary",
+    stepDueSummaryDesc:
+      "View total payments due across all credit cards this month, along with any past-due alerts.",
+    stepAccountChipsTitle: "Card Switcher",
+    stepAccountChipsDesc:
+      "Tap any credit card chip to inspect individual balances, statement details, and credit utilization.",
+    stepLimitUtilizationTitle: "Credit Limit & Utilization",
+    stepLimitUtilizationDesc:
+      "Keep track of your assigned credit limit and real-time utilization ring to preserve your credit score.",
+    stepMetricsTitle: "Billed vs Unbilled Activity",
+    stepMetricsDesc:
+      "Monitor your billed statement balance, current cycle unbilled charges, and total outstanding debt.",
+    stepDueInstallmentsTitle: "Due Date & Installments",
+    stepDueInstallmentsDesc:
+      "See your upcoming statement due date, due amount, and the number of active installment plans.",
+    stepStatementsTitle: "Billed Statements & History",
+    stepStatementsDesc:
+      "Browse generated statements, view paid or overdue status, and inspect itemized billed purchases.",
+    stepUnbilledTitle: "Unbilled Purchases",
+    stepUnbilledDesc:
+      "Review card charges made in the current billing cycle before your next statement cutoff.",
+  },
+  reportsWalkthrough: {
+    introTitle: "Welcome to Reports!",
+    introSubtitle: "Financial insights and analytics",
+    introMessage:
+      "Explore your income, expenses, cash flow, and net worth growth with interactive charts and itemized breakdowns. Would you like a quick walkthrough?",
+    stepTabBarTitle: "Report Categories",
+    stepTabBarDesc:
+      "Easily switch between Income & Expense, Balance Sheet, Cash Flow, Net Worth Growth, and Labels Summary.",
+    stepFilterBarTitle: "Date Range & Filters",
+    stepFilterBarDesc:
+      "Filter reports by Month, Quarter, Year-to-Date, or choose custom date ranges to inspect your finances.",
+    stepChartTitle: "Interactive Visual Charts",
+    stepChartDesc:
+      "Tap slices or bars to inspect detailed period totals, color-coded net balances, and growth trends.",
+    stepBreakdownTableTitle: "Itemized Breakdown",
+    stepBreakdownTableDesc:
+      "Review itemized category totals and monthly historical data in detailed, scrollable tables.",
+  },
   settingsWalkthrough: {
     introTitle: "Welcome to Settings!",
     introSubtitle: "Personalize your Kaizen experience",
@@ -1550,7 +2191,7 @@ export const en = {
       "Permanently erase all local transactions, accounts, and settings to start with a fresh slate.",
     stepLocalBackupTitle: "Local Device Backup",
     stepLocalBackupDesc:
-      "Export and import encrypted full SQLite database backups directly to your device storage.",
+      "Export and import encrypted full data backups directly to your device storage.",
     stepGoogleDriveTitle: "Google Drive Cloud Backup",
     stepGoogleDriveDesc:
       "Safely sync your financial data to your private Google Drive for automated multi-device cloud backups.",
@@ -1566,6 +2207,36 @@ export const en = {
     stepVersionHistoryTitle: "Version History",
     stepVersionHistoryDesc:
       "Browse what changed in every version of the app, including new features, fixes, and improvements.",
+    stepDataImportTitle: "Import Data",
+    stepDataImportDesc:
+      "Import external transactions and financial files into your local ledger.",
+    stepQuickSearchTitle: "Quick Search",
+    stepQuickSearchDesc:
+      "Enable global search shortcut to instantly search accounts, categories, and entries.",
+    stepHapticsTitle: "Haptic Feedback",
+    stepHapticsDesc:
+      "Configure vibration feedback intensity for button clicks and numpad entries.",
+    stepSoundTitle: "Sound Effects",
+    stepSoundDesc:
+      "Toggle auditory sound effects when completing transactions and actions.",
+    stepKaiChatModeTitle: "Chat with Kai Mode",
+    stepKaiChatModeDesc:
+      "Choose between Auto Mode to log entries immediately or Review Mode to inspect first.",
+    stepDeveloperMessageTitle: "Developer Message & Goal",
+    stepDeveloperMessageDesc:
+      "Read the personal story, vision, and core purpose behind Kaizen Finance.",
+    stepSupportDevelopmentTitle: "Support Development",
+    stepSupportDevelopmentDesc:
+      "Support future development and updates for Kaizen Finance.",
+    stepPrivacyTitle: "Privacy Policy",
+    stepPrivacyDesc:
+      "Review our commitment to privacy and keeping your financial data exclusively on your device.",
+    stepTermsTitle: "Terms of Service",
+    stepTermsDesc:
+      "View the terms and conditions governing the usage and services of the application.",
+    stepAppVersionTitle: "App Version",
+    stepAppVersionDesc:
+      "Check your installed build number, release tag, and environment details.",
   },
   resetData: {
     dismissAccessibility: "Dismiss reset data confirmation",
@@ -1574,8 +2245,8 @@ export const en = {
       "This permanently deletes your accounts, transactions, budgets, goals, notes, settings, attachments, and app-managed local backups from this device.",
     externalNote:
       "Files already saved in Google Drive are not deleted. This device disconnects from Google Drive and clears Quick Sync settings.",
-    confirmationInstruction: "Type KAIZEN to confirm",
-    confirmationAccessibility: "Type KAIZEN to confirm resetting all data",
+    confirmationInstruction: "Type RESET to confirm",
+    confirmationAccessibility: "Type RESET to confirm resetting all data",
     deleteAll: "Delete all data",
   },
   security: {
@@ -1657,7 +2328,7 @@ export const en = {
     emergencyResetConfirmTitle: "Emergency Reset All Data?",
     emergencyResetConfirmDesc:
       "This will permanently delete all your financial data and remove the app lock. This action cannot be undone.",
-    emergencyResetInstruction: "Type KAIZEN to confirm reset",
+    emergencyResetInstruction: "Type RESET to confirm reset",
     emergencyResetAction: "Erase All Data & Unlock",
     resetSuccessfulUnlocking: "Password updated successfully. Unlocking...",
     setNewPasswordTitle: "Set New Password",
@@ -1818,10 +2489,25 @@ export const en = {
     },
   },
   transactions: {
+    scrollToTop: "Scroll to top",
     swipeDelete: "Delete",
     swipeDuplicate: "Duplicate",
     speedDialForm: "Manual Entry",
     speedDialChat: "Chat with Kai",
+    exportSavedTitle: "Saved to device",
+    exportSavedMessage: "%{fileName} was saved to the folder you selected.",
+    exportEmptyTitle: "Nothing to export",
+    exportEmptyMessage: "Adjust your filters or record transactions first.",
+    exportFailedTitle: "Export failed",
+    exportFailedMessage: "Unable to export transactions.",
+    transferFeeTitle: "Transfer Fee",
+    transferFeeHelpMessage:
+      "Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges).",
+    transferTypeLockedHint: "Transfer type cannot be changed.",
+    cannotConvertToTransfer:
+      "Cannot convert an existing transaction to a transfer.",
+    cannotConvertFromTransfer:
+      "Cannot convert an existing transfer to an income or expense.",
   },
   chatWithKai: {
     modalTitle: "Chat with Kai",
@@ -2023,6 +2709,19 @@ export const en = {
       "A new version of Kaizen has finished downloading. Restart now to complete the update.",
     restartToApply: "Restart",
     later: "Later",
+  },
+  netWorthInspect: {
+    title: "Net Worth History",
+    growthTitle: "Net Worth Growth",
+    tapToInspect: "Tap chart to inspect",
+    inspectHint: "Tap or drag across months to inspect details",
+    latestRecord: "Latest Record",
+    vsPrevious: "vs previous month",
+    noPriorData: "Initial record",
+    netWorth: "Net Worth",
+    assets: "Total Assets",
+    liabilities: "Total Liabilities",
+    noData: "No historical data available",
   },
 } as const;
 

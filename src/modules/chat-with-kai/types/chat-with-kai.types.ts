@@ -13,6 +13,17 @@ import type { MerchantLookupInfo } from "../services/extract-merchant-note.servi
 
 export type ChatMessageRole = "user" | "assistant";
 
+export class DuplicateKeywordError extends Error {
+  existingEntityName: string;
+  constructor(keyword: string, existingEntityName: string) {
+    super(
+      `The keyword "${keyword}" is already assigned to "${existingEntityName}". Each keyword must be unique.`,
+    );
+    this.name = "DuplicateKeywordError";
+    this.existingEntityName = existingEntityName;
+  }
+}
+
 export interface ParsedTransactionProposal {
   type: TransactionType;
   amountMinorUnits: number;

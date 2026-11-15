@@ -40,7 +40,6 @@ import {
   TransactionTypePicker,
 } from "@/modules/transactions";
 import {
-  DraggableTourChip,
   ScheduleFormWalkthroughOverlay,
   useScheduleFormWalkthrough,
   useWalkthroughTarget,
@@ -953,11 +952,6 @@ function ScheduledTransactionFormModalContent({
             />
           </View>
         </KeyboardAwareForm>
-
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
 
         <ScheduleFormWalkthroughOverlay
           onNext={walkthrough.nextStep}

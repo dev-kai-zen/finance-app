@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useExperiencePreferences } from "@/modules/settings";
-import { DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard-walkthrough-steps";
+import {
+  useExperiencePreferences,
+  type DashboardLayoutPreferences,
+} from "@/modules/settings";
+import { getDashboardWalkthroughSteps } from "./dashboard-walkthrough-steps";
 import type {
   LayoutRect,
   WalkthroughStep,
@@ -12,8 +15,10 @@ import { useWalkthroughRegistry } from "../components/walkthrough-target";
 import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
 export function useDashboardWalkthrough({
+  layout,
   onScrollToTarget,
 }: {
+  layout?: DashboardLayoutPreferences;
   onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
 } = {}) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
@@ -29,8 +34,12 @@ export function useDashboardWalkthrough({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const measurementGenerationRef = useRef(0);
 
+  const steps = useMemo(() => {
+    return getDashboardWalkthroughSteps(layout);
+  }, [layout]);
+
   const currentStep: WalkthroughStep | undefined =
-    DASHBOARD_WALKTHROUGH_STEPS[activeStepIndex];
+    steps[activeStepIndex] ?? steps[0];
 
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
@@ -46,11 +55,11 @@ export function useDashboardWalkthrough({
       const generation = ++measurementGenerationRef.current;
 
       const applyLayout = async () => {
-        const layout = await measureTarget(step.targetId);
+        const layoutResult = await measureTarget(step.targetId);
         if (generation !== measurementGenerationRef.current) {
           return;
         }
-        setActiveTargetLayout(layout);
+        setActiveTargetLayout(layoutResult);
       };
 
       void (async () => {
@@ -79,10 +88,10 @@ export function useDashboardWalkthrough({
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (DASHBOARD_WALKTHROUGH_STEPS[0]) {
-      updateMeasurement(DASHBOARD_WALKTHROUGH_STEPS[0]);
+    if (steps[0]) {
+      updateMeasurement(steps[0]);
     }
-  }, [updateMeasurement]);
+  }, [steps, updateMeasurement]);
 
   const skipWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -99,27 +108,27 @@ export function useDashboardWalkthrough({
   }, [dismissPrompt]);
 
   const nextStep = useCallback(() => {
-    if (activeStepIndex >= DASHBOARD_WALKTHROUGH_STEPS.length - 1) {
+    if (activeStepIndex >= steps.length - 1) {
       completeWalkthrough();
       return;
     }
     const nextIdx = activeStepIndex + 1;
     setActiveStepIndex(nextIdx);
-    const nextStepObj = DASHBOARD_WALKTHROUGH_STEPS[nextIdx];
+    const nextStepObj = steps[nextIdx];
     if (nextStepObj) {
       updateMeasurement(nextStepObj);
     }
-  }, [activeStepIndex, completeWalkthrough, updateMeasurement]);
+  }, [activeStepIndex, completeWalkthrough, steps, updateMeasurement]);
 
   const prevStep = useCallback(() => {
     if (activeStepIndex <= 0) return;
     const prevIdx = activeStepIndex - 1;
     setActiveStepIndex(prevIdx);
-    const prevStepObj = DASHBOARD_WALKTHROUGH_STEPS[prevIdx];
+    const prevStepObj = steps[prevIdx];
     if (prevStepObj) {
       updateMeasurement(prevStepObj);
     }
-  }, [activeStepIndex, updateMeasurement]);
+  }, [activeStepIndex, steps, updateMeasurement]);
 
   useEffect(() => {
     return () => {
@@ -130,7 +139,7 @@ export function useDashboardWalkthrough({
   return {
     isWalkthroughActive,
     activeStepIndex,
-    totalSteps: DASHBOARD_WALKTHROUGH_STEPS.length,
+    totalSteps: steps.length,
     currentStep,
     activeTargetLayout,
     isCompleted: isPromptDismissed("dashboardWalkthroughDismissed"),

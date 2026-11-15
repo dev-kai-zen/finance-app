@@ -21,7 +21,7 @@ import {
 } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 
-export const RESET_DATA_CONFIRMATION_PHRASE = "KAIZEN";
+export const RESET_DATA_CONFIRMATION_PHRASE = "RESET";
 
 interface ResetDataModalProps {
   error: string | null;
@@ -44,7 +44,8 @@ export function ResetDataModal({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-  const isConfirmed = confirmation === RESET_DATA_CONFIRMATION_PHRASE;
+  const isConfirmed =
+    confirmation.trim().toUpperCase() === RESET_DATA_CONFIRMATION_PHRASE;
 
   useEffect(() => {
     if (!visible) setConfirmation("");
@@ -107,7 +108,7 @@ export function ResetDataModal({
               autoCorrect={false}
               editable={!pending}
               onChangeText={setConfirmation}
-              placeholder="KAIZEN"
+              placeholder={RESET_DATA_CONFIRMATION_PHRASE}
               placeholderTextColor={theme.colors.textMuted}
               returnKeyType="done"
               style={styles.input}

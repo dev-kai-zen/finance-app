@@ -1,16 +1,56 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { getBalanceSheetComparison } from "../services/get-balance-sheet-comparison.service";
 import type {
   BalanceSheetComparisonData,
   CollapseLevel,
   ComparisonPreset,
   ExpandLevel,
+  VarianceValue,
 } from "../types/reports.types";
 import {
   getComparisonDateRange,
   toDateKey,
 } from "../utils/reports-dates";
+
+const ZERO_VARIANCE: VarianceValue = {
+  prevMinorUnits: 0,
+  currentMinorUnits: 0,
+  diffMinorUnits: 0,
+  isFavorable: false,
+  direction: "neutral",
+  symbol: "",
+  color: "",
+  formattedDiff: "",
+};
+
+const EMPTY_BALANCE_SHEET: BalanceSheetComparisonData = {
+  range: {
+    prevDate: new Date(0),
+    currentDate: new Date(0),
+    prevLabel: "",
+    currentLabel: "",
+  },
+  assets: {
+    group: "asset",
+    title: "",
+    variance: ZERO_VARIANCE,
+    accountTypes: [],
+  },
+  liabilities: {
+    group: "liability",
+    title: "",
+    variance: ZERO_VARIANCE,
+    accountTypes: [],
+  },
+  netWorth: {
+    prevMinorUnits: 0,
+    currentMinorUnits: 0,
+    diffMinorUnits: 0,
+    variance: ZERO_VARIANCE,
+  },
+};
 
 export function useBalanceSheetReport() {
   const { preferences } = useCurrencyPreferences();
@@ -34,6 +74,9 @@ export function useBalanceSheetReport() {
   // Expanded nodes set
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
   const [hasInitializedExpansion, setHasInitializedExpansion] = useState(false);
+  const [data, setData] = useState<BalanceSheetComparisonData>(EMPTY_BALANCE_SHEET);
+  const [reportLoading, setReportLoading] = useState(true);
+  const hasLoadedOnceRef = useRef(false);
 
   // Compute date range
   const range = useMemo(() => {
@@ -46,8 +89,19 @@ export function useBalanceSheetReport() {
   }, [preset, momYear, momMonth, customDateA, customDateB]);
 
   // Compute comparison data
-  const data: BalanceSheetComparisonData = useMemo(() => {
-    return getBalanceSheetComparison(range, { hideZeroBalances });
+  useEffect(() => {
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading: setReportLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        setData(getBalanceSheetComparison(range, { hideZeroBalances }));
+      },
+    );
   }, [range, hideZeroBalances, preferences.defaultCurrency]);
 
   // Initial expansion: Expand all (including pockets) by default
@@ -143,6 +197,7 @@ export function useBalanceSheetReport() {
     setCustomDateB,
     range,
     data,
+    reportLoading,
     expandedKeys,
     isExpanded,
     toggleExpanded,

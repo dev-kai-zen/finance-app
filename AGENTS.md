@@ -400,6 +400,7 @@ When modifying this project, AI agents must:
 12. **Cross-module access via Services**: Never query another module's database tables or repositories. Always encapsulate and consume cross-module capabilities via public Services exported through `@/modules/<feature>`.
 13. **Descriptive Drizzle Migration Names**: When generating Drizzle migrations, always pass `--name <descriptive_name>` (e.g. `npx drizzle-kit generate --name add_category_budgets`). Never generate or commit migrations with Drizzle's auto-generated random names (e.g. `bitter_meltdown`).
 14. **Version History & Semantic Versioning Rule**: Follow the Version History and Semantic Versioning (`MAJOR.MINOR.PATCH`) guidelines in Section 18 when updating or adding release notes. Whenever a new feature (`MINOR`), bug fix/polish (`PATCH`), or breaking change (`MAJOR`) is implemented, proactively ask the user whether to bump the version across `package.json`, `app.json`, `android/app/build.gradle`, and `RELEASE_NOTES`.
+15. **Mandatory Performance Assessment & 60–120fps Standard**: Every new feature, refactor, bug fix, or architectural/thought discussion ("asking for thoughts") must explicitly evaluate runtime performance impact and strictly follow the 60–120fps engineering rules in Section 19.
 
 ---
 
@@ -466,4 +467,33 @@ When adding or updating "Version History" release notes (`src/modules/version-hi
    - **Proactively Ask the User**: When a new feature, improvement, or fix is implemented during development, the agent must ask the user whether they want to keep it in the current active release or bump the version (recommending the appropriate `MINOR` or `PATCH` increment based on Semantic Versioning) and increment `versionCode`.
    - Whenever the application version is incremented in `package.json` and `app.json`, add a new release block at the top of `RELEASE_NOTES` in `src/modules/version-history/constants/release-notes.ts`.
    - First deployment (v1.0.0) provides a comprehensive overview of all app features; subsequent versions summarize only what changed or was fixed in that release.
+
+---
+
+# 19. Performance Engineering & 60–120fps Standard
+
+All development, code reviews, refactors, and design discussions must target a sustained **60–120fps** frame rate (keeping JavaScript thread work under **8.3ms–16.6ms per frame** during navigation transitions, gestures, and scrolling).
+
+1. **Mandatory Performance Assessment (Code & Design Discussions)**:
+   - Whenever the user asks for thoughts, architectural recommendations, plans, or code changes, agents **must** proactively assess and state the performance impact:
+     - Will this block the JS thread during screen navigation or animations?
+     - Will this trigger unnecessary re-render cascades across context consumers or mounted screens in `<Stack>`?
+     - How many synchronous SQLite queries will execute on mount/focus (`useFocusEffect`), and what is their algorithmic complexity ($O(1)$ vs $O(N)$)?
+2. **Context & Root Provider Discipline**:
+   - **Split State and Dispatch Contexts**: Never combine frequently changing state and setter functions in a single un-memoized Context value consumed by screens (e.g. `AppShellHeaderStateContext` vs `AppShellHeaderDispatchContext`).
+   - **Isolate Route Hooks (`usePathname`)**: Never call `usePathname()` or subscribe to high-frequency navigation state at the top of root layout/provider trees (`_layout.tsx`) when only a leaf component needs it.
+   - **Memoize Provider Values**: Always wrap Context provider values in `useMemo` and callbacks in `useCallback`.
+3. **Modal & Offscreen Component Gating**:
+   - **Early-Return Visibility Guard**: Every modal component must gate its expensive hooks and subtree behind an outer `if (!props.visible) return null;` wrapper before mounting domain hooks (`useTransactions`, `useAccounts`, `useGeneralSearch`, `useModalWalkthrough`, etc.).
+   - **Lightweight Global Providers**: Root-level modal hosts (e.g. `QuickEntryProvider`, `GeneralSearchModal`) must never mount heavy domain data hooks while their modals are closed. Mount data hooks inside a child component rendered only when the modal is open.
+4. **SQLite & Hook Efficiency on Navigation (`useFocusEffect`)**:
+   - **No Duplicate Mount + Focus Queries**: Never pair `useEffect(() => refresh(), [refresh])` with `useFocusEffect(useCallback(() => refresh(), [refresh]))` for the same synchronous query—`useFocusEffect` already runs on initial mount, screen focus, and dependency changes while focused.
+   - **No Unconditional Write Transactions on Read**: Never execute `db.transaction(...)` write reconciliations on every read hook invocation unless guarded by an in-memory dirty/date check.
+   - **Batch & Cache High-Frequency Settings**: Settings read by many mounted components simultaneously (such as `useExperiencePreferences`, `usePrivacyMode`, `useDefaultAccounts`) must batch SQLite reads (`getSettingsByKey`) and cache the snapshot in memory, invalidating on write/listener notification or database replacement.
+   - **Avoid Full-Ledger Reads When Only Mutations Are Needed**: Screens or hosts that only need mutation callbacks (`recordTransaction`, `editTransaction`, `deleteTx`) must pass `{ skipQuery: true }` to `useTransactions` instead of loading the entire historical ledger.
+   - **Stable Hook Default Parameters**: Never use `new Date()`, `{}`, or `[]` inline as default parameter values in hooks (e.g. `useBudgets(date = new Date())`), as they create a new reference on every render and defeat `useMemo` / `useEffect` dependency arrays.
+5. **List & Style Rendering Discipline**:
+   - **Memoize List Rows**: Always wrap recurring list row components (`TransactionRow`, `AccountRow`, etc.) in `React.memo`.
+   - **Hoist Style Factories**: Always define `useThemeStyles(createStyles)` factory functions at module scope—never pass inline arrow functions `useThemeStyles((theme) => ...)` inside a component body.
+
 

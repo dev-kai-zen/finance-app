@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
 import { useCategories, type Category } from "@/modules/categories";
 import {
@@ -27,16 +28,21 @@ import type {
 
 export type { BudgetsSummary };
 
-export function useBudgets(referenceDate: Date = new Date()) {
+export function useBudgets(referenceDate?: Date) {
+  const defaultReferenceDate = useMemo(() => new Date(), []);
+  const effectiveReferenceDate = referenceDate ?? defaultReferenceDate;
   const { categories, loading: categoriesLoading } = useCategories();
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const list = await listCategoryBudgets(db);
       setBudgets(list);
@@ -44,12 +50,15 @@ export function useBudgets(referenceDate: Date = new Date()) {
       console.error("[useBudgets] Failed to load budgets:", err);
       setError(err?.message ?? "Failed to load budgets.");
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    scheduleAfterPaint(() => {
+      void refresh();
+    });
   }, [refresh]);
 
   // Flatten categories map for quick category lookup
@@ -68,42 +77,51 @@ export function useBudgets(referenceDate: Date = new Date()) {
   }, [categories]);
 
   // Calculate statuses for all budgets
-  const budgetStatuses = useMemo<BudgetStatus[]>(() => {
-    if (!budgets.length || !flatCategoriesMap.size) return [];
+  const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([]);
 
-    const activeBudgetCategoryIds = new Set(
-      budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
-    );
-
-    const statuses: BudgetStatus[] = [];
-
-    for (const budget of budgets) {
-      const category = flatCategoriesMap.get(budget.categoryId);
-      if (!category) continue;
-
-      const status = calculateCategoryBudgetStatus({
-        budget,
-        category,
-        childCategories: category.subcategories || [],
-        activeBudgetCategoryIds,
-        referenceDate,
-        context: db,
-      });
-
-      statuses.push(status);
+  useEffect(() => {
+    if (!budgets.length || !flatCategoriesMap.size) {
+      setBudgetStatuses([]);
+      return;
     }
 
-    // Sort by status: exceeded first, then near limit, then by percentage descending
-    return statuses.sort((a, b) => {
-      if (a.isExceeded !== b.isExceeded) {
-        return a.isExceeded ? -1 : 1;
+    scheduleAfterPaint(() => {
+      const activeBudgetCategoryIds = new Set(
+        budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
+      );
+
+      const statuses: BudgetStatus[] = [];
+
+      for (const budget of budgets) {
+        const category = flatCategoriesMap.get(budget.categoryId);
+        if (!category) continue;
+
+        const status = calculateCategoryBudgetStatus({
+          budget,
+          category,
+          childCategories: category.subcategories || [],
+          activeBudgetCategoryIds,
+          referenceDate: effectiveReferenceDate,
+          context: db,
+        });
+
+        statuses.push(status);
       }
-      if (a.isNearLimit !== b.isNearLimit) {
-        return a.isNearLimit ? -1 : 1;
-      }
-      return b.percentage - a.percentage;
+
+      // Sort by status: exceeded first, then near limit, then by percentage descending
+      statuses.sort((a, b) => {
+        if (a.isExceeded !== b.isExceeded) {
+          return a.isExceeded ? -1 : 1;
+        }
+        if (a.isNearLimit !== b.isNearLimit) {
+          return a.isNearLimit ? -1 : 1;
+        }
+        return b.percentage - a.percentage;
+      });
+
+      setBudgetStatuses(statuses);
     });
-  }, [budgets, flatCategoriesMap, referenceDate]);
+  }, [budgets, flatCategoriesMap, effectiveReferenceDate]);
 
   // Summary calculations
   const summary = useMemo<BudgetsSummary>(() => {

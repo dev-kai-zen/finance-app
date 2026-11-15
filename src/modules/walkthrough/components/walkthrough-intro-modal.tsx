@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Compass, Sparkles } from "lucide-react-native";
+import { Compass, Sparkles, X } from "lucide-react-native";
 
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -24,6 +24,7 @@ export interface WalkthroughIntroModalProps {
   icon?: React.ReactNode;
   startLabel?: string;
   skipLabel?: string;
+  dismissOnBackdropPress?: boolean;
   onStart: () => void;
   onSkip: () => void;
 }
@@ -37,6 +38,7 @@ export function WalkthroughIntroModal({
   icon,
   startLabel,
   skipLabel,
+  dismissOnBackdropPress = false,
   onStart,
   onSkip,
 }: WalkthroughIntroModalProps) {
@@ -61,12 +63,27 @@ export function WalkthroughIntroModal({
       <View style={styles.overlay}>
         <Pressable
           accessibilityLabel={resolvedSkip}
-          accessibilityRole="button"
-          onPress={onSkip}
+          accessibilityRole={dismissOnBackdropPress ? "button" : "none"}
+          disabled={!dismissOnBackdropPress}
+          onPress={dismissOnBackdropPress ? onSkip : undefined}
           style={styles.backdrop}
         />
 
         <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+          {/* Close Button in corner */}
+          <Pressable
+            accessibilityLabel="Close dialog"
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={onSkip}
+            style={({ pressed }) => [
+              styles.closeBtn,
+              pressed && styles.closeBtnPressed,
+            ]}
+          >
+            <X color={theme.colors.textSecondary} size={18} />
+          </Pressable>
+
           {/* Header Icon Circle */}
           <View style={styles.iconCircle}>
             {icon ?? <Compass color={theme.colors.primary} size={32} />}
@@ -152,6 +169,24 @@ function createStyles(theme: AppTheme) {
     cardDesktop: {
       maxWidth: 420,
     },
+    closeBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 18,
+      borderWidth: 1,
+      height: 36,
+      justifyContent: "center",
+      position: "absolute",
+      right: 14,
+      top: 14,
+      width: 36,
+      zIndex: 10,
+    },
+    closeBtnPressed: {
+      backgroundColor: theme.colors.border,
+      opacity: 0.8,
+    },
     iconCircle: {
       alignItems: "center",
       backgroundColor: `${theme.colors.primary}18`,
@@ -222,26 +257,37 @@ function createStyles(theme: AppTheme) {
     primaryBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.primary,
+      borderColor: "rgba(255, 255, 255, 0.2)",
       borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      elevation: 4,
       flexDirection: "row",
       gap: theme.spacing.sm,
       justifyContent: "center",
       minHeight: 48,
       paddingHorizontal: theme.spacing.lg,
+      shadowColor: theme.colors.primary,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.35,
+      shadowRadius: 6,
       width: "100%",
     },
     primaryBtnPressed: {
       opacity: 0.88,
+      transform: [{ scale: 0.99 }],
     },
     primaryBtnText: {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+      letterSpacing: 0.2,
     },
     secondaryBtn: {
       alignItems: "center",
       backgroundColor: "transparent",
+      borderColor: theme.colors.borderStrong,
       borderRadius: theme.borderRadius.medium,
+      borderWidth: 1.5,
       justifyContent: "center",
       minHeight: 44,
       paddingHorizontal: theme.spacing.lg,

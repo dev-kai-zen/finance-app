@@ -4,6 +4,361 @@ import type {
 } from "@/infrastructure/localization/translations/en";
 
 export const fil = {
+  dataImport: {
+    ui: {
+      asset: "Ari-arian",
+      liability: "Pananagutan",
+      transferCounts: "Palabas: %{outgoing} | Papasok: %{incoming}",
+      transferMismatch:
+        "Walang pares ng palabas at papasok. Suriin ang opsyon ng paglipat.",
+      amountHelp:
+        "Gumamit ng isang column kung magkakasama ang lahat ng halaga. Piliin ang magkahiwalay kung magkaiba ang column ng gastos at kita, tulad ng Debit at Credit.",
+      required: "Kailangan",
+      optional: "Opsyonal",
+      ready: "Handang i-import",
+      attention: "Kailangang suriin",
+      excluded: "Hindi isasama",
+      previouslyImported: "Na-import na noon",
+      details: "Mga detalye",
+      repeatHelp:
+        "Na-save ang talang ito sa natapos nang import. Hindi ito isasama para hindi madoble, kahit nabura mo na ang orihinal na transaksyon.",
+      draftOnly:
+        "Preview lamang. Mase-save kapag pinili ang I-import ang mga tala.",
+      applyCorrections: "Ilapat ang pagwawasto",
+      searchOptions: "Maghanap ng pagpipilian",
+      searchEntries: "Maghanap ng tala",
+      noResults: "Walang nakitang tala. Subukan ang ibang filter o paghahanap.",
+      fileName: "File: %{name}",
+      rowCount: "Bilang ng mga hilera: %{count}",
+      interpretedDate: "Nabasang petsa: %{date}",
+      validFormat: "Tamang format",
+      invalidFormat: "Maling format",
+      invalidDates: "%{count} petsa ang kailangang suriin.",
+      viewBalances: "Tingnan ang mga balanse at kabuuan",
+      status: "Katayuan",
+      importCount: "I-import ang %{count} tala",
+      mapUnknownTypes:
+        "Piliin kung paano ituturing ang %{count} hindi kilalang uri.",
+      typeMappingTitle: "Itugma ang mga uri ng transaksyon",
+      treatAs: "Gamitin sa Kaizen bilang",
+      preserveBalance: "Hindi magbabago ang kasalukuyang panimulang balanse.",
+      otherExpense: "Iba pang Gastos",
+      otherIncome: "Iba pang Kita",
+      noCategory: "Walang kategorya sa file",
+      accountsHelp:
+        "Pumili ng asset o liability account. Hindi pa suportado ang credit card import. Para sa bago, suriin ang panimulang balanse.",
+      categoriesHelp:
+        "Napili na ang mga katugmang kategorya. Gagamit ng Iba pang Gastos o Iba pang Kita kung walang tugma. Baguhin ito sa category picker.",
+      reviewHelp:
+        "Maaari nang mag-import kapag handa ang lahat ng kasamang tala. Hindi idaragdag ang mga ibinukod o na-import na. Maaaring pagsamahin ang dalawang hilera bilang isang paglipat.",
+    },
+
+    wizard: {
+      columnDateFormat: "Format: %{format}",
+      formatExpectedDate: "Format: Petsa (%{format})",
+      formatExpectedNumber: "Format: Numero",
+      formatExpectedTime: "Format: Oras",
+      formatExpectedCurrency: "Format: Currency code",
+      dateFormatMismatch:
+        "Hindi tugma ang format. Itinutugma namin ito gamit ang unang hanay ng datos. Suriin ang mga petsa bago mag-import.",
+      formatMismatchDate:
+        'Hindi tugma ang format: Inaasahang petsa (%{format}). Halaga sa Hilera 1: "%{value}"',
+      formatMismatchAmount:
+        'Hindi tugma ang format: Inaasahang numerong halaga. Halaga sa Hilera 1: "%{value}"',
+      formatMismatchDecimal:
+        'Hindi tugma ang decimal: Mukhang "%{char}" ang ginagamit sa Hilera 1.',
+      formatMismatchDebitCredit:
+        'Dapat positibong numero ang Debit/Credit. Halaga sa Hilera 1: "%{value}"',
+      formatMismatchTime:
+        'Hindi tugma ang format: Inaasahang oras (hal. 14:30 o 2:30 PM). Halaga sa Hilera 1: "%{value}"',
+      formatMismatchCurrency:
+        'Hindi tugma ang format: Inaasahang 3-titik na code ng currency (hal. USD, PHP). Halaga sa Hilera 1: "%{value}"',
+      formatMismatchType:
+        'Hindi tugma ang format: Inaasahang uri ng transaksyon. Halaga sa Hilera 1: "%{value}"',
+      formatMismatchAccount:
+        'Babala: Ang halaga sa Hilera 1 ("%{value}") ay mukhang numero o petsa, hindi pangalan ng account.',
+      formatMismatchCategory:
+        'Babala: Ang halaga sa Hilera 1 ("%{value}") ay mukhang halaga o petsa, hindi pangalan ng kategorya.',
+      alreadyUsedIn: "Nagamit na sa %{field}",
+      switchTo: "Lumipat sa",
+      newAccountTitle: "Gumawa ng Bagong Account",
+      newAccountSubtitle:
+        "Gagawa ang Kaizen ng account na ito bago i-import ang iyong mga transaksyon.",
+      fromYourFile: "Mula sa iyong file",
+      matchKaizenCategory: "Itugma sa Kaizen Category na ito",
+      matchedViaKai: "Itinugma gamit ang Kaalaman ni Kai",
+      categoryTypeMismatchNotice:
+        'Karaniwang kategorya ng gastos ang "%{name}" sa Kaizen, ngunit kita ang tala na ito. Maaari mo itong itugma sa kategorya ng kita o gumawa ng bago.',
+      resume: "Ipagpatuloy ang paghahanda ng file",
+      accountChoiceHelp:
+        "Para sa lahat ng tala mula sa parehong account sa file ang pagpiling ito.",
+      categoryChoiceHelp:
+        "Para sa mga talang may parehong kategorya sa file ang pagpiling ito.",
+      fileRows: "%{count} tala sa file",
+      step: "Hakbang %{current} sa %{total}",
+      columnsTitle: "Ihanda ang iyong file",
+      columnsDescription:
+        "Sa hakbang na ito, suriin ang format ng petsa at halaga, at itugma ang mga column ng iyong file.",
+      accountsTitle: "Itugma ang iyong mga account",
+      accountsDescription:
+        "Piliin kung saang Kaizen account ilalagay ang bawat account sa file. Gumamit ng kasalukuyang account o gumawa ng bago.",
+      categoriesTitle: "Itugma ang iyong mga kategorya",
+      categoriesDescription:
+        "Piliin kung paano igrupo ang kita at gastos. Panatilihin ang mga kategorya sa file o gumamit ng nasa Kaizen.",
+      reviewTitle: "Suriin bago mag-import",
+      reviewDescription:
+        "Suriin ang mga natuklasan at balanse sa ibaba. Maaaring baguhin o ibukod ang mga tala bago i-save. Wala pang na-import.",
+      fromFile: "Sa iyong file: %{name}",
+      saveToAccount: "Ilagay ang mga talang ito sa",
+      saveToCategory: "Gamitin ang kategoryang ito sa Kaizen",
+      example: "Halimbawa sa file: %{value}",
+      dateExample: "Babasahin ang unang petsa bilang %{value}.",
+      startHelp:
+        "Pumili ng file mula sa lumang app o bangko. Gagabayan ka sa bawat hakbang bago mag-save.",
+      needTemplate: "Kailangan ng halimbawang file?",
+      formatsTitle: "Suriin ang petsa at numero",
+      amountLayout: "Saan nakalagay ang mga halaga sa file?",
+      oneAmount: "Isang column para sa halaga",
+      oneAmountHelp:
+        "Halimbawa: -150 para sa gastos at 2000 para sa kita sa Amount. Maaari ring may hiwalay na column para sa uri.",
+      twoAmounts: "Hiwalay na column para sa palabas at papasok na pera",
+      twoAmountsHelp:
+        "Halimbawa: 150 sa Debit para sa gastos at 2000 sa Credit para sa kita. Itugma ang isa o parehong column sa ibaba.",
+      mappingTitle: "Itugma ang mga column sa file",
+      mappingHelp:
+        "Para sa bawat nasa kaliwa, piliin ang column sa file na may impormasyong iyon. May mga iminungkahi na kaming tugma.",
+      appColumn: "Kailangan ng Kaizen",
+      fileColumn: "Column sa iyong file",
+      fallbackAccount: "Pangalan ng account para sa file",
+      accountExample: "Halimbawa: Cash o BPI Savings",
+      fallbackAccountHelp:
+        "Walang napiling account column. Maglagay ng pangalan para sa mga tala; pipiliin mo ang katugmang Kaizen account sa susunod na hakbang.",
+      transfersTitle: "Perang inilipat sa sarili mong mga account",
+      transferDetected:
+        "May %{count} talang paglipat sa file. Piliin ang halimbawang katulad ng iyong file.",
+      transferOnce: "Isang beses nakatala ang bawat paglipat",
+      transferOnceHelp:
+        "Halimbawa: Savings papuntang Cash, 300.00. Itugma ang pinagmulan at patutunguhang account sa itaas.",
+      transferTwice: "Dalawang beses nakatala ang bawat paglipat",
+      transferTwiceHelp:
+        "Halimbawa: -300.00 sa Savings at +300.00 sa Cash. Pagsasamahin ang palabas at papasok na tala bilang isang paglipat.",
+      transferMismatch:
+        "Walang parehong negatibong palabas at positibong papasok na halaga ng paglipat. Subukan ang unang opsyon o ayusin ang mga tala sa pagsusuri.",
+      transferCounts:
+        "May %{outgoing} palabas at %{incoming} papasok na tala. Pagsasamahin lamang ang malinaw na tugma sa petsa at halaga.",
+      transferHelp:
+        "Ang paglipat ay pera sa pagitan ng sarili mong account, tulad ng Savings papuntang Cash. Hindi ito kita o gastos.\n\nPiliin ang isang beses kung isang tala ang may parehong account. Piliin ang dalawa kung may negatibong tala sa isang account at positibo sa kabila. Dapat pareho ang petsa, halaga, at currency. Ipapakita sa pagsusuri ang hindi malinaw na tugma.",
+      showOptional: "Iba pang detalye (opsyonal)",
+      hideOptional: "Itago ang opsyonal na detalye",
+      optionalHelp:
+        "Opsyonal ang mga detalyeng ito. Iwanang ganito kung walang dagdag na impormasyon ang file.",
+      sourceLabel: "Pangalan ng lumang app o bangko (opsyonal)",
+      sourceExample: "Halimbawa: Wallet o BPI",
+      sourceHelp:
+        "Label lamang ito para maalala ang pinanggalingan ng file. Halimbawa, Wallet kung mula sa Wallet, o BPI kung mula sa bangko. Hindi kami kumokonekta sa app o bangko.\n\nFormat ng file ang CSV, hindi pangalan ng bangko. Iwanang blangko kung hindi sigurado. Kung maglalagay ng pangalan, gamitin din iyon sa susunod para makilala ang mga na-import na tala.",
+      noAccounts:
+        "Bumalik at pumili ng account column o maglagay ng pangalan ng account para sa file.",
+      noCategories:
+        "Walang kategorya ng kita o gastos na itutugma. Maaari nang magpatuloy sa pagsusuri.",
+      findings: "Mga nakita namin",
+      readyCount: "%{count} tala ang handang i-import.",
+      excludedCount: "%{count} tala sa file ang hindi isasama.",
+      fixCount: "%{count} tala sa file ang kailangang suriin.",
+      fixHelp:
+        "Mauuna ang mga talang kailangang suriin. Piliin ang Baguhin ang talang ito para itama, o Huwag isama.",
+      projectedBalances: "Mga balanse pagkatapos ng import",
+      before: "Kasalukuyan o panimulang balanse: %{amount}",
+      after: "Pagkatapos ng import: %{amount}",
+      nextAccounts: "Magpatuloy sa mga account",
+      nextCategories: "Magpatuloy sa mga kategorya",
+      nextReview: "Magpatuloy sa pagsusuri",
+      previous: "Nakaraang hakbang",
+      missingColumns:
+        "Pumili ng column o maglagay ng halaga para sa: %{fields}.",
+      cannotImport:
+        "Ayusin o ibukod ang mga talang may problema para makapag-import.",
+      nothingToImport: "Walang bagong talang handang i-import.",
+      editEntry: "Baguhin ang talang ito",
+      editHelp:
+        "Para lamang sa import na ito ang pagbabago. Hindi magbabago ang orihinal na file. Suriin din ang napiling account at kategorya.",
+      applyChanges: "Ilapat at suriin muli",
+      transferTo: "Ilipat sa: %{account}",
+      issueActions: {
+        type: "Pumili ng uri sa ibaba o huwag isama ang tala.",
+        columns:
+          "Bumalik sa paghahanda ng file at suriin ang napiling column ng bawat impormasyon.",
+        date: "Baguhin ang petsa o oras sa ibaba, o bumalik para baguhin ang format.",
+        amount:
+          "Baguhin ang halaga. Suriin kung kuwit o tuldok ang gamit sa decimal.",
+        account:
+          "Pumili ng account sa ibaba. Kung bago, piliin ang uri at suriin ang panimulang balanse.",
+        category: "Pumili ng kategorya ng kita o gastos sa ibaba.",
+        currency:
+          "Suriin ang currency ng tala at napiling account. Dapat pareho ang mga ito.",
+        unsupported:
+          "Huwag isama ang talang ito at idagdag nang mano-mano matapos ang import.",
+        transfer:
+          "Suriin ang parehong account, halaga, at petsa. Maaari ring bumalik para baguhin ang opsyon ng paglipat.",
+        balance:
+          "Baguhin ang petsa ng panimulang balanse ng bagong account, pumili ng iba, o huwag isama ang tala.",
+        name: "Paikliin ang pangalan, paglalarawan, tala, o label sa ibaba.",
+        duplicate:
+          "Huwag isama, o kumpirmahing hiwalay itong pagbili na dapat i-import.",
+      },
+    },
+
+    help: "Tungkol sa pag-import ng datos",
+    closeHelp: "Naintindihan ko",
+    downloadTemplate: "I-download ang CSV template",
+    templateSaved: "Na-save ang %{fileName} sa napili mong folder.",
+    personalOnly:
+      "Lumipat muna sa personal mong workspace bago mag-import ng mga tala.",
+    title: "Mag-import ng datos",
+    settingsDescription:
+      "Maglipat ng mga account at kasaysayan ng transaksyon mula sa CSV",
+    intro:
+      "Ilipat ang iyong mga account at transaksyon sa Kaizen. Itugma ang mga column, suriin ang mga tala, at tiyakin ang mga balanse bago i-save.",
+    limits:
+      "CSV, TSV, o UTF-8 text: hanggang 2 MB at 1,000 tala. Hiwalay ang pag-set up ng credit card, ibang currency, hati-hating transaksyon, pocket, bayarin, installment, at iskedyul.",
+    kind: "Ano ang gusto mong i-import?",
+    transactions: "Kasaysayan ng transaksyon",
+    accounts: "Mga account lamang",
+    pickFile: "Pumili ng CSV file",
+    template: "Ibahagi ang CSV template",
+    history: "Kasaysayan ng pag-import",
+    nativeOnly:
+      "Gamitin ang Android o iOS app para mag-import. Kailangan ng lokal na safety backup.",
+    columnsHelp:
+      "Itugma ang bawat field sa isang column. May halimbawa sa tabi ng pangalan. Huwag itugma ang Amount kung Debit at Credit ang gamit. Ang uri ay dapat income, expense, o transfer; kung wala, pagbabatayan ang sign ng halaga o Debit/Credit.",
+    source: "Pinanggalingang app o bangko (gamitin muli ang parehong pangalan)",
+    dateFormat: "Format ng petsa sa file",
+    decimal: "Format ng numero",
+    defaultCurrency: "Currency kapag wala sa file",
+    defaultAccount: "Pangalan ng account kapag wala sa file",
+    transferMode: "Paano nakatala ang mga paglipat?",
+    singleTransfer: "Isang positibong tala: pinagmulan → patutunguhan",
+    pairedTransfer: "Dalawang tala: negatibong palabas + positibong papasok",
+    unmapped: "Hindi nakatugma",
+    choose: "Pumili…",
+    next: "Itugma ang mga account at kategorya",
+    matchingHelp:
+      "Pumili ng kasalukuyang account at kategorya, o gumawa ng bago. Suriin ang panimulang balanse ng bagong account. Itutugma o gagawin ang mga label ayon sa pangalan.",
+    matchAccount: "Patutunguhang account",
+    createAccount: "Gumawa ng bagong account",
+    matchCategory: "Patutunguhang kategorya",
+    createCategory: "Gawin ang kategoryang ito",
+    missingCategory: "Walang kategorya",
+    existingBalance:
+      "Kasalukuyang account: hindi magbabago ang panimulang balanse. Hindi maaaring baguhin ang kasalukuyang account sa account-only import.",
+    balanceDateInput: "Petsa ng balanse (YYYY-MM-DD)",
+    openingHelp:
+      "Para sa kasaysayan, ilagay ang balanse bago ang unang transaksyon. Para sa account lamang, ilagay ang balanse sa petsang ito. Mungkahi lamang ang zero; tiyakin ito sa lumang tala.",
+    preview: "Suriin ang import",
+    editColumns: "Baguhin ang mga column at format",
+    review: "Suriin ang mga tala at balanse",
+    reviewCounts:
+      "%{accepted} handa · %{skipped} hindi kasama · %{errors} kailangang suriin",
+    reviewHelp:
+      "Kasama lamang sa inaasahang balanse ang mga tinanggap na tala. Ayusin o ibukod ang bawat may problema. Isang beses lang bibilangin ang paglipat at hindi ito kita o gastos.",
+    confirm: "I-import ang mga tala",
+    confirmHelp:
+      "I-save ang mga nasuring tala at bagong account, kategorya, at label? Gagawa muna ng lokal na safety backup. Idaragdag ang datos sa kasalukuyang workspace.",
+    editMatches: "Baguhin ang tugma ng account at kategorya",
+    row: "Hilera %{number}",
+    repeated: "Na-import na — hindi kasama",
+    excluded: "Ibinukod mo",
+    accepted: "Handang i-import",
+    duplicateAccepted: "Magkatulad na tala — pinili mong i-import",
+    include: "Isama ang talang ito",
+    exclude: "Huwag isama",
+    keepDuplicate: "I-import pa rin ang katulad na tala",
+    counts: "%{imported} na-import · %{skipped} hindi kasama",
+    excludedRows: "Mga hilerang hindi kasama: %{rows}",
+    complete: "Tapos na ang pag-import",
+    recovery:
+      "May safety backup bago ang pag-import. Ibalik ito sa Local Backup kung kailangan. Papalitan nito ang datos, pati ang mga pagbabagong ginawa pagkatapos ng backup.",
+    another: "Magsimula ng panibagong import",
+    emptyHistory:
+      "Wala pang natapos na import. Makikita rito ang pinakahuling 30 import.",
+    working: "Ginagawa… Panatilihing bukas ang screen.",
+    reload: "I-load muli ang datos",
+    cancel: "Kanselahin",
+    back: "Bumalik",
+    leave: "Umalis sa import",
+    leaveHelp:
+      "Itapon ang draft? Mase-save lamang ang mga tala kapag kinumpirma mo ang import.",
+    formats: {
+      ymd: "YYYY-MM-DD",
+      dmy: "DD/MM/YYYY",
+      mdy: "MM/DD/YYYY",
+    },
+    types: {
+      income: "Kita",
+      expense: "Gastos",
+      transfer: "Paglipat",
+    },
+    fields: {
+      date: "Petsa",
+      time: "Oras",
+      amount: "Halaga",
+      debit: "Perang palabas (debit)",
+      credit: "Perang papasok (credit)",
+      type: "Uri ng tala",
+      account: "Pangalan ng account",
+      toAccount: "Patutunguhang account ng paglipat",
+      currency: "Currency code",
+      category: "Kategorya",
+      subcategory: "Subkategorya",
+      name: "Paglalarawan",
+      note: "Tala",
+      labels: "Mga label (paghiwalayin ng semicolon)",
+      sourceId: "Orihinal na ID ng tala",
+      accountType: "Uri ng account",
+      openingBalance: "Panimulang balanse",
+      balanceDate: "Petsa ng balanse",
+      openingDate: "Petsa ng pagbukas",
+    },
+    errors: {
+      type: "Pumili ng Kita, Gastos, o Paglipat para sa talang ito.",
+      workspace: "Lumipat muna sa personal mong workspace bago mag-import.",
+      fileSize: "Pumili ng file na hindi lalampas sa 2 MB.",
+      rowLimit: "Hanggang 1,000 tala lamang bawat import.",
+      encoding: "I-save bilang UTF-8 text at subukang muli.",
+      csv: "May maling paggamit ng panipi sa CSV. Suriin ang file.",
+      headers:
+        "Gumamit ng natatangi at may lamang pangalan ng column, at kahit isang tala.",
+      fileType: "Pumili ng CSV, TSV, o text file.",
+      sharing: "Hindi magagamit ang pagbabahagi ng file sa device na ito.",
+      columns:
+        "Suriin ang napiling mga column at dami ng halaga sa talang ito.",
+      date: "Suriin ang petsa, oras, at format. Dapat mula 1900 hanggang 2200 ang taon.",
+      amount:
+        "Suriin ang halaga at format. Gumamit ng hindi zero at tamang decimal para sa currency.",
+      account:
+        "Pumili ng tamang account at uri. Itugma ang pangalan at currency ng kasalukuyang account.",
+      category:
+        "Pumili ng kategorya ng kita o gastos, o pangalan na hanggang 50 character.",
+      currency:
+        "Dapat pareho ang currency ng tala at mga account, at aktibo sa mga setting.",
+      unsupported:
+        "May bahagi ng talang ito na hindi pa sinusuportahan ng CSV import. Ibukod o ayusin ito.",
+      transfer:
+        "Hindi pa maitugma ang paglipat. Suriin ang mga account, halaga, petsa, at napiling opsyon.",
+      balance:
+        "Mas maaga ang transaksyon kaysa petsa ng panimulang balanse. Suriin ang saklaw at balanse.",
+      name: "Suriin ang haba: account 100, paglalarawan 200, tala 1,000, label 100 character.",
+      duplicate:
+        "Suriin ang katulad na tala o naulit na ID. Ibukod o kumpirmahin ang tunay na katulad na pagbili.",
+      busy: "May kasalukuyang pag-import.",
+      changed:
+        "Nagbago ang datos mula sa preview. I-load muli at suriin ang balanse.",
+      backup:
+        "Hindi na-save ang safety backup. Suriin ang storage. Walang tala ang na-import.",
+      load: "Hindi ma-load ang datos. Subukang i-load muli.",
+      failed:
+        "Hindi natapos ang gawain. Nananatili ang draft para masuri at masubukang muli.",
+    },
+  },
   privacy: {
     hideBalances: "Itago ang mga balanse",
     showBalances: "Ipakita ang mga balanse",
@@ -31,6 +386,12 @@ export const fil = {
     account: "Account",
     uncategorized: "Walang kategorya",
   },
+  accounts: {
+    expand: "I-expand",
+    collapse: "I-collapse",
+    expandAll: "I-expand Lahat",
+    collapseAll: "I-collapse Lahat",
+  },
   search: {
     openSearch: "Buksan ang paghahanap",
     searchPlaceholder: "Maghanap...",
@@ -56,11 +417,14 @@ export const fil = {
     settingSupportDev: "Suportahan ang Pagbuo",
     settingSupportDevDesc: "Suportahan ang app gamit ang tip o review",
     actionLocalBackup: "Lokal na Backup at Restore",
-    actionLocalBackupDesc: "I-save o i-restore ang backup ng database sa device",
+    actionLocalBackupDesc:
+      "I-save o i-restore ang backup ng database sa device",
     actionGoogleDriveSync: "Google Drive Cloud Backup",
-    actionGoogleDriveSyncDesc: "Ligtas na cloud backup at restore gamit ang Google Drive",
+    actionGoogleDriveSyncDesc:
+      "Ligtas na cloud backup at restore gamit ang Google Drive",
     actionManagePresets: "Pamamahala ng Quick Presets",
-    actionManagePresetsDesc: "Pamahalaan ang 1-tap preset templates para sa transaksyon",
+    actionManagePresetsDesc:
+      "Pamahalaan ang 1-tap preset templates para sa transaksyon",
     suggestedTitle: "MGA IPINAPAYONG SHORTCUT",
     clearSearch: "Burahin",
     itemSettingsBadge: "Setting",
@@ -81,47 +445,69 @@ export const fil = {
     actionAddNote: "Gumawa ng Tala",
     actionAddNoteDesc: "Magdagdag ng memo, checklist, o resibo",
     actionAddScheduled: "Magdagdag ng Naka-iskedyul",
-    actionAddScheduledDesc: "Gumawa ng paulit-ulit na bayarin, sahod, o paglipat",
+    actionAddScheduledDesc:
+      "Gumawa ng paulit-ulit na bayarin, sahod, o paglipat",
     actionAddCategory: "Magdagdag ng Kategorya",
     actionAddCategoryDesc: "Gumawa ng custom na grupo ng kategorya",
     actionAddCreditCard: "Magdagdag ng Credit Card",
     actionAddCreditCardDesc: "Gumawa ng credit card account para sa monitoring",
     actionTransactionsTrash: "Basurahan ng mga Transaksyon",
-    actionTransactionsTrashDesc: "Tingnan, ibalik, o permanenteng burahin ang mga naburang transaksyon",
+    actionTransactionsTrashDesc:
+      "Tingnan, ibalik, o permanenteng burahin ang mga naburang transaksyon",
     actionExportTransactionsCsv: "I-export ang mga Transaksyon (CSV)",
-    actionExportTransactionsCsvDesc: "I-save o ibahagi ang mga talaan ng transaksyon bilang CSV spreadsheet",
+    actionExportTransactionsCsvDesc:
+      "I-save o ibahagi ang mga talaan ng transaksyon bilang CSV spreadsheet",
     actionArchivedAccounts: "Naka-archive na mga Account at Pocket",
-    actionArchivedAccountsDesc: "Tingnan at ibalik ang mga nakatagong o naka-archive na account at pocket",
+    actionArchivedAccountsDesc:
+      "Tingnan at ibalik ang mga nakatagong o naka-archive na account at pocket",
     actionChatWithKai: "Makipag-chat kay Kai",
-    actionChatWithKaiDesc: "Gamitin ang AI chat para mabilisang magtala ng transaksyon sa natural na wika",
+    actionChatWithKaiDesc:
+      "Gamitin ang AI chat para mabilisang magtala ng transaksyon sa natural na wika",
     actionManageAccountTypes: "Pamahalaan ang mga Uri ng Account",
-    actionManageAccountTypesDesc: "I-customize ang mga uri ng account tulad ng bangko, cash, wallet, at credit card",
+    actionManageAccountTypesDesc:
+      "I-customize ang mga uri ng account tulad ng bangko, cash, wallet, at credit card",
     screenTransactionsExpense: "Mga Transaksyon (Gastos)",
-    screenTransactionsExpenseDesc: "Tingnan ang kasaysayan ng lahat ng naitalang gastos",
+    screenTransactionsExpenseDesc:
+      "Tingnan ang kasaysayan ng lahat ng naitalang gastos",
     screenTransactionsIncome: "Mga Transaksyon (Kita)",
-    screenTransactionsIncomeDesc: "Tingnan ang kasaysayan ng lahat ng naitalang kita",
+    screenTransactionsIncomeDesc:
+      "Tingnan ang kasaysayan ng lahat ng naitalang kita",
     screenTransactionsTransfer: "Mga Transaksyon (Paglipat)",
-    screenTransactionsTransferDesc: "Tingnan ang kasaysayan ng lahat ng paglilipat ng account",
+    screenTransactionsTransferDesc:
+      "Tingnan ang kasaysayan ng lahat ng paglilipat ng account",
     screenCategoriesExpense: "Mga Kategorya ng Gastos",
-    screenCategoriesExpenseDesc: "Pamahalaan at ayusin ang mga kategorya ng gastos",
+    screenCategoriesExpenseDesc:
+      "Pamahalaan at ayusin ang mga kategorya ng gastos",
     screenCategoriesIncome: "Mga Kategorya ng Kita",
-    screenCategoriesIncomeDesc: "Pamahalaan at ayusin ang mga kategorya ng kita",
+    screenCategoriesIncomeDesc:
+      "Pamahalaan at ayusin ang mga kategorya ng kita",
     screenReportIncomeExpense: "Ulat ng Kita at Gastos",
-    screenReportIncomeExpenseDesc: "Suriin ang pagkakaiba ng kita laban sa gastos at kabuuang kinita",
+    screenReportIncomeExpenseDesc:
+      "Suriin ang pagkakaiba ng kita laban sa gastos at kabuuang kinita",
     screenReportCashFlow: "Ulat ng Daloy ng Pera (Cash Flow)",
-    screenReportCashFlowDesc: "Suriin ang kabuuang perang pumapasok at lumalabas",
+    screenReportCashFlowDesc:
+      "Suriin ang kabuuang perang pumapasok at lumalabas",
     screenReportBalanceSheet: "Paghahambing ng Talaan ng Balanse",
-    screenReportBalanceSheetDesc: "Ihambing ang mga asset at pananagutan sa paglipas ng panahon",
+    screenReportBalanceSheetDesc:
+      "Ihambing ang mga asset at pananagutan sa paglipas ng panahon",
     screenReportNetWorth: "Paglago ng Net Worth",
-    screenReportNetWorthDesc: "Subaybayan ang kalusugan ng pananalapi at kabuuang yaman",
+    screenReportNetWorthDesc:
+      "Subaybayan ang kalusugan ng pananalapi at kabuuang yaman",
     screenReportLabelsSummary: "Buod ng mga Label",
-    screenReportLabelsSummaryDesc: "Tingnan ang breakdown ng mga transaksyon ayon sa label",
+    screenReportLabelsSummaryDesc:
+      "Tingnan ang breakdown ng mga transaksyon ayon sa label",
     settingNicknameDesc: "Itakda ang iyong palayaw at bati sa profile",
-    settingDeveloperMessageDesc: "Basahin ang personal na mensahe mula sa gumawa ng app",
-    settingPrivacyPolicyDesc: "Suriin ang aming patakaran sa privacy at seguridad",
-    settingRestorePurchasesDesc: "Ibalik ang iyong aktibong lisensya ng Kaizen Pro",
-    settingQuickSearchDesc: "I-configure ang button ng paghahanap sa header at sidebar",
-    settingSqliteMonitorDesc: "Suriin ang mga talahanayan at diagnostics ng SQLite",
+    settingDeveloperMessageDesc:
+      "Basahin ang personal na mensahe mula sa gumawa ng app",
+    settingPrivacyPolicyDesc:
+      "Suriin ang aming patakaran sa privacy at seguridad",
+    settingTermsDesc: "Basahin ang mga tuntunin sa paggamit ng Kaizen Finance",
+    settingRestorePurchasesDesc:
+      "Ibalik ang iyong aktibong lisensya ng Kaizen Pro",
+    settingQuickSearchDesc:
+      "I-configure ang button ng paghahanap sa header at sidebar",
+    settingSqliteMonitorDesc:
+      "Suriin ang mga talahanayan at diagnostics ng SQLite",
     guidesToSetting: "Gigabayan sa setting",
   },
   navigation: {
@@ -153,6 +539,8 @@ export const fil = {
       "Ipakita o itago ang opsyonal na menu items. Puwede mong baguhin ang mga ito anumang oras.",
     resetSimpleMenu: "Ibalik sa simpleng menu",
     scrollDown: "Mag-scroll pababa para sa higit pang mga item",
+    scrollLeft: "Mag-scroll pakaliwa para sa higit pang mga item",
+    scrollRight: "Mag-scroll pakanan para sa higit pang mga item",
   },
   brand: {
     tagline: "Patuloy na pagpapabuti ng pananalapi",
@@ -179,7 +567,8 @@ export const fil = {
   },
   quickSync: {
     title: "Quick Sync",
-    description: "I-sync ang mga pagbabago sa Google Drive kapag nagbago ang data mo",
+    description:
+      "I-sync ang mga pagbabago sa Google Drive kapag nagbago ang data mo",
     networkLabel: "I-sync sa pamamagitan ng",
     wifiOnly: "Wi-Fi lamang",
     wifiOnlyDescription: "I-sync lamang kapag nakakonekta sa Wi-Fi",
@@ -206,7 +595,8 @@ export const fil = {
     hapticsCalculator: "Calculator at Keypad Taps",
     hapticsAlerts: "Budget at Goal Alerts",
     hapticsDestructive: "Pagbura at Trash Actions",
-    hapticsDisabledHint: "Paalala: Kung naka-off ang vibration sa system settings ng iyong telepono, hindi mararamdaman ang haptics.",
+    hapticsDisabledHint:
+      "Paalala: Kung naka-off ang vibration sa system settings ng iyong telepono, hindi mararamdaman ang haptics.",
     testHaptics: "Subukan ang Haptics",
     testSound: "Subukan ang Tunog",
     soundMaster: "Mga Epekto ng Tunog",
@@ -224,20 +614,27 @@ export const fil = {
     notificationsSection: "MGA NOTIPIKASYON AT WIDGET",
     aboutSupportSection: "TUNGKOL AT SUPORTA",
     stealthModeTitle: "Stealth Mode (Itago ang Balanse)",
-    stealthModeDescription: "Itago ang mga balanse ng account at halaga sa buong app",
+    stealthModeDescription:
+      "Itago ang mga balanse ng account at halaga sa buong app",
     generalSection: "PANGKALAHATAN",
     profileSection: "PROFILE",
     nicknameTitle: "Palayaw (Nickname)",
     nicknameDescription: "Personal na pangalan na ipapakita sa iyong dashboard",
     nicknameNotSet: "Hindi nakatakda",
     editNicknameTitle: "I-edit ang Palayaw",
-    editNicknamePrompt: "Ilagay ang pangalang nais mong itawag sa iyo sa dashboard.",
+    editNicknamePrompt:
+      "Ilagay ang pangalang nais mong itawag sa iyo sa dashboard.",
     nicknameSave: "I-save",
     nicknameCancel: "Kanselahin",
     localizationSection: "LOKALISASYON",
     themeTitle: "Tema",
     defaultAccountExpenseLabel: "Default na Account (Gastos)",
     defaultAccountIncomeLabel: "Default na Account (Kita)",
+    defaultAccountGroupsViewLabel: "Default na View ng Account Groups",
+    defaultAccountGroupsViewDescription:
+      "Piliin kung magsisimulang naka-expand o naka-collapse ang account groups",
+    accountsGroupViewExpanded: "Naka-expand",
+    accountsGroupViewCollapsed: "Naka-collapse",
     resetDataAccessibility:
       "I-reset ang lahat ng app data. I-tap para magpatuloy.",
     languageSection: "WIKA",
@@ -253,7 +650,8 @@ export const fil = {
     remindersDescription: "Araw-araw na pag-record at mga paalala sa bayarin",
     remindersAccessibility: "I-configure ang mga paalala",
     widgetsTitle: "Mga Widget sa Home Screen",
-    widgetsDescription: "Magdagdag ng mabilis na aksyon at buod ng pera sa iyong home screen",
+    widgetsDescription:
+      "Magdagdag ng mabilis na aksyon at buod ng pera sa iyong home screen",
     widgetsAccessibility: "Buksan ang gallery ng mga widget",
     guideHelperTitle: "Guide helper",
     guideHelperDescription:
@@ -305,16 +703,14 @@ export const fil = {
       "Gumawa, mag-export, o mag-restore ng backup sa device",
     googleDriveAccessibility: "Pamahalaan ang mga backup sa Google Drive",
     googleDrive: "Google Drive",
-    googleDriveDescription:
-      "Kumonekta, gumawa, o mag-restore ng cloud backup",
+    googleDriveDescription: "Kumonekta, gumawa, o mag-restore ng cloud backup",
     backupPaused: "Naka-pause ang backup",
     backupPausedDescription:
       "Pansamantala ang mga sample record at hindi ina-upload sa Google Drive. Magsimula ng personal na workspace para paganahin ang backup.",
     appearanceSection: "TEMA AT MGA PRESET NG KULAY",
-    themeAccessibility:
-      "Kasalukuyang tema: %{theme}. I-tap para palitan.",
+    themeAccessibility: "Kasalukuyang tema: %{theme}. I-tap para palitan.",
     followingAppearance: "Sinusunod ang hitsura ng device",
-    paletteSaved: "%{mode} na palette - naka-save sa device na ito",
+    paletteSaved: "%{mode} na Tema",
     light: "Maliwanag",
     dark: "Madilim",
     sourceManagementSection: "PAMAMAHALA NG SOURCE",
@@ -324,7 +720,8 @@ export const fil = {
     securitySection: "SEGURIDAD AT PRIVACY",
     securityMenuTitle: "Password at Fingerprint",
     securityMenuSubtitleConfigured: "Protektado · Aktibo ang password",
-    securityMenuSubtitleNotConfigured: "Hindi pa naka-set · I-tap para i-set up",
+    securityMenuSubtitleNotConfigured:
+      "Hindi pa naka-set · I-tap para i-set up",
     securityMenuAccessibility:
       "Buksan ang mga setting ng seguridad. I-configure ang password at biometric unlock.",
     dangerZone: "DELIKADONG ZONE",
@@ -333,20 +730,27 @@ export const fil = {
       "Permanenteng burahin ang lahat ng lokal na app data at magsimulang muli.",
     aboutSection: "TUNGKOL SA APP",
     versionHistory: "Kasaysayan ng Bersyon",
-    versionHistoryDescription: "Tingnan ang mga pagbabago sa bawat bersyon ng app",
+    versionHistoryDescription:
+      "Tingnan ang mga pagbabago sa bawat bersyon ng app",
     versionHistoryAccessibility: "Buksan ang kasaysayan ng bersyon",
     developerMessage: "Mensahe at Layunin ng Developer",
     developerMessageSubtitle:
       "Liham mula kay John Paul Arellano tungkol sa aming misyon at financial literacy",
-    developerMessageAccessibility: "Basahin ang mensahe at layunin mula sa developer",
+    developerMessageAccessibility:
+      "Basahin ang mensahe at layunin mula sa developer",
     supportDevelopment: "Suportahan ang Pagpapaunlad",
     supportDevelopmentSubtitle:
       "I-rate ang Kaizen sa Google Play, ibahagi sa mga kaibigan, o magpadala ng feedback",
-    supportDevelopmentAccessibility: "Buksan ang mga opsyon sa pagsuporta sa developer",
+    supportDevelopmentAccessibility:
+      "Buksan ang mga opsyon sa pagsuporta sa developer",
     privacy: "Privacy",
     privacySubtitle: "Basahin ang aming patakaran sa privacy online",
     privacyAccessibility: "Buksan ang website ng patakaran sa privacy",
     privacyOpenError: "Hindi mabuksan ang website ng patakaran sa privacy.",
+    terms: "Mga Tuntunin",
+    termsSubtitle: "Basahin ang mga tuntunin sa paggamit ng Kaizen Finance",
+    termsAccessibility: "Buksan ang website ng mga tuntunin",
+    termsOpenError: "Hindi mabuksan ang website ng mga tuntunin.",
     appVersion: "Bersyon ng App",
     buildReleased: "Released",
     buildDevelopment: "Development",
@@ -358,7 +762,8 @@ export const fil = {
     developerMode: "Developer mode",
     developerModeDescription: "Ipakita ang SQLite Monitor sa navigation menu",
     sqliteMonitor: "SQLite Monitor",
-    sqliteMonitorDescription: "Tingnan ang mga table at mag-SQL sa device na ito",
+    sqliteMonitorDescription:
+      "Tingnan ang mga table at mag-SQL sa device na ito",
     moreToolsSection: "MGA KARAGDAGANG TOOL",
     moreToolsDescription: "Ipakita ang extra screen sa menu kapag kailangan mo",
     navCalendar: "Calendar",
@@ -379,7 +784,8 @@ export const fil = {
     catalogTitle: "Mga Currency",
     catalogRowLabel: "Mga currency at decimal place",
     catalogRowValue: "%{count} na currency",
-    catalogDescription: "Magdagdag ng custom currency o ayusin ang decimal places.",
+    catalogDescription:
+      "Magdagdag ng custom currency o ayusin ang decimal places.",
     catalogHelpTitle: "Tungkol sa mga currency",
     catalogHelpMessage:
       "Magdagdag ng custom currency o baguhin ang decimal places bago gamitin sa account, goal, rate, o bilang default currency. Pananatilihin ng built-in currencies ang code at pangalan; maaaring baguhin ang decimal places bago pa gamitin.",
@@ -392,7 +798,8 @@ export const fil = {
     usageClickToView: "I-click para tingnan",
     usedLockedMessage:
       "Ginagamit na ang currency na ito. Hindi na maaaring baguhin ang decimal places o detalye.",
-    usageChipAccessibility: "Ginagamit, ipakita kung saan ginagamit ang currency",
+    usageChipAccessibility:
+      "Ginagamit, ipakita kung saan ginagamit ang currency",
     usageModalLink: "Tingnan kung saan ginagamit",
     usageModalTitle: "Saan ginagamit ang %{code}",
     usageModalIntro: "Ang %{code} ay nakaugnay sa mga sumusunod:",
@@ -408,7 +815,8 @@ export const fil = {
     fieldNamePlaceholder: "Canadian Dollar",
     fieldSymbol: "Simbolo",
     fieldDecimalPlaces: "Decimal places",
-    fieldDecimalPlacesHint: "Buong numero mula 0 hanggang 3 (hal. 2 para sa cents, 0 para sa yen, 3 para sa dinar).",
+    fieldDecimalPlacesHint:
+      "Buong numero mula 0 hanggang 3 (hal. 2 para sa cents, 0 para sa yen, 3 para sa dinar).",
     builtinEditHint:
       "Built-in currency: puwede lang baguhin ang decimal places bago gamitin.",
     deleteTitle: "Burahin ang currency",
@@ -448,6 +856,7 @@ export const fil = {
     restoreQuickSyncConfirmTitle: "I-restore ang Quick Sync?",
     restoreQuickSyncConfirmMessage:
       "Pinapalitan nito ang lahat ng lokal na data ng Quick Sync file at ibinabalik ang Quick Sync sa device na ito.",
+    disconnectAction: "I-disconnect",
   },
   language: {
     helpTitle: "Tungkol sa Wika",
@@ -467,6 +876,19 @@ export const fil = {
     helpTitle: "Tungkol sa Naka-iskedyul na mga Transaksyon",
     helpMessage:
       "Mag-set up ng umuulit na kita, gastos, o transfer. Piliin kung awtomatikong i-po-post ang bawat occurrence o hihintayin ang iyong kumpirmasyon. Ang due o failed na item ay lalabas sa Needs attention; maaari mong i-pause, tapusin, o i-archive ang mga iskedyul nang hindi tinatanggal ang mga transaksyong na-post na.",
+    advancePost: "I-post nang Pauna",
+    advancePostTitle: "Paunang I-post ang Iskedyul",
+    advancePostDesc:
+      "Itala ang nakaiskedyul na transaksyong ito bago ang takdang petsa. Ang susunod na petsa ay uusad sa susunod na siklo.",
+    advancePostDateLabel: "Petsa ng Transaksyon",
+    advancePostCurrentDate: "Kasalukuyang nakatakdang petsa",
+    advancePostNextDate: "Petsa ng susunod na siklo",
+    advancePostCompletes: "Huling transaksyon (makukumpleto ang iskedyul)",
+    advancePostConfirm: "I-post nang Pauna",
+    advancePostToastTitle: "Nai-post nang mas maaga ang transaksyon",
+    advancePostToastNext: "Inilipat ang susunod na iskedyul sa %{date}.",
+    advancePostToastCompleted: "Kumpleto na ang iskedyul na ito.",
+    today: "Ngayon",
   },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
@@ -474,15 +896,16 @@ export const fil = {
     subtitle:
       "I-preview ang buong palette ng app bago umalis sa screen na ito.",
     followDevice: "Sundin ang hitsura ng device",
-    followDeviceDescription:
-      "Paper sa light mode at Ink sa dark mode.",
+    followDeviceDescription: "Paper sa light mode at Ink sa dark mode.",
     palettes: "MGA PALETTE",
     choices: "%{count} pagpipilian",
     tabPresets: "Mga Preset",
     tabCustomStudio: "Custom Studio",
     customBannerTitle: "Custom Theme Studio",
-    customBannerSubtitle: "Gumawa ng sarili mong kombinasyon ng kulay at surface tint.",
-    customBannerActive: "Kasalukuyang ginagamit ang iyong custom na kulay ng tema.",
+    customBannerSubtitle:
+      "Gumawa ng sarili mong kombinasyon ng kulay at surface tint.",
+    customBannerActive:
+      "Kasalukuyang ginagamit ang iyong custom na kulay ng tema.",
     customizeAction: "I-customize",
     filterAll: "Lahat",
     livePreview: "LIVE NA PREVIEW",
@@ -492,17 +915,21 @@ export const fil = {
     modeDark: "Madilim",
     modeOled: "OLED Itim",
     surfaceTintLabel: "Tint ng Surface at Card",
-    surfaceTintHint: "Ihalo ang iyong pangunahing kulay sa background at mga card.",
+    surfaceTintHint:
+      "Ihalo ang iyong pangunahing kulay sa background at mga card.",
     tintNeutral: "Neutral",
     tintSubtle: "Banayad",
     tintRich: "Matingkad",
     primaryColorLabel: "Pangunahing Kulay",
     primaryColorHint: "Mga button, aktibong tab, at pangunahing highlight.",
-    primaryUsedFor: "Ginagamit sa: Action buttons (Save/Add), aktibong tabs, floating action button (+), napiling chips, at progress bars ng badyet at layunin.",
+    primaryUsedFor:
+      "Ginagamit sa: Action buttons (Save/Add), aktibong tabs, floating action button (+), napiling chips, at progress bars ng badyet at layunin.",
     accentColorLabel: "Accent na Kulay",
     accentColorHint: "Pangalawang highlight, mga badge, at chart.",
-    accentUsedFor: "Ginagamit sa: Kai AI assistant badges & sparkles, pangalawang sukatan sa ulat (savings rate), at mga notification icon.",
+    accentUsedFor:
+      "Ginagamit sa: Kai AI assistant badges & sparkles, pangalawang sukatan sa ulat (savings rate), at mga notification icon.",
     applyCustomTheme: "Gamitin ang Custom Theme",
+    applyingTheme: "Inilalapat ang Tema...",
     unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
     customShadeLabel: "I-adjust ang Tingkad at Liwanag",
   },
@@ -530,6 +957,84 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v151: {
+      date: "Nobyembre 15, 2026",
+      improveItem1:
+        "Pakinisin ang mga layout ng screen at pagbutihin ang scrolling sa Mga Badyet, Kategorya, Kalendaryo, at Layunin.",
+    },
+    v150: {
+      date: "Nobyembre 10, 2026",
+      newItem1:
+        "Mag-import ng mga account at kasaysayan ng transaksyon mula sa mga CSV file na may gabay sa pagtutugma.",
+      newItem2:
+        "Suriin ang mga balanse, maghanap ng magkakaparehong tala, at gumawa ng safety backup bago mag-import.",
+      newItem3:
+        "I-download ang mga halimbawang CSV template nang direkta sa iyong device para sa madaling pag-format.",
+      newItem4:
+        "Magdagdag ng paunang pag-post upang maitala nang maaga ang mga nakaiskedyul na transaksyon patungo sa susunod na siklo.",
+      newItem5:
+        "Magdagdag ng mga interactive na walkthrough tour para sa Credit Cards at Reports upang galugarin ang mga feature at chart.",
+      improveItem1:
+        "Palawakin ang Net Worth gamit ang full-screen inspector, 7-araw at taunang view, mga tooltip, at filter ng taon.",
+      improveItem2:
+        "Pabutihin ang mga walkthrough tour gamit ang matingkad na buttons, malinaw na Skip option, at maayos na hakbang.",
+      improveItem3:
+        "Gawing mas simple ang pagtala ng transaksyon gamit ang pinag-isang petsa at oras, at pinadaling transfer options.",
+      improveItem4:
+        "Pahusayin ang mga filter ng transaksyon gamit ang multi-select label dropdown at madaling ma-access na Clear All button.",
+      improveItem5:
+        "Magdagdag ng tap-to-reverse sorting na may skeleton loading, return-to-top button, at bilugang swipe action cards.",
+      improveItem6:
+        "Pahusayin ang Credit Cards gamit ang mga filter ng cutoff date, review ng aktibidad, at maayos na mga setting.",
+      improveItem7:
+        "Buksan ang mga detalye ng account mula sa dashboard at panatilihing nakikita ang balanse habang nag-e-edit.",
+      improveItem8:
+        "Magpakita ng toast notification at panatilihing nakikita ang halaga kapag nag-e-edit ng mga iskedyul.",
+      improveItem9:
+        "Gawing mas maayos ang privacy button sa itaas na may interactive na loading indicator.",
+      improveItem10:
+        "Gawing mas simple ang Settings, i-standardize ang mga kumpirmasyon, at kumpirmahin ang pag-reset sa pag-type ng RESET.",
+      improveItem11:
+        "I-toggle ang expanded o collapsed view ng account groups at itakda ang iyong default na nais sa Settings.",
+      improveItem12:
+        "Gumawa ng mga custom hex color sa Theme Studio na may maayos at magkatugmang swatches sa bawat screen.",
+      improveItem13:
+        "Gawing mas maayos ang Google Drive connection gamit ang disconnect chip, skeleton loader, at backup toast feedback.",
+      improveItem14:
+        "Magdagdag ng mga arrow button, floating scroll indicator, at makikinis na animation sa mga switch.",
+      improveItem15:
+        "Gawing simpleng flat line ang divider sa sidebar search na may indicator para sa aktibong screen.",
+      improveItem16:
+        "I-standardize ang mga help at info icon sa lahat ng screen at magpakita ng count badges sa mga budget chip.",
+      improveItem17:
+        "Ilagay ang field ng tala sa ilalim ng pamagat ng goal at magpakita ng kumpirmasyon sa unsaved category changes.",
+      improveItem18:
+        "Ayusin ang ayos ng SQLite Monitor at magpakita ng progress modal habang isinasagawa ang database vacuuming.",
+      fixItem1:
+        "Siguraduhing ganap na itinatago ng privacy mode ang mga balanse, paggamit ng credit card, at mga numero ng ulat.",
+      fixItem2:
+        "Panatilihing nakikita ang mga halaga kapag sinusuri ang mga statement ng credit card kahit naka-on ang privacy mode.",
+      fixItem3:
+        "Ayusin ang mga gabay sa walkthrough upang hindi magpatong-patong ang mga button o mag-trigger ng maling tour.",
+      fixItem4:
+        "Pigilan ang app lock habang pumipili ng larawan o nagbabahagi ng file, at panatilihing naka-lock ang version history.",
+      fixItem5:
+        "Pabilisin ang paglipat ng screen at alisin ang pagka-freeze kapag nagpapalit ng tab, petsa, wika, o tema.",
+      fixItem6:
+        "Ayusin ang biglaang pagsasara ng app kapag binubuksan ang Reports at tiyaking mabilis bumukas ang mga form.",
+      fixItem7:
+        "Pigilan ang error sa pagpapalit ng uri ng transfer sa mga transaksyon at ayusin ang shortcut sa Top Spending.",
+      fixItem8:
+        "Panatilihing nakikita ang mga input field ng kulay at hex code sa ibabaw ng virtual keyboard.",
+      fixItem9:
+        "Ayusin ang pagpili ng buwan sa net worth chart at kulayan ang growth chart ayon sa pagtaas o pagbaba.",
+      fixItem10:
+        "Ayusin ang pagpapalit ng Google Drive account para awtomatikong mag-relink at linawin ang gabay sa backup.",
+      fixItem11:
+        "Ayusin ang animation ng mga toggle switch at ihanay ang mga switch sa dashboard at mga setting.",
+      fixItem12:
+        "Ayusin ang layout spacing, border overlap, at padding sa mga chart card, developer note, at form ng pera.",
+    },
     v140: {
       date: "Nobyembre 5, 2026",
       newItem1:
@@ -543,7 +1048,7 @@ export const fil = {
       newItem5:
         "I-customize ang vibration feedback at tunog kapag nagtatala ng transaksyon o gumagamit ng calculator.",
       newItem6:
-        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakanan o pakaliwa sa talaan.",
+        "Mabilis na kopyahin o burahin ang transaksyon sa pamamagitan ng pag-swipe pakaliwa sa talaan upang makita ang mga aksyon.",
       improveItem1:
         "I-customize ang background at kulay ng text ng daily quote sa dashboard o i-reset sa default.",
       improveItem2:
@@ -642,7 +1147,7 @@ export const fil = {
       improveItem2:
         "Dumiretso sa mga paglilipat, ulat, at AI chat mula sa Quick Search.",
       improveItem3:
-        "Pindutin ang \"Laktawan muna\" sa mga pagdiriwang ng layunin at badyet upang makabalik agad sa dashboard.",
+        'Pindutin ang "Laktawan muna" sa mga pagdiriwang ng layunin at badyet upang makabalik agad sa dashboard.',
       fixItem1:
         "Masiyahan sa mas mabilis at maayos na pag-scroll habang tinitingnan ang kasaysayan ng transaksyon.",
       fixItem2:
@@ -679,8 +1184,7 @@ export const fil = {
         "Mag-attach ng mga larawan ng resibo at mag-filter ng mga transaksyon ayon sa petsa o account.",
       calendarItem1:
         "Tingnan ang kabuuang gastos bawat araw at mga darating na bayarin sa kalendaryo.",
-      calendarItem2:
-        "Inayos ang mga bug kapag pumipili ng petsa.",
+      calendarItem2: "Inayos ang mga bug kapag pumipili ng petsa.",
       budgetsItem1:
         "Magtakda ng buwanang limitasyon sa gastos bawat kategorya upang maiwasan ang labis na paggastos.",
       budgetsItem2:
@@ -728,7 +1232,8 @@ export const fil = {
   },
   supportDevelopment: {
     title: "Suportahan ang Pagpapaunlad",
-    subtitle: "Tulungang lumago ang Kaizen Finance at maabot ang mas maraming tao",
+    subtitle:
+      "Tulungang lumago ang Kaizen Finance at maabot ang mas maraming tao",
     badge: "SUPORTAHAN ANG KAIZEN",
     spreadSectionTitle: "IBAHAGI SA IBA",
     directSectionTitle: "DIREKTONG SUPORTA",
@@ -739,17 +1244,22 @@ export const fil = {
     proActiveSubtitle:
       "Salamat sa pagsuporta sa Kaizen! Naka-unlock ang lahat ng Pro features.",
     rateTitle: "I-rate sa Google Play",
-    rateSubtitle: "Mag-iwan ng 5-star review para suportahan ang isang independent developer",
+    rateSubtitle:
+      "Mag-iwan ng 5-star review para suportahan ang isang independent developer",
     rateAction: "I-rate ang Kaizen",
     shareTitle: "Ibahagi sa mga Kaibigan",
-    shareSubtitle: "Tulungan ang iba na subaybayan ang kanilang pera nang offline at pribado",
+    shareSubtitle:
+      "Tulungan ang iba na subaybayan ang kanilang pera nang offline at pribado",
     shareAction: "Ibahagi ang App",
-    shareMessage: "Ginagamit ko ang Kaizen Finance para subaybayan ang aking kita, gastusin, at pockets nang offline at pribado! Subukan ito:",
+    shareMessage:
+      "Ginagamit ko ang Kaizen Finance para subaybayan ang aking kita, gastusin, at pockets nang offline at pribado! Subukan ito:",
     feedbackTitle: "Magpadala ng Feedback at Suhestiyon",
-    feedbackSubtitle: "Sabihin sa amin ang gusto mong makita o mag-ulat ng isyu",
+    feedbackSubtitle:
+      "Sabihin sa amin ang gusto mong makita o mag-ulat ng isyu",
     feedbackAction: "Magpadala ng Feedback",
     proTitle: "Mag-upgrade sa Kaizen Pro",
-    proSubtitle: "I-unlock ang walang limitasyong pockets, cloud backup, at lahat ng tampok",
+    proSubtitle:
+      "I-unlock ang walang limitasyong pockets, cloud backup, at lahat ng tampok",
     proAction: "Tingnan ang Pro",
   },
   inAppReview: {
@@ -766,7 +1276,8 @@ export const fil = {
     welcomeDescription:
       "Isang payapang lugar para subaybayan ang pera na pumasok, lumabas, at natitira.",
     welcomePoint1: "I-record ang gastos at kita sa ilang tap lang",
-    welcomePoint2: "Tingnan kung magkano ang meron ka at ginastos ngayong buwan",
+    welcomePoint2:
+      "Tingnan kung magkano ang meron ka at ginastos ngayong buwan",
     welcomePoint3: "Nasa device mo ang data at gumagana offline",
     getStarted: "Magsimula",
     restoreBackup: "I-restore ang backup",
@@ -780,12 +1291,12 @@ export const fil = {
       "Gagawin naming personal ang iyong workspace at araw-araw na dashboard.",
     nicknameLabel: "IYONG PALAYAW",
     nicknamePlaceholder: "hal. Alex, Sam, Jordan",
-    nicknameHint: "Maaari mong baguhin ang iyong palayaw anumang oras sa Settings.",
+    nicknameHint:
+      "Maaari mong baguhin ang iyong palayaw anumang oras sa Settings.",
     languageTitle: "Piliin ang wika",
     languageDescription: "Maaari mong palitan ito anumang oras sa Settings.",
     languageTitleAssisted: "Ikinagagalak kitang makilala, %{name}!",
-    languageDescriptionAssisted:
-      "Anong wika ang mas komportable mong gamitin?",
+    languageDescriptionAssisted: "Anong wika ang mas komportable mong gamitin?",
     currencyTitle: "Anong pera ang ginagamit mo?",
     currencyDescription: "Gagamitin ito sa unang account at mga halaga.",
     currencyTitleAssisted: "Anong pera ang ginagamit mo, %{name}?",
@@ -854,7 +1365,8 @@ export const fil = {
     accountChoiceManualDesc:
       "Magsimula nang walang laman. Ikaw ang magdadagdag ng mga account at kategorya mamaya.",
     fullSetupTitle: "I-setup ang workspace",
-    fullSetupDescription: "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",
+    fullSetupDescription:
+      "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",
     manualSetupTitle: "Magsimula from scratch",
     manualSetupDescription:
       "Gumawa ng account types, accounts, at categories nang sarili mo.",
@@ -864,9 +1376,6 @@ export const fil = {
     recommendedBadge: "Inirerekomenda",
   },
   transactionForm: {
-    quickDateToday: "Ngayong Araw",
-    quickDateYesterday: "Kahapon",
-    quickDateCustom: "Kalendaryo",
     customizeFieldsTitle: "I-customize ang mga field",
     customizeFieldsSubtitle:
       "Laging nandiyan ang amount, account, category, at date sa form.",
@@ -884,7 +1393,6 @@ export const fil = {
       note: "Note",
       quickPresets: "Quick Presets",
       exactTime: "Eksaktong oras",
-      quickDates: "Mga mabilisang petsa",
     },
   },
   dashboard: {
@@ -935,6 +1443,9 @@ export const fil = {
     walkthroughBack: "Bumalik",
     walkthroughStartTx: "I-tap ang + sa ibaba para magsimula",
     walkthroughStepCount: "Hakbang %{current} ng %{total}",
+    stepGreetingTitle: "Pagbati at Kasabihan",
+    stepGreetingDesc:
+      "Simulan ang araw na may personal na pagbati at gabay pinansyal. I-tap ang shuffle icon anumang oras para sa bagong kasabihan.",
     stepNetWorthTitle: "Kabuuang Net Worth",
     stepNetWorthDesc:
       "Ipinapakita rito ang iyong kabuuang financial snapshot—kinakalkula ang net worth (assets bawas liabilities) at ang history ng balance.",
@@ -947,9 +1458,18 @@ export const fil = {
     stepSettingsModalTitle: "Mga Opsyon sa Display",
     stepSettingsModalDesc:
       "Sa Simple mode, madaling basahin ang pera at gastusin. Sa Detalyado, buo ang assets at liabilities. Malilipat mo ito anumang oras!",
-    stepEyeTitle: "Itago ang Halaga",
-    stepEyeDesc:
-      "I-tap ang mata para itago o ipakita ang iyong mga halaga (••••••) kapag may ibang kasama o nasa publiko.",
+    stepQuickActionsTitle: "Mabilisang Aksyon",
+    stepQuickActionsDesc:
+      "Magtala ng gastos, kita, paglipat sa pagitan ng mga account, o makipag-usap kay Kai sa isang pindot lang.",
+    stepCashflowTitle: "Buwanang Daloy ng Pera",
+    stepCashflowDesc:
+      "Subaybayan ang iyong buwanang kita laban sa gastos at makita ang iyong antas ng naipon sa isang sulyap.",
+    stepAccountsTitle: "Pangkalahatang-ideya ng mga Account",
+    stepAccountsDesc:
+      "Tingnan ang iyong mga aktibong account at kasalukuyang balanse. I-tap ang Tingnan Lahat para pamahalaan ang iyong mga account.",
+    stepTopCategoriesTitle: "Nangungunang Kategorya ng Gastos",
+    stepTopCategoriesDesc:
+      "Alamin kung saan napupunta ang iyong pera gamit ang visual progress bar. I-tap ang anumang kategorya upang makita ang mga transaksyon.",
     stepRecentTxTitle: "Kamakailang Transaksyon",
     stepRecentTxDesc:
       "Lalabas dito ang iyong mga bagong gastos, kita, at transfers. I-tap ang alinman para tingnan ang detalye o i-edit.",
@@ -972,28 +1492,37 @@ export const fil = {
     sectionsOrderLabel: "Mga Card at Pagkakasunod-sunod",
     resetLayout: "Ibalik sa dati",
     presetCashflowFocus: "Tutok sa Cashflow",
-    presetCashflowFocusDesc: "Inuuna ang buwanang kita, gastos, at mga pangunahing kategorya.",
+    presetCashflowFocusDesc:
+      "Inuuna ang buwanang kita, gastos, at mga pangunahing kategorya.",
     presetWealthOverview: "Yaman at Balanse",
-    presetWealthOverviewDesc: "Itinatampok ang net worth, balanse ng account, at cashflow.",
+    presetWealthOverviewDesc:
+      "Itinatampok ang net worth, balanse ng account, at cashflow.",
     presetCompleteView: "Kumpletong Tanaw",
-    presetCompleteViewDesc: "Ipinapakita ang lahat ng 6 na card sa iyong home screen.",
+    presetCompleteViewDesc:
+      "Ipinapakita ang lahat ng 6 na card sa iyong home screen.",
     presetMinimalist: "Minimalist",
-    presetMinimalistDesc: "Maikling pagbati, buwanang cashflow, at kamakailang transaksyon.",
+    presetMinimalistDesc:
+      "Maikling pagbati, buwanang cashflow, at kamakailang transaksyon.",
     widgetGreetingTitle: "Pagbati at Petsa",
     alwaysActive: "Palaging aktibo",
-    widgetGreetingDesc: "Personal na pagbati at opsyonal na pang-araw-araw na quote.",
+    widgetGreetingDesc:
+      "Personal na pagbati at opsyonal na pang-araw-araw na quote.",
     widgetNetWorthTitle: "Net Worth at Balanse",
     widgetNetWorthDesc: "Chart ng balanse, kabuuang assets, at liabilities.",
     widgetCashflowTitle: "Buwanang Cashflow",
-    widgetCashflowDesc: "Bar ng kita laban sa gastos ngayong buwan at savings rate.",
+    widgetCashflowDesc:
+      "Bar ng kita laban sa gastos ngayong buwan at savings rate.",
     widgetAccountsTitle: "Listahan ng Accounts",
-    widgetAccountsDesc: "Mabilisang pahalang na card ng iyong mga aktibong account.",
+    widgetAccountsDesc:
+      "Mabilisang pahalang na card ng iyong mga aktibong account.",
     widgetTopCategoriesTitle: "Pinakamalaking Gastos",
     widgetTopCategoriesDesc: "Kung saan napunta ang pera mo ngayong buwan.",
     widgetRecentTxTitle: "Kamakailang Transaksyon",
-    widgetRecentTxDesc: "Ang iyong pinakahuling naitalang kita, gastos, at transfer.",
+    widgetRecentTxDesc:
+      "Ang iyong pinakahuling naitalang kita, gastos, at transfer.",
     showDailyQuoteTitle: "Ipakita ang Daily Inspiration Quote",
-    showDailyQuoteDesc: "Magpakita ng financial quote sa loob ng greeting card.",
+    showDailyQuoteDesc:
+      "Magpakita ng financial quote sa loob ng greeting card.",
     quoteColorsTitle: "Itsura ng Quote",
     quoteBgColor: "Kulay ng Background",
     quoteTextColor: "Kulay ng Text",
@@ -1025,7 +1554,8 @@ export const fil = {
     recentTransactionsTitle: "Mga Kamakailang Transaksyon",
     viewAllTransactionsAccessibility: "Tingnan ang lahat ng transaksyon",
     noRecentTransactions: "Wala pang naitalang transaksyon.",
-    noRecentTransactionsHint: "Gamitin ang + button upang itala ang iyong unang transaksyon.",
+    noRecentTransactionsHint:
+      "Gamitin ang + button upang itala ang iyong unang transaksyon.",
     transferToAccount: "Paglipat sa %{account}",
     transactionFallback: "Transaksyon",
     viewTransactionAccessibility: "Tingnan ang transaksyon, %{title}",
@@ -1144,8 +1674,7 @@ export const fil = {
     stepColorDesc:
       "Pumili ng natatanging kulay para madaling makilala ang grupong ito.",
     stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
-    stepCustomColorDesc:
-      "Gumawa at mag-save ng sarili mong hex color palette.",
+    stepCustomColorDesc: "Gumawa at mag-save ng sarili mong hex color palette.",
     stepSaveTitle: "I-save ang Grupo ng Account",
     stepSaveDesc:
       "I-tap ang checkmark upang i-save ang bagong grupo ng account.",
@@ -1201,8 +1730,7 @@ export const fil = {
     stepCancelDesc:
       "Ibasura ang kasalukuyang mga pagbabago at isara ang form nang hindi nagse-save.",
     stepSaveTitle: "I-save ang Tala",
-    stepSaveDesc:
-      "I-save agad ang iyong transaksyon sa iyong lokal na talaan.",
+    stepSaveDesc: "I-save agad ang iyong transaksyon sa iyong lokal na talaan.",
     stepCloseTitle: "Isara ang Form",
     stepCloseDesc:
       "Isara ang modal na ito kapag tapos ka na o nais mong lumabas.",
@@ -1285,6 +1813,117 @@ export const fil = {
     stepSaveDesc:
       "I-tap upang i-save at simulan ang iyong paulit-ulit na iskedyul.",
   },
+  categoryFormWalkthrough: {
+    stepGroupTypeTitle: "Uri ng Grupo",
+    stepGroupTypeDesc:
+      "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
+    stepNameTitle: "Pangalan ng Kategorya",
+    stepNameDesc:
+      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
+    stepIconTitle: "Icon ng Kategorya",
+    stepIconDesc:
+      "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",
+    stepColorTitle: "Kulay ng Tema",
+    stepColorDesc:
+      "Pumili ng natatanging kulay para sa mga tsart at mabilis na pagkilala.",
+    stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
+    stepCustomColorDesc:
+      "Maglagay ng sariling hex color code upang personal na iayon ang iyong mga kategorya.",
+    stepCancelTitle: "Kanselahin",
+    stepCancelDesc:
+      "Ibasura ang mga pagbabago at bumalik nang hindi gumagawa ng kategorya.",
+    stepSaveTitle: "Gumawa ng Kategorya",
+    stepSaveDesc:
+      "I-save at simulan ang paggamit sa bagong kategorya para sa mga transaksyon at badyet.",
+  },
+  pocketFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Pocket",
+    stepNameDesc:
+      "Magbigay ng malinaw na pangalan para sa pocket, tulad ng Emergency Fund o Bakasyon.",
+    stepDefaultExpenseTitle: "Default para sa Gastusin",
+    stepDefaultExpenseDesc:
+      "Kapag pinagana, ang mga bagong gastusin sa account na ito ay awtomatikong gagamit sa pocket na ito.",
+    stepDefaultIncomeTitle: "Default para sa Kita",
+    stepDefaultIncomeDesc:
+      "Kapag pinagana, ang mga kita sa account na ito ay awtomatikong mapupunta sa pocket na ito.",
+    stepSaveTitle: "I-save ang Pocket",
+    stepSaveDesc:
+      "I-save at simulan ang paggamit ng pocket na ito sa iyong account.",
+  },
+  presetFormWalkthrough: {
+    stepNameTitle: "Pangalan ng Preset",
+    stepNameDesc:
+      "Maglagay ng pangalan para sa preset, tulad ng Pang-araw-araw na Kape o Pamasahe.",
+    stepTypeTitle: "Uri ng Transaksyon",
+    stepTypeDesc: "Pumili kung ito ay para sa gastusin o kita.",
+    stepAmountTitle: "Halaga ng Preset",
+    stepAmountDesc:
+      "Maaari kang maglagay ng nakapirming halaga na kusa nang mapupuno.",
+    stepDetailsTitle: "Kategorya at Account",
+    stepDetailsDesc:
+      "Ikabit ang kategorya at account para sa napakabilis na pagtatala.",
+    stepSaveTitle: "I-save ang Preset",
+    stepSaveDesc: "I-save upang magamit agad ang shortcut sa transaction form.",
+  },
+  noteEditorWalkthrough: {
+    stepTitleTitle: "Pamagat ng Tala",
+    stepTitleDesc:
+      "Maglagay ng maikling pamagat para sa iyong pinansyal na tala o paalala.",
+    stepContentTitle: "Nilalaman ng Tala",
+    stepContentDesc: "Isulat ang mga detalye, plano sa pera, o listahan.",
+    stepColorTitle: "Kulay ng Tala",
+    stepColorDesc:
+      "Pumili ng kulay upang pangkatin ang iyong mga kaugnay na tala.",
+    stepPinTitle: "I-pin sa Itaas",
+    stepPinDesc:
+      "Panatilihin ang mahahalagang tala sa pinakatuktok para mabilis makita.",
+    stepAttachmentsTitle: "Mga Kalakip na Larawan",
+    stepAttachmentsDesc:
+      "Maglakip ng litrato ng resibo, invoice, o warranty sa talang ito.",
+    stepSaveTitle: "I-save ang Tala",
+    stepSaveDesc: "I-tap ang checkmark upang i-save ang tala sa iyong device.",
+  },
+  customizeDashboardWalkthrough: {
+    stepPreviewTitle: "Preview ng Dashboard",
+    stepPreviewDesc:
+      "Tingnan ang mga pagbabago habang inaayos mo ang iyong mga card.",
+    stepCardsTitle: "Mga Card at Widget",
+    stepCardsDesc:
+      "I-on o i-off at i-drag upang baguhin ang pagkakasunod-sunod ng mga widget.",
+    stepDoneTitle: "Tapos Na",
+    stepDoneDesc:
+      "I-save ang iyong mga pagbabago at bumalik sa iyong dashboard.",
+  },
+  txFilterWalkthrough: {
+    stepDateTitle: "Saklaw ng Petsa",
+    stepDateDesc:
+      "Salain ang mga transaksyon ayon sa araw, linggo, buwan, o sariling saklaw ng petsa.",
+    stepTypeTitle: "Mga Uri ng Transaksyon",
+    stepTypeDesc: "Piliin kung gastusin, kita, o transfer ang nais makita.",
+    stepAccountsTitle: "Mga Account at Kategorya",
+    stepAccountsDesc:
+      "Pumili ng isa o maraming account at kategorya upang paliitin ang listahan.",
+    stepAmountTitle: "Saklaw ng Halaga",
+    stepAmountDesc:
+      "Maglagay ng pinakamababa at pinakamataas na halaga upang mahanap ang transaksyon.",
+    stepApplyTitle: "Ilapat ang Salain",
+    stepApplyDesc:
+      "Ilapat ang mga filter upang makita agad ang mga napiling transaksyon.",
+  },
+  dataImportWalkthrough: {
+    stepFileTitle: "Pumili ng File",
+    stepFileDesc:
+      "Pumili ng CSV, OFX, o QFX bank statement file mula sa iyong device.",
+    stepMappingTitle: "Pagmamapa ng Kolum",
+    stepMappingDesc:
+      "Itugma ang mga kolum ng iyong file (petsa, halaga, payee, at tala) sa mga field ng app.",
+    stepAccountTitle: "Napiling Account",
+    stepAccountDesc:
+      "Piliin kung saang account mapupunta ang mga inangkat na transaksyon.",
+    stepReviewTitle: "Pagsusuri at Pag-import",
+    stepReviewDesc:
+      "Suriin ang mga transaksyon, ayusin ang kategorya, at ligtas na i-import ang mga ito.",
+  },
   budgetFormWalkthrough: {
     introTitle: "Bagong Badyet sa Kategorya",
     introSubtitle: "Magtakda ng limitasyon sa paggastos",
@@ -1355,10 +1994,10 @@ export const fil = {
       "Buksan ang mga advanced filter para limitahan ayon sa petsa, account, kategorya, uri, o tags.",
     stepSortDateTitle: "I-sort ayon sa Petsa",
     stepSortDateDesc:
-      "Iayos ang iyong kasaysayan ng transaksyon ayon sa petsa ng transaksyon.",
+      "I-sort ayon sa petsa mula pinakabago hanggang pinakaluma, at pindutin muli para unahin ang pinakaluma.",
     stepSortAmountTitle: "I-sort ayon sa Halaga",
     stepSortAmountDesc:
-      "Ayusin ang mga tala ayon sa halaga ng pera para agad makita ang pinakamalaki o pinakamaliit na gastusin.",
+      "I-sort ayon sa halaga mula pinakamalaki hanggang pinakamaliit, at pindutin muli para unahin ang pinakamaliit.",
     stepSortOrderTitle: "Direksyon ng Pag-sort",
     stepSortOrderDesc:
       "Magpalit sa pagitan ng pababa (pinakabago/pinakamalaki muna) at pataas (pinakaluma/pinakamaliit muna).",
@@ -1500,6 +2139,54 @@ export const fil = {
     stepFabDesc:
       "Pindutin ang (+) button anumang oras upang gumawa ng bagong tala na may mga attachment, kulay, at pin.",
   },
+  creditCardsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Credit Cards!",
+    introSubtitle: "Matalinong pagsubaybay sa credit card",
+    introMessage:
+      "Subaybayan ang billing cycles, statement cutoffs, credit limits, at active installments sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
+    stepEmptyAddTitle: "Magdagdag ng Credit Card",
+    stepEmptyAddDesc:
+      "Pindutin ito upang gumawa ng credit card account para masubaybayan ang billing cycles, hulugan, at credit limits.",
+    stepDueSummaryTitle: "Buod ng Babayarin",
+    stepDueSummaryDesc:
+      "Tingnan ang kabuuang bayarin sa lahat ng credit cards ngayong buwan, kasama ang anumang past due na balanse.",
+    stepAccountChipsTitle: "Pagpili ng Card",
+    stepAccountChipsDesc:
+      "Pindutin ang alinmang card upang makita ang indibidwal na balanse, detalye ng statement, at credit utilization.",
+    stepLimitUtilizationTitle: "Credit Limit at Paggamit",
+    stepLimitUtilizationDesc:
+      "Bantayan ang iyong credit limit at real-time utilization ring upang mapanatiling malusog ang credit standing.",
+    stepMetricsTitle: "Billed vs Unbilled Activity",
+    stepMetricsDesc:
+      "Subaybayan ang na-bill na statement balance, mga kasalukuyang bayarin, at ang kabuuang natitirang utang.",
+    stepDueInstallmentsTitle: "Petsa ng Bayaran at Hulugan",
+    stepDueInstallmentsDesc:
+      "Alamin ang darating na takdang petsa ng bayaran, babayarang halaga, at bilang ng aktibong installment plans.",
+    stepStatementsTitle: "Billed Statements at Kasaysayan",
+    stepStatementsDesc:
+      "Tingnan ang bawat billing statement, suriin kung bayad na o overdue, at basahin ang bawat transaksyon.",
+    stepUnbilledTitle: "Unbilled na mga Gastos",
+    stepUnbilledDesc:
+      "Suriin ang mga pagbili sa kasalukuyang billing cycle bago dumating ang iyong susunod na cutoff date.",
+  },
+  reportsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Reports!",
+    introSubtitle: "Mga pananaw at pagsusuri sa pananalapi",
+    introMessage:
+      "Tuklasin ang iyong kita, gastusin, cash flow, at paglago ng net worth gamit ang mga interactive na chart at detalyadong talaan. Nais mo ba ng mabilisang gabay?",
+    stepTabBarTitle: "Mga Kategorya ng Report",
+    stepTabBarDesc:
+      "Madaling lumipat sa pagitan ng Income & Expense, Balance Sheet, Cash Flow, Net Worth Growth, at Labels Summary.",
+    stepFilterBarTitle: "Saklaw ng Petsa at Filter",
+    stepFilterBarDesc:
+      "I-filter ang mga report ayon sa Buwan, Quarter, Year-to-Date, o magtakda ng sariling petsa para suriin ang iyong pananalapi.",
+    stepChartTitle: "Interactive na Visual Chart",
+    stepChartDesc:
+      "Pindutin ang mga slice o bar upang suriin ang mga detalyadong halaga, may kulay na balanse ng net, at direksyon ng paglago.",
+    stepBreakdownTableTitle: "Detalyadong Talaan",
+    stepBreakdownTableDesc:
+      "Suriin ang mga detalyadong kabuuan ng bawat kategorya at buwanang kasaysayan sa mga talaan.",
+  },
   settingsWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Setting!",
     introSubtitle: "I-personalize ang iyong karanasan sa Kaizen",
@@ -1546,7 +2233,7 @@ export const fil = {
       "Permanenteng burahin ang lahat ng lokal na transaksyon, account, at setting para magsimula muli.",
     stepLocalBackupTitle: "Lokal na Backup ng Device",
     stepLocalBackupDesc:
-      "Mag-export at mag-import ng buong SQLite database backup direkta sa storage ng iyong device.",
+      "Mag-export at mag-import ng naka-encrypt na kumpletong backup ng data direkta sa storage ng iyong device.",
     stepGoogleDriveTitle: "Google Drive Cloud Backup",
     stepGoogleDriveDesc:
       "Ligtas na i-sync ang iyong data sa Google Drive para sa awtomatikong cloud backup.",
@@ -1562,6 +2249,36 @@ export const fil = {
     stepVersionHistoryTitle: "Kasaysayan ng Bersyon",
     stepVersionHistoryDesc:
       "Tingnan ang mga pagbabago sa bawat bersyon ng app, kasama ang mga bagong tampok, pag-aayos, at pagpapabuti.",
+    stepDataImportTitle: "Mag-import ng Data",
+    stepDataImportDesc:
+      "Mag-import ng mga panlabas na transaksyon at file sa pananalapi sa iyong lokal na ledger.",
+    stepQuickSearchTitle: "Mabilis na Paghahanap",
+    stepQuickSearchDesc:
+      "I-enable ang shortcut sa pangkalahatang paghahanap upang mabilis na mahanap ang mga account, kategorya, at talaan.",
+    stepHapticsTitle: "Haptic Feedback",
+    stepHapticsDesc:
+      "I-configure ang vibration feedback sa bawat pagpindot ng button at paglalagay sa keypad.",
+    stepSoundTitle: "Sound Effects",
+    stepSoundDesc:
+      "I-toggle ang mga kaaya-ayang tunog kapag nagtatala ng transaksyon o gumagawa ng aksyon.",
+    stepKaiChatModeTitle: "Mode ng Chat kay Kai",
+    stepKaiChatModeDesc:
+      "Pumili sa pagitan ng Auto Mode para agad itala o Review Mode para suriin muna bago i-save.",
+    stepDeveloperMessageTitle: "Mensahe ng Developer at Layunin",
+    stepDeveloperMessageDesc:
+      "Basahin ang personal na kwento, pananaw, at pangunahing layunin sa likod ng Kaizen Finance.",
+    stepSupportDevelopmentTitle: "Suportahan ang Pag-develop",
+    stepSupportDevelopmentDesc:
+      "Suportahan ang patuloy na pag-develop at mga darating na update para sa Kaizen Finance.",
+    stepPrivacyTitle: "Patakaran sa Privacy",
+    stepPrivacyDesc:
+      "Suriin ang aming pangako sa privacy at pagpapanatili ng iyong data sa iyong device lamang.",
+    stepTermsTitle: "Mga Tuntunin ng Serbisyo",
+    stepTermsDesc:
+      "Tingnan ang mga tuntunin at kundisyon na namamahala sa paggamit at mga serbisyo ng app.",
+    stepAppVersionTitle: "Bersyon ng App",
+    stepAppVersionDesc:
+      "Tingnan ang kasalukuyang naka-install na bersyon ng app at impormasyon ng release.",
   },
   resetData: {
     dismissAccessibility: "Isara ang kumpirmasyon sa pag-reset ng data",
@@ -1570,9 +2287,9 @@ export const fil = {
       "Permanenteng buburahin nito ang iyong mga account, transaksyon, badyet, layunin, tala, setting, attachment, at mga lokal na backup na pinamamahalaan ng app mula sa device na ito.",
     externalNote:
       "Hindi mabubura ang mga file sa Google Drive. Idi-disconnect ng device na ito ang Google Drive at i-clear ang Quick Sync settings.",
-    confirmationInstruction: "I-type ang KAIZEN para kumpirmahin",
+    confirmationInstruction: "I-type ang RESET para kumpirmahin",
     confirmationAccessibility:
-      "I-type ang KAIZEN para kumpirmahin ang pag-reset ng lahat ng data",
+      "I-type ang RESET para kumpirmahin ang pag-reset ng lahat ng data",
     deleteAll: "Burahin ang lahat ng data",
   },
   security: {
@@ -1604,11 +2321,11 @@ export const fil = {
     setupPasswordToActivate: "Mag-set ng Password para i-activate",
     biometricRequiresPassword:
       "Kailangan munang mag-set ng password para sa biometric unlock.",
-    biometricNoHardware:
-      "Walang biometric sensor sa device na ito",
+    biometricNoHardware: "Walang biometric sensor sa device na ito",
     biometricNotEnrolled:
       "Walang nakarehistrong fingerprint. Magrehistro sa settings ng device",
-    biometricDescription: "Mas mabilis na mag-unlock gamit ang iyong %{biometric}",
+    biometricDescription:
+      "Mas mabilis na mag-unlock gamit ang iyong %{biometric}",
     biometricCancelledFallback:
       "Kinansela ang biometric scan. Mangyaring ilagay ang iyong password para i-unlock.",
     biometricLockoutFallback:
@@ -1656,11 +2373,14 @@ export const fil = {
     emergencyResetConfirmTitle: "I-reset ang Lahat ng Data?",
     emergencyResetConfirmDesc:
       "Permanenteng buburahin nito ang lahat ng iyong financial data at aalisin ang lock ng app. Hindi na ito maibabalik.",
-    emergencyResetInstruction: "I-type ang KAIZEN para kumpirmahin ang pag-reset",
+    emergencyResetInstruction:
+      "I-type ang RESET para kumpirmahin ang pag-reset",
     emergencyResetAction: "Burahin Lahat at I-unlock",
-    resetSuccessfulUnlocking: "Matagumpay na na-update ang password. Nag-a-unlock...",
+    resetSuccessfulUnlocking:
+      "Matagumpay na na-update ang password. Nag-a-unlock...",
     setNewPasswordTitle: "Magtakda ng Bagong Password",
-    setNewPasswordDesc: "Ilagay at kumpirmahin ang iyong bagong password ng app.",
+    setNewPasswordDesc:
+      "Ilagay at kumpirmahin ang iyong bagong password ng app.",
     saveAndUnlockButton: "I-save at I-unlock",
   },
   pro: {
@@ -1725,9 +2445,11 @@ export const fil = {
     restoreNotFoundMsg:
       "Walang nakitang aktibong Lifetime Pro purchase para sa account na kasalukuyang aktibo sa iyong Google Play Store.\n\nTip: Ang mga binili ay nakatali sa iyong Google Play Store account. Kung ibang account ang ginamit mo sa pagbili, buksan ang Google Play Store app, magpalit ng account sa profile icon sa itaas, at subukan muli.",
     restoreErrorTitle: "Nabigo ang Pag-restore",
-    restoreErrorMsg: "Hindi maibalik ang mga binili ngayon. Pakisubukan muli mamaya.",
+    restoreErrorMsg:
+      "Hindi maibalik ang mga binili ngayon. Pakisubukan muli mamaya.",
     purchaseSuccessTitle: "Maligayang Pagdating sa Pro!",
-    purchaseSuccessMsg: "Salamat sa pagsuporta sa Kaizen Finance! Lahat ng Pro features ay bukas na.",
+    purchaseSuccessMsg:
+      "Salamat sa pagsuporta sa Kaizen Finance! Lahat ng Pro features ay bukas na.",
     disclaimer:
       "Ang bayad ay sisingilin sa iyong Google Play account sa pagkumpirma ng pagbili. Ito ay isang beses na pagbili na walang paulit-ulit na bayarin.",
     reportsLockedTitle: "Handa na para sa Ganap na Kalinawan sa Pera?",
@@ -1814,10 +2536,26 @@ export const fil = {
     },
   },
   transactions: {
+    scrollToTop: "Mag-scroll sa itaas",
     swipeDelete: "Tanggalin",
     swipeDuplicate: "Kopyahin",
     speedDialForm: "Manwal na Entry",
     speedDialChat: "Makipag-chat kay Kai",
+    exportSavedTitle: "Nai-save sa device",
+    exportSavedMessage: "Nai-save ang %{fileName} sa napili mong folder.",
+    exportEmptyTitle: "Walang mai-export",
+    exportEmptyMessage:
+      "Baguhin ang iyong mga filter o magtala muna ng mga transaksyon.",
+    exportFailedTitle: "Nabigo ang pag-export",
+    exportFailedMessage: "Hindi ma-export ang mga transaksyon.",
+    transferFeeTitle: "Bayad sa Paglilipat",
+    transferFeeHelpMessage:
+      "Magbawas ng agarang bayad sa transaksyon (hal. InstaPay, GCash, bank charges).",
+    transferTypeLockedHint: "Hindi maaaring baguhin ang uri ng transfer.",
+    cannotConvertToTransfer:
+      "Hindi maaaring i-convert ang kasalukuyang transaksyon sa isang transfer.",
+    cannotConvertFromTransfer:
+      "Hindi maaaring i-convert ang kasalukuyang transfer sa kita o gastos.",
   },
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",
@@ -1826,45 +2564,60 @@ export const fil = {
     settingsSubtitle: "Isaayos kung paano itatala ang mga transaksyon",
     modeSectionTitle: "PARAAN NG PAGTALA NG TRANSAKSYON",
     modeReviewTitle: "Suriin Muna",
-    modeReviewDesc: "Ihahanda ni Kai ang draft para suriin at kumpirmahin bago i-save.",
+    modeReviewDesc:
+      "Ihahanda ni Kai ang draft para suriin at kumpirmahin bago i-save.",
     modeReviewPill: "I-edit · I-save",
     modeAutoTitle: "Awtomatikong I-save",
-    modeAutoDesc: "Agad na itatala ni Kai ang transaksyon habang nakikipag-chat. Maaaring i-edit o burahin anumang oras.",
+    modeAutoDesc:
+      "Agad na itatala ni Kai ang transaksyon habang nakikipag-chat. Maaaring i-edit o burahin anumang oras.",
     modeAutoPill: "I-edit · Burahin",
     recordedBadge: "Naitala",
     tapToEdit: "I-tap para I-edit",
     deleteButton: "Burahin",
     deleteConfirmTitle: "Burahin ang Transaksyon?",
-    deleteConfirmMessage: "Sigurado ka bang nais mong burahin ang naitalang transaksyong ito?",
+    deleteConfirmMessage:
+      "Sigurado ka bang nais mong burahin ang naitalang transaksyong ito?",
     deletedBadge: "Nabura",
     deletedNotice: "Nabura na ang transaksyon",
     manageKnowledgeLink: "Pamahalaan ang mga Keyword",
-    inputPlaceholder: "hal. Nagastos ng 500 sa tanghalian sa McDonald's mula wallet",
+    inputPlaceholder:
+      "hal. Nagastos ng 500 sa tanghalian sa McDonald's mula wallet",
     sectionTitle: "Mga Keyword (Kaalaman ng Kai Assistant)",
-    bannerCategory: "Ang mga keyword na inilagay dito ay nagtuturo kay Kai na awtomatikong matukoy ang kategoryang ito kapag nagtala ka ng transaksyon sa chat.",
-    bannerAccount: "Ang mga keyword na inilagay dito ay nagtuturo kay Kai na awtomatikong matukoy ang account na ito kapag nagtala ka ng transaksyon sa chat.",
+    bannerCategory:
+      "Ang mga keyword na inilagay dito ay nagtuturo kay Kai na awtomatikong matukoy ang kategoryang ito kapag nagtala ka ng transaksyon sa chat.",
+    bannerAccount:
+      "Ang mga keyword na inilagay dito ay nagtuturo kay Kai na awtomatikong matukoy ang account na ito kapag nagtala ka ng transaksyon sa chat.",
     manageKeywords: "Mga Keyword sa Pagkilala",
-    manageKeywordsSubtitle: "Magtakda ng mga keyword sa mga kategorya para sa wastong pagkilala",
+    manageKeywordsSubtitle:
+      "Magtakda ng mga keyword sa mga kategorya para sa wastong pagkilala",
     manageKeywordsAction: "Pamahalaan ang mga Keyword",
-    addKeywordPlaceholder: "Magdagdag ng keyword (hal., boba, grab, netflix)...",
-    addKeywordPlaceholderCategory: "Magdagdag ng keyword (hal. groceries, kape, grab)...",
-    addKeywordPlaceholderAccount: "Magdagdag ng keyword (hal. payroll, pitaka, bpi)...",
+    addKeywordPlaceholder:
+      "Magdagdag ng keyword (hal., boba, grab, netflix)...",
+    addKeywordPlaceholderCategory:
+      "Magdagdag ng keyword (hal. groceries, kape, grab)...",
+    addKeywordPlaceholderAccount:
+      "Magdagdag ng keyword (hal. payroll, pitaka, bpi)...",
     addKeywordButton: "Idagdag",
     keywordAdded: "Matagumpay na naidagdag ang keyword",
     keywordDeleted: "Natanggal ang keyword",
     keywordDuplicateInList: "Ang keyword na '%{keyword}' ay nasa listahan na",
-    keywordAlreadyExists: "Ang keyword na '%{keyword}' ay nakatakda na sa '%{entity}'",
+    keywordAlreadyExists:
+      "Ang keyword na '%{keyword}' ay nakatakda na sa '%{entity}'",
     resetDefaults: "Ibalik ang Default",
-    resetDefaultsConfirm: "Sigurado ka bang nais mong ibalik ang mga default na keyword?",
+    resetDefaultsConfirm:
+      "Sigurado ka bang nais mong ibalik ang mga default na keyword?",
     noKeywordsYet: "Wala pang naidagdag na mga keyword.",
     filterCategory: "Pumili ng Kategorya",
     knowledgeHubTitle: "Pamahalaan ang Kaalaman ni Kai",
-    knowledgeHubSubtitle: "Turuan si Kai na matukoy ang mga aksyon, kategorya, at mga account",
+    knowledgeHubSubtitle:
+      "Turuan si Kai na matukoy ang mga aksyon, kategorya, at mga account",
     selectorTitle: "Mga Keyword (Kaalaman ni Kai)",
     selectorSubtitle: "%{count} mga keyword",
     selectorSubtitleSingle: "1 keyword",
-    selectorSaveFirstCategory: "I-save muna ang kategorya bago magdagdag ng mga keyword",
-    selectorSaveFirstAccount: "I-save muna ang account bago magdagdag ng mga keyword",
+    selectorSaveFirstCategory:
+      "I-save muna ang kategorya bago magdagdag ng mga keyword",
+    selectorSaveFirstAccount:
+      "I-save muna ang account bago magdagdag ng mga keyword",
     tabActions: "Mga Aksyon",
     tabCategories: "Mga Kategorya",
     tabAccounts: "Mga Account",
@@ -1874,11 +2627,15 @@ export const fil = {
     actionExpense: "Gastos",
     actionIncome: "Kita",
     actionTransfer: "Paglipat",
-    actionExpenseDescription: "Mga salitang nagpapahiwatig ng paggastos o paglabas ng pera",
-    actionIncomeDescription: "Mga salitang nagpapahiwatig ng pagtanggap ng pera o kita",
-    actionTransferDescription: "Mga salitang nagpapahiwatig ng paglilipat ng pera sa pagitan ng mga account",
+    actionExpenseDescription:
+      "Mga salitang nagpapahiwatig ng paggastos o paglabas ng pera",
+    actionIncomeDescription:
+      "Mga salitang nagpapahiwatig ng pagtanggap ng pera o kita",
+    actionTransferDescription:
+      "Mga salitang nagpapahiwatig ng paglilipat ng pera sa pagitan ng mga account",
     searchPlaceholder: "Maghanap...",
-    addActionPlaceholder: "Magdagdag ng salitang aksyon (hal. bumili, bayad, pinadala)...",
+    addActionPlaceholder:
+      "Magdagdag ng salitang aksyon (hal. bumili, bayad, pinadala)...",
     tableHeaderKeyword: "Keyword",
     tableHeaderLanguage: "Wika",
     tableHeaderActions: "Mga Aksyon",
@@ -1898,10 +2655,14 @@ export const fil = {
     changeCategory: "Palitan ang Kategorya",
     changeAccount: "Palitan ang Account",
     changeMerchant: "Palitan ang Merchant",
-    selectCategoryPrompt: "Pumili ng kategorya upang makita at mapamahalaan ang mga keyword nito.",
-    selectAccountPrompt: "Pumili ng account upang makita at mapamahalaan ang mga keyword nito.",
-    selectMerchantPrompt: "Pumili ng merchant upang makita at mapamahalaan ang mga recognition keyword nito.",
-    addKeywordPlaceholderMerchant: "Magdagdag ng alias (hal. mcdo, sbux, 711)...",
+    selectCategoryPrompt:
+      "Pumili ng kategorya upang makita at mapamahalaan ang mga keyword nito.",
+    selectAccountPrompt:
+      "Pumili ng account upang makita at mapamahalaan ang mga keyword nito.",
+    selectMerchantPrompt:
+      "Pumili ng merchant upang makita at mapamahalaan ang mga recognition keyword nito.",
+    addKeywordPlaceholderMerchant:
+      "Magdagdag ng alias (hal. mcdo, sbux, 711)...",
     addMerchantPlaceholder: "Pangalan ng merchant (hal. Starbucks, Shell)...",
     defaultCategory: "Default na Kategorya",
     defaultAccount: "Default na Account",
@@ -1913,27 +2674,36 @@ export const fil = {
     editMerchantTitle: "I-edit ang Merchant",
     addMerchantTitle: "Magdagdag ng Merchant",
     deleteMerchantTitle: "Burahin ang Merchant",
-    deleteMerchantConfirm: "Sigurado ka bang nais mong burahin ang '%{name}' at lahat ng mga recognition keyword nito?",
+    deleteMerchantConfirm:
+      "Sigurado ka bang nais mong burahin ang '%{name}' at lahat ng mga recognition keyword nito?",
     deleteMerchantKeywordTitle: "Burahin ang Keyword",
-    deleteMerchantKeywordConfirm: "Sigurado ka bang nais mong burahin ang keyword na ito?",
+    deleteMerchantKeywordConfirm:
+      "Sigurado ka bang nais mong burahin ang keyword na ito?",
     deleteKeywordTitle: "Burahin ang Keyword",
-    deleteKeywordConfirm: "Sigurado ka bang nais mong burahin ang '%{keyword}'?",
+    deleteKeywordConfirm:
+      "Sigurado ka bang nais mong burahin ang '%{keyword}'?",
     deleteBtn: "Burahin",
-    noKeywordsMatching: "Walang nahanap na keyword para sa \"%{query}\"",
+    noKeywordsMatching: 'Walang nahanap na keyword para sa "%{query}"',
     helpModalTitle: "Tungkol sa Kaalaman ni Kai",
     helpModalSubtitle: "Kung paano kinikilala ni Kai ang iyong mga mensahe",
     helpActionsTitle: "Mga Keyword ng Aksyon",
-    helpActionsDesc: "Ituro kay Kai kung anong mga salita ang gastusin (Expense), kita (Income), o paglipat ng pera sa pagitan ng mga account (Transfer).",
+    helpActionsDesc:
+      "Ituro kay Kai kung anong mga salita ang gastusin (Expense), kita (Income), o paglipat ng pera sa pagitan ng mga account (Transfer).",
     helpCategoriesTitle: "Pagkilala sa Kategorya",
-    helpCategoriesDesc: "Magdagdag ng mga keyword para sa mga app, tindahan, serbisyo, o brand (hal. Netflix, Grab, Starbucks). Kapag binanggit mo ang mga ito sa chat, awtomatikong pipiliin ni Kai ang tamang kategorya.",
+    helpCategoriesDesc:
+      "Magdagdag ng mga keyword para sa mga app, tindahan, serbisyo, o brand (hal. Netflix, Grab, Starbucks). Kapag binanggit mo ang mga ito sa chat, awtomatikong pipiliin ni Kai ang tamang kategorya.",
     helpAccountsTitle: "Pagkilala sa Account",
-    helpAccountsDesc: "Awtomatikong tinutukoy ni Kai ang Pangalan ng iyong Account bilang default (hal. 'gamit ang BDO' o 'mula GCash'). Kailangan lamang magdagdag ng mga keyword para sa mga palayaw o shortcut (hal. 'wallet' para sa 'Cash Wallet', o 'payroll' para sa 'BPI Savings').",
+    helpAccountsDesc:
+      "Awtomatikong tinutukoy ni Kai ang Pangalan ng iyong Account bilang default (hal. 'gamit ang BDO' o 'mula GCash'). Kailangan lamang magdagdag ng mga keyword para sa mga palayaw o shortcut (hal. 'wallet' para sa 'Cash Wallet', o 'payroll' para sa 'BPI Savings').",
     helpMerchantsTitle: "Pagkilala sa Merchant at mga Default",
-    helpMerchantsDesc: "Magdagdag ng mga tindahan, restaurant, o bayarin. Kinikilala ni Kai ang kanilang pangalan at mga alias, at awtomatikong pupunan ang default na kategorya at account kung hindi mo ito tinukoy sa chat.",
+    helpMerchantsDesc:
+      "Magdagdag ng mga tindahan, restaurant, o bayarin. Kinikilala ni Kai ang kanilang pangalan at mga alias, at awtomatikong pupunan ang default na kategorya at account kung hindi mo ito tinukoy sa chat.",
     helpLanguagesTitle: "Suporta sa Iba't Ibang Wika",
-    helpLanguagesDesc: "Naiintindihan ni Kai ang natural na pakikipag-chat sa Ingles, Filipino, at Espanyol. Mag-chat nang natural tulad ng 'nagastos ng 200 sa tanghalian mula bdo' o 'nagbayad ng 500 gamit gcash'.",
+    helpLanguagesDesc:
+      "Naiintindihan ni Kai ang natural na pakikipag-chat sa Ingles, Filipino, at Espanyol. Mag-chat nang natural tulad ng 'nagastos ng 200 sa tanghalian mula bdo' o 'nagbayad ng 500 gamit gcash'.",
     helpClose: "Naintindihan",
-    unknownAccountError: "Hindi ko mahanap ang account na tumutugma sa '%{account}'. Pakitingnan ang pangalan ng iyong account o idagdag ito sa Kaalaman ni Kai.",
+    unknownAccountError:
+      "Hindi ko mahanap ang account na tumutugma sa '%{account}'. Pakitingnan ang pangalan ng iyong account o idagdag ito sa Kaalaman ni Kai.",
     pickerSelectCategory: "Pumili ng Kategorya",
     pickerSelectAccount: "Pumili ng Account",
     pickerSelectMerchant: "Pumili ng Merchant",
@@ -1947,15 +2717,18 @@ export const fil = {
     selectCategory: "Pumili ng Kategorya:",
     browseAll: "I-browse Lahat",
     chooseCorrectAmount: "Piliin ang tamang halaga:",
-    alwaysCategorizeAs: "Palagiang i-tag ang '%{keyword}' bilang '%{category}'?",
+    alwaysCategorizeAs:
+      "Palagiang i-tag ang '%{keyword}' bilang '%{category}'?",
     yesAlways: "Oo, Palagi",
     justThisTime: "Ngayon lang",
   },
   widgetGallery: {
     title: "Mga Widget sa Home Screen",
     introTitle: "Idagdag ang Kaizen sa iyong home screen",
-    introSubtitle: "I-tap ang Idagdag sa kahit anong widget at kumpirmahin. Maaari mo itong ilipat o baguhin ang laki pagkatapos.",
-    unsupportedPlatform: "Sa ngayon, sa Android lang available ang mga widget sa home screen.",
+    introSubtitle:
+      "I-tap ang Idagdag sa kahit anong widget at kumpirmahin. Maaari mo itong ilipat o baguhin ang laki pagkatapos.",
+    unsupportedPlatform:
+      "Sa ngayon, sa Android lang available ang mga widget sa home screen.",
     quickActionsSection: "Mabilis na Aksyon",
     insightsSection: "Buod ng Pera",
     addButton: "Idagdag",
@@ -1963,27 +2736,33 @@ export const fil = {
     unlockButton: "I-unlock",
     addedBadge: "Nasa home screen",
     addAccessibility: "Idagdag ang %{widget} widget sa home screen",
-    proFeatureDescription: "Mag-upgrade sa Pro para makita ang iyong cashflow, net worth, at budget mismo sa home screen.",
+    proFeatureDescription:
+      "Mag-upgrade sa Pro para makita ang iyong cashflow, net worth, at budget mismo sa home screen.",
     manualHelpLink: "Hindi maidagdag? Idagdag nang mano-mano",
     manualStepsTitle: "Magdagdag ng widget nang mano-mano",
-    manualStepsMessage: "1. Pumunta sa home screen at pindutin nang matagal ang bakanteng bahagi.\n2. I-tap ang Widgets.\n3. Hanapin ang Kaizen Finance.\n4. Pindutin nang matagal ang widget at i-drag sa gusto mong puwesto.",
+    manualStepsMessage:
+      "1. Pumunta sa home screen at pindutin nang matagal ang bakanteng bahagi.\n2. I-tap ang Widgets.\n3. Hanapin ang Kaizen Finance.\n4. Pindutin nang matagal ang widget at i-drag sa gusto mong puwesto.",
     manualStepsClose: "Naintindihan",
     quickExpenseTitle: "Mabilis na Gastos",
     quickExpenseDescription: "Magtala ng gastos sa isang tap.",
     quickIncomeTitle: "Mabilis na Kita",
     quickIncomeDescription: "Magtala ng kita sa isang tap.",
     quickTransferTitle: "Mabilis na Paglipat",
-    quickTransferDescription: "Maglipat ng pera sa pagitan ng mga account sa isang tap.",
+    quickTransferDescription:
+      "Maglipat ng pera sa pagitan ng mga account sa isang tap.",
     dualActionTitle: "Gastos at Kita",
     dualActionDescription: "Dalawang button para magtala ng gastos at kita.",
     tripleActionTitle: "Gastos, Kita at Paglipat",
     tripleActionDescription: "Isang bar para sa tatlong uri ng transaksyon.",
     monthlyCashflowTitle: "Buwanang Cashflow",
-    monthlyCashflowDescription: "Tingnan agad ang kita, gastos, at ipon ngayong buwan.",
+    monthlyCashflowDescription:
+      "Tingnan agad ang kita, gastos, at ipon ngayong buwan.",
     netWorthTitle: "Sulyap sa Net Worth",
-    netWorthDescription: "Subaybayan ang kabuuang net worth, ari-arian, at utang.",
+    netWorthDescription:
+      "Subaybayan ang kabuuang net worth, ari-arian, at utang.",
     monthlyBudgetTitle: "Progreso ng Buwanang Budget",
-    monthlyBudgetDescription: "Alamin kung magkano pa ang natitira sa budget ngayong buwan.",
+    monthlyBudgetDescription:
+      "Alamin kung magkano pa ang natitira sa budget ngayong buwan.",
   },
   appUpdates: {
     updateDownloadedTitle: "Handa nang i-install ang update",
@@ -1991,5 +2770,18 @@ export const fil = {
       "Matagumpay na na-download ang bagong bersyon ng Kaizen. I-restart ngayon upang makumpleto ang update.",
     restartToApply: "I-restart",
     later: "Mamaya",
+  },
+  netWorthInspect: {
+    title: "Kasaysayan ng Net Worth",
+    growthTitle: "Paglago ng Net Worth",
+    tapToInspect: "Pindutin ang tsart para suriin",
+    inspectHint: "Pindutin o i-drag sa mga buwan para makita ang mga detalye",
+    latestRecord: "Pinakabagong Tala",
+    vsPrevious: "kumpara sa nakaraang buwan",
+    noPriorData: "Unang tala",
+    netWorth: "Kabuuang Net Worth",
+    assets: "Kabuuang Ari-arian",
+    liabilities: "Kabuuang Utang",
+    noData: "Walang available na kasaysayan",
   },
 } satisfies TranslationCatalogShape<TranslationCatalog>;

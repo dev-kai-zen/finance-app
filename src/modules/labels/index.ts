@@ -34,3 +34,5 @@ export type {
   UpdateLabelInput,
   LabelBadgeItem,
 } from "./types/label.types";
+
+export { resolveImportLabels } from "./services/resolve-import-labels.service";

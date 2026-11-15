@@ -1,34 +1,40 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ArrowRight } from "lucide-react-native";
 
-import { IconHelper } from "@/components";
+import { HorizontalScrollView, IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { usePrivacyMode } from "@/modules/settings";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { AccountWithBalance } from "../types/dashboard.types";
 
 export interface DashboardAccountsCardProps {
   accounts: AccountWithBalance[];
   onViewAll: () => void;
+  onPressAccount?: (accountId: string) => void;
 }
 
 export function DashboardAccountsCard({
   accounts,
   onViewAll,
+  onPressAccount,
 }: DashboardAccountsCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const resolveEntityColor = useResolveEntityColor();
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
+  const cardRef = useWalkthroughTarget("accountsCard");
 
   const activeAccounts = accounts.filter((a) => !a.isArchived);
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>{t("dashboard.accountsCardTitle")}</Text>
         <Pressable
@@ -47,11 +53,7 @@ export function DashboardAccountsCard({
       {activeAccounts.length === 0 ? (
         <Text style={styles.emptyText}>{t("dashboard.noAccountsYet")}</Text>
       ) : (
-        <ScrollView
-          contentContainerStyle={styles.strip}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
+        <HorizontalScrollView contentContainerStyle={styles.strip}>
           {activeAccounts.map((acc) => {
             const color = resolveEntityColor(
               acc.accountType?.color ?? acc.accountType?.hexColorsId,
@@ -65,7 +67,17 @@ export function DashboardAccountsCard({
               <Pressable
                 key={acc.id}
                 accessibilityRole="button"
-                onPress={onViewAll}
+                accessibilityLabel={
+                  isPrivate
+                    ? `${acc.name}, ${acc.accountType?.name ?? ""}`
+                    : `${acc.name}, ${acc.accountType?.name ?? ""}, ${formatCurrency(
+                        acc.currentBalanceMinorUnits,
+                        acc.currencyCode,
+                      )}`
+                }
+                onPress={() =>
+                  onPressAccount ? onPressAccount(acc.id) : onViewAll()
+                }
                 style={({ pressed }) => [
                   styles.accountPill,
                   pressed && styles.pressed,
@@ -98,19 +110,22 @@ export function DashboardAccountsCard({
                   numberOfLines={1}
                   style={[
                     styles.accountBalance,
-                    preferences.colorAmounts &&
+                    !isPrivate &&
+                      preferences.colorAmounts &&
                       (isPositive ? styles.positiveText : styles.negativeText),
                   ]}
                 >
-                  {formatCurrency(
-                    acc.currentBalanceMinorUnits,
-                    acc.currencyCode,
-                  )}
+                  {isPrivate
+                    ? "••••••"
+                    : formatCurrency(
+                        acc.currentBalanceMinorUnits,
+                        acc.currencyCode,
+                      )}
                 </Text>
               </Pressable>
             );
           })}
-        </ScrollView>
+        </HorizontalScrollView>
       )}
     </View>
   );
@@ -158,7 +173,7 @@ function createStyles(theme: AppTheme) {
     },
     strip: {
       gap: theme.spacing.sm,
-      paddingTop: 2,
+      paddingVertical: 2,
     },
     accountPill: {
       backgroundColor: theme.colors.background,

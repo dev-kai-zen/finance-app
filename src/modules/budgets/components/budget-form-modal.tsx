@@ -13,6 +13,7 @@ import {
   AmountCalculatorModal,
   FullScreenFormModal,
   HelpIconButton,
+  HorizontalScrollView,
   IconHelper,
   InfoModal,
   NotificationModal,
@@ -27,7 +28,6 @@ import { ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   BudgetFormWalkthroughOverlay,
-  DraggableTourChip,
   useBudgetFormWalkthrough,
   WalkthroughIntroModal,
   useWalkthroughIntro,
@@ -84,7 +84,7 @@ export function BudgetFormModal(props: BudgetFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <BudgetFormModalContent {...props} />
+      <BudgetFormModalContent key={props.initialBudget?.id ?? "new-budget"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -107,16 +107,35 @@ function BudgetFormModalContent({
   const { isPro, guardAction, paywallVisible, closePaywall, guardMeta } =
     useProGuard();
 
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [isEnabled, setIsEnabled] = useState<boolean>(true);
-  const [amountMinorUnits, setAmountCents] = useState<number>(0);
-  const [frequency, setFrequency] = useState<BudgetFrequency>("monthly");
-  const [allowRollover, setAllowRollover] = useState<boolean>(false);
-  const [rolloverMode, setRolloverMode] =
-    useState<BudgetRolloverMode>("positive_only");
-  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(false);
-  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(
-    [],
+  const [categoryId, setCategoryId] = useState<string>(
+    () => initialBudget?.categoryId ?? "",
+  );
+  const [isEnabled, setIsEnabled] = useState<boolean>(
+    () => initialBudget?.isEnabled ?? true,
+  );
+  const [amountMinorUnits, setAmountCents] = useState<number>(
+    () => initialBudget?.amountMinorUnits ?? 0,
+  );
+  const [frequency, setFrequency] = useState<BudgetFrequency>(
+    () => initialBudget?.frequency ?? "monthly",
+  );
+  const [allowRollover, setAllowRollover] = useState<boolean>(
+    () => initialBudget?.allowRollover ?? false,
+  );
+  const [rolloverMode, setRolloverMode] = useState<BudgetRolloverMode>(
+    () => initialBudget?.rolloverMode ?? "positive_only",
+  );
+  const [notifyOnExceeded, setNotifyOnExceeded] = useState<boolean>(
+    () => initialBudget?.notifyOnExceeded ?? false,
+  );
+  const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetInput[]>(() =>
+    initialBudget?.monthlyTargets && initialBudget.monthlyTargets.length > 0
+      ? initialBudget.monthlyTargets.map((t) => ({
+          year: t.year,
+          month: t.month,
+          amountMinorUnits: t.amountMinorUnits,
+        }))
+      : [],
   );
   const [infoModal, setInfoModal] = useState<{
     title: string;
@@ -461,11 +480,9 @@ function BudgetFormModalContent({
               <WalkthroughTarget id="budgetFormFrequency">
                 <View style={styles.section}>
                   <Text style={styles.fieldLabel}>FREQUENCY</Text>
-                  <ScrollView
+                  <HorizontalScrollView
                     ref={frequencyScrollRef}
                     contentContainerStyle={styles.frequencyRow}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
                   >
                     {frequencyOptions.map((opt) => {
                       const isSelected = frequency === opt.key;
@@ -490,7 +507,7 @@ function BudgetFormModalContent({
                         </Pressable>
                       );
                     })}
-                  </ScrollView>
+                  </HorizontalScrollView>
                   <Text style={styles.frequencyHelpText}>
                     {FREQUENCY_DESCRIPTIONS[frequency]}
                   </Text>
@@ -621,6 +638,17 @@ function BudgetFormModalContent({
               </WalkthroughTarget>
           </View>
         </ScrollView>
+
+        <BudgetFormWalkthroughOverlay
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
       </FullScreenFormModal>
 
       {/* Category Picker Submodal */}
@@ -667,22 +695,6 @@ function BudgetFormModalContent({
         onClose={() => setInfoModal(null)}
         title={infoModal?.title ?? ""}
         visible={infoModal !== null}
-      />
-
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
-      />
-
-      <BudgetFormWalkthroughOverlay
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
-        step={walkthrough.currentStep}
-        stepIndex={walkthrough.activeStepIndex}
-        targetLayout={walkthrough.activeTargetLayout}
-        totalSteps={walkthrough.totalSteps}
-        visible={walkthrough.isWalkthroughActive}
       />
 
       <WalkthroughIntroModal
@@ -813,6 +825,7 @@ function createStyles(theme: AppTheme) {
       fontSize: 13,
       fontWeight: "600",
       marginBottom: theme.spacing.xs,
+      textAlign: "center",
     },
     segmentedRow: {
       backgroundColor: theme.colors.background,
@@ -827,6 +840,8 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       borderRadius: theme.borderRadius.small,
       flex: 1,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.xs,
       paddingVertical: 8,
     },
     segmentButtonActive: {
@@ -836,6 +851,7 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textSecondary,
       fontSize: 11,
       fontWeight: "600",
+      textAlign: "center",
     },
     segmentButtonTextActive: {
       color: theme.colors.onPrimary,

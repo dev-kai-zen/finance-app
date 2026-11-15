@@ -26,6 +26,10 @@ const {
   getAccountGroupSetupWalkthroughSteps,
 } = require("../accounts/account-group-setup-walkthrough-steps.ts");
 const { ACCOUNT_TYPE_FORM_WALKTHROUGH_STEPS } = require("../accounts/account-type-form-walkthrough-steps.ts");
+const {
+  getPocketFormWalkthroughSteps,
+  POCKET_FORM_WALKTHROUGH_STEPS,
+} = require("../accounts/pocket-form-walkthrough-steps.ts");
 const { en } = require("../../../infrastructure/localization/translations/en.ts");
 const { es } = require("../../../infrastructure/localization/translations/es.ts");
 const { fil } = require("../../../infrastructure/localization/translations/fil.ts");
@@ -148,4 +152,21 @@ test("account forms walkthrough: intro translations exist in en, es, and fil", (
     assert.ok(dict.accountTypeFormWalkthrough.introMessage);
   });
 });
+
+test("pocket form walkthrough: dynamically provides steps based on editing state", () => {
+  const newPocketSteps = getPocketFormWalkthroughSteps({ isEditing: false });
+  assert.equal(newPocketSteps.length, 2);
+  assert.deepEqual(
+    newPocketSteps.map((s) => s.targetId),
+    ["pocketFormName", "pocketFormSave"],
+  );
+
+  const editPocketSteps = getPocketFormWalkthroughSteps({ isEditing: true });
+  assert.equal(editPocketSteps.length, 4);
+  assert.deepEqual(
+    editPocketSteps.map((s) => s.targetId),
+    ["pocketFormName", "pocketFormDefaultExpense", "pocketFormDefaultIncome", "pocketFormSave"],
+  );
+});
+
 

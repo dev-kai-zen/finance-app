@@ -1,5 +1,12 @@
 import { CircleHelp } from "lucide-react-native";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 
@@ -7,12 +14,18 @@ export interface HelpIconButtonProps {
   accessibilityHint?: string;
   accessibilityLabel: string;
   onPress: () => void;
+  color?: string;
+  size?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function HelpIconButton({
   accessibilityHint,
   accessibilityLabel,
   onPress,
+  color,
+  size = 18,
+  style,
 }: HelpIconButtonProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createHelpIconStyles);
@@ -26,10 +39,11 @@ export function HelpIconButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.helpIconButton,
+        style,
         pressed && styles.helpIconButtonPressed,
       ]}
     >
-      <CircleHelp color={theme.colors.textSecondary} size={18} />
+      <CircleHelp color={color ?? theme.colors.textSecondary} size={size} />
     </Pressable>
   );
 }

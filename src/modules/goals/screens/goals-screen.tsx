@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -14,14 +14,16 @@ import {
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
+  PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AdBanner } from "@/modules/ads";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import {
-  DraggableTourChip,
   GoalCongratulationsModal,
   GoalsWalkthroughOverlay,
   WalkthroughIntroModal,
@@ -141,6 +143,16 @@ function GoalsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "goalsWalkthroughDismissed",
     onStart: walkthrough.startWalkthrough,
@@ -240,29 +252,24 @@ function GoalsScreenContent({
   }));
 
   return (
-    <PageContainer
-      scrollRef={scrollRef}
-      scrollContentRef={scrollContentRef}
-      refreshing={isPullRefreshing}
-      onRefresh={handlePullRefresh}
-      contentContainerStyle={contentSpacing}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
+        refreshing={isPullRefreshing}
+        onRefresh={handlePullRefresh}
+        contentContainerStyle={contentSpacing}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
           <FloatingActionButton
             accessibilityLabel="Add New Goal"
             fabRef={fabRef}
             onPress={handleOpenCreate}
           />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
-    >
+        }
+      >
       {/* Summary Metrics */}
       <GoalSummaryHeader
         summary={summary}
@@ -326,59 +333,72 @@ function GoalsScreenContent({
 
       {/* Main Content Area */}
       {loading && goals.length === 0 ? (
-        <View style={styles.centered}>
-          <ActivityIndicator color={theme.colors.primary} size="large" />
-        </View>
+        <PageLoadingState message="Loading goals..." variant="cards" />
       ) : filteredGoals.length === 0 ? (
-        <View style={styles.emptyStateContainer}>
-          <View style={styles.emptyIconCircle}>
-            <Target color={theme.colors.primary} size={36} />
+        <View>
+          <View style={styles.emptyStateContainer}>
+            <View style={styles.emptyIconCircle}>
+              <Target color={theme.colors.primary} size={36} />
+            </View>
+            <Text style={styles.emptyTitle}>
+              {filter === "completed"
+                ? "No completed goals yet"
+                : filter === "in_progress"
+                  ? "No active goals in progress"
+                  : "No savings goals created"}
+            </Text>
+            <Text style={styles.emptySubtitle}>
+              {filter === "all"
+                ? "Create your first goal, link it to an account, and monitor your savings journey with live balances and deadlines using the + button."
+                : "Adjust your filter or create a new goal to track your progress."}
+            </Text>
+            <View style={styles.emptyCtaWrap}>
+              <AppButton
+                label={"+ Create First Goal"}
+                onPress={handleOpenCreate}
+              />
+            </View>
           </View>
-          <Text style={styles.emptyTitle}>
-            {filter === "completed"
-              ? "No completed goals yet"
-              : filter === "in_progress"
-                ? "No active goals in progress"
-                : "No savings goals created"}
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            {filter === "all"
-              ? "Create your first goal, link it to an account, and monitor your savings journey with live balances and deadlines using the + button."
-              : "Adjust your filter or create a new goal to track your progress."}
-          </Text>
-          <View style={styles.emptyCtaWrap}>
-            <AppButton
-              label={"+ Create First Goal"}
-              onPress={handleOpenCreate}
-            />
-          </View>
+          <AdBanner
+            placement="goals"
+            variant="card"
+            style={{ marginTop: theme.spacing.md }}
+          />
         </View>
       ) : (
         <View style={styles.goalsList}>
           {filteredGoals.map((goal, index) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              markCompleteRef={index === 0 ? markCompleteRef : undefined}
-              onDelete={() => setGoalToDelete(goal)}
-              onAddFunds={() => {
-                const linkedAccountId =
-                  goal.linkedAccounts?.[0]?.id ??
-                  goal.linkedPockets?.[0]?.accountId;
-                router.push(
-                  `/transactions?action=new&type=income${
-                    linkedAccountId
-                      ? `&accountId=${encodeURIComponent(linkedAccountId)}`
-                      : ""
-                  }` as any,
-                );
-              }}
-              onEdit={() => handleOpenEdit(goal)}
-              onPress={() => handleOpenEdit(goal)}
-              onToggleStatus={(newStatus: GoalStatus) =>
-                toggleStatus(goal.id, newStatus)
-              }
-            />
+            <View key={goal.id}>
+              <GoalCard
+                goal={goal}
+                markCompleteRef={index === 0 ? markCompleteRef : undefined}
+                onDelete={() => setGoalToDelete(goal)}
+                onAddFunds={() => {
+                  const linkedAccountId =
+                    goal.linkedAccounts?.[0]?.id ??
+                    goal.linkedPockets?.[0]?.accountId;
+                  router.push(
+                    `/transactions?action=new&type=income${
+                      linkedAccountId
+                        ? `&accountId=${encodeURIComponent(linkedAccountId)}`
+                        : ""
+                    }` as any,
+                  );
+                }}
+                onEdit={() => handleOpenEdit(goal)}
+                onPress={() => handleOpenEdit(goal)}
+                onToggleStatus={(newStatus: GoalStatus) =>
+                  toggleStatus(goal.id, newStatus)
+                }
+              />
+              {index === 0 ? (
+                <AdBanner
+                  placement="goals"
+                  variant="card"
+                  style={{ marginVertical: theme.spacing.sm }}
+                />
+              ) : null}
+            </View>
           ))}
         </View>
       )}
@@ -443,12 +463,29 @@ function GoalsScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     filterTabsRow: {
       flexDirection: "row",
       gap: theme.spacing.sm,

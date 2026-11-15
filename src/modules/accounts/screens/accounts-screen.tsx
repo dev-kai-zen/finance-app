@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, DeviceEventEmitter, ScrollView, View } from "react-native";
-import { usePathname, useRouter } from "expo-router";
+import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View } from "react-native";
+import { useIsFocused, useRouter } from "expo-router";
 import { FloatingActionButton } from "@/components/floating-action-button";
-import { PageContainer } from "@/components/page-container";
+import { PageContainer, PageLoadingState } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
+import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -14,7 +15,6 @@ import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
-  DraggableTourChip,
   WalkthroughIntroModal,
   AccountsWalkthroughOverlay,
   useAccountsWalkthrough,
@@ -24,6 +24,7 @@ import {
 } from "@/modules/walkthrough";
 import { AccountFormModal } from "@/modules/accounts/components/account-form-modal";
 import { AccountGroupSection } from "@/modules/accounts/components/account-group-section";
+import { AccountGroupsViewChip } from "@/modules/accounts/components/account-groups-view-chip";
 import { AccountRow } from "@/modules/accounts/components/account-row";
 import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
 import { AccountTypeManager } from "@/modules/accounts/components/account-type-manager";
@@ -42,12 +43,14 @@ import {
 } from "@/modules/accounts/components/account-ui";
 import { useAccountMutations } from "@/modules/accounts/hooks/use-account-mutations";
 import { useAccounts } from "@/modules/accounts/hooks/use-accounts";
+import { useAccountsGroupViewMode } from "@/modules/accounts/hooks/use-accounts-group-view-mode";
 import { useFundGroups } from "@/modules/accounts/hooks/use-fund-groups";
 import type {
   AccountListItem,
   AccountType,
   PocketListItem,
 } from "@/modules/accounts/types/account.types";
+import type { AccountsGroupViewMode } from "@/modules/settings";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { AdBanner } from "@/modules/ads";
 
@@ -86,8 +89,7 @@ function AccountsScreenContent({
   const s = useThemeStyles(accountStyles);
   const data = useAccounts();
 
-  const pathname = usePathname();
-  const isScreenActive = pathname.startsWith("/accounts");
+  const isScreenActive = useIsFocused();
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
@@ -121,6 +123,38 @@ function AccountsScreenContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPocketAccountIds, setExpandedPocketAccountIds] = useState<Set<string>>(
     () => new Set(),
+  );
+
+  const { viewMode, setViewMode } = useAccountsGroupViewMode();
+  const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
+
+  const handleToggleGlobalViewMode = useCallback(
+    (nextMode: AccountsGroupViewMode) => {
+      setGroupOverrides({});
+      setViewMode(nextMode);
+    },
+    [setViewMode],
+  );
+
+  const isGroupCollapsed = useCallback(
+    (groupId: string) => {
+      if (groupId in groupOverrides) {
+        return groupOverrides[groupId];
+      }
+      return viewMode === "collapsed";
+    },
+    [groupOverrides, viewMode],
+  );
+
+  const handleToggleGroupCollapse = useCallback(
+    (groupId: string) => {
+      setGroupOverrides((prev) => {
+        const currentlyCollapsed =
+          groupId in prev ? prev[groupId] : viewMode === "collapsed";
+        return { ...prev, [groupId]: !currentlyCollapsed };
+      });
+    },
+    [viewMode],
   );
 
   const scrollRef = useRef<ScrollView>(null);
@@ -173,6 +207,16 @@ function AccountsScreenContent({
   const walkthrough = useAccountsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "accountsWalkthroughDismissed",
@@ -367,21 +411,13 @@ function AccountsScreenContent({
     open({ kind: "pocket-form", accountId: account.id });
   };
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
-  const managementActions = useThemeStyles((theme) => ({
-    flexDirection: "row" as const,
-    flexWrap: "wrap" as const,
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  }));
-  const searchSpacing = useThemeStyles((theme) => ({
-    marginBottom: theme.spacing.lg,
-  }));
+  const { contentSpacing, managementActions, searchSpacing } = useThemeStyles(
+    createAccountsLayoutStyles,
+  );
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      <PageContainer
       contentContainerStyle={contentSpacing}
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
@@ -391,22 +427,16 @@ function AccountsScreenContent({
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
       floatingAction={
-        <>
-          <FloatingActionButton
-            accessibilityLabel="Open accounts menu"
-            fabRef={fabRef}
-            onPress={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              setFabSheetOpen(true);
-            }}
-          />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
+        <FloatingActionButton
+          accessibilityLabel="Open accounts menu"
+          fabRef={fabRef}
+          onPress={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            setFabSheetOpen(true);
+          }}
+        />
       }
     >
       <AccountError message={data.error} />
@@ -415,12 +445,7 @@ function AccountsScreenContent({
       ) : null}
 
       {data.loading ? (
-        <ActivityIndicator
-          accessibilityLabel="Loading accounts"
-          color={theme.colors.primary}
-          size="large"
-          style={{ marginVertical: 32 }}
-        />
+        <PageLoadingState message="Loading accounts" variant="cards" />
       ) : (
         <>
           <View style={managementActions}>
@@ -444,6 +469,11 @@ function AccountsScreenContent({
             onChangeText={setSearchQuery}
           />
 
+          <AccountGroupsViewChip
+            viewMode={viewMode}
+            onToggle={handleToggleGlobalViewMode}
+          />
+
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
               {filteredActive.some(
@@ -456,6 +486,8 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
+                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({
@@ -487,6 +519,8 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
+                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
                     open({
@@ -700,5 +734,39 @@ function AccountsScreenContent({
         }}
       />
     </PageContainer>
-  );
-}
+
+        {walkthroughIntro.isWaitingForIntro ? (
+          <View
+            pointerEvents="auto"
+            style={styles.interactionBlocker}
+          />
+        ) : null}
+      </View>
+    );
+  }
+
+const createAccountsLayoutStyles = (theme: { spacing: { lg: number; md: number; sm: number } }) => ({
+  contentSpacing: {
+    paddingTop: theme.spacing.lg,
+  },
+  managementActions: {
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  searchSpacing: {
+    marginBottom: theme.spacing.sm,
+  },
+});
+
+const styles = StyleSheet.create({
+  screenWrapper: {
+    flex: 1,
+  },
+  interactionBlocker: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "transparent",
+    zIndex: 99999,
+  },
+});

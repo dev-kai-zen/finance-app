@@ -1,10 +1,13 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 
 import { IconHelper } from "@/components/icon-helper";
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { db } from "@/infrastructure/database/client";
@@ -29,18 +32,36 @@ const MORE_FEATURE_ROWS: Array<{
   { key: "notes", labelKey: "settings.navNotes", icon: "notebook-pen" },
 ];
 
-export function MoreFeaturesModal({
-  visible,
-  onClose,
-}: {
+export interface MoreFeaturesModalProps {
   visible: boolean;
   onClose: () => void;
-}) {
+}
+
+export function MoreFeaturesModal(props: MoreFeaturesModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <MoreFeaturesModalContent {...props} />;
+}
+
+function MoreFeaturesModalContent({
+  visible,
+  onClose,
+}: MoreFeaturesModalProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const experience = useExperiencePreferences();
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
+
+  const handleToggle = useCallback(
+    (key: NavVisibilityKey, nextValue: boolean) => {
+      experience.setNavVisible(key, nextValue);
+    },
+    [experience],
+  );
 
   const handleResetSimpleMenu = () => {
     applyGuidedWorkspaceSimpleDefaults(db);
@@ -59,44 +80,66 @@ export function MoreFeaturesModal({
               </Text>
               <Text style={styles.subtitle}>{t("navigation.moreFeaturesDescription")}</Text>
             </View>
-            <Pressable accessibilityLabel={t("common.close")} onPress={onClose} style={styles.closeBtn}>
-              <X color={theme.colors.textSecondary} size={22} />
+            <Pressable
+              accessibilityLabel={t("common.close")}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <X color={theme.colors.textSecondary} size={18} />
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-            {MORE_FEATURE_ROWS.map((row) => {
-              const isVisible = experience.navVisibility[row.key];
-              return (
-                <View key={row.key} style={styles.row}>
-                  <Pressable
-                    accessibilityLabel={t(row.labelKey as never)}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: isVisible }}
-                    onPress={() => experience.setNavVisible(row.key, !isVisible)}
-                    style={styles.rowContent}
-                  >
-                    <View style={styles.iconContainer}>
-                      <IconHelper
-                        color={
-                          isVisible
-                            ? theme.colors.primary
-                            : theme.colors.textSecondary
-                        }
-                        name={row.icon}
-                        size={20}
-                      />
-                    </View>
-                    <Text style={styles.rowLabel}>{t(row.labelKey as never)}</Text>
-                  </Pressable>
-                  <ThemedSwitch
-                    accessibilityLabel={t(row.labelKey as never)}
-                    onValueChange={(value) => experience.setNavVisible(row.key, value)}
-                    value={isVisible}
-                  />
-                </View>
-              );
-            })}
-          </ScrollView>
+          <View style={styles.scrollWrapper}>
+            <ScrollView
+              ref={scrollRef}
+              contentContainerStyle={styles.list}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              {...scrollProps}
+            >
+              {MORE_FEATURE_ROWS.map((row) => {
+                const isVisible = experience.navVisibility[row.key];
+                return (
+                  <View key={row.key} style={styles.row}>
+                    <Pressable
+                      accessibilityLabel={t(row.labelKey as never)}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isVisible }}
+                      onPress={() => handleToggle(row.key, !isVisible)}
+                      style={styles.rowContent}
+                    >
+                      <View style={styles.iconContainer}>
+                        <IconHelper
+                          color={
+                            isVisible
+                              ? theme.colors.primary
+                              : theme.colors.textSecondary
+                          }
+                          name={row.icon}
+                          size={20}
+                        />
+                      </View>
+                      <Text style={styles.rowLabel}>{t(row.labelKey as never)}</Text>
+                    </Pressable>
+                    <ThemedSwitch
+                      accessibilityLabel={t(row.labelKey as never)}
+                      onValueChange={(value) => handleToggle(row.key, value)}
+                      value={isVisible}
+                    />
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <ScrollDownIndicator
+              visible={canScrollDown}
+              onPress={scrollToNext}
+              bottomOffset={4}
+            />
+          </View>
           {isGuidedWorkspace() ? (
             <Pressable
               accessibilityRole="button"
@@ -141,7 +184,18 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
-    closeBtn: { padding: theme.spacing.xs },
+    closeBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.round,
+      height: 36,
+      justifyContent: "center",
+      width: 36,
+    },
+    scrollWrapper: {
+      flexShrink: 1,
+      position: "relative",
+    },
     list: { gap: theme.spacing.xs, paddingBottom: theme.spacing.md },
     row: {
       alignItems: "center",

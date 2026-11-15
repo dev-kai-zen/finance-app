@@ -63,6 +63,11 @@ export function updateTransactionInContext(
   }
     const existing = findTransactionById(id, context);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
+    if (existing.type === "transfer" || existing.transactionGroupId) {
+      throw new Error(
+        "Transfers cannot be updated with updateTransaction. Use updateTransfer.",
+      );
+    }
     const account = requireAccount(input.accountId, context);
     const typedAbsForInstallment =
       input.typedAmountMinorUnitsAbs ?? Math.abs(input.amountMinorUnits);

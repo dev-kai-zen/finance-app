@@ -8,14 +8,12 @@ import {
   View,
 } from "react-native";
 import {
-  CheckCircle2,
   ChevronRight,
   Cloud,
   CloudDownload,
   CloudUpload,
   Crown,
   FolderOpen,
-  LogOut,
   ShieldAlert,
   Zap,
 } from "lucide-react-native";
@@ -23,10 +21,8 @@ import { resolveGoogleDriveQuickSyncBackupFile } from "@/infrastructure/sync";
 import { withGoogleDriveAccessToken } from "@/modules/google-drive-backup/services/google-drive-auth.service";
 
 import {
-  AppButton,
   ConfirmModal,
   NotificationModal,
-  PageLoadingState,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -35,6 +31,7 @@ import { BackupPassphraseModal } from "@/modules/local-backup";
 import { useGoogleDriveBackup } from "@/modules/google-drive-backup/hooks/use-google-drive-backup";
 import type { BackupFile } from "@/modules/google-drive-backup/types/google-drive-backup.types";
 import { RestoreBackupModal } from "@/modules/google-drive-backup/components/restore-backup-modal";
+import { GoogleDriveSkeleton } from "@/modules/google-drive-backup/components/google-drive-skeleton";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
@@ -62,12 +59,20 @@ export function GoogleDriveBackupPanel() {
   const [quickSyncPromptVisible, setQuickSyncPromptVisible] = useState(false);
   const [confirmQuickSyncRestore, setConfirmQuickSyncRestore] = useState(false);
   const quickSyncPromptShownRef = useRef(false);
+  const lastUserEmailRef = useRef<string | null>(null);
   const busy = backup.operation !== "idle";
 
   useEffect(() => {
     if (!backup.user) {
       setQuickSyncBackup(null);
+      quickSyncPromptShownRef.current = false;
+      lastUserEmailRef.current = null;
       return;
+    }
+
+    if (lastUserEmailRef.current !== backup.user.email) {
+      quickSyncPromptShownRef.current = false;
+      lastUserEmailRef.current = backup.user.email;
     }
 
     let active = true;
@@ -146,6 +151,9 @@ export function GoogleDriveBackupPanel() {
 
   const confirmGoogleDriveDisconnect = () => {
     setConfirmDisconnect(false);
+    setQuickSyncBackup(null);
+    quickSyncPromptShownRef.current = false;
+    lastUserEmailRef.current = null;
     void backup.disconnect();
   };
 
@@ -167,11 +175,7 @@ export function GoogleDriveBackupPanel() {
   return (
     <>
       {showBootstrapLoading ? (
-        <View style={styles.container}>
-          <View style={[styles.card, styles.loadingCard]}>
-            <PageLoadingState message={t("googleDriveBackup.loading")} />
-          </View>
-        </View>
+        <GoogleDriveSkeleton />
       ) : (
       <View style={styles.container}>
         <View style={styles.card}>
@@ -198,7 +202,22 @@ export function GoogleDriveBackupPanel() {
               </Text>
             </View>
             {backup.user ? (
-              <CheckCircle2 color={theme.colors.success} size={20} />
+              <Pressable
+                accessibilityLabel={t("googleDriveBackup.disconnectAction")}
+                accessibilityRole="button"
+                disabled={busy}
+                hitSlop={8}
+                onPress={() => setConfirmDisconnect(true)}
+                style={({ pressed }) => [
+                  styles.disconnectChip,
+                  pressed && styles.disconnectChipPressed,
+                  busy && styles.disabled,
+                ]}
+              >
+                <Text style={styles.disconnectChipText}>
+                  {t("googleDriveBackup.disconnectAction")}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
 
@@ -347,16 +366,6 @@ export function GoogleDriveBackupPanel() {
         {backup.user ? <ScheduledBackupCard /> : null}
 
         {backup.user ? <QuickSyncCard /> : null}
-
-        {backup.user ? (
-          <AppButton
-            disabled={busy}
-            label="Disconnect"
-            leading={<LogOut color={theme.colors.onDanger} size={18} />}
-            onPress={() => setConfirmDisconnect(true)}
-            variant="destructive"
-          />
-        ) : null}
       </View>
       )}
 
@@ -370,7 +379,7 @@ export function GoogleDriveBackupPanel() {
       />
 
       <ConfirmModal
-        confirmLabel="Disconnect"
+        confirmLabel={t("googleDriveBackup.disconnectAction")}
         message="Disconnect this Google account from Kaizen Finance? Existing backups will remain in Google Drive."
         onCancel={() => setConfirmDisconnect(false)}
         onConfirm={confirmGoogleDriveDisconnect}
@@ -412,7 +421,7 @@ export function GoogleDriveBackupPanel() {
         onCancel={() => setConfirmQuickSyncRestore(false)}
         onConfirm={() => {
           setConfirmQuickSyncRestore(false);
-          void backup.restoreQuickSync();
+          void backup.restoreQuickSync(quickSyncBackup?.id);
         }}
         pending={backup.operation === "restoring"}
         title={t("googleDriveBackup.restoreQuickSyncConfirmTitle")}
@@ -494,9 +503,6 @@ function createStyles(theme: AppTheme) {
       overflow: "hidden",
       ...theme.shadows.card,
     },
-    loadingCard: {
-      minHeight: 180,
-    },
     statusRow: {
       alignItems: "center",
       flexDirection: "row",
@@ -516,6 +522,25 @@ function createStyles(theme: AppTheme) {
     copy: {
       flex: 1,
       gap: 2,
+    },
+    disconnectChip: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}14`,
+      borderColor: `${theme.colors.danger}35`,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      justifyContent: "center",
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+    },
+    disconnectChipPressed: {
+      backgroundColor: `${theme.colors.danger}25`,
+    },
+    disconnectChipText: {
+      color: theme.colors.danger,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
+      lineHeight: theme.typography.lineHeight.xs,
     },
     title: {
       color: theme.colors.textPrimary,

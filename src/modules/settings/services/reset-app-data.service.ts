@@ -3,6 +3,7 @@ import {
   db,
 } from "@/infrastructure/database";
 import { deleteAllUserData } from "../repositories/reset-data.repository";
+import { invalidateExperiencePreferencesCache } from "./experience-preferences.service";
 
 export async function resetAppData(): Promise<void> {
   const { resetGoogleDriveConnectionForAppReset } =
@@ -13,6 +14,7 @@ export async function resetAppData(): Promise<void> {
     deleteAllUserData(tx);
   });
 
+  invalidateExperiencePreferencesCache();
   clearAppManagedFiles();
   setTimeout(announceDatabaseReplacement, 0);
 }

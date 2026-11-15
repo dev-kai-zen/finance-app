@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -14,7 +13,7 @@ import {
   Minus,
   WalletCards,
 } from "lucide-react-native";
-import { IconHelper } from "@/components/icon-helper";
+import { HorizontalScrollView, IconHelper } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -57,8 +56,7 @@ export function BalanceSheetTable({
         </View>
       ) : null}
 
-      <ScrollView
-        horizontal
+      <HorizontalScrollView
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={styles.horizontalScrollContent}
       >
@@ -125,7 +123,7 @@ export function BalanceSheetTable({
             </View>
           </View>
         </View>
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 }

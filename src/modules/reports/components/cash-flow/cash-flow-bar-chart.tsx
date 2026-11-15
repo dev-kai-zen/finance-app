@@ -8,7 +8,9 @@ import {
 } from "react-native";
 import Svg, { Line, Rect, Text as SvgText } from "react-native-svg";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import { REPORT_COLORS } from "../../constants/reports.constants";
 import type { CashFlowRowItem } from "../../types/cash-flow.types";
@@ -23,14 +25,17 @@ const CHART_HEIGHT = 180;
 const PLOT_TOP = 20;
 const PLOT_BOTTOM = 28;
 const PLOT_LEFT = 40;
-const PLOT_RIGHT = 12;
+const PLOT_RIGHT = 18;
 
 export function CashFlowBarChart({
   periods,
   selectedPeriodKey,
   onSelectPeriod,
 }: CashFlowBarChartProps) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { isPrivate } = usePrivacyMode();
+  const { preferences } = useCurrencyPreferences();
   const [containerWidth, setContainerWidth] = useState(0);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -39,6 +44,11 @@ export function CashFlowBarChart({
   };
 
   const selectedPeriod = periods.find((p) => p.periodKey === selectedPeriodKey);
+  const netColor = selectedPeriod
+    ? !preferences.colorAmounts || isPrivate
+      ? theme.colors.textPrimary
+      : selectedPeriod.color
+    : theme.colors.textPrimary;
 
   // If no periods or empty
   if (periods.length === 0) {
@@ -68,7 +78,7 @@ export function CashFlowBarChart({
   const barWidth = Math.max(4, Math.min(18, (slotWidth - 8) / 2));
 
   return (
-    <View style={styles.container} onLayout={handleLayout}>
+    <View style={styles.container}>
       {/* Chart Legend & Highlight header */}
       <View style={styles.legendRow}>
         <View style={styles.legendLeft}>
@@ -83,8 +93,14 @@ export function CashFlowBarChart({
         </View>
 
         {selectedPeriod ? (
-          <Text style={styles.selectedDetailText}>
-            {selectedPeriod.periodLabel}: Net {selectedPeriod.formattedNet} {selectedPeriod.symbol}
+          <Text style={styles.selectedDetailLabel}>
+            {selectedPeriod.periodLabel}: Net{" "}
+            <Text style={[styles.selectedDetailAmount, { color: netColor }]}>
+              {formatPrivacyAmount(
+                `${selectedPeriod.formattedNet} ${selectedPeriod.symbol}`.trim(),
+                isPrivate,
+              )}
+            </Text>
           </Text>
         ) : (
           <Text style={styles.hintText}>Tap a month to inspect</Text>
@@ -92,8 +108,9 @@ export function CashFlowBarChart({
       </View>
 
       {/* Svg Chart */}
-      {containerWidth > 0 ? (
-        <Svg width={containerWidth} height={CHART_HEIGHT}>
+      <View style={styles.chartWrapper} onLayout={handleLayout}>
+        {containerWidth > 0 ? (
+          <Svg width={containerWidth} height={CHART_HEIGHT}>
           {/* Baseline Zero Line */}
           <Line
             x1={PLOT_LEFT}
@@ -220,6 +237,7 @@ export function CashFlowBarChart({
           })}
         </Svg>
       ) : null}
+      </View>
     </View>
   );
 }
@@ -241,6 +259,9 @@ function createStyles(theme: AppTheme) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       backgroundColor: theme.colors.surface,
+    },
+    chartWrapper: {
+      width: "100%",
     },
     legendRow: {
       flexDirection: "row",
@@ -273,10 +294,15 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
       color: theme.colors.textSecondary,
     },
-    selectedDetailText: {
+    selectedDetailLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.textSecondary,
+    },
+    selectedDetailAmount: {
       fontSize: 12,
       fontWeight: "700",
-      color: theme.colors.primary,
+      fontVariant: ["tabular-nums"],
     },
     hintText: {
       fontSize: 11,

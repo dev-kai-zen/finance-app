@@ -3,6 +3,8 @@ import { getTableName } from "drizzle-orm";
 import {
   accountTypes,
   accounts,
+  importBatches,
+  importRecords,
   budgetMonthlyTargets,
   categories,
   categoryBudgets,
@@ -40,6 +42,8 @@ import {
  * Keep in sync with `src/modules/settings/repositories/reset-data.repository.ts`.
  */
 const APP_RESET_USER_DATA_TABLES = [
+  importRecords,
+  importBatches,
   transactionSchedulePostings,
   transactionScheduleOccurrences,
   transactionSchedules,

@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -21,6 +20,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { InfoModal } from "@/components";
 import type { ShakeAction } from "@/modules/settings";
 
 interface GesturesSettingsModalProps {
@@ -42,13 +42,11 @@ export function GesturesSettingsModal({
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [disabledNoticeVisible, setDisabledNoticeVisible] = useState(false);
 
   const handleTest = () => {
     if (shakeAction === "disabled") {
-      Alert.alert(
-        t("settings.gesturesTitle"),
-        t("settings.shakeDisabledAlert"),
-      );
+      setDisabledNoticeVisible(true);
       return;
     }
     onClose();
@@ -259,6 +257,13 @@ export function GesturesSettingsModal({
           </ScrollView>
         </View>
       </View>
+
+      <InfoModal
+        message={t("settings.shakeDisabledAlert")}
+        onClose={() => setDisabledNoticeVisible(false)}
+        title={t("settings.gesturesTitle")}
+        visible={disabledNoticeVisible}
+      />
     </Modal>
   );
 }

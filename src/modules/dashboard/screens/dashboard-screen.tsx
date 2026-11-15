@@ -1,4 +1,4 @@
-import { useFocusEffect, usePathname, useRouter } from "expo-router";
+import { useFocusEffect, useIsFocused, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DeviceEventEmitter, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SlidersHorizontal } from "lucide-react-native";
@@ -7,6 +7,7 @@ import {
   PageContainer,
   PageErrorState,
   PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -52,7 +53,6 @@ import {
   useWalkthroughTarget,
   DashboardWalkthroughOverlay,
   DashboardCongratulationsModal,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useDashboardWalkthrough,
   useWalkthroughIntro,
@@ -80,13 +80,7 @@ function DashboardScreenContent() {
   const {
     homeMode,
     dashboardLayout,
-    toggleDashboardWidget,
-    moveDashboardWidget,
-    reorderDashboardWidgets,
-    setShowGreetingQuote,
-    setQuoteColors,
-    selectDashboardPreset,
-    resetDashboardLayout,
+    updateDashboardLayout,
     isPromptDismissed,
     setHomeMode,
     dismissPrompt,
@@ -99,7 +93,9 @@ function DashboardScreenContent() {
     error: dashboardError,
     refresh: refreshDashboard,
   } = useDashboard();
-  const { accounts, pockets, types, refresh: refreshAccounts } = useAccounts();
+  const { accounts, pockets, types, refresh: refreshAccounts } = useAccounts({
+    includeCreditCardMonitoring: false,
+  });
   const { categories, refresh: refreshCategories } = useCategories();
   const {
     recordTransaction,
@@ -111,10 +107,9 @@ function DashboardScreenContent() {
     error: transactionError,
     clearError: clearTransactionError,
     refresh: refreshTransactions,
-  } = useTransactions();
+  } = useTransactions({ skipQuery: true });
 
-  const pathname = usePathname();
-  const isScreenActive = pathname === "/" || pathname === "";
+  const isScreenActive = useIsFocused();
 
   useEffect(() => {
     const sub = DeviceEventEmitter.addListener(
@@ -148,6 +143,7 @@ function DashboardScreenContent() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const frozenDashboardLayoutRef = useRef(dashboardLayout);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [onChatEditSaved, setOnChatEditSaved] = useState<
     ((data?: ChatSavedTransactionResult) => void) | null
@@ -207,8 +203,19 @@ function DashboardScreenContent() {
   }, [refreshDashboard, refreshAccounts, refreshCategories, refreshTransactions, refreshPresets]);
 
   const walkthrough = useDashboardWalkthrough({
+    layout: dashboardLayout,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const isVersionHistoryPending = useIsVersionHistoryPending();
 
@@ -254,12 +261,6 @@ function DashboardScreenContent() {
     walkthroughIntro.canTrigger,
     walkthroughIntro.triggerIfFirstTime,
   ]);
-
-  useFocusEffect(
-    useCallback(() => {
-      void refreshCategories();
-    }, [refreshCategories]),
-  );
 
   const manualSetupSteps = [
     {
@@ -432,11 +433,20 @@ function DashboardScreenContent() {
   const assets = summary?.totalAssetsMinorUnits ?? 0;
   const liabilities = summary?.totalLiabilitiesMinorUnits ?? 0;
 
+  const layoutForHome = isCustomizeOpen
+    ? frozenDashboardLayoutRef.current
+    : dashboardLayout;
+
   const visibleWidgets = useMemo<DashboardWidgetId[]>(() => {
-    const hiddenSet = new Set(dashboardLayout.hidden);
-    const list = dashboardLayout.order.filter((id) => !hiddenSet.has(id));
+    const hiddenSet = new Set(layoutForHome.hidden);
+    const list = layoutForHome.order.filter((id) => !hiddenSet.has(id));
     return list.length > 0 ? list : ["netWorth", "recentTransactions"];
-  }, [dashboardLayout.hidden, dashboardLayout.order]);
+  }, [layoutForHome.hidden, layoutForHome.order]);
+
+  const openCustomizeHome = useCallback(() => {
+    frozenDashboardLayoutRef.current = dashboardLayout;
+    setIsCustomizeOpen(true);
+  }, [dashboardLayout]);
 
   const renderWidget = (widgetId: DashboardWidgetId) => {
     if (!summary) return null;
@@ -446,9 +456,9 @@ function DashboardScreenContent() {
           <DashboardGreetingCard
             key="greeting"
             nickname={nickname}
-            showQuote={dashboardLayout.showGreetingQuote}
-            quoteBackgroundColor={dashboardLayout.quoteBackgroundColor}
-            quoteTextColor={dashboardLayout.quoteTextColor}
+            showQuote={layoutForHome.showGreetingQuote}
+            quoteBackgroundColor={layoutForHome.quoteBackgroundColor}
+            quoteTextColor={layoutForHome.quoteTextColor}
           />
         );
       case "netWorth":
@@ -463,7 +473,7 @@ function DashboardScreenContent() {
               summary.monthlyCashflow.totalOutflowMinorUnits
             }
             netWorthMinorUnits={netWorth}
-            onCustomizeDashboard={() => setIsCustomizeOpen(true)}
+            onCustomizeDashboard={openCustomizeHome}
             onHomeModeChange={setHomeMode}
             totalAssetsMinorUnits={assets}
             totalLiabilitiesMinorUnits={liabilities}
@@ -500,6 +510,11 @@ function DashboardScreenContent() {
             key="accountsStrip"
             accounts={summary.accountsWithBalances}
             onViewAll={() => router.navigate("/accounts" as any)}
+            onPressAccount={(accountId) =>
+              router.navigate(
+                `/accounts?accountId=${encodeURIComponent(accountId)}` as any,
+              )
+            }
           />
         );
       case "topCategories":
@@ -508,7 +523,11 @@ function DashboardScreenContent() {
             key="topCategories"
             categories={summary.topSpendingCategories}
             currencyCode={currencyPreferences.defaultCurrency}
-            onViewCategories={() => router.navigate("/categories" as any)}
+            onViewAll={() =>
+              router.navigate(
+                "/transactions?type=expense&datePreset=this_month" as any,
+              )
+            }
             onPressCategory={(categoryId) =>
               router.navigate(
                 `/transactions?categoryId=${encodeURIComponent(categoryId)}&datePreset=this_month` as any,
@@ -530,7 +549,8 @@ function DashboardScreenContent() {
   };
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      <PageContainer
       scrollContentRef={scrollContentRef}
       scrollRef={scrollRef}
       refreshing={isPullRefreshing}
@@ -539,28 +559,22 @@ function DashboardScreenContent() {
         walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
       }
       floatingAction={
-        <>
-          <TransactionSpeedDialFab
-            accessibilityLabel="Record new transaction"
-            fabRef={fabRef}
-            onPressForm={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              handleOpenTransactionModal("expense");
-            }}
-            onPressChat={() => {
-              if (walkthrough.isWalkthroughActive) {
-                walkthrough.completeWalkthrough();
-              }
-              setIsChatModalOpen(true);
-            }}
-          />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
+        <TransactionSpeedDialFab
+          accessibilityLabel="Record new transaction"
+          fabRef={fabRef}
+          onPressForm={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            handleOpenTransactionModal("expense");
+          }}
+          onPressChat={() => {
+            if (walkthrough.isWalkthroughActive) {
+              walkthrough.completeWalkthrough();
+            }
+            setIsChatModalOpen(true);
+          }}
+        />
       }
     >
       <View style={styles.container}>
@@ -575,6 +589,7 @@ function DashboardScreenContent() {
           ) : (
             <PageLoadingState
               message={loading ? "Loading your dashboard..." : "Preparing dashboard..."}
+              variant="dashboard"
             />
           )
         ) : (
@@ -593,7 +608,7 @@ function DashboardScreenContent() {
               collapsable={false}
               accessibilityLabel={t("dashboard.customizeHome")}
               accessibilityRole="button"
-              onPress={() => setIsCustomizeOpen(true)}
+              onPress={openCustomizeHome}
               style={({ pressed }) => [
                 styles.customizeHomeBtn,
                 pressed && styles.customizeHomeBtnPressed,
@@ -611,13 +626,7 @@ function DashboardScreenContent() {
       <CustomizeDashboardModal
         layout={dashboardLayout}
         onClose={() => setIsCustomizeOpen(false)}
-        onMoveWidget={moveDashboardWidget}
-        onReorderWidgets={reorderDashboardWidgets}
-        onReset={resetDashboardLayout}
-        onSelectPreset={selectDashboardPreset}
-        onToggleQuote={setShowGreetingQuote}
-        onChangeQuoteColors={setQuoteColors}
-        onToggleWidget={toggleDashboardWidget}
+        onSaveLayout={updateDashboardLayout}
         visible={isCustomizeOpen}
       />
 
@@ -827,12 +836,29 @@ function DashboardScreenContent() {
         onMaybeLater={handleMaybeLater}
         onNeverAskAgain={handleNeverAskAgain}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.lg,
       paddingBottom: 80,

@@ -7,7 +7,7 @@ import {
   Wallet,
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -26,6 +26,7 @@ export function CashFlowSummaryCards({
   netCashFlowMinorUnits,
   savingsRatePercentage,
 }: CashFlowSummaryCardsProps) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
@@ -43,7 +44,14 @@ export function CashFlowSummaryCards({
               <ArrowDownRight size={14} color={REPORT_COLORS.positiveGreen} />
             </View>
           </View>
-          <Text numberOfLines={1} style={[styles.cardValue, styles.inflowValue]}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.cardValue,
+              styles.inflowValue,
+              !preferences.colorAmounts && { color: theme.colors.textPrimary },
+            ]}
+          >
             {formatPrivacyAmount(
               formatCurrency(totalInflowMinorUnits, currencyCode, true),
               isPrivate,
@@ -60,7 +68,14 @@ export function CashFlowSummaryCards({
               <ArrowUpRight size={14} color={REPORT_COLORS.negativeRed} />
             </View>
           </View>
-          <Text numberOfLines={1} style={[styles.cardValue, styles.outflowValue]}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.cardValue,
+              styles.outflowValue,
+              !preferences.colorAmounts && { color: theme.colors.textPrimary },
+            ]}
+          >
             {formatPrivacyAmount(
               formatCurrency(-totalOutflowMinorUnits, currencyCode, true),
               isPrivate,
@@ -82,17 +97,18 @@ export function CashFlowSummaryCards({
             style={[
               styles.cardValue,
               {
-                color: isNetPositive
-                  ? REPORT_COLORS.positiveGreen
-                  : REPORT_COLORS.negativeRed,
+                color: preferences.colorAmounts
+                  ? isNetPositive
+                    ? REPORT_COLORS.positiveGreen
+                    : REPORT_COLORS.negativeRed
+                  : theme.colors.textPrimary,
               },
             ]}
           >
             {formatPrivacyAmount(
-              formatCurrency(netCashFlowMinorUnits, currencyCode, true),
+              `${formatCurrency(netCashFlowMinorUnits, currencyCode, true)} ${isNetPositive ? "▲" : "▼"}`,
               isPrivate,
-            )}{" "}
-            {isNetPositive ? "▲" : "▼"}
+            )}
           </Text>
           <Text style={styles.cardSub}>
             {isNetPositive ? "Net savings" : "Net deficit"}
@@ -108,14 +124,16 @@ export function CashFlowSummaryCards({
             </View>
           </View>
           <Text numberOfLines={1} style={styles.cardValue}>
-            {savingsRatePercentage}%
+            {formatPrivacyAmount(`${savingsRatePercentage}%`, isPrivate)}
           </Text>
           <View style={styles.progressBarTrack}>
             <View
               style={[
                 styles.progressBarFill,
                 {
-                  width: `${Math.min(100, Math.max(0, savingsRatePercentage))}%`,
+                  width: isPrivate
+                    ? "0%"
+                    : `${Math.min(100, Math.max(0, savingsRatePercentage))}%`,
                   backgroundColor:
                     savingsRatePercentage >= 20
                       ? REPORT_COLORS.positiveGreen

@@ -20,6 +20,7 @@ export function createTransfer(input: CreateTransferInput): TransferResult {
 export function createTransferInContext(
   input: CreateTransferInput,
   context: DbContext,
+  options: { reconcileBilling?: boolean } = {},
 ): TransferResult {
   if (!input.fromAccountId) {
     throw new Error("Source account ('From') is required.");
@@ -137,6 +138,6 @@ export function createTransferInContext(
     }
   }
 
-  reconcileCreditCardBillingInContext(new Date(), context);
+  if (options.reconcileBilling !== false) reconcileCreditCardBillingInContext(new Date(), context);
   return { transactionGroupId: groupId, outLeg, inLeg, feeLeg };
 }

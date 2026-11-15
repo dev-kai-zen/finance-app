@@ -218,7 +218,7 @@ export function LabelFormModal({
                     pressed && styles.addColorSwatchPressed,
                   ]}
                 >
-                  <Plus color={theme.colors.primary} size={20} strokeWidth={2.5} />
+                  <Plus color={theme.colors.primary} size={16} strokeWidth={2.5} />
                 </Pressable>
               </View>
             </View>
@@ -404,15 +404,17 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
+      borderColor: "rgba(255,255,255,0.25)",
       borderRadius: theme.borderRadius.round,
-      height: 32,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     colorSwatchSelected: {
       borderColor: theme.colors.textPrimary,
-      borderWidth: 2,
-      transform: [{ scale: 1.1 }],
+      borderWidth: 2.5,
+      transform: [{ scale: 1.06 }],
     },
     colorCheckMark: {
       color: "#FFFFFF",
@@ -424,9 +426,9 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 32,
+      height: 34,
       justifyContent: "center",
-      width: 32,
+      width: 34,
     },
     addColorSwatchPressed: {
       opacity: 0.65,

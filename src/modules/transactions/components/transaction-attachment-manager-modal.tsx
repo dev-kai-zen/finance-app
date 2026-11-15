@@ -32,6 +32,7 @@ import {
   NotificationModal,
 } from "@/components";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { appLockLifecycle } from "@/modules/security";
 import type { AttachmentManagerItem } from "../hooks/use-transaction-attachments";
 import type { TransactionAttachmentDraft } from "../types/transaction.types";
 import { AttachmentViewerModal } from "./attachment-viewer-modal";
@@ -109,7 +110,8 @@ export function TransactionAttachmentManagerModal({
       pickerLaunchTimer.current = null;
       setPicking(true);
       setPickerError(null);
-      void picker()
+      void appLockLifecycle
+        .withLockSuspended(picker)
         .then(async (drafts) => {
           if (drafts.length > 0) await onAdd(drafts);
         })

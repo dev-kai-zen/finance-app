@@ -1,7 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Linking,
   Platform,
   Pressable,
@@ -10,7 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as Application from "expo-application";
 import Constants from "expo-constants";
 import {
@@ -24,10 +23,12 @@ import {
   Database,
   Eye,
   EyeOff,
+  FileText,
   HardDrive,
   Heart,
   Info,
   Languages,
+  Layers,
   LayoutGrid,
   Palette,
   Pipette,
@@ -48,6 +49,7 @@ import {
 } from "lucide-react-native";
 import { ThemedSwitch } from "@/components/themed-switch";
 import { PageContainer } from "@/components/page-container";
+import { AppToast, NotificationModal, useHeaderWalkthroughAction } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
@@ -66,11 +68,11 @@ import { EditNicknameModal } from "@/modules/settings/components/edit-nickname-m
 import { GesturesSettingsModal, useQuickEntry } from "@/modules/gestures";
 import { useShakeActionSetting } from "../hooks/use-shake-action-setting";
 import {
-  DraggableTourChip,
   SettingsWalkthroughOverlay,
   WalkthroughIntroModal,
   useSettingsWalkthrough,
   useWalkthroughIntro,
+  useWalkthroughRegistry,
   useWalkthroughTarget,
   WalkthroughRegistryProvider,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
@@ -81,12 +83,11 @@ import { useExperiencePreferences } from "../hooks/use-experience-preferences";
 import { useResetData } from "../hooks/use-reset-data";
 import { useUserNickname } from "../hooks/use-user-nickname";
 import { useSoundAndHaptics } from "../hooks/use-sound-and-haptics";
-import { usePrivacyMode } from "../hooks/use-privacy-mode";
 import { useChatTransactionMode } from "../hooks/use-chat-transaction-mode";
 import { KaiChatSettingsModal } from "../components/kai-chat-settings-modal";
 import { HapticFeedbackSettingsModal } from "../components/haptic-feedback-settings-modal";
 import { SoundEffectsSettingsModal } from "../components/sound-effects-settings-modal";
-import { PRIVACY_POLICY_URL } from "../constants/settings.constants";
+import { PRIVACY_POLICY_URL, TERMS_URL } from "../constants/settings.constants";
 import { useCurrencyPreferences } from "@/modules/currencies";
 
 export function SettingsScreen() {
@@ -128,7 +129,6 @@ function SettingsScreenContent() {
   const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
   const { shakeAction, setShakeAction } = useShakeActionSetting();
   const soundAndHaptics = useSoundAndHaptics();
-  const privacyMode = usePrivacyMode();
   const { triggerShakeAction } = useQuickEntry();
   const [isGesturesModalOpen, setIsGesturesModalOpen] = useState(false);
   const [isHapticsModalOpen, setIsHapticsModalOpen] = useState(false);
@@ -137,6 +137,19 @@ function SettingsScreenContent() {
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const [isHexColorsOpen, setIsHexColorsOpen] = useState(false);
   const [isExpensePickerOpen, setIsExpensePickerOpen] = useState(false);
+  const [notificationModal, setNotificationModal] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    variant: "info" | "success" | "warning" | "error";
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info",
+  });
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"info" | "success" | "warning" | "error">("info");
   const [isIncomePickerOpen, setIsIncomePickerOpen] = useState(false);
   const [isResetDataOpen, setIsResetDataOpen] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
@@ -149,6 +162,11 @@ function SettingsScreenContent() {
   }>();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [highlightedTarget, setHighlightedTarget] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
+  const { measureTargetInAncestor } = useWalkthroughRegistry();
+  const sectionOffsets = useRef<Record<string, number>>({});
+  const itemScrollY = useRef<Record<string, number>>({});
   const handledTargetRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -165,8 +183,12 @@ function SettingsScreenContent() {
 
     setHighlightedTarget(target);
 
-    const scrollTimer = setTimeout(() => {
-      const offset = itemScrollY.current[target];
+    const scrollTimer = setTimeout(async () => {
+      const layout = await measureTargetInAncestor(
+        target as WalkthroughTargetId,
+        scrollContentRef,
+      );
+      const offset = layout ? layout.y : itemScrollY.current[target];
       if (offset !== undefined) {
         scrollRef.current?.scrollTo({
           y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
@@ -202,6 +224,8 @@ function SettingsScreenContent() {
             setIsSoundModalOpen(true);
           } else if (target === "settingsGestures") {
             setIsGesturesModalOpen(true);
+          } else if (target === "settingsKaiChatMode") {
+            setIsChatSettingsOpen(true);
           } else if (target === "settingsPro") {
             setIsPaywallOpen(true);
           }
@@ -245,37 +269,52 @@ function SettingsScreenContent() {
   // Walkthrough targets & coordination
   const languageRef = useWalkthroughTarget("settingsLanguage");
   const currencyRef = useWalkthroughTarget("settingsCurrency");
-  const nicknameRef = useWalkthroughTarget("settingsNickname");
-  const themeRef = useWalkthroughTarget("settingsTheme");
-  const remindersRef = useWalkthroughTarget("settingsReminders");
-  const widgetsRef = useWalkthroughTarget("settingsWidgets");
-  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
-  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
-  const gesturesRef = useWalkthroughTarget("settingsGestures");
-  const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
-  const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
-  const hexColorsRef = useWalkthroughTarget("settingsHexColors");
-  const resetDataRef = useWalkthroughTarget("settingsResetData");
+  const dataImportRef = useWalkthroughTarget("settingsDataImport");
   const localBackupRef = useWalkthroughTarget("settingsLocalBackup");
   const googleDriveRef = useWalkthroughTarget("settingsGoogleDrive");
+  const resetDataRef = useWalkthroughTarget("settingsResetData");
+  const nicknameRef = useWalkthroughTarget("settingsNickname");
+  const themeRef = useWalkthroughTarget("settingsTheme");
+  const hexColorsRef = useWalkthroughTarget("settingsHexColors");
+  const gesturesRef = useWalkthroughTarget("settingsGestures");
+  const quickSearchRef = useWalkthroughTarget("settingsQuickSearch");
+  const guideHelperRef = useWalkthroughTarget("settingsGuideHelper");
+  const hapticsRef = useWalkthroughTarget("settingsHaptics");
+  const soundRef = useWalkthroughTarget("settingsSound");
+  const kaiChatModeRef = useWalkthroughTarget("settingsKaiChatMode");
+  const kaiKnowledgeRef = useWalkthroughTarget("settingsKaiKnowledge");
+  const defaultExpenseRef = useWalkthroughTarget("settingsDefaultExpense");
+  const defaultIncomeRef = useWalkthroughTarget("settingsDefaultIncome");
+  const remindersRef = useWalkthroughTarget("settingsReminders");
+  const widgetsRef = useWalkthroughTarget("settingsWidgets");
   const securityRef = useWalkthroughTarget("settingsSecurity");
   const proRef = useWalkthroughTarget("settingsPro");
   const restorePurchasesRef = useWalkthroughTarget("settingsRestorePurchases");
   const versionHistoryRef = useWalkthroughTarget("settingsVersionHistory");
+  const developerMessageRef = useWalkthroughTarget("settingsDeveloperMessage");
+  const supportDevelopmentRef = useWalkthroughTarget("settingsSupportDevelopment");
+  const privacyRef = useWalkthroughTarget("settingsPrivacy");
+  const termsRef = useWalkthroughTarget("settingsTerms");
+  const appVersionRef = useWalkthroughTarget("settingsAppVersion");
 
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionOffsets = useRef<Record<string, number>>({});
-  const itemScrollY = useRef<Record<string, number>>({});
-
-  const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
-    const offset = itemScrollY.current[targetId];
-    if (offset !== undefined) {
-      scrollRef.current?.scrollTo({
-        y: Math.max(0, offset - WALKTHROUGH_SCROLL_TOP_OFFSET),
-        animated: true,
-      });
-    }
-  }, []);
+  const handleScrollToTarget = useCallback(
+    (targetId: WalkthroughTargetId) => {
+      void (async () => {
+        const layout = await measureTargetInAncestor(
+          targetId,
+          scrollContentRef,
+        );
+        const y = layout ? layout.y : itemScrollY.current[targetId];
+        if (y !== undefined) {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - WALKTHROUGH_SCROLL_TOP_OFFSET),
+            animated: true,
+          });
+        }
+      })();
+    },
+    [measureTargetInAncestor],
+  );
 
   const walkthrough = useSettingsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
@@ -285,6 +324,16 @@ function SettingsScreenContent() {
     promptKey: "settingsWalkthroughDismissed",
     onStart: walkthrough.startWalkthrough,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   useEffect(() => {
     if (walkthroughIntro.canTrigger) {
@@ -325,19 +374,17 @@ function SettingsScreenContent() {
       })}`;
 
   return (
-    <PageContainer
-      scrollRef={scrollRef}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <DraggableTourChip
-          defaultPlacement="top-left"
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
+      ) : null}
+      <PageContainer
+        scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+      >
       <View style={styles.container}>
         {/* 1. Localization */}
         <View
@@ -423,6 +470,31 @@ function SettingsScreenContent() {
         >
           <Text style={styles.sectionTitle}>{t("settings.backupDataSection")}</Text>
           <View style={styles.card}>
+            <Pressable
+              ref={dataImportRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsDataImport"] =
+                  (sectionOffsets.current["backup"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("dataImport.title")}
+              accessibilityRole="button"
+              onPress={() => router.push("/data-import")}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsDataImport" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <Database color={theme.colors.textSecondary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>{t("dataImport.title")}</Text>
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+            <View style={styles.rowDivider} />
             <Pressable
               ref={localBackupRef as any}
               collapsable={false}
@@ -707,6 +779,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <View
+              ref={quickSearchRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsQuickSearch"] =
@@ -741,7 +814,10 @@ function SettingsScreenContent() {
                 itemScrollY.current["settingsGuideHelper"] =
                   (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
               }}
-              style={styles.toggleRow}
+              style={[
+                styles.toggleRow,
+                highlightedTarget === "settingsGuideHelper" && styles.settingRowHighlighted,
+              ]}
             >
               <View style={styles.iconContainer}>
                 <Sparkles color={theme.colors.accent} size={20} />
@@ -762,6 +838,7 @@ function SettingsScreenContent() {
 
             {/* Haptic Feedback Row -> opens modal */}
             <Pressable
+              ref={hapticsRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsHaptics"] =
@@ -796,6 +873,7 @@ function SettingsScreenContent() {
 
             {/* Sound Effects Row -> opens modal */}
             <Pressable
+              ref={soundRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsSound"] =
@@ -829,11 +907,18 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={kaiChatModeRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsKaiChatMode"] =
+                  (sectionOffsets.current["interactions"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={t("settings.kaiChatModeTitle")}
               accessibilityRole="button"
               onPress={() => setIsChatSettingsOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsKaiChatMode" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -997,9 +1082,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.remindersTitle")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.remindersDescription")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1030,9 +1112,6 @@ function SettingsScreenContent() {
                   <View style={styles.settingCopy}>
                     <Text style={styles.settingLabel}>
                       {t("settings.widgetsTitle")}
-                    </Text>
-                    <Text style={styles.settingDescription}>
-                      {t("settings.widgetsDescription")}
                     </Text>
                   </View>
                   <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1090,42 +1169,6 @@ function SettingsScreenContent() {
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
-
-            <View style={styles.rowDivider} />
-
-            {/* Stealth Mode (Hide Balances) Switch Row */}
-            <View
-              collapsable={false}
-              onLayout={(e) => {
-                itemScrollY.current["settingsStealth"] =
-                  (sectionOffsets.current["security"] || 0) + e.nativeEvent.layout.y;
-              }}
-              style={[
-                styles.toggleRow,
-                highlightedTarget === "settingsStealth" && styles.settingRowHighlighted,
-              ]}
-            >
-              <View style={styles.iconContainer}>
-                {privacyMode.isPrivate ? (
-                  <EyeOff color={theme.colors.primary} size={20} />
-                ) : (
-                  <Eye color={theme.colors.primary} size={20} />
-                )}
-              </View>
-              <View style={styles.settingCopy}>
-                <Text style={styles.settingLabel}>
-                  {t("settings.stealthModeTitle")}
-                </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.stealthModeDescription")}
-                </Text>
-              </View>
-              <ThemedSwitch
-                accessibilityLabel={t("settings.stealthModeTitle")}
-                onValueChange={(value) => privacyMode.setPrivacyMode(value)}
-                value={privacyMode.isPrivate}
-              />
-            </View>
           </View>
         </View>
 
@@ -1184,17 +1227,26 @@ function SettingsScreenContent() {
               onPress={async () => {
                 const res = await restorePurchases();
                 if (res.success && res.restored) {
-                  Alert.alert(
-                    t("pro.restoreSuccessTitle"),
-                    t("pro.restoreSuccessMsg"),
-                  );
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreSuccessTitle"),
+                    message: t("pro.restoreSuccessMsg"),
+                    variant: "success",
+                  });
                 } else if (res.success && !res.restored) {
-                  Alert.alert(
-                    t("pro.restoreNotFoundTitle"),
-                    t("pro.restoreNotFoundMsg"),
-                  );
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreNotFoundTitle"),
+                    message: t("pro.restoreNotFoundMsg"),
+                    variant: "info",
+                  });
                 } else if (!res.success && res.error) {
-                  Alert.alert(t("pro.restoreErrorTitle"), res.error);
+                  setNotificationModal({
+                    visible: true,
+                    title: t("pro.restoreErrorTitle"),
+                    message: res.error,
+                    variant: "error",
+                  });
                 }
               }}
               style={({ pressed }) => [
@@ -1233,9 +1285,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>{t("settings.developerMode")}</Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.developerModeDescription")}
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel={t("settings.developerMode")}
@@ -1250,9 +1299,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Simulate Pro Version</Text>
-                  <Text style={styles.settingDescription}>
-                    Test Free vs Pro features locally without real Play store purchases
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Simulate Pro Version"
@@ -1267,9 +1313,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Force Google Test Ads</Text>
-                  <Text style={styles.settingDescription}>
-                    Use official Google sample banner ad units to safely verify banner display
-                  </Text>
                 </View>
                 <ThemedSwitch
                   accessibilityLabel="Force Google Test Ads"
@@ -1283,10 +1326,8 @@ function SettingsScreenContent() {
                 accessibilityRole="button"
                 onPress={() => {
                   void resetProStatus().then(() => {
-                    Alert.alert(
-                      "Pro Status Reset",
-                      "Pro status has been cleared back to the Free tier for testing.",
-                    );
+                    setToastType("success");
+                    setToastMessage("Pro status has been cleared back to the Free tier for testing.");
                   });
                 }}
                 style={({ pressed }) => [
@@ -1299,9 +1340,6 @@ function SettingsScreenContent() {
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>Reset Pro Status (Dev)</Text>
-                  <Text style={styles.settingDescription}>
-                    Clear cached purchase and return to Free tier to retest the buy button
-                  </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
               </Pressable>
@@ -1311,10 +1349,12 @@ function SettingsScreenContent() {
                 accessibilityRole="button"
                 onPress={() => {
                   if (shakeAction === "disabled") {
-                    Alert.alert(
-                      t("settings.gesturesTitle"),
-                      t("settings.shakeDisabledAlert"),
-                    );
+                    setNotificationModal({
+                      visible: true,
+                      title: t("settings.gesturesTitle"),
+                      message: t("settings.shakeDisabledAlert"),
+                      variant: "info",
+                    });
                   } else {
                     triggerShakeAction();
                   }
@@ -1330,9 +1370,6 @@ function SettingsScreenContent() {
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.testShakeGestureDev")}
-                  </Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.testShakeGestureDevDescription")}
                   </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1353,9 +1390,6 @@ function SettingsScreenContent() {
                 <View style={styles.settingCopy}>
                   <Text style={styles.settingLabel}>
                     {t("settings.sqliteMonitor")}
-                  </Text>
-                  <Text style={styles.settingDescription}>
-                    {t("settings.sqliteMonitorDescription")}
                   </Text>
                 </View>
                 <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1403,6 +1437,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={developerMessageRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsDeveloperMessage"] =
@@ -1424,9 +1459,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.developerMessage")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.developerMessageSubtitle")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1434,6 +1466,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={supportDevelopmentRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsSupportDevelopment"] =
@@ -1455,9 +1488,6 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.supportDevelopment")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.supportDevelopmentSubtitle")}
-                </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
             </Pressable>
@@ -1465,6 +1495,7 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={privacyRef as any}
               collapsable={false}
               onLayout={(e) => {
                 itemScrollY.current["settingsPrivacy"] =
@@ -1474,7 +1505,8 @@ function SettingsScreenContent() {
               accessibilityRole="link"
               onPress={() => {
                 void Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
-                  Alert.alert("Error", t("settings.privacyOpenError"));
+                  setToastType("error");
+                  setToastMessage(t("settings.privacyOpenError"));
                 });
               }}
               style={({ pressed }) => [
@@ -1490,8 +1522,39 @@ function SettingsScreenContent() {
                 <Text style={styles.settingLabel}>
                   {t("settings.privacy")}
                 </Text>
-                <Text style={styles.settingDescription}>
-                  {t("settings.privacySubtitle")}
+              </View>
+              <ChevronRight color={theme.colors.textMuted} size={18} />
+            </Pressable>
+
+            <View style={styles.rowDivider} />
+
+            <Pressable
+              ref={termsRef as any}
+              collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsTerms"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
+              accessibilityLabel={t("settings.termsAccessibility")}
+              accessibilityRole="link"
+              onPress={() => {
+                void Linking.openURL(TERMS_URL).catch(() => {
+                  setToastType("error");
+                  setToastMessage(t("settings.termsOpenError"));
+                });
+              }}
+              style={({ pressed }) => [
+                styles.settingRow,
+                highlightedTarget === "settingsTerms" && styles.settingRowHighlighted,
+                pressed && styles.settingRowPressed,
+              ]}
+            >
+              <View style={styles.iconContainer}>
+                <FileText color={theme.colors.primary} size={20} />
+              </View>
+              <View style={styles.settingCopy}>
+                <Text style={styles.settingLabel}>
+                  {t("settings.terms")}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textMuted} size={18} />
@@ -1500,12 +1563,18 @@ function SettingsScreenContent() {
             <View style={styles.rowDivider} />
 
             <Pressable
+              ref={appVersionRef as any}
               collapsable={false}
+              onLayout={(e) => {
+                itemScrollY.current["settingsAppVersion"] =
+                  (sectionOffsets.current["about"] || 0) + e.nativeEvent.layout.y;
+              }}
               accessibilityLabel={`${t("settings.appVersion")}: ${appVersionSummary}`}
               accessibilityRole="button"
               onPress={() => setIsVersionHistoryOpen(true)}
               style={({ pressed }) => [
                 styles.settingRow,
+                highlightedTarget === "settingsAppVersion" && styles.settingRowHighlighted,
                 pressed && styles.settingRowPressed,
               ]}
             >
@@ -1664,22 +1733,35 @@ function SettingsScreenContent() {
         onSkip={walkthroughIntro.handleSkip}
       />
 
-      <SettingsWalkthroughOverlay
-        visible={walkthrough.isWalkthroughActive}
-        stepIndex={walkthrough.activeStepIndex}
-        totalSteps={walkthrough.totalSteps}
-        step={walkthrough.currentStep}
-        targetLayout={walkthrough.activeTargetLayout}
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
+      <NotificationModal
+        message={notificationModal.message}
+        onClose={() => setNotificationModal((prev) => ({ ...prev, visible: false }))}
+        title={notificationModal.title}
+        variant={notificationModal.variant}
+        visible={notificationModal.visible}
+      />
+
+      <AppToast
+        message={toastMessage ?? ""}
+        onClose={() => setToastMessage(null)}
+        variant={toastType}
+        visible={Boolean(toastMessage)}
       />
     </PageContainer>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.xl,
       paddingTop: theme.spacing.lg,

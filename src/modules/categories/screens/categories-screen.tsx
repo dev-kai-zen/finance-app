@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -8,23 +8,28 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { PageContainer, PageEmptyState } from "@/components/page-container";
+import {
+  PageContainer,
+  PageEmptyState,
+  PageLoadingState,
+} from "@/components/page-container";
 import { SortableListModal } from "@/components/sortable-list-modal";
 import { ActionBottomSheet } from "@/components/action-bottom-sheet";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { IconHelper } from "@/components/icon-helper";
 import { InfoModal } from "@/components/info-modal";
 import { NotificationModal } from "@/components/notification-modal";
+import { useHeaderWalkthroughAction } from "@/components/app-shell-header-context";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AdBanner } from "@/modules/ads";
 import { useExperiencePreferences } from "@/modules/settings";
 import { hasTransactions } from "@/modules/transactions";
 import { useLocalization } from "@/infrastructure/localization";
 import { Tags } from "lucide-react-native";
 import {
   CategoriesWalkthroughOverlay,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useCategoriesWalkthrough,
   useWalkthroughIntro,
@@ -236,6 +241,16 @@ function CategoriesScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "categoriesWalkthroughDismissed",
     enabled: hasExistingTransactions !== null,
@@ -317,19 +332,14 @@ function CategoriesScreenContent({
   };
 
   return (
-    <PageContainer
-      scrollContentRef={scrollContentRef}
-      scrollRef={scrollRef}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-      }
-    >
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        scrollContentRef={scrollContentRef}
+        scrollRef={scrollRef}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+      >
       <View style={styles.container}>
         {/* Category type chips */}
         <View collapsable={false} ref={typeToggleRef} style={styles.tabRow}>
@@ -437,39 +447,51 @@ function CategoriesScreenContent({
         </View>
 
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-            <Text style={styles.loadingText}>Loading categories from SQLite...</Text>
-          </View>
+          <PageLoadingState message="Loading categories..." variant="cards" />
         ) : currentCategories.length === 0 ? (
-          <PageEmptyState
-            actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}
-            description="Create custom category groups and nested subcategories to organize your financial transactions."
-            onAction={handleCreateGroup}
-            title={`No ${selectedType === "expense" ? "Expense" : "Income"} Groups Found`}
-          />
+          <View>
+            <PageEmptyState
+              actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}
+              description="Create custom category groups and nested subcategories to organize your financial transactions."
+              onAction={handleCreateGroup}
+              title={`No ${selectedType === "expense" ? "Expense" : "Income"} Groups Found`}
+            />
+            <AdBanner
+              placement="categories"
+              variant="card"
+              style={{ marginTop: theme.spacing.md }}
+            />
+          </View>
         ) : (
           <View style={[styles.groupsList, isDesktop && styles.groupsListDesktop]}>
             {currentCategories.map((group, index) => (
-              <CategoryGroupCard
-                key={group.id}
-                addSubRef={index === 0 ? firstGroupAddSubRef : undefined}
-                canDeleteGroup={!isProtectedCategoryId(group.id)}
-                group={group}
-                isExpanded={isGroupExpanded(group.id)}
-                onAddSubcategory={() => handleAddSubcategory(group)}
-                onDeleteGroup={() => handleDelete(group, true)}
-                onDeleteSubcategory={(sub) => handleDelete(sub, false)}
-                onEditGroup={() => handleEditGroup(group)}
-                onEditSubcategory={(sub) => handleEditSubcategory(group, sub)}
-                onReorderSubcategories={() => handleOpenReorderSubcategories(group)}
-                onToggleExpand={() => toggleExpand(group.id)}
-                reorderSubRef={
-                  group.id === firstReorderableGroupId
-                    ? firstGroupReorderSubRef
-                    : undefined
-                }
-              />
+              <View key={group.id}>
+                <CategoryGroupCard
+                  addSubRef={index === 0 ? firstGroupAddSubRef : undefined}
+                  canDeleteGroup={!isProtectedCategoryId(group.id)}
+                  group={group}
+                  isExpanded={isGroupExpanded(group.id)}
+                  onAddSubcategory={() => handleAddSubcategory(group)}
+                  onDeleteGroup={() => handleDelete(group, true)}
+                  onDeleteSubcategory={(sub) => handleDelete(sub, false)}
+                  onEditGroup={() => handleEditGroup(group)}
+                  onEditSubcategory={(sub) => handleEditSubcategory(group, sub)}
+                  onReorderSubcategories={() => handleOpenReorderSubcategories(group)}
+                  onToggleExpand={() => toggleExpand(group.id)}
+                  reorderSubRef={
+                    group.id === firstReorderableGroupId
+                      ? firstGroupReorderSubRef
+                      : undefined
+                  }
+                />
+                {index === 0 ? (
+                  <AdBanner
+                    placement="categories"
+                    variant="card"
+                    style={{ marginVertical: theme.spacing.sm }}
+                  />
+                ) : null}
+              </View>
             ))}
           </View>
         )}
@@ -517,7 +539,6 @@ function CategoriesScreenContent({
           }))}
           onClose={() => setReorderGroupsVisible(false)}
           onSave={async (orderedIds) => {
-            setReorderGroupsVisible(false);
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${selectedType === "expense" ? "Expense" : "Income"} Groups`}
@@ -540,8 +561,6 @@ function CategoriesScreenContent({
             setGroupForSubReorder(null);
           }}
           onSave={async (orderedIds) => {
-            setReorderSubsVisible(false);
-            setGroupForSubReorder(null);
             await reorderCategories(orderedIds);
           }}
           title={`Reorder ${groupForSubReorder.name} Subcategories`}
@@ -661,12 +680,29 @@ function CategoriesScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       gap: theme.spacing.md,
       paddingTop: theme.spacing.sm,

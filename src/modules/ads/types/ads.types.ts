@@ -6,6 +6,9 @@ export type AdBannerPlacement =
   | "reports"
   | "budgets"
   | "accounts"
+  | "categories"
+  | "calendar"
+  | "goals"
   | "settings"
   | "global";
 

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronRight, Sparkles } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { InfoModal } from "@/components";
 import { KaiKnowledgeModal } from "./kai-knowledge-modal";
 
 export interface KaiKnowledgeSelectorRowProps {
@@ -27,6 +28,7 @@ export function KaiKnowledgeSelectorRow({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const [modalVisible, setModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   const isConfigured = Boolean(entityId);
   const color = accentColor || theme.colors.primary;
@@ -34,12 +36,7 @@ export function KaiKnowledgeSelectorRow({
   const handlePress = () => {
     if (disabled) return;
     if (!isConfigured) {
-      Alert.alert(
-        t("chatWithKai.selectorTitle"),
-        entityType === "category"
-          ? t("chatWithKai.selectorSaveFirstCategory")
-          : t("chatWithKai.selectorSaveFirstAccount"),
-      );
+      setInfoModalVisible(true);
       return;
     }
     setModalVisible(true);
@@ -110,6 +107,17 @@ export function KaiKnowledgeSelectorRow({
           visible={modalVisible}
         />
       )}
+
+      <InfoModal
+        message={
+          entityType === "category"
+            ? t("chatWithKai.selectorSaveFirstCategory")
+            : t("chatWithKai.selectorSaveFirstAccount")
+        }
+        onClose={() => setInfoModalVisible(false)}
+        title={t("chatWithKai.selectorTitle")}
+        visible={infoModalVisible}
+      />
     </>
   );
 }

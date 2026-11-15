@@ -1,13 +1,27 @@
 import React from "react";
+import { deferComponent } from "@/utils/deferred-module";
 
 export function SettingsScreen() {
   const { SettingsScreen: Screen } =
     require("./screens/settings-screen") as typeof import("./screens/settings-screen");
   return React.createElement(Screen);
 }
-export { KaiChatSettingsModal } from "./components/kai-chat-settings-modal";
-export { HapticFeedbackSettingsModal } from "./components/haptic-feedback-settings-modal";
-export { SoundEffectsSettingsModal } from "./components/sound-effects-settings-modal";
+export const KaiChatSettingsModal = deferComponent(
+  () => require("./components/kai-chat-settings-modal").KaiChatSettingsModal,
+  "KaiChatSettingsModal",
+) as typeof import("./components/kai-chat-settings-modal").KaiChatSettingsModal;
+export const HapticFeedbackSettingsModal = deferComponent(
+  () =>
+    require("./components/haptic-feedback-settings-modal")
+      .HapticFeedbackSettingsModal,
+  "HapticFeedbackSettingsModal",
+) as typeof import("./components/haptic-feedback-settings-modal").HapticFeedbackSettingsModal;
+export const SoundEffectsSettingsModal = deferComponent(
+  () =>
+    require("./components/sound-effects-settings-modal")
+      .SoundEffectsSettingsModal,
+  "SoundEffectsSettingsModal",
+) as typeof import("./components/sound-effects-settings-modal").SoundEffectsSettingsModal;
 export {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -19,6 +33,11 @@ export {
   setTransactionViewMode,
 } from "./services/transaction-view-mode.service";
 export type { TransactionViewMode } from "./services/transaction-view-mode.service";
+export {
+  getAccountsGroupViewMode,
+  setAccountsGroupViewMode,
+} from "./services/accounts-group-view-mode.service";
+export type { AccountsGroupViewMode } from "./services/accounts-group-view-mode.service";
 export {
   getChatTransactionMode,
   setChatTransactionMode,
@@ -60,6 +79,7 @@ export type { ShakeAction } from "./services/gesture-settings.service";
 export {
   DEFAULT_ACCOUNT_SETTINGS_KEYS,
   TRANSACTION_VIEW_MODE_SETTING_KEY,
+  ACCOUNTS_GROUP_VIEW_MODE_SETTING_KEY,
   CHAT_TRANSACTION_MODE_SETTING_KEY,
   GESTURE_SHAKE_ACTION_SETTING_KEY,
   DASHBOARD_LAYOUT_SETTING_KEY,
@@ -72,6 +92,7 @@ export {
   SOUND_AND_HAPTICS_SETTING_KEY,
   USER_NICKNAME_SETTING_KEY,
   PRIVACY_POLICY_URL,
+  TERMS_URL,
 } from "./constants/settings.constants";
 export type {
   NavVisibilityKey,
@@ -88,6 +109,7 @@ export {
   ALL_DASHBOARD_WIDGET_IDS,
   DEFAULT_DASHBOARD_LAYOUT,
   applyDashboardLayoutPreset,
+  resolveDashboardLayoutPreset,
   applyGuidedWorkspaceSimpleDefaults,
   getDashboardLayoutPreferences,
   getDeveloperModeEnabled,

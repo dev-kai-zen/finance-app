@@ -25,7 +25,7 @@ import {
   calculateCreditCardUnbilled,
   calculateCreditCardUtilization,
 } from "../utils/credit-card-computations";
-import { reconcileCreditCardBilling } from "./reconcile-credit-card-billing.service";
+import { ensureCreditCardBillingReconciled } from "./reconcile-credit-card-billing.service";
 
 function sortCreditCardActivityNewestFirst<
   T extends { occurredOn: string; id: string },
@@ -237,7 +237,7 @@ export function computeCreditCardAccountMonitoring(
 export function getCreditCardMonitoring(
   today = new Date(),
 ): CreditCardMonitoringSummary {
-  reconcileCreditCardBilling(today);
+  ensureCreditCardBillingReconciled(today);
   const cards: CreditCardMonitoringItem[] = getAccountsWithBalances()
     .filter((account) => account.creditCardDetails && !account.isArchived)
     .map((account) => computeCreditCardAccountMonitoring(account, today)!)

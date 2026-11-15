@@ -199,7 +199,7 @@ export function SettingsWalkthroughOverlay({
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <X color={theme.colors.textMuted} size={16} />
+                <X color={theme.colors.textSecondary} size={16} />
               </Pressable>
             </View>
 

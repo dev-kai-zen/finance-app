@@ -40,7 +40,6 @@ export function BackupScheduleOptions({
   }, [schedule.timeOfDay]);
 
   const setFrequency = (frequency: BackupScheduleFrequency) => {
-    if (frequency === schedule.frequency) return;
     onChange({ ...schedule, frequency });
   };
 

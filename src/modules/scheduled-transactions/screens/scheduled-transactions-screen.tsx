@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   CalendarClock,
+  FastForward,
   Pause,
   Play,
   RotateCcw,
@@ -12,11 +13,13 @@ import {
 } from "lucide-react-native";
 
 import {
+  AppToast,
   ConfirmModal,
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
   PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -28,7 +31,6 @@ import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
 import { Repeat } from "lucide-react-native";
 import {
-  DraggableTourChip,
   FirstScheduleCongratulationsModal,
   ScheduledTransactionsWalkthroughOverlay,
   WalkthroughIntroModal,
@@ -40,8 +42,8 @@ import {
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
+import { AdvancePostModal } from "../components/advance-post-modal";
 import { ScheduledOccurrenceCard } from "../components/scheduled-occurrence-card";
 import { ScheduledTransactionFormModal } from "../components/scheduled-transaction-form-modal";
 import { useScheduledTransactions } from "../hooks/use-scheduled-transactions";
@@ -50,7 +52,10 @@ import type {
   ScheduleOccurrence,
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
-import { formatScheduleRecurrence } from "../utils/recurrence";
+import {
+  calculateScheduleOccurrence,
+  formatScheduleRecurrence,
+} from "../utils/recurrence";
 import {
   DEFAULT_SCHEDULE_LIST_FILTERS,
   filterSchedulesBySearch,
@@ -108,6 +113,7 @@ function ScheduledTransactionsScreenContent({
     restore,
     postOccurrence,
     skipOccurrence,
+    advancePost,
     scheduleIdsWithPostings,
   } = useScheduledTransactions();
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
@@ -115,6 +121,8 @@ function ScheduledTransactionsScreenContent({
   const handledActionRef = useRef<string | null>(null);
   const handledScheduleIdRef = useRef<string | null>(null);
   const [editingSchedule, setEditingSchedule] =
+    useState<ScheduledTransaction | null>(null);
+  const [advancePostTarget, setAdvancePostTarget] =
     useState<ScheduledTransaction | null>(null);
   const [pendingEnd, setPendingEnd] =
     useState<ScheduledTransaction | null>(null);
@@ -128,6 +136,14 @@ function ScheduledTransactionsScreenContent({
     ReadonlySet<ScheduleListFilter>
   >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
   const [searchQuery, setSearchQuery] = useState("");
+  const [toastState, setToastState] = useState<{
+    visible: boolean;
+    message: string;
+    description?: string;
+  }>({
+    visible: false,
+    message: "",
+  });
 
   const searchRef = useWalkthroughTarget("scheduledSearch");
   const filterRef = useWalkthroughTarget("scheduledFilter");
@@ -141,7 +157,6 @@ function ScheduledTransactionsScreenContent({
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
-  const { isPrivate } = usePrivacyMode();
   const [showCongrats, setShowCongrats] = useState(false);
 
   const searchContext = useMemo((): ScheduleListSearchContext => {
@@ -300,6 +315,39 @@ function ScheduledTransactionsScreenContent({
     if (postOccurrence(occurrence.id)) refreshAccounts();
   };
 
+  const handleAdvancePost = (transactionDate: Date) => {
+    if (!advancePostTarget) return;
+    const target = advancePostTarget;
+    setAdvancePostTarget(null);
+    const success = advancePost(target.id, transactionDate);
+    if (success) {
+      refreshAccounts();
+      const nextOccurrence = calculateScheduleOccurrence(
+        target,
+        target.nextOccurrenceNumber + 1,
+      );
+      const nextDate = nextOccurrence
+        ? nextOccurrence.effectiveAt ?? nextOccurrence.nominalAt
+        : null;
+
+      const description = nextDate
+        ? t("scheduledTransactions.advancePostToastNext", {
+            date: nextDate.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+          })
+        : t("scheduledTransactions.advancePostToastCompleted");
+
+      setToastState({
+        visible: true,
+        message: t("scheduledTransactions.advancePostToastTitle"),
+        description,
+      });
+    }
+  };
+
   const setFilterSelected = (
     filter: ScheduleListFilter,
     selected: boolean,
@@ -351,6 +399,16 @@ function ScheduledTransactionsScreenContent({
     onStart: walkthrough.startWalkthrough,
   });
 
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
+
   useEffect(() => {
     if (!loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
@@ -378,7 +436,11 @@ function ScheduledTransactionsScreenContent({
   }));
 
   return (
-    <PageContainer
+    <View style={styles.screenWrapper}>
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
+      ) : null}
+      <PageContainer
       contentContainerStyle={contentSpacing}
       floatingAction={
         <FloatingActionButton
@@ -493,6 +555,11 @@ function ScheduledTransactionsScreenContent({
             const signedAmount = isTransfer
               ? Math.abs(schedule.amountMinorUnits)
               : schedule.amountMinorUnits;
+            const canAdvancePost =
+              !schedule.archivedAt &&
+              schedule.status === "active" &&
+              schedule.nextEffectiveAt !== null &&
+              schedule.nextEffectiveAt.getTime() > Date.now();
 
             return (
               <View
@@ -544,12 +611,31 @@ function ScheduledTransactionsScreenContent({
                       {formatScheduleRecurrence(schedule)} ·{" "}
                       {schedule.autoPost ? "Auto-post" : "Confirm each"}
                     </Text>
-                    <Text style={styles.nextText}>
-                      {schedule.nextEffectiveAt
-                        ? "Next: " +
-                          schedule.nextEffectiveAt.toLocaleString()
-                        : "No future occurrences"}
-                    </Text>
+                    <View style={styles.nextRow}>
+                      <Text style={styles.nextText}>
+                        {schedule.nextEffectiveAt
+                          ? "Next: " +
+                            schedule.nextEffectiveAt.toLocaleString()
+                          : "No future occurrences"}
+                      </Text>
+                      {canAdvancePost ? (
+                        <Pressable
+                          accessibilityLabel={t(
+                            "scheduledTransactions.advancePost",
+                          )}
+                          onPress={() => setAdvancePostTarget(schedule)}
+                          style={styles.advancePostChip}
+                        >
+                          <FastForward
+                            color={theme.colors.primary}
+                            size={12}
+                          />
+                          <Text style={styles.advancePostChipText}>
+                            {t("scheduledTransactions.advancePost")}
+                          </Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
                   </View>
                   <Text
                     style={[
@@ -561,13 +647,10 @@ function ScheduledTransactionsScreenContent({
                           : styles.amountExpense,
                     ]}
                   >
-                    {formatPrivacyAmount(
-                      formatCurrency(
-                        signedAmount,
-                        source?.currencyCode ?? "PHP",
-                        signedAmount > 0 && !isTransfer,
-                      ),
-                      isPrivate,
+                    {formatCurrency(
+                      signedAmount,
+                      source?.currencyCode ?? "PHP",
+                      signedAmount > 0 && !isTransfer,
                     )}
                   </Text>
                 </View>
@@ -658,6 +741,23 @@ function ScheduledTransactionsScreenContent({
           })
         )}
       </View>
+
+      <AdvancePostModal
+        category={categories.find(
+          (c) => c.id === advancePostTarget?.categoryId,
+        )}
+        destinationAccount={accounts.find(
+          (a) => a.id === advancePostTarget?.toAccountId,
+        )}
+        onClose={() => setAdvancePostTarget(null)}
+        onConfirm={handleAdvancePost}
+        pending={pending}
+        schedule={advancePostTarget}
+        sourceAccount={accounts.find(
+          (a) => a.id === advancePostTarget?.accountId,
+        )}
+        visible={Boolean(advancePostTarget)}
+      />
 
       <ScheduledTransactionFormModal
         accounts={accounts}
@@ -774,11 +874,6 @@ function ScheduledTransactionsScreenContent({
         visible={paywallVisible}
       />
 
-      <DraggableTourChip
-        onPress={walkthrough.startWalkthrough}
-        visible={!walkthrough.isWalkthroughActive}
-      />
-
       <WalkthroughIntroModal
         visible={walkthroughIntro.isIntroVisible}
         title={t("scheduledTransactionsWalkthrough.introTitle")}
@@ -809,12 +904,30 @@ function ScheduledTransactionsScreenContent({
         }}
         visible={showCongrats}
       />
+
+      <AppToast
+        description={toastState.description}
+        message={toastState.message}
+        onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
+        position="top"
+        variant="success"
+        visible={toastState.visible}
+      />
     </PageContainer>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     content: {
       gap: theme.spacing.md,
       paddingBottom: 80,
@@ -899,11 +1012,35 @@ function createStyles(theme: AppTheme) {
       lineHeight: 20,
       marginTop: 2,
     },
+    nextRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: theme.spacing.xs,
+      justifyContent: "space-between",
+      marginTop: theme.spacing.xs,
+    },
     nextText: {
       color: theme.colors.primary,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
-      marginTop: theme.spacing.xs,
+    },
+    advancePostChip: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary + "14",
+      borderColor: theme.colors.primary + "35",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    advancePostChipText: {
+      color: theme.colors.primary,
+      fontSize: 11,
+      fontWeight: theme.typography.fontWeight.medium,
+      lineHeight: 14,
     },
     failureText: {
       color: theme.colors.danger,

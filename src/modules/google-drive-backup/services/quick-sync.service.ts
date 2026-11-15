@@ -5,6 +5,7 @@ import {
   getQuickSyncState,
   queueDebouncedQuickSync,
   registerQuickSyncDebouncedExecutor,
+  resetQuickSyncLocalMetadata,
   saveQuickSyncConfig,
   setQuickSyncRuntimeStatus,
   subscribeToQuickSync,
@@ -21,6 +22,11 @@ import {
 let activeSyncPromise: Promise<boolean> | null = null;
 
 export { getQuickSyncState, subscribeToQuickSync };
+
+export function resetQuickSyncConnection(): void {
+  resetQuickSyncLocalMetadata();
+  setQuickSyncRuntimeStatus("disabled");
+}
 
 /** Debounced Quick Sync after user preference / settings writes (not Quick Sync metadata). */
 export function queueQuickSyncForPreferenceChange(
@@ -100,6 +106,13 @@ async function performSync(
     // 3. Mark syncing
     setQuickSyncRuntimeStatus("syncing");
 
+    // Account check: If active user differs from saved accountEmail, do not reuse old account's fileId
+    const config = getQuickSyncConfig();
+    let fileIdToUse = existingFileId;
+    if (config.accountEmail && user.email && config.accountEmail !== user.email) {
+      fileIdToUse = null;
+    }
+
     // 4. Create database snapshot (unprotected for background auto-sync)
     const archive = await createBackupArchive(null);
 
@@ -108,14 +121,15 @@ async function performSync(
       uploadOrUpdateGoogleDriveQuickSyncBackup(
         accessToken,
         archive.bytes,
-        existingFileId,
+        fileIdToUse,
       ),
     );
 
-    // 6. Update configuration with fileId and last synced timestamp
+    // 6. Update configuration with fileId, accountEmail, and last synced timestamp
     const nowIso = new Date().toISOString();
     saveQuickSyncConfig({
       fileId: backupFile.id,
+      accountEmail: user.email,
       lastSyncedAt: nowIso,
     });
 

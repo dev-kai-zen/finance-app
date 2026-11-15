@@ -20,6 +20,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useResolveEntityColor } from "@/modules/hex-colors";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type { GoalStatus, GoalWithProgress } from "../types/goal.types";
 
@@ -46,6 +47,7 @@ export const GoalCard = memo(function GoalCard({
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const resolveEntityColor = useResolveEntityColor();
+  const { isPrivate } = usePrivacyMode();
 
   const entityColor =
     (goal.hexColorsId ? resolveEntityColor(goal.hexColorsId) : null) ||
@@ -185,13 +187,19 @@ export const GoalCard = memo(function GoalCard({
                   preferences.colorAmounts && { color: theme.colors.success },
               ]}
             >
-              {formatCurrency(goal.currentAmountMinorUnits, goal.currencyCode)}
+              {formatPrivacyAmount(
+                formatCurrency(goal.currentAmountMinorUnits, goal.currencyCode),
+                isPrivate,
+              )}
             </Text>
           </View>
           <View style={styles.targetCol}>
             <Text style={styles.targetLabel}>Target</Text>
             <Text style={styles.targetAmount}>
-              {formatCurrency(goal.targetAmountMinorUnits, goal.currencyCode)}
+              {formatPrivacyAmount(
+                formatCurrency(goal.targetAmountMinorUnits, goal.currencyCode),
+                isPrivate,
+              )}
             </Text>
           </View>
         </View>
@@ -201,7 +209,7 @@ export const GoalCard = memo(function GoalCard({
             style={[
               styles.progressFill,
               {
-                width: `${clampedProgress}%`,
+                width: isPrivate ? "0%" : `${clampedProgress}%`,
                 backgroundColor: statusColor,
               },
             ]}
@@ -210,11 +218,13 @@ export const GoalCard = memo(function GoalCard({
 
         <View style={styles.progressMetaRow}>
           <Text style={styles.progressPercentageText}>
-            {clampedProgress}% completed
+            {isPrivate ? "••% completed" : `${clampedProgress}% completed`}
           </Text>
           {!isCompleted && (
             <Text style={styles.remainingText}>
-              {formatCurrency(goal.remainingMinorUnits, goal.currencyCode)} to go
+              {isPrivate
+                ? "•••••• to go"
+                : `${formatCurrency(goal.remainingMinorUnits, goal.currencyCode)} to go`}
             </Text>
           )}
         </View>
@@ -250,10 +260,12 @@ export const GoalCard = memo(function GoalCard({
               <View style={styles.pacePill}>
                 <Text style={styles.pacePillText}>
                   💡 Save{" "}
-                  {formatCurrency(
-                    goal.pacePerMonthMinorUnits,
-                    goal.currencyCode,
-                  )}
+                  {isPrivate
+                    ? "••••••"
+                    : formatCurrency(
+                        goal.pacePerMonthMinorUnits,
+                        goal.currencyCode,
+                      )}
                   /mo to reach on time
                 </Text>
               </View>

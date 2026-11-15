@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useMemo,
   useRef,
   useState,
   type PropsWithChildren,
@@ -36,6 +37,7 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
 
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [modalMode, setModalMode] = useState<TransactionType>("expense");
   const [prefilledTransaction, setPrefilledTransaction] =
     useState<TransactionListItem | null>(null);
@@ -44,6 +46,129 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
     useState<((saved: ChatSavedTransactionResult) => void) | null>(null);
   const returnToChatOnFormCloseRef = useRef(false);
 
+  const isQuickEntryOpen = isChatOpen || isFormOpen || isTransitioning;
+
+  const openChatWithKai = useCallback(() => {
+    setIsFormOpen(false);
+    setIsTransitioning(false);
+    setIsChatOpen(true);
+  }, []);
+
+  const openManualEntry = useCallback((mode: TransactionType = "expense") => {
+    setIsChatOpen(false);
+    setIsTransitioning(false);
+    setPrefilledTransaction(null);
+    setIsEditingTransaction(false);
+    setModalMode(mode);
+    setIsFormOpen(true);
+  }, []);
+
+  const closeQuickEntry = useCallback(() => {
+    setIsChatOpen(false);
+    setIsFormOpen(false);
+    setIsTransitioning(false);
+    setPrefilledTransaction(null);
+    setIsEditingTransaction(false);
+    returnToChatOnFormCloseRef.current = false;
+  }, []);
+
+  const triggerShakeAction = useCallback(() => {
+    if (shakeAction === "chat_with_kai") {
+      openChatWithKai();
+    } else if (shakeAction === "manual_entry") {
+      openManualEntry("expense");
+    }
+  }, [shakeAction, openChatWithKai, openManualEntry]);
+
+  // Hook up shake sensor
+  useShakeGesture({
+    enabled:
+      shakeAction !== "disabled" &&
+      !isQuickEntryOpen &&
+      !isLocked &&
+      !isAnyModalActive,
+    onShake: triggerShakeAction,
+  });
+
+  const contextValue = useMemo(
+    () => ({
+      openChatWithKai,
+      openManualEntry,
+      triggerShakeAction,
+      closeQuickEntry,
+      isQuickEntryOpen,
+    }),
+    [
+      openChatWithKai,
+      openManualEntry,
+      triggerShakeAction,
+      closeQuickEntry,
+      isQuickEntryOpen,
+    ],
+  );
+
+  return (
+    <QuickEntryContext.Provider value={contextValue}>
+      {children}
+      {isQuickEntryOpen ? (
+        <QuickEntryActiveModals
+          isChatOpen={isChatOpen}
+          isEditingTransaction={isEditingTransaction}
+          isFormOpen={isFormOpen}
+          modalMode={modalMode}
+          onChatEditSaved={onChatEditSaved}
+          prefilledTransaction={prefilledTransaction}
+          returnToChatOnFormCloseRef={returnToChatOnFormCloseRef}
+          setIsChatOpen={setIsChatOpen}
+          setIsEditingTransaction={setIsEditingTransaction}
+          setIsFormOpen={setIsFormOpen}
+          setIsTransitioning={setIsTransitioning}
+          setModalMode={setModalMode}
+          setOnChatEditSaved={setOnChatEditSaved}
+          setPrefilledTransaction={setPrefilledTransaction}
+        />
+      ) : null}
+    </QuickEntryContext.Provider>
+  );
+}
+
+interface QuickEntryActiveModalsProps {
+  isChatOpen: boolean;
+  isEditingTransaction: boolean;
+  isFormOpen: boolean;
+  modalMode: TransactionType;
+  onChatEditSaved: ((saved: ChatSavedTransactionResult) => void) | null;
+  prefilledTransaction: TransactionListItem | null;
+  returnToChatOnFormCloseRef: React.MutableRefObject<boolean>;
+  setIsChatOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsEditingTransaction: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsFormOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsTransitioning: React.Dispatch<React.SetStateAction<boolean>>;
+  setModalMode: React.Dispatch<React.SetStateAction<TransactionType>>;
+  setOnChatEditSaved: React.Dispatch<
+    React.SetStateAction<((saved: ChatSavedTransactionResult) => void) | null>
+  >;
+  setPrefilledTransaction: React.Dispatch<
+    React.SetStateAction<TransactionListItem | null>
+  >;
+}
+
+function QuickEntryActiveModals({
+  isChatOpen,
+  isEditingTransaction,
+  isFormOpen,
+  modalMode,
+  onChatEditSaved,
+  prefilledTransaction,
+  returnToChatOnFormCloseRef,
+  setIsChatOpen,
+  setIsEditingTransaction,
+  setIsFormOpen,
+  setIsTransitioning,
+  setModalMode,
+  setOnChatEditSaved,
+  setPrefilledTransaction,
+}: QuickEntryActiveModalsProps) {
   const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
   const { categories, refresh: refreshCategories } = useCategories();
   const { preferences: currencyPrefs } = useCurrencyPreferences();
@@ -75,48 +200,7 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
     clearError: clearTransactionError,
     pendingAction,
     refresh: refreshTransactions,
-  } = useTransactions();
-
-  const isQuickEntryOpen = isChatOpen || isFormOpen;
-
-  const openChatWithKai = useCallback(() => {
-    setIsFormOpen(false);
-    setIsChatOpen(true);
-  }, []);
-
-  const openManualEntry = useCallback((mode: TransactionType = "expense") => {
-    setIsChatOpen(false);
-    setPrefilledTransaction(null);
-    setIsEditingTransaction(false);
-    setModalMode(mode);
-    setIsFormOpen(true);
-  }, []);
-
-  const closeQuickEntry = useCallback(() => {
-    setIsChatOpen(false);
-    setIsFormOpen(false);
-    setPrefilledTransaction(null);
-    setIsEditingTransaction(false);
-    returnToChatOnFormCloseRef.current = false;
-  }, []);
-
-  const triggerShakeAction = useCallback(() => {
-    if (shakeAction === "chat_with_kai") {
-      openChatWithKai();
-    } else if (shakeAction === "manual_entry") {
-      openManualEntry("expense");
-    }
-  }, [shakeAction, openChatWithKai, openManualEntry]);
-
-  // Hook up shake sensor
-  useShakeGesture({
-    enabled:
-      shakeAction !== "disabled" &&
-      !isQuickEntryOpen &&
-      !isLocked &&
-      !isAnyModalActive,
-    onShake: triggerShakeAction,
-  });
+  } = useTransactions({ skipQuery: true });
 
   const notifyChange = useCallback(() => {
     refreshAccounts();
@@ -198,17 +282,7 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <QuickEntryContext.Provider
-      value={{
-        openChatWithKai,
-        openManualEntry,
-        triggerShakeAction,
-        closeQuickEntry,
-        isQuickEntryOpen,
-      }}
-    >
-      {children}
-
+    <>
       {/* Global Chat with Kai Modal */}
       <ChatWithKaiModal
         accounts={accounts}
@@ -222,10 +296,12 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
           setIsEditingTransaction(isEditing);
           setModalMode((prefilled?.type as TransactionType) ?? "expense");
           setOnChatEditSaved(() => onSaved);
+          setIsTransitioning(true);
           setIsChatOpen(false);
           setTimeout(
             () => {
               setIsFormOpen(true);
+              setIsTransitioning(false);
             },
             Platform.OS === "ios" ? 250 : 80,
           );
@@ -251,6 +327,9 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
         onClose={() => {
           const shouldReturnToChat = returnToChatOnFormCloseRef.current;
           returnToChatOnFormCloseRef.current = false;
+          if (shouldReturnToChat) {
+            setIsTransitioning(true);
+          }
           setIsFormOpen(false);
           setPrefilledTransaction(null);
           setIsEditingTransaction(false);
@@ -260,6 +339,7 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
             setTimeout(
               () => {
                 setIsChatOpen(true);
+                setIsTransitioning(false);
               },
               Platform.OS === "ios" ? 250 : 80,
             );
@@ -333,6 +413,6 @@ export function QuickEntryProvider({ children }: PropsWithChildren) {
         presetSortBy={presetSortBy}
         visible={isFormOpen}
       />
-    </QuickEntryContext.Provider>
+    </>
   );
 }

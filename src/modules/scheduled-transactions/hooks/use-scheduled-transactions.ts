@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import {
@@ -14,6 +14,7 @@ import {
   restoreScheduledTransaction,
   setScheduledTransactionPaused,
 } from "../services/manage-scheduled-transaction.service";
+import { advancePostScheduledTransaction } from "../services/advance-post-schedule.service";
 import {
   postScheduledOccurrence,
   processDueSchedules,
@@ -35,9 +36,12 @@ export function useScheduledTransactions() {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    setLoading(true);
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true);
+    }
     try {
       processDueSchedules();
       setSchedules(listScheduledTransactions({ includeArchived: true }));
@@ -47,13 +51,17 @@ export function useScheduledTransactions() {
     } catch (cause) {
       setError(scheduledTransactionErrorMessage(cause));
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
+      const frameId = requestAnimationFrame(() => {
+        refresh();
+      });
+      return () => cancelAnimationFrame(frameId);
     }, [refresh]),
   );
 
@@ -127,6 +135,12 @@ export function useScheduledTransactions() {
     [runMutation],
   );
 
+  const advancePost = useCallback(
+    (id: string, transactionDate?: Date): boolean =>
+      runMutation(() => advancePostScheduledTransaction(id, { transactionDate })),
+    [runMutation],
+  );
+
   return {
     schedules,
     occurrences,
@@ -144,5 +158,6 @@ export function useScheduledTransactions() {
     restore,
     postOccurrence,
     skipOccurrence,
+    advancePost,
   };
 }

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 
+import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { useWorkspace } from "@/modules/onboarding";
 import { runAutomaticLocalBackupIfDue } from "@/modules/local-backup/services/automatic-local-backup.service";
 
@@ -17,12 +18,17 @@ export function LocalBackupProcessor() {
       });
     };
 
-    runIfDue();
+    const cancelInitial = scheduleAfterInteractions(runIfDue);
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") runIfDue();
+      if (state === "active") {
+        scheduleAfterInteractions(runIfDue);
+      }
     });
 
-    return () => subscription.remove();
+    return () => {
+      cancelInitial();
+      subscription.remove();
+    };
   }, [isPersonalWorkspace]);
 
   return null;

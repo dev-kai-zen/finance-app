@@ -9,6 +9,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 
 export interface DashboardQuickActionsCardProps {
   onAddExpense: () => void;
@@ -26,9 +27,10 @@ export function DashboardQuickActionsCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const cardRef = useWalkthroughTarget("quickActionsCard");
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.actionsGrid}>
         <Pressable
           style={({ pressed }) => [

@@ -143,6 +143,20 @@ function renderSearchIcon(name: string, color: string, size = 18) {
 }
 
 export const GeneralSearchModal = memo(function GeneralSearchModal() {
+  const { isSearchOpen, closeSearch } = useSearch();
+
+  if (!isSearchOpen) {
+    return null;
+  }
+
+  return <GeneralSearchModalContent closeSearch={closeSearch} />;
+});
+
+function GeneralSearchModalContent({
+  closeSearch,
+}: {
+  closeSearch: () => void;
+}) {
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -150,13 +164,9 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const { t } = useLocalization();
-  const { isSearchOpen, closeSearch } = useSearch();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const { sections, totalResults, hasQuery } = useGeneralSearch(
-    searchQuery,
-    isSearchOpen,
-  );
+  const { sections, hasQuery } = useGeneralSearch(searchQuery, true);
 
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
@@ -242,10 +252,6 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
     [handleSelectItem, styles, theme],
   );
 
-  if (!isSearchOpen) {
-    return null;
-  }
-
   return (
     <Modal
       animationType={isDesktop ? "fade" : "slide"}
@@ -253,7 +259,7 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
       onRequestClose={handleClose}
       statusBarTranslucent
       transparent
-      visible={isSearchOpen}
+      visible
     >
       <View style={styles.modalBackdrop}>
         {/* Background tap to dismiss */}
@@ -356,7 +362,7 @@ export const GeneralSearchModal = memo(function GeneralSearchModal() {
       </View>
     </Modal>
   );
-});
+}
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

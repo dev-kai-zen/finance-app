@@ -70,6 +70,12 @@ export const skipScheduledOccurrence = deferFunction(
     require("./services/process-due-schedules.service").skipScheduledOccurrence,
 ) as typeof import("./services/process-due-schedules.service").skipScheduledOccurrence;
 
+export const advancePostScheduledTransaction = deferFunction(
+  () =>
+    require("./services/advance-post-schedule.service")
+      .advancePostScheduledTransaction,
+) as typeof import("./services/advance-post-schedule.service").advancePostScheduledTransaction;
+
 export type {
   CalculatedScheduleOccurrence,
   SaveScheduledTransactionInput,

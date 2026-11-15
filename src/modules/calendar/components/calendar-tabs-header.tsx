@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { Crown } from "lucide-react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { CalendarTab } from "../types/calendar.types";
@@ -100,10 +101,8 @@ export const CalendarTabsHeader = forwardRef<
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <HorizontalScrollView
         ref={scrollViewRef}
-        horizontal
-        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         onContentSizeChange={handleContentSizeChange}
       >
@@ -244,7 +243,7 @@ export const CalendarTabsHeader = forwardRef<
             </View>
           )}
         </Pressable>
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 });

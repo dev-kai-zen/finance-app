@@ -11,6 +11,9 @@ export type DefaultAccountSettingKey =
 export const TRANSACTION_VIEW_MODE_SETTING_KEY =
   "transaction_list_view_mode";
 
+export const ACCOUNTS_GROUP_VIEW_MODE_SETTING_KEY =
+  "accounts_group_view_mode";
+
 export const CHAT_TRANSACTION_MODE_SETTING_KEY = "chat.transactionMode";
 
 export const GESTURE_SHAKE_ACTION_SETTING_KEY = "gestures.shakeAction";
@@ -36,7 +39,6 @@ export const FORM_FIELD_SETTING_KEYS = {
   quickPresets: "form.quickPresets",
   exactTime: "form.exactTime",
   installments: "form.installments",
-  quickDates: "form.quickDates",
 } as const;
 
 export type FormFieldSettingKey =
@@ -80,6 +82,8 @@ export const PROMPT_SETTING_KEYS = {
   budgetsWalkthroughDismissed: "prompt.budgetsWalkthroughDismissed",
   goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
   notesWalkthroughDismissed: "prompt.notesWalkthroughDismissed",
+  creditCardsWalkthroughDismissed: "prompt.creditCardsWalkthroughDismissed",
+  reportsWalkthroughDismissed: "prompt.reportsWalkthroughDismissed",
   settingsWalkthroughDismissed: "prompt.settingsWalkthroughDismissed",
   firstTransactionCelebrated: "prompt.firstTransactionCelebrated",
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
@@ -98,6 +102,14 @@ export const PROMPT_SETTING_KEYS = {
     "prompt.scheduledTransactionFormWalkthroughDismissed",
   budgetFormWalkthroughDismissed: "prompt.budgetFormWalkthroughDismissed",
   goalFormWalkthroughDismissed: "prompt.goalFormWalkthroughDismissed",
+  categoryFormWalkthroughDismissed: "prompt.categoryFormWalkthroughDismissed",
+  pocketFormWalkthroughDismissed: "prompt.pocketFormWalkthroughDismissed",
+  presetFormWalkthroughDismissed: "prompt.presetFormWalkthroughDismissed",
+  noteEditorWalkthroughDismissed: "prompt.noteEditorWalkthroughDismissed",
+  customizeDashboardWalkthroughDismissed:
+    "prompt.customizeDashboardWalkthroughDismissed",
+  txFilterWalkthroughDismissed: "prompt.txFilterWalkthroughDismissed",
+  dataImportWalkthroughDismissed: "prompt.dataImportWalkthroughDismissed",
   developerMessageSeen: "prompt.developerMessageSeen",
   inAppReview10MilestoneDismissed: "prompt.inAppReview10MilestoneDismissed",
   inAppReviewLastPromptedTimestamp: "prompt.inAppReviewLastPromptedTimestamp",
@@ -111,3 +123,4 @@ export const GUIDED_SETUP_STRATEGY = "guided";
 export const USER_NICKNAME_SETTING_KEY = "user_nickname";
 
 export const PRIVACY_POLICY_URL = "https://www.kaizenfinanceapp.com/privacy";
+export const TERMS_URL = "https://www.kaizenfinanceapp.com/terms";

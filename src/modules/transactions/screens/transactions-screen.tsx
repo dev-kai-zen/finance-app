@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Platform,
   Pressable,
   RefreshControl,
@@ -16,10 +17,12 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarClock,
+  ChevronsUp,
   Download,
   FolderDown,
   LayoutList,
   Receipt,
+  RotateCcw,
   Rows3,
   Search,
   Share2,
@@ -33,8 +36,12 @@ import {
   ActionBottomSheet,
   ConfirmModal,
   FloatingActionButton,
+  HorizontalScrollView,
+  InfoModal,
   PageContainer,
   PageEmptyState,
+  PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
@@ -46,7 +53,6 @@ import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
   useWalkthroughTarget,
-  DraggableTourChip,
   WalkthroughIntroModal,
   TransactionsWalkthroughOverlay,
   useTransactionsWalkthrough,
@@ -272,6 +278,16 @@ function TransactionsScreenContent({
   );
   const { viewMode, setViewMode } = useTransactionViewMode();
   const [renderedLimit, setRenderedLimit] = useState(TRANSACTIONS_PAGE_SIZE);
+  const [isSorting, setIsSorting] = useState(false);
+  const sortingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (sortingTimerRef.current) {
+        clearTimeout(sortingTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setRenderedLimit(TRANSACTIONS_PAGE_SIZE);
@@ -285,7 +301,6 @@ function TransactionsScreenContent({
   const filterRef = useWalkthroughTarget("txFilter");
   const sortDateRef = useWalkthroughTarget("txSortDate");
   const sortAmountRef = useWalkthroughTarget("txSortAmount");
-  const sortOrderRef = useWalkthroughTarget("txSortOrder");
   const viewModeRef = useWalkthroughTarget("txViewMode");
   const scheduledRef = useWalkthroughTarget("txScheduled");
   const trashRef = useWalkthroughTarget("txTrash");
@@ -297,6 +312,36 @@ function TransactionsScreenContent({
   }, [registerTarget]);
 
   const sectionListRef = useRef<SectionList<any>>(null);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const showScrollToTopRef = useRef(false);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset } = event.nativeEvent;
+      const shouldShow = contentOffset.y > 350;
+
+      if (shouldShow !== showScrollToTopRef.current) {
+        showScrollToTopRef.current = shouldShow;
+        setShowScrollToTop(shouldShow);
+      }
+    },
+    [],
+  );
+
+  const handleScrollToTop = useCallback(() => {
+    triggerHaptic();
+    const scrollResponder = sectionListRef.current?.getScrollResponder();
+    if (scrollResponder?.scrollTo) {
+      scrollResponder.scrollTo({ y: 0, animated: true });
+    } else {
+      sectionListRef.current?.scrollToLocation({
+        sectionIndex: 0,
+        itemIndex: 0,
+        viewOffset: 0,
+        animated: true,
+      });
+    }
+  }, []);
 
   const handleScrollToTarget = useCallback((targetId: WalkthroughTargetId) => {
     if (targetId === "txFab") {
@@ -307,6 +352,16 @@ function TransactionsScreenContent({
   const walkthrough = useTransactionsWalkthrough({
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "transactionsWalkthroughDismissed",
@@ -401,6 +456,11 @@ function TransactionsScreenContent({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
+  const [exportNotice, setExportNotice] = useState<{
+    title: string;
+    message: string;
+    variant?: "info" | "success" | "error";
+  } | null>(null);
   const handledActionRef = useRef<string | null>(null);
   const returnToChatOnFormCloseRef = useRef(false);
 
@@ -604,8 +664,22 @@ function TransactionsScreenContent({
         const valB = Math.abs(b.amountMinorUnits);
         return filterState.sortOrder === "asc" ? valA - valB : valB - valA;
       } else {
-        const timeA = new Date(a.occurredAt ?? 0).getTime();
-        const timeB = new Date(b.occurredAt ?? 0).getTime();
+        const timeA =
+          typeof a.occurredAt === "number"
+            ? a.occurredAt
+            : a.occurredAt instanceof Date
+              ? a.occurredAt.getTime()
+              : a.occurredAt
+                ? Date.parse(a.occurredAt) || 0
+                : 0;
+        const timeB =
+          typeof b.occurredAt === "number"
+            ? b.occurredAt
+            : b.occurredAt instanceof Date
+              ? b.occurredAt.getTime()
+              : b.occurredAt
+                ? Date.parse(b.occurredAt) || 0
+                : 0;
         return filterState.sortOrder === "asc" ? timeA - timeB : timeB - timeA;
       }
     });
@@ -847,12 +921,14 @@ function TransactionsScreenContent({
         if (error instanceof TransactionCsvExportCancelledError) {
           return;
         }
-        Alert.alert(
-          "Export failed",
-          error instanceof Error
-            ? error.message
-            : "Unable to export transactions.",
-        );
+        setExportNotice({
+          title: t("transactions.exportFailedTitle"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("transactions.exportFailedMessage"),
+          variant: "error",
+        });
       } finally {
         setExportingCsv(false);
       }
@@ -861,10 +937,11 @@ function TransactionsScreenContent({
 
   const handleOpenExportCsv = () => {
     if (filteredTransactions.length === 0) {
-      Alert.alert(
-        "Nothing to export",
-        "Adjust your filters or record transactions first.",
-      );
+      setExportNotice({
+        title: t("transactions.exportEmptyTitle"),
+        message: t("transactions.exportEmptyMessage"),
+        variant: "info",
+      });
       return;
     }
 
@@ -875,10 +952,11 @@ function TransactionsScreenContent({
     setExportCsvSheetOpen(false);
     runCsvExport(async (rows) => {
       const { fileName } = await saveTransactionsCsvToDevice(rows);
-      Alert.alert(
-        "Saved to device",
-        `${fileName} was saved to the folder you selected.`,
-      );
+      setExportNotice({
+        title: t("transactions.exportSavedTitle"),
+        message: t("transactions.exportSavedMessage", { fileName }),
+        variant: "info",
+      });
     });
   };
 
@@ -887,12 +965,27 @@ function TransactionsScreenContent({
     runCsvExport((rows) => shareTransactionsCsv(rows));
   };
 
-  const toggleSortOrder = () => {
-    setFilterState((prev) => ({
-      ...prev,
-      sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
-    }));
-  };
+  const handleSelectSortField = useCallback((field: "date" | "amount") => {
+    if (sortingTimerRef.current) {
+      clearTimeout(sortingTimerRef.current);
+    }
+    setIsSorting(true);
+    sortingTimerRef.current = setTimeout(() => {
+      setFilterState((prev) => ({
+        ...prev,
+        sortBy: field,
+        sortOrder:
+          prev.sortBy === field
+            ? prev.sortOrder === "desc"
+              ? "asc"
+              : "desc"
+            : "desc",
+      }));
+      requestAnimationFrame(() => {
+        setIsSorting(false);
+      });
+    }, 100);
+  }, []);
 
   const handleClearFilters = () => {
     setSearchQuery("");
@@ -914,15 +1007,15 @@ function TransactionsScreenContent({
   );
 
   return (
-    <PageContainer
-      contentContainerStyle={styles.pageContent}
-      refreshing={isPullRefreshing}
-      onRefresh={handlePullRefresh}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        contentContainerStyle={styles.pageContent}
+        refreshing={isPullRefreshing}
+        onRefresh={handlePullRefresh}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
           <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
@@ -939,12 +1032,7 @@ function TransactionsScreenContent({
               setIsChatModalOpen(true);
             }}
           />
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
+        }
       scrollable={false}
     >
       <View style={styles.container}>
@@ -1034,40 +1122,70 @@ function TransactionsScreenContent({
             <Pressable
               ref={sortDateRef as never}
               collapsable={false}
-              accessibilityLabel="Sort by date"
-                onPress={() =>
-                  setFilterState((prev) => ({ ...prev, sortBy: "date" }))
-                }
-                style={[styles.sortPill, filterState.sortBy === "date" && styles.sortPillActive]}
+              accessibilityLabel={`Sort by date, ${
+                filterState.sortBy === "date"
+                  ? filterState.sortOrder === "desc"
+                    ? "latest to oldest"
+                    : "oldest to latest"
+                  : "tap to sort latest to oldest"
+              }`}
+              accessibilityRole="button"
+              onPress={() => handleSelectSortField("date")}
+              style={[
+                styles.sortPill,
+                filterState.sortBy === "date" && styles.sortPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortPillText,
+                  filterState.sortBy === "date" && styles.sortPillTextActive,
+                ]}
               >
-                <Text style={[styles.sortPillText, filterState.sortBy === "date" && styles.sortPillTextActive]}>Date</Text>
-              </Pressable>
+                Date
+              </Text>
+              {filterState.sortBy === "date" ? (
+                filterState.sortOrder === "asc" ? (
+                  <ArrowUp color={theme.colors.success} size={14} />
+                ) : (
+                  <ArrowDown color={theme.colors.success} size={14} />
+                )
+              ) : null}
+            </Pressable>
 
             <Pressable
               ref={sortAmountRef as never}
               collapsable={false}
-              accessibilityLabel="Sort by amount"
-                onPress={() =>
-                  setFilterState((prev) => ({ ...prev, sortBy: "amount" }))
-                }
-                style={[styles.sortPill, filterState.sortBy === "amount" && styles.sortPillActive]}
+              accessibilityLabel={`Sort by amount, ${
+                filterState.sortBy === "amount"
+                  ? filterState.sortOrder === "desc"
+                    ? "highest to lowest"
+                    : "lowest to highest"
+                  : "tap to sort highest to lowest"
+              }`}
+              accessibilityRole="button"
+              onPress={() => handleSelectSortField("amount")}
+              style={[
+                styles.sortPill,
+                filterState.sortBy === "amount" && styles.sortPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sortPillText,
+                  filterState.sortBy === "amount" && styles.sortPillTextActive,
+                ]}
               >
-                <Text style={[styles.sortPillText, filterState.sortBy === "amount" && styles.sortPillTextActive]}>Amount</Text>
-              </Pressable>
-
-            <Pressable
-              ref={sortOrderRef as never}
-              collapsable={false}
-              accessibilityLabel={`Sort order ${filterState.sortOrder}`}
-                onPress={toggleSortOrder}
-                style={styles.sortOrderButton}
-              >
-                {filterState.sortOrder === "asc" ? (
-                  <ArrowUp color={theme.colors.success} size={16} />
+                Amount
+              </Text>
+              {filterState.sortBy === "amount" ? (
+                filterState.sortOrder === "asc" ? (
+                  <ArrowUp color={theme.colors.success} size={14} />
                 ) : (
-                  <ArrowDown color={theme.colors.success} size={16} />
-                )}
-              </Pressable>
+                  <ArrowDown color={theme.colors.success} size={14} />
+                )
+              ) : null}
+            </Pressable>
 
             <Pressable
               ref={viewModeRef as never}
@@ -1139,12 +1257,23 @@ function TransactionsScreenContent({
         </View>
 
         {(activeFilterCount > 0 || searchQuery.trim().length > 0) && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
+          <HorizontalScrollView
             contentContainerStyle={styles.activeFiltersRow}
             style={styles.activeFiltersScroll}
           >
+            <Pressable
+              accessibilityLabel="Clear all filters"
+              accessibilityRole="button"
+              onPress={handleClearFilters}
+              style={({ pressed }) => [
+                styles.clearAllFiltersChip,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <RotateCcw color={theme.colors.textSecondary} size={12} />
+              <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
+            </Pressable>
+
             {searchQuery.trim().length > 0 ? (
               <Pressable
                 style={styles.activeFilterChip}
@@ -1279,18 +1408,18 @@ function TransactionsScreenContent({
                 </Pressable>
               );
             })}
-
-            <Pressable
-              style={styles.clearAllFiltersChip}
-              onPress={handleClearFilters}
-              accessibilityRole="button"
-            >
-              <Text style={styles.clearAllFiltersChipText}>Clear all</Text>
-            </Pressable>
-          </ScrollView>
+          </HorizontalScrollView>
         )}
 
         {/* Transactions Feed Grouped By Date */}
+        {isSorting ? (
+          <View style={styles.sortingSkeletonContainer}>
+            <PageLoadingState
+              message="Sorting transactions..."
+              variant="list"
+            />
+          </View>
+        ) : (
         <SectionList
           ref={sectionListRef}
           alwaysBounceVertical
@@ -1304,38 +1433,45 @@ function TransactionsScreenContent({
           }
           ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
           ListEmptyComponent={
-            <View>
-              <PageEmptyState
-                icon={
-                  activeFilterCount > 0 || searchQuery.length > 0 ? (
-                    <Search color={theme.colors.primary} size={32} />
-                  ) : (
-                    <Receipt color={theme.colors.primary} size={32} />
-                  )
-                }
-                actionLabel={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? "Clear Filters"
-                    : "+ Record First Transaction"
-                }
-                description={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? "No transaction records match your search or filter criteria."
-                    : "Your transaction history is empty. Start recording your expenses, income, or transfers."
-                }
-                onAction={
-                  activeFilterCount > 0 || searchQuery.length > 0
-                    ? handleClearFilters
-                    : handleOpenNewTransaction
-                }
-                title="No Transactions Found"
+            loading ? (
+              <PageLoadingState
+                message="Loading transactions..."
+                variant="list"
               />
-              <AdBanner
-                placement="transactions"
-                variant="card"
-                style={{ marginTop: theme.spacing.md }}
-              />
-            </View>
+            ) : (
+              <View>
+                <PageEmptyState
+                  icon={
+                    activeFilterCount > 0 || searchQuery.length > 0 ? (
+                      <Search color={theme.colors.primary} size={32} />
+                    ) : (
+                      <Receipt color={theme.colors.primary} size={32} />
+                    )
+                  }
+                  actionLabel={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? "Clear Filters"
+                      : "+ Record First Transaction"
+                  }
+                  description={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? "No transaction records match your search or filter criteria."
+                      : "Your transaction history is empty. Start recording your expenses, income, or transfers."
+                  }
+                  onAction={
+                    activeFilterCount > 0 || searchQuery.length > 0
+                      ? handleClearFilters
+                      : handleOpenNewTransaction
+                  }
+                  title="No Transactions Found"
+                />
+                <AdBanner
+                  placement="transactions"
+                  variant="card"
+                  style={{ marginTop: theme.spacing.md }}
+                />
+              </View>
+            )
           }
           contentContainerStyle={[
             styles.listContentContainer,
@@ -1407,6 +1543,8 @@ function TransactionsScreenContent({
           windowSize={7}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
+          onScroll={handleScroll}
+          scrollEventThrottle={32}
           ListFooterComponent={
             hasMoreTransactions ? (
               <View style={styles.loadMoreFooter}>
@@ -1421,6 +1559,36 @@ function TransactionsScreenContent({
             ) : null
           }
         />
+        )}
+
+        {showScrollToTop ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.scrollToTopContainer,
+              { bottom: Math.max(insets.bottom, 16) + 24 },
+            ]}
+          >
+            <Pressable
+              accessibilityLabel={t("transactions.scrollToTop", {
+                defaultValue: "Scroll to top",
+              })}
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={handleScrollToTop}
+              style={({ pressed }) => [
+                styles.scrollToTopButton,
+                pressed && styles.scrollToTopButtonPressed,
+              ]}
+            >
+              <ChevronsUp
+                color={theme.colors.primary}
+                size={22}
+                strokeWidth={2.5}
+              />
+            </Pressable>
+          </View>
+        ) : null}
       </View>
 
       {/* Transaction & Transfer Form Modal */}
@@ -1622,6 +1790,15 @@ function TransactionsScreenContent({
         visible={exportCsvSheetOpen}
       />
 
+      <InfoModal
+        buttonLabel={t("common.ok")}
+        message={exportNotice?.message ?? ""}
+        onClose={() => setExportNotice(null)}
+        title={exportNotice?.title ?? ""}
+        variant={exportNotice?.variant ?? "info"}
+        visible={Boolean(exportNotice)}
+      />
+
       <WalkthroughIntroModal
         visible={walkthroughIntro.isIntroVisible}
         title={t("transactionsWalkthrough.introTitle")}
@@ -1646,12 +1823,29 @@ function TransactionsScreenContent({
           handleOpenNewTransaction();
         }}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     pageContent: {
       flex: 1,
       paddingBottom: 0,
@@ -1663,6 +1857,11 @@ function createStyles(theme: AppTheme) {
     },
     sectionList: {
       flex: 1,
+    },
+    sortingSkeletonContainer: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.xs,
+      paddingTop: theme.spacing.xs,
     },
     listContentContainer: {
       flexGrow: 1,
@@ -1806,6 +2005,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
+      flexDirection: "row",
+      gap: 4,
       justifyContent: "center",
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 5,
@@ -1820,7 +2021,6 @@ function createStyles(theme: AppTheme) {
     },
     sortPillTextActive: {
       color: theme.colors.success,
-      flex: 1,
     },
     sortOrderButton: {
       alignItems: "center",
@@ -1898,6 +2098,8 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
+      flexDirection: "row",
+      gap: 5,
       paddingHorizontal: 10,
       paddingVertical: 4,
     },
@@ -1920,6 +2122,33 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       justifyContent: "center",
       paddingVertical: theme.spacing.md,
+    },
+    scrollToTopContainer: {
+      alignItems: "center",
+      alignSelf: "center",
+      justifyContent: "center",
+      pointerEvents: "box-none",
+      position: "absolute",
+      zIndex: 50,
+    },
+    scrollToTopButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: 22,
+      borderWidth: 1.5,
+      elevation: 6,
+      height: 44,
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      width: 44,
+    },
+    scrollToTopButtonPressed: {
+      backgroundColor: theme.colors.surfaceMuted,
+      transform: [{ scale: 0.92 }],
     },
   });
 }

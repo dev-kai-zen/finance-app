@@ -13,7 +13,10 @@ import {
   saveCurrencyPreferences,
   saveDefaultCurrencyCode,
 } from "@/modules/currencies/services/currency-preferences.service";
-import { applyGuidedWorkspaceSimpleDefaults } from "@/modules/settings/services/experience-preferences.service";
+import {
+  applyGuidedWorkspaceSimpleDefaults,
+  invalidateExperiencePreferencesCache,
+} from "@/modules/settings/services/experience-preferences.service";
 import {
   setDefaultExpenseAccount,
   setDefaultIncomeAccount,
@@ -236,6 +239,7 @@ function saveCompletedSettings(
     context,
     now,
   );
+  invalidateExperiencePreferencesCache();
 }
 
 function completedState(

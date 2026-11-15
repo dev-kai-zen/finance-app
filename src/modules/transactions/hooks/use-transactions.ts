@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import {
   calculateTransactionStats,
   listTransactions,
@@ -25,9 +26,31 @@ import type {
 } from "../types/transaction.types";
 import type { TransactionPresetSubmission } from "../types/transaction-preset.types";
 
-export function useTransactions(initialFilter?: TransactionFilter) {
+export interface UseTransactionsOptions {
+  initialFilter?: TransactionFilter;
+  skipQuery?: boolean;
+}
+
+function isUseTransactionsOptions(
+  value: TransactionFilter | UseTransactionsOptions | undefined,
+): value is UseTransactionsOptions {
+  return Boolean(
+    value && ("skipQuery" in value || "initialFilter" in value),
+  );
+}
+
+export function useTransactions(
+  filterOrOptions?: TransactionFilter | UseTransactionsOptions,
+) {
+  const skipQuery = isUseTransactionsOptions(filterOrOptions)
+    ? Boolean(filterOrOptions.skipQuery)
+    : false;
+  const resolvedInitialFilter = isUseTransactionsOptions(filterOrOptions)
+    ? filterOrOptions.initialFilter
+    : filterOrOptions;
+
   const [filter, setFilter] = useState<TransactionFilter>(
-    initialFilter ?? { type: "all" },
+    resolvedInitialFilter ?? { type: "all" },
   );
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
   const [deletedTransactions, setDeletedTransactions] = useState<
@@ -39,35 +62,46 @@ export function useTransactions(initialFilter?: TransactionFilter) {
     netCashflowMinorUnits: 0,
     transactionCount: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipQuery);
   const [pendingAction, setPendingAction] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    try {
-      setLoading(true);
-      setError(null);
-      const list = listTransactions(filter);
-      const deletedList = listDeletedTransactions();
-      const computedStats = calculateTransactionStats();
-      setTransactions(list);
-      setDeletedTransactions(deletedList);
-      setStats(computedStats);
-    } catch (err: any) {
-      setError(err?.message || "Failed to load transactions.");
-    } finally {
-      setLoading(false);
+    if (skipQuery) {
+      return;
     }
-  }, [filter]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+    runDeferredSyncQuery(
+      {
+        hasCachedResult: hasLoadedOnceRef.current,
+        setLoading,
+        onMarkLoaded: () => {
+          hasLoadedOnceRef.current = true;
+        },
+      },
+      () => {
+        try {
+          setError(null);
+          const list = listTransactions(filter);
+          const deletedList = listDeletedTransactions();
+          const computedStats = calculateTransactionStats();
+          setTransactions(list);
+          setDeletedTransactions(deletedList);
+          setStats(computedStats);
+        } catch (err: any) {
+          setError(err?.message || "Failed to load transactions.");
+        }
+      },
+    );
+  }, [filter, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
+      if (skipQuery) {
+        return;
+      }
       refresh();
-    }, [refresh]),
+    }, [refresh, skipQuery]),
   );
 
   const clearError = useCallback(() => {

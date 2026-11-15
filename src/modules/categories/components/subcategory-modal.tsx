@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { Check, ChevronRight, Plus } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -43,7 +43,12 @@ export interface SubcategoryModalProps {
   onClearError: () => void;
 }
 
-export function SubcategoryModal({
+export function SubcategoryModal(props: SubcategoryModalProps) {
+  if (!props.visible) return null;
+  return <SubcategoryModalContent {...props} />;
+}
+
+function SubcategoryModalContent({
   visible,
   onClose,
   parentCategory,
@@ -61,13 +66,19 @@ export function SubcategoryModal({
 
   const {
     colors: hexColorsList,
-    refresh: refreshHexColors,
     addColor,
   } = useHexColors();
 
-  const [name, setName] = useState("");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_slate");
-  const [selectedIcon, setSelectedIcon] = useState<string>("tag");
+  const [name, setName] = useState(() => subcategoryToEdit?.name ?? "");
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () =>
+      subcategoryToEdit?.hexColorsId ??
+      parentCategory?.hexColorsId ??
+      "color_slate",
+  );
+  const [selectedIcon, setSelectedIcon] = useState<string>(
+    () => subcategoryToEdit?.icon ?? "tag",
+  );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -82,12 +93,6 @@ export function SubcategoryModal({
 
   const selectedHexObj = hexColorsList.find((entry) => entry.id === hexColorsId);
   const categoricalColor = selectedHexObj?.hex ?? theme.colors.primary;
-
-  useEffect(() => {
-    if (visible) {
-      refreshHexColors();
-    }
-  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (!visible) return;
@@ -333,11 +338,17 @@ export function SubcategoryModal({
                       style={[
                         styles.colorSwatch,
                         { backgroundColor: entry.hex },
-                        isSelected && styles.colorSwatchSelected,
+                        isSelected
+                          ? styles.colorSwatchSelected
+                          : styles.colorSwatchUnselected,
                       ]}
                     >
                       {isSelected ? (
-                        <Text style={styles.colorCheckMark}>✓</Text>
+                        <Check
+                          color="#FFFFFF"
+                          size={14}
+                          strokeWidth={3}
+                        />
                       ) : null}
                     </Pressable>
                   );
@@ -352,7 +363,7 @@ export function SubcategoryModal({
                     pressed && styles.addColorSwatchPressed,
                   ]}
                 >
-                  <Plus color={theme.colors.primary} size={22} strokeWidth={2.5} />
+                  <Plus color={theme.colors.primary} size={16} strokeWidth={2.5} />
                 </Pressable>
               </View>
             </View>
@@ -407,21 +418,25 @@ export function SubcategoryModal({
         </View>
       </KeyboardAvoidingView>
 
-      <IconPickerModal
-        onClose={() => setIsIconPickerOpen(false)}
-        onSelectIcon={(iconKey) => {
-          setSelectedIcon(iconKey);
-          setIsIconPickerOpen(false);
-        }}
-        selectedIcon={selectedIcon}
-        visible={isIconPickerOpen}
-      />
+      {isIconPickerOpen ? (
+        <IconPickerModal
+          onClose={() => setIsIconPickerOpen(false)}
+          onSelectIcon={(iconKey) => {
+            setSelectedIcon(iconKey);
+            setIsIconPickerOpen(false);
+          }}
+          selectedIcon={selectedIcon}
+          visible={isIconPickerOpen}
+        />
+      ) : null}
 
-      <HexColorFormModal
-        onClose={() => setIsColorFormOpen(false)}
-        onSave={handleSaveCustomColor}
-        visible={isColorFormOpen}
-      />
+      {isColorFormOpen ? (
+        <HexColorFormModal
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
+        />
+      ) : null}
 
       <NotificationModal
         message={displayError ?? ""}
@@ -656,33 +671,31 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
-      borderRadius: 18,
-      height: 36,
+      borderColor: "rgba(255,255,255,0.25)",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
-      width: 36,
+      width: 34,
     },
+    colorSwatchUnselected: {},
     colorSwatchSelected: {
-      borderColor: theme.colors.surface,
-      borderWidth: 3,
-      ...theme.shadows.card,
+      borderColor: theme.colors.textPrimary,
+      borderWidth: 2.5,
+      transform: [{ scale: 1.06 }],
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 18,
+      borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
-      borderWidth: 2,
-      height: 36,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
-      width: 36,
+      width: 34,
     },
     addColorSwatchPressed: {
       opacity: 0.65,
       transform: [{ scale: 0.96 }],
-    },
-    colorCheckMark: {
-      color: theme.colors.textInverse,
-      fontSize: 14,
-      fontWeight: "bold",
     },
     footerRow: {
       flexDirection: "row",

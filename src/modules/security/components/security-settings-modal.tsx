@@ -11,13 +11,12 @@ import {
   ChevronRight,
   Crown,
   Fingerprint,
-  Info,
   KeyRound,
   ShieldCheck,
   X,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { InfoModal } from "@/components";
+import { HelpIconButton, InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -182,27 +181,22 @@ export function SecuritySettingsModal({
                 <Text style={styles.headerTitle}>
                   {t("security.menuTitle")}
                 </Text>
-              </View>
-              <View style={styles.headerRightActions}>
-                <Pressable
-                  accessibilityLabel="Security info"
-                  accessibilityRole="button"
-                  hitSlop={8}
+                <HelpIconButton
+                  accessibilityLabel={t("security.menuTitle")}
+                  color={theme.colors.textMuted}
                   onPress={() => setInfoModalVisible(true)}
-                  style={styles.closeButton}
-                >
-                  <Info color={theme.colors.textMuted} size={20} />
-                </Pressable>
-                <Pressable
-                  accessibilityLabel={t("common.close")}
-                  accessibilityRole="button"
-                  hitSlop={8}
-                  onPress={onClose}
-                  style={styles.closeButton}
-                >
-                  <X color={theme.colors.textMuted} size={20} />
-                </Pressable>
+                  size={18}
+                />
               </View>
+              <Pressable
+                accessibilityLabel={t("common.close")}
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={onClose}
+                style={styles.closeButton}
+              >
+                <X color={theme.colors.textMuted} size={20} />
+              </Pressable>
             </View>
 
             <ScrollView
@@ -447,6 +441,7 @@ function createStyles(theme: AppTheme) {
       alignItems: "center",
       flexDirection: "row",
       gap: theme.spacing.sm,
+      flexShrink: 1,
     },
     iconCircle: {
       alignItems: "center",
@@ -461,10 +456,10 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.lg,
       fontWeight: theme.typography.fontWeight.bold,
     },
-    headerRightActions: {
+    infoButton: {
       alignItems: "center",
-      flexDirection: "row",
-      gap: theme.spacing.xs,
+      justifyContent: "center",
+      padding: theme.spacing.xs,
     },
     closeButton: {
       padding: theme.spacing.xs,

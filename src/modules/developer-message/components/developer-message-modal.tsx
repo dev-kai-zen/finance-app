@@ -193,7 +193,7 @@ export function DeveloperMessageModal({
                 ]}
               >
                 <Mail color={theme.colors.primary} size={16} />
-                <Text style={styles.secondaryButtonText}>
+                <Text numberOfLines={1} style={styles.secondaryButtonText}>
                   {t("developerMessage.actionFeedback")}
                 </Text>
               </Pressable>
@@ -213,7 +213,7 @@ export function DeveloperMessageModal({
                   ]}
                 >
                   <Crown color="#D97706" size={16} />
-                  <Text style={[styles.secondaryButtonText, { color: "#D97706" }]}>
+                  <Text numberOfLines={1} style={[styles.secondaryButtonText, { color: "#D97706" }]}>
                     {t("developerMessage.actionSupport")}
                   </Text>
                 </Pressable>
@@ -312,14 +312,17 @@ function createStyles(theme: AppTheme) {
     sectionIcon: {
       alignItems: "center",
       borderRadius: theme.borderRadius.small,
+      flexShrink: 0,
       height: 28,
       justifyContent: "center",
       width: 28,
     },
     sectionTitle: {
       color: theme.colors.textPrimary,
+      flex: 1,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+      lineHeight: theme.typography.lineHeight.base,
     },
     sectionBody: {
       color: theme.colors.textSecondary,
@@ -374,6 +377,7 @@ function createStyles(theme: AppTheme) {
     },
     secondaryButtonText: {
       color: theme.colors.textPrimary,
+      flexShrink: 1,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
     },

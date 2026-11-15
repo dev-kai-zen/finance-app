@@ -16,13 +16,17 @@ import {
 import {
   ConfirmModal,
   FloatingActionButton,
+  HorizontalScrollView,
   NotificationModal,
   PageContainer,
   PageEmptyState,
+  PageLoadingState,
+  useHeaderWalkthroughAction,
 } from "@/components";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AdBanner } from "@/modules/ads";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -31,7 +35,6 @@ import { PieChart } from "lucide-react-native";
 import {
   BudgetCongratulationsModal,
   BudgetsWalkthroughOverlay,
-  DraggableTourChip,
   WalkthroughIntroModal,
   useBudgetsWalkthrough,
   useWalkthroughIntro,
@@ -130,6 +133,27 @@ function BudgetsScreenContent({
     return budgetStatuses.filter((s) => s.budget.frequency === selectedFilter);
   }, [budgetStatuses, selectedFilter]);
 
+  const countsByFilter = useMemo(() => {
+    const counts: Record<FrequencyFilter, number> = {
+      all: budgetStatuses.length,
+      daily: 0,
+      weekly: 0,
+      biweekly: 0,
+      semi_monthly: 0,
+      monthly: 0,
+      quarterly: 0,
+      custom_monthly: 0,
+      yearly: 0,
+    };
+    for (const s of budgetStatuses) {
+      const freq = s.budget.frequency;
+      if (freq in counts) {
+        counts[freq] = (counts[freq] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [budgetStatuses]);
+
   // Walkthrough targets & coordination
   const emptyCreateRef = useWalkthroughTarget("budgetEmptyCreateButton");
   const totalActiveCardRef = useWalkthroughTarget("budgetTotalActiveCard");
@@ -175,6 +199,16 @@ function BudgetsScreenContent({
     hasBudgetInList,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "budgetsWalkthroughDismissed",
@@ -281,50 +315,47 @@ function BudgetsScreenContent({
   const overallClampedProgress = Math.min(summary.overallPercentage, 100);
   const isOverallExceeded = summary.totalSpentCents > summary.totalBudgetedCents;
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
+  const contentSpacing = useThemeStyles(createContentSpacingStyles);
 
   return (
-    <PageContainer
-      onRefresh={handlePullRefresh}
-      refreshing={isPullRefreshing}
-      scrollRef={scrollRef}
-      scrollContentRef={scrollContentRef}
-      contentContainerStyle={contentSpacing}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
-          {budgets.length > 0 ? (
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        onRefresh={handlePullRefresh}
+        refreshing={isPullRefreshing}
+        scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
+        contentContainerStyle={contentSpacing}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
+          budgets.length > 0 ? (
             <FloatingActionButton
               accessibilityLabel="Set new category budget"
               fabRef={fabRef}
               onPress={handleOpenCreate}
             />
-          ) : null}
-          <DraggableTourChip
-            onPress={walkthrough.startWalkthrough}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
-    >
+          ) : undefined
+        }
+      >
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-            <Text style={styles.loadingText}>Loading budgets from SQLite...</Text>
-          </View>
+          <PageLoadingState message="Loading budgets..." variant="cards" />
         ) : budgets.length === 0 ? (
-          <PageEmptyState
-            actionLabel="+ Set Your First Category Budget"
-            actionRef={emptyCreateRef}
-            description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
-            onAction={handleOpenCreate}
-            title="No Budgets Configured"
-          />
+          <View>
+            <PageEmptyState
+              actionLabel="+ Set Your First Category Budget"
+              actionRef={emptyCreateRef}
+              description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
+              onAction={handleOpenCreate}
+              title="No Budgets Configured"
+            />
+            <AdBanner
+              placement="budgets"
+              variant="card"
+              style={{ marginTop: theme.spacing.md }}
+            />
+          </View>
         ) : (
           <>
             {/* Overview Summary Card */}
@@ -436,14 +467,13 @@ function BudgetsScreenContent({
             </View>
 
             {/* Frequency Filter Tabs */}
-            <View collapsable={false} ref={frequencyTabsRef}>
-              <ScrollView
+            <View collapsable={false} ref={frequencyTabsRef} style={styles.frequencyTabsContainer}>
+              <HorizontalScrollView
                 contentContainerStyle={styles.filterScroll}
-                horizontal
-                showsHorizontalScrollIndicator={false}
               >
                 {FILTER_TABS.map((tab) => {
                   const active = selectedFilter === tab.key;
+                  const count = countsByFilter[tab.key] ?? 0;
                   return (
                     <Pressable
                       key={tab.key}
@@ -462,10 +492,25 @@ function BudgetsScreenContent({
                       >
                         {tab.label}
                       </Text>
+                      <View
+                        style={[
+                          styles.countBadge,
+                          active && styles.countBadgeActive,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.countBadgeText,
+                            active && styles.countBadgeTextActive,
+                          ]}
+                        >
+                          {count}
+                        </Text>
+                      </View>
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </HorizontalScrollView>
             </View>
 
             {/* List of Category Budgets */}
@@ -480,20 +525,28 @@ function BudgetsScreenContent({
                 style={[styles.budgetList, isDesktop && styles.budgetListDesktop]}
               >
                 {filteredStatuses.map((status, index) => (
-                  <BudgetCard
-                    key={status.budget.id}
-                    onPress={() => handleOpenEdit(status)}
-                    onToggle={(val) => toggleBudget(status.budget.id, val)}
-                    onViewTransactions={() =>
-                      router.push(
-                        `/transactions?categoryId=${encodeURIComponent(
-                          status.budget.categoryId,
-                        )}&datePreset=this_month` as any,
-                      )
-                    }
-                    status={status}
-                    toggleRef={index === 0 ? firstItemToggleRef : undefined}
-                  />
+                  <View key={status.budget.id}>
+                    <BudgetCard
+                      onPress={() => handleOpenEdit(status)}
+                      onToggle={(val) => toggleBudget(status.budget.id, val)}
+                      onViewTransactions={() =>
+                        router.push(
+                          `/transactions?categoryId=${encodeURIComponent(
+                            status.budget.categoryId,
+                          )}&datePreset=this_month` as any,
+                        )
+                      }
+                      status={status}
+                      toggleRef={index === 0 ? firstItemToggleRef : undefined}
+                    />
+                    {index === 0 ? (
+                      <AdBanner
+                        placement="budgets"
+                        variant="card"
+                        style={{ marginVertical: theme.spacing.sm }}
+                      />
+                    ) : null}
+                  </View>
                 ))}
               </View>
             )}
@@ -579,23 +632,35 @@ function BudgetsScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
+const createContentSpacingStyles = (theme: AppTheme) => ({
+  paddingTop: theme.spacing.lg,
+});
+
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    container: {
+    screenWrapper: {
       flex: 1,
     },
-    loadingBox: {
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: theme.spacing.xl * 2,
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
     },
-    loadingText: {
-      color: theme.colors.textSecondary,
-      marginTop: theme.spacing.md,
+    container: {
+      flex: 1,
     },
     summaryCard: {
       backgroundColor: theme.colors.surface,
@@ -700,9 +765,11 @@ function createStyles(theme: AppTheme) {
       height: 24,
       width: 1,
     },
+    frequencyTabsContainer: {
+      marginBottom: theme.spacing.md,
+    },
     filterScroll: {
       gap: theme.spacing.xs,
-      marginBottom: theme.spacing.md,
       paddingVertical: 2,
     },
     filterTab: {
@@ -710,8 +777,11 @@ function createStyles(theme: AppTheme) {
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
     },
     filterTabActive: {
       backgroundColor: theme.colors.primary,
@@ -723,6 +793,26 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
     },
     filterTabTextActive: {
+      color: theme.colors.onPrimary,
+    },
+    countBadge: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      paddingVertical: 1,
+      minWidth: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countBadgeActive: {
+      backgroundColor: "rgba(255, 255, 255, 0.25)",
+    },
+    countBadgeText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: theme.colors.textSecondary,
+    },
+    countBadgeTextActive: {
       color: theme.colors.onPrimary,
     },
     budgetList: {

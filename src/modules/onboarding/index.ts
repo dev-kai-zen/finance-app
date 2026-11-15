@@ -11,3 +11,5 @@ export type {
   WorkspaceSetupStrategy,
   WorkspaceState,
 } from "./types/onboarding.types";
+
+export { isPersonalWorkspace } from "./services/is-personal-workspace.service";

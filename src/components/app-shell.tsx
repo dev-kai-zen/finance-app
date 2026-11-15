@@ -1,5 +1,13 @@
-import { type PropsWithChildren, type ReactNode, useState } from "react";
 import {
+  type PropsWithChildren,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
@@ -8,9 +16,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePathname } from "expo-router";
-import { Eye, EyeOff } from "lucide-react-native";
+import { Eye, EyeOff, Sparkles } from "lucide-react-native";
 import { Sidebar } from "./sidebar";
 import { SyncStatusChip } from "./sync-status-chip";
+import { useAppShellHeaderContext } from "./app-shell-header-context";
 import { isTabletOrDesktop, LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -23,6 +32,7 @@ type Translate = ReturnType<typeof useLocalization>["t"];
 function getScreenTitle(pathname: string, t: Translate): string {
   if (pathname.startsWith("/google-drive-backup"))
     return t("navigation.googleDriveBackup");
+  if (pathname.startsWith("/data-import")) return t("dataImport.title");
   if (pathname.startsWith("/local-backup"))
     return t("navigation.localBackup");
   if (pathname.startsWith("/currency-setup"))
@@ -40,7 +50,7 @@ function getScreenTitle(pathname: string, t: Translate): string {
     return t("navigation.transactions");
   if (pathname.startsWith("/calendar")) return t("navigation.calendar");
   if (pathname.startsWith("/credit-cards"))
-    return t("navigation.creditCardMonitoring");
+    return t("navigation.creditCards");
   if (pathname.startsWith("/categories")) return t("navigation.categories");
   if (pathname.startsWith("/budgets")) return t("navigation.budgets");
   if (pathname.startsWith("/goals")) return t("navigation.goals");
@@ -81,6 +91,91 @@ function ScreenTitle({
   );
 }
 
+function HeaderWalkthroughButton({
+  enabled,
+  label,
+  buttonStyle,
+  pressedStyle,
+}: {
+  enabled: boolean;
+  label: string;
+  buttonStyle: object;
+  pressedStyle: object;
+}) {
+  const { walkthroughAction } = useAppShellHeaderContext();
+  if (!enabled || !walkthroughAction) {
+    return null;
+  }
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      onPress={walkthroughAction.onStart}
+      style={({ pressed }) => [buttonStyle, pressed && pressedStyle]}
+    >
+      <Sparkles color="#00A3FF" size={19} />
+    </Pressable>
+  );
+}
+
+function HeaderPrivacyButton({
+  buttonStyle,
+  pressedStyle,
+  iconColor,
+}: {
+  buttonStyle: object;
+  pressedStyle: object;
+  iconColor: string;
+}) {
+  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const [isPending, setIsPending] = useState(false);
+  const isMountedRef = useRef(true);
+  const { t } = useLocalization();
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const handleToggle = useCallback(() => {
+    if (isPending) return;
+    setIsPending(true);
+    togglePrivacyMode(() => {
+      if (isMountedRef.current) {
+        setIsPending(false);
+      }
+    });
+  }, [isPending, togglePrivacyMode]);
+
+  return (
+    <Pressable
+      accessibilityLabel={
+        isPrivate ? t("privacy.showBalances") : t("privacy.hideBalances")
+      }
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isPending, busy: isPending }}
+      disabled={isPending}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      onPress={handleToggle}
+      style={({ pressed }) => [
+        buttonStyle,
+        pressed && !isPending && pressedStyle,
+      ]}
+    >
+      {isPending ? (
+        <ActivityIndicator color={iconColor} size="small" />
+      ) : isPrivate ? (
+        <EyeOff color={iconColor} size={19} />
+      ) : (
+        <Eye color={iconColor} size={19} />
+      )}
+    </Pressable>
+  );
+}
+
 export function AppShell({
   children,
   banner,
@@ -94,8 +189,10 @@ export function AppShell({
   const styles = useThemeStyles(createStyles);
   const pathname = usePathname();
   const { t } = useLocalization();
-  const { generalSearchEnabled } = useExperiencePreferences();
-  const { isPrivate, togglePrivacyMode } = usePrivacyMode();
+  const { generalSearchEnabled, guideHelperEnabled } = useExperiencePreferences();
+  const walkthroughLabel = t("dashboard.walkthroughChip", {
+    defaultValue: "Guide",
+  });
   const screenTitle = getScreenTitle(pathname, t);
   const isSettingsScreen = pathname.startsWith("/settings");
   const handleSettingsTitlePress =
@@ -107,6 +204,7 @@ export function AppShell({
   const isFullScreenModal =
     pathname.startsWith("/language") ||
     pathname.startsWith("/currency-setup") ||
+    pathname.startsWith("/data-import") ||
     pathname.startsWith("/local-backup") ||
     pathname.startsWith("/google-drive-backup") ||
     pathname.startsWith("/reminder-settings") ||
@@ -133,7 +231,7 @@ export function AppShell({
             },
           ]}
         >
-          <Sidebar hiddenHrefs={hiddenNavHrefs} />
+          <Sidebar currentPathname={pathname} hiddenHrefs={hiddenNavHrefs} />
         </View>
 
         {/* Desktop Page Area */}
@@ -147,26 +245,17 @@ export function AppShell({
               />
             </View>
             <View style={styles.topBarRightGroup}>
-                <Pressable
-                  accessibilityLabel={
-                    isPrivate
-                      ? t("privacy.showBalances")
-                      : t("privacy.hideBalances")
-                  }
-                  accessibilityRole="button"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={togglePrivacyMode}
-                  style={({ pressed }) => [
-                    styles.headerIconButton,
-                    pressed && styles.headerIconButtonPressed,
-                  ]}
-                >
-                  {isPrivate ? (
-                    <EyeOff color={styles.headerIconColor.color} size={19} />
-                  ) : (
-                    <Eye color={styles.headerIconColor.color} size={19} />
-                  )}
-                </Pressable>
+                <HeaderWalkthroughButton
+                  buttonStyle={styles.headerIconButton}
+                  enabled={guideHelperEnabled}
+                  label={walkthroughLabel}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
+                <HeaderPrivacyButton
+                  buttonStyle={styles.headerIconButton}
+                  iconColor={styles.headerIconColor.color}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
               {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
               <SyncStatusChip />
             </View>
@@ -212,26 +301,17 @@ export function AppShell({
               </View>
 
               <View style={styles.topBarRightGroup}>
-                <Pressable
-                  accessibilityLabel={
-                    isPrivate
-                      ? t("privacy.showBalances")
-                      : t("privacy.hideBalances")
-                  }
-                  accessibilityRole="button"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={togglePrivacyMode}
-                  style={({ pressed }) => [
-                    styles.headerIconButton,
-                    pressed && styles.headerIconButtonPressed,
-                  ]}
-                >
-                  {isPrivate ? (
-                    <EyeOff color={styles.headerIconColor.color} size={19} />
-                  ) : (
-                    <Eye color={styles.headerIconColor.color} size={19} />
-                  )}
-                </Pressable>
+                <HeaderWalkthroughButton
+                  buttonStyle={styles.headerIconButton}
+                  enabled={guideHelperEnabled}
+                  label={walkthroughLabel}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
+                <HeaderPrivacyButton
+                  buttonStyle={styles.headerIconButton}
+                  iconColor={styles.headerIconColor.color}
+                  pressedStyle={styles.headerIconButtonPressed}
+                />
                 {generalSearchEnabled && <SearchTriggerButton variant="icon" />}
                 <SyncStatusChip compact />
               </View>
@@ -264,7 +344,11 @@ export function AppShell({
               },
             ]}
           >
-            <Sidebar hiddenHrefs={hiddenNavHrefs} onNavigate={closeDrawer} />
+            <Sidebar
+              currentPathname={pathname}
+              hiddenHrefs={hiddenNavHrefs}
+              onNavigate={closeDrawer}
+            />
           </View>
         </View>
       )}

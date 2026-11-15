@@ -31,32 +31,41 @@ export const PageHeader = memo(function PageHeader({
   const styles = useThemeStyles(createStyles);
 
   const hasActions = Boolean(primaryAction || (secondaryActions && secondaryActions.length > 0));
+  const hasTitleArea = Boolean(title || subtitle || (breadcrumb && isDesktopLayout));
 
   return (
-    <View style={[styles.container, !isDesktopLayout && styles.containerMobile]}>
-      <View style={styles.titleArea}>
-        {breadcrumb && isDesktopLayout ? (
-          <Text style={styles.breadcrumb} numberOfLines={1}>
-            {breadcrumb}
-          </Text>
-        ) : null}
-        {title ? (
-          <Text
-            style={[styles.title, !isDesktopLayout && styles.titleMobile]}
-            accessibilityRole="header"
-          >
-            {title}
-          </Text>
-        ) : null}
-        {subtitle ? (
-          <Text
-            accessibilityRole={title ? undefined : "header"}
-            style={[styles.subtitle, !title && styles.subtitleOnly]}
-          >
-            {subtitle}
-          </Text>
-        ) : null}
-      </View>
+    <View
+      style={[
+        styles.container,
+        !isDesktopLayout && styles.containerMobile,
+        !title && !subtitle && styles.containerCompact,
+      ]}
+    >
+      {hasTitleArea ? (
+        <View style={styles.titleArea}>
+          {breadcrumb && isDesktopLayout ? (
+            <Text style={styles.breadcrumb} numberOfLines={1}>
+              {breadcrumb}
+            </Text>
+          ) : null}
+          {title ? (
+            <Text
+              style={[styles.title, !isDesktopLayout && styles.titleMobile]}
+              accessibilityRole="header"
+            >
+              {title}
+            </Text>
+          ) : null}
+          {subtitle ? (
+            <Text
+              accessibilityRole={title ? undefined : "header"}
+              style={[styles.subtitle, !title && styles.subtitleOnly]}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {hasActions && (
         <View style={[styles.actionsArea, !isDesktopLayout && styles.actionsAreaMobile]}>
@@ -110,6 +119,11 @@ function createStyles(theme: AppTheme) {
       flexDirection: "column",
       alignItems: "stretch",
       gap: theme.spacing.sm,
+      paddingBottom: theme.spacing.md,
+      paddingTop: theme.spacing.sm,
+    },
+    containerCompact: {
+      alignItems: "center",
       paddingBottom: theme.spacing.md,
       paddingTop: theme.spacing.sm,
     },

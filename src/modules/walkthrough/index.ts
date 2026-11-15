@@ -25,7 +25,10 @@ export {
 export { DashboardWalkthroughOverlay } from "./dashboard/dashboard-walkthrough-overlay";
 export { DashboardCongratulationsModal } from "./dashboard/dashboard-congratulations-modal";
 export { useDashboardWalkthrough } from "./dashboard/use-dashboard-walkthrough";
-export { DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard/dashboard-walkthrough-steps";
+export {
+  DASHBOARD_WALKTHROUGH_STEPS,
+  getDashboardWalkthroughSteps,
+} from "./dashboard/dashboard-walkthrough-steps";
 
 export { AccountsWalkthroughOverlay } from "./accounts/accounts-walkthrough-overlay";
 export { useAccountsWalkthrough } from "./accounts/use-accounts-walkthrough";
@@ -100,9 +103,65 @@ export { NotesWalkthroughOverlay } from "./notes/notes-walkthrough-overlay";
 export { useNotesWalkthrough } from "./notes/use-notes-walkthrough";
 export { getNotesWalkthroughSteps } from "./notes/notes-walkthrough-steps";
 
+export { CreditCardsWalkthroughOverlay } from "./credit-cards/credit-cards-walkthrough-overlay";
+export { useCreditCardsWalkthrough } from "./credit-cards/use-credit-cards-walkthrough";
+export {
+  getCreditCardsWalkthroughSteps,
+  CREDIT_CARDS_WALKTHROUGH_STEPS,
+  CREDIT_CARDS_EMPTY_WALKTHROUGH_STEP,
+} from "./credit-cards/credit-cards-walkthrough-steps";
+
 export { SettingsWalkthroughOverlay } from "./settings/settings-walkthrough-overlay";
 export { useSettingsWalkthrough } from "./settings/use-settings-walkthrough";
 export { SETTINGS_WALKTHROUGH_STEPS } from "./settings/settings-walkthrough-steps";
+
+export {
+  ModalWalkthroughOverlay,
+  type ModalWalkthroughOverlayProps,
+} from "./components/modal-walkthrough-overlay";
+export {
+  useModalWalkthrough,
+  type UseModalWalkthroughOptions,
+} from "./hooks/use-modal-walkthrough";
+
+export { CategoryFormWalkthroughOverlay } from "./categories/category-form-walkthrough-overlay";
+export { useCategoryFormWalkthrough } from "./categories/use-category-form-walkthrough";
+export { CATEGORY_FORM_WALKTHROUGH_STEPS } from "./categories/category-form-walkthrough-steps";
+
+export { PocketFormWalkthroughOverlay } from "./accounts/pocket-form-walkthrough-overlay";
+export { usePocketFormWalkthrough } from "./accounts/use-pocket-form-walkthrough";
+export {
+  getPocketFormWalkthroughSteps,
+  POCKET_FORM_WALKTHROUGH_STEPS,
+  type PocketFormWalkthroughOptions,
+} from "./accounts/pocket-form-walkthrough-steps";
+
+export { PresetFormWalkthroughOverlay } from "./transactions/preset-form-walkthrough-overlay";
+export { usePresetFormWalkthrough } from "./transactions/use-preset-form-walkthrough";
+export { PRESET_FORM_WALKTHROUGH_STEPS } from "./transactions/preset-form-walkthrough-steps";
+
+export { NoteEditorWalkthroughOverlay } from "./notes/note-editor-walkthrough-overlay";
+export { useNoteEditorWalkthrough } from "./notes/use-note-editor-walkthrough";
+export { NOTE_EDITOR_WALKTHROUGH_STEPS } from "./notes/note-editor-walkthrough-steps";
+
+export { CustomizeDashboardWalkthroughOverlay } from "./dashboard/customize-dashboard-walkthrough-overlay";
+export { useCustomizeDashboardWalkthrough } from "./dashboard/use-customize-dashboard-walkthrough";
+export { CUSTOMIZE_DASHBOARD_WALKTHROUGH_STEPS } from "./dashboard/customize-dashboard-walkthrough-steps";
+
+export { TxFilterWalkthroughOverlay } from "./transactions/tx-filter-walkthrough-overlay";
+export { useTxFilterWalkthrough } from "./transactions/use-tx-filter-walkthrough";
+export { TX_FILTER_WALKTHROUGH_STEPS } from "./transactions/tx-filter-walkthrough-steps";
+
+export { DataImportWalkthroughOverlay } from "./data-import/data-import-walkthrough-overlay";
+export { useDataImportWalkthrough } from "./data-import/use-data-import-walkthrough";
+export { DATA_IMPORT_WALKTHROUGH_STEPS } from "./data-import/data-import-walkthrough-steps";
+
+export { ReportsWalkthroughOverlay } from "./reports/reports-walkthrough-overlay";
+export { useReportsWalkthrough } from "./reports/use-reports-walkthrough";
+export {
+  REPORTS_WALKTHROUGH_STEPS,
+  getReportsWalkthroughSteps,
+} from "./reports/reports-walkthrough-steps";
 
 export type {
   LayoutRect,

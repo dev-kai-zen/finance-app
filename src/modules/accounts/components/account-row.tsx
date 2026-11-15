@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
@@ -8,12 +9,14 @@ import { AccountTypeBadge } from "@/modules/accounts/components/account-type-bad
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useDefaultAccounts, usePrivacyMode } from "@/modules/settings";
 
-export function AccountRow({
+export const AccountRow = memo(function AccountRow({
   account,
   onPress,
+  ignorePrivacy = false,
 }: {
   account: AccountListItem;
   onPress: () => void;
+  ignorePrivacy?: boolean;
 }) {
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
@@ -26,7 +29,8 @@ export function AccountRow({
     account.currentBalanceMinorUnits !== undefined
       ? account.currentBalanceMinorUnits
       : account.openingBalanceMinorUnits;
-  const amount = isPrivate
+  const shouldHide = isPrivate && !ignorePrivacy;
+  const amount = shouldHide
     ? "••••••"
     :
     account.currencyCode === "PHP"
@@ -90,7 +94,7 @@ export function AccountRow({
       </View>
     </Pressable>
   );
-}
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

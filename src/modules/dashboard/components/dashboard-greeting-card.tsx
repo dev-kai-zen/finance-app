@@ -12,6 +12,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { getContrastTextColor, isLightColor } from "@/utils/color-contrast";
 import {
   getRandomQuote,
@@ -34,6 +35,7 @@ export function DashboardGreetingCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const cardRef = useWalkthroughTarget("greetingCard");
 
   const [quote, setQuote] = useState<MotivationalQuote>(() => getRandomQuote());
 
@@ -122,7 +124,7 @@ export function DashboardGreetingCard({
   }, []);
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       {/* Top Greeting Row */}
       <View style={styles.headerRow}>
         <View style={styles.greetingGroup}>

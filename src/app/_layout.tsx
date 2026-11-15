@@ -1,10 +1,11 @@
 import { LogBox, StyleSheet } from "react-native";
-import { Stack, usePathname } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ExperienceAppShell } from "@/components/experience-app-shell";
+import { RouteAwareSafeAreaBoundary } from "@/components/route-aware-safe-area-boundary";
 import { AppThemeProvider, useThemeContext } from "@/components/theme";
 import { DatabaseProvider } from "@/infrastructure/database";
 import { LocalizationProvider } from "@/infrastructure/localization";
@@ -40,17 +41,6 @@ LogBox.ignoreLogs([
 
 function RootLayoutContent() {
   const { theme } = useThemeContext();
-  const pathname = usePathname();
-  const usesNativeHeader =
-    pathname.startsWith("/language") ||
-    pathname.startsWith("/currency-setup") ||
-    pathname.startsWith("/local-backup") ||
-    pathname.startsWith("/google-drive-backup") ||
-    pathname.startsWith("/reminder-settings") ||
-    pathname.startsWith("/support") ||
-    pathname.startsWith("/widgets") ||
-    pathname.startsWith("/kai-knowledge") ||
-    pathname.startsWith("/transactions/scheduled");
 
   return (
     <SafeAreaProvider
@@ -63,29 +53,27 @@ function RootLayoutContent() {
             <CurrencyPreferencesProvider>
               <WorkspaceProvider>
                 <HexColorsProvider>
-                  <SafeAreaView
-                    edges={usesNativeHeader ? [] : ["top"]}
-                    style={[
-                      styles.safeAreaBoundary,
-                      { backgroundColor: theme.colors.background },
-                    ]}
-                  >
-                    <AppLockGate>
-                      <OnboardingGate>
+                  <AppLockGate>
+                    <OnboardingGate>
                       <DeveloperMessageGate>
-                      <VersionHistoryGate>
-                        <>
-                        <ScheduledTransactionsProcessor />
-                        <TransactionAttachmentsSyncProcessor />
-                        <LocalBackupProcessor />
-                        <GoogleDriveScheduledBackupProcessor />
-                        <QuickSyncProcessor />
-                        <NotificationsReminderProcessor />
-                        <WidgetSyncProcessor />
-                        <InAppUpdateProcessor />
+                        <VersionHistoryGate>
+                          <>
+                            <ScheduledTransactionsProcessor />
+                            <TransactionAttachmentsSyncProcessor />
+                            <LocalBackupProcessor />
+                            <GoogleDriveScheduledBackupProcessor />
+                            <QuickSyncProcessor />
+                            <NotificationsReminderProcessor />
+                            <WidgetSyncProcessor />
+                            <InAppUpdateProcessor />
 
-                        <ExperienceAppShell banner={<SampleWorkspaceBanner />}>
-                          <Stack
+                            <RouteAwareSafeAreaBoundary
+                              backgroundColor={theme.colors.background}
+                            >
+                              <ExperienceAppShell
+                                banner={<SampleWorkspaceBanner />}
+                              >
+                                <Stack
                             screenOptions={{
                               contentStyle: {
                                 backgroundColor: theme.colors.background,
@@ -118,6 +106,7 @@ function RootLayoutContent() {
                             headerShown: false,
                           }}
                         />
+                        <Stack.Screen name="data-import" options={{ presentation: "fullScreenModal", headerShown: false }} />
                         <Stack.Screen
                           name="local-backup"
                           options={{
@@ -169,15 +158,15 @@ function RootLayoutContent() {
                             headerShown: false,
                           }}
                         />
-                        <Stack.Screen name="monitor" />
-                          </Stack>
-                        </ExperienceAppShell>
-                        </>
-                      </VersionHistoryGate>
+                                <Stack.Screen name="monitor" />
+                                </Stack>
+                              </ExperienceAppShell>
+                            </RouteAwareSafeAreaBoundary>
+                          </>
+                        </VersionHistoryGate>
                       </DeveloperMessageGate>
                     </OnboardingGate>
                   </AppLockGate>
-                </SafeAreaView>
                 </HexColorsProvider>
               </WorkspaceProvider>
             </CurrencyPreferencesProvider>
@@ -200,9 +189,6 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   rootLayer: {
-    flex: 1,
-  },
-  safeAreaBoundary: {
     flex: 1,
   },
 });

@@ -318,3 +318,12 @@ export type {
   CashFlowPeriodPoint,
 } from "./services/get-cashflow-history.service";
 export type { TransactionsScreenProps } from "./screens/transactions-screen";
+
+export const getTransactionImportCatalog = deferFunction(
+  () => require("./services/import-transactions.service").getTransactionImportCatalog,
+) as typeof import("./services/import-transactions.service").getTransactionImportCatalog;
+
+export const createImportedTransactions = deferFunction(
+  () => require("./services/import-transactions.service").createImportedTransactions,
+) as typeof import("./services/import-transactions.service").createImportedTransactions;
+export type { ImportedTransactionCommand } from "./services/import-transactions.service";

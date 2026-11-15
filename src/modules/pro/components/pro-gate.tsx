@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,7 +10,7 @@ import {
 import { Crown, Flame, Sparkles, Check, Lock } from "lucide-react-native";
 import { BlurView } from "expo-blur";
 
-import { IconHelper } from "@/components/icon-helper";
+import { IconHelper, NotificationModal } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -40,6 +39,17 @@ export function ProGate({
   const { t } = useLocalization();
   const { isPro, isLoading, isRestoring, offering, restorePurchases } = useProStatus();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [notificationState, setNotificationState] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    variant: "info" | "success" | "warning" | "error";
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info",
+  });
 
   if (isLoading) {
     return (
@@ -66,17 +76,26 @@ export function ProGate({
   const handleRestore = async () => {
     const result = await restorePurchases();
     if (result.success && result.restored) {
-      Alert.alert(
-        t("pro.restoreSuccessTitle"),
-        t("pro.restoreSuccessMsg"),
-      );
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreSuccessTitle"),
+        message: t("pro.restoreSuccessMsg"),
+        variant: "success",
+      });
     } else if (result.success && !result.restored) {
-      Alert.alert(
-        t("pro.restoreNotFoundTitle"),
-        t("pro.restoreNotFoundMsg"),
-      );
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreNotFoundTitle"),
+        message: t("pro.restoreNotFoundMsg"),
+        variant: "info",
+      });
     } else if (!result.success && result.error) {
-      Alert.alert(t("pro.restoreErrorTitle"), result.error);
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreErrorTitle"),
+        message: result.error,
+        variant: "error",
+      });
     }
   };
 
@@ -296,6 +315,14 @@ export function ProGate({
       <ProPaywallModal
         onClose={() => setPaywallOpen(false)}
         visible={paywallOpen}
+      />
+
+      <NotificationModal
+        message={notificationState.message}
+        onClose={() => setNotificationState((prev) => ({ ...prev, visible: false }))}
+        title={notificationState.title}
+        variant={notificationState.variant}
+        visible={notificationState.visible}
       />
     </ScrollView>
   );

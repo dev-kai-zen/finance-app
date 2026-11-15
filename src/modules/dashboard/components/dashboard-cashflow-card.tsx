@@ -11,6 +11,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { usePrivacyMode } from "@/modules/settings";
+import { useWalkthroughTarget } from "@/modules/walkthrough";
 import { formatCurrency } from "@/utils/currency";
 import type { MonthlyCashflow } from "../types/dashboard.types";
 
@@ -34,6 +35,7 @@ export function DashboardCashflowCard({
   const { t } = useLocalization();
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
+  const cardRef = useWalkthroughTarget("cashflowCard");
 
   const inflow = cashflow.totalInflowMinorUnits;
   const outflow = cashflow.totalOutflowMinorUnits;
@@ -47,7 +49,7 @@ export function DashboardCashflowCard({
     totalVolume > 0 ? Math.max(8, 100 - inflowShare) : 50;
 
   return (
-    <View style={styles.card}>
+    <View ref={cardRef} collapsable={false} style={styles.card}>
       <View style={styles.header}>
         <View style={styles.titleWrap}>
           <Text style={styles.title}>{t("dashboard.cashflowCardTitle")}</Text>

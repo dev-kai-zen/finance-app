@@ -7,10 +7,13 @@ import {
   categoryKeywords,
 } from "@/infrastructure/database/schema";
 import { DEFAULT_CATEGORY_SEED_KEYWORDS } from "../constants/default-seed-keywords";
-import type {
-  AccountKeywordItem,
-  CategoryKeywordItem,
+import {
+  type AccountKeywordItem,
+  type CategoryKeywordItem,
+  DuplicateKeywordError,
 } from "../types/chat-with-kai.types";
+
+export { DuplicateKeywordError };
 
 /**
  * Fetches all category keywords stored in the database.
@@ -95,15 +98,39 @@ export async function getCategoryKeywordMap(
   return map;
 }
 
-export class DuplicateKeywordError extends Error {
-  existingEntityName: string;
-  constructor(keyword: string, existingEntityName: string) {
-    super(
-      `The keyword "${keyword}" is already assigned to "${existingEntityName}". Each keyword must be unique.`,
-    );
-    this.name = "DuplicateKeywordError";
-    this.existingEntityName = existingEntityName;
+/**
+ * Synchronous lookup map of lowercase keywords to category IDs.
+ * Populated with default seed keywords and any persisted database keywords.
+ */
+export function getCategoryKeywordMapSync(
+  client: DbContext = db,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const item of DEFAULT_CATEGORY_SEED_KEYWORDS) {
+    const cleanKw = item.keyword.trim().toLowerCase();
+    if (cleanKw) {
+      map.set(cleanKw, item.categoryId);
+    }
   }
+  try {
+    const rows = client
+      .select({
+        categoryId: categoryKeywords.categoryId,
+        keyword: categoryKeywords.keyword,
+      })
+      .from(categoryKeywords)
+      .all();
+
+    for (const r of rows) {
+      const cleanKw = r.keyword.trim().toLowerCase();
+      if (cleanKw) {
+        map.set(cleanKw, r.categoryId);
+      }
+    }
+  } catch {
+    // Fall back to pre-seeded defaults if database is not accessible synchronously
+  }
+  return map;
 }
 
 /**

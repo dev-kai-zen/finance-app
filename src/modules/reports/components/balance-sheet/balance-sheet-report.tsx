@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { PageLoadingState } from "@/components/page-container";
 import { useBalanceSheetReport } from "../../hooks/use-balance-sheet-report";
 import { BalanceSheetFilterBar } from "./balance-sheet-filter-bar";
 import { BalanceSheetTable } from "./balance-sheet-table";
@@ -19,6 +20,7 @@ export function BalanceSheetReport() {
     customDateB,
     setCustomDateB,
     data,
+    reportLoading,
     isExpanded,
     toggleExpanded,
     expandAll,
@@ -46,11 +48,15 @@ export function BalanceSheetReport() {
         onCollapseAll={collapseAll}
       />
 
-      <BalanceSheetTable
-        data={data}
-        isExpanded={isExpanded}
-        onToggleExpanded={toggleExpanded}
-      />
+      {reportLoading ? (
+        <PageLoadingState message="Loading report..." variant="cards" />
+      ) : (
+        <BalanceSheetTable
+          data={data}
+          isExpanded={isExpanded}
+          onToggleExpanded={toggleExpanded}
+        />
+      )}
     </View>
   );
 }

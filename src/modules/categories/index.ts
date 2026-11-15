@@ -63,3 +63,11 @@ export type {
   CategoricalColorKey,
 } from "./types/category.types";
 export type { CategoryPickerModalProps } from "./components/category-picker-modal";
+
+export const getCategoryImportCatalog = deferFunction(
+  () => require("./services/import-categories.service").getCategoryImportCatalog,
+) as typeof import("./services/import-categories.service").getCategoryImportCatalog;
+
+export const resolveImportedCategory = deferFunction(
+  () => require("./services/import-categories.service").resolveImportedCategory,
+) as typeof import("./services/import-categories.service").resolveImportedCategory;

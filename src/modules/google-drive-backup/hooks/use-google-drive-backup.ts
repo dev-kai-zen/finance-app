@@ -22,6 +22,7 @@ import {
   restoreGoogleDriveBackup,
   restoreQuickSyncBackup,
 } from "@/modules/google-drive-backup/services/restore-google-drive-backup.service";
+import { resetQuickSyncConnection } from "@/modules/google-drive-backup/services/quick-sync.service";
 
 export function useGoogleDriveBackup() {
   const [user, setUser] = useState<GoogleDriveUser | null>(null);
@@ -126,11 +127,14 @@ export function useGoogleDriveBackup() {
   const connect = useCallback(async (): Promise<void> => {
     const connectedUser = await run("connecting", connectGoogleDrive);
     if (!connectedUser) return;
+    if (user?.email && connectedUser.email && user.email !== connectedUser.email) {
+      resetQuickSyncConnection();
+    }
     setUser(connectedUser);
 
     const files = await run("loading", listGoogleDriveBackups);
     if (files) applyCatalog(files, setBackups, setFolderUrl, setNotice);
-  }, [run]);
+  }, [run, user]);
 
   const disconnect = useCallback(async (): Promise<void> => {
     const completed = await run("disconnecting", async () => {
@@ -138,6 +142,7 @@ export function useGoogleDriveBackup() {
       return true;
     });
     if (!completed) return;
+    resetQuickSyncConnection();
     setUser(null);
     setBackups([]);
     setFolderUrl(null);
@@ -176,16 +181,19 @@ export function useGoogleDriveBackup() {
     [run],
   );
 
-  const restoreQuickSync = useCallback(async (): Promise<boolean> => {
-    const completed = await run("restoring", async () => {
-      await restoreQuickSyncBackup();
-      return true;
-    });
-    if (completed) {
-      publishRestoreSuccessNotice(setNotice);
-    }
-    return completed === true;
-  }, [run]);
+  const restoreQuickSync = useCallback(
+    async (fileId?: string): Promise<boolean> => {
+      const completed = await run("restoring", async () => {
+        await restoreQuickSyncBackup(fileId);
+        return true;
+      });
+      if (completed) {
+        publishRestoreSuccessNotice(setNotice);
+      }
+      return completed === true;
+    },
+    [run],
+  );
 
   return {
     backups,

@@ -461,3 +461,34 @@ test("scheduled transactions: supports signed amounts for adjustments and preven
     insertSchedule.run("sch_neg_trans", "transfer", "acc1", "acc2", null, -1000, now, now, now, now, now);
   });
 });
+
+test("scheduled transactions: advance posting shifts the next recurring cycle to the following month", () => {
+  const monthlyRule = rule({
+    startsAt: new Date("2026-11-20T10:00:00.000Z"),
+    frequency: "monthly",
+    intervalCount: 1,
+    weekendPolicy: "exact",
+  });
+
+  const currentOccurrence = calculateScheduleOccurrence(monthlyRule, 1);
+  const nextOccurrence = calculateScheduleOccurrence(monthlyRule, 2);
+
+  assert.equal(
+    currentOccurrence.nominalAt.toISOString(),
+    "2026-11-20T10:00:00.000Z",
+  );
+  assert.equal(
+    nextOccurrence.nominalAt.toISOString(),
+    "2026-12-20T10:00:00.000Z",
+  );
+
+  const onceRule = rule({
+    startsAt: new Date("2026-11-20T10:00:00.000Z"),
+    frequency: "once",
+  });
+  const firstOnce = calculateScheduleOccurrence(onceRule, 1);
+  const secondOnce = calculateScheduleOccurrence(onceRule, 2);
+
+  assert.ok(firstOnce);
+  assert.equal(secondOnce, null);
+});

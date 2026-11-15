@@ -16,13 +16,14 @@ import {
   IconPickerModal,
   KeyboardAwareForm,
   NotificationModal,
+  ScrollDownIndicator,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
   WalkthroughRegistryProvider,
-  DraggableTourChip,
   AccountTypeFormWalkthroughOverlay,
   useAccountTypeFormWalkthrough,
   WalkthroughIntroModal,
@@ -59,7 +60,7 @@ export function AccountTypeFormModal(props: AccountTypeFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <AccountTypeFormModalContent {...props} />
+      <AccountTypeFormModalContent key={props.type?.id ?? "new-type"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -77,6 +78,9 @@ function AccountTypeFormModalContent({
   const styles = useThemeStyles(createStyles);
   const { isPromptDismissed } = useExperiencePreferences();
   const scrollRef = useRef<ScrollView>(null);
+  const { canScrollDown, scrollToNext, scrollProps } = useScrollDownIndicator({
+    ref: scrollRef,
+  });
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
@@ -130,14 +134,24 @@ function AccountTypeFormModalContent({
   }, [visible, isEditing, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
   const {
     colors: hexColorsList,
-    refresh: refreshHexColors,
     addColor,
   } = useHexColors();
 
-  const [name, setName] = useState("");
-  const [accountGroup, setAccountGroup] = useState<AccountGroup>("asset");
-  const [iconKey, setIconKey] = useState("landmark");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
+  const [name, setName] = useState(() => type?.name ?? "");
+  const [accountGroup, setAccountGroup] = useState<AccountGroup>(() =>
+    type
+      ? type.accountGroup === "liability"
+        ? "liability"
+        : "asset"
+      : initialGroup,
+  );
+  const [iconKey, setIconKey] = useState(() => type?.iconKey ?? "landmark");
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () =>
+      type?.hexColorsId ??
+      ACCOUNT_DEFAULT_COLOR_IDS[initialGroup] ??
+      "color_blue",
+  );
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   const [isColorFormOpen, setIsColorFormOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -145,12 +159,6 @@ function AccountTypeFormModalContent({
   const initialSnapshotRef = useRef<string>("");
 
   const isProtected = type ? isProtectedAccountType(type) : false;
-
-  useEffect(() => {
-    if (visible) {
-      refreshHexColors();
-    }
-  }, [visible, refreshHexColors]);
 
   useEffect(() => {
     if (visible) {
@@ -284,16 +292,14 @@ function AccountTypeFormModalContent({
         titleAlign="left"
         visible={visible}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
-        <KeyboardAwareForm
-          ref={scrollRef}
-          scrollEnabled={
-            walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-          }
-        >
+        <View style={styles.scrollWrapper}>
+          <KeyboardAwareForm
+            ref={scrollRef}
+            scrollEnabled={
+              walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+            }
+            {...scrollProps}
+          >
           <View ref={scrollContentRef} collapsable={false} style={styles.formContent}>
           {/* Group Name Field */}
             <View style={styles.inputGroup}>
@@ -302,11 +308,13 @@ function AccountTypeFormModalContent({
                 ref={nameRef as never}
                 editable={!mutations.pending && !isProtected}
                 maxLength={60}
+                multiline={false}
+                numberOfLines={1}
                 onChangeText={(text) => {
                   setName(text);
                   if (localError) setLocalError(null);
                 }}
-                placeholder="e.g. Bank Accounts, Investments, Credit Cards..."
+                placeholder="e.g. Bank Accounts, Savings"
                 placeholderTextColor={theme.colors.textMuted}
                 style={[
                   styles.textInput,
@@ -446,8 +454,8 @@ function AccountTypeFormModalContent({
                     >
                       {isSelected ? (
                         <Check
-                          color={theme.colors.textInverse}
-                          size={20}
+                          color="#FFFFFF"
+                          size={14}
                           strokeWidth={3}
                         />
                       ) : null}
@@ -469,7 +477,7 @@ function AccountTypeFormModalContent({
                   >
                     <Plus
                       color={theme.colors.primary}
-                      size={22}
+                      size={16}
                       strokeWidth={2.5}
                     />
                   </Pressable>
@@ -491,6 +499,12 @@ function AccountTypeFormModalContent({
           ) : null}
           </View>
         </KeyboardAwareForm>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={8}
+        />
+      </View>
         <AccountTypeFormWalkthroughOverlay
           visible={walkthrough.isWalkthroughActive}
           stepIndex={walkthrough.activeStepIndex}
@@ -567,6 +581,10 @@ function AccountTypeFormModalContent({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
     formContent: {
       gap: theme.spacing.lg,
       paddingHorizontal: theme.spacing.lg,
@@ -695,30 +713,27 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
+      borderColor: "rgba(255,255,255,0.25)",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
+      width: 34,
     },
-    colorSwatchUnselected: {
-      borderRadius: 15,
-      height: 30,
-      opacity: 0.82,
-      width: 30,
-    },
+    colorSwatchUnselected: {},
     colorSwatchSelected: {
-      borderColor: theme.colors.textInverse,
-      borderRadius: 22,
+      borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
-      height: 44,
-      width: 44,
-      ...theme.shadows.card,
+      transform: [{ scale: 1.06 }],
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 22,
+      borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
-      borderWidth: 2,
-      height: 44,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
-      width: 44,
+      width: 34,
     },
     addColorSwatchPressed: {
       opacity: 0.65,

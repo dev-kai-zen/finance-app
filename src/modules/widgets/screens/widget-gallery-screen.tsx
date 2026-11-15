@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { HelpCircle, LayoutGrid } from "lucide-react-native";
+import { CircleHelp, LayoutGrid } from "lucide-react-native";
 import { InfoModal, ModalScreenHeader } from "@/components";
 import { PageContainer } from "@/components/page-container";
 import type { AppTheme } from "@/constants/theme";
@@ -101,7 +101,7 @@ export function WidgetGalleryScreen() {
             onPress={() => setIsManualStepsOpen(true)}
             style={({ pressed }) => [styles.helpLink, pressed && styles.helpLinkPressed]}
           >
-            <HelpCircle color={theme.colors.textSecondary} size={16} />
+            <CircleHelp color={theme.colors.textSecondary} size={16} />
             <Text style={styles.helpLinkText}>{t("widgetGallery.manualHelpLink")}</Text>
           </Pressable>
         </PageContainer>

@@ -23,12 +23,15 @@ import {
 } from "lucide-react-native";
 import {
   ConfirmModal,
+  FloatingActionButton,
   FullScreenFormModal,
   InfoModal,
   NotificationModal,
   ScreenTitleWithHelp,
+  ScrollDownIndicator,
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type {
   AccountListItem,
@@ -83,7 +86,14 @@ function formatLastUsed(date: Date | null): string {
   })}`;
 }
 
-export function QuickPresetsModal({
+export function QuickPresetsModal(props: QuickPresetsModalProps) {
+  if (!props.visible) {
+    return null;
+  }
+  return <QuickPresetsModalContent {...props} />;
+}
+
+function QuickPresetsModalContent({
   visible,
   presets,
   archivedPresets,
@@ -115,6 +125,8 @@ export function QuickPresetsModal({
   const [pendingPermanentDelete, setPendingPermanentDelete] = useState<TransactionPreset | null>(null);
   const [helpVisible, setHelpVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   const currentSortBy = sortBy ?? internalSortBy;
 
@@ -305,16 +317,6 @@ export function QuickPresetsModal({
   return (
     <>
       <FullScreenFormModal
-        headerRight={
-          <Pressable
-            accessibilityLabel="Create Quick Preset"
-            accessibilityRole="button"
-            onPress={() => openEditor(null)}
-            style={styles.addButton}
-          >
-            <Plus color={theme.colors.onPrimary} size={20} />
-          </Pressable>
-        }
         headerTitle={
           <ScreenTitleWithHelp
             accessibilityHint="Displays help for Quick Presets"
@@ -328,11 +330,14 @@ export function QuickPresetsModal({
         visible={visible}
         onClose={closeManager}
       >
-        <ScrollView
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            {...scrollProps}
+          >
           {/* Search Box */}
           {hasAnyPresets && (
             <View style={styles.searchContainer}>
@@ -715,7 +720,19 @@ export function QuickPresetsModal({
               )}
             </>
           )}
-        </ScrollView>
+          </ScrollView>
+          <ScrollDownIndicator
+            visible={canScrollDown}
+            onPress={scrollToNext}
+            bottomOffset={8}
+          />
+          <FloatingActionButton
+            accessibilityLabel="Create Quick Preset"
+            icon={<Plus color={theme.colors.onPrimary} size={28} strokeWidth={2.5} />}
+            onPress={() => openEditor(null)}
+            style={styles.fab}
+          />
+        </View>
       </FullScreenFormModal>
 
       <QuickPresetFormModal
@@ -805,18 +822,17 @@ export function QuickPresetsModal({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
-    addButton: {
-      alignItems: "center",
-      backgroundColor: theme.colors.primary,
-      borderRadius: 999,
-      height: 36,
-      justifyContent: "center",
-      width: 36,
+    scrollWrapper: {
+      flex: 1,
+      position: "relative",
+    },
+    fab: {
+      bottom: 16,
     },
     content: {
       gap: theme.spacing.sm,
       padding: theme.spacing.lg,
-      paddingBottom: theme.spacing.xxl,
+      paddingBottom: 96,
     },
     searchContainer: {
       alignItems: "center",

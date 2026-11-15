@@ -1,14 +1,14 @@
 import React from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
-import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
@@ -26,6 +26,7 @@ export function NetWorthHistoryTable({
   selectedPointIndex,
   onSelectPointIndex,
 }: NetWorthHistoryTableProps) {
+  const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
   const { isPrivate } = usePrivacyMode();
@@ -46,8 +47,7 @@ export function NetWorthHistoryTable({
         </View>
       ) : null}
 
-      <ScrollView
-        horizontal
+      <HorizontalScrollView
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={styles.horizontalScrollContent}
       >
@@ -99,7 +99,13 @@ export function NetWorthHistoryTable({
                 </View>
 
                 <View style={styles.colNumeric}>
-                  <Text numberOfLines={1} style={styles.assetAmount}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.assetAmount,
+                      !preferences.colorAmounts && { color: theme.colors.textPrimary },
+                    ]}
+                  >
                     {formatPrivacyAmount(
                       formatCurrency(row.totalAssetsMinorUnits, currencyCode),
                       isPrivate,
@@ -108,7 +114,13 @@ export function NetWorthHistoryTable({
                 </View>
 
                 <View style={styles.colNumeric}>
-                  <Text numberOfLines={1} style={styles.debtAmount}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.debtAmount,
+                      !preferences.colorAmounts && { color: theme.colors.textPrimary },
+                    ]}
+                  >
                     {formatPrivacyAmount(
                       formatCurrency(Math.abs(row.totalLiabilitiesMinorUnits), currencyCode),
                       isPrivate,
@@ -125,7 +137,15 @@ export function NetWorthHistoryTable({
                 <View style={styles.colChange}>
                   <Text
                     numberOfLines={1}
-                    style={[styles.changeText, { color: row.color }]}
+                    style={[
+                      styles.changeText,
+                      {
+                        color:
+                          preferences.colorAmounts && !isPrivate
+                            ? row.color
+                            : theme.colors.textPrimary,
+                      },
+                    ]}
                   >
                     {formatPrivacyAmount(`${row.formattedDiff} ${row.symbol}`, isPrivate)}
                   </Text>
@@ -134,7 +154,7 @@ export function NetWorthHistoryTable({
             );
           })}
         </View>
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 }

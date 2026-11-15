@@ -1,7 +1,9 @@
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import {
   ArrowUpDown,
+  ChevronDown,
   ChevronRight,
+  ChevronUp,
   Folder,
   Plus,
   WalletCards,
@@ -11,6 +13,7 @@ import { CreditUtilizationRing } from "@/components/credit-utilization-ring";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import {
   AccountAmountText,
   bigintToSafeNumber,
@@ -43,6 +46,8 @@ interface AccountTypeGroupCardProps {
   onTogglePockets: (accountId: string) => void;
   onSort?: (groupName: string, accounts: AccountListItem[]) => void;
   onEditType?: (accountType: AccountType) => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function AccountTypeGroupCard({
@@ -56,10 +61,13 @@ export function AccountTypeGroupCard({
   onSort,
   onEditType,
   onTogglePockets,
+  isCollapsed = false,
+  onToggleCollapse,
 }: AccountTypeGroupCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { preferences } = useCurrencyPreferences();
+  const { isPrivate } = usePrivacyMode();
 
   const rawColor = accountType.color ?? accountType.hexColorsId ?? null;
   const primaryColor = accountColor(theme, rawColor);
@@ -93,7 +101,7 @@ export function AccountTypeGroupCard({
 
   return (
     <View style={styles.card}>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, isCollapsed && styles.headerRowCollapsed]}>
         <Pressable
           accessibilityLabel={`Edit ${accountType.name} account group`}
           accessibilityRole="button"
@@ -133,7 +141,7 @@ export function AccountTypeGroupCard({
         </Pressable>
 
         <View style={styles.headerRight}>
-          {onSort && accounts.length > 1 ? (
+          {onSort && accounts.length > 1 && !isCollapsed ? (
             <TouchableOpacity
               accessibilityLabel={`Sort accounts under ${accountType.name}`}
               onPress={() => onSort(accountType.name, accounts)}
@@ -150,13 +158,33 @@ export function AccountTypeGroupCard({
               variant="body"
             />
           ) : (
-            <Text style={styles.fallbackTotal}>{formatOpeningTotal(groupTotal)}</Text>
+            <Text style={styles.fallbackTotal}>{formatPrivacyAmount(formatOpeningTotal(groupTotal), isPrivate)}</Text>
           )}
+          {onToggleCollapse ? (
+            <TouchableOpacity
+              accessibilityLabel={
+                isCollapsed
+                  ? `Expand ${accountType.name} accounts`
+                  : `Collapse ${accountType.name} accounts`
+              }
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={onToggleCollapse}
+              style={styles.collapseToggleBtn}
+            >
+              {isCollapsed ? (
+                <ChevronDown color={theme.colors.textSecondary} size={16} />
+              ) : (
+                <ChevronUp color={theme.colors.textSecondary} size={16} />
+              )}
+            </TouchableOpacity>
+          ) : null}
         </View>
       </View>
 
-      <View style={styles.accountsList}>
-        {accounts.map((account, index) => {
+      {!isCollapsed ? (
+        <View style={styles.accountsList}>
+          {accounts.map((account, index) => {
           const balance =
             account.currentBalanceMinorUnits !== undefined
               ? account.currentBalanceMinorUnits
@@ -217,27 +245,37 @@ export function AccountTypeGroupCard({
                       <View style={styles.creditCardMetrics}>
                         <Text style={styles.creditCardMetric}>
                           Billed{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.billedMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.billedMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                         <Text style={styles.creditCardMetric}>
                           Unbilled{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.unbilledMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.unbilledMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                         <Text style={styles.creditCardOutstanding}>
                           Outstanding{" "}
-                          {formatCurrency(
-                            account.creditCardMonitoring.outstandingMinorUnits,
-                            account.currencyCode,
+                          {formatPrivacyAmount(
+                            formatCurrency(
+                              account.creditCardMonitoring.outstandingMinorUnits,
+                              account.currencyCode,
+                            ),
+                            isPrivate,
                           )}
                         </Text>
                       </View>
                       <CreditUtilizationRing
+                        isPrivate={isPrivate}
                         percent={account.creditCardMonitoring.utilizationPercent}
                         size={42}
                       />
@@ -290,7 +328,7 @@ export function AccountTypeGroupCard({
                   </View>
 
                   <View
-                    accessibilityLabel={`Available balance ${formatCurrency(available, account.currencyCode)}`}
+                    accessibilityLabel={`Available balance ${formatPrivacyAmount(formatCurrency(available, account.currencyCode), isPrivate)}`}
                     style={styles.pocketRow}
                   >
                     <View style={styles.mainPocketIcon}>
@@ -307,7 +345,7 @@ export function AccountTypeGroupCard({
                   {accountPockets.map((pocket) => (
                     <Pressable
                       key={pocket.id}
-                      accessibilityLabel={`${pocket.name}, ${formatCurrency(pocket.currentBalanceMinorUnits, account.currencyCode)}. Edit pocket.`}
+                      accessibilityLabel={`${pocket.name}, ${formatPrivacyAmount(formatCurrency(pocket.currentBalanceMinorUnits, account.currencyCode), isPrivate)}. Edit pocket.`}
                       accessibilityRole="button"
                       onPress={() => onEditPocket(pocket)}
                       style={({ pressed }) => [
@@ -332,7 +370,8 @@ export function AccountTypeGroupCard({
             </View>
           );
         })}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -360,6 +399,9 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
       paddingHorizontal: theme.spacing.md,
       paddingVertical: 12,
+    },
+    headerRowCollapsed: {
+      borderBottomWidth: 0,
     },
     headerLeft: {
       alignItems: "center",
@@ -413,6 +455,17 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       flexShrink: 0,
       gap: theme.spacing.sm,
+    },
+    collapseToggleBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      height: 26,
+      justifyContent: "center",
+      marginLeft: 2,
+      width: 26,
     },
     sortBtn: {
       alignItems: "center",

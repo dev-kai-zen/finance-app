@@ -1,6 +1,6 @@
+import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -15,6 +15,7 @@ import { BlurView } from "expo-blur";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { NotificationModal } from "@/components";
 
 import { ProCardsCarousel } from "../components/pro-cards-carousel";
 import { PRO_CONSTANTS } from "../constants/pro.constants";
@@ -30,6 +31,19 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [notificationState, setNotificationState] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    variant: "info" | "success" | "warning" | "error";
+    closeOnDismiss?: boolean;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+    variant: "info",
+    closeOnDismiss: false,
+  });
 
   const {
     isPro,
@@ -44,37 +58,58 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
 
   const handlePurchase = async () => {
     if (isPro) {
-      Alert.alert(t("pro.proActive"), t("pro.allFeaturesUnlocked"));
+      setNotificationState({
+        visible: true,
+        title: t("pro.proActive"),
+        message: t("pro.allFeaturesUnlocked"),
+        variant: "info",
+      });
       return;
     }
 
     const result = await purchaseLifetime();
     if (result.success && result.isPro) {
-      Alert.alert(
-        t("pro.purchaseSuccessTitle"),
-        t("pro.purchaseSuccessMsg"),
-        [{ text: t("common.ok"), onPress: onClose }],
-      );
+      setNotificationState({
+        visible: true,
+        title: t("pro.purchaseSuccessTitle"),
+        message: t("pro.purchaseSuccessMsg"),
+        variant: "success",
+        closeOnDismiss: true,
+      });
     } else if (!result.success && !result.userCancelled && result.error) {
-      Alert.alert(t("pro.restoreErrorTitle"), result.error);
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreErrorTitle"),
+        message: result.error,
+        variant: "error",
+      });
     }
   };
 
   const handleRestore = async () => {
     const result = await restorePurchases();
     if (result.success && result.restored) {
-      Alert.alert(
-        t("pro.restoreSuccessTitle"),
-        t("pro.restoreSuccessMsg"),
-        [{ text: t("common.ok"), onPress: onClose }],
-      );
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreSuccessTitle"),
+        message: t("pro.restoreSuccessMsg"),
+        variant: "success",
+        closeOnDismiss: true,
+      });
     } else if (result.success && !result.restored) {
-      Alert.alert(
-        t("pro.restoreNotFoundTitle"),
-        t("pro.restoreNotFoundMsg"),
-      );
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreNotFoundTitle"),
+        message: t("pro.restoreNotFoundMsg"),
+        variant: "info",
+      });
     } else if (!result.success && result.error) {
-      Alert.alert(t("pro.restoreErrorTitle"), result.error);
+      setNotificationState({
+        visible: true,
+        title: t("pro.restoreErrorTitle"),
+        message: result.error,
+        variant: "error",
+      });
     }
   };
 
@@ -243,6 +278,18 @@ export function ProPaywallModal({ visible, onClose }: ProPaywallModalProps) {
           </ScrollView>
         </View>
       </View>
+
+      <NotificationModal
+        message={notificationState.message}
+        onClose={() => {
+          const shouldClose = notificationState.closeOnDismiss;
+          setNotificationState((prev) => ({ ...prev, visible: false }));
+          if (shouldClose) onClose();
+        }}
+        title={notificationState.title}
+        variant={notificationState.variant}
+        visible={notificationState.visible}
+      />
     </Modal>
   );
 }

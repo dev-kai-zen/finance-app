@@ -1,6 +1,7 @@
 import { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 
+import { appLockLifecycle } from "@/modules/security";
 import type {
   NoteAttachment,
   NoteAttachmentDraft,
@@ -18,22 +19,24 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
     try {
       setPicking(true);
       setError(null);
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        setError("Camera permission is required to take an attachment photo.");
-        return;
-      }
+      await appLockLifecycle.withLockSuspended(async () => {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          setError("Camera permission is required to take an attachment photo.");
+          return;
+        }
 
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
-        allowsEditing: false,
-        quality: 0.85,
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ["images"],
+          allowsEditing: false,
+          quality: 0.85,
+        });
+
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
+          setDrafts((prev) => [...prev, ...newDrafts]);
+        }
       });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
-        setDrafts((prev) => [...prev, ...newDrafts]);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open camera.");
     } finally {
@@ -45,18 +48,20 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
     try {
       setPicking(true);
       setError(null);
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: false,
-        allowsMultipleSelection: true,
-        orderedSelection: true,
-        quality: 0.85,
-      });
+      await appLockLifecycle.withLockSuspended(async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsEditing: false,
+          allowsMultipleSelection: true,
+          orderedSelection: true,
+          quality: 0.85,
+        });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
-        setDrafts((prev) => [...prev, ...newDrafts]);
-      }
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
+          setDrafts((prev) => [...prev, ...newDrafts]);
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open photo library.");
     } finally {

@@ -1,12 +1,12 @@
 import React from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useCurrencyPreferences } from "@/modules/currencies";
@@ -54,8 +54,7 @@ export function CashFlowTable({
         </View>
       ) : null}
 
-      <ScrollView
-        horizontal
+      <HorizontalScrollView
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={styles.horizontalScrollContent}
       >
@@ -87,13 +86,13 @@ export function CashFlowTable({
               <Pressable
                 key={row.periodKey}
                 accessibilityRole="button"
-                accessibilityLabel={`${row.periodLabel}: Inflow ${formatCurrency(
-                  row.inflowMinorUnits,
-                  currencyCode,
-                )}, Outflow ${formatCurrency(
-                  row.outflowMinorUnits,
-                  currencyCode,
-                )}, Net ${row.formattedNet}`}
+                accessibilityLabel={`${row.periodLabel}: Inflow ${formatPrivacyAmount(
+                  formatCurrency(row.inflowMinorUnits, currencyCode),
+                  isPrivate,
+                )}, Outflow ${formatPrivacyAmount(
+                  formatCurrency(row.outflowMinorUnits, currencyCode),
+                  isPrivate,
+                )}, Net ${formatPrivacyAmount(row.formattedNet, isPrivate)}`}
                 onPress={() => {
                   onSelectPeriod(isSelected ? null : row.periodKey);
                 }}
@@ -165,7 +164,9 @@ export function CashFlowTable({
                       styles.rateBadge,
                       {
                         backgroundColor:
-                          row.savingsRatePercentage >= 20
+                          isPrivate || !preferences.colorAmounts
+                            ? `${theme.colors.border}60`
+                            : row.savingsRatePercentage >= 20
                             ? `${REPORT_COLORS.positiveGreen}20`
                             : row.savingsRatePercentage > 0
                             ? `${theme.colors.accent}20`
@@ -178,7 +179,9 @@ export function CashFlowTable({
                         styles.rateBadgeText,
                         {
                           color:
-                            row.savingsRatePercentage >= 20
+                            isPrivate || !preferences.colorAmounts
+                              ? theme.colors.textSecondary
+                              : row.savingsRatePercentage >= 20
                               ? REPORT_COLORS.positiveGreen
                               : row.savingsRatePercentage > 0
                               ? theme.colors.accent
@@ -186,7 +189,10 @@ export function CashFlowTable({
                         },
                       ]}
                     >
-                      {row.savingsRatePercentage}%
+                      {formatPrivacyAmount(
+                        `${row.savingsRatePercentage}%`,
+                        isPrivate,
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -248,20 +254,22 @@ export function CashFlowTable({
                 ]}
               >
                 {formatPrivacyAmount(
-                  formatCurrency(netCashFlowMinorUnits, currencyCode, true),
+                  `${formatCurrency(netCashFlowMinorUnits, currencyCode, true)} ${isNetPositive ? "▲" : "▼"}`,
                   isPrivate,
-                )}{" "}
-                {isNetPositive ? "▲" : "▼"}
+                )}
               </Text>
             </View>
             <View style={[styles.colRate, styles.footerCol]}>
               <Text style={styles.footerRateText}>
-                {overallSavingsRatePercentage}%
+                {formatPrivacyAmount(
+                  `${overallSavingsRatePercentage}%`,
+                  isPrivate,
+                )}
               </Text>
             </View>
           </View>
         </View>
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 }

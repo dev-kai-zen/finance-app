@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Globe, HelpCircle, Sparkles, Store, Tag, Wallet, X } from "lucide-react-native";
+import { CircleHelp, Globe, Sparkles, Store, Tag, Wallet, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -38,7 +38,7 @@ export function KaiKnowledgeHelpModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.headerIconBadge}>
-                <HelpCircle color={theme.colors.primary} size={20} />
+                <CircleHelp color={theme.colors.primary} size={20} />
               </View>
               <View style={styles.headerTitleBox}>
                 <Text style={styles.headerTitle}>

@@ -6,7 +6,6 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import type { Account } from "@/modules/accounts";
 import type { Category } from "@/modules/categories";
-import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import { formatCurrency } from "@/utils/currency";
 import type {
   ScheduleOccurrence,
@@ -45,7 +44,6 @@ export function ScheduledOccurrenceCard({
 }: ScheduledOccurrenceCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const { isPrivate } = usePrivacyMode();
 
   const isTransfer = schedule.transactionType === "transfer";
   const signedAmount = isTransfer
@@ -122,13 +120,10 @@ export function ScheduledOccurrenceCard({
                 : styles.amountExpense,
           ]}
         >
-          {formatPrivacyAmount(
-            formatCurrency(
-              signedAmount,
-              sourceAccount?.currencyCode ?? "PHP",
-              signedAmount > 0 && !isTransfer,
-            ),
-            isPrivate,
+          {formatCurrency(
+            signedAmount,
+            sourceAccount?.currencyCode ?? "PHP",
+            signedAmount > 0 && !isTransfer,
           )}
         </Text>
       </View>

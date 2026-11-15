@@ -36,9 +36,11 @@ import {
   GripVertical,
 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { FullScreenFormModal } from "./full-screen-form-modal";
 import { IconHelper } from "./icon-helper";
+import { ScrollDownIndicator } from "./scroll-down-indicator";
 
 const ROW_REORDER_LAYOUT = LinearTransition.duration(180).reduceMotion(
   ReduceMotion.System,
@@ -59,9 +61,15 @@ export interface SortableListModalProps {
   items: SortableItem[];
   onSave: (orderedIds: string[]) => Promise<void> | void;
   showAlphabetizeAction?: boolean;
+  isDirty?: boolean;
 }
 
-export function SortableListModal({
+export function SortableListModal(props: SortableListModalProps) {
+  if (!props.visible) return null;
+  return <SortableListModalContent {...props} />;
+}
+
+function SortableListModalContent({
   visible,
   onClose,
   title,
@@ -69,6 +77,7 @@ export function SortableListModal({
   items: initialItems,
   onSave,
   showAlphabetizeAction = true,
+  isDirty: externalIsDirty,
 }: SortableListModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -80,16 +89,24 @@ export function SortableListModal({
   const destinationIndex = useSharedValue(-1);
   const dragTranslationY = useSharedValue(0);
   const pendingDropReset = useRef(false);
+  const initialOrderRef = useRef<string[]>([]);
+  const wasVisibleRef = useRef(false);
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>();
 
   useEffect(() => {
     if (visible) {
-      setItems([...initialItems]);
+      if (!wasVisibleRef.current) {
+        initialOrderRef.current = initialItems.map((item) => item.id);
+        setItems([...initialItems]);
+      }
       setRowHeight(0);
       setDraggingItemId(null);
       activeIndex.set(-1);
       destinationIndex.set(-1);
       dragTranslationY.set(0);
     }
+    wasVisibleRef.current = visible;
   }, [
     activeIndex,
     destinationIndex,
@@ -97,6 +114,15 @@ export function SortableListModal({
     visible,
     initialItems,
   ]);
+
+  const isDirty = useMemo(() => {
+    if (externalIsDirty !== undefined) return externalIsDirty;
+    if (!visible || initialOrderRef.current.length === 0) return false;
+    if (items.length !== initialOrderRef.current.length) return false;
+    return items.some(
+      (item, index) => item.id !== initialOrderRef.current[index],
+    );
+  }, [externalIsDirty, items, visible]);
 
   useLayoutEffect(() => {
     if (!pendingDropReset.current) return;
@@ -178,6 +204,7 @@ export function SortableListModal({
 
   return (
     <FullScreenFormModal
+      isDirty={isDirty}
       pending={saving}
       saveLabel="Save order"
       title={title}
@@ -190,10 +217,12 @@ export function SortableListModal({
     >
       <GestureHandlerRootView style={styles.scrollArea}>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           style={styles.scrollArea}
+          {...scrollProps}
         >
           <Text style={styles.instructionText}>
             {showAlphabetizeAction
@@ -234,6 +263,11 @@ export function SortableListModal({
             />
           ))}
         </ScrollView>
+        <ScrollDownIndicator
+          visible={canScrollDown}
+          onPress={scrollToNext}
+          bottomOffset={12}
+        />
       </GestureHandlerRootView>
     </FullScreenFormModal>
   );
@@ -504,6 +538,7 @@ function createStyles(theme: AppTheme) {
     },
     scrollArea: {
       flex: 1,
+      position: "relative",
     },
     scrollContent: {
       gap: theme.spacing.xs,

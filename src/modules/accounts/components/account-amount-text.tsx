@@ -9,12 +9,14 @@ export function AccountAmountText({
   currencyCode = "PHP",
   style,
   variant = "body",
+  ignorePrivacy = false,
   ...rest
 }: {
   amountMinorUnits: number;
   currencyCode?: string;
   variant?: "body" | "title" | "hero";
   style?: TextStyle;
+  ignorePrivacy?: boolean;
 } & Omit<TextProps, "children" | "style">) {
   const theme = useAppTheme();
   const { preferences } = useCurrencyPreferences();
@@ -33,6 +35,8 @@ export function AccountAmountText({
     ? result.color
     : theme.colors.textPrimary;
 
+  const shouldHide = isPrivate && !ignorePrivacy;
+
   return (
     <Text
       {...rest}
@@ -44,7 +48,7 @@ export function AccountAmountText({
         style,
       ]}
     >
-      {isPrivate ? "••••••" : formatted}
+      {shouldHide ? "••••••" : formatted}
     </Text>
   );
 }

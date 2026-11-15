@@ -1,10 +1,14 @@
-import { setQuickSyncRuntimeStatus } from "@/infrastructure/sync";
+import {
+  resetQuickSyncLocalMetadata,
+  setQuickSyncRuntimeStatus,
+} from "@/infrastructure/sync";
 import {
   disconnectGoogleDrive,
   getGoogleDriveConfigurationError,
 } from "./google-drive-auth.service";
 
 export async function resetGoogleDriveConnectionForAppReset(): Promise<void> {
+  resetQuickSyncLocalMetadata();
   if (getGoogleDriveConfigurationError()) {
     setQuickSyncRuntimeStatus("disabled");
     return;

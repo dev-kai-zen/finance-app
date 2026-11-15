@@ -3,6 +3,72 @@ import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-h
 /** Newest releases first. Append a block for each store release you want to highlight. */
 export const RELEASE_NOTES: ReleaseNoteBlock[] = [
   {
+    version: "1.5.1",
+    dateKey: "versionHistory.v151.date",
+    sections: [
+      {
+        categoryKey: "versionHistory.categories.improve",
+        itemKeys: ["versionHistory.v151.improveItem1"],
+      },
+    ],
+  },
+  {
+    version: "1.5.0",
+    dateKey: "versionHistory.v150.date",
+    sections: [
+      {
+        categoryKey: "versionHistory.categories.new",
+        itemKeys: [
+          "versionHistory.v150.newItem1",
+          "versionHistory.v150.newItem2",
+          "versionHistory.v150.newItem3",
+          "versionHistory.v150.newItem4",
+          "versionHistory.v150.newItem5",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.improve",
+        itemKeys: [
+          "versionHistory.v150.improveItem1",
+          "versionHistory.v150.improveItem2",
+          "versionHistory.v150.improveItem3",
+          "versionHistory.v150.improveItem4",
+          "versionHistory.v150.improveItem5",
+          "versionHistory.v150.improveItem6",
+          "versionHistory.v150.improveItem7",
+          "versionHistory.v150.improveItem8",
+          "versionHistory.v150.improveItem9",
+          "versionHistory.v150.improveItem10",
+          "versionHistory.v150.improveItem11",
+          "versionHistory.v150.improveItem12",
+          "versionHistory.v150.improveItem13",
+          "versionHistory.v150.improveItem14",
+          "versionHistory.v150.improveItem15",
+          "versionHistory.v150.improveItem16",
+          "versionHistory.v150.improveItem17",
+          "versionHistory.v150.improveItem18",
+        ],
+      },
+      {
+        categoryKey: "versionHistory.categories.fix",
+        itemKeys: [
+          "versionHistory.v150.fixItem1",
+          "versionHistory.v150.fixItem2",
+          "versionHistory.v150.fixItem3",
+          "versionHistory.v150.fixItem4",
+          "versionHistory.v150.fixItem5",
+          "versionHistory.v150.fixItem6",
+          "versionHistory.v150.fixItem7",
+          "versionHistory.v150.fixItem8",
+          "versionHistory.v150.fixItem9",
+          "versionHistory.v150.fixItem10",
+          "versionHistory.v150.fixItem11",
+          "versionHistory.v150.fixItem12",
+        ],
+      },
+    ],
+  },
+  {
     version: "1.4.0",
     dateKey: "versionHistory.v140.date",
     sections: [
@@ -87,9 +153,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.new",
-        itemKeys: [
-          "versionHistory.v121.newItem1",
-        ],
+        itemKeys: ["versionHistory.v121.newItem1"],
       },
       {
         categoryKey: "versionHistory.categories.improve",
@@ -148,9 +212,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: [
-          "versionHistory.v111.quickActionsItem1",
-        ],
+        itemKeys: ["versionHistory.v111.quickActionsItem1"],
       },
     ],
   },
@@ -160,15 +222,11 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.new",
-        itemKeys: [
-          "versionHistory.v110.searchItem1",
-        ],
+        itemKeys: ["versionHistory.v110.searchItem1"],
       },
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: [
-          "versionHistory.v110.updateItem1",
-        ],
+        itemKeys: ["versionHistory.v110.updateItem1"],
       },
     ],
   },
@@ -207,27 +265,19 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       },
       {
         categoryKey: "versionHistory.categories.scheduledTransactions",
-        itemKeys: [
-          "versionHistory.v100.scheduledItem1",
-        ],
+        itemKeys: ["versionHistory.v100.scheduledItem1"],
       },
       {
         categoryKey: "versionHistory.categories.creditCards",
-        itemKeys: [
-          "versionHistory.v100.creditCardsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.creditCardsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.goals",
-        itemKeys: [
-          "versionHistory.v100.goalsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.goalsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.reports",
-        itemKeys: [
-          "versionHistory.v100.reportsItem1",
-        ],
+        itemKeys: ["versionHistory.v100.reportsItem1"],
       },
       {
         categoryKey: "versionHistory.categories.security",
@@ -238,11 +288,8 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
       },
       {
         categoryKey: "versionHistory.categories.backup",
-        itemKeys: [
-          "versionHistory.v100.backupItem1",
-        ],
+        itemKeys: ["versionHistory.v100.backupItem1"],
       },
     ],
   },
 ];
-

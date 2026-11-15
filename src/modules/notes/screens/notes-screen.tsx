@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,9 +8,13 @@ import {
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 
-import { ConfirmModal } from "@/components";
+import { ConfirmModal, useHeaderWalkthroughAction } from "@/components";
 import { FloatingActionButton } from "@/components/floating-action-button";
-import { PageContainer, PageEmptyState } from "@/components/page-container";
+import {
+  PageContainer,
+  PageEmptyState,
+  PageLoadingState,
+} from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -18,7 +22,6 @@ import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useLocalization } from "@/infrastructure/localization";
 import { StickyNote } from "lucide-react-native";
 import {
-  DraggableTourChip,
   NotesWalkthroughOverlay,
   WalkthroughIntroModal,
   useNotesWalkthrough,
@@ -140,6 +143,16 @@ function NotesScreenContent({
     hasNoteInList,
     onScrollToTarget: handleScrollToTarget,
   });
+
+  useHeaderWalkthroughAction(
+    useMemo(
+      () => ({
+        onStart: walkthrough.startWalkthrough,
+        isActive: walkthrough.isWalkthroughActive,
+      }),
+      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+    ),
+  );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "notesWalkthroughDismissed",
@@ -266,41 +279,29 @@ function NotesScreenContent({
   }));
 
   return (
-    <PageContainer
-      scrollRef={scrollRef}
-      scrollContentRef={scrollContentRef}
-      refreshing={isPullRefreshing}
-      onRefresh={handlePullRefresh}
-      contentContainerStyle={contentSpacing}
-      scrollEnabled={
-        walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
-      }
-      floatingAction={
-        <>
-          {notes.length > 0 ? (
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        scrollRef={scrollRef}
+        scrollContentRef={scrollContentRef}
+        refreshing={isPullRefreshing}
+        onRefresh={handlePullRefresh}
+        contentContainerStyle={contentSpacing}
+        scrollEnabled={
+          walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
+        }
+        floatingAction={
+          notes.length > 0 ? (
             <FloatingActionButton
               accessibilityLabel="Add new note"
               fabRef={fabRef}
               onPress={handleOpenNewNote}
             />
-          ) : null}
-          <DraggableTourChip
-            onPress={() => {
-              if (search.length > 0) {
-                setSearch("");
-              }
-              walkthrough.startWalkthrough();
-            }}
-            visible={!walkthrough.isWalkthroughActive}
-          />
-        </>
-      }
-    >
+          ) : undefined
+        }
+      >
       <View style={styles.container}>
         {loading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-          </View>
+          <PageLoadingState message="Loading notes..." variant="cards" />
         ) : hasNoNotes && !isSearchActive ? (
           /* Empty state when user hasn't created any notes yet */
           <PageEmptyState
@@ -425,12 +426,29 @@ function NotesScreenContent({
         totalSteps={walkthrough.totalSteps}
         visible={walkthrough.isWalkthroughActive}
       />
-    </PageContainer>
+      </PageContainer>
+
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <View
+          pointerEvents="auto"
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "transparent",
+      zIndex: 99999,
+    },
     container: {
       width: "100%",
     },

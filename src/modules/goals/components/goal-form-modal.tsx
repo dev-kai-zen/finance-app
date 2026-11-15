@@ -32,9 +32,12 @@ import {
   type HexColor,
   type HexColorInput,
 } from "@/modules/hex-colors";
-import { useExperiencePreferences } from "@/modules/settings";
 import {
-  DraggableTourChip,
+  formatPrivacyAmount,
+  useExperiencePreferences,
+  usePrivacyMode,
+} from "@/modules/settings";
+import {
   GoalFormWalkthroughOverlay,
   useGoalFormWalkthrough,
   WalkthroughIntroModal,
@@ -76,7 +79,7 @@ export function GoalFormModal(props: GoalFormModalProps) {
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
-      <GoalFormModalContent {...props} />
+      <GoalFormModalContent key={props.initialGoal?.id ?? "new-goal"} {...props} />
     </WalkthroughRegistryProvider>
   );
 }
@@ -94,22 +97,44 @@ function GoalFormModalContent({
   const { accounts, pockets } = useAccounts();
   const { preferences } = useCurrencyPreferences();
   const defaultCurrency = preferences.defaultCurrency || "PHP";
+  const { isPrivate } = usePrivacyMode();
   const {
     colors: hexColorsList,
     addColor,
-    refresh: refreshHexColors,
   } = useHexColors();
 
   // Form State
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const [targetAmountMinorUnits, setTargetAmountMinorUnits] = useState(0);
-  const [currencyCode, setCurrencyCode] = useState(defaultCurrency);
-  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
-  const [selectedPocketIds, setSelectedPocketIds] = useState<string[]>([]);
-  const [targetDate, setTargetDate] = useState<Date | null>(null);
-  const [iconKey, setIconKey] = useState<string>("target");
-  const [hexColorsId, setHexColorsId] = useState<string>("color_blue");
+  const [name, setName] = useState(() => initialGoal?.name ?? "");
+  const [note, setNote] = useState(() => initialGoal?.note ?? "");
+  const [targetAmountMinorUnits, setTargetAmountMinorUnits] = useState(
+    () => initialGoal?.targetAmountMinorUnits ?? 0,
+  );
+  const [currencyCode, setCurrencyCode] = useState(
+    () => initialGoal?.currencyCode || defaultCurrency,
+  );
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>(() =>
+    initialGoal?.accountIds && initialGoal.accountIds.length > 0
+      ? initialGoal.accountIds
+      : initialGoal?.accountId
+        ? [initialGoal.accountId]
+        : [],
+  );
+  const [selectedPocketIds, setSelectedPocketIds] = useState<string[]>(() =>
+    initialGoal?.pocketIds && initialGoal.pocketIds.length > 0
+      ? initialGoal.pocketIds
+      : initialGoal?.pocketId
+        ? [initialGoal.pocketId]
+        : [],
+  );
+  const [targetDate, setTargetDate] = useState<Date | null>(
+    () => initialGoal?.targetDate || null,
+  );
+  const [iconKey, setIconKey] = useState<string>(
+    () => initialGoal?.iconKey || "target",
+  );
+  const [hexColorsId, setHexColorsId] = useState<string>(
+    () => initialGoal?.hexColorsId || "color_blue",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const initialSnapshotRef = useRef<string>("");
@@ -130,7 +155,6 @@ function GoalFormModalContent({
 
   useEffect(() => {
     if (visible) {
-      refreshHexColors();
       if (initialGoal) {
         setName(initialGoal.name);
         setNote(initialGoal.note || "");
@@ -187,7 +211,7 @@ function GoalFormModalContent({
       setFocusedFieldType(null);
       setHelpTopic(null);
     }
-  }, [visible, initialGoal, refreshHexColors]);
+  }, [visible, initialGoal]);
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
@@ -357,10 +381,6 @@ function GoalFormModalContent({
         visible={visible}
         isDirty={isDirty}
       >
-        <DraggableTourChip
-          onPress={walkthrough.startWalkthrough}
-          visible={!walkthrough.isWalkthroughActive}
-        />
         <KeyboardAwareFormPreset
           ref={formScrollRef}
           contentContainerStyle={styles.scrollContent}
@@ -397,6 +417,24 @@ function GoalFormModalContent({
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.input}
                 value={name}
+              />
+            </View>
+          </WalkthroughTarget>
+
+          {/* Optional Notes */}
+          <WalkthroughTarget id="goalFormNotes">
+            <View style={styles.formField}>
+              <Text style={styles.label}>Note</Text>
+              <TextInput
+                multiline
+                numberOfLines={3}
+                onBlur={() => setFocusedFieldType(null)}
+                onChangeText={setNote}
+                onFocus={() => setFocusedFieldType("description")}
+                placeholder="Add note..."
+                placeholderTextColor={theme.colors.textMuted}
+                style={[styles.input, styles.textArea]}
+                value={note}
               />
             </View>
           </WalkthroughTarget>
@@ -439,7 +477,10 @@ function GoalFormModalContent({
                           : `${selectedPockets.length} ${selectedPockets.length === 1 ? "pocket" : "pockets"} linked`}
                     </Text>
                     <Text style={styles.accountsCardHeaderBalance}>
-                      {formatCurrency(totalLinkedBalance, currencyCode)}
+                      {formatPrivacyAmount(
+                        formatCurrency(totalLinkedBalance, currencyCode),
+                        isPrivate,
+                      )}
                     </Text>
                   </View>
 
@@ -452,7 +493,10 @@ function GoalFormModalContent({
                             {account.name}
                           </Text>
                           <Text style={styles.accountChipBalance}>
-                            ({formatCurrency(account.currentBalanceMinorUnits, account.currencyCode)})
+                            ({formatPrivacyAmount(
+                              formatCurrency(account.currentBalanceMinorUnits, account.currencyCode),
+                              isPrivate,
+                            )})
                           </Text>
                         </View>
                         <Pressable
@@ -476,7 +520,10 @@ function GoalFormModalContent({
                               {pocket.name}
                             </Text>
                             <Text style={styles.accountChipBalance}>
-                              ({parent?.name ? `${parent.name} • ` : ""}{formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP")})
+                              ({parent?.name ? `${parent.name} • ` : ""}{formatPrivacyAmount(
+                                formatCurrency(pocket.currentBalanceMinorUnits, parent?.currencyCode ?? "PHP"),
+                                isPrivate,
+                              )})
                             </Text>
                           </View>
                           <Pressable
@@ -631,8 +678,8 @@ function GoalFormModalContent({
                         >
                           {isSelected ? (
                             <Check
-                              color={theme.colors.textInverse}
-                              size={18}
+                              color="#FFFFFF"
+                              size={14}
                               strokeWidth={3}
                             />
                           ) : null}
@@ -660,24 +707,6 @@ function GoalFormModalContent({
               </WalkthroughTarget>
             </View>
           </View>
-
-          {/* Optional Notes */}
-          <WalkthroughTarget id="goalFormNotes">
-            <View style={styles.formField}>
-              <Text style={styles.label}>Note</Text>
-              <TextInput
-                multiline
-                numberOfLines={3}
-                onBlur={() => setFocusedFieldType(null)}
-                onChangeText={setNote}
-                onFocus={() => setFocusedFieldType("description")}
-                placeholder="Add note..."
-                placeholderTextColor={theme.colors.textMuted}
-                style={[styles.input, styles.textArea]}
-                value={note}
-              />
-            </View>
-          </WalkthroughTarget>
           </View>
         </KeyboardAwareFormPreset>
         <GoalFormWalkthroughOverlay
@@ -1022,30 +1051,27 @@ function createStyles(theme: AppTheme) {
     },
     colorSwatch: {
       alignItems: "center",
+      borderColor: "rgba(255,255,255,0.25)",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1.5,
+      height: 34,
       justifyContent: "center",
+      width: 34,
     },
-    colorSwatchUnselected: {
-      borderRadius: 15,
-      height: 30,
-      opacity: 0.82,
-      width: 30,
-    },
+    colorSwatchUnselected: {},
     colorSwatchSelected: {
-      borderColor: theme.colors.textInverse,
-      borderRadius: 22,
+      borderColor: theme.colors.textPrimary,
       borderWidth: 2.5,
-      height: 44,
-      width: 44,
-      ...theme.shadows.card,
+      transform: [{ scale: 1.06 }],
     },
     addColorSwatch: {
       alignItems: "center",
-      borderRadius: 15,
+      borderRadius: theme.borderRadius.round,
       borderStyle: "dashed",
       borderWidth: 1.5,
-      height: 30,
+      height: 34,
       justifyContent: "center",
-      width: 30,
+      width: 34,
     },
     addColorSwatchPressed: {
       opacity: 0.65,

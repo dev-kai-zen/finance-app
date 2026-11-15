@@ -4,6 +4,8 @@ import type { DbContext } from "@/infrastructure/database/client";
 import {
   accountTypes,
   accounts,
+  importBatches,
+  importRecords,
   budgetMonthlyTargets,
   categories,
   categoryBudgets,
@@ -38,6 +40,8 @@ import {
 /** Table names catalog: `@/infrastructure/database/user-data-tables`. */
 export function deleteAllUserData(context: DbContext): void {
   context.delete(syncOperations).run();
+  context.delete(importRecords).run();
+  context.delete(importBatches).run();
 
   context.delete(transactionSchedulePostings).run();
   context.delete(transactionScheduleOccurrences).run();

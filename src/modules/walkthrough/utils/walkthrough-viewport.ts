@@ -1,3 +1,4 @@
+import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import type { LayoutRect } from "../types/walkthrough.types";
 
 export const WALKTHROUGH_SCROLL_TOP_OFFSET = 90;
@@ -9,8 +10,10 @@ export function isWalkthroughTargetVisible(
   layout: LayoutRect,
   windowHeight: number,
   safeAreaInsets: { top: number; bottom: number },
+  headerHeight: number = LAYOUT_DIMENSIONS.topBarHeight,
 ): boolean {
-  const visibleTop = safeAreaInsets.top + WALKTHROUGH_VIEWPORT_TOP_INSET;
+  const visibleTop =
+    safeAreaInsets.top + headerHeight + WALKTHROUGH_VIEWPORT_TOP_INSET;
   const visibleBottom =
     windowHeight - safeAreaInsets.bottom - WALKTHROUGH_VIEWPORT_BOTTOM_INSET;
   const targetTop = layout.y;

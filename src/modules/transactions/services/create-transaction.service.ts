@@ -19,6 +19,7 @@ export function createTransaction(input: CreateTransactionInput): Transaction {
 export function createTransactionInContext(
   input: CreateTransactionInput,
   context: DbContext,
+  options: { reconcileBilling?: boolean } = {},
 ): Transaction {
   if (!input.accountId) {
     throw new Error("Account is required for recording a transaction.");
@@ -100,6 +101,6 @@ export function createTransactionInContext(
     if (input.labelIds && input.labelIds.length > 0) {
       assignTransactionLabels(transaction.id, input.labelIds, context);
     }
-    reconcileCreditCardBillingInContext(new Date(), context);
+    if (options.reconcileBilling !== false) reconcileCreditCardBillingInContext(new Date(), context);
     return transaction;
 }

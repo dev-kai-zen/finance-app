@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
 import { listCategories } from "../repositories/categories.repository";
 import { saveCategory as saveCategoryService } from "../services/save-category.service";
@@ -15,10 +16,13 @@ export function useCategories() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const list = await listCategories(db);
       setCategories(list);
@@ -26,12 +30,15 @@ export function useCategories() {
       console.error("[useCategories] Failed to load categories:", err);
       setError(err?.message ?? "Failed to load categories.");
     } finally {
+      hasLoadedOnceRef.current = true;
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void refresh();
+    scheduleAfterPaint(() => {
+      void refresh();
+    });
   }, [refresh]);
 
   const save = useCallback(
