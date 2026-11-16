@@ -370,6 +370,7 @@ export const es = {
     enabled: "Activado",
     disabled: "Desactivado",
     cancel: "Cancelar",
+    clear: "Borrar",
     close: "Cerrar",
     delete: "Eliminar",
     goBack: "Volver",
@@ -888,6 +889,26 @@ export const es = {
     advancePostToastNext: "La próxima fecha programada se trasladó al %{date}.",
     advancePostToastCompleted: "Esta programación ha finalizado.",
     today: "Hoy",
+    subscriptionBadge: "Suscripción",
+    manageInSubscriptions: "Gestionar en Suscripciones",
+    managedBySubscriptionTitle: "Gestionado por Suscripciones",
+    managedBySubscriptionDesc:
+      "Esta transacción programada se sincroniza automáticamente con tu suscripción. Para ajustar importes, ciclo, pausar o eliminar, gestiónala directamente en Suscripciones.",
+    goToSubscriptions: "Ir a Suscripciones",
+    emptyTitle: "No hay transacciones programadas",
+    emptyDesc:
+      "Crea ingresos, gastos o transferencias recurrentes y decide si cada ocurrencia se publica automáticamente. Usa el botón + para agregar tu primer calendario.",
+    noSubscriptionSchedulesTitle: "No hay calendarios de suscripción",
+    noSubscriptionSchedulesDesc:
+      "No tienes ningún calendario creado por suscripciones. Las suscripciones con publicación automática aparecerán aquí.",
+    noMatchingTitle: "No hay calendarios coincidentes",
+    noMatchingDesc:
+      "Ningún calendario coincide con los filtros seleccionados. Selecciona otro filtro para verlos.",
+    filters: {
+      all: "Todos",
+      regularSchedules: "Calendarios Regulares",
+      subscriptions: "Suscripciones",
+    },
   },
   themePicker: {
     closeAccessibility: "Cerrar selector de tema",
@@ -986,6 +1007,35 @@ export const es = {
     autoPostDesc:
       "Genera automáticamente una transacción de gasto en tu libro en la fecha de renovación programada.",
     cancellationUrlLabel: "Enlace Web de Gestión / Cancelación",
+    firstBillingDate: "Primera Factura / Próxima Renovación",
+    firstBillingDateDesc:
+      "La fecha base utilizada para calcular los ciclos de facturación y cuentas regresivas.",
+    selectBillingDate: "Seleccionar Fecha",
+    exactDay: "Día exacto",
+    cycleDescWeekly: "Facturado cada %{day} de la semana",
+    cycleDescMonthly: "Facturado el día %{day} de cada mes",
+    cycleDescQuarterly: "Facturado cada 3 meses el día %{day} (próximo: %{date})",
+    cycleDescSemiAnnual: "Facturado cada 6 meses el día %{day} (próximo: %{date})",
+    cycleDescYearly: "Facturado anualmente cada %{date}",
+    trialDuration: "Duración de la Prueba",
+    customDate: "Fecha Personalizada",
+    trialEndsAtTitle: "Fecha de Vencimiento de Prueba",
+    trialSummaryCaption: "La prueba termina el %{date} (%{daysLeft}). %{reminder}",
+    reminderLeadDays: "Avisarme Antes de Renovar",
+    reminderSummary: "Recordatorio emitido %{days} días antes.",
+    noReminders: "Sin recordatorios programados.",
+    contractEndsOn: "Vencimiento de Contrato / Finaliza el",
+    contractEndsOnDesc:
+      "Fecha opcional de finalización de contrato o promoción donde cesa la facturación.",
+    noExpiration: "Sin fecha de finalización (continuo)",
+    freeTrialHelp: "Ayuda sobre Prueba Gratuita",
+    freeTrialHelpTitle: "Acerca del Modo de Prueba Gratuita",
+    freeTrialHelpMessage:
+      "Marca esta suscripción como prueba activa. Recibirás recordatorios anticipados para que puedas cancelar antes de que se cargue en tu tarjeta.",
+    autoPostHelp: "Ayuda sobre Publicación Automática",
+    autoPostHelpTitle: "Acerca de la Publicación Automática en Libro",
+    autoPostHelpMessage:
+      "Cuando está activado, se registra automáticamente una transacción de gasto en tu libro en cada fecha de renovación sin confirmación manual.",
     notesPlaceholder: "Nivel del plan, recordatorio de credenciales, etc.",
     searchPlaceholder: "Buscar suscripciones, servicios, facturas...",
     emptyTitle: "Sin Suscripciones Registradas",
@@ -1033,6 +1083,12 @@ export const es = {
       date: "16 de noviembre de 2026",
       newItem1:
         "Realice un seguimiento de sus suscripciones y facturas recurrentes con cuentas regresivas de renovación y totales de gasto mensual.",
+      improveItem1:
+        "Personaliza las fechas de facturación de suscripciones, duración de pruebas y recordatorios con cuenta regresiva.",
+      improveItem2:
+        "Admite subcuentas (pockets), vencimiento de contratos y ocultación de importes con modo de privacidad.",
+      improveItem3:
+        "Vincula suscripciones a transacciones programadas con filtros por origen y protección de solo lectura.",
       fixItem1:
         "Solucionar errores de sincronización y base de datos al cambiar de cuenta de Google Drive.",
       fixItem2:

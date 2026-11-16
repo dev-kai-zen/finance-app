@@ -6,6 +6,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { SubscriptionBurnRateSummary } from "../types/subscription.types";
 
 export interface SubscriptionBurnRateSummaryProps {
@@ -19,6 +20,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
     const theme = useAppTheme();
     const styles = useThemeStyles(createStyles);
     const { t } = useLocalization();
+    const { isPrivate } = usePrivacyMode();
 
     const monthlyFormatted = formatCurrency(
       summary.totalMonthlyBurnRateMinorUnits,
@@ -29,6 +31,9 @@ export const SubscriptionBurnRateSummaryCard = memo(
       summary.totalYearlyProjectedMinorUnits,
       summary.currencyCode,
     );
+
+    const displayMonthly = formatPrivacyAmount(monthlyFormatted, isPrivate);
+    const displayYearly = formatPrivacyAmount(yearlyFormatted, isPrivate);
 
     return (
       <View style={styles.card}>
@@ -54,7 +59,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
         </View>
 
         <View style={styles.amountContainer}>
-          <Text style={styles.mainAmount}>{monthlyFormatted}</Text>
+          <Text style={styles.mainAmount}>{displayMonthly}</Text>
           <Text style={styles.perMonthLabel}>
             {t("subscriptions.perMonth", { defaultValue: "/ month" })}
           </Text>
@@ -69,7 +74,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
                 defaultValue: "Yearly Projection",
               })}
             </Text>
-            <Text style={styles.statValue}>{yearlyFormatted}</Text>
+            <Text style={styles.statValue}>{displayYearly}</Text>
           </View>
 
           {summary.upcomingCount7Days > 0 ? (

@@ -369,6 +369,7 @@ export const fil = {
     enabled: "Naka-on",
     disabled: "Naka-off",
     cancel: "Kanselahin",
+    clear: "Burahin",
     close: "Isara",
     delete: "Burahin",
     goBack: "Bumalik",
@@ -900,6 +901,26 @@ export const fil = {
     advancePostToastNext: "Inilipat ang susunod na iskedyul sa %{date}.",
     advancePostToastCompleted: "Kumpleto na ang iskedyul na ito.",
     today: "Ngayon",
+    subscriptionBadge: "Subscription",
+    manageInSubscriptions: "Pamahalaan sa Mga Subscription",
+    managedBySubscriptionTitle: "Pinamamahalaan ng Mga Subscription",
+    managedBySubscriptionDesc:
+      "Ang nakaiskedyul na transaksyong ito ay awtomatikong naka-synchronize sa iyong subscription. Upang baguhin ang halaga, siklo, i-pause, o burahin, pamahalaan ito nang direkta sa Mga Subscription.",
+    goToSubscriptions: "Pumunta sa Mga Subscription",
+    emptyTitle: "Walang nakaiskedyul na transaksyon",
+    emptyDesc:
+      "Gumawa ng umuulit na kita, gastos, o transfer at magdesisyon kung awtomatikong ipo-post ang bawat occurrence. Gamitin ang + button upang idagdag ang iyong unang iskedyul.",
+    noSubscriptionSchedulesTitle: "Walang iskedyul ng subscription",
+    noSubscriptionSchedulesDesc:
+      "Wala kang anumang iskedyul na ginawa mula sa mga subscription. Ang mga subscription na may auto-post ay lalabas dito.",
+    noMatchingTitle: "Walang tumutugmang iskedyul",
+    noMatchingDesc:
+      "Walang iskedyul na tumutugma sa mga napiling filter. Pumili ng ibang filter upang matingnan ang mga ito.",
+    filters: {
+      all: "Lahat",
+      regularSchedules: "Karaniwang Iskedyul",
+      subscriptions: "Mga Subscription",
+    },
   },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
@@ -1000,6 +1021,35 @@ export const fil = {
     autoPostDesc:
       "Awtomatikong gagawa ng transaksyon sa iyong ledger sa nakatakdang araw ng pag-renew.",
     cancellationUrlLabel: "Web Link para sa Pamamahala / Pagkansela",
+    firstBillingDate: "Unang Singil / Susunod na Petsa ng Pag-renew",
+    firstBillingDateDesc:
+      "Ang batayang petsa na ginagamit upang kalkulahin ang siklo ng paniningil at countdown sa pag-renew.",
+    selectBillingDate: "Pumili ng Petsa",
+    exactDay: "Eksaktong araw",
+    cycleDescWeekly: "Sisingilin tuwing %{day} ng linggo",
+    cycleDescMonthly: "Sisingilin tuwing ika-%{day} ng bawat buwan",
+    cycleDescQuarterly: "Sisingilin kada 3 buwan sa ika-%{day} (susunod: %{date})",
+    cycleDescSemiAnnual: "Sisingilin kada 6 buwan sa ika-%{day} (susunod: %{date})",
+    cycleDescYearly: "Sisingilin taon-taon tuwing %{date}",
+    trialDuration: "Tagal ng Trial",
+    customDate: "Pasadyang Petsa",
+    trialEndsAtTitle: "Petsa ng Pagkawalang-bisa ng Trial",
+    trialSummaryCaption: "Magtatapos ang trial sa %{date} (%{daysLeft}). %{reminder}",
+    reminderLeadDays: "Ipaalala Bago Mag-renew",
+    reminderSummary: "Mag-aalerto %{days} araw bago ang petsa.",
+    noReminders: "Walang nakatakdang paalala.",
+    contractEndsOn: "Pagtatapos ng Kontrata / Ends On",
+    contractEndsOnDesc:
+      "Opsyonal na petsa ng pagtatapos ng kontrata o promo kung kailan awtomatikong hihinto ang paniningil.",
+    noExpiration: "Walang petsa ng pagtatapos (tuloy-tuloy)",
+    freeTrialHelp: "Tulong para sa Libreng Trial",
+    freeTrialHelpTitle: "Tungkol sa Libreng Trial Mode",
+    freeTrialHelpMessage:
+      "Minamarkahan ito bilang aktibong trial. Makakatanggap ka ng maagang paalala upang makapagkansela bago masingil ang iyong card.",
+    autoPostHelp: "Tulong para sa Auto-Post",
+    autoPostHelpTitle: "Tungkol sa Awtomatikong Pag-post sa Ledger",
+    autoPostHelpMessage:
+      "Kapag naka-on, awtomatikong magtatala ng transaksyon sa iyong ledger sa bawat petsa ng renewal nang hindi kailangan ng manu-manong kumpirmasyon.",
     notesPlaceholder: "Tier ng plano, paalala sa account, atbp.",
     searchPlaceholder: "Maghanap ng subscription, utility, serbisyo...",
     emptyTitle: "Wala Pang Naka-track na Subscription",
@@ -1047,6 +1097,12 @@ export const fil = {
       date: "Nobyembre 16, 2026",
       newItem1:
         "Subaybayan ang iyong mga paulit-ulit na subscription at bayarin na may countdown sa pag-renew at kabuuang buwanang gastos.",
+      improveItem1:
+        "I-customize ang petsa ng paniningil ng subscription, tagal ng trial, at paalala bago mag-renew.",
+      improveItem2:
+        "Suportahan ang sub-account pockets, petsa ng pagtatapos ng kontrata, at pagtatago ng halaga kapag naka-privacy mode.",
+      improveItem3:
+        "I-link ang mga subscription sa naka-iskedyul na transaksyon na may filter grouping at proteksyon laban sa maling pag-edit.",
       fixItem1:
         "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
       fixItem2:

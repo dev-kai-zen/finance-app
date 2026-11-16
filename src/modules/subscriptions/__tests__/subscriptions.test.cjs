@@ -153,3 +153,22 @@ test("subscriptionFormSchema validates valid and invalid payloads", () => {
     });
   });
 });
+
+test("subscriptionFormSchema supports pocketId and endsOn attributes", () => {
+  const payloadWithPocketAndEnd = {
+    name: "Gym Membership",
+    amountMinorUnits: 150000,
+    currencyCode: "PHP",
+    billingCycle: "monthly",
+    billingCycleInterval: 1,
+    status: "active",
+    firstBillingDate: new Date("2026-01-01"),
+    autoPost: true,
+    pocketId: "pocket-123",
+    endsOn: new Date("2026-12-31"),
+  };
+
+  const parsed = subscriptionFormSchema.parse(payloadWithPocketAndEnd);
+  assert.equal(parsed.pocketId, "pocket-123");
+  assert.equal(parsed.endsOn.getFullYear(), 2026);
+});

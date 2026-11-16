@@ -17,6 +17,7 @@ export function recordSubscriptionPayment(
   subscriptionId: string,
   options: {
     accountId?: string;
+    pocketId?: string | null;
     paidAt?: Date;
     amountMinorUnits?: number;
     note?: string;
@@ -31,6 +32,7 @@ export function recordSubscriptionPaymentInContext(
   subscriptionId: string,
   options: {
     accountId?: string;
+    pocketId?: string | null;
     paidAt?: Date;
     amountMinorUnits?: number;
     note?: string;
@@ -49,6 +51,9 @@ export function recordSubscriptionPaymentInContext(
     );
   }
 
+  const pocketId =
+    options.pocketId !== undefined ? options.pocketId : subscription.pocketId;
+
   const paidDate = options.paidAt || new Date();
   const paymentAmount =
     options.amountMinorUnits !== undefined
@@ -61,6 +66,7 @@ export function recordSubscriptionPaymentInContext(
       kind: "transaction",
       input: {
         accountId,
+        pocketId,
         categoryId: subscription.categoryId,
         type: "expense",
         amountMinorUnits: -paymentAmount,
@@ -107,4 +113,43 @@ export function recordSubscriptionPaymentInContext(
     transactionId: txRecord.id,
     nextRenewalDate: nextRenewal,
   };
+}
+
+export function handleSubscriptionScheduleExecutedInContext(
+  subscriptionId: string,
+  transactionId: string,
+  paidAt: Date,
+  amountMinorUnits: number,
+  context: DbContext,
+): void {
+  const subscription = findSubscriptionById(subscriptionId, context);
+  if (!subscription) return;
+
+  const paymentRecordId = generateSubscriptionId(context);
+  insertSubscriptionPaymentRecord(
+    {
+      id: paymentRecordId,
+      subscriptionId: subscription.id,
+      transactionId,
+      paidAt,
+      amountMinorUnits,
+      createdAt: new Date(),
+    },
+    context,
+  );
+
+  const nextRenewal = calculateNextRenewal(
+    subscription.nextRenewalDate,
+    subscription.billingCycle,
+    subscription.billingCycleInterval,
+  );
+
+  updateSubscriptionRecord(
+    subscription.id,
+    {
+      nextRenewalDate: nextRenewal,
+      updatedAt: new Date(),
+    },
+    context,
+  );
 }

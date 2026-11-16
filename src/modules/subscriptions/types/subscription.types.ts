@@ -21,6 +21,8 @@ export interface SubscriptionItem {
   cancelledAt: Date | null;
   accountId: string | null;
   accountName?: string | null;
+  pocketId: string | null;
+  pocketName?: string | null;
   categoryId: string | null;
   categoryName?: string | null;
   categoryIcon?: string | null;
@@ -28,6 +30,7 @@ export interface SubscriptionItem {
   merchantId: string | null;
   merchantName?: string | null;
   scheduleId: string | null;
+  endsOn: Date | null;
   autoPost: boolean;
   reminderLeadDays: number[];
   cancellationUrl: string | null;
@@ -65,8 +68,10 @@ export interface SaveSubscriptionInput {
   nextRenewalDate?: Date;
   trialEndsAt?: Date | null;
   accountId?: string | null;
+  pocketId?: string | null;
   categoryId?: string | null;
   merchantId?: string | null;
+  endsOn?: Date | null;
   autoPost?: boolean;
   reminderLeadDays?: number[];
   cancellationUrl?: string | null;

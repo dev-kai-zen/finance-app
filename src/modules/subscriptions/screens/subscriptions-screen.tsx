@@ -35,6 +35,7 @@ import type {
 export function SubscriptionsScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const contentSpacing = useThemeStyles(createContentSpacing);
   const { t } = useLocalization();
 
   const {
@@ -166,7 +167,17 @@ export function SubscriptionsScreen() {
   const hasSubscriptions = subscriptions.length > 0;
 
   return (
-    <PageContainer>
+    <PageContainer
+      contentContainerStyle={contentSpacing}
+      floatingAction={
+        <FloatingActionButton
+          accessibilityLabel={t("subscriptions.addSubscription", {
+            defaultValue: "Add Subscription",
+          })}
+          onPress={handleOpenCreate}
+        />
+      }
+    >
       {/* Search Input Bar (When there are items) */}
       {hasSubscriptions && (
         <View style={styles.searchBar}>
@@ -244,14 +255,6 @@ export function SubscriptionsScreen() {
         </View>
       )}
 
-      {/* Floating Action Button (+) */}
-      <FloatingActionButton
-        accessibilityLabel={t("subscriptions.addSubscription", {
-          defaultValue: "Add Subscription",
-        })}
-        onPress={handleOpenCreate}
-      />
-
       {/* Add / Edit Form Modal */}
       <SubscriptionFormModal
         onClose={handleCloseForm}
@@ -306,4 +309,10 @@ function createStyles(theme: AppTheme) {
       paddingBottom: 80,
     },
   });
+}
+
+function createContentSpacing(theme: AppTheme) {
+  return {
+    paddingTop: theme.spacing.lg,
+  };
 }

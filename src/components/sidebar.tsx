@@ -41,12 +41,12 @@ const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
   { href: "/transactions", labelKey: "navigation.transactions", icon: "transactions" },
   { href: "/calendar", labelKey: "navigation.calendar", icon: "calendar" },
   { href: "/credit-cards", labelKey: "navigation.creditCards", icon: "credit-cards" },
+  { href: "/subscriptions", labelKey: "navigation.subscriptions", icon: "subscriptions" },
   { href: "/categories", labelKey: "navigation.categories", icon: "categories" },
   { href: "/budgets", labelKey: "navigation.budgets", icon: "budgets" },
   { href: "/goals", labelKey: "navigation.goals", icon: "goals" },
   { href: "/reports", labelKey: "navigation.reports", icon: "reports" },
   { href: "/notes", labelKey: "navigation.notes", icon: "notes" },
-  { href: "/subscriptions", labelKey: "navigation.subscriptions", icon: "subscriptions" },
 ];
 
 const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [

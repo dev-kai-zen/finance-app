@@ -28,7 +28,7 @@ export function saveScheduledTransaction(
   );
 }
 
-function saveScheduledTransactionInContext(
+export function saveScheduledTransactionInContext(
   rawInput: SaveScheduledTransactionInput,
   id: string | undefined,
   context: DbContext,
@@ -119,6 +119,7 @@ function saveScheduledTransactionInContext(
     nextOccurrenceNumber,
     nextNominalAt: next.nominalAt,
     nextEffectiveAt: next.effectiveAt ?? next.nominalAt,
+    subscriptionId: input.subscriptionId ?? existing?.subscriptionId ?? null,
     updatedAt: now,
   };
 

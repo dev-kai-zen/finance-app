@@ -8,20 +8,28 @@ import {
   View,
 } from "react-native";
 import {
+  Calendar,
   ChevronRight,
+  Clock,
   Sparkles,
   Tag,
   Wallet,
+  X,
+  Zap,
 } from "lucide-react-native";
 
 import {
   AmountCalculatorField,
   AmountCalculatorModal,
+  DatePickerModal,
   FullScreenFormModal,
   IconHelper,
+  InfoModal,
   KeyboardAwareForm,
   ThemedSwitch,
 } from "@/components";
+import { HelpIconButton } from "@/components/screen-title-with-help";
+import { ReminderLeadDaysSelector } from "@/modules/notifications/components/reminder-lead-days-selector";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -36,6 +44,93 @@ import type {
   SubscriptionPreset,
   SubscriptionStatus,
 } from "../types/subscription.types";
+
+function toIsoDate(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseIsoDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDisplayDate(d: Date): string {
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return `${day}th`;
+  switch (day % 10) {
+    case 1:
+      return `${day}st`;
+    case 2:
+      return `${day}nd`;
+    case 3:
+      return `${day}rd`;
+    default:
+      return `${day}th`;
+  }
+}
+
+function getBillingCycleDescription(
+  cycle: BillingCycle,
+  date: Date,
+  t: (key: any, options?: any) => string,
+): string {
+  switch (cycle) {
+    case "weekly": {
+      const weekday = date.toLocaleDateString(undefined, { weekday: "long" });
+      return t("subscriptions.cycleDescWeekly", {
+        weekday,
+        defaultValue: `Billed every ${weekday}`,
+      });
+    }
+    case "monthly": {
+      const day = getOrdinalSuffix(date.getDate());
+      return t("subscriptions.cycleDescMonthly", {
+        day,
+        defaultValue: `Billed on the ${day} of every month`,
+      });
+    }
+    case "quarterly": {
+      const dateFormatted = date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
+      return t("subscriptions.cycleDescQuarterly", {
+        date: dateFormatted,
+        defaultValue: `Billed every 3 months starting ${dateFormatted}`,
+      });
+    }
+    case "semi_annual": {
+      const dateFormatted = date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
+      return t("subscriptions.cycleDescSemiAnnual", {
+        date: dateFormatted,
+        defaultValue: `Billed every 6 months starting ${dateFormatted}`,
+      });
+    }
+    case "yearly": {
+      const dateFormatted = date.toLocaleDateString(undefined, {
+        month: "long",
+        day: "numeric",
+      });
+      return t("subscriptions.cycleDescYearly", {
+        date: dateFormatted,
+        defaultValue: `Billed annually on ${dateFormatted}`,
+      });
+    }
+  }
+}
 
 export interface SubscriptionFormModalProps {
   visible: boolean;
@@ -78,14 +173,53 @@ function SubscriptionFormModalContent({
   const [billingCycleInterval, setBillingCycleInterval] = useState(
     subscription?.billingCycleInterval ?? 1,
   );
+  const [firstBillingDate, setFirstBillingDate] = useState<Date>(() =>
+    subscription?.firstBillingDate
+      ? new Date(subscription.firstBillingDate)
+      : new Date(),
+  );
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
   const [isTrial, setIsTrial] = useState(subscription?.status === "trial");
+  const [trialDurationPreset, setTrialDurationPreset] = useState<
+    7 | 14 | 30 | "custom"
+  >(() => {
+    if (!subscription?.trialEndsAt) return 14;
+    const diffDays = Math.round(
+      (new Date(subscription.trialEndsAt).getTime() -
+        (subscription.firstBillingDate
+          ? new Date(subscription.firstBillingDate).getTime()
+          : Date.now())) /
+        (24 * 60 * 60 * 1000),
+    );
+    if (diffDays === 7 || diffDays === 14 || diffDays === 30) return diffDays;
+    return "custom";
+  });
+  const [trialEndsAt, setTrialEndsAt] = useState<Date | null>(() =>
+    subscription?.trialEndsAt ? new Date(subscription.trialEndsAt) : null,
+  );
+  const [isTrialDatePickerOpen, setIsTrialDatePickerOpen] = useState(false);
+
   const [accountId, setAccountId] = useState<string | null>(
     subscription?.accountId ?? (accounts[0]?.id || null),
+  );
+  const [pocketId, setPocketId] = useState<string | null>(
+    subscription?.pocketId ?? null,
   );
   const [categoryId, setCategoryId] = useState<string | null>(
     subscription?.categoryId ?? null,
   );
   const [autoPost, setAutoPost] = useState(subscription?.autoPost ?? false);
+  const [endsOn, setEndsOn] = useState<Date | null>(() =>
+    subscription?.endsOn ? new Date(subscription.endsOn) : null,
+  );
+  const [isEndsOnPickerOpen, setIsEndsOnPickerOpen] = useState(false);
+  const [reminderLeadDays, setReminderLeadDays] = useState<number[]>(() =>
+    subscription?.reminderLeadDays && subscription.reminderLeadDays.length > 0
+      ? subscription.reminderLeadDays
+      : [1, 3],
+  );
+
   const [cancellationUrl, setCancellationUrl] = useState(
     subscription?.cancellationUrl ?? "",
   );
@@ -97,8 +231,41 @@ function SubscriptionFormModalContent({
   const [accountPickerVisible, setAccountPickerVisible] = useState(false);
   const [categoryPickerVisible, setCategoryPickerVisible] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const isEditing = Boolean(subscription?.id);
+
+  const handleToggleTrial = useCallback(
+    (enabled: boolean) => {
+      setIsTrial(enabled);
+      if (enabled && !trialEndsAt) {
+        const defaultEnd = new Date(
+          firstBillingDate.getTime() + 14 * 24 * 60 * 60 * 1000,
+        );
+        setTrialEndsAt(defaultEnd);
+        setTrialDurationPreset(14);
+      }
+    },
+    [firstBillingDate, trialEndsAt],
+  );
+
+  const handleSelectTrialPreset = useCallback(
+    (days: 7 | 14 | 30 | "custom") => {
+      setTrialDurationPreset(days);
+      if (days === "custom") {
+        setIsTrialDatePickerOpen(true);
+      } else {
+        const calculated = new Date(
+          firstBillingDate.getTime() + days * 24 * 60 * 60 * 1000,
+        );
+        setTrialEndsAt(calculated);
+      }
+    },
+    [firstBillingDate],
+  );
 
   // Select Preset Handler
   const handleSelectPreset = useCallback(
@@ -127,9 +294,55 @@ function SubscriptionFormModalContent({
     return accounts.find((a) => a.id === accountId) || null;
   }, [accounts, accountId]);
 
+  const selectedPocket = useMemo(() => {
+    return pockets.find((p) => p.id === pocketId) || null;
+  }, [pockets, pocketId]);
+
+  const accountDisplayLabel = useMemo(() => {
+    if (!selectedAccount) {
+      return t("subscriptions.selectAccount", {
+        defaultValue: "Select Account",
+      });
+    }
+    if (selectedPocket) {
+      return `${selectedAccount.name} • ${selectedPocket.name}`;
+    }
+    return selectedAccount.name;
+  }, [selectedAccount, selectedPocket, t]);
+
   const selectedCategory = useMemo(() => {
     return categories.find((c) => c.id === categoryId) || null;
   }, [categories, categoryId]);
+
+  const billingCycleDescription = useMemo(() => {
+    return getBillingCycleDescription(billingCycle, firstBillingDate, t);
+  }, [billingCycle, firstBillingDate, t]);
+
+  const trialSummaryCaption = useMemo(() => {
+    if (!trialEndsAt) return "";
+    const daysLeft = Math.max(
+      0,
+      Math.round(
+        (trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
+      ),
+    );
+    const leadsStr =
+      reminderLeadDays.length > 0
+        ? reminderLeadDays
+            .map((d) =>
+              d === 0
+                ? t("subscriptions.exactDay", { defaultValue: "on the day" })
+                : `${d}d`,
+            )
+            .join(", ")
+        : t("subscriptions.noReminders", { defaultValue: "no alerts" });
+    return t("subscriptions.trialSummaryCaption", {
+      date: formatDisplayDate(trialEndsAt),
+      days: daysLeft,
+      alerts: leadsStr,
+      defaultValue: `Trial ends on ${formatDisplayDate(trialEndsAt)} (${daysLeft}d left). Alerts: ${leadsStr}.`,
+    });
+  }, [trialEndsAt, reminderLeadDays, t]);
 
   const isValid = name.trim().length > 0 && (isTrial || amountMinorUnits > 0);
 
@@ -149,15 +362,21 @@ function SubscriptionFormModalContent({
       name: name.trim(),
       status,
       amountMinorUnits,
-      currencyCode: subscription?.currencyCode || selectedAccount?.currencyCode || "PHP",
+      currencyCode:
+        subscription?.currencyCode || selectedAccount?.currencyCode || "PHP",
       billingCycle,
       billingCycleInterval,
-      firstBillingDate: subscription?.firstBillingDate || new Date(),
-      trialEndsAt: isTrial ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) : null,
+      firstBillingDate,
+      trialEndsAt: isTrial
+        ? trialEndsAt ||
+          new Date(firstBillingDate.getTime() + 14 * 24 * 60 * 60 * 1000)
+        : null,
       accountId,
+      pocketId,
       categoryId,
+      endsOn,
       autoPost,
-      reminderLeadDays: subscription?.reminderLeadDays || [1, 3],
+      reminderLeadDays,
       cancellationUrl: cancellationUrl.trim() || null,
       notes: notes.trim() || null,
       color,
@@ -298,6 +517,37 @@ function SubscriptionFormModalContent({
             </View>
           </View>
 
+          {/* Anchor Billing Date */}
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>
+              {t("subscriptions.firstBillingDate", {
+                defaultValue: "First Bill / Next Renewal Date",
+              })}
+            </Text>
+            <Pressable
+              accessibilityLabel={t("subscriptions.selectBillingDate", {
+                defaultValue: "Select Billing Date",
+              })}
+              accessibilityRole="button"
+              onPress={() => setIsDatePickerOpen(true)}
+              style={styles.selectorBtn}
+            >
+              <View style={styles.selectorLeft}>
+                <Calendar color={theme.colors.primary} size={18} />
+                <Text style={styles.selectorValue}>
+                  {formatDisplayDate(firstBillingDate)}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textSecondary} size={18} />
+            </Pressable>
+            <View style={styles.dynamicCycleBanner}>
+              <Clock color={theme.colors.primary} size={14} />
+              <Text style={styles.dynamicCycleText}>
+                {billingCycleDescription}
+              </Text>
+            </View>
+          </View>
+
           {/* Account Picker */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
@@ -313,10 +563,7 @@ function SubscriptionFormModalContent({
               <View style={styles.selectorLeft}>
                 <Wallet color={theme.colors.primary} size={18} />
                 <Text style={styles.selectorValue}>
-                  {selectedAccount?.name ||
-                    t("subscriptions.selectAccount", {
-                      defaultValue: "Select Account",
-                    })}
+                  {accountDisplayLabel}
                 </Text>
               </View>
               <ChevronRight color={theme.colors.textSecondary} size={18} />
@@ -346,43 +593,178 @@ function SubscriptionFormModalContent({
             </Pressable>
           </View>
 
-          {/* Free Trial Toggle */}
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleTextCol}>
-              <View style={styles.toggleHeader}>
-                <Sparkles color="#8B5CF6" size={16} />
-                <Text style={styles.toggleTitle}>
-                  {t("subscriptions.freeTrialTitle", {
-                    defaultValue: "Free Trial Mode",
-                  })}
-                </Text>
-              </View>
-              <Text style={styles.toggleDescription}>
-                {t("subscriptions.freeTrialDesc", {
-                  defaultValue:
-                    "Flags this subscription as a trial with early renewal alerts so you can cancel before getting charged.",
+          {/* Free Trial Toggle (Minimalist) */}
+          <View style={styles.toggleRowMinimal}>
+            <View style={styles.toggleLeftRow}>
+              <Sparkles color="#8B5CF6" size={16} />
+              <Text style={styles.toggleTitle}>
+                {t("subscriptions.freeTrialTitle", {
+                  defaultValue: "Free Trial Mode",
                 })}
               </Text>
+              <HelpIconButton
+                accessibilityLabel={t("subscriptions.freeTrialHelp", {
+                  defaultValue: "Free Trial Help",
+                })}
+                onPress={() =>
+                  setInfoModalContent({
+                    title: t("subscriptions.freeTrialTitle", {
+                      defaultValue: "Free Trial Mode",
+                    }),
+                    message: t("subscriptions.freeTrialDesc", {
+                      defaultValue:
+                        "Flags this subscription as a trial with early renewal alerts so you can cancel before getting charged.",
+                    }),
+                  })
+                }
+                size={16}
+              />
             </View>
-            <ThemedSwitch onValueChange={setIsTrial} value={isTrial} />
+            <ThemedSwitch onValueChange={handleToggleTrial} value={isTrial} />
           </View>
 
-          {/* Auto-Post Toggle */}
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleTextCol}>
+          {/* When Free Trial is Active: Duration Selector & Dynamic Summary */}
+          {isTrial && (
+            <View style={styles.trialContainer}>
+              <Text style={styles.subFieldLabel}>
+                {t("subscriptions.trialDuration", {
+                  defaultValue: "Trial Duration",
+                })}
+              </Text>
+              <View style={styles.trialPresetsRow}>
+                {([7, 14, 30] as const).map((days) => {
+                  const isSelected = trialDurationPreset === days;
+                  return (
+                    <Pressable
+                      key={days}
+                      onPress={() => handleSelectTrialPreset(days)}
+                      style={[
+                        styles.trialChip,
+                        isSelected && styles.trialChipSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.trialChipText,
+                          isSelected && styles.trialChipTextSelected,
+                        ]}
+                      >
+                        {days}d
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+                <Pressable
+                  onPress={() => handleSelectTrialPreset("custom")}
+                  style={[
+                    styles.trialChip,
+                    trialDurationPreset === "custom" && styles.trialChipSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.trialChipText,
+                      trialDurationPreset === "custom" &&
+                        styles.trialChipTextSelected,
+                    ]}
+                  >
+                    {trialDurationPreset === "custom" && trialEndsAt
+                      ? formatDisplayDate(trialEndsAt)
+                      : t("subscriptions.customDate", {
+                          defaultValue: "Custom Date",
+                        })}
+                  </Text>
+                </Pressable>
+              </View>
+              {trialSummaryCaption ? (
+                <Text style={styles.trialSummaryText}>
+                  {trialSummaryCaption}
+                </Text>
+              ) : null}
+            </View>
+          )}
+
+          {/* Notification Lead Days */}
+          <ReminderLeadDaysSelector
+            disabled={false}
+            onToggleDay={(day) => {
+              setReminderLeadDays((current) =>
+                current.includes(day)
+                  ? current.filter((d) => d !== day)
+                  : [...current, day].sort((a, b) => a - b),
+              );
+            }}
+            selectedDays={reminderLeadDays}
+          />
+
+          {/* Auto-Post Toggle (Minimalist) */}
+          <View style={styles.toggleRowMinimal}>
+            <View style={styles.toggleLeftRow}>
+              <Zap color={theme.colors.primary} size={16} />
               <Text style={styles.toggleTitle}>
                 {t("subscriptions.autoPostTitle", {
                   defaultValue: "Auto-Post to Ledger",
                 })}
               </Text>
-              <Text style={styles.toggleDescription}>
-                {t("subscriptions.autoPostDesc", {
-                  defaultValue:
-                    "Automatically generates an expense transaction in your ledger on the scheduled renewal date.",
+              <HelpIconButton
+                accessibilityLabel={t("subscriptions.autoPostHelp", {
+                  defaultValue: "Auto-Post Help",
                 })}
-              </Text>
+                onPress={() =>
+                  setInfoModalContent({
+                    title: t("subscriptions.autoPostTitle", {
+                      defaultValue: "Auto-Post to Ledger",
+                    }),
+                    message: t("subscriptions.autoPostDesc", {
+                      defaultValue:
+                        "Automatically generates an expense transaction in your ledger on the scheduled renewal date.",
+                    }),
+                  })
+                }
+                size={16}
+              />
             </View>
             <ThemedSwitch onValueChange={setAutoPost} value={autoPost} />
+          </View>
+
+          {/* Optional Contract Expiration Date */}
+          <View style={styles.fieldGroup}>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>
+                {t("subscriptions.contractEndsOn", {
+                  defaultValue: "Contract / Promo Expiration (Optional)",
+                })}
+              </Text>
+              {endsOn ? (
+                <Pressable hitSlop={6} onPress={() => setEndsOn(null)}>
+                  <Text style={styles.clearLink}>
+                    {t("common.clear", { defaultValue: "Clear" })}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setIsEndsOnPickerOpen(true)}
+              style={styles.selectorBtn}
+            >
+              <View style={styles.selectorLeft}>
+                <Calendar color={theme.colors.textSecondary} size={18} />
+                <Text
+                  style={[
+                    styles.selectorValue,
+                    !endsOn && { color: theme.colors.textSecondary },
+                  ]}
+                >
+                  {endsOn
+                    ? formatDisplayDate(endsOn)
+                    : t("subscriptions.noExpiration", {
+                        defaultValue: "Renews indefinitely (no end date)",
+                      })}
+                </Text>
+              </View>
+              <ChevronRight color={theme.colors.textSecondary} size={18} />
+            </Pressable>
           </View>
 
           {/* Direct Cancellation Link */}
@@ -411,7 +793,7 @@ function SubscriptionFormModalContent({
             </Text>
             <TextInput
               multiline
-              numberOfLines={3}
+              scrollEnabled={false}
               onChangeText={setNotes}
               placeholder={t("subscriptions.notesPlaceholder", {
                 defaultValue: "Plan tier, account credentials hint, etc.",
@@ -427,14 +809,16 @@ function SubscriptionFormModalContent({
       {/* Account Picker Modal */}
       <AccountPickerModal
         accounts={accounts}
-        hidePockets={true}
+        hidePockets={false}
         onClose={() => setAccountPickerVisible(false)}
-        onSelectLocation={(acc) => {
+        onSelectLocation={(acc, selectedPocketId) => {
           setAccountId(acc.id);
+          setPocketId(selectedPocketId ?? null);
           setAccountPickerVisible(false);
         }}
         pockets={pockets}
         selectedAccountId={accountId || undefined}
+        selectedPocketId={pocketId || undefined}
         visible={accountPickerVisible}
       />
 
@@ -461,6 +845,58 @@ function SubscriptionFormModalContent({
         }}
         visible={isCalculatorOpen}
       />
+
+      {/* First Billing Date Picker */}
+      <DatePickerModal
+        onClose={() => setIsDatePickerOpen(false)}
+        onSelectDate={(iso) => {
+          setFirstBillingDate(parseIsoDate(iso));
+          setIsDatePickerOpen(false);
+        }}
+        selectedDate={toIsoDate(firstBillingDate)}
+        title={t("subscriptions.firstBillingDate", {
+          defaultValue: "First Bill / Next Renewal Date",
+        })}
+        visible={isDatePickerOpen}
+      />
+
+      {/* Trial End Date Picker */}
+      <DatePickerModal
+        onClose={() => setIsTrialDatePickerOpen(false)}
+        onSelectDate={(iso) => {
+          setTrialEndsAt(parseIsoDate(iso));
+          setIsTrialDatePickerOpen(false);
+        }}
+        selectedDate={toIsoDate(trialEndsAt || firstBillingDate)}
+        title={t("subscriptions.trialEndsAtTitle", {
+          defaultValue: "Trial End Date",
+        })}
+        visible={isTrialDatePickerOpen}
+      />
+
+      {/* Contract Expiration Date Picker */}
+      <DatePickerModal
+        onClose={() => setIsEndsOnPickerOpen(false)}
+        onSelectDate={(iso) => {
+          setEndsOn(parseIsoDate(iso));
+          setIsEndsOnPickerOpen(false);
+        }}
+        selectedDate={endsOn ? toIsoDate(endsOn) : toIsoDate(firstBillingDate)}
+        title={t("subscriptions.contractEndsOn", {
+          defaultValue: "Contract / Promo Expiration",
+        })}
+        visible={isEndsOnPickerOpen}
+      />
+
+      {/* Info Help Modal */}
+      {infoModalContent && (
+        <InfoModal
+          message={infoModalContent.message}
+          onClose={() => setInfoModalContent(null)}
+          title={infoModalContent.title}
+          visible={Boolean(infoModalContent)}
+        />
+      )}
     </>
   );
 }
@@ -526,8 +962,90 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
     },
     textArea: {
-      minHeight: 70,
+      minHeight: 96,
       textAlignVertical: "top",
+    },
+    dynamicCycleBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 6,
+      paddingHorizontal: 4,
+    },
+    dynamicCycleText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: theme.colors.primary,
+    },
+    labelRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: theme.spacing.xs,
+    },
+    clearLink: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.primary,
+    },
+    toggleRowMinimal: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: theme.colors.border,
+      marginBottom: theme.spacing.sm,
+    },
+    toggleLeftRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    trialContainer: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderRadius: theme.borderRadius.medium,
+      padding: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    subFieldLabel: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.textSecondary,
+      marginBottom: 8,
+    },
+    trialPresetsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      marginBottom: 8,
+    },
+    trialChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: theme.borderRadius.round,
+      backgroundColor: theme.colors.surface,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    trialChipSelected: {
+      backgroundColor: "#8B5CF6",
+      borderColor: "#8B5CF6",
+    },
+    trialChipText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: theme.colors.textPrimary,
+    },
+    trialChipTextSelected: {
+      color: "#FFFFFF",
+    },
+    trialSummaryText: {
+      fontSize: 12,
+      color: theme.colors.textSecondary,
+      lineHeight: 16,
     },
     cycleGrid: {
       flexDirection: "row",

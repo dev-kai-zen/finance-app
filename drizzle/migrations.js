@@ -48,6 +48,7 @@ import m0043 from './0043_allow_signed_scheduled_transactions.sql';
 import m0044 from './0044_remove_pocket_target_amount.sql';
 import m0045 from './0045_add_csv_import_history.sql';
 import m0046 from './0046_add_subscriptions_hub.sql';
+import m0047 from './0047_add_subscription_pocket_and_schedule_link.sql';
 
   export default {
     journal,
@@ -98,7 +99,8 @@ m0042,
 m0043,
 m0044,
 m0045,
-m0046
+m0046,
+m0047
     }
   }
 

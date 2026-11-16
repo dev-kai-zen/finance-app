@@ -25,12 +25,12 @@ const MORE_FEATURE_ROWS: Array<{
 }> = [
   { key: "calendar", labelKey: "settings.navCalendar", icon: "calendar" },
   { key: "creditCards", labelKey: "settings.navCreditCards", icon: "credit-card" },
+  { key: "subscriptions", labelKey: "settings.navSubscriptions", icon: "repeat" },
   { key: "categories", labelKey: "settings.navCategories", icon: "layers" },
   { key: "budgets", labelKey: "settings.navBudgets", icon: "pie-chart" },
   { key: "goals", labelKey: "settings.navGoals", icon: "target" },
   { key: "reports", labelKey: "settings.navReports", icon: "file-text" },
   { key: "notes", labelKey: "settings.navNotes", icon: "notebook-pen" },
-  { key: "subscriptions", labelKey: "settings.navSubscriptions", icon: "repeat" },
 ];
 
 export interface MoreFeaturesModalProps {

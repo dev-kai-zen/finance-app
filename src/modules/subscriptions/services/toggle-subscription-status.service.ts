@@ -4,6 +4,7 @@ import {
   updateSubscriptionRecord,
 } from "../repositories/subscriptions.repository";
 import type { SubscriptionStatus } from "../types/subscription.types";
+import { setScheduledTransactionPaused } from "@/modules/scheduled-transactions";
 
 export function setSubscriptionStatus(
   subscriptionId: string,
@@ -20,6 +21,15 @@ export function setSubscriptionStatusInContext(
   const sub = findSubscriptionById(subscriptionId, context);
   if (!sub) {
     throw new Error(`Subscription not found: ${subscriptionId}`);
+  }
+
+  if (sub.scheduleId) {
+    try {
+      const isPaused = newStatus === "paused" || newStatus === "cancelled";
+      setScheduledTransactionPaused(sub.scheduleId, isPaused);
+    } catch {
+      // Ignore if schedule record was not found
+    }
   }
 
   const now = new Date();

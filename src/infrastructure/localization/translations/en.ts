@@ -363,6 +363,7 @@ export const en = {
     enabled: "Enabled",
     disabled: "Disabled",
     cancel: "Cancel",
+    clear: "Clear",
     close: "Close",
     delete: "Delete",
     goBack: "Go back",
@@ -873,6 +874,26 @@ export const en = {
     advancePostToastNext: "Next schedule automatically moved to %{date}.",
     advancePostToastCompleted: "This scheduled transaction is now completed.",
     today: "Today",
+    subscriptionBadge: "Subscription",
+    manageInSubscriptions: "Manage in Subscriptions",
+    managedBySubscriptionTitle: "Managed by Subscriptions",
+    managedBySubscriptionDesc:
+      "This scheduled transaction is automatically synchronized with your subscription. To adjust amounts, cycle, pause, or delete, manage it directly in Subscriptions.",
+    goToSubscriptions: "Go to Subscriptions",
+    emptyTitle: "No scheduled transactions",
+    emptyDesc:
+      "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
+    noSubscriptionSchedulesTitle: "No subscription schedules",
+    noSubscriptionSchedulesDesc:
+      "You do not have any schedules created by subscriptions. Subscriptions with auto-post enabled will appear here.",
+    noMatchingTitle: "No matching schedules",
+    noMatchingDesc:
+      "No schedules match the selected filters. Select another filter to view them.",
+    filters: {
+      all: "All",
+      regularSchedules: "Regular Schedules",
+      subscriptions: "Subscriptions",
+    },
   },
   themePicker: {
     closeAccessibility: "Close theme picker",
@@ -969,6 +990,35 @@ export const en = {
     autoPostDesc:
       "Automatically generates an expense transaction in your ledger on the scheduled renewal date.",
     cancellationUrlLabel: "Manage / Cancellation Web Link",
+    firstBillingDate: "First Bill / Next Renewal Date",
+    firstBillingDateDesc:
+      "The anchor date used to calculate recurring billing cycles and renewal countdowns.",
+    selectBillingDate: "Select Date",
+    exactDay: "Exact day",
+    cycleDescWeekly: "Billed every %{day} of the week",
+    cycleDescMonthly: "Billed on the %{day} of every month",
+    cycleDescQuarterly: "Billed every 3 months on the %{day} (next: %{date})",
+    cycleDescSemiAnnual: "Billed every 6 months on the %{day} (next: %{date})",
+    cycleDescYearly: "Billed annually every %{date}",
+    trialDuration: "Trial Duration",
+    customDate: "Custom Date",
+    trialEndsAtTitle: "Trial Expiration Date",
+    trialSummaryCaption: "Trial ends on %{date} (%{daysLeft}). %{reminder}",
+    reminderLeadDays: "Notify Me Before Renewal",
+    reminderSummary: "Reminder alerts %{days} days before.",
+    noReminders: "No reminders scheduled.",
+    contractEndsOn: "Contract Expiration / Ends On",
+    contractEndsOnDesc:
+      "Optional contract or promo end date when billing automatically terminates.",
+    noExpiration: "No end date (ongoing)",
+    freeTrialHelp: "Free Trial Help",
+    freeTrialHelpTitle: "About Free Trial Mode",
+    freeTrialHelpMessage:
+      "Flags this subscription as an active trial. You will receive early reminder notifications so you can cancel before your card gets billed.",
+    autoPostHelp: "Auto-Post Help",
+    autoPostHelpTitle: "About Auto-Post to Ledger",
+    autoPostHelpMessage:
+      "When turned on, an expense transaction is automatically recorded in your ledger on every renewal date without requiring manual confirmation.",
     notesPlaceholder: "Plan tier, account credentials hint, etc.",
     searchPlaceholder: "Search subscriptions, utilities, services...",
     emptyTitle: "No Subscriptions Tracked Yet",
@@ -1016,6 +1066,12 @@ export const en = {
       date: "November 16, 2026",
       newItem1:
         "Track your recurring subscriptions and bills with renewal countdowns and monthly burn rate totals.",
+      improveItem1:
+        "Customize subscription billing anchors, free trial durations, and reminder lead times with live countdowns.",
+      improveItem2:
+        "Support sub-account pockets, contract expiration dates, and privacy masking for all subscription amounts.",
+      improveItem3:
+        "Link subscriptions seamlessly to scheduled transactions with filter grouping and read-only protection.",
       fixItem1:
         "Fix Google Drive sync and database errors when changing connected accounts.",
       fixItem2:

@@ -11,6 +11,7 @@ import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
 import { merchants } from "./merchants";
+import { pockets } from "./pockets";
 import { transactionSchedules } from "./transaction-schedules";
 import { transactions } from "./transactions";
 
@@ -47,6 +48,9 @@ export const subscriptions = sqliteTable(
     accountId: text("account_id").references(() => accounts.id, {
       onDelete: "set null",
     }),
+    pocketId: text("pocket_id").references(() => pockets.id, {
+      onDelete: "set null",
+    }),
     categoryId: text("category_id").references(() => categories.id, {
       onDelete: "set null",
     }),
@@ -56,6 +60,7 @@ export const subscriptions = sqliteTable(
     scheduleId: text("schedule_id").references(() => transactionSchedules.id, {
       onDelete: "set null",
     }),
+    endsOn: integer("ends_on", { mode: "timestamp_ms" }),
     autoPost: integer("auto_post", { mode: "boolean" })
       .notNull()
       .default(false),
@@ -83,6 +88,7 @@ export const subscriptions = sqliteTable(
       table.nextRenewalDate,
     ),
     index("subscriptions_account_idx").on(table.accountId),
+    index("subscriptions_pocket_idx").on(table.pocketId),
     index("subscriptions_category_idx").on(table.categoryId),
     index("subscriptions_schedule_idx").on(table.scheduleId),
   ],

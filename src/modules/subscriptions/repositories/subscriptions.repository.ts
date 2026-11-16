@@ -11,6 +11,7 @@ import {
   accounts,
   categories,
   merchants,
+  pockets,
   subscriptionPayments,
   subscriptions,
   type NewSubscriptionPaymentRecord,
@@ -47,6 +48,7 @@ export function mapSubscriptionRow(
   row: {
     subscription: SubscriptionRecord;
     accountName: string | null;
+    pocketName?: string | null;
     categoryName: string | null;
     categoryIcon: string | null;
     merchantName: string | null;
@@ -75,6 +77,8 @@ export function mapSubscriptionRow(
     cancelledAt: sub.cancelledAt,
     accountId: sub.accountId,
     accountName: row.accountName,
+    pocketId: sub.pocketId,
+    pocketName: row.pocketName ?? null,
     categoryId: sub.categoryId,
     categoryName: row.categoryName,
     categoryIcon: row.categoryIcon,
@@ -82,6 +86,7 @@ export function mapSubscriptionRow(
     merchantId: sub.merchantId,
     merchantName: row.merchantName,
     scheduleId: sub.scheduleId,
+    endsOn: sub.endsOn,
     autoPost: sub.autoPost,
     reminderLeadDays: parseLeadDays(sub.reminderLeadDays),
     cancellationUrl: sub.cancellationUrl,
@@ -105,12 +110,14 @@ export function listSubscriptions(
     .select({
       subscription: subscriptions,
       accountName: accounts.name,
+      pocketName: pockets.name,
       categoryName: categories.name,
       categoryIcon: categories.icon,
       merchantName: merchants.name,
     })
     .from(subscriptions)
     .leftJoin(accounts, eq(subscriptions.accountId, accounts.id))
+    .leftJoin(pockets, eq(subscriptions.pocketId, pockets.id))
     .leftJoin(categories, eq(subscriptions.categoryId, categories.id))
     .leftJoin(merchants, eq(subscriptions.merchantId, merchants.id))
     .orderBy(
@@ -134,12 +141,14 @@ export function findSubscriptionById(
     .select({
       subscription: subscriptions,
       accountName: accounts.name,
+      pocketName: pockets.name,
       categoryName: categories.name,
       categoryIcon: categories.icon,
       merchantName: merchants.name,
     })
     .from(subscriptions)
     .leftJoin(accounts, eq(subscriptions.accountId, accounts.id))
+    .leftJoin(pockets, eq(subscriptions.pocketId, pockets.id))
     .leftJoin(categories, eq(subscriptions.categoryId, categories.id))
     .leftJoin(merchants, eq(subscriptions.merchantId, merchants.id))
     .where(eq(subscriptions.id, id))

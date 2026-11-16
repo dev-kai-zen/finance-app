@@ -21,6 +21,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { formatCurrency } from "@/utils/currency";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { SubscriptionItem } from "../types/subscription.types";
 
 export interface SubscriptionCardProps {
@@ -43,6 +44,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const { isPrivate } = usePrivacyMode();
 
   const formattedAmount = formatCurrency(
     subscription.amountMinorUnits,
@@ -52,6 +54,12 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   const monthlyBurnFormatted = formatCurrency(
     subscription.monthlyBurnRateMinorUnits,
     subscription.currencyCode,
+  );
+
+  const displayAmount = formatPrivacyAmount(formattedAmount, isPrivate);
+  const displayMonthlyBurn = formatPrivacyAmount(
+    monthlyBurnFormatted,
+    isPrivate,
   );
 
   const days = subscription.daysUntilRenewal;
@@ -161,7 +169,9 @@ export const SubscriptionCard = memo(function SubscriptionCard({
           <View style={styles.subtextRow}>
             {subscription.accountName ? (
               <Text numberOfLines={1} style={styles.metaText}>
-                {subscription.accountName}
+                {[subscription.accountName, subscription.pocketName]
+                  .filter(Boolean)
+                  .join(" • ")}
               </Text>
             ) : null}
             {subscription.accountName && subscription.categoryName ? (
@@ -176,11 +186,11 @@ export const SubscriptionCard = memo(function SubscriptionCard({
         </View>
 
         <View style={styles.amountCol}>
-          <Text style={styles.amountText}>{formattedAmount}</Text>
+          <Text style={styles.amountText}>{displayAmount}</Text>
           <Text style={styles.cycleText}>{cycleLabel}</Text>
           {subscription.billingCycle !== "monthly" && (
             <Text style={styles.normalizedText}>
-              ({monthlyBurnFormatted}/mo)
+              ({displayMonthlyBurn}/mo)
             </Text>
           )}
         </View>

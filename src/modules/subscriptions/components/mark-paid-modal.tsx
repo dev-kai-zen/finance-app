@@ -15,6 +15,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAccounts } from "@/modules/accounts";
 import { formatCurrency } from "@/utils/currency";
+import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { SubscriptionItem } from "../types/subscription.types";
 
 export interface MarkPaidModalProps {
@@ -59,6 +60,7 @@ function MarkPaidModalContent({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const { accounts } = useAccounts();
+  const { isPrivate } = usePrivacyMode();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(
     subscription.accountId || (accounts[0]?.id ?? ""),
@@ -76,6 +78,7 @@ function MarkPaidModalContent({
     subscription.amountMinorUnits,
     subscription.currencyCode,
   );
+  const displayAmount = formatPrivacyAmount(formattedAmount, isPrivate);
 
   const handleConfirm = () => {
     if (!selectedAccountId) return;
@@ -107,7 +110,7 @@ function MarkPaidModalContent({
                 })}
               </Text>
               <Text style={styles.subtitle}>
-                {subscription.name} • {formattedAmount}
+                {subscription.name} • {displayAmount}
               </Text>
             </View>
             <Pressable

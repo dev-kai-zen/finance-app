@@ -330,6 +330,13 @@
       "when": 1794700000000,
       "tag": "0046_add_subscriptions_hub",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1794710000000,
+      "tag": "0047_add_subscription_pocket_and_schedule_link",
+      "breakpoints": true
     }
   ]
 }

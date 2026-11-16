@@ -2,6 +2,7 @@ import { db, type DbContext } from "@/infrastructure/database/client";
 import type { NewSubscriptionRecord } from "@/infrastructure/database/schema";
 import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import {
+  findSubscriptionById,
   generateSubscriptionId,
   insertSubscription,
   updateSubscriptionRecord,
@@ -12,6 +13,36 @@ import type {
   SubscriptionItem,
 } from "../types/subscription.types";
 import { calculateNextRenewal } from "../utils/renewal-calculator";
+import {
+  permanentlyDeleteScheduledTransaction,
+  saveScheduledTransactionInContext,
+  type SaveScheduledTransactionInput,
+} from "@/modules/scheduled-transactions";
+
+function mapCycleToSchedule(cycle: BillingCycle, intervalCount: number): {
+  frequency: "weekly" | "monthly" | "yearly";
+  intervalCount: number;
+} {
+  switch (cycle) {
+    case "weekly":
+      return { frequency: "weekly", intervalCount };
+    case "monthly":
+      return { frequency: "monthly", intervalCount };
+    case "quarterly":
+      return { frequency: "monthly", intervalCount: 3 * intervalCount };
+    case "semi_annual":
+      return { frequency: "monthly", intervalCount: 6 * intervalCount };
+    case "yearly":
+      return { frequency: "yearly", intervalCount };
+  }
+}
+
+function toDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 function resolveUpcomingRenewal(
   firstBillingDate: Date,
@@ -66,6 +97,47 @@ export function saveSubscriptionInContext(
       : [1, 3],
   );
 
+  const existing = existingId ? findSubscriptionById(existingId, context) : null;
+
+  let linkedScheduleId = existing?.scheduleId || null;
+  if (input.autoPost && input.accountId) {
+    const { frequency, intervalCount: schedInterval } = mapCycleToSchedule(
+      input.billingCycle,
+      interval,
+    );
+    const schedInput: SaveScheduledTransactionInput = {
+      transactionType: "expense",
+      accountId: input.accountId,
+      pocketId: input.pocketId ?? null,
+      categoryId: input.categoryId ?? null,
+      amountMinorUnits: Math.abs(input.amountMinorUnits),
+      name: input.name.trim(),
+      note: input.notes?.trim() || null,
+      frequency,
+      intervalCount: schedInterval,
+      startsAt: input.firstBillingDate,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      endMode: input.endsOn ? "on_date" : "never",
+      endsOn: input.endsOn ? toDateKey(input.endsOn) : null,
+      weekendPolicy: "exact",
+      autoPost: true,
+      subscriptionId,
+    };
+    const savedSched = saveScheduledTransactionInContext(
+      schedInput,
+      linkedScheduleId || undefined,
+      context,
+    );
+    linkedScheduleId = savedSched.id;
+  } else if (!input.autoPost && linkedScheduleId) {
+    try {
+      permanentlyDeleteScheduledTransaction(linkedScheduleId);
+    } catch {
+      // Ignore if already deleted
+    }
+    linkedScheduleId = null;
+  }
+
   const record: NewSubscriptionRecord = {
     id: subscriptionId,
     name: input.name.trim(),
@@ -79,9 +151,11 @@ export function saveSubscriptionInContext(
     trialEndsAt: input.trialEndsAt || null,
     cancelledAt: input.status === "cancelled" ? now : null,
     accountId: input.accountId || null,
+    pocketId: input.pocketId || null,
     categoryId: input.categoryId || null,
     merchantId: input.merchantId || null,
-    scheduleId: null,
+    scheduleId: linkedScheduleId,
+    endsOn: input.endsOn || null,
     autoPost: Boolean(input.autoPost),
     reminderLeadDays: reminderLeadDaysJson,
     cancellationUrl: input.cancellationUrl?.trim() || null,

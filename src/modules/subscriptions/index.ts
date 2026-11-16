@@ -19,6 +19,12 @@ export const recordSubscriptionPayment = deferFunction(
       .recordSubscriptionPayment,
 ) as typeof import("./services/record-subscription-payment.service").recordSubscriptionPayment;
 
+export const handleSubscriptionScheduleExecutedInContext = deferFunction(
+  () =>
+    require("./services/record-subscription-payment.service")
+      .handleSubscriptionScheduleExecutedInContext,
+) as typeof import("./services/record-subscription-payment.service").handleSubscriptionScheduleExecutedInContext;
+
 export const scheduleSubscriptionReminders = deferFunction(
   () =>
     require("./services/schedule-sub-reminders.service")
