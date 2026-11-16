@@ -94,6 +94,7 @@ export interface NavVisibilityPreferences {
   goals: boolean;
   reports: boolean;
   notes: boolean;
+  subscriptions: boolean;
 }
 
 type ExperienceListener = () => void;
@@ -392,6 +393,10 @@ export function getNavVisibilityPreferences(
       missingDefault,
     ),
     notes: parseStoredBoolean(map[NAV_VISIBILITY_SETTING_KEYS.notes], missingDefault),
+    subscriptions: parseStoredBoolean(
+      map[NAV_VISIBILITY_SETTING_KEYS.subscriptions],
+      missingDefault,
+    ),
   };
 }
 

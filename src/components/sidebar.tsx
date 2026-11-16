@@ -32,7 +32,7 @@ import { sendFeedback } from "@/utils/send-feedback";
 interface NavItemConfig {
   href: string;
   labelKey: TranslationKey;
-  icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "goals" | "reports" | "notes" | "monitor" | "settings";
+  icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "goals" | "reports" | "notes" | "monitor" | "settings" | "subscriptions";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -46,6 +46,7 @@ const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
   { href: "/goals", labelKey: "navigation.goals", icon: "goals" },
   { href: "/reports", labelKey: "navigation.reports", icon: "reports" },
   { href: "/notes", labelKey: "navigation.notes", icon: "notes" },
+  { href: "/subscriptions", labelKey: "navigation.subscriptions", icon: "subscriptions" },
 ];
 
 const SECONDARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -375,6 +376,7 @@ function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolea
     notes: "notebook-pen",
     monitor: "database",
     settings: "settings",
+    subscriptions: "repeat",
   };
 
   return <IconHelper color={iconColor} name={iconNameMap[type]} size={18} />;

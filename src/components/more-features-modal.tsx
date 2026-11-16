@@ -30,6 +30,7 @@ const MORE_FEATURE_ROWS: Array<{
   { key: "goals", labelKey: "settings.navGoals", icon: "target" },
   { key: "reports", labelKey: "settings.navReports", icon: "file-text" },
   { key: "notes", labelKey: "settings.navNotes", icon: "notebook-pen" },
+  { key: "subscriptions", labelKey: "settings.navSubscriptions", icon: "repeat" },
 ];
 
 export interface MoreFeaturesModalProps {

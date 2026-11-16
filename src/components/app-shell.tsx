@@ -56,6 +56,8 @@ function getScreenTitle(pathname: string, t: Translate): string {
   if (pathname.startsWith("/goals")) return t("navigation.goals");
   if (pathname.startsWith("/reports")) return t("navigation.reports");
   if (pathname.startsWith("/notes")) return t("navigation.notes");
+  if (pathname.startsWith("/subscriptions"))
+    return t("navigation.subscriptions");
   if (pathname.startsWith("/monitor")) return t("navigation.sqliteMonitor");
   if (pathname.startsWith("/settings")) return t("navigation.settings");
   return t("navigation.dashboard");

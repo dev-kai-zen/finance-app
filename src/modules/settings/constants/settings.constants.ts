@@ -54,6 +54,7 @@ export const NAV_VISIBILITY_SETTING_KEYS = {
   goals: "nav.goals",
   reports: "nav.reports",
   notes: "nav.notes",
+  subscriptions: "nav.subscriptions",
 } as const;
 
 export type NavVisibilityKey = keyof typeof NAV_VISIBILITY_SETTING_KEYS;
@@ -69,6 +70,7 @@ export const NAV_HREF_BY_VISIBILITY_KEY: Record<
   goals: "/goals",
   reports: "/reports",
   notes: "/notes",
+  subscriptions: "/subscriptions",
 };
 
 export const PROMPT_SETTING_KEYS = {

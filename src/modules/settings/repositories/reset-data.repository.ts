@@ -32,6 +32,8 @@ import {
   notes,
   pockets,
   settings,
+  subscriptionPayments,
+  subscriptions,
   syncOperations,
   transactionAttachments,
   transactionEntries,
@@ -46,6 +48,8 @@ import {
 /** Table names catalog: `@/infrastructure/database/user-data-tables`. */
 export function deleteAllUserData(context: DbContext): void {
   context.delete(syncOperations).run();
+  context.delete(subscriptionPayments).run();
+  context.delete(subscriptions).run();
   context.delete(importRecords).run();
   context.delete(importBatches).run();
 

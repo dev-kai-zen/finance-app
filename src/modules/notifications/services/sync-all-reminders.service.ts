@@ -15,6 +15,7 @@ import { scheduleDailyReminder } from "./schedule-daily-reminder.service";
 import { scheduleGoalReminders } from "./schedule-goal-reminders.service";
 import { scheduleMonthlySummary } from "./schedule-monthly-summary.service";
 import { scheduleTxReminders } from "./schedule-tx-reminders.service";
+import { scheduleSubscriptionReminders } from "@/modules/subscriptions";
 
 let isSyncInProgress = false;
 
@@ -63,6 +64,7 @@ export async function syncAllReminders(
         currentSettings.savingsGoalAlertsEnabled,
         now,
       ),
+      scheduleSubscriptionReminders(now),
       checkAndNotifyCreditLimit(),
       checkAndNotifyGoalMilestones(),
     ]);
