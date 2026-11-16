@@ -1827,7 +1827,7 @@ export const es = {
     stepGroupTypeDesc: "Elige si esta categoría registrará Gastos o Ingresos.",
     stepNameTitle: "Nombre de categoría",
     stepNameDesc:
-      "Ingresa un nombre claro, como Comestibles, Restaurantes o Trabajo independiente.",
+      "Ingresa un nombre claro, como Comida o Transporte.",
     stepIconTitle: "Ícono de categoría",
     stepIconDesc:
       "Elige un ícono intuitivo para identificar esta categoría en transacciones e informes.",

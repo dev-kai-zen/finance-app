@@ -1844,7 +1844,7 @@ export const fil = {
       "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
     stepNameTitle: "Pangalan ng Kategorya",
     stepNameDesc:
-      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
+      "Maglagay ng malinaw na pangalan tulad ng Pagkain o Transportasyon.",
     stepIconTitle: "Icon ng Kategorya",
     stepIconDesc:
       "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",

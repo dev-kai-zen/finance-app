@@ -1803,7 +1803,7 @@ export const en = {
       "Choose whether this category tracks Expenses (spending) or Income (earnings).",
     stepNameTitle: "Category Name",
     stepNameDesc:
-      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
+      "Enter a clear name, like Food & Dining or Transportation.",
     stepIconTitle: "Category Icon",
     stepIconDesc:
       "Pick an intuitive icon to visually represent this category across transactions and reports.",
