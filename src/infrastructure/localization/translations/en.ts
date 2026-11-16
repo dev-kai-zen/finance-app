@@ -938,6 +938,8 @@ export const en = {
       date: "November 16, 2026",
       improveItem1:
         "Streamline the privacy settings screen by removing redundant descriptive text.",
+      improveItem2:
+        "Add hundreds of inspiring quotes focusing on cash flow, liquidity, and daily financial motivation.",
       fixItem1:
         "Fix an issue where resetting all app data could fail on accounts with existing data.",
       fixItem2:

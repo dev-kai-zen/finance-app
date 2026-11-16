@@ -8,7 +8,10 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
     sections: [
       {
         categoryKey: "versionHistory.categories.improve",
-        itemKeys: ["versionHistory.v162.improveItem1"],
+        itemKeys: [
+          "versionHistory.v162.improveItem1",
+          "versionHistory.v162.improveItem2",
+        ],
       },
       {
         categoryKey: "versionHistory.categories.fix",

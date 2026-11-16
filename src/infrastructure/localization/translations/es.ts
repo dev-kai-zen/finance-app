@@ -955,6 +955,8 @@ export const es = {
       date: "16 de noviembre de 2026",
       improveItem1:
         "Simplificar la pantalla de configuración de privacidad eliminando texto descriptivo redundante.",
+      improveItem2:
+        "Agregar cientos de citas inspiradoras centradas en el flujo de caja, la liquidez y la motivación financiera diaria.",
       fixItem1:
         "Solucionar un problema por el cual restablecer todos los datos podía fallar en cuentas con datos existentes.",
       fixItem2:
