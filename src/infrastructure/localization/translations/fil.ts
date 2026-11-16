@@ -965,6 +965,17 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v162: {
+      date: "Nobyembre 16, 2026",
+      improveItem1:
+        "Gawing mas maayos ang privacy settings sa pamamagitan ng pag-alis ng paulit-ulit na paglalarawan.",
+      improveItem2:
+        "Magdagdag ng daan-daang nakaka-inspire na kasabihan tungkol sa cash flow, liquidity, at motibasyon sa pananalapi.",
+      fixItem1:
+        "Ayusin ang isyu kung saan maaaring mabigo ang pag-reset ng lahat ng data sa mga account na may dating tala.",
+      fixItem2:
+        "Ayusin ang mga pindutan ng duplicate at delete na sumisilip sa likod ng mga card ng transaksyon.",
+    },
     v161: {
       date: "Nobyembre 15, 2026",
       fixItem1:
@@ -1839,7 +1850,7 @@ export const fil = {
       "Pumili kung ang kategoryang ito ay para sa Gastusin o sa Kita.",
     stepNameTitle: "Pangalan ng Kategorya",
     stepNameDesc:
-      "Maglagay ng malinaw na pangalan, tulad ng Pamamalengke, Pagkain sa Labas, o Freelance.",
+      "Maglagay ng malinaw na pangalan tulad ng Pagkain o Transportasyon.",
     stepIconTitle: "Icon ng Kategorya",
     stepIconDesc:
       "Pumili ng angkop na icon na kakatawan sa kategoryang ito sa mga transaksyon at ulat.",

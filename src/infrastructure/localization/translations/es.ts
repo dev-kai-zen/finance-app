@@ -951,6 +951,17 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v162: {
+      date: "16 de noviembre de 2026",
+      improveItem1:
+        "Simplificar la pantalla de configuración de privacidad eliminando texto descriptivo redundante.",
+      improveItem2:
+        "Agregar cientos de citas inspiradoras centradas en el flujo de caja, la liquidez y la motivación financiera diaria.",
+      fixItem1:
+        "Solucionar un problema por el cual restablecer todos los datos podía fallar en cuentas con datos existentes.",
+      fixItem2:
+        "Corregir los botones de acción de duplicar y eliminar que se asomaban detrás de las tarjetas de transacciones.",
+    },
     v161: {
       date: "15 de noviembre de 2026",
       fixItem1:
@@ -1822,7 +1833,7 @@ export const es = {
     stepGroupTypeDesc: "Elige si esta categoría registrará Gastos o Ingresos.",
     stepNameTitle: "Nombre de categoría",
     stepNameDesc:
-      "Ingresa un nombre claro, como Comestibles, Restaurantes o Trabajo independiente.",
+      "Ingresa un nombre claro, como Comida o Transporte.",
     stepIconTitle: "Ícono de categoría",
     stepIconDesc:
       "Elige un ícono intuitivo para identificar esta categoría en transacciones e informes.",

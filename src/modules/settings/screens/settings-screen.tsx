@@ -1216,9 +1216,6 @@ function SettingsScreenContent() {
               />
             </View>
           </View>
-          <Text style={[styles.sectionHint, { marginTop: 4, marginHorizontal: 4 }]}>
-            {t("settings.privacyDataGuarantee")}
-          </Text>
         </View>
 
         {/* 8. Kaizen Pro */}

@@ -934,6 +934,17 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v162: {
+      date: "November 16, 2026",
+      improveItem1:
+        "Streamline the privacy settings screen by removing redundant descriptive text.",
+      improveItem2:
+        "Add hundreds of inspiring quotes focusing on cash flow, liquidity, and daily financial motivation.",
+      fixItem1:
+        "Fix an issue where resetting all app data could fail on accounts with existing data.",
+      fixItem2:
+        "Fix background duplicate and delete action buttons visibly peeking out behind transaction cards.",
+    },
     v161: {
       date: "November 15, 2026",
       fixItem1:
@@ -1798,7 +1809,7 @@ export const en = {
       "Choose whether this category tracks Expenses (spending) or Income (earnings).",
     stepNameTitle: "Category Name",
     stepNameDesc:
-      "Enter a clear name for this category or subcategory, such as Groceries, Dining Out, or Freelance.",
+      "Enter a clear name, like Food & Dining or Transportation.",
     stepIconTitle: "Category Icon",
     stepIconDesc:
       "Pick an intuitive icon to visually represent this category across transactions and reports.",

@@ -1,13 +1,14 @@
 import { getTableName } from "drizzle-orm";
 
 import {
+  accountKeywords,
   accountTypes,
   accounts,
-  importBatches,
-  importRecords,
+  actionKeywords,
   budgetMonthlyTargets,
   categories,
   categoryBudgets,
+  categoryKeywords,
   creditCardDetails,
   creditCardInstallmentPlans,
   creditCardInstallments,
@@ -22,7 +23,11 @@ import {
   goalPockets,
   goals,
   hexColors,
+  importBatches,
+  importRecords,
   labels,
+  merchantKeywords,
+  merchants,
   noteAttachments,
   notes,
   pockets,
@@ -49,6 +54,7 @@ const APP_RESET_USER_DATA_TABLES = [
   transactionSchedules,
   transactionAttachments,
   transactionLabels,
+  transactionEntries,
   creditCardStatementEntries,
   creditCardInstallments,
   creditCardInstallmentPlans,
@@ -63,6 +69,11 @@ const APP_RESET_USER_DATA_TABLES = [
   fundGroupAccounts,
   fundGroupPockets,
   fundGroups,
+  merchantKeywords,
+  merchants,
+  categoryKeywords,
+  accountKeywords,
+  actionKeywords,
   creditCardDetails,
   pockets,
   accounts,
@@ -84,7 +95,6 @@ const APP_RESET_USER_DATA_TABLES = [
 const USER_DATA_TABLES = [
   ...APP_RESET_USER_DATA_TABLES,
   currencies,
-  transactionEntries,
 ] as const;
 
 export const APP_RESET_USER_DATA_TABLE_NAMES = APP_RESET_USER_DATA_TABLES.map(

@@ -328,6 +328,16 @@ test("reset data removes user records while preserving built-in catalog rows", a
     .run("reset-category", "Reset category", "reset-color", now, now);
   sqlite
     .prepare(
+      "INSERT INTO categories (id, name, type, hex_colors_id, parent_id, is_system, sort_order, created_at, updated_at) VALUES (?, ?, 'expense', ?, 'reset-category', 0, 1, ?, ?)",
+    )
+    .run("reset-subcategory", "Reset subcategory", "reset-color", now, now);
+  sqlite
+    .prepare(
+      "UPDATE categories SET hex_colors_id = 'reset-color' WHERE id = (SELECT id FROM categories WHERE is_system = 1 LIMIT 1)",
+    )
+    .run();
+  sqlite
+    .prepare(
       "INSERT INTO accounts (id, account_type_id, name, currency_code, opening_balance_minor_units, opening_balance_at, starting_balance_locked, hide_from_selection, hide_from_reports, pocket_enabled, is_archived, sort_order, created_at, updated_at) VALUES (?, ?, ?, 'PHP', 0, ?, 0, 0, 0, 0, 0, 0, ?, ?)",
     )
     .run("reset-account", "reset-type", "Reset account", now, now, now);
@@ -338,12 +348,37 @@ test("reset data removes user records while preserving built-in catalog rows", a
     .run(
       "reset-transaction",
       "reset-account",
-      "reset-category",
+      "reset-subcategory",
       "Reset transaction",
       now,
       now,
       now,
     );
+  sqlite
+    .prepare(
+      "INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run("reset-entry", "reset-transaction", "reset-subcategory", 100, now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO merchants (id, name, default_category_id, default_account_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run("reset-merchant", "Reset merchant", "reset-subcategory", "reset-account", now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO merchant_keywords (id, merchant_id, keyword, created_at) VALUES (?, ?, ?, ?)",
+    )
+    .run("reset-mk", "reset-merchant", "reset merchant keyword", now);
+  sqlite
+    .prepare(
+      "INSERT INTO category_keywords (id, category_id, keyword, created_at) VALUES (?, ?, ?, ?)",
+    )
+    .run("reset-ckw", "reset-subcategory", "reset category keyword", now);
+  sqlite
+    .prepare(
+      "INSERT INTO account_keywords (id, account_id, keyword, created_at) VALUES (?, ?, ?, ?)",
+    )
+    .run("reset-akw", "reset-account", "reset account keyword", now);
   sqlite
     .prepare(
       "INSERT INTO transaction_attachments (id, transaction_id, original_name, storage_key, mime_type, size_bytes, sha256, sync_status, created_at, updated_at) VALUES (?, ?, ?, ?, 'image/jpeg', 1, ?, 'pending', ?, ?)",
@@ -386,7 +421,12 @@ test("reset data removes user records while preserving built-in catalog rows", a
   for (const table of [
     "accounts",
     "transactions",
+    "transaction_entries",
     "transaction_attachments",
+    "merchants",
+    "merchant_keywords",
+    "category_keywords",
+    "account_keywords",
     "notes",
     "note_attachments",
     "settings",

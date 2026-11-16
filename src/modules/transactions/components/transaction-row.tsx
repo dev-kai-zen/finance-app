@@ -166,6 +166,13 @@ export const TransactionRow = memo(function TransactionRow({
     transform: [{ translateX: translateX.get() }],
   }));
 
+  const animatedActionsStyle = useAnimatedStyle(() => {
+    const tx = translateX.get();
+    return {
+      opacity: tx < 0 ? Math.min(1, Math.max(0, -tx / 15)) : 0,
+    };
+  });
+
   const handleRowPress = () => {
     if (Math.abs(translateX.get()) > 10) {
       translateX.set(withSpring(0, { dampingRatio: 0.85, duration: 200 }));
@@ -280,7 +287,9 @@ export const TransactionRow = memo(function TransactionRow({
     if (totalActionsWidth === 0) return null;
 
     return (
-      <View style={styles.swipeActionsContainer}>
+      <Animated.View
+        style={[styles.swipeActionsContainer, animatedActionsStyle]}
+      >
         {onDuplicate ? (
           <Pressable
             accessibilityLabel={`Duplicate ${title}`}
@@ -315,7 +324,7 @@ export const TransactionRow = memo(function TransactionRow({
             </Text>
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
     );
   };
 
@@ -569,10 +578,10 @@ function createStyles(theme: AppTheme) {
     },
     swipeActionsContainer: {
       position: "absolute",
-      top: 0,
+      top: 1,
       left: 0,
       right: 0,
-      bottom: 0,
+      bottom: 1,
       flexDirection: "row",
       justifyContent: "flex-end",
       alignItems: "stretch",
@@ -591,6 +600,8 @@ function createStyles(theme: AppTheme) {
     deleteActionButton: {
       alignItems: "center",
       backgroundColor: theme.colors.danger,
+      borderBottomRightRadius: theme.borderRadius.medium,
+      borderTopRightRadius: theme.borderRadius.medium,
       justifyContent: "center",
       width: ACTION_WIDTH,
       gap: 3,
