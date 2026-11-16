@@ -2,13 +2,14 @@ import { eq } from "drizzle-orm";
 
 import type { DbContext } from "@/infrastructure/database/client";
 import {
+  accountKeywords,
   accountTypes,
   accounts,
-  importBatches,
-  importRecords,
+  actionKeywords,
   budgetMonthlyTargets,
   categories,
   categoryBudgets,
+  categoryKeywords,
   creditCardDetails,
   creditCardInstallmentPlans,
   creditCardInstallments,
@@ -22,13 +23,18 @@ import {
   goalPockets,
   goals,
   hexColors,
+  importBatches,
+  importRecords,
   labels,
+  merchantKeywords,
+  merchants,
   noteAttachments,
   notes,
   pockets,
   settings,
   syncOperations,
   transactionAttachments,
+  transactionEntries,
   transactionLabels,
   transactionPresets,
   transactionScheduleOccurrences,
@@ -49,6 +55,7 @@ export function deleteAllUserData(context: DbContext): void {
 
   context.delete(transactionAttachments).run();
   context.delete(transactionLabels).run();
+  context.delete(transactionEntries).run();
 
   context.delete(creditCardStatementEntries).run();
   context.delete(creditCardInstallments).run();
@@ -69,6 +76,12 @@ export function deleteAllUserData(context: DbContext): void {
   context.delete(fundGroupPockets).run();
   context.delete(fundGroups).run();
 
+  context.delete(merchantKeywords).run();
+  context.delete(merchants).run();
+  context.delete(categoryKeywords).run();
+  context.delete(accountKeywords).run();
+  context.delete(actionKeywords).run();
+
   context.delete(creditCardDetails).run();
   context.delete(pockets).run();
   context.delete(accounts).run();
@@ -78,6 +91,17 @@ export function deleteAllUserData(context: DbContext): void {
   context.delete(labels).run();
   context.delete(exchangeRates).run();
   context.delete(settings).run();
+
+  context
+    .update(categories)
+    .set({ parentId: null, hexColorsId: "color_slate" })
+    .run();
+
+  context
+    .update(accountTypes)
+    .set({ hexColorsId: "color_slate" })
+    .where(eq(accountTypes.isSystem, true))
+    .run();
 
   context.delete(accountTypes).where(eq(accountTypes.isSystem, false)).run();
   context.delete(categories).where(eq(categories.isSystem, false)).run();

@@ -1,6 +1,7 @@
 import {
   announceDatabaseReplacement,
   db,
+  sqliteDatabase,
 } from "@/infrastructure/database";
 import { deleteAllUserData } from "../repositories/reset-data.repository";
 import { invalidateExperiencePreferencesCache } from "./experience-preferences.service";
@@ -10,9 +11,24 @@ export async function resetAppData(): Promise<void> {
     require("@/modules/google-drive-backup") as typeof import("@/modules/google-drive-backup");
   await resetGoogleDriveConnectionForAppReset();
 
-  await db.transaction(async (tx) => {
-    deleteAllUserData(tx);
-  });
+  const fkRow = sqliteDatabase.getFirstSync<{ foreign_keys: number }>(
+    "PRAGMA foreign_keys;",
+  );
+  const wasFkEnabled = fkRow?.foreign_keys === 1;
+
+  if (wasFkEnabled) {
+    sqliteDatabase.execSync("PRAGMA foreign_keys = OFF;");
+  }
+
+  try {
+    db.transaction((tx) => {
+      deleteAllUserData(tx);
+    });
+  } finally {
+    if (wasFkEnabled) {
+      sqliteDatabase.execSync("PRAGMA foreign_keys = ON;");
+    }
+  }
 
   invalidateExperiencePreferencesCache();
   clearAppManagedFiles();
