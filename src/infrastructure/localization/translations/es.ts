@@ -953,6 +953,8 @@ export const es = {
     },
     v162: {
       date: "16 de noviembre de 2026",
+      improveItem1:
+        "Simplificar la pantalla de configuración de privacidad eliminando texto descriptivo redundante.",
       fixItem1:
         "Solucionar un problema por el cual restablecer todos los datos podía fallar en cuentas con datos existentes.",
     },

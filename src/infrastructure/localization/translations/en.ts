@@ -936,6 +936,8 @@ export const en = {
     },
     v162: {
       date: "November 16, 2026",
+      improveItem1:
+        "Streamline the privacy settings screen by removing redundant descriptive text.",
       fixItem1:
         "Fix an issue where resetting all app data could fail on accounts with existing data.",
     },
