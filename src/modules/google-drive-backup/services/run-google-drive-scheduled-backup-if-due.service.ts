@@ -1,5 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
 
+import { isDatabaseReplacing } from "@/infrastructure/database";
 import { isScheduledBackupDue } from "@/utils/backup-schedule";
 import { getCurrentProStatus } from "@/modules/pro";
 import {
@@ -22,6 +23,8 @@ export function runGoogleDriveScheduledBackupIfDue(): Promise<boolean> {
 }
 
 async function performScheduledBackup(): Promise<boolean> {
+  if (isDatabaseReplacing()) return false;
+
   const isPro = getCurrentProStatus().isPro;
   if (!isPro) return false;
 

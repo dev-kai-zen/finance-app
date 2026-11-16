@@ -103,6 +103,7 @@ export function saveQuickSyncConfig(
 export function resetQuickSyncLocalMetadata(context: DbContext = db): void {
   saveQuickSyncConfig(
     {
+      enabled: false,
       fileId: null,
       lastSyncedAt: null,
       accountEmail: null,

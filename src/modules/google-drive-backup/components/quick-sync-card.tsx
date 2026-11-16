@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 import {
+  AlertCircle,
   CheckCircle2,
+  Clock,
   Crown,
   RefreshCw,
   RotateCcw,
@@ -80,7 +82,19 @@ export function QuickSyncCard() {
     }
   };
 
-  const formattedLastSynced = quickSync.lastSyncedAt
+  const isNeverSynced = !quickSync.lastSyncedAt || !quickSync.fileId;
+
+  const statusLabel = isSyncing
+    ? t("sync.syncing")
+    : quickSync.status === "waiting_network"
+      ? t("sync.waitingNetwork")
+      : quickSync.status === "error"
+        ? t("sync.failed")
+        : isNeverSynced
+          ? t("sync.notSynced")
+          : t("sync.synced");
+
+  const formattedLastSynced = quickSync.lastSyncedAt && quickSync.fileId
     ? formatDateTime(new Date(quickSync.lastSyncedAt))
     : t("quickSync.neverSynced");
 
@@ -196,17 +210,30 @@ export function QuickSyncCard() {
                     color={theme.colors.primary}
                     size="small"
                   />
+                ) : quickSync.status === "error" ? (
+                  <AlertCircle color={theme.colors.danger} size={16} />
+                ) : quickSync.status === "waiting_network" ? (
+                  <Clock color={theme.colors.warning} size={16} />
+                ) : isNeverSynced ? (
+                  <Clock color={theme.colors.textMuted} size={16} />
                 ) : (
                   <CheckCircle2 color={theme.colors.success} size={16} />
                 )}
-                <Text style={styles.statusLabel}>
-                  {isSyncing
-                    ? t("sync.syncing")
-                    : quickSync.status === "waiting_network"
-                      ? t("sync.waitingNetwork")
-                      : quickSync.status === "error"
-                        ? t("sync.failed")
-                        : t("sync.synced")}
+                <Text
+                  style={[
+                    styles.statusLabel,
+                    quickSync.status === "error" && { color: theme.colors.danger },
+                    quickSync.status === "waiting_network" && { color: theme.colors.warning },
+                    isNeverSynced && { color: theme.colors.textMuted },
+                    !isSyncing &&
+                      !isNeverSynced &&
+                      quickSync.status !== "error" &&
+                      quickSync.status !== "waiting_network" && {
+                        color: theme.colors.success,
+                      },
+                  ]}
+                >
+                  {statusLabel}
                 </Text>
               </View>
               <Text style={styles.lastSyncedText}>

@@ -552,7 +552,7 @@ export function OnboardingScreen() {
                 description="Connect Google Drive and restore an encrypted Kaizen Finance backup."
                 title="Restore your data"
               />
-              <GoogleDriveBackupPanel />
+              <GoogleDriveBackupPanel mode="restore-only" />
               <Text style={styles.restoreFootnote}>
                 After a successful restore, the app will reopen using the restored
                 accounts and transaction history.

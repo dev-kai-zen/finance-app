@@ -553,6 +553,7 @@ export const fil = {
     synced: "Na-sync na",
     waitingNetwork: "Naghihintay ng Wi-Fi",
     failed: "Nabigo ang pag-sync",
+    notSynced: "Hindi pa na-sync",
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
@@ -1046,6 +1047,10 @@ export const fil = {
       date: "Nobyembre 16, 2026",
       newItem1:
         "Subaybayan ang iyong mga paulit-ulit na subscription at bayarin na may countdown sa pag-renew at kabuuang buwanang gastos.",
+      fixItem1:
+        "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
+      fixItem2:
+        "Ipakita ang tumpak na status ng sync na direktang na-verify sa Google Drive.",
     },
     v162: {
       date: "Nobyembre 16, 2026",

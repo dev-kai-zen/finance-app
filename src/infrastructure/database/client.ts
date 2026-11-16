@@ -8,6 +8,7 @@ const sqlite = SQLite.openDatabaseSync(DATABASE_NAME, {
   enableChangeListener: true,
 });
 sqlite.execSync("PRAGMA journal_mode = WAL;");
+sqlite.execSync("PRAGMA busy_timeout = 5000;");
 sqlite.execSync("PRAGMA foreign_keys = ON;");
 
 export const sqliteDatabase = sqlite;

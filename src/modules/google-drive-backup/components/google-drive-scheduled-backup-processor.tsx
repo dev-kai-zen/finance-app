@@ -7,7 +7,9 @@ import { runGoogleDriveScheduledBackupIfDue } from "@/modules/google-drive-backu
 
 export function GoogleDriveScheduledBackupProcessor() {
   const workspace = useWorkspace();
-  const isPersonalWorkspace = workspace.state.mode === "personal";
+  const isPersonalWorkspace =
+    workspace.state.mode === "personal" &&
+    workspace.state.status === "completed";
 
   useEffect(() => {
     if (!isPersonalWorkspace) return;

@@ -1,5 +1,6 @@
 import NetInfo from "@react-native-community/netinfo";
 
+import { isDatabaseReplacing } from "@/infrastructure/database";
 import {
   getQuickSyncConfig,
   getQuickSyncState,
@@ -13,6 +14,7 @@ import {
   type QuickSyncNetworkPreference,
   type QuickSyncState,
 } from "@/infrastructure/sync";
+import { isPersonalWorkspace } from "@/modules/onboarding";
 import { createBackupArchive } from "@/modules/local-backup";
 import {
   restoreGoogleDriveSession,
@@ -58,6 +60,10 @@ export function setQuickSyncNetworkPreference(
 export async function triggerQuickSync(options?: {
   immediate?: boolean;
 }): Promise<boolean> {
+  if (isDatabaseReplacing()) {
+    return false;
+  }
+
   const config = getQuickSyncConfig();
   if (!config.enabled) {
     setQuickSyncRuntimeStatus("disabled");
@@ -80,6 +86,11 @@ async function performSync(
   existingFileId: string | null,
 ): Promise<boolean> {
   try {
+    // 0. Ensure app is in a valid completed personal workspace (never sync empty onboarding database)
+    if (!isPersonalWorkspace() || isDatabaseReplacing()) {
+      return false;
+    }
+
     // 1. Verify Google Drive session is active
     const user = await restoreGoogleDriveSession().catch(() => null);
     if (!user) {
@@ -103,15 +114,21 @@ async function performSync(
       return false;
     }
 
+    // Account check: If active user differs from saved accountEmail, do NOT auto-overwrite
+    const config = getQuickSyncConfig();
+    if (config.accountEmail && user.email && config.accountEmail !== user.email) {
+      saveQuickSyncConfig({
+        enabled: false,
+        fileId: null,
+        lastSyncedAt: null,
+        accountEmail: user.email,
+      });
+      setQuickSyncRuntimeStatus("disabled");
+      return false;
+    }
+
     // 3. Mark syncing
     setQuickSyncRuntimeStatus("syncing");
-
-    // Account check: If active user differs from saved accountEmail, do not reuse old account's fileId
-    const config = getQuickSyncConfig();
-    let fileIdToUse = existingFileId;
-    if (config.accountEmail && user.email && config.accountEmail !== user.email) {
-      fileIdToUse = null;
-    }
 
     // 4. Create database snapshot (unprotected for background auto-sync)
     const archive = await createBackupArchive(null);
@@ -121,7 +138,7 @@ async function performSync(
       uploadOrUpdateGoogleDriveQuickSyncBackup(
         accessToken,
         archive.bytes,
-        fileIdToUse,
+        existingFileId,
       ),
     );
 

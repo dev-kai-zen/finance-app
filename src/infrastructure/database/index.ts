@@ -7,7 +7,12 @@ export {
   announceDatabaseReplacement,
   subscribeToDatabaseReplacement,
 } from './database-replacement';
-export { createDatabaseSnapshot, replaceDatabaseFromSnapshot } from './snapshot';
+export {
+  createDatabaseSnapshot,
+  isDatabaseReplacing,
+  replaceDatabaseFromSnapshot,
+  withDatabaseSnapshotLock,
+} from './snapshot';
 export {
   APP_RESET_USER_DATA_TABLE_NAMES,
   QUICK_SYNC_WATCHED_TABLE_NAME_SET,

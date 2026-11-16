@@ -539,6 +539,7 @@ export const en = {
     synced: "Synced",
     waitingNetwork: "Waiting for Wi-Fi",
     failed: "Sync failed",
+    notSynced: "Not synced yet",
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
   scheduledBackup: {
@@ -1015,6 +1016,10 @@ export const en = {
       date: "November 16, 2026",
       newItem1:
         "Track your recurring subscriptions and bills with renewal countdowns and monthly burn rate totals.",
+      fixItem1:
+        "Fix Google Drive sync and database errors when changing connected accounts.",
+      fixItem2:
+        "Show accurate sync status verified directly against files in Google Drive.",
     },
     v162: {
       date: "November 16, 2026",

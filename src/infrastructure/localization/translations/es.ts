@@ -547,6 +547,7 @@ export const es = {
     synced: "Sincronizado",
     waitingNetwork: "Esperando Wi-Fi",
     failed: "Error al sincronizar",
+    notSynced: "Aún no sincronizado",
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
@@ -1032,6 +1033,10 @@ export const es = {
       date: "16 de noviembre de 2026",
       newItem1:
         "Realice un seguimiento de sus suscripciones y facturas recurrentes con cuentas regresivas de renovación y totales de gasto mensual.",
+      fixItem1:
+        "Solucionar errores de sincronización y base de datos al cambiar de cuenta de Google Drive.",
+      fixItem2:
+        "Mostrar un estado de sincronización preciso verificado directamente en Google Drive.",
     },
     v162: {
       date: "16 de noviembre de 2026",
