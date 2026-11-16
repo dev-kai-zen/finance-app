@@ -957,6 +957,8 @@ export const es = {
         "Simplificar la pantalla de configuración de privacidad eliminando texto descriptivo redundante.",
       fixItem1:
         "Solucionar un problema por el cual restablecer todos los datos podía fallar en cuentas con datos existentes.",
+      fixItem2:
+        "Corregir los botones de acción de duplicar y eliminar que se asomaban detrás de las tarjetas de transacciones.",
     },
     v161: {
       date: "15 de noviembre de 2026",

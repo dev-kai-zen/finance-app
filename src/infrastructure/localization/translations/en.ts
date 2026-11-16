@@ -940,6 +940,8 @@ export const en = {
         "Streamline the privacy settings screen by removing redundant descriptive text.",
       fixItem1:
         "Fix an issue where resetting all app data could fail on accounts with existing data.",
+      fixItem2:
+        "Fix background duplicate and delete action buttons visibly peeking out behind transaction cards.",
     },
     v161: {
       date: "November 15, 2026",

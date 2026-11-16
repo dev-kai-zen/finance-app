@@ -971,6 +971,8 @@ export const fil = {
         "Gawing mas maayos ang privacy settings sa pamamagitan ng pag-alis ng paulit-ulit na paglalarawan.",
       fixItem1:
         "Ayusin ang isyu kung saan maaaring mabigo ang pag-reset ng lahat ng data sa mga account na may dating tala.",
+      fixItem2:
+        "Ayusin ang mga pindutan ng duplicate at delete na sumisilip sa likod ng mga card ng transaksyon.",
     },
     v161: {
       date: "Nobyembre 15, 2026",
