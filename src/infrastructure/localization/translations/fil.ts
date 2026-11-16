@@ -965,6 +965,11 @@ export const fil = {
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
     },
+    v162: {
+      date: "Nobyembre 16, 2026",
+      fixItem1:
+        "Ayusin ang isyu kung saan maaaring mabigo ang pag-reset ng lahat ng data sa mga account na may dating tala.",
+    },
     v161: {
       date: "Nobyembre 15, 2026",
       fixItem1:

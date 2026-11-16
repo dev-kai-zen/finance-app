@@ -10,7 +10,7 @@ export function TelemetryProcessor(): null {
       initializeTelemetrySettings();
       logTelemetryEvent("app_launched", {
         is_first_launch: false,
-        app_version: Constants.expoConfig?.version ?? "1.6.1",
+        app_version: Constants.expoConfig?.version ?? "1.6.2",
       });
     });
 

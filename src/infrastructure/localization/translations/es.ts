@@ -951,6 +951,11 @@ export const es = {
       backup: "Copia de seguridad y sincronización",
       general: "General",
     },
+    v162: {
+      date: "16 de noviembre de 2026",
+      fixItem1:
+        "Solucionar un problema por el cual restablecer todos los datos podía fallar en cuentas con datos existentes.",
+    },
     v161: {
       date: "15 de noviembre de 2026",
       fixItem1:

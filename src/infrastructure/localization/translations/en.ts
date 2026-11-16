@@ -934,6 +934,11 @@ export const en = {
       backup: "Backup & Sync",
       general: "General",
     },
+    v162: {
+      date: "November 16, 2026",
+      fixItem1:
+        "Fix an issue where resetting all app data could fail on accounts with existing data.",
+    },
     v161: {
       date: "November 15, 2026",
       fixItem1:
