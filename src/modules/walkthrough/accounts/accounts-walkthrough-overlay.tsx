@@ -58,14 +58,14 @@ export function AccountsWalkthroughOverlay({
 
   // Calculate cutout sizing
   let cutoutPadding = 4;
-  let cutoutRadius = 14;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "archivedChip" || step.id === "fundGroupsChip") {
     cutoutPadding = 5;
     cutoutRadius = 20;
   } else if (step.id === "searchBox") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;

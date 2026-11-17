@@ -338,13 +338,12 @@ function NotesScreenContent({
               /* Square Tiles View (2 Columns) */
               <View style={styles.tilesGrid}>
                 {notes.map((item, index) => (
-                  <View
-                    key={item.id}
-                    collapsable={false}
-                    ref={index === 0 ? firstNoteRef : undefined}
-                    style={styles.tileCol}
-                  >
-                    <NoteCardTile note={item} onPress={handleSelectNote} />
+                  <View key={item.id} style={styles.tileCol}>
+                    <NoteCardTile
+                      note={item}
+                      onPress={handleSelectNote}
+                      tileRef={index === 0 ? firstNoteRef : undefined}
+                    />
                   </View>
                 ))}
               </View>
@@ -352,17 +351,13 @@ function NotesScreenContent({
               /* Table / Rows View with swipe-to-delete */
               <View style={styles.tableList}>
                 {notes.map((item, index) => (
-                  <View
+                  <NoteTableRow
                     key={item.id}
-                    collapsable={false}
-                    ref={index === 0 ? firstNoteRef : undefined}
-                  >
-                    <NoteTableRow
-                      note={item}
-                      onDelete={handleConfirmDeleteFromRow}
-                      onPress={handleSelectNote}
-                    />
-                  </View>
+                    note={item}
+                    onDelete={handleConfirmDeleteFromRow}
+                    onPress={handleSelectNote}
+                    rowRef={index === 0 ? firstNoteRef : undefined}
+                  />
                 ))}
               </View>
             )}

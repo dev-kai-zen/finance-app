@@ -46,7 +46,7 @@ export function SettingsWalkthroughOverlay({
   if (!visible || !step) return null;
 
   const cutoutPadding = 3;
-  const cutoutRadius = 12;
+  const cutoutRadius = theme.borderRadius.large;
 
   const cutoutX = targetLayout
     ? Math.max(0, targetLayout.x - cutoutPadding)

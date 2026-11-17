@@ -26,7 +26,6 @@ export interface ScheduledTransactionsWalkthroughOverlayProps {
 }
 
 const SPOTLIGHT_PADDING = 4;
-const SPOTLIGHT_RADIUS = 12;
 const CARD_MARGIN = 16;
 const CARD_ESTIMATED_HEIGHT = 180;
 
@@ -47,6 +46,9 @@ export function ScheduledTransactionsWalkthroughOverlay({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   if (!visible || !step) return null;
+
+  const isFabStep = step.id === "scheduledFab";
+  const spotlightRadius = isFabStep ? 34 : theme.borderRadius.large;
 
   const title = t(step.titleKey as any);
   const desc = t(step.descKey as any);
@@ -149,7 +151,7 @@ export function ScheduledTransactionsWalkthroughOverlay({
                   left: spotlightLeft,
                   width: spotlightWidth,
                   height: spotlightHeight,
-                  borderRadius: SPOTLIGHT_RADIUS,
+                  borderRadius: spotlightRadius,
                 },
               ]}
             />

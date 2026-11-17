@@ -59,7 +59,7 @@ export function DashboardWalkthroughOverlay({
 
   // Calculate cutout sizing
   let cutoutPadding = 6;
-  let cutoutRadius = 14;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (
     step.id === "collapseIcon" ||

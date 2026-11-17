@@ -55,20 +55,20 @@ export function TransactionsWalkthroughOverlay({
 
   // Calculate cutout sizing
   let cutoutPadding = 4;
-  let cutoutRadius = 12;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "txSearch") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "txFilter") {
     cutoutPadding = 4;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "txSortDate" || step.id === "txSortAmount") {
     cutoutPadding = 3;
     cutoutRadius = 16;
   } else if (step.id === "txSortOrder" || step.id === "txViewMode" || step.id === "txExport") {
     cutoutPadding = 4;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "txScheduled" || step.id === "txTrash") {
     cutoutPadding = 4;
     cutoutRadius = 20;

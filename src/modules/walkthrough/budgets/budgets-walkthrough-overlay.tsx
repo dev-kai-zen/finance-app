@@ -54,23 +54,23 @@ export function BudgetsWalkthroughOverlay({
 
   // Calculate cutout sizing based on target
   let cutoutPadding = 4;
-  let cutoutRadius = 12;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "budgetTotalActiveCard") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "budgetFrequencyTabs") {
     cutoutPadding = 3;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "budgetFirstItemToggle") {
     cutoutPadding = 3;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;
   } else if (isEmptyCreateStep) {
     cutoutPadding = 4;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   }
 
   const cutoutX = targetLayout

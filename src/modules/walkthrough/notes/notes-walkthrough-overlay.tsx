@@ -54,23 +54,23 @@ export function NotesWalkthroughOverlay({
 
   // Calculate cutout sizing based on target
   let cutoutPadding = 4;
-  let cutoutRadius = 12;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "notesEmptyCreateButton") {
     cutoutPadding = 4;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "notesSearch") {
     cutoutPadding = 3;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "notesViewMode") {
     cutoutPadding = 3;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "notesSortFilter") {
     cutoutPadding = 3;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (step.id === "notesFirstItem") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;

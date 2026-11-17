@@ -62,6 +62,13 @@ export function useBudgetsWalkthrough(options: UseBudgetsWalkthroughOptions) {
         if (generation !== measurementGenerationRef.current) {
           return;
         }
+
+        // Fixed floating action button is always visible on-screen; apply immediately
+        if (step.targetId === "budgetFab" && initialLayout) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
         if (
           initialLayout &&
           isWalkthroughTargetVisible(initialLayout, windowHeight, insets)

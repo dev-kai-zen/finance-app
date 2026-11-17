@@ -47,7 +47,7 @@ export function CalendarWalkthroughOverlay({
 
   // Calculate cutout sizing based on target
   let cutoutPadding = 4;
-  let cutoutRadius = 8;
+  let cutoutRadius = theme.borderRadius.medium;
 
   if (step.id === "calArrows") {
     cutoutPadding = 3;
@@ -55,7 +55,7 @@ export function CalendarWalkthroughOverlay({
   } else {
     // Tab targets
     cutoutPadding = 3;
-    cutoutRadius = 8;
+    cutoutRadius = theme.borderRadius.medium;
   }
 
   const cutoutX = targetLayout

@@ -13,12 +13,14 @@ export interface NoteCardTileProps {
   note: Note;
   onPress: (note: Note) => void;
   onLongPress?: (note: Note) => void;
+  tileRef?: React.Ref<View>;
 }
 
 export const NoteCardTile = memo(function NoteCardTile({
   note,
   onPress,
   onLongPress,
+  tileRef,
 }: NoteCardTileProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -40,6 +42,8 @@ export const NoteCardTile = memo(function NoteCardTile({
 
   return (
     <Pressable
+      ref={tileRef as any}
+      collapsable={false}
       accessibilityLabel={`Note: ${note.title}`}
       accessibilityRole="button"
       onLongPress={() => onLongPress?.(note)}

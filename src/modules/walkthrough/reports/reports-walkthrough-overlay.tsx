@@ -46,17 +46,17 @@ export function ReportsWalkthroughOverlay({
   if (!visible || !step) return null;
 
   let cutoutPadding = 4;
-  let cutoutRadius = 12;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "reportsTabBar" || step.id === "reportsFilterBar") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (
     step.id === "reportsChart" ||
     step.id === "reportsBreakdownTable"
   ) {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   }
 
   const cutoutX = targetLayout

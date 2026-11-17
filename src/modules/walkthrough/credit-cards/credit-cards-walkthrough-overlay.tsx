@@ -50,29 +50,29 @@ export function CreditCardsWalkthroughOverlay({
   const isEmptyAddStep = step.id === "creditCardEmptyAddButton";
 
   let cutoutPadding = 4;
-  let cutoutRadius = 12;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "creditCardDueSummary") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "creditCardAccountChips") {
     cutoutPadding = 3;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "creditCardLimitUtilization") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "creditCardMetrics") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "creditCardDueInstallments") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "creditCardStatements" || step.id === "creditCardUnbilled") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (isEmptyAddStep) {
     cutoutPadding = 4;
-    cutoutRadius = 10;
+    cutoutRadius = theme.borderRadius.medium;
   }
 
   const cutoutX = targetLayout
