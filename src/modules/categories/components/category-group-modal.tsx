@@ -261,8 +261,8 @@ function CategoryGroupModalContent({
                 onChangeText={setName}
                 placeholder={
                   type === "expense"
-                    ? "e.g. Food & Dining, Transportation, Utilities..."
-                    : "e.g. Salary & Wages, Business, Investments..."
+                    ? "e.g. Food & Dining, Travel"
+                    : "e.g. Salary, Investments"
                 }
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
