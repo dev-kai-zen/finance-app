@@ -58,7 +58,6 @@ export interface NetWorthInspectModalProps {
   title?: string;
   points: NetWorthInspectPoint[];
   currencyCode?: string;
-  valuesVisible?: boolean;
   periods?: string[];
   activePeriod?: string;
   onSelectPeriod?: (period: string) => void;
@@ -80,7 +79,6 @@ export function NetWorthInspectModal({
   title,
   points,
   currencyCode = "PHP",
-  valuesVisible = true,
   periods,
   activePeriod,
   onSelectPeriod,
@@ -107,7 +105,6 @@ export function NetWorthInspectModal({
       points={points}
       selectedYear={selectedYear}
       title={title}
-      valuesVisible={valuesVisible}
       visible={visible}
     />
   );
@@ -119,7 +116,6 @@ function NetWorthInspectModalContent({
   title,
   points,
   currencyCode = "PHP",
-  valuesVisible = true,
   periods,
   activePeriod,
   onSelectPeriod,
@@ -291,7 +287,6 @@ function NetWorthInspectModalContent({
       : null;
 
   const headerTitle = title ?? t("netWorthInspect.title");
-  const privateMask = "••••••";
 
   return (
     <Modal
@@ -480,7 +475,7 @@ function NetWorthInspectModalContent({
                             x={PLOT_LEFT - 8}
                             y={y + 4}
                           >
-                            {valuesVisible ? formatShortAxis(tick) : "•••"}
+                            {formatShortAxis(tick)}
                           </SvgText>
                         </G>
                       );
@@ -791,15 +786,13 @@ function NetWorthInspectModalContent({
                   numberOfLines={1}
                   style={[styles.heroValue, { color: theme.colors.info }]}
                 >
-                  {valuesVisible
-                    ? formatCurrency(
-                        activePoint.netWorthMinorUnits,
-                        currencyCode,
-                      )
-                    : privateMask}
+                  {formatCurrency(
+                    activePoint.netWorthMinorUnits,
+                    currencyCode,
+                  )}
                 </Text>
 
-                {comparison && valuesVisible ? (
+                {comparison ? (
                   <Text style={styles.comparisonSubtext}>
                     {comparison.isPositive ? "+" : ""}
                     {formatCurrency(comparison.diff, currencyCode)}{" "}
@@ -832,12 +825,10 @@ function NetWorthInspectModalContent({
                       { color: theme.colors.success },
                     ]}
                   >
-                    {valuesVisible
-                      ? formatCurrency(
-                          activePoint.totalAssetsMinorUnits,
-                          currencyCode,
-                        )
-                      : privateMask}
+                    {formatCurrency(
+                      activePoint.totalAssetsMinorUnits,
+                      currencyCode,
+                    )}
                   </Text>
                 </View>
 
@@ -863,12 +854,10 @@ function NetWorthInspectModalContent({
                       { color: theme.colors.danger },
                     ]}
                   >
-                    {valuesVisible
-                      ? formatCurrency(
-                          Math.abs(activePoint.totalLiabilitiesMinorUnits),
-                          currencyCode,
-                        )
-                      : privateMask}
+                    {formatCurrency(
+                      Math.abs(activePoint.totalLiabilitiesMinorUnits),
+                      currencyCode,
+                    )}
                   </Text>
                 </View>
               </View>

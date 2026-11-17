@@ -85,7 +85,6 @@ export function NetWorthGrowthReport() {
         onClose={() => setInspectModalVisible(false)}
         points={data.points}
         title={t("netWorthInspect.growthTitle")}
-        valuesVisible={!isPrivate}
         visible={inspectModalVisible}
       />
     </View>

@@ -410,7 +410,6 @@ export function DashboardNetWorthCard({
         periods={PERIODS}
         points={activePoints}
         title={simpleHomeLabels ? t("dashboard.moneyYouHave") : "Net Worth"}
-        valuesVisible={valuesVisible}
         visible={inspectModalVisible}
         availableYears={availableYears}
         selectedYear={selectedYear}
