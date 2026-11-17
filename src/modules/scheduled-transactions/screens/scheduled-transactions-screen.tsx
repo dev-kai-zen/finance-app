@@ -217,6 +217,11 @@ function ScheduledTransactionsScreenContent({
     [schedules],
   );
 
+  const activeRegularSchedules = useMemo(
+    () => activeSchedules.filter((schedule) => !schedule.subscriptionId),
+    [activeSchedules],
+  );
+
   const scheduleById = useMemo(
     () =>
       new Map(
@@ -295,7 +300,10 @@ function ScheduledTransactionsScreenContent({
   );
 
   const openNew = useCallback(() => {
-    if (activeSchedules.length >= PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS) {
+    if (
+      activeRegularSchedules.length >=
+      PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
+    ) {
       guardAction(() => {
         setEditingSchedule(null);
         setFormVisible(true);
@@ -309,7 +317,7 @@ function ScheduledTransactionsScreenContent({
     }
     setEditingSchedule(null);
     setFormVisible(true);
-  }, [activeSchedules.length, guardAction, t]);
+  }, [activeRegularSchedules.length, guardAction, t]);
 
   useEffect(() => {
     if (!loading && initialAction === "new") {
@@ -988,9 +996,11 @@ function ScheduledTransactionsScreenContent({
         onCancel={() => setPendingRestore(null)}
         onConfirm={() => {
           if (pendingRestore) {
+            const isRegular = !pendingRestore.subscriptionId;
             if (
-              activeSchedules.length >=
-              PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
+              isRegular &&
+              activeRegularSchedules.length >=
+                PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
             ) {
               const toRestore = pendingRestore;
               setPendingRestore(null);

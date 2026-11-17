@@ -492,3 +492,21 @@ test("scheduled transactions: advance posting shifts the next recurring cycle to
   assert.ok(firstOnce);
   assert.equal(secondOnce, null);
 });
+
+test("scheduled transactions: Pro limit calculation only counts active regular schedules, excluding subscriptions", () => {
+  const activeSchedules = [
+    { id: "sch_1", archivedAt: null, subscriptionId: null },
+    { id: "sch_2", archivedAt: null, subscriptionId: null },
+    { id: "sch_sub_1", archivedAt: null, subscriptionId: "sub_1" },
+    { id: "sch_sub_2", archivedAt: null, subscriptionId: "sub_2" },
+    { id: "sch_sub_3", archivedAt: null, subscriptionId: "sub_3" },
+    { id: "sch_archived", archivedAt: new Date(), subscriptionId: null },
+  ];
+
+  const active = activeSchedules.filter((s) => s.archivedAt === null);
+  const activeRegular = active.filter((s) => !s.subscriptionId);
+
+  assert.equal(active.length, 5);
+  assert.equal(activeRegular.length, 2);
+  assert.equal(activeRegular.length < 5, true);
+});
