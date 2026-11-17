@@ -5,12 +5,15 @@ import {
   hasSubscriptionPayments,
   permanentlyDeleteSubscriptionRecord,
   restoreSubscriptionRecord,
+  updateSubscriptionRecord,
 } from "../repositories/subscriptions.repository";
 import {
   getScheduleBySubscriptionId,
+  processDueSchedules,
   removeScheduledTransaction,
   restoreScheduledTransaction,
 } from "@/modules/scheduled-transactions";
+import { syncSubscriptionScheduleInContext } from "./save-subscription.service";
 
 export type RemoveSubscriptionResult = "deleted" | "archived";
 
@@ -51,6 +54,11 @@ export function archiveSubscriptionInContext(
 
 export function restoreSubscription(subscriptionId: string): void {
   db.transaction((tx) => restoreSubscriptionInContext(subscriptionId, tx));
+  try {
+    processDueSchedules(new Date());
+  } catch {
+    // Ignore if processing encounters an issue
+  }
 }
 
 export function restoreSubscriptionInContext(
@@ -59,21 +67,13 @@ export function restoreSubscriptionInContext(
 ): void {
   const sub = findSubscriptionById(subscriptionId, context);
   if (sub) {
-    const schedId = resolveScheduleId(sub, context);
-    if (schedId) {
-      try {
-        restoreScheduledTransaction(
-          schedId,
-          {
-            status: sub.status === "paused" ? "paused" : "active",
-            nextNominalAt: sub.nextRenewalDate,
-            nextEffectiveAt: sub.nextRenewalDate,
-          },
-          context,
-        );
-      } catch (err) {
-        console.warn("[restoreSubscriptionInContext] Failed to restore schedule:", err);
-      }
+    const linkedScheduleId = syncSubscriptionScheduleInContext(sub, context);
+    if (linkedScheduleId && linkedScheduleId !== sub.scheduleId) {
+      updateSubscriptionRecord(
+        subscriptionId,
+        { scheduleId: linkedScheduleId, updatedAt: new Date() },
+        context,
+      );
     }
   }
   restoreSubscriptionRecord(subscriptionId, context);

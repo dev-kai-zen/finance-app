@@ -68,6 +68,13 @@ export function endScheduledTransaction(id: string): void {
   });
 }
 
+export function getScheduledTransaction(
+  id: string,
+  context: DbContext = db,
+): ScheduledTransaction | null {
+  return findScheduledTransaction(id, context);
+}
+
 export function getScheduleBySubscriptionId(
   subscriptionId: string,
   context: DbContext = db,

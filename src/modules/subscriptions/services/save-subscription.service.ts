@@ -11,10 +11,14 @@ import type {
   BillingCycle,
   SaveSubscriptionInput,
   SubscriptionItem,
+  SubscriptionStatus,
 } from "../types/subscription.types";
 import { calculateNextRenewal } from "../utils/renewal-calculator";
 import {
-  permanentlyDeleteScheduledTransaction,
+  getScheduleBySubscriptionId,
+  getScheduledTransaction,
+  processDueSchedules,
+  removeScheduledTransaction,
   saveScheduledTransactionInContext,
   setScheduledTransactionPaused,
   type SaveScheduledTransactionInput,
@@ -75,11 +79,101 @@ function resolveUpcomingRenewal(
   return candidate;
 }
 
+export function syncSubscriptionScheduleInContext(
+  sub: {
+    id: string;
+    name: string;
+    status: SubscriptionStatus;
+    amountMinorUnits: number;
+    billingCycle: BillingCycle;
+    billingCycleInterval: number;
+    firstBillingDate: Date;
+    accountId: string | null;
+    pocketId: string | null;
+    categoryId: string | null;
+    endsOn: Date | null;
+    autoPost: boolean;
+    notes: string | null;
+    scheduleId: string | null;
+  },
+  context: DbContext,
+): string | null {
+  let linkedScheduleId = sub.scheduleId;
+  if (!linkedScheduleId) {
+    const foundSched = getScheduleBySubscriptionId(sub.id, context);
+    if (foundSched) {
+      linkedScheduleId = foundSched.id;
+    }
+  }
+
+  if (sub.accountId) {
+    const interval = Math.max(1, sub.billingCycleInterval || 1);
+    const { frequency, intervalCount: schedInterval } = mapCycleToSchedule(
+      sub.billingCycle,
+      interval,
+    );
+    const schedInput: SaveScheduledTransactionInput = {
+      transactionType: "expense",
+      accountId: sub.accountId,
+      pocketId: sub.pocketId ?? null,
+      categoryId: sub.categoryId ?? null,
+      amountMinorUnits: Math.abs(sub.amountMinorUnits),
+      name: sub.name.trim(),
+      note: sub.notes?.trim() || null,
+      frequency,
+      intervalCount: schedInterval,
+      startsAt: sub.firstBillingDate,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      endMode: sub.endsOn ? "on_date" : "never",
+      endsOn: sub.endsOn ? toDateKey(sub.endsOn) : null,
+      weekendPolicy: "exact",
+      autoPost: Boolean(sub.autoPost),
+      subscriptionId: sub.id,
+    };
+
+    // Verify existing schedule actually exists in SQLite before passing id to update
+    const existingSched = linkedScheduleId
+      ? getScheduledTransaction(linkedScheduleId, context)
+      : null;
+    const targetScheduleId = existingSched ? existingSched.id : undefined;
+
+    const savedSched = saveScheduledTransactionInContext(
+      schedInput,
+      targetScheduleId,
+      context,
+    );
+    linkedScheduleId = savedSched.id;
+
+    if (sub.status === "paused" || sub.status === "cancelled") {
+      try {
+        setScheduledTransactionPaused(linkedScheduleId, true);
+      } catch {
+        // Ignore if schedule record was not found
+      }
+    }
+  } else if (linkedScheduleId) {
+    try {
+      removeScheduledTransaction(linkedScheduleId, context);
+    } catch {
+      // Ignore if already deleted
+    }
+    linkedScheduleId = null;
+  }
+
+  return linkedScheduleId;
+}
+
 export function saveSubscription(
   input: SaveSubscriptionInput,
   id?: string,
 ): string {
-  return db.transaction((tx) => saveSubscriptionInContext(input, id, tx));
+  const result = db.transaction((tx) => saveSubscriptionInContext(input, id, tx));
+  try {
+    processDueSchedules(new Date());
+  } catch {
+    // Ignore
+  }
+  return result;
 }
 
 export function saveSubscriptionInContext(
@@ -106,52 +200,25 @@ export function saveSubscriptionInContext(
 
   const existing = existingId ? findSubscriptionById(existingId, context) : null;
 
-  let linkedScheduleId = existing?.scheduleId || null;
-  if (input.accountId) {
-    const { frequency, intervalCount: schedInterval } = mapCycleToSchedule(
-      input.billingCycle,
-      interval,
-    );
-    const schedInput: SaveScheduledTransactionInput = {
-      transactionType: "expense",
-      accountId: input.accountId,
-      pocketId: input.pocketId ?? null,
-      categoryId: input.categoryId ?? null,
-      amountMinorUnits: Math.abs(input.amountMinorUnits),
-      name: input.name.trim(),
-      note: input.notes?.trim() || null,
-      frequency,
-      intervalCount: schedInterval,
-      startsAt: input.firstBillingDate,
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-      endMode: input.endsOn ? "on_date" : "never",
-      endsOn: input.endsOn ? toDateKey(input.endsOn) : null,
-      weekendPolicy: "exact",
+  const linkedScheduleId = syncSubscriptionScheduleInContext(
+    {
+      id: subscriptionId,
+      name: input.name,
+      status: input.status,
+      amountMinorUnits: input.amountMinorUnits,
+      billingCycle: input.billingCycle,
+      billingCycleInterval: interval,
+      firstBillingDate: input.firstBillingDate,
+      accountId: input.accountId || null,
+      pocketId: input.pocketId || null,
+      categoryId: input.categoryId || null,
+      endsOn: input.endsOn || null,
       autoPost: Boolean(input.autoPost),
-      subscriptionId,
-    };
-    const savedSched = saveScheduledTransactionInContext(
-      schedInput,
-      linkedScheduleId || undefined,
-      context,
-    );
-    linkedScheduleId = savedSched.id;
-
-    if (input.status === "paused" || input.status === "cancelled") {
-      try {
-        setScheduledTransactionPaused(linkedScheduleId, true);
-      } catch {
-        // Ignore if schedule record was not found
-      }
-    }
-  } else if (linkedScheduleId) {
-    try {
-      permanentlyDeleteScheduledTransaction(linkedScheduleId);
-    } catch {
-      // Ignore if already deleted
-    }
-    linkedScheduleId = null;
-  }
+      notes: input.notes || null,
+      scheduleId: existing?.scheduleId || null,
+    },
+    context,
+  );
 
   const record: NewSubscriptionRecord = {
     id: subscriptionId,

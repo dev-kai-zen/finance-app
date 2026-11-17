@@ -32,6 +32,12 @@ export const removeScheduledTransaction = deferFunction(
       .removeScheduledTransaction,
 ) as typeof import("./services/manage-scheduled-transaction.service").removeScheduledTransaction;
 
+export const getScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").getScheduledTransaction;
+
 export const getScheduleBySubscriptionId = deferFunction(
   () =>
     require("./services/manage-scheduled-transaction.service")
@@ -93,6 +99,11 @@ export const skipScheduledOccurrence = deferFunction(
   () =>
     require("./services/process-due-schedules.service").skipScheduledOccurrence,
 ) as typeof import("./services/process-due-schedules.service").skipScheduledOccurrence;
+
+export const processDueSchedules = deferFunction(
+  () =>
+    require("./services/process-due-schedules.service").processDueSchedules,
+) as typeof import("./services/process-due-schedules.service").processDueSchedules;
 
 export const advancePostScheduledTransaction = deferFunction(
   () =>
