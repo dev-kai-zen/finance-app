@@ -82,6 +82,17 @@ export function findScheduleBySubscriptionId(
   return row ? mapSchedule(row) : null;
 }
 
+export function findSchedulesWithSubscription(
+  context: DbContext = db,
+): ScheduledTransaction[] {
+  const rows = context
+    .select()
+    .from(transactionSchedules)
+    .where(isNotNull(transactionSchedules.subscriptionId))
+    .all();
+  return rows.map(mapSchedule);
+}
+
 export function listDueScheduledTransactions(
   now: Date,
   limit = 100,

@@ -3,11 +3,13 @@ import { AppState } from "react-native";
 
 import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { processDueSchedules } from "../services/process-due-schedules.service";
+import { reconcileOrphanedSubscriptionSchedules } from "../services/reconcile-orphaned-schedules.service";
 
 export function ScheduledTransactionsProcessor() {
   useEffect(() => {
     const process = () => {
       try {
+        reconcileOrphanedSubscriptionSchedules();
         processDueSchedules();
       } catch (error) {
         console.error(

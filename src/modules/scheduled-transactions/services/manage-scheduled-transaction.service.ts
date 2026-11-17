@@ -175,3 +175,17 @@ export function getPocketIdsWithSchedules(
 ): Set<string> {
   return repoGetPocketIdsWithSchedules(context);
 }
+
+export function unlinkScheduledTransactionSubscription(
+  id: string,
+  context?: DbContext,
+): void {
+  const runner = (tx: DbContext) => {
+    updateScheduledTransactionRecord(
+      id,
+      { subscriptionId: null, updatedAt: new Date() },
+      tx,
+    );
+  };
+  return context ? runner(context) : db.transaction(runner);
+}

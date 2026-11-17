@@ -47,6 +47,12 @@ export const checkSubscriptionHasPayments = deferFunction(
       .checkSubscriptionHasPayments,
 ) as typeof import("./services/delete-subscription.service").checkSubscriptionHasPayments;
 
+export const getExistingSubscriptionIdSet = deferFunction(
+  () =>
+    require("./services/delete-subscription.service")
+      .getExistingSubscriptionIdSet,
+) as typeof import("./services/delete-subscription.service").getExistingSubscriptionIdSet;
+
 export type {
   BillingCycle,
   SaveSubscriptionInput,

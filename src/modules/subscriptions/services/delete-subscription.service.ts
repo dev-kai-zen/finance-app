@@ -2,6 +2,7 @@ import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   archiveSubscriptionRecord,
   findSubscriptionById,
+  getAllSubscriptionIds,
   hasSubscriptionPayments,
   permanentlyDeleteSubscriptionRecord,
   restoreSubscriptionRecord,
@@ -12,6 +13,7 @@ import {
   processDueSchedules,
   removeScheduledTransaction,
   restoreScheduledTransaction,
+  unlinkScheduledTransactionSubscription,
 } from "@/modules/scheduled-transactions";
 import { syncSubscriptionScheduleInContext } from "./save-subscription.service";
 
@@ -83,6 +85,12 @@ export function permanentlyDeleteSubscription(subscriptionId: string): void {
   db.transaction((tx) => permanentlyDeleteSubscriptionInContext(subscriptionId, tx));
 }
 
+export function getExistingSubscriptionIdSet(
+  context: DbContext = db,
+): Set<string> {
+  return new Set(getAllSubscriptionIds(context));
+}
+
 export function permanentlyDeleteSubscriptionInContext(
   subscriptionId: string,
   context: DbContext,
@@ -92,7 +100,10 @@ export function permanentlyDeleteSubscriptionInContext(
     const schedId = resolveScheduleId(sub, context);
     if (schedId) {
       try {
-        removeScheduledTransaction(schedId, context);
+        const res = removeScheduledTransaction(schedId, context);
+        if (res === "archived") {
+          unlinkScheduledTransactionSubscription(schedId, context);
+        }
       } catch (err) {
         console.warn("[permanentlyDeleteSubscriptionInContext] Failed to remove schedule:", err);
       }

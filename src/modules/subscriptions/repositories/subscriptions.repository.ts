@@ -158,6 +158,14 @@ export function findSubscriptionById(
   return mapSubscriptionRow(row);
 }
 
+export function getAllSubscriptionIds(context: DbContext = db): string[] {
+  const rows = context
+    .select({ id: subscriptions.id })
+    .from(subscriptions)
+    .all();
+  return rows.map((r) => r.id);
+}
+
 export function insertSubscription(
   record: NewSubscriptionRecord,
   context: DbContext = db,
