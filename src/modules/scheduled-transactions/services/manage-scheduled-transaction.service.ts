@@ -139,9 +139,7 @@ export function restoreScheduledTransaction(
   return context ? runner(context) : db.transaction(runner);
 }
 
-export function clearScheduledTransactionWorkspace(
-  context: DbContext,
-): void {
+export function clearScheduledTransactionWorkspace(context: DbContext): void {
   deleteAllScheduledTransactionRecords(context);
 }
 
