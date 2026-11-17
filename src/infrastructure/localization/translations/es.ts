@@ -1095,15 +1095,19 @@ export const es = {
       general: "General",
     },
     v170: {
-      date: "16 de noviembre de 2026",
+      date: "17 de noviembre de 2026",
       newItem1:
         "Realice un seguimiento de sus suscripciones y facturas recurrentes con cuentas regresivas de renovación y totales de gasto mensual.",
+      newItem2:
+        "Aprenda a administrar sus suscripciones con una guía interactiva paso a paso.",
       improveItem1:
         "Personaliza las fechas de facturación de suscripciones, duración de pruebas y recordatorios con cuenta regresiva.",
       improveItem2:
         "Admite subcuentas (pockets), vencimiento de contratos y ocultación de importes con modo de privacidad.",
       improveItem3:
         "Vincula suscripciones a transacciones programadas con filtros por origen y protección de solo lectura.",
+      improveItem4:
+        "Optimice la experiencia de la versión gratuita con anuncios no invasivos y soporte para hasta 3 suscripciones.",
       fixItem1:
         "Solucionar errores de sincronización y base de datos al cambiar de cuenta de Google Drive.",
       fixItem2:
@@ -2289,6 +2293,34 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
   },
+  subscriptionCongratulations: {
+    title: "¡Primera suscripción añadida!",
+    subtitle: "Toma el control de tus facturas recurrentes",
+    message:
+      "¡Felicitaciones por registrar tu primera suscripción! Monitorea las cuentas regresivas de renovación, el total de gasto mensual y nunca te pierdas una fecha de pago.",
+    button: "Explorar recorrido de suscripciones",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Suscripciones!",
+    introSubtitle: "Gestiona tus membresías y facturas periódicas",
+    introMessage:
+      "Lleva el control de tus servicios recurrentes, fechas de cobro y gasto mensual en un solo lugar. ¿Te gustaría hacer una guía rápida?",
+    stepEmptyCreateTitle: "Registra tu primera suscripción",
+    stepEmptyCreateDesc:
+      "Toca aquí para añadir servicios de streaming, servicios básicos, gimnasio o licencias con ciclos de cobro personalizados.",
+    stepBurnRateSummaryTitle: "Gasto mensual y anual",
+    stepBurnRateSummaryDesc:
+      "Supervisa tu costo total mensual y anualizado, servicios activos y la cuenta regresiva para tu próxima renovación.",
+    stepFilterTabsTitle: "Filtros por estado",
+    stepFilterTabsDesc:
+      "Filtra rápidamente entre Todas, Activas, Pruebas gratuitas, En pausa, Canceladas y Archivadas.",
+    stepFirstItemTitle: "Cuenta regresiva y acciones",
+    stepFirstItemDesc:
+      "Consulta próximas fechas de cobro, costos del ciclo y toca 'Mark Paid' o el botón de pausa para registrar pagos o pausar el servicio.",
+    stepFabTitle: "Agregar nueva suscripción",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para registrar una nueva suscripción, seleccionar servicios populares y configurar alertas de recordatorio.",
+  },
   notesWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Notas!",
     introSubtitle: "Listas y notas financieras",
@@ -2604,12 +2636,17 @@ export const es = {
       notesTitle: "¡Excelente registro de notas!",
       notesDesc:
         "¡Has completado tus primeras %{count} notas financieras! Desbloquea Kaizen Pro para notas ilimitadas, adjuntar fotos de recibos y etiquetas personalizadas.",
+      subscriptionsTitle: "¡Controlando tus suscripciones!",
+      subscriptionsDesc:
+        "¡Has registrado tus primeras %{count} suscripciones! Mejora a Kaizen Pro para suscripciones ilimitadas, analíticas de cobros recurrentes y seguimiento automático.",
       restoreAccountDesc:
         "Restaurar esta cuenta superaría tus %{count} cuentas activas. Mejora a Kaizen Pro para cuentas ilimitadas y total libertad.",
       restorePocketDesc:
         "Restaurar esta subcuenta superaría tus %{count} bolsillos para esta cuenta. Mejora a Kaizen Pro para subcuentas ilimitadas.",
       restoreScheduleDesc:
         "Restaurar este cronograma superaría tus %{count} transacciones recurrentes. Mejora a Kaizen Pro para cronogramas ilimitados.",
+      restoreSubscriptionDesc:
+        "Restaurar esta suscripción superaría tus %{count} suscripciones activas. Mejora a Kaizen Pro para suscripciones ilimitadas.",
     },
     restorePurchases: "Restaurar Compras",
     restoring: "Restaurando...",

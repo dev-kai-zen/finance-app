@@ -86,6 +86,7 @@ export const PROMPT_SETTING_KEYS = {
   budgetsWalkthroughDismissed: "prompt.budgetsWalkthroughDismissed",
   goalsWalkthroughDismissed: "prompt.goalsWalkthroughDismissed",
   notesWalkthroughDismissed: "prompt.notesWalkthroughDismissed",
+  subscriptionsWalkthroughDismissed: "prompt.subscriptionsWalkthroughDismissed",
   creditCardsWalkthroughDismissed: "prompt.creditCardsWalkthroughDismissed",
   reportsWalkthroughDismissed: "prompt.reportsWalkthroughDismissed",
   settingsWalkthroughDismissed: "prompt.settingsWalkthroughDismissed",
@@ -93,6 +94,7 @@ export const PROMPT_SETTING_KEYS = {
   firstBudgetCelebrated: "prompt.firstBudgetCelebrated",
   firstGoalCelebrated: "prompt.firstGoalCelebrated",
   firstScheduleCelebrated: "prompt.firstScheduleCelebrated",
+  firstSubscriptionCelebrated: "prompt.firstSubscriptionCelebrated",
   accountFormWalkthroughDismissed: "prompt.accountFormWalkthroughDismissed",
   accountGroupSetupWalkthroughDismissed:
     "prompt.accountGroupSetupWalkthroughDismissed",

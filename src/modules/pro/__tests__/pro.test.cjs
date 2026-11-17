@@ -216,5 +216,6 @@ test("pro constants: defines agreed freemium limits", () => {
   assert.equal(PRO_LIMITS.FREE_MAX_GOALS, 3);
   assert.equal(PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS, 5);
   assert.equal(PRO_LIMITS.FREE_MAX_NOTES, 5);
+  assert.equal(PRO_LIMITS.FREE_MAX_SUBSCRIPTIONS, 3);
 });
 

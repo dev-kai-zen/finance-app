@@ -9,6 +9,7 @@ export type AdBannerPlacement =
   | "categories"
   | "calendar"
   | "goals"
+  | "subscriptions"
   | "settings"
   | "global";
 

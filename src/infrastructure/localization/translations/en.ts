@@ -1078,15 +1078,19 @@ export const en = {
       general: "General",
     },
     v170: {
-      date: "November 16, 2026",
+      date: "November 17, 2026",
       newItem1:
         "Track your recurring subscriptions and bills with renewal countdowns and monthly burn rate totals.",
+      newItem2:
+        "Learn how to master your subscriptions with an interactive guided walkthrough.",
       improveItem1:
         "Customize subscription billing anchors, free trial durations, and reminder lead times with live countdowns.",
       improveItem2:
         "Support sub-account pockets, contract expiration dates, and privacy masking for all subscription amounts.",
       improveItem3:
         "Link subscriptions seamlessly to scheduled transactions with filter grouping and read-only protection.",
+      improveItem4:
+        "Optimize free tier experience with clean ad placement and support for up to 3 subscriptions.",
       fixItem1:
         "Fix Google Drive sync and database errors when changing connected accounts.",
       fixItem2:
@@ -2263,6 +2267,34 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
   },
+  subscriptionCongratulations: {
+    title: "First Subscription Added!",
+    subtitle: "Take control of recurring bills",
+    message:
+      "Congratulations on tracking your first subscription! Monitor renewal countdowns, monthly burn rate totals, and never miss an upcoming bill.",
+    button: "Explore Subscriptions Tour",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "Welcome to Subscriptions!",
+    introSubtitle: "Master your recurring bills & memberships",
+    introMessage:
+      "Track recurring services, renewal countdowns, and your monthly burn rate in one place. Would you like a quick walkthrough?",
+    stepEmptyCreateTitle: "Track Your First Subscription",
+    stepEmptyCreateDesc:
+      "Tap here to add streaming services, utilities, gym memberships, or software licenses with custom billing cycles.",
+    stepBurnRateSummaryTitle: "Monthly & Annual Burn Rate",
+    stepBurnRateSummaryDesc:
+      "Monitor your total monthly and annualized subscription costs, active services, and countdown to your next renewal.",
+    stepFilterTabsTitle: "Status Filters",
+    stepFilterTabsDesc:
+      "Quickly filter between All, Active, Free Trials, Paused, Cancelled, and Archived subscriptions with live counters.",
+    stepFirstItemTitle: "Renewal Countdown & Actions",
+    stepFirstItemDesc:
+      "View upcoming billing dates, cycle prices, and tap 'Mark Paid' or the pause toggle to record payments or pause service.",
+    stepFabTitle: "Add New Subscription",
+    stepFabDesc:
+      "Tap the (+) button anytime to track a new subscription, pick popular presets, configure custom cycles, and set reminder alerts.",
+  },
   notesWalkthrough: {
     introTitle: "Welcome to Notes!",
     introSubtitle: "Financial checklists & memos",
@@ -2572,12 +2604,17 @@ export const en = {
       notesTitle: "Keeping great records!",
       notesDesc:
         "You’ve filled your first %{count} financial notes! Unlock Kaizen Pro for unlimited notes, document and receipt photo attachments, and custom color tagging.",
+      subscriptionsTitle: "Staying on top of your subscriptions!",
+      subscriptionsDesc:
+        "You’ve tracked your first %{count} subscriptions! Upgrade to Kaizen Pro for unlimited subscriptions, recurring billing analytics, and automatic payment tracking.",
       restoreAccountDesc:
         "Restoring this account would exceed your %{count} active accounts. Upgrade to Kaizen Pro for unlimited accounts and complete portfolio freedom.",
       restorePocketDesc:
         "Restoring this pocket would exceed your %{count} pockets for this account. Upgrade to Kaizen Pro for unlimited sub-pockets.",
       restoreScheduleDesc:
         "Restoring this schedule would exceed your %{count} recurring transactions. Upgrade to Kaizen Pro for unlimited schedules.",
+      restoreSubscriptionDesc:
+        "Restoring this subscription would exceed your %{count} active subscriptions. Upgrade to Kaizen Pro for unlimited subscriptions.",
     },
     restorePurchases: "Restore Purchases",
     restoring: "Restoring...",

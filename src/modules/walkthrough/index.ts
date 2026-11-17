@@ -99,6 +99,11 @@ export { GoalFormWalkthroughOverlay } from "./goals/goal-form-walkthrough-overla
 export { useGoalFormWalkthrough } from "./goals/use-goal-form-walkthrough";
 export { GOAL_FORM_WALKTHROUGH_STEPS } from "./goals/goal-form-walkthrough-steps";
 
+export { SubscriptionCongratulationsModal } from "./subscriptions/subscription-congratulations-modal";
+export { SubscriptionsWalkthroughOverlay } from "./subscriptions/subscriptions-walkthrough-overlay";
+export { useSubscriptionsWalkthrough } from "./subscriptions/use-subscriptions-walkthrough";
+export { getSubscriptionsWalkthroughSteps } from "./subscriptions/subscriptions-walkthrough-steps";
+
 export { NotesWalkthroughOverlay } from "./notes/notes-walkthrough-overlay";
 export { useNotesWalkthrough } from "./notes/use-notes-walkthrough";
 export { getNotesWalkthroughSteps } from "./notes/notes-walkthrough-steps";

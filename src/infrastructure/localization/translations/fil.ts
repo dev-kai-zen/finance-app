@@ -1109,15 +1109,19 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v170: {
-      date: "Nobyembre 16, 2026",
+      date: "Nobyembre 17, 2026",
       newItem1:
         "Subaybayan ang iyong mga paulit-ulit na subscription at bayarin na may countdown sa pag-renew at kabuuang buwanang gastos.",
+      newItem2:
+        "Matutunan kung paano pamahalaan ang mga suskripsyon gamit ang interactive na guided walkthrough.",
       improveItem1:
         "I-customize ang petsa ng paniningil ng subscription, tagal ng trial, at paalala bago mag-renew.",
       improveItem2:
         "Suportahan ang sub-account pockets, petsa ng pagtatapos ng kontrata, at pagtatago ng halaga kapag naka-privacy mode.",
       improveItem3:
         "I-link ang mga subscription sa naka-iskedyul na transaksyon na may filter grouping at proteksyon laban sa maling pag-edit.",
+      improveItem4:
+        "I-optimize ang libreng tier gamit ang maayos na banner ad at limitasyon hanggang 3 suskripsyon.",
       fixItem1:
         "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
       fixItem2:
@@ -2304,6 +2308,34 @@ export const fil = {
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
   },
+  subscriptionCongratulations: {
+    title: "Unang Suskripsyon Naisama!",
+    subtitle: "Pamahalaan ang mga paulit-ulit na bayarin",
+    message:
+      "Binabati kita sa pagsubaybay sa iyong unang suskripsyon! Bantayan ang countdown sa pag-renew, kabuuang buwanang gastos, at huwag palampasin ang mga paparating na bayarin.",
+    button: "Galugarin ang Tour ng Suskripsyon",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Suskripsyon!",
+    introSubtitle: "Pamahalaan ang mga paulit-ulit na bayarin at membership",
+    introMessage:
+      "Subaybayan ang iyong mga serbisyo, countdown sa pag-renew, at buwanang kabuuang gastos sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
+    stepEmptyCreateTitle: "Subaybayan ang Iyong Unang Suskripsyon",
+    stepEmptyCreateDesc:
+      "Pindutin dito upang magdagdag ng streaming services, kuryente/tubig, gym membership, o software licenses.",
+    stepBurnRateSummaryTitle: "Buwanan at Taunang Kabuuang Gastos",
+    stepBurnRateSummaryDesc:
+      "Bantayan ang kabuuang buwanan at taunang gastos sa suskripsyon, mga aktibong serbisyo, at countdown patungo sa susunod na pag-renew.",
+    stepFilterTabsTitle: "Mga Filter ng Katayuan",
+    stepFilterTabsDesc:
+      "Mabilis na mag-filter sa pagitan ng Lahat, Aktibo, Libreng Trial, Naka-pause, Kinansela, at Naka-archive na mga suskripsyon.",
+    stepFirstItemTitle: "Countdown sa Pag-renew at Aksyon",
+    stepFirstItemDesc:
+      "Tingnan ang petsa ng paniningil, halaga ng cycle, at i-tap ang 'Mark Paid' o ang toggle upang magtala ng bayad o i-pause ang serbisyo.",
+    stepFabTitle: "Magdagdag ng Bagong Suskripsyon",
+    stepFabDesc:
+      "I-tap ang (+) button anumang oras upang magtala ng bagong suskripsyon, pumili ng mga kilalang preset, magtakda ng custom cycle, at maglagay ng mga paalala.",
+  },
   notesWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Tala!",
     introSubtitle: "Checklists at mga paalala sa pananalapi",
@@ -2619,12 +2651,17 @@ export const fil = {
       notesTitle: "Mahusay na pagtatala ng talaan!",
       notesDesc:
         "Napuno mo na ang iyong unang %{count} tala sa pananalapi! Buksan ang Kaizen Pro para sa walang limitasyong notes, photo at receipt attachments, at custom color tagging.",
+      subscriptionsTitle: "Pamahalaan ang iyong mga suskripsyon!",
+      subscriptionsDesc:
+        "Nasubaybayan mo na ang iyong unang %{count} suskripsyon! Mag-upgrade sa Kaizen Pro para sa walang limitasyong suskripsyon, analytics sa paulit-ulit na bayarin, at awtomatikong tracking.",
       restoreAccountDesc:
         "Ang pag-restore sa account na ito ay lalampas sa iyong %{count} aktibong accounts. Mag-upgrade sa Kaizen Pro para sa walang limitasyong accounts at ganap na kalayaan.",
       restorePocketDesc:
         "Ang pag-restore sa pocket na ito ay lalampas sa iyong %{count} pockets para sa account na ito. Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets.",
       restoreScheduleDesc:
         "Ang pag-restore sa iskedyul na ito ay lalampas sa iyong %{count} recurring transactions. Mag-upgrade sa Kaizen Pro para sa walang limitasyong schedules.",
+      restoreSubscriptionDesc:
+        "Ang pag-restore sa suskripsyon na ito ay lalampas sa iyong %{count} aktibong suskripsyon. Mag-upgrade sa Kaizen Pro para sa walang limitasyong suskripsyon.",
     },
     restorePurchases: "Ibalik ang mga Binili (Restore)",
     restoring: "Ibinabalik...",

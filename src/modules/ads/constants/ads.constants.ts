@@ -31,6 +31,8 @@ function getAndroidPlacementUnitId(placement: AdBannerPlacement): string | undef
         process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_GOAL ||
         process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_GOALS
       );
+    case "subscriptions":
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS;
     default:
       return undefined;
   }
@@ -56,6 +58,11 @@ function getIosPlacementUnitId(placement: AdBannerPlacement): string | undefined
       return (
         process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_GOAL ||
         process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_GOALS
+      );
+    case "subscriptions":
+      return (
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS ||
+        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS
       );
     default:
       return undefined;

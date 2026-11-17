@@ -18,6 +18,7 @@ export const PRO_LIMITS = {
   FREE_MAX_GOALS: 3,
   FREE_MAX_SCHEDULED_TRANSACTIONS: 5,
   FREE_MAX_NOTES: 5,
+  FREE_MAX_SUBSCRIPTIONS: 3,
 } as const;
 
 export const PRO_SECURE_KEYS = {
