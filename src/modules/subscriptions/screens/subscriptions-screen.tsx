@@ -63,6 +63,7 @@ export function SubscriptionsScreen() {
   const [markingPaidSub, setMarkingPaidSub] =
     useState<SubscriptionItem | null>(null);
   const [subToDelete, setSubToDelete] = useState<SubscriptionItem | null>(null);
+  const [subToRestore, setSubToRestore] = useState<SubscriptionItem | null>(null);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -158,21 +159,25 @@ export function SubscriptionsScreen() {
     }
   }, [subToDelete, isArchiveOperation, archive, remove, t]);
 
-  const handleRestoreSubscription = useCallback(
-    (sub: SubscriptionItem) => {
-      try {
-        restore(sub.id);
-        setToastMessage(
-          t("subscriptions.restoredToast", {
-            defaultValue: "Subscription restored",
-          }),
-        );
-      } catch (err: any) {
-        setToastMessage(err?.message || "Failed to restore subscription");
-      }
-    },
-    [restore, t],
-  );
+  const handleRequestRestore = useCallback((sub: SubscriptionItem) => {
+    setSubToRestore(sub);
+  }, []);
+
+  const handleConfirmRestore = useCallback(() => {
+    if (!subToRestore) return;
+    try {
+      const sub = subToRestore;
+      setSubToRestore(null);
+      restore(sub.id);
+      setToastMessage(
+        t("subscriptions.restoredToast", {
+          defaultValue: "Subscription restored",
+        }),
+      );
+    } catch (err: any) {
+      setToastMessage(err?.message || "Failed to restore subscription");
+    }
+  }, [subToRestore, restore, t]);
 
   const handleConfirmMarkPaid = useCallback(
     (options: {
@@ -311,7 +316,7 @@ export function SubscriptionsScreen() {
               onEdit={() => handleOpenEdit(sub)}
               onMarkPaid={() => setMarkingPaidSub(sub)}
               onPress={() => handleOpenEdit(sub)}
-              onRestore={() => handleRestoreSubscription(sub)}
+              onRestore={() => handleRequestRestore(sub)}
               onToggleStatus={() => handleToggleStatus(sub)}
               subscription={sub}
             />
@@ -357,7 +362,7 @@ export function SubscriptionsScreen() {
                 })
               : t("subscriptions.deleteConfirmMessage", {
                   name: subToDelete.name,
-                  defaultValue: `Are you sure you want to permanently delete "${subToDelete.name}"? This cannot be undone.`,
+                  defaultValue: `Are you sure you want to permanently delete "${subToDelete.name}"? Past expense transactions in your accounts will not be deleted.`,
                 })
           }
           onCancel={() => setSubToDelete(null)}
@@ -376,12 +381,31 @@ export function SubscriptionsScreen() {
         />
       ) : null}
 
+      {/* Restore Confirmation Modal */}
+      {subToRestore ? (
+        <ConfirmModal
+          cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
+          confirmLabel={t("subscriptions.restore", { defaultValue: "Restore" })}
+          message={t("subscriptions.restoreConfirmMessage", {
+            name: subToRestore.name,
+            defaultValue: `Do you want to restore "${subToRestore.name}"? Its renewal countdown and recurring schedule will be reactivated.`,
+          })}
+          onCancel={() => setSubToRestore(null)}
+          onConfirm={handleConfirmRestore}
+          title={t("subscriptions.restoreConfirmTitle", {
+            defaultValue: "Restore Subscription",
+          })}
+          variant="restore"
+          visible={Boolean(subToRestore)}
+        />
+      ) : null}
+
       {/* Feedback Toast */}
       {toastMessage ? (
         <AppToast
           message={toastMessage}
           onClose={() => setToastMessage(null)}
-          position="bottom"
+          position="top"
           variant="success"
           visible={Boolean(toastMessage)}
         />

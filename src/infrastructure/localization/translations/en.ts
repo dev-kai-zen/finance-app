@@ -1045,10 +1045,13 @@ export const en = {
     deletePermanently: "Delete Permanently",
     deleteConfirmTitle: "Delete Subscription",
     deleteConfirmMessage:
-      'Are you sure you want to permanently delete "%{name}"? This cannot be undone.',
+      'Are you sure you want to permanently delete "%{name}"? Past expense transactions in your accounts will not be deleted.',
     archiveConfirmTitle: "Archive Subscription",
     archiveConfirmMessage:
       '"%{name}" has recorded payments in your ledger. It will be moved to Archived to preserve your transaction history and stop all upcoming reminders. You can restore it anytime.',
+    restoreConfirmTitle: "Restore Subscription",
+    restoreConfirmMessage:
+      'Do you want to restore "%{name}"? Its renewal countdown and recurring schedule will be reactivated.',
   },
   versionHistory: {
     heading: "Version History",

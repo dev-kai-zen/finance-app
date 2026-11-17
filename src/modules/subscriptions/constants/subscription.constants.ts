@@ -17,10 +17,10 @@ export const SUBSCRIPTION_FILTER_OPTIONS: ReadonlyArray<{
   value: SubscriptionFilter;
   labelKey: string;
 }> = [
+  { value: "all", labelKey: "subscriptions.filterAll" },
   { value: "active", labelKey: "subscriptions.filterActive" },
   { value: "trial", labelKey: "subscriptions.filterTrial" },
   { value: "paused", labelKey: "subscriptions.filterPaused" },
   { value: "cancelled", labelKey: "subscriptions.filterCancelled" },
-  { value: "all", labelKey: "subscriptions.filterAll" },
   { value: "archived", labelKey: "subscriptions.filterArchived" },
 ];

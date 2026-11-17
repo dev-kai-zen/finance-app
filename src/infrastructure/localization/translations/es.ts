@@ -1062,10 +1062,13 @@ export const es = {
     deletePermanently: "Eliminar permanentemente",
     deleteConfirmTitle: "Eliminar Suscripción",
     deleteConfirmMessage:
-      '¿Estás seguro de que deseas eliminar permanentemente "%{name}"? Esta acción no se puede deshacer.',
+      '¿Estás seguro de que deseas eliminar permanentemente "%{name}"? Las transacciones de gastos anteriores en tus cuentas no se eliminarán.',
     archiveConfirmTitle: "Archivar Suscripción",
     archiveConfirmMessage:
       '"%{name}" tiene pagos registrados en su libro contable. Se moverá a Archivadas para preservar su historial y detener futuros recordatorios. Puede restaurarla en cualquier momento.',
+    restoreConfirmTitle: "Restaurar Suscripción",
+    restoreConfirmMessage:
+      '¿Deseas restaurar "%{name}"? Se reactivarán la cuenta regresiva de renovación y su programación recurrente.',
   },
   versionHistory: {
     heading: "Historial de versiones",

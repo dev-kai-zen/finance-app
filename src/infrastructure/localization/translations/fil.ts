@@ -1076,10 +1076,13 @@ export const fil = {
     deletePermanently: "Permanenteng Burahin",
     deleteConfirmTitle: "Burahin ang Subscription",
     deleteConfirmMessage:
-      'Sigurado ka bang nais mong permanenteng burahin ang "%{name}"? Hindi na ito maibabalik.',
+      'Sigurado ka bang nais mong permanenteng burahin ang "%{name}"? Hindi mabubura ang mga nakaraang transaksyon ng gastos sa iyong mga account.',
     archiveConfirmTitle: "I-archive ang Subscription",
     archiveConfirmMessage:
       'May mga naitalang bayad na ang "%{name}" sa iyong ledger. Ililipat ito sa Naka-archive upang mapanatili ang iyong kasaysayan ng transaksyon at ihinto ang mga paalala. Maaari mo itong ibalik anumang oras.',
+    restoreConfirmTitle: "Ibalik ang Subscription",
+    restoreConfirmMessage:
+      'Nais mo bang ibalik ang "%{name}"? Muling ia-activate ang countdown sa renewal at ang recurring schedule nito.',
   },
   versionHistory: {
     heading: "Kasaysayan ng Bersyon",
