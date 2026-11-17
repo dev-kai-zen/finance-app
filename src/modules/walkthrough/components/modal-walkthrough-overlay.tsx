@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface ModalWalkthroughOverlayProps {
@@ -147,7 +148,7 @@ export function ModalWalkthroughOverlay({
             </Mask>
           </Defs>
           <Rect
-            fill="rgba(0, 0, 0, 0.72)"
+            fill={WALKTHROUGH_THEME.backdropFill}
             height={windowHeight}
             mask={`url(#${maskId})`}
             width={windowWidth}
@@ -253,7 +254,7 @@ function createStyles(theme: AppTheme) {
       position: "relative",
     },
     focusRing: {
-      borderColor: "#00A3FF",
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       borderWidth: 2,
       position: "absolute",
       backgroundColor: "transparent",
@@ -278,15 +279,15 @@ function createStyles(theme: AppTheme) {
       marginBottom: 2,
     },
     stepBadge: {
-      backgroundColor: `${theme.colors.primary}15`,
-      borderColor: `${theme.colors.primary}30`,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
+      borderColor: "transparent",
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 3,
     },
     stepBadgeText: {
-      color: theme.colors.primary,
+      color: WALKTHROUGH_THEME.badgeText,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.3,
@@ -335,7 +336,7 @@ function createStyles(theme: AppTheme) {
     },
     nextBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
       gap: 5,
@@ -346,7 +347,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: "#FFFFFF",
+      color: WALKTHROUGH_THEME.nextButtonText,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

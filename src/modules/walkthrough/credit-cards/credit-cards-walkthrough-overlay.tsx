@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface CreditCardsWalkthroughOverlayProps {
@@ -169,7 +170,7 @@ export function CreditCardsWalkthroughOverlay({
           </Defs>
 
           <Rect
-            fill="#000000B3"
+            fill={WALKTHROUGH_THEME.backdropFill}
             height={windowHeight}
             mask="url(#creditCardSpotlightMask)"
             width={windowWidth}
@@ -307,9 +308,10 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     focusRing: {
-      borderColor: theme.colors.primary,
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       borderWidth: 2,
       position: "absolute",
+      backgroundColor: "transparent",
     },
     card: {
       backgroundColor: theme.colors.surfaceElevated,
@@ -330,13 +332,13 @@ function createStyles(theme: AppTheme) {
       marginBottom: 10,
     },
     stepBadge: {
-      backgroundColor: theme.colors.surfaceMuted,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
       borderRadius: theme.borderRadius.round,
       paddingHorizontal: 8,
       paddingVertical: 3,
     },
     stepBadgeText: {
-      color: theme.colors.textSecondary,
+      color: WALKTHROUGH_THEME.badgeText,
       fontSize: 11,
       fontWeight: "700",
       letterSpacing: 0.3,
@@ -376,7 +378,7 @@ function createStyles(theme: AppTheme) {
     },
     nextBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
       gap: 4,
@@ -384,7 +386,7 @@ function createStyles(theme: AppTheme) {
       paddingVertical: 8,
     },
     nextBtnText: {
-      color: theme.colors.onPrimary,
+      color: WALKTHROUGH_THEME.nextButtonText,
       fontSize: 13,
       fontWeight: "700",
     },

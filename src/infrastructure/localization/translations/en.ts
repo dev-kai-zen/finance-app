@@ -1095,6 +1095,8 @@ export const en = {
         "Fix Google Drive sync and database errors when changing connected accounts.",
       fixItem2:
         "Show accurate sync status verified directly against files in Google Drive.",
+      fixItem3:
+        "Standardize walkthrough highlight outlines, buttons, and backdrops across all app features.",
     },
     v162: {
       date: "November 16, 2026",

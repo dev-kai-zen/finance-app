@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface TransactionFormWalkthroughOverlayProps {
@@ -243,7 +244,7 @@ export function TransactionFormWalkthroughOverlay({
                   {isLastStep ? "Finish" : t("dashboard.walkthroughNext")}
                 </Text>
                 {isLastStep ? null : (
-                  <ChevronRight color={theme.colors.textPrimary} size={16} />
+                  <ChevronRight color={WALKTHROUGH_THEME.nextButtonText} size={16} />
                 )}
               </Pressable>
             </View>
@@ -261,11 +262,11 @@ function createStyles(theme: AppTheme) {
       zIndex: 9999,
     },
     maskSlice: {
-      backgroundColor: "rgba(0, 0, 0, 0.72)",
+      backgroundColor: WALKTHROUGH_THEME.backdropFill,
       position: "absolute",
     },
     focusRing: {
-      borderColor: "#00A3FF",
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       borderWidth: 2,
       position: "absolute",
       backgroundColor: "transparent",
@@ -290,15 +291,15 @@ function createStyles(theme: AppTheme) {
       marginBottom: 10,
     },
     stepBadge: {
-      backgroundColor: `${theme.colors.primary}18`,
-      borderColor: `${theme.colors.primary}33`,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
+      borderColor: "transparent",
       borderRadius: 8,
       borderWidth: 1,
       paddingHorizontal: 8,
       paddingVertical: 3,
     },
     stepBadgeText: {
-      color: theme.colors.primary,
+      color: WALKTHROUGH_THEME.badgeText,
       fontSize: 12,
       fontWeight: "700",
     },
@@ -361,7 +362,7 @@ function createStyles(theme: AppTheme) {
     },
     nextBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       borderRadius: 10,
       flexDirection: "row",
       gap: 6,
@@ -372,7 +373,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: theme.colors.textPrimary,
+      color: WALKTHROUGH_THEME.nextButtonText,
       fontSize: 13,
       fontWeight: "700",
     },

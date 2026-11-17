@@ -1126,6 +1126,8 @@ export const fil = {
         "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
       fixItem2:
         "Ipakita ang tumpak na status ng sync na direktang na-verify sa Google Drive.",
+      fixItem3:
+        "I-standardize ang mga outline, button, at backdrop ng walkthrough sa lahat ng feature ng app.",
     },
     v162: {
       date: "Nobyembre 16, 2026",

@@ -1112,6 +1112,8 @@ export const es = {
         "Solucionar errores de sincronización y base de datos al cambiar de cuenta de Google Drive.",
       fixItem2:
         "Mostrar un estado de sincronización preciso verificado directamente en Google Drive.",
+      fixItem3:
+        "Estandarizar los contornos resaltados, botones y fondos de las guías en todas las funciones.",
     },
     v162: {
       date: "16 de noviembre de 2026",

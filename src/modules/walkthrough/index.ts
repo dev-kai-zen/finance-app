@@ -168,6 +168,8 @@ export {
   getReportsWalkthroughSteps,
 } from "./reports/reports-walkthrough-steps";
 
+export { WALKTHROUGH_THEME } from "./constants/walkthrough-theme.constants";
+
 export type {
   LayoutRect,
   WalkthroughStep,

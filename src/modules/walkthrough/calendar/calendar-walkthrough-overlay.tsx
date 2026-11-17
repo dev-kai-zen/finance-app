@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface CalendarWalkthroughOverlayProps {
@@ -164,7 +165,7 @@ export function CalendarWalkthroughOverlay({
             y="0"
             width={windowWidth}
             height={windowHeight}
-            fill="#000000B3"
+            fill={WALKTHROUGH_THEME.backdropFill}
             mask="url(#calSpotlightMask)"
           />
         </Svg>
@@ -269,7 +270,7 @@ export function CalendarWalkthroughOverlay({
                     : t("dashboard.walkthroughNext")}
                 </Text>
                 {isLastStep ? null : (
-                  <ChevronRight color={theme.colors.textPrimary} size={15} />
+                  <ChevronRight color={WALKTHROUGH_THEME.nextButtonText} size={15} />
                 )}
               </Pressable>
             </View>
@@ -287,7 +288,7 @@ function createStyles(theme: AppTheme) {
       position: "relative",
     },
     focusRing: {
-      borderColor: "#00A3FF",
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       borderWidth: 2,
       position: "absolute",
       backgroundColor: "transparent",
@@ -312,15 +313,15 @@ function createStyles(theme: AppTheme) {
       marginBottom: 2,
     },
     stepBadge: {
-      backgroundColor: `${theme.colors.primary}15`,
-      borderColor: `${theme.colors.primary}30`,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
+      borderColor: "transparent",
       borderRadius: theme.borderRadius.round,
       borderWidth: 1,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 3,
     },
     stepBadgeText: {
-      color: theme.colors.primary,
+      color: WALKTHROUGH_THEME.badgeText,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.semibold,
       letterSpacing: 0.3,
@@ -361,7 +362,7 @@ function createStyles(theme: AppTheme) {
     },
     nextBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
       gap: 5,
@@ -372,7 +373,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: theme.colors.textPrimary,
+      color: WALKTHROUGH_THEME.nextButtonText,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
     },

@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface ReportsWalkthroughOverlayProps {
@@ -153,7 +154,7 @@ export function ReportsWalkthroughOverlay({
             </Mask>
           </Defs>
           <Rect
-            fill="rgba(0, 0, 0, 0.72)"
+            fill={WALKTHROUGH_THEME.backdropFill}
             height={windowHeight}
             mask="url(#reportsMask)"
             width={windowWidth}
@@ -276,7 +277,7 @@ function createStyles(theme: AppTheme) {
     spotlightRing: {
       position: "absolute",
       borderWidth: 2,
-      borderColor: "#00A3FF",
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       backgroundColor: "transparent",
     },
     card: {
@@ -298,7 +299,7 @@ function createStyles(theme: AppTheme) {
       marginBottom: 10,
     },
     stepBadge: {
-      backgroundColor: `${theme.colors.primary}18`,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 6,
@@ -306,7 +307,7 @@ function createStyles(theme: AppTheme) {
     stepBadgeText: {
       fontSize: 11,
       fontWeight: "700",
-      color: theme.colors.primary,
+      color: WALKTHROUGH_THEME.badgeText,
     },
     skipIconBtn: {
       padding: 4,
@@ -345,7 +346,7 @@ function createStyles(theme: AppTheme) {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      backgroundColor: "#00A3FF",
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       paddingVertical: 9,
       paddingHorizontal: 16,
       borderRadius: 10,
@@ -353,7 +354,7 @@ function createStyles(theme: AppTheme) {
     nextBtnText: {
       fontSize: 13,
       fontWeight: "700",
-      color: theme.colors.onPrimary,
+      color: WALKTHROUGH_THEME.nextButtonText,
     },
   });
 }
