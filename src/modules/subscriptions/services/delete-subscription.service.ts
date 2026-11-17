@@ -7,11 +7,21 @@ import {
   restoreSubscriptionRecord,
 } from "../repositories/subscriptions.repository";
 import {
+  getScheduleBySubscriptionId,
   removeScheduledTransaction,
   restoreScheduledTransaction,
 } from "@/modules/scheduled-transactions";
 
 export type RemoveSubscriptionResult = "deleted" | "archived";
+
+function resolveScheduleId(
+  sub: { id: string; scheduleId: string | null },
+  context: DbContext,
+): string | null {
+  if (sub.scheduleId) return sub.scheduleId;
+  const linked = getScheduleBySubscriptionId(sub.id, context);
+  return linked?.id || null;
+}
 
 export function checkSubscriptionHasPayments(subscriptionId: string): boolean {
   return hasSubscriptionPayments(subscriptionId, db);
@@ -26,11 +36,14 @@ export function archiveSubscriptionInContext(
   context: DbContext,
 ): void {
   const sub = findSubscriptionById(subscriptionId, context);
-  if (sub?.scheduleId) {
-    try {
-      removeScheduledTransaction(sub.scheduleId);
-    } catch {
-      // Ignore if schedule record was not found
+  if (sub) {
+    const schedId = resolveScheduleId(sub, context);
+    if (schedId) {
+      try {
+        removeScheduledTransaction(schedId, context);
+      } catch (err) {
+        console.warn("[archiveSubscriptionInContext] Failed to remove schedule:", err);
+      }
     }
   }
   archiveSubscriptionRecord(subscriptionId, context);
@@ -45,15 +58,22 @@ export function restoreSubscriptionInContext(
   context: DbContext,
 ): void {
   const sub = findSubscriptionById(subscriptionId, context);
-  if (sub?.scheduleId) {
-    try {
-      restoreScheduledTransaction(sub.scheduleId, {
-        status: sub.status === "paused" ? "paused" : "active",
-        nextNominalAt: sub.nextRenewalDate,
-        nextEffectiveAt: sub.nextRenewalDate,
-      });
-    } catch {
-      // Ignore if schedule record was not found
+  if (sub) {
+    const schedId = resolveScheduleId(sub, context);
+    if (schedId) {
+      try {
+        restoreScheduledTransaction(
+          schedId,
+          {
+            status: sub.status === "paused" ? "paused" : "active",
+            nextNominalAt: sub.nextRenewalDate,
+            nextEffectiveAt: sub.nextRenewalDate,
+          },
+          context,
+        );
+      } catch (err) {
+        console.warn("[restoreSubscriptionInContext] Failed to restore schedule:", err);
+      }
     }
   }
   restoreSubscriptionRecord(subscriptionId, context);
@@ -68,11 +88,14 @@ export function permanentlyDeleteSubscriptionInContext(
   context: DbContext,
 ): void {
   const sub = findSubscriptionById(subscriptionId, context);
-  if (sub?.scheduleId) {
-    try {
-      removeScheduledTransaction(sub.scheduleId);
-    } catch {
-      // Ignore if already deleted
+  if (sub) {
+    const schedId = resolveScheduleId(sub, context);
+    if (schedId) {
+      try {
+        removeScheduledTransaction(schedId, context);
+      } catch (err) {
+        console.warn("[permanentlyDeleteSubscriptionInContext] Failed to remove schedule:", err);
+      }
     }
   }
   permanentlyDeleteSubscriptionRecord(subscriptionId, context);

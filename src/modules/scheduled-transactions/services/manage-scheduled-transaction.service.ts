@@ -1,8 +1,10 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import type { ScheduledTransaction } from "../types/scheduled-transaction.types";
 import {
   deleteAllScheduledTransactionRecords,
   deleteScheduledTransactionRecord,
   deleteUnprocessedScheduleOccurrences,
+  findScheduleBySubscriptionId,
   findScheduledTransaction,
   getAccountIdsWithSchedules as repoGetAccountIdsWithSchedules,
   getPocketIdsWithSchedules as repoGetPocketIdsWithSchedules,
@@ -66,10 +68,18 @@ export function endScheduledTransaction(id: string): void {
   });
 }
 
+export function getScheduleBySubscriptionId(
+  subscriptionId: string,
+  context: DbContext = db,
+): ScheduledTransaction | null {
+  return findScheduleBySubscriptionId(subscriptionId, context);
+}
+
 export function removeScheduledTransaction(
   id: string,
+  context?: DbContext,
 ): RemoveScheduledTransactionResult {
-  return db.transaction((tx) => {
+  const runner = (tx: DbContext): RemoveScheduledTransactionResult => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
 
@@ -92,7 +102,9 @@ export function removeScheduledTransaction(
       tx,
     );
     return "archived";
-  });
+  };
+
+  return context ? runner(context) : db.transaction(runner);
 }
 
 export function restoreScheduledTransaction(
@@ -102,8 +114,9 @@ export function restoreScheduledTransaction(
     nextNominalAt?: Date;
     nextEffectiveAt?: Date;
   },
+  context?: DbContext,
 ): void {
-  db.transaction((tx) => {
+  const runner = (tx: DbContext) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
     if (!schedule.archivedAt && !options?.status) return;
@@ -121,7 +134,9 @@ export function restoreScheduledTransaction(
       },
       tx,
     );
-  });
+  };
+
+  return context ? runner(context) : db.transaction(runner);
 }
 
 export function clearScheduledTransactionWorkspace(

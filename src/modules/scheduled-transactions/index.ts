@@ -32,6 +32,12 @@ export const removeScheduledTransaction = deferFunction(
       .removeScheduledTransaction,
 ) as typeof import("./services/manage-scheduled-transaction.service").removeScheduledTransaction;
 
+export const getScheduleBySubscriptionId = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getScheduleBySubscriptionId,
+) as typeof import("./services/manage-scheduled-transaction.service").getScheduleBySubscriptionId;
+
 export const restoreScheduledTransaction = deferFunction(
   () =>
     require("./services/manage-scheduled-transaction.service")
