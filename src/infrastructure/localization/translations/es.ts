@@ -900,7 +900,7 @@ export const es = {
       "Crea ingresos, gastos o transferencias recurrentes y decide si cada ocurrencia se publica automáticamente. Usa el botón + para agregar tu primer calendario.",
     noSubscriptionSchedulesTitle: "No hay calendarios de suscripción",
     noSubscriptionSchedulesDesc:
-      "No tienes ningún calendario creado por suscripciones. Las suscripciones con publicación automática aparecerán aquí.",
+      "No tienes ningún calendario creado por suscripciones. Las suscripciones activas aparecerán aquí.",
     noMatchingTitle: "No hay calendarios coincidentes",
     noMatchingDesc:
       "Ningún calendario coincide con los filtros seleccionados. Selecciona otro filtro para verlos.",
@@ -985,6 +985,7 @@ export const es = {
     overdueDays: "%{count}d vencida",
     markPaid: "Marcar Pagada",
     recordPaymentTitle: "Registrar Pago",
+    paymentDate: "Fecha de Transacción",
     selectPaymentAccount: "Cuenta de Pago",
     rollForwardNotice:
       "Esto registrará un gasto en su libro mayor y avanzará la cuenta regresiva de renovación al siguiente ciclo.",
@@ -1020,7 +1021,7 @@ export const es = {
     trialDuration: "Duración de la Prueba",
     customDate: "Fecha Personalizada",
     trialEndsAtTitle: "Fecha de Vencimiento de Prueba",
-    trialSummaryCaption: "La prueba termina el %{date} (%{daysLeft}). %{reminder}",
+    trialSummaryCaption: "La prueba termina el %{date} (%{daysLeft})",
     reminderLeadDays: "Avisarme Antes de Renovar",
     reminderSummary: "Recordatorio emitido %{days} días antes.",
     noReminders: "Sin recordatorios programados.",

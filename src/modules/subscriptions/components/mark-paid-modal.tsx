@@ -1,28 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { CheckCircle2, X } from "lucide-react-native";
+import { Calendar, ChevronRight, Wallet, X } from "lucide-react-native";
 
 import { AppButton } from "@/components/app-button";
+import { DatePickerModal } from "@/components/date-picker-modal";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { useAccounts } from "@/modules/accounts";
+import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { formatCurrency } from "@/utils/currency";
 import { formatPrivacyAmount, usePrivacyMode } from "@/modules/settings";
 import type { SubscriptionItem } from "../types/subscription.types";
+
+function toIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDisplayDate(d: Date): string {
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export interface MarkPaidModalProps {
   visible: boolean;
   subscription: SubscriptionItem | null;
   onClose: () => void;
-  onConfirm: (options: { accountId: string; paidAt: Date }) => void;
+  onConfirm: (options: {
+    accountId: string;
+    pocketId?: string | null;
+    paidAt: Date;
+  }) => void;
 }
 
 export function MarkPaidModal({
@@ -54,25 +73,60 @@ function MarkPaidModalContent({
   visible: boolean;
   subscription: SubscriptionItem;
   onClose: () => void;
-  onConfirm: (options: { accountId: string; paidAt: Date }) => void;
+  onConfirm: (options: {
+    accountId: string;
+    pocketId?: string | null;
+    paidAt: Date;
+  }) => void;
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
-  const { accounts } = useAccounts();
+  const { accounts, pockets } = useAccounts({
+    includeCreditCardMonitoring: false,
+  });
   const { isPrivate } = usePrivacyMode();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>(
     subscription.accountId || (accounts[0]?.id ?? ""),
   );
+  const [selectedPocketId, setSelectedPocketId] = useState<string | null>(
+    subscription.pocketId ?? null,
+  );
+  const [selectedPaidAt, setSelectedPaidAt] = useState<Date>(() => new Date());
+
+  const [accountPickerVisible, setAccountPickerVisible] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   useEffect(() => {
     if (subscription.accountId) {
       setSelectedAccountId(subscription.accountId);
+      setSelectedPocketId(subscription.pocketId ?? null);
     } else if (accounts.length > 0) {
       setSelectedAccountId(accounts[0].id);
+      setSelectedPocketId(null);
     }
-  }, [subscription.accountId, accounts]);
+  }, [subscription.accountId, subscription.pocketId, accounts]);
+
+  const selectedAccount = useMemo(() => {
+    return accounts.find((a) => a.id === selectedAccountId) || null;
+  }, [accounts, selectedAccountId]);
+
+  const selectedPocket = useMemo(() => {
+    return pockets.find((p) => p.id === selectedPocketId) || null;
+  }, [pockets, selectedPocketId]);
+
+  const accountDisplayLabel = useMemo(() => {
+    if (!selectedAccount) {
+      return t("subscriptions.selectAccount", {
+        defaultValue: "Select Account",
+      });
+    }
+    if (selectedPocket) {
+      return `${selectedAccount.name} • ${selectedPocket.name}`;
+    }
+    return selectedAccount.name;
+  }, [selectedAccount, selectedPocket, t]);
 
   const formattedAmount = formatCurrency(
     subscription.amountMinorUnits,
@@ -84,107 +138,146 @@ function MarkPaidModalContent({
     if (!selectedAccountId) return;
     onConfirm({
       accountId: selectedAccountId,
-      paidAt: new Date(),
+      pocketId: selectedPocketId,
+      paidAt: selectedPaidAt,
     });
   };
 
   return (
-    <Modal
-      animationType="fade"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
-      <View style={styles.overlay}>
-        <Pressable
-          accessibilityLabel={t("common.close")}
-          onPress={onClose}
-          style={styles.backdrop}
-        />
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <View style={styles.titleCol}>
-              <Text style={styles.title}>
-                {t("subscriptions.recordPaymentTitle", {
-                  defaultValue: "Record Payment",
+    <>
+      <Modal
+        animationType="fade"
+        onRequestClose={onClose}
+        transparent
+        visible={visible}
+      >
+        <View style={styles.overlay}>
+          <Pressable
+            accessibilityLabel={t("common.close")}
+            onPress={onClose}
+            style={styles.backdrop}
+          />
+          <View style={styles.sheet}>
+            <View style={styles.header}>
+              <View style={styles.titleCol}>
+                <Text style={styles.title}>
+                  {t("subscriptions.recordPaymentTitle", {
+                    defaultValue: "Record Payment",
+                  })}
+                </Text>
+                <Text style={styles.subtitle}>
+                  {subscription.name} • {displayAmount}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel={t("common.close")}
+                hitSlop={8}
+                onPress={onClose}
+                style={styles.closeBtn}
+              >
+                <X color={theme.colors.textSecondary} size={18} />
+              </Pressable>
+            </View>
+
+            {/* Payment Account Selector */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.sectionLabel}>
+                {t("subscriptions.selectPaymentAccount", {
+                  defaultValue: "Payment Account",
                 })}
               </Text>
-              <Text style={styles.subtitle}>
-                {subscription.name} • {displayAmount}
-              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setAccountPickerVisible(true)}
+                style={styles.selectorBtn}
+              >
+                <View style={styles.selectorLeft}>
+                  <Wallet color={theme.colors.primary} size={18} />
+                  <Text style={styles.selectorValue}>{accountDisplayLabel}</Text>
+                </View>
+                <ChevronRight color={theme.colors.textSecondary} size={18} />
+              </Pressable>
             </View>
-            <Pressable
-              accessibilityLabel={t("common.close")}
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.closeBtn}
-            >
-              <X color={theme.colors.textSecondary} size={18} />
-            </Pressable>
-          </View>
 
-          <Text style={styles.sectionLabel}>
-            {t("subscriptions.selectPaymentAccount", {
-              defaultValue: "Payment Account",
-            })}
-          </Text>
-
-          <ScrollView style={styles.accountList}>
-            {accounts.map((acc) => {
-              const isSelected = acc.id === selectedAccountId;
-              return (
-                <Pressable
-                  key={acc.id}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: isSelected }}
-                  onPress={() => setSelectedAccountId(acc.id)}
-                  style={({ pressed }) => [
-                    styles.accountRow,
-                    isSelected && styles.accountRowSelected,
-                    pressed && { opacity: 0.8 },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.accountName,
-                      isSelected && styles.accountNameSelected,
-                    ]}
-                  >
-                    {acc.name}
+            {/* Payment Date Selector */}
+            <View style={styles.fieldGroup}>
+              <Text style={styles.sectionLabel}>
+                {t("subscriptions.paymentDate", {
+                  defaultValue: "Transaction Date",
+                })}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setIsDatePickerOpen(true)}
+                style={styles.selectorBtn}
+              >
+                <View style={styles.selectorLeft}>
+                  <Calendar color={theme.colors.primary} size={18} />
+                  <Text style={styles.selectorValue}>
+                    {formatDisplayDate(selectedPaidAt)}
                   </Text>
-                  {isSelected ? (
-                    <CheckCircle2 color={theme.colors.primary} size={18} />
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                </View>
+                <ChevronRight color={theme.colors.textSecondary} size={18} />
+              </Pressable>
+            </View>
 
-          <Text style={styles.rollForwardNotice}>
-            {t("subscriptions.rollForwardNotice", {
-              defaultValue:
-                "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
-            })}
-          </Text>
-
-          <View style={styles.btnRow}>
-            <AppButton
-              label={t("common.cancel")}
-              onPress={onClose}
-              variant="secondary"
-            />
-            <AppButton
-              disabled={!selectedAccountId}
-              label={t("subscriptions.confirmPayment", {
-                defaultValue: "Confirm Payment",
+            <Text style={styles.rollForwardNotice}>
+              {t("subscriptions.rollForwardNotice", {
+                defaultValue:
+                  "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
               })}
-              onPress={handleConfirm}
-              variant="primary"
-            />
+            </Text>
+
+            <View style={styles.btnRow}>
+              <AppButton
+                label={t("common.cancel")}
+                onPress={onClose}
+                variant="secondary"
+              />
+              <AppButton
+                disabled={!selectedAccountId}
+                label={t("subscriptions.confirmPayment", {
+                  defaultValue: "Confirm Payment",
+                })}
+                onPress={handleConfirm}
+                variant="primary"
+              />
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      {/* Account Picker Modal */}
+      <AccountPickerModal
+        accounts={accounts}
+        hidePockets={false}
+        onClose={() => setAccountPickerVisible(false)}
+        onSelectLocation={(acc, pickedPocketId) => {
+          setSelectedAccountId(acc.id);
+          setSelectedPocketId(pickedPocketId ?? null);
+          setAccountPickerVisible(false);
+        }}
+        pockets={pockets}
+        selectedAccountId={selectedAccountId || undefined}
+        selectedPocketId={selectedPocketId || undefined}
+        visible={accountPickerVisible}
+      />
+
+      {/* Payment Date Picker Modal */}
+      <DatePickerModal
+        onClose={() => setIsDatePickerOpen(false)}
+        onSelectDate={(iso) => {
+          const [y, m, d] = iso.split("-").map(Number);
+          setSelectedPaidAt(new Date(y, m - 1, d));
+          setIsDatePickerOpen(false);
+        }}
+        selectedDate={toIsoDate(selectedPaidAt)}
+        title={t("subscriptions.paymentDate", {
+          defaultValue: "Transaction Date",
+        })}
+        visible={isDatePickerOpen}
+      />
+    </>
   );
 }
 
@@ -232,40 +325,36 @@ function createStyles(theme: AppTheme) {
     closeBtn: {
       padding: 4,
     },
+    fieldGroup: {
+      marginBottom: theme.spacing.md,
+    },
     sectionLabel: {
       fontSize: 12,
       fontWeight: "600",
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing.xs,
     },
-    accountList: {
-      maxHeight: 180,
-      marginBottom: theme.spacing.md,
-    },
-    accountRow: {
+    selectorBtn: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      borderRadius: theme.borderRadius.medium,
+      justifyContent: "space-between",
       backgroundColor: theme.colors.surfaceMuted,
-      marginBottom: 6,
+      borderRadius: theme.borderRadius.medium,
       borderWidth: 1,
-      borderColor: "transparent",
+      borderColor: theme.colors.border,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 12,
     },
-    accountRowSelected: {
-      borderColor: theme.colors.primary,
-      backgroundColor: "rgba(34, 197, 94, 0.08)",
+    selectorLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      flex: 1,
     },
-    accountName: {
+    selectorValue: {
       fontSize: 14,
       fontWeight: "500",
       color: theme.colors.textPrimary,
-    },
-    accountNameSelected: {
-      fontWeight: "700",
-      color: theme.colors.primary,
     },
     rollForwardNotice: {
       fontSize: 11,

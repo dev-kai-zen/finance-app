@@ -16,6 +16,7 @@ import { calculateNextRenewal } from "../utils/renewal-calculator";
 import {
   permanentlyDeleteScheduledTransaction,
   saveScheduledTransactionInContext,
+  setScheduledTransactionPaused,
   type SaveScheduledTransactionInput,
 } from "@/modules/scheduled-transactions";
 
@@ -54,6 +55,7 @@ function resolveUpcomingRenewal(
 
   const now = new Date();
   let candidate = new Date(firstBillingDate.getTime());
+  const anchorDay = firstBillingDate.getDate();
 
   // If firstBillingDate is today or in the future, that is the next renewal
   if (candidate.getTime() >= now.getTime()) {
@@ -62,7 +64,12 @@ function resolveUpcomingRenewal(
 
   // Roll forward until it is in the future or today
   while (candidate.getTime() < now.getTime()) {
-    candidate = calculateNextRenewal(candidate, billingCycle, intervalCount);
+    candidate = calculateNextRenewal(
+      candidate,
+      billingCycle,
+      intervalCount,
+      anchorDay,
+    );
   }
 
   return candidate;
@@ -100,7 +107,7 @@ export function saveSubscriptionInContext(
   const existing = existingId ? findSubscriptionById(existingId, context) : null;
 
   let linkedScheduleId = existing?.scheduleId || null;
-  if (input.autoPost && input.accountId) {
+  if (input.accountId) {
     const { frequency, intervalCount: schedInterval } = mapCycleToSchedule(
       input.billingCycle,
       interval,
@@ -120,7 +127,7 @@ export function saveSubscriptionInContext(
       endMode: input.endsOn ? "on_date" : "never",
       endsOn: input.endsOn ? toDateKey(input.endsOn) : null,
       weekendPolicy: "exact",
-      autoPost: true,
+      autoPost: Boolean(input.autoPost),
       subscriptionId,
     };
     const savedSched = saveScheduledTransactionInContext(
@@ -129,7 +136,15 @@ export function saveSubscriptionInContext(
       context,
     );
     linkedScheduleId = savedSched.id;
-  } else if (!input.autoPost && linkedScheduleId) {
+
+    if (input.status === "paused" || input.status === "cancelled") {
+      try {
+        setScheduledTransactionPaused(linkedScheduleId, true);
+      } catch {
+        // Ignore if schedule record was not found
+      }
+    }
+  } else if (linkedScheduleId) {
     try {
       permanentlyDeleteScheduledTransaction(linkedScheduleId);
     } catch {

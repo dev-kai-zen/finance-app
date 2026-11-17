@@ -912,7 +912,7 @@ export const fil = {
       "Gumawa ng umuulit na kita, gastos, o transfer at magdesisyon kung awtomatikong ipo-post ang bawat occurrence. Gamitin ang + button upang idagdag ang iyong unang iskedyul.",
     noSubscriptionSchedulesTitle: "Walang iskedyul ng subscription",
     noSubscriptionSchedulesDesc:
-      "Wala kang anumang iskedyul na ginawa mula sa mga subscription. Ang mga subscription na may auto-post ay lalabas dito.",
+      "Wala kang anumang iskedyul na ginawa mula sa mga subscription. Ang mga aktibong subscription ay lalabas dito.",
     noMatchingTitle: "Walang tumutugmang iskedyul",
     noMatchingDesc:
       "Walang iskedyul na tumutugma sa mga napiling filter. Pumili ng ibang filter upang matingnan ang mga ito.",
@@ -999,6 +999,7 @@ export const fil = {
     overdueDays: "%{count}d lampas na sa takdang araw",
     markPaid: "Markahang Bayad",
     recordPaymentTitle: "Itala ang Pagbabayad",
+    paymentDate: "Petsa ng Transaksyon",
     selectPaymentAccount: "Account na Pambayad",
     rollForwardNotice:
       "Magtatala ito ng gastos sa iyong ledger at isusulong ang countdown ng susunod na pag-renew.",
@@ -1034,7 +1035,7 @@ export const fil = {
     trialDuration: "Tagal ng Trial",
     customDate: "Pasadyang Petsa",
     trialEndsAtTitle: "Petsa ng Pagkawalang-bisa ng Trial",
-    trialSummaryCaption: "Magtatapos ang trial sa %{date} (%{daysLeft}). %{reminder}",
+    trialSummaryCaption: "Magtatapos ang trial sa %{date} (%{daysLeft})",
     reminderLeadDays: "Ipaalala Bago Mag-renew",
     reminderSummary: "Mag-aalerto %{days} araw bago ang petsa.",
     noReminders: "Walang nakatakdang paalala.",

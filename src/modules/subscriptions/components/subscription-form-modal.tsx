@@ -23,13 +23,13 @@ import {
   AmountCalculatorModal,
   DatePickerModal,
   FullScreenFormModal,
+  HorizontalScrollView,
   IconHelper,
   InfoModal,
   KeyboardAwareForm,
   ThemedSwitch,
 } from "@/components";
 import { HelpIconButton } from "@/components/screen-title-with-help";
-import { ReminderLeadDaysSelector } from "@/modules/notifications/components/reminder-lead-days-selector";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -88,8 +88,8 @@ function getBillingCycleDescription(
     case "weekly": {
       const weekday = date.toLocaleDateString(undefined, { weekday: "long" });
       return t("subscriptions.cycleDescWeekly", {
-        weekday,
-        defaultValue: `Billed every ${weekday}`,
+        day: weekday,
+        defaultValue: `Billed every ${weekday} of the week`,
       });
     }
     case "monthly": {
@@ -100,23 +100,27 @@ function getBillingCycleDescription(
       });
     }
     case "quarterly": {
+      const day = getOrdinalSuffix(date.getDate());
       const dateFormatted = date.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
       });
       return t("subscriptions.cycleDescQuarterly", {
+        day,
         date: dateFormatted,
-        defaultValue: `Billed every 3 months starting ${dateFormatted}`,
+        defaultValue: `Billed every 3 months on the ${day} (next: ${dateFormatted})`,
       });
     }
     case "semi_annual": {
+      const day = getOrdinalSuffix(date.getDate());
       const dateFormatted = date.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
       });
       return t("subscriptions.cycleDescSemiAnnual", {
+        day,
         date: dateFormatted,
-        defaultValue: `Billed every 6 months starting ${dateFormatted}`,
+        defaultValue: `Billed every 6 months on the ${day} (next: ${dateFormatted})`,
       });
     }
     case "yearly": {
@@ -126,7 +130,7 @@ function getBillingCycleDescription(
       });
       return t("subscriptions.cycleDescYearly", {
         date: dateFormatted,
-        defaultValue: `Billed annually on ${dateFormatted}`,
+        defaultValue: `Billed annually every ${dateFormatted}`,
       });
     }
   }
@@ -214,11 +218,6 @@ function SubscriptionFormModalContent({
     subscription?.endsOn ? new Date(subscription.endsOn) : null,
   );
   const [isEndsOnPickerOpen, setIsEndsOnPickerOpen] = useState(false);
-  const [reminderLeadDays, setReminderLeadDays] = useState<number[]>(() =>
-    subscription?.reminderLeadDays && subscription.reminderLeadDays.length > 0
-      ? subscription.reminderLeadDays
-      : [1, 3],
-  );
 
   const [cancellationUrl, setCancellationUrl] = useState(
     subscription?.cancellationUrl ?? "",
@@ -326,23 +325,14 @@ function SubscriptionFormModalContent({
         (trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
       ),
     );
-    const leadsStr =
-      reminderLeadDays.length > 0
-        ? reminderLeadDays
-            .map((d) =>
-              d === 0
-                ? t("subscriptions.exactDay", { defaultValue: "on the day" })
-                : `${d}d`,
-            )
-            .join(", ")
-        : t("subscriptions.noReminders", { defaultValue: "no alerts" });
+    const daysLeftText = `${daysLeft}d left`;
     return t("subscriptions.trialSummaryCaption", {
       date: formatDisplayDate(trialEndsAt),
-      days: daysLeft,
-      alerts: leadsStr,
-      defaultValue: `Trial ends on ${formatDisplayDate(trialEndsAt)} (${daysLeft}d left). Alerts: ${leadsStr}.`,
+      daysLeft: daysLeftText,
+      reminder: "",
+      defaultValue: `Trial ends on ${formatDisplayDate(trialEndsAt)} (${daysLeftText}).`,
     });
-  }, [trialEndsAt, reminderLeadDays, t]);
+  }, [trialEndsAt, t]);
 
   const isValid = name.trim().length > 0 && (isTrial || amountMinorUnits > 0);
 
@@ -376,7 +366,7 @@ function SubscriptionFormModalContent({
       categoryId,
       endsOn,
       autoPost,
-      reminderLeadDays,
+      reminderLeadDays: subscription?.reminderLeadDays ?? [1, 3],
       cancellationUrl: cancellationUrl.trim() || null,
       notes: notes.trim() || null,
       color,
@@ -410,7 +400,7 @@ function SubscriptionFormModalContent({
         }
         visible={true}
       >
-        <KeyboardAwareForm>
+        <KeyboardAwareForm contentContainerStyle={styles.formContainer}>
           {/* Quick Presets (Shown when creating new) */}
           {!isEditing && (
             <View style={styles.presetsSection}>
@@ -419,8 +409,7 @@ function SubscriptionFormModalContent({
                   defaultValue: "Popular Services",
                 })}
               </Text>
-              <ScrollView
-                horizontal
+              <HorizontalScrollView
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.presetsScroll}
               >
@@ -449,7 +438,7 @@ function SubscriptionFormModalContent({
                     <Text style={styles.presetName}>{preset.name}</Text>
                   </Pressable>
                 ))}
-              </ScrollView>
+              </HorizontalScrollView>
             </View>
           )}
 
@@ -684,19 +673,6 @@ function SubscriptionFormModalContent({
             </View>
           )}
 
-          {/* Notification Lead Days */}
-          <ReminderLeadDaysSelector
-            disabled={false}
-            onToggleDay={(day) => {
-              setReminderLeadDays((current) =>
-                current.includes(day)
-                  ? current.filter((d) => d !== day)
-                  : [...current, day].sort((a, b) => a - b),
-              );
-            }}
-            selectedDays={reminderLeadDays}
-          />
-
           {/* Auto-Post Toggle (Minimalist) */}
           <View style={styles.toggleRowMinimal}>
             <View style={styles.toggleLeftRow}>
@@ -903,6 +879,11 @@ function SubscriptionFormModalContent({
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    formContainer: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      paddingBottom: theme.spacing.xxxl,
+    },
     presetsSection: {
       marginBottom: theme.spacing.lg,
     },

@@ -885,7 +885,7 @@ export const en = {
       "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
     noSubscriptionSchedulesTitle: "No subscription schedules",
     noSubscriptionSchedulesDesc:
-      "You do not have any schedules created by subscriptions. Subscriptions with auto-post enabled will appear here.",
+      "You do not have any schedules created by subscriptions. Active subscriptions will appear here.",
     noMatchingTitle: "No matching schedules",
     noMatchingDesc:
       "No schedules match the selected filters. Select another filter to view them.",
@@ -968,6 +968,7 @@ export const en = {
     overdueDays: "%{count}d overdue",
     markPaid: "Mark Paid",
     recordPaymentTitle: "Record Payment",
+    paymentDate: "Transaction Date",
     selectPaymentAccount: "Payment Account",
     rollForwardNotice:
       "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
@@ -1003,7 +1004,7 @@ export const en = {
     trialDuration: "Trial Duration",
     customDate: "Custom Date",
     trialEndsAtTitle: "Trial Expiration Date",
-    trialSummaryCaption: "Trial ends on %{date} (%{daysLeft}). %{reminder}",
+    trialSummaryCaption: "Trial ends on %{date} (%{daysLeft})",
     reminderLeadDays: "Notify Me Before Renewal",
     reminderSummary: "Reminder alerts %{days} days before.",
     noReminders: "No reminders scheduled.",

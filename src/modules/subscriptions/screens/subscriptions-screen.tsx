@@ -125,7 +125,11 @@ export function SubscriptionsScreen() {
   );
 
   const handleConfirmMarkPaid = useCallback(
-    (options: { accountId: string; paidAt: Date }) => {
+    (options: {
+      accountId: string;
+      pocketId?: string | null;
+      paidAt: Date;
+    }) => {
       if (!markingPaidSub) return;
       try {
         markPaid(markingPaidSub.id, options);

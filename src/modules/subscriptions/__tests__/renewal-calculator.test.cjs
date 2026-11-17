@@ -64,6 +64,32 @@ test("calculateNextRenewal advances dates correctly", () => {
   assert.equal(nextQuarter.getMonth(), 3); // April
 });
 
+test("calculateNextRenewal clamps month-end without month rollover and restores anchorDay", () => {
+  // Jan 31, 2026 -> Feb 28, 2026 (non-leap year)
+  const jan31 = new Date(2026, 0, 31);
+  const feb = calculateNextRenewal(jan31, "monthly", 1, 31);
+  assert.equal(feb.getFullYear(), 2026);
+  assert.equal(feb.getMonth(), 1); // February
+  assert.equal(feb.getDate(), 28);
+
+  // Feb 28 with anchorDay 31 -> March 31
+  const march = calculateNextRenewal(feb, "monthly", 1, 31);
+  assert.equal(march.getFullYear(), 2026);
+  assert.equal(march.getMonth(), 2); // March
+  assert.equal(march.getDate(), 31);
+
+  // Feb 17 quarterly -> May 17
+  const feb17 = new Date(2026, 1, 17);
+  const may17 = calculateNextRenewal(feb17, "quarterly", 1);
+  assert.equal(may17.getMonth(), 4); // May
+  assert.equal(may17.getDate(), 17);
+
+  // Feb 17 semi-annual -> Aug 17
+  const aug17 = calculateNextRenewal(feb17, "semi_annual", 1);
+  assert.equal(aug17.getMonth(), 7); // August
+  assert.equal(aug17.getDate(), 17);
+});
+
 test("getDaysUntilRenewal computes correct day offsets", () => {
   const now = new Date(2026, 0, 10, 12, 0, 0);
 

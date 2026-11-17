@@ -2,34 +2,96 @@ import type { BillingCycle } from "../types/subscription.types";
 
 /**
  * Calculates the next renewal date based on billing cycle and interval.
+ * Clamps days to prevent JavaScript Date month rollover (e.g. Jan 31 -> Feb 28).
+ * Accepts an optional anchorDay (e.g. from the original subscription firstBillingDate)
+ * so that subsequent months with 31 days restore back to day 31.
  */
 export function calculateNextRenewal(
   currentDate: Date,
   billingCycle: BillingCycle,
   intervalCount = 1,
+  anchorDay?: number,
 ): Date {
   const safeInterval = Math.max(1, intervalCount);
-  const next = new Date(currentDate.getTime());
+  const baseDay = anchorDay ?? currentDate.getDate();
 
   switch (billingCycle) {
-    case "weekly":
+    case "weekly": {
+      const next = new Date(currentDate.getTime());
       next.setDate(next.getDate() + 7 * safeInterval);
-      break;
-    case "monthly":
-      next.setMonth(next.getMonth() + safeInterval);
-      break;
-    case "quarterly":
-      next.setMonth(next.getMonth() + 3 * safeInterval);
-      break;
-    case "semi_annual":
-      next.setMonth(next.getMonth() + 6 * safeInterval);
-      break;
-    case "yearly":
-      next.setFullYear(next.getFullYear() + safeInterval);
-      break;
+      return next;
+    }
+    case "monthly": {
+      const totalMonths =
+        currentDate.getFullYear() * 12 + currentDate.getMonth() + safeInterval;
+      const targetYear = Math.floor(totalMonths / 12);
+      const targetMonth = ((totalMonths % 12) + 12) % 12;
+      const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+      const targetDay = Math.min(baseDay, lastDay);
+      return new Date(
+        targetYear,
+        targetMonth,
+        targetDay,
+        currentDate.getHours(),
+        currentDate.getMinutes(),
+        currentDate.getSeconds(),
+        currentDate.getMilliseconds(),
+      );
+    }
+    case "quarterly": {
+      const totalMonths =
+        currentDate.getFullYear() * 12 +
+        currentDate.getMonth() +
+        3 * safeInterval;
+      const targetYear = Math.floor(totalMonths / 12);
+      const targetMonth = ((totalMonths % 12) + 12) % 12;
+      const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+      const targetDay = Math.min(baseDay, lastDay);
+      return new Date(
+        targetYear,
+        targetMonth,
+        targetDay,
+        currentDate.getHours(),
+        currentDate.getMinutes(),
+        currentDate.getSeconds(),
+        currentDate.getMilliseconds(),
+      );
+    }
+    case "semi_annual": {
+      const totalMonths =
+        currentDate.getFullYear() * 12 +
+        currentDate.getMonth() +
+        6 * safeInterval;
+      const targetYear = Math.floor(totalMonths / 12);
+      const targetMonth = ((totalMonths % 12) + 12) % 12;
+      const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+      const targetDay = Math.min(baseDay, lastDay);
+      return new Date(
+        targetYear,
+        targetMonth,
+        targetDay,
+        currentDate.getHours(),
+        currentDate.getMinutes(),
+        currentDate.getSeconds(),
+        currentDate.getMilliseconds(),
+      );
+    }
+    case "yearly": {
+      const targetYear = currentDate.getFullYear() + safeInterval;
+      const targetMonth = currentDate.getMonth();
+      const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+      const targetDay = Math.min(baseDay, lastDay);
+      return new Date(
+        targetYear,
+        targetMonth,
+        targetDay,
+        currentDate.getHours(),
+        currentDate.getMinutes(),
+        currentDate.getSeconds(),
+        currentDate.getMilliseconds(),
+      );
+    }
   }
-
-  return next;
 }
 
 /**

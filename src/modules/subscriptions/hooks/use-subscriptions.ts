@@ -66,7 +66,14 @@ export function useSubscriptions() {
   }, [items, filter, searchQuery]);
 
   const markPaid = useCallback(
-    (subscriptionId: string, options?: { accountId?: string; paidAt?: Date }) => {
+    (
+      subscriptionId: string,
+      options?: {
+        accountId?: string;
+        pocketId?: string | null;
+        paidAt?: Date;
+      },
+    ) => {
       const result = recordSubscriptionPayment(subscriptionId, options);
       refresh();
       return result;

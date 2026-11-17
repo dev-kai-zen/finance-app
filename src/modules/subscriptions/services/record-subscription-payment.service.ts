@@ -98,6 +98,7 @@ export function recordSubscriptionPaymentInContext(
     subscription.nextRenewalDate,
     subscription.billingCycle,
     subscription.billingCycleInterval,
+    subscription.firstBillingDate.getDate(),
   );
 
   updateSubscriptionRecord(
@@ -142,6 +143,7 @@ export function handleSubscriptionScheduleExecutedInContext(
     subscription.nextRenewalDate,
     subscription.billingCycle,
     subscription.billingCycleInterval,
+    subscription.firstBillingDate.getDate(),
   );
 
   updateSubscriptionRecord(
