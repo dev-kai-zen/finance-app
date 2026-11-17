@@ -51,20 +51,20 @@ export function SubscriptionsWalkthroughOverlay({
 
   // Calculate cutout sizing based on target
   let cutoutPadding = 4;
-  let cutoutRadius = 16;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (step.id === "subBurnRateSummary") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "subFilterTabs") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = 18;
   } else if (step.id === "subFirstItemCard") {
     cutoutPadding = 4;
-    cutoutRadius = 16;
+    cutoutRadius = theme.borderRadius.large;
   } else if (step.id === "subEmptyAddButton") {
     cutoutPadding = 4;
-    cutoutRadius = 12;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;

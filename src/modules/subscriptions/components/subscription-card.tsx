@@ -33,6 +33,7 @@ export interface SubscriptionCardProps {
   onToggleStatus?: () => void;
   onRestore?: () => void;
   onDelete?: () => void;
+  cardRef?: React.Ref<View>;
 }
 
 export const SubscriptionCard = memo(function SubscriptionCard({
@@ -43,6 +44,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   onToggleStatus,
   onRestore,
   onDelete,
+  cardRef,
 }: SubscriptionCardProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -148,6 +150,8 @@ export const SubscriptionCard = memo(function SubscriptionCard({
 
   return (
     <Pressable
+      ref={cardRef as any}
+      collapsable={false}
       accessibilityLabel={`${subscription.name}, ${formattedAmount} ${cycleLabel}, ${countdownText}`}
       accessibilityRole="button"
       onPress={onPress || onEdit}

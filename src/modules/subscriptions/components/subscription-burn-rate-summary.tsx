@@ -11,11 +11,13 @@ import type { SubscriptionBurnRateSummary } from "../types/subscription.types";
 
 export interface SubscriptionBurnRateSummaryProps {
   summary: SubscriptionBurnRateSummary;
+  cardRef?: React.Ref<View>;
 }
 
 export const SubscriptionBurnRateSummaryCard = memo(
   function SubscriptionBurnRateSummaryCard({
     summary,
+    cardRef,
   }: SubscriptionBurnRateSummaryProps) {
     const theme = useAppTheme();
     const styles = useThemeStyles(createStyles);
@@ -36,7 +38,7 @@ export const SubscriptionBurnRateSummaryCard = memo(
     const displayYearly = formatPrivacyAmount(yearlyFormatted, isPrivate);
 
     return (
-      <View style={styles.card}>
+      <View ref={cardRef} collapsable={false} style={styles.card}>
         <View style={styles.headerRow}>
           <View style={styles.titleWithIcon}>
             <View style={styles.flameIconContainer}>

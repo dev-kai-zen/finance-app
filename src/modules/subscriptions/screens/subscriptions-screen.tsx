@@ -378,14 +378,13 @@ function SubscriptionsScreenContent() {
       <PageContainer
         contentContainerStyle={styles.pageContent}
         floatingAction={
-          <View ref={fabRef as any} collapsable={false}>
-            <FloatingActionButton
-              accessibilityLabel={t("subscriptions.addSubscription", {
-                defaultValue: "Add Subscription",
-              })}
-              onPress={handleOpenCreate}
-            />
-          </View>
+          <FloatingActionButton
+            accessibilityLabel={t("subscriptions.addSubscription", {
+              defaultValue: "Add Subscription",
+            })}
+            fabRef={fabRef}
+            onPress={handleOpenCreate}
+          />
         }
         scrollable={false}
       >
@@ -412,40 +411,39 @@ function SubscriptionsScreenContent() {
             </View>
 
             {/* Hero Burn Rate Card */}
-            <View ref={summaryTargetRef as any} collapsable={false}>
-              <SubscriptionBurnRateSummaryCard summary={summary} />
-            </View>
+            <SubscriptionBurnRateSummaryCard
+              cardRef={summaryTargetRef}
+              summary={summary}
+            />
 
             {/* Filter Tabs */}
-            <View ref={filterTabsRef as any} collapsable={false}>
-              <SubscriptionFilterTabs
-                counts={filterCounts}
-                currentFilter={filter}
-                onSelectFilter={setFilter}
-              />
-            </View>
+            <SubscriptionFilterTabs
+              containerRef={filterTabsRef}
+              counts={filterCounts}
+              currentFilter={filter}
+              onSelectFilter={setFilter}
+            />
           </View>
         )}
 
         {/* Subscription Cards List or Empty State */}
         {!hasSubscriptions ? (
           <View style={styles.emptyContainer}>
-            <View ref={emptyAddRef as any} collapsable={false}>
-              <PageEmptyState
-                actionLabel={t("subscriptions.addFirstAction", {
-                  defaultValue: "Add Subscription",
-                })}
-                description={t("subscriptions.emptyDescription", {
-                  defaultValue:
-                    "Track your recurring memberships, streaming apps, gym, and bills in one place with automatic renewal countdowns.",
-                })}
-                icon={<Repeat color={theme.colors.primary} size={32} />}
-                onAction={handleOpenCreate}
-                title={t("subscriptions.emptyTitle", {
-                  defaultValue: "No Subscriptions Tracked Yet",
-                })}
-              />
-            </View>
+            <PageEmptyState
+              actionLabel={t("subscriptions.addFirstAction", {
+                defaultValue: "Add Subscription",
+              })}
+              actionRef={emptyAddRef}
+              description={t("subscriptions.emptyDescription", {
+                defaultValue:
+                  "Track your recurring memberships, streaming apps, gym, and bills in one place with automatic renewal countdowns.",
+              })}
+              icon={<Repeat color={theme.colors.primary} size={32} />}
+              onAction={handleOpenCreate}
+              title={t("subscriptions.emptyTitle", {
+                defaultValue: "No Subscriptions Tracked Yet",
+              })}
+            />
             <AdBanner
               placement="subscriptions"
               variant="card"
@@ -475,20 +473,16 @@ function SubscriptionsScreenContent() {
             <View ref={scrollContentRef} collapsable={false}>
               {filteredSubscriptions.map((sub, index) => (
                 <View key={sub.id}>
-                  <View
-                    ref={index === 0 ? (firstItemRef as any) : undefined}
-                    collapsable={false}
-                  >
-                    <SubscriptionCard
-                      onDelete={() => handleRequestDelete(sub)}
-                      onEdit={() => handleOpenEdit(sub)}
-                      onMarkPaid={() => setMarkingPaidSub(sub)}
-                      onPress={() => handleOpenEdit(sub)}
-                      onRestore={() => handleRequestRestore(sub)}
-                      onToggleStatus={() => handleToggleStatus(sub)}
-                      subscription={sub}
-                    />
-                  </View>
+                  <SubscriptionCard
+                    cardRef={index === 0 ? firstItemRef : undefined}
+                    onDelete={() => handleRequestDelete(sub)}
+                    onEdit={() => handleOpenEdit(sub)}
+                    onMarkPaid={() => setMarkingPaidSub(sub)}
+                    onPress={() => handleOpenEdit(sub)}
+                    onRestore={() => handleRequestRestore(sub)}
+                    onToggleStatus={() => handleToggleStatus(sub)}
+                    subscription={sub}
+                  />
                   {index === 0 ? (
                     <AdBanner
                       placement="subscriptions"

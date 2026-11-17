@@ -17,18 +17,20 @@ export interface SubscriptionFilterTabsProps {
   currentFilter: SubscriptionFilter;
   onSelectFilter: (filter: SubscriptionFilter) => void;
   counts?: Partial<Record<SubscriptionFilter, number>>;
+  containerRef?: React.Ref<View>;
 }
 
 export const SubscriptionFilterTabs = memo(function SubscriptionFilterTabs({
   currentFilter,
   onSelectFilter,
   counts,
+  containerRef,
 }: SubscriptionFilterTabsProps) {
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
   return (
-    <View style={styles.container}>
+    <View ref={containerRef} collapsable={false} style={styles.container}>
       <HorizontalScrollView
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
