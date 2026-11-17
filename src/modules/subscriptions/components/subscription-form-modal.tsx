@@ -254,7 +254,9 @@ function SubscriptionFormModalContent({
     subscription?.cancellationUrl ?? "",
   );
   const [notes, setNotes] = useState(subscription?.notes ?? "");
-  const [color, setColor] = useState<string | null>(subscription?.color ?? null);
+  const [color, setColor] = useState<string | null>(
+    subscription?.color ?? null,
+  );
   const [icon, setIcon] = useState<string | null>(subscription?.icon ?? null);
 
   // Picker modals
@@ -352,9 +354,7 @@ function SubscriptionFormModalContent({
     if (!trialEndsAt) return "";
     const daysLeft = Math.max(
       0,
-      Math.round(
-        (trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000),
-      ),
+      Math.round((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
     );
     const daysLeftText = `${daysLeft}d left`;
     return t("subscriptions.trialSummaryCaption", {
@@ -480,7 +480,9 @@ function SubscriptionFormModalContent({
           {/* Name Field */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
-              {t("subscriptions.nameLabel", { defaultValue: "Subscription Name" })}
+              {t("subscriptions.nameLabel", {
+                defaultValue: "Subscription Name",
+              })}
               <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <TextInput
@@ -497,7 +499,9 @@ function SubscriptionFormModalContent({
           {/* Amount Field */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
-              {t("subscriptions.amountLabel", { defaultValue: "Amount / Cost" })}
+              {t("subscriptions.amountLabel", {
+                defaultValue: "Amount / Cost",
+              })}
               {!isTrial && <Text style={styles.requiredAsterisk}> *</Text>}
             </Text>
             <AmountCalculatorField
@@ -512,7 +516,9 @@ function SubscriptionFormModalContent({
           {/* Billing Cycle Row */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
-              {t("subscriptions.billingCycle", { defaultValue: "Billing Cycle" })}
+              {t("subscriptions.billingCycle", {
+                defaultValue: "Billing Cycle",
+              })}
               <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <View style={styles.cycleGrid}>
@@ -591,9 +597,7 @@ function SubscriptionFormModalContent({
             >
               <View style={styles.selectorLeft}>
                 <Wallet color={theme.colors.primary} size={18} />
-                <Text style={styles.selectorValue}>
-                  {accountDisplayLabel}
-                </Text>
+                <Text style={styles.selectorValue}>{accountDisplayLabel}</Text>
               </View>
               <ChevronRight color={theme.colors.textSecondary} size={18} />
             </Pressable>
@@ -688,7 +692,8 @@ function SubscriptionFormModalContent({
                   onPress={() => handleSelectTrialPreset("custom")}
                   style={[
                     styles.trialChip,
-                    trialDurationPreset === "custom" && styles.trialChipSelected,
+                    trialDurationPreset === "custom" &&
+                      styles.trialChipSelected,
                   ]}
                 >
                   <Text
