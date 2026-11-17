@@ -95,14 +95,30 @@ export function removeScheduledTransaction(
   });
 }
 
-export function restoreScheduledTransaction(id: string): void {
+export function restoreScheduledTransaction(
+  id: string,
+  options?: {
+    status?: "active" | "paused";
+    nextNominalAt?: Date;
+    nextEffectiveAt?: Date;
+  },
+): void {
   db.transaction((tx) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
-    if (!schedule.archivedAt) return;
+    if (!schedule.archivedAt && !options?.status) return;
+    const now = new Date();
     updateScheduledTransactionRecord(
       id,
-      { archivedAt: null, updatedAt: new Date() },
+      {
+        archivedAt: null,
+        status:
+          options?.status ??
+          (schedule.status === "completed" ? "active" : schedule.status),
+        nextNominalAt: options?.nextNominalAt ?? schedule.nextNominalAt,
+        nextEffectiveAt: options?.nextEffectiveAt ?? schedule.nextEffectiveAt,
+        updatedAt: now,
+      },
       tx,
     );
   });

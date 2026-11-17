@@ -1,4 +1,5 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import { resolveScheduleOccurrencePaidInContext } from "@/modules/scheduled-transactions";
 import { recordTransactionInContext } from "@/modules/transactions";
 import {
   findSubscriptionById,
@@ -109,6 +110,20 @@ export function recordSubscriptionPaymentInContext(
     },
     context,
   );
+
+  // 4. Synchronize linked schedule to clear "Needs attention" in Scheduled Transactions
+  if (subscription.scheduleId) {
+    try {
+      resolveScheduleOccurrencePaidInContext(
+        subscription.scheduleId,
+        txRecord.id,
+        paidDate,
+        context,
+      );
+    } catch {
+      // Continue even if schedule sync encounters an issue
+    }
+  }
 
   return {
     transactionId: txRecord.id,

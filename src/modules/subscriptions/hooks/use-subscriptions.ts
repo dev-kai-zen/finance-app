@@ -4,7 +4,14 @@ import { useFocusEffect } from "expo-router";
 import { useLocalization } from "@/infrastructure/localization";
 import { listSubscriptions } from "../repositories/subscriptions.repository";
 import { calculateBurnRateSummary } from "../services/calculate-burn-rate.service";
-import { archiveSubscription, permanentlyDeleteSubscription } from "../services/delete-subscription.service";
+import {
+  archiveSubscription,
+  checkSubscriptionHasPayments,
+  deleteOrArchiveSubscription,
+  permanentlyDeleteSubscription,
+  restoreSubscription,
+  type RemoveSubscriptionResult,
+} from "../services/delete-subscription.service";
 import { recordSubscriptionPayment } from "../services/record-subscription-payment.service";
 import { setSubscriptionStatus } from "../services/toggle-subscription-status.service";
 import type {
@@ -16,13 +23,13 @@ import type {
 
 export function useSubscriptions() {
   const [items, setItems] = useState<SubscriptionItem[]>([]);
-  const [filter, setFilter] = useState<SubscriptionFilter>("all");
+  const [filter, setFilter] = useState<SubscriptionFilter>("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
     try {
-      const data = listSubscriptions();
+      const data = listSubscriptions({ includeArchived: true });
       setItems(data);
     } catch (err) {
       console.warn("[useSubscriptions] Error reading subscriptions:", err);
@@ -46,10 +53,16 @@ export function useSubscriptions() {
 
     return items.filter((item) => {
       // 1. Filter by status tab
-      if (filter === "active" && item.status !== "active") return false;
-      if (filter === "trial" && item.status !== "trial") return false;
-      if (filter === "paused" && item.status !== "paused") return false;
-      if (filter === "cancelled" && item.status !== "cancelled") return false;
+      if (filter === "archived") {
+        if (!item.archivedAt) return false;
+      } else {
+        // Active and non-archived tabs exclude archived subscriptions
+        if (item.archivedAt) return false;
+        if (filter === "active" && item.status !== "active") return false;
+        if (filter === "trial" && item.status !== "trial") return false;
+        if (filter === "paused" && item.status !== "paused") return false;
+        if (filter === "cancelled" && item.status !== "cancelled") return false;
+      }
 
       // 2. Filter by search query
       if (query.length > 0) {
@@ -97,6 +110,14 @@ export function useSubscriptions() {
     [refresh],
   );
 
+  const restore = useCallback(
+    (subscriptionId: string) => {
+      restoreSubscription(subscriptionId);
+      refresh();
+    },
+    [refresh],
+  );
+
   const remove = useCallback(
     (subscriptionId: string) => {
       permanentlyDeleteSubscription(subscriptionId);
@@ -104,6 +125,19 @@ export function useSubscriptions() {
     },
     [refresh],
   );
+
+  const deleteOrArchive = useCallback(
+    (subscriptionId: string): RemoveSubscriptionResult => {
+      const result = deleteOrArchiveSubscription(subscriptionId);
+      refresh();
+      return result;
+    },
+    [refresh],
+  );
+
+  const checkHasPayments = useCallback((subscriptionId: string): boolean => {
+    return checkSubscriptionHasPayments(subscriptionId);
+  }, []);
 
   return {
     subscriptions: items,
@@ -118,6 +152,9 @@ export function useSubscriptions() {
     markPaid,
     changeStatus,
     archive,
+    restore,
     remove,
+    deleteOrArchive,
+    checkHasPayments,
   };
 }

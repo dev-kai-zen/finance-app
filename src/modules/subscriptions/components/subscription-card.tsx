@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Pause,
   Play,
+  RotateCcw,
   SquarePen,
   Trash2,
 } from "lucide-react-native";
@@ -30,6 +31,7 @@ export interface SubscriptionCardProps {
   onEdit?: () => void;
   onMarkPaid?: () => void;
   onToggleStatus?: () => void;
+  onRestore?: () => void;
   onDelete?: () => void;
 }
 
@@ -39,6 +41,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   onEdit,
   onMarkPaid,
   onToggleStatus,
+  onRestore,
   onDelete,
 }: SubscriptionCardProps) {
   const theme = useAppTheme();
@@ -63,6 +66,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   );
 
   const days = subscription.daysUntilRenewal;
+  const isArchived = Boolean(subscription.archivedAt);
   const isTrial = subscription.status === "trial";
   const isPaused = subscription.status === "paused";
   const isCancelled = subscription.status === "cancelled";
@@ -72,7 +76,11 @@ export const SubscriptionCard = memo(function SubscriptionCard({
   let badgeStyle = styles.badgeUpcoming;
   let badgeTextStyle = styles.badgeTextUpcoming;
 
-  if (isPaused) {
+  if (isArchived) {
+    countdownText = t("subscriptions.filterArchived", { defaultValue: "Archived" });
+    badgeStyle = styles.badgePaused;
+    badgeTextStyle = styles.badgeTextPaused;
+  } else if (isPaused) {
     countdownText = t("subscriptions.statusPaused", { defaultValue: "Paused" });
     badgeStyle = styles.badgePaused;
     badgeTextStyle = styles.badgeTextPaused;
@@ -145,7 +153,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
       onPress={onPress || onEdit}
       style={({ pressed }) => [
         styles.card,
-        isPaused && styles.cardDimmed,
+        (isPaused || isArchived) && styles.cardDimmed,
         pressed && styles.cardPressed,
       ]}
     >
@@ -198,7 +206,27 @@ export const SubscriptionCard = memo(function SubscriptionCard({
 
       {/* Action Row */}
       <View style={styles.actionRow}>
-        {!isPaused && !isCancelled && onMarkPaid && (
+        {isArchived && onRestore && (
+          <Pressable
+            accessibilityLabel={t("subscriptions.restore", {
+              defaultValue: "Restore",
+            })}
+            accessibilityRole="button"
+            hitSlop={6}
+            onPress={onRestore}
+            style={({ pressed }) => [
+              styles.restoreBtn,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <RotateCcw color="#FFFFFF" size={12} />
+            <Text style={styles.restoreBtnText}>
+              {t("subscriptions.restore", { defaultValue: "Restore" })}
+            </Text>
+          </Pressable>
+        )}
+
+        {!isArchived && !isPaused && !isCancelled && onMarkPaid && (
           <Pressable
             accessibilityLabel={t("subscriptions.markPaid", {
               defaultValue: "Mark Paid",
@@ -240,7 +268,7 @@ export const SubscriptionCard = memo(function SubscriptionCard({
 
         <View style={styles.spacer} />
 
-        {onToggleStatus && (
+        {!isArchived && onToggleStatus && (
           <Pressable
             accessibilityLabel={
               isPaused
@@ -435,6 +463,20 @@ function createStyles(theme: AppTheme) {
       borderRadius: theme.borderRadius.round,
     },
     markPaidBtnText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
+    restoreBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: theme.colors.success,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: theme.borderRadius.round,
+    },
+    restoreBtnText: {
       fontSize: 11,
       fontWeight: "700",
       color: "#FFFFFF",

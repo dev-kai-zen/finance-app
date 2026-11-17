@@ -26,6 +26,18 @@ export const permanentlyDeleteScheduledTransaction = deferFunction(
       .permanentlyDeleteScheduledTransaction,
 ) as typeof import("./services/manage-scheduled-transaction.service").permanentlyDeleteScheduledTransaction;
 
+export const removeScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .removeScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").removeScheduledTransaction;
+
+export const restoreScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .restoreScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").restoreScheduledTransaction;
+
 export const setScheduledTransactionPaused = deferFunction(
   () =>
     require("./services/manage-scheduled-transaction.service")
@@ -93,6 +105,12 @@ export const saveScheduledTransactionInContext = deferFunction(
     require("./services/save-scheduled-transaction.service")
       .saveScheduledTransactionInContext,
 ) as typeof import("./services/save-scheduled-transaction.service").saveScheduledTransactionInContext;
+
+export const resolveScheduleOccurrencePaidInContext = deferFunction(
+  () =>
+    require("./services/resolve-schedule-paid.service")
+      .resolveScheduleOccurrencePaidInContext,
+) as typeof import("./services/resolve-schedule-paid.service").resolveScheduleOccurrencePaidInContext;
 
 export type {
   CalculatedScheduleOccurrence,

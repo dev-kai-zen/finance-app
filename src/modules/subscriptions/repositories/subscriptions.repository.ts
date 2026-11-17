@@ -194,6 +194,32 @@ export function archiveSubscriptionRecord(
     .run();
 }
 
+export function restoreSubscriptionRecord(
+  id: string,
+  context: DbContext = db,
+): void {
+  context
+    .update(subscriptions)
+    .set({
+      archivedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.id, id))
+    .run();
+}
+
+export function hasSubscriptionPayments(
+  subscriptionId: string,
+  context: DbContext = db,
+): boolean {
+  const row = context
+    .select({ id: subscriptionPayments.id })
+    .from(subscriptionPayments)
+    .where(eq(subscriptionPayments.subscriptionId, subscriptionId))
+    .get();
+  return Boolean(row);
+}
+
 export function permanentlyDeleteSubscriptionRecord(
   id: string,
   context: DbContext = db,

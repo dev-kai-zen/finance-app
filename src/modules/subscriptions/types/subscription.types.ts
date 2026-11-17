@@ -81,11 +81,12 @@ export interface SaveSubscriptionInput {
 }
 
 export type SubscriptionFilter =
-  | "all"
   | "active"
   | "trial"
   | "paused"
-  | "cancelled";
+  | "cancelled"
+  | "all"
+  | "archived";
 
 export interface SubscriptionPreset {
   id: string;

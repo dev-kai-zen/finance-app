@@ -1,12 +1,12 @@
 import React, { memo } from "react";
 import {
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
+import { HorizontalScrollView } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -29,8 +29,7 @@ export const SubscriptionFilterTabs = memo(function SubscriptionFilterTabs({
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
+      <HorizontalScrollView
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -78,7 +77,7 @@ export const SubscriptionFilterTabs = memo(function SubscriptionFilterTabs({
             </Pressable>
           );
         })}
-      </ScrollView>
+      </HorizontalScrollView>
     </View>
   );
 });

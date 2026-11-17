@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -213,6 +213,37 @@ function SubscriptionFormModalContent({
   const [categoryId, setCategoryId] = useState<string | null>(
     subscription?.categoryId ?? null,
   );
+
+  // Set default category and account when loaded and not yet selected
+  useEffect(() => {
+    if (!subscription?.categoryId && !categoryId && categories.length > 0) {
+      const entertainment = categories.find(
+        (c) =>
+          c.name.toLowerCase() === "entertainment" ||
+          c.name.toLowerCase().includes("entertainment"),
+      );
+      if (entertainment) {
+        setCategoryId(entertainment.id);
+        return;
+      }
+      const otherExpenses = categories.find(
+        (c) =>
+          c.name.toLowerCase() === "other expenses" ||
+          c.name.toLowerCase().includes("other"),
+      );
+      if (otherExpenses) {
+        setCategoryId(otherExpenses.id);
+        return;
+      }
+      setCategoryId(categories[0].id);
+    }
+  }, [categories, categoryId, subscription?.categoryId]);
+
+  useEffect(() => {
+    if (!subscription?.accountId && !accountId && accounts.length > 0) {
+      setAccountId(accounts[0].id);
+    }
+  }, [accounts, accountId, subscription?.accountId]);
   const [autoPost, setAutoPost] = useState(subscription?.autoPost ?? false);
   const [endsOn, setEndsOn] = useState<Date | null>(() =>
     subscription?.endsOn ? new Date(subscription.endsOn) : null,
@@ -334,7 +365,11 @@ function SubscriptionFormModalContent({
     });
   }, [trialEndsAt, t]);
 
-  const isValid = name.trim().length > 0 && (isTrial || amountMinorUnits > 0);
+  const isValid =
+    name.trim().length > 0 &&
+    (isTrial || amountMinorUnits > 0) &&
+    Boolean(accountId) &&
+    Boolean(categoryId);
 
   const handleSave = () => {
     if (!isValid) return;
@@ -446,6 +481,7 @@ function SubscriptionFormModalContent({
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
               {t("subscriptions.nameLabel", { defaultValue: "Subscription Name" })}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <TextInput
               onChangeText={setName}
@@ -462,6 +498,7 @@ function SubscriptionFormModalContent({
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
               {t("subscriptions.amountLabel", { defaultValue: "Amount / Cost" })}
+              {!isTrial && <Text style={styles.requiredAsterisk}> *</Text>}
             </Text>
             <AmountCalculatorField
               amountMinorUnits={amountMinorUnits}
@@ -476,6 +513,7 @@ function SubscriptionFormModalContent({
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
               {t("subscriptions.billingCycle", { defaultValue: "Billing Cycle" })}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <View style={styles.cycleGrid}>
               {BILLING_CYCLE_OPTIONS.map((opt) => {
@@ -512,6 +550,7 @@ function SubscriptionFormModalContent({
               {t("subscriptions.firstBillingDate", {
                 defaultValue: "First Bill / Next Renewal Date",
               })}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <Pressable
               accessibilityLabel={t("subscriptions.selectBillingDate", {
@@ -543,6 +582,7 @@ function SubscriptionFormModalContent({
               {t("subscriptions.paymentAccount", {
                 defaultValue: "Paid From Account",
               })}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -563,6 +603,7 @@ function SubscriptionFormModalContent({
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>
               {t("subscriptions.category", { defaultValue: "Category" })}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <Pressable
               accessibilityRole="button"
@@ -931,6 +972,10 @@ function createStyles(theme: AppTheme) {
       fontWeight: "600",
       color: theme.colors.textSecondary,
       marginBottom: theme.spacing.xs,
+    },
+    requiredAsterisk: {
+      color: theme.colors.danger,
+      fontWeight: "700",
     },
     textInput: {
       backgroundColor: theme.colors.surfaceMuted,

@@ -11,6 +11,7 @@ import { Plus, Repeat, Search, X } from "lucide-react-native";
 
 import {
   AppToast,
+  ConfirmModal,
   FloatingActionButton,
   PageContainer,
   PageEmptyState,
@@ -35,7 +36,6 @@ import type {
 export function SubscriptionsScreen() {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
-  const contentSpacing = useThemeStyles(createContentSpacing);
   const { t } = useLocalization();
 
   const {
@@ -51,7 +51,9 @@ export function SubscriptionsScreen() {
     markPaid,
     changeStatus,
     archive,
+    restore,
     remove,
+    checkHasPayments,
   } = useSubscriptions();
 
   // Modal states
@@ -60,17 +62,19 @@ export function SubscriptionsScreen() {
     useState<SubscriptionItem | null>(null);
   const [markingPaidSub, setMarkingPaidSub] =
     useState<SubscriptionItem | null>(null);
+  const [subToDelete, setSubToDelete] = useState<SubscriptionItem | null>(null);
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const filterCounts = useMemo<Partial<Record<SubscriptionFilter, number>>>(() => {
     return {
-      all: subscriptions.length,
-      active: subscriptions.filter((s) => s.status === "active").length,
-      trial: subscriptions.filter((s) => s.status === "trial").length,
-      paused: subscriptions.filter((s) => s.status === "paused").length,
-      cancelled: subscriptions.filter((s) => s.status === "cancelled").length,
+      all: subscriptions.filter((s) => !s.archivedAt).length,
+      active: subscriptions.filter((s) => !s.archivedAt && s.status === "active").length,
+      trial: subscriptions.filter((s) => !s.archivedAt && s.status === "trial").length,
+      paused: subscriptions.filter((s) => !s.archivedAt && s.status === "paused").length,
+      cancelled: subscriptions.filter((s) => !s.archivedAt && s.status === "cancelled").length,
+      archived: subscriptions.filter((s) => Boolean(s.archivedAt)).length,
     };
   }, [subscriptions]);
 
@@ -108,20 +112,66 @@ export function SubscriptionsScreen() {
     [refresh, t],
   );
 
-  const handleDeleteSubscription = useCallback(
+  const handleRequestDelete = useCallback((sub: SubscriptionItem) => {
+    setSubToDelete(sub);
+  }, []);
+
+  const handleFormDelete = useCallback(
     (id: string) => {
-      try {
-        remove(id);
+      const target = subscriptions.find((s) => s.id === id);
+      if (target) {
         setFormModalVisible(false);
         setEditingSubscription(null);
-        setToastMessage(
-          t("subscriptions.deletedToast", { defaultValue: "Subscription deleted" }),
-        );
-      } catch (err: any) {
-        setToastMessage(err?.message || "Failed to delete subscription");
+        setSubToDelete(target);
       }
     },
-    [remove, t],
+    [subscriptions],
+  );
+
+  const isArchivedTarget = Boolean(subToDelete?.archivedAt);
+  const targetHasPayments = subToDelete ? checkHasPayments(subToDelete.id) : false;
+  const isArchiveOperation = targetHasPayments && !isArchivedTarget;
+
+  const handleConfirmDeleteOrArchive = useCallback(() => {
+    if (!subToDelete) return;
+    try {
+      const sub = subToDelete;
+      setSubToDelete(null);
+
+      if (isArchiveOperation) {
+        archive(sub.id);
+        setToastMessage(
+          t("subscriptions.archivedToast", {
+            defaultValue: "Subscription archived",
+          }),
+        );
+      } else {
+        remove(sub.id);
+        setToastMessage(
+          t("subscriptions.deletedToast", {
+            defaultValue: "Subscription deleted",
+          }),
+        );
+      }
+    } catch (err: any) {
+      setToastMessage(err?.message || "Failed to process request");
+    }
+  }, [subToDelete, isArchiveOperation, archive, remove, t]);
+
+  const handleRestoreSubscription = useCallback(
+    (sub: SubscriptionItem) => {
+      try {
+        restore(sub.id);
+        setToastMessage(
+          t("subscriptions.restoredToast", {
+            defaultValue: "Subscription restored",
+          }),
+        );
+      } catch (err: any) {
+        setToastMessage(err?.message || "Failed to restore subscription");
+      }
+    },
+    [restore, t],
   );
 
   const handleConfirmMarkPaid = useCallback(
@@ -172,7 +222,7 @@ export function SubscriptionsScreen() {
 
   return (
     <PageContainer
-      contentContainerStyle={contentSpacing}
+      contentContainerStyle={styles.pageContent}
       floatingAction={
         <FloatingActionButton
           accessibilityLabel={t("subscriptions.addSubscription", {
@@ -181,88 +231,98 @@ export function SubscriptionsScreen() {
           onPress={handleOpenCreate}
         />
       }
+      scrollable={false}
     >
-      {/* Search Input Bar (When there are items) */}
+      {/* Fixed Header Section: Search, Summary, Filter Tabs */}
       {hasSubscriptions && (
-        <View style={styles.searchBar}>
-          <Search color={theme.colors.textSecondary} size={16} />
-          <TextInput
-            onChangeText={setSearchQuery}
-            placeholder={t("subscriptions.searchPlaceholder", {
-              defaultValue: "Search subscriptions, utilities, services...",
-            })}
-            placeholderTextColor={theme.colors.textSecondary}
-            style={styles.searchInput}
-            value={searchQuery}
+        <View style={styles.fixedHeader}>
+          {/* Search Input Bar */}
+          <View style={styles.searchBar}>
+            <Search color={theme.colors.textSecondary} size={16} />
+            <TextInput
+              onChangeText={setSearchQuery}
+              placeholder={t("subscriptions.searchPlaceholder", {
+                defaultValue: "Search subscriptions, utilities, services...",
+              })}
+              placeholderTextColor={theme.colors.textSecondary}
+              style={styles.searchInput}
+              value={searchQuery}
+            />
+            {searchQuery.length > 0 ? (
+              <Pressable hitSlop={8} onPress={() => setSearchQuery("")}>
+                <X color={theme.colors.textSecondary} size={16} />
+              </Pressable>
+            ) : null}
+          </View>
+
+          {/* Hero Burn Rate Card */}
+          <SubscriptionBurnRateSummaryCard summary={summary} />
+
+          {/* Filter Tabs */}
+          <SubscriptionFilterTabs
+            counts={filterCounts}
+            currentFilter={filter}
+            onSelectFilter={setFilter}
           />
-          {searchQuery.length > 0 ? (
-            <Pressable hitSlop={8} onPress={() => setSearchQuery("")}>
-              <X color={theme.colors.textSecondary} size={16} />
-            </Pressable>
-          ) : null}
         </View>
-      )}
-
-      {/* Hero Burn Rate Card */}
-      {hasSubscriptions && (
-        <SubscriptionBurnRateSummaryCard summary={summary} />
-      )}
-
-      {/* Filter Tabs */}
-      {hasSubscriptions && (
-        <SubscriptionFilterTabs
-          counts={filterCounts}
-          currentFilter={filter}
-          onSelectFilter={setFilter}
-        />
       )}
 
       {/* Subscription Cards List or Empty State */}
       {!hasSubscriptions ? (
-        <PageEmptyState
-          actionLabel={t("subscriptions.addFirstAction", {
-            defaultValue: "Add Subscription",
-          })}
-          description={t("subscriptions.emptyDescription", {
-            defaultValue:
-              "Track your recurring memberships, streaming apps, gym, and bills in one place with automatic renewal countdowns.",
-          })}
-          icon={<Repeat color={theme.colors.primary} size={32} />}
-          onAction={handleOpenCreate}
-          title={t("subscriptions.emptyTitle", {
-            defaultValue: "No Subscriptions Tracked Yet",
-          })}
-        />
+        <View style={styles.emptyContainer}>
+          <PageEmptyState
+            actionLabel={t("subscriptions.addFirstAction", {
+              defaultValue: "Add Subscription",
+            })}
+            description={t("subscriptions.emptyDescription", {
+              defaultValue:
+                "Track your recurring memberships, streaming apps, gym, and bills in one place with automatic renewal countdowns.",
+            })}
+            icon={<Repeat color={theme.colors.primary} size={32} />}
+            onAction={handleOpenCreate}
+            title={t("subscriptions.emptyTitle", {
+              defaultValue: "No Subscriptions Tracked Yet",
+            })}
+          />
+        </View>
       ) : filteredSubscriptions.length === 0 ? (
-        <PageEmptyState
-          description={t("subscriptions.noMatchDescription", {
-            defaultValue: "Try adjusting your search query or switching tabs.",
-          })}
-          icon={<Search color={theme.colors.textSecondary} size={28} />}
-          title={t("subscriptions.noMatchTitle", {
-            defaultValue: "No matching subscriptions found",
-          })}
-        />
+        <View style={styles.emptyContainer}>
+          <PageEmptyState
+            description={t("subscriptions.noMatchDescription", {
+              defaultValue: "Try adjusting your search query or switching tabs.",
+            })}
+            icon={<Search color={theme.colors.textSecondary} size={28} />}
+            title={t("subscriptions.noMatchTitle", {
+              defaultValue: "No matching subscriptions found",
+            })}
+          />
+        </View>
       ) : (
-        <View style={styles.list}>
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator
+          style={styles.listScrollView}
+        >
           {filteredSubscriptions.map((sub) => (
             <SubscriptionCard
               key={sub.id}
-              onDelete={() => handleDeleteSubscription(sub.id)}
+              onDelete={() => handleRequestDelete(sub)}
               onEdit={() => handleOpenEdit(sub)}
               onMarkPaid={() => setMarkingPaidSub(sub)}
               onPress={() => handleOpenEdit(sub)}
+              onRestore={() => handleRestoreSubscription(sub)}
               onToggleStatus={() => handleToggleStatus(sub)}
               subscription={sub}
             />
           ))}
-        </View>
+        </ScrollView>
       )}
 
       {/* Add / Edit Form Modal */}
       <SubscriptionFormModal
         onClose={handleCloseForm}
-        onDelete={handleDeleteSubscription}
+        onDelete={handleFormDelete}
         onSave={handleSaveSubscription}
         subscription={editingSubscription}
         visible={formModalVisible}
@@ -276,11 +336,52 @@ export function SubscriptionsScreen() {
         visible={Boolean(markingPaidSub)}
       />
 
+      {/* Delete / Archive Confirmation Modal */}
+      {subToDelete ? (
+        <ConfirmModal
+          cancelLabel={t("common.cancel", { defaultValue: "Cancel" })}
+          confirmLabel={
+            isArchiveOperation
+              ? t("subscriptions.filterArchived", { defaultValue: "Archive" })
+              : isArchivedTarget
+                ? t("subscriptions.deletePermanently", {
+                    defaultValue: "Delete Permanently",
+                  })
+                : t("common.delete", { defaultValue: "Delete" })
+          }
+          message={
+            isArchiveOperation
+              ? t("subscriptions.archiveConfirmMessage", {
+                  name: subToDelete.name,
+                  defaultValue: `"${subToDelete.name}" has recorded payments in your ledger. It will be moved to Archived to preserve your transaction history and stop all upcoming reminders. You can restore it anytime.`,
+                })
+              : t("subscriptions.deleteConfirmMessage", {
+                  name: subToDelete.name,
+                  defaultValue: `Are you sure you want to permanently delete "${subToDelete.name}"? This cannot be undone.`,
+                })
+          }
+          onCancel={() => setSubToDelete(null)}
+          onConfirm={handleConfirmDeleteOrArchive}
+          title={
+            isArchiveOperation
+              ? t("subscriptions.archiveConfirmTitle", {
+                  defaultValue: "Archive Subscription",
+                })
+              : t("subscriptions.deleteConfirmTitle", {
+                  defaultValue: "Delete Subscription",
+                })
+          }
+          variant={isArchiveOperation ? "primary" : "destructive"}
+          visible={Boolean(subToDelete)}
+        />
+      ) : null}
+
       {/* Feedback Toast */}
       {toastMessage ? (
         <AppToast
           message={toastMessage}
           onClose={() => setToastMessage(null)}
+          position="bottom"
           variant="success"
           visible={Boolean(toastMessage)}
         />
@@ -291,6 +392,14 @@ export function SubscriptionsScreen() {
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    pageContent: {
+      flex: 1,
+      paddingBottom: 0,
+      paddingTop: theme.spacing.md,
+    },
+    fixedHeader: {
+      flexShrink: 0,
+    },
     searchBar: {
       flexDirection: "row",
       alignItems: "center",
@@ -309,14 +418,15 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       padding: 0,
     },
-    list: {
-      paddingBottom: 80,
+    listScrollView: {
+      flex: 1,
+    },
+    listContent: {
+      paddingBottom: 96,
+    },
+    emptyContainer: {
+      flex: 1,
+      paddingTop: theme.spacing.xl,
     },
   });
-}
-
-function createContentSpacing(theme: AppTheme) {
-  return {
-    paddingTop: theme.spacing.lg,
-  };
 }

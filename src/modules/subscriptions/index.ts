@@ -31,6 +31,22 @@ export const scheduleSubscriptionReminders = deferFunction(
       .scheduleSubscriptionReminders,
 ) as typeof import("./services/schedule-sub-reminders.service").scheduleSubscriptionReminders;
 
+export const deleteOrArchiveSubscription = deferFunction(
+  () =>
+    require("./services/delete-subscription.service")
+      .deleteOrArchiveSubscription,
+) as typeof import("./services/delete-subscription.service").deleteOrArchiveSubscription;
+
+export const restoreSubscription = deferFunction(
+  () => require("./services/delete-subscription.service").restoreSubscription,
+) as typeof import("./services/delete-subscription.service").restoreSubscription;
+
+export const checkSubscriptionHasPayments = deferFunction(
+  () =>
+    require("./services/delete-subscription.service")
+      .checkSubscriptionHasPayments,
+) as typeof import("./services/delete-subscription.service").checkSubscriptionHasPayments;
+
 export type {
   BillingCycle,
   SaveSubscriptionInput,
