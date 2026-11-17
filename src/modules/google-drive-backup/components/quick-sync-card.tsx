@@ -18,7 +18,7 @@ import {
   Zap,
 } from "lucide-react-native";
 
-import { AppButton, ConfirmModal } from "@/components";
+import { AppButton, ConfirmModal, HelpIconButton, InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -33,6 +33,7 @@ export function QuickSyncCard() {
   const { t } = useLocalization();
   const { isPro } = useProStatus();
   const [proModalVisible, setProModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const quickSync = useQuickSync();
   const [syncingManual, setSyncingManual] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -107,6 +108,12 @@ export function QuickSyncCard() {
         <View style={styles.headerCopy}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{t("quickSync.title")}</Text>
+            <HelpIconButton
+              accessibilityHint={t("quickSync.description")}
+              accessibilityLabel={t("quickSync.title")}
+              onPress={() => setInfoModalVisible(true)}
+              size={16}
+            />
             {!isPro && (
               <View style={styles.proChip}>
                 <Crown color="#D97706" size={8} />
@@ -114,7 +121,6 @@ export function QuickSyncCard() {
               </View>
             )}
           </View>
-          <Text style={styles.description}>{t("quickSync.description")}</Text>
         </View>
         <ThemedSwitch
           accessibilityLabel={t("quickSync.title")}
@@ -310,6 +316,13 @@ export function QuickSyncCard() {
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />
+
+      <InfoModal
+        message={t("quickSync.description")}
+        onClose={() => setInfoModalVisible(false)}
+        title={t("quickSync.title")}
+        visible={infoModalVisible}
+      />
     </View>
   );
 }
@@ -375,11 +388,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 15,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    description: {
-      color: theme.colors.textSecondary,
-      fontSize: 13,
-      lineHeight: 18,
     },
     divider: {
       backgroundColor: theme.colors.border,
