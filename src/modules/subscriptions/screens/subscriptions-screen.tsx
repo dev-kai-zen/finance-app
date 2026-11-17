@@ -226,18 +226,19 @@ export function SubscriptionsScreen() {
   const hasSubscriptions = subscriptions.length > 0;
 
   return (
-    <PageContainer
-      contentContainerStyle={styles.pageContent}
-      floatingAction={
-        <FloatingActionButton
-          accessibilityLabel={t("subscriptions.addSubscription", {
-            defaultValue: "Add Subscription",
-          })}
-          onPress={handleOpenCreate}
-        />
-      }
-      scrollable={false}
-    >
+    <View style={styles.screenWrapper}>
+      <PageContainer
+        contentContainerStyle={styles.pageContent}
+        floatingAction={
+          <FloatingActionButton
+            accessibilityLabel={t("subscriptions.addSubscription", {
+              defaultValue: "Add Subscription",
+            })}
+            onPress={handleOpenCreate}
+          />
+        }
+        scrollable={false}
+      >
       {/* Fixed Header Section: Search, Summary, Filter Tabs */}
       {hasSubscriptions && (
         <View style={styles.fixedHeader}>
@@ -400,22 +401,27 @@ export function SubscriptionsScreen() {
         />
       ) : null}
 
+      </PageContainer>
+
       {/* Feedback Toast */}
-      {toastMessage ? (
-        <AppToast
-          message={toastMessage}
-          onClose={() => setToastMessage(null)}
-          position="top"
-          variant="success"
-          visible={Boolean(toastMessage)}
-        />
-      ) : null}
-    </PageContainer>
+      <AppToast
+        duration={2500}
+        message={toastMessage ?? ""}
+        onClose={() => setToastMessage(null)}
+        position="top"
+        variant="success"
+        visible={Boolean(toastMessage)}
+      />
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      backgroundColor: theme.colors.background,
+      flex: 1,
+    },
     pageContent: {
       flex: 1,
       paddingBottom: 0,
