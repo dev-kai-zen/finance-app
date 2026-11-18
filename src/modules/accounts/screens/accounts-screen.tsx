@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, DeviceEventEmitter, ScrollView, StyleSheet, View } from "react-native";
+import {
+  ActivityIndicator,
+  DeviceEventEmitter,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { useIsFocused, useRouter } from "expo-router";
+import { ActionBottomSheet } from "@/components/action-bottom-sheet";
 import { FloatingActionButton } from "@/components/floating-action-button";
+import { InfoModal } from "@/components/info-modal";
 import { PageContainer, PageLoadingState } from "@/components/page-container";
 import { NotificationModal } from "@/components/notification-modal";
 import { SortableListModal, type SortableItem } from "@/components/sortable-list-modal";
@@ -10,7 +19,12 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
-import { Wallet } from "lucide-react-native";
+import { Download, FolderDown, Share2, Wallet } from "lucide-react-native";
+import {
+  AccountCsvExportCancelledError,
+  saveAccountsCsvToDevice,
+  shareAccountsCsv,
+} from "@/modules/accounts/services/export-accounts-csv.service";
 import {
   WalkthroughRegistryProvider,
   useWalkthroughRegistry,
@@ -156,6 +170,83 @@ function AccountsScreenContent({
     },
     [viewMode],
   );
+
+  const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportCsvSheetOpen, setExportCsvSheetOpen] = useState(false);
+  const [exportNotice, setExportNotice] = useState<{
+    title: string;
+    message: string;
+    variant?: "info" | "error";
+  } | null>(null);
+
+  const runCsvExport = (
+    action: (
+      accounts: readonly AccountListItem[],
+      pockets: readonly PocketListItem[],
+    ) => Promise<void>,
+  ) => {
+    void (async () => {
+      try {
+        setExportingCsv(true);
+        const exportableAccounts = normalizedSearchQuery
+          ? data.accounts.filter((account) =>
+              account.name.toLowerCase().includes(normalizedSearchQuery),
+            )
+          : data.accounts;
+        await action(exportableAccounts, data.pockets);
+      } catch (error) {
+        if (error instanceof AccountCsvExportCancelledError) {
+          return;
+        }
+        setExportNotice({
+          title: t("accounts.exportFailedTitle"),
+          message:
+            error instanceof Error
+              ? error.message
+              : t("accounts.exportFailedMessage"),
+          variant: "error",
+        });
+      } finally {
+        setExportingCsv(false);
+      }
+    })();
+  };
+
+  const handleOpenExportCsv = () => {
+    const exportableAccounts = normalizedSearchQuery
+      ? data.accounts.filter((account) =>
+          account.name.toLowerCase().includes(normalizedSearchQuery),
+        )
+      : data.accounts;
+
+    if (exportableAccounts.length === 0) {
+      setExportNotice({
+        title: t("accounts.exportEmptyTitle"),
+        message: t("accounts.exportEmptyMessage"),
+        variant: "info",
+      });
+      return;
+    }
+
+    setExportCsvSheetOpen(true);
+  };
+
+  const handleSaveCsvToDevice = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport(async (accounts, pockets) => {
+      const { fileName } = await saveAccountsCsvToDevice(accounts, pockets);
+      setExportNotice({
+        title: t("accounts.exportSavedTitle"),
+        message: t("accounts.exportSavedMessage", { fileName }),
+        variant: "info",
+      });
+    });
+  };
+
+  const handleShareCsv = () => {
+    setExportCsvSheetOpen(false);
+    runCsvExport((accounts, pockets) => shareAccountsCsv(accounts, pockets));
+  };
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
@@ -411,9 +502,16 @@ function AccountsScreenContent({
     open({ kind: "pocket-form", accountId: account.id });
   };
 
-  const { contentSpacing, managementActions, searchSpacing } = useThemeStyles(
-    createAccountsLayoutStyles,
-  );
+  const {
+    accountGroupsViewChipReset,
+    contentSpacing,
+    exportCsvButton,
+    exportCsvButtonDisabled,
+    exportCsvButtonPressed,
+    managementActions,
+    searchSpacing,
+    viewModeControlsRow,
+  } = useThemeStyles(createAccountsLayoutStyles);
 
   return (
     <View style={styles.screenWrapper}>
@@ -469,10 +567,33 @@ function AccountsScreenContent({
             onChangeText={setSearchQuery}
           />
 
-          <AccountGroupsViewChip
-            viewMode={viewMode}
-            onToggle={handleToggleGlobalViewMode}
-          />
+          <View style={viewModeControlsRow}>
+            <Pressable
+              accessibilityLabel={t("accounts.exportCsv")}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: exportingCsv || data.loading }}
+              disabled={exportingCsv || data.loading}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={handleOpenExportCsv}
+              style={({ pressed }) => [
+                exportCsvButton,
+                (exportingCsv || data.loading) && exportCsvButtonDisabled,
+                pressed && exportCsvButtonPressed,
+              ]}
+            >
+              {exportingCsv ? (
+                <ActivityIndicator color={theme.colors.success} size="small" />
+              ) : (
+                <Download color={theme.colors.success} size={15} />
+              )}
+            </Pressable>
+
+            <AccountGroupsViewChip
+              style={accountGroupsViewChipReset}
+              viewMode={viewMode}
+              onToggle={handleToggleGlobalViewMode}
+            />
+          </View>
 
           {!normalizedSearchQuery || hasSearchResults ? (
             <>
@@ -733,6 +854,37 @@ function AccountsScreenContent({
           walkthrough.nextStep();
         }}
       />
+
+      <ActionBottomSheet
+        items={[
+          {
+            id: "save-to-device",
+            label: t("accounts.saveToDevice"),
+            description: t("accounts.saveToDeviceDesc"),
+            icon: <FolderDown color={theme.colors.primary} size={22} />,
+            onPress: handleSaveCsvToDevice,
+          },
+          {
+            id: "share",
+            label: t("accounts.share"),
+            description: t("accounts.shareDesc"),
+            icon: <Share2 color={theme.colors.success} size={22} />,
+            onPress: handleShareCsv,
+          },
+        ]}
+        onClose={() => setExportCsvSheetOpen(false)}
+        title={t("accounts.exportCsv")}
+        visible={exportCsvSheetOpen}
+      />
+
+      <InfoModal
+        buttonLabel={t("common.ok")}
+        message={exportNotice?.message ?? ""}
+        onClose={() => setExportNotice(null)}
+        title={exportNotice?.title ?? ""}
+        variant={exportNotice?.variant ?? "info"}
+        visible={Boolean(exportNotice)}
+      />
     </PageContainer>
 
         {walkthroughIntro.isWaitingForIntro ? (
@@ -745,7 +897,7 @@ function AccountsScreenContent({
     );
   }
 
-const createAccountsLayoutStyles = (theme: { spacing: { lg: number; md: number; sm: number } }) => ({
+const createAccountsLayoutStyles = (theme: AppTheme) => ({
   contentSpacing: {
     paddingTop: theme.spacing.lg,
   },
@@ -757,6 +909,34 @@ const createAccountsLayoutStyles = (theme: { spacing: { lg: number; md: number; 
   },
   searchSpacing: {
     marginBottom: theme.spacing.sm,
+  },
+  viewModeControlsRow: {
+    alignItems: "center" as const,
+    flexDirection: "row" as const,
+    justifyContent: "flex-end" as const,
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    marginTop: -theme.spacing.xs,
+  },
+  accountGroupsViewChipReset: {
+    marginBottom: 0,
+    marginTop: 0,
+  },
+  exportCsvButton: {
+    alignItems: "center" as const,
+    backgroundColor: theme.colors.surfaceMuted,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.round,
+    borderWidth: 1,
+    height: 29,
+    justifyContent: "center" as const,
+    width: 32,
+  },
+  exportCsvButtonPressed: {
+    opacity: 0.7,
+  },
+  exportCsvButtonDisabled: {
+    opacity: 0.4,
   },
 });
 

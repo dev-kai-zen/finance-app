@@ -393,6 +393,17 @@ export const es = {
     collapse: "Colapsar",
     expandAll: "Expandir todo",
     collapseAll: "Colapsar todo",
+    exportCsv: "Exportar CSV",
+    exportSavedTitle: "Guardado en el dispositivo",
+    exportSavedMessage: "%{fileName} se guardó en la carpeta seleccionada.",
+    exportEmptyTitle: "Nada que exportar",
+    exportEmptyMessage: "Crea una cuenta primero antes de exportar.",
+    exportFailedTitle: "Error al exportar",
+    exportFailedMessage: "No se pudieron exportar las cuentas.",
+    saveToDevice: "Guardar en el dispositivo",
+    saveToDeviceDesc: "Elige una carpeta en Archivos o Descargas",
+    share: "Compartir",
+    shareDesc: "Enviar a otra aplicación o almacenamiento en la nube",
   },
   search: {
     openSearch: "Abrir búsqueda",
@@ -1109,6 +1120,11 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v180: {
+      date: "18 de noviembre de 2026",
+      newItem1:
+        "Exporta todas las cuentas, saldos actuales y resúmenes de bolsillos a una hoja de cálculo CSV limpia.",
     },
     v170: {
       date: "18 de noviembre de 2026",

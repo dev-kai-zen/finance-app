@@ -180,3 +180,13 @@ export const AccountTypePickerModal = deferComponent(
   () => require("./components/account-type-picker-modal").AccountTypePickerModal,
   "AccountTypePickerModal",
 ) as typeof import("./components/account-type-picker-modal").AccountTypePickerModal;
+
+export const saveAccountsCsvToDevice = deferFunction(
+  () => require("./services/export-accounts-csv.service").saveAccountsCsvToDevice,
+) as typeof import("./services/export-accounts-csv.service").saveAccountsCsvToDevice;
+
+export const shareAccountsCsv = deferFunction(
+  () => require("./services/export-accounts-csv.service").shareAccountsCsv,
+) as typeof import("./services/export-accounts-csv.service").shareAccountsCsv;
+
+export { AccountCsvExportCancelledError } from "./services/export-accounts-csv.service";

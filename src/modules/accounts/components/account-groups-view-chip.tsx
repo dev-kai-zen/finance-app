@@ -1,4 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { ChevronDown, ChevronUp } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -8,18 +15,20 @@ import type { AccountsGroupViewMode } from "@/modules/settings";
 export interface AccountGroupsViewChipProps {
   viewMode: AccountsGroupViewMode;
   onToggle: (mode: AccountsGroupViewMode) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function AccountGroupsViewChip({
   viewMode,
   onToggle,
+  style,
 }: AccountGroupsViewChipProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.segmentedPill}>
         <Pressable
           accessibilityLabel={t("accounts.expandAll")}

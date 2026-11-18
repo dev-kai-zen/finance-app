@@ -392,6 +392,17 @@ export const fil = {
     collapse: "I-collapse",
     expandAll: "I-expand Lahat",
     collapseAll: "I-collapse Lahat",
+    exportCsv: "I-export ang CSV",
+    exportSavedTitle: "Nai-save sa device",
+    exportSavedMessage: "Ang %{fileName} ay na-save sa napiling folder.",
+    exportEmptyTitle: "Walang mai-export",
+    exportEmptyMessage: "Gumawa muna ng account bago mag-export.",
+    exportFailedTitle: "Bigo ang pag-export",
+    exportFailedMessage: "Hindi ma-export ang mga account.",
+    saveToDevice: "I-save sa device",
+    saveToDeviceDesc: "Pumili ng folder sa Files o Downloads",
+    share: "Ibahagi",
+    shareDesc: "Ipadala sa ibang app o cloud storage",
   },
   search: {
     openSearch: "Buksan ang paghahanap",
@@ -1123,6 +1134,11 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v180: {
+      date: "Nobyembre 18, 2026",
+      newItem1:
+        "I-export ang lahat ng account, kasalukuyang balanse, at buod ng pocket sa isang malinis na CSV spreadsheet.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

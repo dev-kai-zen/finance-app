@@ -386,6 +386,17 @@ export const en = {
     collapse: "Collapse",
     expandAll: "Expand All",
     collapseAll: "Collapse All",
+    exportCsv: "Export CSV",
+    exportSavedTitle: "Saved to device",
+    exportSavedMessage: "%{fileName} was saved to the folder you selected.",
+    exportEmptyTitle: "Nothing to export",
+    exportEmptyMessage: "Create an account first before exporting.",
+    exportFailedTitle: "Export failed",
+    exportFailedMessage: "Unable to export accounts.",
+    saveToDevice: "Save to device",
+    saveToDeviceDesc: "Choose a folder in Files or Downloads",
+    share: "Share",
+    shareDesc: "Send to another app or cloud storage",
   },
   search: {
     openSearch: "Open search",
@@ -1092,6 +1103,11 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v180: {
+      date: "November 18, 2026",
+      newItem1:
+        "Export all accounts, current balances, and pocket summaries into a clean CSV spreadsheet.",
     },
     v170: {
       date: "November 18, 2026",
