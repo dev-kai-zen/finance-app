@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 import { useWorkspace } from "@/modules/onboarding";
 import { useAppLock } from "@/modules/security";
-import { useExperiencePreferences } from "@/modules/settings";
 import { VersionHistoryModal } from "@/modules/version-history/components/version-history-modal";
 import {
   evaluateAutoShowPresentation,
@@ -13,7 +12,6 @@ import type { ReleaseNoteBlock } from "@/modules/version-history/types/version-h
 
 export function VersionHistoryGate({ children }: PropsWithChildren) {
   const { state } = useWorkspace();
-  const experience = useExperiencePreferences();
   const { isLocked, isReady } = useAppLock();
   const [visible, setVisible] = useState(false);
   const [blocks, setBlocks] = useState<ReleaseNoteBlock[]>([]);
@@ -21,7 +19,6 @@ export function VersionHistoryGate({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!isReady || isLocked) return;
     if (state.status !== "completed") return;
-    if (!experience.isPromptDismissed("developerMessageSeen")) return;
 
     const presentation = evaluateAutoShowPresentation();
     if (!presentation) return;
@@ -32,7 +29,7 @@ export function VersionHistoryGate({ children }: PropsWithChildren) {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [state.status, experience.isPromptDismissed, isLocked, isReady]);
+  }, [state.status, isLocked, isReady]);
 
   return (
     <>

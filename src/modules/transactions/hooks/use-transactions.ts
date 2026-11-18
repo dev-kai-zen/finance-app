@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import {
@@ -122,6 +123,7 @@ export function useTransactions(
           attachmentChanges,
         )) as Transaction;
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return result.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transaction.");
@@ -147,6 +149,7 @@ export function useTransactions(
           attachmentChanges,
         )) as TransferResult;
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return result.outLeg.transactionGroupId ?? result.outLeg.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transfer.");
@@ -165,6 +168,7 @@ export function useTransactions(
         setError(null);
         removeTransaction(id);
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to delete transaction.");

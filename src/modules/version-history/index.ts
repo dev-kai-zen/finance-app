@@ -5,6 +5,7 @@ export {
   getAllReleaseNotes,
   getLatestReleaseNotes,
   isVersionHistoryPending,
+  markVersionHistorySeen,
 } from "./services/version-history.service";
 export { useIsVersionHistoryPending } from "./hooks/use-is-version-history-pending";
 export type { ReleaseNoteBlock, ReleaseNoteSection } from "./types/version-history.types";

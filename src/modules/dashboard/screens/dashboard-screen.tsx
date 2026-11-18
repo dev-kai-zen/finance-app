@@ -221,7 +221,6 @@ function DashboardScreenContent() {
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "dashboardWalkthroughDismissed",
-    prerequisitePromptKey: "developerMessageSeen",
     enabled: !isVersionHistoryPending,
     onStart: walkthrough.startWalkthrough,
   });
