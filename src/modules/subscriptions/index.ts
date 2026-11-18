@@ -62,3 +62,4 @@ export type {
   SubscriptionPreset,
   SubscriptionStatus,
 } from "./types/subscription.types";
+export type { SubscriptionsScreenProps } from "./screens/subscriptions-screen";

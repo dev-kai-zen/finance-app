@@ -411,6 +411,7 @@ export const fil = {
     sectionSchedules: "MGA NAKATAKDANG TRANSAKSYON",
     sectionLabels: "MGA LABEL AT TAG",
     sectionPockets: "MGA POCKET",
+    sectionSubscriptions: "MGA SUBSCRIPTION",
     settingStealthMode: "Privacy / Stealth Mode",
     settingStealthModeDesc: "Itago o takpan ang mga balanse ng account",
     settingSoundHaptics: "Mga Setting ng Tunog at Haptics",
@@ -510,6 +511,17 @@ export const fil = {
     settingSqliteMonitorDesc:
       "Suriin ang mga talahanayan at diagnostics ng SQLite",
     guidesToSetting: "Gigabayan sa setting",
+    actionAddSubscription: "Magdagdag ng Subscription",
+    actionAddSubscriptionDesc:
+      "Subaybayan ang paulit-ulit na bayarin o serbisyo",
+    actionSubscriptionsArchived: "Naka-archive na Subscriptions",
+    actionSubscriptionsArchivedDesc:
+      "Tingnan at ibalik ang mga nakaraang subscription",
+    actionImportDataCsv: "Mag-import ng Data (CSV)",
+    actionImportDataCsvDesc:
+      "Magpasok ng mga account at transaksyon mula sa spreadsheet",
+    screenSubscriptionsDesc:
+      "Subaybayan ang mga gastusin, burn rate, at paalala sa renewal",
   },
   navigation: {
     dashboard: "Dashboard",

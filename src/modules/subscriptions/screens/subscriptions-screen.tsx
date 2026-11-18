@@ -7,6 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { Repeat, Search, X } from "lucide-react-native";
 
 import {
@@ -49,15 +50,26 @@ import type {
   SubscriptionItem,
 } from "../types/subscription.types";
 
-export function SubscriptionsScreen() {
+export interface SubscriptionsScreenProps {
+  initialAction?: "new";
+  initialFilter?: SubscriptionFilter;
+  initialSubscriptionId?: string;
+}
+
+export function SubscriptionsScreen(props?: SubscriptionsScreenProps) {
   return (
     <WalkthroughRegistryProvider>
-      <SubscriptionsScreenContent />
+      <SubscriptionsScreenContent {...props} />
     </WalkthroughRegistryProvider>
   );
 }
 
-function SubscriptionsScreenContent() {
+function SubscriptionsScreenContent({
+  initialAction,
+  initialFilter,
+  initialSubscriptionId,
+}: SubscriptionsScreenProps = {}) {
+  const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
@@ -205,6 +217,59 @@ function SubscriptionsScreenContent() {
     setEditingSubscription(sub);
     setFormModalVisible(true);
   }, []);
+
+  const handledActionRef = useRef<string | null>(null);
+  const handledSubIdRef = useRef<string | null>(null);
+  const handledFilterRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (initialFilter && handledFilterRef.current !== initialFilter) {
+      handledFilterRef.current = initialFilter;
+      setFilter(initialFilter);
+    } else if (!initialFilter) {
+      handledFilterRef.current = null;
+    }
+  }, [initialFilter, setFilter]);
+
+  useEffect(() => {
+    if (!loading && initialAction === "new") {
+      if (handledActionRef.current !== "new") {
+        handledActionRef.current = "new";
+        handleOpenCreate();
+        router.setParams({ action: undefined });
+      }
+    } else if (!initialAction) {
+      handledActionRef.current = null;
+    }
+  }, [handleOpenCreate, initialAction, loading, router]);
+
+  useEffect(() => {
+    if (
+      !loading &&
+      initialSubscriptionId &&
+      handledSubIdRef.current !== initialSubscriptionId
+    ) {
+      const found = subscriptions.find((s) => s.id === initialSubscriptionId);
+      if (found) {
+        handledSubIdRef.current = initialSubscriptionId;
+        if (found.archivedAt && filter !== "archived") {
+          setFilter("archived");
+        }
+        handleOpenEdit(found);
+        router.setParams({ subscriptionId: undefined });
+      }
+    } else if (!initialSubscriptionId) {
+      handledSubIdRef.current = null;
+    }
+  }, [
+    filter,
+    handleOpenEdit,
+    initialSubscriptionId,
+    loading,
+    router,
+    setFilter,
+    subscriptions,
+  ]);
 
   const handleCloseForm = useCallback(() => {
     setFormModalVisible(false);

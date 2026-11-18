@@ -412,6 +412,7 @@ export const es = {
     sectionSchedules: "TRANSACCIONES PROGRAMADAS",
     sectionLabels: "ETIQUETAS",
     sectionPockets: "BOLSILLOS",
+    sectionSubscriptions: "SUSCRIPCIONES",
     settingStealthMode: "Modo Privacidad / Sigilo",
     settingStealthModeDesc: "Ocultar saldos y montos de cuentas",
     settingSoundHaptics: "Ajustes de Sonido y Háptica",
@@ -504,6 +505,17 @@ export const es = {
       "Configurar el botón de búsqueda en cabecera y barra lateral",
     settingSqliteMonitorDesc: "Inspeccionar tablas y diagnósticos de SQLite",
     guidesToSetting: "Guía al ajuste",
+    actionAddSubscription: "Agregar suscripción",
+    actionAddSubscriptionDesc:
+      "Controlar una factura recurrente, membresía o servicio",
+    actionSubscriptionsArchived: "Suscripciones archivadas",
+    actionSubscriptionsArchivedDesc:
+      "Ver y restaurar suscripciones pasadas o archivadas",
+    actionImportDataCsv: "Importar datos (CSV)",
+    actionImportDataCsvDesc:
+      "Importar cuentas y transacciones desde una hoja de cálculo",
+    screenSubscriptionsDesc:
+      "Controlar gastos recurrentes, tasa de consumo y alertas",
   },
   navigation: {
     dashboard: "Panel",

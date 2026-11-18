@@ -405,6 +405,7 @@ export const en = {
     sectionSchedules: "SCHEDULED TRANSACTIONS",
     sectionLabels: "LABELS & TAGS",
     sectionPockets: "POCKETS",
+    sectionSubscriptions: "SUBSCRIPTIONS",
     settingStealthMode: "Privacy / Stealth Mode",
     settingStealthModeDesc:
       "Hide or mask sensitive account balances and totals",
@@ -496,6 +497,17 @@ export const en = {
       "Configure the search button in header and navigation",
     settingSqliteMonitorDesc: "Inspect local database tables and diagnostics",
     guidesToSetting: "Guides to setting",
+    actionAddSubscription: "Add Subscription",
+    actionAddSubscriptionDesc:
+      "Track a recurring bill, membership, or service",
+    actionSubscriptionsArchived: "Archived Subscriptions",
+    actionSubscriptionsArchivedDesc:
+      "View and restore past or archived subscriptions",
+    actionImportDataCsv: "Import Data (CSV)",
+    actionImportDataCsvDesc:
+      "Bring accounts and transactions from a spreadsheet",
+    screenSubscriptionsDesc:
+      "Track recurring expenses, burn rate, and renewal alerts",
   },
   navigation: {
     dashboard: "Dashboard",
