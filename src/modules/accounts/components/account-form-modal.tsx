@@ -792,6 +792,34 @@ function AccountFormModalContent({
               setAmountSign((prev) => (prev === "+" ? "-" : "+"));
             }}
           />
+
+          {account ? (
+            <View style={styles.latestBalanceSection}>
+              <Text style={styles.fieldLabel}>Latest Balance</Text>
+              <View style={styles.latestBalanceRow}>
+                <AccountAmountText
+                  amountMinorUnits={account.currentBalanceMinorUnits}
+                  currencyCode={account.currencyCode}
+                  ignorePrivacy
+                  variant="title"
+                  style={styles.latestBalanceAmount}
+                />
+                <Pressable
+                  accessibilityLabel={`List of transactions for ${account.name}`}
+                  accessibilityRole="button"
+                  disabled={pending}
+                  onPress={handleViewTransactions}
+                  style={({ pressed }) => [
+                    styles.transactionsChip,
+                    pressed && styles.transactionsChipPressed,
+                  ]}
+                >
+                  <LayoutList color={theme.colors.textSecondary} size={14} />
+                  <Text style={styles.transactionsChipText}>List of Transactions</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
           {!isLiabilityAccount ? (
             <AmountCalculatorField
               amountInputRef={maintainingBalanceRef}
@@ -1004,31 +1032,6 @@ function AccountFormModalContent({
               }
             }}
           />
-
-          {account ? (
-            <View style={styles.balanceFooter}>
-              <Text style={styles.fieldLabel}>Latest Balance</Text>
-              <AccountAmountText
-                amountMinorUnits={account.currentBalanceMinorUnits}
-                currencyCode={account.currencyCode}
-                ignorePrivacy
-                variant="title"
-              />
-              <Pressable
-                accessibilityLabel={`List of transactions for ${account.name}`}
-                accessibilityRole="button"
-                disabled={pending}
-                onPress={handleViewTransactions}
-                style={({ pressed }) => [
-                  styles.transactionsChip,
-                  pressed && styles.transactionsChipPressed,
-                ]}
-              >
-                <LayoutList color={theme.colors.textSecondary} size={14} />
-                <Text style={styles.transactionsChipText}>List of Transactions</Text>
-              </Pressable>
-            </View>
-          ) : null}
 
           {account?.isArchived && isDeletable && onPermanentDelete ? (
             <View style={styles.archivedDeleteContainer}>
@@ -1470,17 +1473,20 @@ function createStyles(theme: AppTheme) {
       fontSize: 12,
       fontWeight: "600",
     },
-    balanceFooter: {
-      alignItems: "flex-start",
-      borderColor: theme.colors.border,
-      borderTopWidth: 1,
-      gap: theme.spacing.sm,
-      marginTop: theme.spacing.lg,
-      paddingTop: theme.spacing.lg,
+    latestBalanceSection: {
+      gap: theme.spacing.xs,
+    },
+    latestBalanceRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    latestBalanceAmount: {
+      flexShrink: 1,
+      marginRight: theme.spacing.sm,
     },
     transactionsChip: {
       alignItems: "center",
-      alignSelf: "flex-start",
       backgroundColor: theme.colors.surfaceMuted,
       borderColor: theme.colors.border,
       borderRadius: theme.borderRadius.round,
