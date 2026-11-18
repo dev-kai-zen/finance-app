@@ -1549,6 +1549,9 @@ export const es = {
       "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
     readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
+    readyTourTipTitle: "Recorridos interactivos cuando los necesites",
+    readyTourTipMessage:
+      "Cuando quieras una guía rápida en cualquier pantalla o formulario, toca el botón de destellos (✨) en la parte superior.",
     finishSetup: "Ir a Inicio",
     continue: "Continuar",
     accountSetupChoiceTitle: "¿Cómo te gustaría configurar tus cuentas?",
@@ -1637,7 +1640,7 @@ export const es = {
     walkthroughIntroTitle: "¡Te damos la bienvenida a tu Panel!",
     walkthroughIntroSubtitle: "Tu centro de control financiero",
     walkthroughIntroMessage:
-      "Aquí puedes ver tu patrimonio neto total, monitorear tus gastos mensuales y gestionar tus transacciones. ¿Te gustaría hacer un recorrido rápido para conocer cómo funciona?",
+      "Aquí puedes ver tu patrimonio neto total, monitorear gastos mensuales y gestionar transacciones. También puedes tocar el botón de destellos (✨) en la parte superior en cualquier momento para un recorrido guiado.",
     walkthroughIntroStart: "Iniciar recorrido",
     walkthroughIntroSkip: "Explorar por mi cuenta",
     walkthroughChip: "Guía",

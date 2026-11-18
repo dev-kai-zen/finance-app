@@ -606,6 +606,18 @@ export function GuidedReadyStep({
           </Text>
         ) : null}
       </View>
+
+      <View style={styles.tourTipCard}>
+        <Sparkles color="#00A3FF" size={18} />
+        <View style={styles.tourTipCopy}>
+          <Text style={styles.tourTipTitle}>
+            {t("onboarding.readyTourTipTitle")}
+          </Text>
+          <Text style={styles.tourTipMessage}>
+            {t("onboarding.readyTourTipMessage")}
+          </Text>
+        </View>
+      </View>
     </OnboardingStepShell>
   );
 }
@@ -781,6 +793,31 @@ function createStyles(theme: AppTheme) {
     summaryLine: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
+    },
+    tourTipCard: {
+      alignItems: "flex-start",
+      backgroundColor: `${theme.colors.primary}10`,
+      borderColor: `${theme.colors.primary}30`,
+      borderRadius: theme.borderRadius.large,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      marginTop: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    tourTipCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    tourTipTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    tourTipMessage: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      lineHeight: theme.typography.lineHeight.sm,
     },
     toggleCardList: {
       gap: theme.spacing.md,

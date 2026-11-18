@@ -1527,6 +1527,9 @@ export const en = {
       "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
     readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
+    readyTourTipTitle: "Interactive Tours on Demand",
+    readyTourTipMessage:
+      "Whenever you want a quick guide on any screen or form, simply tap the Sparkles (✨) button at the top.",
     finishSetup: "Go to Home",
     continue: "Continue",
     accountSetupChoiceTitle: "How would you like to set up accounts?",
@@ -1615,7 +1618,7 @@ export const en = {
     walkthroughIntroTitle: "Welcome to your Dashboard!",
     walkthroughIntroSubtitle: "Your financial command center",
     walkthroughIntroMessage:
-      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. Would you like a quick walkthrough of how everything works?",
+      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. You can also tap the Sparkles (✨) button at the top of any screen anytime for a guided tour.",
     walkthroughIntroStart: "Take a Tour",
     walkthroughIntroSkip: "Explore on My Own",
     walkthroughChip: "Guide",

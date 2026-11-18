@@ -222,6 +222,7 @@ function DashboardScreenContent() {
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "dashboardWalkthroughDismissed",
     enabled: !isVersionHistoryPending,
+    autoTrigger: true,
     onStart: walkthrough.startWalkthrough,
   });
 
@@ -251,7 +252,7 @@ function DashboardScreenContent() {
     ) {
       const timer = setTimeout(() => {
         walkthroughIntro.triggerIfFirstTime();
-      }, 200);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [

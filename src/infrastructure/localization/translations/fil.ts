@@ -1566,6 +1566,9 @@ export const fil = {
     readyAccountManual:
       "Mga Account: Magsimula mula sa simula (walang panimulang account)",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
+    readyTourTipTitle: "Interactive Tours Anumang Oras",
+    readyTourTipMessage:
+      "Kahit kailan mo gusto ng mabilisang gabay sa anumang screen o form, pindutin lamang ang Sparkles (✨) button sa itaas.",
     finishSetup: "Pumunta sa Home",
     continue: "Magpatuloy",
     accountSetupChoiceTitle: "Paano mo gustong i-setup ang iyong mga account?",
@@ -1655,7 +1658,7 @@ export const fil = {
     walkthroughIntroTitle: "Maligayang pagdating sa iyong Dashboard!",
     walkthroughIntroSubtitle: "Ang iyong command center sa pananalapi",
     walkthroughIntroMessage:
-      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Nais mo ba ng mabilisang walkthrough para maging pamilyar?",
+      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Maaari mo ring pindutin ang Sparkles (✨) button sa itaas anumang oras para sa guided tour.",
     walkthroughIntroStart: "Mag-tour",
     walkthroughIntroSkip: "I-explore mag-isa",
     walkthroughChip: "Guide",

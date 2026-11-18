@@ -9,6 +9,7 @@ export interface UseWalkthroughIntroOptions {
   onStart: () => void;
   prerequisitePromptKey?: PromptSettingKey;
   enabled?: boolean;
+  autoTrigger?: boolean;
 }
 
 export function useWalkthroughIntro({
@@ -16,6 +17,7 @@ export function useWalkthroughIntro({
   onStart,
   prerequisitePromptKey,
   enabled = true,
+  autoTrigger = false,
 }: UseWalkthroughIntroOptions) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const [isIntroVisible, setIsIntroVisible] = useState(false);
@@ -24,14 +26,15 @@ export function useWalkthroughIntro({
   const isPrerequisiteMet = prerequisitePromptKey
     ? isPromptDismissed(prerequisitePromptKey)
     : true;
-  // On-demand walkthrough model: do not auto-trigger surprise popups on first visit
-  const canTrigger = false;
-  const isWaitingForIntro = false;
-  const scrollEnabled = !isIntroVisible;
+  const canTrigger = autoTrigger && !isDismissed && isPrerequisiteMet && enabled;
+  const isWaitingForIntro = canTrigger && !isIntroVisible;
+  const scrollEnabled = !isWaitingForIntro && !isIntroVisible;
 
   const triggerIfFirstTime = useCallback(() => {
-    // Intentionally no-op: tours are triggered on-demand via header Sparkles buttons
-  }, []);
+    if (autoTrigger && !isPromptDismissed(promptKey) && isPrerequisiteMet && enabled) {
+      setIsIntroVisible(true);
+    }
+  }, [autoTrigger, isPromptDismissed, promptKey, isPrerequisiteMet, enabled]);
 
   const showIntro = useCallback(() => {
     setIsIntroVisible(true);
