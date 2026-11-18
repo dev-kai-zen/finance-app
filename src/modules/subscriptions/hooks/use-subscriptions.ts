@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
 import { useLocalization } from "@/infrastructure/localization";
+import { useCurrencyPreferences } from "@/modules/currencies";
 import { listSubscriptions } from "../repositories/subscriptions.repository";
 import { calculateBurnRateSummary } from "../services/calculate-burn-rate.service";
 import {
@@ -22,6 +23,7 @@ import type {
 } from "../types/subscription.types";
 
 export function useSubscriptions() {
+  const { preferences } = useCurrencyPreferences();
   const [items, setItems] = useState<SubscriptionItem[]>([]);
   const [filter, setFilter] = useState<SubscriptionFilter>("active");
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,8 +47,11 @@ export function useSubscriptions() {
   );
 
   const summary: SubscriptionBurnRateSummary = useMemo(() => {
-    return calculateBurnRateSummary(items);
-  }, [items]);
+    return calculateBurnRateSummary(
+      items,
+      preferences.defaultCurrency,
+    );
+  }, [items, preferences.defaultCurrency]);
 
   const filteredSubscriptions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();

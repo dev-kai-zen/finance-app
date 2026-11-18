@@ -120,6 +120,41 @@ test("calculateBurnRateSummary aggregates multiple subscriptions correctly", () 
   assert.equal(summary.currencyCode, "PHP");
 });
 
+test("calculateBurnRateSummary converts multi-currency subscriptions to base currency", () => {
+  const multiCurrencySubs = [
+    {
+      id: "sub-usd",
+      name: "Netflix US",
+      status: "active",
+      amountMinorUnits: 1500, // $15.00 USD
+      currencyCode: "USD",
+      billingCycle: "monthly",
+      billingCycleInterval: 1,
+      daysUntilRenewal: 5,
+      archivedAt: null,
+    },
+    {
+      id: "sub-php",
+      name: "PLDT",
+      status: "active",
+      amountMinorUnits: 150000, // ₱1500.00 PHP
+      currencyCode: "PHP",
+      billingCycle: "monthly",
+      billingCycleInterval: 1,
+      daysUntilRenewal: 10,
+      archivedAt: null,
+    },
+  ];
+
+  // Rates: 1 USD = 58 PHP (580,000 bps)
+  const ratesMap = new Map([["USD", 580000]]);
+  const summary = calculateBurnRateSummary(multiCurrencySubs, "PHP", ratesMap);
+
+  // $15.00 * 58 = 870.00 PHP (87000 minor units) + 150000 PHP = 237000 PHP
+  assert.equal(summary.totalMonthlyBurnRateMinorUnits, 237000);
+  assert.equal(summary.currencyCode, "PHP");
+});
+
 test("subscriptionFormSchema validates valid and invalid payloads", () => {
   const valid = {
     name: "Spotify Family",

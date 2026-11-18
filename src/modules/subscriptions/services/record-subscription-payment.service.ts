@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { resolveScheduleOccurrencePaidInContext } from "@/modules/scheduled-transactions";
 import { recordTransactionInContext } from "@/modules/transactions";
@@ -24,9 +25,11 @@ export function recordSubscriptionPayment(
     note?: string;
   } = {},
 ): RecordSubscriptionPaymentResult {
-  return db.transaction((tx) =>
+  const result = db.transaction((tx) =>
     recordSubscriptionPaymentInContext(subscriptionId, options, tx),
   );
+  DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+  return result;
 }
 
 export function recordSubscriptionPaymentInContext(

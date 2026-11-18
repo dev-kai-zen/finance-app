@@ -43,6 +43,9 @@ export function setScheduledTransactionPaused(
     if (schedule.status === "completed") {
       throw new Error("A completed schedule cannot be resumed.");
     }
+    if (paused) {
+      deleteUnprocessedScheduleOccurrences(id, tx);
+    }
     updateScheduledTransactionRecord(
       id,
       { status: paused ? "paused" : "active", updatedAt: new Date() },

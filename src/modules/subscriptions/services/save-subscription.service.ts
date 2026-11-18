@@ -150,6 +150,12 @@ export function syncSubscriptionScheduleInContext(
       } catch {
         // Ignore if schedule record was not found
       }
+    } else {
+      try {
+        setScheduledTransactionPaused(linkedScheduleId, false);
+      } catch {
+        // Ignore if schedule record was not found
+      }
     }
   } else if (linkedScheduleId) {
     try {

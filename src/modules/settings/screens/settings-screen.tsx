@@ -1790,6 +1790,7 @@ function SettingsScreenContent() {
       </PageContainer>
 
       <AppToast
+        includeSafeArea
         message={toastMessage ?? ""}
         onClose={() => setToastMessage(null)}
         variant={toastType}

@@ -164,7 +164,7 @@ function SubscriptionsScreenContent() {
     if (!loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
         walkthroughIntro.triggerIfFirstTime();
-      }, 600);
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
@@ -616,9 +616,20 @@ function SubscriptionsScreenContent() {
         />
       </PageContainer>
 
+      {/* Block interaction while waiting for the first-time modal */}
+      {walkthroughIntro.isWaitingForIntro ? (
+        <Pressable
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={() => {}}
+          style={styles.interactionBlocker}
+        />
+      ) : null}
+
       {/* Feedback Toast */}
       <AppToast
         duration={2500}
+        includeSafeArea
         message={toastMessage ?? ""}
         onClose={() => setToastMessage(null)}
         position="top"
@@ -634,6 +645,11 @@ function createStyles(theme: AppTheme) {
     screenWrapper: {
       backgroundColor: theme.colors.background,
       flex: 1,
+    },
+    interactionBlocker: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: "rgba(0,0,0,0.01)",
+      zIndex: 99999,
     },
     pageContent: {
       flex: 1,

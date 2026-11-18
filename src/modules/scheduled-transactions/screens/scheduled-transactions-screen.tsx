@@ -1014,8 +1014,14 @@ function ScheduledTransactionsScreenContent({
               });
               return;
             }
-            if (restore(pendingRestore.id)) {
+            const toRestore = pendingRestore;
+            if (restore(toRestore.id)) {
               setPendingRestore(null);
+              setToastState({
+                visible: true,
+                message: "Schedule restored",
+                description: `"${toRestore.name || "Schedule"}" was restored to active schedules.`,
+              });
             }
           }
         }}
@@ -1051,8 +1057,19 @@ function ScheduledTransactionsScreenContent({
         }
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
-          if (pendingDelete && remove(pendingDelete.id)) {
-            setPendingDelete(null);
+          if (pendingDelete) {
+            const isArchive = pendingDeleteHasHistory;
+            const name = pendingDelete.name || "Schedule";
+            if (remove(pendingDelete.id)) {
+              setPendingDelete(null);
+              setToastState({
+                visible: true,
+                message: isArchive ? "Schedule archived" : "Schedule deleted",
+                description: isArchive
+                  ? `"${name}" was moved to archive.`
+                  : `"${name}" was permanently deleted.`,
+              });
+            }
           }
         }}
         pending={pending}
@@ -1126,6 +1143,7 @@ function ScheduledTransactionsScreenContent({
 
       <AppToast
         description={toastState.description}
+        includeSafeArea
         message={toastState.message}
         onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
         position="top"

@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DeviceEventEmitter } from "react-native";
 
 import { useWorkspace } from "@/modules/onboarding";
@@ -7,6 +7,7 @@ import { useAppLock } from "@/modules/security";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useProStatus, ProPaywallModal } from "@/modules/pro";
 import { getTransactionCount } from "@/modules/transactions";
+import { isVersionHistoryPending, subscribeToVersionHistory } from "@/modules/version-history";
 import { MIN_TRANSACTIONS_FOR_DEVELOPER_MESSAGE } from "../constants/developer-message.constants";
 import { DeveloperMessageModal } from "./developer-message-modal";
 
@@ -17,30 +18,47 @@ export function DeveloperMessageGate({ children }: PropsWithChildren) {
   const { isLocked, isReady } = useAppLock();
   const [visible, setVisible] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   const checkEligibility = useCallback(() => {
+    clearTimer();
     if (!isReady || isLocked) return;
     if (state.status !== "completed") return;
     if (state.mode !== "personal") return;
     if (experience.isPromptDismissed("developerMessageSeen")) return;
+    if (isVersionHistoryPending()) return;
 
     try {
       const count = getTransactionCount();
       if (count >= MIN_TRANSACTIONS_FOR_DEVELOPER_MESSAGE) {
-        // Delay to allow any active modal to finish closing smoothly
-        const timer = setTimeout(() => {
+        // Delay to allow any active modal/screen to settle
+        timerRef.current = setTimeout(() => {
           setVisible(true);
+          timerRef.current = null;
         }, 750);
-        return () => clearTimeout(timer);
       }
     } catch {
       // Ignore during initial SQLite migration or load
     }
-  }, [isReady, isLocked, state.status, state.mode, experience]);
+  }, [clearTimer, isReady, isLocked, state.status, state.mode, experience]);
 
   useEffect(() => {
-    const cleanup = checkEligibility();
-    return cleanup;
+    checkEligibility();
+    return clearTimer;
+  }, [checkEligibility, clearTimer]);
+
+  useEffect(() => {
+    const unsubVersionHistory = subscribeToVersionHistory(() => {
+      checkEligibility();
+    });
+    return unsubVersionHistory;
   }, [checkEligibility]);
 
   useEffect(() => {
@@ -50,8 +68,11 @@ export function DeveloperMessageGate({ children }: PropsWithChildren) {
         checkEligibility();
       },
     );
-    return () => sub.remove();
-  }, [checkEligibility]);
+    return () => {
+      sub.remove();
+      clearTimer();
+    };
+  }, [checkEligibility, clearTimer]);
 
   const handleClose = () => {
     setVisible(false);

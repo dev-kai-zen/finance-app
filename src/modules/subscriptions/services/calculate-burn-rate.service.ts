@@ -1,4 +1,7 @@
-import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
+import {
+  convertCurrencyMinorUnits,
+  DEFAULT_BASE_CURRENCY,
+} from "@/utils/currency";
 import type {
   SubscriptionBurnRateSummary,
   SubscriptionItem,
@@ -11,6 +14,7 @@ import {
 export function calculateBurnRateSummary(
   subscriptions: SubscriptionItem[],
   baseCurrency = DEFAULT_BASE_CURRENCY,
+  ratesMap?: Map<string, number> | Record<string, number>,
 ): SubscriptionBurnRateSummary {
   let totalMonthlyBurn = 0;
   let activeCount = 0;
@@ -27,7 +31,13 @@ export function calculateBurnRateSummary(
         item.billingCycle,
         item.billingCycleInterval,
       );
-      totalMonthlyBurn += burn;
+      const convertedBurn = convertCurrencyMinorUnits(
+        burn,
+        item.currencyCode || baseCurrency,
+        baseCurrency,
+        ratesMap,
+      );
+      totalMonthlyBurn += convertedBurn;
 
       if (item.status === "active") activeCount += 1;
       if (item.status === "trial") trialCount += 1;

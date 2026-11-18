@@ -1,3 +1,4 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   recordTransactionInContext,
@@ -72,6 +73,10 @@ export function processDueSchedules(
       result.failed += 1;
     }
     result.processed += 1;
+  }
+
+  if (result.posted > 0) {
+    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
   }
 
   return result;
@@ -256,6 +261,7 @@ export function postScheduledOccurrence(
       tx,
     );
   });
+  DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
 }
 
 export function skipScheduledOccurrence(

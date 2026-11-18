@@ -187,6 +187,7 @@ export function useTransactions(
         setError(null);
         restoreTransaction(id);
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to restore transaction.");
@@ -205,6 +206,7 @@ export function useTransactions(
         setError(null);
         permanentlyDeleteTransaction(id);
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to permanently delete transaction.");
@@ -222,6 +224,7 @@ export function useTransactions(
       setError(null);
       permanentlyDeleteAllDeletedTransactions();
       refresh();
+      DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
       return true;
     } catch (err: any) {
       setError(
@@ -243,6 +246,7 @@ export function useTransactions(
         setError(null);
         await updateTransfer(input, attachmentChanges);
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to update transfer.");
@@ -265,6 +269,7 @@ export function useTransactions(
         setError(null);
         await updateTransaction(id, input, attachmentChanges);
         refresh();
+        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to update transaction.");
