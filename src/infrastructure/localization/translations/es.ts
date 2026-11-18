@@ -1149,6 +1149,8 @@ export const es = {
         "Busca y filtra monedas al instante durante la configuración inicial.",
       improveItem2:
         "Aclara las etiquetas de tipos de cuenta para organizar tus finanzas con mayor facilidad.",
+      improveItem3:
+        "Destacar la exportación CSV y el colapso de grupos en la guía de cuentas.",
     },
     v170: {
       date: "18 de noviembre de 2026",
@@ -1836,6 +1838,12 @@ export const es = {
     stepSearchTitle: "Buscar cuentas",
     stepSearchDesc:
       "Filtra rápidamente tus cuentas por nombre en activos y pasivos.",
+    stepExportTitle: "Exportar cuentas",
+    stepExportDesc:
+      "Exporta los saldos de tus cuentas y bolsillos en un archivo CSV para guardarlo en tu dispositivo o compartirlo.",
+    stepCollapseExpandTitle: "Colapsar y expandir grupos",
+    stepCollapseExpandDesc:
+      "Expande o colapsa rápidamente todos los grupos de cuentas a la vez para tener una vista más organizada y compacta.",
     stepAssetsTitle: "Resumen de activos",
     stepAssetsDesc:
       "Consulta tus cuentas positivas (bancos, efectivo, inversiones y bolsillos) junto con su saldo total.",

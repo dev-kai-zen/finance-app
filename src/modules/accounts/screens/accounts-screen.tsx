@@ -252,6 +252,8 @@ function AccountsScreenContent({
   const scrollContentRef = useRef<View>(null);
   const fabRef = useRef<View>(null);
   const searchRef = useWalkthroughTarget("searchBox");
+  const exportRef = useWalkthroughTarget("accountsExport");
+  const collapseExpandRef = useWalkthroughTarget("accountsCollapseExpand");
   const { registerTarget, measureTargetInAncestor } = useWalkthroughRegistry();
   const { isPromptDismissed } = useExperiencePreferences();
 
@@ -569,6 +571,8 @@ function AccountsScreenContent({
 
           <View style={viewModeControlsRow}>
             <Pressable
+              ref={exportRef as never}
+              collapsable={false}
               accessibilityLabel={t("accounts.exportCsv")}
               accessibilityRole="button"
               accessibilityState={{ disabled: exportingCsv || data.loading }}
@@ -590,6 +594,7 @@ function AccountsScreenContent({
 
             <AccountGroupsViewChip
               style={accountGroupsViewChipReset}
+              targetRef={collapseExpandRef}
               viewMode={viewMode}
               onToggle={handleToggleGlobalViewMode}
             />

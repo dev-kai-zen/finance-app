@@ -67,6 +67,12 @@ export function AccountsWalkthroughOverlay({
   } else if (step.id === "searchBox") {
     cutoutPadding = 4;
     cutoutRadius = theme.borderRadius.large;
+  } else if (step.id === "accountsExport") {
+    cutoutPadding = 4;
+    cutoutRadius = 16;
+  } else if (step.id === "accountsCollapseExpand") {
+    cutoutPadding = 4;
+    cutoutRadius = 20;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;

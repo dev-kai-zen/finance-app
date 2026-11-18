@@ -14,6 +14,8 @@ export type WalkthroughTargetId =
   | "archivedChip"
   | "fundGroupsChip"
   | "searchBox"
+  | "accountsExport"
+  | "accountsCollapseExpand"
   | "assetsSection"
   | "liabilitiesSection"
   | "accountsFab"

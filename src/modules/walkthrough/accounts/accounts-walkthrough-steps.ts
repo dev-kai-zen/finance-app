@@ -20,6 +20,18 @@ export const ACCOUNTS_WALKTHROUGH_STEPS: WalkthroughStep[] = [
     descKey: "accountsWalkthrough.stepSearchDesc",
   },
   {
+    id: "accountsExport",
+    targetId: "accountsExport",
+    titleKey: "accountsWalkthrough.stepExportTitle",
+    descKey: "accountsWalkthrough.stepExportDesc",
+  },
+  {
+    id: "accountsCollapseExpand",
+    targetId: "accountsCollapseExpand",
+    titleKey: "accountsWalkthrough.stepCollapseExpandTitle",
+    descKey: "accountsWalkthrough.stepCollapseExpandDesc",
+  },
+  {
     id: "assetsSection",
     targetId: "assetsSection",
     titleKey: "accountsWalkthrough.stepAssetsTitle",

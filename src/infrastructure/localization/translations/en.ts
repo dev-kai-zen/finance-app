@@ -1132,6 +1132,8 @@ export const en = {
         "Search and filter currencies instantly during first-time onboarding setup.",
       improveItem2:
         "Clarify account type labels and setup menus to make organizing finances easier.",
+      improveItem3:
+        "Highlight exporting CSV files and collapsing account groups in the accounts walkthrough.",
     },
     v170: {
       date: "November 18, 2026",
@@ -1813,6 +1815,12 @@ export const en = {
     stepSearchTitle: "Search Accounts",
     stepSearchDesc:
       "Instantly filter your accounts by name across both assets and liabilities.",
+    stepExportTitle: "Export Accounts",
+    stepExportDesc:
+      "Export your complete account balances and sub-pockets into a CSV spreadsheet file to save to your device or share.",
+    stepCollapseExpandTitle: "Collapse & Expand Groups",
+    stepCollapseExpandDesc:
+      "Quickly expand or collapse all account categories at once for a cleaner, high-level summary of your balances.",
     stepAssetsTitle: "Assets Overview",
     stepAssetsDesc:
       "View your positive accounts—such as bank accounts, cash, investments, and sub-pockets—along with your total asset valuation.",

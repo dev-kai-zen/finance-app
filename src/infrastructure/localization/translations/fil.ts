@@ -1163,6 +1163,8 @@ export const fil = {
         "Maghanap at magsala ng pera nang mabilis habang nag-o-onboarding.",
       improveItem2:
         "Linawin ang mga label ng uri ng account upang maging mas madali ang pag-aayos.",
+      improveItem3:
+        "Itampok ang pag-export ng mga CSV file at pag-collapse ng mga grupo sa walkthrough.",
     },
     v170: {
       date: "Nobyembre 18, 2026",
@@ -1854,6 +1856,12 @@ export const fil = {
     stepSearchTitle: "Maghanap ng Account",
     stepSearchDesc:
       "Mabilis na maghanap at mag-filter ng account gamit ang pangalan.",
+    stepExportTitle: "I-export ang mga Account",
+    stepExportDesc:
+      "I-export ang iyong mga balanse sa account at pockets sa isang CSV spreadsheet file para i-save sa iyong device o ibahagi.",
+    stepCollapseExpandTitle: "I-collapse at I-expand ang mga Grupo",
+    stepCollapseExpandDesc:
+      "Mabilis na i-expand o i-collapse ang lahat ng grupo ng account nang sabay-sabay para sa mas malinis at buod na pagtingin sa iyong mga balanse.",
     stepAssetsTitle: "Pangkalahatang-ideya ng Assets",
     stepAssetsDesc:
       "Tingnan ang iyong mga positibong account—tulad ng bangko, cash, e-wallets, at pockets—kasama ang kabuuang halaga.",

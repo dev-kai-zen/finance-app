@@ -1,3 +1,4 @@
+import { type Ref } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -16,12 +17,14 @@ export interface AccountGroupsViewChipProps {
   viewMode: AccountsGroupViewMode;
   onToggle: (mode: AccountsGroupViewMode) => void;
   style?: StyleProp<ViewStyle>;
+  targetRef?: Ref<View>;
 }
 
 export function AccountGroupsViewChip({
   viewMode,
   onToggle,
   style,
+  targetRef,
 }: AccountGroupsViewChipProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -29,7 +32,7 @@ export function AccountGroupsViewChip({
 
   return (
     <View style={[styles.container, style]}>
-      <View style={styles.segmentedPill}>
+      <View ref={targetRef} collapsable={false} style={styles.segmentedPill}>
         <Pressable
           accessibilityLabel={t("accounts.expandAll")}
           accessibilityRole="button"
