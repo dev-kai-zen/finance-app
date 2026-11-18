@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 
 import { appLockLifecycle } from "@/modules/security";
@@ -78,12 +78,12 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
-  const reset = (attachments: NoteAttachment[] = []) => {
+  const reset = useCallback((attachments: NoteAttachment[] = []) => {
     setExistingAttachments(attachments);
     setDrafts([]);
     setRemovedAttachmentIds([]);
     setError(null);
-  };
+  }, []);
 
   return {
     existingAttachments,

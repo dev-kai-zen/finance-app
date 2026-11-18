@@ -182,47 +182,53 @@ export function NoteAttachmentsGrid({
       )}
 
       {/* Action bottom sheet for Camera / Gallery */}
-      <ActionBottomSheet
-        items={[
-          {
-            id: "camera",
-            label: "Take Photo",
-            icon: <Camera color={theme.colors.primary} size={20} />,
-            onPress: () => {
-              setSheetOpen(false);
-              setTimeout(onPickCamera, 200);
+      {sheetOpen ? (
+        <ActionBottomSheet
+          items={[
+            {
+              id: "camera",
+              label: "Take Photo",
+              icon: <Camera color={theme.colors.primary} size={20} />,
+              onPress: () => {
+                setSheetOpen(false);
+                setTimeout(onPickCamera, 200);
+              },
             },
-          },
-          {
-            id: "library",
-            label: "Choose from Photos",
-            icon: <ImageIcon color={theme.colors.primary} size={20} />,
-            onPress: () => {
-              setSheetOpen(false);
-              setTimeout(onPickLibrary, 200);
+            {
+              id: "library",
+              label: "Choose from Photos",
+              icon: <ImageIcon color={theme.colors.primary} size={20} />,
+              onPress: () => {
+                setSheetOpen(false);
+                setTimeout(onPickLibrary, 200);
+              },
             },
-          },
-        ]}
-        onClose={() => setSheetOpen(false)}
-        title="Attach Photo"
-        visible={sheetOpen}
-      />
+          ]}
+          onClose={() => setSheetOpen(false)}
+          title="Attach Photo"
+          visible={sheetOpen}
+        />
+      ) : null}
 
       {/* Image viewer modal */}
-      <NoteImageViewerModal
-        imageName={activeViewer?.name}
-        imageUri={activeViewer?.uri ?? null}
-        onClose={() => setActiveViewer(null)}
-        onDelete={activeViewer?.onDelete}
-        visible={Boolean(activeViewer)}
-      />
+      {Boolean(activeViewer) ? (
+        <NoteImageViewerModal
+          imageName={activeViewer?.name}
+          imageUri={activeViewer?.uri ?? null}
+          onClose={() => setActiveViewer(null)}
+          onDelete={activeViewer?.onDelete}
+          visible={Boolean(activeViewer)}
+        />
+      ) : null}
 
-      <ProFeatureModal
-        featureDescription={t("pro.locked.receiptsDesc")}
-        featureTitle={t("pro.locked.receiptsTitle")}
-        onClose={() => setProModalVisible(false)}
-        visible={proModalVisible}
-      />
+      {proModalVisible ? (
+        <ProFeatureModal
+          featureDescription={t("pro.locked.receiptsDesc")}
+          featureTitle={t("pro.locked.receiptsTitle")}
+          onClose={() => setProModalVisible(false)}
+          visible={proModalVisible}
+        />
+      ) : null}
     </View>
   );
 }

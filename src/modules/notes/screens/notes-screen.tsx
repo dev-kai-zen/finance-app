@@ -78,7 +78,7 @@ function NotesScreenContent({
     updateNote,
     deleteNote,
     refresh,
-  } = useNotes();
+  } = useNotes({ autoRefresh: false });
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
 
   const [editorVisible, setEditorVisible] = useState(false);
@@ -365,63 +365,74 @@ function NotesScreenContent({
         )}
       </View>
 
-      <NoteEditorModal
-        note={selectedNote}
-        onClose={() => setEditorVisible(false)}
-        onDelete={handleDeleteNote}
-        onSave={handleSaveNote}
-        saving={saving}
-        visible={editorVisible}
-      />
+      </PageContainer>
 
-      <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete"
-        message={`Are you sure you want to permanently delete "${noteToDelete?.title ?? "this note"}"? This action cannot be undone.`}
-        onCancel={() => setNoteToDelete(null)}
-        onConfirm={handleExecuteDelete}
-        title="Delete Note"
-        variant="destructive"
-        visible={Boolean(noteToDelete)}
-      />
+      {editorVisible ? (
+        <NoteEditorModal
+          note={selectedNote}
+          onClose={() => setEditorVisible(false)}
+          onDelete={handleDeleteNote}
+          onSave={handleSaveNote}
+          saving={saving}
+          visible={editorVisible}
+        />
+      ) : null}
 
-      <ProFeatureModal
-        featureDescription={guardMeta?.featureDescription}
-        featureTitle={guardMeta?.featureTitle}
-        onClose={closePaywall}
-        visible={paywallVisible}
-      />
+      {Boolean(noteToDelete) ? (
+        <ConfirmModal
+          cancelLabel="Cancel"
+          confirmLabel="Delete"
+          message={`Are you sure you want to permanently delete "${noteToDelete?.title ?? "this note"}"? This action cannot be undone.`}
+          onCancel={() => setNoteToDelete(null)}
+          onConfirm={handleExecuteDelete}
+          title="Delete Note"
+          variant="destructive"
+          visible={Boolean(noteToDelete)}
+        />
+      ) : null}
 
-      <WalkthroughIntroModal
-        visible={walkthroughIntro.isIntroVisible}
-        title={t("notesWalkthrough.introTitle")}
-        subtitle={t("notesWalkthrough.introSubtitle")}
-        message={t("notesWalkthrough.introMessage")}
-        icon={<StickyNote color={theme.colors.primary} size={32} />}
-        onStart={walkthroughIntro.handleStart}
-        onSkip={walkthroughIntro.handleSkip}
-      />
+      {paywallVisible ? (
+        <ProFeatureModal
+          featureDescription={guardMeta?.featureDescription}
+          featureTitle={guardMeta?.featureTitle}
+          onClose={closePaywall}
+          visible={paywallVisible}
+        />
+      ) : null}
+
+      {walkthroughIntro.isIntroVisible ? (
+        <WalkthroughIntroModal
+          visible={walkthroughIntro.isIntroVisible}
+          title={t("notesWalkthrough.introTitle")}
+          subtitle={t("notesWalkthrough.introSubtitle")}
+          message={t("notesWalkthrough.introMessage")}
+          icon={<StickyNote color={theme.colors.primary} size={32} />}
+          onStart={walkthroughIntro.handleStart}
+          onSkip={walkthroughIntro.handleSkip}
+        />
+      ) : null}
 
       {/* Notes Walkthrough Overlay */}
-      <NotesWalkthroughOverlay
-        onEmptyCreatePress={() => {
-          walkthrough.completeWalkthrough();
-          handleOpenNewNote();
-        }}
-        onFabPress={() => {
-          walkthrough.completeWalkthrough();
-          handleOpenNewNote();
-        }}
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
-        step={walkthrough.currentStep}
-        stepIndex={walkthrough.activeStepIndex}
-        targetLayout={walkthrough.activeTargetLayout}
-        totalSteps={walkthrough.totalSteps}
-        visible={walkthrough.isWalkthroughActive}
-      />
-      </PageContainer>
+      {walkthrough.isWalkthroughActive ? (
+        <NotesWalkthroughOverlay
+          onEmptyCreatePress={() => {
+            walkthrough.completeWalkthrough();
+            handleOpenNewNote();
+          }}
+          onFabPress={() => {
+            walkthrough.completeWalkthrough();
+            handleOpenNewNote();
+          }}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
+      ) : null}
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (

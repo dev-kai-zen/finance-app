@@ -41,6 +41,8 @@ export function UnsavedChangesModal({
   discardLabel,
   keepEditingLabel,
 }: UnsavedChangesModalProps) {
+  if (!visible) return null;
+
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();

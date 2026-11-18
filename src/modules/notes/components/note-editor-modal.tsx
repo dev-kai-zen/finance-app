@@ -27,6 +27,7 @@ import {
   WalkthroughTarget,
 } from "@/modules/walkthrough";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useRegisterActiveModal } from "@/hooks";
 import type { AppTheme } from "@/constants/theme";
 import {
   HexColorFormModal,
@@ -55,6 +56,7 @@ export interface NoteEditorModalProps {
 }
 
 export function NoteEditorModal(props: NoteEditorModalProps) {
+  useRegisterActiveModal(props.visible);
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
@@ -94,7 +96,6 @@ function NoteEditorModalContent({
 
   const {
     colors: hexColorsList,
-    refresh: refreshHexColors,
     addColor,
   } = useHexColors();
 
@@ -114,7 +115,6 @@ function NoteEditorModalContent({
 
   useEffect(() => {
     if (visible) {
-      refreshHexColors();
       setIsColorFormOpen(false);
       if (note) {
         setTitle(note.title);
@@ -137,7 +137,7 @@ function NoteEditorModalContent({
       });
       setValidationError(null);
     }
-  }, [visible, note, refreshHexColors]);
+  }, [visible, note, resetAttachments]);
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
@@ -483,51 +483,59 @@ function NoteEditorModalContent({
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete"
-        message="Are you sure you want to permanently delete this note and its attachments? This action cannot be undone."
-        onCancel={() => setDeleteConfirmOpen(false)}
-        onConfirm={handleDelete}
-        title="Delete Note"
-        variant="destructive"
-        visible={deleteConfirmOpen}
-      />
+      {deleteConfirmOpen ? (
+        <ConfirmModal
+          cancelLabel="Cancel"
+          confirmLabel="Delete"
+          message="Are you sure you want to permanently delete this note and its attachments? This action cannot be undone."
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onConfirm={handleDelete}
+          title="Delete Note"
+          variant="destructive"
+          visible={deleteConfirmOpen}
+        />
+      ) : null}
 
       {/* Validation / Error Notification Modal */}
-      <NotificationModal
-        message={validationError ?? attachmentError ?? ""}
-        onClose={() => {
-          setValidationError(null);
-          clearAttachmentError();
-        }}
-        title="Notice"
-        variant="error"
-        visible={Boolean(validationError || attachmentError)}
-      />
+      {Boolean(validationError || attachmentError) ? (
+        <NotificationModal
+          message={validationError ?? attachmentError ?? ""}
+          onClose={() => {
+            setValidationError(null);
+            clearAttachmentError();
+          }}
+          title="Notice"
+          variant="error"
+          visible={Boolean(validationError || attachmentError)}
+        />
+      ) : null}
 
-      <HexColorFormModal
-        initialColor={null}
-        onClose={() => setIsColorFormOpen(false)}
-        onSave={handleSaveCustomColor}
-        visible={isColorFormOpen}
-      />
+      {isColorFormOpen ? (
+        <HexColorFormModal
+          initialColor={null}
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
+        />
+      ) : null}
 
-      <UnsavedChangesModal
-        visible={showUnsavedPrompt}
-        pending={saving}
-        onSave={() => {
-          setShowUnsavedPrompt(false);
-          void handleSave();
-        }}
-        onDiscard={() => {
-          setShowUnsavedPrompt(false);
-          onClose();
-        }}
-        onKeepEditing={() => {
-          setShowUnsavedPrompt(false);
-        }}
-      />
+      {showUnsavedPrompt ? (
+        <UnsavedChangesModal
+          visible={showUnsavedPrompt}
+          pending={saving}
+          onSave={() => {
+            setShowUnsavedPrompt(false);
+            void handleSave();
+          }}
+          onDiscard={() => {
+            setShowUnsavedPrompt(false);
+            onClose();
+          }}
+          onKeepEditing={() => {
+            setShowUnsavedPrompt(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }
