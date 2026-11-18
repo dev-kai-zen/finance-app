@@ -181,6 +181,15 @@ export const AccountTypePickerModal = deferComponent(
   "AccountTypePickerModal",
 ) as typeof import("./components/account-type-picker-modal").AccountTypePickerModal;
 
+export const AccountTypeFormModal = deferComponent(
+  () => require("./components/account-type-form-modal").AccountTypeFormModal,
+  "AccountTypeFormModal",
+) as typeof import("./components/account-type-form-modal").AccountTypeFormModal;
+
+export const useAccountMutations = deferFunction(
+  () => require("./hooks/use-account-mutations").useAccountMutations,
+) as typeof import("./hooks/use-account-mutations").useAccountMutations;
+
 export const saveAccountsCsvToDevice = deferFunction(
   () => require("./services/export-accounts-csv.service").saveAccountsCsvToDevice,
 ) as typeof import("./services/export-accounts-csv.service").saveAccountsCsvToDevice;

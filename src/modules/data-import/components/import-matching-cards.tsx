@@ -4,7 +4,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { useDataImport } from "../hooks/use-data-import";
 import { normalizeImportName } from "../utils/csv";
-import { AccountPickerModal, AccountTypePickerModal } from "@/modules/accounts";
+import { AccountPickerModal, AccountTypeFormModal, AccountTypePickerModal, useAccountMutations, type AccountGroup } from "@/modules/accounts";
 import { CategoryPickerModal } from "@/modules/categories";
 import { matchCategoryWithKnowledge } from "@/modules/chat-with-kai";
 import { InfoModal } from "@/components/info-modal";
@@ -15,6 +15,10 @@ export function ImportAccountCard({ name, state }: { name: string; state: Import
   const theme = useAppTheme(), { t } = useLocalization();
   const [accountPicker, setAccountPicker] = useState(false), [typePicker, setTypePicker] = useState(false);
   const [balanceHelp, setBalanceHelp] = useState(false);
+  const [newTypeGroup, setNewTypeGroup] = useState<AccountGroup | null>(null);
+  const typeMutations = useAccountMutations(() => {
+    state.reload();
+  });
   const key = normalizeImportName(name), mapping = state.options.accounts[key];
   if (!mapping) return null;
   const selectedAccount = state.catalog?.pickerAccounts?.find((account) => account.id === mapping.existingId);
@@ -53,7 +57,29 @@ export function ImportAccountCard({ name, state }: { name: string; state: Import
         {input("name", t("dataImport.fields.account"))}
         <ImportFieldButton label={t("dataImport.fields.accountType")} value={selectedType ? `${selectedType.name} (${groupLabel(selectedType.accountGroup)})` : t("dataImport.choose")}
           disabled={state.busy} onPress={() => setTypePicker(true)} />
-        <AccountTypePickerModal visible={typePicker} onClose={() => setTypePicker(false)} types={state.catalog?.pickerAccountTypes ?? []} value={mapping.accountTypeId} onSelect={(accountTypeId) => update({ accountTypeId })} />
+        <AccountTypePickerModal
+          visible={typePicker}
+          onClose={() => setTypePicker(false)}
+          types={state.catalog?.pickerAccountTypes ?? []}
+          value={mapping.accountTypeId}
+          onSelect={(accountTypeId) => update({ accountTypeId })}
+          onPressAddGroup={(group) => {
+            setTypePicker(false);
+            setNewTypeGroup(group);
+          }}
+        />
+        {newTypeGroup !== null ? (
+          <AccountTypeFormModal
+            accounts={state.catalog?.pickerAccounts ?? []}
+            initialGroup={newTypeGroup}
+            mutations={typeMutations}
+            onCreated={(createdId) => {
+              update({ accountTypeId: createdId });
+            }}
+            onClose={() => setNewTypeGroup(null)}
+            visible={newTypeGroup !== null}
+          />
+        ) : null}
         <ImportSelect label={t("dataImport.fields.currency")} value={mapping.currency} disabled={state.busy}
           items={state.catalog?.currencies.map((code) => ({ value: code, label: code })) ?? []} onChange={(currency) => update({ currency })} />
         {input("openingBalance", t("dataImport.fields.openingBalance"))}

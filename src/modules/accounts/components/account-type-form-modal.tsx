@@ -54,6 +54,7 @@ export interface AccountTypeFormModalProps {
   accounts: AccountListItem[];
   mutations: AccountMutations;
   onClose: () => void;
+  onCreated?: (id: string) => void;
 }
 
 export function AccountTypeFormModal(props: AccountTypeFormModalProps) {
@@ -72,6 +73,7 @@ function AccountTypeFormModalContent({
   accounts,
   mutations,
   onClose,
+  onCreated,
 }: AccountTypeFormModalProps) {
   const theme = useAppTheme();
   const { t } = useLocalization();
@@ -226,7 +228,7 @@ function AccountTypeFormModalContent({
   const handleSave = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
-      setLocalError("Account group name is required.");
+      setLocalError("Account type name is required.");
       return;
     }
 
@@ -243,6 +245,9 @@ function AccountTypeFormModalContent({
     );
 
     if (success) {
+      if (typeof success === "string") {
+        onCreated?.(success);
+      }
       onClose();
     }
   };
@@ -258,8 +263,8 @@ function AccountTypeFormModalContent({
     if (linkedAccountsCount > 0) {
       setLocalError(
         linkedAccountsCount === 1
-          ? "Reassign or remove the linked account before deleting this group."
-          : `Reassign or remove the ${linkedAccountsCount} linked accounts before deleting this group.`,
+          ? "Reassign or remove the linked account before deleting this type."
+          : `Reassign or remove the ${linkedAccountsCount} linked accounts before deleting this type.`,
       );
       return;
     }
@@ -288,11 +293,11 @@ function AccountTypeFormModalContent({
         pending={mutations.pending}
         saveButtonRef={saveTargetRef}
         saveDisabled={mutations.pending || !name.trim()}
-        title={isEditing ? "Edit Account Group" : "New Account Group"}
+        title={isEditing ? t("accounts.editAccountType") : t("accounts.newAccountType")}
         titleAlign="left"
         visible={visible}
         onTour={guideHelperEnabled && !isEditing ? walkthrough.startWalkthrough : undefined}
-        tourLabel="Tour account group form"
+        tourLabel="Tour account type form"
       >
         <View style={styles.scrollWrapper}>
           <KeyboardAwareForm
@@ -489,13 +494,13 @@ function AccountTypeFormModalContent({
           {/* Linked accounts count info */}
           {isEditing ? (
             <View style={styles.infoBox}>
-              <Text style={styles.infoBoxTitle}>Group Details</Text>
+              <Text style={styles.infoBoxTitle}>{t("accounts.typeDetails")}</Text>
               <Text style={styles.infoBoxText}>
                 {linkedAccountsCount}{" "}
                 {linkedAccountsCount === 1
                   ? "account belongs"
                   : "accounts belong"}{" "}
-                to this group.
+                to this type.
               </Text>
             </View>
           ) : null}
@@ -528,7 +533,7 @@ function AccountTypeFormModalContent({
         }}
         selectedIcon={iconKey}
         themeColor={currentColorHex}
-        title="Select Group Icon"
+        title={t("accounts.selectTypeIcon")}
         visible={isIconPickerOpen}
       />
 
@@ -542,12 +547,12 @@ function AccountTypeFormModalContent({
       {isEditing && !isProtected ? (
         <ConfirmModal
           cancelLabel="Cancel"
-          confirmLabel={mutations.pending ? "Deleting..." : "Delete Group"}
-          message="Delete this account group permanently? This cannot be undone."
+          confirmLabel={mutations.pending ? "Deleting..." : "Delete Type"}
+          message="Delete this account type permanently? This cannot be undone."
           onCancel={() => setIsConfirmDeleteOpen(false)}
           onConfirm={handleConfirmDelete}
           pending={mutations.pending}
-          title={`Delete "${name || "Account Group"}"?`}
+          title={t("accounts.deleteTypeTitle", { name: name || "Account Type" })}
           variant="destructive"
           visible={isConfirmDeleteOpen}
         />
@@ -561,8 +566,8 @@ function AccountTypeFormModalContent({
         }}
         title={
           localError
-            ? "Check account group details"
-            : "Unable to save account group"
+            ? "Check account type details"
+            : "Unable to save account type"
         }
         variant={localError ? "warning" : "error"}
         visible={visible && !isColorFormOpen && Boolean(displayError)}

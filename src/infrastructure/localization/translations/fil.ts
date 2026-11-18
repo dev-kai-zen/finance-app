@@ -403,6 +403,20 @@ export const fil = {
     saveToDeviceDesc: "Pumili ng folder sa Files o Downloads",
     share: "Ibahagi",
     shareDesc: "Ipadala sa ibang app o cloud storage",
+    addNewAccountType: "Magdagdag ng bagong uri ng account",
+    accountTypeSetupTitle: "Setup ng Uri ng Account",
+    newAccountType: "Bagong Uri ng Account",
+    editAccountType: "I-edit ang Uri ng Account",
+    typeDetails: "Mga Detalye ng Uri",
+    selectTypeIcon: "Pumili ng Icon ng Uri",
+    reorderTypesTitle: "Ayusin ang %{group}",
+    assetTypes: "Mga Uri ng Asset",
+    liabilityTypes: "Mga Uri ng Liability",
+    deleteTypeTitle: 'Burahin ang "%{name}"?',
+    cannotDeleteTypeTitle: "Hindi Mabura ang Uri ng Account",
+    unableToDeleteType: "Hindi mabura ang uri ng account",
+    unableToUpdateTypes: "Hindi ma-update ang mga uri ng account",
+    emptyTypes: "Walang uri ng account sa grupong ito.",
   },
   search: {
     openSearch: "Buksan ang paghahanap",
@@ -1139,6 +1153,16 @@ export const fil = {
       date: "Nobyembre 18, 2026",
       newItem1:
         "I-export ang lahat ng account, kasalukuyang balanse, at buod ng pocket sa isang malinis na CSV spreadsheet.",
+      newItem2:
+        "Mag-import ng mga account mula sa spreadsheet sa unang pag-setup ng app.",
+      newItem3:
+        "Gumawa agad ng bagong uri ng account habang nagtutugma ng accounts sa data import.",
+      newItem4:
+        "Pumili mula sa mahigit 150 opisyal na pera sa buong mundo na may angkop na simbolo.",
+      improveItem1:
+        "Maghanap at magsala ng pera nang mabilis habang nag-o-onboarding.",
+      improveItem2:
+        "Linawin ang mga label ng uri ng account upang maging mas madali ang pag-aayos.",
     },
     v170: {
       date: "Nobyembre 18, 2026",
@@ -1581,12 +1605,16 @@ export const fil = {
       "Mga Account: Inirekumendang starter pack (Cash, Bangko, Ipon, E-Wallet)",
     readyAccountManual:
       "Mga Account: Magsimula mula sa simula (walang panimulang account)",
+    readyAccountImport:
+      "Mga Account: Mag-import mula sa CSV pagkatapos ng setup",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
     readyTourTipTitle: "Interactive Tours Anumang Oras",
     readyTourTipMessage:
       "Kahit kailan mo gusto ng mabilisang gabay sa anumang screen o form, pindutin lamang ang Sparkles (✨) button sa itaas.",
     finishSetup: "Pumunta sa Home",
     continue: "Magpatuloy",
+    currencySearchPlaceholder: "Maghanap ng currency",
+    currencyNoResults: 'Walang tumutugmang currency sa "%{query}"',
     accountSetupChoiceTitle: "Paano mo gustong i-setup ang iyong mga account?",
     accountSetupChoiceTitleAssisted:
       "Paano mo gustong i-setup ang iyong mga account, %{name}?",
@@ -1604,6 +1632,9 @@ export const fil = {
     accountChoiceManualTitle: "Magsimula mula sa simula",
     accountChoiceManualDesc:
       "Magsimula nang walang laman. Ikaw ang magdadagdag ng mga account at kategorya mamaya.",
+    accountChoiceImportTitle: "Mag-import ng mga account mula sa file",
+    accountChoiceImportDesc:
+      "Ipasok ang iyong mga account at panimulang balanse mula sa CSV file.",
     fullSetupTitle: "I-setup ang workspace",
     fullSetupDescription:
       "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",
@@ -1838,9 +1869,9 @@ export const fil = {
     actionAddAccount: "Magdagdag ng Bagong Account",
     actionAddAccountDesc:
       "Gumawa ng bagong account sa bangko, cash, wallet, o puhunan na may panimulang balanse.",
-    actionManageTypes: "Pag-setup ng Grupo ng Account",
+    actionManageTypes: "Pag-setup ng Uri ng Account",
     actionManageTypesDesc:
-      "I-configure ang mga uri ng account at kategorya ayon sa iyong kagustuhan.",
+      "I-configure ang mga custom na uri ng account sa assets at liabilities.",
   },
   accountFormWalkthrough: {
     introTitle: "Setup ng Bagong Account",
@@ -1858,7 +1889,7 @@ export const fil = {
       "Pumili kung ito ay Asset (bangko, pera, puhunan) o Liability (credit card, utang).",
     stepIconTitle: "Icon ng Account",
     stepIconDesc:
-      "Pumili ng custom icon o gamitin ang default icon ng napiling grupo.",
+      "Pumili ng custom icon o gamitin ang default icon ng napiling uri ng account.",
     stepStartingBalanceTitle: "Panimulang Balanse",
     stepStartingBalanceDesc:
       "Itakda ang simulaing balanse sa araw ng pagbukas. I-tap upang buksan ang calculator.",
@@ -1882,42 +1913,42 @@ export const fil = {
       "Tukuyin kung kailan nagsimula ang account para sa tamang pagsubaybay sa kasaysayan.",
   },
   accountGroupSetupWalkthrough: {
-    introTitle: "Setup ng Grupo ng Account",
+    introTitle: "Setup ng Uri ng Account",
     introSubtitle: "Ayusin ang mga uri ng account",
     introMessage:
-      "Pamahalaan ang mga pasadyang grupo sa assets at liabilities, at baguhin ang pagkakasunod-sunod. Nais mo ba ng mabilisang walkthrough?",
+      "Pamahalaan ang mga pasadyang uri ng account sa assets at liabilities, at baguhin ang pagkakasunod-sunod. Nais mo ba ng mabilisang walkthrough?",
     stepClassificationPickerTitle: "Piliin ang Assets o Liabilities",
     stepClassificationPickerDesc:
       "Lumipat sa pagitan ng Assets (mga pag-aari) at Liabilities (mga utang).",
-    stepReorderTitle: "Ayusin ang Pagkakasunod-sunod",
+    stepReorderTitle: "Ayusin ang mga Uri",
     stepReorderDesc:
-      "Baguhin ang ayos ng mga grupo ng account ayon sa madalas mong tinitingnan.",
-    stepNewGroupTitle: "Bagong Grupo ng Account",
+      "Baguhin ang ayos ng mga uri ng account ayon sa madalas mong tinitingnan.",
+    stepNewGroupTitle: "Bagong Uri ng Account",
     stepNewGroupDesc:
-      "Gumawa ng sariling grupo tulad ng E-Wallets o mga Raket/Negosyo.",
+      "Gumawa ng sariling uri ng account tulad ng E-Wallets o mga Raket/Negosyo.",
   },
   accountTypeFormWalkthrough: {
-    introTitle: "Bagong Grupo ng Account",
-    introSubtitle: "Lumikha ng pasadyang kategorya ng account",
+    introTitle: "Bagong Uri ng Account",
+    introSubtitle: "Lumikha ng pasadyang uri ng account",
     introMessage:
-      "Magtakda ng pasadyang kategorya kasama ang klasipikasyon, icon, at kulay ng tema. Nais mo ba ng mabilisang walkthrough?",
-    stepNameTitle: "Pangalan ng Grupo",
+      "Magtakda ng pasadyang uri ng account kasama ang klasipikasyon, icon, at kulay ng tema. Nais mo ba ng mabilisang walkthrough?",
+    stepNameTitle: "Pangalan ng Uri",
     stepNameDesc:
-      "Pangalanan ang grupong ito, tulad ng High-Yield Savings o Negosyo.",
+      "Pangalanan ang uri na ito, tulad ng High-Yield Savings o Negosyo.",
     stepClassificationTitle: "Klasipikasyon",
     stepClassificationDesc:
       "Itakda bilang Asset (positibong yaman) o Liability (utang o bayarin).",
-    stepIconTitle: "Icon ng Grupo",
+    stepIconTitle: "Icon ng Uri",
     stepIconDesc:
-      "Pumili ng icon na kumakatawan sa grupong ito sa iyong mga account at ulat.",
+      "Pumili ng icon na kumakatawan sa uring ito sa iyong mga account at ulat.",
     stepColorTitle: "Kulay ng Tema",
     stepColorDesc:
-      "Pumili ng natatanging kulay para madaling makilala ang grupong ito.",
+      "Pumili ng natatanging kulay para madaling makilala ang uring ito.",
     stepCustomColorTitle: "Magdagdag ng Custom na Kulay",
     stepCustomColorDesc: "Gumawa at mag-save ng sarili mong hex color palette.",
-    stepSaveTitle: "I-save ang Grupo ng Account",
+    stepSaveTitle: "I-save ang Uri ng Account",
     stepSaveDesc:
-      "I-tap ang checkmark upang i-save ang bagong grupo ng account.",
+      "I-tap ang checkmark upang i-save ang bagong uri ng account.",
   },
   transactionFormWalkthrough: {
     introTitle: "Magtala ng Transaksyon",

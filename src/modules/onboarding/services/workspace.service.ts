@@ -109,7 +109,7 @@ export async function completeManualSetup(): Promise<WorkspaceState> {
   return completedState("personal", "manual");
 }
 
-export type GuidedAccountStrategy = "custom" | "recommended" | "manual";
+export type GuidedAccountStrategy = "custom" | "recommended" | "manual" | "import";
 
 export interface GuidedWorkspaceInput {
   currencyCode: string;
@@ -136,6 +136,8 @@ export async function completeGuidedSetup(
       setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     } else if (strategy === "manual") {
       await prepareWorkspaceCategories("manual", tx, now);
+    } else if (strategy === "import") {
+      await prepareWorkspaceCategories("recommended", tx, now);
     } else {
       await prepareWorkspaceCategories("recommended", tx, now);
       if (input.account) {

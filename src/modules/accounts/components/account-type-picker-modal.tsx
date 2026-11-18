@@ -7,6 +7,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { accountColor } from "@/modules/accounts/constants/account-appearance.constants";
 import type { AccountType } from "@/modules/accounts/types/account.types";
+import { useLocalization } from "@/infrastructure/localization";
 
 export function AccountTypePickerModal({
   visible,
@@ -28,6 +29,7 @@ export function AccountTypePickerModal({
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
 
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
@@ -87,7 +89,7 @@ export function AccountTypePickerModal({
                       ]}
                     >
                       <Plus color={theme.colors.primary} size={18} />
-                      <Text style={styles.addGroupLabel}>Add new account group</Text>
+                      <Text style={styles.addGroupLabel}>{t("accounts.addNewAccountType")}</Text>
                     </Pressable>
                   ) : null}
                 </View>

@@ -404,6 +404,20 @@ export const es = {
     saveToDeviceDesc: "Elige una carpeta en Archivos o Descargas",
     share: "Compartir",
     shareDesc: "Enviar a otra aplicación o almacenamiento en la nube",
+    addNewAccountType: "Agregar nuevo tipo de cuenta",
+    accountTypeSetupTitle: "Configuración de tipos de cuenta",
+    newAccountType: "Nuevo tipo de cuenta",
+    editAccountType: "Editar tipo de cuenta",
+    typeDetails: "Detalles del tipo",
+    selectTypeIcon: "Seleccionar icono del tipo",
+    reorderTypesTitle: "Reordenar %{group}",
+    assetTypes: "Tipos de activos",
+    liabilityTypes: "Tipos de pasivos",
+    deleteTypeTitle: '¿Eliminar "%{name}"?',
+    cannotDeleteTypeTitle: "No se puede eliminar el tipo de cuenta",
+    unableToDeleteType: "No se pudo eliminar el tipo de cuenta",
+    unableToUpdateTypes: "No se pudieron actualizar los tipos de cuenta",
+    emptyTypes: "No hay tipos de cuenta en este grupo.",
   },
   search: {
     openSearch: "Abrir búsqueda",
@@ -1125,6 +1139,16 @@ export const es = {
       date: "18 de noviembre de 2026",
       newItem1:
         "Exporta todas las cuentas, saldos actuales y resúmenes de bolsillos a una hoja de cálculo CSV limpia.",
+      newItem2:
+        "Importa cuentas existentes desde una hoja de cálculo durante la configuración inicial.",
+      newItem3:
+        "Crea tipos de cuenta personalizados al instante mientras vinculas cuentas en la importación.",
+      newItem4:
+        "Elige entre más de 150 monedas oficiales del mundo con símbolos y decimales correctos.",
+      improveItem1:
+        "Busca y filtra monedas al instante durante la configuración inicial.",
+      improveItem2:
+        "Aclara las etiquetas de tipos de cuenta para organizar tus finanzas con mayor facilidad.",
     },
     v170: {
       date: "18 de noviembre de 2026",
@@ -1564,12 +1588,15 @@ export const es = {
     readyAccountRecommended:
       "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
     readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
+    readyAccountImport: "Cuentas: Importar desde CSV tras la configuración",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
     readyTourTipTitle: "Recorridos interactivos cuando los necesites",
     readyTourTipMessage:
       "Cuando quieras una guía rápida en cualquier pantalla o formulario, toca el botón de destellos (✨) en la parte superior.",
     finishSetup: "Ir a Inicio",
     continue: "Continuar",
+    currencySearchPlaceholder: "Buscar monedas",
+    currencyNoResults: 'No se encontraron monedas para "%{query}"',
     accountSetupChoiceTitle: "¿Cómo te gustaría configurar tus cuentas?",
     accountSetupChoiceTitleAssisted:
       "¿Cómo te gustaría configurar tus cuentas, %{name}?",
@@ -1587,6 +1614,9 @@ export const es = {
     accountChoiceManualTitle: "Empezar desde cero",
     accountChoiceManualDesc:
       "Comienza con un espacio vacío. Añadirás tus cuentas y categorías manualmente.",
+    accountChoiceImportTitle: "Importar cuentas desde archivo",
+    accountChoiceImportDesc:
+      "Importa tus cuentas y saldos iniciales desde un archivo CSV.",
     fullSetupTitle: "Configura tu espacio",
     fullSetupDescription: "Elige cuánta estructura quieres el primer día.",
     manualSetupTitle: "Empezar desde cero",
@@ -1821,9 +1851,9 @@ export const es = {
     actionAddAccount: "Agregar nueva cuenta",
     actionAddAccountDesc:
       "Crea cuentas de banco, efectivo, billetera o inversiones con saldo inicial.",
-    actionManageTypes: "Configuración de grupos",
+    actionManageTypes: "Configuración de tipos de cuenta",
     actionManageTypesDesc:
-      "Define y administra tipos y grupos personalizados de cuentas.",
+      "Define y administra tipos personalizados de cuentas en activos y pasivos.",
   },
   accountFormWalkthrough: {
     introTitle: "Configuración de Cuenta",
@@ -1841,7 +1871,7 @@ export const es = {
       "Elige si esta cuenta es un Activo (banco, efectivo, inversión) o Pasivo (tarjeta de crédito, préstamo).",
     stepIconTitle: "Ícono de la cuenta",
     stepIconDesc:
-      "Elige un ícono personalizado o utiliza el ícono predeterminado del grupo de cuenta.",
+      "Elige un ícono personalizado o utiliza el ícono predeterminado del tipo de cuenta.",
     stepStartingBalanceTitle: "Saldo inicial",
     stepStartingBalanceDesc:
       "Establece el saldo inicial en la fecha de apertura. Toca para abrir la calculadora.",
@@ -1865,43 +1895,43 @@ export const es = {
       "Indica cuándo se inició esta cuenta para el seguimiento histórico de saldos.",
   },
   accountGroupSetupWalkthrough: {
-    introTitle: "Grupos de Cuentas",
+    introTitle: "Configuración de Tipos de Cuenta",
     introSubtitle: "Organiza tus tipos de cuentas",
     introMessage:
-      "Administra grupos personalizados de activos y pasivos, y ajusta su orden. ¿Deseas un recorrido rápido?",
+      "Administra tipos personalizados de activos y pasivos, y ajusta su orden. ¿Deseas un recorrido rápido?",
     stepClassificationPickerTitle: "Selector de Activos y Pasivos",
     stepClassificationPickerDesc:
       "Alterna entre Activos (lo que posees) y Pasivos (lo que debes).",
-    stepReorderTitle: "Reordenar grupos",
+    stepReorderTitle: "Reordenar tipos",
     stepReorderDesc:
-      "Personaliza el orden de tus grupos de cuentas según tus preferencias.",
-    stepNewGroupTitle: "Nuevo grupo de cuenta",
+      "Personaliza el orden de tus tipos de cuentas según tus preferencias.",
+    stepNewGroupTitle: "Nuevo tipo de cuenta",
     stepNewGroupDesc:
-      "Crea un grupo personalizado como Billeteras digitales o Emprendimientos.",
+      "Crea un tipo personalizado como Billeteras digitales o Emprendimientos.",
   },
   accountTypeFormWalkthrough: {
-    introTitle: "Nuevo Grupo de Cuentas",
-    introSubtitle: "Crea categorías de cuentas personalizadas",
+    introTitle: "Nuevo Tipo de Cuenta",
+    introSubtitle: "Crea tipos de cuentas personalizados",
     introMessage:
-      "Define una categoría personalizada con tu clasificación, icono y color preferidos. ¿Deseas un recorrido rápido?",
-    stepNameTitle: "Nombre del grupo",
+      "Define un tipo personalizado con tu clasificación, icono y color preferidos. ¿Deseas un recorrido rápido?",
+    stepNameTitle: "Nombre del tipo",
     stepNameDesc:
-      "Nombra este grupo de cuentas, como Ahorro de alto rendimiento o Negocios.",
+      "Nombra este tipo de cuenta, como Ahorro de alto rendimiento o Negocios.",
     stepClassificationTitle: "Clasificación",
     stepClassificationDesc:
-      "Designa este grupo como Activo (riqueza positiva) o Pasivo (deuda u obligación).",
-    stepIconTitle: "Ícono del grupo",
+      "Designa este tipo como Activo (riqueza positiva) o Pasivo (deuda u obligación).",
+    stepIconTitle: "Ícono del tipo",
     stepIconDesc:
-      "Elige un ícono que identifique este grupo en tus cuentas e informes.",
+      "Elige un ícono que identifique este tipo en tus cuentas e informes.",
     stepColorTitle: "Color del tema",
     stepColorDesc:
-      "Elige un color para diferenciar e identificar este grupo visualmente.",
+      "Elige un color para diferenciar e identificar este tipo visualmente.",
     stepCustomColorTitle: "Agregar color personalizado",
     stepCustomColorDesc:
       "Crea y guarda tu propia paleta de colores hexadecimales.",
-    stepSaveTitle: "Guardar grupo de cuenta",
+    stepSaveTitle: "Guardar tipo de cuenta",
     stepSaveDesc:
-      "Toca la marca de verificación para guardar tu nuevo grupo de cuenta.",
+      "Toca la marca de verificación para guardar tu nuevo tipo de cuenta.",
   },
   transactionFormWalkthrough: {
     introTitle: "Registrar Transacción",

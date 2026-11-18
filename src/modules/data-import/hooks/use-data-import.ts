@@ -13,13 +13,13 @@ import { buildImportPreview, sourceAccountNames, sourceCategories } from "../uti
 import { prepareImportMappings } from "../utils/prepare-import-mappings";
 
 const defaults = (kind: ImportKind, defaultCurrency: string): ImportOptions => ({ kind, source: "", columns: {}, dateFormat: "ymd", decimal: ".", defaultCurrency, defaultAccount: "", transferMode: "single", accounts: {}, categories: {}, decisions: {} });
-export function useDataImport() {
+export function useDataImport(initialKind: ImportKind = "transactions") {
   const { preferences } = useCurrencyPreferences();
   const defaultCurrency = preferences.defaultCurrency;
   const [catalog, setCatalog] = useState<ImportCatalog | null>(null);
   const [history, setHistory] = useState<ReturnType<typeof listImportHistory>>([]);
   const [file, setFile] = useState<Awaited<ReturnType<typeof pickImportFile>>>(null);
-  const [options, setOptions] = useState<ImportOptions>(() => defaults("transactions", defaultCurrency));
+  const [options, setOptions] = useState<ImportOptions>(() => defaults(initialKind, defaultCurrency));
   const [step, setStep] = useState<ImportStep>("file");
   const [busy, setBusy] = useState(false), [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

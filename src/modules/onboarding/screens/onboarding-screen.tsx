@@ -41,6 +41,7 @@ import { useCurrencyPreferences } from "@/modules/currencies";
 import type { InitialAccountTemplate } from "@/modules/accounts";
 import { openingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useLocalization } from "@/infrastructure/localization";
+import { useRouter } from "expo-router";
 
 type OnboardingStep =
   | "welcome"
@@ -58,6 +59,7 @@ type OnboardingStep =
   | "restore";
 
 export function OnboardingScreen() {
+  const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const workspace = useWorkspace();
@@ -70,7 +72,7 @@ export function OnboardingScreen() {
     currencyPreferences.defaultCurrency,
   );
   const [accountStrategy, setAccountStrategy] = useState<
-    "custom" | "recommended" | "manual"
+    "custom" | "recommended" | "manual" | "import"
   >("custom");
   const [accountTemplate, setAccountTemplate] =
     useState<InitialAccountTemplate>("cash");
@@ -361,8 +363,8 @@ export function OnboardingScreen() {
                 currencyCode={guidedCurrency}
                 dailyReminderEnabled={dailyReminderEnabled}
                 nickname={nickname}
-                onFinish={() =>
-                  void workspace.completeGuidedSetup({
+                onFinish={async () => {
+                  const ok = await workspace.completeGuidedSetup({
                     currencyCode: guidedCurrency,
                     nickname,
                     accountStrategy,
@@ -377,8 +379,14 @@ export function OnboardingScreen() {
                             template: accountTemplate,
                           }
                         : undefined,
-                  })
-                }
+                  });
+                  if (ok && accountStrategy === "import") {
+                    router.replace({
+                      pathname: "/data-import",
+                      params: { kind: "accounts" },
+                    });
+                  }
+                }}
               />
             </View>
           ) : null}

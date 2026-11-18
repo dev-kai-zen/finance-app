@@ -45,6 +45,7 @@ import {
 import { useDataImport } from "../hooks/use-data-import";
 import type {
   ImportField,
+  ImportKind,
   ImportReviewGroup,
   ImportTransactionType,
 } from "../types/import.types";
@@ -71,7 +72,11 @@ type Item = {
   kind: "account" | "category" | "row" | "history" | "type";
   index: number;
 };
-export function DataImportScreen() {
+export function DataImportScreen({
+  initialKind = "transactions",
+}: {
+  initialKind?: ImportKind;
+} = {}) {
   const { t } = useLocalization();
   const router = useRouter();
 
@@ -88,14 +93,18 @@ export function DataImportScreen() {
       loadingVariant="cards"
     >
       <WalkthroughRegistryProvider>
-        <DataImportScreenContent />
+        <DataImportScreenContent initialKind={initialKind} />
       </WalkthroughRegistryProvider>
     </DeferredScreenBody>
   );
 }
 
-export function DataImportScreenContent() {
-  const state = useDataImport(),
+export function DataImportScreenContent({
+  initialKind = "transactions",
+}: {
+  initialKind?: ImportKind;
+} = {}) {
+  const state = useDataImport(initialKind),
     theme = useAppTheme(),
     styles = useThemeStyles(createStyles);
   const walkthrough = useDataImportWalkthrough();

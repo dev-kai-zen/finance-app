@@ -1,5 +1,5 @@
 export type WorkspaceMode = "personal" | "sample";
-export type WorkspaceSetupStrategy = "manual" | "recommended" | "guided";
+export type WorkspaceSetupStrategy = "manual" | "recommended" | "guided" | "import";
 
 export type WorkspaceState =
   | {

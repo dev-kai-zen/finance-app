@@ -7,7 +7,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AlertCircle, Check, Clock, Layers, Sparkles, Wallet } from "lucide-react-native";
+import { AlertCircle, Check, Clock, FileSpreadsheet, Layers, Search, Sparkles, Wallet, X } from "lucide-react-native";
+import { CURRENCY_SYMBOLS } from "@/utils/currency";
 
 import {
   AmountCalculatorField,
@@ -228,10 +229,28 @@ export function GuidedCurrencyStep({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+  const [search, setSearch] = useState("");
+
   const codes = useMemo(() => {
     const nonPhpCodes = SUPPORTED_CURRENCY_CODES.filter((code) => code !== "PHP");
     return ["PHP", ...nonPhpCodes];
   }, []);
+
+  const filteredCodes = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      if (selectedCode && selectedCode !== "PHP") {
+        return [selectedCode, ...codes.filter((c) => c !== selectedCode)];
+      }
+      return codes;
+    }
+    return codes.filter((code) => {
+      const name = CURRENCY_NAMES[code]?.toLowerCase() ?? "";
+      const symbol = CURRENCY_SYMBOLS[code]?.toLowerCase() ?? "";
+      const lowerCode = code.toLowerCase();
+      return lowerCode.includes(q) || name.includes(q) || symbol.includes(q);
+    });
+  }, [codes, search, selectedCode]);
 
   const title = nickname?.trim()
     ? t("onboarding.currencyTitleAssisted", { name: nickname.trim() })
@@ -255,29 +274,64 @@ export function GuidedCurrencyStep({
       progressTotal={guidedTotal}
       title={title}
     >
-      <View style={styles.optionList}>
-        {codes.map((code) => {
-          const active = selectedCode === code;
-          return (
-            <Pressable
-              key={code}
-              accessibilityRole="button"
-              onPress={() => onChange(code)}
-              style={({ pressed }) => [
-                styles.choiceRow,
-                active && styles.choiceRowActive,
-                pressed && styles.choiceRowPressed,
-              ]}
-            >
-              <View style={styles.choiceCopy}>
-                <Text style={styles.choiceLabel}>{code}</Text>
-                <Text style={styles.choiceHint}>{CURRENCY_NAMES[code]}</Text>
-              </View>
-              {active ? <Check color={theme.colors.primary} size={18} /> : null}
-            </Pressable>
-          );
-        })}
+      <View style={styles.searchBox}>
+        <Search color={theme.colors.textMuted} size={18} />
+        <TextInput
+          accessibilityLabel={t("onboarding.currencySearchPlaceholder")}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder={t("onboarding.currencySearchPlaceholder")}
+          placeholderTextColor={theme.colors.textMuted}
+          returnKeyType="search"
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+        />
+        {search.length > 0 ? (
+          <Pressable
+            accessibilityLabel="Clear search"
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => setSearch("")}
+            style={({ pressed }) => [styles.searchClearBtn, pressed && { opacity: 0.7 }]}
+          >
+            <X color={theme.colors.textSecondary} size={16} />
+          </Pressable>
+        ) : null}
       </View>
+
+      {filteredCodes.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>
+            {t("onboarding.currencyNoResults", { query: search })}
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.optionList}>
+          {filteredCodes.map((code) => {
+            const active = selectedCode === code;
+            return (
+              <Pressable
+                key={code}
+                accessibilityRole="button"
+                onPress={() => onChange(code)}
+                style={({ pressed }) => [
+                  styles.choiceRow,
+                  active && styles.choiceRowActive,
+                  pressed && styles.choiceRowPressed,
+                ]}
+              >
+                <View style={styles.choiceCopy}>
+                  <Text style={styles.choiceLabel}>{code}</Text>
+                  <Text style={styles.choiceHint}>{CURRENCY_NAMES[code]}</Text>
+                </View>
+                {active ? <Check color={theme.colors.primary} size={18} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
       <View style={styles.infoCard}>
         <AlertCircle color={theme.colors.info} size={18} />
         <Text style={styles.infoText}>{t("onboarding.currencyHint")}</Text>
@@ -292,7 +346,7 @@ export function GuidedAccountChoiceStep({
   busy,
 }: {
   nickname?: string;
-  onChooseStrategy: (strategy: "custom" | "recommended" | "manual") => void;
+  onChooseStrategy: (strategy: "custom" | "recommended" | "manual" | "import") => void;
   busy: boolean;
 }) {
   const theme = useAppTheme();
@@ -335,6 +389,13 @@ export function GuidedAccountChoiceStep({
           icon={<Layers color={theme.colors.textSecondary} size={23} />}
           onPress={() => onChooseStrategy("manual")}
           title={t("onboarding.accountChoiceManualTitle")}
+        />
+        <OnboardingOptionCard
+          description={t("onboarding.accountChoiceImportDesc")}
+          disabled={busy}
+          icon={<FileSpreadsheet color={theme.colors.textSecondary} size={23} />}
+          onPress={() => onChooseStrategy("import")}
+          title={t("onboarding.accountChoiceImportTitle")}
         />
       </View>
     </OnboardingStepShell>
@@ -551,7 +612,7 @@ export function GuidedReadyStep({
 }: {
   nickname?: string;
   accountName: string;
-  accountStrategy?: "custom" | "recommended" | "manual";
+  accountStrategy?: "custom" | "recommended" | "manual" | "import";
   currencyCode: string;
   dailyReminderEnabled?: boolean;
   busy: boolean;
@@ -596,9 +657,11 @@ export function GuidedReadyStep({
             ? t("onboarding.readyAccountRecommended")
             : accountStrategy === "manual"
               ? t("onboarding.readyAccountManual")
-              : t("onboarding.readyAccount", {
-                  name: accountName.trim() || t("onboarding.accountTemplateCash"),
-                })}
+              : accountStrategy === "import"
+                ? t("onboarding.readyAccountImport")
+                : t("onboarding.readyAccount", {
+                    name: accountName.trim() || t("onboarding.accountTemplateCash"),
+                  })}
         </Text>
         {dailyReminderEnabled ? (
           <Text style={styles.summaryLine}>
@@ -877,6 +940,37 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.onPrimary,
       fontSize: theme.typography.fontSize.base,
       fontWeight: theme.typography.fontWeight.bold,
+    },
+    searchBox: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      minHeight: 46,
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.sm,
+    },
+    searchInput: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: theme.typography.fontSize.sm,
+      paddingVertical: theme.spacing.sm,
+    },
+    searchClearBtn: {
+      padding: theme.spacing.xs,
+    },
+    emptyContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: theme.spacing.xl,
+    },
+    emptyText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.sm,
+      textAlign: "center",
     },
   });
 }

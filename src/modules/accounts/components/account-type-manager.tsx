@@ -162,11 +162,11 @@ function AccountTypeManagerContent({
         <InfoModal
           message={
             linkedCount === 1
-              ? "This group has 1 linked account. Reassign or remove it before deleting the group."
-              : `This group has ${linkedCount} linked accounts. Reassign or remove them before deleting the group.`
+              ? "This type has 1 linked account. Reassign or remove it before deleting the type."
+              : `This type has ${linkedCount} linked accounts. Reassign or remove them before deleting the type.`
           }
           onClose={back}
-          title="Cannot Delete Account Type"
+          title={t("accounts.cannotDeleteTypeTitle")}
           variant="error"
           visible
         />
@@ -177,8 +177,8 @@ function AccountTypeManagerContent({
       <>
         <ConfirmModal
           cancelLabel="Cancel"
-          confirmLabel="Delete group"
-          message={`Delete "${deleting.name}" account group permanently? This cannot be undone.`}
+          confirmLabel="Delete type"
+          message={`Delete "${deleting.name}" account type permanently? This cannot be undone.`}
           onCancel={back}
           onConfirm={() => {
             void mutations.deleteType(deleting.id).then((saved) => {
@@ -186,13 +186,13 @@ function AccountTypeManagerContent({
             });
           }}
           pending={mutations.pending}
-          title="Delete Account Type?"
+          title={t("accounts.deleteTypeTitle", { name: deleting.name })}
           visible
         />
         <NotificationModal
           message={mutations.error ?? ""}
           onClose={mutations.clearError}
-          title="Unable to delete account group"
+          title={t("accounts.unableToDeleteType")}
           variant="error"
           visible={Boolean(mutations.error)}
         />
@@ -204,7 +204,7 @@ function AccountTypeManagerContent({
     <>
       <FullScreenFormModal
         pending={mutations.pending}
-        title="Account Group Setup"
+        title={t("accounts.accountTypeSetupTitle")}
         titleAlign="left"
         visible
         onTour={
@@ -212,7 +212,7 @@ function AccountTypeManagerContent({
             ? walkthrough.startWalkthrough
             : undefined
         }
-        tourLabel="Tour account group setup"
+        tourLabel="Tour account type setup"
         onClose={onClose}
       >
         <View style={styles.scrollWrapper}>
@@ -253,7 +253,7 @@ function AccountTypeManagerContent({
               <Pressable
                 ref={reorderRef as never}
                 collapsable={false}
-                accessibilityLabel="Reorder account groups"
+                accessibilityLabel="Reorder account types"
                   accessibilityRole="button"
                   disabled={mutations.pending}
                   onPress={() => setReorderVisible(true)}
@@ -271,7 +271,7 @@ function AccountTypeManagerContent({
             <Pressable
               ref={newGroupRef as never}
               collapsable={false}
-              accessibilityLabel="New Account Group"
+              accessibilityLabel={t("accounts.newAccountType")}
                 accessibilityRole="button"
                 disabled={mutations.pending}
                 onPress={() => {
@@ -286,12 +286,12 @@ function AccountTypeManagerContent({
                 ]}
               >
                 <IconHelper color={activeColor} name="plus" size={15} />
-                <Text style={[styles.toolbarChipText, { color: activeColor }]}>New Account Group</Text>
+                <Text style={[styles.toolbarChipText, { color: activeColor }]}>{t("accounts.newAccountType")}</Text>
               </Pressable>
           </View>
 
           {visibleTypes.length === 0 ? (
-            <Text style={styles.emptyText}>No types in this group.</Text>
+            <Text style={styles.emptyText}>{t("accounts.emptyTypes")}</Text>
           ) : (
             visibleTypes.map((type, index) => {
               const protectedType = isProtectedAccountType(type);
@@ -367,7 +367,9 @@ function AccountTypeManagerContent({
         onSave={async (orderedIds) => {
           await mutations.reorderAccountTypes(orderedIds);
         }}
-        title={`Reorder ${group === "asset" ? "Asset" : "Liability"} Groups`}
+        title={t("accounts.reorderTypesTitle", {
+          group: group === "asset" ? t("accounts.assetTypes") : t("accounts.liabilityTypes"),
+        })}
         titleAlign="left"
         visible={reorderVisible}
       />
@@ -375,7 +377,7 @@ function AccountTypeManagerContent({
       <NotificationModal
         message={mutations.error ?? ""}
         onClose={mutations.clearError}
-        title="Unable to update account groups"
+        title={t("accounts.unableToUpdateTypes")}
         variant="error"
         visible={Boolean(mutations.error)}
       />

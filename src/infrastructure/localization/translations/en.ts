@@ -397,6 +397,20 @@ export const en = {
     saveToDeviceDesc: "Choose a folder in Files or Downloads",
     share: "Share",
     shareDesc: "Send to another app or cloud storage",
+    addNewAccountType: "Add new account type",
+    accountTypeSetupTitle: "Account Type Setup",
+    newAccountType: "New Account Type",
+    editAccountType: "Edit Account Type",
+    typeDetails: "Type Details",
+    selectTypeIcon: "Select Type Icon",
+    reorderTypesTitle: "Reorder %{group}",
+    assetTypes: "Asset Types",
+    liabilityTypes: "Liability Types",
+    deleteTypeTitle: 'Delete "%{name}"?',
+    cannotDeleteTypeTitle: "Cannot Delete Account Type",
+    unableToDeleteType: "Unable to delete account type",
+    unableToUpdateTypes: "Unable to update account types",
+    emptyTypes: "No account types in this group.",
   },
   search: {
     openSearch: "Open search",
@@ -1108,6 +1122,16 @@ export const en = {
       date: "November 18, 2026",
       newItem1:
         "Export all accounts, current balances, and pocket summaries into a clean CSV spreadsheet.",
+      newItem2:
+        "Import existing accounts directly from a spreadsheet during first-time onboarding.",
+      newItem3:
+        "Create custom account types on the spot while matching accounts during data import.",
+      newItem4:
+        "Choose from over 150 official world currencies with native symbols and decimals.",
+      improveItem1:
+        "Search and filter currencies instantly during first-time onboarding setup.",
+      improveItem2:
+        "Clarify account type labels and setup menus to make organizing finances easier.",
     },
     v170: {
       date: "November 18, 2026",
@@ -1542,12 +1566,15 @@ export const en = {
     readyAccountRecommended:
       "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
     readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
+    readyAccountImport: "Accounts: Import from CSV after setup",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
     readyTourTipTitle: "Interactive Tours on Demand",
     readyTourTipMessage:
       "Whenever you want a quick guide on any screen or form, simply tap the Sparkles (✨) button at the top.",
     finishSetup: "Go to Home",
     continue: "Continue",
+    currencySearchPlaceholder: "Search currencies",
+    currencyNoResults: 'No currencies match "%{query}"',
     accountSetupChoiceTitle: "How would you like to set up accounts?",
     accountSetupChoiceTitleAssisted:
       "How would you like to set up your accounts, %{name}?",
@@ -1565,6 +1592,9 @@ export const en = {
     accountChoiceManualTitle: "Start from scratch",
     accountChoiceManualDesc:
       "Start with an empty workspace. You'll add your accounts and categories manually later.",
+    accountChoiceImportTitle: "Import accounts from file",
+    accountChoiceImportDesc:
+      "Bring in your accounts and opening balances from a CSV file.",
     fullSetupTitle: "Set up your workspace",
     fullSetupDescription: "Choose how much structure you want on day one.",
     manualSetupTitle: "Start from scratch",
@@ -1798,9 +1828,9 @@ export const en = {
     actionAddAccount: "Add New Account",
     actionAddAccountDesc:
       "Create bank, cash, wallet, or investment accounts with starting balances.",
-    actionManageTypes: "Account Group Setup",
+    actionManageTypes: "Account Type Setup",
     actionManageTypesDesc:
-      "Define and manage custom account types and groups to tailor your tracking.",
+      "Define and manage custom account types across assets and liabilities.",
   },
   accountFormWalkthrough: {
     introTitle: "New Account Setup",
@@ -1818,7 +1848,7 @@ export const en = {
       "Choose whether this account is an Asset (bank, cash, investment) or Liability (credit card, loan).",
     stepIconTitle: "Account Icon",
     stepIconDesc:
-      "Pick a custom icon from the icon library or use the default icon of the selected account group.",
+      "Pick a custom icon from the icon library or use the default icon of the selected account type.",
     stepStartingBalanceTitle: "Starting Balance",
     stepStartingBalanceDesc:
       "Set the initial balance of your account on its opening date. Tap to open the calculator.",
@@ -1842,43 +1872,43 @@ export const en = {
       "Specify when this account started. Starting balances and calculations will be tracked from this date onward.",
   },
   accountGroupSetupWalkthrough: {
-    introTitle: "Account Group Setup",
+    introTitle: "Account Type Setup",
     introSubtitle: "Organize your account types",
     introMessage:
-      "Manage custom account groups across assets and liabilities, and customize your grouping order. Would you like a quick walkthrough?",
+      "Manage custom account types across assets and liabilities, and customize your display order. Would you like a quick walkthrough?",
     stepClassificationPickerTitle: "Asset & Liability Switcher",
     stepClassificationPickerDesc:
       "Switch between Assets (what you own, like cash and investments) and Liabilities (what you owe, like credit cards and loans).",
-    stepReorderTitle: "Reorder Groups",
+    stepReorderTitle: "Reorder Types",
     stepReorderDesc:
-      "Customize the order of your account groups to prioritize the ones you view most frequently.",
-    stepNewGroupTitle: "New Account Group",
+      "Customize the order of your account types to prioritize the ones you view most frequently.",
+    stepNewGroupTitle: "New Account Type",
     stepNewGroupDesc:
-      "Create a custom account group tailored to your lifestyle, such as Digital Wallets or Side Hustles.",
+      "Create a custom account type tailored to your lifestyle, such as Digital Wallets or Side Hustles.",
   },
   accountTypeFormWalkthrough: {
-    introTitle: "New Account Group",
-    introSubtitle: "Create a custom category",
+    introTitle: "New Account Type",
+    introSubtitle: "Create a custom account type",
     introMessage:
-      "Define a custom category with your preferred name, classification, icon, and theme color. Would you like a quick walkthrough?",
-    stepNameTitle: "Group Name",
+      "Define a custom account type with your preferred name, classification, icon, and theme color. Would you like a quick walkthrough?",
+    stepNameTitle: "Account Type Name",
     stepNameDesc:
-      "Name this account group, such as High-Yield Savings, Business Accounts, or Crypto Wallets.",
+      "Name this account type, such as High-Yield Savings, Business Accounts, or Crypto Wallets.",
     stepClassificationTitle: "Classification",
     stepClassificationDesc:
-      "Designate this group as an Asset (positive wealth) or Liability (debt and obligations).",
-    stepIconTitle: "Group Icon",
+      "Designate this account type as an Asset (positive wealth) or Liability (debt and obligations).",
+    stepIconTitle: "Type Icon",
     stepIconDesc:
-      "Choose an icon representing this group across your accounts and reports.",
+      "Choose an icon representing this account type across your accounts and reports.",
     stepColorTitle: "Theme Color",
     stepColorDesc:
-      "Select a distinct theme color to visually separate and identify this group throughout the app.",
+      "Select a distinct theme color to visually separate and identify this account type throughout the app.",
     stepCustomColorTitle: "Add Custom Color",
     stepCustomColorDesc:
       "Create and save your own hex color palette to personalize your finances.",
-    stepSaveTitle: "Save Account Group",
+    stepSaveTitle: "Save Account Type",
     stepSaveDesc:
-      "Tap the save checkmark to store your account group and start adding accounts to it.",
+      "Tap the save checkmark to store your account type and start adding accounts to it.",
   },
   transactionFormWalkthrough: {
     introTitle: "Record Transaction",

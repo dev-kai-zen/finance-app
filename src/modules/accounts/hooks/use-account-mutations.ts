@@ -47,7 +47,13 @@ export function useAccountMutations(onSuccess: () => void) {
       return ok ? (createdId ?? true) : false;
     },
     lockStartingBalance: (id: string) => run(() => lockAccountStartingBalance(id)),
-    saveType: (input: AccountTypeInput, id?: string) => run(() => saveAccountType(input, id)),
+    saveType: async (input: AccountTypeInput, id?: string): Promise<string | boolean> => {
+      let createdId: string | null = null;
+      const ok = await run(() => {
+        createdId = saveAccountType(input, id);
+      });
+      return ok ? (createdId ?? true) : false;
+    },
     archiveAccount: (id: string, archived: boolean) => run(() => setAccountArchived(id, archived)),
     deleteAccount: (id: string) => run(() => deleteAccountService(id)),
     savePocket: (input: PocketInput, id?: string) => run(() => savePocket(input, id)),

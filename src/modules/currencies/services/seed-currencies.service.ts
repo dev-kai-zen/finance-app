@@ -5,7 +5,6 @@ import {
   CURRENCY_SYMBOLS,
 } from "@/utils/currency";
 import { CURRENCY_NAMES } from "../constants/currency-preferences.constants";
-import { upsertCurrency } from "../repositories/currencies.repository";
 import { refreshActiveCurrencyCatalog } from "./currency-catalog.service";
 
 export function seedCurrenciesIfEmpty(context: DbContext = db): void {
@@ -18,8 +17,9 @@ export function seedCurrenciesIfEmpty(context: DbContext = db): void {
   if (missingCodes.length > 0) {
     const now = new Date();
     missingCodes.forEach((code, index) => {
-      upsertCurrency(
-        {
+      context
+        .insert(currencies)
+        .values({
           code,
           name: CURRENCY_NAMES[code] ?? code,
           symbol: CURRENCY_SYMBOLS[code] ?? `${code} `,
@@ -29,9 +29,9 @@ export function seedCurrenciesIfEmpty(context: DbContext = db): void {
           isCustom: false,
           createdAt: now,
           updatedAt: now,
-        },
-        context,
-      );
+        })
+        .onConflictDoNothing()
+        .run();
     });
   }
 
