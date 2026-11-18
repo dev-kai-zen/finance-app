@@ -8,7 +8,13 @@ import {
   View,
 } from "react-native";
 import { Image } from "expo-image";
-import { Camera, Crown, Image as ImageIcon, Plus, Trash2 } from "lucide-react-native";
+import {
+  Camera,
+  Crown,
+  Image as ImageIcon,
+  Plus,
+  Trash2,
+} from "lucide-react-native";
 import { ActionBottomSheet, HorizontalScrollView } from "@/components";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useLocalization } from "@/infrastructure/localization";
@@ -108,9 +114,7 @@ export function NoteAttachmentsGrid({
           </Text>
         </Pressable>
       ) : (
-        <HorizontalScrollView
-          contentContainerStyle={styles.scrollList}
-        >
+        <HorizontalScrollView contentContainerStyle={styles.scrollList}>
           {/* Existing attachments */}
           {existingAttachments.map((attachment) => (
             <View key={attachment.id} style={styles.thumbnailWrapper}>

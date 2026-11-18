@@ -79,7 +79,8 @@ function NotesScreenContent({
     deleteNote,
     refresh,
   } = useNotes({ autoRefresh: false });
-  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
+  const { guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -166,7 +167,11 @@ function NotesScreenContent({
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
+  }, [
+    loading,
+    walkthroughIntro.canTrigger,
+    walkthroughIntro.triggerIfFirstTime,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -176,15 +181,18 @@ function NotesScreenContent({
 
   const handleOpenNewNote = useCallback(() => {
     if (notes.length >= PRO_LIMITS.FREE_MAX_NOTES) {
-      guardAction(() => {
-        setSelectedNote(null);
-        setEditorVisible(true);
-      }, {
-        featureTitle: t("pro.limits.notesTitle"),
-        featureDescription: t("pro.limits.notesDesc", {
-          count: PRO_LIMITS.FREE_MAX_NOTES,
-        }),
-      });
+      guardAction(
+        () => {
+          setSelectedNote(null);
+          setEditorVisible(true);
+        },
+        {
+          featureTitle: t("pro.limits.notesTitle"),
+          featureDescription: t("pro.limits.notesDesc", {
+            count: PRO_LIMITS.FREE_MAX_NOTES,
+          }),
+        },
+      );
       return;
     }
     setSelectedNote(null);
@@ -204,7 +212,11 @@ function NotesScreenContent({
   }, [handleOpenNewNote, initialAction, loading, router]);
 
   useEffect(() => {
-    if (!loading && initialNoteId && handledNoteIdRef.current !== initialNoteId) {
+    if (
+      !loading &&
+      initialNoteId &&
+      handledNoteIdRef.current !== initialNoteId
+    ) {
       const found = notes.find((n) => n.id === initialNoteId);
       if (found) {
         handledNoteIdRef.current = initialNoteId;
@@ -299,72 +311,71 @@ function NotesScreenContent({
           ) : undefined
         }
       >
-      <View style={styles.container}>
-        {loading ? (
-          <PageLoadingState message="Loading notes..." variant="cards" />
-        ) : hasNoNotes && !isSearchActive ? (
-          /* Empty state when user hasn't created any notes yet */
-          <PageEmptyState
-            actionLabel="+ Create First Note"
-            actionRef={emptyCreateRef}
-            description="Capture your financial goals, checklists, memos, and receipt photos."
-            onAction={handleOpenNewNote}
-            title="No Notes Yet"
-          />
-        ) : (
-          <>
-            {/* Search, View Toggle, and Sort controls */}
-            <NoteSortFilterBar
-              onSearchChange={setSearch}
-              onSortByChange={setSortBy}
-              onViewModeChange={setViewMode}
-              search={search}
-              searchRef={searchRef}
-              sortBy={sortBy}
-              sortFilterRef={sortFilterRef}
-              viewMode={viewMode}
-              viewModeRef={viewModeRef}
+        <View style={styles.container}>
+          {loading ? (
+            <PageLoadingState message="Loading notes..." variant="cards" />
+          ) : hasNoNotes && !isSearchActive ? (
+            /* Empty state when user hasn't created any notes yet */
+            <PageEmptyState
+              actionLabel="+ Create First Note"
+              actionRef={emptyCreateRef}
+              description="Capture your financial goals, checklists, memos, and receipt photos."
+              onAction={handleOpenNewNote}
+              title="No Notes Yet"
             />
-
-            {hasNoNotes && isSearchActive ? (
-              /* Empty state when search query matches nothing */
-              <PageEmptyState
-                actionLabel="Clear Search"
-                description={`No notes found matching "${search}".`}
-                onAction={() => setSearch("")}
-                title="No Matching Notes"
+          ) : (
+            <>
+              {/* Search, View Toggle, and Sort controls */}
+              <NoteSortFilterBar
+                onSearchChange={setSearch}
+                onSortByChange={setSortBy}
+                onViewModeChange={setViewMode}
+                search={search}
+                searchRef={searchRef}
+                sortBy={sortBy}
+                sortFilterRef={sortFilterRef}
+                viewMode={viewMode}
+                viewModeRef={viewModeRef}
               />
-            ) : viewMode === "tiles" ? (
-              /* Square Tiles View (2 Columns) */
-              <View style={styles.tilesGrid}>
-                {notes.map((item, index) => (
-                  <View key={item.id} style={styles.tileCol}>
-                    <NoteCardTile
-                      note={item}
-                      onPress={handleSelectNote}
-                      tileRef={index === 0 ? firstNoteRef : undefined}
-                    />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              /* Table / Rows View with swipe-to-delete */
-              <View style={styles.tableList}>
-                {notes.map((item, index) => (
-                  <NoteTableRow
-                    key={item.id}
-                    note={item}
-                    onDelete={handleConfirmDeleteFromRow}
-                    onPress={handleSelectNote}
-                    rowRef={index === 0 ? firstNoteRef : undefined}
-                  />
-                ))}
-              </View>
-            )}
-          </>
-        )}
-      </View>
 
+              {hasNoNotes && isSearchActive ? (
+                /* Empty state when search query matches nothing */
+                <PageEmptyState
+                  actionLabel="Clear Search"
+                  description={`No notes found matching "${search}".`}
+                  onAction={() => setSearch("")}
+                  title="No Matching Notes"
+                />
+              ) : viewMode === "tiles" ? (
+                /* Square Tiles View (2 Columns) */
+                <View style={styles.tilesGrid}>
+                  {notes.map((item, index) => (
+                    <View key={item.id} style={styles.tileCol}>
+                      <NoteCardTile
+                        note={item}
+                        onPress={handleSelectNote}
+                        tileRef={index === 0 ? firstNoteRef : undefined}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                /* Table / Rows View with swipe-to-delete */
+                <View style={styles.tableList}>
+                  {notes.map((item, index) => (
+                    <NoteTableRow
+                      key={item.id}
+                      note={item}
+                      onDelete={handleConfirmDeleteFromRow}
+                      onPress={handleSelectNote}
+                      rowRef={index === 0 ? firstNoteRef : undefined}
+                    />
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </View>
       </PageContainer>
 
       {editorVisible ? (
@@ -436,10 +447,7 @@ function NotesScreenContent({
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
-        <View
-          pointerEvents="auto"
-          style={styles.interactionBlocker}
-        />
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
       ) : null}
     </View>
   );

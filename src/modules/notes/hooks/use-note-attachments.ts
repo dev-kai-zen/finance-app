@@ -2,16 +2,15 @@ import { useCallback, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 
 import { appLockLifecycle } from "@/modules/security";
-import type {
-  NoteAttachment,
-  NoteAttachmentDraft,
-} from "../types/note.types";
+import type { NoteAttachment, NoteAttachmentDraft } from "../types/note.types";
 
 export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
   const [existingAttachments, setExistingAttachments] =
     useState<NoteAttachment[]>(initialAttachments);
   const [drafts, setDrafts] = useState<NoteAttachmentDraft[]>([]);
-  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    [],
+  );
   const [picking, setPicking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,7 +21,9 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
       await appLockLifecycle.withLockSuspended(async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          setError("Camera permission is required to take an attachment photo.");
+          setError(
+            "Camera permission is required to take an attachment photo.",
+          );
           return;
         }
 
@@ -33,7 +34,8 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
         });
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
-          const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
+          const newDrafts: NoteAttachmentDraft[] =
+            result.assets.map(toImageDraft);
           setDrafts((prev) => [...prev, ...newDrafts]);
         }
       });
@@ -58,12 +60,15 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
         });
 
         if (!result.canceled && result.assets && result.assets.length > 0) {
-          const newDrafts: NoteAttachmentDraft[] = result.assets.map(toImageDraft);
+          const newDrafts: NoteAttachmentDraft[] =
+            result.assets.map(toImageDraft);
           setDrafts((prev) => [...prev, ...newDrafts]);
         }
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to open photo library.");
+      setError(
+        err instanceof Error ? err.message : "Failed to open photo library.",
+      );
     } finally {
       setPicking(false);
     }
@@ -100,7 +105,9 @@ export function useNoteAttachments(initialAttachments: NoteAttachment[] = []) {
   };
 }
 
-function toImageDraft(asset: ImagePicker.ImagePickerAsset): NoteAttachmentDraft {
+function toImageDraft(
+  asset: ImagePicker.ImagePickerAsset,
+): NoteAttachmentDraft {
   return {
     uri: asset.uri,
     name: asset.fileName ?? `photo-${Date.now()}.jpg`,

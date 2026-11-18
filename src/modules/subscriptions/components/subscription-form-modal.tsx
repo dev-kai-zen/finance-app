@@ -981,6 +981,10 @@ function createStyles(theme: AppTheme) {
     requiredAsterisk: {
       color: theme.colors.danger,
       fontWeight: "700",
+      fontSize: 11,
+      lineHeight: 13,
+      textAlignVertical: "top",
+      transform: [{ translateY: -2 }],
     },
     textInput: {
       backgroundColor: theme.colors.surfaceMuted,
