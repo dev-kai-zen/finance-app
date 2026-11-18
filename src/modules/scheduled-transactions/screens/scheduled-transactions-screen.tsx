@@ -1122,6 +1122,8 @@ function ScheduledTransactionsScreenContent({
         visible={showCongrats}
       />
 
+      </PageContainer>
+
       <AppToast
         description={toastState.description}
         message={toastState.message}
@@ -1130,7 +1132,6 @@ function ScheduledTransactionsScreenContent({
         variant="success"
         visible={toastState.visible}
       />
-    </PageContainer>
     </View>
   );
 }

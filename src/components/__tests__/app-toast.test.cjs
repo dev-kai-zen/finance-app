@@ -18,11 +18,14 @@ function resolveToastAccentColor(variant, themeColors) {
   }
 }
 
-function resolveToastOffset(position, insets) {
-  if (position === "top") {
-    return Math.max(12, (insets.top ?? 0) + 8);
+function resolveToastOffset(position, insets, includeSafeArea = false, offset) {
+  if (offset !== undefined) {
+    return offset;
   }
-  return Math.max(16, (insets.bottom ?? 0) + 12);
+  if (position === "top") {
+    return includeSafeArea ? Math.max(12, (insets?.top ?? 0) + 8) : 12;
+  }
+  return Math.max(16, (insets?.bottom ?? 0) + 12);
 }
 
 test("app-toast: resolves accent colors correctly for each variant", () => {
@@ -46,7 +49,14 @@ test("app-toast: resolves top and bottom safe area offsets accurately", () => {
   assert.equal(resolveToastOffset("bottom", zeroInsets), 16);
 
   const notchInsets = { top: 44, bottom: 34 };
-  assert.equal(resolveToastOffset("top", notchInsets), 52); // 44 + 8
+  // Default top offset without includeSafeArea places toast immediately below navbar (12px)
+  assert.equal(resolveToastOffset("top", notchInsets), 12);
+  // With includeSafeArea=true, top offset includes safe area insets (52px)
+  assert.equal(resolveToastOffset("top", notchInsets, true), 52); // 44 + 8
   assert.equal(resolveToastOffset("bottom", notchInsets), 46); // 34 + 12
+
+  // Custom offset overrides
+  assert.equal(resolveToastOffset("top", notchInsets, false, 20), 20);
+  assert.equal(resolveToastOffset("bottom", notchInsets, false, 30), 30);
 });
 

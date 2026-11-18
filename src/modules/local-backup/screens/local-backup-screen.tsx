@@ -203,13 +203,14 @@ export function LocalBackupScreen() {
         onPressHelp={() => setStorageHelpVisible(true)}
         title={t("navigation.localBackup")}
       />
-      <InfoModal
-        message="Local backups remain available across normal app updates, but uninstalling the app or clearing its data can remove them. Automatic backups keep the 7 most recent copies. Export a backup to save an independent copy in your device Files, Drive, or cloud storage."
-        onClose={() => setStorageHelpVisible(false)}
-        title="About Local Storage & Backups"
-        visible={storageHelpVisible}
-      />
-      <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
+      <View style={styles.body}>
+        <InfoModal
+          message="Local backups remain available across normal app updates, but uninstalling the app or clearing its data can remove them. Automatic backups keep the 7 most recent copies. Export a backup to save an independent copy in your device Files, Drive, or cloud storage."
+          onClose={() => setStorageHelpVisible(false)}
+          title="About Local Storage & Backups"
+          visible={storageHelpVisible}
+        />
+        <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
       <View style={styles.summaryCard}>
         <View style={styles.summaryIcon}>
           <Archive color={theme.colors.primary} size={26} />
@@ -491,15 +492,16 @@ export function LocalBackupScreen() {
         visible={proModalVisible}
       />
     </PageContainer>
-    <AppToast
-      description={toastState.description}
-      duration={2500}
-      message={toastState.message}
-      onClose={handleCloseToast}
-      position="top"
-      variant={toastState.variant ?? "success"}
-      visible={toastState.visible}
-    />
+        <AppToast
+          description={toastState.description}
+          duration={2500}
+          message={toastState.message}
+          onClose={handleCloseToast}
+          position="top"
+          variant={toastState.variant ?? "success"}
+          visible={toastState.visible}
+        />
+      </View>
     </View>
   );
 }
@@ -693,6 +695,10 @@ function createStyles(theme: AppTheme) {
     container: {
       backgroundColor: theme.colors.background,
       flex: 1,
+    },
+    body: {
+      flex: 1,
+      position: "relative",
     },
     page: {
       gap: theme.spacing.xl,
