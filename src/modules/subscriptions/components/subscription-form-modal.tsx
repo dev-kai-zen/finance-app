@@ -11,6 +11,8 @@ import {
   Calendar,
   ChevronRight,
   Clock,
+  Pause,
+  Play,
   Sparkles,
   Tag,
   Wallet,
@@ -184,6 +186,11 @@ function SubscriptionFormModalContent({
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
+  const [isActive, setIsActive] = useState<boolean>(() => {
+    return subscription
+      ? subscription.status !== "paused" && subscription.status !== "cancelled"
+      : true;
+  });
   const [isTrial, setIsTrial] = useState(subscription?.status === "trial");
   const [trialDurationPreset, setTrialDurationPreset] = useState<
     7 | 14 | 30 | "custom"
@@ -376,11 +383,11 @@ function SubscriptionFormModalContent({
 
     const status: SubscriptionStatus = isTrial
       ? "trial"
-      : subscription?.status === "paused"
-        ? "paused"
+      : isActive
+        ? "active"
         : subscription?.status === "cancelled"
           ? "cancelled"
-          : "active";
+          : "paused";
 
     const input: SaveSubscriptionInput = {
       id: subscription?.id,
@@ -626,6 +633,42 @@ function SubscriptionFormModalContent({
               <ChevronRight color={theme.colors.textSecondary} size={18} />
             </Pressable>
           </View>
+
+          {/* Subscription Active Toggle (When editing an existing subscription) */}
+          {isEditing && !isTrial && (
+            <View style={styles.toggleRowMinimal}>
+              <View style={styles.toggleLeftRow}>
+                {isActive ? (
+                  <Play color={theme.colors.primary} size={16} />
+                ) : (
+                  <Pause color={theme.colors.warning || "#F59E0B"} size={16} />
+                )}
+                <Text style={styles.toggleTitle}>
+                  {t("subscriptions.activeStatusTitle", {
+                    defaultValue: "Subscription Active",
+                  })}
+                </Text>
+                <HelpIconButton
+                  accessibilityLabel={t("subscriptions.activeStatusHelp", {
+                    defaultValue: "Subscription Status Help",
+                  })}
+                  onPress={() =>
+                    setInfoModalContent({
+                      title: t("subscriptions.activeStatusTitle", {
+                        defaultValue: "Subscription Active",
+                      }),
+                      message: t("subscriptions.activeStatusDesc", {
+                        defaultValue:
+                          "When active, renewals and reminders are tracked normally. Pausing stops upcoming due alerts and scheduled payments.",
+                      }),
+                    })
+                  }
+                  size={16}
+                />
+              </View>
+              <ThemedSwitch onValueChange={setIsActive} value={isActive} />
+            </View>
+          )}
 
           {/* Free Trial Toggle (Minimalist) */}
           <View style={styles.toggleRowMinimal}>

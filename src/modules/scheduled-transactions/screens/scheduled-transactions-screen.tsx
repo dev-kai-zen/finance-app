@@ -239,7 +239,7 @@ function ScheduledTransactionsScreenContent({
           return false;
         }
         const schedule = scheduleById.get(occurrence.scheduleId);
-        if (!schedule) return false;
+        if (!schedule || schedule.status === "paused") return false;
         return scheduleMatchesSearchQuery(
           schedule,
           normalizedSearchQuery,

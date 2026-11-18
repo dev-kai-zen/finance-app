@@ -1002,6 +1002,10 @@ export const es = {
     selectAccount: "Seleccionar Cuenta",
     category: "Categoría",
     selectCategory: "Seleccionar Categoría",
+    activeStatusTitle: "Suscripción Activa",
+    activeStatusHelp: "Ayuda sobre el Estado de la Suscripción",
+    activeStatusDesc:
+      "Cuando está activa, las renovaciones y recordatorios se registran normalmente. Pausarla detiene las alertas de vencimiento y pagos programados.",
     freeTrialTitle: "Modo de Prueba Gratuita",
     freeTrialDesc:
       "Marca esta suscripción como prueba con alertas anticipadas para que puedas cancelar antes de que se cobre.",

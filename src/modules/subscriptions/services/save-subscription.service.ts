@@ -146,13 +146,13 @@ export function syncSubscriptionScheduleInContext(
 
     if (sub.status === "paused" || sub.status === "cancelled") {
       try {
-        setScheduledTransactionPaused(linkedScheduleId, true);
+        setScheduledTransactionPaused(linkedScheduleId, true, context);
       } catch {
         // Ignore if schedule record was not found
       }
     } else {
       try {
-        setScheduledTransactionPaused(linkedScheduleId, false);
+        setScheduledTransactionPaused(linkedScheduleId, false, context);
       } catch {
         // Ignore if schedule record was not found
       }

@@ -1016,6 +1016,10 @@ export const fil = {
     selectAccount: "Pumili ng Account",
     category: "Kategorya",
     selectCategory: "Pumili ng Kategorya",
+    activeStatusTitle: "Aktibong Subskripsyon",
+    activeStatusHelp: "Tulong sa Katayuan ng Subskripsyon",
+    activeStatusDesc:
+      "Kapag aktibo, normal na sinusubaybayan ang mga renewal at paalala. Ang pag-pause ay nagpapatigil sa mga darating na paalala at nakaiskedyul na pagbabayad.",
     freeTrialTitle: "Libreng Trial Mode",
     freeTrialDesc:
       "Minamarkahan ito bilang trial na may maagang alerto upang makapagkansela bago masingil.",

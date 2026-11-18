@@ -985,6 +985,10 @@ export const en = {
     selectAccount: "Select Account",
     category: "Category",
     selectCategory: "Select Category",
+    activeStatusTitle: "Subscription Active",
+    activeStatusHelp: "Subscription Status Help",
+    activeStatusDesc:
+      "When active, renewals and reminders are tracked normally. Pausing stops upcoming due alerts and scheduled payments.",
     freeTrialTitle: "Free Trial Mode",
     freeTrialDesc:
       "Flags this subscription as a trial with early renewal alerts so you can cancel before getting charged.",

@@ -1,5 +1,6 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import type { ScheduledTransaction } from "../types/scheduled-transaction.types";
+import { processDueSchedules } from "./process-due-schedules.service";
 import {
   deleteAllScheduledTransactionRecords,
   deleteScheduledTransactionRecord,
@@ -36,8 +37,9 @@ export function permanentlyDeleteScheduledTransaction(id: string): void {
 export function setScheduledTransactionPaused(
   id: string,
   paused: boolean,
+  context?: DbContext,
 ): void {
-  db.transaction((tx) => {
+  const runner = (tx: DbContext) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
     if (schedule.status === "completed") {
@@ -51,7 +53,20 @@ export function setScheduledTransactionPaused(
       { status: paused ? "paused" : "active", updatedAt: new Date() },
       tx,
     );
-  });
+  };
+
+  if (context) {
+    runner(context);
+  } else {
+    db.transaction(runner);
+    if (!paused) {
+      try {
+        processDueSchedules(new Date());
+      } catch {
+        // Ignore
+      }
+    }
+  }
 }
 
 export function endScheduledTransaction(id: string): void {
