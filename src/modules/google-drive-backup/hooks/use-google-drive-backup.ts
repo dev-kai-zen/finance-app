@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
+import { getQuickSyncConfig } from "@/infrastructure/sync";
 
 import type {
   BackupCatalog,
@@ -127,7 +128,9 @@ export function useGoogleDriveBackup() {
   const connect = useCallback(async (): Promise<void> => {
     const connectedUser = await run("connecting", connectGoogleDrive);
     if (!connectedUser) return;
-    if (user?.email && connectedUser.email && user.email !== connectedUser.email) {
+    const currentQuickSync = getQuickSyncConfig();
+    const previousEmail = user?.email ?? currentQuickSync.accountEmail;
+    if (previousEmail && connectedUser.email && previousEmail !== connectedUser.email) {
       resetQuickSyncConnection();
     }
     setUser(connectedUser);

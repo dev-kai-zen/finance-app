@@ -1,9 +1,11 @@
+import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   recordTransactionInContext,
   type Transaction,
   type TransferResult,
 } from "@/modules/transactions";
+import { handleSubscriptionScheduleExecutedInContext } from "@/modules/subscriptions";
 import {
   findScheduleOccurrence,
   findScheduleOccurrenceById,
@@ -71,6 +73,10 @@ export function processDueSchedules(
       result.failed += 1;
     }
     result.processed += 1;
+  }
+
+  if (result.posted > 0) {
+    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
   }
 
   return result;
@@ -141,13 +147,26 @@ function processNextOccurrence(
   );
 
   if (!occurrence.skippedForWeekend && schedule.autoPost) {
-    postSnapshot(
+    const postedResult = postSnapshot(
       parseTemplateSnapshot(created.templateSnapshot),
       created.id,
       occurrence.effectiveAt ?? occurrence.nominalAt,
       now,
       context,
     );
+    if (schedule.subscriptionId && postedResult && "id" in postedResult) {
+      try {
+        handleSubscriptionScheduleExecutedInContext(
+          schedule.subscriptionId,
+          postedResult.id,
+          occurrence.effectiveAt ?? occurrence.nominalAt,
+          Math.abs(schedule.amountMinorUnits),
+          context,
+        );
+      } catch {
+        // Keep auto-post working even if sub record sync fails
+      }
+    }
   }
 
   advanceSchedule(schedule, occurrence.sequenceNumber + 1, now, context);
@@ -210,13 +229,27 @@ export function postScheduledOccurrence(
       throw new Error("Only due or failed occurrences can be posted.");
     }
 
-    postSnapshot(
+    const postedResult = postSnapshot(
       parseTemplateSnapshot(occurrence.templateSnapshot),
       occurrence.id,
       occurrence.effectiveDueAt ?? occurrence.nominalDueAt,
       now,
       tx,
     );
+    const sched = findScheduledTransaction(occurrence.scheduleId, tx);
+    if (sched?.subscriptionId && postedResult && "id" in postedResult) {
+      try {
+        handleSubscriptionScheduleExecutedInContext(
+          sched.subscriptionId,
+          postedResult.id,
+          occurrence.effectiveDueAt ?? occurrence.nominalDueAt,
+          Math.abs(sched.amountMinorUnits),
+          tx,
+        );
+      } catch {
+        // ignore
+      }
+    }
     updateScheduleOccurrenceRecord(
       occurrence.id,
       {
@@ -228,6 +261,7 @@ export function postScheduledOccurrence(
       tx,
     );
   });
+  DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
 }
 
 export function skipScheduledOccurrence(
@@ -259,7 +293,7 @@ export function postSnapshot(
   occurredAt: Date,
   now: Date,
   context: DbContext,
-): void {
+): Transaction | TransferResult {
   let result: Transaction | TransferResult;
   if (snapshot.transactionType === "transfer") {
     result = recordTransactionInContext(
@@ -280,7 +314,7 @@ export function postSnapshot(
     );
     insertSchedulePosting(occurrenceId, result.outLeg.id, now, context);
     insertSchedulePosting(occurrenceId, result.inLeg.id, now, context);
-    return;
+    return result;
   }
 
   result = recordTransactionInContext(
@@ -300,6 +334,7 @@ export function postSnapshot(
     context,
   );
   insertSchedulePosting(occurrenceId, result.id, now, context);
+  return result;
 }
 
 export function resolveRecordedOccurrence(

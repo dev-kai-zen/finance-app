@@ -321,7 +321,7 @@ function GoalFormModalContent({
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
-  const { isPromptDismissed } = useExperiencePreferences();
+  const { isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
 
   const handleScrollToTarget = useCallback(
     (targetId: WalkthroughTargetId) => {
@@ -380,6 +380,8 @@ function GoalFormModalContent({
         titleAlign="left"
         visible={visible}
         isDirty={isDirty}
+        onTour={guideHelperEnabled && !initialGoal ? walkthrough.startWalkthrough : undefined}
+        tourLabel="Tour goal form"
       >
         <KeyboardAwareFormPreset
           ref={formScrollRef}

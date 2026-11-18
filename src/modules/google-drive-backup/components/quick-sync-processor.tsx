@@ -6,7 +6,10 @@ import {
   type DatabaseChangeEvent,
 } from "expo-sqlite";
 
-import { QUICK_SYNC_WATCHED_TABLE_NAME_SET } from "@/infrastructure/database/user-data-tables";
+import {
+  isDatabaseReplacing,
+  QUICK_SYNC_WATCHED_TABLE_NAME_SET,
+} from "@/infrastructure/database";
 import {
   flushDebouncedQuickSync,
   queueDebouncedQuickSync,
@@ -18,6 +21,9 @@ import { triggerQuickSync } from "../services/quick-sync.service";
 function shouldQueueQuickSyncForDatabaseChange(
   event: DatabaseChangeEvent,
 ): boolean {
+  if (isDatabaseReplacing()) {
+    return false;
+  }
   return QUICK_SYNC_WATCHED_TABLE_NAME_SET.has(event.tableName);
 }
 

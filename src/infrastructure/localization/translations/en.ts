@@ -363,6 +363,7 @@ export const en = {
     enabled: "Enabled",
     disabled: "Disabled",
     cancel: "Cancel",
+    clear: "Clear",
     close: "Close",
     delete: "Delete",
     goBack: "Go back",
@@ -404,6 +405,7 @@ export const en = {
     sectionSchedules: "SCHEDULED TRANSACTIONS",
     sectionLabels: "LABELS & TAGS",
     sectionPockets: "POCKETS",
+    sectionSubscriptions: "SUBSCRIPTIONS",
     settingStealthMode: "Privacy / Stealth Mode",
     settingStealthModeDesc:
       "Hide or mask sensitive account balances and totals",
@@ -495,6 +497,17 @@ export const en = {
       "Configure the search button in header and navigation",
     settingSqliteMonitorDesc: "Inspect local database tables and diagnostics",
     guidesToSetting: "Guides to setting",
+    actionAddSubscription: "Add Subscription",
+    actionAddSubscriptionDesc:
+      "Track a recurring bill, membership, or service",
+    actionSubscriptionsArchived: "Archived Subscriptions",
+    actionSubscriptionsArchivedDesc:
+      "View and restore past or archived subscriptions",
+    actionImportDataCsv: "Import Data (CSV)",
+    actionImportDataCsvDesc:
+      "Bring accounts and transactions from a spreadsheet",
+    screenSubscriptionsDesc:
+      "Track recurring expenses, burn rate, and renewal alerts",
   },
   navigation: {
     dashboard: "Dashboard",
@@ -509,6 +522,7 @@ export const en = {
     goals: "Goals",
     reports: "Reports",
     notes: "Notes",
+    subscriptions: "Subscriptions",
     sqliteMonitor: "SQLite Monitor",
     settings: "Settings",
     sendFeedback: "Send Feedback",
@@ -538,6 +552,7 @@ export const en = {
     synced: "Synced",
     waitingNetwork: "Waiting for Wi-Fi",
     failed: "Sync failed",
+    notSynced: "Not synced yet",
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
   scheduledBackup: {
@@ -756,6 +771,7 @@ export const en = {
     navGoals: "Goals",
     navReports: "Reports",
     navNotes: "Notes",
+    navSubscriptions: "Subscriptions",
   },
   currency: {
     defaultCurrency: "Default currency",
@@ -870,6 +886,26 @@ export const en = {
     advancePostToastNext: "Next schedule automatically moved to %{date}.",
     advancePostToastCompleted: "This scheduled transaction is now completed.",
     today: "Today",
+    subscriptionBadge: "Subscription",
+    manageInSubscriptions: "Manage in Subscriptions",
+    managedBySubscriptionTitle: "Managed by Subscriptions",
+    managedBySubscriptionDesc:
+      "This scheduled transaction is automatically synchronized with your subscription. To adjust amounts, cycle, pause, or delete, manage it directly in Subscriptions.",
+    goToSubscriptions: "Go to Subscriptions",
+    emptyTitle: "No scheduled transactions",
+    emptyDesc:
+      "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
+    noSubscriptionSchedulesTitle: "No subscription schedules",
+    noSubscriptionSchedulesDesc:
+      "You do not have any schedules created by subscriptions. Active subscriptions will appear here.",
+    noMatchingTitle: "No matching schedules",
+    noMatchingDesc:
+      "No schedules match the selected filters. Select another filter to view them.",
+    filters: {
+      all: "All",
+      regularSchedules: "Regular Schedules",
+      subscriptions: "Subscriptions",
+    },
   },
   themePicker: {
     closeAccessibility: "Close theme picker",
@@ -910,6 +946,129 @@ export const en = {
     unlockCustomThemePro: "Unlock Pro to Apply Custom Theme",
     customShadeLabel: "Fine-tune Tone & Brightness",
   },
+  subscriptions: {
+    title: "Subscriptions",
+    monthlyBurnRate: "Monthly Burn Rate",
+    perMonth: "/ month",
+    yearlyProjected: "Yearly Projection",
+    activeCount: "%{count} Active",
+    dueIn7Days: "%{count} due this week",
+    trialsActive: "%{count} on Trial",
+    filterAll: "All",
+    filterActive: "Active",
+    filterTrial: "Free Trial",
+    filterPaused: "Paused",
+    filterCancelled: "Cancelled",
+    filterArchived: "Archived",
+    cycleWeekly: "Weekly",
+    cycleMonthly: "Monthly",
+    cycleQuarterly: "Quarterly",
+    cycleSemiAnnual: "Semi-Annual",
+    cycleYearly: "Yearly",
+    cycle_weekly: "/ wk",
+    cycle_monthly: "/ mo",
+    cycle_quarterly: "/ qtr",
+    cycle_semi_annual: "/ 6mo",
+    cycle_yearly: "/ yr",
+    statusPaused: "Paused",
+    statusCancelled: "Cancelled",
+    trialEndsToday: "Trial ends today",
+    trialEndsTomorrow: "Trial ends tomorrow",
+    trialEndsInDays: "Trial ends in %{count}d",
+    dueToday: "Due today",
+    dueTomorrow: "Tomorrow",
+    inDays: "In %{count} days",
+    overdueDays: "%{count}d overdue",
+    markPaid: "Mark Paid",
+    recordPaymentTitle: "Record Payment",
+    paymentDate: "Transaction Date",
+    selectPaymentAccount: "Payment Account",
+    rollForwardNotice:
+      "This will log an expense transaction in your ledger and advance the renewal countdown to the next cycle.",
+    confirmPayment: "Confirm Payment",
+    newSubscription: "New Subscription",
+    editSubscription: "Edit Subscription",
+    quickPresets: "Popular Services",
+    nameLabel: "Subscription Name",
+    namePlaceholder: "e.g. Netflix, Spotify, Gym",
+    amountLabel: "Amount / Cost",
+    billingCycle: "Billing Cycle",
+    paymentAccount: "Paid From Account",
+    selectAccount: "Select Account",
+    category: "Category",
+    selectCategory: "Select Category",
+    activeStatusTitle: "Subscription Active",
+    activeStatusHelp: "Subscription Status Help",
+    activeStatusDesc:
+      "When active, renewals and reminders are tracked normally. Pausing stops upcoming due alerts and scheduled payments.",
+    freeTrialTitle: "Free Trial Mode",
+    freeTrialDesc:
+      "Flags this subscription as a trial with early renewal alerts so you can cancel before getting charged.",
+    autoPostTitle: "Auto-Post to Ledger",
+    autoPostDesc:
+      "Automatically generates an expense transaction in your ledger on the scheduled renewal date.",
+    cancellationUrlLabel: "Manage / Cancellation Web Link",
+    firstBillingDate: "First Bill / Next Renewal Date",
+    firstBillingDateDesc:
+      "The anchor date used to calculate recurring billing cycles and renewal countdowns.",
+    selectBillingDate: "Select Date",
+    exactDay: "Exact day",
+    cycleDescWeekly: "Billed every %{day} of the week",
+    cycleDescMonthly: "Billed on the %{day} of every month",
+    cycleDescQuarterly: "Billed every 3 months on the %{day} (next: %{date})",
+    cycleDescSemiAnnual: "Billed every 6 months on the %{day} (next: %{date})",
+    cycleDescYearly: "Billed annually every %{date}",
+    trialDuration: "Trial Duration",
+    customDate: "Custom Date",
+    trialEndsAtTitle: "Trial Expiration Date",
+    trialSummaryCaption: "Trial ends on %{date} (%{daysLeft})",
+    reminderLeadDays: "Notify Me Before Renewal",
+    reminderSummary: "Reminder alerts %{days} days before.",
+    noReminders: "No reminders scheduled.",
+    contractEndsOn: "Contract Expiration / Ends On",
+    contractEndsOnDesc:
+      "Optional contract or promo end date when billing automatically terminates.",
+    noExpiration: "No end date (ongoing)",
+    freeTrialHelp: "Free Trial Help",
+    freeTrialHelpTitle: "About Free Trial Mode",
+    freeTrialHelpMessage:
+      "Flags this subscription as an active trial. You will receive early reminder notifications so you can cancel before your card gets billed.",
+    autoPostHelp: "Auto-Post Help",
+    autoPostHelpTitle: "About Auto-Post to Ledger",
+    autoPostHelpMessage:
+      "When turned on, an expense transaction is automatically recorded in your ledger on every renewal date without requiring manual confirmation.",
+    notesPlaceholder: "Plan tier, account credentials hint, etc.",
+    searchPlaceholder: "Search subscriptions, utilities, services...",
+    emptyTitle: "No Subscriptions Tracked Yet",
+    emptyDescription:
+      "Track your recurring memberships, streaming apps, gym, and bills in one place with automatic renewal countdowns.",
+    addFirstAction: "Add Subscription",
+    addSubscription: "Add Subscription",
+    noMatchTitle: "No matching subscriptions found",
+    noMatchDescription: "Try adjusting your search query or switching tabs.",
+    createdToast: "Subscription added",
+    updatedToast: "Subscription updated",
+    deletedToast: "Subscription deleted",
+    archivedToast: "Subscription archived",
+    restoredToast: "Subscription restored",
+    pausedToast: "Subscription paused",
+    resumedToast: "Subscription resumed",
+    paymentRecordedToast: "Recorded payment for %{name}",
+    manageOnline: "Manage",
+    resume: "Resume",
+    pause: "Pause",
+    restore: "Restore",
+    deletePermanently: "Delete Permanently",
+    deleteConfirmTitle: "Delete Subscription",
+    deleteConfirmMessage:
+      'Are you sure you want to permanently delete "%{name}"? Past expense transactions in your accounts will not be deleted.',
+    archiveConfirmTitle: "Archive Subscription",
+    archiveConfirmMessage:
+      '"%{name}" has recorded payments in your ledger. It will be moved to Archived to preserve your transaction history and stop all upcoming reminders. You can restore it anytime.',
+    restoreConfirmTitle: "Restore Subscription",
+    restoreConfirmMessage:
+      'Do you want to restore "%{name}"? Its renewal countdown and recurring schedule will be reactivated.',
+  },
   versionHistory: {
     heading: "Version History",
     continue: "Continue",
@@ -933,6 +1092,37 @@ export const en = {
       security: "Privacy & Security",
       backup: "Backup & Sync",
       general: "General",
+    },
+    v170: {
+      date: "November 18, 2026",
+      newItem1:
+        "Track recurring subscriptions and bills with renewal countdowns, trial end dates, and monthly burn rate totals.",
+      newItem2:
+        "Link subscriptions directly to scheduled transactions and sub-account pockets for automatic tracking.",
+      newItem3:
+        "Learn how to manage your subscriptions with an interactive step-by-step walkthrough.",
+      improveItem1:
+        "View your latest balance and transaction history prominently at the top of account details.",
+      improveItem2:
+        "View complete figures and detailed financial totals directly inside Net Worth growth reports.",
+      improveItem3:
+        "Add quick help buttons and guidance popups to Google Drive backup and sync cards.",
+      improveItem4:
+        "Exclude subscription-linked schedules from counting against the free scheduled transaction limit.",
+      improveItem5:
+        "Show developer messages only after recording regular transactions for an uninterrupted start.",
+      improveItem6:
+        "Polish walkthrough tours with standardized styling and steady card layouts across all screens.",
+      improveItem7:
+        "Explore screens and forms on your own time with on-demand tour buttons instead of unexpected popups.",
+      fixItem1:
+        "Fix Google Drive sync and database errors when changing connected accounts.",
+      fixItem2:
+        "Show accurate sync status verified directly against files in Google Drive.",
+      fixItem3:
+        "Fix off-screen modal rendering to keep screen navigation and transitions fast and responsive.",
+      fixItem4:
+        "Adjust notification toast positioning across screens to prevent overlapping navigation buttons.",
     },
     v162: {
       date: "November 16, 2026",
@@ -1337,6 +1527,9 @@ export const en = {
       "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
     readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
+    readyTourTipTitle: "Interactive Tours on Demand",
+    readyTourTipMessage:
+      "Whenever you want a quick guide on any screen or form, simply tap the Sparkles (✨) button at the top.",
     finishSetup: "Go to Home",
     continue: "Continue",
     accountSetupChoiceTitle: "How would you like to set up accounts?",
@@ -1425,7 +1618,7 @@ export const en = {
     walkthroughIntroTitle: "Welcome to your Dashboard!",
     walkthroughIntroSubtitle: "Your financial command center",
     walkthroughIntroMessage:
-      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. Would you like a quick walkthrough of how everything works?",
+      "Here you can view your total net worth, monitor monthly spending, and manage transactions in one place. You can also tap the Sparkles (✨) button at the top of any screen anytime for a guided tour.",
     walkthroughIntroStart: "Take a Tour",
     walkthroughIntroSkip: "Explore on My Own",
     walkthroughChip: "Guide",
@@ -2105,6 +2298,34 @@ export const en = {
     stepFabDesc:
       "Tap the (+) button anytime to set up a new target, link bank accounts or pockets, specify deadlines, and calculate required monthly pace.",
   },
+  subscriptionCongratulations: {
+    title: "First Subscription Added!",
+    subtitle: "Take control of recurring bills",
+    message:
+      "Congratulations on tracking your first subscription! Monitor renewal countdowns, monthly burn rate totals, and never miss an upcoming bill.",
+    button: "Explore Subscriptions Tour",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "Welcome to Subscriptions!",
+    introSubtitle: "Master your recurring bills & memberships",
+    introMessage:
+      "Track recurring services, renewal countdowns, and your monthly burn rate in one place. Would you like a quick walkthrough?",
+    stepEmptyCreateTitle: "Track Your First Subscription",
+    stepEmptyCreateDesc:
+      "Tap here to add streaming services, utilities, gym memberships, or software licenses with custom billing cycles.",
+    stepBurnRateSummaryTitle: "Monthly & Annual Burn Rate",
+    stepBurnRateSummaryDesc:
+      "Monitor your total monthly and annualized subscription costs, active services, and countdown to your next renewal.",
+    stepFilterTabsTitle: "Status Filters",
+    stepFilterTabsDesc:
+      "Quickly filter between All, Active, Free Trials, Paused, Cancelled, and Archived subscriptions with live counters.",
+    stepFirstItemTitle: "Renewal Countdown & Actions",
+    stepFirstItemDesc:
+      "View upcoming billing dates, cycle prices, and tap 'Mark Paid' or the pause toggle to record payments or pause service.",
+    stepFabTitle: "Add New Subscription",
+    stepFabDesc:
+      "Tap the (+) button anytime to track a new subscription, pick popular presets, configure custom cycles, and set reminder alerts.",
+  },
   notesWalkthrough: {
     introTitle: "Welcome to Notes!",
     introSubtitle: "Financial checklists & memos",
@@ -2414,12 +2635,17 @@ export const en = {
       notesTitle: "Keeping great records!",
       notesDesc:
         "You’ve filled your first %{count} financial notes! Unlock Kaizen Pro for unlimited notes, document and receipt photo attachments, and custom color tagging.",
+      subscriptionsTitle: "Staying on top of your subscriptions!",
+      subscriptionsDesc:
+        "You’ve tracked your first %{count} subscriptions! Upgrade to Kaizen Pro for unlimited subscriptions, recurring billing analytics, and automatic payment tracking.",
       restoreAccountDesc:
         "Restoring this account would exceed your %{count} active accounts. Upgrade to Kaizen Pro for unlimited accounts and complete portfolio freedom.",
       restorePocketDesc:
         "Restoring this pocket would exceed your %{count} pockets for this account. Upgrade to Kaizen Pro for unlimited sub-pockets.",
       restoreScheduleDesc:
         "Restoring this schedule would exceed your %{count} recurring transactions. Upgrade to Kaizen Pro for unlimited schedules.",
+      restoreSubscriptionDesc:
+        "Restoring this subscription would exceed your %{count} active subscriptions. Upgrade to Kaizen Pro for unlimited subscriptions.",
     },
     restorePurchases: "Restore Purchases",
     restoring: "Restoring...",

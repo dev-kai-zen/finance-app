@@ -56,4 +56,5 @@ export const NOTIFICATION_IDENTIFIERS = {
   GOAL_DEADLINE_PREFIX: "reminder-goal-deadline-",
   GOAL_MILESTONE_PREFIX: "reminder-goal-milestone-",
   BUDGET_ALERT_PREFIX: "reminder-budget-alert-",
+  SUB_PREFIX: "reminder-sub-",
 } as const;

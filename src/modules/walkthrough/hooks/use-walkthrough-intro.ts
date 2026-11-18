@@ -9,6 +9,7 @@ export interface UseWalkthroughIntroOptions {
   onStart: () => void;
   prerequisitePromptKey?: PromptSettingKey;
   enabled?: boolean;
+  autoTrigger?: boolean;
 }
 
 export function useWalkthroughIntro({
@@ -16,6 +17,7 @@ export function useWalkthroughIntro({
   onStart,
   prerequisitePromptKey,
   enabled = true,
+  autoTrigger = false,
 }: UseWalkthroughIntroOptions) {
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const [isIntroVisible, setIsIntroVisible] = useState(false);
@@ -24,15 +26,15 @@ export function useWalkthroughIntro({
   const isPrerequisiteMet = prerequisitePromptKey
     ? isPromptDismissed(prerequisitePromptKey)
     : true;
-  const canTrigger = !isDismissed && isPrerequisiteMet && enabled;
+  const canTrigger = autoTrigger && !isDismissed && isPrerequisiteMet && enabled;
   const isWaitingForIntro = canTrigger && !isIntroVisible;
   const scrollEnabled = !isWaitingForIntro && !isIntroVisible;
 
   const triggerIfFirstTime = useCallback(() => {
-    if (!isPromptDismissed(promptKey) && isPrerequisiteMet && enabled) {
+    if (autoTrigger && !isPromptDismissed(promptKey) && isPrerequisiteMet && enabled) {
       setIsIntroVisible(true);
     }
-  }, [isPromptDismissed, promptKey, isPrerequisiteMet, enabled]);
+  }, [autoTrigger, isPromptDismissed, promptKey, isPrerequisiteMet, enabled]);
 
   const showIntro = useCallback(() => {
     setIsIntroVisible(true);

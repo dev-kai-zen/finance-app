@@ -12,7 +12,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronLeft, Pin, Plus, Slash, Trash2 } from "lucide-react-native";
+import {
+  Check,
+  ChevronLeft,
+  Pin,
+  Plus,
+  Slash,
+  Trash2,
+} from "lucide-react-native";
 
 import {
   ConfirmModal,
@@ -27,6 +34,7 @@ import {
   WalkthroughTarget,
 } from "@/modules/walkthrough";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useRegisterActiveModal } from "@/hooks";
 import type { AppTheme } from "@/constants/theme";
 import {
   HexColorFormModal,
@@ -55,6 +63,7 @@ export interface NoteEditorModalProps {
 }
 
 export function NoteEditorModal(props: NoteEditorModalProps) {
+  useRegisterActiveModal(props.visible);
   if (!props.visible) return null;
   return (
     <WalkthroughRegistryProvider>
@@ -92,11 +101,7 @@ function NoteEditorModalContent({
     }
   }, [visible]);
 
-  const {
-    colors: hexColorsList,
-    refresh: refreshHexColors,
-    addColor,
-  } = useHexColors();
+  const { colors: hexColorsList, addColor } = useHexColors();
 
   const {
     existingAttachments,
@@ -114,7 +119,6 @@ function NoteEditorModalContent({
 
   useEffect(() => {
     if (visible) {
-      refreshHexColors();
       setIsColorFormOpen(false);
       if (note) {
         setTitle(note.title);
@@ -137,7 +141,7 @@ function NoteEditorModalContent({
       });
       setValidationError(null);
     }
-  }, [visible, note, refreshHexColors]);
+  }, [visible, note, resetAttachments]);
 
   const handleSaveCustomColor = (input: HexColorInput) => {
     const created = addColor(input);
@@ -148,8 +152,7 @@ function NoteEditorModalContent({
   const hasLegacyColor =
     Boolean(color) &&
     !hexColorsList.some(
-      (c) =>
-        c.hex.toUpperCase() === color!.toUpperCase() || c.id === color,
+      (c) => c.hex.toUpperCase() === color!.toUpperCase() || c.id === color,
     );
 
   const isDirty = useMemo(() => {
@@ -165,7 +168,15 @@ function NoteEditorModalContent({
       drafts.length > 0 ||
       removedAttachmentIds.length > 0
     );
-  }, [visible, title, content, color, isPinned, drafts.length, removedAttachmentIds.length]);
+  }, [
+    visible,
+    title,
+    content,
+    color,
+    isPinned,
+    drafts.length,
+    removedAttachmentIds.length,
+  ]);
 
   const handleRequestClose = useCallback(() => {
     if (saving || picking) return;
@@ -258,10 +269,7 @@ function NoteEditorModalContent({
                   accessibilityRole="button"
                   hitSlop={8}
                   onPress={() => setIsPinned((prev) => !prev)}
-                  style={[
-                    styles.pinButton,
-                    isPinned && styles.pinButtonActive,
-                  ]}
+                  style={[styles.pinButton, isPinned && styles.pinButtonActive]}
                 >
                   <Pin
                     color={
@@ -303,7 +311,10 @@ function NoteEditorModalContent({
                   ]}
                 >
                   {saving ? (
-                    <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+                    <ActivityIndicator
+                      color={theme.colors.onPrimary}
+                      size="small"
+                    />
                   ) : (
                     <>
                       <Check color={theme.colors.onPrimary} size={16} />
@@ -324,210 +335,229 @@ function NoteEditorModalContent({
             {/* Color Palette (Placed above Note Title so it's always visible) */}
             <WalkthroughTarget id="noteEditorColor">
               <View style={styles.topPaletteContainer}>
-              <HorizontalScrollView
-                contentContainerStyle={styles.paletteScrollContent}
-                keyboardShouldPersistTaps="handled"
-              >
-                {/* Default (no accent) */}
-                <Pressable
-                  accessibilityLabel="Default color (no accent)"
-                  accessibilityRole="button"
-                  onPress={() => setColor(null)}
-                  style={[
-                    styles.colorChip,
-                    {
-                      backgroundColor: theme.colors.surfaceMuted,
-                      borderColor:
-                        color === null
-                          ? theme.colors.textPrimary
-                          : "rgba(255,255,255,0.25)",
-                      borderWidth: color === null ? 2.5 : 1.5,
-                      transform: color === null ? [{ scale: 1.06 }] : undefined,
-                    },
-                  ]}
+                <HorizontalScrollView
+                  contentContainerStyle={styles.paletteScrollContent}
+                  keyboardShouldPersistTaps="handled"
                 >
-                  {color === null ? (
-                    <Check color={theme.colors.textPrimary} size={14} strokeWidth={3} />
-                  ) : (
-                    <Slash color={theme.colors.textMuted} size={12} />
-                  )}
-                </Pressable>
-
-                {/* Hex colors from hex-colors repository */}
-                {hexColorsList.map((c) => {
-                  const isSelected =
-                    Boolean(color) &&
-                    (color === c.hex ||
-                      color === c.id ||
-                      color?.toUpperCase() === c.hex.toUpperCase());
-                  const light = isLightColor(c.hex);
-                  const checkColor = light ? "#0F172A" : "#FFFFFF";
-
-                  return (
-                    <Pressable
-                      key={c.id}
-                      accessibilityLabel={`Color ${c.name} (${c.hex})`}
-                      accessibilityRole="button"
-                      onPress={() => setColor(c.hex)}
-                      style={[
-                        styles.colorChip,
-                        {
-                          backgroundColor: c.hex,
-                          borderColor: isSelected
-                            ? theme.colors.textPrimary
-                            : "rgba(255,255,255,0.25)",
-                          borderWidth: isSelected ? 2.5 : 1.5,
-                          transform: isSelected ? [{ scale: 1.06 }] : undefined,
-                        },
-                      ]}
-                    >
-                      {isSelected ? (
-                        <Check color={checkColor} size={14} strokeWidth={3} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-
-                {/* Legacy Note Color if not in the hexColorsList */}
-                {hasLegacyColor && color ? (
+                  {/* Default (no accent) */}
                   <Pressable
-                    accessibilityLabel={`Current note color (${color})`}
+                    accessibilityLabel="Default color (no accent)"
                     accessibilityRole="button"
-                    onPress={() => setColor(color)}
+                    onPress={() => setColor(null)}
                     style={[
                       styles.colorChip,
                       {
-                        backgroundColor: color,
-                        borderColor: theme.colors.textPrimary,
-                        borderWidth: 2.5,
-                        transform: [{ scale: 1.06 }],
+                        backgroundColor: theme.colors.surfaceMuted,
+                        borderColor:
+                          color === null
+                            ? theme.colors.textPrimary
+                            : "rgba(255,255,255,0.25)",
+                        borderWidth: color === null ? 2.5 : 1.5,
+                        transform:
+                          color === null ? [{ scale: 1.06 }] : undefined,
                       },
                     ]}
                   >
-                    <Check
-                      color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
-                      size={14}
-                      strokeWidth={3}
+                    {color === null ? (
+                      <Check
+                        color={theme.colors.textPrimary}
+                        size={14}
+                        strokeWidth={3}
+                      />
+                    ) : (
+                      <Slash color={theme.colors.textMuted} size={12} />
+                    )}
+                  </Pressable>
+
+                  {/* Hex colors from hex-colors repository */}
+                  {hexColorsList.map((c) => {
+                    const isSelected =
+                      Boolean(color) &&
+                      (color === c.hex ||
+                        color === c.id ||
+                        color?.toUpperCase() === c.hex.toUpperCase());
+                    const light = isLightColor(c.hex);
+                    const checkColor = light ? "#0F172A" : "#FFFFFF";
+
+                    return (
+                      <Pressable
+                        key={c.id}
+                        accessibilityLabel={`Color ${c.name} (${c.hex})`}
+                        accessibilityRole="button"
+                        onPress={() => setColor(c.hex)}
+                        style={[
+                          styles.colorChip,
+                          {
+                            backgroundColor: c.hex,
+                            borderColor: isSelected
+                              ? theme.colors.textPrimary
+                              : "rgba(255,255,255,0.25)",
+                            borderWidth: isSelected ? 2.5 : 1.5,
+                            transform: isSelected
+                              ? [{ scale: 1.06 }]
+                              : undefined,
+                          },
+                        ]}
+                      >
+                        {isSelected ? (
+                          <Check color={checkColor} size={14} strokeWidth={3} />
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+
+                  {/* Legacy Note Color if not in the hexColorsList */}
+                  {hasLegacyColor && color ? (
+                    <Pressable
+                      accessibilityLabel={`Current note color (${color})`}
+                      accessibilityRole="button"
+                      onPress={() => setColor(color)}
+                      style={[
+                        styles.colorChip,
+                        {
+                          backgroundColor: color,
+                          borderColor: theme.colors.textPrimary,
+                          borderWidth: 2.5,
+                          transform: [{ scale: 1.06 }],
+                        },
+                      ]}
+                    >
+                      <Check
+                        color={isLightColor(color) ? "#0F172A" : "#FFFFFF"}
+                        size={14}
+                        strokeWidth={3}
+                      />
+                    </Pressable>
+                  ) : null}
+
+                  {/* Add Custom Color (+) button */}
+                  <Pressable
+                    accessibilityLabel="Add custom color"
+                    accessibilityRole="button"
+                    onPress={() => setIsColorFormOpen(true)}
+                    style={({ pressed }) => [
+                      styles.addColorChip,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Plus
+                      color={theme.colors.primary}
+                      size={16}
+                      strokeWidth={2.5}
                     />
                   </Pressable>
-                ) : null}
+                </HorizontalScrollView>
+              </View>
+            </WalkthroughTarget>
 
-                {/* Add Custom Color (+) button */}
-                <Pressable
-                  accessibilityLabel="Add custom color"
-                  accessibilityRole="button"
-                  onPress={() => setIsColorFormOpen(true)}
-                  style={({ pressed }) => [
-                    styles.addColorChip,
-                    pressed && styles.buttonPressed,
-                  ]}
-                >
-                  <Plus color={theme.colors.primary} size={16} strokeWidth={2.5} />
-                </Pressable>
-              </HorizontalScrollView>
-            </View>
-          </WalkthroughTarget>
+            {/* Title Input */}
+            <WalkthroughTarget id="noteEditorTitle">
+              <TextInput
+                accessibilityLabel="Note title"
+                onChangeText={setTitle}
+                placeholder="Title"
+                placeholderTextColor={theme.colors.textMuted}
+                style={styles.titleInput}
+                value={title}
+              />
+            </WalkthroughTarget>
 
-          {/* Title Input */}
-          <WalkthroughTarget id="noteEditorTitle">
-            <TextInput
-              accessibilityLabel="Note title"
-              onChangeText={setTitle}
-              placeholder="Title"
-              placeholderTextColor={theme.colors.textMuted}
-              style={styles.titleInput}
-              value={title}
-            />
-          </WalkthroughTarget>
+            {/* Content Input */}
+            <WalkthroughTarget id="noteEditorContent">
+              <TextInput
+                accessibilityLabel="Note content"
+                multiline
+                onChangeText={setContent}
+                placeholder="Write your thoughts, financial goals, checklist, or receipt notes here..."
+                placeholderTextColor={theme.colors.textMuted}
+                scrollEnabled={false}
+                style={styles.contentInput}
+                textAlignVertical="top"
+                value={content}
+              />
+            </WalkthroughTarget>
 
-          {/* Content Input */}
-          <WalkthroughTarget id="noteEditorContent">
-            <TextInput
-              accessibilityLabel="Note content"
-              multiline
-              onChangeText={setContent}
-              placeholder="Write your thoughts, financial goals, checklist, or receipt notes here..."
-              placeholderTextColor={theme.colors.textMuted}
-              scrollEnabled={false}
-              style={styles.contentInput}
-              textAlignVertical="top"
-              value={content}
-            />
-          </WalkthroughTarget>
+            {/* Photo Attachments Grid */}
+            <WalkthroughTarget id="noteEditorAttachments">
+              <NoteAttachmentsGrid
+                drafts={drafts}
+                existingAttachments={existingAttachments}
+                onPickCamera={pickFromCamera}
+                onPickLibrary={pickFromLibrary}
+                onRemoveDraft={removeDraft}
+                onRemoveExisting={markExistingAttachmentForRemoval}
+                picking={picking}
+              />
+            </WalkthroughTarget>
+          </ScrollView>
 
-          {/* Photo Attachments Grid */}
-          <WalkthroughTarget id="noteEditorAttachments">
-            <NoteAttachmentsGrid
-              drafts={drafts}
-              existingAttachments={existingAttachments}
-              onPickCamera={pickFromCamera}
-              onPickLibrary={pickFromLibrary}
-              onRemoveDraft={removeDraft}
-              onRemoveExisting={markExistingAttachmentForRemoval}
-              picking={picking}
-            />
-          </WalkthroughTarget>
-        </ScrollView>
-
-        <NoteEditorWalkthroughOverlay
-          onNext={walkthrough.nextStep}
-          onPrev={walkthrough.prevStep}
-          onSkip={walkthrough.skipWalkthrough}
-          step={walkthrough.currentStep}
-          stepIndex={walkthrough.activeStepIndex}
-          targetLayout={walkthrough.activeTargetLayout}
-          totalSteps={walkthrough.totalSteps}
-          visible={walkthrough.isWalkthroughActive}
-        />
+          <NoteEditorWalkthroughOverlay
+            onNext={walkthrough.nextStep}
+            onPrev={walkthrough.prevStep}
+            onSkip={walkthrough.skipWalkthrough}
+            step={walkthrough.currentStep}
+            stepIndex={walkthrough.activeStepIndex}
+            targetLayout={walkthrough.activeTargetLayout}
+            totalSteps={walkthrough.totalSteps}
+            visible={walkthrough.isWalkthroughActive}
+          />
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete"
-        message="Are you sure you want to permanently delete this note and its attachments? This action cannot be undone."
-        onCancel={() => setDeleteConfirmOpen(false)}
-        onConfirm={handleDelete}
-        title="Delete Note"
-        variant="destructive"
-        visible={deleteConfirmOpen}
-      />
+      {deleteConfirmOpen ? (
+        <ConfirmModal
+          cancelLabel="Cancel"
+          confirmLabel="Delete"
+          message="Are you sure you want to permanently delete this note and its attachments? This action cannot be undone."
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onConfirm={handleDelete}
+          title="Delete Note"
+          variant="destructive"
+          visible={deleteConfirmOpen}
+        />
+      ) : null}
 
       {/* Validation / Error Notification Modal */}
-      <NotificationModal
-        message={validationError ?? attachmentError ?? ""}
-        onClose={() => {
-          setValidationError(null);
-          clearAttachmentError();
-        }}
-        title="Notice"
-        variant="error"
-        visible={Boolean(validationError || attachmentError)}
-      />
+      {Boolean(validationError || attachmentError) ? (
+        <NotificationModal
+          message={validationError ?? attachmentError ?? ""}
+          onClose={() => {
+            setValidationError(null);
+            clearAttachmentError();
+          }}
+          title="Notice"
+          variant="error"
+          visible={Boolean(validationError || attachmentError)}
+        />
+      ) : null}
 
-      <HexColorFormModal
-        initialColor={null}
-        onClose={() => setIsColorFormOpen(false)}
-        onSave={handleSaveCustomColor}
-        visible={isColorFormOpen}
-      />
+      {isColorFormOpen ? (
+        <HexColorFormModal
+          initialColor={null}
+          onClose={() => setIsColorFormOpen(false)}
+          onSave={handleSaveCustomColor}
+          visible={isColorFormOpen}
+        />
+      ) : null}
 
-      <UnsavedChangesModal
-        visible={showUnsavedPrompt}
-        pending={saving}
-        onSave={() => {
-          setShowUnsavedPrompt(false);
-          void handleSave();
-        }}
-        onDiscard={() => {
-          setShowUnsavedPrompt(false);
-          onClose();
-        }}
-        onKeepEditing={() => {
-          setShowUnsavedPrompt(false);
-        }}
-      />
+      {showUnsavedPrompt ? (
+        <UnsavedChangesModal
+          visible={showUnsavedPrompt}
+          pending={saving}
+          onSave={() => {
+            setShowUnsavedPrompt(false);
+            void handleSave();
+          }}
+          onDiscard={() => {
+            setShowUnsavedPrompt(false);
+            onClose();
+          }}
+          onKeepEditing={() => {
+            setShowUnsavedPrompt(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

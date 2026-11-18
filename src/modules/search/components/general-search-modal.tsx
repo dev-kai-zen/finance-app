@@ -38,6 +38,7 @@ import {
   PieChart,
   Plus,
   Receipt,
+  Repeat,
   RotateCcw,
   Search,
   SearchX,
@@ -129,6 +130,8 @@ function renderSearchIcon(name: string, color: string, size = 18) {
       return <Download color={color} size={size} />;
     case "archive":
       return <Archive color={color} size={size} />;
+    case "repeat":
+      return <Repeat color={color} size={size} />;
     case "smartphone":
       return <Smartphone color={color} size={size} />;
     case "layout-grid":

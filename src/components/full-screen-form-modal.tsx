@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, RotateCcw, Save, Trash2 } from "lucide-react-native";
+import { ChevronLeft, RotateCcw, Save, Sparkles, Trash2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { UnsavedChangesModal } from "./unsaved-changes-modal";
@@ -20,6 +20,8 @@ export interface FullScreenFormModalProps extends PropsWithChildren {
   onClose: () => void;
   onSave?: () => void;
   onDelete?: () => void;
+  onTour?: () => void;
+  tourLabel?: string;
   saveLabel?: string;
   deleteLabel?: string;
   deleteAction?: "delete" | "restore";
@@ -40,6 +42,8 @@ export function FullScreenFormModal({
   onClose,
   onSave,
   onDelete,
+  onTour,
+  tourLabel = "Take a tour",
   saveLabel = "Save",
   deleteLabel = "Delete",
   deleteAction = "delete",
@@ -76,8 +80,25 @@ export function FullScreenFormModal({
   }, [isDirty, onClose, pending]);
 
   const defaultHeaderRight =
-    onSave || onDelete ? (
+    onSave || onDelete || onTour ? (
       <View style={styles.headerActions}>
+        {onTour ? (
+          <Pressable
+            accessibilityLabel={tourLabel}
+            accessibilityRole="button"
+            disabled={pending}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={onTour}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              styles.tourBtn,
+              pressed && styles.iconBtnPressed,
+              pending && styles.iconBtnDisabled,
+            ]}
+          >
+            <Sparkles color="#00A3FF" size={18} />
+          </Pressable>
+        ) : null}
         {onDelete ? (
           <Pressable
             accessibilityLabel={deleteLabel}
@@ -246,6 +267,14 @@ function createStyles(theme: AppTheme) {
       height: 36,
       justifyContent: "center",
       width: 36,
+    },
+    iconBtnPressed: {
+      opacity: 0.7,
+    },
+    tourBtn: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
     },
     saveBtn: {
       backgroundColor: theme.colors.primary,

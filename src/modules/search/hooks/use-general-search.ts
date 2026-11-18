@@ -9,6 +9,7 @@ import { useGoals } from "@/modules/goals";
 import { useNotes } from "@/modules/notes";
 import { useScheduledTransactions } from "@/modules/scheduled-transactions";
 import { useLabels } from "@/modules/labels";
+import { useSubscriptions } from "@/modules/subscriptions";
 import { formatCurrency } from "@/utils/currency";
 import {
   SEARCH_CATALOG,
@@ -29,6 +30,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const notesHook = useNotes();
   const schedulesHook = useScheduledTransactions();
   const labelsHook = useLabels();
+  const subscriptionsHook = useSubscriptions();
 
   const { accounts, pockets, refresh: refreshAccounts } = accountsHook;
   const { categories, refresh: refreshCategories } = categoriesHook;
@@ -38,6 +40,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { notes, refresh: refreshNotes } = notesHook;
   const { schedules, refresh: refreshSchedules } = schedulesHook;
   const { labels, refresh: refreshLabels } = labelsHook;
+  const { subscriptions, refresh: refreshSubscriptions } = subscriptionsHook;
 
   useEffect(() => {
     if (!isOpen) {
@@ -52,6 +55,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
       void refreshNotes?.();
       void refreshSchedules?.();
       void refreshLabels?.();
+      void refreshSubscriptions?.();
     });
   }, [
     isOpen,
@@ -63,6 +67,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     refreshNotes,
     refreshSchedules,
     refreshLabels,
+    refreshSubscriptions,
   ]);
 
   const sections = useMemo<SearchResultSection[]>(() => {
@@ -246,7 +251,74 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
       }
     }
 
-    // 7. Filter budgets
+    // 7. Filter subscriptions
+    const matchedSubscriptions: SearchResultItem[] = [];
+    if (subscriptions && subscriptions.length > 0) {
+      for (const sub of subscriptions) {
+        const nameMatch = sub.name.toLowerCase().includes(trimmed);
+        const notesMatch = sub.notes?.toLowerCase().includes(trimmed);
+        const categoryMatch = sub.categoryName?.toLowerCase().includes(trimmed);
+        const accountMatch = sub.accountName?.toLowerCase().includes(trimmed);
+        const statusMatch = sub.status.toLowerCase().includes(trimmed);
+        const cycleMatch = sub.billingCycle.toLowerCase().includes(trimmed);
+
+        if (
+          nameMatch ||
+          notesMatch ||
+          categoryMatch ||
+          accountMatch ||
+          statusMatch ||
+          cycleMatch
+        ) {
+          const amountStr = formatCurrency(
+            sub.amountMinorUnits,
+            sub.currencyCode,
+          );
+          const cycleLabel =
+            sub.billingCycle === "weekly"
+              ? t("subscriptions.cycleWeekly", { defaultValue: "Weekly" })
+              : sub.billingCycle === "monthly"
+                ? t("subscriptions.cycleMonthly", { defaultValue: "Monthly" })
+                : sub.billingCycle === "quarterly"
+                  ? t("subscriptions.cycleQuarterly", { defaultValue: "Quarterly" })
+                  : sub.billingCycle === "semi_annual"
+                    ? t("subscriptions.cycleSemiAnnual", { defaultValue: "Semi-Annual" })
+                    : t("subscriptions.cycleYearly", { defaultValue: "Yearly" });
+
+          const nextRenewalStr = sub.nextRenewalDate
+            ? new Date(sub.nextRenewalDate).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })
+            : "";
+
+          const statusText = sub.archivedAt
+            ? t("subscriptions.filterArchived", { defaultValue: "Archived" })
+            : sub.status === "trial"
+              ? t("subscriptions.filterTrial", { defaultValue: "Trial" })
+              : sub.status === "paused"
+                ? t("subscriptions.filterPaused", { defaultValue: "Paused" })
+                : null;
+
+          const descParts = [cycleLabel, amountStr];
+          if (nextRenewalStr) descParts.push(nextRenewalStr);
+          if (statusText) descParts.push(statusText);
+
+          matchedSubscriptions.push({
+            id: `user_subscription_${sub.id}`,
+            category: "subscription",
+            title: sub.name,
+            description: descParts.join(" · "),
+            iconName: "repeat",
+            iconColor: sub.color || "#8B5CF6",
+            route: `/subscriptions?subscriptionId=${sub.id}`,
+            badge: t("search.sectionSubscriptions"),
+          });
+        }
+      }
+    }
+
+    // 8. Filter budgets
     const matchedBudgets: SearchResultItem[] = [];
     if (budgets && budgets.length > 0) {
       for (const b of budgets) {
@@ -399,6 +471,13 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
         data: matchedTransactions,
       });
     }
+    if (matchedSubscriptions.length > 0) {
+      resultSections.push({
+        category: "subscription",
+        title: t("search.sectionSubscriptions"),
+        data: matchedSubscriptions,
+      });
+    }
     if (matchedBudgets.length > 0) {
       resultSections.push({
         category: "budget",
@@ -448,6 +527,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     notes,
     schedules,
     labels,
+    subscriptions,
   ]);
 
   const totalResults = useMemo(() => {

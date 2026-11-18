@@ -73,6 +73,7 @@ export const transactionSchedules = sqliteTable(
     nextNominalAt: integer("next_nominal_at", { mode: "timestamp_ms" }),
     nextEffectiveAt: integer("next_effective_at", { mode: "timestamp_ms" }),
     archivedAt: integer("archived_at", { mode: "timestamp_ms" }),
+    subscriptionId: text("subscription_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
@@ -135,6 +136,7 @@ export const transactionSchedules = sqliteTable(
     index("transaction_schedules_account_index").on(table.accountId),
     index("transaction_schedules_to_account_index").on(table.toAccountId),
     index("transaction_schedules_category_index").on(table.categoryId),
+    index("transaction_schedules_subscription_idx").on(table.subscriptionId),
   ],
 );
 

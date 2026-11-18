@@ -52,6 +52,8 @@ export function HexColorFormModal({
   onSave,
   initialColor = null,
 }: HexColorFormModalProps) {
+  if (!visible) return null;
+
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);

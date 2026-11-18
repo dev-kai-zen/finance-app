@@ -372,7 +372,7 @@ function TransactionsScreenContent({
     if (!loading && walkthroughIntro.canTrigger) {
       const timer = setTimeout(() => {
         walkthroughIntro.triggerIfFirstTime();
-      }, 600);
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
@@ -1827,8 +1827,10 @@ function TransactionsScreenContent({
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
-        <View
-          pointerEvents="auto"
+        <Pressable
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={() => {}}
           style={styles.interactionBlocker}
         />
       ) : null}
@@ -1843,7 +1845,7 @@ function createStyles(theme: AppTheme) {
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: "transparent",
+      backgroundColor: "rgba(0,0,0,0.01)",
       zIndex: 99999,
     },
     pageContent: {

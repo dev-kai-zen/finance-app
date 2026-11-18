@@ -72,13 +72,23 @@ export function evaluateAutoShowPresentation(): VersionHistoryPresentation | nul
     return null;
   }
 
-  const allBlocks = getAllReleaseNotes();
-  if (allBlocks.length === 0) {
+  // First-time install / new user: stamp current version so release notes are not shown on initial launch
+  if (lastSeenFingerprint === null) {
     markVersionHistorySeen(currentFingerprint);
     return null;
   }
 
-  return { blocks: allBlocks };
+  const updateBlocks = resolveReleaseNotesForUpdate(
+    lastSeenFingerprint,
+    currentFingerprint,
+  );
+  const blocks = updateBlocks.length > 0 ? updateBlocks : getAllReleaseNotes();
+  if (blocks.length === 0) {
+    markVersionHistorySeen(currentFingerprint);
+    return null;
+  }
+
+  return { blocks };
 }
 
 export function resolveReleaseNotesForUpdate(

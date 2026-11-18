@@ -221,8 +221,8 @@ function DashboardScreenContent() {
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "dashboardWalkthroughDismissed",
-    prerequisitePromptKey: "developerMessageSeen",
     enabled: !isVersionHistoryPending,
+    autoTrigger: true,
     onStart: walkthrough.startWalkthrough,
   });
 
@@ -252,7 +252,7 @@ function DashboardScreenContent() {
     ) {
       const timer = setTimeout(() => {
         walkthroughIntro.triggerIfFirstTime();
-      }, 600);
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [
@@ -840,8 +840,10 @@ function DashboardScreenContent() {
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
-        <View
-          pointerEvents="auto"
+        <Pressable
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          onPress={() => {}}
           style={styles.interactionBlocker}
         />
       ) : null}
@@ -856,7 +858,7 @@ function createStyles(theme: AppTheme) {
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,
-      backgroundColor: "transparent",
+      backgroundColor: "rgba(0,0,0,0.01)",
       zIndex: 99999,
     },
     container: {

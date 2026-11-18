@@ -54,6 +54,12 @@ export type WalkthroughTargetId =
   | "notesSortFilter"
   | "notesFirstItem"
   | "notesFab"
+  // Subscriptions
+  | "subEmptyAddButton"
+  | "subBurnRateSummary"
+  | "subFilterTabs"
+  | "subFirstItemCard"
+  | "subFab"
   | "settingsLanguage"
   | "settingsCurrency"
   | "settingsDataImport"

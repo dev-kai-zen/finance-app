@@ -78,8 +78,9 @@ function NotesScreenContent({
     updateNote,
     deleteNote,
     refresh,
-  } = useNotes();
-  const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
+  } = useNotes({ autoRefresh: false });
+  const { guardAction, paywallVisible, closePaywall, guardMeta } =
+    useProGuard();
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -166,7 +167,11 @@ function NotesScreenContent({
       }, 600);
       return () => clearTimeout(timer);
     }
-  }, [loading, walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
+  }, [
+    loading,
+    walkthroughIntro.canTrigger,
+    walkthroughIntro.triggerIfFirstTime,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -176,15 +181,18 @@ function NotesScreenContent({
 
   const handleOpenNewNote = useCallback(() => {
     if (notes.length >= PRO_LIMITS.FREE_MAX_NOTES) {
-      guardAction(() => {
-        setSelectedNote(null);
-        setEditorVisible(true);
-      }, {
-        featureTitle: t("pro.limits.notesTitle"),
-        featureDescription: t("pro.limits.notesDesc", {
-          count: PRO_LIMITS.FREE_MAX_NOTES,
-        }),
-      });
+      guardAction(
+        () => {
+          setSelectedNote(null);
+          setEditorVisible(true);
+        },
+        {
+          featureTitle: t("pro.limits.notesTitle"),
+          featureDescription: t("pro.limits.notesDesc", {
+            count: PRO_LIMITS.FREE_MAX_NOTES,
+          }),
+        },
+      );
       return;
     }
     setSelectedNote(null);
@@ -204,7 +212,11 @@ function NotesScreenContent({
   }, [handleOpenNewNote, initialAction, loading, router]);
 
   useEffect(() => {
-    if (!loading && initialNoteId && handledNoteIdRef.current !== initialNoteId) {
+    if (
+      !loading &&
+      initialNoteId &&
+      handledNoteIdRef.current !== initialNoteId
+    ) {
       const found = notes.find((n) => n.id === initialNoteId);
       if (found) {
         handledNoteIdRef.current = initialNoteId;
@@ -299,141 +311,143 @@ function NotesScreenContent({
           ) : undefined
         }
       >
-      <View style={styles.container}>
-        {loading ? (
-          <PageLoadingState message="Loading notes..." variant="cards" />
-        ) : hasNoNotes && !isSearchActive ? (
-          /* Empty state when user hasn't created any notes yet */
-          <PageEmptyState
-            actionLabel="+ Create First Note"
-            actionRef={emptyCreateRef}
-            description="Capture your financial goals, checklists, memos, and receipt photos."
-            onAction={handleOpenNewNote}
-            title="No Notes Yet"
-          />
-        ) : (
-          <>
-            {/* Search, View Toggle, and Sort controls */}
-            <NoteSortFilterBar
-              onSearchChange={setSearch}
-              onSortByChange={setSortBy}
-              onViewModeChange={setViewMode}
-              search={search}
-              searchRef={searchRef}
-              sortBy={sortBy}
-              sortFilterRef={sortFilterRef}
-              viewMode={viewMode}
-              viewModeRef={viewModeRef}
+        <View style={styles.container}>
+          {loading ? (
+            <PageLoadingState message="Loading notes..." variant="cards" />
+          ) : hasNoNotes && !isSearchActive ? (
+            /* Empty state when user hasn't created any notes yet */
+            <PageEmptyState
+              actionLabel="+ Create First Note"
+              actionRef={emptyCreateRef}
+              description="Capture your financial goals, checklists, memos, and receipt photos."
+              onAction={handleOpenNewNote}
+              title="No Notes Yet"
             />
-
-            {hasNoNotes && isSearchActive ? (
-              /* Empty state when search query matches nothing */
-              <PageEmptyState
-                actionLabel="Clear Search"
-                description={`No notes found matching "${search}".`}
-                onAction={() => setSearch("")}
-                title="No Matching Notes"
+          ) : (
+            <>
+              {/* Search, View Toggle, and Sort controls */}
+              <NoteSortFilterBar
+                onSearchChange={setSearch}
+                onSortByChange={setSortBy}
+                onViewModeChange={setViewMode}
+                search={search}
+                searchRef={searchRef}
+                sortBy={sortBy}
+                sortFilterRef={sortFilterRef}
+                viewMode={viewMode}
+                viewModeRef={viewModeRef}
               />
-            ) : viewMode === "tiles" ? (
-              /* Square Tiles View (2 Columns) */
-              <View style={styles.tilesGrid}>
-                {notes.map((item, index) => (
-                  <View
-                    key={item.id}
-                    collapsable={false}
-                    ref={index === 0 ? firstNoteRef : undefined}
-                    style={styles.tileCol}
-                  >
-                    <NoteCardTile note={item} onPress={handleSelectNote} />
-                  </View>
-                ))}
-              </View>
-            ) : (
-              /* Table / Rows View with swipe-to-delete */
-              <View style={styles.tableList}>
-                {notes.map((item, index) => (
-                  <View
-                    key={item.id}
-                    collapsable={false}
-                    ref={index === 0 ? firstNoteRef : undefined}
-                  >
+
+              {hasNoNotes && isSearchActive ? (
+                /* Empty state when search query matches nothing */
+                <PageEmptyState
+                  actionLabel="Clear Search"
+                  description={`No notes found matching "${search}".`}
+                  onAction={() => setSearch("")}
+                  title="No Matching Notes"
+                />
+              ) : viewMode === "tiles" ? (
+                /* Square Tiles View (2 Columns) */
+                <View style={styles.tilesGrid}>
+                  {notes.map((item, index) => (
+                    <View key={item.id} style={styles.tileCol}>
+                      <NoteCardTile
+                        note={item}
+                        onPress={handleSelectNote}
+                        tileRef={index === 0 ? firstNoteRef : undefined}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                /* Table / Rows View with swipe-to-delete */
+                <View style={styles.tableList}>
+                  {notes.map((item, index) => (
                     <NoteTableRow
+                      key={item.id}
                       note={item}
                       onDelete={handleConfirmDeleteFromRow}
                       onPress={handleSelectNote}
+                      rowRef={index === 0 ? firstNoteRef : undefined}
                     />
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-      </View>
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </PageContainer>
 
-      <NoteEditorModal
-        note={selectedNote}
-        onClose={() => setEditorVisible(false)}
-        onDelete={handleDeleteNote}
-        onSave={handleSaveNote}
-        saving={saving}
-        visible={editorVisible}
-      />
+      {editorVisible ? (
+        <NoteEditorModal
+          note={selectedNote}
+          onClose={() => setEditorVisible(false)}
+          onDelete={handleDeleteNote}
+          onSave={handleSaveNote}
+          saving={saving}
+          visible={editorVisible}
+        />
+      ) : null}
 
-      <ConfirmModal
-        cancelLabel="Cancel"
-        confirmLabel="Delete"
-        message={`Are you sure you want to permanently delete "${noteToDelete?.title ?? "this note"}"? This action cannot be undone.`}
-        onCancel={() => setNoteToDelete(null)}
-        onConfirm={handleExecuteDelete}
-        title="Delete Note"
-        variant="destructive"
-        visible={Boolean(noteToDelete)}
-      />
+      {Boolean(noteToDelete) ? (
+        <ConfirmModal
+          cancelLabel="Cancel"
+          confirmLabel="Delete"
+          message={`Are you sure you want to permanently delete "${noteToDelete?.title ?? "this note"}"? This action cannot be undone.`}
+          onCancel={() => setNoteToDelete(null)}
+          onConfirm={handleExecuteDelete}
+          title="Delete Note"
+          variant="destructive"
+          visible={Boolean(noteToDelete)}
+        />
+      ) : null}
 
-      <ProFeatureModal
-        featureDescription={guardMeta?.featureDescription}
-        featureTitle={guardMeta?.featureTitle}
-        onClose={closePaywall}
-        visible={paywallVisible}
-      />
+      {paywallVisible ? (
+        <ProFeatureModal
+          featureDescription={guardMeta?.featureDescription}
+          featureTitle={guardMeta?.featureTitle}
+          onClose={closePaywall}
+          visible={paywallVisible}
+        />
+      ) : null}
 
-      <WalkthroughIntroModal
-        visible={walkthroughIntro.isIntroVisible}
-        title={t("notesWalkthrough.introTitle")}
-        subtitle={t("notesWalkthrough.introSubtitle")}
-        message={t("notesWalkthrough.introMessage")}
-        icon={<StickyNote color={theme.colors.primary} size={32} />}
-        onStart={walkthroughIntro.handleStart}
-        onSkip={walkthroughIntro.handleSkip}
-      />
+      {walkthroughIntro.isIntroVisible ? (
+        <WalkthroughIntroModal
+          visible={walkthroughIntro.isIntroVisible}
+          title={t("notesWalkthrough.introTitle")}
+          subtitle={t("notesWalkthrough.introSubtitle")}
+          message={t("notesWalkthrough.introMessage")}
+          icon={<StickyNote color={theme.colors.primary} size={32} />}
+          onStart={walkthroughIntro.handleStart}
+          onSkip={walkthroughIntro.handleSkip}
+        />
+      ) : null}
 
       {/* Notes Walkthrough Overlay */}
-      <NotesWalkthroughOverlay
-        onEmptyCreatePress={() => {
-          walkthrough.completeWalkthrough();
-          handleOpenNewNote();
-        }}
-        onFabPress={() => {
-          walkthrough.completeWalkthrough();
-          handleOpenNewNote();
-        }}
-        onNext={walkthrough.nextStep}
-        onPrev={walkthrough.prevStep}
-        onSkip={walkthrough.skipWalkthrough}
-        step={walkthrough.currentStep}
-        stepIndex={walkthrough.activeStepIndex}
-        targetLayout={walkthrough.activeTargetLayout}
-        totalSteps={walkthrough.totalSteps}
-        visible={walkthrough.isWalkthroughActive}
-      />
-      </PageContainer>
+      {walkthrough.isWalkthroughActive ? (
+        <NotesWalkthroughOverlay
+          onEmptyCreatePress={() => {
+            walkthrough.completeWalkthrough();
+            handleOpenNewNote();
+          }}
+          onFabPress={() => {
+            walkthrough.completeWalkthrough();
+            handleOpenNewNote();
+          }}
+          onNext={walkthrough.nextStep}
+          onPrev={walkthrough.prevStep}
+          onSkip={walkthrough.skipWalkthrough}
+          step={walkthrough.currentStep}
+          stepIndex={walkthrough.activeStepIndex}
+          targetLayout={walkthrough.activeTargetLayout}
+          totalSteps={walkthrough.totalSteps}
+          visible={walkthrough.isWalkthroughActive}
+        />
+      ) : null}
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
-        <View
-          pointerEvents="auto"
-          style={styles.interactionBlocker}
-        />
+        <View pointerEvents="auto" style={styles.interactionBlocker} />
       ) : null}
     </View>
   );

@@ -26,6 +26,42 @@ export const permanentlyDeleteScheduledTransaction = deferFunction(
       .permanentlyDeleteScheduledTransaction,
 ) as typeof import("./services/manage-scheduled-transaction.service").permanentlyDeleteScheduledTransaction;
 
+export const removeScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .removeScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").removeScheduledTransaction;
+
+export const getScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").getScheduledTransaction;
+
+export const getScheduleBySubscriptionId = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .getScheduleBySubscriptionId,
+) as typeof import("./services/manage-scheduled-transaction.service").getScheduleBySubscriptionId;
+
+export const restoreScheduledTransaction = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .restoreScheduledTransaction,
+) as typeof import("./services/manage-scheduled-transaction.service").restoreScheduledTransaction;
+
+export const unlinkScheduledTransactionSubscription = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .unlinkScheduledTransactionSubscription,
+) as typeof import("./services/manage-scheduled-transaction.service").unlinkScheduledTransactionSubscription;
+
+export const setScheduledTransactionPaused = deferFunction(
+  () =>
+    require("./services/manage-scheduled-transaction.service")
+      .setScheduledTransactionPaused,
+) as typeof import("./services/manage-scheduled-transaction.service").setScheduledTransactionPaused;
+
 export const hasScheduledTransactionPostings = deferFunction(
   () =>
     require("./services/manage-scheduled-transaction.service")
@@ -70,11 +106,40 @@ export const skipScheduledOccurrence = deferFunction(
     require("./services/process-due-schedules.service").skipScheduledOccurrence,
 ) as typeof import("./services/process-due-schedules.service").skipScheduledOccurrence;
 
+export const processDueSchedules = deferFunction(
+  () =>
+    require("./services/process-due-schedules.service").processDueSchedules,
+) as typeof import("./services/process-due-schedules.service").processDueSchedules;
+
+export const reconcileOrphanedSubscriptionSchedules = deferFunction(
+  () =>
+    require("./services/reconcile-orphaned-schedules.service")
+      .reconcileOrphanedSubscriptionSchedules,
+) as typeof import("./services/reconcile-orphaned-schedules.service").reconcileOrphanedSubscriptionSchedules;
+
 export const advancePostScheduledTransaction = deferFunction(
   () =>
     require("./services/advance-post-schedule.service")
       .advancePostScheduledTransaction,
 ) as typeof import("./services/advance-post-schedule.service").advancePostScheduledTransaction;
+
+export const saveScheduledTransaction = deferFunction(
+  () =>
+    require("./services/save-scheduled-transaction.service")
+      .saveScheduledTransaction,
+) as typeof import("./services/save-scheduled-transaction.service").saveScheduledTransaction;
+
+export const saveScheduledTransactionInContext = deferFunction(
+  () =>
+    require("./services/save-scheduled-transaction.service")
+      .saveScheduledTransactionInContext,
+) as typeof import("./services/save-scheduled-transaction.service").saveScheduledTransactionInContext;
+
+export const resolveScheduleOccurrencePaidInContext = deferFunction(
+  () =>
+    require("./services/resolve-schedule-paid.service")
+      .resolveScheduleOccurrencePaidInContext,
+) as typeof import("./services/resolve-schedule-paid.service").resolveScheduleOccurrencePaidInContext;
 
 export type {
   CalculatedScheduleOccurrence,

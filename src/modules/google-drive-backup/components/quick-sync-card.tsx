@@ -7,7 +7,9 @@ import {
   View,
 } from "react-native";
 import {
+  AlertCircle,
   CheckCircle2,
+  Clock,
   Crown,
   RefreshCw,
   RotateCcw,
@@ -16,7 +18,7 @@ import {
   Zap,
 } from "lucide-react-native";
 
-import { AppButton, ConfirmModal } from "@/components";
+import { AppButton, ConfirmModal, HelpIconButton, InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -31,6 +33,7 @@ export function QuickSyncCard() {
   const { t } = useLocalization();
   const { isPro } = useProStatus();
   const [proModalVisible, setProModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const quickSync = useQuickSync();
   const [syncingManual, setSyncingManual] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -80,7 +83,19 @@ export function QuickSyncCard() {
     }
   };
 
-  const formattedLastSynced = quickSync.lastSyncedAt
+  const isNeverSynced = !quickSync.lastSyncedAt || !quickSync.fileId;
+
+  const statusLabel = isSyncing
+    ? t("sync.syncing")
+    : quickSync.status === "waiting_network"
+      ? t("sync.waitingNetwork")
+      : quickSync.status === "error"
+        ? t("sync.failed")
+        : isNeverSynced
+          ? t("sync.notSynced")
+          : t("sync.synced");
+
+  const formattedLastSynced = quickSync.lastSyncedAt && quickSync.fileId
     ? formatDateTime(new Date(quickSync.lastSyncedAt))
     : t("quickSync.neverSynced");
 
@@ -93,6 +108,12 @@ export function QuickSyncCard() {
         <View style={styles.headerCopy}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{t("quickSync.title")}</Text>
+            <HelpIconButton
+              accessibilityHint={t("quickSync.description")}
+              accessibilityLabel={t("quickSync.title")}
+              onPress={() => setInfoModalVisible(true)}
+              size={16}
+            />
             {!isPro && (
               <View style={styles.proChip}>
                 <Crown color="#D97706" size={8} />
@@ -100,7 +121,6 @@ export function QuickSyncCard() {
               </View>
             )}
           </View>
-          <Text style={styles.description}>{t("quickSync.description")}</Text>
         </View>
         <ThemedSwitch
           accessibilityLabel={t("quickSync.title")}
@@ -196,17 +216,30 @@ export function QuickSyncCard() {
                     color={theme.colors.primary}
                     size="small"
                   />
+                ) : quickSync.status === "error" ? (
+                  <AlertCircle color={theme.colors.danger} size={16} />
+                ) : quickSync.status === "waiting_network" ? (
+                  <Clock color={theme.colors.warning} size={16} />
+                ) : isNeverSynced ? (
+                  <Clock color={theme.colors.textMuted} size={16} />
                 ) : (
                   <CheckCircle2 color={theme.colors.success} size={16} />
                 )}
-                <Text style={styles.statusLabel}>
-                  {isSyncing
-                    ? t("sync.syncing")
-                    : quickSync.status === "waiting_network"
-                      ? t("sync.waitingNetwork")
-                      : quickSync.status === "error"
-                        ? t("sync.failed")
-                        : t("sync.synced")}
+                <Text
+                  style={[
+                    styles.statusLabel,
+                    quickSync.status === "error" && { color: theme.colors.danger },
+                    quickSync.status === "waiting_network" && { color: theme.colors.warning },
+                    isNeverSynced && { color: theme.colors.textMuted },
+                    !isSyncing &&
+                      !isNeverSynced &&
+                      quickSync.status !== "error" &&
+                      quickSync.status !== "waiting_network" && {
+                        color: theme.colors.success,
+                      },
+                  ]}
+                >
+                  {statusLabel}
                 </Text>
               </View>
               <Text style={styles.lastSyncedText}>
@@ -283,6 +316,13 @@ export function QuickSyncCard() {
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
       />
+
+      <InfoModal
+        message={t("quickSync.description")}
+        onClose={() => setInfoModalVisible(false)}
+        title={t("quickSync.title")}
+        visible={infoModalVisible}
+      />
     </View>
   );
 }
@@ -348,11 +388,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 15,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    description: {
-      color: theme.colors.textSecondary,
-      fontSize: 13,
-      lineHeight: 18,
     },
     divider: {
       backgroundColor: theme.colors.border,

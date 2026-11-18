@@ -26,6 +26,8 @@ export interface AppToastProps {
   onClose: () => void;
   icon?: React.ReactNode;
   style?: ViewStyle;
+  offset?: number;
+  includeSafeArea?: boolean;
 }
 
 export function AppToast({
@@ -38,6 +40,8 @@ export function AppToast({
   onClose,
   icon,
   style,
+  offset,
+  includeSafeArea = false,
 }: AppToastProps) {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
@@ -103,8 +107,16 @@ export function AppToast({
           ? theme.colors.warning
           : theme.colors.primary;
 
-  const topOffset = Math.max(12, insets.top + 8);
-  const bottomOffset = Math.max(16, insets.bottom + 12);
+  const topOffset =
+    offset !== undefined
+      ? offset
+      : includeSafeArea
+        ? Math.max(12, insets.top + 8)
+        : 12;
+  const bottomOffset =
+    offset !== undefined
+      ? offset
+      : Math.max(16, insets.bottom + 12);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],

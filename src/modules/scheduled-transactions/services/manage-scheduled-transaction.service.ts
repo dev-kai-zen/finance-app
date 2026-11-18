@@ -1,8 +1,11 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
+import type { ScheduledTransaction } from "../types/scheduled-transaction.types";
+import { processDueSchedules } from "./process-due-schedules.service";
 import {
   deleteAllScheduledTransactionRecords,
   deleteScheduledTransactionRecord,
   deleteUnprocessedScheduleOccurrences,
+  findScheduleBySubscriptionId,
   findScheduledTransaction,
   getAccountIdsWithSchedules as repoGetAccountIdsWithSchedules,
   getPocketIdsWithSchedules as repoGetPocketIdsWithSchedules,
@@ -34,19 +37,36 @@ export function permanentlyDeleteScheduledTransaction(id: string): void {
 export function setScheduledTransactionPaused(
   id: string,
   paused: boolean,
+  context?: DbContext,
 ): void {
-  db.transaction((tx) => {
+  const runner = (tx: DbContext) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
     if (schedule.status === "completed") {
       throw new Error("A completed schedule cannot be resumed.");
+    }
+    if (paused) {
+      deleteUnprocessedScheduleOccurrences(id, tx);
     }
     updateScheduledTransactionRecord(
       id,
       { status: paused ? "paused" : "active", updatedAt: new Date() },
       tx,
     );
-  });
+  };
+
+  if (context) {
+    runner(context);
+  } else {
+    db.transaction(runner);
+    if (!paused) {
+      try {
+        processDueSchedules(new Date());
+      } catch {
+        // Ignore
+      }
+    }
+  }
 }
 
 export function endScheduledTransaction(id: string): void {
@@ -66,10 +86,25 @@ export function endScheduledTransaction(id: string): void {
   });
 }
 
+export function getScheduledTransaction(
+  id: string,
+  context: DbContext = db,
+): ScheduledTransaction | null {
+  return findScheduledTransaction(id, context);
+}
+
+export function getScheduleBySubscriptionId(
+  subscriptionId: string,
+  context: DbContext = db,
+): ScheduledTransaction | null {
+  return findScheduleBySubscriptionId(subscriptionId, context);
+}
+
 export function removeScheduledTransaction(
   id: string,
+  context?: DbContext,
 ): RemoveScheduledTransactionResult {
-  return db.transaction((tx) => {
+  const runner = (tx: DbContext): RemoveScheduledTransactionResult => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
 
@@ -92,25 +127,44 @@ export function removeScheduledTransaction(
       tx,
     );
     return "archived";
-  });
+  };
+
+  return context ? runner(context) : db.transaction(runner);
 }
 
-export function restoreScheduledTransaction(id: string): void {
-  db.transaction((tx) => {
+export function restoreScheduledTransaction(
+  id: string,
+  options?: {
+    status?: "active" | "paused";
+    nextNominalAt?: Date;
+    nextEffectiveAt?: Date;
+  },
+  context?: DbContext,
+): void {
+  const runner = (tx: DbContext) => {
     const schedule = findScheduledTransaction(id, tx);
     if (!schedule) throw new Error("Scheduled transaction was not found.");
-    if (!schedule.archivedAt) return;
+    if (!schedule.archivedAt && !options?.status) return;
+    const now = new Date();
     updateScheduledTransactionRecord(
       id,
-      { archivedAt: null, updatedAt: new Date() },
+      {
+        archivedAt: null,
+        status:
+          options?.status ??
+          (schedule.status === "completed" ? "active" : schedule.status),
+        nextNominalAt: options?.nextNominalAt ?? schedule.nextNominalAt,
+        nextEffectiveAt: options?.nextEffectiveAt ?? schedule.nextEffectiveAt,
+        updatedAt: now,
+      },
       tx,
     );
-  });
+  };
+
+  return context ? runner(context) : db.transaction(runner);
 }
 
-export function clearScheduledTransactionWorkspace(
-  context: DbContext,
-): void {
+export function clearScheduledTransactionWorkspace(context: DbContext): void {
   deleteAllScheduledTransactionRecords(context);
 }
 
@@ -138,4 +192,18 @@ export function getPocketIdsWithSchedules(
   context: DbContext = db,
 ): Set<string> {
   return repoGetPocketIdsWithSchedules(context);
+}
+
+export function unlinkScheduledTransactionSubscription(
+  id: string,
+  context?: DbContext,
+): void {
+  const runner = (tx: DbContext) => {
+    updateScheduledTransactionRecord(
+      id,
+      { subscriptionId: null, updatedAt: new Date() },
+      tx,
+    );
+  };
+  return context ? runner(context) : db.transaction(runner);
 }

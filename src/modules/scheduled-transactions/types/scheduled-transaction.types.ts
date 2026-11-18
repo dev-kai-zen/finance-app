@@ -40,6 +40,7 @@ export interface ScheduledTransaction {
   nextNominalAt: Date | null;
   nextEffectiveAt: Date | null;
   archivedAt: Date | null;
+  subscriptionId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +87,7 @@ export interface SaveScheduledTransactionInput {
   endsOn?: string | null;
   weekendPolicy: ScheduleWeekendPolicy;
   autoPost: boolean;
+  subscriptionId?: string | null;
 }
 
 export interface CalculatedScheduleOccurrence {

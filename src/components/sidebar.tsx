@@ -32,7 +32,7 @@ import { sendFeedback } from "@/utils/send-feedback";
 interface NavItemConfig {
   href: string;
   labelKey: TranslationKey;
-  icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "goals" | "reports" | "notes" | "monitor" | "settings";
+  icon: "dashboard" | "accounts" | "transactions" | "calendar" | "credit-cards" | "categories" | "budgets" | "goals" | "reports" | "notes" | "monitor" | "settings" | "subscriptions";
 }
 
 const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
@@ -41,6 +41,7 @@ const PRIMARY_NAVIGATION_ITEMS: NavItemConfig[] = [
   { href: "/transactions", labelKey: "navigation.transactions", icon: "transactions" },
   { href: "/calendar", labelKey: "navigation.calendar", icon: "calendar" },
   { href: "/credit-cards", labelKey: "navigation.creditCards", icon: "credit-cards" },
+  { href: "/subscriptions", labelKey: "navigation.subscriptions", icon: "subscriptions" },
   { href: "/categories", labelKey: "navigation.categories", icon: "categories" },
   { href: "/budgets", labelKey: "navigation.budgets", icon: "budgets" },
   { href: "/goals", labelKey: "navigation.goals", icon: "goals" },
@@ -375,6 +376,7 @@ function NavIcon({ type, active }: { type: NavItemConfig["icon"]; active: boolea
     notes: "notebook-pen",
     monitor: "database",
     settings: "settings",
+    subscriptions: "repeat",
   };
 
   return <IconHelper color={iconColor} name={iconNameMap[type]} size={18} />;

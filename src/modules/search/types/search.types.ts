@@ -12,7 +12,8 @@ export type SearchCategory =
   | "note"
   | "schedule"
   | "label"
-  | "pocket";
+  | "pocket"
+  | "subscription";
 
 export interface SearchCatalogItem {
   id: string;
@@ -52,6 +53,7 @@ export interface SearchCatalogItem {
     | "database"
     | "download"
     | "archive"
+    | "repeat"
     | "layout-grid"
     | "smartphone"
     | "vibrate"

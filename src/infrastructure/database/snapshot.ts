@@ -28,57 +28,128 @@ const CURRENT_REQUIRED_TABLES = [
   "sync_operations",
 ] as const;
 
+let snapshotLock = Promise.resolve();
+let isReplacing = false;
+
+export function isDatabaseReplacing(): boolean {
+  return isReplacing;
+}
+
+export async function withDatabaseSnapshotLock<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  const previous = snapshotLock;
+  let release: () => void = () => {};
+  snapshotLock = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  try {
+    await previous;
+    return await fn();
+  } finally {
+    release();
+  }
+}
+
+async function executeWalCheckpoint(
+  mode: "TRUNCATE" | "PASSIVE" = "TRUNCATE",
+): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await sqliteDatabase.execAsync(`PRAGMA wal_checkpoint(${mode});`);
+      return;
+    } catch (error) {
+      if (attempt === 2) {
+        if (mode === "TRUNCATE") {
+          try {
+            await sqliteDatabase.execAsync("PRAGMA wal_checkpoint(PASSIVE);");
+            return;
+          } catch {
+            // Fall through and throw original error
+          }
+        }
+        throw error;
+      }
+      await new Promise((resolve) =>
+        setTimeout(resolve, 50 * Math.pow(2, attempt)),
+      );
+    }
+  }
+}
+
 export async function createDatabaseSnapshot(): Promise<Uint8Array> {
-  await sqliteDatabase.execAsync("PRAGMA wal_checkpoint(TRUNCATE);");
-  return normalizeSerializedDatabaseForMemory(
-    await sqliteDatabase.serializeAsync(),
-  );
+  return withDatabaseSnapshotLock(async () => {
+    await executeWalCheckpoint("TRUNCATE");
+    return normalizeSerializedDatabaseForMemory(
+      await sqliteDatabase.serializeAsync(),
+    );
+  });
 }
 
 export async function replaceDatabaseFromSnapshot(
   snapshot: Uint8Array,
 ): Promise<void> {
-  const replacement = await SQLite.deserializeDatabaseAsync(
-    normalizeSerializedDatabaseForMemory(snapshot),
-  );
-  const rollbackBytes = await createDatabaseSnapshot();
-  let rollback: SQLite.SQLiteDatabase | null = null;
-  let replacementStarted = false;
-
-  try {
-    validateSnapshot(replacement, LEGACY_REQUIRED_TABLES);
-
-    replacementStarted = true;
-    await SQLite.backupDatabaseAsync({
-      sourceDatabase: replacement,
-      sourceDatabaseName: "main",
-      destDatabase: sqliteDatabase,
-      destDatabaseName: "main",
-    });
-
-    await runSafeMigrations(db, migrations);
-    validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
-    await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
-    await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
-  } catch (error) {
-    if (replacementStarted) {
-      rollback = await SQLite.deserializeDatabaseAsync(
-        normalizeSerializedDatabaseForMemory(rollbackBytes),
+  return withDatabaseSnapshotLock(async () => {
+    isReplacing = true;
+    const replacement = await SQLite.deserializeDatabaseAsync(
+      normalizeSerializedDatabaseForMemory(snapshot),
+    );
+    let rollbackBytes: Uint8Array | null = null;
+    try {
+      await executeWalCheckpoint("TRUNCATE");
+      rollbackBytes = normalizeSerializedDatabaseForMemory(
+        await sqliteDatabase.serializeAsync(),
       );
+    } catch {
+      // Best-effort rollback bytes capture
+    }
+    let rollback: SQLite.SQLiteDatabase | null = null;
+    let replacementStarted = false;
+
+    try {
+      validateSnapshot(replacement, LEGACY_REQUIRED_TABLES);
+
+      replacementStarted = true;
       await SQLite.backupDatabaseAsync({
-        sourceDatabase: rollback,
+        sourceDatabase: replacement,
         sourceDatabaseName: "main",
         destDatabase: sqliteDatabase,
         destDatabaseName: "main",
       });
+
+      await runSafeMigrations(db, migrations);
+      validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
       await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
       await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
+      await executeWalCheckpoint("TRUNCATE");
+    } catch (error) {
+      if (replacementStarted && rollbackBytes) {
+        try {
+          rollback = await SQLite.deserializeDatabaseAsync(
+            normalizeSerializedDatabaseForMemory(rollbackBytes),
+          );
+          await SQLite.backupDatabaseAsync({
+            sourceDatabase: rollback,
+            sourceDatabaseName: "main",
+            destDatabase: sqliteDatabase,
+            destDatabaseName: "main",
+          });
+          await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
+          await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
+          await executeWalCheckpoint("TRUNCATE");
+        } catch {
+          // Keep primary error on failed rollback
+        }
+      }
+      throw error;
+    } finally {
+      isReplacing = false;
+      await replacement.closeAsync();
+      if (rollback) {
+        await (rollback as SQLite.SQLiteDatabase).closeAsync();
+      }
     }
-    throw error;
-  } finally {
-    await replacement.closeAsync();
-    await rollback?.closeAsync();
-  }
+  });
 }
 
 function normalizeSerializedDatabaseForMemory(

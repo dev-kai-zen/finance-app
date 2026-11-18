@@ -304,6 +304,10 @@ test("search catalog: creation quick actions route with action=new", () => {
   const scheduledItem = SEARCH_CATALOG.find((item) => item.id === "action_add_scheduled");
   assert.ok(scheduledItem, "action_add_scheduled must exist");
   assert.equal(scheduledItem.route, "/transactions/scheduled?action=new");
+
+  const subItem = SEARCH_CATALOG.find((item) => item.id === "action_add_subscription");
+  assert.ok(subItem, "action_add_subscription must exist");
+  assert.equal(subItem.route, "/subscriptions?action=new");
 });
 
 test("search catalog: finds trash, export csv, and archived accounts actions", () => {
@@ -418,6 +422,72 @@ test("search catalog: finds new actions and screens (Chat with Kai, Account Type
   const incExpScreen = SEARCH_CATALOG.find((item) => item.id === "screen_report_income_expense");
   assert.ok(incExpScreen, "screen_report_income_expense must exist");
   assert.equal(incExpScreen.route, "/reports?tab=income-expense");
+});
+
+test("search catalog: finds Subscriptions actions and screens", () => {
+  const subQueries = [
+    { query: "subscription", expectedId: "screen_subscriptions" },
+    { query: "subscriptions", expectedId: "screen_subscriptions" },
+    { query: "netflix", expectedId: "screen_subscriptions" },
+    { query: "spotify", expectedId: "screen_subscriptions" },
+    { query: "burn rate", expectedId: "screen_subscriptions" },
+    { query: "new subscription", expectedId: "action_add_subscription" },
+    { query: "add subscription", expectedId: "action_add_subscription" },
+    { query: "archived subscriptions", expectedId: "action_subscriptions_archived" },
+  ];
+
+  for (const { query, expectedId } of subQueries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}', found: ${matches.map((m) => m.id).join(", ")}`,
+    );
+  }
+});
+
+test("search catalog: finds Data Import actions, screens, and settings", () => {
+  const importQueries = [
+    { query: "import data", expectedId: "screen_data_import" },
+    { query: "data import", expectedId: "screen_data_import" },
+    { query: "import csv", expectedId: "action_import_data" },
+    { query: "upload csv", expectedId: "action_import_data" },
+    { query: "bank statement", expectedId: "action_import_data" },
+  ];
+
+  for (const { query, expectedId } of importQueries) {
+    const trimmed = query.toLowerCase();
+    const matches = SEARCH_CATALOG.filter((item) => {
+      const enTitle = resolvePath(en, item.titleKey) || "";
+      const enDesc = resolvePath(en, item.descriptionKey) || "";
+      const titleMatch = enTitle.toLowerCase().includes(trimmed);
+      const descMatch = enDesc.toLowerCase().includes(trimmed);
+      const keywordMatch = item.keywords.some((k) =>
+        k.toLowerCase().includes(trimmed) || trimmed.includes(k.toLowerCase()),
+      );
+      return titleMatch || descMatch || keywordMatch;
+    });
+
+    assert.ok(
+      matches.some((item) => item.id === expectedId),
+      `Expected '${expectedId}' to match query '${query}', found: ${matches.map((m) => m.id).join(", ")}`,
+    );
+  }
+
+  const settingItem = SEARCH_CATALOG.find((item) => item.id === "setting_data_import");
+  assert.ok(settingItem, "setting_data_import must exist");
+  assert.equal(settingItem.targetId, "settingsDataImport");
+  assert.equal(settingItem.route, "/settings?target=settingsDataImport");
 });
 
 

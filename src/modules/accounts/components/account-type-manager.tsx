@@ -64,7 +64,7 @@ function AccountTypeManagerContent({
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
-  const { isPromptDismissed } = useExperiencePreferences();
+  const { isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
   const [group, setGroup] = useState<AccountGroup>("asset");
   const [editor, setEditor] = useState<{ type?: AccountType } | null>(null);
   const [deleting, setDeleting] = useState<AccountType | null>(null);
@@ -207,6 +207,12 @@ function AccountTypeManagerContent({
         title="Account Group Setup"
         titleAlign="left"
         visible
+        onTour={
+          guideHelperEnabled && !editor && !deleting
+            ? walkthrough.startWalkthrough
+            : undefined
+        }
+        tourLabel="Tour account group setup"
         onClose={onClose}
       >
         <View style={styles.scrollWrapper}>

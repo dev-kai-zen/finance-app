@@ -20,6 +20,7 @@ import {
   processDueSchedules,
   skipScheduledOccurrence,
 } from "../services/process-due-schedules.service";
+import { reconcileOrphanedSubscriptionSchedules } from "../services/reconcile-orphaned-schedules.service";
 import { saveScheduledTransaction } from "../services/save-scheduled-transaction.service";
 import type {
   SaveScheduledTransactionInput,
@@ -43,6 +44,7 @@ export function useScheduledTransactions() {
       setLoading(true);
     }
     try {
+      reconcileOrphanedSubscriptionSchedules();
       processDueSchedules();
       setSchedules(listScheduledTransactions({ includeArchived: true }));
       setOccurrences(listScheduleOccurrences());

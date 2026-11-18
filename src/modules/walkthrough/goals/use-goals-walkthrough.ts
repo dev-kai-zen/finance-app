@@ -62,6 +62,13 @@ export function useGoalsWalkthrough(options: UseGoalsWalkthroughOptions) {
         if (generation !== measurementGenerationRef.current) {
           return;
         }
+
+        // Fixed floating action button is always visible on-screen; apply immediately
+        if (step.targetId === "goalFab" && initialLayout) {
+          setActiveTargetLayout(initialLayout);
+          return;
+        }
+
         if (
           initialLayout &&
           isWalkthroughTargetVisible(initialLayout, windowHeight, insets)

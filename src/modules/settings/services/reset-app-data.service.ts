@@ -1,38 +1,78 @@
+import * as SQLite from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+
+import migrations from "../../../../drizzle/migrations";
+import * as schema from "@/infrastructure/database/schema";
 import {
   announceDatabaseReplacement,
   db,
+  runSafeMigrations,
   sqliteDatabase,
+  withDatabaseSnapshotLock,
 } from "@/infrastructure/database";
 import { deleteAllUserData } from "../repositories/reset-data.repository";
 import { invalidateExperiencePreferencesCache } from "./experience-preferences.service";
 
 export async function resetAppData(): Promise<void> {
-  const { resetGoogleDriveConnectionForAppReset } =
-    require("@/modules/google-drive-backup") as typeof import("@/modules/google-drive-backup");
-  await resetGoogleDriveConnectionForAppReset();
+  return withDatabaseSnapshotLock(async () => {
+    const { resetGoogleDriveConnectionForAppReset } =
+      require("@/modules/google-drive-backup") as typeof import("@/modules/google-drive-backup");
+    await resetGoogleDriveConnectionForAppReset();
 
-  const fkRow = sqliteDatabase.getFirstSync<{ foreign_keys: number }>(
-    "PRAGMA foreign_keys;",
-  );
-  const wasFkEnabled = fkRow?.foreign_keys === 1;
+    const fkRow = sqliteDatabase.getFirstSync<{ foreign_keys: number }>(
+      "PRAGMA foreign_keys;",
+    );
+    const wasFkEnabled = fkRow?.foreign_keys === 1;
 
-  if (wasFkEnabled) {
-    sqliteDatabase.execSync("PRAGMA foreign_keys = OFF;");
-  }
-
-  try {
-    db.transaction((tx) => {
-      deleteAllUserData(tx);
-    });
-  } finally {
     if (wasFkEnabled) {
-      sqliteDatabase.execSync("PRAGMA foreign_keys = ON;");
+      sqliteDatabase.execSync("PRAGMA foreign_keys = OFF;");
     }
-  }
 
-  invalidateExperiencePreferencesCache();
-  clearAppManagedFiles();
-  setTimeout(announceDatabaseReplacement, 0);
+    try {
+      db.transaction((tx) => {
+        deleteAllUserData(tx);
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("malformed") || message.includes("corrupt")) {
+        await recoverMalformedDatabase();
+      } else {
+        throw error;
+      }
+    } finally {
+      if (wasFkEnabled) {
+        try {
+          sqliteDatabase.execSync("PRAGMA foreign_keys = ON;");
+        } catch {
+          // Best effort foreign key re-enable
+        }
+      }
+    }
+
+    invalidateExperiencePreferencesCache();
+    clearAppManagedFiles();
+    setTimeout(announceDatabaseReplacement, 0);
+  });
+}
+
+async function recoverMalformedDatabase(): Promise<void> {
+  const cleanDb = await SQLite.openDatabaseAsync(":memory:");
+  try {
+    const cleanDrizzle = drizzle(cleanDb, { schema });
+    await runSafeMigrations(cleanDrizzle, migrations);
+    await SQLite.backupDatabaseAsync({
+      sourceDatabase: cleanDb,
+      sourceDatabaseName: "main",
+      destDatabase: sqliteDatabase,
+      destDatabaseName: "main",
+    });
+    await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
+    await sqliteDatabase.execAsync("PRAGMA busy_timeout = 5000;");
+    await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
+    await sqliteDatabase.execAsync("PRAGMA wal_checkpoint(TRUNCATE);");
+  } finally {
+    await cleanDb.closeAsync();
+  }
 }
 
 function clearAppManagedFiles(): void {

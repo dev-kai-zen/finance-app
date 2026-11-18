@@ -37,7 +37,13 @@ import { useQuickSync } from "../hooks/use-quick-sync";
 import { QuickSyncCard } from "./quick-sync-card";
 import { ScheduledBackupCard } from "./scheduled-backup-card";
 
-export function GoogleDriveBackupPanel() {
+export interface GoogleDriveBackupPanelProps {
+  mode?: "full" | "restore-only";
+}
+
+export function GoogleDriveBackupPanel({
+  mode = "full",
+}: GoogleDriveBackupPanelProps = {}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
@@ -260,24 +266,28 @@ export function GoogleDriveBackupPanel() {
                   <View style={styles.insetDivider} />
                 </>
               ) : null}
-              <View style={styles.divider} />
-              <Pressable
-                accessibilityLabel="Create backup"
-                accessibilityRole="button"
-                disabled={busy}
-                onPress={() => setPassphraseMode("create")}
-                style={({ pressed }) => [
-                  styles.actionRow,
-                  pressed && styles.pressed,
-                  busy && styles.disabled,
-                ]}
-              >
-                <CloudUpload color={theme.colors.primary} size={20} />
-                <View style={styles.copy}>
-                  <Text style={styles.actionTitle}>Back up now</Text>
-                </View>
-                <ChevronRight color={theme.colors.textMuted} size={18} />
-              </Pressable>
+              {mode === "full" ? (
+                <>
+                  <View style={styles.divider} />
+                  <Pressable
+                    accessibilityLabel="Create backup"
+                    accessibilityRole="button"
+                    disabled={busy}
+                    onPress={() => setPassphraseMode("create")}
+                    style={({ pressed }) => [
+                      styles.actionRow,
+                      pressed && styles.pressed,
+                      busy && styles.disabled,
+                    ]}
+                  >
+                    <CloudUpload color={theme.colors.primary} size={20} />
+                    <View style={styles.copy}>
+                      <Text style={styles.actionTitle}>Back up now</Text>
+                    </View>
+                    <ChevronRight color={theme.colors.textMuted} size={18} />
+                  </Pressable>
+                </>
+              ) : null}
 
               <View style={styles.insetDivider} />
               <Pressable
@@ -363,9 +373,9 @@ export function GoogleDriveBackupPanel() {
           ) : null}
         </View>
 
-        {backup.user ? <ScheduledBackupCard /> : null}
+        {mode === "full" && backup.user ? <ScheduledBackupCard /> : null}
 
-        {backup.user ? <QuickSyncCard /> : null}
+        {mode === "full" && backup.user ? <QuickSyncCard /> : null}
       </View>
       )}
 

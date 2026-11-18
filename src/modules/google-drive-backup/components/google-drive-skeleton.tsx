@@ -111,9 +111,6 @@ export function GoogleDriveSkeleton() {
             <Animated.View
               style={[styles.skeletonTitle, { width: 135, opacity: pulseAnim }]}
             />
-            <Animated.View
-              style={[styles.skeletonSubtitle, { width: 190, opacity: pulseAnim }]}
-            />
           </View>
           <Animated.View
             style={[styles.skeletonSwitch, { opacity: pulseAnim }]}
@@ -130,9 +127,6 @@ export function GoogleDriveSkeleton() {
           <View style={styles.copy}>
             <Animated.View
               style={[styles.skeletonTitle, { width: 110, opacity: pulseAnim }]}
-            />
-            <Animated.View
-              style={[styles.skeletonSubtitle, { width: 175, opacity: pulseAnim }]}
             />
           </View>
           <Animated.View

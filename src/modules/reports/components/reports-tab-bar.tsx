@@ -16,14 +16,19 @@ import type { ReportTabKey } from "../types/reports.types";
 interface ReportsTabBarProps {
   activeTab: ReportTabKey;
   onSelectTab: (tabKey: ReportTabKey) => void;
+  tabBarRef?: React.Ref<View>;
 }
 
-export function ReportsTabBar({ activeTab, onSelectTab }: ReportsTabBarProps) {
+export function ReportsTabBar({
+  activeTab,
+  onSelectTab,
+  tabBarRef,
+}: ReportsTabBarProps) {
   const styles = useThemeStyles(createStyles);
   const { isPro } = useProStatus();
 
   return (
-    <View style={styles.container}>
+    <View collapsable={false} ref={tabBarRef} style={styles.container}>
       <HorizontalScrollView
         contentContainerStyle={styles.scrollContent}
       >

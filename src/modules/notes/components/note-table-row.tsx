@@ -20,6 +20,7 @@ export interface NoteTableRowProps {
   onPress: (note: Note) => void;
   onLongPress?: (note: Note) => void;
   onDelete?: (note: Note) => void;
+  rowRef?: React.Ref<View>;
 }
 
 const ACTION_WIDTH = 75;
@@ -29,6 +30,7 @@ export const NoteTableRow = memo(function NoteTableRow({
   onPress,
   onLongPress,
   onDelete,
+  rowRef,
 }: NoteTableRowProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -90,7 +92,7 @@ export const NoteTableRow = memo(function NoteTableRow({
   };
 
   return (
-    <View style={styles.container}>
+    <View ref={rowRef as any} collapsable={false} style={styles.container}>
       {/* Background Delete Button revealed upon swipe */}
       <View style={styles.actionsContainer}>
         <Pressable

@@ -25,6 +25,7 @@ const MORE_FEATURE_ROWS: Array<{
 }> = [
   { key: "calendar", labelKey: "settings.navCalendar", icon: "calendar" },
   { key: "creditCards", labelKey: "settings.navCreditCards", icon: "credit-card" },
+  { key: "subscriptions", labelKey: "settings.navSubscriptions", icon: "repeat" },
   { key: "categories", labelKey: "settings.navCategories", icon: "layers" },
   { key: "budgets", labelKey: "settings.navBudgets", icon: "pie-chart" },
   { key: "goals", labelKey: "settings.navGoals", icon: "target" },

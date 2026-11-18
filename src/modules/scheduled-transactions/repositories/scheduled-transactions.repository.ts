@@ -70,6 +70,29 @@ export function findScheduledTransaction(
   return row ? mapSchedule(row) : null;
 }
 
+export function findScheduleBySubscriptionId(
+  subscriptionId: string,
+  context: DbContext = db,
+): ScheduledTransaction | null {
+  const row = context
+    .select()
+    .from(transactionSchedules)
+    .where(eq(transactionSchedules.subscriptionId, subscriptionId))
+    .get();
+  return row ? mapSchedule(row) : null;
+}
+
+export function findSchedulesWithSubscription(
+  context: DbContext = db,
+): ScheduledTransaction[] {
+  const rows = context
+    .select()
+    .from(transactionSchedules)
+    .where(isNotNull(transactionSchedules.subscriptionId))
+    .all();
+  return rows.map(mapSchedule);
+}
+
 export function listDueScheduledTransactions(
   now: Date,
   limit = 100,

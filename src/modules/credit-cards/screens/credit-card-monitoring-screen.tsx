@@ -177,7 +177,7 @@ function CreditCardMonitoringScreenContent() {
         />
       ) : (
         <>
-          <View ref={dueSummaryRef} style={styles.summary}>
+          <View collapsable={false} ref={dueSummaryRef} style={styles.summary}>
             <View>
               <Text style={styles.summaryLabel}>DUE THIS MONTH</Text>
               <Text
@@ -216,7 +216,7 @@ function CreditCardMonitoringScreenContent() {
             ) : null}
           </View>
 
-          <View ref={accountChipsRef} style={styles.chipsSection}>
+          <View collapsable={false} ref={accountChipsRef} style={styles.chipsSection}>
             <HorizontalScrollView
               contentContainerStyle={styles.chipsScrollContent}
             >

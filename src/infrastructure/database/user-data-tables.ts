@@ -32,6 +32,8 @@ import {
   notes,
   pockets,
   settings,
+  subscriptionPayments,
+  subscriptions,
   transactionAttachments,
   transactionEntries,
   transactionLabels,
@@ -47,6 +49,8 @@ import {
  * Keep in sync with `src/modules/settings/repositories/reset-data.repository.ts`.
  */
 const APP_RESET_USER_DATA_TABLES = [
+  subscriptionPayments,
+  subscriptions,
   importRecords,
   importBatches,
   transactionSchedulePostings,

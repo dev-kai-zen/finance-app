@@ -1,10 +1,14 @@
 import type { PropsWithChildren } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 
 import { useWorkspace } from "@/modules/onboarding";
 import { useAppLock } from "@/modules/security";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useProStatus, ProPaywallModal } from "@/modules/pro";
+import { getTransactionCount } from "@/modules/transactions";
+import { isVersionHistoryPending, subscribeToVersionHistory } from "@/modules/version-history";
+import { MIN_TRANSACTIONS_FOR_DEVELOPER_MESSAGE } from "../constants/developer-message.constants";
 import { DeveloperMessageModal } from "./developer-message-modal";
 
 export function DeveloperMessageGate({ children }: PropsWithChildren) {
@@ -14,19 +18,61 @@ export function DeveloperMessageGate({ children }: PropsWithChildren) {
   const { isLocked, isReady } = useAppLock();
   const [visible, setVisible] = useState(false);
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const checkEligibility = useCallback(() => {
+    clearTimer();
     if (!isReady || isLocked) return;
     if (state.status !== "completed") return;
+    if (state.mode !== "personal") return;
     if (experience.isPromptDismissed("developerMessageSeen")) return;
+    if (isVersionHistoryPending()) return;
 
-    // Small delay to ensure the dashboard/stack is fully mounted
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 450);
+    try {
+      const count = getTransactionCount();
+      if (count >= MIN_TRANSACTIONS_FOR_DEVELOPER_MESSAGE) {
+        // Delay to allow any active modal/screen to settle
+        timerRef.current = setTimeout(() => {
+          setVisible(true);
+          timerRef.current = null;
+        }, 750);
+      }
+    } catch {
+      // Ignore during initial SQLite migration or load
+    }
+  }, [clearTimer, isReady, isLocked, state.status, state.mode, experience]);
 
-    return () => clearTimeout(timer);
-  }, [state.status, experience.isPromptDismissed, isLocked, isReady]);
+  useEffect(() => {
+    checkEligibility();
+    return clearTimer;
+  }, [checkEligibility, clearTimer]);
+
+  useEffect(() => {
+    const unsubVersionHistory = subscribeToVersionHistory(() => {
+      checkEligibility();
+    });
+    return unsubVersionHistory;
+  }, [checkEligibility]);
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        checkEligibility();
+      },
+    );
+    return () => {
+      sub.remove();
+      clearTimer();
+    };
+  }, [checkEligibility, clearTimer]);
 
   const handleClose = () => {
     setVisible(false);

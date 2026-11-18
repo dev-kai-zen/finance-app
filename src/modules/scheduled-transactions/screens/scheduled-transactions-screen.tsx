@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
   CalendarClock,
+  ExternalLink,
   FastForward,
   Pause,
   Play,
@@ -135,6 +136,9 @@ function ScheduledTransactionsScreenContent({
   const [selectedFilters, setSelectedFilters] = useState<
     ReadonlySet<ScheduleListFilter>
   >(() => new Set(DEFAULT_SCHEDULE_LIST_FILTERS));
+  const [sourceFilter, setSourceFilter] = useState<"all" | "regular" | "subscription">("all");
+  const [managedBySubTarget, setManagedBySubTarget] =
+    useState<ScheduledTransaction | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [toastState, setToastState] = useState<{
     visible: boolean;
@@ -180,19 +184,42 @@ function ScheduledTransactionsScreenContent({
     [schedules, selectedFilters],
   );
 
+  const sourceFilterCounts = useMemo(() => {
+    return {
+      all: statusFilteredSchedules.length,
+      regular: statusFilteredSchedules.filter((s) => !s.subscriptionId).length,
+      subscription: statusFilteredSchedules.filter((s) => Boolean(s.subscriptionId)).length,
+    };
+  }, [statusFilteredSchedules]);
+
+  const sourceFilteredSchedules = useMemo(() => {
+    if (sourceFilter === "regular") {
+      return statusFilteredSchedules.filter((s) => !s.subscriptionId);
+    }
+    if (sourceFilter === "subscription") {
+      return statusFilteredSchedules.filter((s) => Boolean(s.subscriptionId));
+    }
+    return statusFilteredSchedules;
+  }, [statusFilteredSchedules, sourceFilter]);
+
   const visibleSchedules = useMemo(
     () =>
       filterSchedulesBySearch(
-        statusFilteredSchedules,
+        sourceFilteredSchedules,
         searchQuery,
         searchContext,
       ),
-    [statusFilteredSchedules, searchQuery, searchContext],
+    [sourceFilteredSchedules, searchQuery, searchContext],
   );
 
   const activeSchedules = useMemo(
     () => schedules.filter((schedule) => schedule.archivedAt === null),
     [schedules],
+  );
+
+  const activeRegularSchedules = useMemo(
+    () => activeSchedules.filter((schedule) => !schedule.subscriptionId),
+    [activeSchedules],
   );
 
   const scheduleById = useMemo(
@@ -212,7 +239,7 @@ function ScheduledTransactionsScreenContent({
           return false;
         }
         const schedule = scheduleById.get(occurrence.scheduleId);
-        if (!schedule) return false;
+        if (!schedule || schedule.status === "paused") return false;
         return scheduleMatchesSearchQuery(
           schedule,
           normalizedSearchQuery,
@@ -235,11 +262,18 @@ function ScheduledTransactionsScreenContent({
           "Create recurring income, expenses, or transfers and decide whether each occurrence posts automatically. Use the + button to add your first schedule.",
       };
     }
-    if (statusFilteredSchedules.length === 0) {
+    if (sourceFilter === "subscription" && sourceFilteredSchedules.length === 0) {
+      return {
+        title: "No subscription schedules",
+        description:
+          "You do not have any schedules created by subscriptions. Subscriptions with auto-post enabled will appear here.",
+      };
+    }
+    if (statusFilteredSchedules.length === 0 || sourceFilteredSchedules.length === 0) {
       return {
         title: "No matching schedules",
         description:
-          "No schedules match the selected status filters. Select another status to view them.",
+          "No schedules match the selected filters. Select another filter to view them.",
       };
     }
     if (normalizedSearchQuery) {
@@ -252,10 +286,12 @@ function ScheduledTransactionsScreenContent({
     return {
       title: "No matching schedules",
       description:
-        "No schedules match the selected status filters. Select another status to view them.",
+        "No schedules match the selected filters. Select another filter to view them.",
     };
   }, [
     schedules.length,
+    sourceFilter,
+    sourceFilteredSchedules.length,
     statusFilteredSchedules.length,
     normalizedSearchQuery,
   ]);
@@ -264,7 +300,10 @@ function ScheduledTransactionsScreenContent({
   );
 
   const openNew = useCallback(() => {
-    if (activeSchedules.length >= PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS) {
+    if (
+      activeRegularSchedules.length >=
+      PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
+    ) {
       guardAction(() => {
         setEditingSchedule(null);
         setFormVisible(true);
@@ -278,7 +317,7 @@ function ScheduledTransactionsScreenContent({
     }
     setEditingSchedule(null);
     setFormVisible(true);
-  }, [activeSchedules.length, guardAction, t]);
+  }, [activeRegularSchedules.length, guardAction, t]);
 
   useEffect(() => {
     if (!loading && initialAction === "new") {
@@ -297,8 +336,12 @@ function ScheduledTransactionsScreenContent({
       const found = schedules.find((s) => s.id === initialScheduleId);
       if (found) {
         handledScheduleIdRef.current = initialScheduleId;
-        setEditingSchedule(found);
-        setFormVisible(true);
+        if (found.subscriptionId) {
+          setManagedBySubTarget(found);
+        } else {
+          setEditingSchedule(found);
+          setFormVisible(true);
+        }
         router.setParams({ scheduleId: undefined });
       }
     } else if (!initialScheduleId) {
@@ -510,6 +553,127 @@ function ScheduledTransactionsScreenContent({
           </View>
         ) : null}
 
+        {/* Source Filter Tabs */}
+        <View style={styles.sourceFilterContainer}>
+          <ScrollView
+            contentContainerStyle={styles.sourceFilterScroll}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: sourceFilter === "all" }}
+              onPress={() => setSourceFilter("all")}
+              style={[
+                styles.sourceTab,
+                sourceFilter === "all" && styles.sourceTabSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sourceTabText,
+                  sourceFilter === "all" && styles.sourceTabTextSelected,
+                ]}
+              >
+                {t("scheduledTransactions.filters.all", { defaultValue: "All" })}
+              </Text>
+              {sourceFilterCounts.all > 0 ? (
+                <View
+                  style={[
+                    styles.countBadge,
+                    sourceFilter === "all" && styles.countBadgeSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.countText,
+                      sourceFilter === "all" && styles.countTextSelected,
+                    ]}
+                  >
+                    {sourceFilterCounts.all}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: sourceFilter === "regular" }}
+              onPress={() => setSourceFilter("regular")}
+              style={[
+                styles.sourceTab,
+                sourceFilter === "regular" && styles.sourceTabSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sourceTabText,
+                  sourceFilter === "regular" && styles.sourceTabTextSelected,
+                ]}
+              >
+                {t("scheduledTransactions.filters.regularSchedules", {
+                  defaultValue: "Regular Schedules",
+                })}
+              </Text>
+              {sourceFilterCounts.regular > 0 ? (
+                <View
+                  style={[
+                    styles.countBadge,
+                    sourceFilter === "regular" && styles.countBadgeSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.countText,
+                      sourceFilter === "regular" && styles.countTextSelected,
+                    ]}
+                  >
+                    {sourceFilterCounts.regular}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: sourceFilter === "subscription" }}
+              onPress={() => setSourceFilter("subscription")}
+              style={[
+                styles.sourceTab,
+                sourceFilter === "subscription" && styles.sourceTabSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.sourceTabText,
+                  sourceFilter === "subscription" && styles.sourceTabTextSelected,
+                ]}
+              >
+                {t("scheduledTransactions.filters.subscriptions", {
+                  defaultValue: "Subscriptions",
+                })}
+              </Text>
+              {sourceFilterCounts.subscription > 0 ? (
+                <View
+                  style={[
+                    styles.countBadge,
+                    sourceFilter === "subscription" && styles.countBadgeSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.countText,
+                      sourceFilter === "subscription" && styles.countTextSelected,
+                    ]}
+                  >
+                    {sourceFilterCounts.subscription}
+                  </Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </ScrollView>
+        </View>
+
         <View style={styles.scheduleHeadingRow}>
           <Text style={styles.sectionHeading}>Schedules</Text>
           <View
@@ -555,7 +719,9 @@ function ScheduledTransactionsScreenContent({
             const signedAmount = isTransfer
               ? Math.abs(schedule.amountMinorUnits)
               : schedule.amountMinorUnits;
+            const isSubscription = Boolean(schedule.subscriptionId);
             const canAdvancePost =
+              !isSubscription &&
               !schedule.archivedAt &&
               schedule.status === "active" &&
               schedule.nextEffectiveAt !== null &&
@@ -581,6 +747,15 @@ function ScheduledTransactionsScreenContent({
                             ? "Scheduled transfer"
                             : "Scheduled " + schedule.transactionType)}
                       </Text>
+                      {isSubscription ? (
+                        <View style={styles.subscriptionBadge}>
+                          <Text style={styles.subscriptionBadgeText}>
+                            {t("scheduledTransactions.subscriptionBadge", {
+                              defaultValue: "Subscription",
+                            })}
+                          </Text>
+                        </View>
+                      ) : null}
                       <View
                         style={[
                           styles.statusBadge,
@@ -656,7 +831,26 @@ function ScheduledTransactionsScreenContent({
                 </View>
 
                 <View style={styles.cardActions}>
-                  {schedule.archivedAt ? (
+                  {isSubscription ? (
+                    <Pressable
+                      accessibilityLabel={t(
+                        "scheduledTransactions.manageInSubscriptions",
+                        { defaultValue: "Manage in Subscriptions" },
+                      )}
+                      onPress={() => setManagedBySubTarget(schedule)}
+                      style={styles.manageInSubAction}
+                    >
+                      <ExternalLink
+                        color={theme.colors.primary}
+                        size={15}
+                      />
+                      <Text style={styles.manageInSubActionText}>
+                        {t("scheduledTransactions.manageInSubscriptions", {
+                          defaultValue: "Manage in Subscriptions",
+                        })}
+                      </Text>
+                    </Pressable>
+                  ) : schedule.archivedAt ? (
                     <>
                       <Pressable
                         accessibilityLabel="Restore schedule"
@@ -775,15 +969,38 @@ function ScheduledTransactionsScreenContent({
       />
 
       <ConfirmModal
+        cancelLabel={t("common.close", { defaultValue: "Close" })}
+        confirmLabel={t("scheduledTransactions.goToSubscriptions", {
+          defaultValue: "Go to Subscriptions",
+        })}
+        message={t("scheduledTransactions.managedBySubscriptionDesc", {
+          defaultValue:
+            "This scheduled transaction is automatically synchronized with your subscription. To adjust amounts, cycle, pause, or delete, manage it directly in Subscriptions.",
+        })}
+        onCancel={() => setManagedBySubTarget(null)}
+        onConfirm={() => {
+          setManagedBySubTarget(null);
+          router.push("/subscriptions");
+        }}
+        title={t("scheduledTransactions.managedBySubscriptionTitle", {
+          defaultValue: "Managed by Subscriptions",
+        })}
+        variant="primary"
+        visible={managedBySubTarget !== null}
+      />
+
+      <ConfirmModal
         cancelLabel="Keep Archived"
         confirmLabel="Restore Schedule"
         message="This schedule will return to the schedules list. Its completed status and transaction history will remain unchanged."
         onCancel={() => setPendingRestore(null)}
         onConfirm={() => {
           if (pendingRestore) {
+            const isRegular = !pendingRestore.subscriptionId;
             if (
-              activeSchedules.length >=
-              PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
+              isRegular &&
+              activeRegularSchedules.length >=
+                PRO_LIMITS.FREE_MAX_SCHEDULED_TRANSACTIONS
             ) {
               const toRestore = pendingRestore;
               setPendingRestore(null);
@@ -797,8 +1014,14 @@ function ScheduledTransactionsScreenContent({
               });
               return;
             }
-            if (restore(pendingRestore.id)) {
+            const toRestore = pendingRestore;
+            if (restore(toRestore.id)) {
               setPendingRestore(null);
+              setToastState({
+                visible: true,
+                message: "Schedule restored",
+                description: `"${toRestore.name || "Schedule"}" was restored to active schedules.`,
+              });
             }
           }
         }}
@@ -834,8 +1057,19 @@ function ScheduledTransactionsScreenContent({
         }
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
-          if (pendingDelete && remove(pendingDelete.id)) {
-            setPendingDelete(null);
+          if (pendingDelete) {
+            const isArchive = pendingDeleteHasHistory;
+            const name = pendingDelete.name || "Schedule";
+            if (remove(pendingDelete.id)) {
+              setPendingDelete(null);
+              setToastState({
+                visible: true,
+                message: isArchive ? "Schedule archived" : "Schedule deleted",
+                description: isArchive
+                  ? `"${name}" was moved to archive.`
+                  : `"${name}" was permanently deleted.`,
+              });
+            }
           }
         }}
         pending={pending}
@@ -905,15 +1139,17 @@ function ScheduledTransactionsScreenContent({
         visible={showCongrats}
       />
 
+      </PageContainer>
+
       <AppToast
         description={toastState.description}
+        includeSafeArea
         message={toastState.message}
         onClose={() => setToastState((prev) => ({ ...prev, visible: false }))}
         position="top"
         variant="success"
         visible={toastState.visible}
       />
-    </PageContainer>
     </View>
   );
 }
@@ -960,6 +1196,83 @@ function createStyles(theme: AppTheme) {
       flexWrap: "wrap",
       gap: theme.spacing.sm,
       justifyContent: "space-between",
+    },
+    sourceFilterContainer: {
+      marginBottom: 0,
+    },
+    sourceFilterScroll: {
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      paddingVertical: 2,
+    },
+    sourceTab: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 6,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: 6,
+    },
+    sourceTabSelected: {
+      backgroundColor: theme.colors.primary + "14",
+      borderColor: theme.colors.primary,
+    },
+    sourceTabText: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    sourceTabTextSelected: {
+      color: theme.colors.primary,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    countBadge: {
+      backgroundColor: theme.colors.border,
+      borderRadius: 10,
+      minWidth: 18,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+    },
+    countBadgeSelected: {
+      backgroundColor: theme.colors.primary,
+    },
+    countText: {
+      color: theme.colors.textSecondary,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      textAlign: "center",
+    },
+    countTextSelected: {
+      color: theme.colors.onPrimary,
+    },
+    subscriptionBadge: {
+      backgroundColor: theme.colors.primary + "18",
+      borderColor: theme.colors.primary + "40",
+      borderRadius: theme.borderRadius.round,
+      borderWidth: 1,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    subscriptionBadgeText: {
+      color: theme.colors.primary,
+      fontSize: 10,
+      fontWeight: theme.typography.fontWeight.bold,
+      textTransform: "uppercase",
+    },
+    manageInSubAction: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.sm,
+    },
+    manageInSubActionText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     filterOptions: {
       alignItems: "center",

@@ -16,7 +16,8 @@ import type {
   UpdateNoteInput,
 } from "../types/note.types";
 
-export function useNotes() {
+export function useNotes(options?: { autoRefresh?: boolean }) {
+  const autoRefresh = options?.autoRefresh ?? true;
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasAnyNotes, setHasAnyNotes] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -53,11 +54,12 @@ export function useNotes() {
   }, [search, sortBy]);
 
   useEffect(() => {
+    if (!autoRefresh) return;
     const frameId = requestAnimationFrame(() => {
       refresh();
     });
     return () => cancelAnimationFrame(frameId);
-  }, [refresh]);
+  }, [autoRefresh, refresh]);
 
   const createNote = useCallback(
     async (input: CreateNoteInput): Promise<Note> => {

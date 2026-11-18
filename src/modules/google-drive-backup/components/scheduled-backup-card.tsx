@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CalendarClock, Crown } from "lucide-react-native";
 
-import { BackupScheduleOptions } from "@/components";
+import { BackupScheduleOptions, HelpIconButton, InfoModal } from "@/components";
 import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -18,6 +18,7 @@ export function ScheduledBackupCard() {
   const { isPro } = useProStatus();
   const scheduled = useGoogleDriveScheduledBackup();
   const [proModalVisible, setProModalVisible] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const busy = scheduled.operation !== "idle";
 
   const applyConfig = (patch: Partial<GoogleDriveScheduledBackupConfig>) => {
@@ -51,6 +52,12 @@ export function ScheduledBackupCard() {
         <View style={styles.headerCopy}>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{t("scheduledBackup.title")}</Text>
+            <HelpIconButton
+              accessibilityHint={t("scheduledBackup.description")}
+              accessibilityLabel={t("scheduledBackup.title")}
+              onPress={() => setInfoModalVisible(true)}
+              size={16}
+            />
             {!isPro && (
               <View style={styles.proChip}>
                 <Crown color="#D97706" size={8} />
@@ -58,7 +65,6 @@ export function ScheduledBackupCard() {
               </View>
             )}
           </View>
-          <Text style={styles.description}>{t("scheduledBackup.description")}</Text>
         </View>
         <ThemedSwitch
           accessibilityLabel={t("scheduledBackup.title")}
@@ -93,6 +99,13 @@ export function ScheduledBackupCard() {
         featureTitle={t("scheduledBackup.proTitle")}
         onClose={() => setProModalVisible(false)}
         visible={proModalVisible}
+      />
+
+      <InfoModal
+        message={t("scheduledBackup.description")}
+        onClose={() => setInfoModalVisible(false)}
+        title={t("scheduledBackup.title")}
+        visible={infoModalVisible}
       />
     </View>
   );
@@ -141,11 +154,6 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.semibold,
-    },
-    description: {
-      color: theme.colors.textMuted,
-      fontSize: theme.typography.fontSize.xs,
-      lineHeight: theme.typography.lineHeight.xs,
     },
     proChip: {
       alignItems: "center",

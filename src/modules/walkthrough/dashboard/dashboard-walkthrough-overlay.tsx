@@ -21,6 +21,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
+import { WALKTHROUGH_THEME } from "../constants/walkthrough-theme.constants";
 import type { LayoutRect, WalkthroughStep } from "../types/walkthrough.types";
 
 export interface DashboardWalkthroughOverlayProps {
@@ -59,7 +60,7 @@ export function DashboardWalkthroughOverlay({
 
   // Calculate cutout sizing
   let cutoutPadding = 6;
-  let cutoutRadius = 14;
+  let cutoutRadius = theme.borderRadius.large;
 
   if (
     step.id === "collapseIcon" ||
@@ -193,7 +194,7 @@ export function DashboardWalkthroughOverlay({
             </Mask>
           </Defs>
           <Rect
-            fill="rgba(0, 0, 0, 0.72)"
+            fill={WALKTHROUGH_THEME.backdropFill}
             height={windowHeight}
             mask="url(#walkthroughSpotlightMask)"
             width={windowWidth}
@@ -355,7 +356,7 @@ export function DashboardWalkthroughOverlay({
                     : t("dashboard.walkthroughNext")}
                 </Text>
                 {stepIndex === totalSteps - 1 ? null : (
-                  <ChevronRight color={theme.colors.textPrimary} size={16} />
+                  <ChevronRight color={WALKTHROUGH_THEME.nextButtonText} size={16} />
                 )}
               </Pressable>
             </View>
@@ -372,7 +373,7 @@ function createStyles(theme: AppTheme) {
       flex: 1,
     },
     focusRing: {
-      borderColor: "#00A3FF",
+      borderColor: WALKTHROUGH_THEME.spotlightBorder,
       borderWidth: 2,
       position: "absolute",
       backgroundColor: "transparent",
@@ -393,13 +394,13 @@ function createStyles(theme: AppTheme) {
       justifyContent: "space-between",
     },
     stepBadge: {
-      backgroundColor: `${theme.colors.primary}18`,
+      backgroundColor: WALKTHROUGH_THEME.badgeBg,
       borderRadius: theme.borderRadius.round,
       paddingHorizontal: theme.spacing.sm,
       paddingVertical: 3,
     },
     stepBadgeText: {
-      color: theme.colors.primary,
+      color: WALKTHROUGH_THEME.badgeText,
       fontSize: theme.typography.fontSize.xs,
       fontWeight: theme.typography.fontWeight.bold,
       letterSpacing: 0.3,
@@ -438,7 +439,7 @@ function createStyles(theme: AppTheme) {
     },
     nextBtn: {
       alignItems: "center",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: WALKTHROUGH_THEME.nextButtonBg,
       borderRadius: theme.borderRadius.medium,
       flexDirection: "row",
       gap: 4,
@@ -450,7 +451,7 @@ function createStyles(theme: AppTheme) {
       opacity: 0.85,
     },
     nextBtnText: {
-      color: theme.colors.textPrimary,
+      color: WALKTHROUGH_THEME.nextButtonText,
       fontSize: theme.typography.fontSize.sm,
       fontWeight: theme.typography.fontWeight.bold,
     },

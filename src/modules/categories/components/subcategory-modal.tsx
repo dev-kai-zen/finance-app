@@ -269,7 +269,7 @@ function SubcategoryModalContent({
               <TextInput
                 maxLength={50}
                 onChangeText={setName}
-                placeholder="e.g. Groceries, Restaurants, Electricity, Gas..."
+                placeholder="e.g. Groceries, Dining"
                 placeholderTextColor={theme.colors.textMuted}
                 style={styles.textInput}
                 value={name}

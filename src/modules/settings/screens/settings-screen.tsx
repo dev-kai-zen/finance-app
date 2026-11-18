@@ -1787,13 +1787,15 @@ function SettingsScreenContent() {
         visible={notificationModal.visible}
       />
 
+      </PageContainer>
+
       <AppToast
+        includeSafeArea
         message={toastMessage ?? ""}
         onClose={() => setToastMessage(null)}
         variant={toastType}
         visible={Boolean(toastMessage)}
       />
-    </PageContainer>
     </View>
   );
 }

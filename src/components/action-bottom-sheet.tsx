@@ -48,6 +48,8 @@ export function ActionBottomSheet({
   items,
   title,
 }: ActionBottomSheetProps) {
+  if (!visible) return null;
+
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const styles = useThemeStyles(createStyles);

@@ -323,6 +323,20 @@
       "when": 1793934862089,
       "tag": "0045_add_csv_import_history",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "6",
+      "when": 1794700000000,
+      "tag": "0046_add_subscriptions_hub",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1794710000000,
+      "tag": "0047_add_subscription_pocket_and_schedule_link",
+      "breakpoints": true
     }
   ]
 }

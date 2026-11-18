@@ -27,6 +27,7 @@ export const scheduledTransactionInputSchema = z
       .optional(),
     weekendPolicy: z.enum(["exact", "next_weekday", "previous_weekday", "skip"]),
     autoPost: z.boolean(),
+    subscriptionId: z.string().nullable().optional(),
   })
   .superRefine((value, context) => {
     if (value.transactionType === "transfer") {

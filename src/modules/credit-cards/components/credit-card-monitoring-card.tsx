@@ -137,7 +137,7 @@ export function CreditCardMonitoringCard({
 
   return (
     <View style={styles.card}>
-      <View ref={limitUtilizationRef} style={styles.header}>
+      <View collapsable={false} ref={limitUtilizationRef} style={styles.header}>
         <View style={styles.titleColumn}>
           <Text style={styles.title}>{card.accountName}</Text>
           <Text style={styles.limit}>
@@ -154,7 +154,7 @@ export function CreditCardMonitoringCard({
         />
       </View>
 
-      <View ref={metricsRef} style={styles.metrics}>
+      <View collapsable={false} ref={metricsRef} style={styles.metrics}>
         <Metric
           isPrivate={isPrivate}
           label="Billed"
@@ -172,7 +172,7 @@ export function CreditCardMonitoringCard({
         />
       </View>
 
-      <View ref={dueInstallmentsRef}>
+      <View collapsable={false} ref={dueInstallmentsRef}>
         <View style={styles.detailRow}>
           <CalendarClock color={theme.colors.textSecondary} size={17} />
           <View style={styles.detailText}>
@@ -216,7 +216,7 @@ export function CreditCardMonitoringCard({
       </View>
 
       {/* Billed Statements Filter & Items Section */}
-      <View ref={statementsRef} style={styles.activitySection}>
+      <View collapsable={false} ref={statementsRef} style={styles.activitySection}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.activityTitle}>Billed statements</Text>
           {activeStatement && activeStatementItems.length > 0 ? (
@@ -406,7 +406,7 @@ export function CreditCardMonitoringCard({
 
       {/* Unbilled Activity Section */}
       {card.unbilledItems.length > 0 ? (
-        <View ref={unbilledRef} style={styles.activitySection}>
+        <View collapsable={false} ref={unbilledRef} style={styles.activitySection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.activityTitle}>Unbilled activity</Text>
             <Text style={styles.activityItemCount}>

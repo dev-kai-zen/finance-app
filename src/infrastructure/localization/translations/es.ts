@@ -370,6 +370,7 @@ export const es = {
     enabled: "Activado",
     disabled: "Desactivado",
     cancel: "Cancelar",
+    clear: "Borrar",
     close: "Cerrar",
     delete: "Eliminar",
     goBack: "Volver",
@@ -411,6 +412,7 @@ export const es = {
     sectionSchedules: "TRANSACCIONES PROGRAMADAS",
     sectionLabels: "ETIQUETAS",
     sectionPockets: "BOLSILLOS",
+    sectionSubscriptions: "SUSCRIPCIONES",
     settingStealthMode: "Modo Privacidad / Sigilo",
     settingStealthModeDesc: "Ocultar saldos y montos de cuentas",
     settingSoundHaptics: "Ajustes de Sonido y Háptica",
@@ -503,6 +505,17 @@ export const es = {
       "Configurar el botón de búsqueda en cabecera y barra lateral",
     settingSqliteMonitorDesc: "Inspeccionar tablas y diagnósticos de SQLite",
     guidesToSetting: "Guía al ajuste",
+    actionAddSubscription: "Agregar suscripción",
+    actionAddSubscriptionDesc:
+      "Controlar una factura recurrente, membresía o servicio",
+    actionSubscriptionsArchived: "Suscripciones archivadas",
+    actionSubscriptionsArchivedDesc:
+      "Ver y restaurar suscripciones pasadas o archivadas",
+    actionImportDataCsv: "Importar datos (CSV)",
+    actionImportDataCsvDesc:
+      "Importar cuentas y transacciones desde una hoja de cálculo",
+    screenSubscriptionsDesc:
+      "Controlar gastos recurrentes, tasa de consumo y alertas",
   },
   navigation: {
     dashboard: "Panel",
@@ -517,6 +530,7 @@ export const es = {
     goals: "Objetivos",
     reports: "Informes",
     notes: "Notas",
+    subscriptions: "Suscripciones",
     sqliteMonitor: "Monitor de SQLite",
     settings: "Configuración",
     sendFeedback: "Enviar comentarios",
@@ -546,6 +560,7 @@ export const es = {
     synced: "Sincronizado",
     waitingNetwork: "Esperando Wi-Fi",
     failed: "Error al sincronizar",
+    notSynced: "Aún no sincronizado",
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
@@ -771,6 +786,7 @@ export const es = {
     navGoals: "Metas",
     navReports: "Informes",
     navNotes: "Notas",
+    navSubscriptions: "Suscripciones",
   },
   currency: {
     defaultCurrency: "Moneda predeterminada",
@@ -885,6 +901,26 @@ export const es = {
     advancePostToastNext: "La próxima fecha programada se trasladó al %{date}.",
     advancePostToastCompleted: "Esta programación ha finalizado.",
     today: "Hoy",
+    subscriptionBadge: "Suscripción",
+    manageInSubscriptions: "Gestionar en Suscripciones",
+    managedBySubscriptionTitle: "Gestionado por Suscripciones",
+    managedBySubscriptionDesc:
+      "Esta transacción programada se sincroniza automáticamente con tu suscripción. Para ajustar importes, ciclo, pausar o eliminar, gestiónala directamente en Suscripciones.",
+    goToSubscriptions: "Ir a Suscripciones",
+    emptyTitle: "No hay transacciones programadas",
+    emptyDesc:
+      "Crea ingresos, gastos o transferencias recurrentes y decide si cada ocurrencia se publica automáticamente. Usa el botón + para agregar tu primer calendario.",
+    noSubscriptionSchedulesTitle: "No hay calendarios de suscripción",
+    noSubscriptionSchedulesDesc:
+      "No tienes ningún calendario creado por suscripciones. Las suscripciones activas aparecerán aquí.",
+    noMatchingTitle: "No hay calendarios coincidentes",
+    noMatchingDesc:
+      "Ningún calendario coincide con los filtros seleccionados. Selecciona otro filtro para verlos.",
+    filters: {
+      all: "Todos",
+      regularSchedules: "Calendarios Regulares",
+      subscriptions: "Suscripciones",
+    },
   },
   themePicker: {
     closeAccessibility: "Cerrar selector de tema",
@@ -927,6 +963,129 @@ export const es = {
     unlockCustomThemePro: "Desbloquear Pro para Aplicar Tema",
     customShadeLabel: "Ajustar brillo y tonalidad",
   },
+  subscriptions: {
+    title: "Suscripciones",
+    monthlyBurnRate: "Gasto Mensual Fijo",
+    perMonth: "/ mes",
+    yearlyProjected: "Proyección Anual",
+    activeCount: "%{count} Activas",
+    dueIn7Days: "%{count} vencen esta semana",
+    trialsActive: "%{count} en Prueba",
+    filterAll: "Todas",
+    filterActive: "Activas",
+    filterTrial: "Prueba Gratuita",
+    filterPaused: "Pausadas",
+    filterCancelled: "Canceladas",
+    filterArchived: "Archivadas",
+    cycleWeekly: "Semanal",
+    cycleMonthly: "Mensual",
+    cycleQuarterly: "Trimestral",
+    cycleSemiAnnual: "Semestral",
+    cycleYearly: "Anual",
+    cycle_weekly: "/ sem",
+    cycle_monthly: "/ mes",
+    cycle_quarterly: "/ trim",
+    cycle_semi_annual: "/ 6meses",
+    cycle_yearly: "/ año",
+    statusPaused: "Pausada",
+    statusCancelled: "Cancelada",
+    trialEndsToday: "La prueba termina hoy",
+    trialEndsTomorrow: "La prueba termina mañana",
+    trialEndsInDays: "La prueba termina en %{count}d",
+    dueToday: "Vence hoy",
+    dueTomorrow: "Mañana",
+    inDays: "En %{count} días",
+    overdueDays: "%{count}d vencida",
+    markPaid: "Marcar Pagada",
+    recordPaymentTitle: "Registrar Pago",
+    paymentDate: "Fecha de Transacción",
+    selectPaymentAccount: "Cuenta de Pago",
+    rollForwardNotice:
+      "Esto registrará un gasto en su libro mayor y avanzará la cuenta regresiva de renovación al siguiente ciclo.",
+    confirmPayment: "Confirmar Pago",
+    newSubscription: "Nueva Suscripción",
+    editSubscription: "Editar Suscripción",
+    quickPresets: "Servicios Populares",
+    nameLabel: "Nombre de Suscripción",
+    namePlaceholder: "ej. Netflix, Spotify, Gimnasio",
+    amountLabel: "Importe / Costo",
+    billingCycle: "Ciclo de Facturación",
+    paymentAccount: "Pagado Desde Cuenta",
+    selectAccount: "Seleccionar Cuenta",
+    category: "Categoría",
+    selectCategory: "Seleccionar Categoría",
+    activeStatusTitle: "Suscripción Activa",
+    activeStatusHelp: "Ayuda sobre el Estado de la Suscripción",
+    activeStatusDesc:
+      "Cuando está activa, las renovaciones y recordatorios se registran normalmente. Pausarla detiene las alertas de vencimiento y pagos programados.",
+    freeTrialTitle: "Modo de Prueba Gratuita",
+    freeTrialDesc:
+      "Marca esta suscripción como prueba con alertas anticipadas para que puedas cancelar antes de que se cobre.",
+    autoPostTitle: "Publicar Automáticamente en Libro",
+    autoPostDesc:
+      "Genera automáticamente una transacción de gasto en tu libro en la fecha de renovación programada.",
+    cancellationUrlLabel: "Enlace Web de Gestión / Cancelación",
+    firstBillingDate: "Primera Factura / Próxima Renovación",
+    firstBillingDateDesc:
+      "La fecha base utilizada para calcular los ciclos de facturación y cuentas regresivas.",
+    selectBillingDate: "Seleccionar Fecha",
+    exactDay: "Día exacto",
+    cycleDescWeekly: "Facturado cada %{day} de la semana",
+    cycleDescMonthly: "Facturado el día %{day} de cada mes",
+    cycleDescQuarterly: "Facturado cada 3 meses el día %{day} (próximo: %{date})",
+    cycleDescSemiAnnual: "Facturado cada 6 meses el día %{day} (próximo: %{date})",
+    cycleDescYearly: "Facturado anualmente cada %{date}",
+    trialDuration: "Duración de la Prueba",
+    customDate: "Fecha Personalizada",
+    trialEndsAtTitle: "Fecha de Vencimiento de Prueba",
+    trialSummaryCaption: "La prueba termina el %{date} (%{daysLeft})",
+    reminderLeadDays: "Avisarme Antes de Renovar",
+    reminderSummary: "Recordatorio emitido %{days} días antes.",
+    noReminders: "Sin recordatorios programados.",
+    contractEndsOn: "Vencimiento de Contrato / Finaliza el",
+    contractEndsOnDesc:
+      "Fecha opcional de finalización de contrato o promoción donde cesa la facturación.",
+    noExpiration: "Sin fecha de finalización (continuo)",
+    freeTrialHelp: "Ayuda sobre Prueba Gratuita",
+    freeTrialHelpTitle: "Acerca del Modo de Prueba Gratuita",
+    freeTrialHelpMessage:
+      "Marca esta suscripción como prueba activa. Recibirás recordatorios anticipados para que puedas cancelar antes de que se cargue en tu tarjeta.",
+    autoPostHelp: "Ayuda sobre Publicación Automática",
+    autoPostHelpTitle: "Acerca de la Publicación Automática en Libro",
+    autoPostHelpMessage:
+      "Cuando está activado, se registra automáticamente una transacción de gasto en tu libro en cada fecha de renovación sin confirmación manual.",
+    notesPlaceholder: "Nivel del plan, recordatorio de credenciales, etc.",
+    searchPlaceholder: "Buscar suscripciones, servicios, facturas...",
+    emptyTitle: "Sin Suscripciones Registradas",
+    emptyDescription:
+      "Realiza el seguimiento de membresías, streaming, gimnasio y facturas en un solo lugar con cuentas regresivas de renovación.",
+    addFirstAction: "Añadir Suscripción",
+    addSubscription: "Añadir Suscripción",
+    noMatchTitle: "No se encontraron suscripciones coincidentes",
+    noMatchDescription: "Intenta cambiar los términos de búsqueda o de pestaña.",
+    createdToast: "Suscripción agregada",
+    updatedToast: "Suscripción actualizada",
+    deletedToast: "Suscripción eliminada",
+    archivedToast: "Suscripción archivada",
+    restoredToast: "Suscripción restaurada",
+    pausedToast: "Suscripción pausada",
+    resumedToast: "Suscripción reanudada",
+    paymentRecordedToast: "Pago registrado para %{name}",
+    manageOnline: "Gestionar",
+    resume: "Reanudar",
+    pause: "Pausar",
+    restore: "Restaurar",
+    deletePermanently: "Eliminar permanentemente",
+    deleteConfirmTitle: "Eliminar Suscripción",
+    deleteConfirmMessage:
+      '¿Estás seguro de que deseas eliminar permanentemente "%{name}"? Las transacciones de gastos anteriores en tus cuentas no se eliminarán.',
+    archiveConfirmTitle: "Archivar Suscripción",
+    archiveConfirmMessage:
+      '"%{name}" tiene pagos registrados en su libro contable. Se moverá a Archivadas para preservar su historial y detener futuros recordatorios. Puede restaurarla en cualquier momento.',
+    restoreConfirmTitle: "Restaurar Suscripción",
+    restoreConfirmMessage:
+      '¿Deseas restaurar "%{name}"? Se reactivarán la cuenta regresiva de renovación y su programación recurrente.',
+  },
   versionHistory: {
     heading: "Historial de versiones",
     continue: "Continuar",
@@ -950,6 +1109,37 @@ export const es = {
       security: "Privacidad y seguridad",
       backup: "Copia de seguridad y sincronización",
       general: "General",
+    },
+    v170: {
+      date: "18 de noviembre de 2026",
+      newItem1:
+        "Controle suscripciones y facturas recurrentes con cuentas regresivas de renovación, periodos de prueba y gasto mensual.",
+      newItem2:
+        "Vincule suscripciones directamente a transacciones programadas y apartados para un seguimiento automático.",
+      newItem3:
+        "Aprenda a administrar sus suscripciones con una guía interactiva paso a paso.",
+      improveItem1:
+        "Vea su saldo más reciente y el historial de transacciones en la parte superior de los detalles de la cuenta.",
+      improveItem2:
+        "Muestre cifras completas y totales financieros directamente dentro de los informes de Patrimonio Neto.",
+      improveItem3:
+        "Agregue botones de ayuda rápida y ventanas de orientación a las tarjetas de copia de seguridad de Google Drive.",
+      improveItem4:
+        "Excluya las suscripciones del límite de transacciones programadas en la versión gratuita.",
+      improveItem5:
+        "Muestre los mensajes del desarrollador únicamente después de registrar transacciones regulares.",
+      improveItem6:
+        "Mejore los recorridos interactivos con estilos consistentes y tarjetas estables en todas las pantallas.",
+      improveItem7:
+        "Explore pantallas y formularios a su propio ritmo con botones de guía en lugar de ventanas emergentes inesperadas.",
+      fixItem1:
+        "Solucione errores de base de datos y sincronización de Google Drive al cambiar de cuenta conectada.",
+      fixItem2:
+        "Muestre un estado de sincronización preciso verificado directamente contra los archivos en Google Drive.",
+      fixItem3:
+        "Corrija la renderización de modales ocultos para mantener transiciones y navegación rápidas y fluidas.",
+      fixItem4:
+        "Ajuste la posición de las notificaciones flotantes para evitar tapar los botones de navegación.",
     },
     v162: {
       date: "16 de noviembre de 2026",
@@ -1359,6 +1549,9 @@ export const es = {
       "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
     readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
+    readyTourTipTitle: "Recorridos interactivos cuando los necesites",
+    readyTourTipMessage:
+      "Cuando quieras una guía rápida en cualquier pantalla o formulario, toca el botón de destellos (✨) en la parte superior.",
     finishSetup: "Ir a Inicio",
     continue: "Continuar",
     accountSetupChoiceTitle: "¿Cómo te gustaría configurar tus cuentas?",
@@ -1447,7 +1640,7 @@ export const es = {
     walkthroughIntroTitle: "¡Te damos la bienvenida a tu Panel!",
     walkthroughIntroSubtitle: "Tu centro de control financiero",
     walkthroughIntroMessage:
-      "Aquí puedes ver tu patrimonio neto total, monitorear tus gastos mensuales y gestionar tus transacciones. ¿Te gustaría hacer un recorrido rápido para conocer cómo funciona?",
+      "Aquí puedes ver tu patrimonio neto total, monitorear gastos mensuales y gestionar transacciones. También puedes tocar el botón de destellos (✨) en la parte superior en cualquier momento para un recorrido guiado.",
     walkthroughIntroStart: "Iniciar recorrido",
     walkthroughIntroSkip: "Explorar por mi cuenta",
     walkthroughChip: "Guía",
@@ -2131,6 +2324,34 @@ export const es = {
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para crear una nueva meta, vincular cuentas bancarias o bolsillos, fijar fechas límite y calcular el ritmo mensual necesario.",
   },
+  subscriptionCongratulations: {
+    title: "¡Primera suscripción añadida!",
+    subtitle: "Toma el control de tus facturas recurrentes",
+    message:
+      "¡Felicitaciones por registrar tu primera suscripción! Monitorea las cuentas regresivas de renovación, el total de gasto mensual y nunca te pierdas una fecha de pago.",
+    button: "Explorar recorrido de suscripciones",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "¡Te damos la bienvenida a Suscripciones!",
+    introSubtitle: "Gestiona tus membresías y facturas periódicas",
+    introMessage:
+      "Lleva el control de tus servicios recurrentes, fechas de cobro y gasto mensual en un solo lugar. ¿Te gustaría hacer una guía rápida?",
+    stepEmptyCreateTitle: "Registra tu primera suscripción",
+    stepEmptyCreateDesc:
+      "Toca aquí para añadir servicios de streaming, servicios básicos, gimnasio o licencias con ciclos de cobro personalizados.",
+    stepBurnRateSummaryTitle: "Gasto mensual y anual",
+    stepBurnRateSummaryDesc:
+      "Supervisa tu costo total mensual y anualizado, servicios activos y la cuenta regresiva para tu próxima renovación.",
+    stepFilterTabsTitle: "Filtros por estado",
+    stepFilterTabsDesc:
+      "Filtra rápidamente entre Todas, Activas, Pruebas gratuitas, En pausa, Canceladas y Archivadas.",
+    stepFirstItemTitle: "Cuenta regresiva y acciones",
+    stepFirstItemDesc:
+      "Consulta próximas fechas de cobro, costos del ciclo y toca 'Mark Paid' o el botón de pausa para registrar pagos o pausar el servicio.",
+    stepFabTitle: "Agregar nueva suscripción",
+    stepFabDesc:
+      "Toca el botón (+) en cualquier momento para registrar una nueva suscripción, seleccionar servicios populares y configurar alertas de recordatorio.",
+  },
   notesWalkthrough: {
     introTitle: "¡Te damos la bienvenida a Notas!",
     introSubtitle: "Listas y notas financieras",
@@ -2446,12 +2667,17 @@ export const es = {
       notesTitle: "¡Excelente registro de notas!",
       notesDesc:
         "¡Has completado tus primeras %{count} notas financieras! Desbloquea Kaizen Pro para notas ilimitadas, adjuntar fotos de recibos y etiquetas personalizadas.",
+      subscriptionsTitle: "¡Controlando tus suscripciones!",
+      subscriptionsDesc:
+        "¡Has registrado tus primeras %{count} suscripciones! Mejora a Kaizen Pro para suscripciones ilimitadas, analíticas de cobros recurrentes y seguimiento automático.",
       restoreAccountDesc:
         "Restaurar esta cuenta superaría tus %{count} cuentas activas. Mejora a Kaizen Pro para cuentas ilimitadas y total libertad.",
       restorePocketDesc:
         "Restaurar esta subcuenta superaría tus %{count} bolsillos para esta cuenta. Mejora a Kaizen Pro para subcuentas ilimitadas.",
       restoreScheduleDesc:
         "Restaurar este cronograma superaría tus %{count} transacciones recurrentes. Mejora a Kaizen Pro para cronogramas ilimitados.",
+      restoreSubscriptionDesc:
+        "Restaurar esta suscripción superaría tus %{count} suscripciones activas. Mejora a Kaizen Pro para suscripciones ilimitadas.",
     },
     restorePurchases: "Restaurar Compras",
     restoring: "Restaurando...",

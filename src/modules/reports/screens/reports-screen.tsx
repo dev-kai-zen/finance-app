@@ -20,10 +20,10 @@ import {
   useReportsWalkthrough,
   useWalkthroughIntro,
   useWalkthroughRegistry,
+  useWalkthroughTarget,
   WALKTHROUGH_SCROLL_TOP_OFFSET,
   WalkthroughIntroModal,
   WalkthroughRegistryProvider,
-  WalkthroughTarget,
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { BalanceSheetReport } from "../components/balance-sheet/balance-sheet-report";
@@ -52,6 +52,7 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
   const [isReady, setIsReady] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
+  const tabBarRef = useWalkthroughTarget("reportsTabBar");
   const { measureTargetInAncestor } = useWalkthroughRegistry();
 
   useEffect(() => {
@@ -131,9 +132,11 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
         scrollContentRef={scrollContentRef}
         contentContainerStyle={styles.pageContent}
       >
-        <WalkthroughTarget id="reportsTabBar">
-          <ReportsTabBar activeTab={activeTab} onSelectTab={setActiveTab} />
-        </WalkthroughTarget>
+        <ReportsTabBar
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          tabBarRef={tabBarRef}
+        />
 
         {!isReady ? (
           <View style={styles.skeletonWrapper}>

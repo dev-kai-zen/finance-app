@@ -32,6 +32,8 @@ export function ProFeatureModal({
   featureTitle,
   featureDescription,
 }: ProFeatureModalProps) {
+  if (!visible) return null;
+
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();

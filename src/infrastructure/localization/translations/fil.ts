@@ -369,6 +369,7 @@ export const fil = {
     enabled: "Naka-on",
     disabled: "Naka-off",
     cancel: "Kanselahin",
+    clear: "Burahin",
     close: "Isara",
     delete: "Burahin",
     goBack: "Bumalik",
@@ -410,6 +411,7 @@ export const fil = {
     sectionSchedules: "MGA NAKATAKDANG TRANSAKSYON",
     sectionLabels: "MGA LABEL AT TAG",
     sectionPockets: "MGA POCKET",
+    sectionSubscriptions: "MGA SUBSCRIPTION",
     settingStealthMode: "Privacy / Stealth Mode",
     settingStealthModeDesc: "Itago o takpan ang mga balanse ng account",
     settingSoundHaptics: "Mga Setting ng Tunog at Haptics",
@@ -509,6 +511,17 @@ export const fil = {
     settingSqliteMonitorDesc:
       "Suriin ang mga talahanayan at diagnostics ng SQLite",
     guidesToSetting: "Gigabayan sa setting",
+    actionAddSubscription: "Magdagdag ng Subscription",
+    actionAddSubscriptionDesc:
+      "Subaybayan ang paulit-ulit na bayarin o serbisyo",
+    actionSubscriptionsArchived: "Naka-archive na Subscriptions",
+    actionSubscriptionsArchivedDesc:
+      "Tingnan at ibalik ang mga nakaraang subscription",
+    actionImportDataCsv: "Mag-import ng Data (CSV)",
+    actionImportDataCsvDesc:
+      "Magpasok ng mga account at transaksyon mula sa spreadsheet",
+    screenSubscriptionsDesc:
+      "Subaybayan ang mga gastusin, burn rate, at paalala sa renewal",
   },
   navigation: {
     dashboard: "Dashboard",
@@ -523,6 +536,7 @@ export const fil = {
     goals: "Mga Layunin",
     reports: "Mga Ulat",
     notes: "Mga Tala",
+    subscriptions: "Mga Subscription",
     sqliteMonitor: "SQLite Monitor",
     settings: "Mga Setting",
     sendFeedback: "Magpadala ng Feedback",
@@ -552,6 +566,7 @@ export const fil = {
     synced: "Na-sync na",
     waitingNetwork: "Naghihintay ng Wi-Fi",
     failed: "Nabigo ang pag-sync",
+    notSynced: "Hindi pa na-sync",
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
@@ -781,6 +796,7 @@ export const fil = {
     navGoals: "Mga Goal",
     navReports: "Mga Report",
     navNotes: "Mga Note",
+    navSubscriptions: "Mga Subscription",
   },
   currency: {
     defaultCurrency: "Default na currency",
@@ -897,6 +913,26 @@ export const fil = {
     advancePostToastNext: "Inilipat ang susunod na iskedyul sa %{date}.",
     advancePostToastCompleted: "Kumpleto na ang iskedyul na ito.",
     today: "Ngayon",
+    subscriptionBadge: "Subscription",
+    manageInSubscriptions: "Pamahalaan sa Mga Subscription",
+    managedBySubscriptionTitle: "Pinamamahalaan ng Mga Subscription",
+    managedBySubscriptionDesc:
+      "Ang nakaiskedyul na transaksyong ito ay awtomatikong naka-synchronize sa iyong subscription. Upang baguhin ang halaga, siklo, i-pause, o burahin, pamahalaan ito nang direkta sa Mga Subscription.",
+    goToSubscriptions: "Pumunta sa Mga Subscription",
+    emptyTitle: "Walang nakaiskedyul na transaksyon",
+    emptyDesc:
+      "Gumawa ng umuulit na kita, gastos, o transfer at magdesisyon kung awtomatikong ipo-post ang bawat occurrence. Gamitin ang + button upang idagdag ang iyong unang iskedyul.",
+    noSubscriptionSchedulesTitle: "Walang iskedyul ng subscription",
+    noSubscriptionSchedulesDesc:
+      "Wala kang anumang iskedyul na ginawa mula sa mga subscription. Ang mga aktibong subscription ay lalabas dito.",
+    noMatchingTitle: "Walang tumutugmang iskedyul",
+    noMatchingDesc:
+      "Walang iskedyul na tumutugma sa mga napiling filter. Pumili ng ibang filter upang matingnan ang mga ito.",
+    filters: {
+      all: "Lahat",
+      regularSchedules: "Karaniwang Iskedyul",
+      subscriptions: "Mga Subscription",
+    },
   },
   themePicker: {
     closeAccessibility: "Isara ang tagapili ng tema",
@@ -941,6 +977,129 @@ export const fil = {
     unlockCustomThemePro: "I-unlock ang Pro para Gamitin ang Custom Theme",
     customShadeLabel: "I-adjust ang Tingkad at Liwanag",
   },
+  subscriptions: {
+    title: "Mga Subscription",
+    monthlyBurnRate: "Buwanang Gastos",
+    perMonth: "/ buwan",
+    yearlyProjected: "Taunang Proyekto",
+    activeCount: "%{count} Aktibo",
+    dueIn7Days: "%{count} dapat bayaran ngayong linggo",
+    trialsActive: "%{count} naka-Trial",
+    filterAll: "Lahat",
+    filterActive: "Aktibo",
+    filterTrial: "Libreng Trial",
+    filterPaused: "Naka-pause",
+    filterCancelled: "Kinansela",
+    filterArchived: "Naka-archive",
+    cycleWeekly: "Lingguhan",
+    cycleMonthly: "Buwanan",
+    cycleQuarterly: "Kada 3 Buwan",
+    cycleSemiAnnual: "Kada 6 Buwan",
+    cycleYearly: "Taunan",
+    cycle_weekly: "/ linggo",
+    cycle_monthly: "/ buwan",
+    cycle_quarterly: "/ 3buwan",
+    cycle_semi_annual: "/ 6buwan",
+    cycle_yearly: "/ taon",
+    statusPaused: "Naka-pause",
+    statusCancelled: "Kinansela",
+    trialEndsToday: "Magtatapos ang trial ngayon",
+    trialEndsTomorrow: "Magtatapos ang trial bukas",
+    trialEndsInDays: "Magtatapos ang trial sa loob ng %{count}d",
+    dueToday: "Dapat bayaran ngayon",
+    dueTomorrow: "Bukas",
+    inDays: "Sa loob ng %{count} araw",
+    overdueDays: "%{count}d lampas na sa takdang araw",
+    markPaid: "Markahang Bayad",
+    recordPaymentTitle: "Itala ang Pagbabayad",
+    paymentDate: "Petsa ng Transaksyon",
+    selectPaymentAccount: "Account na Pambayad",
+    rollForwardNotice:
+      "Magtatala ito ng gastos sa iyong ledger at isusulong ang countdown ng susunod na pag-renew.",
+    confirmPayment: "Kumpirmahin ang Bayad",
+    newSubscription: "Bagong Subscription",
+    editSubscription: "I-edit ang Subscription",
+    quickPresets: "Mga Sikat na Serbisyo",
+    nameLabel: "Pangalan ng Subscription",
+    namePlaceholder: "hal. Netflix, Spotify, Gym",
+    amountLabel: "Halaga / Gastos",
+    billingCycle: "Siklo ng Paniningil",
+    paymentAccount: "Binabayaran Mula sa Account",
+    selectAccount: "Pumili ng Account",
+    category: "Kategorya",
+    selectCategory: "Pumili ng Kategorya",
+    activeStatusTitle: "Aktibong Subskripsyon",
+    activeStatusHelp: "Tulong sa Katayuan ng Subskripsyon",
+    activeStatusDesc:
+      "Kapag aktibo, normal na sinusubaybayan ang mga renewal at paalala. Ang pag-pause ay nagpapatigil sa mga darating na paalala at nakaiskedyul na pagbabayad.",
+    freeTrialTitle: "Libreng Trial Mode",
+    freeTrialDesc:
+      "Minamarkahan ito bilang trial na may maagang alerto upang makapagkansela bago masingil.",
+    autoPostTitle: "Awtomatikong I-post sa Ledger",
+    autoPostDesc:
+      "Awtomatikong gagawa ng transaksyon sa iyong ledger sa nakatakdang araw ng pag-renew.",
+    cancellationUrlLabel: "Web Link para sa Pamamahala / Pagkansela",
+    firstBillingDate: "Unang Singil / Susunod na Petsa ng Pag-renew",
+    firstBillingDateDesc:
+      "Ang batayang petsa na ginagamit upang kalkulahin ang siklo ng paniningil at countdown sa pag-renew.",
+    selectBillingDate: "Pumili ng Petsa",
+    exactDay: "Eksaktong araw",
+    cycleDescWeekly: "Sisingilin tuwing %{day} ng linggo",
+    cycleDescMonthly: "Sisingilin tuwing ika-%{day} ng bawat buwan",
+    cycleDescQuarterly: "Sisingilin kada 3 buwan sa ika-%{day} (susunod: %{date})",
+    cycleDescSemiAnnual: "Sisingilin kada 6 buwan sa ika-%{day} (susunod: %{date})",
+    cycleDescYearly: "Sisingilin taon-taon tuwing %{date}",
+    trialDuration: "Tagal ng Trial",
+    customDate: "Pasadyang Petsa",
+    trialEndsAtTitle: "Petsa ng Pagkawalang-bisa ng Trial",
+    trialSummaryCaption: "Magtatapos ang trial sa %{date} (%{daysLeft})",
+    reminderLeadDays: "Ipaalala Bago Mag-renew",
+    reminderSummary: "Mag-aalerto %{days} araw bago ang petsa.",
+    noReminders: "Walang nakatakdang paalala.",
+    contractEndsOn: "Pagtatapos ng Kontrata / Ends On",
+    contractEndsOnDesc:
+      "Opsyonal na petsa ng pagtatapos ng kontrata o promo kung kailan awtomatikong hihinto ang paniningil.",
+    noExpiration: "Walang petsa ng pagtatapos (tuloy-tuloy)",
+    freeTrialHelp: "Tulong para sa Libreng Trial",
+    freeTrialHelpTitle: "Tungkol sa Libreng Trial Mode",
+    freeTrialHelpMessage:
+      "Minamarkahan ito bilang aktibong trial. Makakatanggap ka ng maagang paalala upang makapagkansela bago masingil ang iyong card.",
+    autoPostHelp: "Tulong para sa Auto-Post",
+    autoPostHelpTitle: "Tungkol sa Awtomatikong Pag-post sa Ledger",
+    autoPostHelpMessage:
+      "Kapag naka-on, awtomatikong magtatala ng transaksyon sa iyong ledger sa bawat petsa ng renewal nang hindi kailangan ng manu-manong kumpirmasyon.",
+    notesPlaceholder: "Tier ng plano, paalala sa account, atbp.",
+    searchPlaceholder: "Maghanap ng subscription, utility, serbisyo...",
+    emptyTitle: "Wala Pang Naka-track na Subscription",
+    emptyDescription:
+      "Subaybayan ang iyong mga recurring membership, streaming apps, gym, at bayarin sa isang lugar na may countdown sa renewal.",
+    addFirstAction: "Magdagdag ng Subscription",
+    addSubscription: "Magdagdag ng Subscription",
+    noMatchTitle: "Walang nahanap na tugmang subscription",
+    noMatchDescription: "Subukang baguhin ang iyong paghahanap o lumipat ng tab.",
+    createdToast: "Naidagdag ang subscription",
+    updatedToast: "Na-update ang subscription",
+    deletedToast: "Nabura ang subscription",
+    archivedToast: "Nai-archive ang subscription",
+    restoredToast: "Naibalik ang subscription",
+    pausedToast: "Naka-pause ang subscription",
+    resumedToast: "Naipagpatuloy ang subscription",
+    paymentRecordedToast: "Naitala ang bayad para sa %{name}",
+    manageOnline: "Pamahalaan",
+    resume: "Ipagpatuloy",
+    pause: "I-pause",
+    restore: "Ibalik",
+    deletePermanently: "Permanenteng Burahin",
+    deleteConfirmTitle: "Burahin ang Subscription",
+    deleteConfirmMessage:
+      'Sigurado ka bang nais mong permanenteng burahin ang "%{name}"? Hindi mabubura ang mga nakaraang transaksyon ng gastos sa iyong mga account.',
+    archiveConfirmTitle: "I-archive ang Subscription",
+    archiveConfirmMessage:
+      'May mga naitalang bayad na ang "%{name}" sa iyong ledger. Ililipat ito sa Naka-archive upang mapanatili ang iyong kasaysayan ng transaksyon at ihinto ang mga paalala. Maaari mo itong ibalik anumang oras.',
+    restoreConfirmTitle: "Ibalik ang Subscription",
+    restoreConfirmMessage:
+      'Nais mo bang ibalik ang "%{name}"? Muling ia-activate ang countdown sa renewal at ang recurring schedule nito.',
+  },
   versionHistory: {
     heading: "Kasaysayan ng Bersyon",
     continue: "Magpatuloy",
@@ -964,6 +1123,37 @@ export const fil = {
       security: "Privacy at Seguridad",
       backup: "Backup at Pag-sync",
       general: "Pangkalahatan",
+    },
+    v170: {
+      date: "Nobyembre 18, 2026",
+      newItem1:
+        "Subaybayan ang mga suskripsyon at bayarin gamit ang renewal countdown, trial dates, at kabuuang buwanang gastos.",
+      newItem2:
+        "I-link ang mga suskripsyon sa naka-iskedyul na transaksyon at pockets para sa awtomatikong pagsubaybay.",
+      newItem3:
+        "Matutunan kung paano pamahalaan ang mga suskripsyon gamit ang interactive na sunod-sunod na gabay.",
+      improveItem1:
+        "Tingnan ang pinakabagong balanse at listahan ng transaksyon sa itaas ng mga detalye ng account.",
+      improveItem2:
+        "Ipakita ang kumpletong halaga at kabuuang pinansyal sa loob ng mga ulat ng Net Worth.",
+      improveItem3:
+        "Magdagdag ng mabilisang gabay at help popups para sa backup at sync cards ng Google Drive.",
+      improveItem4:
+        "Ihiwalay ang mga suskripsyon sa limitasyon ng libreng bilang ng mga naka-iskedyul na transaksyon.",
+      improveItem5:
+        "Ipakita lamang ang mensahe ng developer pagkatapos magtala ng mga regular na transaksyon.",
+      improveItem6:
+        "Gawing mas maayos ang mga walkthrough tour gamit ang pare-parehong disenyo sa lahat ng screen.",
+      improveItem7:
+        "I-explore ang mga screen at form sa sariling oras gamit ang mga tour button sa halip na mga biglaang popup.",
+      fixItem1:
+        "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
+      fixItem2:
+        "Ipakita ang tumpak na status ng sync na direktang na-verify sa mga file sa Google Drive.",
+      fixItem3:
+        "Ayusin ang pag-render ng mga nakatagong modal upang mapanatiling mabilis at maayos ang pag-navigate.",
+      fixItem4:
+        "I-adjust ang pwesto ng notification toast upang hindi matakpan ang mga pindutan sa screen.",
     },
     v162: {
       date: "Nobyembre 16, 2026",
@@ -1376,6 +1566,9 @@ export const fil = {
     readyAccountManual:
       "Mga Account: Magsimula mula sa simula (walang panimulang account)",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
+    readyTourTipTitle: "Interactive Tours Anumang Oras",
+    readyTourTipMessage:
+      "Kahit kailan mo gusto ng mabilisang gabay sa anumang screen o form, pindutin lamang ang Sparkles (✨) button sa itaas.",
     finishSetup: "Pumunta sa Home",
     continue: "Magpatuloy",
     accountSetupChoiceTitle: "Paano mo gustong i-setup ang iyong mga account?",
@@ -1465,7 +1658,7 @@ export const fil = {
     walkthroughIntroTitle: "Maligayang pagdating sa iyong Dashboard!",
     walkthroughIntroSubtitle: "Ang iyong command center sa pananalapi",
     walkthroughIntroMessage:
-      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Nais mo ba ng mabilisang walkthrough para maging pamilyar?",
+      "Dito mo makikita ang iyong kabuuang net worth, mababantayan ang buwanang gastusin, at mapapamahalaan ang mga transaksyon. Maaari mo ring pindutin ang Sparkles (✨) button sa itaas anumang oras para sa guided tour.",
     walkthroughIntroStart: "Mag-tour",
     walkthroughIntroSkip: "I-explore mag-isa",
     walkthroughChip: "Guide",
@@ -2146,6 +2339,34 @@ export const fil = {
     stepFabDesc:
       "I-tap ang (+) button anumang oras upang magtakda ng bagong target, i-link ang mga bank account o pocket, maglagay ng deadline, at kalkulahin ang kinakailangang buwanang ipon.",
   },
+  subscriptionCongratulations: {
+    title: "Unang Suskripsyon Naisama!",
+    subtitle: "Pamahalaan ang mga paulit-ulit na bayarin",
+    message:
+      "Binabati kita sa pagsubaybay sa iyong unang suskripsyon! Bantayan ang countdown sa pag-renew, kabuuang buwanang gastos, at huwag palampasin ang mga paparating na bayarin.",
+    button: "Galugarin ang Tour ng Suskripsyon",
+  },
+  subscriptionsWalkthrough: {
+    introTitle: "Maligayang pagdating sa Mga Suskripsyon!",
+    introSubtitle: "Pamahalaan ang mga paulit-ulit na bayarin at membership",
+    introMessage:
+      "Subaybayan ang iyong mga serbisyo, countdown sa pag-renew, at buwanang kabuuang gastos sa iisang lugar. Nais mo ba ng mabilisang walkthrough?",
+    stepEmptyCreateTitle: "Subaybayan ang Iyong Unang Suskripsyon",
+    stepEmptyCreateDesc:
+      "Pindutin dito upang magdagdag ng streaming services, kuryente/tubig, gym membership, o software licenses.",
+    stepBurnRateSummaryTitle: "Buwanan at Taunang Kabuuang Gastos",
+    stepBurnRateSummaryDesc:
+      "Bantayan ang kabuuang buwanan at taunang gastos sa suskripsyon, mga aktibong serbisyo, at countdown patungo sa susunod na pag-renew.",
+    stepFilterTabsTitle: "Mga Filter ng Katayuan",
+    stepFilterTabsDesc:
+      "Mabilis na mag-filter sa pagitan ng Lahat, Aktibo, Libreng Trial, Naka-pause, Kinansela, at Naka-archive na mga suskripsyon.",
+    stepFirstItemTitle: "Countdown sa Pag-renew at Aksyon",
+    stepFirstItemDesc:
+      "Tingnan ang petsa ng paniningil, halaga ng cycle, at i-tap ang 'Mark Paid' o ang toggle upang magtala ng bayad o i-pause ang serbisyo.",
+    stepFabTitle: "Magdagdag ng Bagong Suskripsyon",
+    stepFabDesc:
+      "I-tap ang (+) button anumang oras upang magtala ng bagong suskripsyon, pumili ng mga kilalang preset, magtakda ng custom cycle, at maglagay ng mga paalala.",
+  },
   notesWalkthrough: {
     introTitle: "Maligayang pagdating sa Mga Tala!",
     introSubtitle: "Checklists at mga paalala sa pananalapi",
@@ -2461,12 +2682,17 @@ export const fil = {
       notesTitle: "Mahusay na pagtatala ng talaan!",
       notesDesc:
         "Napuno mo na ang iyong unang %{count} tala sa pananalapi! Buksan ang Kaizen Pro para sa walang limitasyong notes, photo at receipt attachments, at custom color tagging.",
+      subscriptionsTitle: "Pamahalaan ang iyong mga suskripsyon!",
+      subscriptionsDesc:
+        "Nasubaybayan mo na ang iyong unang %{count} suskripsyon! Mag-upgrade sa Kaizen Pro para sa walang limitasyong suskripsyon, analytics sa paulit-ulit na bayarin, at awtomatikong tracking.",
       restoreAccountDesc:
         "Ang pag-restore sa account na ito ay lalampas sa iyong %{count} aktibong accounts. Mag-upgrade sa Kaizen Pro para sa walang limitasyong accounts at ganap na kalayaan.",
       restorePocketDesc:
         "Ang pag-restore sa pocket na ito ay lalampas sa iyong %{count} pockets para sa account na ito. Mag-upgrade sa Kaizen Pro para sa walang limitasyong sub-pockets.",
       restoreScheduleDesc:
         "Ang pag-restore sa iskedyul na ito ay lalampas sa iyong %{count} recurring transactions. Mag-upgrade sa Kaizen Pro para sa walang limitasyong schedules.",
+      restoreSubscriptionDesc:
+        "Ang pag-restore sa suskripsyon na ito ay lalampas sa iyong %{count} aktibong suskripsyon. Mag-upgrade sa Kaizen Pro para sa walang limitasyong suskripsyon.",
     },
     restorePurchases: "Ibalik ang mga Binili (Restore)",
     restoring: "Ibinabalik...",
