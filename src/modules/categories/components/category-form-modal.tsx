@@ -10,10 +10,11 @@ import {
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, ChevronRight, Plus } from "lucide-react-native";
+import { Check, ChevronRight, Plus, Sparkles } from "lucide-react-native";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { useExperiencePreferences } from "@/modules/settings";
 import {
   IconHelper,
   IconPickerModal,
@@ -73,6 +74,7 @@ function CategoryFormModalContent({
   const styles = useThemeStyles(createStyles);
   const walkthrough = useCategoryFormWalkthrough();
   const { addColor } = useHexColors();
+  const { guideHelperEnabled } = useExperiencePreferences();
 
   const isSubcategory = Boolean(categoryToEdit?.parentId || initialParentId);
 
@@ -182,14 +184,30 @@ function CategoryFormModalContent({
                   ? "New Subcategory"
                   : "New Category"}
             </Text>
-            <Pressable
-              accessibilityLabel="Close category form"
-              accessibilityRole="button"
-              onPress={onClose}
-              style={styles.closeBtn}
-            >
-              <Text style={styles.closeBtnText}>✕</Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              {!categoryToEdit && guideHelperEnabled ? (
+                <Pressable
+                  accessibilityLabel="Tour category form"
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={walkthrough.startWalkthrough}
+                  style={({ pressed }) => [
+                    styles.tourBtn,
+                    pressed && styles.tourBtnPressed,
+                  ]}
+                >
+                  <Sparkles color="#00A3FF" size={17} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                accessibilityLabel="Close category form"
+                accessibilityRole="button"
+                onPress={onClose}
+                style={styles.closeBtn}
+              >
+                <Text style={styles.closeBtnText}>✕</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* Subcategory Parent Indicator Banner */}
@@ -524,6 +542,24 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 18,
       fontWeight: "700",
+    },
+    headerActions: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+    },
+    tourBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      borderWidth: 1,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
+    },
+    tourBtnPressed: {
+      opacity: 0.7,
     },
     closeBtn: {
       alignItems: "center",

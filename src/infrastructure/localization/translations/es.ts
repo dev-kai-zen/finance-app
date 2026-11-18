@@ -1130,6 +1130,8 @@ export const es = {
         "Muestre los mensajes del desarrollador únicamente después de registrar transacciones regulares.",
       improveItem6:
         "Mejore los recorridos interactivos con estilos consistentes y tarjetas estables en todas las pantallas.",
+      improveItem7:
+        "Explore pantallas y formularios a su propio ritmo con botones de guía en lugar de ventanas emergentes inesperadas.",
       fixItem1:
         "Solucione errores de base de datos y sincronización de Google Drive al cambiar de cuenta conectada.",
       fixItem2:

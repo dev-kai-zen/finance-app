@@ -34,7 +34,7 @@ import {
 } from "@/modules/categories";
 import { useResolveEntityColor } from "@/modules/hex-colors";
 import { ProFeatureModal, useProGuard } from "@/modules/pro";
-import { useDefaultAccounts } from "@/modules/settings";
+import { useDefaultAccounts, useExperiencePreferences } from "@/modules/settings";
 import {
   TransactionDateTimePickerModal,
   TransactionTypePicker,
@@ -146,6 +146,7 @@ function ScheduledTransactionFormModalContent({
   const styles = useThemeStyles(createStyles);
   const resolveEntityColor = useResolveEntityColor();
   const defaultAccounts = useDefaultAccounts();
+  const { guideHelperEnabled } = useExperiencePreferences();
   const { isPro, guardAction, paywallVisible, closePaywall } = useProGuard();
 
   const typeRef = useWalkthroughTarget("scheduleFormType");
@@ -591,6 +592,8 @@ function ScheduledTransactionFormModalContent({
         title={initialSchedule ? "Edit Schedule" : "New Schedule"}
         visible={visible}
         isDirty={isDirty}
+        onTour={guideHelperEnabled && !initialSchedule ? walkthrough.startWalkthrough : undefined}
+        tourLabel="Tour schedule form"
       >
         <KeyboardAwareForm
           contentContainerStyle={styles.formContent}

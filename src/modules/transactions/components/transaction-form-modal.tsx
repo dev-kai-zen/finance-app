@@ -304,7 +304,7 @@ function TransactionFormModalInner({
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
   const defaultAccounts = useDefaultAccounts();
-  const { formFields, isPromptDismissed } = useExperiencePreferences();
+  const { formFields, isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
   const {
     saveCategory: saveCategoryRecord,
     saving: categorySaving,
@@ -1952,15 +1952,31 @@ function TransactionFormModalInner({
             <Text style={styles.modalTitle}>
               {isEditing ? "Edit Transaction" : "Record Transaction"}
             </Text>
-            <Pressable
-              ref={closeRef}
-              accessibilityLabel="Close form"
-              accessibilityRole="button"
-              onPress={handleRequestClose}
-              style={styles.closeBtn}
-            >
-              <Text style={styles.closeBtnText}>✕</Text>
-            </Pressable>
+            <View style={styles.headerActions}>
+              {!isEditing && guideHelperEnabled ? (
+                <Pressable
+                  accessibilityLabel="Tour transaction form"
+                  accessibilityRole="button"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={walkthrough.startWalkthrough}
+                  style={({ pressed }) => [
+                    styles.tourBtn,
+                    pressed && styles.tourBtnPressed,
+                  ]}
+                >
+                  <Sparkles color="#00A3FF" size={17} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                ref={closeRef}
+                accessibilityLabel="Close form"
+                accessibilityRole="button"
+                onPress={handleRequestClose}
+                style={styles.closeBtn}
+              >
+                <Text style={styles.closeBtnText}>✕</Text>
+              </Pressable>
+            </View>
           </View>
 
           <HorizontalScrollView
@@ -3531,6 +3547,24 @@ function createStyles(theme: AppTheme) {
       color: theme.colors.textPrimary,
       fontSize: 18,
       fontWeight: "700",
+    },
+    headerActions: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 8,
+    },
+    tourBtn: {
+      alignItems: "center",
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: 16,
+      borderWidth: 1,
+      height: 32,
+      justifyContent: "center",
+      width: 32,
+    },
+    tourBtnPressed: {
+      opacity: 0.7,
     },
     closeBtn: {
       alignItems: "center",

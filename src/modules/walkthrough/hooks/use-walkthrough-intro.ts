@@ -24,15 +24,14 @@ export function useWalkthroughIntro({
   const isPrerequisiteMet = prerequisitePromptKey
     ? isPromptDismissed(prerequisitePromptKey)
     : true;
-  const canTrigger = !isDismissed && isPrerequisiteMet && enabled;
-  const isWaitingForIntro = canTrigger && !isIntroVisible;
-  const scrollEnabled = !isWaitingForIntro && !isIntroVisible;
+  // On-demand walkthrough model: do not auto-trigger surprise popups on first visit
+  const canTrigger = false;
+  const isWaitingForIntro = false;
+  const scrollEnabled = !isIntroVisible;
 
   const triggerIfFirstTime = useCallback(() => {
-    if (!isPromptDismissed(promptKey) && isPrerequisiteMet && enabled) {
-      setIsIntroVisible(true);
-    }
-  }, [isPromptDismissed, promptKey, isPrerequisiteMet, enabled]);
+    // Intentionally no-op: tours are triggered on-demand via header Sparkles buttons
+  }, []);
 
   const showIntro = useCallback(() => {
     setIsIntroVisible(true);

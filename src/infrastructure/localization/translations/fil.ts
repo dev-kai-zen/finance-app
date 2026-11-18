@@ -1144,6 +1144,8 @@ export const fil = {
         "Ipakita lamang ang mensahe ng developer pagkatapos magtala ng mga regular na transaksyon.",
       improveItem6:
         "Gawing mas maayos ang mga walkthrough tour gamit ang pare-parehong disenyo sa lahat ng screen.",
+      improveItem7:
+        "I-explore ang mga screen at form sa sariling oras gamit ang mga tour button sa halip na mga biglaang popup.",
       fixItem1:
         "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
       fixItem2:

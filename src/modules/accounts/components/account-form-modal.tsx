@@ -367,7 +367,7 @@ function AccountFormModalContent({
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
-  const { isPromptDismissed } = useExperiencePreferences();
+  const { isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
   const nameRef = useWalkthroughTarget("accountFormName");
   const noteRef = useWalkthroughTarget("accountFormNote");
   const typeRef = useWalkthroughTarget("accountFormType");
@@ -652,6 +652,8 @@ function AccountFormModalContent({
         titleAlign="left"
         visible={visible}
         isDirty={isDirty}
+        onTour={guideHelperEnabled && !account ? walkthrough.startWalkthrough : undefined}
+        tourLabel="Tour account form"
         onClose={onClose}
         onDelete={
           account?.isArchived

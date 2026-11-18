@@ -76,7 +76,7 @@ function AccountTypeFormModalContent({
   const theme = useAppTheme();
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
-  const { isPromptDismissed } = useExperiencePreferences();
+  const { isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
   const scrollRef = useRef<ScrollView>(null);
   const { canScrollDown, scrollToNext, scrollProps } = useScrollDownIndicator({
     ref: scrollRef,
@@ -291,6 +291,8 @@ function AccountTypeFormModalContent({
         title={isEditing ? "Edit Account Group" : "New Account Group"}
         titleAlign="left"
         visible={visible}
+        onTour={guideHelperEnabled && !isEditing ? walkthrough.startWalkthrough : undefined}
+        tourLabel="Tour account group form"
       >
         <View style={styles.scrollWrapper}>
           <KeyboardAwareForm

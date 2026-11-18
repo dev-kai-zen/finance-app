@@ -299,7 +299,7 @@ function BudgetFormModalContent({
   const scrollContentRef = useRef<View>(null);
   const didAutoStartWalkthroughRef = useRef(false);
   const { measureTargetInAncestor } = useWalkthroughRegistry();
-  const { isPromptDismissed } = useExperiencePreferences();
+  const { isPromptDismissed, guideHelperEnabled } = useExperiencePreferences();
 
   const handleScrollToTarget = useCallback(
     (targetId: WalkthroughTargetId) => {
@@ -383,6 +383,8 @@ function BudgetFormModalContent({
         titleAlign="left"
         visible={visible}
         isDirty={isDirty}
+        onTour={guideHelperEnabled && !initialBudget ? walkthrough.startWalkthrough : undefined}
+        tourLabel="Tour budget form"
         onClose={onClose}
         onDelete={initialBudget && onDelete ? handleDelete : undefined}
         onSave={() => void handleSave()}

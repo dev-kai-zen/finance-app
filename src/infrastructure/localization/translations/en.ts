@@ -1113,6 +1113,8 @@ export const en = {
         "Show developer messages only after recording regular transactions for an uninterrupted start.",
       improveItem6:
         "Polish walkthrough tours with standardized styling and steady card layouts across all screens.",
+      improveItem7:
+        "Explore screens and forms on your own time with on-demand tour buttons instead of unexpected popups.",
       fixItem1:
         "Fix Google Drive sync and database errors when changing connected accounts.",
       fixItem2:
