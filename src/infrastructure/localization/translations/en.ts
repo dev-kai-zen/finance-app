@@ -1078,25 +1078,33 @@ export const en = {
       general: "General",
     },
     v170: {
-      date: "November 17, 2026",
+      date: "November 18, 2026",
       newItem1:
-        "Track your recurring subscriptions and bills with renewal countdowns and monthly burn rate totals.",
+        "Track recurring subscriptions and bills with renewal countdowns, trial end dates, and monthly burn rate totals.",
       newItem2:
-        "Learn how to master your subscriptions with an interactive guided walkthrough.",
+        "Link subscriptions directly to scheduled transactions and sub-account pockets for automatic tracking.",
+      newItem3:
+        "Learn how to manage your subscriptions with an interactive step-by-step walkthrough.",
       improveItem1:
-        "Customize subscription billing anchors, free trial durations, and reminder lead times with live countdowns.",
+        "View your latest balance and transaction history prominently at the top of account details.",
       improveItem2:
-        "Support sub-account pockets, contract expiration dates, and privacy masking for all subscription amounts.",
+        "View complete figures and detailed financial totals directly inside Net Worth growth reports.",
       improveItem3:
-        "Link subscriptions seamlessly to scheduled transactions with filter grouping and read-only protection.",
+        "Add quick help buttons and guidance popups to Google Drive backup and sync cards.",
       improveItem4:
-        "Optimize free tier experience with clean ad placement and support for up to 3 subscriptions.",
+        "Exclude subscription-linked schedules from counting against the free scheduled transaction limit.",
+      improveItem5:
+        "Show developer messages only after recording regular transactions for an uninterrupted start.",
+      improveItem6:
+        "Polish walkthrough tours with standardized styling and steady card layouts across all screens.",
       fixItem1:
         "Fix Google Drive sync and database errors when changing connected accounts.",
       fixItem2:
         "Show accurate sync status verified directly against files in Google Drive.",
       fixItem3:
-        "Standardize walkthrough highlight outlines, buttons, and backdrops across all app features.",
+        "Fix off-screen modal rendering to keep screen navigation and transitions fast and responsive.",
+      fixItem4:
+        "Adjust notification toast positioning across screens to prevent overlapping navigation buttons.",
     },
     v162: {
       date: "November 16, 2026",

@@ -1095,25 +1095,33 @@ export const es = {
       general: "General",
     },
     v170: {
-      date: "17 de noviembre de 2026",
+      date: "18 de noviembre de 2026",
       newItem1:
-        "Realice un seguimiento de sus suscripciones y facturas recurrentes con cuentas regresivas de renovación y totales de gasto mensual.",
+        "Controle suscripciones y facturas recurrentes con cuentas regresivas de renovación, periodos de prueba y gasto mensual.",
       newItem2:
+        "Vincule suscripciones directamente a transacciones programadas y apartados para un seguimiento automático.",
+      newItem3:
         "Aprenda a administrar sus suscripciones con una guía interactiva paso a paso.",
       improveItem1:
-        "Personaliza las fechas de facturación de suscripciones, duración de pruebas y recordatorios con cuenta regresiva.",
+        "Vea su saldo más reciente y el historial de transacciones en la parte superior de los detalles de la cuenta.",
       improveItem2:
-        "Admite subcuentas (pockets), vencimiento de contratos y ocultación de importes con modo de privacidad.",
+        "Muestre cifras completas y totales financieros directamente dentro de los informes de Patrimonio Neto.",
       improveItem3:
-        "Vincula suscripciones a transacciones programadas con filtros por origen y protección de solo lectura.",
+        "Agregue botones de ayuda rápida y ventanas de orientación a las tarjetas de copia de seguridad de Google Drive.",
       improveItem4:
-        "Optimice la experiencia de la versión gratuita con anuncios no invasivos y soporte para hasta 3 suscripciones.",
+        "Excluya las suscripciones del límite de transacciones programadas en la versión gratuita.",
+      improveItem5:
+        "Muestre los mensajes del desarrollador únicamente después de registrar transacciones regulares.",
+      improveItem6:
+        "Mejore los recorridos interactivos con estilos consistentes y tarjetas estables en todas las pantallas.",
       fixItem1:
-        "Solucionar errores de sincronización y base de datos al cambiar de cuenta de Google Drive.",
+        "Solucione errores de base de datos y sincronización de Google Drive al cambiar de cuenta conectada.",
       fixItem2:
-        "Mostrar un estado de sincronización preciso verificado directamente en Google Drive.",
+        "Muestre un estado de sincronización preciso verificado directamente contra los archivos en Google Drive.",
       fixItem3:
-        "Estandarizar los contornos resaltados, botones y fondos de las guías en todas las funciones.",
+        "Corrija la renderización de modales ocultos para mantener transiciones y navegación rápidas y fluidas.",
+      fixItem4:
+        "Ajuste la posición de las notificaciones flotantes para evitar tapar los botones de navegación.",
     },
     v162: {
       date: "16 de noviembre de 2026",

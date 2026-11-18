@@ -11,6 +11,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
         itemKeys: [
           "versionHistory.v170.newItem1",
           "versionHistory.v170.newItem2",
+          "versionHistory.v170.newItem3",
         ],
       },
       {
@@ -20,6 +21,8 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
           "versionHistory.v170.improveItem2",
           "versionHistory.v170.improveItem3",
           "versionHistory.v170.improveItem4",
+          "versionHistory.v170.improveItem5",
+          "versionHistory.v170.improveItem6",
         ],
       },
       {
@@ -28,6 +31,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
           "versionHistory.v170.fixItem1",
           "versionHistory.v170.fixItem2",
           "versionHistory.v170.fixItem3",
+          "versionHistory.v170.fixItem4",
         ],
       },
     ],

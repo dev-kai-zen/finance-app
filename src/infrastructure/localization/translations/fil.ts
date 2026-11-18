@@ -1109,25 +1109,33 @@ export const fil = {
       general: "Pangkalahatan",
     },
     v170: {
-      date: "Nobyembre 17, 2026",
+      date: "Nobyembre 18, 2026",
       newItem1:
-        "Subaybayan ang iyong mga paulit-ulit na subscription at bayarin na may countdown sa pag-renew at kabuuang buwanang gastos.",
+        "Subaybayan ang mga suskripsyon at bayarin gamit ang renewal countdown, trial dates, at kabuuang buwanang gastos.",
       newItem2:
-        "Matutunan kung paano pamahalaan ang mga suskripsyon gamit ang interactive na guided walkthrough.",
+        "I-link ang mga suskripsyon sa naka-iskedyul na transaksyon at pockets para sa awtomatikong pagsubaybay.",
+      newItem3:
+        "Matutunan kung paano pamahalaan ang mga suskripsyon gamit ang interactive na sunod-sunod na gabay.",
       improveItem1:
-        "I-customize ang petsa ng paniningil ng subscription, tagal ng trial, at paalala bago mag-renew.",
+        "Tingnan ang pinakabagong balanse at listahan ng transaksyon sa itaas ng mga detalye ng account.",
       improveItem2:
-        "Suportahan ang sub-account pockets, petsa ng pagtatapos ng kontrata, at pagtatago ng halaga kapag naka-privacy mode.",
+        "Ipakita ang kumpletong halaga at kabuuang pinansyal sa loob ng mga ulat ng Net Worth.",
       improveItem3:
-        "I-link ang mga subscription sa naka-iskedyul na transaksyon na may filter grouping at proteksyon laban sa maling pag-edit.",
+        "Magdagdag ng mabilisang gabay at help popups para sa backup at sync cards ng Google Drive.",
       improveItem4:
-        "I-optimize ang libreng tier gamit ang maayos na banner ad at limitasyon hanggang 3 suskripsyon.",
+        "Ihiwalay ang mga suskripsyon sa limitasyon ng libreng bilang ng mga naka-iskedyul na transaksyon.",
+      improveItem5:
+        "Ipakita lamang ang mensahe ng developer pagkatapos magtala ng mga regular na transaksyon.",
+      improveItem6:
+        "Gawing mas maayos ang mga walkthrough tour gamit ang pare-parehong disenyo sa lahat ng screen.",
       fixItem1:
         "Ayusin ang mga error sa Google Drive sync at database kapag nagpapalit ng nakakonektang account.",
       fixItem2:
-        "Ipakita ang tumpak na status ng sync na direktang na-verify sa Google Drive.",
+        "Ipakita ang tumpak na status ng sync na direktang na-verify sa mga file sa Google Drive.",
       fixItem3:
-        "I-standardize ang mga outline, button, at backdrop ng walkthrough sa lahat ng feature ng app.",
+        "Ayusin ang pag-render ng mga nakatagong modal upang mapanatiling mabilis at maayos ang pag-navigate.",
+      fixItem4:
+        "I-adjust ang pwesto ng notification toast upang hindi matakpan ang mga pindutan sa screen.",
     },
     v162: {
       date: "Nobyembre 16, 2026",
