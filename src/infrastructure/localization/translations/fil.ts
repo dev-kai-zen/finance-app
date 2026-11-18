@@ -214,6 +214,10 @@ export const fil = {
     personalOnly:
       "Lumipat muna sa personal mong workspace bago mag-import ng mga tala.",
     title: "Mag-import ng datos",
+    onboardingBannerTitle: "Mag-i-import mula sa ibang app?",
+    onboardingBannerMessage:
+      "Kung mayroon kang na-export na spreadsheet ng account mula sa iyong lumang app o bangko, piliin ito sa ibaba. Wala ka bang nakahandang file ngayon? Walang problema — maaari kang pumili ng ibang opsyon sa pag-setup at i-import ang iyong mga account o buong kasaysayan ng transaksyon anumang oras mamaya sa Mga Setting.",
+    chooseAnotherSetup: "Pumili ng ibang opsyon sa pag-setup",
     settingsDescription:
       "Maglipat ng mga account at kasaysayan ng transaksyon mula sa CSV",
     intro:
@@ -275,6 +279,7 @@ export const fil = {
     counts: "%{imported} na-import · %{skipped} hindi kasama",
     excludedRows: "Mga hilerang hindi kasama: %{rows}",
     complete: "Tapos na ang pag-import",
+    goToDashboard: "Pumunta sa Homepage",
     recovery:
       "May safety backup bago ang pag-import. Ibalik ito sa Local Backup kung kailangan. Papalitan nito ang datos, pati ang mga pagbabagong ginawa pagkatapos ng backup.",
     another: "Magsimula ng panibagong import",
@@ -1165,6 +1170,10 @@ export const fil = {
         "Linawin ang mga label ng uri ng account upang maging mas madali ang pag-aayos.",
       improveItem3:
         "Itampok ang pag-export ng mga CSV file at pag-collapse ng mga grupo sa walkthrough.",
+      fixItem1:
+        "Inayos ang pag-navigate sa pag-import sa onboarding para makabalik sa mga opsyon nang hindi naiipit.",
+      fixItem2:
+        "Pinanatiling nakapirmi ang kahon ng paghahanap ng currency sa itaas na may gabay pababa.",
     },
     v170: {
       date: "Nobyembre 18, 2026",
@@ -1607,8 +1616,10 @@ export const fil = {
       "Mga Account: Inirekumendang starter pack (Cash, Bangko, Ipon, E-Wallet)",
     readyAccountManual:
       "Mga Account: Magsimula mula sa simula (walang panimulang account)",
-    readyAccountImport:
-      "Mga Account: Mag-import mula sa CSV pagkatapos ng setup",
+    readyAccountImport: "Mga Account: Mag-import ng mga account mula sa CSV",
+    readyAccountImported:
+      "Mga account: %{count} na account ang na-import mula sa CSV",
+    moreItemsBelow: "May iba pa sa ibaba",
     readyDailyReminder: "Araw-araw na Paalala: Naka-on (8:00 PM)",
     readyTourTipTitle: "Interactive Tours Anumang Oras",
     readyTourTipMessage:
@@ -1634,9 +1645,9 @@ export const fil = {
     accountChoiceManualTitle: "Magsimula mula sa simula",
     accountChoiceManualDesc:
       "Magsimula nang walang laman. Ikaw ang magdadagdag ng mga account at kategorya mamaya.",
-    accountChoiceImportTitle: "Mag-import ng mga account mula sa file",
+    accountChoiceImportTitle: "Mag-import mula sa spreadsheet",
     accountChoiceImportDesc:
-      "Ipasok ang iyong mga account at panimulang balanse mula sa CSV file.",
+      "Para sa mga gumagamit na lumilipat mula sa ibang app na may kasalukuyang account CSV. Maaari ka ring mag-import anumang oras mamaya sa Mga Setting.",
     fullSetupTitle: "I-setup ang workspace",
     fullSetupDescription:
       "Piliin kung gaano karaming istruktura ang gusto mo sa unang araw.",

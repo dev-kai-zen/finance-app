@@ -5,3 +5,8 @@ export const DataImportScreen = deferComponent(
   () => require("./screens/data-import-screen").DataImportScreen,
   "DataImportScreen",
 ) as typeof import("./screens/data-import-screen").DataImportScreen;
+
+export const DataImportScreenContent = deferComponent(
+  () => require("./screens/data-import-screen").DataImportScreenContent,
+  "DataImportScreenContent",
+) as typeof import("./screens/data-import-screen").DataImportScreenContent;

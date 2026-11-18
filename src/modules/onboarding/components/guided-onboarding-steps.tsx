@@ -270,36 +270,38 @@ export function GuidedCurrencyStep({
           onPress={onContinue}
         />
       }
+      pinnedHeader={
+        <View style={styles.searchBox}>
+          <Search color={theme.colors.textMuted} size={18} />
+          <TextInput
+            accessibilityLabel={t("onboarding.currencySearchPlaceholder")}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder={t("onboarding.currencySearchPlaceholder")}
+            placeholderTextColor={theme.colors.textMuted}
+            returnKeyType="search"
+            style={styles.searchInput}
+            value={search}
+            onChangeText={setSearch}
+          />
+          {search.length > 0 ? (
+            <Pressable
+              accessibilityLabel="Clear search"
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() => setSearch("")}
+              style={({ pressed }) => [styles.searchClearBtn, pressed && { opacity: 0.7 }]}
+            >
+              <X color={theme.colors.textSecondary} size={16} />
+            </Pressable>
+          ) : null}
+        </View>
+      }
       progressIndex={guidedProgress.currency}
       progressTotal={guidedTotal}
+      showScrollHint
       title={title}
     >
-      <View style={styles.searchBox}>
-        <Search color={theme.colors.textMuted} size={18} />
-        <TextInput
-          accessibilityLabel={t("onboarding.currencySearchPlaceholder")}
-          autoCapitalize="none"
-          autoCorrect={false}
-          placeholder={t("onboarding.currencySearchPlaceholder")}
-          placeholderTextColor={theme.colors.textMuted}
-          returnKeyType="search"
-          style={styles.searchInput}
-          value={search}
-          onChangeText={setSearch}
-        />
-        {search.length > 0 ? (
-          <Pressable
-            accessibilityLabel="Clear search"
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={() => setSearch("")}
-            style={({ pressed }) => [styles.searchClearBtn, pressed && { opacity: 0.7 }]}
-          >
-            <X color={theme.colors.textSecondary} size={16} />
-          </Pressable>
-        ) : null}
-      </View>
-
       {filteredCodes.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
@@ -365,6 +367,7 @@ export function GuidedAccountChoiceStep({
       description={description}
       progressIndex={guidedProgress.account}
       progressTotal={guidedTotal}
+      showScrollHint
       title={title}
     >
       <View style={styles.cardsList}>
@@ -384,18 +387,18 @@ export function GuidedAccountChoiceStep({
           title={t("onboarding.accountChoiceRecommendedTitle")}
         />
         <OnboardingOptionCard
-          description={t("onboarding.accountChoiceManualDesc")}
-          disabled={busy}
-          icon={<Layers color={theme.colors.textSecondary} size={23} />}
-          onPress={() => onChooseStrategy("manual")}
-          title={t("onboarding.accountChoiceManualTitle")}
-        />
-        <OnboardingOptionCard
           description={t("onboarding.accountChoiceImportDesc")}
           disabled={busy}
           icon={<FileSpreadsheet color={theme.colors.textSecondary} size={23} />}
           onPress={() => onChooseStrategy("import")}
           title={t("onboarding.accountChoiceImportTitle")}
+        />
+        <OnboardingOptionCard
+          description={t("onboarding.accountChoiceManualDesc")}
+          disabled={busy}
+          icon={<Layers color={theme.colors.textSecondary} size={23} />}
+          onPress={() => onChooseStrategy("manual")}
+          title={t("onboarding.accountChoiceManualTitle")}
         />
       </View>
     </OnboardingStepShell>
@@ -605,6 +608,7 @@ export function GuidedReadyStep({
   nickname,
   accountName,
   accountStrategy = "custom",
+  importedAccountCount = 0,
   currencyCode,
   dailyReminderEnabled,
   busy,
@@ -613,6 +617,7 @@ export function GuidedReadyStep({
   nickname?: string;
   accountName: string;
   accountStrategy?: "custom" | "recommended" | "manual" | "import";
+  importedAccountCount?: number;
   currencyCode: string;
   dailyReminderEnabled?: boolean;
   busy: boolean;
@@ -658,7 +663,9 @@ export function GuidedReadyStep({
             : accountStrategy === "manual"
               ? t("onboarding.readyAccountManual")
               : accountStrategy === "import"
-                ? t("onboarding.readyAccountImport")
+                ? importedAccountCount > 0
+                  ? t("onboarding.readyAccountImported", { count: importedAccountCount })
+                  : t("onboarding.readyAccountImport")
                 : t("onboarding.readyAccount", {
                     name: accountName.trim() || t("onboarding.accountTemplateCash"),
                   })}

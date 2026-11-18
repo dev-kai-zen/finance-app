@@ -42,6 +42,7 @@ Module._load = function (request, ...args) {
     const name = names[request.split("/").pop()]; return { [name]: name };
   }
   if (request.endsWith("/import-controls")) return { ImportInput: "ImportInput", ImportSelect: "ImportSelect", ImportAction: "ImportAction", ImportChoice: "ImportChoice", ImportChip: "ImportChip", ImportDateField: "ImportDateField", ImportFieldButton: "ImportFieldButton", ImportTypePicker: "ImportTypePicker" };
+  if (request === "lucide-react-native") return new Proxy({}, { get: (_, prop) => prop });
   return load.call(this, request, ...args);
 };
 require.extensions[".ts"] = require.extensions[".tsx"] = (module, filename) => module._compile(ts.transpileModule(fs.readFileSync(filename, "utf8"), {
@@ -150,4 +151,20 @@ test("review starts with attention entries and filter buttons change the display
   const ready = walk(tree, (entry) => entry.type === "Pressable" && walk(entry.props.children, (child) => child.type === "Text" && child.props.children === "dataImport.ui.ready"));
   ready.props.onPress(); tree = render();
   assert.equal(list(tree).props.data.length, 1); assert.equal(list(tree).props.data[0].index, 1);
+});
+
+test("onboarding mode displays guidance banner and calls onCancel when choose another setup is pressed", () => {
+  state.step = "file";
+  let cancelled = false;
+  const tree = DataImportScreen({
+    allowOnboarding: true,
+    lockKind: true,
+    onCancel: () => { cancelled = true; },
+  });
+  const banner = walk(tree, (node) => node.type === "Text" && node.props.children === "dataImport.onboardingBannerTitle");
+  assert.ok(banner);
+  const chooseAnotherButton = walk(tree, (node) => node.type === "ImportAction" && node.props.label === "dataImport.chooseAnotherSetup");
+  assert.ok(chooseAnotherButton);
+  chooseAnotherButton.props.onPress();
+  assert.equal(cancelled, true);
 });

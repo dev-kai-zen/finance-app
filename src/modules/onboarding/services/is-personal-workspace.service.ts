@@ -6,3 +6,10 @@ export function isPersonalWorkspace(context: DbContext = db): boolean {
   const settings = getOnboardingSettings(context);
   return settings[ONBOARDING_SETTING_KEYS.status] === "completed" && settings[ONBOARDING_SETTING_KEYS.workspaceMode] === "personal";
 }
+
+export function canImportWorkspaceData(context: DbContext = db): boolean {
+  if (isPersonalWorkspace(context)) return true;
+  const settings = getOnboardingSettings(context);
+  const status = settings[ONBOARDING_SETTING_KEYS.status];
+  return !status || status === "pending";
+}

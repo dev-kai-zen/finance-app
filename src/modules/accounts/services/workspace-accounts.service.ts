@@ -142,6 +142,11 @@ export function hasAccountWorkspaceData(context: DbContext = db): boolean {
   );
 }
 
+export function getFirstActiveAccountId(context: DbContext = db): string | null {
+  const active = listAccounts(context).find((a) => !a.isArchived);
+  return active?.id ?? null;
+}
+
 export function createInitialAccount(
   input: InitialAccountInput,
   context: DbContext,

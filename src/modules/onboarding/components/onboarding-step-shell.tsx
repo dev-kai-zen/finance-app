@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { ScrollDownIndicator } from "@/components/scroll-down-indicator";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { useScrollDownIndicator } from "@/hooks/use-scroll-down-indicator";
+import { useLocalization } from "@/infrastructure/localization";
 
 export function OnboardingProgressDots({
   currentIndex,
@@ -32,8 +35,10 @@ export function OnboardingStepShell({
   children,
   description,
   footer,
+  pinnedHeader,
   progressIndex,
   progressTotal,
+  showScrollHint = false,
   title,
 }: {
   title: string;
@@ -41,10 +46,15 @@ export function OnboardingStepShell({
   progressIndex?: number;
   progressTotal?: number;
   footer?: ReactNode;
+  pinnedHeader?: ReactNode;
+  showScrollHint?: boolean;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
+  const { scrollRef, canScrollDown, scrollToNext, scrollProps } =
+    useScrollDownIndicator<ScrollView>({ threshold: 24, scrollStep: 180 });
 
   return (
     <View style={[styles.shell, { paddingBottom: Math.max(insets.bottom, 16) }]}>
@@ -57,14 +67,27 @@ export function OnboardingStepShell({
         </Text>
         <Text style={styles.description}>{description}</Text>
       </View>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        style={styles.scroll}
-      >
-        {children}
-      </ScrollView>
+      {pinnedHeader ? <View style={styles.pinnedHeader}>{pinnedHeader}</View> : null}
+      <View style={styles.scrollHost}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.scroll}
+          {...(showScrollHint ? scrollProps : {})}
+        >
+          {children}
+        </ScrollView>
+        {showScrollHint ? (
+          <ScrollDownIndicator
+            accessibilityLabel={t("onboarding.moreItemsBelow")}
+            bottomOffset={6}
+            onPress={() => scrollToNext(180)}
+            visible={canScrollDown}
+          />
+        ) : null}
+      </View>
       {footer ? <View style={styles.footer}>{footer}</View> : null}
     </View>
   );
@@ -97,6 +120,13 @@ function createStyles(theme: AppTheme) {
     header: {
       gap: theme.spacing.sm,
       paddingHorizontal: theme.spacing.xs,
+    },
+    pinnedHeader: {
+      gap: theme.spacing.sm,
+    },
+    scrollHost: {
+      flex: 1,
+      position: "relative",
     },
     title: {
       color: theme.colors.textPrimary,

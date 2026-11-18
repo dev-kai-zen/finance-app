@@ -4,6 +4,7 @@ import {
   createInitialAccount,
   createRecommendedAccounts,
   createSampleAccounts,
+  getFirstActiveAccountId,
   hasAccountWorkspaceData,
   RECOMMENDED_ACCOUNT_IDS,
   type InitialAccountInput,
@@ -138,6 +139,11 @@ export async function completeGuidedSetup(
       await prepareWorkspaceCategories("manual", tx, now);
     } else if (strategy === "import") {
       await prepareWorkspaceCategories("recommended", tx, now);
+      const defaultId = getFirstActiveAccountId(tx);
+      if (defaultId) {
+        setDefaultExpenseAccount(defaultId, null, tx);
+        setDefaultIncomeAccount(defaultId, null, tx);
+      }
     } else {
       await prepareWorkspaceCategories("recommended", tx, now);
       if (input.account) {
@@ -212,7 +218,7 @@ export async function loadSampleWorkspace(): Promise<WorkspaceState> {
   return completedState("sample", null);
 }
 
-function clearSampleWorkspaceIfNeeded(context: DbContext): void {
+export function clearSampleWorkspaceIfNeeded(context: DbContext): void {
   const values = getOnboardingSettings(context);
   if (values[ONBOARDING_SETTING_KEYS.workspaceMode] !== "sample") return;
 

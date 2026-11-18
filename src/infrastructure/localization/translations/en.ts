@@ -207,6 +207,10 @@ export const en = {
     personalOnly:
       "Switch to your personal workspace before importing your records.",
     title: "Import data",
+    onboardingBannerTitle: "Importing from another app?",
+    onboardingBannerMessage:
+      "If you have an exported account spreadsheet from your old app or bank, choose it below. Don't have a file ready right now? No problem — you can choose another setup option and import your accounts or full transaction history anytime later in Settings.",
+    chooseAnotherSetup: "Choose another setup option",
     settingsDescription:
       "Bring accounts and transaction history from a CSV file",
     intro:
@@ -268,6 +272,7 @@ export const en = {
     counts: "%{imported} imported · %{skipped} excluded",
     excludedRows: "Excluded file rows: %{rows}",
     complete: "Import completed",
+    goToDashboard: "Go to Homepage",
     recovery:
       "A safety backup was saved before importing. Restore it from Local Backup if needed. Restoring replaces your data, including changes made after the backup.",
     another: "Start another import",
@@ -1134,6 +1139,10 @@ export const en = {
         "Clarify account type labels and setup menus to make organizing finances easier.",
       improveItem3:
         "Highlight exporting CSV files and collapsing account groups in the accounts walkthrough.",
+      fixItem1:
+        "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
+      fixItem2:
+        "Keep the currency search box fixed at the top while browsing with a floating indicator for remaining items.",
     },
     v170: {
       date: "November 18, 2026",
@@ -1568,7 +1577,9 @@ export const en = {
     readyAccountRecommended:
       "Accounts: Recommended starter pack (Cash, Bank, Savings, E-Wallet)",
     readyAccountManual: "Accounts: Start from scratch (no initial accounts)",
-    readyAccountImport: "Accounts: Import from CSV after setup",
+    readyAccountImport: "Accounts: Import accounts from CSV",
+    readyAccountImported: "Accounts: %{count} accounts imported from CSV",
+    moreItemsBelow: "More items below",
     readyDailyReminder: "Daily Reminder: Enabled (8:00 PM)",
     readyTourTipTitle: "Interactive Tours on Demand",
     readyTourTipMessage:
@@ -1594,9 +1605,9 @@ export const en = {
     accountChoiceManualTitle: "Start from scratch",
     accountChoiceManualDesc:
       "Start with an empty workspace. You'll add your accounts and categories manually later.",
-    accountChoiceImportTitle: "Import accounts from file",
+    accountChoiceImportTitle: "Import from spreadsheet",
     accountChoiceImportDesc:
-      "Bring in your accounts and opening balances from a CSV file.",
+      "For users switching from another app with an existing account CSV. You can also import anytime later in Settings.",
     fullSetupTitle: "Set up your workspace",
     fullSetupDescription: "Choose how much structure you want on day one.",
     manualSetupTitle: "Start from scratch",

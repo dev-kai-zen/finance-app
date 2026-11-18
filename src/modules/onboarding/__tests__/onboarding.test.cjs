@@ -411,3 +411,33 @@ test("guided setup saves user nickname when provided", async () => {
   const row = sqlite.prepare("SELECT value FROM settings WHERE key = 'user_nickname'").get();
   assert.equal(row.value, "Alex");
 });
+
+test("canImportWorkspaceData returns true in pending onboarding", () => {
+  const { canImportWorkspaceData } = require("@/modules/onboarding/services/is-personal-workspace.service");
+  assert.equal(canImportWorkspaceData(), true);
+});
+
+test("guided setup with import strategy finalizes categories and settings", async () => {
+  await workspace.completeGuidedSetup({
+    currencyCode: "USD",
+    accountStrategy: "import",
+    nickname: "Sam",
+  });
+
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'onboarding.status'").get().value,
+    "completed",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'workspace.setupStrategy'").get().value,
+    "import",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT value FROM settings WHERE key = 'user_nickname'").get().value,
+    "Sam",
+  );
+  assert.equal(
+    sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
+    DEFAULT_SEED_CATEGORIES.length,
+  );
+});

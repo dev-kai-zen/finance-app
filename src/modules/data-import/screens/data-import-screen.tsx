@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Sparkles } from "lucide-react-native";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { useNavigation, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -85,7 +86,13 @@ export function DataImportScreen({
       header={
         <ModalScreenHeader
           backAccessibilityLabel={t("dataImport.back")}
-          onPressBack={() => router.back()}
+          onPressBack={() => {
+            if (typeof router.canGoBack === "function" ? router.canGoBack() : true) {
+              router.back();
+            } else {
+              router.replace("/");
+            }
+          }}
           title={t("dataImport.title")}
         />
       }
@@ -101,8 +108,16 @@ export function DataImportScreen({
 
 export function DataImportScreenContent({
   initialKind = "transactions",
+  lockKind = false,
+  allowOnboarding = false,
+  onCancel,
+  onComplete,
 }: {
   initialKind?: ImportKind;
+  lockKind?: boolean;
+  allowOnboarding?: boolean;
+  onCancel?: () => void;
+  onComplete?: (result: { imported: number; skipped: number }) => void;
 } = {}) {
   const state = useDataImport(initialKind),
     theme = useAppTheme(),
@@ -113,7 +128,11 @@ export function DataImportScreenContent({
     navigation = useNavigation(),
     insets = useSafeAreaInsets();
   const wide = useWindowDimensions().width >= 1000;
-  const personalWorkspace = useWorkspace().state.mode === "personal";
+  const workspaceState = useWorkspace().state;
+  const personalWorkspace =
+    allowOnboarding ||
+    workspaceState.mode === "personal" ||
+    workspaceState.status === "pending";
   const [confirm, setConfirm] = useState(false),
     [discard, setDiscard] = useState(false);
   const [help, setHelp] = useState<
@@ -173,14 +192,29 @@ export function DataImportScreenContent({
         state.setStep(previous);
         return;
       }
-      setPendingBack(() => () => navigation.dispatch(data.action));
+      setPendingBack(() => () => {
+        if (onCancel) {
+          onCancel();
+        } else if (typeof router.canGoBack === "function" ? router.canGoBack() : true) {
+          navigation.dispatch(data.action);
+        } else {
+          router.replace("/");
+        }
+      });
       setDiscard(true);
     },
   );
   const goBack = () => {
     if (state.busy) return;
-    if (previous) state.setStep(previous);
-    else router.back();
+    if (previous) {
+      state.setStep(previous);
+    } else if (onCancel) {
+      onCancel();
+    } else if (typeof router.canGoBack === "function" ? router.canGoBack() : true) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
   };
   const money = (amount: number, currency: string) =>
     `${currency} ${(amount / 10 ** getCurrencyMinorUnitExponent(currency)).toFixed(getCurrencyMinorUnitExponent(currency))}`;
@@ -596,6 +630,26 @@ export function DataImportScreenContent({
       )}
       {state.step === "file" && (
         <>
+          {allowOnboarding && (
+            <View style={styles.onboardingBanner}>
+              <View style={styles.onboardingBannerHeader}>
+                <Sparkles size={18} color={theme.colors.primary} />
+                <Text style={styles.onboardingBannerTitle}>
+                  {t("dataImport.onboardingBannerTitle")}
+                </Text>
+              </View>
+              <Text style={styles.onboardingBannerMessage}>
+                {t("dataImport.onboardingBannerMessage")}
+              </Text>
+              {onCancel && (
+                <ImportAction
+                  variant="secondary"
+                  label={t("dataImport.chooseAnotherSetup")}
+                  onPress={onCancel}
+                />
+              )}
+            </View>
+          )}
           <Text style={styles.body}>{t("dataImport.wizard.startHelp")}</Text>
           {state.file && (
             <View style={styles.card}>
@@ -607,15 +661,16 @@ export function DataImportScreenContent({
               />
             </View>
           )}
-          {select(
-            t("dataImport.kind"),
-            state.options.kind,
-            [
-              { value: "transactions", label: t("dataImport.transactions") },
-              { value: "accounts", label: t("dataImport.accounts") },
-            ],
-            (kind) => state.chooseKind(kind as "accounts" | "transactions"),
-          )}
+          {!lockKind &&
+            select(
+              t("dataImport.kind"),
+              state.options.kind,
+              [
+                { value: "transactions", label: t("dataImport.transactions") },
+                { value: "accounts", label: t("dataImport.accounts") },
+              ],
+              (kind) => state.chooseKind(kind as "accounts" | "transactions"),
+            )}
           {!personalWorkspace && (
             <Text style={styles.body}>{t("dataImport.personalOnly")}</Text>
           )}
@@ -1002,6 +1057,19 @@ export function DataImportScreenContent({
             })}
           </Text>
           <Text style={styles.body}>{t("dataImport.recovery")}</Text>
+          {onComplete ? (
+            <ImportAction
+              label={t("onboarding.continue")}
+              onPress={() =>
+                onComplete(state.result ?? { imported: 0, skipped: 0 })
+              }
+            />
+          ) : (
+            <ImportAction
+              label={t("dataImport.goToDashboard")}
+              onPress={() => router.replace("/")}
+            />
+          )}
           <ImportAction
             label={t("dataImport.history")}
             onPress={() => state.setStep("history")}
@@ -1324,6 +1392,30 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surface,
       borderWidth: 1,
       borderColor: theme.colors.border,
+    },
+    onboardingBanner: {
+      padding: theme.spacing.lg,
+      gap: theme.spacing.md,
+      borderRadius: theme.borderRadius.large,
+      backgroundColor: theme.colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+    },
+    onboardingBannerHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.sm,
+    },
+    onboardingBannerTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.base,
+      fontWeight: "700",
+      flex: 1,
+    },
+    onboardingBannerMessage: {
+      color: theme.colors.textSecondary,
+      fontSize: theme.typography.fontSize.sm,
+      lineHeight: theme.typography.lineHeight.base,
     },
     label: {
       color: theme.colors.textPrimary,

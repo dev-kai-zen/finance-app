@@ -213,6 +213,10 @@ export const es = {
     personalOnly:
       "Cambia a tu espacio personal antes de importar tus registros.",
     title: "Importar datos",
+    onboardingBannerTitle: "¿Importas desde otra aplicación?",
+    onboardingBannerMessage:
+      "Si tienes una hoja de cálculo de cuentas exportada de tu aplicación anterior o banco, selecciónala a continuación. ¿No tienes un archivo listo ahora? No te preocupes: puedes elegir otra opción de configuración e importar tus cuentas o tu historial completo de transacciones en cualquier momento más tarde en Ajustes.",
+    chooseAnotherSetup: "Elegir otra opción de configuración",
     settingsDescription:
       "Trae cuentas e historial de transacciones desde un archivo CSV",
     intro:
@@ -275,6 +279,7 @@ export const es = {
     counts: "%{imported} importados · %{skipped} excluidos",
     excludedRows: "Filas excluidas: %{rows}",
     complete: "Importación completada",
+    goToDashboard: "Ir a la Página Principal",
     recovery:
       "Se guardó una copia de seguridad antes de importar. Puedes restaurarla desde Copia local. Restaurar sustituye los datos, incluidos los cambios posteriores a la copia.",
     another: "Iniciar otra importación",
@@ -1151,6 +1156,10 @@ export const es = {
         "Aclara las etiquetas de tipos de cuenta para organizar tus finanzas con mayor facilidad.",
       improveItem3:
         "Destacar la exportación CSV y el colapso de grupos en la guía de cuentas.",
+      fixItem1:
+        "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
+      fixItem2:
+        "Se fijó el cuadro de búsqueda de monedas en la parte superior con un indicador para desplazarse hacia abajo.",
     },
     v170: {
       date: "18 de noviembre de 2026",
@@ -1590,7 +1599,9 @@ export const es = {
     readyAccountRecommended:
       "Cuentas: Paquete recomendado (Efectivo, Banco, Ahorros, Billetera)",
     readyAccountManual: "Cuentas: Empezar desde cero (sin cuentas iniciales)",
-    readyAccountImport: "Cuentas: Importar desde CSV tras la configuración",
+    readyAccountImport: "Cuentas: Importar cuentas desde CSV",
+    readyAccountImported: "Cuentas: %{count} cuentas importadas desde CSV",
+    moreItemsBelow: "Más elementos abajo",
     readyDailyReminder: "Recordatorio diario: Activado (8:00 PM)",
     readyTourTipTitle: "Recorridos interactivos cuando los necesites",
     readyTourTipMessage:
@@ -1616,9 +1627,9 @@ export const es = {
     accountChoiceManualTitle: "Empezar desde cero",
     accountChoiceManualDesc:
       "Comienza con un espacio vacío. Añadirás tus cuentas y categorías manualmente.",
-    accountChoiceImportTitle: "Importar cuentas desde archivo",
+    accountChoiceImportTitle: "Importar desde hoja de cálculo",
     accountChoiceImportDesc:
-      "Importa tus cuentas y saldos iniciales desde un archivo CSV.",
+      "Para usuarios que se cambian desde otra app con un CSV de cuentas existente. También puedes importar en cualquier momento más tarde en Ajustes.",
     fullSetupTitle: "Configura tu espacio",
     fullSetupDescription: "Elige cuánta estructura quieres el primer día.",
     manualSetupTitle: "Empezar desde cero",

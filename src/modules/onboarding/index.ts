@@ -5,11 +5,17 @@ export {
   WorkspaceProvider,
   useWorkspace,
 } from "./providers/workspace-provider";
-export { finalizeRestoredWorkspace } from "./services/workspace.service";
+export {
+  clearSampleWorkspaceIfNeeded,
+  finalizeRestoredWorkspace,
+} from "./services/workspace.service";
 export type {
   WorkspaceMode,
   WorkspaceSetupStrategy,
   WorkspaceState,
 } from "./types/onboarding.types";
 
-export { isPersonalWorkspace } from "./services/is-personal-workspace.service";
+export {
+  isPersonalWorkspace,
+  canImportWorkspaceData,
+} from "./services/is-personal-workspace.service";

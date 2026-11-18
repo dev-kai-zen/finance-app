@@ -42,6 +42,8 @@ import type { InitialAccountTemplate } from "@/modules/accounts";
 import { openingAmountInput } from "@/modules/accounts/utils/account-input";
 import { useLocalization } from "@/infrastructure/localization";
 import { useRouter } from "expo-router";
+import { DataImportScreenContent } from "@/modules/data-import";
+import { WalkthroughRegistryProvider } from "@/modules/walkthrough";
 
 type OnboardingStep =
   | "welcome"
@@ -50,6 +52,7 @@ type OnboardingStep =
   | "currency"
   | "accountChoice"
   | "account"
+  | "import"
   | "notifications"
   | "ready"
   | "fullSetup"
@@ -78,6 +81,7 @@ export function OnboardingScreen() {
     useState<InitialAccountTemplate>("cash");
   const [accountName, setAccountName] = useState("");
   const [openingAmountMinor, setOpeningAmountMinor] = useState(0);
+  const [importedAccountCount, setImportedAccountCount] = useState(0);
   const [sampleExitHubOpen, setSampleExitHubOpen] = useState(false);
   const [dailyReminderEnabled, setDailyReminderEnabled] = useState(false);
 
@@ -149,8 +153,18 @@ export function OnboardingScreen() {
       setStep("accountChoice");
       return;
     }
+    if (step === "import") {
+      setStep("accountChoice");
+      return;
+    }
     if (step === "notifications") {
-      setStep(accountStrategy === "custom" ? "account" : "accountChoice");
+      setStep(
+        accountStrategy === "custom"
+          ? "account"
+          : accountStrategy === "import"
+            ? "import"
+            : "accountChoice",
+      );
       return;
     }
     if (step === "ready") {
@@ -166,7 +180,7 @@ export function OnboardingScreen() {
 
   const stepBody = (
         <View style={[styles.container, isGuidedFlexStep && styles.guidedContainer]}>
-          {step !== "welcome" || workspace.personalSetupRequested ? (
+          {(step !== "welcome" || workspace.personalSetupRequested) ? (
             <Pressable
               accessibilityLabel={
                 workspace.personalSetupRequested && step === "welcome"
@@ -311,6 +325,8 @@ export function OnboardingScreen() {
                   setAccountStrategy(chosenStrategy);
                   if (chosenStrategy === "custom") {
                     setStep("account");
+                  } else if (chosenStrategy === "import") {
+                    setStep("import");
                   } else {
                     setStep("notifications");
                   }
@@ -362,9 +378,10 @@ export function OnboardingScreen() {
                 busy={workspace.busy}
                 currencyCode={guidedCurrency}
                 dailyReminderEnabled={dailyReminderEnabled}
+                importedAccountCount={importedAccountCount}
                 nickname={nickname}
                 onFinish={async () => {
-                  const ok = await workspace.completeGuidedSetup({
+                  await workspace.completeGuidedSetup({
                     currencyCode: guidedCurrency,
                     nickname,
                     accountStrategy,
@@ -380,12 +397,6 @@ export function OnboardingScreen() {
                           }
                         : undefined,
                   });
-                  if (ok && accountStrategy === "import") {
-                    router.replace({
-                      pathname: "/data-import",
-                      params: { kind: "accounts" },
-                    });
-                  }
                 }}
               />
             </View>
@@ -569,6 +580,37 @@ export function OnboardingScreen() {
           ) : null}
         </View>
   );
+
+  if (step === "import") {
+    return (
+      <View style={styles.screen}>
+        <WalkthroughRegistryProvider>
+          <DataImportScreenContent
+            allowOnboarding
+            initialKind="accounts"
+            lockKind
+            onCancel={() => {
+              workspace.clearError();
+              setStep("accountChoice");
+            }}
+            onComplete={(result) => {
+              workspace.clearError();
+              setImportedAccountCount(result.imported);
+              setStep("notifications");
+            }}
+          />
+        </WalkthroughRegistryProvider>
+
+        <NotificationModal
+          message={workspace.error ?? ""}
+          onClose={workspace.clearError}
+          title="Unable to prepare workspace"
+          variant="error"
+          visible={Boolean(workspace.error)}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>

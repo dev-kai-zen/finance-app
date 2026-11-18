@@ -104,6 +104,11 @@ export const hasAccountWorkspaceData = deferFunction(
     require("./services/workspace-accounts.service").hasAccountWorkspaceData,
 ) as typeof import("./services/workspace-accounts.service").hasAccountWorkspaceData;
 
+export const getFirstActiveAccountId = deferFunction(
+  () =>
+    require("./services/workspace-accounts.service").getFirstActiveAccountId,
+) as typeof import("./services/workspace-accounts.service").getFirstActiveAccountId;
+
 export const setPocketArchived = deferFunction(
   () => require("./services/archive-pocket.service").setPocketArchived,
 ) as typeof import("./services/archive-pocket.service").setPocketArchived;

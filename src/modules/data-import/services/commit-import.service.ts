@@ -4,7 +4,11 @@ import { createImportedAccount } from "@/modules/accounts";
 import { resolveImportedCategory } from "@/modules/categories";
 import { resolveImportLabels } from "@/modules/labels";
 import { createLocalBackup } from "@/modules/local-backup";
-import { isPersonalWorkspace } from "@/modules/onboarding";
+import {
+  canImportWorkspaceData,
+  clearSampleWorkspaceIfNeeded,
+  isPersonalWorkspace,
+} from "@/modules/onboarding";
 import { createImportedTransactions, type ImportedTransactionCommand } from "@/modules/transactions";
 import { insertImportBatch, insertImportRecord } from "../repositories/imports.repository";
 import type { CsvDocument, ImportOptions } from "../types/import.types";
@@ -27,13 +31,14 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
   // Snapshot the reviewed draft so user interactions cannot change it during backup.
   const draft = JSON.parse(JSON.stringify(options)) as ImportOptions;
   try {
-    if (!isPersonalWorkspace()) throw new ImportValidationError("workspace");
+    if (!canImportWorkspaceData()) throw new ImportValidationError("workspace");
     const preview = buildImportPreview(document, draft, getImportCatalog(), fileHash);
     if (!preview.ready || preview.signature !== signature) throw new ImportValidationError("changed");
     try { await createLocalBackup(null, "safety"); }
     catch { throw new ImportValidationError("backup"); }
     const committed = db.transaction((tx) => {
-      if (!isPersonalWorkspace(tx)) throw new ImportValidationError("workspace");
+      if (!canImportWorkspaceData(tx)) throw new ImportValidationError("workspace");
+      clearSampleWorkspaceIfNeeded(tx);
       const fresh = buildImportPreview(document, draft, getImportCatalog(tx), fileHash);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");
       const batchId = randomUUID(), accountIds = new Map<string, string>();
