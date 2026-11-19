@@ -59,12 +59,13 @@ export function setQuickSyncNetworkPreference(
 
 export async function triggerQuickSync(options?: {
   immediate?: boolean;
+  config?: ReturnType<typeof getQuickSyncConfig>;
 }): Promise<boolean> {
   if (isDatabaseReplacing()) {
     return false;
   }
 
-  const config = getQuickSyncConfig();
+  const config = options?.config ?? getQuickSyncConfig();
   if (!config.enabled) {
     setQuickSyncRuntimeStatus("disabled");
     return false;

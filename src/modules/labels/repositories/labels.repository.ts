@@ -1,4 +1,4 @@
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { labels, transactionLabels } from "@/infrastructure/database/schema";
 import type { Label, NewLabel } from "../types/label.types";
@@ -58,6 +58,38 @@ export function findLabelById(
       .where(eq(labels.id, id))
       .get() ?? null
   );
+}
+
+export function findLabelsByIds(
+  ids: readonly string[],
+  context: DbContext = db,
+): Label[] {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  if (uniqueIds.length === 0) return [];
+
+  const results: Label[] = [];
+  const CHUNK_SIZE = 500;
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+    const rows = context
+      .select({
+        id: labels.id,
+        name: labels.name,
+        color: labels.color,
+        sortOrder: labels.sortOrder,
+        isArchived: labels.isArchived,
+        createdAt: labels.createdAt,
+        updatedAt: labels.updatedAt,
+        usageCount: sql<number>`(
+          SELECT count(*) FROM transaction_labels tl WHERE tl.label_id = ${labels.id}
+        )`,
+      })
+      .from(labels)
+      .where(inArray(labels.id, chunk))
+      .all();
+    results.push(...rows);
+  }
+  return results;
 }
 
 export function findLabelByName(

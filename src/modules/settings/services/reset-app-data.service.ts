@@ -59,7 +59,7 @@ async function recoverMalformedDatabase(): Promise<void> {
   const cleanDb = await SQLite.openDatabaseAsync(":memory:");
   try {
     const cleanDrizzle = drizzle(cleanDb, { schema });
-    await runSafeMigrations(cleanDrizzle, migrations);
+    await runSafeMigrations(cleanDrizzle, migrations, { forceFullCheck: true });
     await SQLite.backupDatabaseAsync({
       sourceDatabase: cleanDb,
       sourceDatabaseName: "main",

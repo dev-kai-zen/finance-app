@@ -117,7 +117,7 @@ export async function replaceDatabaseFromSnapshot(
         destDatabaseName: "main",
       });
 
-      await runSafeMigrations(db, migrations);
+      await runSafeMigrations(db, migrations, { forceFullCheck: true });
       validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
       await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
       await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");

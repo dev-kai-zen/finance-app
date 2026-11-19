@@ -544,6 +544,10 @@ export function listDeletedTransactions(
     .orderBy(desc(transactions.deletedAt), desc(transactions.occurredAt))
     .all();
 
+  if (rows.length === 0) {
+    return [];
+  }
+
   const balanceAfterByTransactionId = getBalanceAfterByTransactionId(
     null,
     context,

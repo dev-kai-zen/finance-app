@@ -14,10 +14,17 @@ export type UseAccountsOptions = {
    * Defaults to false so selectors, pickers, and modals remain fast and lightweight.
    */
   includeCreditCardMonitoring?: boolean;
+  /**
+   * When true, computes `isDeletable` and `canChangeCurrency` management flags.
+   * Defaults to matching `includeCreditCardMonitoring` so pickers skip management-only scans.
+   */
+  includeManagementFlags?: boolean;
 };
 
 export function useAccounts(options?: UseAccountsOptions) {
   const includeCreditCardMonitoring = options?.includeCreditCardMonitoring === true;
+  const includeManagementFlags =
+    options?.includeManagementFlags ?? includeCreditCardMonitoring;
   const [data, setData] = useState<{
     accounts: AccountListItem[];
     pockets: PocketListItem[];
@@ -26,8 +33,10 @@ export function useAccounts(options?: UseAccountsOptions) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const cancelPendingRef = useRef<(() => void) | null>(null);
   const refresh = useCallback(() => {
-    runDeferredSyncQuery(
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
         setLoading,
@@ -36,14 +45,18 @@ export function useAccounts(options?: UseAccountsOptions) {
         },
       },
       () => {
+        cancelPendingRef.current = null;
         try {
+          const baseAccounts = getAccountsWithBalances(undefined, {
+            includeManagementFlags,
+          });
           let accounts: AccountListItem[];
           if (includeCreditCardMonitoring) {
-            const monitoring = getCreditCardMonitoring();
+            const monitoring = getCreditCardMonitoring(undefined, baseAccounts);
             const monitoringByAccountId = new Map(
               monitoring.cards.map((card) => [card.accountId, card]),
             );
-            accounts = getAccountsWithBalances().map((account) => {
+            accounts = baseAccounts.map((account) => {
               const card = monitoringByAccountId.get(account.id);
               return {
                 ...account,
@@ -58,14 +71,16 @@ export function useAccounts(options?: UseAccountsOptions) {
               };
             });
           } else {
-            accounts = getAccountsWithBalances().map((account) => ({
+            accounts = baseAccounts.map((account) => ({
               ...account,
               creditCardMonitoring: null,
             }));
           }
           setData({
             accounts,
-            pockets: getPocketsWithBalances(),
+            pockets: getPocketsWithBalances(undefined, {
+              includeManagementFlags,
+            }),
             types: listAccountTypes(),
           });
           setError(null);
@@ -74,10 +89,14 @@ export function useAccounts(options?: UseAccountsOptions) {
         }
       },
     );
-  }, [includeCreditCardMonitoring]);
+  }, [includeCreditCardMonitoring, includeManagementFlags]);
   useFocusEffect(
     useCallback(() => {
       refresh();
+      return () => {
+        cancelPendingRef.current?.();
+        cancelPendingRef.current = null;
+      };
     }, [refresh]),
   );
   return { ...data, loading, error, refresh };

@@ -101,7 +101,10 @@ function AccountsScreenContent({
   const theme = useAppTheme();
   const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
-  const data = useAccounts({ includeCreditCardMonitoring: true });
+  const data = useAccounts({
+    includeCreditCardMonitoring: true,
+    includeManagementFlags: true,
+  });
 
   const isScreenActive = useIsFocused();
 
@@ -116,7 +119,10 @@ function AccountsScreenContent({
     );
     return () => sub.remove();
   }, [isScreenActive, data.refresh]);
-  const fundGroups = useFundGroups();
+  const fundGroups = useFundGroups({
+    preloadedAccounts: data.accounts,
+    preloadedPockets: data.pockets,
+  });
   const mutations = useAccountMutations(data.refresh);
   const { guardAction, paywallVisible, closePaywall, guardMeta } = useProGuard();
   const [overlay, setOverlay] = useState<Overlay>(() => {

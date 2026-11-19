@@ -23,6 +23,7 @@ export {
 export {
   listLabels,
   findLabelById,
+  findLabelsByIds,
   findLabelByName,
 } from "./repositories/labels.repository";
 

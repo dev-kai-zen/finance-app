@@ -4,7 +4,10 @@ import { AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { formatCurrency } from "@/utils/currency";
-import { checkBudgetExceeded } from "../services/check-budget-exceeded.service";
+import {
+  evaluateBudgetSnapshot,
+  getBudgetLiveSnapshot,
+} from "../services/check-budget-exceeded.service";
 
 export interface BudgetLiveIndicatorProps {
   categoryId: string;
@@ -23,17 +26,22 @@ export const BudgetLiveIndicator = memo(function BudgetLiveIndicator({
 }: BudgetLiveIndicatorProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const occurredAtMs = occurredAt ? occurredAt.getTime() : null;
 
-  const result = useMemo(() => {
+  const snapshot = useMemo(() => {
     if (!categoryId) return null;
-    return checkBudgetExceeded({
+    return getBudgetLiveSnapshot({
       categoryId,
-      amountMinorUnits: amountMinorUnits,
       expenseCurrencyCode,
-      occurredAt,
+      occurredAt: occurredAtMs !== null ? new Date(occurredAtMs) : undefined,
       excludeTransactionId,
     });
-  }, [categoryId, amountMinorUnits, expenseCurrencyCode, occurredAt, excludeTransactionId]);
+  }, [categoryId, expenseCurrencyCode, occurredAtMs, excludeTransactionId]);
+
+  const result = useMemo(() => {
+    if (!snapshot) return null;
+    return evaluateBudgetSnapshot(snapshot, amountMinorUnits);
+  }, [snapshot, amountMinorUnits]);
 
   if (!result || !result.hasBudget || !result.isEnabled) {
     return null;

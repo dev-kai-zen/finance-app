@@ -116,7 +116,6 @@ function DashboardScreenContent() {
     pendingAction,
     error: transactionError,
     clearError: clearTransactionError,
-    refresh: refreshTransactions,
   } = useTransactions({ skipQuery: true });
 
   const isScreenActive = useIsFocused();
@@ -127,12 +126,11 @@ function DashboardScreenContent() {
       () => {
         if (isScreenActive) {
           refreshDashboard();
-          void refreshTransactions();
         }
       },
     );
     return () => sub.remove();
-  }, [isScreenActive, refreshDashboard, refreshTransactions]);
+  }, [isScreenActive, refreshDashboard]);
   const {
     presets,
     archivedPresets,
@@ -205,12 +203,11 @@ function DashboardScreenContent() {
       refreshDashboard();
       refreshAccounts();
       void refreshCategories();
-      void refreshTransactions();
       refreshPresets();
     } finally {
       setTimeout(() => setIsPullRefreshing(false), 500);
     }
-  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshTransactions, refreshPresets]);
+  }, [refreshDashboard, refreshAccounts, refreshCategories, refreshPresets]);
 
   const walkthrough = useDashboardWalkthrough({
     layout: dashboardLayout,
@@ -641,7 +638,6 @@ function DashboardScreenContent() {
 
       <TransactionDetailModal
         onAttachmentsChanged={() => {
-          void refreshTransactions();
           refreshDashboard();
         }}
         onClose={() => setInspectedTransaction(null)}

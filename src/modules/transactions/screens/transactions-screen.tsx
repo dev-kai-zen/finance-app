@@ -228,7 +228,8 @@ function TransactionsScreenContent({
     editTransaction,
     editTransfer,
     refresh,
-  } = useTransactions();
+    refreshDeletedTransactions,
+  } = useTransactions({ includeDeleted: false, includeStats: false });
   const {
     presets,
     archivedPresets,
@@ -877,23 +878,27 @@ function TransactionsScreenContent({
     return success;
   };
 
-  const handleDuplicate = (tx: TransactionListItem) => {
+  const handleDuplicate = useCallback((tx: TransactionListItem) => {
     setInspectedTransaction(null);
     setPrefilledTransaction(tx);
     setIsEditingTransaction(false);
     setIsFormModalOpen(true);
-  };
+  }, []);
 
-  const handleEdit = (tx: TransactionListItem) => {
+  const handleEdit = useCallback((tx: TransactionListItem) => {
     setInspectedTransaction(null);
     setPrefilledTransaction(tx);
     setIsEditingTransaction(true);
     setIsFormModalOpen(true);
-  };
+  }, []);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = useCallback((id: string) => {
     setPendingDeleteId(id);
-  };
+  }, []);
+
+  const handleInspectTransaction = useCallback((item: TransactionListItem) => {
+    setInspectedTransaction(item);
+  }, []);
 
   const handleConfirmDelete = async () => {
     if (!pendingDeleteId) return;
@@ -999,6 +1004,50 @@ function TransactionsScreenContent({
     setSearchQuery("");
     setFilterState(DEFAULT_TRANSACTION_FILTERS);
   };
+
+  const thirdTransactionId =
+    filteredTransactions.length >= 4
+      ? (filteredTransactions[2]?.id ?? null)
+      : null;
+
+  const renderRowSeparator = useCallback(
+    () => <View style={styles.rowSeparator} />,
+    [styles.rowSeparator],
+  );
+
+  const renderTransactionItem = useCallback(
+    ({ item }: { item: TransactionListItem }) => {
+      const isThirdTransaction =
+        thirdTransactionId !== null && thirdTransactionId === item.id;
+
+      return (
+        <View key={item.id}>
+          <TransactionRow
+            onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
+            onPress={handleInspectTransaction}
+            transaction={item}
+            viewMode={viewMode}
+          />
+          {isThirdTransaction ? (
+            <AdBanner
+              placement="transactions"
+              variant="card"
+              style={{ marginVertical: theme.spacing.sm }}
+            />
+          ) : null}
+        </View>
+      );
+    },
+    [
+      handleDelete,
+      handleDuplicate,
+      handleInspectTransaction,
+      thirdTransactionId,
+      theme.spacing.sm,
+      viewMode,
+    ],
+  );
 
   const sections = useMemo(
     () =>
@@ -1240,6 +1289,7 @@ function TransactionsScreenContent({
               accessibilityRole="button"
               onPress={() => {
                 clearError();
+                refreshDeletedTransactions();
                 setIsTrashModalOpen(true);
               }}
               style={styles.trashButton}
@@ -1439,7 +1489,7 @@ function TransactionsScreenContent({
               tintColor={theme.colors.primary}
             />
           }
-          ItemSeparatorComponent={() => <View style={styles.rowSeparator} />}
+          ItemSeparatorComponent={renderRowSeparator}
           ListEmptyComponent={
             loading ? (
               <PageLoadingState
@@ -1489,30 +1539,7 @@ function TransactionsScreenContent({
           keyExtractor={(item) => item.id}
           maxToRenderPerBatch={15}
           removeClippedSubviews={Platform.OS !== "web"}
-          renderItem={({ item }) => {
-            const isThirdTransaction =
-              filteredTransactions.length >= 4 &&
-              filteredTransactions[2]?.id === item.id;
-
-            return (
-              <View key={item.id}>
-                <TransactionRow
-                  onDelete={handleDelete}
-                  onDuplicate={handleDuplicate}
-                  onPress={(item) => setInspectedTransaction(item)}
-                  transaction={item}
-                  viewMode={viewMode}
-                />
-                {isThirdTransaction ? (
-                  <AdBanner
-                    placement="transactions"
-                    variant="card"
-                    style={{ marginVertical: theme.spacing.sm }}
-                  />
-                ) : null}
-              </View>
-            );
-          }}
+          renderItem={renderTransactionItem}
           renderSectionHeader={({ section }) => (
             <View style={styles.dateGroupHeader}>
               <Text style={styles.dateGroupTitle}>{section.title}</Text>

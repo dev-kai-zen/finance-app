@@ -7,28 +7,58 @@ import {
 import { getAccountsWithBalances } from "@/modules/accounts/services/get-accounts-with-balances.service";
 import { getPocketsWithBalances } from "@/modules/accounts/services/get-pockets-with-balances.service";
 import type {
+  AccountListItem,
+  PocketListItem,
+} from "@/modules/accounts/types/account.types";
+import type {
   FundGroupListItem,
   FundGroupMemberItem,
   FundGroupsWorkspace,
 } from "@/modules/accounts/types/fund-group.types";
 
+export interface GetFundGroupsWorkspacePreloaded {
+  accounts?: AccountListItem[];
+  pockets?: PocketListItem[];
+}
+
 export function getFundGroupsWorkspace(
   context: DbContext = db,
+  preloaded?: GetFundGroupsWorkspacePreloaded,
 ): FundGroupsWorkspace {
-  const accounts = getAccountsWithBalances(context);
-  const pockets = getPocketsWithBalances(context);
+  const accounts =
+    preloaded?.accounts ??
+    getAccountsWithBalances(context, { includeManagementFlags: false });
+  const pockets =
+    preloaded?.pockets ??
+    getPocketsWithBalances(context, { includeManagementFlags: false });
   const accountById = new Map(accounts.map((account) => [account.id, account]));
   const pocketById = new Map(pockets.map((pocket) => [pocket.id, pocket]));
   const accountMemberships = listFundGroupAccounts(context);
   const pocketMemberships = listFundGroupPockets(context);
 
+  const accountIdsByGroupId = new Map<string, string[]>();
+  for (const membership of accountMemberships) {
+    let bucket = accountIdsByGroupId.get(membership.fundGroupId);
+    if (!bucket) {
+      bucket = [];
+      accountIdsByGroupId.set(membership.fundGroupId, bucket);
+    }
+    bucket.push(membership.accountId);
+  }
+
+  const pocketIdsByGroupId = new Map<string, string[]>();
+  for (const membership of pocketMemberships) {
+    let bucket = pocketIdsByGroupId.get(membership.fundGroupId);
+    if (!bucket) {
+      bucket = [];
+      pocketIdsByGroupId.set(membership.fundGroupId, bucket);
+    }
+    bucket.push(membership.pocketId);
+  }
+
   const groups: FundGroupListItem[] = listFundGroups(context).map((group) => {
-    const accountIds = accountMemberships
-      .filter((membership) => membership.fundGroupId === group.id)
-      .map((membership) => membership.accountId);
-    const pocketIds = pocketMemberships
-      .filter((membership) => membership.fundGroupId === group.id)
-      .map((membership) => membership.pocketId);
+    const accountIds = accountIdsByGroupId.get(group.id) ?? [];
+    const pocketIds = pocketIdsByGroupId.get(group.id) ?? [];
 
     const accountMembers = accountIds.flatMap<FundGroupMemberItem>((accountId) => {
       const account = accountById.get(accountId);

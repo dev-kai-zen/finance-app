@@ -35,6 +35,8 @@ export interface UseTransactionsOptions {
   includeStats?: boolean;
 }
 
+let nextTransactionsHookId = 1;
+
 function isUseTransactionsOptions(
   value: TransactionFilter | UseTransactionsOptions | undefined,
 ): value is UseTransactionsOptions {
@@ -87,12 +89,30 @@ export function useTransactions(
   const [pendingAction, setPendingAction] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const hookInstanceIdRef = useRef<number>(nextTransactionsHookId++);
+  const cancelPendingRef = useRef<(() => void) | null>(null);
+
+  const emitTransactionMutated = useCallback(() => {
+    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED", {
+      sourceId: hookInstanceIdRef.current,
+    });
+  }, []);
+
+  const refreshDeletedTransactions = useCallback(() => {
+    try {
+      setError(null);
+      setDeletedTransactions(listDeletedTransactions());
+    } catch (err: any) {
+      setError(err?.message || "Failed to load deleted transactions.");
+    }
+  }, []);
 
   const refresh = useCallback(() => {
     if (skipQuery) {
       return;
     }
-    runDeferredSyncQuery(
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
         setLoading,
@@ -101,6 +121,7 @@ export function useTransactions(
         },
       },
       () => {
+        cancelPendingRef.current = null;
         try {
           setError(null);
           const list = listTransactions(filter);
@@ -133,6 +154,19 @@ export function useTransactions(
         return;
       }
       refresh();
+      const sub = DeviceEventEmitter.addListener(
+        "FINANCE_APP_TRANSACTION_MUTATED",
+        (payload?: { sourceId?: number }) => {
+          if (payload?.sourceId !== hookInstanceIdRef.current) {
+            refresh();
+          }
+        },
+      );
+      return () => {
+        sub.remove();
+        cancelPendingRef.current?.();
+        cancelPendingRef.current = null;
+      };
     }, [refresh, skipQuery]),
   );
 
@@ -154,7 +188,7 @@ export function useTransactions(
           attachmentChanges,
         )) as Transaction;
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        emitTransactionMutated();
         return result.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transaction.");
@@ -163,7 +197,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, refresh],
   );
 
   const recordTransfer = useCallback(
@@ -180,7 +214,7 @@ export function useTransactions(
           attachmentChanges,
         )) as TransferResult;
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        emitTransactionMutated();
         return result.outLeg.transactionGroupId ?? result.outLeg.id;
       } catch (err: any) {
         setError(err?.message || "Failed to record transfer.");
@@ -189,7 +223,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, refresh],
   );
 
   const deleteTx = useCallback(
@@ -199,7 +233,7 @@ export function useTransactions(
         setError(null);
         removeTransaction(id);
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        emitTransactionMutated();
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to delete transaction.");
@@ -208,7 +242,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, refresh],
   );
 
   const restoreTx = useCallback(
@@ -218,7 +252,10 @@ export function useTransactions(
         setError(null);
         restoreTransaction(id);
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        if (!includeDeleted) {
+          refreshDeletedTransactions();
+        }
+        emitTransactionMutated();
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to restore transaction.");
@@ -227,7 +264,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, includeDeleted, refresh, refreshDeletedTransactions],
   );
 
   const permanentlyDeleteTx = useCallback(
@@ -237,7 +274,10 @@ export function useTransactions(
         setError(null);
         permanentlyDeleteTransaction(id);
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        if (!includeDeleted) {
+          refreshDeletedTransactions();
+        }
+        emitTransactionMutated();
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to permanently delete transaction.");
@@ -246,7 +286,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, includeDeleted, refresh, refreshDeletedTransactions],
   );
 
   const permanentlyDeleteAllTx = useCallback(async (): Promise<boolean> => {
@@ -255,7 +295,10 @@ export function useTransactions(
       setError(null);
       permanentlyDeleteAllDeletedTransactions();
       refresh();
-      DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+      if (!includeDeleted) {
+        setDeletedTransactions([]);
+      }
+      emitTransactionMutated();
       return true;
     } catch (err: any) {
       setError(
@@ -265,7 +308,7 @@ export function useTransactions(
     } finally {
       setPendingAction(false);
     }
-  }, [refresh]);
+  }, [emitTransactionMutated, includeDeleted, refresh]);
 
   const editTransfer = useCallback(
     async (
@@ -277,7 +320,7 @@ export function useTransactions(
         setError(null);
         await updateTransfer(input, attachmentChanges);
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        emitTransactionMutated();
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to update transfer.");
@@ -286,7 +329,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, refresh],
   );
 
   const editTransaction = useCallback(
@@ -300,7 +343,7 @@ export function useTransactions(
         setError(null);
         await updateTransaction(id, input, attachmentChanges);
         refresh();
-        DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+        emitTransactionMutated();
         return true;
       } catch (err: any) {
         setError(err?.message || "Failed to update transaction.");
@@ -309,7 +352,7 @@ export function useTransactions(
         setPendingAction(false);
       }
     },
-    [refresh],
+    [emitTransactionMutated, refresh],
   );
 
   return {
@@ -331,5 +374,6 @@ export function useTransactions(
     permanentlyDeleteAllTx,
     clearError,
     refresh,
+    refreshDeletedTransactions,
   };
 }

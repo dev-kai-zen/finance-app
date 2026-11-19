@@ -78,12 +78,13 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
         excluded: fresh.rows.filter((r) => r.skip).map((r) => ({ row: r.number, reason: r.repeated ? "repeated" : r.issue || "excluded" })),
       };
       insertImportBatch({ id: batchId, fileName, kind: draft.kind, source: draft.source.trim() || "CSV", importedCount: fresh.accepted, skippedCount: fresh.skipped, summaryJson: JSON.stringify(summary), createdAt: new Date() }, tx);
+      const rowsByNumber = new Map(fresh.rows.map((r) => [r.number, r]));
       rows.forEach((row, index) => {
         const sourceAccount = normalizeImportName(cellValue(row.cells, draft, "account") || draft.defaultAccount);
         const ids = draft.kind === "transactions" ? recordIds[index] : [accountIds.get(sourceAccount)!];
         insertImportRecord({ id: randomUUID(), batchId, sourceKey: row.sourceKey, rowNumber: row.number, recordIdsJson: JSON.stringify(ids) }, tx);
         if (row.companion) {
-          const other = fresh.rows.find((r) => r.number === row.companion)!;
+          const other = rowsByNumber.get(row.companion)!;
           insertImportRecord({ id: randomUUID(), batchId, sourceKey: other.sourceKey, rowNumber: other.number, recordIdsJson: JSON.stringify(ids) }, tx);
         }
       });

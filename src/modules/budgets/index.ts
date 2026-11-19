@@ -38,6 +38,16 @@ export const checkBudgetExceeded = deferFunction(
   () => require("./services/check-budget-exceeded.service").checkBudgetExceeded,
 ) as typeof import("./services/check-budget-exceeded.service").checkBudgetExceeded;
 
+export const getBudgetLiveSnapshot = deferFunction(
+  () =>
+    require("./services/check-budget-exceeded.service").getBudgetLiveSnapshot,
+) as typeof import("./services/check-budget-exceeded.service").getBudgetLiveSnapshot;
+
+export const evaluateBudgetSnapshot = deferFunction(
+  () =>
+    require("./services/check-budget-exceeded.service").evaluateBudgetSnapshot,
+) as typeof import("./services/check-budget-exceeded.service").evaluateBudgetSnapshot;
+
 export const calculateCategoryBudgetStatus = deferFunction(
   () =>
     require("./services/calculate-category-budget.service")
@@ -80,4 +90,8 @@ export type {
   BudgetCheckResult,
   BudgetsSummary,
 } from "./types/budget.types";
-export type { CheckBudgetExceededInput } from "./services/check-budget-exceeded.service";
+export type {
+  BudgetLiveSnapshot,
+  BudgetLiveSnapshotInput,
+  CheckBudgetExceededInput,
+} from "./services/check-budget-exceeded.service";

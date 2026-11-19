@@ -5,10 +5,7 @@ import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
-import {
-  findCategoryBudgetByCategoryId,
-  listCategoryBudgets,
-} from "../repositories/category-budgets.repository";
+import { findCategoryBudgetByCategoryId } from "../repositories/category-budgets.repository";
 import type { BudgetCheckResult } from "../types/budget.types";
 import { calculateCategoryBudgetStatus } from "./calculate-category-budget.service";
 
@@ -21,22 +18,44 @@ export interface CheckBudgetExceededInput {
   context?: DbContext;
 }
 
+export type BudgetLiveSnapshotInput = Omit<
+  CheckBudgetExceededInput,
+  "amountMinorUnits"
+>;
+
+export interface BudgetLiveSnapshot {
+  hasBudget: boolean;
+  isEnabled: boolean;
+  categoryName: string;
+  budgetCurrencyCode: string;
+  frequency: BudgetCheckResult["frequency"];
+  periodLabel: string;
+  effectiveBudgetCents: number;
+  currentSpentCents: number;
+  remainingBeforeCents: number;
+  notifyOnExceeded: boolean;
+  expenseCurrency: string;
+  ratesMap: Map<string, number>;
+}
+
+const EMPTY_RATES = new Map<string, number>();
+
 /**
- * Checks whether an expense of `amountMinorUnits` will exceed the category's budget
- * (or its parent category's budget).
+ * Queries SQLite once for the active budget and period spend baseline for a
+ * category/date/currency. Pair with `evaluateBudgetSnapshot` so live typing
+ * previews run in O(1) JS without re-querying SQLite on every keystroke.
  */
-export function checkBudgetExceeded(
-  input: CheckBudgetExceededInput,
-): BudgetCheckResult {
+export function getBudgetLiveSnapshot(
+  input: BudgetLiveSnapshotInput,
+): BudgetLiveSnapshot {
   const {
     categoryId,
-    amountMinorUnits,
     occurredAt = new Date(),
     excludeTransactionId,
     context = db,
   } = input;
 
-  const noBudgetResult: BudgetCheckResult = {
+  const noBudgetSnapshot: BudgetLiveSnapshot = {
     hasBudget: false,
     isEnabled: false,
     categoryName: "",
@@ -45,22 +64,19 @@ export function checkBudgetExceeded(
     periodLabel: "",
     effectiveBudgetCents: 0,
     currentSpentCents: 0,
-    additionalExpenseCents: Math.abs(amountMinorUnits),
-    newSpentCents: Math.abs(amountMinorUnits),
     remainingBeforeCents: 0,
-    remainingAfterCents: 0,
-    exceeds: false,
-    exceededByCents: 0,
     notifyOnExceeded: false,
+    expenseCurrency: "",
+    ratesMap: EMPTY_RATES,
   };
 
   if (!categoryId) {
-    return noBudgetResult;
+    return noBudgetSnapshot;
   }
 
   const category = getCategory(categoryId, context);
   if (!category) {
-    return noBudgetResult;
+    return noBudgetSnapshot;
   }
 
   // 1. Try finding budget on this category directly
@@ -84,15 +100,11 @@ export function checkBudgetExceeded(
 
   if (!budget || !budget.isEnabled) {
     return {
-      ...noBudgetResult,
+      ...noBudgetSnapshot,
       categoryName: category.name,
     };
   }
 
-  // Fetch all active budgets so subcategories with their own budgets aren't counted twice
-  const allBudgets = listCategoryBudgets(context);
-  // Note: listCategoryBudgets is async in definition, let's use direct query or synchronous in SQLite
-  // Let's ensure synchronous execution in SQLite client
   const status = calculateCategoryBudgetStatus({
     budget,
     category: budgetedCategory,
@@ -102,22 +114,12 @@ export function checkBudgetExceeded(
     context,
   });
 
-  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
   const expenseCurrency =
     input.expenseCurrencyCode?.trim().toUpperCase() ?? budget.currencyCode;
-  const additionalExpenseCents = convertCurrencyMinorUnits(
-    Math.abs(amountMinorUnits),
-    expenseCurrency,
-    budget.currencyCode,
-    ratesMap,
-    DEFAULT_BASE_CURRENCY,
-  );
-  const newSpentCents = status.spentCents + additionalExpenseCents;
-  const exceeds =
-    status.effectiveTargetCents > 0
-      ? newSpentCents > status.effectiveTargetCents
-      : false;
-  const exceededByCents = Math.max(0, newSpentCents - status.effectiveTargetCents);
+  const ratesMap =
+    expenseCurrency !== budget.currencyCode
+      ? getExchangeRateMap(DEFAULT_BASE_CURRENCY, context)
+      : EMPTY_RATES;
 
   return {
     hasBudget: true,
@@ -128,12 +130,89 @@ export function checkBudgetExceeded(
     periodLabel: status.periodLabel,
     effectiveBudgetCents: status.effectiveTargetCents,
     currentSpentCents: status.spentCents,
+    remainingBeforeCents: status.remainingCents,
+    notifyOnExceeded: budget.notifyOnExceeded,
+    expenseCurrency,
+    ratesMap,
+  };
+}
+
+/**
+ * Pure O(1) evaluation of a pending expense amount against a pre-fetched
+ * `BudgetLiveSnapshot`. Performs zero database queries.
+ */
+export function evaluateBudgetSnapshot(
+  snapshot: BudgetLiveSnapshot,
+  amountMinorUnits: number,
+): BudgetCheckResult {
+  const absAmount = Math.abs(amountMinorUnits);
+
+  if (!snapshot.hasBudget || !snapshot.isEnabled) {
+    return {
+      hasBudget: snapshot.hasBudget,
+      isEnabled: snapshot.isEnabled,
+      categoryName: snapshot.categoryName,
+      budgetCurrencyCode: snapshot.budgetCurrencyCode,
+      frequency: snapshot.frequency,
+      periodLabel: snapshot.periodLabel,
+      effectiveBudgetCents: 0,
+      currentSpentCents: 0,
+      additionalExpenseCents: absAmount,
+      newSpentCents: absAmount,
+      remainingBeforeCents: 0,
+      remainingAfterCents: 0,
+      exceeds: false,
+      exceededByCents: 0,
+      notifyOnExceeded: false,
+    };
+  }
+
+  const additionalExpenseCents =
+    snapshot.expenseCurrency === snapshot.budgetCurrencyCode
+      ? absAmount
+      : convertCurrencyMinorUnits(
+          absAmount,
+          snapshot.expenseCurrency,
+          snapshot.budgetCurrencyCode,
+          snapshot.ratesMap,
+          DEFAULT_BASE_CURRENCY,
+        );
+  const newSpentCents = snapshot.currentSpentCents + additionalExpenseCents;
+  const exceeds =
+    snapshot.effectiveBudgetCents > 0
+      ? newSpentCents > snapshot.effectiveBudgetCents
+      : false;
+  const exceededByCents = Math.max(
+    0,
+    newSpentCents - snapshot.effectiveBudgetCents,
+  );
+
+  return {
+    hasBudget: true,
+    isEnabled: snapshot.isEnabled,
+    categoryName: snapshot.categoryName,
+    budgetCurrencyCode: snapshot.budgetCurrencyCode,
+    frequency: snapshot.frequency,
+    periodLabel: snapshot.periodLabel,
+    effectiveBudgetCents: snapshot.effectiveBudgetCents,
+    currentSpentCents: snapshot.currentSpentCents,
     additionalExpenseCents,
     newSpentCents,
-    remainingBeforeCents: status.remainingCents,
-    remainingAfterCents: status.effectiveTargetCents - newSpentCents,
+    remainingBeforeCents: snapshot.remainingBeforeCents,
+    remainingAfterCents: snapshot.effectiveBudgetCents - newSpentCents,
     exceeds,
     exceededByCents,
-    notifyOnExceeded: budget.notifyOnExceeded,
+    notifyOnExceeded: snapshot.notifyOnExceeded,
   };
+}
+
+/**
+ * Checks whether an expense of `amountMinorUnits` will exceed the category's budget
+ * (or its parent category's budget).
+ */
+export function checkBudgetExceeded(
+  input: CheckBudgetExceededInput,
+): BudgetCheckResult {
+  const snapshot = getBudgetLiveSnapshot(input);
+  return evaluateBudgetSnapshot(snapshot, input.amountMinorUnits);
 }

@@ -39,19 +39,44 @@ export function listNoteAttachmentsByNoteIds(
   noteIds: readonly string[],
   context: DbContext = db,
 ): NoteAttachment[] {
-  if (noteIds.length === 0) return [];
-  return context
-    .select()
-    .from(noteAttachments)
-    .where(
-      and(
-        inArray(noteAttachments.noteId, [...noteIds]),
-        isNull(noteAttachments.deletedAt),
-      ),
-    )
-    .orderBy(desc(noteAttachments.createdAt))
-    .all()
-    .map(mapAttachment);
+  const uniqueIds = Array.from(new Set(noteIds.filter(Boolean)));
+  if (uniqueIds.length === 0) return [];
+
+  const CHUNK_SIZE = 500;
+  if (uniqueIds.length <= CHUNK_SIZE) {
+    return context
+      .select()
+      .from(noteAttachments)
+      .where(
+        and(
+          inArray(noteAttachments.noteId, uniqueIds),
+          isNull(noteAttachments.deletedAt),
+        ),
+      )
+      .orderBy(desc(noteAttachments.createdAt))
+      .all()
+      .map(mapAttachment);
+  }
+
+  const all: NoteAttachment[] = [];
+  for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+    const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+    const rows = context
+      .select()
+      .from(noteAttachments)
+      .where(
+        and(
+          inArray(noteAttachments.noteId, chunk),
+          isNull(noteAttachments.deletedAt),
+        ),
+      )
+      .orderBy(desc(noteAttachments.createdAt))
+      .all()
+      .map(mapAttachment);
+    all.push(...rows);
+  }
+
+  return all.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
 export function findNoteAttachmentById(

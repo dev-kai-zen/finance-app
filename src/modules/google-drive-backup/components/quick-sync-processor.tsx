@@ -27,8 +27,43 @@ function shouldQueueQuickSyncForDatabaseChange(
   return QUICK_SYNC_WATCHED_TABLE_NAME_SET.has(event.tableName);
 }
 
+const QUICK_SYNC_RESUME_DELAY_MS = 1500;
+
 export function QuickSyncProcessor() {
   useEffect(() => {
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let latestNetState: { isConnected: boolean | null; type: string } | null =
+      null;
+
+    const clearPendingResumeTimer = () => {
+      if (resumeTimer !== null) {
+        clearTimeout(resumeTimer);
+        resumeTimer = null;
+      }
+    };
+
+    const scheduleDeferredSyncCheck = (requireNetworkMatch: boolean) => {
+      clearPendingResumeTimer();
+      resumeTimer = setTimeout(() => {
+        resumeTimer = null;
+        const config = getQuickSyncConfig();
+        if (!config.enabled) {
+          return;
+        }
+        if (requireNetworkMatch && latestNetState) {
+          if (
+            !latestNetState.isConnected ||
+            (config.network !== "any" &&
+              latestNetState.type !== "wifi" &&
+              latestNetState.type !== "ethernet")
+          ) {
+            return;
+          }
+        }
+        void triggerQuickSync({ config });
+      }, QUICK_SYNC_RESUME_DELAY_MS);
+    };
+
     const dbSubscription = addDatabaseChangeListener((event) => {
       if (!shouldQueueQuickSyncForDatabaseChange(event)) {
         return;
@@ -38,17 +73,12 @@ export function QuickSyncProcessor() {
     });
 
     const netInfoSubscription = NetInfo.addEventListener((netState) => {
+      latestNetState = {
+        isConnected: netState.isConnected,
+        type: netState.type,
+      };
       if (netState.isConnected) {
-        const config = getQuickSyncConfig();
-        if (config.enabled) {
-          if (
-            config.network === "any" ||
-            netState.type === "wifi" ||
-            netState.type === "ethernet"
-          ) {
-            void triggerQuickSync();
-          }
-        }
+        scheduleDeferredSyncCheck(true);
       }
     });
 
@@ -56,17 +86,16 @@ export function QuickSyncProcessor() {
       "change",
       (nextState) => {
         if (nextState === "background" || nextState === "inactive") {
+          clearPendingResumeTimer();
           flushDebouncedQuickSync();
         } else if (nextState === "active") {
-          const config = getQuickSyncConfig();
-          if (config.enabled) {
-            void triggerQuickSync();
-          }
+          scheduleDeferredSyncCheck(false);
         }
       },
     );
 
     return () => {
+      clearPendingResumeTimer();
       dbSubscription.remove();
       netInfoSubscription();
       appStateSubscription.remove();

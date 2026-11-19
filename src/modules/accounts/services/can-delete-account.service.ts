@@ -25,8 +25,13 @@ export function canDeleteAccount(
   return !isAccountInUse(accountId, context);
 }
 
-export function getAccountIdsInUse(context: DbContext = db): Set<string> {
-  const transactionAccounts = getAccountIdsInUseByTransactions(context);
+export function getAccountIdsInUse(
+  context: DbContext = db,
+  precomputedTransactionAccountIds?: ReadonlySet<string>,
+): Set<string> {
+  const transactionAccounts =
+    precomputedTransactionAccountIds ??
+    getAccountIdsInUseByTransactions(context);
   const scheduledAccounts = getAccountIdsWithSchedules(context);
   const inUse = new Set(transactionAccounts);
   for (const id of scheduledAccounts) {

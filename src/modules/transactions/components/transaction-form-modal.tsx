@@ -121,7 +121,7 @@ import { QuickPresetSuggestions } from "./quick-preset-suggestions";
 import { TransactionAttachmentManagerModal } from "./transaction-attachment-manager-modal";
 import { useTransactionAttachmentDraft } from "../hooks/use-transaction-attachments";
 import {
-  findLabelById,
+  findLabelsByIds,
   LabelPickerModal,
   useLabels,
   type Label,
@@ -493,16 +493,19 @@ function TransactionFormModalInner({
   const { labels, refresh: refreshLabels } = useLabels({ includeArchived: true });
   const formInitSessionRef = useRef<string | null>(null);
 
-  const selectedLabelsForChips = useMemo(
-    () =>
-      selectedLabelIds
-        .map(
-          (id) =>
-            labels.find((label) => label.id === id) ?? findLabelById(id),
-        )
-        .filter((label): label is Label => label != null),
-    [labels, selectedLabelIds],
-  );
+  const selectedLabelsForChips = useMemo(() => {
+    if (selectedLabelIds.length === 0) return [];
+    const labelById = new Map(labels.map((label) => [label.id, label]));
+    const missingIds = selectedLabelIds.filter((id) => !labelById.has(id));
+    if (missingIds.length > 0) {
+      for (const fetched of findLabelsByIds(missingIds)) {
+        labelById.set(fetched.id, fetched);
+      }
+    }
+    return selectedLabelIds
+      .map((id) => labelById.get(id))
+      .filter((label): label is Label => label != null);
+  }, [labels, selectedLabelIds]);
 
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,

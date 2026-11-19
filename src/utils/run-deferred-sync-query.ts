@@ -2,6 +2,7 @@ import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 
 /**
  * Shows loading state on the current frame, then runs a synchronous SQLite query.
+ * Returns a cancel function that prevents a stale pending query from executing.
  */
 export function runDeferredSyncQuery(
   options: {
@@ -10,17 +11,26 @@ export function runDeferredSyncQuery(
     onMarkLoaded?: () => void;
   },
   query: () => void,
-): void {
+): () => void {
   if (!options.hasCachedResult) {
     options.setLoading(true);
   }
 
-  scheduleAfterPaint(() => {
+  let cancelled = false;
+  const cancelScheduled = scheduleAfterPaint(() => {
+    if (cancelled) return;
     try {
       query();
     } finally {
-      options.onMarkLoaded?.();
-      options.setLoading(false);
+      if (!cancelled) {
+        options.onMarkLoaded?.();
+        options.setLoading(false);
+      }
     }
   });
+
+  return () => {
+    cancelled = true;
+    cancelScheduled();
+  };
 }

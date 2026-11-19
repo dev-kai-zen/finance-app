@@ -15,9 +15,22 @@ export function useDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const cancelPendingQueryRef = useRef<(() => void) | null>(null);
+  const cancelPendingHistoryRef = useRef<(() => void) | null>(null);
+
+  const cancelPending = useCallback(() => {
+    cancelPendingQueryRef.current?.();
+    cancelPendingQueryRef.current = null;
+    cancelPendingHistoryRef.current?.();
+    cancelPendingHistoryRef.current = null;
+  }, []);
 
   const refresh = useCallback(() => {
-    runDeferredSyncQuery(
+    cancelPending();
+    const requestId = ++requestIdRef.current;
+
+    cancelPendingQueryRef.current = runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
         setLoading,
@@ -26,13 +39,21 @@ export function useDashboard() {
         },
       },
       () => {
+        cancelPendingQueryRef.current = null;
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
         try {
           setError(null);
           const quick = getDashboardSummary(undefined, new Date(), {
             includeNetWorthHistory: false,
           });
           setSummary(quick);
-          scheduleAfterPaint(() => {
+          cancelPendingHistoryRef.current = scheduleAfterPaint(() => {
+            cancelPendingHistoryRef.current = null;
+            if (requestId !== requestIdRef.current) {
+              return;
+            }
             try {
               const netWorthHistory = getNetWorthHistory(
                 quick.accountsWithBalances,
@@ -70,12 +91,16 @@ export function useDashboard() {
         }
       },
     );
-  }, [preferences.defaultCurrency]);
+  }, [cancelPending, preferences.defaultCurrency]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh]),
+      return () => {
+        requestIdRef.current += 1;
+        cancelPending();
+      };
+    }, [cancelPending, refresh]),
   );
 
   return {

@@ -1,4 +1,7 @@
-import { getAccountsWithBalances } from "@/modules/accounts";
+import {
+  getAccountsWithBalances,
+  type AccountListItem,
+} from "@/modules/accounts";
 import {
   getCurrencyPreferences,
   getExchangeRateMap,
@@ -62,16 +65,52 @@ export function computeCreditCardAccountMonitoring(
   const entries = listEntriesForStatements(
     statements.map((statement) => statement.id),
   );
-  const statementSummaries = statements.map((statement) => ({
-    ...statement,
-    remainingAmountMinorUnits: Math.max(
-      0,
-      entries
-        .filter((entry) => entry.statementId === statement.id)
-        .reduce((sum, entry) => sum + entry.amountMinorUnits, 0),
-    ),
-    entries: entries.filter((entry) => entry.statementId === statement.id),
-  }));
+  const entriesByStatementId = new Map<string, typeof entries>();
+  const billedTransactionIds = new Set<string>();
+  const installmentBilledByTxId = new Map<string, number>();
+  const allocatedCreditsByTxId = new Map<string, number>();
+
+  for (const entry of entries) {
+    let bucket = entriesByStatementId.get(entry.statementId);
+    if (!bucket) {
+      bucket = [];
+      entriesByStatementId.set(entry.statementId, bucket);
+    }
+    bucket.push(entry);
+
+    if (entry.transactionId) {
+      if (entry.entryType === "charge" || entry.entryType === "installment") {
+        billedTransactionIds.add(entry.transactionId);
+      }
+      if (entry.entryType === "installment") {
+        installmentBilledByTxId.set(
+          entry.transactionId,
+          (installmentBilledByTxId.get(entry.transactionId) ?? 0) +
+            entry.amountMinorUnits,
+        );
+      }
+      if (entry.amountMinorUnits < 0) {
+        allocatedCreditsByTxId.set(
+          entry.transactionId,
+          (allocatedCreditsByTxId.get(entry.transactionId) ?? 0) +
+            Math.abs(entry.amountMinorUnits),
+        );
+      }
+    }
+  }
+
+  const statementSummaries = statements.map((statement) => {
+    const statementEntries = entriesByStatementId.get(statement.id) ?? [];
+    let totalAmount = 0;
+    for (const entry of statementEntries) {
+      totalAmount += entry.amountMinorUnits;
+    }
+    return {
+      ...statement,
+      remainingAmountMinorUnits: Math.max(0, totalAmount),
+      entries: statementEntries,
+    };
+  });
   const dueThisMonth = statementSummaries
     .filter(
       (statement) =>
@@ -100,18 +139,10 @@ export function computeCreditCardAccountMonitoring(
   const ledger = excludeTransactionId
     ? rawLedger.filter((transaction) => transaction.id !== excludeTransactionId)
     : rawLedger;
+  const ledgerById = new Map(ledger.map((transaction) => [transaction.id, transaction]));
   const plans = listInstallmentPlansForAccount(account.id);
   const planTransactionIds = new Set(
     plans.map((plan) => plan.purchaseTransactionId),
-  );
-  const billedTransactionIds = new Set(
-    entries
-      .filter(
-        (entry) =>
-          entry.transactionId &&
-          ["charge", "installment"].includes(entry.entryType),
-      )
-      .map((entry) => entry.transactionId!),
   );
   const billedItems = statementSummaries
     .filter((statement) => statement.remainingAmountMinorUnits > 0)
@@ -154,17 +185,10 @@ export function computeCreditCardAccountMonitoring(
     ) {
       continue;
     }
-    const purchase = ledger.find(
-      (transaction) => transaction.id === plan.purchaseTransactionId,
-    );
+    const purchase = ledgerById.get(plan.purchaseTransactionId);
     if (!purchase) continue;
-    const billedPrincipal = entries
-      .filter(
-        (entry) =>
-          entry.transactionId === plan.purchaseTransactionId &&
-          entry.entryType === "installment",
-      )
-      .reduce((sum, entry) => sum + entry.amountMinorUnits, 0);
+    const billedPrincipal =
+      installmentBilledByTxId.get(plan.purchaseTransactionId) ?? 0;
     const remainingPrincipal = Math.max(
       0,
       plan.principalMinorUnits - billedPrincipal,
@@ -189,13 +213,7 @@ export function computeCreditCardAccountMonitoring(
   const unallocatedCredits = ledger
     .filter((transaction) => transaction.amountMinorUnits > 0)
     .reduce((sum, transaction) => {
-      const allocated = entries
-        .filter(
-          (entry) =>
-            entry.transactionId === transaction.id &&
-            entry.amountMinorUnits < 0,
-        )
-        .reduce((eSum, entry) => eSum + Math.abs(entry.amountMinorUnits), 0);
+      const allocated = allocatedCreditsByTxId.get(transaction.id) ?? 0;
       return sum + Math.max(0, transaction.amountMinorUnits - allocated);
     }, 0);
   const billed = calculateCreditCardBilled(statementSummaries);
@@ -236,9 +254,13 @@ export function computeCreditCardAccountMonitoring(
 
 export function getCreditCardMonitoring(
   today = new Date(),
+  preloadedAccounts?: readonly AccountListItem[],
 ): CreditCardMonitoringSummary {
   ensureCreditCardBillingReconciled(today);
-  const cards: CreditCardMonitoringItem[] = getAccountsWithBalances()
+  const sourceAccounts =
+    preloadedAccounts ??
+    getAccountsWithBalances(undefined, { includeManagementFlags: false });
+  const cards: CreditCardMonitoringItem[] = sourceAccounts
     .filter((account) => account.creditCardDetails && !account.isArchived)
     .map((account) => computeCreditCardAccountMonitoring(account, today)!)
     .filter(Boolean);
