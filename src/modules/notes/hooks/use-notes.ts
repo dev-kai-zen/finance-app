@@ -4,7 +4,7 @@ import {
   DEFAULT_NOTE_SORT_OPTION,
   DEFAULT_NOTE_VIEW_MODE,
 } from "../constants/notes.constants";
-import { listNotes } from "../repositories/notes.repository";
+import { hasNotes, listNotes } from "../repositories/notes.repository";
 import { createNote as createNoteService } from "../services/create-note.service";
 import { updateNote as updateNoteService } from "../services/update-note.service";
 import { deleteNote as deleteNoteService } from "../services/delete-note.service";
@@ -16,11 +16,15 @@ import type {
   UpdateNoteInput,
 } from "../types/note.types";
 
-export function useNotes(options?: { autoRefresh?: boolean }) {
+export function useNotes(options?: {
+  autoRefresh?: boolean;
+  skipQuery?: boolean;
+}) {
   const autoRefresh = options?.autoRefresh ?? true;
+  const skipQuery = options?.skipQuery ?? false;
   const [notes, setNotes] = useState<Note[]>([]);
   const [hasAnyNotes, setHasAnyNotes] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
@@ -29,6 +33,9 @@ export function useNotes(options?: { autoRefresh?: boolean }) {
   const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
+    if (skipQuery) {
+      return;
+    }
     try {
       if (!hasLoadedOnceRef.current) {
         setLoading(true);
@@ -41,7 +48,7 @@ export function useNotes(options?: { autoRefresh?: boolean }) {
       setNotes(items);
       setHasAnyNotes(
         trimmedSearch.length > 0
-          ? listNotes({ sortBy }).length > 0
+          ? hasNotes()
           : items.length > 0,
       );
       setError(null);
@@ -51,15 +58,15 @@ export function useNotes(options?: { autoRefresh?: boolean }) {
       hasLoadedOnceRef.current = true;
       setLoading(false);
     }
-  }, [search, sortBy]);
+  }, [search, skipQuery, sortBy]);
 
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh || skipQuery) return;
     const frameId = requestAnimationFrame(() => {
       refresh();
     });
     return () => cancelAnimationFrame(frameId);
-  }, [autoRefresh, refresh]);
+  }, [autoRefresh, refresh, skipQuery]);
 
   const createNote = useCallback(
     async (input: CreateNoteInput): Promise<Note> => {

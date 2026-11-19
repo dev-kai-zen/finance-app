@@ -1,9 +1,8 @@
-import { useEffect, useMemo } from "react";
-import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
+import { useMemo } from "react";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
-import { useTransactions } from "@/modules/transactions";
+import { searchTransactions } from "@/modules/transactions";
 import { useBudgets } from "@/modules/budgets";
 import { useGoals } from "@/modules/goals";
 import { useNotes } from "@/modules/notes";
@@ -24,51 +23,21 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { t } = useLocalization();
   const accountsHook = useAccounts({ includeCreditCardMonitoring: false });
   const categoriesHook = useCategories();
-  const transactionsHook = useTransactions();
   const budgetsHook = useBudgets();
   const goalsHook = useGoals();
-  const notesHook = useNotes();
+  const notesHook = useNotes({ autoRefresh: false, skipQuery: !isOpen });
   const schedulesHook = useScheduledTransactions();
   const labelsHook = useLabels();
   const subscriptionsHook = useSubscriptions();
 
-  const { accounts, pockets, refresh: refreshAccounts } = accountsHook;
-  const { categories, refresh: refreshCategories } = categoriesHook;
-  const { transactions, refresh: refreshTransactions } = transactionsHook;
-  const { budgets, refresh: refreshBudgets } = budgetsHook;
-  const { goals, refresh: refreshGoals } = goalsHook;
-  const { notes, refresh: refreshNotes } = notesHook;
-  const { schedules, refresh: refreshSchedules } = schedulesHook;
-  const { labels, refresh: refreshLabels } = labelsHook;
-  const { subscriptions, refresh: refreshSubscriptions } = subscriptionsHook;
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    scheduleAfterPaint(() => {
-      void refreshAccounts?.();
-      void refreshCategories?.();
-      void refreshTransactions?.();
-      void refreshBudgets?.();
-      void refreshGoals?.();
-      void refreshNotes?.();
-      void refreshSchedules?.();
-      void refreshLabels?.();
-      void refreshSubscriptions?.();
-    });
-  }, [
-    isOpen,
-    refreshAccounts,
-    refreshCategories,
-    refreshTransactions,
-    refreshBudgets,
-    refreshGoals,
-    refreshNotes,
-    refreshSchedules,
-    refreshLabels,
-    refreshSubscriptions,
-  ]);
+  const { accounts, pockets } = accountsHook;
+  const { categories } = categoriesHook;
+  const { budgets } = budgetsHook;
+  const { goals } = goalsHook;
+  const { notes } = notesHook;
+  const { schedules } = schedulesHook;
+  const { labels } = labelsHook;
+  const { subscriptions } = subscriptionsHook;
 
   const sections = useMemo<SearchResultSection[]>(() => {
     const trimmed = query.trim().toLowerCase();
@@ -221,33 +190,29 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
       }
     }
 
-    // 6. Filter transactions (top 8 matches)
+    // 6. Filter transactions (top 8 matches via targeted SQL query)
     const matchedTransactions: SearchResultItem[] = [];
-    if (transactions && transactions.length > 0) {
-      for (const tx of transactions) {
-        const nameMatch = tx.name?.toLowerCase().includes(trimmed);
-        const noteMatch = tx.note?.toLowerCase().includes(trimmed);
-        const catMatch = tx.categoryName?.toLowerCase().includes(trimmed);
-
-        if (nameMatch || noteMatch || catMatch) {
-          const dateStr = new Date(tx.occurredAt).toLocaleDateString(undefined, {
-            month: "short",
-            day: "numeric",
-          });
-          const amountStr = formatCurrency(tx.amountMinorUnits, tx.currencyCode);
-          const searchParam = encodeURIComponent(tx.name || tx.categoryName || tx.note || trimmed);
-          matchedTransactions.push({
-            id: `user_tx_${tx.id}`,
-            category: "transaction",
-            title: tx.name || tx.categoryName || tx.note || "Transaction",
-            description: `${dateStr} · ${amountStr}${tx.note ? ` · ${tx.note}` : ""}`,
-            iconName: "receipt",
-            iconColor: tx.type === "expense" ? "#EF4444" : "#10B981",
-            route: `/transactions?search=${searchParam}&inspectId=${tx.id}`,
-            badge: t("search.sectionTransactions"),
-          });
-          if (matchedTransactions.length >= 8) break;
-        }
+    if (trimmed.length > 0) {
+      const searchResults = searchTransactions(trimmed, 8);
+      for (const tx of searchResults) {
+        const dateStr = new Date(tx.occurredAt).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+        });
+        const amountStr = formatCurrency(tx.amountMinorUnits, tx.currencyCode);
+        const searchParam = encodeURIComponent(
+          tx.name || tx.categoryName || tx.note || trimmed,
+        );
+        matchedTransactions.push({
+          id: `user_tx_${tx.id}`,
+          category: "transaction",
+          title: tx.name || tx.categoryName || tx.note || "Transaction",
+          description: `${dateStr} · ${amountStr}${tx.note ? ` · ${tx.note}` : ""}`,
+          iconName: "receipt",
+          iconColor: tx.type === "expense" ? "#EF4444" : "#10B981",
+          route: `/transactions?search=${searchParam}&inspectId=${tx.id}`,
+          badge: t("search.sectionTransactions"),
+        });
       }
     }
 
@@ -521,7 +486,6 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     accounts,
     pockets,
     categories,
-    transactions,
     budgets,
     goals,
     notes,

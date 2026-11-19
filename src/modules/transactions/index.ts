@@ -273,6 +273,17 @@ export const findRecentDuplicateTransaction = deferFunction(
       .findRecentDuplicateTransaction,
 ) as typeof import("./services/find-recent-duplicate.service").findRecentDuplicateTransaction;
 
+export const searchTransactions = deferFunction(
+  () => require("./services/search-transactions.service").searchTransactions,
+) as typeof import("./services/search-transactions.service").searchTransactions;
+
+export const getCalendarMonthTransactions = deferFunction(
+  () =>
+    require("./services/get-calendar-month-transactions.service")
+      .getCalendarMonthTransactions,
+) as typeof import("./services/get-calendar-month-transactions.service").getCalendarMonthTransactions;
+
+export type { TransactionSearchResult } from "./services/search-transactions.service";
 export type { MerchantHistoryInsight } from "./services/get-merchant-history.service";
 export type {
   DuplicateCheckInput,

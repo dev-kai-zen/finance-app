@@ -29,14 +29,22 @@ import type { TransactionPresetSubmission } from "../types/transaction-preset.ty
 
 export interface UseTransactionsOptions {
   initialFilter?: TransactionFilter;
+  filter?: TransactionFilter;
   skipQuery?: boolean;
+  includeDeleted?: boolean;
+  includeStats?: boolean;
 }
 
 function isUseTransactionsOptions(
   value: TransactionFilter | UseTransactionsOptions | undefined,
 ): value is UseTransactionsOptions {
   return Boolean(
-    value && ("skipQuery" in value || "initialFilter" in value),
+    value &&
+      ("skipQuery" in value ||
+        "initialFilter" in value ||
+        "filter" in value ||
+        "includeDeleted" in value ||
+        "includeStats" in value),
   );
 }
 
@@ -46,13 +54,25 @@ export function useTransactions(
   const skipQuery = isUseTransactionsOptions(filterOrOptions)
     ? Boolean(filterOrOptions.skipQuery)
     : false;
-  const resolvedInitialFilter = isUseTransactionsOptions(filterOrOptions)
+  const initialFilterFromOptions = isUseTransactionsOptions(filterOrOptions)
     ? filterOrOptions.initialFilter
     : filterOrOptions;
+  const controlledFilter = isUseTransactionsOptions(filterOrOptions)
+    ? filterOrOptions.filter
+    : undefined;
+  const includeDeleted = isUseTransactionsOptions(filterOrOptions)
+    ? (filterOrOptions.includeDeleted ?? true)
+    : true;
+  const includeStats = isUseTransactionsOptions(filterOrOptions)
+    ? (filterOrOptions.includeStats ?? true)
+    : true;
 
-  const [filter, setFilter] = useState<TransactionFilter>(
-    resolvedInitialFilter ?? { type: "all" },
+  const [internalFilter, setInternalFilter] = useState<TransactionFilter>(
+    controlledFilter ?? initialFilterFromOptions ?? { type: "all" },
   );
+
+  const filter = controlledFilter ?? internalFilter;
+  const setFilter = setInternalFilter;
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
   const [deletedTransactions, setDeletedTransactions] = useState<
     TransactionListItem[]
@@ -84,17 +104,28 @@ export function useTransactions(
         try {
           setError(null);
           const list = listTransactions(filter);
-          const deletedList = listDeletedTransactions();
-          const computedStats = calculateTransactionStats();
+          const deletedList = includeDeleted ? listDeletedTransactions() : [];
+          const computedStats = includeStats
+            ? calculateTransactionStats()
+            : {
+                totalInflowMinorUnits: 0,
+                totalOutflowMinorUnits: 0,
+                netCashflowMinorUnits: 0,
+                transactionCount: 0,
+              };
           setTransactions(list);
-          setDeletedTransactions(deletedList);
-          setStats(computedStats);
+          if (includeDeleted) {
+            setDeletedTransactions(deletedList);
+          }
+          if (includeStats) {
+            setStats(computedStats);
+          }
         } catch (err: any) {
           setError(err?.message || "Failed to load transactions.");
         }
       },
     );
-  }, [filter, skipQuery]);
+  }, [filter, includeDeleted, includeStats, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {

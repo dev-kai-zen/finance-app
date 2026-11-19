@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { ArrowLeftRight } from "lucide-react-native";
-import { PageEmptyState } from "@/components";
+import { AppButton, PageEmptyState } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import {
@@ -18,6 +18,9 @@ export interface CalendarTransactionsTabProps {
   selectedDay: string | null;
   onPressTransaction: (tx: TransactionListItem) => void;
   onDeleteTransaction?: (id: string) => void;
+  visibleCount?: number;
+  totalCount?: number;
+  onLoadMore?: () => void;
 }
 
 interface DateGroup {
@@ -31,14 +34,25 @@ export function CalendarTransactionsTab({
   selectedDay,
   onPressTransaction,
   onDeleteTransaction,
+  visibleCount = 50,
+  totalCount,
+  onLoadMore,
 }: CalendarTransactionsTabProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
 
+  const effectiveTotal = totalCount ?? transactions.length;
+  const displayedTransactions = useMemo(() => {
+    if (visibleCount >= transactions.length) {
+      return transactions;
+    }
+    return transactions.slice(0, visibleCount);
+  }, [transactions, visibleCount]);
+
   const grouped = useMemo<DateGroup[]>(() => {
     const map = new Map<string, TransactionListItem[]>();
 
-    for (const tx of transactions) {
+    for (const tx of displayedTransactions) {
       if (!tx.occurredAt) continue;
       const key = getDateKeyFromDate(tx.occurredAt);
       const list = map.get(key) ?? [];
@@ -54,7 +68,7 @@ export function CalendarTransactionsTab({
       label: formatFriendlyDate(key),
       items: map.get(key)!,
     }));
-  }, [transactions]);
+  }, [displayedTransactions]);
 
   if (transactions.length === 0) {
     return (
@@ -72,11 +86,13 @@ export function CalendarTransactionsTab({
     );
   }
 
+  const hasMore = displayedTransactions.length < effectiveTotal;
+
   // If a single day is selected, show list directly
   if (selectedDay) {
     return (
       <View style={styles.listContainer}>
-        {transactions.map((tx) => (
+        {displayedTransactions.map((tx) => (
           <TransactionRow
             key={tx.id}
             onDelete={onDeleteTransaction}
@@ -84,6 +100,21 @@ export function CalendarTransactionsTab({
             transaction={tx}
           />
         ))}
+        {hasMore && (
+          <View style={styles.loadMoreContainer}>
+            <Text style={styles.loadMoreText}>
+              Showing {displayedTransactions.length} of {effectiveTotal} records
+            </Text>
+            {onLoadMore && (
+              <AppButton
+                label="Load next 50"
+                onPress={onLoadMore}
+                size="small"
+                variant="secondary"
+              />
+            )}
+          </View>
+        )}
       </View>
     );
   }
@@ -115,6 +146,22 @@ export function CalendarTransactionsTab({
           </View>
         </View>
       ))}
+
+      {hasMore && (
+        <View style={styles.loadMoreContainer}>
+          <Text style={styles.loadMoreText}>
+            Showing {displayedTransactions.length} of {effectiveTotal} records
+          </Text>
+          {onLoadMore && (
+            <AppButton
+              label="Load next 50"
+              onPress={onLoadMore}
+              size="small"
+              variant="secondary"
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -163,6 +210,17 @@ function createStyles(theme: AppTheme) {
     },
     groupItems: {
       gap: 2,
+    },
+    loadMoreContainer: {
+      alignItems: "center",
+      gap: theme.spacing.xs,
+      justifyContent: "center",
+      paddingVertical: theme.spacing.md,
+    },
+    loadMoreText: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      fontWeight: "500",
     },
   });
 }

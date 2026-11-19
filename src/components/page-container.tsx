@@ -1,6 +1,8 @@
 import { PropsWithChildren, ReactNode, useEffect, useRef } from "react";
 import {
   Animated,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -30,6 +32,8 @@ export interface PageContainerProps extends PropsWithChildren {
   scrollContentRef?: React.RefObject<View | null>;
   onRefresh?: () => Promise<void> | void;
   refreshing?: boolean;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  scrollEventThrottle?: number;
 }
 
 export function PageContainer({
@@ -44,6 +48,8 @@ export function PageContainer({
   scrollContentRef,
   onRefresh,
   refreshing,
+  onScroll,
+  scrollEventThrottle = 16,
 }: PageContainerProps) {
   const theme = useAppTheme();
   const { width } = useWindowDimensions();
@@ -87,7 +93,9 @@ export function PageContainer({
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        onScroll={onScroll}
         scrollEnabled={scrollEnabled}
+        scrollEventThrottle={scrollEventThrottle}
         showsVerticalScrollIndicator
         style={styles.scrollWrapper}
         refreshControl={

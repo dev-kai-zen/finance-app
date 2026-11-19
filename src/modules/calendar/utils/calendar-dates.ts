@@ -59,6 +59,19 @@ export function getEndOfMonthDateKey(year: number, month: number): string {
   return formatDateKey(year, month, lastDay);
 }
 
+export function getCalendarGridDateRange(
+  year: number,
+  month: number,
+): { startDate: Date; endDate: Date } {
+  const rawCells = buildCalendarMonthGrid(year, month);
+  const first = rawCells[0];
+  const last = rawCells[rawCells.length - 1];
+  return {
+    startDate: new Date(first.year, first.monthIndex, first.dayNumber, 0, 0, 0, 0),
+    endDate: new Date(last.year, last.monthIndex, last.dayNumber, 23, 59, 59, 999),
+  };
+}
+
 
 export interface GridCellMeta {
   dateKey: string;

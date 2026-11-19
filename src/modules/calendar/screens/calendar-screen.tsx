@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 import {
   ConfirmModal,
@@ -269,10 +275,50 @@ function CalendarScreenContent() {
           ? balanceSheetAccountCount
           : scopedTransactions.length;
 
+  // List windowing (50 at a time) for 60-120fps smoothness without ANR
+  const [visibleTxCount, setVisibleTxCount] = useState(50);
+
+  // Reset pagination when activeMonth or selectedDay changes
+  useEffect(() => {
+    setVisibleTxCount(50);
+  }, [activeMonth.year, activeMonth.month, selectedDay]);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Only paginate whole-month transaction list (single-day selection does not need windowing)
+      if (activeTab !== "transactions" || selectedDay !== null) return;
+      const { layoutMeasurement, contentOffset, contentSize } =
+        event.nativeEvent;
+
+      // Ensure the content actually exceeds the viewport and user has scrolled down
+      if (
+        contentOffset.y > 50 &&
+        contentSize.height > layoutMeasurement.height &&
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - 250
+      ) {
+        setVisibleTxCount((prev) => {
+          if (prev < scopedTransactions.length) {
+            return Math.min(prev + 50, scopedTransactions.length);
+          }
+          return prev;
+        });
+      }
+    },
+    [activeTab, selectedDay, scopedTransactions.length],
+  );
+
+  const handleLoadMoreTransactions = useCallback(() => {
+    setVisibleTxCount((prev) =>
+      Math.min(prev + 50, scopedTransactions.length),
+    );
+  }, [scopedTransactions.length]);
+
   return (
     <View style={styles.screenWrapper}>
       <PageContainer
+        onScroll={handleScroll}
         scrollContentRef={scrollContentRef}
+        scrollEventThrottle={16}
         scrollRef={scrollRef}
         scrollEnabled={
           walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
@@ -340,9 +386,12 @@ function CalendarScreenContent() {
             {activeTab === "transactions" && (
               <CalendarTransactionsTab
                 onDeleteTransaction={handleDeleteTransaction}
+                onLoadMore={handleLoadMoreTransactions}
                 onPressTransaction={(tx) => setInspectedTransaction(tx)}
                 selectedDay={selectedDay}
+                totalCount={scopedTransactions.length}
                 transactions={scopedTransactions}
+                visibleCount={visibleTxCount}
               />
             )}
 

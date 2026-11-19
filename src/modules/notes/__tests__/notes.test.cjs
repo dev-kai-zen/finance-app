@@ -127,3 +127,30 @@ test("notes: sorting prioritizes pinned notes, then last modified or title", () 
   assert.equal(byTitle[1].id, "n1"); // Bravo Note
   assert.equal(byTitle[2].id, "n3"); // Charlie Note
 });
+
+test("hasNotes: detects whether any non-deleted note exists with LIMIT 1", () => {
+  const db = setupTestDb();
+  const hasNotesQuery = () =>
+    Boolean(
+      db
+        .prepare("SELECT id FROM notes WHERE deleted_at IS NULL LIMIT 1")
+        .get(),
+    );
+
+  assert.equal(hasNotesQuery(), false);
+
+  const now = Date.now();
+  db.prepare(`
+    INSERT INTO notes (id, title, content, color, is_pinned, created_at, updated_at, deleted_at)
+    VALUES ('n-deleted', 'Deleted Note', 'Content', null, 0, ?, ?, ?)
+  `).run(now, now, now);
+
+  assert.equal(hasNotesQuery(), false, "Deleted note should not satisfy hasNotes");
+
+  db.prepare(`
+    INSERT INTO notes (id, title, content, color, is_pinned, created_at, updated_at)
+    VALUES ('n-active', 'Active Note', 'Content', null, 0, ?, ?)
+  `).run(now, now);
+
+  assert.equal(hasNotesQuery(), true, "Active note satisfies hasNotes");
+});

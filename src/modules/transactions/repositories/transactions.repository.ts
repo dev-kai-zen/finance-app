@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   DEFAULT_BASE_CURRENCY,
@@ -323,17 +323,26 @@ export function listTransactions(
       )`,
     );
   }
+  if (filter?.startDate) {
+    conditions.push(gte(transactions.occurredAt, filter.startDate));
+  }
+  if (filter?.endDate) {
+    conditions.push(lte(transactions.occurredAt, filter.endDate));
+  }
 
   const rows = query.where(and(...conditions)).all();
 
-  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(
-    filter?.accountId,
+  const shouldIncludeBalances = filter?.includeBalances ?? true;
+  const balanceAfterByTransactionId = shouldIncludeBalances
+    ? getBalanceAfterByTransactionId(filter?.accountId, context)
+    : new Map<string, number>();
+  const pocketBalanceAfterByTransactionId = shouldIncludeBalances
+    ? getPocketBalanceAfterByTransactionId(null, context)
+    : new Map<string, number>();
+  const attachmentCountByTransactionId = getAttachmentCountByTransactionId(
     context,
+    rows.map((row) => row.transaction.id),
   );
-  const pocketBalanceAfterByTransactionId =
-    getPocketBalanceAfterByTransactionId(null, context);
-  const attachmentCountByTransactionId =
-    getAttachmentCountByTransactionId(context);
   const labelsByTransactionId = getLabelsByTransactionIds(
     rows.map((row) => row.transaction.id),
     context,

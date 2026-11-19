@@ -1,5 +1,6 @@
 export { NotesScreen } from "./screens/notes-screen";
 export { useNotes } from "./hooks/use-notes";
+export { hasNotes } from "./repositories/notes.repository";
 export { createNote } from "./services/create-note.service";
 export { updateNote } from "./services/update-note.service";
 export { deleteNote } from "./services/delete-note.service";

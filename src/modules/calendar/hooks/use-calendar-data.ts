@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DeviceEventEmitter } from "react-native";
 import {
   getBalanceSheet,
   useAccounts,
@@ -14,7 +15,11 @@ import {
   useScheduledTransactions,
   type CalendarScheduleOccurrence,
 } from "@/modules/scheduled-transactions";
-import { useTransactions, type TransactionListItem } from "@/modules/transactions";
+import {
+  getCalendarMonthTransactions,
+  type TransactionListItem,
+} from "@/modules/transactions";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
@@ -28,6 +33,7 @@ import type {
 import {
   buildCalendarMonthGrid,
   formatDateKey,
+  getCalendarGridDateRange,
   getDateKeyFromDate,
   getTodayParts,
   parseDateKey,
@@ -53,11 +59,100 @@ export function useCalendarData() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
 
-  const {
-    transactions,
-    loading: transactionsLoading,
-    refresh: refreshTransactions,
-  } = useTransactions();
+  const currentMonthKey = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
+  const monthCacheRef = useRef<Map<string, TransactionListItem[]>>(new Map());
+
+  // Initialize with initial month data synchronously
+  const [transactions, setTransactions] = useState<TransactionListItem[]>(() => {
+    try {
+      const range = getCalendarGridDateRange(todayParts.year, todayParts.month);
+      const initial = getCalendarMonthTransactions(range.startDate, range.endDate);
+      const key = `${todayParts.year}-${String(todayParts.month + 1).padStart(2, "0")}`;
+      monthCacheRef.current.set(key, initial);
+      return initial;
+    } catch {
+      return [];
+    }
+  });
+
+  const [isMonthLoading, setIsMonthLoading] = useState(false);
+  const loadedMonthKeyRef = useRef(currentMonthKey);
+
+  // Whenever the active month key does not match the loaded month key in state,
+  // indicate loading immediately on render to eliminate any stale data / padding transaction flicker
+  const isMonthPending = loadedMonthKeyRef.current !== currentMonthKey;
+
+  useEffect(() => {
+    const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
+
+    if (loadedMonthKeyRef.current === key) {
+      return;
+    }
+
+    setIsMonthLoading(true);
+    let cancelled = false;
+
+    scheduleAfterPaint(() => {
+      if (cancelled) return;
+
+      if (monthCacheRef.current.has(key)) {
+        const cached = monthCacheRef.current.get(key)!;
+        loadedMonthKeyRef.current = key;
+        setTransactions(cached);
+        setIsMonthLoading(false);
+        return;
+      }
+
+      try {
+        const range = getCalendarGridDateRange(activeMonth.year, activeMonth.month);
+        const fresh = getCalendarMonthTransactions(range.startDate, range.endDate);
+        if (cancelled) return;
+        monthCacheRef.current.set(key, fresh);
+        loadedMonthKeyRef.current = key;
+        setTransactions(fresh);
+      } catch (err) {
+        console.error("[useCalendarData] Failed to load month transactions:", err);
+      } finally {
+        setIsMonthLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeMonth.year, activeMonth.month]);
+
+  // Reload month helper for mutations and manual refresh
+  const reloadMonthTransactions = useCallback((force = false) => {
+    const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
+    if (!force && monthCacheRef.current.has(key)) {
+      loadedMonthKeyRef.current = key;
+      setTransactions(monthCacheRef.current.get(key)!);
+      return;
+    }
+    try {
+      const range = getCalendarGridDateRange(activeMonth.year, activeMonth.month);
+      const fresh = getCalendarMonthTransactions(range.startDate, range.endDate);
+      monthCacheRef.current.set(key, fresh);
+      loadedMonthKeyRef.current = key;
+      setTransactions(fresh);
+    } catch (err) {
+      console.error("[useCalendarData] Failed to reload month transactions:", err);
+    }
+  }, [activeMonth.year, activeMonth.month]);
+
+  // Subscribe to transaction mutations across the app
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(
+      "FINANCE_APP_TRANSACTION_MUTATED",
+      () => {
+        monthCacheRef.current.clear();
+        reloadMonthTransactions(true);
+      },
+    );
+    return () => sub.remove();
+  }, [reloadMonthTransactions]);
+
   const { categories, loading: categoriesLoading } = useCategories();
   const {
     accounts,
@@ -73,10 +168,11 @@ export function useCalendarData() {
   } = useScheduledTransactions();
 
   const loading =
-    transactionsLoading ||
     categoriesLoading ||
     accountsLoading ||
-    schedulesLoading;
+    schedulesLoading ||
+    isMonthPending ||
+    isMonthLoading;
 
   const exchangeRates = useMemo(() => {
     if (loading && accounts.length === 0) {
@@ -105,10 +201,11 @@ export function useCalendarData() {
   );
 
   const refreshAll = useCallback(() => {
-    refreshTransactions();
+    monthCacheRef.current.clear();
+    reloadMonthTransactions(true);
     refreshSchedules();
     refreshAccounts();
-  }, [refreshTransactions, refreshSchedules, refreshAccounts]);
+  }, [reloadMonthTransactions, refreshSchedules, refreshAccounts]);
 
   // Compute month start and end dates
   const monthDateRange = useMemo(() => {
@@ -138,7 +235,7 @@ export function useCalendarData() {
     } catch {
       return [];
     }
-  }, [loading, monthDateRange, transactions]);
+  }, [loading, monthDateRange]);
 
   // Group transactions by dateKey (YYYY-MM-DD)
   const transactionsByDateKey = useMemo(() => {
@@ -232,7 +329,7 @@ export function useCalendarData() {
         dayNumber: cell.dayNumber,
         isCurrentMonth: cell.isCurrentMonth,
         isToday: cell.isToday,
-        isSelected: cell.dateKey === selectedDay,
+        isSelected: false,
         date: cell.date,
         transactionCount: dayTxs.length,
         hasIncome: incomeCount > 0,
@@ -247,7 +344,6 @@ export function useCalendarData() {
     });
   }, [
     activeMonth,
-    selectedDay,
     transactionsByDateKey,
     schedulesByDateKey,
     convertToDefaultCurrency,
@@ -271,7 +367,7 @@ export function useCalendarData() {
   }, [selectedDay, activeMonth]);
 
   const balanceSheetData = useMemo<BalanceSheetData>(() => {
-    if (loading && accounts.length === 0) {
+    if (activeTab !== "balance_sheet" || (loading && accounts.length === 0)) {
       return {
         cutoffDate: balanceSheetCutoffDate,
         assets: { totalMinorUnits: 0, accountTypes: [] },
@@ -290,12 +386,52 @@ export function useCalendarData() {
       };
     }
   }, [
+    activeTab,
     balanceSheetCutoffDate,
     loading,
     transactions,
     accounts,
     pockets,
     preferences.defaultCurrency,
+  ]);
+
+  // Projected Month-End Net (only recomputes when month transactions or schedules change, NOT on daily date taps)
+  const projectedMonthEndNet = useMemo(() => {
+    let monthPendingInflows = 0;
+    let monthPendingOutflows = 0;
+
+    for (const occ of monthScheduleOccurrences) {
+      if (occ.status === "due" || occ.status === "upcoming") {
+        const convertedAmount = convertToDefaultCurrency(
+          occ.amountMinorUnits,
+          accountCurrencyMap.get(occ.accountId) ?? DEFAULT_BASE_CURRENCY,
+        );
+        if (occ.transactionType === "income") {
+          monthPendingInflows += convertedAmount;
+        } else if (occ.transactionType === "expense") {
+          monthPendingOutflows += convertedAmount;
+        }
+      }
+    }
+
+    let monthActualInflow = 0;
+    let monthActualOutflow = 0;
+    for (const tx of activeMonthTransactions) {
+      if (tx.type === "transfer") continue;
+      const convertedAmount = convertToDefaultCurrency(
+        tx.amountMinorUnits,
+        tx.accountCurrency,
+      );
+      if (tx.amountMinorUnits > 0 || tx.type === "income") monthActualInflow += convertedAmount;
+      if (tx.amountMinorUnits < 0 || tx.type === "expense") monthActualOutflow += convertedAmount;
+    }
+    const monthActualNet = monthActualInflow + monthActualOutflow;
+    return monthActualNet + monthPendingInflows - monthPendingOutflows;
+  }, [
+    monthScheduleOccurrences,
+    activeMonthTransactions,
+    accountCurrencyMap,
+    convertToDefaultCurrency,
   ]);
 
   // Summary Metrics for the current scope (selectedDay OR activeMonth)
@@ -338,40 +474,6 @@ export function useCalendarData() {
     const savingsRate =
       inflow > 0 ? Math.max(0, Math.round(((inflow + outflow) / inflow) * 100)) : 0;
 
-    // Projected Month-End Net:
-    // Takes the month's total actual net, and adds pending scheduled inflows and subtracts pending scheduled outflows
-    let monthPendingInflows = 0;
-    let monthPendingOutflows = 0;
-
-    for (const occ of monthScheduleOccurrences) {
-      if (occ.status === "due" || occ.status === "upcoming") {
-        const convertedAmount = convertToDefaultCurrency(
-          occ.amountMinorUnits,
-          accountCurrencyMap.get(occ.accountId) ?? DEFAULT_BASE_CURRENCY,
-        );
-        if (occ.transactionType === "income") {
-          monthPendingInflows += convertedAmount;
-        } else if (occ.transactionType === "expense") {
-          monthPendingOutflows += convertedAmount;
-        }
-      }
-    }
-
-    let monthActualInflow = 0;
-    let monthActualOutflow = 0;
-    for (const tx of activeMonthTransactions) {
-      if (tx.type === "transfer") continue;
-      const convertedAmount = convertToDefaultCurrency(
-        tx.amountMinorUnits,
-        tx.accountCurrency,
-      );
-      if (tx.amountMinorUnits > 0 || tx.type === "income") monthActualInflow += convertedAmount;
-      if (tx.amountMinorUnits < 0 || tx.type === "expense") monthActualOutflow += convertedAmount;
-    }
-    const monthActualNet = monthActualInflow + monthActualOutflow;
-    const projectedMonthEndNet =
-      monthActualNet + monthPendingInflows - monthPendingOutflows;
-
     return {
       totalInflowMinorUnits: inflow,
       totalOutflowMinorUnits: outflow,
@@ -390,8 +492,7 @@ export function useCalendarData() {
   }, [
     scopedTransactions,
     scopedSchedules,
-    monthScheduleOccurrences,
-    activeMonthTransactions,
+    projectedMonthEndNet,
     balanceSheetData,
     accountCurrencyMap,
     convertToDefaultCurrency,
@@ -399,6 +500,10 @@ export function useCalendarData() {
 
   // Top spending categories breakdown for current scope
   const categoryBreakdown = useMemo<CategoryExpenseBreakdown[]>(() => {
+    if (activeTab !== "net") {
+      return [];
+    }
+
     const categoryTotals = new Map<string, number>();
     let totalExpenseInScope = 0;
 
@@ -435,7 +540,7 @@ export function useCalendarData() {
 
     result.sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
     return result;
-  }, [scopedTransactions, categories, convertToDefaultCurrency]);
+  }, [activeTab, scopedTransactions, categories, convertToDefaultCurrency]);
 
   // Navigation handlers
   const goToPrevMonth = useCallback(() => {

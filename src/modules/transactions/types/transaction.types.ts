@@ -196,6 +196,9 @@ export interface TransactionFilter {
   categoryId?: string;
   searchQuery?: string;
   labelIds?: string[];
+  startDate?: Date;
+  endDate?: Date;
+  includeBalances?: boolean;
 }
 
 export interface TransactionStats {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useCallback } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -12,7 +12,71 @@ export interface CalendarGridProps {
   onToggleDay: (dateKey: string) => void;
 }
 
-export function CalendarGrid({
+interface DayCellProps {
+  cell: CalendarDayCellData;
+  isSelected: boolean;
+  activeTab: CalendarTab;
+  onToggleDay: (dateKey: string) => void;
+  theme: AppTheme;
+  styles: ReturnType<typeof createStyles>;
+}
+
+const DayCell = memo(function DayCell({
+  cell,
+  isSelected,
+  activeTab,
+  onToggleDay,
+  theme,
+  styles,
+}: DayCellProps) {
+  const handlePress = useCallback(() => {
+    onToggleDay(cell.dateKey);
+  }, [onToggleDay, cell.dateKey]);
+
+  return (
+    <Pressable
+      accessibilityLabel={`Day ${cell.dayNumber}, ${cell.dateKey}`}
+      accessibilityRole="button"
+      accessibilityState={{ selected: isSelected }}
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.dayCell,
+        pressed && styles.cellPressed,
+      ]}
+    >
+      <View
+        style={[
+          styles.dayBadge,
+          isSelected
+            ? styles.selectedBadge
+            : cell.isToday
+              ? styles.todayBadge
+              : styles.neutralBadge,
+        ]}
+      >
+        <Text
+          style={[
+            styles.dayText,
+            !isSelected &&
+              !cell.isCurrentMonth &&
+              styles.otherMonthText,
+            !isSelected && cell.isToday && styles.todayText,
+            isSelected && styles.selectedDayText,
+          ]}
+        >
+          {cell.dayNumber}
+        </Text>
+      </View>
+
+      {/* Activity Indicators (Dots) */}
+      <View style={styles.dotContainer}>
+        {renderDots(cell, activeTab, theme, styles)}
+      </View>
+    </Pressable>
+  );
+});
+
+export const CalendarGrid = memo(function CalendarGrid({
   cells,
   selectedDay,
   activeTab,
@@ -44,56 +108,21 @@ export function CalendarGrid({
 
       {/* Days Grid */}
       <View style={styles.grid}>
-        {cells.map((cell) => {
-          const isSelected = cell.dateKey === selectedDay;
-
-          return (
-            <Pressable
-              key={cell.dateKey}
-              accessibilityLabel={`Day ${cell.dayNumber}, ${cell.dateKey}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isSelected }}
-              onPress={() => onToggleDay(cell.dateKey)}
-              style={({ pressed }) => [
-                styles.dayCell,
-                pressed && styles.cellPressed,
-              ]}
-            >
-              <View
-                style={[
-                  styles.dayBadge,
-                  isSelected
-                    ? styles.selectedBadge
-                    : cell.isToday
-                      ? styles.todayBadge
-                      : styles.neutralBadge,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dayText,
-                    !isSelected &&
-                      !cell.isCurrentMonth &&
-                      styles.otherMonthText,
-                    !isSelected && cell.isToday && styles.todayText,
-                    isSelected && styles.selectedDayText,
-                  ]}
-                >
-                  {cell.dayNumber}
-                </Text>
-              </View>
-
-              {/* Activity Indicators (Dots) */}
-              <View style={styles.dotContainer}>
-                {renderDots(cell, activeTab, theme, styles)}
-              </View>
-            </Pressable>
-          );
-        })}
+        {cells.map((cell) => (
+          <DayCell
+            key={cell.dateKey}
+            cell={cell}
+            isSelected={cell.dateKey === selectedDay}
+            activeTab={activeTab}
+            onToggleDay={onToggleDay}
+            theme={theme}
+            styles={styles}
+          />
+        ))}
       </View>
     </View>
   );
-}
+});
 
 function renderDots(
   cell: CalendarDayCellData,

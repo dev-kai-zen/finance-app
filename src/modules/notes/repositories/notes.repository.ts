@@ -158,3 +158,14 @@ export function deleteNoteRecord(
 ): void {
   context.delete(notes).where(eq(notes.id, id)).run();
 }
+
+export function hasNotes(context: DbContext = db): boolean {
+  return Boolean(
+    context
+      .select({ id: notes.id })
+      .from(notes)
+      .where(isNull(notes.deletedAt))
+      .limit(1)
+      .get(),
+  );
+}
