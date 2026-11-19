@@ -1,4 +1,5 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { accounts } from "./accounts";
 import { categories } from "./categories";
@@ -45,5 +46,8 @@ export const transactions = sqliteTable(
       table.transactionGroupId,
     ),
     index("transactions_currency_code_index").on(table.currencyCode),
+    index("transactions_active_feed_index")
+      .on(table.occurredAt, table.createdAt, table.id)
+      .where(sql`${table.deletedAt} IS NULL`),
   ],
 );

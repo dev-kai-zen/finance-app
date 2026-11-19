@@ -1156,12 +1156,20 @@ export const es = {
         "Aclara las etiquetas de tipos de cuenta para organizar tus finanzas con mayor facilidad.",
       improveItem3:
         "Destacar la exportación CSV y el colapso de grupos en la guía de cuentas.",
+      improveItem4:
+        "Acelera el inicio de la app y la carga en Inicio, Cuentas, Transacciones, Calendario y Búsqueda.",
+      improveItem5:
+        "Mejora la velocidad al desplazarse, filtrar y escribir con historiales grandes y vistas previas de presupuesto.",
       fixItem1:
         "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
       fixItem2:
         "Se fijó el cuadro de búsqueda de monedas en la parte superior con un indicador para desplazarse hacia abajo.",
       fixItem3:
         "Se eliminaron los retrasos al abrir el formulario de transacciones con un cargador esqueleto instantáneo y botón de cierre receptivo.",
+      fixItem4:
+        "Corrige actualizaciones innecesarias de widgets y retrasos al volver a la app para responder al instante.",
+      fixItem5:
+        "Corrige las transacciones que no se actualizaban al instante al registrarlas mediante entrada rápida.",
     },
     v170: {
       date: "18 de noviembre de 2026",

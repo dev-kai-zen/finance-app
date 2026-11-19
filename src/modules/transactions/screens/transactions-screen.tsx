@@ -71,7 +71,7 @@ import {
   type DatePreset,
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
-import { isLocalDateKeyInRange } from "../utils/transaction-date-filter";
+import { normalizeDateRange } from "../utils/transaction-date-filter";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
@@ -83,7 +83,7 @@ import {
   type ChatSavedTransactionResult,
 } from "@/modules/chat-with-kai";
 import { TransactionRow } from "../components/transaction-row";
-import { useTransactions } from "../hooks/use-transactions";
+import { usePaginatedTransactions } from "../hooks/use-paginated-transactions";
 import { useTransactionPresets } from "../hooks/use-transaction-presets";
 import { useTransactionViewMode } from "../hooks/use-transaction-view-mode";
 import {
@@ -93,10 +93,74 @@ import {
 } from "../services/export-transactions-csv.service";
 import type {
   TransactionListItem,
+  TransactionPageFilter,
   TransactionType,
 } from "../types/transaction.types";
 
 const TRANSACTIONS_PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 150;
+
+function resolveDateRangeForFilter(filterState: TransactionFilterState): {
+  startDate?: Date;
+  endDate?: Date;
+  emptyResult?: boolean;
+} {
+  if (filterState.datePreset === "all") {
+    return {};
+  }
+
+  const now = new Date();
+  switch (filterState.datePreset) {
+    case "this_month":
+      return {
+        startDate: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0),
+        endDate: new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        ),
+      };
+    case "last_month":
+      return {
+        startDate: new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          1,
+          0,
+          0,
+          0,
+          0,
+        ),
+        endDate: new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999),
+      };
+    case "this_year":
+      return {
+        startDate: new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0),
+        endDate: new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999),
+      };
+    case "custom": {
+      if (!filterState.customDateFrom || !filterState.customDateTo) {
+        return { emptyResult: true };
+      }
+      const { from, to } = normalizeDateRange(
+        filterState.customDateFrom,
+        filterState.customDateTo,
+      );
+      const [fromY, fromM, fromD] = from.split("-").map(Number);
+      const [toY, toM, toD] = to.split("-").map(Number);
+      return {
+        startDate: new Date(fromY, fromM - 1, fromD, 0, 0, 0, 0),
+        endDate: new Date(toY, toM - 1, toD, 23, 59, 59, 999),
+      };
+    }
+    default:
+      return {};
+  }
+}
 
 interface DateGroup {
   key: string;
@@ -212,10 +276,84 @@ function TransactionsScreenContent({
   const { t } = useLocalization();
   const styles = useThemeStyles(createStyles);
 
+  // Search & Filter state (drives SQLite keyset pagination directly)
+  const [searchQuery, setSearchQuery] = useState(initialSearch ?? "");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(
+    initialSearch ?? "",
+  );
+  const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
+    initialFilterState(
+      initialAction !== "new" ? initialCategoryId : undefined,
+      initialAction !== "new" ? initialDatePreset : undefined,
+      initialAction !== "new" ? initialAccountId : undefined,
+      initialAction !== "new" ? initialType : undefined,
+      initialAction !== "new" ? initialLabelId : undefined,
+    ),
+  );
+
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length === 0) {
+      setDebouncedSearchQuery("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    refresh: refreshCategories,
+  } = useCategories();
+
+  const expandedCategoryIds = useMemo(() => {
+    if (!filterState.categoryIds || filterState.categoryIds.length === 0) {
+      return undefined;
+    }
+    const matchingCatIds = new Set<string>();
+    for (const catId of filterState.categoryIds) {
+      matchingCatIds.add(catId);
+      const parent = categories.find((c) => c.id === catId);
+      if (parent?.subcategories) {
+        for (const sub of parent.subcategories) {
+          matchingCatIds.add(sub.id);
+        }
+      }
+    }
+    return Array.from(matchingCatIds);
+  }, [categories, filterState.categoryIds]);
+
+  const pageFilter = useMemo<TransactionPageFilter>(() => {
+    const dateRange = resolveDateRangeForFilter(filterState);
+    return {
+      type: filterState.type,
+      accountIds:
+        filterState.accountIds.length > 0 ? filterState.accountIds : undefined,
+      categoryIds: expandedCategoryIds,
+      labelIds:
+        filterState.labelIds && filterState.labelIds.length > 0
+          ? filterState.labelIds
+          : undefined,
+      searchQuery: debouncedSearchQuery.trim() || undefined,
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate,
+      emptyResult: dateRange.emptyResult,
+      sortBy: filterState.sortBy,
+      sortOrder: filterState.sortOrder,
+      includeBalances: true,
+    };
+  }, [debouncedSearchQuery, expandedCategoryIds, filterState]);
+
   const {
     transactions,
     deletedTransactions,
+    totalCount,
+    hasMore: hasMoreTransactions,
     loading,
+    isFilterTransitioning,
     pendingAction,
     error,
     clearError,
@@ -228,8 +366,14 @@ function TransactionsScreenContent({
     editTransaction,
     editTransfer,
     refresh,
+    loadMore: handleLoadMore,
     refreshDeletedTransactions,
-  } = useTransactions({ includeDeleted: false, includeStats: false });
+    getTransactionById,
+    getExportRows,
+  } = usePaginatedTransactions({
+    filter: pageFilter,
+    pageSize: TRANSACTIONS_PAGE_SIZE,
+  });
   const {
     presets,
     archivedPresets,
@@ -254,11 +398,6 @@ function TransactionsScreenContent({
     loading: accountsLoading,
     refresh: refreshAccounts,
   } = useAccounts();
-  const {
-    categories,
-    loading: categoriesLoading,
-    refresh: refreshCategories,
-  } = useCategories();
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
@@ -275,33 +414,18 @@ function TransactionsScreenContent({
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const { labels: allLabels } = useLabels();
 
-  // Search & Filter state
-  const [searchQuery, setSearchQuery] = useState(initialSearch ?? "");
-  const [filterState, setFilterState] = useState<TransactionFilterState>(() =>
-    initialFilterState(
-      initialAction !== "new" ? initialCategoryId : undefined,
-      initialAction !== "new" ? initialDatePreset : undefined,
-      initialAction !== "new" ? initialAccountId : undefined,
-      initialAction !== "new" ? initialType : undefined,
-      initialAction !== "new" ? initialLabelId : undefined,
-    ),
-  );
   const { viewMode, setViewMode } = useTransactionViewMode();
-  const [renderedLimit, setRenderedLimit] = useState(TRANSACTIONS_PAGE_SIZE);
-  const [isSorting, setIsSorting] = useState(false);
-  const sortingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (sortingTimerRef.current) {
-        clearTimeout(sortingTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    setRenderedLimit(TRANSACTIONS_PAGE_SIZE);
-  }, [searchQuery, filterState]);
+  const transitionKindRef = useRef<"sort" | "filter">("filter");
+  const prevSortSignatureRef = useRef(
+    `${filterState.sortBy}:${filterState.sortOrder}`,
+  );
+  const currentSortSignature = `${filterState.sortBy}:${filterState.sortOrder}`;
+  if (prevSortSignatureRef.current !== currentSortSignature) {
+    prevSortSignatureRef.current = currentSortSignature;
+    transitionKindRef.current = "sort";
+  } else if (!isFilterTransitioning) {
+    transitionKindRef.current = "filter";
+  }
 
   const fabRef = useRef<View>(null);
   const { registerTarget } = useWalkthroughRegistry();
@@ -431,7 +555,9 @@ function TransactionsScreenContent({
 
   useEffect(() => {
     if (initialInspectId && handledInspectIdRef.current !== initialInspectId) {
-      const target = transactions.find((transaction) => transaction.id === initialInspectId);
+      const target =
+        transactions.find((transaction) => transaction.id === initialInspectId) ??
+        getTransactionById(initialInspectId);
       if (target) {
         handledInspectIdRef.current = initialInspectId;
         setInspectedTransaction(target);
@@ -440,7 +566,7 @@ function TransactionsScreenContent({
     } else if (!initialInspectId) {
       handledInspectIdRef.current = null;
     }
-  }, [initialInspectId, router, transactions]);
+  }, [getTransactionById, initialInspectId, router, transactions]);
 
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -500,6 +626,7 @@ function TransactionsScreenContent({
       if (handledActionRef.current !== "trash") {
         handledActionRef.current = "trash";
         clearError();
+        refreshDeletedTransactions();
         setIsTrashModalOpen(true);
         router.setParams({
           action: undefined,
@@ -541,16 +668,24 @@ function TransactionsScreenContent({
     } else {
       handledActionRef.current = null;
     }
-  }, [clearError, initialAccountId, initialAction, initialType, router]);
+  }, [
+    clearError,
+    initialAccountId,
+    initialAction,
+    initialType,
+    refreshDeletedTransactions,
+    router,
+  ]);
 
   useEffect(() => {
     setInspectedTransaction((current) =>
       current
         ? transactions.find((transaction) => transaction.id === current.id) ??
+          getTransactionById(current.id) ??
           current
         : null,
     );
-  }, [transactions]);
+  }, [getTransactionById, transactions]);
 
   const pendingDeleteTransaction = useMemo(
     () => transactions.find((tx) => tx.id === pendingDeleteId) ?? null,
@@ -567,157 +702,12 @@ function TransactionsScreenContent({
     return count;
   }, [filterState]);
 
-  // Client-side filtering & sorting
-  const filteredTransactions = useMemo(() => {
-    let list = [...transactions];
-
-    // 1. Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter((tx) => {
-        return (
-          (tx.name && tx.name.toLowerCase().includes(q)) ||
-          (tx.note && tx.note.toLowerCase().includes(q)) ||
-          (tx.categoryName && tx.categoryName.toLowerCase().includes(q)) ||
-          (tx.labels && tx.labels.some((lbl) => lbl.name.toLowerCase().includes(q))) ||
-          tx.accountName.toLowerCase().includes(q) ||
-          (tx.transferAccountName &&
-            tx.transferAccountName.toLowerCase().includes(q))
-        );
-      });
-    }
-
-    // 2. Type filter
-    if (filterState.type !== "all") {
-      list = list.filter((tx) => tx.type === filterState.type);
-    }
-
-    // 3. Account filter
-    if (filterState.accountIds.length > 0) {
-      list = list.filter(
-        (tx) =>
-          filterState.accountIds.includes(tx.accountId) ||
-          (tx.transferAccountId !== null &&
-            filterState.accountIds.includes(tx.transferAccountId)),
-      );
-    }
-
-    // 3b. Category filter (includes subcategories when a parent category is selected, plus split entries)
-    if (filterState.categoryIds && filterState.categoryIds.length > 0) {
-      const matchingCatIds = new Set<string>();
-      for (const catId of filterState.categoryIds) {
-        matchingCatIds.add(catId);
-        const parent = categories.find((c) => c.id === catId);
-        if (parent?.subcategories) {
-          for (const sub of parent.subcategories) {
-            matchingCatIds.add(sub.id);
-          }
-        }
-      }
-      list = list.filter(
-        (tx) =>
-          (tx.categoryId !== null && matchingCatIds.has(tx.categoryId)) ||
-          Boolean(
-            tx.splitEntries?.some(
-              (entry) =>
-                entry.categoryId !== null && matchingCatIds.has(entry.categoryId),
-            ),
-          ),
-      );
-    }
-
-    // 4. Label filter
-    if (filterState.labelIds && filterState.labelIds.length > 0) {
-      list = list.filter((tx) =>
-        tx.labels?.some((lbl) => filterState.labelIds!.includes(lbl.id)),
-      );
-    }
-
-    // 4. Date preset filter
-    if (filterState.datePreset !== "all") {
-      const now = new Date();
-      list = list.filter((tx) => {
-        if (!tx.occurredAt) return false;
-        const d = new Date(tx.occurredAt);
-
-        switch (filterState.datePreset) {
-          case "this_month":
-            return (
-              d.getFullYear() === now.getFullYear() &&
-              d.getMonth() === now.getMonth()
-            );
-          case "last_month": {
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            return (
-              d.getFullYear() === lastMonth.getFullYear() &&
-              d.getMonth() === lastMonth.getMonth()
-            );
-          }
-          case "this_year":
-            return d.getFullYear() === now.getFullYear();
-          case "custom": {
-            const from = filterState.customDateFrom;
-            const to = filterState.customDateTo;
-            if (!from || !to) return false;
-            return isLocalDateKeyInRange(tx.occurredAt, from, to);
-          }
-          default:
-            return true;
-        }
-      });
-    }
-
-    // 5. Sorting
-    list.sort((a, b) => {
-      if (filterState.sortBy === "amount") {
-        const valA = Math.abs(a.amountMinorUnits);
-        const valB = Math.abs(b.amountMinorUnits);
-        return filterState.sortOrder === "asc" ? valA - valB : valB - valA;
-      } else {
-        const timeA =
-          typeof a.occurredAt === "number"
-            ? a.occurredAt
-            : a.occurredAt instanceof Date
-              ? a.occurredAt.getTime()
-              : a.occurredAt
-                ? Date.parse(a.occurredAt) || 0
-                : 0;
-        const timeB =
-          typeof b.occurredAt === "number"
-            ? b.occurredAt
-            : b.occurredAt instanceof Date
-              ? b.occurredAt.getTime()
-              : b.occurredAt
-                ? Date.parse(b.occurredAt) || 0
-                : 0;
-        return filterState.sortOrder === "asc" ? timeA - timeB : timeB - timeA;
-      }
-    });
-
-    return list;
-  }, [transactions, searchQuery, filterState, categories]);
-
-  const visibleTransactions = useMemo(
-    () => filteredTransactions.slice(0, renderedLimit),
-    [filteredTransactions, renderedLimit],
-  );
-
-  const hasMoreTransactions = renderedLimit < filteredTransactions.length;
-
-  const handleLoadMore = useCallback(() => {
-    if (renderedLimit < filteredTransactions.length) {
-      setRenderedLimit((prev) =>
-        Math.min(prev + TRANSACTIONS_PAGE_SIZE, filteredTransactions.length),
-      );
-    }
-  }, [renderedLimit, filteredTransactions.length]);
-
-  // Group transactions by date
+  // Group paginated transactions by date (already filtered & sorted in SQLite)
   const groupedTransactions = useMemo(() => {
     const groups: DateGroup[] = [];
     const map = new Map<string, DateGroup>();
 
-    for (const tx of visibleTransactions) {
+    for (const tx of transactions) {
       const { key, label } = getDateGroupInfo(tx.occurredAt);
       if (!map.has(key)) {
         const group: DateGroup = {
@@ -749,7 +739,7 @@ function TransactionsScreenContent({
     }
 
     return groups;
-  }, [visibleTransactions, currencyPreferences.defaultCurrency]);
+  }, [transactions, currencyPreferences.defaultCurrency]);
 
   const handleOpenNewTransaction = () => {
     setPrefilledTransaction(null);
@@ -929,7 +919,8 @@ function TransactionsScreenContent({
     void (async () => {
       try {
         setExportingCsv(true);
-        await action(filteredTransactions);
+        const allMatchingRows = getExportRows();
+        await action(allMatchingRows);
       } catch (error) {
         if (error instanceof TransactionCsvExportCancelledError) {
           return;
@@ -949,7 +940,7 @@ function TransactionsScreenContent({
   };
 
   const handleOpenExportCsv = () => {
-    if (filteredTransactions.length === 0) {
+    if (totalCount === 0) {
       setExportNotice({
         title: t("transactions.exportEmptyTitle"),
         message: t("transactions.exportEmptyMessage"),
@@ -979,25 +970,17 @@ function TransactionsScreenContent({
   };
 
   const handleSelectSortField = useCallback((field: "date" | "amount") => {
-    if (sortingTimerRef.current) {
-      clearTimeout(sortingTimerRef.current);
-    }
-    setIsSorting(true);
-    sortingTimerRef.current = setTimeout(() => {
-      setFilterState((prev) => ({
-        ...prev,
-        sortBy: field,
-        sortOrder:
-          prev.sortBy === field
-            ? prev.sortOrder === "desc"
-              ? "asc"
-              : "desc"
-            : "desc",
-      }));
-      requestAnimationFrame(() => {
-        setIsSorting(false);
-      });
-    }, 100);
+    transitionKindRef.current = "sort";
+    setFilterState((prev) => ({
+      ...prev,
+      sortBy: field,
+      sortOrder:
+        prev.sortBy === field
+          ? prev.sortOrder === "desc"
+            ? "asc"
+            : "desc"
+          : "desc",
+    }));
   }, []);
 
   const handleClearFilters = () => {
@@ -1006,9 +989,7 @@ function TransactionsScreenContent({
   };
 
   const thirdTransactionId =
-    filteredTransactions.length >= 4
-      ? (filteredTransactions[2]?.id ?? null)
-      : null;
+    totalCount >= 4 ? (transactions[2]?.id ?? null) : null;
 
   const renderRowSeparator = useCallback(
     () => <View style={styles.rowSeparator} />,
@@ -1167,11 +1148,11 @@ function TransactionsScreenContent({
         {/* Sort & Results Bar */}
         <View style={styles.sortBar}>
           <Text style={styles.resultsCountText}>
-            {loading
-              ? "Loading transactions..."
-              : `${filteredTransactions.length} transaction${
-                  filteredTransactions.length === 1 ? "" : "s"
-                } found`}
+            {loading || isFilterTransitioning
+              ? transitionKindRef.current === "sort"
+                ? "Sorting transactions..."
+                : "Loading transactions..."
+              : `${totalCount} transaction${totalCount === 1 ? "" : "s"} found`}
           </Text>
 
           <View style={styles.sortActionsRow}>
@@ -1470,10 +1451,14 @@ function TransactionsScreenContent({
         )}
 
         {/* Transactions Feed Grouped By Date */}
-        {isSorting ? (
+        {isFilterTransitioning ? (
           <View style={styles.sortingSkeletonContainer}>
             <PageLoadingState
-              message="Sorting transactions..."
+              message={
+                transitionKindRef.current === "sort"
+                  ? "Sorting transactions..."
+                  : "Loading transactions..."
+              }
               variant="list"
             />
           </View>
@@ -1585,7 +1570,7 @@ function TransactionsScreenContent({
               <View style={styles.loadMoreFooter}>
                 <ActivityIndicator color={theme.colors.primary} size="small" />
               </View>
-            ) : filteredTransactions.length > 0 && filteredTransactions.length < 4 ? (
+            ) : totalCount > 0 && totalCount < 4 ? (
               <AdBanner
                 placement="transactions"
                 variant="card"

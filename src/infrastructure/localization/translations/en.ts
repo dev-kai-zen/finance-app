@@ -1139,12 +1139,20 @@ export const en = {
         "Clarify account type labels and setup menus to make organizing finances easier.",
       improveItem3:
         "Highlight exporting CSV files and collapsing account groups in the accounts walkthrough.",
+      improveItem4:
+        "Speed up app startup and screen loading across Home, Accounts, Transactions, Calendar, and Search.",
+      improveItem5:
+        "Improve scrolling, filtering, and typing speed when managing large transaction histories and live budget previews.",
       fixItem1:
         "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
       fixItem2:
         "Keep the currency search box fixed at the top while browsing with a floating indicator for remaining items.",
       fixItem3:
         "Eliminate delays when opening transaction forms with instant skeleton loaders and responsive close buttons.",
+      fixItem4:
+        "Fix unnecessary background widget updates and resume delays so taps respond immediately across the app.",
+      fixItem5:
+        "Fix transactions not refreshing immediately on the list when recorded through quick entry.",
     },
     v170: {
       date: "November 18, 2026",

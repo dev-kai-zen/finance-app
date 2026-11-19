@@ -1170,12 +1170,20 @@ export const fil = {
         "Linawin ang mga label ng uri ng account upang maging mas madali ang pag-aayos.",
       improveItem3:
         "Itampok ang pag-export ng mga CSV file at pag-collapse ng mga grupo sa walkthrough.",
+      improveItem4:
+        "Pabilisin ang pagbukas ng app at pag-load ng Home, Accounts, Transactions, Calendar, at Search.",
+      improveItem5:
+        "Pahusayin ang bilis ng pag-scroll, pagsasala, at pag-type sa malalaking listahan ng transaksyon at budget.",
       fixItem1:
         "Inayos ang pag-navigate sa pag-import sa onboarding para makabalik sa mga opsyon nang hindi naiipit.",
       fixItem2:
         "Pinanatiling nakapirmi ang kahon ng paghahanap ng currency sa itaas na may gabay pababa.",
       fixItem3:
         "Inalis ang pagkaantala sa pagbukas ng form ng transaksyon gamit ang mabilis na skeleton loader at mas madaling pinduting buton ng pagsasara.",
+      fixItem4:
+        "Ayusin ang hindi kailangang background update ng widget at pagbagal pagbalik sa app para mabilis ang pindot.",
+      fixItem5:
+        "Ayusin ang hindi agarang pag-refresh ng listahan ng transaksyon kapag nagdagdag gamit ang quick entry.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

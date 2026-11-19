@@ -64,6 +64,17 @@ export const useTransactions = deferFunction(
   () => require("./hooks/use-transactions").useTransactions,
 ) as typeof import("./hooks/use-transactions").useTransactions;
 
+export const usePaginatedTransactions = deferFunction(
+  () =>
+    require("./hooks/use-paginated-transactions").usePaginatedTransactions,
+) as typeof import("./hooks/use-paginated-transactions").usePaginatedTransactions;
+
+export const getTransactionsForExport = deferFunction(
+  () =>
+    require("./services/get-transactions-for-export.service")
+      .getTransactionsForExport,
+) as typeof import("./services/get-transactions-for-export.service").getTransactionsForExport;
+
 export const useTransactionPresets = deferFunction(
   () =>
     require("./hooks/use-transaction-presets").useTransactionPresets,
@@ -298,6 +309,11 @@ export type {
   UpdateTransferInput,
   TransferResult,
   TransactionFilter,
+  TransactionPageCursor,
+  TransactionPageFilter,
+  TransactionPageResult,
+  TransactionPageSortBy,
+  TransactionPageSortOrder,
   TransactionStats,
   TransactionType,
   TransactionAttachment,

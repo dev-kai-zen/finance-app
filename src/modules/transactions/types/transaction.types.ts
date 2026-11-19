@@ -201,6 +201,40 @@ export interface TransactionFilter {
   includeBalances?: boolean;
 }
 
+export type TransactionPageSortBy = "date" | "amount";
+export type TransactionPageSortOrder = "asc" | "desc";
+
+export interface TransactionPageCursor {
+  sortBy: TransactionPageSortBy;
+  sortOrder: TransactionPageSortOrder;
+  occurredAtMs: number;
+  createdAtMs: number;
+  absAmount: number;
+  id: string;
+}
+
+export interface TransactionPageFilter {
+  type?: "all" | "income" | "expense" | "transfer";
+  accountIds?: string[];
+  categoryIds?: string[];
+  labelIds?: string[];
+  searchQuery?: string;
+  startDate?: Date;
+  endDate?: Date;
+  sortBy?: TransactionPageSortBy;
+  sortOrder?: TransactionPageSortOrder;
+  includeBalances?: boolean;
+  /** When true (e.g. incomplete custom date range), short-circuits to an empty result. */
+  emptyResult?: boolean;
+}
+
+export interface TransactionPageResult {
+  items: TransactionListItem[];
+  nextCursor: TransactionPageCursor | null;
+  hasMore: boolean;
+  totalCount?: number;
+}
+
 export interface TransactionStats {
   totalInflowMinorUnits: number;
   totalOutflowMinorUnits: number;
