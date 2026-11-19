@@ -9,12 +9,15 @@ import { getCreditCardMonitoring } from "@/modules/credit-cards";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 
 export type UseAccountsOptions = {
-  /** When false, skips billing reconciliation during reads (faster for Home / Search). */
+  /**
+   * When true, calculates detailed credit card monitoring (statements, billing cycles, utilization).
+   * Defaults to false so selectors, pickers, and modals remain fast and lightweight.
+   */
   includeCreditCardMonitoring?: boolean;
 };
 
 export function useAccounts(options?: UseAccountsOptions) {
-  const includeCreditCardMonitoring = options?.includeCreditCardMonitoring !== false;
+  const includeCreditCardMonitoring = options?.includeCreditCardMonitoring === true;
   const [data, setData] = useState<{
     accounts: AccountListItem[];
     pockets: PocketListItem[];

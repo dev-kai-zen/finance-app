@@ -1,6 +1,9 @@
 import type { DbContext } from "@/infrastructure/database/client";
 import type { Category } from "@/modules/categories";
-import { getCategoryExpenseTotal } from "@/modules/transactions";
+import {
+  getCategoryExpenseTotal,
+  getCategoryExpenseTotalsGrouped,
+} from "@/modules/transactions";
 import type {
   BudgetStatus,
   CategoryBudget,
@@ -15,6 +18,8 @@ export interface CalculateBudgetOptions {
   referenceDate?: Date;
   excludeTransactionId?: string | null;
   context?: DbContext;
+  precomputedSpent?: number;
+  precomputedPreviousSpent?: number;
 }
 
 /**
@@ -77,15 +82,18 @@ export function calculateCategoryBudgetStatus(
       }
     }
 
-    const previousSpent = getCategoryExpenseTotal(
-      {
-        categoryIds,
-        startDate: period.previousStartDate,
-        endDate: period.previousEndDate,
-        targetCurrencyCode: budget.currencyCode,
-      },
-      context,
-    );
+    const previousSpent =
+      options.precomputedPreviousSpent !== undefined
+        ? options.precomputedPreviousSpent
+        : getCategoryExpenseTotal(
+            {
+              categoryIds,
+              startDate: period.previousStartDate,
+              endDate: period.previousEndDate,
+              targetCurrencyCode: budget.currencyCode,
+            },
+            context,
+          );
 
     const netPrevious = previousTargetCents - previousSpent;
     if (budget.rolloverMode === "positive_only") {
@@ -99,16 +107,19 @@ export function calculateCategoryBudgetStatus(
   const effectiveTargetCents = Math.max(0, baseTargetCents + rolloverCents);
 
   // 4. Current period spending
-  const spentCents = getCategoryExpenseTotal(
-    {
-      categoryIds,
-      startDate: period.startDate,
-      endDate: period.endDate,
-      excludeTransactionId,
-      targetCurrencyCode: budget.currencyCode,
-    },
-    context,
-  );
+  const spentCents =
+    options.precomputedSpent !== undefined
+      ? options.precomputedSpent
+      : getCategoryExpenseTotal(
+          {
+            categoryIds,
+            startDate: period.startDate,
+            endDate: period.endDate,
+            excludeTransactionId,
+            targetCurrencyCode: budget.currencyCode,
+          },
+          context,
+        );
 
   // 5. Metrics
   const remainingCents = effectiveTargetCents - spentCents;
@@ -136,4 +147,153 @@ export function calculateCategoryBudgetStatus(
     isExceeded,
     isNearLimit,
   };
+}
+
+/**
+ * Calculates budget statuses in bulk for an array of budgets.
+ * Batches spending queries by period and currency code using getCategoryExpenseTotalsGrouped,
+ * replacing N distinct queries with 1-2 grouped SQL queries.
+ */
+export function calculateBudgetStatusesBatch(
+  budgets: CategoryBudget[],
+  flatCategoriesMap: Map<string, Category>,
+  referenceDate: Date = new Date(),
+  context?: DbContext,
+): BudgetStatus[] {
+  if (budgets.length === 0) return [];
+
+  const activeBudgetCategoryIds = new Set(
+    budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
+  );
+
+  const currentGroupMap = new Map<
+    string,
+    { startDate: Date; endDate: Date; currencyCode: string; categoryIds: Set<string> }
+  >();
+  const previousGroupMap = new Map<
+    string,
+    { startDate: Date; endDate: Date; currencyCode: string; categoryIds: Set<string> }
+  >();
+
+  for (const budget of budgets) {
+    if (!budget.isEnabled) continue;
+    const category = flatCategoriesMap.get(budget.categoryId);
+    if (!category) continue;
+
+    const period = getBudgetPeriodInfo(budget.frequency, referenceDate, budget.startDate);
+    const currKey = `${period.startDate.getTime()}:${period.endDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
+
+    let currGroup = currentGroupMap.get(currKey);
+    if (!currGroup) {
+      currGroup = {
+        startDate: period.startDate,
+        endDate: period.endDate,
+        currencyCode: budget.currencyCode,
+        categoryIds: new Set<string>(),
+      };
+      currentGroupMap.set(currKey, currGroup);
+    }
+    currGroup.categoryIds.add(category.id);
+    if (category.subcategories) {
+      for (const child of category.subcategories) {
+        if (!activeBudgetCategoryIds.has(child.id)) {
+          currGroup.categoryIds.add(child.id);
+        }
+      }
+    }
+
+    if (budget.allowRollover) {
+      const prevKey = `${period.previousStartDate.getTime()}:${period.previousEndDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
+      let prevGroup = previousGroupMap.get(prevKey);
+      if (!prevGroup) {
+        prevGroup = {
+          startDate: period.previousStartDate,
+          endDate: period.previousEndDate,
+          currencyCode: budget.currencyCode,
+          categoryIds: new Set<string>(),
+        };
+        previousGroupMap.set(prevKey, prevGroup);
+      }
+      prevGroup.categoryIds.add(category.id);
+      if (category.subcategories) {
+        for (const child of category.subcategories) {
+          if (!activeBudgetCategoryIds.has(child.id)) {
+            prevGroup.categoryIds.add(child.id);
+          }
+        }
+      }
+    }
+  }
+
+  const currentTotalsByGroup = new Map<string, Record<string, number>>();
+  for (const [key, group] of currentGroupMap) {
+    const totals = getCategoryExpenseTotalsGrouped(
+      {
+        categoryIds: Array.from(group.categoryIds),
+        startDate: group.startDate,
+        endDate: group.endDate,
+        targetCurrencyCode: group.currencyCode,
+      },
+      context,
+    );
+    currentTotalsByGroup.set(key, totals);
+  }
+
+  const previousTotalsByGroup = new Map<string, Record<string, number>>();
+  for (const [key, group] of previousGroupMap) {
+    const totals = getCategoryExpenseTotalsGrouped(
+      {
+        categoryIds: Array.from(group.categoryIds),
+        startDate: group.startDate,
+        endDate: group.endDate,
+        targetCurrencyCode: group.currencyCode,
+      },
+      context,
+    );
+    previousTotalsByGroup.set(key, totals);
+  }
+
+  const statuses: BudgetStatus[] = [];
+
+  for (const budget of budgets) {
+    const category = flatCategoriesMap.get(budget.categoryId);
+    if (!category) continue;
+
+    const period = getBudgetPeriodInfo(budget.frequency, referenceDate, budget.startDate);
+    const currKey = `${period.startDate.getTime()}:${period.endDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
+    const currTotals = currentTotalsByGroup.get(currKey) ?? {};
+
+    const catIds = [category.id];
+    if (category.subcategories) {
+      for (const child of category.subcategories) {
+        if (!activeBudgetCategoryIds.has(child.id)) {
+          catIds.push(child.id);
+        }
+      }
+    }
+
+    const precomputedSpent = catIds.reduce((sum, id) => sum + (currTotals[id] ?? 0), 0);
+
+    let precomputedPreviousSpent: number | undefined;
+    if (budget.allowRollover) {
+      const prevKey = `${period.previousStartDate.getTime()}:${period.previousEndDate.getTime()}:${budget.currencyCode.toUpperCase()}`;
+      const prevTotals = previousTotalsByGroup.get(prevKey) ?? {};
+      precomputedPreviousSpent = catIds.reduce((sum, id) => sum + (prevTotals[id] ?? 0), 0);
+    }
+
+    statuses.push(
+      calculateCategoryBudgetStatus({
+        budget,
+        category,
+        childCategories: category.subcategories || [],
+        activeBudgetCategoryIds,
+        referenceDate,
+        context,
+        precomputedSpent,
+        precomputedPreviousSpent,
+      }),
+    );
+  }
+
+  return statuses;
 }

@@ -44,6 +44,12 @@ export const calculateCategoryBudgetStatus = deferFunction(
       .calculateCategoryBudgetStatus,
 ) as typeof import("./services/calculate-category-budget.service").calculateCategoryBudgetStatus;
 
+export const calculateBudgetStatusesBatch = deferFunction(
+  () =>
+    require("./services/calculate-category-budget.service")
+      .calculateBudgetStatusesBatch,
+) as typeof import("./services/calculate-category-budget.service").calculateBudgetStatusesBatch;
+
 export const saveCategoryBudget = deferFunction(
   () => require("./services/save-category-budget.service").saveCategoryBudget,
 ) as typeof import("./services/save-category-budget.service").saveCategoryBudget;

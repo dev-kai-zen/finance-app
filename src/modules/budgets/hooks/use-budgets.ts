@@ -14,7 +14,10 @@ import {
   findCategoryBudgetByCategoryId,
   listCategoryBudgets,
 } from "../repositories/category-budgets.repository";
-import { calculateCategoryBudgetStatus } from "../services/calculate-category-budget.service";
+import {
+  calculateCategoryBudgetStatus,
+  calculateBudgetStatusesBatch,
+} from "../services/calculate-category-budget.service";
 import { deleteCategoryBudget as deleteCategoryBudgetService } from "../services/delete-category-budget.service";
 import { saveCategoryBudget as saveCategoryBudgetService } from "../services/save-category-budget.service";
 import { toggleCategoryBudget as toggleCategoryBudgetService } from "../services/toggle-category-budget.service";
@@ -86,27 +89,12 @@ export function useBudgets(referenceDate?: Date) {
     }
 
     scheduleAfterPaint(() => {
-      const activeBudgetCategoryIds = new Set(
-        budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
+      const statuses = calculateBudgetStatusesBatch(
+        budgets,
+        flatCategoriesMap,
+        effectiveReferenceDate,
+        db,
       );
-
-      const statuses: BudgetStatus[] = [];
-
-      for (const budget of budgets) {
-        const category = flatCategoriesMap.get(budget.categoryId);
-        if (!category) continue;
-
-        const status = calculateCategoryBudgetStatus({
-          budget,
-          category,
-          childCategories: category.subcategories || [],
-          activeBudgetCategoryIds,
-          referenceDate: effectiveReferenceDate,
-          context: db,
-        });
-
-        statuses.push(status);
-      }
 
       // Sort by status: exceeded first, then near limit, then by percentage descending
       statuses.sort((a, b) => {

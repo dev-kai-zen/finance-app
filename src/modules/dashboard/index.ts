@@ -8,6 +8,7 @@ export const DashboardScreen = deferComponent(
 export { useDashboard } from "./hooks/use-dashboard";
 export {
   getDashboardSummary,
+  getNetWorthHistory,
   getAccountDynamicBalances,
   getMonthlyCashflow,
   getCategorySpendingBreakdown,

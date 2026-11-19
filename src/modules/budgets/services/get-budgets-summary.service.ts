@@ -11,7 +11,7 @@ import {
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
 import { listCategoryBudgetsSync } from "../repositories/category-budgets.repository";
-import { calculateCategoryBudgetStatus } from "./calculate-category-budget.service";
+import { calculateBudgetStatusesBatch } from "./calculate-category-budget.service";
 import type { BudgetsSummary } from "../types/budget.types";
 
 /**
@@ -46,8 +46,11 @@ export function getBudgetsSummary(
   }
   traverse(hierarchicalCategories);
 
-  const activeBudgetCategoryIds = new Set(
-    budgets.filter((b) => b.isEnabled).map((b) => b.categoryId),
+  const statuses = calculateBudgetStatusesBatch(
+    budgets,
+    flatCategoriesMap,
+    referenceDate,
+    context,
   );
 
   let totalBudgetedCents = 0;
@@ -58,31 +61,20 @@ export function getBudgetsSummary(
   const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
-  for (const budget of budgets) {
-    if (!budget.isEnabled) continue;
-    const category = flatCategoriesMap.get(budget.categoryId);
-    if (!category) continue;
-
-    const status = calculateCategoryBudgetStatus({
-      budget,
-      category,
-      childCategories: category.subcategories || [],
-      activeBudgetCategoryIds,
-      referenceDate,
-      context,
-    });
+  for (const status of statuses) {
+    if (!status.budget.isEnabled) continue;
 
     activeCount += 1;
     totalBudgetedCents += convertCurrencyMinorUnits(
       status.effectiveTargetCents,
-      budget.currencyCode,
+      status.budget.currencyCode,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,
     );
     totalSpentCents += convertCurrencyMinorUnits(
       status.spentCents,
-      budget.currencyCode,
+      status.budget.currencyCode,
       homeCurrency,
       ratesMap,
       DEFAULT_BASE_CURRENCY,

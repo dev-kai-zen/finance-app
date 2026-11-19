@@ -3,7 +3,10 @@ import { useFocusEffect } from "expo-router";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
-import { getDashboardSummary } from "../repositories/dashboard.repository";
+import {
+  getDashboardSummary,
+  getNetWorthHistory,
+} from "../repositories/dashboard.repository";
 import type { DashboardSummary } from "../types/dashboard.types";
 
 export function useDashboard() {
@@ -31,7 +34,33 @@ export function useDashboard() {
           setSummary(quick);
           scheduleAfterPaint(() => {
             try {
-              setSummary(getDashboardSummary());
+              const netWorthHistory = getNetWorthHistory(
+                quick.accountsWithBalances,
+              );
+              const monthlyPoints = netWorthHistory["1Y"];
+              const currentPoint = monthlyPoints.at(-1);
+              const previousMonthPoint = monthlyPoints.at(-2);
+              const netWorthChangePercentage =
+                currentPoint &&
+                previousMonthPoint &&
+                previousMonthPoint.netWorthMinorUnits !== 0
+                  ? Math.round(
+                      ((currentPoint.netWorthMinorUnits -
+                        previousMonthPoint.netWorthMinorUnits) /
+                        Math.abs(previousMonthPoint.netWorthMinorUnits)) *
+                        100,
+                    )
+                  : null;
+
+              setSummary((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      netWorthHistory,
+                      netWorthChangePercentage,
+                    }
+                  : null,
+              );
             } catch (err: any) {
               setError(err?.message || "Failed to load dashboard data.");
             }

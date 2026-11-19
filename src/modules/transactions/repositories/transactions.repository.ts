@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   DEFAULT_BASE_CURRENCY,
@@ -380,6 +380,127 @@ export function listTransactions(
   return grouped;
 }
 
+/**
+ * Loads only the newest logical transactions with bounded hydration.
+ * Retrieves companions for any transfer group within the boundary so
+ * recent transfers and fees group accurately without scanning the whole ledger.
+ */
+export function listRecentTransactions(
+  limit = 5,
+  context: DbContext = db,
+): TransactionListItem[] {
+  if (limit <= 0) return [];
+
+  const fetchLimit = Math.max(15, limit * 3);
+  const rawRows = context
+    .select({
+      transaction: transactions,
+      accountName: accounts.name,
+      accountCurrency: accounts.currencyCode,
+      accountTypeName: accountTypes.name,
+      accountPocketEnabled: accounts.pocketEnabled,
+      categoryName: categories.name,
+      categoryIcon: categories.icon,
+      categoryColor: categories.hexColorsId,
+      pocketName: pockets.name,
+    })
+    .from(transactions)
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(pockets, eq(transactions.pocketId, pockets.id))
+    .where(isNull(transactions.deletedAt))
+    .orderBy(
+      desc(transactions.occurredAt),
+      desc(transactions.createdAt),
+      desc(transactions.id),
+    )
+    .limit(fetchLimit)
+    .all();
+
+  if (rawRows.length === 0) return [];
+
+  const fetchedIds = new Set(rawRows.map((r) => r.transaction.id));
+  const groupIds = new Set(
+    rawRows
+      .map((r) => r.transaction.transactionGroupId)
+      .filter((g): g is string => Boolean(g)),
+  );
+
+  let allRows = [...rawRows];
+  if (groupIds.size > 0) {
+    const siblingRows = context
+      .select({
+        transaction: transactions,
+        accountName: accounts.name,
+        accountCurrency: accounts.currencyCode,
+        accountTypeName: accountTypes.name,
+        accountPocketEnabled: accounts.pocketEnabled,
+        categoryName: categories.name,
+        categoryIcon: categories.icon,
+        categoryColor: categories.hexColorsId,
+        pocketName: pockets.name,
+      })
+      .from(transactions)
+      .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+      .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
+      .leftJoin(categories, eq(transactions.categoryId, categories.id))
+      .leftJoin(pockets, eq(transactions.pocketId, pockets.id))
+      .where(
+        and(
+          isNull(transactions.deletedAt),
+          inArray(transactions.transactionGroupId, Array.from(groupIds)),
+        ),
+      )
+      .all();
+
+    for (const sib of siblingRows) {
+      if (!fetchedIds.has(sib.transaction.id)) {
+        fetchedIds.add(sib.transaction.id);
+        allRows.push(sib);
+      }
+    }
+
+    allRows.sort((a, b) => {
+      const dateDiff =
+        b.transaction.occurredAt.getTime() - a.transaction.occurredAt.getTime();
+      if (dateDiff !== 0) return dateDiff;
+      const createdDiff =
+        b.transaction.createdAt.getTime() - a.transaction.createdAt.getTime();
+      if (createdDiff !== 0) return createdDiff;
+      return b.transaction.id.localeCompare(a.transaction.id);
+    });
+  }
+
+  const txIds = allRows.map((r) => r.transaction.id);
+  const labelsByTransactionId = getLabelsByTransactionIds(txIds, context);
+  const attachmentCountByTransactionId = getAttachmentCountByTransactionId(
+    context,
+    txIds,
+  );
+
+  const emptyBalances = new Map<string, number>();
+  const mapped = allRows.map((row) =>
+    mapRowToListItem(
+      row,
+      emptyBalances,
+      emptyBalances,
+      attachmentCountByTransactionId,
+      labelsByTransactionId,
+    ),
+  );
+
+  const grouped = applySplitListMetadata(groupTransferRows(mapped), context);
+  grouped.sort((a, b) => {
+    const timeA = new Date(a.occurredAt).getTime();
+    const timeB = new Date(b.occurredAt).getTime();
+    if (timeB !== timeA) return timeB - timeA;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  return grouped.slice(0, limit);
+}
+
 export function hasTransactions(context: DbContext = db): boolean {
   return Boolean(
     context
@@ -444,14 +565,24 @@ export function listDeletedTransactions(
 
 function getAttachmentCountByTransactionId(
   context: DbContext = db,
+  transactionIds?: string[],
 ): Map<string, number> {
+  if (transactionIds !== undefined && transactionIds.length === 0) {
+    return new Map();
+  }
+
+  const conditions = [isNull(transactionAttachments.deletedAt)];
+  if (transactionIds && transactionIds.length > 0) {
+    conditions.push(inArray(transactionAttachments.transactionId, transactionIds));
+  }
+
   const rows = context
     .select({
       transactionId: transactionAttachments.transactionId,
       count: sql<number>`count(*)`,
     })
     .from(transactionAttachments)
-    .where(isNull(transactionAttachments.deletedAt))
+    .where(and(...conditions))
     .groupBy(transactionAttachments.transactionId)
     .all();
   return new Map(rows.map((row) => [row.transactionId, Number(row.count)]));

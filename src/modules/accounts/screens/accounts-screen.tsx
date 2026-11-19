@@ -101,7 +101,7 @@ function AccountsScreenContent({
   const theme = useAppTheme();
   const { t } = useLocalization();
   const s = useThemeStyles(accountStyles);
-  const data = useAccounts();
+  const data = useAccounts({ includeCreditCardMonitoring: true });
 
   const isScreenActive = useIsFocused();
 
