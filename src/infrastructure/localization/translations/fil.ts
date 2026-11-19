@@ -1174,6 +1174,8 @@ export const fil = {
         "Pabilisin ang pagbukas ng app at pag-load ng Home, Accounts, Transactions, Calendar, at Search.",
       improveItem5:
         "Pahusayin ang bilis ng pag-scroll, pagsasala, at pag-type sa malalaking listahan ng transaksyon at budget.",
+      improveItem6:
+        "Iangkop ang mga mungkahi sa Chat with Kai gamit ang sarili mong mga account para sa gastos, kita, at paglipat.",
       fixItem1:
         "Inayos ang pag-navigate sa pag-import sa onboarding para makabalik sa mga opsyon nang hindi naiipit.",
       fixItem2:
@@ -1184,6 +1186,8 @@ export const fil = {
         "Ayusin ang hindi kailangang background update ng widget at pagbagal pagbalik sa app para mabilis ang pindot.",
       fixItem5:
         "Ayusin ang hindi agarang pag-refresh ng listahan ng transaksyon kapag nagdagdag gamit ang quick entry.",
+      fixItem6:
+        "Panatilihing buo ang usapan at mga draft na transaksyon sa Chat with Kai kapag nag-edit o muling nagbukas nito.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

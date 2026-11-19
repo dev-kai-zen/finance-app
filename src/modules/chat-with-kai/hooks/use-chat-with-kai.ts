@@ -1,11 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import type {
   ChatMessage,
   ParseChatTransactionContext,
   ParsedTransactionProposal,
 } from "../types/chat-with-kai.types";
 import { parseChatTransaction } from "../services/parse-chat-transaction.service";
-import { SAMPLE_PROMPTS } from "../constants/sample-prompts";
+import { buildSuggestedPrompts } from "../services/build-suggested-prompts.service";
+import {
+  appendChatSessionMessage,
+  getChatSessionSnapshot,
+  markChatSessionProposalDeleted,
+  markChatSessionProposalSaved,
+  resetChatSession,
+  setChatSessionInputText,
+  subscribeChatSession,
+  updateChatSessionMessages,
+  updateChatSessionProposalData,
+} from "../utils/chat-session-store";
+import {
+  getCachedChatKeywords,
+  setCachedChatKeywords,
+} from "../utils/chat-keywords-cache";
 import {
   addCategoryKeyword,
   getAccountKeywordMap,
@@ -41,22 +63,31 @@ export function useChatWithKai(
   options?: UseChatWithKaiOptions,
 ) {
   const lang = context.language ?? "en";
-  const initialPrompts = SAMPLE_PROMPTS[lang] ?? SAMPLE_PROMPTS.en;
   const currentMode = options?.mode ?? "review";
   const onAutoSave = options?.onAutoSave;
+  const isMountedRef = useRef(true);
+  const welcomeTimestampRef = useRef(new Date());
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const initialKeywords = getCachedChatKeywords();
   const [categoryKeywordsMap, setCategoryKeywordsMap] = useState<
     Map<string, string>
-  >(new Map());
+  >(() => initialKeywords?.categoryKeywordsMap ?? new Map());
   const [accountKeywordsMap, setAccountKeywordsMap] = useState<
     Map<string, string>
-  >(new Map());
+  >(() => initialKeywords?.accountKeywordsMap ?? new Map());
   const [actionKeywordsMap, setActionKeywordsMap] = useState<
     Map<string, TransactionType>
-  >(new Map());
+  >(() => initialKeywords?.actionKeywordsMap ?? new Map());
   const [merchantKeywordsMap, setMerchantKeywordsMap] = useState<
     Map<string, MerchantLookupInfo>
-  >(new Map());
+  >(() => initialKeywords?.merchantKeywordsMap ?? new Map());
 
   const reloadKeywords = useCallback(async () => {
     try {
@@ -71,6 +102,13 @@ export function useChatWithKai(
         getActionKeywordMap(),
         getMerchantKeywordMap(),
       ]);
+      setCachedChatKeywords({
+        categoryKeywordsMap: catMap,
+        accountKeywordsMap: accMap,
+        actionKeywordsMap: actMap,
+        merchantKeywordsMap: merchMap,
+      });
+      if (!isMountedRef.current) return;
       setCategoryKeywordsMap(catMap);
       setAccountKeywordsMap(accMap);
       setActionKeywordsMap(actMap);
@@ -81,10 +119,34 @@ export function useChatWithKai(
   }, []);
 
   useEffect(() => {
-    reloadKeywords();
+    const cached = getCachedChatKeywords();
+    if (cached) {
+      setCategoryKeywordsMap(cached.categoryKeywordsMap);
+      setAccountKeywordsMap(cached.accountKeywordsMap);
+      setActionKeywordsMap(cached.actionKeywordsMap);
+      setMerchantKeywordsMap(cached.merchantKeywordsMap);
+      return;
+    }
+    void reloadKeywords();
   }, [reloadKeywords]);
 
-  const createInitialMessage = useCallback((): ChatMessage => {
+  const initialPrompts = useMemo(
+    () =>
+      buildSuggestedPrompts({
+        accounts: context.accounts,
+        defaultExpenseAccountId: context.defaultExpenseAccountId,
+        defaultIncomeAccountId: context.defaultIncomeAccountId,
+        language: lang,
+      }),
+    [
+      context.accounts,
+      context.defaultExpenseAccountId,
+      context.defaultIncomeAccountId,
+      lang,
+    ],
+  );
+
+  const welcomeMessage = useMemo<ChatMessage>(() => {
     let welcomeText =
       "Hi! I'm Kai, your personal finance companion. Just type what you spent, received, or transferred!";
     if (lang === "fil") {
@@ -99,13 +161,22 @@ export function useChatWithKai(
       id: "welcome-msg",
       role: "assistant",
       text: welcomeText,
-      timestamp: new Date(),
-      suggestedPrompts: initialPrompts.slice(0, 3),
+      timestamp: welcomeTimestampRef.current,
+      suggestedPrompts: initialPrompts,
     };
   }, [lang, initialPrompts]);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([createInitialMessage()]);
-  const [inputText, setInputText] = useState("");
+  const session = useSyncExternalStore(
+    subscribeChatSession,
+    getChatSessionSnapshot,
+    getChatSessionSnapshot,
+  );
+  const messages = useMemo(
+    () => [welcomeMessage, ...session.messages],
+    [welcomeMessage, session.messages],
+  );
+  const inputText = session.inputText;
+  const setInputText = setChatSessionInputText;
   const [processing, setProcessing] = useState(false);
 
   const sendMessage = useCallback(
@@ -121,10 +192,10 @@ export function useChatWithKai(
         timestamp: new Date(),
       };
 
-      setInputText("");
+      setChatSessionInputText("");
       setProcessing(true);
 
-      setMessages((prev) => [...prev, userMessage]);
+      appendChatSessionMessage(userMessage);
 
       // Small async delay for natural conversational rhythm
       setTimeout(async () => {
@@ -188,7 +259,7 @@ export function useChatWithKai(
               timestamp: new Date(),
               proposal,
             };
-            setMessages((prev) => [...prev, assistantMsg]);
+            appendChatSessionMessage(assistantMsg);
           } else {
             const assistantMsg: ChatMessage = {
               id: assistantMessageId,
@@ -200,10 +271,12 @@ export function useChatWithKai(
               suggestedAmounts: result.suggestedAmounts,
               partialProposal: result.partialProposal,
             };
-            setMessages((prev) => [...prev, assistantMsg]);
+            appendChatSessionMessage(assistantMsg);
           }
         } finally {
-          setProcessing(false);
+          if (isMountedRef.current) {
+            setProcessing(false);
+          }
         }
       }, 180);
     },
@@ -221,75 +294,16 @@ export function useChatWithKai(
     ],
   );
 
-  const markProposalSaved = useCallback(
-    (messageId: string, transactionId?: string | null) => {
-      setMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.id === messageId && msg.proposal) {
-            return {
-              ...msg,
-              proposal: {
-                ...msg.proposal,
-                isSaved: true,
-                transactionId: transactionId ?? msg.proposal.transactionId,
-              },
-            };
-          }
-          return msg;
-        }),
-      );
-    },
-    [],
-  );
-
-  const updateProposalData = useCallback(
-    (
-      messageId: string,
-      updated?: Partial<ParsedTransactionProposal>,
-    ) => {
-      setMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.id === messageId && msg.proposal) {
-            return {
-              ...msg,
-              proposal: {
-                ...msg.proposal,
-                ...(updated ?? {}),
-                isSaved: true,
-                transactionId: updated?.transactionId ?? msg.proposal.transactionId,
-              },
-            };
-          }
-          return msg;
-        }),
-      );
-    },
-    [],
-  );
-
-  const markProposalDeleted = useCallback((messageId: string) => {
-    setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id === messageId && msg.proposal) {
-          return {
-            ...msg,
-            proposal: {
-              ...msg.proposal,
-              isDeleted: true,
-            },
-          };
-        }
-        return msg;
-      }),
-    );
-  }, []);
+  const markProposalSaved = markChatSessionProposalSaved;
+  const updateProposalData = updateChatSessionProposalData;
+  const markProposalDeleted = markChatSessionProposalDeleted;
 
   const assignCategoryToProposal = useCallback(
     async (messageId: string, category: Category) => {
       let candidateMerchantName: string | null = null;
       let completedProposalToSave: ParsedTransactionProposal | null = null;
 
-      setMessages((prev) =>
+      updateChatSessionMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === messageId && msg.partialProposal) {
             candidateMerchantName = msg.partialProposal.name;
@@ -337,7 +351,7 @@ export function useChatWithKai(
               explanation = `Se registró ${formatted} para ${category.name}.`;
             }
 
-            setMessages((prev) =>
+            updateChatSessionMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === messageId && msg.proposal) {
                   return {
@@ -378,7 +392,7 @@ export function useChatWithKai(
     async (messageId: string, category: Category) => {
       let candidateMerchantName: string | null = null;
 
-      setMessages((prev) =>
+      updateChatSessionMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === messageId && msg.proposal) {
             const originalCatId =
@@ -433,7 +447,7 @@ export function useChatWithKai(
       let kwToReassign: string | null = null;
       let newCatId: string | null = null;
 
-      setMessages((prev) =>
+      updateChatSessionMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === messageId && msg.pendingKeywordReassignment) {
             kwToReassign = msg.pendingKeywordReassignment.keyword;
@@ -460,7 +474,7 @@ export function useChatWithKai(
   );
 
   const dismissReassignKeyword = useCallback((messageId: string) => {
-    setMessages((prev) =>
+    updateChatSessionMessages((prev) =>
       prev.map((msg) =>
         msg.id === messageId
           ? { ...msg, pendingKeywordReassignment: null }
@@ -470,9 +484,9 @@ export function useChatWithKai(
   }, []);
 
   const clearConversation = useCallback(() => {
-    setMessages([createInitialMessage()]);
-    setInputText("");
-  }, [createInitialMessage]);
+    welcomeTimestampRef.current = new Date();
+    resetChatSession();
+  }, []);
 
   return {
     messages,

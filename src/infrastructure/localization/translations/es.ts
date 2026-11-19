@@ -1160,6 +1160,8 @@ export const es = {
         "Acelera el inicio de la app y la carga en Inicio, Cuentas, Transacciones, Calendario y Búsqueda.",
       improveItem5:
         "Mejora la velocidad al desplazarse, filtrar y escribir con historiales grandes y vistas previas de presupuesto.",
+      improveItem6:
+        "Personaliza las sugerencias de Chat con Kai usando tus cuentas reales para gastos, ingresos y transferencias.",
       fixItem1:
         "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
       fixItem2:
@@ -1170,6 +1172,8 @@ export const es = {
         "Corrige actualizaciones innecesarias de widgets y retrasos al volver a la app para responder al instante.",
       fixItem5:
         "Corrige las transacciones que no se actualizaban al instante al registrarlas mediante entrada rápida.",
+      fixItem6:
+        "Mantiene intactos tus mensajes y borradores de Chat con Kai al editar una transacción o volver a abrir el chat.",
     },
     v170: {
       date: "18 de noviembre de 2026",

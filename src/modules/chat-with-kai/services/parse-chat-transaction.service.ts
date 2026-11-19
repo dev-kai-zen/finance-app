@@ -4,7 +4,7 @@ import type {
   ParsedTransactionProposal,
 } from "../types/chat-with-kai.types";
 import { INTENT_VOCABULARY } from "../constants/intent-vocabulary";
-import { SAMPLE_PROMPTS } from "../constants/sample-prompts";
+import { buildSuggestedPrompts } from "./build-suggested-prompts.service";
 import { extractAmount, extractAmounts } from "./extract-amount.service";
 import { matchAccounts } from "./match-accounts.service";
 import { matchCategory } from "./match-category.service";
@@ -22,7 +22,12 @@ export function parseChatTransaction(
 ): ParseChatTransactionResult {
   const text = rawInput.trim();
   const lang = context.language ?? "en";
-  const defaultPrompts = SAMPLE_PROMPTS[lang] ?? SAMPLE_PROMPTS.en;
+  const defaultPrompts = buildSuggestedPrompts({
+    accounts: context.accounts,
+    defaultExpenseAccountId: context.defaultExpenseAccountId,
+    defaultIncomeAccountId: context.defaultIncomeAccountId,
+    language: lang,
+  });
 
   if (!text) {
     return {
@@ -116,13 +121,14 @@ export function parseChatTransaction(
           suggestedPrompts: defaultPrompts.slice(0, 3),
         };
       }
+      const transferSuggestion = defaultPrompts[2];
       return {
         success: false,
         reason: "missing_transfer_destination",
         message: getLocalizedMessage("missing_transfer_destination", lang),
-        suggestedPrompts: [
-          `Transfer ${amountResult.rawAmount} from ${context.accounts[0]?.name ?? "Cash"} to ${context.accounts[1]?.name ?? "Bank"}`,
-        ],
+        suggestedPrompts: transferSuggestion
+          ? [transferSuggestion]
+          : defaultPrompts,
       };
     }
   }

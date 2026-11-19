@@ -1143,6 +1143,8 @@ export const en = {
         "Speed up app startup and screen loading across Home, Accounts, Transactions, Calendar, and Search.",
       improveItem5:
         "Improve scrolling, filtering, and typing speed when managing large transaction histories and live budget previews.",
+      improveItem6:
+        "Personalize Chat with Kai prompt suggestions using your real accounts for expense, income, and transfer examples.",
       fixItem1:
         "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
       fixItem2:
@@ -1153,6 +1155,8 @@ export const en = {
         "Fix unnecessary background widget updates and resume delays so taps respond immediately across the app.",
       fixItem5:
         "Fix transactions not refreshing immediately on the list when recorded through quick entry.",
+      fixItem6:
+        "Keep your Chat with Kai messages and drafted transactions intact when editing a transaction or reopening Kai.",
     },
     v170: {
       date: "November 18, 2026",

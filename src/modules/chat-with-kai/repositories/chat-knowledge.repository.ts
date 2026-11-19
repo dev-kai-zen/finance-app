@@ -12,6 +12,7 @@ import {
   type CategoryKeywordItem,
   DuplicateKeywordError,
 } from "../types/chat-with-kai.types";
+import { invalidateChatKeywordsCache } from "../utils/chat-keywords-cache";
 
 export { DuplicateKeywordError };
 
@@ -180,6 +181,7 @@ export async function addCategoryKeyword(
     language,
     createdAt,
   });
+  invalidateChatKeywordsCache();
 
   return {
     id,
@@ -198,6 +200,7 @@ export async function deleteCategoryKeyword(
   client: DbContext = db,
 ): Promise<void> {
   await client.delete(categoryKeywords).where(eq(categoryKeywords.id, id));
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -241,6 +244,7 @@ export async function updateCategoryKeyword(
       language,
     })
     .where(eq(categoryKeywords.id, id));
+  invalidateChatKeywordsCache();
 
   const updated = await client
     .select({
@@ -295,6 +299,7 @@ export async function reassignCategoryKeyword(
       createdAt: new Date(),
     });
   }
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -420,6 +425,7 @@ export async function addAccountKeyword(
     language,
     createdAt,
   });
+  invalidateChatKeywordsCache();
 
   return {
     id,
@@ -471,6 +477,7 @@ export async function updateAccountKeyword(
       language,
     })
     .where(eq(accountKeywords.id, id));
+  invalidateChatKeywordsCache();
 
   const updated = await client
     .select({
@@ -501,6 +508,7 @@ export async function deleteAccountKeyword(
   client: DbContext = db,
 ): Promise<void> {
   await client.delete(accountKeywords).where(eq(accountKeywords.id, id));
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -732,5 +740,6 @@ export async function resetToDefaultCategoryKeywords(
   client: DbContext = db,
 ): Promise<number> {
   await client.delete(categoryKeywords);
+  invalidateChatKeywordsCache();
   return seedDefaultChatKnowledgeIfEmpty(client);
 }

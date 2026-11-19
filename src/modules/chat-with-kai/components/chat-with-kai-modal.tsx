@@ -177,9 +177,10 @@ function ChatWithKaiModalContent({
 
   useEffect(() => {
     if (visible && messages.length > 0) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         listRef.current?.scrollToEnd({ animated: true });
       }, 100);
+      return () => clearTimeout(timer);
     }
   }, [visible, messages.length]);
 

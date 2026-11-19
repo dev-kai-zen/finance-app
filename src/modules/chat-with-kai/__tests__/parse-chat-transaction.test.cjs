@@ -30,6 +30,14 @@ require.extensions[".ts"] = function (module, filename) {
 };
 
 const { parseChatTransaction } = require("../services/parse-chat-transaction.service.ts");
+const { buildSuggestedPrompts } = require("../services/build-suggested-prompts.service.ts");
+const {
+  appendChatSessionMessage,
+  getChatSessionSnapshot,
+  resetChatSession,
+  setChatSessionInputText,
+  updateChatSessionProposalData,
+} = require("../utils/chat-session-store.ts");
 
 const mockAccounts = [
   { id: "acc-wallet", name: "Wallet", currencyCode: "PHP" },
@@ -475,4 +483,291 @@ test("parse-chat-transaction: prioritizes Asset over Liability when account name
     assert.equal(result.proposal.accountName, "GCASH");
     assert.equal(result.proposal.accountGroup, "asset");
   }
+});
+
+test("buildSuggestedPrompts: generates 3 parseable suggestions (Expense, Income, Transfer) using default expense and active accounts", () => {
+  const accounts = [
+    {
+      id: "acc-cc",
+      name: "BPI Credit",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-liab", name: "Credit Card", accountGroup: "liability" },
+    },
+    {
+      id: "acc-cash",
+      name: "Cash",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Cash", accountGroup: "asset" },
+    },
+    {
+      id: "acc-maya",
+      name: "Maya",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-ewallet", name: "E-Wallet", accountGroup: "asset" },
+    },
+  ];
+
+  for (const language of ["en", "fil", "es"]) {
+    const prompts = buildSuggestedPrompts({
+      accounts,
+      defaultExpenseAccountId: "acc-maya",
+      defaultIncomeAccountId: "acc-cash",
+      language,
+    });
+
+    assert.equal(prompts.length, 3);
+
+    const parsedExpense = parseChatTransaction(prompts[0], {
+      ...defaultContext,
+      accounts,
+      defaultExpenseAccountId: "acc-maya",
+      defaultIncomeAccountId: "acc-cash",
+      language,
+    });
+    assert.equal(parsedExpense.success, true, `Expense failed for ${language}: ${prompts[0]}`);
+    if (parsedExpense.success) {
+      assert.equal(parsedExpense.proposal.type, "expense");
+      assert.equal(parsedExpense.proposal.accountId, "acc-maya");
+    }
+
+    const parsedIncome = parseChatTransaction(prompts[1], {
+      ...defaultContext,
+      accounts,
+      defaultExpenseAccountId: "acc-maya",
+      defaultIncomeAccountId: "acc-cash",
+      language,
+    });
+    assert.equal(parsedIncome.success, true, `Income failed for ${language}: ${prompts[1]}`);
+    if (parsedIncome.success) {
+      assert.equal(parsedIncome.proposal.type, "income");
+      assert.equal(parsedIncome.proposal.accountId, "acc-cash");
+    }
+
+    const parsedTransfer = parseChatTransaction(prompts[2], {
+      ...defaultContext,
+      accounts,
+      defaultExpenseAccountId: "acc-maya",
+      defaultIncomeAccountId: "acc-cash",
+      language,
+    });
+    assert.equal(parsedTransfer.success, true, `Transfer failed for ${language}: ${prompts[2]}`);
+    if (parsedTransfer.success) {
+      assert.equal(parsedTransfer.proposal.type, "transfer");
+      assert.equal(parsedTransfer.proposal.accountId, "acc-maya");
+      assert.equal(parsedTransfer.proposal.transferAccountId, "acc-cash");
+    }
+  }
+});
+
+test("buildSuggestedPrompts: falls back to first asset account for expense when no default expense account is set", () => {
+  const accounts = [
+    {
+      id: "acc-cc",
+      name: "Visa Card",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-liab", name: "Credit Card", accountGroup: "liability" },
+    },
+    {
+      id: "acc-archived",
+      name: "Old Bank",
+      currencyCode: "PHP",
+      isArchived: true,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+    },
+    {
+      id: "acc-hidden",
+      name: "Hidden Stash",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: true,
+      accountType: { id: "t-asset", name: "Cash", accountGroup: "asset" },
+    },
+    {
+      id: "acc-savings",
+      name: "GoTyme",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+    },
+    {
+      id: "acc-ewallet",
+      name: "SeaBank",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+    },
+  ];
+
+  const prompts = buildSuggestedPrompts({
+    accounts,
+    defaultExpenseAccountId: null,
+    defaultIncomeAccountId: null,
+    language: "en",
+  });
+
+  assert.equal(prompts.length, 3);
+  assert.ok(prompts[0].includes("GoTyme"));
+  assert.ok(!prompts[0].includes("Visa Card"));
+  assert.ok(!prompts[0].includes("Old Bank"));
+  assert.ok(!prompts[0].includes("Hidden Stash"));
+  assert.ok(prompts[2].includes("GoTyme"));
+  assert.ok(prompts[2].includes("SeaBank"));
+});
+
+test("buildSuggestedPrompts: returns only 2 suggestions (Expense & Income) when user has 1 active account", () => {
+  const accounts = [
+    {
+      id: "acc-only",
+      name: "Cash On Hand",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Cash", accountGroup: "asset" },
+    },
+    {
+      id: "acc-archived",
+      name: "Archived Bank",
+      currencyCode: "PHP",
+      isArchived: true,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+    },
+  ];
+
+  const prompts = buildSuggestedPrompts({
+    accounts,
+    language: "en",
+  });
+
+  assert.equal(prompts.length, 2);
+
+  const parsedExpense = parseChatTransaction(prompts[0], {
+    ...defaultContext,
+    accounts,
+    defaultExpenseAccountId: null,
+  });
+  assert.equal(parsedExpense.success, true);
+  if (parsedExpense.success) {
+    assert.equal(parsedExpense.proposal.type, "expense");
+    assert.equal(parsedExpense.proposal.accountId, "acc-only");
+  }
+
+  const parsedIncome = parseChatTransaction(prompts[1], {
+    ...defaultContext,
+    accounts,
+    defaultExpenseAccountId: null,
+  });
+  assert.equal(parsedIncome.success, true);
+  if (parsedIncome.success) {
+    assert.equal(parsedIncome.proposal.type, "income");
+    assert.equal(parsedIncome.proposal.accountId, "acc-only");
+  }
+});
+
+test("buildSuggestedPrompts: returns empty array when no active accounts exist", () => {
+  assert.deepEqual(
+    buildSuggestedPrompts({ accounts: [], language: "en" }),
+    [],
+  );
+  assert.deepEqual(
+    buildSuggestedPrompts({
+      accounts: [
+        {
+          id: "acc-arch",
+          name: "Closed",
+          currencyCode: "PHP",
+          isArchived: true,
+          accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+        },
+      ],
+      language: "en",
+    }),
+    [],
+  );
+});
+
+test("buildSuggestedPrompts: avoids multiple_amounts failure when default account name contains digits", () => {
+  const accounts = [
+    {
+      id: "acc-num",
+      name: "BDO 1234",
+      currencyCode: "PHP",
+      isArchived: false,
+      hideFromSelection: false,
+      accountType: { id: "t-asset", name: "Bank", accountGroup: "asset" },
+    },
+  ];
+
+  const prompts = buildSuggestedPrompts({
+    accounts,
+    defaultExpenseAccountId: "acc-num",
+    language: "en",
+  });
+
+  assert.equal(prompts.length, 2);
+  const parsedExpense = parseChatTransaction(prompts[0], {
+    ...defaultContext,
+    accounts,
+    defaultExpenseAccountId: "acc-num",
+  });
+  assert.equal(parsedExpense.success, true);
+  if (parsedExpense.success) {
+    assert.equal(parsedExpense.proposal.accountId, "acc-num");
+    assert.equal(parsedExpense.proposal.amountMinorUnits, 50000);
+  }
+});
+
+test("chat-session-store: preserves conversation and updates drafted proposals across modal unmount", () => {
+  resetChatSession();
+  setChatSessionInputText("coffee 150");
+  appendChatSessionMessage({
+    id: "user-1",
+    role: "user",
+    text: "Spent 500 on lunch",
+    timestamp: new Date(),
+  });
+  appendChatSessionMessage({
+    id: "assistant-1",
+    role: "assistant",
+    text: "Prepared expense",
+    timestamp: new Date(),
+    proposal: {
+      type: "expense",
+      amountMinorUnits: 50000,
+      currencyCode: "PHP",
+      name: "Lunch",
+      note: null,
+      occurredAt: new Date(),
+      accountId: "acc-wallet",
+      accountName: "Wallet",
+      isSaved: false,
+    },
+  });
+
+  updateChatSessionProposalData("assistant-1", {
+    amountMinorUnits: 65000,
+    transactionId: "tx-saved-1",
+  });
+
+  const snap = getChatSessionSnapshot();
+  assert.equal(snap.inputText, "coffee 150");
+  assert.equal(snap.messages.length, 2);
+  assert.equal(snap.messages[1].proposal?.isSaved, true);
+  assert.equal(snap.messages[1].proposal?.amountMinorUnits, 65000);
+  assert.equal(snap.messages[1].proposal?.transactionId, "tx-saved-1");
+
+  resetChatSession();
+  assert.equal(getChatSessionSnapshot().messages.length, 0);
+  assert.equal(getChatSessionSnapshot().inputText, "");
 });

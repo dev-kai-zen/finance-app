@@ -78,6 +78,7 @@ export const useChatToEncode = deferFunction(
   () => require("./hooks/use-chat-with-kai").useChatToEncode,
 ) as typeof import("./hooks/use-chat-with-kai").useChatToEncode;
 export { parseChatTransaction } from "./services/parse-chat-transaction.service";
+export { buildSuggestedPrompts } from "./services/build-suggested-prompts.service";
 export { extractAmount, extractAmounts } from "./services/extract-amount.service";
 export { matchAccounts } from "./services/match-accounts.service";
 export { matchCategory } from "./services/match-category.service";

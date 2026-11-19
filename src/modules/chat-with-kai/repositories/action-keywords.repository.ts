@@ -4,6 +4,7 @@ import { actionKeywords } from "@/infrastructure/database/schema";
 import type { TransactionType } from "@/modules/transactions";
 import { DEFAULT_ACTION_SEED_KEYWORDS } from "../constants/default-action-seed-keywords";
 import type { ActionKeywordItem } from "../types/chat-with-kai.types";
+import { invalidateChatKeywordsCache } from "../utils/chat-keywords-cache";
 import { DuplicateKeywordError } from "./chat-knowledge.repository";
 
 /**
@@ -157,6 +158,7 @@ export async function addActionKeyword(
     language,
     createdAt,
   });
+  invalidateChatKeywordsCache();
 
   return {
     id,
@@ -175,6 +177,7 @@ export async function deleteActionKeyword(
   client: DbContext = db,
 ): Promise<void> {
   await client.delete(actionKeywords).where(eq(actionKeywords.id, id));
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -213,6 +216,7 @@ export async function updateActionKeyword(
       language,
     })
     .where(eq(actionKeywords.id, id));
+  invalidateChatKeywordsCache();
 
   const updated = await client
     .select({
@@ -296,5 +300,6 @@ export async function resetToDefaultActionKeywords(
   client: DbContext = db,
 ): Promise<number> {
   await client.delete(actionKeywords);
+  invalidateChatKeywordsCache();
   return seedDefaultActionKeywordsIfEmpty(client);
 }

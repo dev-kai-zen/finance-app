@@ -5,6 +5,7 @@ import {
   merchantKeywords,
   merchants,
 } from "@/infrastructure/database/schema";
+import { invalidateChatKeywordsCache } from "../utils/chat-keywords-cache";
 
 export interface MerchantItem {
   id: string;
@@ -297,6 +298,7 @@ export async function upsertMerchant(
         updatedAt: now,
       })
       .where(eq(merchants.id, row.id));
+    invalidateChatKeywordsCache();
 
     return {
       id: row.id,
@@ -324,6 +326,7 @@ export async function upsertMerchant(
   } catch {
     // Ignore duplicate keyword
   }
+  invalidateChatKeywordsCache();
 
   return {
     id,
@@ -350,6 +353,7 @@ export async function updateMerchantDefaultCategory(
       updatedAt: new Date(),
     })
     .where(eq(merchants.id, merchantId));
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -389,6 +393,7 @@ export async function addMerchantKeyword(
     keyword: cleanKeyword,
     createdAt: now,
   });
+  invalidateChatKeywordsCache();
 
   return {
     id,
@@ -520,6 +525,7 @@ export async function updateMerchant(
     .update(merchants)
     .set(setObj)
     .where(eq(merchants.id, merchantId));
+  invalidateChatKeywordsCache();
 
   const rows = await client
     .select({
@@ -550,6 +556,7 @@ export async function deleteMerchant(
     .where(eq(merchantKeywords.merchantId, merchantId));
 
   await client.delete(merchants).where(eq(merchants.id, merchantId));
+  invalidateChatKeywordsCache();
 }
 
 /**
@@ -567,6 +574,7 @@ export async function updateMerchantKeyword(
     .update(merchantKeywords)
     .set({ keyword: clean })
     .where(eq(merchantKeywords.id, keywordId));
+  invalidateChatKeywordsCache();
 
   const rows = await client
     .select({
@@ -593,6 +601,7 @@ export async function deleteMerchantKeyword(
   await client
     .delete(merchantKeywords)
     .where(eq(merchantKeywords.id, keywordId));
+  invalidateChatKeywordsCache();
 }
 
 /**

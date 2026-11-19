@@ -255,11 +255,39 @@ function QuickEntryActiveModals({
       const id = await handleSaveTx(input, preset, attachmentChanges);
       if (id) {
         notifyChange();
+        const cat = categories
+          .flatMap((c) => [c, ...(c.subcategories ?? [])])
+          .find((c) => c.id === input.categoryId);
+        const acc = accounts.find((a) => a.id === input.accountId);
+        onChatEditSaved?.({
+          id: typeof id === "string" ? id : undefined,
+          type: input.type,
+          amountMinorUnits: Math.abs(input.amountMinorUnits),
+          currencyCode: input.currencyCode,
+          name: input.name ?? null,
+          note: input.note ?? null,
+          occurredAt: input.occurredAt ?? new Date(),
+          accountId: input.accountId,
+          accountName: acc?.name ?? null,
+          categoryId: input.categoryId ?? null,
+          categoryName: cat?.name ?? null,
+          categoryIcon: cat?.icon ?? null,
+          categoryColor: cat?.hexColorsId ?? null,
+          pocketId: input.pocketId ?? null,
+        });
+        setOnChatEditSaved(null);
         return true;
       }
       return false;
     },
-    [handleSaveTx, notifyChange],
+    [
+      handleSaveTx,
+      notifyChange,
+      categories,
+      accounts,
+      onChatEditSaved,
+      setOnChatEditSaved,
+    ],
   );
 
   const handleFormSaveTransfer = useCallback(
@@ -271,11 +299,32 @@ function QuickEntryActiveModals({
       const id = await handleSaveTransfer(input, preset, attachmentChanges);
       if (id) {
         notifyChange();
+        const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
+        const toAcc = accounts.find((a) => a.id === input.toAccountId);
+        onChatEditSaved?.({
+          id: typeof id === "string" ? id : undefined,
+          type: "transfer",
+          amountMinorUnits: Math.abs(input.amountMinorUnits),
+          name: input.name ?? null,
+          note: input.note ?? null,
+          occurredAt: input.occurredAt ?? new Date(),
+          accountId: input.fromAccountId,
+          accountName: fromAcc?.name ?? null,
+          transferAccountId: input.toAccountId,
+          transferAccountName: toAcc?.name ?? null,
+        });
+        setOnChatEditSaved(null);
         return true;
       }
       return false;
     },
-    [handleSaveTransfer, notifyChange],
+    [
+      handleSaveTransfer,
+      notifyChange,
+      accounts,
+      onChatEditSaved,
+      setOnChatEditSaved,
+    ],
   );
 
   const handleDeleteTransaction = useCallback(
