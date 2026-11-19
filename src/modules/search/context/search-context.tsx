@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type PropsWithChildren,
 } from "react";
@@ -47,15 +48,18 @@ export function SearchProvider({ children }: PropsWithChildren) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSearch, closeSearch, isSearchOpen]);
 
+  const contextValue = useMemo(
+    () => ({
+      isSearchOpen,
+      openSearch,
+      closeSearch,
+      toggleSearch,
+    }),
+    [isSearchOpen, openSearch, closeSearch, toggleSearch],
+  );
+
   return (
-    <SearchContext.Provider
-      value={{
-        isSearchOpen,
-        openSearch,
-        closeSearch,
-        toggleSearch,
-      }}
-    >
+    <SearchContext.Provider value={contextValue}>
       {children}
     </SearchContext.Provider>
   );

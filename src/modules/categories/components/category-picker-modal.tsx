@@ -32,7 +32,12 @@ export interface CategoryPickerModalProps {
   onRequestAddSubcategory?: (parent: Category, type: CategoryType) => void;
 }
 
-export function CategoryPickerModal({
+export function CategoryPickerModal(props: CategoryPickerModalProps) {
+  if (!props.visible) return null;
+  return <CategoryPickerModalContent {...props} />;
+}
+
+function CategoryPickerModalContent({
   visible,
   onClose,
   categories,

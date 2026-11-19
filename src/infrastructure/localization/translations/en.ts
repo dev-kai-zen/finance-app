@@ -1143,6 +1143,8 @@ export const en = {
         "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
       fixItem2:
         "Keep the currency search box fixed at the top while browsing with a floating indicator for remaining items.",
+      fixItem3:
+        "Eliminate delays when opening transaction forms with instant skeleton loaders and responsive close buttons.",
     },
     v170: {
       date: "November 18, 2026",

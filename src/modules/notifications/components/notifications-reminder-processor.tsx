@@ -10,10 +10,24 @@ export function NotificationsReminderProcessor() {
 
   useEffect(() => {
     const cancelInitial = scheduleAfterInteractions(() => syncAllReminders());
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelResumeSchedule: (() => void) | null = null;
 
     const appStateSub = AppState.addEventListener("change", (nextState) => {
       if (nextState === "active") {
-        scheduleAfterInteractions(() => syncAllReminders());
+        if (resumeTimer) clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(() => {
+          cancelResumeSchedule = scheduleAfterInteractions(() => syncAllReminders());
+        }, 1500);
+      } else {
+        if (resumeTimer) {
+          clearTimeout(resumeTimer);
+          resumeTimer = null;
+        }
+        if (cancelResumeSchedule) {
+          cancelResumeSchedule();
+          cancelResumeSchedule = null;
+        }
       }
     });
 
@@ -28,6 +42,8 @@ export function NotificationsReminderProcessor() {
 
     return () => {
       cancelInitial();
+      if (resumeTimer) clearTimeout(resumeTimer);
+      if (cancelResumeSchedule) cancelResumeSchedule();
       appStateSub.remove();
       unsubscribeResponses();
     };

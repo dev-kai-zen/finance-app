@@ -84,6 +84,7 @@ function CalendarScreenContent() {
     refreshAll,
     postOccurrence,
     skipOccurrence,
+    loading: calendarLoading,
   } = useCalendarData();
 
   const {
@@ -441,6 +442,7 @@ function CalendarScreenContent() {
         presetPending={presetPending}
         presets={presets}
         presetsLoading={presetsLoading}
+        loading={calendarLoading}
         onCategoriesChanged={() => void refreshAll()}
         visible={formModalOpen}
       />

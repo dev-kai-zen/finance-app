@@ -143,8 +143,10 @@ class AppLockLifecycleService {
 
           const config = await getSecurityConfig();
           if (!config.isPasswordSet) {
-            this.isLocked = false;
-            this.notify();
+            if (this.isLocked) {
+              this.isLocked = false;
+              this.notify();
+            }
             return;
           }
 

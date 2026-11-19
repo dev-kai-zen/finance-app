@@ -1160,6 +1160,8 @@ export const es = {
         "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
       fixItem2:
         "Se fijó el cuadro de búsqueda de monedas en la parte superior con un indicador para desplazarse hacia abajo.",
+      fixItem3:
+        "Se eliminaron los retrasos al abrir el formulario de transacciones con un cargador esqueleto instantáneo y botón de cierre receptivo.",
     },
     v170: {
       date: "18 de noviembre de 2026",

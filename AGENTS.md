@@ -495,5 +495,14 @@ All development, code reviews, refactors, and design discussions must target a s
 5. **List & Style Rendering Discipline**:
    - **Memoize List Rows**: Always wrap recurring list row components (`TransactionRow`, `AccountRow`, etc.) in `React.memo`.
    - **Hoist Style Factories**: Always define `useThemeStyles(createStyles)` factory functions at module scope—never pass inline arrow functions `useThemeStyles((theme) => ...)` inside a component body.
+6. **Instant Form Presentation & Background Skeleton Loaders**:
+   - **Sub-16ms Immediate Sheet Presentation**: When opening forms or modals (e.g. `TransactionFormModal`), present the sheet immediately without waiting for background data. Never execute synchronous database reads (such as `refreshAccounts()`) inside click/press event handlers before opening the modal.
+   - **Interactive Shell + Background Skeleton**: Keep the modal shell and header (title, close button) interactive from frame 1. If foundational data (`accounts`, `categories`, `presets`) is still resolving in the background, display a native-driven skeleton loader (`useNativeDriver: true`) inside the sheet body until data is ready, skipping the skeleton if data is already cached in memory.
+7. **Touch Target Ergonomics & Keyboard Tap Persistence**:
+   - **Minimum Touch Targets & Hit Slops**: All header action and dismiss buttons (especially close "✕" buttons) must have an effective touch target of at least 44×44px or provide generous hit slop (`hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}`).
+   - **Keyboard Tap Dismissal**: Modal close callbacks must call `Keyboard.dismiss()` to prevent the software keyboard responder from intercepting or swallowing the first tap when an input was focused.
+8. **AppState Resume Throttling ("Resume Stampede" Prevention)**:
+   - **Stagger Non-Urgent Processors**: Background processors listening to `AppState.addEventListener("change")` (such as `syncAllReminders`, `runAutomaticLocalBackupIfDue`, `processDueSchedules`, `triggerQuickSync`, and widget updates) must **never fire synchronously in parallel on the first frame of app resume**. Always stagger or debounce background processors with a 1.0s–2.0s delay so the JS thread remains free for immediate touch responder negotiation (like opening the sidebar or tapping navigation).
+   - **Conditional Notification Broadcasts**: Lifecycle and security listeners must never call `notify()` unconditionally on app resume unless state actually mutated (e.g. guard `if (this.isLocked)` when password is not set).
 
 

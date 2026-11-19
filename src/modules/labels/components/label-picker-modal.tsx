@@ -27,7 +27,12 @@ export interface LabelPickerModalProps {
   title?: string;
 }
 
-export function LabelPickerModal({
+export function LabelPickerModal(props: LabelPickerModalProps) {
+  if (!props.visible) return null;
+  return <LabelPickerModalContent {...props} />;
+}
+
+function LabelPickerModalContent({
   visible,
   onClose,
   selectedLabelIds,

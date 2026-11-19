@@ -61,7 +61,14 @@ const DOCUMENT_TYPES = [
   "text/plain",
 ] as const;
 
-export function TransactionAttachmentManagerModal({
+export function TransactionAttachmentManagerModal(
+  props: TransactionAttachmentManagerModalProps,
+) {
+  if (!props.visible) return null;
+  return <TransactionAttachmentManagerModalContent {...props} />;
+}
+
+function TransactionAttachmentManagerModalContent({
   visible,
   items,
   totalCount = items.length,

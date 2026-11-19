@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Checkbox, Host } from "@expo/ui";
 import {
+  Keyboard,
   Modal,
   Platform,
   Pressable,
@@ -131,6 +132,7 @@ import {
   type SplitLineState,
 } from "./transaction-split-editor";
 import { TransactionFormFieldPreferencesModal } from "./transaction-form-field-preferences-modal";
+import { TransactionFormSkeleton } from "./transaction-form-skeleton";
 
 function formatDateString(value: string | null): string {
   if (!value) return "None";
@@ -226,6 +228,7 @@ export interface TransactionFormModalProps {
   defaultExpensePocketId?: string | null;
   defaultIncomeAccountId?: string | null;
   defaultIncomePocketId?: string | null;
+  loading?: boolean;
   onCategoriesChanged?: () => void | Promise<void>;
 }
 
@@ -297,6 +300,7 @@ function TransactionFormModalInner({
   defaultExpensePocketId: propsDefaultExpensePocketId,
   defaultIncomeAccountId: propsDefaultIncomeAccountId,
   defaultIncomePocketId: propsDefaultIncomePocketId,
+  loading = false,
   onCategoriesChanged,
 }: TransactionFormModalProps) {
   const insets = useSafeAreaInsets();
@@ -310,7 +314,8 @@ function TransactionFormModalInner({
     saving: categorySaving,
     error: categorySaveError,
     clearError: clearCategorySaveError,
-  } = useCategories();
+  } = useCategories({ skipQuery: true });
+  const isFormLoading = Boolean(loading || (accounts.length === 0 && presetsLoading));
   const [isFieldPreferencesOpen, setIsFieldPreferencesOpen] = useState(false);
   const [categoryFormDraft, setCategoryFormDraft] = useState<{
     applySelection: (categoryId: string) => void;
@@ -1914,6 +1919,7 @@ function TransactionFormModalInner({
   ]);
 
   const handleRequestClose = useCallback(() => {
+    Keyboard.dismiss();
     if (pending) return;
     if (isDirty) {
       setShowUnsavedPrompt(true);
@@ -1971,14 +1977,22 @@ function TransactionFormModalInner({
                 ref={closeRef}
                 accessibilityLabel="Close form"
                 accessibilityRole="button"
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 onPress={handleRequestClose}
-                style={styles.closeBtn}
+                style={({ pressed }) => [
+                  styles.closeBtn,
+                  pressed && styles.closeBtnPressed,
+                ]}
               >
                 <Text style={styles.closeBtnText}>✕</Text>
               </Pressable>
             </View>
           </View>
 
+          {isFormLoading ? (
+            <TransactionFormSkeleton />
+          ) : (
+            <>
           <HorizontalScrollView
             contentContainerStyle={styles.topActionsContent}
             keyboardShouldPersistTaps="handled"
@@ -3050,6 +3064,8 @@ function TransactionFormModalInner({
               </Pressable>
             </View>
           </KeyboardStickyView>
+          </>
+          )}
 
           <TransactionFormWalkthroughOverlay
             onNext={walkthrough.nextStep}
@@ -3569,10 +3585,14 @@ function createStyles(theme: AppTheme) {
     closeBtn: {
       alignItems: "center",
       backgroundColor: theme.colors.surfaceMuted,
-      borderRadius: 16,
-      height: 32,
+      borderRadius: 18,
+      height: 36,
       justifyContent: "center",
-      width: 32,
+      width: 36,
+    },
+    closeBtnPressed: {
+      opacity: 0.7,
+      backgroundColor: theme.colors.border,
     },
     closeBtnText: {
       color: theme.colors.textSecondary,

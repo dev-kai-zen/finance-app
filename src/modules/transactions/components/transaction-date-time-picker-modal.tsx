@@ -27,7 +27,14 @@ interface TransactionDateTimePickerModalProps {
   title?: string;
 }
 
-export function TransactionDateTimePickerModal({
+export function TransactionDateTimePickerModal(
+  props: TransactionDateTimePickerModalProps,
+) {
+  if (!props.visible) return null;
+  return <TransactionDateTimePickerModalContent {...props} />;
+}
+
+function TransactionDateTimePickerModalContent({
   mode,
   onClose,
   onConfirm,

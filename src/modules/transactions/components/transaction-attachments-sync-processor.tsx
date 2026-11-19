@@ -20,11 +20,26 @@ export function TransactionAttachmentsSyncProcessor() {
     const networkSubscription = NetInfo.addEventListener((state) => {
       if (state.isConnected) triggerTransactionAttachmentSync();
     });
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelResumeSchedule: (() => void) | null = null;
+
     const appStateSubscription = AppState.addEventListener(
       "change",
       (state) => {
         if (state === "active") {
-          scheduleAfterInteractions(runWhenOnline);
+          if (resumeTimer) clearTimeout(resumeTimer);
+          resumeTimer = setTimeout(() => {
+            cancelResumeSchedule = scheduleAfterInteractions(runWhenOnline);
+          }, 2000);
+        } else {
+          if (resumeTimer) {
+            clearTimeout(resumeTimer);
+            resumeTimer = null;
+          }
+          if (cancelResumeSchedule) {
+            cancelResumeSchedule();
+            cancelResumeSchedule = null;
+          }
         }
       },
     );
@@ -32,6 +47,8 @@ export function TransactionAttachmentsSyncProcessor() {
     return () => {
       cancelInitial();
       clearInterval(interval);
+      if (resumeTimer) clearTimeout(resumeTimer);
+      if (cancelResumeSchedule) cancelResumeSchedule();
       networkSubscription();
       appStateSubscription.remove();
     };

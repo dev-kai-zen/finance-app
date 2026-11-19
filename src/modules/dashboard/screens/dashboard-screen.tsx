@@ -93,10 +93,20 @@ function DashboardScreenContent() {
     error: dashboardError,
     refresh: refreshDashboard,
   } = useDashboard();
-  const { accounts, pockets, types, refresh: refreshAccounts } = useAccounts({
+  const {
+    accounts,
+    pockets,
+    types,
+    loading: accountsLoading,
+    refresh: refreshAccounts,
+  } = useAccounts({
     includeCreditCardMonitoring: false,
   });
-  const { categories, refresh: refreshCategories } = useCategories();
+  const {
+    categories,
+    loading: categoriesLoading,
+    refresh: refreshCategories,
+  } = useCategories();
   const {
     recordTransaction,
     recordTransfer,
@@ -300,7 +310,6 @@ function DashboardScreenContent() {
   ];
 
   const handleOpenTransactionModal = (mode: TransactionType) => {
-    refreshAccounts();
     setPrefilledTransaction(null);
     setIsEditingTransaction(false);
     setModalMode(mode);
@@ -736,6 +745,7 @@ function DashboardScreenContent() {
           return success;
         }}
         onCategoriesChanged={() => void refreshCategories()}
+        loading={accountsLoading || categoriesLoading}
         pending={pendingAction}
         visible={isModalOpen}
       />

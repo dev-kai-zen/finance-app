@@ -20,13 +20,30 @@ export function ScheduledTransactionsProcessor() {
     };
 
     const cancelInitial = scheduleAfterInteractions(process);
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelResumeSchedule: (() => void) | null = null;
+
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        scheduleAfterInteractions(process);
+        if (resumeTimer) clearTimeout(resumeTimer);
+        resumeTimer = setTimeout(() => {
+          cancelResumeSchedule = scheduleAfterInteractions(process);
+        }, 1000);
+      } else {
+        if (resumeTimer) {
+          clearTimeout(resumeTimer);
+          resumeTimer = null;
+        }
+        if (cancelResumeSchedule) {
+          cancelResumeSchedule();
+          cancelResumeSchedule = null;
+        }
       }
     });
     return () => {
       cancelInitial();
+      if (resumeTimer) clearTimeout(resumeTimer);
+      if (cancelResumeSchedule) cancelResumeSchedule();
       subscription.remove();
     };
   }, []);

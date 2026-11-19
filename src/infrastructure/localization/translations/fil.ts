@@ -1174,6 +1174,8 @@ export const fil = {
         "Inayos ang pag-navigate sa pag-import sa onboarding para makabalik sa mga opsyon nang hindi naiipit.",
       fixItem2:
         "Pinanatiling nakapirmi ang kahon ng paghahanap ng currency sa itaas na may gabay pababa.",
+      fixItem3:
+        "Inalis ang pagkaantala sa pagbukas ng form ng transaksyon gamit ang mabilis na skeleton loader at mas madaling pinduting buton ng pagsasara.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

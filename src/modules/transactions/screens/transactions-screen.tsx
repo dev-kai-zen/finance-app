@@ -247,8 +247,17 @@ function TransactionsScreenContent({
     clearError: clearPresetError,
   } = useTransactionPresets();
 
-  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
-  const { categories, refresh: refreshCategories } = useCategories();
+  const {
+    accounts,
+    pockets,
+    loading: accountsLoading,
+    refresh: refreshAccounts,
+  } = useAccounts();
+  const {
+    categories,
+    loading: categoriesLoading,
+    refresh: refreshCategories,
+  } = useCategories();
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const handlePullRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
@@ -742,7 +751,6 @@ function TransactionsScreenContent({
   }, [visibleTransactions, currencyPreferences.defaultCurrency]);
 
   const handleOpenNewTransaction = () => {
-    refreshAccounts();
     setPrefilledTransaction(null);
     setIsEditingTransaction(false);
     setIsFormModalOpen(true);
@@ -1644,6 +1652,7 @@ function TransactionsScreenContent({
         onUpdateTransaction={handleUpdateTransaction}
         onUpdateTransfer={handleUpdateTransfer}
         onCategoriesChanged={() => void refreshCategories()}
+        loading={accountsLoading || categoriesLoading}
         pending={pendingAction}
         visible={isFormModalOpen}
       />

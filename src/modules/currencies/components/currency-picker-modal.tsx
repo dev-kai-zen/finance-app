@@ -16,21 +16,28 @@ import { AccountSearchBox } from "@/modules/accounts/components/account-search-b
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useCurrencies } from "../hooks/use-currencies";
 
-export function CurrencyPickerModal({
-  visible,
-  selectedCode,
-  title = "Select currency",
-  subtitle,
-  onClose,
-  onSelect,
-}: {
+export interface CurrencyPickerModalProps {
   visible: boolean;
   selectedCode: string;
   title?: string;
   subtitle?: string;
   onClose: () => void;
   onSelect: (code: string) => void;
-}) {
+}
+
+export function CurrencyPickerModal(props: CurrencyPickerModalProps) {
+  if (!props.visible) return null;
+  return <CurrencyPickerModalContent {...props} />;
+}
+
+function CurrencyPickerModalContent({
+  visible,
+  selectedCode,
+  title = "Select currency",
+  subtitle,
+  onClose,
+  onSelect,
+}: CurrencyPickerModalProps) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const insets = useSafeAreaInsets();

@@ -164,7 +164,12 @@ function formatWithCommas(val: string): string {
   return isNegative ? `-${formatted}` : formatted;
 }
 
-export function AmountCalculatorModal({
+export function AmountCalculatorModal(props: AmountCalculatorModalProps) {
+  if (!props.visible) return null;
+  return <AmountCalculatorModalContent {...props} />;
+}
+
+function AmountCalculatorModalContent({
   visible,
   onClose,
   onConfirm,

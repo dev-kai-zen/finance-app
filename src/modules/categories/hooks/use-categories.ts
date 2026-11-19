@@ -11,9 +11,14 @@ import {
 } from "../services/category-presets.service";
 import type { Category, CategoryInput } from "../types/category.types";
 
-export function useCategories() {
+export interface UseCategoriesOptions {
+  skipQuery?: boolean;
+}
+
+export function useCategories(options?: UseCategoriesOptions) {
+  const skipQuery = options?.skipQuery ?? false;
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(!skipQuery);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
@@ -36,10 +41,11 @@ export function useCategories() {
   }, []);
 
   useEffect(() => {
+    if (skipQuery) return;
     scheduleAfterPaint(() => {
       void refresh();
     });
-  }, [refresh]);
+  }, [refresh, skipQuery]);
 
   const save = useCallback(
     async (input: CategoryInput, id?: string): Promise<Category | null> => {

@@ -42,7 +42,13 @@ import {
   useDefaultAccounts,
 } from "@/modules/settings";
 
-export function ChatWithKaiModal({
+export function ChatWithKaiModal(props: ChatWithKaiModalProps) {
+  useRegisterActiveModal(props.visible);
+  if (!props.visible) return null;
+  return <ChatWithKaiModalContent {...props} />;
+}
+
+function ChatWithKaiModalContent({
   visible,
   onClose,
   accounts,
@@ -67,7 +73,6 @@ export function ChatWithKaiModal({
   const { mode, setMode } = useChatTransactionMode();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  useRegisterActiveModal(visible);
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined

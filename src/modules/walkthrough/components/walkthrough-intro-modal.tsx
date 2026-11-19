@@ -29,7 +29,12 @@ export interface WalkthroughIntroModalProps {
   onSkip: () => void;
 }
 
-export function WalkthroughIntroModal({
+export function WalkthroughIntroModal(props: WalkthroughIntroModalProps) {
+  if (!props.visible) return null;
+  return <WalkthroughIntroModalContent {...props} />;
+}
+
+function WalkthroughIntroModalContent({
   visible,
   title,
   subtitle,

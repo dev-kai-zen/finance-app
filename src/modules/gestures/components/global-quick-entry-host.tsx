@@ -169,8 +169,17 @@ function QuickEntryActiveModals({
   setOnChatEditSaved,
   setPrefilledTransaction,
 }: QuickEntryActiveModalsProps) {
-  const { accounts, pockets, refresh: refreshAccounts } = useAccounts();
-  const { categories, refresh: refreshCategories } = useCategories();
+  const {
+    accounts,
+    pockets,
+    loading: accountsLoading,
+    refresh: refreshAccounts,
+  } = useAccounts();
+  const {
+    categories,
+    loading: categoriesLoading,
+    refresh: refreshCategories,
+  } = useCategories();
   const { preferences: currencyPrefs } = useCurrencyPreferences();
 
   const {
@@ -284,41 +293,44 @@ function QuickEntryActiveModals({
   return (
     <>
       {/* Global Chat with Kai Modal */}
-      <ChatWithKaiModal
-        accounts={accounts}
-        categories={categories}
-        defaultCurrency={currencyPrefs.defaultCurrency}
-        onClose={() => setIsChatOpen(false)}
-        onDeleteTransaction={handleDeleteTransaction}
-        onEditInForm={(prefilled, onSaved, isEditing = false) => {
-          returnToChatOnFormCloseRef.current = true;
-          setPrefilledTransaction(prefilled);
-          setIsEditingTransaction(isEditing);
-          setModalMode((prefilled?.type as TransactionType) ?? "expense");
-          setOnChatEditSaved(() => onSaved);
-          setIsTransitioning(true);
-          setIsChatOpen(false);
-          setTimeout(
-            () => {
-              setIsFormOpen(true);
-              setIsTransitioning(false);
-            },
-            Platform.OS === "ios" ? 250 : 80,
-          );
-        }}
-        onSaveTransaction={handleSaveTransaction}
-        onSaveTransfer={handleSaveTransferAction}
-        pockets={pockets}
-        visible={isChatOpen}
-      />
+      {isChatOpen ? (
+        <ChatWithKaiModal
+          accounts={accounts}
+          categories={categories}
+          defaultCurrency={currencyPrefs.defaultCurrency}
+          onClose={() => setIsChatOpen(false)}
+          onDeleteTransaction={handleDeleteTransaction}
+          onEditInForm={(prefilled, onSaved, isEditing = false) => {
+            returnToChatOnFormCloseRef.current = true;
+            setPrefilledTransaction(prefilled);
+            setIsEditingTransaction(isEditing);
+            setModalMode((prefilled?.type as TransactionType) ?? "expense");
+            setOnChatEditSaved(() => onSaved);
+            setIsTransitioning(true);
+            setIsChatOpen(false);
+            setTimeout(
+              () => {
+                setIsFormOpen(true);
+                setIsTransitioning(false);
+              },
+              Platform.OS === "ios" ? 250 : 80,
+            );
+          }}
+          onSaveTransaction={handleSaveTransaction}
+          onSaveTransfer={handleSaveTransferAction}
+          pockets={pockets}
+          visible={isChatOpen}
+        />
+      ) : null}
 
       {/* Global Manual Entry Transaction Modal */}
-      <TransactionFormModal
-        accounts={accounts}
-        archivedPresets={archivedPresets}
-        categories={categories}
-        error={transactionError}
-        initialTransaction={prefilledTransaction}
+      {isFormOpen ? (
+        <TransactionFormModal
+          accounts={accounts}
+          archivedPresets={archivedPresets}
+          categories={categories}
+          error={transactionError}
+          initialTransaction={prefilledTransaction}
         initialType={modalMode}
         isEditing={isEditingTransaction}
         onChangePresetSortBy={setPresetSortBy}
@@ -404,6 +416,7 @@ function QuickEntryActiveModals({
           return success;
         }}
         onCategoriesChanged={() => void refreshCategories()}
+        loading={accountsLoading || categoriesLoading}
         pending={pendingAction}
         pockets={pockets}
         presetError={presetError}
@@ -413,6 +426,7 @@ function QuickEntryActiveModals({
         presetSortBy={presetSortBy}
         visible={isFormOpen}
       />
+      ) : null}
     </>
   );
 }
