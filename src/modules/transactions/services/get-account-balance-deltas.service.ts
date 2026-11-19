@@ -1,4 +1,4 @@
-import { asc, isNull, sql } from "drizzle-orm";
+import { and, asc, isNull, lte, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { transactions } from "@/infrastructure/database/schema";
 
@@ -41,6 +41,12 @@ export function getAccountBalanceDeltasAtDates(
 ): Array<Record<string, number>> {
   if (cutoffDates.length === 0) return [];
 
+  let maxCutoffTime = -Infinity;
+  for (let i = 0; i < cutoffDates.length; i++) {
+    const t = cutoffDates[i].getTime();
+    if (t > maxCutoffTime) maxCutoffTime = t;
+  }
+
   const rows = context
     .select({
       accountId: transactions.accountId,
@@ -48,22 +54,36 @@ export function getAccountBalanceDeltasAtDates(
       occurredAt: transactions.occurredAt,
     })
     .from(transactions)
-    .where(isNull(transactions.deletedAt))
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        lte(transactions.occurredAt, new Date(maxCutoffTime)),
+      ),
+    )
     .orderBy(asc(transactions.occurredAt))
     .all();
 
-  return cutoffDates.map((cutoffDate) => {
-    const cutoffTime = cutoffDate.getTime();
-    const deltas: Record<string, number> = {};
+  // Create an array of cutoff indices sorted chronologically: [0, 1, ..., K-1]
+  const sortedIndices = Array.from({ length: cutoffDates.length }, (_, i) => i)
+    .sort((a, b) => cutoffDates[a].getTime() - cutoffDates[b].getTime());
 
-    for (const row of rows) {
-      if (row.occurredAt.getTime() > cutoffTime) break;
-      deltas[row.accountId] =
-        (deltas[row.accountId] ?? 0) + row.amountMinorUnits;
+  const results: Array<Record<string, number>> = new Array(cutoffDates.length);
+  const runningDeltas: Record<string, number> = {};
+  let rowIdx = 0;
+  const totalRows = rows.length;
+
+  for (const idx of sortedIndices) {
+    const cutoffTime = cutoffDates[idx].getTime();
+    while (rowIdx < totalRows && rows[rowIdx].occurredAt.getTime() <= cutoffTime) {
+      const row = rows[rowIdx];
+      runningDeltas[row.accountId] =
+        (runningDeltas[row.accountId] ?? 0) + row.amountMinorUnits;
+      rowIdx++;
     }
+    results[idx] = { ...runningDeltas };
+  }
 
-    return deltas;
-  });
+  return results;
 }
 
 /**

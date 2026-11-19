@@ -504,11 +504,6 @@ function TransactionFormModalInner({
     [labels, selectedLabelIds],
   );
 
-  useEffect(() => {
-    if (visible) {
-      refreshLabels();
-    }
-  }, [refreshLabels, visible]);
   const attachmentDraft = useTransactionAttachmentDraft({
     visible,
     isEditing,

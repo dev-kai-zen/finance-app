@@ -3,14 +3,17 @@ import { Platform } from "react-native";
 import { scheduleAfterInteractions } from "@/utils/schedule-after-interactions";
 import { addDatabaseChangeListener } from "expo-sqlite";
 import { initializeProStatus, subscribeToProStatus } from "@/modules/pro";
+import { subscribeToCurrencyPreferences } from "@/modules/currencies";
 import { updateDataWidgets } from "../services/widget-snapshot.service";
 
-/** Subset of `USER_DATA_TABLE_NAMES` in `@/infrastructure/database/user-data-tables`. */
+/**
+ * Data tables that affect widget totals.
+ * Explicitly excludes `settings` to prevent self-invalidation loops when saving snapshots.
+ */
 const SYNCED_TABLES = new Set([
   "transactions",
   "transaction_entries",
   "accounts",
-  "settings",
   "categories",
   "category_budgets",
   "exchange_rates",
@@ -39,6 +42,11 @@ export function WidgetSyncProcessor(): null {
       void updateDataWidgets();
     });
 
+    // React immediately whenever display currency or formatting preferences change
+    const unsubscribeCurrency = subscribeToCurrencyPreferences(() => {
+      void updateDataWidgets();
+    });
+
     const subscription = addDatabaseChangeListener((event) => {
       if (!SYNCED_TABLES.has(event.tableName)) {
         return;
@@ -56,6 +64,7 @@ export function WidgetSyncProcessor(): null {
     return () => {
       cancelInitial();
       unsubscribePro();
+      unsubscribeCurrency();
       subscription.remove();
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);

@@ -292,72 +292,15 @@ export async function deleteCategory(
 }
 
 export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void> {
-  const now = new Date();
   const existing = await db
     .select({ id: categories.id })
     .from(categories)
     .limit(1);
 
   if (existing.length === 0) {
+    const now = new Date();
     for (const [idx, cat] of DEFAULT_SEED_CATEGORIES.entries()) {
       await insertCategoryPreset(db, cat, idx, now);
-    }
-  }
-
-  // Existing databases may have older preset rows marked as system. Keep only
-  // the two fallback categories protected when the category list is refreshed.
-  for (const cat of DEFAULT_SEED_CATEGORIES) {
-    await db
-      .update(categories)
-      .set({ isSystem: cat.isSystem })
-      .where(and(eq(categories.id, cat.id), ne(categories.isSystem, cat.isSystem)));
-  }
-
-  // Repair any custom groups created with sortOrder 0 so they sit at the end before "Others"
-  for (const type of ["expense", "income"] as const) {
-    const parentRows = await db
-      .select({
-        id: categories.id,
-        sortOrder: categories.sortOrder,
-        createdAt: categories.createdAt,
-      })
-      .from(categories)
-      .where(and(eq(categories.type, type), isNull(categories.parentId)));
-
-    const firstSeededId = type === "expense" ? "cat_exp_housing" : "cat_inc_salary";
-    const customZeroOrder = parentRows.filter(
-      (r) =>
-        !isProtectedCategoryId(r.id) &&
-        r.id !== firstSeededId &&
-        (r.sortOrder === 0 || r.sortOrder == null),
-    );
-
-    if (customZeroOrder.length > 0) {
-      const nonProtected = parentRows.filter(
-        (r) => !isProtectedCategoryId(r.id) && (r.sortOrder ?? 0) > 0,
-      );
-      let currentMax =
-        nonProtected.length > 0
-          ? Math.max(...nonProtected.map((r) => r.sortOrder ?? 0))
-          : 0;
-
-      customZeroOrder.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-      for (const customCat of customZeroOrder) {
-        currentMax += 1;
-        await db
-          .update(categories)
-          .set({ sortOrder: currentMax, updatedAt: now })
-          .where(eq(categories.id, customCat.id));
-      }
-
-      const others = parentRows.find((r) => isProtectedCategoryId(r.id));
-      if (others) {
-        await db
-          .update(categories)
-          .set({ sortOrder: currentMax + 1, updatedAt: now })
-          .where(eq(categories.id, others.id));
-      }
     }
   }
 }

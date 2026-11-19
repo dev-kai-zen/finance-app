@@ -1,7 +1,7 @@
 import React from "react";
 import { Platform } from "react-native";
 import { eq } from "drizzle-orm";
-import { requestWidgetUpdate } from "react-native-android-widget";
+import { getWidgetInfo, requestWidgetUpdate } from "react-native-android-widget";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { settings } from "@/infrastructure/database/schema";
 import { getDashboardSummary, getMonthlyCashflow } from "@/modules/dashboard";
@@ -42,7 +42,10 @@ export function computeAndSaveFinancialSnapshot(
   try {
     const homeCurrency =
       getCurrencyPreferences(context)?.defaultCurrency ?? DEFAULT_BASE_CURRENCY;
-    const summary = getDashboardSummary(context);
+    const summary = getDashboardSummary(context, new Date(), {
+      includeRecentTransactions: false,
+      includeCategoryBreakdown: false,
+    });
     const cashflow = summary.monthlyCashflow ?? getMonthlyCashflow(context);
 
     const inflow = cashflow.totalInflowMinorUnits;
@@ -143,6 +146,21 @@ export async function updateDataWidgets(): Promise<void> {
   }
 
   try {
+    const [cashflowWidgets, netWorthWidgets, budgetWidgets] = await Promise.all([
+      getWidgetInfo(MONTHLY_CASHFLOW_WIDGET_NAME).catch(() => []),
+      getWidgetInfo(NET_WORTH_WIDGET_NAME).catch(() => []),
+      getWidgetInfo(MONTHLY_BUDGET_WIDGET_NAME).catch(() => []),
+    ]);
+
+    const hasActiveWidgets =
+      cashflowWidgets.length > 0 ||
+      netWorthWidgets.length > 0 ||
+      budgetWidgets.length > 0;
+
+    if (!hasActiveWidgets) {
+      return;
+    }
+
     const snapshot = computeAndSaveFinancialSnapshot();
     await Promise.allSettled([
       requestWidgetUpdate({

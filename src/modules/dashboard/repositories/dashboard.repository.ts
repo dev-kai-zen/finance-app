@@ -201,7 +201,11 @@ const EMPTY_NET_WORTH_HISTORY: NetWorthHistory = {
 export function getDashboardSummary(
   context: DbContext = db,
   targetDate: Date = new Date(),
-  options?: { includeNetWorthHistory?: boolean },
+  options?: {
+    includeNetWorthHistory?: boolean;
+    includeRecentTransactions?: boolean;
+    includeCategoryBreakdown?: boolean;
+  },
 ): DashboardSummary {
   const accountsWithBalances = getAccountDynamicBalances(context);
   const activeAccounts = accountsWithBalances.filter(
@@ -233,11 +237,14 @@ export function getDashboardSummary(
   const netWorth = totalAssets + totalLiabilities;
 
   const monthlyCashflow = getMonthlyCashflow(context, targetDate);
-  const topSpendingCategories = getCategorySpendingBreakdown(
-    context,
-    targetDate,
-  );
-  const recentTransactions = getRecentTransactions(5, context);
+  const topSpendingCategories =
+    options?.includeCategoryBreakdown !== false
+      ? getCategorySpendingBreakdown(context, targetDate)
+      : [];
+  const recentTransactions =
+    options?.includeRecentTransactions !== false
+      ? getRecentTransactions(5, context)
+      : [];
   const includeHistory = options?.includeNetWorthHistory !== false;
   const netWorthHistory = includeHistory
     ? getNetWorthHistory(accountsWithBalances, context, targetDate)

@@ -696,7 +696,6 @@ function DashboardScreenContent() {
           const success = await editTransaction(id, input, attachmentChanges);
           if (success) {
             refreshAccounts();
-            refreshDashboard();
             const cat = categories
               .flatMap((c) => [c, ...(c.subcategories ?? [])])
               .find((c) => c.id === input.categoryId);
@@ -725,7 +724,6 @@ function DashboardScreenContent() {
           const success = await editTransfer(input, attachmentChanges);
           if (success) {
             refreshAccounts();
-            refreshDashboard();
             const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
             const toAcc = accounts.find((a) => a.id === input.toAccountId);
             onChatEditSaved?.({
@@ -767,7 +765,6 @@ function DashboardScreenContent() {
           const res = await recordTransaction(input);
           if (res) {
             refreshAccounts();
-            refreshDashboard();
           }
           return res;
         }}
@@ -775,7 +772,6 @@ function DashboardScreenContent() {
           const res = await recordTransfer(input);
           if (res) {
             refreshAccounts();
-            refreshDashboard();
           }
           return res;
         }}

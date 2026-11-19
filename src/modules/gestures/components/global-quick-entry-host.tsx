@@ -214,7 +214,6 @@ function QuickEntryActiveModals({
   const notifyChange = useCallback(() => {
     refreshAccounts();
     void refreshTransactions();
-    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
   }, [refreshAccounts, refreshTransactions]);
 
   const handleSaveTransaction = useCallback(
