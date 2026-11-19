@@ -72,6 +72,7 @@ function CalendarScreenContent() {
     selectedDay,
     activeTab,
     loading,
+    isTabLoading,
     gridCells,
     scopedTransactions,
     scopedSchedules,
@@ -383,56 +384,77 @@ function CalendarScreenContent() {
             />
 
             {/* 6. Active Tab Content */}
-            {activeTab === "transactions" && (
-              <CalendarTransactionsTab
-                onDeleteTransaction={handleDeleteTransaction}
-                onLoadMore={handleLoadMoreTransactions}
-                onPressTransaction={(tx) => setInspectedTransaction(tx)}
-                selectedDay={selectedDay}
-                totalCount={scopedTransactions.length}
-                transactions={scopedTransactions}
-                visibleCount={visibleTxCount}
+            {isTabLoading ? (
+              <PageLoadingState
+                message={
+                  activeTab === "transactions"
+                    ? "Loading transactions..."
+                    : activeTab === "schedules"
+                      ? "Loading schedules..."
+                      : activeTab === "net"
+                        ? "Calculating net earnings..."
+                        : "Loading balance sheet..."
+                }
+                variant={
+                  activeTab === "net" || activeTab === "balance_sheet"
+                    ? "cards"
+                    : "list"
+                }
               />
-            )}
+            ) : (
+              <>
+                {activeTab === "transactions" && (
+                  <CalendarTransactionsTab
+                    onDeleteTransaction={handleDeleteTransaction}
+                    onLoadMore={handleLoadMoreTransactions}
+                    onPressTransaction={(tx) => setInspectedTransaction(tx)}
+                    selectedDay={selectedDay}
+                    totalCount={scopedTransactions.length}
+                    transactions={scopedTransactions}
+                    visibleCount={visibleTxCount}
+                  />
+                )}
 
-            {activeTab === "schedules" && (
-              <CalendarSchedulesTab
-                accounts={accounts}
-                categories={categories}
-                onNavigateToSchedules={() => router.navigate("/transactions/scheduled" as any)}
-                onPostOccurrence={(id) => setPendingPostScheduleId(id)}
-                onSkipOccurrence={(id) => setPendingSkipScheduleId(id)}
-                schedules={scopedSchedules}
-                selectedDay={selectedDay}
-              />
-            )}
+                {activeTab === "schedules" && (
+                  <CalendarSchedulesTab
+                    accounts={accounts}
+                    categories={categories}
+                    onNavigateToSchedules={() => router.navigate("/transactions/scheduled" as any)}
+                    onPostOccurrence={(id) => setPendingPostScheduleId(id)}
+                    onSkipOccurrence={(id) => setPendingSkipScheduleId(id)}
+                    schedules={scopedSchedules}
+                    selectedDay={selectedDay}
+                  />
+                )}
 
-            {activeTab === "net" && (
-              <ProGate
-                featureDescription="Visualize daily income vs expense variance, cash flow spikes, and net balance trajectories across your calendar with Kaizen Pro."
-                featureTitle="Net Earnings Calendar"
-                mode="blur"
-              >
-                <CalendarNetTab
-                  categoryBreakdown={categoryBreakdown}
-                  isMonthScope={selectedDay === null}
-                  metrics={summaryMetrics}
-                />
-              </ProGate>
-            )}
+                {activeTab === "net" && (
+                  <ProGate
+                    featureDescription="Visualize daily income vs expense variance, cash flow spikes, and net balance trajectories across your calendar with Kaizen Pro."
+                    featureTitle="Net Earnings Calendar"
+                    mode="blur"
+                  >
+                    <CalendarNetTab
+                      categoryBreakdown={categoryBreakdown}
+                      isMonthScope={selectedDay === null}
+                      metrics={summaryMetrics}
+                    />
+                  </ProGate>
+                )}
 
-            {activeTab === "balance_sheet" && (
-              <ProGate
-                featureDescription="Track daily asset, liability, and equity trends directly on your calendar timeline with Kaizen Pro."
-                featureTitle="Balance Sheet Projections"
-                mode="blur"
-              >
-                <CalendarBalanceSheetTab
-                  activeMonth={activeMonth}
-                  balanceSheet={balanceSheetData}
-                  selectedDay={selectedDay}
-                />
-              </ProGate>
+                {activeTab === "balance_sheet" && (
+                  <ProGate
+                    featureDescription="Track daily asset, liability, and equity trends directly on your calendar timeline with Kaizen Pro."
+                    featureTitle="Balance Sheet Projections"
+                    mode="blur"
+                  >
+                    <CalendarBalanceSheetTab
+                      activeMonth={activeMonth}
+                      balanceSheet={balanceSheetData}
+                      selectedDay={selectedDay}
+                    />
+                  </ProGate>
+                )}
+              </>
             )}
           </>
         )}

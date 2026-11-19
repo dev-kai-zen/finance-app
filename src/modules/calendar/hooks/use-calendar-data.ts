@@ -58,6 +58,7 @@ export function useCalendarData() {
   });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
+  const [isTabLoading, setIsTabLoading] = useState(false);
 
   const currentMonthKey = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
   const monthCacheRef = useRef<Map<string, TransactionListItem[]>>(new Map());
@@ -366,29 +367,37 @@ export function useCalendarData() {
     );
   }, [selectedDay, activeMonth]);
 
-  const balanceSheetData = useMemo<BalanceSheetData>(() => {
-    if (activeTab !== "balance_sheet" || (loading && accounts.length === 0)) {
-      return {
-        cutoffDate: balanceSheetCutoffDate,
-        assets: { totalMinorUnits: 0, accountTypes: [] },
-        liabilities: { totalMinorUnits: 0, accountTypes: [] },
-        netWorthMinorUnits: 0,
-      };
+  const [balanceSheetData, setBalanceSheetData] = useState<BalanceSheetData>(() => ({
+    cutoffDate: new Date(),
+    assets: { totalMinorUnits: 0, accountTypes: [] },
+    liabilities: { totalMinorUnits: 0, accountTypes: [] },
+    netWorthMinorUnits: 0,
+  }));
+
+  useEffect(() => {
+    if (activeTab !== "balance_sheet") {
+      return;
     }
-    try {
-      return getBalanceSheet(balanceSheetCutoffDate);
-    } catch {
-      return {
-        cutoffDate: balanceSheetCutoffDate,
-        assets: { totalMinorUnits: 0, accountTypes: [] },
-        liabilities: { totalMinorUnits: 0, accountTypes: [] },
-        netWorthMinorUnits: 0,
-      };
-    }
+
+    let cancelled = false;
+    scheduleAfterPaint(() => {
+      if (cancelled) return;
+      try {
+        const fresh = getBalanceSheet(balanceSheetCutoffDate);
+        if (!cancelled) {
+          setBalanceSheetData(fresh);
+        }
+      } catch (err) {
+        console.error("[useCalendarData] Failed to compute balance sheet:", err);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     activeTab,
     balanceSheetCutoffDate,
-    loading,
     transactions,
     accounts,
     pockets,
@@ -580,10 +589,26 @@ export function useCalendarData() {
     });
 
     setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+    setIsTabLoading(true);
+    scheduleAfterPaint(() => {
+      setIsTabLoading(false);
+    });
   }, []);
 
   const clearDaySelection = useCallback(() => {
     setSelectedDay(null);
+    setIsTabLoading(true);
+    scheduleAfterPaint(() => {
+      setIsTabLoading(false);
+    });
+  }, []);
+
+  const selectTab = useCallback((tab: CalendarTab) => {
+    setActiveTab(tab);
+    setIsTabLoading(true);
+    scheduleAfterPaint(() => {
+      setIsTabLoading(false);
+    });
   }, []);
 
   return {
@@ -591,6 +616,7 @@ export function useCalendarData() {
     selectedDay,
     activeTab,
     loading,
+    isTabLoading,
     gridCells,
     scopedTransactions,
     scopedSchedules,
@@ -605,7 +631,7 @@ export function useCalendarData() {
     goToToday,
     toggleSelectDay,
     clearDaySelection,
-    setActiveTab,
+    setActiveTab: selectTab,
     refreshAll,
     postOccurrence,
     skipOccurrence,
