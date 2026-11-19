@@ -2,10 +2,11 @@ import { db, type DbContext } from "@/infrastructure/database/client";
 import { getAccountsWithBalances } from "./get-accounts-with-balances.service";
 import { listAccountTypes } from "../repositories/account-types.repository";
 import { insertAccount, newAccountRecordId, findAccountsByAccountTypeId } from "../repositories/accounts.repository";
+import { upsertCreditCardDetails } from "../repositories/credit-card-details.repository";
 import { accountInputSchema, type AccountInput } from "../schemas/account.schema";
 import { requireAccountType } from "./account-rules";
 import { isCreditCardAccountType } from "../utils/pocket-eligibility";
-import { parseOpeningAmount, parseOpeningDate } from "../utils/account-input";
+import { parseBillingDay, parseCreditLimit, parseOpeningAmount, parseOpeningDate } from "../utils/account-input";
 
 export function getAccountImportCatalog(context: DbContext = db) {
   return {
@@ -20,8 +21,28 @@ export function getAccountImportCatalog(context: DbContext = db) {
 export function createImportedAccount(input: AccountInput, context: DbContext): string {
   const value = accountInputSchema.parse(input);
   const type = requireAccountType(value.accountTypeId, context);
-  if (isCreditCardAccountType(type.id, type.name)) throw new Error("Credit card import is not supported.");
   const currencyCode = (value.currencyCode ?? "PHP").toUpperCase();
+  const creditCardType = isCreditCardAccountType(type.id, type.name);
+  if (creditCardType && !value.creditCardDetails) {
+    throw new Error("Enter the credit card limit, statement day, and payment due day.");
+  }
+  const creditCardValues =
+    creditCardType && value.creditCardDetails
+      ? {
+          creditLimitMinorUnits: parseCreditLimit(
+            value.creditCardDetails.creditLimit,
+            currencyCode,
+          ),
+          statementDay: parseBillingDay(
+            value.creditCardDetails.statementDay,
+            "Statement day",
+          ),
+          paymentDueDay: parseBillingDay(
+            value.creditCardDetails.paymentDueDay,
+            "Payment due day",
+          ),
+        }
+      : null;
   const now = new Date();
   const id = newAccountRecordId(context);
   insertAccount({
@@ -32,5 +53,8 @@ export function createImportedAccount(input: AccountInput, context: DbContext): 
     pocketEnabled: false, sortOrder: Math.max(-1, ...findAccountsByAccountTypeId(type.id, context).map((a) => a.sortOrder)) + 1,
     createdAt: now, updatedAt: now,
   }, context);
+  if (creditCardValues) {
+    upsertCreditCardDetails({ accountId: id, ...creditCardValues }, context);
+  }
   return id;
 }

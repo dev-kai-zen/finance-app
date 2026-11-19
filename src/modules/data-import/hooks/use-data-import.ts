@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { subscribeToDatabaseReplacement } from "@/infrastructure/database";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { useCurrencyPreferences } from "@/modules/currencies";
+import { PRO_LIMITS, useProStatus } from "@/modules/pro";
 import { getImportCatalog } from "../services/import-catalog.service";
 import { commitImport } from "../services/commit-import.service";
 import { downloadImportTemplate, pickImportFile, shareImportTemplate } from "../services/import-files.service";
@@ -15,6 +16,7 @@ import { prepareImportMappings } from "../utils/prepare-import-mappings";
 const defaults = (kind: ImportKind, defaultCurrency: string): ImportOptions => ({ kind, source: "", columns: {}, dateFormat: "ymd", decimal: ".", defaultCurrency, defaultAccount: "", transferMode: "single", accounts: {}, categories: {}, decisions: {} });
 export function useDataImport(initialKind: ImportKind = "transactions") {
   const { preferences } = useCurrencyPreferences();
+  const { isPro } = useProStatus();
   const defaultCurrency = preferences.defaultCurrency;
   const [catalog, setCatalog] = useState<ImportCatalog | null>(null);
   const [history, setHistory] = useState<ReturnType<typeof listImportHistory>>([]);
@@ -59,13 +61,22 @@ export function useDataImport(initialKind: ImportKind = "transactions") {
     finally { locked.current = false; setBusy(false); }
   };
   const patch = (value: Partial<ImportOptions>) => { if (!locked.current) setOptions((previous) => ({ ...previous, ...value })); };
-  const preview = useMemo(() => file && catalog ? buildImportPreview(file.document, options, catalog, file.hash) : null, [file, options, catalog]);
+  const preview = useMemo(
+    () =>
+      file && catalog
+        ? buildImportPreview(file.document, options, catalog, file.hash, {
+            isPro,
+            maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+          })
+        : null,
+    [file, options, catalog, isPro],
+  );
   const matching = () => {
     if (!file || !catalog) return;
     patch(prepareImportMappings(file.document, options, catalog)); setStep("matching");
   };
   return {
-    catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, patch,
+    catalog, history, file, options, step, setStep, busy, loading, error, savedTemplate, result, preview, patch, isPro,
     reload: () =>
       run(async () => {
         refresh(Boolean(file));

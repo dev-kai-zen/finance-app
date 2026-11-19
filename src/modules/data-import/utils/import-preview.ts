@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
-import type { CsvDocument, ImportCatalog, ImportField, ImportOptions, ImportPreview, ImportPreviewRow, PlannedAccount, PlannedTransaction } from "../types/import.types";
-import { categoryMappingKey, ImportValidationError, normalizeImportName, parseImportAmount, parseImportDate, transactionFingerprint } from "./csv";
+import type { CsvDocument, ImportCatalog, ImportField, ImportOptions, ImportPreview, ImportPreviewConstraints, ImportPreviewRow, PlannedAccount, PlannedTransaction } from "../types/import.types";
+import { categoryMappingKey, ImportValidationError, normalizeImportName, parseImportAmount, parseImportCreditCardDetails, parseImportDate, transactionFingerprint } from "./csv";
 
 export function importDigest(value: string): string { return bytesToHex(sha256(utf8ToBytes(value))); }
 export function cellValue(cells: string[], options: ImportOptions, field: ImportField): string {
@@ -55,7 +55,13 @@ function inferType(type: string, amount: string, debit: string, credit: string):
   return "";
 }
 
-export function buildImportPreview(document: CsvDocument, options: ImportOptions, catalog: ImportCatalog, fileHash: string): ImportPreview {
+export function buildImportPreview(
+  document: CsvDocument,
+  options: ImportOptions,
+  catalog: ImportCatalog,
+  fileHash: string,
+  constraints?: ImportPreviewConstraints,
+): ImportPreview {
   document = applyImportEdits(document, options);
   const accounts = new Map<string, PlannedAccount>();
   const usedSourceKeys = new Set(catalog.sourceKeys);
@@ -69,13 +75,16 @@ export function buildImportPreview(document: CsvDocument, options: ImportOptions
     if (!mapping) throw new ImportValidationError("account");
     const existing = catalog.accounts.find((a) => a.id === mapping.existingId);
     if (mapping.existingId && !existing) throw new ImportValidationError("account");
-    if (existing?.isArchived || existing?.creditCard) throw new ImportValidationError("unsupported");
+    if (existing?.isArchived) throw new ImportValidationError("unsupported");
     const currency = existing?.currencyCode || mapping.currency.trim().toUpperCase();
     const rowCurrency = cellValue(cells, options, "currency").toUpperCase();
     if (!catalog.currencies.includes(currency) || (rowCurrency && rowCurrency !== currency)) throw new ImportValidationError("currency");
     const type = catalog.accountTypes.find((t) => t.id === (existing?.accountTypeId || mapping.accountTypeId));
     if (!type) throw new ImportValidationError("account");
-    if (type.creditCard) throw new ImportValidationError("unsupported");
+    const creditCardDetails =
+      !existing && type.creditCard
+        ? parseImportCreditCardDetails(mapping, currency, options.decimal)
+        : undefined;
     const planned: PlannedAccount = existing ? {
       key, id: existing.id, name: existing.name, accountTypeId: existing.accountTypeId, currency,
       openingBalance: existing.openingBalanceMinorUnits, balanceDate: existing.openingBalanceAt, currentBalance: existing.currentBalanceMinorUnits,
@@ -84,6 +93,7 @@ export function buildImportPreview(document: CsvDocument, options: ImportOptions
       openingBalance: parseImportAmount(mapping.openingBalance, currency, options.decimal),
       balanceDate: parseImportDate(mapping.balanceDate, "ymd"),
       currentBalance: parseImportAmount(mapping.openingBalance, currency, options.decimal), note: mapping.note,
+      creditCardDetails,
     };
     if (!planned.name || planned.name.length > 100 || (planned.note?.length ?? 0) > 1000) throw new ImportValidationError("name");
     if (!planned.id && catalog.accounts.some((a) => normalizeImportName(a.name) === normalizeImportName(planned.name) && a.currencyCode === currency)) throw new ImportValidationError("account");
@@ -206,6 +216,33 @@ export function buildImportPreview(document: CsvDocument, options: ImportOptions
     }
     for (const row of rows) if (row.transaction?.type === "transfer" && !row.companion && !row.issue) row.issue = "transfer";
   }
+  // Repeated account names in accounts-only files would otherwise create duplicate accounts.
+  if (options.kind === "accounts") {
+    const names = new Set<string>();
+    for (const row of rows.filter((r) => !r.skip && !r.issue)) {
+      const key = normalizeImportName(cellValue(row.cells, options, "account") || options.defaultAccount);
+      if (names.has(key)) row.issue = "duplicate";
+      names.add(key);
+    }
+  }
+  const isPro = constraints?.isPro ?? false;
+  const maxActiveAccounts = constraints?.maxActiveAccounts ?? 5;
+  const existingActiveCount = catalog.accounts.filter((a) => !a.isArchived).length;
+  const remainingFreeSlots = isPro ? Number.POSITIVE_INFINITY : Math.max(0, maxActiveAccounts - existingActiveCount);
+  const acceptedNewAccountKeys = new Set<string>();
+  const blockedNewAccountKeys = new Set<string>();
+  const reserveNewAccounts = (keys: (string | undefined)[]): boolean => {
+    if (isPro) return true;
+    const needed = [...new Set(keys.filter((k): k is string => Boolean(k) && accounts.has(k!) && !accounts.get(k!)!.id))];
+    const unseen = needed.filter((k) => !acceptedNewAccountKeys.has(k));
+    if (!unseen.length) return true;
+    if (unseen.some((k) => blockedNewAccountKeys.has(k)) || acceptedNewAccountKeys.size + unseen.length > remainingFreeSlots) {
+      for (const k of unseen) blockedNewAccountKeys.add(k);
+      return false;
+    }
+    for (const k of unseen) acceptedNewAccountKeys.add(k);
+    return true;
+  };
   const logicalRows = rows.filter((r) => !r.skip && !r.issue && !r.secondary);
   const income: Record<string, number> = {}, expense: Record<string, number> = {};
   const deltas = new Map<string, number>();
@@ -218,10 +255,16 @@ export function buildImportPreview(document: CsvDocument, options: ImportOptions
   };
   for (const row of logicalRows) {
     const tx = row.transaction;
-    if (!tx) { actualAccounts.add(normalizeImportName(cellValue(row.cells, options, "account") || options.defaultAccount)); continue; }
+    if (!tx) {
+      const accountKey = normalizeImportName(cellValue(row.cells, options, "account") || options.defaultAccount);
+      if (!reserveNewAccounts([accountKey])) { row.issue = "freeAccountLimit"; continue; }
+      actualAccounts.add(accountKey);
+      continue;
+    }
     const fingerprint = transactionFingerprint(tx.type, accountId(tx.accountKey), tx.toAccountKey ? accountId(tx.toAccountKey) : "", tx.date, tx.amount, tx.name);
     row.duplicate = fingerprints.has(fingerprint);
     if (row.duplicate && options.decisions[row.number] !== "import") { row.issue = "duplicate"; continue; }
+    if (!reserveNewAccounts([tx.accountKey, tx.toAccountKey])) { row.issue = "freeAccountLimit"; continue; }
     fingerprints.add(fingerprint);
     actualAccounts.add(tx.accountKey);
     const balanceKey = accounts.get(tx.accountKey)!.id || tx.accountKey;
@@ -233,15 +276,6 @@ export function buildImportPreview(document: CsvDocument, options: ImportOptions
     }
     if (tx.type === "income") income[tx.currency] = (income[tx.currency] || 0) + tx.amount;
     if (tx.type === "expense") expense[tx.currency] = (expense[tx.currency] || 0) + Math.abs(tx.amount);
-  }
-  // Repeated account names in accounts-only files would otherwise create duplicate accounts.
-  if (options.kind === "accounts") {
-    const names = new Set<string>();
-    for (const row of rows.filter((r) => !r.skip && !r.issue)) {
-      const key = normalizeImportName(cellValue(row.cells, options, "account") || options.defaultAccount);
-      if (names.has(key)) row.issue = "duplicate";
-      names.add(key);
-    }
   }
   const plannedAccounts = [...accounts.values()].filter((a) => actualAccounts.has(a.key));
   const balances = [...new Map(plannedAccounts.map((a) => [a.id || a.key, { key: a.key, name: a.name, currency: a.currency, before: a.currentBalance, after: a.currentBalance + (deltas.get(a.id || a.key) || 0) }])).values()];

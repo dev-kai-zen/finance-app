@@ -23,8 +23,8 @@ export function getImportCatalog(
   }
   return {
     ...accountCatalog, categories: categoryCatalog.map((c) => ({ ...c, parentId: c.parentId ?? null })),
-    pickerAccounts: accountCatalog.accounts.filter((a) => !a.creditCard && !a.isArchived),
-    pickerAccountTypes: accountCatalog.accountTypes.filter((a) => !a.creditCard),
+    pickerAccounts: accountCatalog.accounts.filter((a) => !a.isArchived),
+    pickerAccountTypes: accountCatalog.accountTypes,
     pickerCategories: categoryCatalog,
     categoryKeywordsMap,
     fallbackCategoryIds: DEFAULT_OTHERS_CATEGORY_IDS,

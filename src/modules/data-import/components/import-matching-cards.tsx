@@ -3,18 +3,23 @@ import { Text, View } from "react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { useDataImport } from "../hooks/use-data-import";
-import { normalizeImportName } from "../utils/csv";
+import { getImportCreditCardFieldErrors, normalizeImportName } from "../utils/csv";
+import { cellValue } from "../utils/import-preview";
 import { AccountPickerModal, AccountTypeFormModal, AccountTypePickerModal, useAccountMutations, type AccountGroup } from "@/modules/accounts";
 import { CategoryPickerModal } from "@/modules/categories";
 import { matchCategoryWithKnowledge } from "@/modules/chat-with-kai";
 import { InfoModal } from "@/components/info-modal";
-import { ImportAction, ImportDateField, ImportFieldButton, ImportInput, ImportSelect } from "./import-controls";
+import { ImportAction, ImportChip, ImportDateField, ImportFieldButton, ImportInput, ImportSelect } from "./import-controls";
 
 type ImportState = ReturnType<typeof useDataImport>;
 export function ImportAccountCard({ name, state }: { name: string; state: ImportState }) {
   const theme = useAppTheme(), { t } = useLocalization();
   const [accountPicker, setAccountPicker] = useState(false), [typePicker, setTypePicker] = useState(false);
   const [balanceHelp, setBalanceHelp] = useState(false);
+  const [showCcColumnPicker, setShowCcColumnPicker] = useState(false);
+  const [selectedCcCols, setSelectedCcCols] = useState<
+    Partial<Record<"creditLimit" | "statementDay" | "paymentDueDay", number>>
+  >({});
   const [newTypeGroup, setNewTypeGroup] = useState<AccountGroup | null>(null);
   const typeMutations = useAccountMutations(() => {
     state.reload();
@@ -23,6 +28,53 @@ export function ImportAccountCard({ name, state }: { name: string; state: Import
   if (!mapping) return null;
   const selectedAccount = state.catalog?.pickerAccounts?.find((account) => account.id === mapping.existingId);
   const selectedType = state.catalog?.pickerAccountTypes?.find((type) => type.id === mapping.accountTypeId);
+  const isCreditCardType = Boolean(
+    state.catalog?.accountTypes.find((type) => type.id === mapping.accountTypeId)?.creditCard,
+  );
+  const ccFieldErrors = isCreditCardType
+    ? getImportCreditCardFieldErrors(
+        mapping,
+        mapping.currency || state.options.defaultCurrency || "PHP",
+        state.options.decimal,
+      )
+    : null;
+  const sourceRow =
+    isCreditCardType && state.file
+      ? state.file.document.rows.find((row) => {
+          const cells = state.options.rowEdits?.[row.number] ?? row.cells;
+          return (
+            normalizeImportName(
+              cellValue(cells, state.options, "account") || state.options.defaultAccount,
+            ) === key
+          );
+        })
+      : undefined;
+  const sourceRowCells = sourceRow
+    ? (state.options.rowEdits?.[sourceRow.number] ?? sourceRow.cells)
+    : null;
+  const fileColumnItems =
+    isCreditCardType && state.file?.document.headers.length
+      ? state.file.document.headers.map((header, index) => {
+          const sample = sourceRowCells?.[index]?.trim() ?? "";
+          return {
+            value: String(index),
+            label: header,
+            sublabel: sample
+              ? t("dataImport.wizard.example", { value: sample.slice(0, 60) })
+              : undefined,
+          };
+        })
+      : [];
+  const ccErrorText = (
+    field: "creditLimit" | "statementDay" | "paymentDueDay",
+  ): string | undefined => {
+    const code = ccFieldErrors?.[field];
+    if (!code) return undefined;
+    if (code === "required") return t("dataImport.wizard.creditCardRequiredError");
+    return field === "creditLimit"
+      ? t("dataImport.wizard.creditCardLimitInvalid")
+      : t("dataImport.wizard.creditCardDayInvalid");
+  };
   const groupLabel = (group: string) => t(group === "liability" ? "dataImport.ui.liability" : "dataImport.ui.asset");
   const update = (value: Parameters<ImportState["account"]>[1]) => state.account(key, value);
   const input = (field: "name" | "openingBalance" | "balanceDate" | "note", label: string) =>
@@ -84,6 +136,91 @@ export function ImportAccountCard({ name, state }: { name: string; state: Import
           items={state.catalog?.currencies.map((code) => ({ value: code, label: code })) ?? []} onChange={(currency) => update({ currency })} />
         {input("openingBalance", t("dataImport.fields.openingBalance"))}
         <ImportDateField label={t("dataImport.fields.openingDate")} value={mapping.balanceDate} onChange={(balanceDate) => update({ balanceDate })} disabled={state.busy} />
+        {isCreditCardType && (
+          <View style={{
+            padding: theme.spacing.md,
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.medium,
+            borderWidth: 1,
+            borderColor:
+              ccFieldErrors && Object.keys(ccFieldErrors).length > 0
+                ? theme.colors.danger
+                : theme.colors.border,
+            gap: theme.spacing.sm,
+          }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: theme.spacing.sm, flexWrap: "wrap" }}>
+              <Text style={{ color: theme.colors.textPrimary, fontWeight: "700", fontSize: 14 }}>
+                {t("dataImport.wizard.creditCardDetailsTitle")}
+              </Text>
+              <ImportChip label={t("dataImport.ui.required")} tone="required" />
+            </View>
+            <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>
+              {t("dataImport.wizard.creditCardDetailsSubtitle")}
+            </Text>
+            {fileColumnItems.length > 0 && (
+              <ImportAction
+                size="small"
+                variant="secondary"
+                disabled={state.busy}
+                label={t(
+                  showCcColumnPicker
+                    ? "dataImport.wizard.creditCardHideColumnMap"
+                    : "dataImport.wizard.creditCardFillFromColumn",
+                )}
+                onPress={() => setShowCcColumnPicker((prev) => !prev)}
+              />
+            )}
+            {showCcColumnPicker && fileColumnItems.length > 0 && (
+              <View style={{ gap: theme.spacing.sm, paddingBottom: theme.spacing.xs }}>
+                {(["creditLimit", "statementDay", "paymentDueDay"] as const).map((field) => (
+                  <ImportSelect
+                    key={field}
+                    label={t(`dataImport.fields.${field}`)}
+                    value={String(selectedCcCols[field] ?? state.options.columns[field] ?? -1)}
+                    disabled={state.busy}
+                    items={[
+                      { value: "-1", label: t("dataImport.choose") },
+                      ...fileColumnItems,
+                    ]}
+                    onChange={(selectedIdx) => {
+                      const idx = Number(selectedIdx);
+                      setSelectedCcCols((prev) => ({ ...prev, [field]: idx }));
+                      if (idx < 0 || !sourceRowCells) return;
+                      update({ [field]: sourceRowCells[idx]?.trim() ?? "" });
+                    }}
+                  />
+                ))}
+              </View>
+            )}
+            <ImportInput
+              label={t("dataImport.fields.creditLimit")}
+              value={mapping.creditLimit ?? ""}
+              onChange={(creditLimit) => update({ creditLimit })}
+              disabled={state.busy}
+              keyboardType="decimal-pad"
+              placeholder="50000"
+              error={ccErrorText("creditLimit")}
+            />
+            <ImportInput
+              label={t("dataImport.fields.statementDay")}
+              value={mapping.statementDay ?? ""}
+              onChange={(statementDay) => update({ statementDay })}
+              disabled={state.busy}
+              keyboardType="number-pad"
+              placeholder="15"
+              error={ccErrorText("statementDay")}
+            />
+            <ImportInput
+              label={t("dataImport.fields.paymentDueDay")}
+              value={mapping.paymentDueDay ?? ""}
+              onChange={(paymentDueDay) => update({ paymentDueDay })}
+              disabled={state.busy}
+              keyboardType="number-pad"
+              placeholder="5"
+              error={ccErrorText("paymentDueDay")}
+            />
+          </View>
+        )}
         {state.options.kind === "accounts" && input("note", t("dataImport.fields.note"))}
       </View>
     ) : (

@@ -2,13 +2,14 @@ import { randomUUID } from "expo-crypto";
 import { db } from "@/infrastructure/database/client";
 import { createImportedAccount } from "@/modules/accounts";
 import { resolveImportedCategory } from "@/modules/categories";
+import { reconcileCreditCardBillingInContext } from "@/modules/credit-cards";
 import { resolveImportLabels } from "@/modules/labels";
 import { createLocalBackup } from "@/modules/local-backup";
 import {
   canImportWorkspaceData,
   clearSampleWorkspaceIfNeeded,
-  isPersonalWorkspace,
 } from "@/modules/onboarding";
+import { getCurrentProStatus, PRO_LIMITS } from "@/modules/pro";
 import { createImportedTransactions, type ImportedTransactionCommand } from "@/modules/transactions";
 import { insertImportBatch, insertImportRecord } from "../repositories/imports.repository";
 import type { CsvDocument, ImportOptions } from "../types/import.types";
@@ -32,26 +33,47 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
   const draft = JSON.parse(JSON.stringify(options)) as ImportOptions;
   try {
     if (!canImportWorkspaceData()) throw new ImportValidationError("workspace");
-    const preview = buildImportPreview(document, draft, getImportCatalog(), fileHash);
+    const isPro = getCurrentProStatus().isPro;
+    const previewConstraints = { isPro, maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS };
+    const preview = buildImportPreview(document, draft, getImportCatalog(), fileHash, previewConstraints);
     if (!preview.ready || preview.signature !== signature) throw new ImportValidationError("changed");
     try { await createLocalBackup(null, "safety"); }
     catch { throw new ImportValidationError("backup"); }
     const committed = db.transaction((tx) => {
       if (!canImportWorkspaceData(tx)) throw new ImportValidationError("workspace");
       clearSampleWorkspaceIfNeeded(tx);
-      const fresh = buildImportPreview(document, draft, getImportCatalog(tx), fileHash);
+      const freshCatalog = getImportCatalog(tx);
+      const fresh = buildImportPreview(document, draft, freshCatalog, fileHash, previewConstraints);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");
+      if (!isPro) {
+        const existingActiveCount = freshCatalog.accounts.filter((a) => !a.isArchived).length;
+        const plannedNewAccounts = fresh.accounts.filter((a) => !a.id).length;
+        if (existingActiveCount + plannedNewAccounts > PRO_LIMITS.FREE_MAX_ACCOUNTS) {
+          throw new ImportValidationError("freeAccountLimit");
+        }
+      }
       const batchId = randomUUID(), accountIds = new Map<string, string>();
       const newAccounts: string[] = [], categoryIds = new Map<string, string>();
+      let createdCreditCard = false;
       for (const account of fresh.accounts) {
         const id = account.id ?? createImportedAccount({
           name: account.name, accountTypeId: account.accountTypeId, currencyCode: account.currency,
           openingAmount: decimalAmount(account.openingBalance, account.currency), openingDate: dateInput(account.balanceDate),
           note: account.note,
           hideFromSelection: false, hideFromReports: false, pocketEnabled: false,
+          creditCardDetails: account.creditCardDetails
+            ? {
+                creditLimit: decimalAmount(account.creditCardDetails.creditLimit, account.currency),
+                statementDay: String(account.creditCardDetails.statementDay),
+                paymentDueDay: String(account.creditCardDetails.paymentDueDay),
+              }
+            : undefined,
         }, tx);
         accountIds.set(account.key, id);
-        if (!account.id) newAccounts.push(id);
+        if (!account.id) {
+          newAccounts.push(id);
+          if (account.creditCardDetails) createdCreditCard = true;
+        }
       }
       const rows = fresh.rows.filter((r) => !r.skip && !r.issue && !r.secondary);
       const commands: ImportedTransactionCommand[] = [];
@@ -72,6 +94,9 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
         }
       }
       const recordIds = commands.length ? createImportedTransactions(commands, tx) : [];
+      if (createdCreditCard && !commands.length) {
+        reconcileCreditCardBillingInContext(new Date(), tx);
+      }
       const summary = {
         accounts: fresh.balances.map((b) => ({ name: b.name, currency: b.currency, balance: b.after })),
         newAccounts, dateFrom: fresh.dateFrom, dateTo: fresh.dateTo,

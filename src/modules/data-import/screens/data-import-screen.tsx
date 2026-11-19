@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { Sparkles } from "lucide-react-native";
+import { Crown, Sparkles } from "lucide-react-native";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { useNavigation, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +23,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { useWorkspace } from "@/modules/onboarding";
+import { PRO_LIMITS, ProFeatureModal } from "@/modules/pro";
 import type { TranslationKey } from "@/infrastructure/localization/translations/en";
 import {
   ImportAction,
@@ -50,7 +51,11 @@ import type {
   ImportReviewGroup,
   ImportTransactionType,
 } from "../types/import.types";
-import { suggestColumns } from "../utils/csv";
+import {
+  getImportCreditCardFieldErrors,
+  normalizeImportName,
+  suggestColumns,
+} from "../utils/csv";
 import { validateColumnSample } from "../utils/validate-column-sample";
 import { cellValue } from "../utils/import-preview";
 import {
@@ -150,6 +155,7 @@ export function DataImportScreenContent({
   );
   const [search, setSearch] = useState("");
   const [balancesOpen, setBalancesOpen] = useState(false);
+  const [proModalOpen, setProModalOpen] = useState(false);
   useEffect(() => {
     if (state.step !== "review") {
       setReviewFilter(null);
@@ -250,7 +256,16 @@ export function DataImportScreenContent({
     : { count: 0, outgoing: 0, incoming: 0 };
   const basicFields: ImportField[] =
     state.options.kind === "accounts"
-      ? ["account", "accountType", "currency", "openingBalance", "balanceDate"]
+      ? [
+          "account",
+          "accountType",
+          "currency",
+          "openingBalance",
+          "balanceDate",
+          "creditLimit",
+          "statementDay",
+          "paymentDueDay",
+        ]
       : [
           "date",
           "name",
@@ -266,7 +281,16 @@ export function DataImportScreenContent({
   const optionalFields: ImportField[] =
     state.options.kind === "accounts"
       ? ["note", "sourceId"]
-      : ["time", "note", "labels", "subcategory", "sourceId"];
+      : [
+          "time",
+          "note",
+          "labels",
+          "subcategory",
+          "sourceId",
+          "creditLimit",
+          "statementDay",
+          "paymentDueDay",
+        ];
   const mapColumn = (field: ImportField, value: string) => {
     const columns = { ...state.options.columns };
     if (value === "-1") {
@@ -298,13 +322,18 @@ export function DataImportScreenContent({
         ? t("dataImport.wizard.formatExpectedDate", {
             format: t(`dataImport.formats.${state.options.dateFormat}`),
           })
-        : field === "amount" || field === "debit" || field === "credit"
+        : field === "amount" ||
+            field === "debit" ||
+            field === "credit" ||
+            field === "creditLimit"
           ? t("dataImport.wizard.formatExpectedNumber")
-          : field === "time"
-            ? t("dataImport.wizard.formatExpectedTime")
-            : field === "currency"
-              ? t("dataImport.wizard.formatExpectedCurrency")
-              : null;
+          : field === "statementDay" || field === "paymentDueDay"
+            ? t("dataImport.wizard.formatExpectedBillingDay")
+            : field === "time"
+              ? t("dataImport.wizard.formatExpectedTime")
+              : field === "currency"
+                ? t("dataImport.wizard.formatExpectedCurrency")
+                : null;
 
     const items = [
       { value: "-1", label: t("dataImport.unmapped") },
@@ -405,6 +434,69 @@ export function DataImportScreenContent({
       </View>
     );
   };
+  const existingActiveCount =
+    state.catalog?.accounts.filter((account) => !account.isArchived).length ?? 0;
+  const remainingFreeSlots = state.isPro
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, PRO_LIMITS.FREE_MAX_ACCOUNTS - existingActiveCount);
+  const plannedNewAccountCount =
+    state.step === "matching"
+      ? state.accountNames.reduce((total, name) => {
+          const mapping = state.options.accounts?.[normalizeImportName(name)];
+          return mapping && !mapping.existingId ? total + 1 : total;
+        }, 0)
+      : 0;
+  const incompleteCreditCardCount =
+    state.step === "matching"
+      ? state.accountNames.reduce((total, name) => {
+          const mapping = state.options.accounts?.[normalizeImportName(name)];
+          if (!mapping || mapping.existingId) return total;
+          const isCreditCard = Boolean(
+            state.catalog?.accountTypes.find(
+              (type) => type.id === mapping.accountTypeId,
+            )?.creditCard,
+          );
+          if (!isCreditCard) return total;
+          const fieldErrors = getImportCreditCardFieldErrors(
+            mapping,
+            mapping.currency || state.options.defaultCurrency || "PHP",
+            state.options.decimal,
+          );
+          return Object.keys(fieldErrors).length > 0 ? total + 1 : total;
+        }, 0)
+      : 0;
+  const hasFreeAccountLimitIssue = Boolean(
+    !state.isPro &&
+      state.preview?.rows.some(
+        (row) => !row.skip && !row.secondary && row.issue === "freeAccountLimit",
+      ),
+  );
+  const openProModal = () => setProModalOpen(true);
+  const proLimitBanner = (newCount: number) => (
+    <View style={styles.proLimitBanner}>
+      <View style={styles.onboardingBannerHeader}>
+        <Crown size={18} color="#D97706" />
+        <Text style={styles.onboardingBannerTitle}>
+          {t("dataImport.wizard.freeAccountLimitBannerTitle", {
+            limit: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+          })}
+        </Text>
+      </View>
+      <Text style={styles.onboardingBannerMessage}>
+        {t("dataImport.wizard.freeAccountLimitBannerMessage", {
+          limit: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+          existing: existingActiveCount,
+          incoming: newCount,
+        })}
+      </Text>
+      <ImportAction
+        size="small"
+        label={t("dataImport.wizard.unlockPro")}
+        onPress={openProModal}
+        disabled={state.busy}
+      />
+    </View>
+  );
   const rowIndices = new Map(
     state.preview?.rows.map((row, index) => [row.number, index]) ?? [],
   );
@@ -511,6 +603,7 @@ export function DataImportScreenContent({
           row={state.preview!.rows[item.index]}
           state={state}
           wide={wide}
+          onUnlockPro={openProModal}
         />
       );
       return item.index === 0 ? (
@@ -719,7 +812,7 @@ export function DataImportScreenContent({
         </>
       )}
       {state.step === "columns" && (
-        <WalkthroughTarget id="importStepMapping">
+        <WalkthroughTarget id="importStepMapping" style={styles.section}>
           <View style={styles.card}>
             <Text style={styles.label}>
               {t("dataImport.wizard.formatsTitle")}
@@ -962,11 +1055,23 @@ export function DataImportScreenContent({
       {state.step === "matching" && !state.accountNames.length && (
         <Text style={styles.error}>{t("dataImport.wizard.noAccounts")}</Text>
       )}
+      {state.step === "matching" &&
+        !state.isPro &&
+        plannedNewAccountCount > remainingFreeSlots &&
+        proLimitBanner(plannedNewAccountCount)}
       {state.step === "categories" && !state.categoryNames.length && (
         <Text style={styles.body}>{t("dataImport.wizard.noCategories")}</Text>
       )}
       {state.step === "review" && state.preview && (
         <>
+          {hasFreeAccountLimitIssue &&
+            proLimitBanner(
+              state.accountNames.reduce((total, name) => {
+                const mapping =
+                  state.options.accounts?.[normalizeImportName(name)];
+                return mapping && !mapping.existingId ? total + 1 : total;
+              }, 0),
+            )}
           <View style={styles.card}>
             <Text style={styles.label}>{t("dataImport.wizard.findings")}</Text>
             <View
@@ -1130,19 +1235,28 @@ export function DataImportScreenContent({
           </>
         )}
         {state.step === "matching" && (
-          <ImportAction
-            label={t(
-              state.options.kind === "transactions"
-                ? "dataImport.wizard.nextCategories"
-                : "dataImport.wizard.nextReview",
+          <>
+            {incompleteCreditCardCount > 0 && (
+              <Text style={styles.error}>
+                {t("dataImport.wizard.creditCardIncompleteWarning", {
+                  count: incompleteCreditCardCount,
+                })}
+              </Text>
             )}
-            onPress={() =>
-              state.setStep(
-                state.options.kind === "transactions" ? "categories" : "review",
-              )
-            }
-            disabled={state.busy}
-          />
+            <ImportAction
+              label={t(
+                state.options.kind === "transactions"
+                  ? "dataImport.wizard.nextCategories"
+                  : "dataImport.wizard.nextReview",
+              )}
+              onPress={() =>
+                state.setStep(
+                  state.options.kind === "transactions" ? "categories" : "review",
+                )
+              }
+              disabled={state.busy}
+            />
+          </>
         )}
         {state.step === "categories" && (
           <ImportAction
@@ -1359,6 +1473,15 @@ export function DataImportScreenContent({
         }}
       />
 
+      <ProFeatureModal
+        featureDescription={t("pro.limits.accountsDesc", {
+          count: PRO_LIMITS.FREE_MAX_ACCOUNTS,
+        })}
+        featureTitle={t("pro.limits.accountsTitle")}
+        onClose={() => setProModalOpen(false)}
+        visible={proModalOpen}
+      />
+
       <DataImportWalkthroughOverlay
         onNext={walkthrough.nextStep}
         onPrev={walkthrough.prevStep}
@@ -1400,6 +1523,14 @@ function createStyles(theme: AppTheme) {
       backgroundColor: theme.colors.surfaceMuted,
       borderWidth: 1,
       borderColor: theme.colors.primary,
+    },
+    proLimitBanner: {
+      padding: theme.spacing.lg,
+      gap: theme.spacing.sm,
+      borderRadius: theme.borderRadius.large,
+      backgroundColor: theme.colors.surfaceMuted,
+      borderWidth: 1.5,
+      borderColor: "#D97706",
     },
     onboardingBannerHeader: {
       flexDirection: "row",

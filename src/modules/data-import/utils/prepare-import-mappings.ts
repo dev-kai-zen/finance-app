@@ -14,8 +14,8 @@ export function prepareImportMappings(document: CsvDocument, options: ImportOpti
     const get = (field: Parameters<typeof cellValue>[2]) => row ? cellValue(row.cells, options, field) : "";
     const currency = get("currency").toUpperCase() || options.defaultCurrency;
     const typeName = get("accountType");
-    const type = catalog.accountTypes.find((t) => !t.creditCard && normalizeImportName(t.name) === normalizeImportName(typeName));
-    const existing = catalog.accounts.filter((a) => !a.isArchived && !a.creditCard && normalizeImportName(a.name) === key && a.currencyCode === currency && (!typeName || a.accountTypeId === type?.id));
+    const type = catalog.accountTypes.find((t) => normalizeImportName(t.name) === normalizeImportName(typeName));
+    const existing = catalog.accounts.filter((a) => !a.isArchived && normalizeImportName(a.name) === key && a.currencyCode === currency && (!typeName || a.accountTypeId === type?.id));
     let earliest = "";
     for (const source of document.rows) {
       if (![cellValue(source.cells, options, "account") || options.defaultAccount, cellValue(source.cells, options, "toAccount")].some((n) => normalizeImportName(n) === key)) continue;
@@ -32,7 +32,18 @@ export function prepareImportMappings(document: CsvDocument, options: ImportOpti
         balanceDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       } catch { /* Leave the source date visible for correction. */ }
     }
-    accounts[key] = { existingId: existing.length === 1 ? existing[0].id : "", name, currency, accountTypeId: type?.id || "", openingBalance: options.kind === "accounts" ? get("openingBalance") : "0", balanceDate: options.kind === "accounts" ? balanceDate : earliest, note: options.kind === "accounts" ? get("note") : "" };
+    accounts[key] = {
+      existingId: existing.length === 1 ? existing[0].id : "",
+      name,
+      currency,
+      accountTypeId: type?.id || "",
+      openingBalance: options.kind === "accounts" ? get("openingBalance") : "0",
+      balanceDate: options.kind === "accounts" ? balanceDate : earliest,
+      note: options.kind === "accounts" ? get("note") : "",
+      creditLimit: get("creditLimit"),
+      statementDay: get("statementDay"),
+      paymentDueDay: get("paymentDueDay"),
+    };
   }
   const categories = { ...options.categories };
   for (const category of sourceCategories(document, options)) {

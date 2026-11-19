@@ -15,7 +15,7 @@ import { ImportAction, ImportChip, ImportDateField, ImportInput, ImportTypePicke
 import { ImportAccountCard, ImportCategoryCard } from "./import-matching-cards";
 
 type ImportState = ReturnType<typeof useDataImport>;
-export function ImportReviewEntry({ row, state, wide = false }: { row: ImportPreviewRow; state: ImportState; wide?: boolean }) {
+export function ImportReviewEntry({ row, state, wide = false, onUnlockPro }: { row: ImportPreviewRow; state: ImportState; wide?: boolean; onUnlockPro?: () => void }) {
   const { t } = useLocalization(), theme = useAppTheme();
   const [editing, setEditing] = useState(false), [cells, setCells] = useState(row.cells);
   const [accounts, setAccounts] = useState<Record<string, AccountMapping>>({}), [categories, setCategories] = useState<Record<string, string>>({});
@@ -36,7 +36,7 @@ export function ImportReviewEntry({ row, state, wide = false }: { row: ImportPre
   const accountName = get("account") || draftOptions.defaultAccount;
   const accountNames = [...new Set([accountName, get("toAccount"), row.transaction?.toAccountKey ? state.accountNames.find((name) => normalizeImportName(name) === row.transaction?.toAccountKey) : ""].filter((name): name is string => !!name))];
   const category = sourceCategories({ headers: state.file?.document.headers ?? [], rows: [{ number: row.number, cells: editing ? cells : row.cells }] }, draftOptions)[0];
-  const fields = Object.entries(state.options.columns).filter(([field]) => !["sourceId", "accountType", "openingBalance", "balanceDate", "type"].includes(field)) as [ImportField, number][];
+  const fields = Object.entries(state.options.columns).filter(([field]) => !["sourceId", "accountType", "openingBalance", "balanceDate", "creditLimit", "statementDay", "paymentDueDay", "type"].includes(field)) as [ImportField, number][];
   const basic = new Set(["date", "name", "amount", "debit", "credit"]);
   const group = importReviewGroup(row), label = row.repeated ? t("dataImport.ui.previouslyImported") : t(`dataImport.ui.${group}`);
   const resolved = resolveImportType(row.cells, state.options, row.number);
@@ -71,6 +71,7 @@ export function ImportReviewEntry({ row, state, wide = false }: { row: ImportPre
         {row.repeated ? <ImportAction size="small" variant="secondary" label={t("dataImport.ui.details")} onPress={() => setRepeatHelp(true)} /> : <>
           <ImportAction size="small" variant="secondary" label={t("dataImport.wizard.editEntry")} disabled={state.busy} onPress={edit} />
           <ImportAction size="small" variant="secondary" label={t(row.skip ? "dataImport.include" : "dataImport.exclude")} disabled={state.busy} onPress={() => { if (row.skip && resolved === "exclude") edit(); else state.decision(row.number, row.skip ? undefined : "skip"); }} />
+          {row.issue === "freeAccountLimit" && !row.skip && onUnlockPro && <ImportAction size="small" label={t("dataImport.wizard.unlockPro")} disabled={state.busy} onPress={onUnlockPro} />}
           {row.duplicate && !row.skip && state.options.kind === "transactions" && <ImportAction size="small" label={t("dataImport.keepDuplicate")} disabled={state.busy} onPress={() => state.decision(row.number, "import")} />}
         </>}
       </View>
@@ -81,9 +82,12 @@ export function ImportReviewEntry({ row, state, wide = false }: { row: ImportPre
       <KeyboardAwareForm contentContainerStyle={{ padding: theme.spacing.lg, gap: theme.spacing.lg }}>
         <Text style={{ color: theme.colors.textSecondary }}>{t("dataImport.ui.draftOnly")}</Text>
         <ImportChip label={label} tone={group} />
-        {row.issue && !row.skip && <View>
+        {row.issue && !row.skip && <View style={{ gap: theme.spacing.xs }}>
           <Text style={{ color: theme.colors.danger }}>{"\u2022 "}{t(`dataImport.errors.${row.issue}`)}</Text>
           <Text style={textStyle}>{"\u2022 "}{t(`dataImport.wizard.issueActions.${row.issue}`)}</Text>
+          {row.issue === "freeAccountLimit" && onUnlockPro && (
+            <ImportAction size="small" label={t("dataImport.wizard.unlockPro")} disabled={state.busy} onPress={() => { setEditing(false); onUnlockPro(); }} />
+          )}
         </View>}
         {state.options.kind === "transactions" && <>
           <Text style={textStyle}>{t("dataImport.fields.type")}</Text>

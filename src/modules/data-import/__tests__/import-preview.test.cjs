@@ -123,13 +123,98 @@ test("missing/ambiguous transfer legs are blocked and different currencies canno
   s.data.accounts[1].currencyCode = "USD";
   assert.equal(s.preview().rows[0].issue, "transfer");
 });
-test("unsupported metadata and credit-card accounts are blocked, and can be excluded", () => {
+test("unsupported metadata and archived accounts are blocked, and can be excluded", () => {
   const s = setup("Date,Type,Amount,Account,Category,Pocket\n2026-01-02,expense,150,Cash,Food,Vault");
   assert.equal(s.preview().rows[0].issue, "unsupported");
   s.options.decisions[2] = "skip";
   assert.equal(s.preview().errors, 0);
-  delete s.options.decisions[2]; s.document.rows[0].cells[5] = ""; s.data.accounts[0].creditCard = true;
+  delete s.options.decisions[2]; s.document.rows[0].cells[5] = ""; s.data.accounts[0].isArchived = true;
   assert.equal(s.preview().rows[0].issue, "unsupported");
+});
+
+test("credit card accounts are supported in accounts and transactions imports and require valid credit card details", () => {
+  const s = setup("Account,Account Type,Currency,Opening Balance,Opening Date,Credit Limit,Statement Cutoff Day,Payment Due Day\nBPI Visa,Credit Card,PHP,-5000,2026-01-01,50000,15,5");
+  s.options.kind = "accounts";
+  s.data.accountTypes.push({ id: "cc", name: "Credit Card", creditCard: true });
+  s.options.accounts["bpi visa"] = {
+    existingId: "", name: "BPI Visa", accountTypeId: "cc", currency: "PHP",
+    openingBalance: "-5000", balanceDate: "2026-01-01",
+    creditLimit: "", statementDay: "15", paymentDueDay: "5",
+  };
+  assert.equal(s.preview().rows[0].issue, "creditCardDetails");
+  assert.equal(s.preview().ready, false);
+
+  s.options.accounts["bpi visa"].creditLimit = "50000";
+  s.options.accounts["bpi visa"].statementDay = "32";
+  assert.equal(s.preview().rows[0].issue, "creditCardDetails");
+
+  s.options.accounts["bpi visa"].statementDay = "15";
+  const readyPreview = s.preview();
+  assert.equal(readyPreview.ready, true);
+  assert.deepEqual(readyPreview.accounts[0].creditCardDetails, { creditLimit: 5000000, statementDay: 15, paymentDueDay: 5 });
+
+  // Transactions import into an existing credit card account works without re-entering CC details.
+  const tx = setup("Date,Type,Amount,Account,Category\n2026-01-02,expense,250,BPI Visa,Food");
+  tx.data.accountTypes.push({ id: "cc", name: "Credit Card", creditCard: true });
+  tx.data.accounts.push({ id: "a_cc", name: "BPI Visa", accountTypeId: "cc", currencyCode: "PHP", openingBalanceMinorUnits: 0, openingBalanceAt: new Date(2026, 0, 1), currentBalanceMinorUnits: 0, isArchived: false, creditCard: true });
+  tx.options.accounts["bpi visa"] = { existingId: "a_cc", name: "BPI Visa", accountTypeId: "cc", currency: "PHP", openingBalance: "0", balanceDate: "2026-01-01" };
+  assert.equal(tx.preview().ready, true);
+  assert.equal(tx.preview().balances[0].after, -25000);
+});
+
+test("prepareImportMappings auto-matches Credit Card type and maps credit card columns", () => {
+  const { prepareImportMappings } = require("../utils/prepare-import-mappings.ts");
+  const s = setup("Account,Account Type,Currency,Opening Balance,Opening Date,Credit Limit,Statement Cutoff Day,Payment Due Day\nBPI Visa,Credit Card,PHP,-5000,2026-01-01,50000,15,5");
+  s.options.kind = "accounts";
+  s.options.accounts = {};
+  s.data.accountTypes.push({ id: "cc", name: "Credit Card", creditCard: true });
+  const prepared = prepareImportMappings(s.document, s.options, s.data);
+  assert.equal(prepared.accounts["bpi visa"].accountTypeId, "cc");
+  assert.equal(prepared.accounts["bpi visa"].creditLimit, "50000");
+  assert.equal(prepared.accounts["bpi visa"].statementDay, "15");
+  assert.equal(prepared.accounts["bpi visa"].paymentDueDay, "5");
+});
+
+test("free tier 5-account limit flags excess new accounts until excluded or Pro is unlocked", () => {
+  const csv = [
+    "Account,Currency,Opening Balance,Opening Date",
+    "Acc1,PHP,100,2026-01-01",
+    "Acc2,PHP,100,2026-01-01",
+    "Acc3,PHP,100,2026-01-01",
+    "Acc4,PHP,100,2026-01-01",
+    "Acc5,PHP,100,2026-01-01",
+    "Acc6,PHP,100,2026-01-01",
+  ].join("\n");
+  const s = setup(csv);
+  s.options.kind = "accounts";
+  // Archived existing accounts do not count toward the 5 active account cap.
+  s.data.accounts = [{ id: "arch1", name: "Old", accountTypeId: "wallet", currencyCode: "PHP", openingBalanceMinorUnits: 0, openingBalanceAt: new Date(2026, 0, 1), currentBalanceMinorUnits: 0, isArchived: true, creditCard: false }];
+  s.options.accounts = Object.fromEntries(
+    ["Acc1", "Acc2", "Acc3", "Acc4", "Acc5", "Acc6"].map((name) => [
+      name.toLowerCase(),
+      { existingId: "", name, accountTypeId: "wallet", currency: "PHP", openingBalance: "100", balanceDate: "2026-01-01" },
+    ]),
+  );
+
+  const freePreview = buildImportPreview(s.document, s.options, s.data, importDigest(csv), { isPro: false, maxActiveAccounts: 5 });
+  assert.equal(freePreview.ready, false);
+  assert.equal(freePreview.accepted, 5);
+  assert.equal(freePreview.errors, 1);
+  assert.equal(freePreview.rows[5].issue, "freeAccountLimit");
+
+  // Excluding an earlier account frees a slot for the 6th account.
+  s.options.decisions[2] = "skip";
+  const excludedPreview = buildImportPreview(s.document, s.options, s.data, importDigest(csv), { isPro: false, maxActiveAccounts: 5 });
+  assert.equal(excludedPreview.ready, true);
+  assert.equal(excludedPreview.accepted, 5);
+  assert.equal(excludedPreview.rows[5].issue, undefined);
+
+  // Unlocking Pro clears the limit for all 6 accounts.
+  delete s.options.decisions[2];
+  const proPreview = buildImportPreview(s.document, s.options, s.data, importDigest(csv), { isPro: true, maxActiveAccounts: 5 });
+  assert.equal(proPreview.ready, true);
+  assert.equal(proPreview.accepted, 6);
+  assert.equal(proPreview.errors, 0);
 });
 test("accounts-only imports do not silently update existing accounts", () => {
   const s = setup("Account,Currency,Opening Balance,Balance Date\nCash,PHP,1000,2026-01-01");

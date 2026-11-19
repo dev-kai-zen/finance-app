@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const { DatabaseSync } = require("node:sqlite");
 const fs = require("node:fs"), path = require("node:path"), Module = require("node:module"), ts = require("typescript");
 const root = path.resolve(__dirname, "../../..");
-let sqlite, database, backupCalls, backupAction;
+let sqlite, database, backupCalls, backupAction, proEnabled = false;
 const resolve = Module._resolveFilename, load = Module._load;
 Module._resolveFilename = function (request, parent, ...args) {
   return resolve.call(this, request.startsWith("@/") ? path.join(root, request.slice(2)) : request, parent, ...args);
@@ -12,6 +12,7 @@ const mock = () => new Proxy(() => mock(), { get: (_, key) => key === "create" ?
 Module._load = function (request, ...args) {
   if (request === "@/infrastructure/database/client") return { get db() { return database; } };
   if (request === "@/modules/local-backup") return { createLocalBackup: async () => { backupCalls++; await backupAction(); } };
+  if (request === "@/modules/pro") return { PRO_LIMITS: { FREE_MAX_ACCOUNTS: 5 }, getCurrentProStatus: () => ({ isPro: proEnabled }) };
   if (request === "expo-crypto") return { randomUUID: require("node:crypto").randomUUID };
   if (request.includes("drizzle/migrations")) return {};
   if (/^(expo|@expo|react|react-native)/.test(request) || request === "lucide-react-native") return mock();
@@ -113,7 +114,7 @@ beforeEach(() => {
   connect(); database.dialect.migrate(migrations, database.session);
   sqlite.exec("INSERT OR IGNORE INTO currencies (code,name,symbol,minor_unit_exponent,is_active,created_at,updated_at) VALUES ('PHP','Peso','PHP',2,1,0,0)");
   sqlite.exec("INSERT OR REPLACE INTO settings (key,value,updated_at) VALUES ('onboarding.status','completed',0),('workspace.mode','personal',0)");
-  backupCalls = 0; backupAction = async () => {};
+  backupCalls = 0; backupAction = async () => {}; proEnabled = false;
   sqlite.prepare("INSERT INTO account_types (id,name,account_group,sort_order,is_system,created_at,updated_at) VALUES ('wallet','Wallet','asset',0,0,0,0)").run();
 });
 afterEach(() => sqlite.close());
@@ -122,7 +123,7 @@ function draft(csv = "Date,Type,Amount,Account,Category,Name,Labels,Source ID\n2
   const options = { kind: "transactions", source: "Old app", columns: suggestColumns(document.headers), dateFormat: "ymd", decimal: ".", defaultCurrency: "PHP", defaultAccount: "", transferMode: "single", decisions: {},
     accounts: { cash: { existingId: "", name: "Cash", accountTypeId: "wallet", currency: "PHP", openingBalance: "1000", balanceDate: "2026-01-01" }, savings: { existingId: "", name: "Savings", accountTypeId: "wallet", currency: "PHP", openingBalance: "2000", balanceDate: "2026-01-01" } },
     categories: { [categoryMappingKey("expense", "Food")]: "", [categoryMappingKey("income", "Salary")]: "" } };
-  const preview = () => buildImportPreview(document, options, getImportCatalog(), hash);
+  const preview = () => buildImportPreview(document, options, getImportCatalog(), hash, { isPro: proEnabled, maxActiveAccounts: 5 });
   const save = () => commitImport(document, options, hash, "history.csv", preview().signature);
   return { document, hash, options, preview, save };
 }
@@ -234,4 +235,58 @@ test("default Other categories are saved without creating unknown category names
   const rows = sqlite.prepare("SELECT type, category_id FROM transactions ORDER BY type").all();
   assert.deepEqual(rows.map((row) => row.category_id), ["cat_exp_others", "cat_inc_others"]);
   assert.equal(sqlite.prepare("SELECT count(*) AS n FROM categories WHERE name='Unknown'").get().n, 0);
+});
+
+test("credit card accounts and transactions commit with required credit card details", async () => {
+  const d = draft("Date,Type,Amount,Account,Category,Name\n2026-01-05,expense,1200,BPI Visa,Food,Groceries");
+  d.options.accounts["bpi visa"] = {
+    existingId: "",
+    name: "BPI Visa",
+    accountTypeId: "system:liability:credit-card",
+    currency: "PHP",
+    openingBalance: "0",
+    balanceDate: "2026-01-01",
+    creditLimit: "50000",
+    statementDay: "15",
+    paymentDueDay: "5",
+  };
+  assert.equal(d.preview().ready, true);
+  const result = await d.save();
+  assert.equal(result.imported, 1);
+  const card = getAccountsWithBalances().find((a) => a.name === "BPI Visa");
+  assert.ok(card);
+  assert.equal(card.currentBalanceMinorUnits, -120000);
+  const ccDetails = sqlite.prepare("SELECT credit_limit_minor_units, statement_day, payment_due_day FROM credit_card_details WHERE account_id = ?").get(card.id);
+  assert.deepEqual({ ...ccDetails }, { credit_limit_minor_units: 5000000, statement_day: 15, payment_due_day: 5 });
+});
+
+test("commit enforces the Free 5-account limit and allows 6+ accounts when Pro is unlocked", async () => {
+  const csv = [
+    "Account,Currency,Opening Balance,Opening Date",
+    "A1,PHP,100,2026-01-01",
+    "A2,PHP,100,2026-01-01",
+    "A3,PHP,100,2026-01-01",
+    "A4,PHP,100,2026-01-01",
+    "A5,PHP,100,2026-01-01",
+    "A6,PHP,100,2026-01-01",
+  ].join("\n");
+  const d = draft(csv);
+  d.options.kind = "accounts";
+  d.options.accounts = Object.fromEntries(
+    ["A1", "A2", "A3", "A4", "A5", "A6"].map((name) => [
+      name.toLowerCase(),
+      { existingId: "", name, accountTypeId: "wallet", currency: "PHP", openingBalance: "100", balanceDate: "2026-01-01" },
+    ]),
+  );
+
+  assert.equal(d.preview().ready, false);
+  assert.equal(d.preview().rows[5].issue, "freeAccountLimit");
+  await assert.rejects(d.save(), /changed/);
+  assert.equal(count("accounts"), 0);
+
+  proEnabled = true;
+  assert.equal(d.preview().ready, true);
+  const result = await d.save();
+  assert.equal(result.imported, 6);
+  assert.equal(count("accounts"), 6);
 });

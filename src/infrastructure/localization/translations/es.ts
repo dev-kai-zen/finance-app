@@ -46,7 +46,7 @@ export const es = {
       otherIncome: "Otros ingresos",
       noCategory: "Sin categor\u00eda en el archivo",
       accountsHelp:
-        "Elige una cuenta de activo o pasivo. Las tarjetas de cr\u00e9dito a\u00fan no se pueden importar. Revisa el saldo inicial de las cuentas nuevas.",
+        "Elige una cuenta de activo o pasivo, incluidas tarjetas de cr\u00e9dito. Revisa el saldo inicial y los datos obligatorios de tarjeta de cr\u00e9dito de las cuentas nuevas.",
       categoriesHelp:
         "Las categor\u00edas coincidentes ya est\u00e1n seleccionadas. Los registros sin coincidencia usan Otros gastos u Otros ingresos. Puedes cambiarlo en el selector.",
       reviewHelp:
@@ -57,6 +57,7 @@ export const es = {
       columnDateFormat: "Formato: %{format}",
       formatExpectedDate: "Formato: Fecha (%{format})",
       formatExpectedNumber: "Formato: Número",
+      formatExpectedBillingDay: "Formato: Día del mes (1–31)",
       formatExpectedTime: "Formato: Hora",
       formatExpectedCurrency: "Formato: Código de moneda",
       dateFormatMismatch:
@@ -65,6 +66,10 @@ export const es = {
         'El formato no coincide: Fecha esperada (%{format}). Valor de fila 1: "%{value}"',
       formatMismatchAmount:
         'El formato no coincide: Cantidad numérica esperada. Valor de fila 1: "%{value}"',
+      formatMismatchCreditLimit:
+        'El formato no coincide: Se esperaba un límite de crédito no negativo. Valor de fila 1: "%{value}"',
+      formatMismatchBillingDay:
+        'El formato no coincide: Se esperaba un día del 1 al 31. Valor de fila 1: "%{value}"',
       formatMismatchDecimal:
         'Discrepancia en decimal: La fila 1 parece usar "%{char}" como separador decimal.',
       formatMismatchDebitCredit:
@@ -84,6 +89,21 @@ export const es = {
       newAccountTitle: "Crear nueva cuenta",
       newAccountSubtitle:
         "Kaizen creará esta cuenta antes de importar tus transacciones.",
+      creditCardDetailsTitle: "Detalles de la tarjeta de crédito",
+      creditCardDetailsSubtitle:
+        "Obligatorio para nuevas tarjetas de crédito. Ingrésalos abajo o complétalos desde una columna de tu archivo.",
+      creditCardFillFromColumn: "Completar desde una columna del archivo",
+      creditCardHideColumnMap: "Ocultar selector de columna",
+      creditCardRequiredError: "Obligatorio",
+      creditCardLimitInvalid:
+        "Introduce un límite de crédito no negativo válido para el formato de moneda seleccionado.",
+      creditCardDayInvalid: "Introduce un número entero del 1 al 31.",
+      creditCardIncompleteWarning:
+        "%{count} tarjeta de crédito aún necesita datos obligatorios (Límite de crédito, Día de corte o Día de pago). Complétalos arriba o excluye el registro en Revisión.",
+      freeAccountLimitBannerTitle: "Límite del plan gratuito: %{limit} cuentas activas",
+      freeAccountLimitBannerMessage:
+        "Actualmente tienes %{existing} cuenta(s) activa(s) y vas a importar %{incoming} cuenta(s) nueva(s). Excluye cuentas adicionales en Revisión o desbloquea Kaizen Pro para cuentas ilimitadas.",
+      unlockPro: "Desbloquear Pro",
       fromYourFile: "De tu archivo",
       matchKaizenCategory: "Coincidir con esta categoría de Kaizen",
       matchedViaKai: "Coincidencia mediante conocimiento de Kai",
@@ -203,6 +223,10 @@ export const es = {
         name: "Acorta el nombre, descripci\u00f3n, nota o etiqueta afectada abajo.",
         duplicate:
           "Excluye el registro o confirma que es una compra distinta que debe importarse.",
+        creditCardDetails:
+          "Introduce el límite de crédito, el día de corte (1–31) y el día de pago (1–31) abajo, o excluye este registro.",
+        freeAccountLimit:
+          "Excluye este registro para mantenerte dentro del límite gratuito, vincúlalo a una cuenta existente o desbloquea Kaizen Pro.",
       },
     },
 
@@ -222,7 +246,7 @@ export const es = {
     intro:
       "Trae tus cuentas y transacciones a Kaizen. Asigna las columnas, revisa los registros y confirma los saldos antes de guardar.",
     limits:
-      "CSV, TSV o texto UTF-8: hasta 2 MB y 1.000 registros. Tarjetas de crédito, divisas distintas, divisiones, bolsillos, comisiones, cuotas y programaciones requieren configuración aparte.",
+      "CSV, TSV o texto UTF-8: hasta 2 MB y 1.000 registros. Divisas distintas, divisiones, bolsillos, comisiones, cuotas y programaciones requieren configuración aparte.",
     kind: "¿Qué quieres importar?",
     transactions: "Historial de transacciones",
     accounts: "Solo cuentas",
@@ -254,7 +278,7 @@ export const es = {
     missingCategory: "Falta categoría",
     existingBalance:
       "Cuenta existente: el saldo inicial se conserva. La importación de solo cuentas no actualiza cuentas existentes.",
-    balanceDateInput: "Fecha del saldo (AAAA-MM-DD)",
+    balanceDateInput: "Fecha de apertura (AAAA-MM-DD)",
     openingHelp:
       "Para el historial, introduce el saldo anterior a la primera transacción. Para solo cuentas, usa el saldo de esta fecha. Cero es una sugerencia; compruébalo con tus registros anteriores.",
     preview: "Revisar importación",
@@ -320,8 +344,11 @@ export const es = {
       sourceId: "ID del registro original",
       accountType: "Tipo de cuenta",
       openingBalance: "Saldo inicial",
-      balanceDate: "Fecha del saldo",
+      balanceDate: "Fecha de apertura",
       openingDate: "Fecha de apertura",
+      creditLimit: "Límite de crédito",
+      statementDay: "Día de corte del estado de cuenta",
+      paymentDueDay: "Día límite de pago",
     },
     errors: {
       type: "Elige Ingreso, Gasto o Transferencia para este registro.",
@@ -354,6 +381,10 @@ export const es = {
       name: "Revisa la longitud: cuenta 100, descripción 200, nota 1.000, etiqueta 100 caracteres.",
       duplicate:
         "Revisa el registro similar o ID repetido. Exclúyelo o confirma una compra similar legítima.",
+      creditCardDetails:
+        "Las cuentas de tarjeta de crédito requieren un límite de crédito válido, día de corte (1–31) y día de pago (1–31).",
+      freeAccountLimit:
+        "Supera el límite del plan gratuito de 5 cuentas activas. Excluye cuentas adicionales o desbloquea Kaizen Pro.",
       busy: "Ya hay una importación en curso.",
       changed:
         "Los datos cambiaron desde la vista previa. Recarga y revisa los saldos antes de importar.",
@@ -1150,6 +1181,8 @@ export const es = {
         "Crea tipos de cuenta personalizados al instante mientras vinculas cuentas en la importación.",
       newItem4:
         "Elige entre más de 150 monedas oficiales del mundo con símbolos y decimales correctos.",
+      newItem5:
+        "Importa tarjetas de crédito y sus transacciones asignando o ingresando límites de crédito y fechas de facturación.",
       improveItem1:
         "Busca y filtra monedas al instante durante la configuración inicial.",
       improveItem2:
@@ -1162,6 +1195,8 @@ export const es = {
         "Mejora la velocidad al desplazarse, filtrar y escribir con historiales grandes y vistas previas de presupuesto.",
       improveItem6:
         "Personaliza las sugerencias de Chat con Kai usando tus cuentas reales para gastos, ingresos y transferencias.",
+      improveItem7:
+        "Muestra claramente el límite de cuentas del plan gratuito con opción para desbloquear Pro al importar.",
       fixItem1:
         "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
       fixItem2:
@@ -1174,6 +1209,8 @@ export const es = {
         "Corrige las transacciones que no se actualizaban al instante al registrarlas mediante entrada rápida.",
       fixItem6:
         "Mantiene intactos tus mensajes y borradores de Chat con Kai al editar una transacción o volver a abrir el chat.",
+      fixItem7:
+        "Renombra Fecha del saldo a Fecha de apertura y corrige el espaciado de tarjetas en el Paso 1 de importación.",
     },
     v170: {
       date: "18 de noviembre de 2026",

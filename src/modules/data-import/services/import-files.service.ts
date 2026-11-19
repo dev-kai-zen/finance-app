@@ -33,7 +33,7 @@ export async function pickImportFile() {
 
 function importTemplateContents(kind: ImportKind): string {
   const csv = kind === "accounts"
-    ? "Account,Account Type,Currency,Opening Balance,Balance Date\r\nCash,Wallet,PHP,1000.00,2026-01-01\r\nSavings,Bank,PHP,5000.00,2026-01-01\r\n"
+    ? "Account,Account Type,Currency,Opening Balance,Opening Date,Credit Limit,Statement Cutoff Day,Payment Due Day\r\nCash,Wallet,PHP,1000.00,2026-01-01,,,\r\nSavings,Bank,PHP,5000.00,2026-01-01,,,\r\n"
     : "Date,Type,Amount,Currency,Account,To Account,Category,Subcategory,Name,Note,Labels,Source ID\r\n2026-01-02,expense,150.00,PHP,Cash,,Food,,Lunch,,Personal,example-1\r\n2026-01-03,income,2000.00,PHP,Savings,,Salary,,Pay,,Work,example-2\r\n2026-01-04,transfer,300.00,PHP,Savings,Cash,,,Withdrawal,,,example-3\r\n";
   return `\uFEFF${csv}`;
 }

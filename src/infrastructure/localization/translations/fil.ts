@@ -46,7 +46,7 @@ export const fil = {
       otherIncome: "Iba pang Kita",
       noCategory: "Walang kategorya sa file",
       accountsHelp:
-        "Pumili ng asset o liability account. Hindi pa suportado ang credit card import. Para sa bago, suriin ang panimulang balanse.",
+        "Pumili ng asset o liability account, kasama ang mga credit card. Para sa bagong account, suriin ang panimulang balanse at mga detalye ng credit card bago mag-import.",
       categoriesHelp:
         "Napili na ang mga katugmang kategorya. Gagamit ng Iba pang Gastos o Iba pang Kita kung walang tugma. Baguhin ito sa category picker.",
       reviewHelp:
@@ -57,6 +57,7 @@ export const fil = {
       columnDateFormat: "Format: %{format}",
       formatExpectedDate: "Format: Petsa (%{format})",
       formatExpectedNumber: "Format: Numero",
+      formatExpectedBillingDay: "Format: Araw ng buwan (1–31)",
       formatExpectedTime: "Format: Oras",
       formatExpectedCurrency: "Format: Currency code",
       dateFormatMismatch:
@@ -65,6 +66,10 @@ export const fil = {
         'Hindi tugma ang format: Inaasahang petsa (%{format}). Halaga sa Hilera 1: "%{value}"',
       formatMismatchAmount:
         'Hindi tugma ang format: Inaasahang numerong halaga. Halaga sa Hilera 1: "%{value}"',
+      formatMismatchCreditLimit:
+        'Hindi tugma ang format: Inaasahang hindi negatibong credit limit. Halaga sa Hilera 1: "%{value}"',
+      formatMismatchBillingDay:
+        'Hindi tugma ang format: Inaasahang araw mula 1 hanggang 31. Halaga sa Hilera 1: "%{value}"',
       formatMismatchDecimal:
         'Hindi tugma ang decimal: Mukhang "%{char}" ang ginagamit sa Hilera 1.',
       formatMismatchDebitCredit:
@@ -84,6 +89,21 @@ export const fil = {
       newAccountTitle: "Gumawa ng Bagong Account",
       newAccountSubtitle:
         "Gagawa ang Kaizen ng account na ito bago i-import ang iyong mga transaksyon.",
+      creditCardDetailsTitle: "Mga Detalye ng Credit Card",
+      creditCardDetailsSubtitle:
+        "Kailangan para sa bagong credit card. Ilagay ito sa ibaba o punan mula sa column ng iyong file.",
+      creditCardFillFromColumn: "Punan mula sa column ng file",
+      creditCardHideColumnMap: "Itago ang pagpili ng column",
+      creditCardRequiredError: "Kailangan",
+      creditCardLimitInvalid:
+        "Maglagay ng tamang hindi negatibong credit limit ayon sa format ng currency.",
+      creditCardDayInvalid: "Maglagay ng buong numero mula 1 hanggang 31.",
+      creditCardIncompleteWarning:
+        "May %{count} credit card pa na kulang sa kailangang detalye (Credit limit, Statement cutoff day, o Payment due day). Ilagay ito sa itaas o ibukod sa Pagsusuri.",
+      freeAccountLimitBannerTitle: "Limitasyon ng Libreng plano: %{limit} aktibong account",
+      freeAccountLimitBannerMessage:
+        "Mayroon kang %{existing} aktibong account ngayon at mag-i-import ng %{incoming} bagong account. Ibukod ang sobrang account sa Pagsusuri o i-unlock ang Kaizen Pro para sa walang limitasyong account.",
+      unlockPro: "I-unlock ang Pro",
       fromYourFile: "Mula sa iyong file",
       matchKaizenCategory: "Itugma sa Kaizen Category na ito",
       matchedViaKai: "Itinugma gamit ang Kaalaman ni Kai",
@@ -204,6 +224,10 @@ export const fil = {
         name: "Paikliin ang pangalan, paglalarawan, tala, o label sa ibaba.",
         duplicate:
           "Huwag isama, o kumpirmahing hiwalay itong pagbili na dapat i-import.",
+        creditCardDetails:
+          "Ilagay ang credit limit, statement cutoff day (1–31), at payment due day (1–31) sa ibaba, o huwag isama ang talang ito.",
+        freeAccountLimit:
+          "Huwag isama ang talang ito upang manatili sa limitasyon ng Libreng plano, itugma sa kasalukuyang account, o i-unlock ang Kaizen Pro.",
       },
     },
 
@@ -223,7 +247,7 @@ export const fil = {
     intro:
       "Ilipat ang iyong mga account at transaksyon sa Kaizen. Itugma ang mga column, suriin ang mga tala, at tiyakin ang mga balanse bago i-save.",
     limits:
-      "CSV, TSV, o UTF-8 text: hanggang 2 MB at 1,000 tala. Hiwalay ang pag-set up ng credit card, ibang currency, hati-hating transaksyon, pocket, bayarin, installment, at iskedyul.",
+      "CSV, TSV, o UTF-8 text: hanggang 2 MB at 1,000 tala. Hiwalay ang pag-set up ng ibang currency, hati-hating transaksyon, pocket, bayarin, installment, at iskedyul.",
     kind: "Ano ang gusto mong i-import?",
     transactions: "Kasaysayan ng transaksyon",
     accounts: "Mga account lamang",
@@ -254,7 +278,7 @@ export const fil = {
     missingCategory: "Walang kategorya",
     existingBalance:
       "Kasalukuyang account: hindi magbabago ang panimulang balanse. Hindi maaaring baguhin ang kasalukuyang account sa account-only import.",
-    balanceDateInput: "Petsa ng balanse (YYYY-MM-DD)",
+    balanceDateInput: "Petsa ng pagbukas (YYYY-MM-DD)",
     openingHelp:
       "Para sa kasaysayan, ilagay ang balanse bago ang unang transaksyon. Para sa account lamang, ilagay ang balanse sa petsang ito. Mungkahi lamang ang zero; tiyakin ito sa lumang tala.",
     preview: "Suriin ang import",
@@ -320,8 +344,11 @@ export const fil = {
       sourceId: "Orihinal na ID ng tala",
       accountType: "Uri ng account",
       openingBalance: "Panimulang balanse",
-      balanceDate: "Petsa ng balanse",
+      balanceDate: "Petsa ng pagbukas",
       openingDate: "Petsa ng pagbukas",
+      creditLimit: "Credit limit",
+      statementDay: "Araw ng cutoff ng statement",
+      paymentDueDay: "Araw ng takdang bayad",
     },
     errors: {
       type: "Pumili ng Kita, Gastos, o Paglipat para sa talang ito.",
@@ -354,6 +381,10 @@ export const fil = {
       name: "Suriin ang haba: account 100, paglalarawan 200, tala 1,000, label 100 character.",
       duplicate:
         "Suriin ang katulad na tala o naulit na ID. Ibukod o kumpirmahin ang tunay na katulad na pagbili.",
+      creditCardDetails:
+        "Kailangan ng mga credit card account ng tamang credit limit, statement cutoff day (1–31), at payment due day (1–31).",
+      freeAccountLimit:
+        "Lumampas sa limitasyon ng Libreng plano na 5 aktibong account. Ibukod ang sobrang account o i-unlock ang Kaizen Pro.",
       busy: "May kasalukuyang pag-import.",
       changed:
         "Nagbago ang datos mula sa preview. I-load muli at suriin ang balanse.",
@@ -1164,6 +1195,8 @@ export const fil = {
         "Gumawa agad ng bagong uri ng account habang nagtutugma ng accounts sa data import.",
       newItem4:
         "Pumili mula sa mahigit 150 opisyal na pera sa buong mundo na may angkop na simbolo.",
+      newItem5:
+        "Mag-import ng mga credit card account at transaksyon kasama ang credit limit at petsa ng singil.",
       improveItem1:
         "Maghanap at magsala ng pera nang mabilis habang nag-o-onboarding.",
       improveItem2:
@@ -1176,6 +1209,8 @@ export const fil = {
         "Pahusayin ang bilis ng pag-scroll, pagsasala, at pag-type sa malalaking listahan ng transaksyon at budget.",
       improveItem6:
         "Iangkop ang mga mungkahi sa Chat with Kai gamit ang sarili mong mga account para sa gastos, kita, at paglipat.",
+      improveItem7:
+        "Ipakita nang malinaw ang limitasyon ng libreng plano na may opsyong mag-Unlock ng Pro habang nag-i-import.",
       fixItem1:
         "Inayos ang pag-navigate sa pag-import sa onboarding para makabalik sa mga opsyon nang hindi naiipit.",
       fixItem2:
@@ -1188,6 +1223,8 @@ export const fil = {
         "Ayusin ang hindi agarang pag-refresh ng listahan ng transaksyon kapag nagdagdag gamit ang quick entry.",
       fixItem6:
         "Panatilihing buo ang usapan at mga draft na transaksyon sa Chat with Kai kapag nag-edit o muling nagbukas nito.",
+      fixItem7:
+        "Palitan ang Balance date sa Petsa ng pagbukas at ayusin ang pagitan ng mga card sa Hakbang 1 ng import.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

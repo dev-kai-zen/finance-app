@@ -51,11 +51,17 @@ export function validateColumnSample(
     }
   }
 
-  if (field === "amount" || field === "debit" || field === "credit") {
+  if (field === "amount" || field === "debit" || field === "credit" || field === "creditLimit") {
     const cleaned = trimmed.replace(/^[\$€£¥₱₹A-Za-z\s]+|[\$€£¥₱₹A-Za-z\s]+$/g, "");
     if ((field === "debit" || field === "credit") && (cleaned.startsWith("-") || trimmed.startsWith("-"))) {
       return {
         warningKey: "dataImport.wizard.formatMismatchDebitCredit",
+        warningParams: { value: trimmed.slice(0, 50) },
+      };
+    }
+    if (field === "creditLimit" && (cleaned.startsWith("-") || trimmed.startsWith("-"))) {
+      return {
+        warningKey: "dataImport.wizard.formatMismatchCreditLimit",
         warningParams: { value: trimmed.slice(0, 50) },
       };
     }
@@ -76,7 +82,18 @@ export function validateColumnSample(
     }
 
     return {
-      warningKey: "dataImport.wizard.formatMismatchAmount",
+      warningKey: field === "creditLimit" ? "dataImport.wizard.formatMismatchCreditLimit" : "dataImport.wizard.formatMismatchAmount",
+      warningParams: { value: trimmed.slice(0, 50) },
+    };
+  }
+
+  if (field === "statementDay" || field === "paymentDueDay") {
+    if (/^\d{1,2}$/.test(trimmed)) {
+      const day = Number(trimmed);
+      if (day >= 1 && day <= 31) return null;
+    }
+    return {
+      warningKey: "dataImport.wizard.formatMismatchBillingDay",
       warningParams: { value: trimmed.slice(0, 50) },
     };
   }

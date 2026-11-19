@@ -64,6 +64,9 @@ const aliases: Record<ImportField, string[]> = {
   name: ["name", "description", "payee"], note: ["note", "notes", "memo"], labels: ["labels", "tags"],
   sourceId: ["source id", "transaction id", "id"], accountType: ["account type"],
   openingBalance: ["opening balance", "starting balance"], balanceDate: ["balance date", "opening date"],
+  creditLimit: ["credit limit", "card limit", "limit"],
+  statementDay: ["statement cutoff day", "statement day", "billing day", "cutoff day"],
+  paymentDueDay: ["payment due day", "due day", "due date day"],
 };
 export function suggestColumns(headers: string[]): Partial<Record<ImportField, number>> {
   const result: Partial<Record<ImportField, number>> = {};
@@ -102,6 +105,73 @@ export function parseImportDate(value: string, format: "ymd" | "dmy" | "mdy", ti
   const date = new Date(year, month - 1, day, hour, minute, second);
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day || hour > 23 || minute > 59 || second > 59 || date.getHours() !== hour) throw new ImportValidationError("date");
   return date;
+}
+
+export function parseImportBillingDay(value: string): number {
+  const trimmed = value.trim();
+  if (!/^\d{1,2}$/.test(trimmed)) throw new ImportValidationError("creditCardDetails");
+  const day = Number(trimmed);
+  if (day < 1 || day > 31) throw new ImportValidationError("creditCardDetails");
+  return day;
+}
+
+export function parseImportCreditLimit(value: string, currency: string, decimal: "." | ","): number {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.startsWith("-")) throw new ImportValidationError("creditCardDetails");
+  try {
+    const parsed = parseImportAmount(trimmed, currency, decimal);
+    if (parsed < 0) throw new ImportValidationError("creditCardDetails");
+    return parsed;
+  } catch {
+    throw new ImportValidationError("creditCardDetails");
+  }
+}
+
+export function parseImportCreditCardDetails(
+  details: { creditLimit?: string; statementDay?: string; paymentDueDay?: string },
+  currency: string,
+  decimal: "." | ",",
+): { creditLimit: number; statementDay: number; paymentDueDay: number } {
+  return {
+    creditLimit: parseImportCreditLimit(details.creditLimit ?? "", currency, decimal),
+    statementDay: parseImportBillingDay(details.statementDay ?? ""),
+    paymentDueDay: parseImportBillingDay(details.paymentDueDay ?? ""),
+  };
+}
+
+export function getImportCreditCardFieldErrors(
+  details: { creditLimit?: string; statementDay?: string; paymentDueDay?: string },
+  currency: string,
+  decimal: "." | ",",
+): {
+  creditLimit?: "required" | "invalid";
+  statementDay?: "required" | "invalid";
+  paymentDueDay?: "required" | "invalid";
+} {
+  const errors: {
+    creditLimit?: "required" | "invalid";
+    statementDay?: "required" | "invalid";
+    paymentDueDay?: "required" | "invalid";
+  } = {};
+  const limit = details.creditLimit?.trim() ?? "";
+  if (!limit) errors.creditLimit = "required";
+  else {
+    try { parseImportCreditLimit(limit, currency, decimal); }
+    catch { errors.creditLimit = "invalid"; }
+  }
+  const statement = details.statementDay?.trim() ?? "";
+  if (!statement) errors.statementDay = "required";
+  else {
+    try { parseImportBillingDay(statement); }
+    catch { errors.statementDay = "invalid"; }
+  }
+  const due = details.paymentDueDay?.trim() ?? "";
+  if (!due) errors.paymentDueDay = "required";
+  else {
+    try { parseImportBillingDay(due); }
+    catch { errors.paymentDueDay = "invalid"; }
+  }
+  return errors;
 }
 
 export function normalizeImportName(value: string): string { return value.trim().normalize("NFKC").toLowerCase(); }

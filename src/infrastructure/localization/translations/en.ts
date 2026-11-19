@@ -40,7 +40,7 @@ export const en = {
       otherIncome: "Other Income",
       noCategory: "No category in your file",
       accountsHelp:
-        "Choose an asset or liability account. Credit card imports are not supported yet. For new accounts, check the starting balance before importing.",
+        "Choose an asset or liability account, including credit cards. For new accounts, check the opening balance and required credit card details before importing.",
       categoriesHelp:
         "Matching categories are preselected. Unmatched entries use Other Expense or Other Income. Use the category picker to change the choice.",
       reviewHelp:
@@ -51,6 +51,7 @@ export const en = {
       columnDateFormat: "Format: %{format}",
       formatExpectedDate: "Format: Date (%{format})",
       formatExpectedNumber: "Format: Number",
+      formatExpectedBillingDay: "Format: Day of month (1–31)",
       formatExpectedTime: "Format: Time",
       formatExpectedCurrency: "Format: Currency code",
       dateFormatMismatch:
@@ -59,6 +60,10 @@ export const en = {
         'Format doesn\'t match: Expected date (%{format}). Row 1 value: "%{value}"',
       formatMismatchAmount:
         'Format doesn\'t match: Expected numeric amount. Row 1 value: "%{value}"',
+      formatMismatchCreditLimit:
+        'Format doesn\'t match: Expected a non-negative credit limit. Row 1 value: "%{value}"',
+      formatMismatchBillingDay:
+        'Format doesn\'t match: Expected a day from 1 to 31. Row 1 value: "%{value}"',
       formatMismatchDecimal:
         'Decimal format mismatch: Row 1 appears to use "%{char}" as decimal separator.',
       formatMismatchDebitCredit:
@@ -78,6 +83,21 @@ export const en = {
       newAccountTitle: "Create New Account",
       newAccountSubtitle:
         "Kaizen will create this account before importing your transactions.",
+      creditCardDetailsTitle: "Credit Card Details",
+      creditCardDetailsSubtitle:
+        "Required for new credit cards. Enter them below or fill from a column in your file.",
+      creditCardFillFromColumn: "Fill from file column",
+      creditCardHideColumnMap: "Hide file column picker",
+      creditCardRequiredError: "Required",
+      creditCardLimitInvalid:
+        "Enter a valid non-negative credit limit matching the selected currency format.",
+      creditCardDayInvalid: "Enter a whole number from 1 to 31.",
+      creditCardIncompleteWarning:
+        "%{count} credit card still needs required details (Credit limit, Statement cutoff day, or Payment due day). Fill them in above or leave the entry out in Review.",
+      freeAccountLimitBannerTitle: "Free plan limit: %{limit} active accounts",
+      freeAccountLimitBannerMessage:
+        "You currently have %{existing} active account(s) and are importing %{incoming} new account(s). Leave out extra accounts in Review or unlock Kaizen Pro for unlimited accounts.",
+      unlockPro: "Unlock Pro",
       fromYourFile: "From your file",
       matchKaizenCategory: "Match this Kaizen Category",
       matchedViaKai: "Matched via Kai Knowledge",
@@ -197,6 +217,10 @@ export const en = {
         name: "Shorten the affected name, description, note, or label below.",
         duplicate:
           "Leave this entry out, or confirm it is a separate purchase that should be imported.",
+        creditCardDetails:
+          "Enter the credit limit, statement cutoff day (1–31), and payment due day (1–31) below, or leave this entry out.",
+        freeAccountLimit:
+          "Leave this entry out to stay within the Free plan limit, match it to an existing account, or unlock Kaizen Pro.",
       },
     },
 
@@ -216,7 +240,7 @@ export const en = {
     intro:
       "Bring your accounts and transaction history into Kaizen. Match your file columns, review records, then confirm the balances before saving.",
     limits:
-      "CSV, TSV, or UTF-8 text files: up to 2 MB and 1,000 records. Credit cards, foreign-currency records, splits, pockets, fees, installments, and schedules need separate setup.",
+      "CSV, TSV, or UTF-8 text files: up to 2 MB and 1,000 records. Foreign-currency records, splits, pockets, fees, installments, and schedules need separate setup.",
     kind: "What would you like to import?",
     transactions: "Transaction history",
     accounts: "Accounts only",
@@ -247,7 +271,7 @@ export const en = {
     missingCategory: "Missing category",
     existingBalance:
       "Existing account: its opening balance stays unchanged. Account-only imports cannot update existing accounts.",
-    balanceDateInput: "Balance date (YYYY-MM-DD)",
+    balanceDateInput: "Opening date (YYYY-MM-DD)",
     openingHelp:
       "For history, enter the balance immediately before the first imported transaction. For accounts only, enter the balance on this date. Zero is a suggestion; verify it against your old records.",
     preview: "Review import",
@@ -313,8 +337,11 @@ export const en = {
       sourceId: "Original record ID",
       accountType: "Account type",
       openingBalance: "Opening balance",
-      balanceDate: "Balance date",
+      balanceDate: "Opening date",
       openingDate: "Opening date",
+      creditLimit: "Credit limit",
+      statementDay: "Statement cutoff day",
+      paymentDueDay: "Payment due day",
     },
     errors: {
       type: "Choose Expense, Income or Transfer for this entry.",
@@ -347,6 +374,10 @@ export const en = {
       name: "Check the name and note lengths: account 100, description 200, note 1,000, label 100 characters.",
       duplicate:
         "A similar record or repeated source ID needs review. Exclude it or confirm a legitimate similar purchase.",
+      creditCardDetails:
+        "Credit card accounts require a valid credit limit, statement cutoff day (1–31), and payment due day (1–31).",
+      freeAccountLimit:
+        "Exceeds the Free plan limit of 5 active accounts. Leave out extra accounts or unlock Kaizen Pro.",
       busy: "An import is already running.",
       changed:
         "Your data changed since the preview. Reload data and review the balances again before importing.",
@@ -1133,6 +1164,8 @@ export const en = {
         "Create custom account types on the spot while matching accounts during data import.",
       newItem4:
         "Choose from over 150 official world currencies with native symbols and decimals.",
+      newItem5:
+        "Import credit card accounts and transactions by mapping or entering credit limits and billing dates.",
       improveItem1:
         "Search and filter currencies instantly during first-time onboarding setup.",
       improveItem2:
@@ -1145,6 +1178,8 @@ export const en = {
         "Improve scrolling, filtering, and typing speed when managing large transaction histories and live budget previews.",
       improveItem6:
         "Personalize Chat with Kai prompt suggestions using your real accounts for expense, income, and transfer examples.",
+      improveItem7:
+        "Show clear Free plan account limits with an instant Unlock Pro option while importing accounts.",
       fixItem1:
         "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
       fixItem2:
@@ -1157,6 +1192,8 @@ export const en = {
         "Fix transactions not refreshing immediately on the list when recorded through quick entry.",
       fixItem6:
         "Keep your Chat with Kai messages and drafted transactions intact when editing a transaction or reopening Kai.",
+      fixItem7:
+        "Rename Balance date to Opening date and fix card spacing on Step 1 of data import.",
     },
     v170: {
       date: "November 18, 2026",

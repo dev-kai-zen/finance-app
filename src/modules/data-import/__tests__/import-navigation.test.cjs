@@ -35,8 +35,9 @@ Module._load = function (request, ...args) {
   if (request === "@/modules/accounts") return { AccountPickerModal: "AccountPickerModal", AccountTypePickerModal: "AccountTypePickerModal" };
   if (request === "@/modules/categories") return { CategoryPickerModal: "CategoryPickerModal" };
   if (request === "@/modules/onboarding") return { useWorkspace: () => ({ state: { mode: "personal" } }) };
+  if (request === "@/modules/pro") return { PRO_LIMITS: { FREE_MAX_ACCOUNTS: 5 }, ProFeatureModal: "ProFeatureModal" };
   if (request === "../hooks/use-data-import") return { useDataImport: () => state };
-  if (request === "@/modules/walkthrough") return { DraggableTourChip: "DraggableTourChip", DataImportWalkthroughOverlay: "DataImportWalkthroughOverlay", useDataImportWalkthrough: () => ({ isWalkthroughActive: false, startWalkthrough: () => {} }), WalkthroughRegistryProvider: ({ children }) => children, WalkthroughTarget: ({ children }) => children, useWalkthroughTarget: () => ({ current: null }) };
+  if (request === "@/modules/walkthrough") return { DraggableTourChip: "DraggableTourChip", DataImportWalkthroughOverlay: "DataImportWalkthroughOverlay", useDataImportWalkthrough: () => ({ isWalkthroughActive: false, startWalkthrough: () => {} }), WalkthroughRegistryProvider: ({ children }) => children, WalkthroughTarget: "WalkthroughTarget", useWalkthroughTarget: () => ({ current: null }) };
   if (request.startsWith("@/components/")) {
     const names = { "app-button": "AppButton", "confirm-modal": "ConfirmModal", "info-modal": "InfoModal", "modal-screen-header": "ModalScreenHeader", "full-screen-form-modal": "FullScreenFormModal", "keyboard-aware-form": "KeyboardAwareForm", "date-picker-modal": "DatePickerModal", "screen-title-with-help": "HelpIconButton" };
     const name = names[request.split("/").pop()]; return { [name]: name };
@@ -52,7 +53,7 @@ const { DataImportScreenContent: DataImportScreen } = require("../screens/data-i
 const { ImportReviewEntry } = require("../components/import-review-entry.tsx");
 beforeEach(() => {
   steps = []; routerBack = 0; hooks = []; hookIndex = 0;
-  state = { step: "history", options: { kind: "transactions", columns: {}, defaultAccount: "", source: "" }, history: [], accountNames: [], categoryNames: [], busy: false, loading: false, file: null, setStep: (step) => steps.push(step) };
+  state = { step: "history", options: { kind: "transactions", columns: {}, defaultAccount: "", source: "", accounts: {} }, history: [], accountNames: [], categoryNames: [], busy: false, loading: false, file: null, isPro: false, setStep: (step) => steps.push(step) };
 });
 const header = (tree) => tree.props.children.find((child) => child?.type === "ModalScreenHeader");
 
@@ -167,4 +168,26 @@ test("onboarding mode displays guidance banner and calls onCancel when choose an
   assert.ok(chooseAnotherButton);
   chooseAnotherButton.props.onPress();
   assert.equal(cancelled, true);
+});
+
+test("step 1 column mapping WalkthroughTarget applies section spacing so cards have gaps", () => {
+  state.step = "columns";
+  state.options = { ...state.options, kind: "accounts", dateFormat: "ymd", decimal: ".", columns: { account: 0 } };
+  state.file = { name: "accounts.csv", document: { headers: ["Account"], rows: [{ number: 2, cells: ["Cash"] }] } };
+  const tree = DataImportScreen();
+  const target = walk(tree, (node) => node.type === "WalkthroughTarget" && node.props.id === "importStepMapping");
+  assert.ok(target);
+  assert.equal(target.props.style?.gap, theme.spacing.md);
+});
+
+test("review shows Unlock Pro prompt when freeAccountLimit issue is present", () => {
+  state.step = "review";
+  state.isPro = false;
+  state.preview = {
+    rows: [{ number: 2, cells: ["Acc6"], issue: "freeAccountLimit", skip: false, repeated: false }],
+    accepted: 0, errors: 1, skipped: 0, ready: false, balances: [], income: {}, expense: {},
+  };
+  const tree = DataImportScreen();
+  const unlockBtn = walk(tree, (node) => node.type === "ImportAction" && node.props.label === "dataImport.wizard.unlockPro");
+  assert.ok(unlockBtn);
 });

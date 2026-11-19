@@ -116,3 +116,19 @@ test("account and category validation: flags samples that look like amounts or d
   assert.equal(dateCategory.warningKey, "dataImport.wizard.formatMismatchCategory");
 });
 
+test("credit card column validation: verifies creditLimit and 1-31 billing days", () => {
+  assert.equal(validateColumnSample("creditLimit", "50000.00", defaultOptions), null);
+  const negLimit = validateColumnSample("creditLimit", "-5000", defaultOptions);
+  assert.ok(negLimit);
+  assert.equal(negLimit.warningKey, "dataImport.wizard.formatMismatchCreditLimit");
+
+  assert.equal(validateColumnSample("statementDay", "15", defaultOptions), null);
+  assert.equal(validateColumnSample("paymentDueDay", "31", defaultOptions), null);
+  const badDay = validateColumnSample("statementDay", "35", defaultOptions);
+  assert.ok(badDay);
+  assert.equal(badDay.warningKey, "dataImport.wizard.formatMismatchBillingDay");
+  const zeroDay = validateColumnSample("paymentDueDay", "0", defaultOptions);
+  assert.ok(zeroDay);
+  assert.equal(zeroDay.warningKey, "dataImport.wizard.formatMismatchBillingDay");
+});
+

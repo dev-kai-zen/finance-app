@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Keyboard, Pressable, Text, TextInput, View } from "react-native";
+import { Keyboard, Pressable, Text, TextInput, type TextInputProps, View } from "react-native";
 import { Check, ChevronDown } from "lucide-react-native";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -92,8 +92,8 @@ export function ImportSelect({ label, value, items, onChange, disabled, hideLabe
     </FullScreenFormModal>
   </>;
 }
-export function ImportInput({ label, value, onChange, disabled, placeholder, onHelp }: {
-  label: string; value: string; onChange: (value: string) => void; disabled?: boolean; placeholder?: string; onHelp?: () => void;
+export function ImportInput({ label, value, onChange, disabled, placeholder, onHelp, keyboardType, error }: {
+  label: string; value: string; onChange: (value: string) => void; disabled?: boolean; placeholder?: string; onHelp?: () => void; keyboardType?: TextInputProps["keyboardType"]; error?: string;
 }) {
   const theme = useAppTheme();
   return <View style={{ gap: theme.spacing.xs }}>
@@ -102,8 +102,9 @@ export function ImportInput({ label, value, onChange, disabled, placeholder, onH
       {onHelp && <HelpIconButton accessibilityLabel={label} onPress={() => { Keyboard.dismiss(); onHelp(); }} />}
     </View>
     <TextInput accessibilityLabel={label} value={value} onChangeText={onChange} editable={!disabled} placeholder={placeholder}
-      placeholderTextColor={theme.colors.textMuted} autoCorrect={false}
-      style={{ minHeight: 48, borderWidth: 1, borderColor: theme.colors.borderStrong, borderRadius: theme.borderRadius.medium, color: theme.colors.textPrimary, padding: theme.spacing.md, backgroundColor: theme.colors.surface }} />
+      placeholderTextColor={theme.colors.textMuted} autoCorrect={false} keyboardType={keyboardType}
+      style={{ minHeight: 48, borderWidth: 1, borderColor: error ? theme.colors.danger : theme.colors.borderStrong, borderRadius: theme.borderRadius.medium, color: theme.colors.textPrimary, padding: theme.spacing.md, backgroundColor: theme.colors.surface }} />
+    {!!error && <Text style={{ color: theme.colors.danger, fontSize: theme.typography.fontSize.xs }}>{error}</Text>}
   </View>;
 }
 export function ImportDateField({ label, value, onChange, disabled, format = "ymd" }: {
