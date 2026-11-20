@@ -4,8 +4,10 @@ export { QuickSyncProcessor } from "./components/quick-sync-processor";
 export { GoogleDriveScheduledBackupProcessor } from "./components/google-drive-scheduled-backup-processor";
 export { useQuickSync } from "./hooks/use-quick-sync";
 export {
+  checkQuickSyncRemoteStatus,
   triggerQuickSync,
   queueQuickSyncForPreferenceChange,
+  setQuickSyncDeviceLabel,
   setQuickSyncEnabled,
   setQuickSyncNetworkPreference,
 } from "./services/quick-sync.service";

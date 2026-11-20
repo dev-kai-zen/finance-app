@@ -622,6 +622,7 @@ export const es = {
     waitingNetwork: "Esperando Wi-Fi",
     failed: "Error al sincronizar",
     notSynced: "Aún no sincronizado",
+    updateAvailable: "Actualización disponible",
     accessibility:
       "Estado de sincronización: %{label}. Toca para abrir la configuración.",
   },
@@ -655,6 +656,30 @@ export const es = {
     restoreConfirmMessage:
       "Esto reemplaza todos los datos locales con el archivo Quick Sync más reciente de Google Drive. Se guarda una copia de seguridad en memoria y se restaura automáticamente si falla la validación.",
     restoreConfirmAction: "Restaurar",
+    deviceLabelTitle: "Etiqueta del dispositivo (opcional)",
+    deviceLabelSave: "Guardar",
+    deviceLabelShownAs: "Visible para otros dispositivos como: %{label}",
+    conflictTitle: "Se encontraron datos más recientes de Quick Sync",
+    conflictSubtitle:
+      "Otro dispositivo subió un archivo de Quick Sync más reciente a Google Drive. Elige cómo continuar antes de sincronizar.",
+    conflictUpdatedByLabel: "Actualizado por",
+    conflictUnknownDevice: "Otro dispositivo",
+    conflictDriveUpdatedLabel: "Actualizado en Google Drive",
+    conflictLocalSyncedLabel: "Última sincronización local",
+    conflictHasLocalChanges: "Este dispositivo tiene cambios locales sin sincronizar",
+    conflictNoLocalChanges: "No se detectaron cambios locales sin sincronizar",
+    conflictRestoreAction: "Restaurar datos de Quick Sync",
+    conflictRestoreWarning:
+      "Si tienes cambios sin sincronizar en este dispositivo, no se guardarán y deberás volver a ingresarlos.",
+    conflictOverwriteAction: "Sobrescribir datos",
+    conflictOverwriting: "Sobrescribiendo...",
+    conflictOverwriteWarning:
+      "Esto sobrescribirá cualquier cambio más reciente guardado en el archivo Quick Sync de Google Drive.",
+    conflictOverwriteFailed: "No se pudo sobrescribir el archivo de Quick Sync.",
+    conflictDecideLater: "Decidir más tarde",
+    conflictReviewAction: "Revisar actualización",
+    conflictBannerCopy:
+      "Actualizado por %{device} el %{time}. La sincronización automática está en pausa hasta que elijas restaurar o sobrescribir.",
   },
   settings: {
     soundAndHapticsSection: "Sonido y Vibración",
@@ -1183,6 +1208,8 @@ export const es = {
         "Elige entre más de 150 monedas oficiales del mundo con símbolos y decimales correctos.",
       newItem5:
         "Importa tarjetas de crédito y sus transacciones asignando o ingresando límites de crédito y fechas de facturación.",
+      newItem6:
+        "Avisarte antes de sobrescribir datos más recientes de Quick Sync de otro dispositivo, con etiquetas personalizadas por dispositivo.",
       improveItem1:
         "Busca y filtra monedas al instante durante la configuración inicial.",
       improveItem2:

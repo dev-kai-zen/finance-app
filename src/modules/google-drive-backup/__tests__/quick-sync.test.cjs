@@ -35,6 +35,18 @@ Module._resolveFilename = function (request, parent, ...rest) {
 globalThis.__DEV__ = false;
 
 Module._load = function (request, parent, ...rest) {
+  if (request === "expo-device") {
+    return {
+      brand: "google",
+      modelName: "Pixel 8",
+      osName: "Android",
+    };
+  }
+  if (request === "expo-crypto") {
+    return {
+      randomUUID: () => "uuid-device-local-1",
+    };
+  }
   if (
     request === "react-native" ||
     request === "expo-sqlite" ||
@@ -85,11 +97,27 @@ const {
   subscribeToQuickSyncSettings,
 } = require("@/infrastructure/sync/quick-sync-settings.repository");
 const {
+  clearQuickSyncRemoteConflict,
   getQuickSyncState,
+  setQuickSyncConflictPromptVisible,
+  setQuickSyncRemoteConflict,
   subscribeToQuickSync,
   setQuickSyncRuntimeStatus,
   resetQuickSyncStateForTests,
 } = require("@/infrastructure/sync/quick-sync-state");
+const {
+  clearQuickSyncRemoteTracking,
+  formatQuickSyncDeviceDisplayName,
+  getQuickSyncDeviceMetadata,
+  getQuickSyncHardwareDeviceName,
+  markQuickSyncLocalChangesPending,
+  resetQuickSyncDeviceMetadataForTests,
+  setQuickSyncCustomDeviceName,
+  updateQuickSyncDeviceMetadata,
+} = require("@/infrastructure/sync/quick-sync-device.storage");
+const {
+  evaluateQuickSyncRemoteState,
+} = require("@/infrastructure/sync/quick-sync-conflict");
 
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
@@ -209,6 +237,7 @@ beforeEach(() => {
 
 afterEach(() => {
   resetQuickSyncStateForTests();
+  resetQuickSyncDeviceMetadataForTests();
   if (sqlite) {
     try {
       sqlite.close();
@@ -310,4 +339,239 @@ test("quick sync: preserves accountEmail and resetQuickSyncLocalMetadata clears 
   assert.equal(config.fileId, null);
   assert.equal(config.accountEmail, null);
   assert.equal(config.lastSyncedAt, null);
+});
+
+test("quick sync device metadata: formats policy-safe hardware model and custom label", () => {
+  assert.equal(getQuickSyncHardwareDeviceName(), "Google Pixel 8");
+  assert.equal(formatQuickSyncDeviceDisplayName(null), "Google Pixel 8");
+  assert.equal(
+    formatQuickSyncDeviceDisplayName("Partner's Phone", "Pixel 8"),
+    "Partner's Phone (Pixel 8)",
+  );
+  assert.equal(
+    formatQuickSyncDeviceDisplayName("My Pixel 8", "Pixel 8"),
+    "My Pixel 8",
+  );
+
+  const initial = getQuickSyncDeviceMetadata();
+  setQuickSyncCustomDeviceName("Work Phone");
+  markQuickSyncLocalChangesPending();
+  updateQuickSyncDeviceMetadata({
+    lastKnownRemoteVersion: 14,
+    lastKnownRemoteFileId: "file-14",
+    lastKnownRemoteModifiedTime: "2026-11-20T05:00:00.000Z",
+  });
+
+  clearQuickSyncRemoteTracking();
+  const afterClear = getQuickSyncDeviceMetadata();
+  assert.equal(afterClear.deviceId, initial.deviceId);
+  assert.equal(afterClear.customDeviceName, "Work Phone");
+  assert.equal(afterClear.lastKnownRemoteSyncId, null);
+  assert.equal(afterClear.lastKnownRemoteHeadRevisionId, null);
+  assert.equal(afterClear.lastKnownRemoteVersion, null);
+  assert.equal(afterClear.lastKnownRemoteFileId, null);
+  assert.equal(afterClear.hasUnsyncedLocalChanges, false);
+});
+
+test("quick sync conflict evaluation: detects remote ahead via syncRevisionId/headRevisionId and avoids false self-conflicts", () => {
+  const remoteBase = {
+    id: "file-1",
+    name: "kaizen-finance-quick-sync.kfb",
+    createdTime: "2026-11-20T05:00:00.000Z",
+    modifiedTime: "2026-11-20T05:30:00.000Z",
+    size: 1024,
+    location: "visible",
+    passwordProtected: false,
+    version: 25,
+    headRevisionId: "head-rev-10",
+    trashed: false,
+    syncRevisionId: "sync-rev-10",
+    lastUpdatedByDeviceId: "device-other",
+    lastUpdatedByDeviceName: "Partner's Phone (Pixel 8)",
+  };
+
+  // Missing / trashed remote file
+  assert.equal(
+    evaluateQuickSyncRemoteState(null, {
+      fileId: "file-1",
+      lastSyncedAt: "2026-11-20T05:00:00.000Z",
+      lastKnownRemoteSyncId: "sync-rev-9",
+      lastKnownRemoteHeadRevisionId: "head-rev-9",
+      lastKnownRemoteVersion: 24,
+      lastKnownRemoteModifiedTime: "2026-11-20T05:00:00.000Z",
+      lastKnownRemoteFileId: "file-1",
+      deviceId: "device-local",
+      hasUnsyncedLocalChanges: false,
+    }).status,
+    "missing",
+  );
+  assert.equal(
+    evaluateQuickSyncRemoteState(
+      { ...remoteBase, trashed: true },
+      {
+        fileId: "file-1",
+        lastSyncedAt: "2026-11-20T05:00:00.000Z",
+        lastKnownRemoteSyncId: "sync-rev-9",
+        lastKnownRemoteHeadRevisionId: "head-rev-9",
+        lastKnownRemoteVersion: 24,
+        lastKnownRemoteModifiedTime: "2026-11-20T05:00:00.000Z",
+        lastKnownRemoteFileId: "file-1",
+        deviceId: "device-local",
+        hasUnsyncedLocalChanges: false,
+      },
+    ).status,
+    "missing",
+  );
+
+  // Different syncRevisionId from another device -> remote_ahead
+  const aheadResult = evaluateQuickSyncRemoteState(remoteBase, {
+    fileId: "file-1",
+    lastSyncedAt: "2026-11-20T05:00:00.000Z",
+    lastKnownRemoteSyncId: "sync-rev-9",
+    lastKnownRemoteHeadRevisionId: "head-rev-9",
+    lastKnownRemoteVersion: 24,
+    lastKnownRemoteModifiedTime: "2026-11-20T05:00:00.000Z",
+    lastKnownRemoteFileId: "file-1",
+    deviceId: "device-local",
+    hasUnsyncedLocalChanges: true,
+  });
+  assert.equal(aheadResult.status, "remote_ahead");
+  assert.equal(aheadResult.conflict.remoteDeviceName, "Partner's Phone (Pixel 8)");
+  assert.equal(aheadResult.conflict.hasUnsyncedLocalChanges, true);
+
+  // Same syncRevisionId even if Google Drive internally bumped file.version (24 -> 25) -> up_to_date!
+  const driveVersionBumpOnly = evaluateQuickSyncRemoteState(remoteBase, {
+    fileId: "file-1",
+    lastSyncedAt: "2026-11-20T05:30:00.000Z",
+    lastKnownRemoteSyncId: "sync-rev-10",
+    lastKnownRemoteHeadRevisionId: "head-rev-10",
+    lastKnownRemoteVersion: 24,
+    lastKnownRemoteModifiedTime: "2026-11-20T05:30:00.000Z",
+    lastKnownRemoteFileId: "file-1",
+    deviceId: "device-local",
+    hasUnsyncedLocalChanges: true,
+  });
+  assert.equal(driveVersionBumpOnly.status, "up_to_date");
+
+  // Same headRevisionId fallback (when syncRevisionId absent) despite version bump -> up_to_date!
+  const headRevisionMatch = evaluateQuickSyncRemoteState(
+    { ...remoteBase, syncRevisionId: null },
+    {
+      fileId: "file-1",
+      lastSyncedAt: "2026-11-20T05:30:00.000Z",
+      lastKnownRemoteSyncId: null,
+      lastKnownRemoteHeadRevisionId: "head-rev-10",
+      lastKnownRemoteVersion: 24,
+      lastKnownRemoteModifiedTime: "2026-11-20T05:30:00.000Z",
+      lastKnownRemoteFileId: "file-1",
+      deviceId: "device-local",
+      hasUnsyncedLocalChanges: false,
+    },
+  );
+  assert.equal(headRevisionMatch.status, "up_to_date");
+
+  // Newly linked second device (never synced) when Drive file exists -> remote_ahead
+  const freshDeviceResult = evaluateQuickSyncRemoteState(remoteBase, {
+    fileId: null,
+    lastSyncedAt: null,
+    lastKnownRemoteSyncId: null,
+    lastKnownRemoteHeadRevisionId: null,
+    lastKnownRemoteVersion: null,
+    lastKnownRemoteModifiedTime: null,
+    lastKnownRemoteFileId: null,
+    deviceId: "device-local",
+    hasUnsyncedLocalChanges: false,
+  });
+  assert.equal(freshDeviceResult.status, "remote_ahead");
+
+  // Self-writer protection: if THIS device was the last writer on Drive, NEVER self-conflict
+  // even when hasUnsyncedLocalChanges is true
+  const selfAdoptResult = evaluateQuickSyncRemoteState(
+    { ...remoteBase, lastUpdatedByDeviceId: "device-local" },
+    {
+      fileId: "file-1",
+      lastSyncedAt: "2026-11-20T05:00:00.000Z",
+      lastKnownRemoteSyncId: "sync-rev-9",
+      lastKnownRemoteHeadRevisionId: "head-rev-9",
+      lastKnownRemoteVersion: 24,
+      lastKnownRemoteModifiedTime: "2026-11-20T05:00:00.000Z",
+      lastKnownRemoteFileId: "file-1",
+      deviceId: "device-local",
+      hasUnsyncedLocalChanges: true,
+    },
+  );
+  assert.equal(selfAdoptResult.status, "adopt_self");
+
+  // Legacy upgrade fallback (no syncRevisionId/headRevisionId yet): within 10s -> up_to_date, >10s -> remote_ahead
+  assert.equal(
+    evaluateQuickSyncRemoteState(
+      { ...remoteBase, syncRevisionId: null, headRevisionId: null },
+      {
+        fileId: "file-1",
+        lastSyncedAt: "2026-11-20T05:29:55.000Z",
+        lastKnownRemoteSyncId: null,
+        lastKnownRemoteHeadRevisionId: null,
+        lastKnownRemoteVersion: null,
+        lastKnownRemoteModifiedTime: null,
+        lastKnownRemoteFileId: null,
+        deviceId: "device-local",
+        hasUnsyncedLocalChanges: false,
+      },
+    ).status,
+    "up_to_date",
+  );
+  assert.equal(
+    evaluateQuickSyncRemoteState(
+      { ...remoteBase, syncRevisionId: null, headRevisionId: null },
+      {
+        fileId: "file-1",
+        lastSyncedAt: "2026-11-20T05:20:00.000Z",
+        lastKnownRemoteSyncId: null,
+        lastKnownRemoteHeadRevisionId: null,
+        lastKnownRemoteVersion: null,
+        lastKnownRemoteModifiedTime: null,
+        lastKnownRemoteFileId: null,
+        deviceId: "device-local",
+        hasUnsyncedLocalChanges: false,
+      },
+    ).status,
+    "remote_ahead",
+  );
+});
+
+test("quick sync state: tracks remote_ahead conflict and prompt visibility", () => {
+  saveQuickSyncConfig({ enabled: true });
+
+  setQuickSyncRemoteConflict({
+    fileId: "file-1",
+    remoteVersion: 12,
+    remoteModifiedTime: "2026-11-20T05:30:00.000Z",
+    remoteDeviceId: "device-other",
+    remoteDeviceName: "Pixel 8",
+    localLastSyncedAt: "2026-11-20T05:00:00.000Z",
+    hasUnsyncedLocalChanges: false,
+  });
+
+  let state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, true);
+  assert.equal(state.remoteConflict?.remoteDeviceName, "Pixel 8");
+
+  // Dismissing prompt keeps conflict paused so background uploads never overwrite
+  setQuickSyncConflictPromptVisible(false);
+  state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, false);
+
+  // Syncing state takes precedence during active restore/overwrite resolution
+  setQuickSyncRuntimeStatus("syncing");
+  state = getQuickSyncState();
+  assert.equal(state.status, "syncing");
+
+  clearQuickSyncRemoteConflict();
+  setQuickSyncRuntimeStatus("synced");
+  state = getQuickSyncState();
+  assert.equal(state.status, "synced");
+  assert.equal(state.remoteConflict, null);
+  assert.equal(state.conflictPromptVisible, false);
 });

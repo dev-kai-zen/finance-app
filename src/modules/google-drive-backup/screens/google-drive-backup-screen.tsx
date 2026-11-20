@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { InfoModal, ModalScreenHeader, PageContainer } from "@/components";
+import {
+  InfoModal,
+  KeyboardAwareForm,
+  ModalScreenHeader,
+  PageContainer,
+} from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
@@ -29,15 +34,26 @@ export function GoogleDriveBackupScreen({
         onPressHelp={() => setInternalHelpVisible(true)}
         title={t("navigation.googleDriveBackup")}
       />
-      <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
-        <InfoModal
-          message={t("googleDriveBackup.helpMessage")}
-          onClose={handleCloseHelp}
-          title={t("googleDriveBackup.helpTitle")}
-          visible={isHelpVisible}
-        />
-        <GoogleDriveBackupPanel />
-      </PageContainer>
+      <KeyboardAwareForm
+        bottomOffset={28}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator
+        style={styles.scrollWrapper}
+      >
+        <PageContainer
+          contentContainerStyle={styles.page}
+          maxWidth={760}
+          scrollable={false}
+        >
+          <InfoModal
+            message={t("googleDriveBackup.helpMessage")}
+            onClose={handleCloseHelp}
+            title={t("googleDriveBackup.helpTitle")}
+            visible={isHelpVisible}
+          />
+          <GoogleDriveBackupPanel />
+        </PageContainer>
+      </KeyboardAwareForm>
     </View>
   );
 }
@@ -47,6 +63,12 @@ function createStyles(theme: AppTheme) {
     container: {
       backgroundColor: theme.colors.background,
       flex: 1,
+    },
+    scrollWrapper: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
     },
     page: {
       gap: theme.spacing.xl,

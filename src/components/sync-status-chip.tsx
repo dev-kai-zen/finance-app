@@ -15,12 +15,15 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useRouter } from "expo-router";
-import { Cloud, CloudOff, Smartphone } from "lucide-react-native";
+import { AlertTriangle, Cloud, CloudOff, Smartphone } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { LAYOUT_DIMENSIONS } from "@/constants/layout";
 import { useLocalization } from "@/infrastructure/localization";
-import { useQuickSyncStatus } from "@/infrastructure/sync";
+import {
+  setQuickSyncConflictPromptVisible,
+  useQuickSyncStatus,
+} from "@/infrastructure/sync";
 
 export interface SyncStatusChipProps {
   onPress?: () => void;
@@ -43,6 +46,7 @@ export function SyncStatusChip({
 
   const isQuickSyncActive = quickSync.enabled;
   const isSyncing = isQuickSyncActive && quickSync.status === "syncing";
+  const isRemoteAhead = isQuickSyncActive && quickSync.status === "remote_ahead";
   const isSynced =
     isQuickSyncActive &&
     (quickSync.status === "synced" || quickSync.status === "idle");
@@ -82,6 +86,8 @@ export function SyncStatusChip({
     displayLabel = t("sync.localOnly");
   } else if (isSyncing) {
     displayLabel = t("sync.syncing");
+  } else if (isRemoteAhead) {
+    displayLabel = t("sync.updateAvailable");
   } else if (isSynced) {
     displayLabel = t("sync.synced");
   } else if (isWaitingNetwork) {
@@ -100,6 +106,8 @@ export function SyncStatusChip({
     dotColorStyle = styles.dotOffline;
   } else if (isSyncing) {
     dotColorStyle = styles.dotSyncing;
+  } else if (isRemoteAhead) {
+    dotColorStyle = styles.dotWaiting;
   } else if (isSynced) {
     dotColorStyle = styles.dotOnline;
   } else if (isWaitingNetwork) {
@@ -111,6 +119,8 @@ export function SyncStatusChip({
   const handlePress = () => {
     if (onPress) {
       onPress();
+    } else if (isRemoteAhead && quickSync.remoteConflict) {
+      setQuickSyncConflictPromptVisible(true);
     } else {
       router.navigate("/google-drive-backup" as any);
     }
@@ -122,6 +132,9 @@ export function SyncStatusChip({
     if (isError) {
       IconComponent = CloudOff;
       iconColor = theme.colors.danger;
+    } else if (isRemoteAhead) {
+      IconComponent = AlertTriangle;
+      iconColor = theme.colors.warning;
     } else if (isQuickSyncActive) {
       IconComponent = Cloud;
       iconColor = isSyncing

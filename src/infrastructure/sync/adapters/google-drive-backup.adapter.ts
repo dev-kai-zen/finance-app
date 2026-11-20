@@ -23,6 +23,9 @@ const LEGACY_FILE_ID_PROPERTY = "legacyFileId";
 const ORIGINAL_CREATED_AT_PROPERTY = "originalCreatedAt";
 export const QUICK_SYNC_BACKUP_NAME = "kaizen-finance-quick-sync.kfb";
 export const QUICK_SYNC_PROPERTY = "isQuickSync";
+export const QUICK_SYNC_DEVICE_ID_PROPERTY = "lastUpdatedByDeviceId";
+export const QUICK_SYNC_DEVICE_NAME_PROPERTY = "lastUpdatedByDeviceName";
+export const QUICK_SYNC_REVISION_ID_PROPERTY = "syncRevisionId";
 
 export type GoogleDriveBackupLocation = "visible" | "legacy-hidden";
 
@@ -34,6 +37,21 @@ export interface GoogleDriveBackupFile {
   size: number;
   location: GoogleDriveBackupLocation;
   passwordProtected: boolean;
+}
+
+export interface GoogleDriveQuickSyncMetadata extends GoogleDriveBackupFile {
+  version: number | null;
+  headRevisionId: string | null;
+  trashed: boolean;
+  syncRevisionId: string | null;
+  lastUpdatedByDeviceId: string | null;
+  lastUpdatedByDeviceName: string | null;
+}
+
+export interface GoogleDriveQuickSyncDeviceProperties {
+  deviceId?: string | null;
+  deviceName?: string | null;
+  syncRevisionId?: string | null;
 }
 
 export interface GoogleDriveBackupCatalog {
@@ -50,6 +68,9 @@ interface DriveFileResponse {
   createdTime?: string;
   modifiedTime?: string;
   size?: string;
+  version?: string;
+  headRevisionId?: string;
+  trashed?: boolean;
   appProperties?: Record<string, string>;
 }
 
@@ -206,7 +227,7 @@ async function uploadBackupToFolder(
   const suffix = encoder.encode(`\r\n--${boundary}--\r\n`);
   const body = joinBytes(prefix, bytes, suffix);
   const fields = encodeURIComponent(
-    "id,name,createdTime,modifiedTime,size,appProperties",
+    "id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties",
   );
   const response = await driveFetch(
     `${DRIVE_UPLOAD_URL}?uploadType=multipart&fields=${fields}`,
@@ -256,7 +277,7 @@ async function updateBackupFile(
   const suffix = encoder.encode(`\r\n--${boundary}--\r\n`);
   const body = joinBytes(prefix, bytes, suffix);
   const fields = encodeURIComponent(
-    "id,name,createdTime,modifiedTime,size,appProperties",
+    "id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties",
   );
   const response = await driveFetch(
     `${DRIVE_UPLOAD_URL}/${encodeURIComponent(fileId)}?uploadType=multipart&fields=${fields}`,
@@ -278,10 +299,12 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   accessToken: string,
   bytes: Uint8Array,
   existingFileId?: string | null,
-): Promise<GoogleDriveBackupFile> {
+  deviceProperties?: GoogleDriveQuickSyncDeviceProperties,
+): Promise<GoogleDriveQuickSyncMetadata> {
   const backupFolder = await ensureBackupFolder(accessToken);
   const now = new Date();
   const originalCreatedAt = now.toISOString();
+  const quickSyncProperties = buildQuickSyncAppProperties(deviceProperties);
 
   if (existingFileId) {
     try {
@@ -291,9 +314,9 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
         bytes,
         originalCreatedAt,
         QUICK_SYNC_BACKUP_NAME,
-        { [QUICK_SYNC_PROPERTY]: "true" },
+        quickSyncProperties,
       );
-      return toVisibleBackupFile(updated);
+      return toQuickSyncMetadata(updated);
     } catch (error) {
       if (!(error instanceof GoogleDriveApiError && error.status === 404)) {
         throw error;
@@ -315,9 +338,9 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
       bytes,
       originalCreatedAt,
       QUICK_SYNC_BACKUP_NAME,
-      { [QUICK_SYNC_PROPERTY]: "true" },
+      quickSyncProperties,
     );
-    return toVisibleBackupFile(updated);
+    return toQuickSyncMetadata(updated);
   }
 
   const created = await uploadBackupToFolder(
@@ -328,24 +351,63 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
     QUICK_SYNC_BACKUP_NAME,
     undefined,
     false,
-    { [QUICK_SYNC_PROPERTY]: "true" },
+    quickSyncProperties,
   );
 
-  return toVisibleBackupFile(created);
+  return toQuickSyncMetadata(created);
+}
+
+export async function getGoogleDriveQuickSyncFileMetadata(
+  accessToken: string,
+  existingFileId?: string | null,
+): Promise<GoogleDriveQuickSyncMetadata | null> {
+  if (existingFileId) {
+    try {
+      const fields = encodeURIComponent(
+        "id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties",
+      );
+      const response = await driveFetch(
+        `${DRIVE_FILES_URL}/${encodeURIComponent(existingFileId)}?fields=${fields}`,
+        accessToken,
+      );
+      const file = (await response.json()) as DriveFileResponse;
+      if (!file.trashed) {
+        return toQuickSyncMetadata(file);
+      }
+    } catch (error) {
+      if (!(error instanceof GoogleDriveApiError && error.status === 404)) {
+        throw error;
+      }
+    }
+  }
+
+  const backupFolder = await findBackupFolder(accessToken);
+  if (!backupFolder) return null;
+
+  const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
+  const quickSyncFile = existingFiles.find(
+    (file) =>
+      !file.trashed &&
+      (file.name === QUICK_SYNC_BACKUP_NAME ||
+        file.appProperties?.[QUICK_SYNC_PROPERTY] === "true"),
+  );
+
+  return quickSyncFile ? toQuickSyncMetadata(quickSyncFile) : null;
 }
 
 export async function resolveGoogleDriveQuickSyncBackupFile(
   accessToken: string,
-): Promise<GoogleDriveBackupFile | null> {
+): Promise<GoogleDriveQuickSyncMetadata | null> {
   const backupFolder = await ensureBackupFolder(accessToken);
   const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
   const quickSyncFile = existingFiles.find(
     (file) =>
-      file.name === QUICK_SYNC_BACKUP_NAME ||
-      file.appProperties?.[QUICK_SYNC_PROPERTY] === "true",
+      !file.trashed &&
+      (file.name === QUICK_SYNC_BACKUP_NAME ||
+        file.appProperties?.[QUICK_SYNC_PROPERTY] === "true"),
   );
 
-  return quickSyncFile ? toVisibleBackupFile(quickSyncFile) : null;
+  return quickSyncFile ? toQuickSyncMetadata(quickSyncFile) : null;
 }
 
 export async function downloadGoogleDriveBackupFile(
@@ -548,6 +610,15 @@ async function ensureBackupFolder(
   );
 }
 
+async function findBackupFolder(
+  accessToken: string,
+): Promise<DriveFileResponse | null> {
+  const rootFolder = await findFolder(accessToken, ROOT_FOLDER_KIND);
+  if (!rootFolder) return null;
+
+  return findFolder(accessToken, BACKUPS_FOLDER_KIND, rootFolder.id);
+}
+
 async function ensureAttachmentsFolder(
   accessToken: string,
 ): Promise<DriveFileResponse> {
@@ -580,12 +651,11 @@ export async function ensureNotesAttachmentsFolder(
   );
 }
 
-async function findOrCreateFolder(
+async function findFolder(
   accessToken: string,
-  name: string,
   kind: string,
   parentId?: string,
-): Promise<DriveFileResponse> {
+): Promise<DriveFileResponse | null> {
   const parentQuery = parentId
     ? ` and '${escapeDriveQueryValue(parentId)}' in parents`
     : "";
@@ -600,7 +670,16 @@ async function findOrCreateFolder(
   ].join("&");
   const response = await driveFetch(`${DRIVE_FILES_URL}?${query}`, accessToken);
   const body = (await response.json()) as DriveFileListResponse;
-  const existing = body.files?.[0];
+  return body.files?.[0] ?? null;
+}
+
+async function findOrCreateFolder(
+  accessToken: string,
+  name: string,
+  kind: string,
+  parentId?: string,
+): Promise<DriveFileResponse> {
+  const existing = await findFolder(accessToken, kind, parentId);
   if (existing) return existing;
 
   return createDriveMetadataFile(accessToken, {
@@ -623,7 +702,7 @@ async function listVisibleBackupFiles(
     `q=${encodeURIComponent(q)}`,
     "orderBy=createdTime desc",
     "pageSize=100",
-    `fields=${encodeURIComponent("files(id,name,createdTime,modifiedTime,size,appProperties)")}`,
+    `fields=${encodeURIComponent("files(id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties)")}`,
   ].join("&");
   const response = await driveFetch(`${DRIVE_FILES_URL}?${query}`, accessToken);
   const body = (await response.json()) as DriveFileListResponse;
@@ -661,6 +740,48 @@ function isQuickSyncBackupFile(file: {
 
 function toVisibleBackupFile(file: DriveFileResponse): GoogleDriveBackupFile {
   return toBackupFile(file, "visible");
+}
+
+function buildQuickSyncAppProperties(
+  deviceProperties?: GoogleDriveQuickSyncDeviceProperties,
+): Record<string, string> {
+  const properties: Record<string, string> = {
+    [QUICK_SYNC_PROPERTY]: "true",
+  };
+  const deviceId = deviceProperties?.deviceId?.trim();
+  const deviceName = deviceProperties?.deviceName?.trim();
+  const syncRevisionId = deviceProperties?.syncRevisionId?.trim();
+  if (deviceId) {
+    properties[QUICK_SYNC_DEVICE_ID_PROPERTY] = deviceId.slice(0, 80);
+  }
+  if (deviceName) {
+    properties[QUICK_SYNC_DEVICE_NAME_PROPERTY] = deviceName.slice(0, 60);
+  }
+  if (syncRevisionId) {
+    properties[QUICK_SYNC_REVISION_ID_PROPERTY] = syncRevisionId.slice(0, 80);
+  }
+  return properties;
+}
+
+function toQuickSyncMetadata(
+  file: DriveFileResponse,
+): GoogleDriveQuickSyncMetadata {
+  const base = toBackupFile(file, "visible");
+  const parsedVersion =
+    file.version !== undefined ? Number(file.version) : Number.NaN;
+
+  return {
+    ...base,
+    version: Number.isFinite(parsedVersion) ? parsedVersion : null,
+    headRevisionId: file.headRevisionId ?? null,
+    trashed: Boolean(file.trashed),
+    syncRevisionId:
+      file.appProperties?.[QUICK_SYNC_REVISION_ID_PROPERTY] ?? null,
+    lastUpdatedByDeviceId:
+      file.appProperties?.[QUICK_SYNC_DEVICE_ID_PROPERTY] ?? null,
+    lastUpdatedByDeviceName:
+      file.appProperties?.[QUICK_SYNC_DEVICE_NAME_PROPERTY] ?? null,
+  };
 }
 
 function toBackupFile(

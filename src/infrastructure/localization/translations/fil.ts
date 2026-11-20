@@ -628,6 +628,7 @@ export const fil = {
     waitingNetwork: "Naghihintay ng Wi-Fi",
     failed: "Nabigo ang pag-sync",
     notSynced: "Hindi pa na-sync",
+    updateAvailable: "May bagong update",
     accessibility:
       "Status ng pag-sync: %{label}. I-tap para buksan ang mga setting.",
   },
@@ -662,6 +663,30 @@ export const fil = {
     restoreConfirmMessage:
       "Pinapalitan nito ang lahat ng lokal na data ng pinakabagong Quick Sync file mula sa Google Drive. May safety copy sa memory at awtomatikong ibabalik kung mabigo ang validation.",
     restoreConfirmAction: "I-restore",
+    deviceLabelTitle: "Pangalan ng device (opsyonal)",
+    deviceLabelSave: "I-save",
+    deviceLabelShownAs: "Makikita sa ibang device bilang: %{label}",
+    conflictTitle: "May mas bagong Quick Sync data",
+    conflictSubtitle:
+      "May ibang device na nag-upload ng mas bagong Quick Sync file sa Google Drive. Piliin kung paano magpapatuloy bago mag-sync.",
+    conflictUpdatedByLabel: "In-update ng",
+    conflictUnknownDevice: "Ibang device",
+    conflictDriveUpdatedLabel: "Huling update sa Google Drive",
+    conflictLocalSyncedLabel: "Huling sync ng device na ito",
+    conflictHasLocalChanges: "May mga pagbabagong hindi pa na-sync sa device na ito",
+    conflictNoLocalChanges: "Walang natukoy na hindi pa na-sync na pagbabago",
+    conflictRestoreAction: "I-restore ang Quick Sync Data",
+    conflictRestoreWarning:
+      "Kung may mga pagbabago ka sa device na ito na hindi pa na-sync, hindi ito maitatala at kakailanganing i-encode muli.",
+    conflictOverwriteAction: "I-overwrite ang Data",
+    conflictOverwriting: "Ino-overwrite...",
+    conflictOverwriteWarning:
+      "Papalitan nito ang anumang mas bagong pagbabago na naka-save ngayon sa Quick Sync file sa Google Drive.",
+    conflictOverwriteFailed: "Hindi ma-overwrite ang Quick Sync file.",
+    conflictDecideLater: "Mamaya na magpasya",
+    conflictReviewAction: "Suriin ang update",
+    conflictBannerCopy:
+      "In-update ng %{device} noong %{time}. Naka-pause ang auto-sync hanggang pumili ka kung magre-restore o mag-o-overwrite.",
   },
   settings: {
     soundAndHapticsSection: "Tunog at Haptics",
@@ -1197,6 +1222,8 @@ export const fil = {
         "Pumili mula sa mahigit 150 opisyal na pera sa buong mundo na may angkop na simbolo.",
       newItem5:
         "Mag-import ng mga credit card account at transaksyon kasama ang credit limit at petsa ng singil.",
+      newItem6:
+        "Magbigay ng babala bago i-overwrite ang mas bagong Quick Sync data mula sa ibang device, na may opsyonal na pangalan ng device.",
       improveItem1:
         "Maghanap at magsala ng pera nang mabilis habang nag-o-onboarding.",
       improveItem2:

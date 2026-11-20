@@ -614,6 +614,7 @@ export const en = {
     waitingNetwork: "Waiting for Wi-Fi",
     failed: "Sync failed",
     notSynced: "Not synced yet",
+    updateAvailable: "Update available",
     accessibility: "Sync status: %{label}. Tap to open settings.",
   },
   scheduledBackup: {
@@ -646,6 +647,30 @@ export const en = {
     restoreConfirmMessage:
       "This replaces all local data with the latest Quick Sync file from Google Drive. A safety copy is kept in memory and restored automatically if validation fails.",
     restoreConfirmAction: "Restore",
+    deviceLabelTitle: "Device label (optional)",
+    deviceLabelSave: "Save",
+    deviceLabelShownAs: "Shown to other devices as: %{label}",
+    conflictTitle: "Newer Quick Sync data found",
+    conflictSubtitle:
+      "Another device uploaded a newer Quick Sync file to Google Drive. Choose how to continue before syncing.",
+    conflictUpdatedByLabel: "Updated by",
+    conflictUnknownDevice: "Another device",
+    conflictDriveUpdatedLabel: "Google Drive updated",
+    conflictLocalSyncedLabel: "This device last synced",
+    conflictHasLocalChanges: "This device has unsynced local changes",
+    conflictNoLocalChanges: "No unsynced local changes detected",
+    conflictRestoreAction: "Restore Quick Sync Data",
+    conflictRestoreWarning:
+      "If you have unsynced changes on this device, they will not be recorded and will need to be re-entered.",
+    conflictOverwriteAction: "Overwrite Data",
+    conflictOverwriting: "Overwriting...",
+    conflictOverwriteWarning:
+      "This will overwrite any newer changes currently saved in the Google Drive Quick Sync file.",
+    conflictOverwriteFailed: "Could not overwrite the Quick Sync file.",
+    conflictDecideLater: "Decide later",
+    conflictReviewAction: "Review update",
+    conflictBannerCopy:
+      "Updated by %{device} on %{time}. Auto-sync is paused until you choose to restore or overwrite.",
   },
   settings: {
     soundAndHapticsSection: "Sound & Haptics",
@@ -1166,6 +1191,8 @@ export const en = {
         "Choose from over 150 official world currencies with native symbols and decimals.",
       newItem5:
         "Import credit card accounts and transactions by mapping or entering credit limits and billing dates.",
+      newItem6:
+        "Alert you before overwriting newer Quick Sync data from another device, with custom device labels for clarity.",
       improveItem1:
         "Search and filter currencies instantly during first-time onboarding setup.",
       improveItem2:

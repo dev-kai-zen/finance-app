@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Clock,
   Crown,
@@ -39,9 +41,22 @@ export function QuickSyncCard() {
   const [restoring, setRestoring] = useState(false);
   const [restoreConfirmVisible, setRestoreConfirmVisible] = useState(false);
   const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [deviceLabelDraft, setDeviceLabelDraft] = useState(
+    quickSync.customDeviceName ?? "",
+  );
+
+  useEffect(() => {
+    setDeviceLabelDraft(quickSync.customDeviceName ?? "");
+  }, [quickSync.customDeviceName]);
 
   const isBusy = quickSync.status === "syncing" || syncingManual || restoring;
   const isSyncing = quickSync.status === "syncing" || syncingManual;
+  const isRemoteAhead =
+    quickSync.status === "remote_ahead" && quickSync.remoteConflict !== null;
+
+  const trimmedDraft = deviceLabelDraft.trim();
+  const savedCustomLabel = quickSync.customDeviceName ?? "";
+  const isDeviceLabelDirty = trimmedDraft !== savedCustomLabel;
 
   const handleToggle = (value: boolean) => {
     if (value && !isPro) {
@@ -56,8 +71,16 @@ export function QuickSyncCard() {
     quickSync.setNetworkPreference(pref);
   };
 
+  const handleSaveDeviceLabel = () => {
+    quickSync.setDeviceLabel(trimmedDraft.length > 0 ? trimmedDraft : null);
+  };
+
   const handleManualSync = async () => {
     if (isBusy) return;
+    if (isRemoteAhead) {
+      quickSync.openConflictPrompt();
+      return;
+    }
     setSyncingManual(true);
     setRestoreError(null);
     try {
@@ -87,13 +110,15 @@ export function QuickSyncCard() {
 
   const statusLabel = isSyncing
     ? t("sync.syncing")
-    : quickSync.status === "waiting_network"
-      ? t("sync.waitingNetwork")
-      : quickSync.status === "error"
-        ? t("sync.failed")
-        : isNeverSynced
-          ? t("sync.notSynced")
-          : t("sync.synced");
+    : isRemoteAhead
+      ? t("sync.updateAvailable")
+      : quickSync.status === "waiting_network"
+        ? t("sync.waitingNetwork")
+        : quickSync.status === "error"
+          ? t("sync.failed")
+          : isNeverSynced
+            ? t("sync.notSynced")
+            : t("sync.synced");
 
   const formattedLastSynced = quickSync.lastSyncedAt && quickSync.fileId
     ? formatDateTime(new Date(quickSync.lastSyncedAt))
@@ -207,6 +232,80 @@ export function QuickSyncCard() {
 
           <View style={styles.divider} />
 
+          {/* Optional Local Device Label */}
+          <View style={styles.deviceLabelSection}>
+            <Text style={styles.sectionLabel}>
+              {t("quickSync.deviceLabelTitle")}
+            </Text>
+            <View style={styles.deviceLabelInputRow}>
+              <TextInput
+                accessibilityLabel={t("quickSync.deviceLabelTitle")}
+                autoCapitalize="words"
+                autoCorrect={false}
+                maxLength={40}
+                onBlur={handleSaveDeviceLabel}
+                onChangeText={setDeviceLabelDraft}
+                onSubmitEditing={handleSaveDeviceLabel}
+                placeholder={quickSync.hardwareDeviceName}
+                placeholderTextColor={theme.colors.textMuted}
+                returnKeyType="done"
+                style={styles.deviceLabelInput}
+                value={deviceLabelDraft}
+              />
+              {isDeviceLabelDirty ? (
+                <Pressable
+                  accessibilityLabel={t("quickSync.deviceLabelSave")}
+                  accessibilityRole="button"
+                  onPress={handleSaveDeviceLabel}
+                  style={({ pressed }) => [
+                    styles.deviceLabelSaveButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.deviceLabelSaveText}>
+                    {t("quickSync.deviceLabelSave")}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+            <Text style={styles.deviceLabelHelper}>
+              {t("quickSync.deviceLabelShownAs", {
+                label: quickSync.deviceLabel,
+              })}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Remote-Ahead Warning Banner */}
+          {isRemoteAhead && quickSync.remoteConflict ? (
+            <View style={styles.conflictBanner}>
+              <View style={styles.conflictBannerHeader}>
+                <AlertTriangle color={theme.colors.warning} size={16} />
+                <Text style={styles.conflictBannerTitle}>
+                  {t("quickSync.conflictTitle")}
+                </Text>
+              </View>
+              <Text style={styles.conflictBannerCopy}>
+                {t("quickSync.conflictBannerCopy", {
+                  device:
+                    quickSync.remoteConflict.remoteDeviceName ??
+                    t("quickSync.conflictUnknownDevice"),
+                  time: formatDateTime(
+                    new Date(quickSync.remoteConflict.remoteModifiedTime),
+                  ),
+                })}
+              </Text>
+              <AppButton
+                disabled={isBusy}
+                label={t("quickSync.conflictReviewAction")}
+                onPress={quickSync.openConflictPrompt}
+                size="small"
+                variant="primary"
+              />
+            </View>
+          ) : null}
+
           {/* Status & Last Synced Timestamp */}
           <View style={styles.statusRow}>
             <View style={styles.statusInfo}>
@@ -216,6 +315,8 @@ export function QuickSyncCard() {
                     color={theme.colors.primary}
                     size="small"
                   />
+                ) : isRemoteAhead ? (
+                  <AlertTriangle color={theme.colors.warning} size={16} />
                 ) : quickSync.status === "error" ? (
                   <AlertCircle color={theme.colors.danger} size={16} />
                 ) : quickSync.status === "waiting_network" ? (
@@ -229,10 +330,15 @@ export function QuickSyncCard() {
                   style={[
                     styles.statusLabel,
                     quickSync.status === "error" && { color: theme.colors.danger },
-                    quickSync.status === "waiting_network" && { color: theme.colors.warning },
-                    isNeverSynced && { color: theme.colors.textMuted },
+                    (quickSync.status === "waiting_network" || isRemoteAhead) && {
+                      color: theme.colors.warning,
+                    },
+                    isNeverSynced && !isRemoteAhead && {
+                      color: theme.colors.textMuted,
+                    },
                     !isSyncing &&
                       !isNeverSynced &&
+                      !isRemoteAhead &&
                       quickSync.status !== "error" &&
                       quickSync.status !== "waiting_network" && {
                         color: theme.colors.success,
@@ -396,6 +502,70 @@ function createStyles(theme: AppTheme) {
     },
     networkSection: {
       gap: theme.spacing.sm,
+    },
+    deviceLabelSection: {
+      gap: theme.spacing.xs,
+    },
+    deviceLabelInputRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    deviceLabelInput: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 13,
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.xs,
+    },
+    deviceLabelSaveButton: {
+      alignItems: "center",
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.medium,
+      justifyContent: "center",
+      minHeight: 40,
+      paddingHorizontal: theme.spacing.md,
+    },
+    deviceLabelSaveText: {
+      color: theme.colors.onPrimary,
+      fontSize: 12,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    deviceLabelHelper: {
+      color: theme.colors.textMuted,
+      fontSize: 11,
+      lineHeight: 15,
+    },
+    conflictBanner: {
+      backgroundColor: `${theme.colors.warning}14`,
+      borderColor: `${theme.colors.warning}44`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      gap: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+      padding: theme.spacing.md,
+    },
+    conflictBannerHeader: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: theme.spacing.xs,
+    },
+    conflictBannerTitle: {
+      color: theme.colors.textPrimary,
+      flex: 1,
+      fontSize: 13,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    conflictBannerCopy: {
+      color: theme.colors.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+      marginBottom: theme.spacing.xs,
     },
     sectionLabel: {
       color: theme.colors.textSecondary,

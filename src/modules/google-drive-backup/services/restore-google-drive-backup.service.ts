@@ -3,11 +3,16 @@ import {
   replaceDatabaseFromSnapshot,
 } from "@/infrastructure/database";
 import {
+  clearQuickSyncRemoteConflict,
   downloadGoogleDriveBackupFile,
+  getGoogleDriveQuickSyncFileMetadata,
   getQuickSyncConfig,
+  markQuickSyncLocalChangesPending,
   resolveGoogleDriveQuickSyncBackupFile,
   saveQuickSyncConfig,
-  type GoogleDriveBackupFile,
+  setQuickSyncRuntimeStatus,
+  updateQuickSyncDeviceMetadata,
+  type GoogleDriveQuickSyncMetadata,
 } from "@/infrastructure/sync";
 import { finalizeRestoredWorkspace } from "@/modules/onboarding";
 import { readDatabaseBackup } from "@/modules/local-backup";
@@ -28,6 +33,7 @@ export async function restoreGoogleDriveBackup(
   const backup = await readDatabaseBackup(archive, passphrase);
   await replaceDatabaseFromSnapshot(backup.database);
   finalizeRestoredWorkspace();
+  markQuickSyncLocalChangesPending();
 
   restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully.`;
   setTimeout(announceDatabaseReplacement, 0);
@@ -38,49 +44,50 @@ export async function restoreQuickSyncBackup(
 ): Promise<void> {
   const config = getQuickSyncConfig();
   const currentUser = await restoreGoogleDriveSession().catch(() => null);
-  let resolvedFileId = explicitFileId ?? config.fileId;
-  let resolvedModifiedTime: string | null = null;
+  let resolvedMetadata: GoogleDriveQuickSyncMetadata | null = null;
 
   const archive = await withGoogleDriveAccessToken(async (accessToken) => {
-    let fileIdToDownload = explicitFileId;
+    const isAccountMatch =
+      !config.accountEmail || config.accountEmail === currentUser?.email;
+    const preferredFileId =
+      explicitFileId ?? (isAccountMatch ? config.fileId : null);
 
-    if (!fileIdToDownload) {
-      const isAccountMatch =
-        !config.accountEmail || config.accountEmail === currentUser?.email;
+    resolvedMetadata =
+      (await getGoogleDriveQuickSyncFileMetadata(accessToken, preferredFileId)) ??
+      (await resolveGoogleDriveQuickSyncBackupFile(accessToken));
 
-      if (config.fileId && isAccountMatch) {
-        try {
-          return await downloadGoogleDriveBackupFile(accessToken, config.fileId);
-        } catch {
-          // File may no longer exist in Drive; fall back to resolving active quick sync file
-        }
-      }
-
-      const quickSyncFile: GoogleDriveBackupFile | null =
-        await resolveGoogleDriveQuickSyncBackupFile(accessToken);
-      if (!quickSyncFile) {
-        throw new Error("No Quick Sync backup found on Google Drive.");
-      }
-      resolvedFileId = quickSyncFile.id;
-      resolvedModifiedTime = quickSyncFile.modifiedTime;
-      fileIdToDownload = quickSyncFile.id;
+    if (!resolvedMetadata) {
+      throw new Error("No Quick Sync backup found on Google Drive.");
     }
 
-    return downloadGoogleDriveBackupFile(accessToken, fileIdToDownload);
+    return downloadGoogleDriveBackupFile(accessToken, resolvedMetadata.id);
   });
 
   const backup = await readDatabaseBackup(archive, null);
   await replaceDatabaseFromSnapshot(backup.database);
   finalizeRestoredWorkspace();
 
-  if (resolvedFileId) {
+  const restoredFile = resolvedMetadata as GoogleDriveQuickSyncMetadata | null;
+  if (restoredFile) {
     saveQuickSyncConfig({
       enabled: true,
-      fileId: resolvedFileId,
+      network: config.network,
+      fileId: restoredFile.id,
       accountEmail: currentUser?.email ?? null,
-      lastSyncedAt: resolvedModifiedTime ?? new Date().toISOString(),
+      lastSyncedAt: restoredFile.modifiedTime ?? new Date().toISOString(),
+    });
+    updateQuickSyncDeviceMetadata({
+      lastKnownRemoteSyncId: restoredFile.syncRevisionId,
+      lastKnownRemoteHeadRevisionId: restoredFile.headRevisionId,
+      lastKnownRemoteVersion: restoredFile.version,
+      lastKnownRemoteModifiedTime: restoredFile.modifiedTime,
+      lastKnownRemoteFileId: restoredFile.id,
+      hasUnsyncedLocalChanges: false,
     });
   }
+
+  clearQuickSyncRemoteConflict();
+  setQuickSyncRuntimeStatus("synced");
 
   const restoredAt = backup.createdAt.toLocaleString();
   restoreNotice = `Quick Sync backup from ${restoredAt} restored successfully.`;

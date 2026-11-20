@@ -16,7 +16,8 @@ import {
 } from "@/infrastructure/sync";
 
 import { getQuickSyncConfig } from "../repositories/quick-sync-settings.repository";
-import { triggerQuickSync } from "../services/quick-sync.service";
+import { checkQuickSyncRemoteStatus } from "../services/quick-sync.service";
+import { QuickSyncConflictModal } from "./quick-sync-conflict-modal";
 
 function shouldQueueQuickSyncForDatabaseChange(
   event: DatabaseChangeEvent,
@@ -42,7 +43,10 @@ export function QuickSyncProcessor() {
       }
     };
 
-    const scheduleDeferredSyncCheck = (requireNetworkMatch: boolean) => {
+    const scheduleDeferredRemoteCheck = (
+      requireNetworkMatch: boolean,
+      force = false,
+    ) => {
       clearPendingResumeTimer();
       resumeTimer = setTimeout(() => {
         resumeTimer = null;
@@ -60,9 +64,17 @@ export function QuickSyncProcessor() {
             return;
           }
         }
-        void triggerQuickSync({ config });
+        void checkQuickSyncRemoteStatus({
+          config,
+          force,
+          openPromptOnConflict: true,
+        });
       }, QUICK_SYNC_RESUME_DELAY_MS);
     };
+
+    // Proactive startup check: detects if another device uploaded a newer
+    // Quick Sync file before the user starts encoding new changes locally.
+    scheduleDeferredRemoteCheck(false, true);
 
     const dbSubscription = addDatabaseChangeListener((event) => {
       if (!shouldQueueQuickSyncForDatabaseChange(event)) {
@@ -73,12 +85,13 @@ export function QuickSyncProcessor() {
     });
 
     const netInfoSubscription = NetInfo.addEventListener((netState) => {
+      const wasDisconnected = latestNetState?.isConnected === false;
       latestNetState = {
         isConnected: netState.isConnected,
         type: netState.type,
       };
       if (netState.isConnected) {
-        scheduleDeferredSyncCheck(true);
+        scheduleDeferredRemoteCheck(true, wasDisconnected);
       }
     });
 
@@ -89,7 +102,7 @@ export function QuickSyncProcessor() {
           clearPendingResumeTimer();
           flushDebouncedQuickSync();
         } else if (nextState === "active") {
-          scheduleDeferredSyncCheck(false);
+          scheduleDeferredRemoteCheck(false, false);
         }
       },
     );
@@ -102,5 +115,5 @@ export function QuickSyncProcessor() {
     };
   }, []);
 
-  return null;
+  return <QuickSyncConflictModal />;
 }

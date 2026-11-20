@@ -366,11 +366,10 @@ function reconcileAccount(
           ),
       )
       .reduce((sum, entry) => sum + entry.amountMinorUnits, 0);
-    updateStatementIssuedAmount(
-      statement.id,
-      Math.max(0, issuedAmount),
-      context,
-    );
+    const nextIssuedAmount = Math.max(0, issuedAmount);
+    if (nextIssuedAmount !== statement.issuedAmountMinorUnits) {
+      updateStatementIssuedAmount(statement.id, nextIssuedAmount, context);
+    }
   }
 }
 

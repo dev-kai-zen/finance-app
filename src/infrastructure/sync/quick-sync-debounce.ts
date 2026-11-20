@@ -1,3 +1,4 @@
+import { markQuickSyncLocalChangesPending } from "./quick-sync-device.storage";
 import {
   getQuickSyncConfig,
   QUICK_SYNC_SETTINGS_KEYS,
@@ -32,6 +33,8 @@ export function queueDebouncedQuickSync(changedKeys?: readonly string[]): void {
       return;
     }
   }
+
+  markQuickSyncLocalChangesPending();
 
   if (!getQuickSyncConfig().enabled) {
     return;

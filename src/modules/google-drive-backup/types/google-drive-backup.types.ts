@@ -1,6 +1,11 @@
 import type {
   GoogleDriveBackupCatalog,
   GoogleDriveBackupFile,
+  QuickSyncConfig,
+  QuickSyncNetworkPreference,
+  QuickSyncRemoteConflict,
+  QuickSyncState,
+  QuickSyncStatus,
 } from "@/infrastructure/sync";
 import type { BackupScheduleFields } from "@/utils/backup-schedule";
 
@@ -26,33 +31,13 @@ export interface BackupNotice {
   message: string;
 }
 
-export type QuickSyncNetworkPreference = "wifi_only" | "any";
-
-export interface QuickSyncConfig {
-  enabled: boolean;
-  network: QuickSyncNetworkPreference;
-  lastSyncedAt: string | null;
-  fileId: string | null;
-  accountEmail?: string | null;
-}
-
-export type QuickSyncStatus =
-  | "disabled"
-  | "idle"
-  | "syncing"
-  | "synced"
-  | "waiting_network"
-  | "error";
-
-export interface QuickSyncState {
-  enabled: boolean;
-  status: QuickSyncStatus;
-  networkPreference: QuickSyncNetworkPreference;
-  lastSyncedAt: string | null;
-  fileId: string | null;
-  accountEmail?: string | null;
-  lastError: string | null;
-}
+export type {
+  QuickSyncConfig,
+  QuickSyncNetworkPreference,
+  QuickSyncRemoteConflict,
+  QuickSyncState,
+  QuickSyncStatus,
+};
 
 export interface GoogleDriveScheduledBackupConfig extends BackupScheduleFields {
   enabled: boolean;

@@ -1,4 +1,6 @@
 import {
+  clearQuickSyncRemoteConflict,
+  clearQuickSyncRemoteTracking,
   resetQuickSyncLocalMetadata,
   setQuickSyncRuntimeStatus,
 } from "@/infrastructure/sync";
@@ -9,6 +11,8 @@ import {
 
 export async function resetGoogleDriveConnectionForAppReset(): Promise<void> {
   resetQuickSyncLocalMetadata();
+  clearQuickSyncRemoteTracking();
+  clearQuickSyncRemoteConflict();
   if (getGoogleDriveConfigurationError()) {
     setQuickSyncRuntimeStatus("disabled");
     return;
