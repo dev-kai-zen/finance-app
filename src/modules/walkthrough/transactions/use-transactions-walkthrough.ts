@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useExperiencePreferences } from "@/modules/settings";
-import { TRANSACTIONS_WALKTHROUGH_STEPS } from "./transactions-walkthrough-steps";
+import {
+  getTransactionsWalkthroughSteps,
+  type GetTransactionsWalkthroughStepsOptions,
+} from "./transactions-walkthrough-steps";
 import type {
   LayoutRect,
   WalkthroughStep,
@@ -11,14 +14,24 @@ import type {
 import { useWalkthroughRegistry } from "../components/walkthrough-target";
 import { isWalkthroughTargetVisible } from "../utils/walkthrough-viewport";
 
-export function useTransactionsWalkthrough(options: {
+export interface UseTransactionsWalkthroughOptions
+  extends GetTransactionsWalkthroughStepsOptions {
   onScrollToTarget?: (targetId: WalkthroughTargetId) => void;
-} = {}) {
-  const { onScrollToTarget } = options;
+}
+
+export function useTransactionsWalkthrough(
+  options: UseTransactionsWalkthroughOptions = {},
+) {
+  const { hasTransactionInList = false, onScrollToTarget } = options;
   const { isPromptDismissed, dismissPrompt } = useExperiencePreferences();
   const { measureTarget } = useWalkthroughRegistry();
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  const steps = useMemo(
+    () => getTransactionsWalkthroughSteps({ hasTransactionInList }),
+    [hasTransactionInList],
+  );
 
   const [isWalkthroughActive, setIsWalkthroughActive] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -28,8 +41,8 @@ export function useTransactionsWalkthrough(options: {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const measurementGenerationRef = useRef(0);
 
-  const currentStep: WalkthroughStep | undefined =
-    TRANSACTIONS_WALKTHROUGH_STEPS[activeStepIndex];
+  const safeStepIndex = Math.min(activeStepIndex, Math.max(0, steps.length - 1));
+  const currentStep: WalkthroughStep | undefined = steps[safeStepIndex];
 
   const updateMeasurement = useCallback(
     (step: WalkthroughStep) => {
@@ -80,10 +93,7 @@ export function useTransactionsWalkthrough(options: {
   const startWalkthrough = useCallback(() => {
     setActiveStepIndex(0);
     setIsWalkthroughActive(true);
-    if (TRANSACTIONS_WALKTHROUGH_STEPS[0]) {
-      updateMeasurement(TRANSACTIONS_WALKTHROUGH_STEPS[0]);
-    }
-  }, [updateMeasurement]);
+  }, []);
 
   const skipWalkthrough = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -100,27 +110,24 @@ export function useTransactionsWalkthrough(options: {
   }, [dismissPrompt]);
 
   const nextStep = useCallback(() => {
-    if (activeStepIndex >= TRANSACTIONS_WALKTHROUGH_STEPS.length - 1) {
+    if (safeStepIndex >= steps.length - 1) {
       completeWalkthrough();
       return;
     }
-    const nextIdx = activeStepIndex + 1;
-    setActiveStepIndex(nextIdx);
-    const nextStepObj = TRANSACTIONS_WALKTHROUGH_STEPS[nextIdx];
-    if (nextStepObj) {
-      updateMeasurement(nextStepObj);
-    }
-  }, [activeStepIndex, completeWalkthrough, updateMeasurement]);
+    setActiveStepIndex(safeStepIndex + 1);
+  }, [completeWalkthrough, safeStepIndex, steps.length]);
 
   const prevStep = useCallback(() => {
-    if (activeStepIndex <= 0) return;
-    const prevIdx = activeStepIndex - 1;
-    setActiveStepIndex(prevIdx);
-    const prevStepObj = TRANSACTIONS_WALKTHROUGH_STEPS[prevIdx];
-    if (prevStepObj) {
-      updateMeasurement(prevStepObj);
+    if (safeStepIndex <= 0) return;
+    setActiveStepIndex(safeStepIndex - 1);
+  }, [safeStepIndex]);
+
+  useEffect(() => {
+    if (!isWalkthroughActive || !currentStep) {
+      return;
     }
-  }, [activeStepIndex, updateMeasurement]);
+    updateMeasurement(currentStep);
+  }, [currentStep, isWalkthroughActive, updateMeasurement]);
 
   useEffect(() => {
     return () => {
@@ -130,8 +137,8 @@ export function useTransactionsWalkthrough(options: {
 
   return {
     isWalkthroughActive,
-    activeStepIndex,
-    totalSteps: TRANSACTIONS_WALKTHROUGH_STEPS.length,
+    activeStepIndex: safeStepIndex,
+    totalSteps: steps.length,
     currentStep,
     activeTargetLayout,
     isCompleted: isPromptDismissed("transactionsWalkthroughDismissed"),

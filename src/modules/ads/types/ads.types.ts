@@ -11,6 +11,7 @@ export type AdBannerPlacement =
   | "goals"
   | "subscriptions"
   | "settings"
+  | "notes"
   | "global";
 
 export type AdBannerVariant = "card" | "plain";

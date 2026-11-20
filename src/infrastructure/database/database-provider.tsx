@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import migrations from "../../../drizzle/migrations";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "./client";
 import { subscribeToDatabaseReplacement } from "./database-replacement";
 import { useAppMigrations } from "./migrator";
@@ -10,15 +11,27 @@ import { useAppMigrations } from "./migrator";
 export function DatabaseProvider({ children }: PropsWithChildren) {
   const { success, error } = useAppMigrations(db, migrations);
   const [databaseRevision, setDatabaseRevision] = useState(0);
+  const [isReplacingDatabase, setIsReplacingDatabase] = useState(false);
   const styles = useThemeStyles(createStyles);
 
-  useEffect(
-    () =>
-      subscribeToDatabaseReplacement(() => {
+  useEffect(() => {
+    let cancelRemount: (() => void) | null = null;
+
+    const unsubscribe = subscribeToDatabaseReplacement(() => {
+      cancelRemount?.();
+      setIsReplacingDatabase(true);
+      cancelRemount = scheduleAfterPaint(() => {
+        cancelRemount = null;
         setDatabaseRevision((revision) => revision + 1);
-      }),
-    [],
-  );
+        setIsReplacingDatabase(false);
+      });
+    });
+
+    return () => {
+      cancelRemount?.();
+      unsubscribe();
+    };
+  }, []);
 
   if (error) {
     return (
@@ -33,7 +46,7 @@ export function DatabaseProvider({ children }: PropsWithChildren) {
     );
   }
 
-  if (!success) {
+  if (!success || isReplacingDatabase) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={styles.spinner.color} />

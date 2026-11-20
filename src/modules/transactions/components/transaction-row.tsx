@@ -31,6 +31,7 @@ export interface TransactionRowProps {
   onDelete?: (id: string) => void;
   onDuplicate?: (tx: TransactionListItem) => void;
   viewMode?: "compact" | "detailed";
+  rowRef?: React.RefObject<View | null>;
 }
 
 const SHORT_MONTHS = [
@@ -106,6 +107,7 @@ export const TransactionRow = memo(function TransactionRow({
   onDelete,
   onDuplicate,
   viewMode = "compact",
+  rowRef,
 }: TransactionRowProps) {
   const theme = useAppTheme();
   const { preferences } = useCurrencyPreferences();
@@ -347,7 +349,11 @@ export const TransactionRow = memo(function TransactionRow({
       : `${compactCategory}  ·  ${compactLocation}`;
 
     return (
-      <View style={styles.swipeContainer}>
+      <View
+        ref={rowRef}
+        collapsable={rowRef ? false : undefined}
+        style={styles.swipeContainer}
+      >
         {renderSwipeActions()}
 
         <GestureDetector gesture={panGesture}>
@@ -431,7 +437,11 @@ export const TransactionRow = memo(function TransactionRow({
   const displayDestinationBalance = isPrivate ? "••••••" : destinationBalance;
 
   return (
-    <View style={styles.swipeContainer}>
+    <View
+      ref={rowRef}
+      collapsable={rowRef ? false : undefined}
+      style={styles.swipeContainer}
+    >
       {renderSwipeActions()}
 
       <GestureDetector gesture={panGesture}>

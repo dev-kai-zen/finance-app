@@ -15,7 +15,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
@@ -377,12 +377,6 @@ function CalendarScreenContent() {
               transactionsRef={transactionsTabRef}
             />
 
-            <AdBanner
-              placement="calendar"
-              variant="card"
-              style={{ marginVertical: theme.spacing.sm }}
-            />
-
             {/* 6. Active Tab Content */}
             {isTabLoading ? (
               <PageLoadingState
@@ -578,6 +572,8 @@ function CalendarScreenContent() {
       />
 
       </PageContainer>
+
+      <AnchoredAdDock placement="calendar" />
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (

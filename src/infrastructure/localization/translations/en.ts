@@ -1180,6 +1180,8 @@ export const en = {
         "Personalize Chat with Kai prompt suggestions using your real accounts for expense, income, and transfer examples.",
       improveItem7:
         "Show clear Free plan account limits with an instant Unlock Pro option while importing accounts.",
+      improveItem8:
+        "Highlight transaction rows in the Transactions walkthrough to show swipe-left quick actions for Duplicate and Delete.",
       fixItem1:
         "Smooth onboarding import navigation so you can import accounts and go back to change preferences without getting stuck.",
       fixItem2:
@@ -1194,6 +1196,8 @@ export const en = {
         "Keep your Chat with Kai messages and drafted transactions intact when editing a transaction or reopening Kai.",
       fixItem7:
         "Rename Balance date to Opening date and fix card spacing on Step 1 of data import.",
+      fixItem8:
+        "Improve memory stability and prevent unexpected app closures when resetting data after recording many transactions.",
     },
     v170: {
       date: "November 18, 2026",
@@ -2312,6 +2316,9 @@ export const en = {
     stepExportTitle: "Export CSV",
     stepExportDesc:
       "Export your filtered transaction history as a clean CSV spreadsheet to share, analyze, or back up.",
+    stepFirstItemTitle: "Transaction Item",
+    stepFirstItemDesc:
+      "Tap any transaction to view full details or edit it. Swipe left on a row for quick actions like Duplicate or Delete.",
     stepFabTitle: "Record Transaction",
     stepFabDesc:
       "Tap the (+) button anytime to log a new expense, income, or transfer between accounts. You're ready to go!",

@@ -60,7 +60,7 @@ import {
   type WalkthroughTargetId,
 } from "@/modules/walkthrough";
 import { useAccounts } from "@/modules/accounts";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { useCategories } from "@/modules/categories";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { useLabels } from "@/modules/labels";
@@ -439,6 +439,11 @@ function TransactionsScreenContent({
   const scheduledRef = useWalkthroughTarget("txScheduled");
   const trashRef = useWalkthroughTarget("txTrash");
   const exportRef = useWalkthroughTarget("txExport");
+  const firstTransactionId = transactions[0]?.id ?? null;
+  const hasTransactionInList = firstTransactionId !== null;
+  const firstItemRef = useWalkthroughTarget(
+    hasTransactionInList ? "txFirstItem" : null,
+  );
 
   useEffect(() => {
     registerTarget("txFab", fabRef);
@@ -447,6 +452,7 @@ function TransactionsScreenContent({
 
   const sectionListRef = useRef<SectionList<any>>(null);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
   const showScrollToTopRef = useRef(false);
 
   const handleScroll = useCallback(
@@ -481,9 +487,27 @@ function TransactionsScreenContent({
     if (targetId === "txFab") {
       return;
     }
+    if (targetId === "txFirstItem") {
+      const scrollResponder = sectionListRef.current?.getScrollResponder();
+      if (scrollResponder?.scrollTo) {
+        scrollResponder.scrollTo({ y: 0, animated: true });
+      } else {
+        try {
+          sectionListRef.current?.scrollToLocation({
+            sectionIndex: 0,
+            itemIndex: 0,
+            viewOffset: 0,
+            animated: true,
+          });
+        } catch {
+          // Ignore if SectionList has not laid out yet
+        }
+      }
+    }
   }, []);
 
   const walkthrough = useTransactionsWalkthrough({
+    hasTransactionInList,
     onScrollToTarget: handleScrollToTarget,
   });
 
@@ -988,9 +1012,6 @@ function TransactionsScreenContent({
     setFilterState(DEFAULT_TRANSACTION_FILTERS);
   };
 
-  const thirdTransactionId =
-    totalCount >= 4 ? (transactions[2]?.id ?? null) : null;
-
   const renderRowSeparator = useCallback(
     () => <View style={styles.rowSeparator} />,
     [styles.rowSeparator],
@@ -998,34 +1019,26 @@ function TransactionsScreenContent({
 
   const renderTransactionItem = useCallback(
     ({ item }: { item: TransactionListItem }) => {
-      const isThirdTransaction =
-        thirdTransactionId !== null && thirdTransactionId === item.id;
+      const isFirstTransaction =
+        firstTransactionId !== null && firstTransactionId === item.id;
 
       return (
-        <View key={item.id}>
-          <TransactionRow
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-            onPress={handleInspectTransaction}
-            transaction={item}
-            viewMode={viewMode}
-          />
-          {isThirdTransaction ? (
-            <AdBanner
-              placement="transactions"
-              variant="card"
-              style={{ marginVertical: theme.spacing.sm }}
-            />
-          ) : null}
-        </View>
+        <TransactionRow
+          onDelete={handleDelete}
+          onDuplicate={handleDuplicate}
+          onPress={handleInspectTransaction}
+          rowRef={isFirstTransaction ? firstItemRef : undefined}
+          transaction={item}
+          viewMode={viewMode}
+        />
       );
     },
     [
+      firstItemRef,
+      firstTransactionId,
       handleDelete,
       handleDuplicate,
       handleInspectTransaction,
-      thirdTransactionId,
-      theme.spacing.sm,
       viewMode,
     ],
   );
@@ -1057,6 +1070,7 @@ function TransactionsScreenContent({
           <TransactionSpeedDialFab
             accessibilityLabel="Record new transaction"
             fabRef={fabRef}
+            style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
             onPressForm={() => {
               if (walkthrough.isWalkthroughActive) {
                 walkthrough.completeWalkthrough();
@@ -1451,18 +1465,6 @@ function TransactionsScreenContent({
         )}
 
         {/* Transactions Feed Grouped By Date */}
-        {isFilterTransitioning ? (
-          <View style={styles.sortingSkeletonContainer}>
-            <PageLoadingState
-              message={
-                transitionKindRef.current === "sort"
-                  ? "Sorting transactions..."
-                  : "Loading transactions..."
-              }
-              variant="list"
-            />
-          </View>
-        ) : (
         <SectionList
           ref={sectionListRef}
           alwaysBounceVertical
@@ -1476,49 +1478,51 @@ function TransactionsScreenContent({
           }
           ItemSeparatorComponent={renderRowSeparator}
           ListEmptyComponent={
-            loading ? (
-              <PageLoadingState
-                message="Loading transactions..."
-                variant="list"
-              />
-            ) : (
-              <View>
-                <PageEmptyState
-                  icon={
-                    activeFilterCount > 0 || searchQuery.length > 0 ? (
-                      <Search color={theme.colors.primary} size={32} />
-                    ) : (
-                      <Receipt color={theme.colors.primary} size={32} />
-                    )
+            loading || isFilterTransitioning ? (
+              <View style={styles.sortingSkeletonContainer}>
+                <PageLoadingState
+                  message={
+                    isFilterTransitioning && transitionKindRef.current === "sort"
+                      ? "Sorting transactions..."
+                      : "Loading transactions..."
                   }
-                  actionLabel={
-                    activeFilterCount > 0 || searchQuery.length > 0
-                      ? "Clear Filters"
-                      : "+ Record First Transaction"
-                  }
-                  description={
-                    activeFilterCount > 0 || searchQuery.length > 0
-                      ? "No transaction records match your search or filter criteria."
-                      : "Your transaction history is empty. Start recording your expenses, income, or transfers."
-                  }
-                  onAction={
-                    activeFilterCount > 0 || searchQuery.length > 0
-                      ? handleClearFilters
-                      : handleOpenNewTransaction
-                  }
-                  title="No Transactions Found"
-                />
-                <AdBanner
-                  placement="transactions"
-                  variant="card"
-                  style={{ marginTop: theme.spacing.md }}
+                  variant="list"
                 />
               </View>
+            ) : (
+              <PageEmptyState
+                icon={
+                  activeFilterCount > 0 || searchQuery.length > 0 ? (
+                    <Search color={theme.colors.primary} size={32} />
+                  ) : (
+                    <Receipt color={theme.colors.primary} size={32} />
+                  )
+                }
+                actionLabel={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? "Clear Filters"
+                    : "+ Record First Transaction"
+                }
+                description={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? "No transaction records match your search or filter criteria."
+                    : "Your transaction history is empty. Start recording your expenses, income, or transfers."
+                }
+                onAction={
+                  activeFilterCount > 0 || searchQuery.length > 0
+                    ? handleClearFilters
+                    : handleOpenNewTransaction
+                }
+                title="No Transactions Found"
+              />
             )
           }
           contentContainerStyle={[
             styles.listContentContainer,
-            { paddingBottom: Math.max(insets.bottom, 24) + 80 },
+            {
+              paddingBottom:
+                (isBottomAdVisible ? 16 : Math.max(insets.bottom, 24)) + 80,
+            },
           ]}
           initialNumToRender={20}
           keyExtractor={(item) => item.id}
@@ -1556,7 +1560,7 @@ function TransactionsScreenContent({
               </View>
             </View>
           )}
-          sections={sections}
+          sections={isFilterTransitioning ? [] : sections}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           style={styles.sectionList}
@@ -1566,27 +1570,24 @@ function TransactionsScreenContent({
           onScroll={handleScroll}
           scrollEventThrottle={32}
           ListFooterComponent={
-            hasMoreTransactions ? (
+            !isFilterTransitioning && hasMoreTransactions ? (
               <View style={styles.loadMoreFooter}>
                 <ActivityIndicator color={theme.colors.primary} size="small" />
               </View>
-            ) : totalCount > 0 && totalCount < 4 ? (
-              <AdBanner
-                placement="transactions"
-                variant="card"
-                style={{ marginTop: theme.spacing.sm, marginBottom: theme.spacing.md }}
-              />
             ) : null
           }
         />
-        )}
 
         {showScrollToTop ? (
           <View
             pointerEvents="box-none"
             style={[
               styles.scrollToTopContainer,
-              { bottom: Math.max(insets.bottom, 16) + 24 },
+              {
+                bottom: isBottomAdVisible
+                  ? 16
+                  : Math.max(insets.bottom, 16) + 24,
+              },
             ]}
           >
             <Pressable
@@ -1846,6 +1847,11 @@ function TransactionsScreenContent({
       />
       </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="transactions"
+      />
+
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
         <Pressable
@@ -1888,6 +1894,9 @@ function createStyles(theme: AppTheme) {
     },
     listContentContainer: {
       flexGrow: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     searchRow: {
       alignItems: "center",

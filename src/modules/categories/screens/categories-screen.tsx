@@ -23,7 +23,7 @@ import { useHeaderWalkthroughAction } from "@/components/app-shell-header-contex
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { useExperiencePreferences } from "@/modules/settings";
 import { hasTransactions } from "@/modules/transactions";
 import { useLocalization } from "@/infrastructure/localization";
@@ -449,49 +449,34 @@ function CategoriesScreenContent({
         {loading ? (
           <PageLoadingState message="Loading categories..." variant="cards" />
         ) : currentCategories.length === 0 ? (
-          <View>
-            <PageEmptyState
-              actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}
-              description="Create custom category groups and nested subcategories to organize your financial transactions."
-              onAction={handleCreateGroup}
-              title={`No ${selectedType === "expense" ? "Expense" : "Income"} Groups Found`}
-            />
-            <AdBanner
-              placement="categories"
-              variant="card"
-              style={{ marginTop: theme.spacing.md }}
-            />
-          </View>
+          <PageEmptyState
+            actionLabel={`+ Add First ${selectedType === "expense" ? "Expense" : "Income"} Group`}
+            description="Create custom category groups and nested subcategories to organize your financial transactions."
+            onAction={handleCreateGroup}
+            title={`No ${selectedType === "expense" ? "Expense" : "Income"} Groups Found`}
+          />
         ) : (
           <View style={[styles.groupsList, isDesktop && styles.groupsListDesktop]}>
             {currentCategories.map((group, index) => (
-              <View key={group.id}>
-                <CategoryGroupCard
-                  addSubRef={index === 0 ? firstGroupAddSubRef : undefined}
-                  canDeleteGroup={!isProtectedCategoryId(group.id)}
-                  group={group}
-                  isExpanded={isGroupExpanded(group.id)}
-                  onAddSubcategory={() => handleAddSubcategory(group)}
-                  onDeleteGroup={() => handleDelete(group, true)}
-                  onDeleteSubcategory={(sub) => handleDelete(sub, false)}
-                  onEditGroup={() => handleEditGroup(group)}
-                  onEditSubcategory={(sub) => handleEditSubcategory(group, sub)}
-                  onReorderSubcategories={() => handleOpenReorderSubcategories(group)}
-                  onToggleExpand={() => toggleExpand(group.id)}
-                  reorderSubRef={
-                    group.id === firstReorderableGroupId
-                      ? firstGroupReorderSubRef
-                      : undefined
-                  }
-                />
-                {index === 0 ? (
-                  <AdBanner
-                    placement="categories"
-                    variant="card"
-                    style={{ marginVertical: theme.spacing.sm }}
-                  />
-                ) : null}
-              </View>
+              <CategoryGroupCard
+                key={group.id}
+                addSubRef={index === 0 ? firstGroupAddSubRef : undefined}
+                canDeleteGroup={!isProtectedCategoryId(group.id)}
+                group={group}
+                isExpanded={isGroupExpanded(group.id)}
+                onAddSubcategory={() => handleAddSubcategory(group)}
+                onDeleteGroup={() => handleDelete(group, true)}
+                onDeleteSubcategory={(sub) => handleDelete(sub, false)}
+                onEditGroup={() => handleEditGroup(group)}
+                onEditSubcategory={(sub) => handleEditSubcategory(group, sub)}
+                onReorderSubcategories={() => handleOpenReorderSubcategories(group)}
+                onToggleExpand={() => toggleExpand(group.id)}
+                reorderSubRef={
+                  group.id === firstReorderableGroupId
+                    ? firstGroupReorderSubRef
+                    : undefined
+                }
+              />
             ))}
           </View>
         )}
@@ -681,6 +666,8 @@ function CategoriesScreenContent({
         visible={walkthrough.isWalkthroughActive}
       />
       </PageContainer>
+
+      <AnchoredAdDock placement="categories" />
 
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (

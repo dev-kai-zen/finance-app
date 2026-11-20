@@ -54,7 +54,10 @@ export { ACCOUNT_TYPE_FORM_WALKTHROUGH_STEPS } from "./accounts/account-type-for
 
 export { TransactionsWalkthroughOverlay } from "./transactions/transactions-walkthrough-overlay";
 export { useTransactionsWalkthrough } from "./transactions/use-transactions-walkthrough";
-export { TRANSACTIONS_WALKTHROUGH_STEPS } from "./transactions/transactions-walkthrough-steps";
+export {
+  getTransactionsWalkthroughSteps,
+  TRANSACTIONS_WALKTHROUGH_STEPS,
+} from "./transactions/transactions-walkthrough-steps";
 
 export { TransactionFormWalkthroughOverlay } from "./transactions/transaction-form-walkthrough-overlay";
 export { useTransactionFormWalkthrough } from "./transactions/use-transaction-form-walkthrough";

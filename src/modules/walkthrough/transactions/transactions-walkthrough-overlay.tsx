@@ -73,6 +73,9 @@ export function TransactionsWalkthroughOverlay({
   } else if (step.id === "txScheduled" || step.id === "txTrash") {
     cutoutPadding = 4;
     cutoutRadius = 20;
+  } else if (step.id === "txFirstItem") {
+    cutoutPadding = 4;
+    cutoutRadius = theme.borderRadius.medium;
   } else if (isFabStep) {
     cutoutPadding = 6;
     cutoutRadius = 34;

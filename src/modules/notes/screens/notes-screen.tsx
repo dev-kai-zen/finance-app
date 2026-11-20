@@ -18,6 +18,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
+import { AnchoredAdDock } from "@/modules/ads";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useLocalization } from "@/infrastructure/localization";
 import { StickyNote } from "lucide-react-native";
@@ -285,6 +286,7 @@ function NotesScreenContent({
 
   const isSearchActive = search.trim().length > 0;
   const hasNoNotes = notes.length === 0;
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
@@ -307,6 +309,7 @@ function NotesScreenContent({
               accessibilityLabel="Add new note"
               fabRef={fabRef}
               onPress={handleOpenNewNote}
+              style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
             />
           ) : undefined
         }
@@ -377,6 +380,11 @@ function NotesScreenContent({
           )}
         </View>
       </PageContainer>
+
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="notes"
+      />
 
       {editorVisible ? (
         <NoteEditorModal
@@ -457,6 +465,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
       flex: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,

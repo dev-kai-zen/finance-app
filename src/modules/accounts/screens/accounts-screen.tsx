@@ -66,7 +66,7 @@ import type {
 } from "@/modules/accounts/types/account.types";
 import type { AccountsGroupViewMode } from "@/modules/settings";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 
 type Overlay =
   | { kind: "create" }
@@ -520,6 +520,7 @@ function AccountsScreenContent({
     searchSpacing,
     viewModeControlsRow,
   } = useThemeStyles(createAccountsLayoutStyles);
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
   return (
     <View style={styles.screenWrapper}>
@@ -536,6 +537,7 @@ function AccountsScreenContent({
         <FloatingActionButton
           accessibilityLabel="Open accounts menu"
           fabRef={fabRef}
+          style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
           onPress={() => {
             if (walkthrough.isWalkthroughActive) {
               walkthrough.completeWalkthrough();
@@ -634,12 +636,6 @@ function AccountsScreenContent({
                   walkthroughTargetId="assetsSection"
                 />
               ) : null}
-
-              <AdBanner
-                placement="accounts"
-                variant="card"
-                style={{ marginVertical: theme.spacing.sm }}
-              />
 
               {filteredActive.some(
                 (account) => account.accountType?.accountGroup === "liability",
@@ -898,6 +894,11 @@ function AccountsScreenContent({
       />
     </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="accounts"
+      />
+
         {walkthroughIntro.isWaitingForIntro ? (
           <View
             pointerEvents="auto"
@@ -954,6 +955,9 @@ const createAccountsLayoutStyles = (theme: AppTheme) => ({
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
+  },
+  fabAboveAdDock: {
+    bottom: 16,
   },
   interactionBlocker: {
     ...StyleSheet.absoluteFill,

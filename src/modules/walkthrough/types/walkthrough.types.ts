@@ -29,6 +29,7 @@ export type WalkthroughTargetId =
   | "txScheduled"
   | "txTrash"
   | "txExport"
+  | "txFirstItem"
   | "txFab"
   | "calArrows"
   | "calTransactionsTab"

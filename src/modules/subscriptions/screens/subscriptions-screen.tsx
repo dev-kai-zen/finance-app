@@ -22,7 +22,7 @@ import {
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import {
@@ -72,6 +72,7 @@ function SubscriptionsScreenContent({
   const router = useRouter();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
   const { t } = useLocalization();
 
   const {
@@ -449,6 +450,7 @@ function SubscriptionsScreenContent({
             })}
             fabRef={fabRef}
             onPress={handleOpenCreate}
+            style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
           />
         }
         scrollable={false}
@@ -509,11 +511,6 @@ function SubscriptionsScreenContent({
                 defaultValue: "No Subscriptions Tracked Yet",
               })}
             />
-            <AdBanner
-              placement="subscriptions"
-              variant="card"
-              style={{ marginTop: theme.spacing.md }}
-            />
           </View>
         ) : filteredSubscriptions.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -537,25 +534,17 @@ function SubscriptionsScreenContent({
           >
             <View ref={scrollContentRef} collapsable={false}>
               {filteredSubscriptions.map((sub, index) => (
-                <View key={sub.id}>
-                  <SubscriptionCard
-                    cardRef={index === 0 ? firstItemRef : undefined}
-                    onDelete={() => handleRequestDelete(sub)}
-                    onEdit={() => handleOpenEdit(sub)}
-                    onMarkPaid={() => setMarkingPaidSub(sub)}
-                    onPress={() => handleOpenEdit(sub)}
-                    onRestore={() => handleRequestRestore(sub)}
-                    onToggleStatus={() => handleToggleStatus(sub)}
-                    subscription={sub}
-                  />
-                  {index === 0 ? (
-                    <AdBanner
-                      placement="subscriptions"
-                      variant="card"
-                      style={{ marginVertical: theme.spacing.sm }}
-                    />
-                  ) : null}
-                </View>
+                <SubscriptionCard
+                  key={sub.id}
+                  cardRef={index === 0 ? firstItemRef : undefined}
+                  onDelete={() => handleRequestDelete(sub)}
+                  onEdit={() => handleOpenEdit(sub)}
+                  onMarkPaid={() => setMarkingPaidSub(sub)}
+                  onPress={() => handleOpenEdit(sub)}
+                  onRestore={() => handleRequestRestore(sub)}
+                  onToggleStatus={() => handleToggleStatus(sub)}
+                  subscription={sub}
+                />
               ))}
             </View>
           </ScrollView>
@@ -681,6 +670,11 @@ function SubscriptionsScreenContent({
         />
       </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="subscriptions"
+      />
+
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
         <Pressable
@@ -710,6 +704,9 @@ function createStyles(theme: AppTheme) {
     screenWrapper: {
       backgroundColor: theme.colors.background,
       flex: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,

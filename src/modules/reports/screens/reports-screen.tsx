@@ -13,7 +13,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { ProGate } from "@/modules/pro";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { logTelemetryEvent } from "@/infrastructure/telemetry";
 import {
   ReportsWalkthroughOverlay,
@@ -125,7 +125,7 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
   }, [walkthroughIntro.canTrigger, walkthroughIntro.triggerIfFirstTime]);
 
   return (
-    <>
+    <View style={styles.screenWrapper}>
       <PageContainer
         scrollable={true}
         scrollRef={scrollRef}
@@ -145,14 +145,7 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
         ) : (
           <>
             {activeTab === "income-expense" ? (
-              <>
-                <IncomeExpenseReport />
-                <AdBanner
-                  placement="reports"
-                  variant="card"
-                  style={{ marginHorizontal: 16, marginTop: 16 }}
-                />
-              </>
+              <IncomeExpenseReport />
             ) : null}
 
             {activeTab === "balance-sheet" ? (
@@ -182,6 +175,8 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
         )}
       </PageContainer>
 
+      <AnchoredAdDock placement="reports" />
+
       <WalkthroughIntroModal
         visible={walkthroughIntro.isIntroVisible}
         title={t("reportsWalkthrough.introTitle")}
@@ -209,12 +204,15 @@ function ReportsScreenContent(props?: { initialTab?: ReportTabKey }) {
           style={styles.interactionBlocker}
         />
       ) : null}
-    </>
+    </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
+    screenWrapper: {
+      flex: 1,
+    },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,
       backgroundColor: "transparent",

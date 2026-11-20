@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import type { AppTheme } from "@/constants/theme";
 import { useThemeStyles } from "@/hooks/use-app-theme";
 import { useProStatus } from "@/modules/pro";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { getBannerAdUnitId } from "../constants/ads.constants";
 import { useAdsDevMode } from "../hooks/use-ads-dev-mode";
 import type { AdBannerProps } from "../types/ads.types";
@@ -19,7 +21,29 @@ export function AdBanner({
   const { isForceTestAds } = useAdsDevMode();
   const styles = useThemeStyles(createStyles);
   const [hasError, setHasError] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isScreenFocused, setIsScreenFocused] = useState(false);
+
+  // Only keep native AdView / WebView mounted while this screen is actively focused.
+  // Deferring mount until after paint keeps navigation transitions at 60-120fps, and
+  // unmounting on blur prevents background stack screens from accumulating WebView memory.
+  useFocusEffect(
+    useCallback(() => {
+      if (isPro || Platform.OS === "web") {
+        setIsScreenFocused(false);
+        return;
+      }
+
+      setHasError(false);
+      const cancel = scheduleAfterPaint(() => {
+        setIsScreenFocused(true);
+      });
+
+      return () => {
+        cancel();
+        setIsScreenFocused(false);
+      };
+    }, [isPro]),
+  );
 
   // 1. Pro users get 100% ad-free experience (zero ad calls / zero tracking)
   if (isPro) {
@@ -31,7 +55,12 @@ export function AdBanner({
     return null;
   }
 
-  // 3. If an ad failed to load (offline or no fill), collapse cleanly without showing an empty gap
+  // 3. Do not keep native AdView/WebView mounted while off-screen in Stack
+  if (!isScreenFocused) {
+    return null;
+  }
+
+  // 4. If an ad failed to load (offline or no fill), collapse cleanly without showing an empty gap
   if (hasError) {
     return null;
   }
@@ -47,7 +76,6 @@ export function AdBanner({
           requestNonPersonalizedAdsOnly: true,
         }}
         onAdLoaded={() => {
-          setIsLoaded(true);
           setHasError(false);
           onAdLoaded?.();
         }}

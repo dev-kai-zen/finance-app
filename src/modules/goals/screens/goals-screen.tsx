@@ -19,7 +19,7 @@ import {
 } from "@/components";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
@@ -250,6 +250,7 @@ function GoalsScreenContent({
   const contentSpacing = useThemeStyles((theme) => ({
     paddingTop: theme.spacing.lg,
   }));
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
   return (
     <View style={styles.screenWrapper}>
@@ -267,6 +268,7 @@ function GoalsScreenContent({
             accessibilityLabel="Add New Goal"
             fabRef={fabRef}
             onPress={handleOpenCreate}
+            style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
           />
         }
       >
@@ -359,46 +361,33 @@ function GoalsScreenContent({
               />
             </View>
           </View>
-          <AdBanner
-            placement="goals"
-            variant="card"
-            style={{ marginTop: theme.spacing.md }}
-          />
         </View>
       ) : (
         <View style={styles.goalsList}>
           {filteredGoals.map((goal, index) => (
-            <View key={goal.id}>
-              <GoalCard
-                goal={goal}
-                markCompleteRef={index === 0 ? markCompleteRef : undefined}
-                onDelete={() => setGoalToDelete(goal)}
-                onAddFunds={() => {
-                  const linkedAccountId =
-                    goal.linkedAccounts?.[0]?.id ??
-                    goal.linkedPockets?.[0]?.accountId;
-                  router.push(
-                    `/transactions?action=new&type=income${
-                      linkedAccountId
-                        ? `&accountId=${encodeURIComponent(linkedAccountId)}`
-                        : ""
-                    }` as any,
-                  );
-                }}
-                onEdit={() => handleOpenEdit(goal)}
-                onPress={() => handleOpenEdit(goal)}
-                onToggleStatus={(newStatus: GoalStatus) =>
-                  toggleStatus(goal.id, newStatus)
-                }
-              />
-              {index === 0 ? (
-                <AdBanner
-                  placement="goals"
-                  variant="card"
-                  style={{ marginVertical: theme.spacing.sm }}
-                />
-              ) : null}
-            </View>
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              markCompleteRef={index === 0 ? markCompleteRef : undefined}
+              onDelete={() => setGoalToDelete(goal)}
+              onAddFunds={() => {
+                const linkedAccountId =
+                  goal.linkedAccounts?.[0]?.id ??
+                  goal.linkedPockets?.[0]?.accountId;
+                router.push(
+                  `/transactions?action=new&type=income${
+                    linkedAccountId
+                      ? `&accountId=${encodeURIComponent(linkedAccountId)}`
+                      : ""
+                  }` as any,
+                );
+              }}
+              onEdit={() => handleOpenEdit(goal)}
+              onPress={() => handleOpenEdit(goal)}
+              onToggleStatus={(newStatus: GoalStatus) =>
+                toggleStatus(goal.id, newStatus)
+              }
+            />
           ))}
         </View>
       )}
@@ -465,6 +454,11 @@ function GoalsScreenContent({
       />
       </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="goals"
+      />
+
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
         <View
@@ -480,6 +474,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
       flex: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,

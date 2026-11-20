@@ -55,7 +55,7 @@ import { AppToast, NotificationModal, useHeaderWalkthroughAction } from "@/compo
 import type { AppTheme } from "@/constants/theme";
 import { useThemeController, useThemeStyles } from "@/hooks/use-app-theme";
 import { ProPaywallModal, useProStatus } from "@/modules/pro";
-import { useAdsDevMode } from "@/modules/ads";
+import { AnchoredAdDock, useAdsDevMode } from "@/modules/ads";
 import { HexColorsModal, useHexColors } from "@/modules/hex-colors";
 import { SecuritySettingsModal, useSecuritySettings } from "@/modules/security";
 import { useLocalization } from "@/infrastructure/localization";
@@ -1788,6 +1788,8 @@ function SettingsScreenContent() {
       />
 
       </PageContainer>
+
+      <AnchoredAdDock placement="settings" />
 
       <AppToast
         includeSafeArea

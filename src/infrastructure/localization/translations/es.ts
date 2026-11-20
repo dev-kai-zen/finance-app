@@ -1197,6 +1197,8 @@ export const es = {
         "Personaliza las sugerencias de Chat con Kai usando tus cuentas reales para gastos, ingresos y transferencias.",
       improveItem7:
         "Muestra claramente el límite de cuentas del plan gratuito con opción para desbloquear Pro al importar.",
+      improveItem8:
+        "Destaca las filas de transacciones en la guía para mostrar acciones rápidas al deslizar a la izquierda, como Duplicar o Eliminar.",
       fixItem1:
         "Se corrigió la navegación de importación inicial para poder volver a las opciones sin quedarse atascado.",
       fixItem2:
@@ -1211,6 +1213,8 @@ export const es = {
         "Mantiene intactos tus mensajes y borradores de Chat con Kai al editar una transacción o volver a abrir el chat.",
       fixItem7:
         "Renombra Fecha del saldo a Fecha de apertura y corrige el espaciado de tarjetas en el Paso 1 de importación.",
+      fixItem8:
+        "Mejora la estabilidad de memoria y evita cierres inesperados al restablecer datos tras registrar muchas transacciones.",
     },
     v170: {
       date: "18 de noviembre de 2026",
@@ -2338,6 +2342,9 @@ export const es = {
     stepExportTitle: "Exportar CSV",
     stepExportDesc:
       "Exporta tu historial filtrado a una hoja de cálculo CSV para compartir, respaldar o analizar.",
+    stepFirstItemTitle: "Elemento de transacción",
+    stepFirstItemDesc:
+      "Toca cualquier transacción para ver todos los detalles o editarla. Desliza una fila hacia la izquierda para acciones rápidas como Duplicar o Eliminar.",
     stepFabTitle: "Registrar transacción",
     stepFabDesc:
       "Toca el botón (+) en cualquier momento para registrar un nuevo gasto, ingreso o transferencia. ¡Listo para comenzar!",

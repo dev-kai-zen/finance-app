@@ -26,7 +26,7 @@ import {
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import { useCurrencyPreferences } from "@/modules/currencies";
 import { PRO_LIMITS, ProFeatureModal, useProGuard } from "@/modules/pro";
 import { useExperiencePreferences } from "@/modules/settings";
@@ -316,6 +316,7 @@ function BudgetsScreenContent({
   const isOverallExceeded = summary.totalSpentCents > summary.totalBudgetedCents;
 
   const contentSpacing = useThemeStyles(createContentSpacingStyles);
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
   return (
     <View style={styles.screenWrapper}>
@@ -334,6 +335,7 @@ function BudgetsScreenContent({
               accessibilityLabel="Set new category budget"
               fabRef={fabRef}
               onPress={handleOpenCreate}
+              style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
             />
           ) : undefined
         }
@@ -342,20 +344,13 @@ function BudgetsScreenContent({
         {loading ? (
           <PageLoadingState message="Loading budgets..." variant="cards" />
         ) : budgets.length === 0 ? (
-          <View>
-            <PageEmptyState
-              actionLabel="+ Set Your First Category Budget"
-              actionRef={emptyCreateRef}
-              description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
-              onAction={handleOpenCreate}
-              title="No Budgets Configured"
-            />
-            <AdBanner
-              placement="budgets"
-              variant="card"
-              style={{ marginTop: theme.spacing.md }}
-            />
-          </View>
+          <PageEmptyState
+            actionLabel="+ Set Your First Category Budget"
+            actionRef={emptyCreateRef}
+            description="Control your spending with daily, weekly, or monthly limits per category with smart rollover."
+            onAction={handleOpenCreate}
+            title="No Budgets Configured"
+          />
         ) : (
           <>
             {/* Overview Summary Card */}
@@ -525,28 +520,20 @@ function BudgetsScreenContent({
                 style={[styles.budgetList, isDesktop && styles.budgetListDesktop]}
               >
                 {filteredStatuses.map((status, index) => (
-                  <View key={status.budget.id}>
-                    <BudgetCard
-                      onPress={() => handleOpenEdit(status)}
-                      onToggle={(val) => toggleBudget(status.budget.id, val)}
-                      onViewTransactions={() =>
-                        router.push(
-                          `/transactions?categoryId=${encodeURIComponent(
-                            status.budget.categoryId,
-                          )}&datePreset=this_month` as any,
-                        )
-                      }
-                      status={status}
-                      toggleRef={index === 0 ? firstItemToggleRef : undefined}
-                    />
-                    {index === 0 ? (
-                      <AdBanner
-                        placement="budgets"
-                        variant="card"
-                        style={{ marginVertical: theme.spacing.sm }}
-                      />
-                    ) : null}
-                  </View>
+                  <BudgetCard
+                    key={status.budget.id}
+                    onPress={() => handleOpenEdit(status)}
+                    onToggle={(val) => toggleBudget(status.budget.id, val)}
+                    onViewTransactions={() =>
+                      router.push(
+                        `/transactions?categoryId=${encodeURIComponent(
+                          status.budget.categoryId,
+                        )}&datePreset=this_month` as any,
+                      )
+                    }
+                    status={status}
+                    toggleRef={index === 0 ? firstItemToggleRef : undefined}
+                  />
                 ))}
               </View>
             )}
@@ -634,6 +621,11 @@ function BudgetsScreenContent({
       />
       </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="budgets"
+      />
+
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
         <View
@@ -653,6 +645,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
       flex: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,

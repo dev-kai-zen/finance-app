@@ -30,7 +30,7 @@ import { DashboardCashflowCard } from "../components/dashboard-cashflow-card";
 import { DashboardAccountsCard } from "../components/dashboard-accounts-card";
 import { DashboardTopCategoriesCard } from "../components/dashboard-top-categories-card";
 import { CustomizeDashboardModal } from "../components/customize-dashboard-modal";
-import { AdBanner } from "@/modules/ads";
+import { AnchoredAdDock } from "@/modules/ads";
 import {
   TransactionDetailModal,
   TransactionFormModal,
@@ -75,6 +75,7 @@ function DashboardScreenContent() {
   const { t } = useLocalization();
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
   const { state: workspaceState } = useWorkspace();
   const { preferences: currencyPreferences } = useCurrencyPreferences();
   const {
@@ -568,6 +569,7 @@ function DashboardScreenContent() {
         <TransactionSpeedDialFab
           accessibilityLabel="Record new transaction"
           fabRef={fabRef}
+          style={isBottomAdVisible ? styles.fabAboveAdDock : undefined}
           onPressForm={() => {
             if (walkthrough.isWalkthroughActive) {
               walkthrough.completeWalkthrough();
@@ -600,12 +602,9 @@ function DashboardScreenContent() {
           )
         ) : (
           <>
-            {visibleWidgets.map((widgetId, index) => (
+            {visibleWidgets.map((widgetId) => (
               <View key={widgetId} style={styles.widgetSlot}>
                 {renderWidget(widgetId)}
-                {index === 0 ? (
-                  <AdBanner placement="dashboard" variant="card" />
-                ) : null}
               </View>
             ))}
 
@@ -840,6 +839,11 @@ function DashboardScreenContent() {
       />
       </PageContainer>
 
+      <AnchoredAdDock
+        onVisibilityChange={setIsBottomAdVisible}
+        placement="dashboard"
+      />
+
       {/* Block interaction while waiting for the first-time modal */}
       {walkthroughIntro.isWaitingForIntro ? (
         <Pressable
@@ -857,6 +861,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     screenWrapper: {
       flex: 1,
+    },
+    fabAboveAdDock: {
+      bottom: 16,
     },
     interactionBlocker: {
       ...StyleSheet.absoluteFill,
