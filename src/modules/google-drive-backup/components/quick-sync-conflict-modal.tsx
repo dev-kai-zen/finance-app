@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -26,6 +26,7 @@ import {
   useQuickSyncStatus,
   type QuickSyncRemoteConflict,
 } from "@/infrastructure/sync";
+import { appLockLifecycle } from "@/modules/security";
 
 import {
   dismissQuickSyncConflictPrompt,
@@ -37,8 +38,19 @@ type ConflictAction = "idle" | "restoring" | "overwriting";
 
 export function QuickSyncConflictModal() {
   const quickSync = useQuickSyncStatus();
+  const [isAppLocked, setIsAppLocked] = useState(() =>
+    appLockLifecycle.getIsLocked(),
+  );
 
-  if (!quickSync.conflictPromptVisible || !quickSync.remoteConflict) {
+  useEffect(() => {
+    return appLockLifecycle.subscribe(setIsAppLocked);
+  }, []);
+
+  if (
+    isAppLocked ||
+    !quickSync.conflictPromptVisible ||
+    !quickSync.remoteConflict
+  ) {
     return null;
   }
 

@@ -15,6 +15,7 @@ import {
   queueDebouncedQuickSync,
 } from "@/infrastructure/sync";
 import { isPersonalWorkspace } from "@/modules/onboarding";
+import { appLockLifecycle } from "@/modules/security";
 
 import { getQuickSyncConfig } from "../repositories/quick-sync-settings.repository";
 import { checkQuickSyncRemoteStatus } from "../services/quick-sync.service";
@@ -36,6 +37,11 @@ export function QuickSyncProcessor() {
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
     let latestNetState: { isConnected: boolean | null; type: string } | null =
       null;
+    let pendingLockedCheck: {
+      requireNetworkMatch: boolean;
+      force: boolean;
+    } | null = null;
+    let wasAppLocked = appLockLifecycle.getIsLocked();
 
     const clearPendingResumeTimer = () => {
       if (resumeTimer !== null) {
@@ -49,8 +55,29 @@ export function QuickSyncProcessor() {
       force = false,
     ) => {
       clearPendingResumeTimer();
+      if (appLockLifecycle.getIsLocked()) {
+        pendingLockedCheck = {
+          requireNetworkMatch:
+            pendingLockedCheck !== null
+              ? pendingLockedCheck.requireNetworkMatch && requireNetworkMatch
+              : requireNetworkMatch,
+          force: Boolean(pendingLockedCheck?.force || force),
+        };
+        return;
+      }
+
       resumeTimer = setTimeout(() => {
         resumeTimer = null;
+        if (appLockLifecycle.getIsLocked()) {
+          pendingLockedCheck = {
+            requireNetworkMatch:
+              pendingLockedCheck !== null
+                ? pendingLockedCheck.requireNetworkMatch && requireNetworkMatch
+                : requireNetworkMatch,
+            force: Boolean(pendingLockedCheck?.force || force),
+          };
+          return;
+        }
         const config = getQuickSyncConfig();
         if (!config.enabled) {
           return;
@@ -76,6 +103,33 @@ export function QuickSyncProcessor() {
     // Proactive startup check: detects if another device uploaded a newer
     // Quick Sync file before the user starts encoding new changes locally.
     scheduleDeferredRemoteCheck(false, true);
+
+    const unsubscribeAppLock = appLockLifecycle.subscribe((isLocked) => {
+      if (isLocked) {
+        wasAppLocked = true;
+        if (resumeTimer !== null && pendingLockedCheck === null) {
+          pendingLockedCheck = {
+            requireNetworkMatch: false,
+            force: false,
+          };
+        }
+        clearPendingResumeTimer();
+        return;
+      }
+
+      if (wasAppLocked) {
+        wasAppLocked = false;
+        const deferred = pendingLockedCheck ?? {
+          requireNetworkMatch: false,
+          force: false,
+        };
+        pendingLockedCheck = null;
+        scheduleDeferredRemoteCheck(
+          deferred.requireNetworkMatch,
+          deferred.force,
+        );
+      }
+    });
 
     const dbSubscription = addDatabaseChangeListener((event) => {
       if (!shouldQueueQuickSyncForDatabaseChange(event)) {
@@ -110,6 +164,7 @@ export function QuickSyncProcessor() {
 
     return () => {
       clearPendingResumeTimer();
+      unsubscribeAppLock();
       dbSubscription.remove();
       netInfoSubscription();
       appStateSubscription.remove();

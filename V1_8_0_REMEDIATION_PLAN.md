@@ -99,7 +99,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-04 — Quick Sync: `QuickSyncConflictModal` Renders Over `AppLockGate` Lock Screen
+### [x] P1-04 — Quick Sync: `QuickSyncConflictModal` Renders Over `AppLockGate` Lock Screen (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/security/components/app-lock-gate.tsx`
