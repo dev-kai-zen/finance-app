@@ -1,6 +1,7 @@
 import { db } from "@/infrastructure/database/client";
 import {
   findTransactionById,
+  findTransactionsByGroupId,
   softDeleteTransaction,
   softDeleteTransactionsByGroupId,
 } from "../repositories/transactions.repository";
@@ -17,7 +18,17 @@ export function removeTransaction(id: string): void {
   db.transaction((tx) => {
     const existing = findTransactionById(id, tx);
     if (!existing) {
-      throw new Error(`Transaction with ID ${id} was not found.`);
+      const groupLegs = findTransactionsByGroupId(id, tx).filter(
+        (leg) => leg.deletedAt === null,
+      );
+      if (groupLegs.length === 0) {
+        throw new Error(`Transaction with ID ${id} was not found.`);
+      }
+
+      deletedType = "transfer";
+      softDeleteTransactionsByGroupId(id, new Date(), tx);
+      reconcileCreditCardBillingInContext(new Date(), tx);
+      return;
     }
 
     deletedType = existing.type;

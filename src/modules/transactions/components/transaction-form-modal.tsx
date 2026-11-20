@@ -1595,7 +1595,10 @@ function TransactionFormModalInner({
           ? await onUpdateTransfer(
               {
                 ...transferInput,
-                transactionGroupId: initialTransaction.transactionGroupId ?? "",
+                transactionGroupId:
+                  initialTransaction.transactionGroupId ||
+                  initialTransaction.id ||
+                  "",
               },
               attachmentDraft.changes,
             )

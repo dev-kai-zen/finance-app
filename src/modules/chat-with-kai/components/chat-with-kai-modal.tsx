@@ -192,7 +192,7 @@ function ChatWithKaiModalContent({
   };
 
   const handleEdit = (proposal: ParsedTransactionProposal) => {
-    const isNeg = proposal.type === "expense";
+    const isNeg = proposal.type === "expense" || proposal.type === "transfer";
     const signedAmount = isNeg
       ? -Math.abs(proposal.amountMinorUnits)
       : Math.abs(proposal.amountMinorUnits);
@@ -214,7 +214,10 @@ function ChatWithKaiModalContent({
       categoryColor: proposal.categoryColor ?? null,
       pocketId: proposal.pocketId ?? null,
       pocketName: proposal.pocketName ?? null,
-      transactionGroupId: null,
+      transactionGroupId:
+        isAlreadySaved && proposal.type === "transfer"
+          ? proposal.transactionId!
+          : null,
       type: proposal.type,
       currencyCode: proposal.currencyCode,
       amountMinorUnits: signedAmount,
@@ -232,8 +235,8 @@ function ChatWithKaiModalContent({
       transferAccountCurrency: proposal.currencyCode,
       transferAccountTypeName: null,
       transferAccountPocketEnabled: false,
-      transferPocketId: null,
-      transferPocketName: null,
+      transferPocketId: proposal.transferPocketId ?? null,
+      transferPocketName: proposal.transferPocketName ?? null,
       destinationBalanceAfterMinorUnits: null,
       destinationLocationBalanceAfterMinorUnits: null,
     };

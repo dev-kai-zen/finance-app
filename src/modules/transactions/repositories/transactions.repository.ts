@@ -1327,7 +1327,12 @@ export function findTransactionListItemById(
     .leftJoin(accountTypes, eq(accounts.accountTypeId, accountTypes.id))
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .leftJoin(pockets, eq(transactions.pocketId, pockets.id))
-    .where(and(eq(transactions.id, id), isNull(transactions.deletedAt)))
+    .where(
+      and(
+        or(eq(transactions.id, id), eq(transactions.transactionGroupId, id)),
+        isNull(transactions.deletedAt),
+      ),
+    )
     .get();
 
   if (!row) return null;

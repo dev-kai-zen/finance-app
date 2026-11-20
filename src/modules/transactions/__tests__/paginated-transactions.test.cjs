@@ -566,3 +566,65 @@ test("F03: 10,000-row ledger uses transactions_active_feed_index, bounds SQL sta
 
   sqlite.close();
 });
+
+test("Chat with Kai transfer edit and delete by transactionGroupId (P1-07): findTransactionListItemById, updateTransfer, and removeTransaction accept tgrp_... IDs", async () => {
+  const {
+    findTransactionListItemById,
+    findTransactionsByGroupId,
+  } = require("../repositories/transactions.repository");
+  const { updateTransferInContext } = require("../services/update-transfer.service");
+  const { removeTransaction } = require("../services/delete-transaction.service");
+
+  connectAndMigrate();
+  seedMixedLedger();
+
+  // Seed a 2-leg transfer with transactionGroupId = 'tgrp_kai_1' (what recordTransfer returns to Kai)
+  const now = Date.now();
+  const groupId = "tgrp_kai_1";
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'transfer', 'PHP', ?, 'Kai Transfer', ?, ?, ?)",
+    )
+    .run("tx_kai_out", "acc_main", groupId, -200000, now, now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'transfer', 'PHP', ?, 'Kai Transfer', ?, ?, ?)",
+    )
+    .run("tx_kai_in", "acc_save", groupId, 200000, now, now, now);
+
+  // 1. findTransactionListItemById resolves the canonical transfer item when given tgrp_kai_1
+  const resolvedByGroup = findTransactionListItemById(groupId, database);
+  assert.ok(resolvedByGroup);
+  assert.equal(resolvedByGroup.id, "tx_kai_out");
+  assert.equal(resolvedByGroup.transactionGroupId, groupId);
+  assert.equal(resolvedByGroup.accountId, "acc_main");
+  assert.equal(resolvedByGroup.transferAccountId, "acc_save");
+  assert.equal(resolvedByGroup.amountMinorUnits, 200000);
+
+  // 2. updateTransferInContext updates both legs when editing the saved Kai transfer
+  updateTransferInContext(
+    {
+      transactionGroupId: groupId,
+      fromAccountId: "acc_main",
+      toAccountId: "acc_save",
+      amountMinorUnits: 250000,
+      name: "Kai Transfer Edited",
+      occurredAt: new Date(now),
+    },
+    database,
+  );
+  const afterUpdate = findTransactionListItemById(groupId, database);
+  assert.ok(afterUpdate);
+  assert.equal(afterUpdate.amountMinorUnits, 250000);
+  assert.equal(afterUpdate.name, "Kai Transfer Edited");
+
+  // 3. removeTransaction soft-deletes both legs when given tgrp_kai_1 (as Kai passes proposal.transactionId)
+  removeTransaction(groupId);
+  const afterDelete = findTransactionListItemById(groupId, database);
+  assert.equal(afterDelete, null);
+  const groupRows = findTransactionsByGroupId(groupId, database);
+  assert.equal(groupRows.length, 2);
+  assert.ok(groupRows.every((leg) => leg.deletedAt !== null));
+
+  sqlite.close();
+});
