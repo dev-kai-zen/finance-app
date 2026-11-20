@@ -189,7 +189,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ## High Severity (Part 1)
 
-### [ ] P1-08 — Global Search Never Returns Notes (`notes` Permanently `[]`)
+### [x] P1-08 — Global Search Never Returns Notes (`notes` Permanently `[]`) (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/search/hooks/use-general-search.ts`
@@ -206,7 +206,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-09 — Global Search Transactions: Duplicate Transfer Legs, Missing Split Categories & Unescaped SQL `LIKE` Wildcards
+### [x] P1-09 — Global Search Transactions: Duplicate Transfer Legs, Missing Split Categories & Unescaped SQL `LIKE` Wildcards (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (All 3 cases confirmed)
 - **Files:**
   - `src/modules/transactions/services/search-transactions.service.ts`

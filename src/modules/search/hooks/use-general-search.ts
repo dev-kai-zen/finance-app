@@ -25,7 +25,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const categoriesHook = useCategories();
   const budgetsHook = useBudgets();
   const goalsHook = useGoals();
-  const notesHook = useNotes({ autoRefresh: false, skipQuery: !isOpen });
+  const notesHook = useNotes({ skipQuery: !isOpen });
   const schedulesHook = useScheduledTransactions();
   const labelsHook = useLabels();
   const subscriptionsHook = useSubscriptions();
@@ -80,7 +80,11 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     }
 
     const accountMap = new Map((accounts ?? []).map((a) => [a.id, a]));
-    const categoryMap = new Map((categories ?? []).map((c) => [c.id, c]));
+    const allCategories = (categories ?? []).flatMap((c) => [
+      c,
+      ...(c.subcategories ?? []),
+    ]);
+    const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
 
     // 2. Filter catalog items
     const matchedActions: SearchResultItem[] = [];
@@ -170,8 +174,8 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
 
     // 5. Filter user categories
     const matchedCategories: SearchResultItem[] = [];
-    if (categories && categories.length > 0) {
-      for (const cat of categories) {
+    if (allCategories.length > 0) {
+      for (const cat of allCategories) {
         if (cat.name.toLowerCase().includes(trimmed)) {
           matchedCategories.push({
             id: `user_category_${cat.id}`,

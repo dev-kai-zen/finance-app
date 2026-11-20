@@ -257,6 +257,71 @@ test("searchTransactions: matches name, note, or category with limit and exclude
   assert.equal(limited.length, 1, "Respects limit parameter");
 });
 
+test("searchTransactions (P1-09): deduplicates 2-leg transfers, matches split categories, escapes SQL LIKE wildcards, and resolves account currency", () => {
+  const { sqlite: db, database } = setupTestDb();
+  const now = Date.now();
+
+  db.prepare(`
+    INSERT INTO account_types (id, name, account_group, sort_order, icon_key, is_system, created_at, updated_at)
+    VALUES ('at1', 'Cash', 'asset', 0, 'wallet', 1, ${now}, ${now})
+  `).run();
+
+  db.prepare(`
+    INSERT INTO accounts (id, name, account_type_id, currency_code, opening_balance_minor_units, opening_balance_at, pocket_enabled, created_at, updated_at)
+    VALUES
+      ('acc_php_1', 'Cash Wallet', 'at1', 'PHP', 100000, ${now}, 0, ${now}, ${now}),
+      ('acc_php_2', 'Bank Vault', 'at1', 'PHP', 100000, ${now}, 0, ${now}, ${now})
+  `).run();
+
+  db.prepare(`
+    INSERT INTO categories (id, name, type, icon, hex_colors_id, is_system, created_at, updated_at)
+    VALUES
+      ('cat_groceries', 'Groceries', 'expense', 'shopping-bag', null, 0, ${now}, ${now}),
+      ('cat_pharmacy', 'Pharmacy & Meds', 'expense', 'pill', null, 0, ${now}, ${now})
+  `).run();
+
+  // 1. Two-leg transfer ("Monthly Savings Move")
+  db.prepare(`
+    INSERT INTO transactions (id, account_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at)
+    VALUES
+      ('tx_trf_out', 'acc_php_1', 'tgrp_move_1', 'transfer', 'PHP', -250000, 'Monthly Savings Move', ${now - 1000}, ${now - 1000}, ${now - 1000}),
+      ('tx_trf_in', 'acc_php_2', 'tgrp_move_1', 'transfer', 'PHP', 250000, 'Monthly Savings Move', ${now - 1000}, ${now - 1000}, ${now - 1000})
+  `).run();
+
+  // 2. Split expense with category_id = NULL on parent and child categories in transaction_entries
+  db.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at)
+    VALUES ('tx_split_1', 'acc_php_1', null, 'expense', 'USD', -58500, 'Supermarket Run', ${now - 2000}, ${now - 2000}, ${now - 2000})
+  `).run();
+  db.prepare(`
+    INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, note, created_at, updated_at)
+    VALUES
+      ('te_1', 'tx_split_1', 'cat_groceries', 38500, 'Veggies', ${now - 2000}, ${now - 2000}),
+      ('te_2', 'tx_split_1', 'cat_pharmacy', 20000, 'Vitamins 50% off', ${now - 2000}, ${now - 2000})
+  `).run();
+
+  // A: Transfer search returns 1 canonical row (no duplicate -₱ and +₱ rows)
+  const transferHits = searchTransactions("Monthly Savings Move", 8, database);
+  assert.equal(transferHits.length, 1);
+  assert.equal(transferHits[0].id, "tx_trf_out");
+  assert.equal(transferHits[0].amountMinorUnits, 250000);
+
+  // B: Split child category search finds the split transaction and populates matched categoryName + account currency
+  const splitHits = searchTransactions("Pharmacy", 8, database);
+  assert.equal(splitHits.length, 1);
+  assert.equal(splitHits[0].id, "tx_split_1");
+  assert.equal(splitHits[0].categoryName, "Pharmacy & Meds");
+  assert.equal(splitHits[0].currencyCode, "PHP");
+
+  // C: Searching '%' only matches the transaction that literally has '50% off' in its split entry note
+  const percentHits = searchTransactions("%", 8, database);
+  assert.equal(percentHits.length, 1);
+  assert.equal(percentHits[0].id, "tx_split_1");
+
+  const underscoreHits = searchTransactions("_", 8, database);
+  assert.equal(underscoreHits.length, 0);
+});
+
 test("listTransactions: scopes results by startDate and endDate", () => {
   const { sqlite: db, database } = setupTestDb();
   const day1 = new Date(2026, 10, 1, 10, 0, 0).getTime();
