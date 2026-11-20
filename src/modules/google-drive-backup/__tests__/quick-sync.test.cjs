@@ -822,3 +822,55 @@ test("quick sync in-flight edit (P1-02): edits made during an active upload keep
   );
   assert.equal(getQuickSyncState().status, "synced");
 });
+
+test("quick sync mixed v1.8.0 + v1.7.0 devices (P1-03): detects v1.7.0 PATCH upload when Drive preserves stale syncRevisionId and lastUpdatedByDeviceId", () => {
+  // Device A (v1.8.0) synced rev-10 / head-10.
+  // Then Device B (v1.7.0) uploaded new bytes via Drive v3 PATCH without syncRevisionId,
+  // so Drive preserved sync-rev-10 and device-A in appProperties while advancing headRevisionId to head-11.
+  const remoteAfterV170Patch = {
+    id: "file-1",
+    name: "kaizen-finance-quick-sync.kfb",
+    createdTime: "2026-11-20T05:00:00.000Z",
+    modifiedTime: "2026-11-20T05:45:00.000Z",
+    size: 2048,
+    location: "visible",
+    passwordProtected: false,
+    version: 26,
+    headRevisionId: "head-rev-11",
+    trashed: false,
+    syncRevisionId: "sync-rev-10",
+    lastUpdatedByDeviceId: "device-A",
+    lastUpdatedByDeviceName: "Device A (Pixel 8)",
+  };
+
+  const deviceABaseline = {
+    fileId: "file-1",
+    lastSyncedAt: "2026-11-20T05:30:00.000Z",
+    lastKnownRemoteSyncId: "sync-rev-10",
+    lastKnownRemoteHeadRevisionId: "head-rev-10",
+    lastKnownRemoteVersion: 25,
+    lastKnownRemoteModifiedTime: "2026-11-20T05:30:00.000Z",
+    lastKnownRemoteFileId: "file-1",
+    deviceId: "device-A",
+    hasUnsyncedLocalChanges: true,
+  };
+
+  const result = evaluateQuickSyncRemoteState(
+    remoteAfterV170Patch,
+    deviceABaseline,
+  );
+  assert.equal(result.status, "remote_ahead");
+  assert.equal(result.conflict.remoteDeviceId, null);
+  assert.equal(result.conflict.remoteDeviceName, null);
+  assert.equal(result.conflict.hasUnsyncedLocalChanges, true);
+
+  // Fallback when headRevisionId is unavailable on the Drive response: modifiedTime advancement > 10s
+  // still detects the legacy v1.7.0 overwrite and prevents adopt_self
+  const resultWithoutHeadRevision = evaluateQuickSyncRemoteState(
+    { ...remoteAfterV170Patch, headRevisionId: null },
+    { ...deviceABaseline, lastKnownRemoteHeadRevisionId: null },
+  );
+  assert.equal(resultWithoutHeadRevision.status, "remote_ahead");
+  assert.equal(resultWithoutHeadRevision.conflict.remoteDeviceId, null);
+  assert.equal(resultWithoutHeadRevision.conflict.remoteDeviceName, null);
+});

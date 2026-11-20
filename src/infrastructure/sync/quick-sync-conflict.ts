@@ -43,13 +43,18 @@ export function evaluateQuickSyncRemoteState(
     return { status: "up_to_date", remoteFile };
   }
 
+  const legacyWriterAhead = isLegacyWriterAhead(remoteFile, local);
+
   // Self-writer protection: this exact device was the last writer on Google Drive.
   // Another device has NOT uploaded since, so never show a self-conflict modal
   // saying "Updated by <this device>". Silently adopt the remote baseline instead.
   // Never adopt_self when local tracking has no sync baseline at all (e.g. after
-  // app reset or disconnect/reconnect on a fresh workspace).
+  // app reset or disconnect/reconnect on a fresh workspace), or when a legacy v1.7.0
+  // device uploaded new content via Drive PATCH (which preserves stale appProperties
+  // such as syncRevisionId and lastUpdatedByDeviceId while advancing headRevisionId).
   if (
     !hasLocalNeverSynced(local) &&
+    !legacyWriterAhead &&
     remoteFile.lastUpdatedByDeviceId &&
     remoteFile.lastUpdatedByDeviceId === local.deviceId
   ) {
@@ -63,8 +68,12 @@ export function evaluateQuickSyncRemoteState(
       fileId: remoteFile.id,
       remoteVersion: remoteFile.version,
       remoteModifiedTime: remoteFile.modifiedTime,
-      remoteDeviceId: remoteFile.lastUpdatedByDeviceId,
-      remoteDeviceName: remoteFile.lastUpdatedByDeviceName,
+      remoteDeviceId: legacyWriterAhead
+        ? null
+        : remoteFile.lastUpdatedByDeviceId,
+      remoteDeviceName: legacyWriterAhead
+        ? null
+        : remoteFile.lastUpdatedByDeviceName,
       localLastSyncedAt: local.lastSyncedAt ?? local.lastKnownRemoteModifiedTime,
       hasUnsyncedLocalChanges: local.hasUnsyncedLocalChanges,
     },
@@ -79,6 +88,50 @@ function hasLocalNeverSynced(local: QuickSyncLocalBaseline): boolean {
     local.lastKnownRemoteModifiedTime === null &&
     local.lastSyncedAt === null
   );
+}
+
+function isModifiedTimeAhead(
+  remoteFile: GoogleDriveQuickSyncMetadata,
+  local: QuickSyncLocalBaseline,
+): boolean {
+  const localBaselineTimestamp =
+    local.lastKnownRemoteModifiedTime ?? local.lastSyncedAt;
+  if (!localBaselineTimestamp) {
+    return true;
+  }
+
+  const remoteMs = Date.parse(remoteFile.modifiedTime);
+  const localMs = Date.parse(localBaselineTimestamp);
+  if (Number.isNaN(remoteMs) || Number.isNaN(localMs)) {
+    return false;
+  }
+
+  return remoteMs > localMs + LEGACY_REMOTE_AHEAD_GRACE_MS;
+}
+
+/**
+ * Detects when an older app version (e.g. v1.7.0) uploaded new file content via
+ * Google Drive v3 PATCH without writing `syncRevisionId`. Drive PATCH merges
+ * omitted `appProperties` keys, keeping the previous v1.8.0 `syncRevisionId` and
+ * `lastUpdatedByDeviceId` while advancing `headRevisionId` and `modifiedTime`.
+ */
+function isLegacyWriterAhead(
+  remoteFile: GoogleDriveQuickSyncMetadata,
+  local: QuickSyncLocalBaseline,
+): boolean {
+  if (
+    !remoteFile.syncRevisionId ||
+    !local.lastKnownRemoteSyncId ||
+    remoteFile.syncRevisionId !== local.lastKnownRemoteSyncId
+  ) {
+    return false;
+  }
+
+  if (remoteFile.headRevisionId && local.lastKnownRemoteHeadRevisionId) {
+    return remoteFile.headRevisionId !== local.lastKnownRemoteHeadRevisionId;
+  }
+
+  return isModifiedTimeAhead(remoteFile, local);
 }
 
 function detectRemoteAhead(
@@ -99,9 +152,14 @@ function detectRemoteAhead(
   }
 
   // Primary #1: App-stamped syncRevisionId (UUID written into Drive appProperties
-  // on every Quick Sync upload). Immune to Google Drive internal version bumps.
+  // on every Quick Sync upload). Immune to Google Drive internal version bumps,
+  // while still catching legacy v1.7.0 PATCH uploads that advanced headRevisionId
+  // or modifiedTime without updating syncRevisionId.
   if (remoteFile.syncRevisionId && local.lastKnownRemoteSyncId) {
-    return remoteFile.syncRevisionId !== local.lastKnownRemoteSyncId;
+    if (remoteFile.syncRevisionId !== local.lastKnownRemoteSyncId) {
+      return true;
+    }
+    return isLegacyWriterAhead(remoteFile, local);
   }
 
   // Primary #2: Drive content headRevisionId (only changes when file bytes change).
@@ -111,17 +169,5 @@ function detectRemoteAhead(
 
   // Legacy migration fallback before a syncRevisionId/headRevisionId baseline exists:
   // compare Drive server modifiedTime against local baseline timestamp.
-  const localBaselineTimestamp =
-    local.lastKnownRemoteModifiedTime ?? local.lastSyncedAt;
-  if (!localBaselineTimestamp) {
-    return true;
-  }
-
-  const remoteMs = Date.parse(remoteFile.modifiedTime);
-  const localMs = Date.parse(localBaselineTimestamp);
-  if (Number.isNaN(remoteMs) || Number.isNaN(localMs)) {
-    return false;
-  }
-
-  return remoteMs > localMs + LEGACY_REMOTE_AHEAD_GRACE_MS;
+  return isModifiedTimeAhead(remoteFile, local);
 }

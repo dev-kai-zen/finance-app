@@ -79,7 +79,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-03 — Quick Sync: Mixed v1.8.0 + v1.7.0 Devices Miss Conflicts (Google Drive `PATCH` Merges `appProperties`)
+### [x] P1-03 — Quick Sync: Mixed v1.8.0 + v1.7.0 Devices Miss Conflicts (Google Drive `PATCH` Merges `appProperties`) (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (*"it overwrites the data of Device B"*)
 - **Files:**
   - `src/infrastructure/sync/quick-sync-conflict.ts`
