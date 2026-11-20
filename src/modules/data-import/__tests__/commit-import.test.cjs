@@ -290,3 +290,105 @@ test("commit enforces the Free 5-account limit and allows 6+ accounts when Pro i
   assert.equal(result.imported, 6);
   assert.equal(count("accounts"), 6);
 });
+
+test("Sample Mode -> Guided Setup -> Import Accounts -> Finish Setup (P1-06): replaces sample data without free-limit false positives and survives completeGuidedSetup", async () => {
+  const {
+    loadSampleWorkspace,
+    completeGuidedSetup,
+  } = require("@/modules/onboarding/services/workspace.service");
+
+  sqlite.exec("DELETE FROM settings; DELETE FROM account_types WHERE id = 'wallet'");
+  await loadSampleWorkspace();
+  assert.equal(count("accounts"), 8);
+  assert.equal(count("transactions"), 31);
+
+  // Free user imports 2 accounts (including names that overlap with sample accounts) via Guided Setup
+  proEnabled = false;
+  const csv = [
+    "Account,Currency,Opening Balance,Opening Date",
+    "Wallet,PHP,2500,2026-01-01",
+    "My Savings,PHP,10000,2026-01-01",
+  ].join("\n");
+  const document = parseCsv(csv);
+  const hash = importDigest(csv);
+  const options = {
+    kind: "accounts",
+    source: "CSV",
+    columns: suggestColumns(document.headers),
+    dateFormat: "ymd",
+    decimal: ".",
+    defaultCurrency: "PHP",
+    defaultAccount: "",
+    transferMode: "single",
+    decisions: {},
+    accounts: {
+      wallet: {
+        existingId: "",
+        name: "Wallet",
+        accountTypeId: "recommended:type:cash",
+        currency: "PHP",
+        openingBalance: "2500",
+        balanceDate: "2026-01-01",
+      },
+      "my savings": {
+        existingId: "",
+        name: "My Savings",
+        accountTypeId: "recommended:type:savings",
+        currency: "PHP",
+        openingBalance: "10000",
+        balanceDate: "2026-01-01",
+      },
+    },
+    categories: {},
+  };
+
+  const catalog = getImportCatalog();
+  assert.equal(catalog.accounts.length, 0);
+  const cashTypeId = catalog.accountTypes.find((t) => t.name === "Cash")?.id ?? catalog.accountTypes[0].id;
+  const savingsTypeId = catalog.accountTypes.find((t) => t.name === "Savings")?.id ?? catalog.accountTypes[0].id;
+  options.accounts.wallet.accountTypeId = cashTypeId;
+  options.accounts["my savings"].accountTypeId = savingsTypeId;
+  const preview = buildImportPreview(document, options, catalog, hash, {
+    isPro: false,
+    maxActiveAccounts: 5,
+  });
+  assert.equal(preview.ready, true);
+
+  // Direct import without allowOnboarding is still blocked in sample mode
+  await assert.rejects(
+    commitImport(document, options, hash, "accounts.csv", preview.signature),
+    /workspace/,
+  );
+
+  // Guided Setup import (allowOnboarding: true) clears sample data and imports the 2 accounts
+  const result = await commitImport(
+    document,
+    options,
+    hash,
+    "accounts.csv",
+    preview.signature,
+    { allowOnboarding: true },
+  );
+  assert.equal(result.imported, 2);
+  assert.equal(count("accounts"), 2);
+  assert.equal(count("transactions"), 0);
+
+  // Tapping "Finish Setup" (completeGuidedSetup) must NOT wipe the newly imported accounts
+  const finalState = await completeGuidedSetup({
+    currencyCode: "PHP",
+    accountStrategy: "import",
+    nickname: "John",
+  });
+  assert.equal(finalState.mode, "personal");
+  assert.equal(count("accounts"), 2);
+  const accountsAfterFinish = getAccountsWithBalances();
+  assert.deepEqual(
+    accountsAfterFinish
+      .map((a) => [a.name, a.currentBalanceMinorUnits])
+      .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+    [
+      ["My Savings", 1000000],
+      ["Wallet", 250000],
+    ],
+  );
+});

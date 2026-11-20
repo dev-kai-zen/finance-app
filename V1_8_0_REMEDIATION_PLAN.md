@@ -137,7 +137,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-06 — Onboarding + Data Import: Sample Mode → Guided Setup → Import Accounts Fails & Wipes Imported Accounts on Finish
+### [x] P1-06 — Onboarding + Data Import: Sample Mode → Guided Setup → Import Accounts Fails & Wipes Imported Accounts on Finish (Implemented — Ready for User Verification)
 - **User Test Status & Question:** *"Free users are blocked by the 5 account limit, Pro users, I successfully import 32 accounts, let me know what is the problem?"*
 - **Why You Succeeded as Pro and What the Exact Bug Is:**
   - When you tested on **Fresh Onboarding** (after Reset App Data), onboarding status is `"pending"` and there are `0` sample accounts in SQLite—so Free users hit the 5-account limit on a 32-account CSV (`32 > 5`), and Pro users succeed in importing 32 accounts.

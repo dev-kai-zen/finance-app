@@ -218,15 +218,26 @@ export async function loadSampleWorkspace(): Promise<WorkspaceState> {
   return completedState("sample", null);
 }
 
-export function clearSampleWorkspaceIfNeeded(context: DbContext): void {
+export function clearSampleWorkspaceIfNeeded(
+  context: DbContext,
+  options?: { preserveAccountTypes?: boolean },
+): void {
   const values = getOnboardingSettings(context);
   if (values[ONBOARDING_SETTING_KEYS.workspaceMode] !== "sample") return;
 
   clearScheduledTransactionWorkspace(context);
   clearTransactionWorkspace(context);
   clearGoalWorkspace(context);
-  clearAccountWorkspace(context);
+  clearAccountWorkspace(context, options);
   clearCustomWorkspaceCategories(context);
+  saveOnboardingSettings(
+    {
+      [ONBOARDING_SETTING_KEYS.status]: "pending",
+      [ONBOARDING_SETTING_KEYS.workspaceMode]: "",
+      [ONBOARDING_SETTING_KEYS.sampleVersion]: "0",
+    },
+    context,
+  );
 }
 
 function saveCompletedSettings(

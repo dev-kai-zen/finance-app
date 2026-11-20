@@ -26,13 +26,21 @@ function decimalAmount(amount: number, currency: string): string {
 }
 function dateInput(date: Date): string { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 
-export async function commitImport(document: CsvDocument, options: ImportOptions, fileHash: string, fileName: string, signature: string) {
+export async function commitImport(
+  document: CsvDocument,
+  options: ImportOptions,
+  fileHash: string,
+  fileName: string,
+  signature: string,
+  commitOptions?: { allowOnboarding?: boolean },
+) {
   if (importing) throw new ImportValidationError("busy");
   importing = true;
   // Snapshot the reviewed draft so user interactions cannot change it during backup.
   const draft = JSON.parse(JSON.stringify(options)) as ImportOptions;
+  const allowOnboarding = Boolean(commitOptions?.allowOnboarding);
   try {
-    if (!canImportWorkspaceData()) throw new ImportValidationError("workspace");
+    if (!canImportWorkspaceData(db, { allowOnboarding })) throw new ImportValidationError("workspace");
     const isPro = getCurrentProStatus().isPro;
     const previewConstraints = { isPro, maxActiveAccounts: PRO_LIMITS.FREE_MAX_ACCOUNTS };
     const preview = buildImportPreview(document, draft, getImportCatalog(), fileHash, previewConstraints);
@@ -40,8 +48,8 @@ export async function commitImport(document: CsvDocument, options: ImportOptions
     try { await createLocalBackup(null, "safety"); }
     catch { throw new ImportValidationError("backup"); }
     const committed = db.transaction((tx) => {
-      if (!canImportWorkspaceData(tx)) throw new ImportValidationError("workspace");
-      clearSampleWorkspaceIfNeeded(tx);
+      if (!canImportWorkspaceData(tx, { allowOnboarding })) throw new ImportValidationError("workspace");
+      clearSampleWorkspaceIfNeeded(tx, { preserveAccountTypes: true });
       const freshCatalog = getImportCatalog(tx);
       const fresh = buildImportPreview(document, draft, freshCatalog, fileHash, previewConstraints);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");

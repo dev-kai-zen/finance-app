@@ -14,10 +14,14 @@ import { buildImportPreview, sourceAccountNames, sourceCategories } from "../uti
 import { prepareImportMappings } from "../utils/prepare-import-mappings";
 
 const defaults = (kind: ImportKind, defaultCurrency: string): ImportOptions => ({ kind, source: "", columns: {}, dateFormat: "ymd", decimal: ".", defaultCurrency, defaultAccount: "", transferMode: "single", accounts: {}, categories: {}, decisions: {} });
-export function useDataImport(initialKind: ImportKind = "transactions") {
+export function useDataImport(
+  initialKind: ImportKind = "transactions",
+  hookOptions?: { allowOnboarding?: boolean },
+) {
   const { preferences } = useCurrencyPreferences();
   const { isPro } = useProStatus();
   const defaultCurrency = preferences.defaultCurrency;
+  const allowOnboarding = Boolean(hookOptions?.allowOnboarding);
   const [catalog, setCatalog] = useState<ImportCatalog | null>(null);
   const [history, setHistory] = useState<ReturnType<typeof listImportHistory>>([]);
   const [file, setFile] = useState<Awaited<ReturnType<typeof pickImportFile>>>(null);
@@ -133,7 +137,14 @@ export function useDataImport(initialKind: ImportKind = "transactions") {
     },
     commit: () => run(async () => {
       if (!file || !preview?.ready) return;
-      const saved = await commitImport(file.document, options, file.hash, file.name, preview.signature);
+      const saved = await commitImport(
+        file.document,
+        options,
+        file.hash,
+        file.name,
+        preview.signature,
+        { allowOnboarding },
+      );
       setResult(saved); setStep("done"); setFile(null);
       // Saving succeeded even if refreshing a presentation query subsequently fails.
       try {

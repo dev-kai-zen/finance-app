@@ -124,7 +124,7 @@ export function DataImportScreenContent({
   onCancel?: () => void;
   onComplete?: (result: { imported: number; skipped: number }) => void;
 } = {}) {
-  const state = useDataImport(initialKind),
+  const state = useDataImport(initialKind, { allowOnboarding }),
     theme = useAppTheme(),
     styles = useThemeStyles(createStyles);
   const walkthrough = useDataImportWalkthrough();

@@ -611,8 +611,13 @@ export function createSampleAccounts(
   return SAMPLE_IDS;
 }
 
-export function clearAccountWorkspace(context: DbContext): void {
+export function clearAccountWorkspace(
+  context: DbContext,
+  options?: { preserveAccountTypes?: boolean },
+): void {
   clearFundGroupWorkspace(context);
   deleteAllAccountRecords(context);
-  deleteNonSystemAccountTypes(context);
+  if (!options?.preserveAccountTypes) {
+    deleteNonSystemAccountTypes(context);
+  }
 }

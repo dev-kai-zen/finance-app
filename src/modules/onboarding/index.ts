@@ -17,5 +17,6 @@ export type {
 
 export {
   isPersonalWorkspace,
+  isSampleWorkspace,
   canImportWorkspaceData,
 } from "./services/is-personal-workspace.service";
