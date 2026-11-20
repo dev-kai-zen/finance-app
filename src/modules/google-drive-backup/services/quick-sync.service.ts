@@ -2,6 +2,7 @@ import NetInfo from "@react-native-community/netinfo";
 
 import { isDatabaseReplacing } from "@/infrastructure/database";
 import {
+  cancelDebouncedQuickSync,
   clearQuickSyncRemoteConflict,
   clearQuickSyncRemoteTracking,
   createQuickSyncRevisionId,
@@ -11,6 +12,7 @@ import {
   getQuickSyncConfig,
   getQuickSyncDeviceMetadata,
   getQuickSyncHardwareDeviceName,
+  getQuickSyncLocalChangeGeneration,
   getQuickSyncState,
   queueDebouncedQuickSync,
   registerQuickSyncDebouncedExecutor,
@@ -38,6 +40,8 @@ const QUICK_SYNC_CHECK_COOLDOWN_MS = 12_000;
 let activeSyncPromise: Promise<boolean> | null = null;
 let activeCheckPromise: Promise<QuickSyncCheckResult> | null = null;
 let lastRemoteCheckCompletedAt = 0;
+let pendingFollowUpSync = false;
+let pendingFollowUpForceOverwrite = false;
 
 export type QuickSyncCheckResult =
   | "skipped"
@@ -49,6 +53,9 @@ export type QuickSyncCheckResult =
 export { getQuickSyncState, subscribeToQuickSync };
 
 export function resetQuickSyncConnection(): void {
+  cancelDebouncedQuickSync();
+  pendingFollowUpSync = false;
+  pendingFollowUpForceOverwrite = false;
   resetQuickSyncLocalMetadata();
   clearQuickSyncRemoteTracking();
   clearQuickSyncRemoteConflict();
@@ -163,8 +170,15 @@ export async function triggerQuickSync(options?: {
   }
 
   if (activeSyncPromise) {
+    pendingFollowUpSync = true;
+    if (options?.forceOverwrite) {
+      pendingFollowUpForceOverwrite = true;
+    }
     return activeSyncPromise;
   }
+
+  pendingFollowUpSync = false;
+  pendingFollowUpForceOverwrite = false;
 
   activeSyncPromise = performSync(
     config.network,
@@ -172,6 +186,8 @@ export async function triggerQuickSync(options?: {
     Boolean(options?.forceOverwrite),
   ).finally(() => {
     activeSyncPromise = null;
+    pendingFollowUpSync = false;
+    pendingFollowUpForceOverwrite = false;
   });
 
   return activeSyncPromise;
@@ -391,7 +407,14 @@ async function performSync(
     // 3. Mark syncing
     setQuickSyncRuntimeStatus("syncing");
 
-    // 4. Create database snapshot (unprotected for background auto-sync)
+    // 4. Create database snapshot (unprotected for background auto-sync).
+    // Capture localChangeGeneration right before taking the snapshot so any edit
+    // that occurs during snapshot creation or upload stays marked unsynced and
+    // triggers an automatic follow-up upload.
+    const snapshotGeneration = getQuickSyncLocalChangeGeneration();
+    pendingFollowUpSync = false;
+    pendingFollowUpForceOverwrite = false;
+    cancelDebouncedQuickSync();
     const archive = await createBackupArchive(null);
 
     const deviceName = formatQuickSyncDeviceDisplayName(
@@ -415,6 +438,11 @@ async function performSync(
     );
     lastRemoteCheckCompletedAt = Date.now();
 
+    const hasNewerLocalChanges =
+      pendingFollowUpSync ||
+      getQuickSyncLocalChangeGeneration() !== snapshotGeneration;
+    const nextForceOverwrite = pendingFollowUpForceOverwrite;
+
     // 6. Update configuration & device-local sync baseline
     const syncedAt = backupFile.modifiedTime || new Date().toISOString();
     saveQuickSyncConfig({
@@ -428,9 +456,20 @@ async function performSync(
       lastKnownRemoteVersion: backupFile.version,
       lastKnownRemoteModifiedTime: syncedAt,
       lastKnownRemoteFileId: backupFile.id,
-      hasUnsyncedLocalChanges: false,
+      hasUnsyncedLocalChanges: hasNewerLocalChanges,
     });
     clearQuickSyncRemoteConflict();
+
+    if (hasNewerLocalChanges) {
+      pendingFollowUpSync = false;
+      pendingFollowUpForceOverwrite = false;
+      cancelDebouncedQuickSync();
+      return await performSync(
+        networkPreference,
+        backupFile.id,
+        nextForceOverwrite,
+      );
+    }
 
     setQuickSyncRuntimeStatus("synced");
     return true;

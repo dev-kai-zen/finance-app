@@ -34,6 +34,12 @@ Module._resolveFilename = function (request, parent, ...rest) {
 
 globalThis.__DEV__ = false;
 
+let mockNetInfoState = { isConnected: true, type: "wifi" };
+let mockUploadHandler = null;
+let mockGetRemoteMetadataHandler = null;
+let mockCreateArchiveHandler = null;
+let mockGoogleUser = { email: "user@gmail.com" };
+
 Module._load = function (request, parent, ...rest) {
   if (request === "expo-device") {
     return {
@@ -43,25 +49,50 @@ Module._load = function (request, parent, ...rest) {
     };
   }
   if (request === "expo-crypto") {
+    let counter = 0;
     return {
-      randomUUID: () => "uuid-device-local-1",
+      randomUUID: () => {
+        counter += 1;
+        return counter === 1 ? "uuid-device-local-1" : `uuid-device-local-${counter}`;
+      },
+    };
+  }
+  if (request === "@react-native-community/netinfo") {
+    const netInfo = {
+      fetch: async () => mockNetInfoState,
+      addEventListener: () => () => {},
+    };
+    return { __esModule: true, default: netInfo, ...netInfo };
+  }
+  if (
+    /^(expo|@expo|react|react-native|@react-native)/.test(request) ||
+    request === "lucide-react-native"
+  ) {
+    return createMock();
+  }
+  if (request === "@/modules/local-backup") {
+    return {
+      createBackupArchive: async (...args) => {
+        if (mockCreateArchiveHandler) {
+          return mockCreateArchiveHandler(...args);
+        }
+        return { bytes: new Uint8Array([1, 2, 3]) };
+      },
     };
   }
   if (
-    request === "react-native" ||
-    request === "expo-sqlite" ||
-    request === "expo-router" ||
-    request === "expo-constants" ||
-    request === "@expo/ui" ||
-    request === "lucide-react-native" ||
-    request === "@react-native-community/netinfo" ||
-    request === "react-native-reanimated" ||
-    request === "expo-file-system" ||
-    request === "expo-modules-core" ||
-    request === "expo/fetch" ||
-    request === "react-native-nitro-google-signin"
+    request === "./google-drive-auth.service" &&
+    parent?.filename?.includes("google-drive-backup")
   ) {
-    return createMock();
+    return {
+      restoreGoogleDriveSession: async () => mockGoogleUser,
+      withGoogleDriveAccessToken: async (fn) => fn("test-access-token"),
+      disconnectGoogleDrive: async () => {},
+      getGoogleDriveConfigurationError: () => null,
+    };
+  }
+  if (request.endsWith("drizzle/migrations")) {
+    return { __esModule: true, default: { journal: { entries: [] }, migrations: {} } };
   }
   if (request === "@/infrastructure/database/client") {
     return {
@@ -72,7 +103,34 @@ Module._load = function (request, parent, ...rest) {
       closeDatabase: () => {},
     };
   }
-  return originalLoad.call(this, request, parent, ...rest);
+  const loaded = originalLoad.call(this, request, parent, ...rest);
+  if (
+    request === "./adapters/google-drive-backup.adapter" &&
+    parent?.filename?.includes("sync")
+  ) {
+    return {
+      ...loaded,
+      getGoogleDriveQuickSyncFileMetadata: async (...args) => {
+        if (mockGetRemoteMetadataHandler) {
+          return mockGetRemoteMetadataHandler(...args);
+        }
+        return null;
+      },
+      uploadOrUpdateGoogleDriveQuickSyncBackup: async (...args) => {
+        if (mockUploadHandler) {
+          return mockUploadHandler(...args);
+        }
+        return {
+          id: "file-1",
+          modifiedTime: "2026-11-20T06:00:00.000Z",
+          version: 1,
+          headRevisionId: "head-1",
+          syncRevisionId: args[3]?.syncRevisionId ?? "rev-1",
+        };
+      },
+    };
+  }
+  return loaded;
 };
 
 require.extensions[".ts"] = require.extensions[".tsx"] = (module, filename) => {
@@ -122,6 +180,15 @@ const {
 const {
   resetGoogleDriveConnectionForAppReset,
 } = require("@/modules/google-drive-backup/services/reset-google-drive-for-app-reset.service");
+const {
+  triggerQuickSync,
+} = require("@/modules/google-drive-backup/services/quick-sync.service");
+const {
+  ONBOARDING_SETTING_KEYS,
+} = require("@/modules/onboarding/constants/onboarding.constants");
+const {
+  saveOnboardingSettings,
+} = require("@/modules/onboarding/repositories/onboarding.repository");
 
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
@@ -240,6 +307,11 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  mockNetInfoState = { isConnected: true, type: "wifi" };
+  mockUploadHandler = null;
+  mockGetRemoteMetadataHandler = null;
+  mockCreateArchiveHandler = null;
+  mockGoogleUser = { email: "user@gmail.com" };
   resetQuickSyncStateForTests();
   resetQuickSyncDeviceMetadataForTests();
   if (sqlite) {
@@ -672,4 +744,81 @@ test("quick sync state: tracks remote_ahead conflict and prompt visibility", () 
   assert.equal(state.status, "synced");
   assert.equal(state.remoteConflict, null);
   assert.equal(state.conflictPromptVisible, false);
+});
+
+test("quick sync in-flight edit (P1-02): edits made during an active upload keep hasUnsyncedLocalChanges true and chain a follow-up upload", async () => {
+  saveOnboardingSettings({
+    [ONBOARDING_SETTING_KEYS.status]: "completed",
+    [ONBOARDING_SETTING_KEYS.workspaceMode]: "personal",
+  });
+  saveQuickSyncConfig({
+    enabled: true,
+    network: "wifi_only",
+    accountEmail: "user@gmail.com",
+  });
+
+  const uploadedSnapshots = [];
+  let latestRemoteMetadata = null;
+  let archiveCounter = 0;
+
+  mockCreateArchiveHandler = async () => {
+    archiveCounter += 1;
+    return { bytes: new Uint8Array([archiveCounter]) };
+  };
+
+  mockGetRemoteMetadataHandler = async () => latestRemoteMetadata;
+
+  mockUploadHandler = async (_token, bytes, existingFileId, props) => {
+    const uploadNumber = uploadedSnapshots.length + 1;
+    uploadedSnapshots.push({
+      uploadNumber,
+      snapshotByte: bytes[0],
+      existingFileId,
+      syncRevisionId: props.syncRevisionId,
+    });
+
+    if (uploadNumber === 1) {
+      // Simulate user adding Transaction B while Upload #1 is in flight over the network
+      // and the 3s debounce firing while activeSyncPromise is still running.
+      markQuickSyncLocalChangesPending();
+      void triggerQuickSync();
+
+      // Verify hasUnsyncedLocalChanges stays true during Upload #1
+      assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges, true);
+    }
+
+    latestRemoteMetadata = {
+      id: "file-1",
+      name: "kaizen-finance-quick-sync.kfb",
+      createdTime: "2026-11-20T05:00:00.000Z",
+      modifiedTime: `2026-11-20T06:0${uploadNumber}:00.000Z`,
+      size: 1024,
+      location: "visible",
+      passwordProtected: false,
+      version: uploadNumber,
+      headRevisionId: `head-${uploadNumber}`,
+      trashed: false,
+      syncRevisionId: props.syncRevisionId,
+      lastUpdatedByDeviceId: props.deviceId,
+      lastUpdatedByDeviceName: props.deviceName,
+    };
+
+    return latestRemoteMetadata;
+  };
+
+  // Start Upload #1 for Transaction A
+  markQuickSyncLocalChangesPending();
+  const synced = await triggerQuickSync();
+
+  assert.equal(synced, true);
+  assert.equal(uploadedSnapshots.length, 2);
+  assert.equal(uploadedSnapshots[0].snapshotByte, 1);
+  assert.equal(uploadedSnapshots[1].snapshotByte, 2);
+  assert.equal(uploadedSnapshots[1].existingFileId, "file-1");
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges, false);
+  assert.equal(
+    getQuickSyncDeviceMetadata().lastKnownRemoteSyncId,
+    uploadedSnapshots[1].syncRevisionId,
+  );
+  assert.equal(getQuickSyncState().status, "synced");
 });

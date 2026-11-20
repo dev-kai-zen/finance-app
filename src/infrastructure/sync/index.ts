@@ -52,6 +52,7 @@ export {
   formatQuickSyncDeviceDisplayName,
   getQuickSyncDeviceMetadata,
   getQuickSyncHardwareDeviceName,
+  getQuickSyncLocalChangeGeneration,
   markQuickSyncLocalChangesPending,
   resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncDeviceMetadataForTests,

@@ -20,6 +20,11 @@ type DeviceMetadataListener = () => void;
 const listeners = new Set<DeviceMetadataListener>();
 let cachedMetadata: QuickSyncDeviceMetadata | null = null;
 let cachedHardwareDeviceName: string | null = null;
+let localChangeGeneration = 0;
+
+export function getQuickSyncLocalChangeGeneration(): number {
+  return localChangeGeneration;
+}
 
 export function subscribeToQuickSyncDeviceMetadata(
   listener: DeviceMetadataListener,
@@ -187,6 +192,7 @@ export function updateQuickSyncDeviceMetadata(
 }
 
 export function markQuickSyncLocalChangesPending(): boolean {
+  localChangeGeneration += 1;
   const current = getQuickSyncDeviceMetadata();
   if (current.hasUnsyncedLocalChanges) {
     return false;
@@ -245,6 +251,7 @@ export function resetQuickSyncDeviceMetadataForTests(
   overrides?: Partial<QuickSyncDeviceMetadata>,
 ): void {
   cachedHardwareDeviceName = null;
+  localChangeGeneration = 0;
   cachedMetadata = overrides
     ? {
         deviceId: overrides.deviceId ?? "test-device-id",

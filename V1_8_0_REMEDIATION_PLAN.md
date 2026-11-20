@@ -55,7 +55,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-02 — Quick Sync: Edits Made During an In-Flight Upload Are Dropped and `hasUnsyncedLocalChanges` Is Cleared
+### [x] P1-02 — Quick Sync: Edits Made During an In-Flight Upload Are Dropped and `hasUnsyncedLocalChanges` Is Cleared (Implemented — Ready for User Verification)
 - **User Test Status & Question:** *"I test it, while the sync chip is blinking, I tried to immediately add transaction or delete transactions, then after it syncs, it resync again, if my fail is not the proper way, let me know how we properly fix it"*
 - **Why You Saw It Resync During Your Test:**
   - Every edit starts a **3-second debounce timer** (`DEBOUNCE_DELAY_MS = 3000`).
