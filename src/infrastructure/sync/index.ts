@@ -53,6 +53,7 @@ export {
   getQuickSyncDeviceMetadata,
   getQuickSyncHardwareDeviceName,
   markQuickSyncLocalChangesPending,
+  resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncDeviceMetadataForTests,
   sanitizeQuickSyncCustomDeviceName,
   setQuickSyncCustomDeviceName,
@@ -68,6 +69,7 @@ export type {
   QuickSyncRemoteEvaluation,
 } from "./quick-sync-conflict";
 export {
+  cancelDebouncedQuickSync,
   flushDebouncedQuickSync,
   queueDebouncedQuickSync,
   QUICK_SYNC_DEBOUNCE_MS,

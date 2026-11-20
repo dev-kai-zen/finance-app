@@ -11,6 +11,7 @@ export {
   createDatabaseSnapshot,
   isDatabaseReplacing,
   replaceDatabaseFromSnapshot,
+  setDatabaseReplacing,
   withDatabaseSnapshotLock,
 } from './snapshot';
 export {

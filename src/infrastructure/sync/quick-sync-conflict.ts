@@ -46,7 +46,10 @@ export function evaluateQuickSyncRemoteState(
   // Self-writer protection: this exact device was the last writer on Google Drive.
   // Another device has NOT uploaded since, so never show a self-conflict modal
   // saying "Updated by <this device>". Silently adopt the remote baseline instead.
+  // Never adopt_self when local tracking has no sync baseline at all (e.g. after
+  // app reset or disconnect/reconnect on a fresh workspace).
   if (
+    !hasLocalNeverSynced(local) &&
     remoteFile.lastUpdatedByDeviceId &&
     remoteFile.lastUpdatedByDeviceId === local.deviceId
   ) {
@@ -68,17 +71,22 @@ export function evaluateQuickSyncRemoteState(
   };
 }
 
+function hasLocalNeverSynced(local: QuickSyncLocalBaseline): boolean {
+  return (
+    local.lastKnownRemoteSyncId === null &&
+    local.lastKnownRemoteHeadRevisionId === null &&
+    local.lastKnownRemoteVersion === null &&
+    local.lastKnownRemoteModifiedTime === null &&
+    local.lastSyncedAt === null
+  );
+}
+
 function detectRemoteAhead(
   remoteFile: GoogleDriveQuickSyncMetadata,
   local: QuickSyncLocalBaseline,
 ): boolean {
   const knownFileId = local.lastKnownRemoteFileId ?? local.fileId;
-  const hasNeverSynced =
-    local.lastKnownRemoteSyncId === null &&
-    local.lastKnownRemoteHeadRevisionId === null &&
-    local.lastKnownRemoteVersion === null &&
-    local.lastKnownRemoteModifiedTime === null &&
-    local.lastSyncedAt === null;
+  const hasNeverSynced = hasLocalNeverSynced(local);
 
   // Freshly linked / second device where a Drive Quick Sync file already exists
   if (hasNeverSynced) {

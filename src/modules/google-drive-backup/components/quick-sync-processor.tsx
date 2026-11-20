@@ -14,6 +14,7 @@ import {
   flushDebouncedQuickSync,
   queueDebouncedQuickSync,
 } from "@/infrastructure/sync";
+import { isPersonalWorkspace } from "@/modules/onboarding";
 
 import { getQuickSyncConfig } from "../repositories/quick-sync-settings.repository";
 import { checkQuickSyncRemoteStatus } from "../services/quick-sync.service";
@@ -22,7 +23,7 @@ import { QuickSyncConflictModal } from "./quick-sync-conflict-modal";
 function shouldQueueQuickSyncForDatabaseChange(
   event: DatabaseChangeEvent,
 ): boolean {
-  if (isDatabaseReplacing()) {
+  if (isDatabaseReplacing() || !isPersonalWorkspace()) {
     return false;
   }
   return QUICK_SYNC_WATCHED_TABLE_NAME_SET.has(event.tableName);

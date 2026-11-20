@@ -65,6 +65,13 @@ export function flushDebouncedQuickSync(): void {
   executor?.();
 }
 
+export function cancelDebouncedQuickSync(): void {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+}
+
 export function resetQuickSyncDebounceForTests(): void {
   if (debounceTimer) {
     clearTimeout(debounceTimer);

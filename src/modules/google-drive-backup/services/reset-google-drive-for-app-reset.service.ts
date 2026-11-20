@@ -1,6 +1,7 @@
 import {
+  cancelDebouncedQuickSync,
   clearQuickSyncRemoteConflict,
-  clearQuickSyncRemoteTracking,
+  resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncLocalMetadata,
   setQuickSyncRuntimeStatus,
 } from "@/infrastructure/sync";
@@ -10,8 +11,9 @@ import {
 } from "./google-drive-auth.service";
 
 export async function resetGoogleDriveConnectionForAppReset(): Promise<void> {
+  cancelDebouncedQuickSync();
   resetQuickSyncLocalMetadata();
-  clearQuickSyncRemoteTracking();
+  resetQuickSyncDeviceIdentityForAppReset();
   clearQuickSyncRemoteConflict();
   if (getGoogleDriveConfigurationError()) {
     setQuickSyncRuntimeStatus("disabled");

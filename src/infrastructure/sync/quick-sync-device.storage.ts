@@ -215,6 +215,32 @@ export function clearQuickSyncRemoteTracking(): void {
   });
 }
 
+export function resetQuickSyncDeviceIdentityForAppReset(): QuickSyncDeviceMetadata {
+  const current = getQuickSyncDeviceMetadata();
+  let nextDeviceId = generateUniqueId("device");
+  if (nextDeviceId === current.deviceId) {
+    nextDeviceId = `${nextDeviceId}-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+  }
+
+  const next: QuickSyncDeviceMetadata = {
+    deviceId: nextDeviceId,
+    customDeviceName: null,
+    lastKnownRemoteSyncId: null,
+    lastKnownRemoteHeadRevisionId: null,
+    lastKnownRemoteVersion: null,
+    lastKnownRemoteModifiedTime: null,
+    lastKnownRemoteFileId: null,
+    hasUnsyncedLocalChanges: false,
+  };
+
+  cachedMetadata = next;
+  writeDeviceMetadataToDisk(next);
+  notifyDeviceMetadataChange();
+  return { ...next };
+}
+
 export function resetQuickSyncDeviceMetadataForTests(
   overrides?: Partial<QuickSyncDeviceMetadata>,
 ): void {

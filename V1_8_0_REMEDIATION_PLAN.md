@@ -35,7 +35,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ## Critical (Release Blockers)
 
-### [ ] P1-01 — Quick Sync: App Reset Preserves `deviceId`, Silently Overwriting Cloud Backup with an Empty Database
+### [x] P1-01 — Quick Sync: App Reset Preserves `deviceId`, Silently Overwriting Cloud Backup with an Empty Database (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/infrastructure/sync/quick-sync-device.storage.ts`

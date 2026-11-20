@@ -35,6 +35,10 @@ export function isDatabaseReplacing(): boolean {
   return isReplacing;
 }
 
+export function setDatabaseReplacing(replacing: boolean): void {
+  isReplacing = replacing;
+}
+
 export async function withDatabaseSnapshotLock<T>(
   fn: () => Promise<T>,
 ): Promise<T> {

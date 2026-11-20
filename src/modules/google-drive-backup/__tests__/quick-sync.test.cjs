@@ -111,6 +111,7 @@ const {
   getQuickSyncDeviceMetadata,
   getQuickSyncHardwareDeviceName,
   markQuickSyncLocalChangesPending,
+  resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncDeviceMetadataForTests,
   setQuickSyncCustomDeviceName,
   updateQuickSyncDeviceMetadata,
@@ -118,6 +119,9 @@ const {
 const {
   evaluateQuickSyncRemoteState,
 } = require("@/infrastructure/sync/quick-sync-conflict");
+const {
+  resetGoogleDriveConnectionForAppReset,
+} = require("@/modules/google-drive-backup/services/reset-google-drive-for-app-reset.service");
 
 const journal = require(path.join(root, "../drizzle/meta/_journal.json"));
 const migrations = journal.entries.map((entry) => ({
@@ -371,6 +375,100 @@ test("quick sync device metadata: formats policy-safe hardware model and custom 
   assert.equal(afterClear.lastKnownRemoteVersion, null);
   assert.equal(afterClear.lastKnownRemoteFileId, null);
   assert.equal(afterClear.hasUnsyncedLocalChanges, false);
+
+  // Full app reset rotates deviceId and clears customDeviceName
+  setQuickSyncCustomDeviceName("Work Phone");
+  markQuickSyncLocalChangesPending();
+  const afterAppReset = resetQuickSyncDeviceIdentityForAppReset();
+  assert.notEqual(afterAppReset.deviceId, initial.deviceId);
+  assert.equal(afterAppReset.customDeviceName, null);
+  assert.equal(afterAppReset.lastKnownRemoteSyncId, null);
+  assert.equal(afterAppReset.lastKnownRemoteHeadRevisionId, null);
+  assert.equal(afterAppReset.lastKnownRemoteVersion, null);
+  assert.equal(afterAppReset.lastKnownRemoteModifiedTime, null);
+  assert.equal(afterAppReset.lastKnownRemoteFileId, null);
+  assert.equal(afterAppReset.hasUnsyncedLocalChanges, false);
+});
+
+test("quick sync app reset (P1-01): rotating deviceId and guarding hasNeverSynced prevents silent cloud overwrite after reset", async () => {
+  const beforeReset = getQuickSyncDeviceMetadata();
+  setQuickSyncCustomDeviceName("Main Phone");
+  saveQuickSyncConfig({
+    enabled: true,
+    fileId: "file-1",
+    accountEmail: "user@gmail.com",
+    lastSyncedAt: "2026-11-20T05:30:00.000Z",
+  });
+  updateQuickSyncDeviceMetadata({
+    lastKnownRemoteSyncId: "sync-rev-10",
+    lastKnownRemoteHeadRevisionId: "head-rev-10",
+    lastKnownRemoteVersion: 25,
+    lastKnownRemoteModifiedTime: "2026-11-20T05:30:00.000Z",
+    lastKnownRemoteFileId: "file-1",
+    hasUnsyncedLocalChanges: true,
+  });
+
+  const remoteCloudFileFromBeforeReset = {
+    id: "file-1",
+    name: "kaizen-finance-quick-sync.kfb",
+    createdTime: "2026-11-20T05:00:00.000Z",
+    modifiedTime: "2026-11-20T05:30:00.000Z",
+    size: 4096,
+    location: "visible",
+    passwordProtected: false,
+    version: 25,
+    headRevisionId: "head-rev-10",
+    trashed: false,
+    syncRevisionId: "sync-rev-10",
+    lastUpdatedByDeviceId: beforeReset.deviceId,
+    lastUpdatedByDeviceName: "Main Phone (Google Pixel 8)",
+  };
+
+  await resetGoogleDriveConnectionForAppReset();
+
+  const postResetConfig = getQuickSyncConfig();
+  const postResetMeta = getQuickSyncDeviceMetadata();
+  assert.equal(postResetConfig.enabled, false);
+  assert.equal(postResetConfig.fileId, null);
+  assert.equal(postResetConfig.lastSyncedAt, null);
+  assert.notEqual(postResetMeta.deviceId, beforeReset.deviceId);
+  assert.equal(postResetMeta.customDeviceName, null);
+  assert.equal(postResetMeta.hasUnsyncedLocalChanges, false);
+
+  // User completes fresh onboarding, reconnects same Google account, and toggles Quick Sync ON
+  const evaluationAfterReset = evaluateQuickSyncRemoteState(
+    remoteCloudFileFromBeforeReset,
+    {
+      fileId: postResetConfig.fileId,
+      lastSyncedAt: postResetConfig.lastSyncedAt,
+      lastKnownRemoteSyncId: postResetMeta.lastKnownRemoteSyncId,
+      lastKnownRemoteHeadRevisionId: postResetMeta.lastKnownRemoteHeadRevisionId,
+      lastKnownRemoteVersion: postResetMeta.lastKnownRemoteVersion,
+      lastKnownRemoteModifiedTime: postResetMeta.lastKnownRemoteModifiedTime,
+      lastKnownRemoteFileId: postResetMeta.lastKnownRemoteFileId,
+      deviceId: postResetMeta.deviceId,
+      hasUnsyncedLocalChanges: true,
+    },
+  );
+  assert.equal(evaluationAfterReset.status, "remote_ahead");
+
+  // Even if deviceId were identical when local has never synced (e.g. after disconnect/clear),
+  // it must still return remote_ahead and never adopt_self
+  const evaluationSameDeviceNeverSynced = evaluateQuickSyncRemoteState(
+    remoteCloudFileFromBeforeReset,
+    {
+      fileId: null,
+      lastSyncedAt: null,
+      lastKnownRemoteSyncId: null,
+      lastKnownRemoteHeadRevisionId: null,
+      lastKnownRemoteVersion: null,
+      lastKnownRemoteModifiedTime: null,
+      lastKnownRemoteFileId: null,
+      deviceId: beforeReset.deviceId,
+      hasUnsyncedLocalChanges: true,
+    },
+  );
+  assert.equal(evaluationSameDeviceNeverSynced.status, "remote_ahead");
 });
 
 test("quick sync conflict evaluation: detects remote ahead via syncRevisionId/headRevisionId and avoids false self-conflicts", () => {
