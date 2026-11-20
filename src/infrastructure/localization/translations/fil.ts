@@ -665,6 +665,8 @@ export const fil = {
     restoreConfirmAction: "I-restore",
     deviceLabelTitle: "Pangalan ng device (opsyonal)",
     deviceLabelSave: "I-save",
+    deviceLabelSaved: "Na-save na ang pangalan ng device.",
+    deviceLabelReset: "Naibalik sa default ang pangalan ng device.",
     deviceLabelShownAs: "Makikita sa ibang device bilang: %{label}",
     conflictTitle: "May mas bagong Quick Sync data",
     conflictSubtitle:

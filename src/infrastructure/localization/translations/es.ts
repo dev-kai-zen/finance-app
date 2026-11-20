@@ -658,6 +658,8 @@ export const es = {
     restoreConfirmAction: "Restaurar",
     deviceLabelTitle: "Etiqueta del dispositivo (opcional)",
     deviceLabelSave: "Guardar",
+    deviceLabelSaved: "Etiqueta del dispositivo guardada.",
+    deviceLabelReset: "Etiqueta del dispositivo restablecida.",
     deviceLabelShownAs: "Visible para otros dispositivos como: %{label}",
     conflictTitle: "Se encontraron datos más recientes de Quick Sync",
     conflictSubtitle:

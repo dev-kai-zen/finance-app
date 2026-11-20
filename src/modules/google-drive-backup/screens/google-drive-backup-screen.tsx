@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import {
+  AppToast,
   InfoModal,
   KeyboardAwareForm,
   ModalScreenHeader,
@@ -21,9 +22,16 @@ export function GoogleDriveBackupScreen({
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
   const [internalHelpVisible, setInternalHelpVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isHelpVisible = helpVisible ?? internalHelpVisible;
   const handleCloseHelp = onCloseHelp ?? (() => setInternalHelpVisible(false));
+  const handleShowToast = useCallback((message: string) => {
+    setToastMessage(message);
+  }, []);
+  const handleCloseToast = useCallback(() => {
+    setToastMessage(null);
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -51,9 +59,17 @@ export function GoogleDriveBackupScreen({
             title={t("googleDriveBackup.helpTitle")}
             visible={isHelpVisible}
           />
-          <GoogleDriveBackupPanel />
+          <GoogleDriveBackupPanel onShowToast={handleShowToast} />
         </PageContainer>
       </KeyboardAwareForm>
+      <AppToast
+        includeSafeArea
+        message={toastMessage ?? ""}
+        onClose={handleCloseToast}
+        position="top"
+        variant="success"
+        visible={toastMessage !== null}
+      />
     </View>
   );
 }

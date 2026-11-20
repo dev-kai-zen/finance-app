@@ -649,6 +649,8 @@ export const en = {
     restoreConfirmAction: "Restore",
     deviceLabelTitle: "Device label (optional)",
     deviceLabelSave: "Save",
+    deviceLabelSaved: "Device label saved.",
+    deviceLabelReset: "Device label reset to default.",
     deviceLabelShownAs: "Shown to other devices as: %{label}",
     conflictTitle: "Newer Quick Sync data found",
     conflictSubtitle:

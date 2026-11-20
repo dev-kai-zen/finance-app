@@ -39,10 +39,12 @@ import { ScheduledBackupCard } from "./scheduled-backup-card";
 
 export interface GoogleDriveBackupPanelProps {
   mode?: "full" | "restore-only";
+  onShowToast?: (message: string) => void;
 }
 
 export function GoogleDriveBackupPanel({
   mode = "full",
+  onShowToast,
 }: GoogleDriveBackupPanelProps = {}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
@@ -375,7 +377,9 @@ export function GoogleDriveBackupPanel({
 
         {mode === "full" && backup.user ? <ScheduledBackupCard /> : null}
 
-        {mode === "full" && backup.user ? <QuickSyncCard /> : null}
+        {mode === "full" && backup.user ? (
+          <QuickSyncCard onShowToast={onShowToast} />
+        ) : null}
       </View>
       )}
 

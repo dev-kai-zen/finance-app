@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
@@ -29,7 +30,11 @@ import type { QuickSyncNetworkPreference } from "@/infrastructure/sync";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 
-export function QuickSyncCard() {
+export interface QuickSyncCardProps {
+  onShowToast?: (message: string) => void;
+}
+
+export function QuickSyncCard({ onShowToast }: QuickSyncCardProps = {}) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
@@ -72,7 +77,14 @@ export function QuickSyncCard() {
   };
 
   const handleSaveDeviceLabel = () => {
+    if (!isDeviceLabelDirty) return;
     quickSync.setDeviceLabel(trimmedDraft.length > 0 ? trimmedDraft : null);
+    Keyboard.dismiss();
+    onShowToast?.(
+      trimmedDraft.length > 0
+        ? t("quickSync.deviceLabelSaved")
+        : t("quickSync.deviceLabelReset"),
+    );
   };
 
   const handleManualSync = async () => {
@@ -243,7 +255,6 @@ export function QuickSyncCard() {
                 autoCapitalize="words"
                 autoCorrect={false}
                 maxLength={40}
-                onBlur={handleSaveDeviceLabel}
                 onChangeText={setDeviceLabelDraft}
                 onSubmitEditing={handleSaveDeviceLabel}
                 placeholder={quickSync.hardwareDeviceName}
@@ -252,21 +263,27 @@ export function QuickSyncCard() {
                 style={styles.deviceLabelInput}
                 value={deviceLabelDraft}
               />
-              {isDeviceLabelDirty ? (
-                <Pressable
-                  accessibilityLabel={t("quickSync.deviceLabelSave")}
-                  accessibilityRole="button"
-                  onPress={handleSaveDeviceLabel}
-                  style={({ pressed }) => [
-                    styles.deviceLabelSaveButton,
-                    pressed && styles.pressed,
+              <Pressable
+                accessibilityLabel={t("quickSync.deviceLabelSave")}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !isDeviceLabelDirty }}
+                disabled={!isDeviceLabelDirty}
+                onPress={handleSaveDeviceLabel}
+                style={({ pressed }) => [
+                  styles.deviceLabelSaveButton,
+                  !isDeviceLabelDirty && styles.deviceLabelSaveButtonDisabled,
+                  pressed && isDeviceLabelDirty && styles.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.deviceLabelSaveText,
+                    !isDeviceLabelDirty && styles.deviceLabelSaveTextDisabled,
                   ]}
                 >
-                  <Text style={styles.deviceLabelSaveText}>
-                    {t("quickSync.deviceLabelSave")}
-                  </Text>
-                </Pressable>
-              ) : null}
+                  {t("quickSync.deviceLabelSave")}
+                </Text>
+              </Pressable>
             </View>
             <Text style={styles.deviceLabelHelper}>
               {t("quickSync.deviceLabelShownAs", {
@@ -531,10 +548,18 @@ function createStyles(theme: AppTheme) {
       minHeight: 40,
       paddingHorizontal: theme.spacing.md,
     },
+    deviceLabelSaveButtonDisabled: {
+      backgroundColor: theme.colors.surfaceMuted,
+      borderColor: theme.colors.border,
+      borderWidth: 1,
+    },
     deviceLabelSaveText: {
       color: theme.colors.onPrimary,
       fontSize: 12,
       fontWeight: theme.typography.fontWeight.semibold,
+    },
+    deviceLabelSaveTextDisabled: {
+      color: theme.colors.textMuted,
     },
     deviceLabelHelper: {
       color: theme.colors.textMuted,
