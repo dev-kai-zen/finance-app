@@ -120,7 +120,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-05 — Calendar: Posted / Skipped Schedules Never Update Until Switching Months
+### [x] P1-05 — Calendar: Posted / Skipped Schedules Never Update Until Switching Months (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/calendar/hooks/use-calendar-data.ts`

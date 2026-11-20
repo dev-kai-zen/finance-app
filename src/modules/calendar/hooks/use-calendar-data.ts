@@ -162,11 +162,29 @@ export function useCalendarData() {
     refresh: refreshAccounts,
   } = useAccounts();
   const {
+    schedules,
+    occurrences,
     loading: schedulesLoading,
     refresh: refreshSchedules,
-    postOccurrence,
-    skipOccurrence,
+    postOccurrence: rawPostOccurrence,
+    skipOccurrence: rawSkipOccurrence,
   } = useScheduledTransactions();
+
+  const postOccurrence = useCallback(
+    (id: string): boolean => {
+      const ok = rawPostOccurrence(id);
+      if (ok) {
+        refreshAccounts();
+      }
+      return ok;
+    },
+    [rawPostOccurrence, refreshAccounts],
+  );
+
+  const skipOccurrence = useCallback(
+    (id: string): boolean => rawSkipOccurrence(id),
+    [rawSkipOccurrence],
+  );
 
   const loading =
     categoriesLoading ||
@@ -236,7 +254,7 @@ export function useCalendarData() {
     } catch {
       return [];
     }
-  }, [loading, monthDateRange]);
+  }, [loading, monthDateRange, transactions, schedules, occurrences]);
 
   // Group transactions by dateKey (YYYY-MM-DD)
   const transactionsByDateKey = useMemo(() => {

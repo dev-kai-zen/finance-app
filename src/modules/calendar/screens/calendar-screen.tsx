@@ -243,14 +243,12 @@ function CalendarScreenContent() {
     if (!pendingPostScheduleId) return;
     postOccurrence(pendingPostScheduleId);
     setPendingPostScheduleId(null);
-    refreshAll();
   };
 
   const handleConfirmSkipSchedule = () => {
     if (!pendingSkipScheduleId) return;
     skipOccurrence(pendingSkipScheduleId);
     setPendingSkipScheduleId(null);
-    refreshAll();
   };
 
   const handleSelectTab = (tab: CalendarTab) => {
