@@ -1111,11 +1111,15 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 
 ---
 
-### [ ] P3-01 — Startup Stall: `seedCurrenciesIfEmpty()` & `seedDefaultCategoriesIfEmpty()` Run 155+ Unbatched Synchronous SQLite Commits Outside a Transaction
+### [x] P3-01 — Startup Stall: `seedCurrenciesIfEmpty()` & `seedDefaultCategoriesIfEmpty()` Run 155+ Unbatched Synchronous SQLite Commits Outside a Transaction
 - **How to Observe & Verify:**
   - **On Device:** On a fresh install, app reset, or v1.7.0 → v1.8.0 upgrade, SQLite currently opens and commits **155 separate disk transactions** one by one in a `.forEach()` loop on the main JS thread (~150ms–1,200ms freeze on Android flash storage).
-  - **How We Fix It:** Wrap `seedCurrenciesIfEmpty()` (`seed-currencies.service.ts`) and `seedDefaultCategoriesIfEmpty()` (`seed-default-categories.service.ts`) in `db.transaction((tx) => ...)` so all 155 rows commit in **1 single atomic disk flush** (<5ms).
-  - **Verification:** We will log/assert the execution time and transaction count in an automated test (`< 10ms` in-transaction vs 155 autocommits) and verify instant first-boot/reset transition.
+  - **How We Fix It:** Wrap `seedCurrenciesIfEmpty()` (`seed-currencies.service.ts`) and `seedDefaultCategoriesIfEmpty()` (`seed-default-categories.service.ts`) in `db.transaction((tx) => ...)` so each seed operation commits its catalog in **1 atomic transaction**. Keep Expo SQLite transaction callbacks synchronous.
+  - **Verification:** Log execution time and assert transaction counts, rollback, and no-op behavior in automated tests; verify first-boot/reset transitions on a release device. A fixed <10ms timing cannot be guaranteed by an in-memory test.
+
+- **Implemented:** Currency seeding already batches missing currencies and order repairs into one synchronous transaction, with no transaction when current. Category default insertion is now synchronous and owned by an explicit seed service or the existing workspace/preset transaction. Workspace transaction callbacks no longer yield before category/account/settings writes finish. Ordinary category reads no longer seed defaults.
+- **Automated verification:** Real in-memory SQLite tests assert one commit for all 51 default categories, field parity and parent links, no writes outside transactions, failure rollback/retry, caller-owned rollback, preservation of existing/custom workspaces, and read-only empty category queries. Currency tests cover fresh seeding, legacy upgrades, custom currency preservation, no-op reruns, and failure rollback/retry.
+- **Performance assessment:** Seeding is O(C) for the fixed catalog and uses one commit per seed operation instead of one per row; existing-category detection is a single LIMIT 1 probe. No navigation subscriptions, render cascades, or per-focus writes are added. In-memory timing is logged, not enforced as a flaky <10ms threshold; release-device cold-start/reset/upgrade profiling remains required to verify frame timing. The current catalogs contain 153 currencies and 51 categories.
 
 ---
 

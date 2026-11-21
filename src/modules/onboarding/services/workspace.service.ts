@@ -106,9 +106,9 @@ function readWorkspaceStateFromDatabase(context: DbContext = db): WorkspaceState
 export async function completeManualSetup(): Promise<WorkspaceState> {
   const now = new Date();
 
-  await db.transaction(async (tx) => {
+  await db.transaction((tx) => {
     clearSampleWorkspaceIfNeeded(tx);
-    await prepareWorkspaceCategories("manual", tx, now);
+    prepareWorkspaceCategories("manual", tx, now);
     saveCompletedSettings("personal", "manual", tx, now);
   });
 
@@ -132,25 +132,25 @@ export async function completeGuidedSetup(
     input.accountStrategy ?? (input.account ? "custom" : "recommended");
   let accountId = "";
 
-  await db.transaction(async (tx) => {
+  await db.transaction((tx) => {
     clearSampleWorkspaceIfNeeded(tx);
 
     if (strategy === "recommended") {
-      await prepareWorkspaceCategories("recommended", tx, now);
+      prepareWorkspaceCategories("recommended", tx, now);
       createRecommendedAccounts(tx, now, input.currencyCode);
       setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
       setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
     } else if (strategy === "manual") {
-      await prepareWorkspaceCategories("manual", tx, now);
+      prepareWorkspaceCategories("manual", tx, now);
     } else if (strategy === "import") {
-      await prepareWorkspaceCategories("recommended", tx, now);
+      prepareWorkspaceCategories("recommended", tx, now);
       const defaultId = getFirstActiveAccountId(tx);
       if (defaultId) {
         setDefaultExpenseAccount(defaultId, null, tx);
         setDefaultIncomeAccount(defaultId, null, tx);
       }
     } else {
-      await prepareWorkspaceCategories("recommended", tx, now);
+      prepareWorkspaceCategories("recommended", tx, now);
       if (input.account) {
         accountId = createInitialAccount(
           input.account,
@@ -189,9 +189,9 @@ export async function completeGuidedSetup(
 export async function completeRecommendedSetup(): Promise<WorkspaceState> {
   const now = new Date();
 
-  await db.transaction(async (tx) => {
+  await db.transaction((tx) => {
     clearSampleWorkspaceIfNeeded(tx);
-    await prepareWorkspaceCategories("recommended", tx, now);
+    prepareWorkspaceCategories("recommended", tx, now);
     createRecommendedAccounts(tx, now);
     setDefaultExpenseAccount(RECOMMENDED_ACCOUNT_IDS.cash, null, tx);
     setDefaultIncomeAccount(RECOMMENDED_ACCOUNT_IDS.bank, null, tx);
@@ -213,8 +213,8 @@ export async function loadSampleWorkspace(): Promise<WorkspaceState> {
   }
 
   const now = new Date();
-  await db.transaction(async (tx) => {
-    await prepareWorkspaceCategories("recommended", tx, now);
+  await db.transaction((tx) => {
+    prepareWorkspaceCategories("recommended", tx, now);
     const accountIds = createSampleAccounts(tx, now);
     createSampleTransactions(accountIds, tx, now);
     saveCompletedSettings("sample", null, tx, now);

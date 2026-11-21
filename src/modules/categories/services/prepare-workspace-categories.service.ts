@@ -23,11 +23,11 @@ const ESSENTIAL_CATEGORY_IDS = new Set([
   "cat_sub_salary_base",
 ]);
 
-export async function prepareWorkspaceCategories(
+export function prepareWorkspaceCategories(
   setup: CategorySetup,
   context: DbContext,
   now = new Date(),
-): Promise<void> {
+): void {
   const categories = DEFAULT_SEED_CATEGORIES.filter(({ id }) => {
     if (setup === "recommended") return true;
     const selectedIds =
@@ -36,7 +36,7 @@ export async function prepareWorkspaceCategories(
   });
 
   for (const [sortOrder, category] of categories.entries()) {
-    await insertCategoryPreset(context, category, sortOrder, now);
+    insertCategoryPreset(context, category, sortOrder, now);
   }
 }
 

@@ -16,10 +16,10 @@ const INCOME_FALLBACK_ID = "cat_inc_others";
 const REMOVED_PRESET_IDS = ["cat_exp_groceries"] as const;
 
 export async function loadCategoryPresets(client: AppDatabase = db): Promise<void> {
-  await client.transaction(async (tx) => {
+  await client.transaction((tx) => {
     const now = new Date();
     for (const [sortOrder, category] of DEFAULT_SEED_CATEGORIES.entries()) {
-      await insertCategoryPreset(tx, category, sortOrder, now);
+      insertCategoryPreset(tx, category, sortOrder, now);
     }
   });
   invalidateChatKeywordsCache();

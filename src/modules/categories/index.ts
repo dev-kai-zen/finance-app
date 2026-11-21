@@ -83,3 +83,7 @@ export const getCategoryImportCatalog = deferFunction(
 export const resolveImportedCategory = deferFunction(
   () => require("./services/import-categories.service").resolveImportedCategory,
 ) as typeof import("./services/import-categories.service").resolveImportedCategory;
+
+export const seedDefaultCategoriesIfEmpty = deferFunction(
+  () => require("./services/seed-default-categories.service").seedDefaultCategoriesIfEmpty,
+) as typeof import("./services/seed-default-categories.service").seedDefaultCategoriesIfEmpty;

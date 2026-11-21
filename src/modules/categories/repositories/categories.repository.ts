@@ -1,10 +1,7 @@
 import { and, asc, eq, inArray, isNull, ne, notInArray } from "drizzle-orm";
 import type { DbContext } from "@/infrastructure/database/client";
 import { categories, hexColors, transactions } from "@/infrastructure/database/schema";
-import {
-  DEFAULT_SEED_CATEGORIES,
-  isProtectedCategoryId,
-} from "../constants/categories.constants";
+import { isProtectedCategoryId } from "../constants/categories.constants";
 import type { Category, CategoryInput, CategoryType } from "../types/category.types";
 
 function mapCategory(
@@ -46,9 +43,6 @@ export async function listCategories(
   db: DbContext,
   options?: { flat?: boolean },
 ): Promise<Category[]> {
-  // Ensure default categories exist if database is fresh
-  await seedDefaultCategoriesIfEmpty(db);
-
   const rows = await db
     .select({
       category: categories,
@@ -326,18 +320,8 @@ export async function deleteCategory(
   return true;
 }
 
-export async function seedDefaultCategoriesIfEmpty(db: DbContext): Promise<void> {
-  const existing = await db
-    .select({ id: categories.id })
-    .from(categories)
-    .limit(1);
-
-  if (existing.length === 0) {
-    const now = new Date();
-    for (const [idx, cat] of DEFAULT_SEED_CATEGORIES.entries()) {
-      await insertCategoryPreset(db, cat, idx, now);
-    }
-  }
+export function hasAnyCategories(context: DbContext): boolean {
+  return Boolean(context.select({ id: categories.id }).from(categories).limit(1).get());
 }
 
 export function deleteNonSystemCategoryRecords(db: DbContext): void {
@@ -348,13 +332,13 @@ export function deleteNonSystemCategoryRecords(db: DbContext): void {
   db.delete(categories).where(eq(categories.isSystem, false)).run();
 }
 
-export async function insertCategoryPreset(
+export function insertCategoryPreset(
   db: DbContext,
   cat: CategoryInput & { id: string; isSystem: boolean },
   sortOrder: number,
   now = new Date(),
-): Promise<void> {
-  await db
+): void {
+  db
     .insert(categories)
     .values({
       id: cat.id,
@@ -368,7 +352,8 @@ export async function insertCategoryPreset(
       createdAt: now,
       updatedAt: now,
     })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .run();
 }
 
 export async function detachCustomChildrenFromPresetGroups(

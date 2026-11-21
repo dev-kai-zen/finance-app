@@ -471,3 +471,19 @@ test("mid-onboarding account import (P1-16): app restart before Finish Setup kee
     setupStrategy: null,
   });
 });
+
+
+test("P3-01: setup failure after category seeding restores the entire sample workspace", async () => {
+  await workspace.loadSampleWorkspace();
+  const tables = ["categories", "accounts", "transactions", "settings"];
+  const snapshot = () => tables.map((table) => sqlite.prepare('SELECT * FROM "' + table + '" ORDER BY rowid').all());
+  const before = snapshot();
+  sqlite.exec("CREATE TRIGGER fail_setup BEFORE INSERT ON accounts BEGIN SELECT RAISE(ABORT, 'setup failed'); END;");
+
+  await assert.rejects(workspace.completeRecommendedSetup(), /setup failed/);
+  assert.deepEqual(snapshot(), before);
+  assert.equal(workspace.initializeWorkspaceState().mode, "sample");
+
+  sqlite.exec("DROP TRIGGER fail_setup");
+  assert.equal((await workspace.completeRecommendedSetup()).mode, "personal");
+});
