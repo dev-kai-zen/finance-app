@@ -1030,7 +1030,12 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-09 — [MEDIUM — Notes] Free-Tier 10-Note Limit Bypass & Vanishing `+` FAB During Search
+### [x] P2-09 — [MEDIUM — Notes] Free-Tier 10-Note Limit Bypass & Vanishing `+` FAB During Search
+- **Status:** Implemented; Android search/FAB and release-build frame verification remain pending.
+- **Implementation:** Expose the unfiltered active `totalNotesCount` from `useNotes` and use it for the free-tier add guard, FAB visibility, and FAB walkthrough target. Preserve `hasAnyNotes` as a derived value. Recheck the configured limit inside the note-creation transaction to prevent stale or concurrent saves bypassing it. The current `PRO_LIMITS.FREE_MAX_NOTES` is 5, rather than the 10 in this reproduction example; the configured limit is unchanged.
+- **Loading:** Debounce database-backed search by 150ms (clear immediately), defer note/count reads after paint, cancel pending work on re-trigger/blur/unmount, and resolve loading with the matching rows/count. Keep search controls mounted while the results skeleton is shown. Hoist the screen spacing style factory.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all eight notes tests passed, including four new real SQLite/hook regressions for one/zero search matches, Trash exclusion, indexed count SQL, simultaneous free saves, Pro access, deletion freeing a slot, deferred/debounced reads, search clearing, skipQuery, and cancellation. Android visual verification remains pending; no device was connected.
+- **Performance:** No SQL during render or live typing. Unfiltered refreshes reuse the loaded row count; filtered refreshes use one indexed COUNT instead of the prior existence probe, without hydrating more notes or attachments. Exact counting is O(A) over active index entries; free-tier creation adds one transactional count. No new root subscriptions or duplicate mount/focus loads.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test Both in 15 Seconds):**
   1. Open **Notes** (ensure you have at least 1 note).

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, like, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull, like, or } from "drizzle-orm";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { notes, type NewNoteRecord, type NoteRecord } from "@/infrastructure/database/schema";
@@ -168,4 +168,10 @@ export function hasNotes(context: DbContext = db): boolean {
       .limit(1)
       .get(),
   );
+}
+
+/** Counts active notes without hydrating note bodies or attachments. */
+export function countNotes(context: DbContext = db): number {
+  return context.select({ total: count() }).from(notes)
+    .where(isNull(notes.deletedAt)).get()?.total ?? 0;
 }

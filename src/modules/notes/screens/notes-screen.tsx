@@ -68,6 +68,7 @@ function NotesScreenContent({
   const {
     notes,
     hasAnyNotes,
+    totalNotesCount,
     loading,
     search,
     setSearch,
@@ -79,6 +80,7 @@ function NotesScreenContent({
     updateNote,
     deleteNote,
     refresh,
+    cancelRefresh,
   } = useNotes({ autoRefresh: false });
   const { guardAction, paywallVisible, closePaywall, guardMeta } =
     useProGuard();
@@ -99,7 +101,7 @@ function NotesScreenContent({
   const firstNoteRef = useWalkthroughTarget(
     hasNoteInList ? "notesFirstItem" : null,
   );
-  const fabRef = useWalkthroughTarget(hasNoteInList ? "notesFab" : null);
+  const fabRef = useWalkthroughTarget(totalNotesCount > 0 ? "notesFab" : null);
 
   const scrollRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
@@ -177,11 +179,12 @@ function NotesScreenContent({
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh]),
+      return cancelRefresh;
+    }, [cancelRefresh, refresh]),
   );
 
   const handleOpenNewNote = useCallback(() => {
-    if (notes.length >= PRO_LIMITS.FREE_MAX_NOTES) {
+    if (totalNotesCount >= PRO_LIMITS.FREE_MAX_NOTES) {
       guardAction(
         () => {
           setSelectedNote(null);
@@ -198,7 +201,7 @@ function NotesScreenContent({
     }
     setSelectedNote(null);
     setEditorVisible(true);
-  }, [guardAction, notes.length, t]);
+  }, [guardAction, totalNotesCount, t]);
 
   useEffect(() => {
     if (!loading && initialAction === "new") {
@@ -288,9 +291,7 @@ function NotesScreenContent({
   const hasNoNotes = notes.length === 0;
   const [isBottomAdVisible, setIsBottomAdVisible] = useState(false);
 
-  const contentSpacing = useThemeStyles((theme) => ({
-    paddingTop: theme.spacing.lg,
-  }));
+  const contentSpacing = useThemeStyles(createContentSpacing);
 
   return (
     <View style={styles.screenWrapper}>
@@ -304,7 +305,7 @@ function NotesScreenContent({
           walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive
         }
         floatingAction={
-          notes.length > 0 ? (
+          totalNotesCount > 0 ? (
             <FloatingActionButton
               accessibilityLabel="Add new note"
               fabRef={fabRef}
@@ -315,6 +316,20 @@ function NotesScreenContent({
         }
       >
         <View style={styles.container}>
+          {/* Keep search controls mounted while results load. */}
+          {(totalNotesCount > 0 || isSearchActive) && (
+            <NoteSortFilterBar
+              onSearchChange={setSearch}
+              onSortByChange={setSortBy}
+              onViewModeChange={setViewMode}
+              search={search}
+              searchRef={searchRef}
+              sortBy={sortBy}
+              sortFilterRef={sortFilterRef}
+              viewMode={viewMode}
+              viewModeRef={viewModeRef}
+            />
+          )}
           {loading ? (
             <PageLoadingState message="Loading notes..." variant="cards" />
           ) : hasNoNotes && !isSearchActive ? (
@@ -328,18 +343,7 @@ function NotesScreenContent({
             />
           ) : (
             <>
-              {/* Search, View Toggle, and Sort controls */}
-              <NoteSortFilterBar
-                onSearchChange={setSearch}
-                onSortByChange={setSortBy}
-                onViewModeChange={setViewMode}
-                search={search}
-                searchRef={searchRef}
-                sortBy={sortBy}
-                sortFilterRef={sortFilterRef}
-                viewMode={viewMode}
-                viewModeRef={viewModeRef}
-              />
+
 
               {hasNoNotes && isSearchActive ? (
                 /* Empty state when search query matches nothing */
@@ -459,6 +463,10 @@ function NotesScreenContent({
       ) : null}
     </View>
   );
+}
+
+function createContentSpacing(theme: AppTheme) {
+  return { paddingTop: theme.spacing.lg };
 }
 
 function createStyles(theme: AppTheme) {

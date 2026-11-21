@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 
 import {
   DEFAULT_NOTE_SORT_OPTION,
   DEFAULT_NOTE_VIEW_MODE,
 } from "../constants/notes.constants";
-import { hasNotes, listNotes } from "../repositories/notes.repository";
+import { countNotes, listNotes } from "../repositories/notes.repository";
 import { createNote as createNoteService } from "../services/create-note.service";
 import { updateNote as updateNoteService } from "../services/update-note.service";
 import { deleteNote as deleteNoteService } from "../services/delete-note.service";
@@ -23,50 +24,63 @@ export function useNotes(options?: {
   const autoRefresh = options?.autoRefresh ?? true;
   const skipQuery = options?.skipQuery ?? false;
   const [notes, setNotes] = useState<Note[]>([]);
-  const [hasAnyNotes, setHasAnyNotes] = useState(false);
+  const [totalNotesCount, setTotalNotesCount] = useState(0);
   const [loading, setLoading] = useState(!skipQuery);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<NoteSortOption>(DEFAULT_NOTE_SORT_OPTION);
   const [viewMode, setViewMode] = useState<NoteViewMode>(DEFAULT_NOTE_VIEW_MODE);
-  const hasLoadedOnceRef = useRef(false);
-
-  const refresh = useCallback(() => {
-    if (skipQuery) {
-      return;
-    }
-    try {
-      if (!hasLoadedOnceRef.current) {
-        setLoading(true);
-      }
-      const trimmedSearch = search.trim();
-      const items = listNotes({
-        search: trimmedSearch.length > 0 ? search : undefined,
-        sortBy,
-      });
-      setNotes(items);
-      setHasAnyNotes(
-        trimmedSearch.length > 0
-          ? hasNotes()
-          : items.length > 0,
-      );
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load notes.");
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
-  }, [search, skipQuery, sortBy]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [resolvedQuery, setResolvedQuery] = useState(() => ({
+    search: "", sortBy: DEFAULT_NOTE_SORT_OPTION,
+  }));
+  const cancelPendingRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!autoRefresh || skipQuery) return;
-    const frameId = requestAnimationFrame(() => {
-      refresh();
-    });
-    return () => cancelAnimationFrame(frameId);
-  }, [autoRefresh, refresh, skipQuery]);
+    if (!search.trim()) {
+      setDebouncedSearch("");
+      return;
+    }
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 150);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const cancelRefresh = useCallback(() => {
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = null;
+  }, []);
+
+  const refresh = useCallback(() => {
+    cancelRefresh();
+    if (skipQuery) return;
+    cancelPendingRef.current = runDeferredSyncQuery(
+      { hasCachedResult: false, setLoading },
+      () => {
+        cancelPendingRef.current = null;
+        try {
+          const trimmedSearch = debouncedSearch.trim();
+          const items = listNotes({
+            search: trimmedSearch || undefined,
+            sortBy,
+          });
+          const total = trimmedSearch ? countNotes() : items.length;
+          setNotes(items);
+          setTotalNotesCount(total);
+          setError(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Failed to load notes.");
+        } finally {
+          setResolvedQuery({ search: debouncedSearch.trim(), sortBy });
+        }
+      },
+    );
+  }, [cancelRefresh, debouncedSearch, skipQuery, sortBy]);
+
+  useEffect(() => {
+    if (autoRefresh && !skipQuery) refresh();
+    return cancelRefresh;
+  }, [autoRefresh, cancelRefresh, refresh, skipQuery]);
 
   const createNote = useCallback(
     async (input: CreateNoteInput): Promise<Note> => {
@@ -118,8 +132,9 @@ export function useNotes(options?: {
 
   return {
     notes,
-    hasAnyNotes,
-    loading,
+    totalNotesCount,
+    hasAnyNotes: totalNotesCount > 0,
+    loading: !skipQuery && (loading || search.trim() !== resolvedQuery.search || sortBy !== resolvedQuery.sortBy),
     error,
     search,
     setSearch,
@@ -131,6 +146,7 @@ export function useNotes(options?: {
     updateNote,
     deleteNote,
     refresh,
+    cancelRefresh,
     clearError,
   };
 }

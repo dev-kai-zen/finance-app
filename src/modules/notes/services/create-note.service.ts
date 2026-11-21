@@ -3,7 +3,8 @@ import { randomUUID } from "expo-crypto";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { noteInputSchema } from "../schemas/note.schema";
 import type { CreateNoteInput, Note } from "../types/note.types";
-import { insertNote } from "../repositories/notes.repository";
+import { getCurrentProStatus, PRO_LIMITS } from "@/modules/pro";
+import { countNotes, insertNote } from "../repositories/notes.repository";
 import { insertNoteAttachment } from "../repositories/note-attachments.repository";
 import {
   discardPreparedNoteAttachments,
@@ -22,6 +23,9 @@ export async function createNote(input: CreateNoteInput): Promise<Note> {
 
   try {
     const committed = db.transaction((tx: DbContext) => {
+      if (!getCurrentProStatus().isPro && countNotes(tx) >= PRO_LIMITS.FREE_MAX_NOTES) {
+        throw new Error(`The free plan supports up to ${PRO_LIMITS.FREE_MAX_NOTES} notes. Upgrade to Pro to add more.`);
+      }
       const now = new Date();
       const noteId = randomUUID();
 
