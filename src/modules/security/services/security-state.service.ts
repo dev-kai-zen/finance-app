@@ -18,6 +18,22 @@ import type {
   SecurityConfig,
 } from "../types/security.types";
 
+type SecurityConfigListener = () => void;
+const securityConfigListeners = new Set<SecurityConfigListener>();
+
+export function subscribeSecurityConfigChanged(listener: SecurityConfigListener): () => void {
+  securityConfigListeners.add(listener);
+  return () => {
+    securityConfigListeners.delete(listener);
+  };
+}
+
+function notifySecurityConfigChanged(): void {
+  for (const listener of securityConfigListeners) {
+    listener();
+  }
+}
+
 /**
  * Retrieves the current security configuration from secure storage.
  */
@@ -96,6 +112,7 @@ export async function setPassword(
     setSecureItem(SECURE_STORAGE_KEYS.PASSWORD_HASH, hash),
     setSecureItem(SECURE_STORAGE_KEYS.PASSWORD_SALT, salt),
   ]);
+  notifySecurityConfigChanged();
 
   return { success: true };
 }
@@ -116,6 +133,7 @@ export async function removePassword(
     deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_SALT),
     deleteSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED),
   ]);
+  notifySecurityConfigChanged();
 
   return { success: true };
 }
@@ -129,6 +147,7 @@ export async function setBiometricsEnabled(
 ): Promise<{ success: boolean; error?: string }> {
   if (!enabled) {
     await setSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED, "false");
+    notifySecurityConfigChanged();
     return { success: true };
   }
 
@@ -170,6 +189,7 @@ export async function setBiometricsEnabled(
   }
 
   await setSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED, "true");
+  notifySecurityConfigChanged();
   return { success: true };
 }
 
@@ -238,6 +258,7 @@ export async function removePasswordWithBiometrics(): Promise<{
     deleteSecureItem(SECURE_STORAGE_KEYS.PASSWORD_SALT),
     deleteSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED),
   ]);
+  notifySecurityConfigChanged();
 
   return { success: true };
 }
@@ -253,4 +274,5 @@ export async function clearAllSecurityCredentials(): Promise<void> {
     deleteSecureItem(SECURE_STORAGE_KEYS.BIOMETRICS_ENABLED),
     deleteSecureItem(SECURE_STORAGE_KEYS.AUTO_LOCK_TIMEOUT_MS),
   ]);
+  notifySecurityConfigChanged();
 }

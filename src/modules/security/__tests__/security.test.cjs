@@ -106,6 +106,7 @@ require.extensions[".ts"] = function (module, filename) {
 
 const {
   getSecurityConfig,
+  subscribeSecurityConfigChanged,
   setPassword,
   verifyCurrentPassword,
   removePassword,
@@ -334,4 +335,154 @@ test("security (Option 3): clearAllSecurityCredentials wipes all security keys f
   config = await getSecurityConfig();
   assert.equal(config.isPasswordSet, false);
   assert.equal(config.isBiometricsEnabled, false);
+});
+
+
+function mountAppLock(configReader = getSecurityConfig) {
+  const slots = [];
+  const effects = [];
+  const cleanups = [];
+  let cursor = 0;
+  let unmounted = false;
+  const sameDeps = (a, b) => a && a.length === b.length && a.every((v, i) => Object.is(v, b[i]));
+  const react = {
+    useState(initial) {
+      const i = cursor++;
+      if (!(i in slots)) slots[i] = typeof initial === "function" ? initial() : initial;
+      return [slots[i], value => {
+        assert.equal(unmounted, false, "No state updates after unmount");
+        slots[i] = typeof value === "function" ? value(slots[i]) : value;
+      }];
+    },
+    useRef(initial) {
+      const i = cursor++;
+      return slots[i] ?? (slots[i] = { current: initial });
+    },
+    useCallback(callback, deps) {
+      const i = cursor++;
+      if (!sameDeps(slots[i]?.deps, deps)) slots[i] = { deps, callback };
+      return slots[i].callback;
+    },
+    useEffect(callback, deps) {
+      const i = cursor++;
+      if (!sameDeps(slots[i], deps)) { slots[i] = deps; effects.push(callback); }
+    },
+  };
+  const filename = path.resolve(__dirname, "../hooks/use-app-lock.ts");
+  const localRequire = Module.createRequire(filename);
+  const exports = {};
+  const code = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  require("node:vm").runInNewContext(code, {
+    exports,
+    console,
+    require: name => name === "react" ? react : name === "../services/security-state.service"
+      ? { ...localRequire(name), getSecurityConfig: configReader } : localRequire(name),
+  });
+  return {
+    render() {
+      cursor = 0;
+      const state = exports.useAppLock();
+      effects.splice(0).forEach(effect => cleanups.push(effect()));
+      return state;
+    },
+    unmount() {
+      cleanups.forEach(cleanup => cleanup?.());
+      unmounted = true;
+    },
+  };
+}
+
+const flushSecurityUpdates = () => new Promise(resolve => setImmediate(resolve));
+
+test("security: successful mutations notify after writes; rejected mutations do not notify", async () => {
+  const snapshots = [];
+  const unsubscribe = subscribeSecurityConfigChanged(() => {
+    snapshots.push({
+      hash: secureStorageMock.get("kaizen_security_password_hash"),
+      salt: secureStorageMock.get("kaizen_security_password_salt"),
+      biometrics: secureStorageMock.get("kaizen_security_biometrics_enabled"),
+    });
+  });
+  try {
+    await setPassword("");
+    assert.equal(snapshots.length, 0);
+    await setPassword("secret");
+    assert.ok(snapshots[0].hash);
+    assert.ok(snapshots[0].salt);
+    await setPassword("changed", "wrong");
+    await removePassword("wrong");
+    assert.equal(snapshots.length, 1);
+    await setBiometricsEnabled(true);
+    assert.equal(snapshots.at(-1).biometrics, "true");
+    mockBiometricPromptSuccess = false;
+    await removePasswordWithBiometrics();
+    assert.equal(snapshots.length, 2);
+    mockBiometricPromptSuccess = true;
+    await resetPasswordWithBiometrics("changed");
+    assert.equal(snapshots.length, 3, "Biometric reset publishes once via setPassword");
+    await setBiometricsEnabled(false);
+    assert.equal(snapshots.at(-1).biometrics, "false");
+    await removePassword("changed");
+    assert.equal(snapshots.at(-1).hash, undefined);
+    assert.equal(snapshots.at(-1).salt, undefined);
+    assert.equal(snapshots.at(-1).biometrics, undefined);
+    await setPassword("another");
+    await setBiometricsEnabled(true);
+    await removePasswordWithBiometrics();
+    assert.equal(snapshots.at(-1).hash, undefined);
+    await clearAllSecurityCredentials();
+    assert.equal(snapshots.length, 9);
+  } finally {
+    unsubscribe();
+  }
+  await setPassword("after-unsubscribe");
+  assert.equal(snapshots.length, 9);
+});
+
+test("security: mounted app-lock gate activates on password setup without restart", async () => {
+  const hook = mountAppLock();
+  try {
+    hook.render();
+    await flushSecurityUpdates();
+    assert.equal(hook.render().config.isPasswordSet, false);
+    await setPassword("new-lock-password");
+    await flushSecurityUpdates();
+    assert.equal(hook.render().config.isPasswordSet, true);
+    assert.equal(hook.render().isLocked, false, "Setup does not lock the active session");
+    for (const listener of appStateListeners) await listener("background");
+    for (const listener of appStateListeners) await listener("active");
+    assert.equal(hook.render().isLocked, true);
+    await setBiometricsEnabled(true);
+    await flushSecurityUpdates();
+    assert.equal(hook.render().config.isBiometricsEnabled, true);
+    await removePasswordWithBiometrics();
+    await flushSecurityUpdates();
+    assert.equal(hook.render().config.isPasswordSet, false);
+    assert.equal(hook.render().isLocked, false);
+  } finally {
+    hook.unmount();
+  }
+});
+
+test("security: hook ignores stale reads and pending reads after unmount", async () => {
+  const reads = [];
+  const hook = mountAppLock(() => new Promise(resolve => reads.push(resolve)));
+  hook.render();
+  await setPassword("fresh-password");
+  assert.equal(reads.length, 2);
+  reads[1]({ isPasswordSet: true, isBiometricsEnabled: false, autoLockTimeoutMs: 0 });
+  await flushSecurityUpdates();
+  assert.equal(hook.render().config.isPasswordSet, true);
+  reads[0]({ isPasswordSet: false, isBiometricsEnabled: false, autoLockTimeoutMs: 0 });
+  await flushSecurityUpdates();
+  assert.equal(hook.render().config.isPasswordSet, true);
+  await clearAllSecurityCredentials();
+  assert.equal(reads.length, 3);
+  hook.unmount();
+  reads[2]({ isPasswordSet: false, isBiometricsEnabled: false, autoLockTimeoutMs: 0 });
+  await flushSecurityUpdates();
+  await setPassword("after-unmount");
+  assert.equal(reads.length, 3, "Unmount removes the config subscription");
 });

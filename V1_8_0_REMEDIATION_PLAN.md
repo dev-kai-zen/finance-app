@@ -822,7 +822,10 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-01 — [HIGH — Security] Setting a New App Lock Password Doesn't Activate Auto-Lock Until Force-Restart
+### [x] P2-01 — [HIGH — Security] Setting a New App Lock Password Doesn't Activate Auto-Lock Until Force-Restart
+- **Implementation:** Publish an in-memory config-change event after successful password setup/change, removal (including biometrics), biometric preference changes, and credential reset. `useAppLock` subscribes and refreshes its config, ignores stale asynchronous reads, and unsubscribes on unmount. The existing lifecycle service already checks current config on resume.
+- **Verification:** `npx tsc --noEmit` and all 16 security tests passed, including mounted-hook password setup followed by background/resume without restart, completed-write notifications, rejected operations, removal, stale reads, and unmount cleanup. Android device verification remains pending; no device was connected.
+- **Performance:** No added SQLite queries, polling, or navigation/focus subscriptions. Config changes trigger a fixed number of asynchronous secure-storage and biometric-capability reads per mounted lock hook; notification dispatch is linear only in the small number of subscribers.
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/security/hooks/use-app-lock.ts`

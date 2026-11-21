@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { appLockLifecycle } from "../services/app-lock-lifecycle.service";
 import {
   authenticateWithBiometrics,
@@ -6,6 +6,7 @@ import {
 } from "../services/biometrics.service";
 import {
   getSecurityConfig,
+  subscribeSecurityConfigChanged,
   verifyCurrentPassword,
 } from "../services/security-state.service";
 import type {
@@ -27,6 +28,8 @@ const DEFAULT_BIOMETRICS: BiometricCapabilities = {
 };
 
 export function useAppLock() {
+  const mountedRef = useRef(false);
+  const requestIdRef = useRef(0);
   const [isLocked, setIsLocked] = useState(appLockLifecycle.getIsLocked());
   const [isReady, setIsReady] = useState(false);
   const [config, setConfig] = useState<SecurityConfig>(DEFAULT_CONFIG);
@@ -34,10 +37,13 @@ export function useAppLock() {
     useState<BiometricCapabilities>(DEFAULT_BIOMETRICS);
 
   const refreshState = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     const [freshConfig, freshBiometrics] = await Promise.all([
       getSecurityConfig(),
       getBiometricCapabilities(),
     ]);
+
+    if (!mountedRef.current || requestId !== requestIdRef.current) return;
 
     setConfig(freshConfig);
     setBiometrics(freshBiometrics);
@@ -49,36 +55,38 @@ export function useAppLock() {
   }, []);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
+
+    const unsubscribeConfig = subscribeSecurityConfigChanged(() => {
+      void refreshState().catch((error) => {
+        console.warn("[useAppLock] Error refreshing security configuration:", error);
+      });
+    });
 
     async function init() {
-      const [freshConfig, freshBiometrics] = await Promise.all([
-        getSecurityConfig(),
-        getBiometricCapabilities(),
-      ]);
-
-      if (!mounted) return;
-      setConfig(freshConfig);
-      setBiometrics(freshBiometrics);
+      await refreshState();
+      if (!mountedRef.current) return;
 
       await appLockLifecycle.initialize();
-      if (!mounted) return;
+      if (!mountedRef.current) return;
       setIsReady(true);
     }
 
     void init();
 
     const unsubscribe = appLockLifecycle.subscribe((locked) => {
-      if (mounted) {
+      if (mountedRef.current) {
         setIsLocked(locked);
       }
     });
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
+      ++requestIdRef.current;
+      unsubscribeConfig();
       unsubscribe();
     };
-  }, []);
+  }, [refreshState]);
 
   const unlockWithPassword = useCallback(async (password: string) => {
     const verification = await verifyCurrentPassword(password);
