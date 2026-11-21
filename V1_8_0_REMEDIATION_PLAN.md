@@ -514,19 +514,23 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ## Medium / Low Severity (Part 1)
 
-### [ ] P1-23 — Quick Sync: `restoreQuickSyncBackup` / Conflict Restore Doesn't Hold `activeSyncPromise`
+### [x] P1-23 — Quick Sync: `restoreQuickSyncBackup` / Conflict Restore Doesn't Hold `activeSyncPromise` (Implemented — Ready for User Verification)
 - **User Test Status & Question:** *"I can't validate, but how can we resolve it"*
 - **Why It Happens & How We Resolve It Cleanly:**
   - `performSync()` (uploading) uses `activeSyncPromise` as a mutex lock so two uploads can't run at the same time.
-  - However, `restoreQuickSyncBackup()` and `resolveQuickSyncConflictByRestore()` (downloading & replacing the local SQLite database) do **not** assign their promise to `activeSyncPromise`!
-  - If a 3-second debounce timer or an `AppState` resume check fires while a restore download is mid-flight, `performSync()` or `checkQuickSyncRemoteStatus()` runs concurrently against the database while it is being replaced.
+  - However, `restoreQuickSyncBackup()` and `resolveQuickSyncConflictByRestore()` (downloading & replacing the local SQLite database) did **not** hold `activeSyncPromise` or cancel pending debounce timers.
+  - If a 3-second debounce timer or an `AppState` resume check fired while a restore download was mid-flight, `performSync()` or `checkQuickSyncRemoteStatus()` could run concurrently against the database while it was being replaced.
 - **Files:**
   - `src/modules/google-drive-backup/services/quick-sync.service.ts`
-- **How We Will Properly Fix It:**
-  1. At the start of `restoreQuickSyncBackup()` and `resolveQuickSyncConflictByRestore()`, cancel any pending debounce timer (`clearDebounceTimer()`), wait for any in-flight `activeSyncPromise` to settle, and wrap the restore execution in `activeSyncPromise` (clearing `activeSyncPromise = null` in `finally`).
+  - `src/modules/google-drive-backup/hooks/use-quick-sync.ts`
+  - `src/modules/google-drive-backup/hooks/use-google-drive-backup.ts`
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
+- **How We Properly Fix It:**
+  1. Added a coordinated `runCoordinatedQuickSyncRestore()` + `restoreFromQuickSync()` mutex in `quick-sync.service.ts` shared by both `restoreFromQuickSync` and `resolveQuickSyncConflictByRestore`: immediately cancels pending debounced Quick Sync timers (`cancelDebouncedQuickSync()`), sets `isRestoringQuickSync = true`, awaits any in-flight `activeSyncPromise` upload before starting restore, holds `activeSyncPromise` for the full restore duration, and deduplicates overlapping restore calls via `activeRestorePromise`.
+  2. Guarded `triggerQuickSync()` (`return false`) and `checkQuickSyncRemoteStatus()` (`return "skipped"`) when `isRestoringQuickSync` is `true`, preventing any upload or remote check from slipping in during restore or during the microtask handoff after a prior upload settles.
+  3. Routed `useQuickSync().restoreFromQuickSync` and `useGoogleDriveBackup().restoreQuickSync` through `restoreFromQuickSync()` in `quick-sync.service.ts` so every Quick Sync restore path holds the mutex.
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Add a unit test in `quick-sync.service.test.ts` that triggers a debounced edit (`queueLocalSyncChange`) and immediately calls `restoreQuickSyncBackup()`.
-  2. **Expected Result:** The debounce timer is cancelled and any `triggerQuickSync` call during restore waits/no-ops instead of running a concurrent upload.
+  1. Automated test in `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs` (`quick sync restore mutex (P1-23)`) verifies both directions: (A) a queued debounced edit is cancelled and concurrent `triggerQuickSync` / `checkQuickSyncRemoteStatus` calls no-op/skip during restore, and (B) a restore started while an upload is mid-flight waits until the upload finishes before executing.
 
 ---
 

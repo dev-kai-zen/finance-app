@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { restoreQuickSyncBackup } from "../services/restore-google-drive-backup.service";
 import {
   checkQuickSyncRemoteStatus,
   dismissQuickSyncConflictPrompt,
@@ -7,6 +6,7 @@ import {
   openQuickSyncConflictPrompt,
   resolveQuickSyncConflictByOverwrite,
   resolveQuickSyncConflictByRestore,
+  restoreFromQuickSync,
   setQuickSyncDeviceLabel,
   setQuickSyncEnabled,
   setQuickSyncNetworkPreference,
@@ -30,7 +30,7 @@ export function useQuickSync() {
     checkRemoteStatus: () =>
       checkQuickSyncRemoteStatus({ force: true, openPromptOnConflict: true }),
     triggerSync: () => triggerQuickSync({ immediate: true }),
-    restoreFromQuickSync: (fileId?: string) => restoreQuickSyncBackup(fileId),
+    restoreFromQuickSync: (fileId?: string) => restoreFromQuickSync(fileId),
     openConflictPrompt: openQuickSyncConflictPrompt,
     dismissConflictPrompt: dismissQuickSyncConflictPrompt,
     resolveConflictByRestore: resolveQuickSyncConflictByRestore,

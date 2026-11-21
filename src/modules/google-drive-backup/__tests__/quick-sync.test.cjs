@@ -218,8 +218,13 @@ const {
   dismissQuickSyncConflictPrompt,
   openQuickSyncConflictPrompt,
   resolveQuickSyncConflictByRestore,
+  restoreFromQuickSync,
   triggerQuickSync,
 } = require("@/modules/google-drive-backup/services/quick-sync.service");
+const {
+  flushDebouncedQuickSync,
+  queueDebouncedQuickSync,
+} = require("@/infrastructure/sync/quick-sync-debounce");
 const {
   ONBOARDING_SETTING_KEYS,
 } = require("@/modules/onboarding/constants/onboarding.constants");
@@ -1233,4 +1238,106 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
     fetchCalls.some((c) => c.method === "POST" && c.url.includes("upload/drive/v3/files")),
     "Adapter must create a new active Drive file when PATCH returns trashed=true",
   );
+});
+
+test("quick sync restore mutex (P1-23): cancels debounced sync, blocks concurrent trigger/check during restore, and waits for in-flight upload", async () => {
+  saveOnboardingSettings({
+    [ONBOARDING_SETTING_KEYS.status]: "completed",
+    [ONBOARDING_SETTING_KEYS.workspaceMode]: "personal",
+  });
+  saveQuickSyncConfig({
+    enabled: true,
+    network: "wifi_only",
+    fileId: "file-1",
+    accountEmail: "user@gmail.com",
+  });
+
+  // Scenario A: Debounced edit queued + restore starts -> cancels debounce & blocks trigger/check during restore
+  let uploadCalls = 0;
+  mockGetRemoteMetadataHandler = async () => null;
+  mockUploadHandler = async (_token, _bytes, existingFileId, props) => {
+    uploadCalls += 1;
+    return {
+      id: existingFileId ?? "file-1",
+      modifiedTime: "2026-11-20T07:00:00.000Z",
+      version: 1,
+      headRevisionId: "head-1",
+      syncRevisionId: props.syncRevisionId,
+    };
+  };
+
+  let releaseRestore;
+  const restoreGate = new Promise((resolve) => {
+    releaseRestore = resolve;
+  });
+  let restoreStarted = false;
+  mockRestoreHandler = async () => {
+    restoreStarted = true;
+    await restoreGate;
+  };
+
+  queueDebouncedQuickSync();
+  const restorePromise = restoreFromQuickSync("file-1");
+  await Promise.resolve();
+
+  assert.equal(restoreStarted, true);
+  flushDebouncedQuickSync();
+  const concurrentTrigger = await triggerQuickSync({ immediate: true });
+  const concurrentCheck = await checkQuickSyncRemoteStatus({ force: true });
+
+  assert.equal(concurrentTrigger, false, "triggerQuickSync must no-op while restore is in flight");
+  assert.equal(concurrentCheck, "skipped", "checkQuickSyncRemoteStatus must skip while restore is in flight");
+  assert.equal(uploadCalls, 0, "No upload may run concurrently with restore");
+
+  releaseRestore();
+  await restorePromise;
+  assert.equal(uploadCalls, 0);
+
+  // Scenario B: Upload already in flight -> restore waits for upload to settle before running
+  const events = [];
+  let releaseUpload;
+  const uploadGate = new Promise((resolve) => {
+    releaseUpload = resolve;
+  });
+
+  mockUploadHandler = async (_token, _bytes, existingFileId, props) => {
+    events.push("upload:start");
+    await uploadGate;
+    events.push("upload:end");
+    return {
+      id: existingFileId ?? "file-1",
+      modifiedTime: "2026-11-20T07:05:00.000Z",
+      version: 2,
+      headRevisionId: "head-2",
+      syncRevisionId: props.syncRevisionId,
+    };
+  };
+  mockRestoreHandler = async () => {
+    events.push("restore:start");
+    events.push("restore:end");
+  };
+
+  const uploadPromise = triggerQuickSync({ immediate: true });
+  // Wait until upload reaches network gate
+  for (let i = 0; i < 10 && !events.includes("upload:start"); i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  assert.deepEqual(events, ["upload:start"]);
+
+  const queuedRestore = restoreFromQuickSync("file-1");
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.deepEqual(
+    events,
+    ["upload:start"],
+    "Restore must wait until in-flight upload finishes before executing",
+  );
+
+  releaseUpload();
+  await Promise.all([uploadPromise, queuedRestore]);
+  assert.deepEqual(events, [
+    "upload:start",
+    "upload:end",
+    "restore:start",
+    "restore:end",
+  ]);
 });

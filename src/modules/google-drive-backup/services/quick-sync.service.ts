@@ -39,6 +39,8 @@ const QUICK_SYNC_CHECK_COOLDOWN_MS = 12_000;
 
 let activeSyncPromise: Promise<boolean> | null = null;
 let activeCheckPromise: Promise<QuickSyncCheckResult> | null = null;
+let activeRestorePromise: Promise<void> | null = null;
+let isRestoringQuickSync = false;
 let lastRemoteCheckCompletedAt = 0;
 let pendingFollowUpSync = false;
 let pendingFollowUpForceOverwrite = false;
@@ -119,7 +121,7 @@ export async function checkQuickSyncRemoteStatus(options?: {
     return "skipped";
   }
 
-  if (activeSyncPromise) {
+  if (activeSyncPromise || isRestoringQuickSync) {
     return "skipped";
   }
 
@@ -150,7 +152,7 @@ export async function triggerQuickSync(options?: {
   forceOverwrite?: boolean;
   config?: ReturnType<typeof getQuickSyncConfig>;
 }): Promise<boolean> {
-  if (isDatabaseReplacing()) {
+  if (isDatabaseReplacing() || isRestoringQuickSync) {
     return false;
   }
 
@@ -193,15 +195,90 @@ export async function triggerQuickSync(options?: {
   return activeSyncPromise;
 }
 
+async function runCoordinatedQuickSyncRestore(
+  explicitFileId?: string,
+  onRestoreError?: (error: unknown) => void,
+): Promise<void> {
+  cancelDebouncedQuickSync();
+  pendingFollowUpSync = false;
+  pendingFollowUpForceOverwrite = false;
+
+  if (activeRestorePromise) {
+    return activeRestorePromise;
+  }
+
+  isRestoringQuickSync = true;
+  const restorePromise = (async () => {
+    while (activeSyncPromise) {
+      await activeSyncPromise.catch(() => false);
+    }
+
+    cancelDebouncedQuickSync();
+    pendingFollowUpSync = false;
+    pendingFollowUpForceOverwrite = false;
+    setQuickSyncRuntimeStatus("syncing");
+
+    let releaseSyncLock!: (ok: boolean) => void;
+    const syncLock = new Promise<boolean>((resolve) => {
+      releaseSyncLock = resolve;
+    });
+    activeSyncPromise = syncLock;
+
+    try {
+      await restoreQuickSyncBackup(explicitFileId);
+      lastRemoteCheckCompletedAt = Date.now();
+      releaseSyncLock(true);
+    } catch (error) {
+      onRestoreError?.(error);
+      releaseSyncLock(false);
+      throw error;
+    } finally {
+      if (activeSyncPromise === syncLock) {
+        activeSyncPromise = null;
+      }
+      pendingFollowUpSync = false;
+      pendingFollowUpForceOverwrite = false;
+    }
+  })();
+
+  activeRestorePromise = restorePromise;
+  try {
+    await restorePromise;
+  } finally {
+    isRestoringQuickSync = false;
+    if (activeRestorePromise === restorePromise) {
+      activeRestorePromise = null;
+    }
+  }
+}
+
+export async function restoreFromQuickSync(
+  explicitFileId?: string,
+): Promise<void> {
+  return runCoordinatedQuickSyncRestore(explicitFileId, (error) => {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not restore Quick Sync backup.";
+    const conflict = getQuickSyncState().remoteConflict;
+    if (conflict) {
+      setQuickSyncRemoteConflict(conflict, {
+        openPrompt: false,
+        errorMessage: message,
+      });
+    } else {
+      setQuickSyncRuntimeStatus("error", message);
+    }
+  });
+}
+
 export async function resolveQuickSyncConflictByRestore(): Promise<void> {
   const conflict = getQuickSyncState().remoteConflict;
-  setQuickSyncRuntimeStatus("syncing");
-  try {
-    await restoreQuickSyncBackup(conflict?.fileId);
-    lastRemoteCheckCompletedAt = Date.now();
-  } catch (error) {
+  return runCoordinatedQuickSyncRestore(conflict?.fileId, (error) => {
     const message =
-      error instanceof Error ? error.message : "Could not restore Quick Sync backup.";
+      error instanceof Error
+        ? error.message
+        : "Could not restore Quick Sync backup.";
     if (conflict) {
       setQuickSyncRemoteConflict(conflict, {
         openPrompt: true,
@@ -210,8 +287,7 @@ export async function resolveQuickSyncConflictByRestore(): Promise<void> {
     } else {
       setQuickSyncRuntimeStatus("error", message);
     }
-    throw error;
-  }
+  });
 }
 
 export async function resolveQuickSyncConflictByOverwrite(): Promise<boolean> {

@@ -21,9 +21,11 @@ import { listGoogleDriveBackups } from "@/modules/google-drive-backup/services/l
 import {
   consumeRestoreNotice,
   restoreGoogleDriveBackup,
-  restoreQuickSyncBackup,
 } from "@/modules/google-drive-backup/services/restore-google-drive-backup.service";
-import { resetQuickSyncConnection } from "@/modules/google-drive-backup/services/quick-sync.service";
+import {
+  resetQuickSyncConnection,
+  restoreFromQuickSync,
+} from "@/modules/google-drive-backup/services/quick-sync.service";
 
 export function useGoogleDriveBackup() {
   const [user, setUser] = useState<GoogleDriveUser | null>(null);
@@ -187,7 +189,7 @@ export function useGoogleDriveBackup() {
   const restoreQuickSync = useCallback(
     async (fileId?: string): Promise<boolean> => {
       const completed = await run("restoring", async () => {
-        await restoreQuickSyncBackup(fileId);
+        await restoreFromQuickSync(fileId);
         return true;
       });
       if (completed) {
