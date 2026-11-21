@@ -638,22 +638,23 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-29 — Budgets: Brief Flash of `"0 active categories"` / `"No all budgets configured."` on Initial Load
+### [x] P1-29 — Budgets: Brief Flash of `"0 active categories"` / `"No all budgets configured."` on Initial Load (Implemented — Ready for User Verification)
 - **User Test Status:** *"Can't verify it properly"*
 - **Why It Happens & How to See It:**
-  - In `use-budgets.ts` (line 48), `loading` initializes to `false` (`useState(false)`), and `refresh()` waits 2 animation frames (`runDeferredSyncQuery`) before setting `loading = true`!
-  - So for the first 2 frames (~32ms) when navigating to **Budgets** for the very first time after launching the app, `loading` is `false` and `statuses` is `[]`—rendering the empty state (`"No budgets configured"` / `"0 active categories"`) before the skeleton/cards appear.
+  - In `use-budgets.ts`, `refresh()` set `budgets` and `loading = false` on Frame 2, while `budgetStatuses` was still `[]` waiting 2 frames inside `scheduleAfterPaint(() => calculateBudgetStatusesBatch(...))`.
+  - So for 2 frames (~32ms) on initial load, `loading` was `false`, `budgets.length > 0`, and `budgetStatuses` was `[]` — rendering `"0 active categories budgeted"` and `"No all budgets configured."` before the budget cards appeared.
 - **Files:**
   - `src/modules/budgets/hooks/use-budgets.ts`
 - **Before-Fix Scenario (How to Reproduce):**
   1. Have at least 1 budget configured. Force-close and reopen the app.
   2. Navigate to **Budgets** for the first time and watch the center of the screen closely as it opens.
-  3. **Bug Observed:** For 1–2 frames before the budget cards appear, the empty-state card briefly flashes.
-- **How We Will Properly Fix It:**
-  1. In `useBudgets` (`use-budgets.ts`, line 48), initialize `const [loading, setLoading] = useState(true);` so frame 1 renders the native-driven skeleton loader cleanly until the deferred SQLite query commits `statuses`, `summary`, and `loading = false` in a single batch.
+  3. **Bug Observed:** For 1–2 frames before the budget cards appear, `"0 active categories budgeted"` and `"No all budgets configured."` briefly flash.
+- **How We Properly Fix It:**
+  1. In `useBudgets` (`use-budgets.ts`), added `statusesReady` state (initially `false`) and returned `loading: loading || categoriesLoading || !statusesReady`.
+  2. Committed `setBudgetStatuses(statuses)` and `setStatusesReady(true)` in the same batched React update after the initial deferred `calculateBudgetStatusesBatch()` completes (or immediately once `!loading && !categoriesLoading` when there are 0 budgets), added cleanup cancellation handles to both `scheduleAfterPaint` effects, and added a fast-exit in `summary` when `budgetStatuses.length === 0`.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Force-close, relaunch, and open **Budgets**.
-  2. **Expected Result:** Transitions smoothly from skeleton to your budget cards with zero empty-state flash.
+  2. **Expected Result:** Transitions directly from the skeleton loader to your populated budget cards and accurate summary with zero `"0 active categories"` / `"No all budgets configured."` flash.
 
 ---
 

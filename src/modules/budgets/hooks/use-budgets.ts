@@ -59,9 +59,10 @@ export function useBudgets(referenceDate?: Date) {
   }, []);
 
   useEffect(() => {
-    scheduleAfterPaint(() => {
+    const cancelPaint = scheduleAfterPaint(() => {
       void refresh();
     });
+    return cancelPaint;
   }, [refresh]);
 
   // Flatten categories map for quick category lookup
@@ -81,14 +82,20 @@ export function useBudgets(referenceDate?: Date) {
 
   // Calculate statuses for all budgets
   const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([]);
+  const [statusesReady, setStatusesReady] = useState(false);
 
   useEffect(() => {
     if (!budgets.length || !flatCategoriesMap.size) {
       setBudgetStatuses([]);
+      if (!loading && !categoriesLoading) {
+        setStatusesReady(true);
+      }
       return;
     }
 
-    scheduleAfterPaint(() => {
+    let cancelled = false;
+    const cancelPaint = scheduleAfterPaint(() => {
+      if (cancelled) return;
       const statuses = calculateBudgetStatusesBatch(
         budgets,
         flatCategoriesMap,
@@ -108,11 +115,28 @@ export function useBudgets(referenceDate?: Date) {
       });
 
       setBudgetStatuses(statuses);
+      setStatusesReady(true);
     });
-  }, [budgets, flatCategoriesMap, effectiveReferenceDate]);
+
+    return () => {
+      cancelled = true;
+      cancelPaint();
+    };
+  }, [budgets, flatCategoriesMap, effectiveReferenceDate, loading, categoriesLoading]);
 
   // Summary calculations
   const summary = useMemo<BudgetsSummary>(() => {
+    if (budgetStatuses.length === 0) {
+      return {
+        totalBudgetedCents: 0,
+        totalSpentCents: 0,
+        totalRemainingCents: 0,
+        overallPercentage: 0,
+        activeCount: 0,
+        exceededCount: 0,
+        nearLimitCount: 0,
+      };
+    }
     let totalBudgetedCents = 0;
     let totalSpentCents = 0;
     let activeCount = 0;
@@ -221,7 +245,7 @@ export function useBudgets(referenceDate?: Date) {
     budgetStatuses,
     summary,
     categories,
-    loading: loading || categoriesLoading,
+    loading: loading || categoriesLoading || !statusesReady,
     saving,
     error,
     refresh,
