@@ -758,11 +758,13 @@ function TransactionFormModalInner({
   ]);
 
   // When accounts, categories, or default settings finish loading asynchronously from SQLite,
-  // backfill default account and category if still unselected in create mode
+  // backfill default account, transfer destination account, and category if still unselected in create mode
   useEffect(() => {
     if (!visible || initialTransaction || isEditing) {
       return;
     }
+
+    let resolvedSourceAccountId = selectedAccountId;
 
     if (!selectedAccountId && accounts.length > 0) {
       const targetDefaultAccountId =
@@ -776,7 +778,11 @@ function TransactionFormModalInner({
       const chosenAccountId = defaultAccount
         ? defaultAccount.id
         : (activeAccounts[0]?.id ?? "");
+      resolvedSourceAccountId = chosenAccountId;
       setSelectedAccountId(chosenAccountId);
+      if (!feeAccountManuallyChanged) {
+        setFeeAccountId(chosenAccountId);
+      }
 
       const targetDefaultPocketId =
         mode === "income"
@@ -795,6 +801,16 @@ function TransactionFormModalInner({
       }
     }
 
+    if (!transferToAccountId && accounts.length > 0) {
+      const activeAccounts = accounts.filter((a) => !a.isArchived);
+      const secondAccount = activeAccounts.find(
+        (a) => a.id !== resolvedSourceAccountId,
+      );
+      if (secondAccount) {
+        setTransferToAccountId(secondAccount.id);
+      }
+    }
+
     if (!selectedCategoryId && categories.length > 0 && mode !== "transfer") {
       const defaultCategory = resolveDefaultTransactionCategoryId(categories, mode);
       if (defaultCategory) {
@@ -806,7 +822,9 @@ function TransactionFormModalInner({
     initialTransaction,
     isEditing,
     selectedAccountId,
+    transferToAccountId,
     selectedCategoryId,
+    feeAccountManuallyChanged,
     accounts,
     categories,
     pockets,
@@ -1156,10 +1174,10 @@ function TransactionFormModalInner({
   const allowTransfer = activeAccountCount >= 2 && !isEditingNonTransfer;
 
   useEffect(() => {
-    if (!allowTransfer && mode === "transfer") {
+    if (!isFormLoading && !allowTransfer && mode === "transfer") {
       setMode("expense");
     }
-  }, [allowTransfer, mode]);
+  }, [allowTransfer, isFormLoading, mode]);
 
   const showTransactionNameField =
     formFields.transactionName ||

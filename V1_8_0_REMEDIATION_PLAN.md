@@ -228,7 +228,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-10 — Deep-Linking / Quick-Opening a New Transfer Resets Form Mode to "Expense"
+### [x] P1-10 — Deep-Linking / Quick-Opening a New Transfer Resets Form Mode to "Expense" (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/transactions/components/transaction-form-modal.tsx`
