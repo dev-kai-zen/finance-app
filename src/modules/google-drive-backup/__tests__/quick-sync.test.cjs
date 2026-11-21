@@ -39,6 +39,7 @@ let mockUploadHandler = null;
 let mockGetRemoteMetadataHandler = null;
 let mockCreateArchiveHandler = null;
 let mockRestoreHandler = null;
+let mockFetchHandler = null;
 let mockGoogleUser = { email: "user@gmail.com" };
 
 Module._load = function (request, parent, ...rest) {
@@ -64,6 +65,16 @@ Module._load = function (request, parent, ...rest) {
       addEventListener: () => () => {},
     };
     return { __esModule: true, default: netInfo, ...netInfo };
+  }
+  if (request === "expo/fetch") {
+    return {
+      fetch: async (...args) => {
+        if (mockFetchHandler) {
+          return mockFetchHandler(...args);
+        }
+        throw new Error("Unexpected expo/fetch call in test");
+      },
+    };
   }
   if (
     /^(expo|@expo|react|react-native|@react-native)/.test(request) ||
@@ -191,6 +202,14 @@ const {
 const {
   evaluateQuickSyncRemoteState,
 } = require("@/infrastructure/sync/quick-sync-conflict");
+const {
+  buildQuickSyncAppProperties,
+  QUICK_SYNC_DEVICE_ID_PROPERTY,
+  QUICK_SYNC_DEVICE_NAME_PROPERTY,
+  QUICK_SYNC_REVISION_ID_PROPERTY,
+  truncateUtf8Bytes,
+  uploadOrUpdateGoogleDriveQuickSyncBackup: realUploadOrUpdateQuickSyncBackup,
+} = require("@/infrastructure/sync/adapters/google-drive-backup.adapter");
 const {
   resetGoogleDriveConnectionForAppReset,
 } = require("@/modules/google-drive-backup/services/reset-google-drive-for-app-reset.service");
@@ -330,6 +349,7 @@ afterEach(() => {
   mockGetRemoteMetadataHandler = null;
   mockCreateArchiveHandler = null;
   mockRestoreHandler = null;
+  mockFetchHandler = null;
   mockGoogleUser = { email: "user@gmail.com" };
   resetQuickSyncStateForTests();
   resetQuickSyncDeviceMetadataForTests();
@@ -1040,4 +1060,177 @@ test("quick sync manual/local backup restore (P1-19): clearing baseline blocks a
   assert.equal(overwriteResult, true);
   assert.equal(uploadCalls, 1);
   assert.equal(getQuickSyncState().status, "synced");
+});
+
+test("quick sync appProperties UTF-8 byte cap (P1-20): truncates emoji and CJK device labels safely under Drive's 124-byte limit", () => {
+  const emojiLabel = "📱".repeat(25); // 25 emojis = 100 UTF-8 bytes
+  const cjkLabel = "あ".repeat(40); // 40 CJK chars = 120 UTF-8 bytes
+
+  const emojiProps = buildQuickSyncAppProperties({
+    deviceId: "device-123",
+    deviceName: emojiLabel,
+    syncRevisionId: "rev-123",
+  });
+  const emojiName = emojiProps[QUICK_SYNC_DEVICE_NAME_PROPERTY];
+  assert.ok(emojiName.length > 0);
+  assert.equal(
+    Buffer.byteLength(emojiName, "utf8") <= 80,
+    true,
+    "Device name value must be <= 80 UTF-8 bytes",
+  );
+  assert.equal(
+    Buffer.byteLength(QUICK_SYNC_DEVICE_NAME_PROPERTY + emojiName, "utf8") <= 124,
+    true,
+    "Key + value must never exceed Google Drive's 124-byte appProperty limit",
+  );
+  // Must not split surrogate pairs (20 whole 4-byte emojis = 80 bytes)
+  assert.equal(Array.from(emojiName).length, 20);
+  assert.equal(emojiName, "📱".repeat(20));
+
+  const cjkProps = buildQuickSyncAppProperties({
+    deviceId: "device-".repeat(20),
+    deviceName: cjkLabel,
+    syncRevisionId: "rev-".repeat(30),
+  });
+  for (const [key, value] of Object.entries(cjkProps)) {
+    assert.equal(
+      Buffer.byteLength(key + value, "utf8") <= 124,
+      true,
+      `appProperty ${key} exceeded 124 UTF-8 bytes`,
+    );
+  }
+  assert.equal(
+    Buffer.byteLength(cjkProps[QUICK_SYNC_DEVICE_ID_PROPERTY], "utf8") <= 80,
+    true,
+  );
+  assert.equal(
+    Buffer.byteLength(cjkProps[QUICK_SYNC_REVISION_ID_PROPERTY], "utf8") <= 80,
+    true,
+  );
+  assert.equal(truncateUtf8Bytes("a📱b", 4), "a");
+  assert.equal(truncateUtf8Bytes("a📱b", 5), "a📱");
+});
+
+test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileId on performSync and creates fresh active file when PATCH returns trashed=true", async () => {
+  saveOnboardingSettings({
+    [ONBOARDING_SETTING_KEYS.status]: "completed",
+    [ONBOARDING_SETTING_KEYS.workspaceMode]: "personal",
+  });
+  saveQuickSyncConfig({
+    enabled: true,
+    network: "wifi_only",
+    fileId: "trashed-file-1",
+    accountEmail: "user@gmail.com",
+    lastSyncedAt: "2026-11-20T05:00:00.000Z",
+  });
+
+  // 1. performSync layer: remote metadata check returns null because file is trashed on Drive
+  mockGetRemoteMetadataHandler = async () => null;
+  let receivedUploadFileId = "UNSET";
+  mockUploadHandler = async (_token, _bytes, existingFileId, props) => {
+    receivedUploadFileId = existingFileId;
+    return {
+      id: "fresh-active-file-2",
+      modifiedTime: "2026-11-20T06:30:00.000Z",
+      version: 1,
+      headRevisionId: "head-fresh-1",
+      syncRevisionId: props.syncRevisionId,
+    };
+  };
+
+  const synced = await triggerQuickSync();
+  assert.equal(synced, true);
+  assert.equal(
+    receivedUploadFileId,
+    null,
+    "performSync must clear stale trashed fileId when remote active file is missing",
+  );
+  assert.equal(getQuickSyncConfig().fileId, "fresh-active-file-2");
+
+  // 2. Adapter layer (e.g. forceOverwrite: true or file trashed mid-flight):
+  // PATCH on trashed existingFileId returns 200 OK with trashed: true -> must create fresh active file
+  const fetchCalls = [];
+  mockFetchHandler = async (url, init = {}) => {
+    const method = init.method ?? "GET";
+    fetchCalls.push({ method, url });
+
+    // Folder lookups (root + Backups)
+    if (method === "GET" && url.includes("mimeType")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          files: [{ id: "folder-1", name: "Backups" }],
+        }),
+      };
+    }
+
+    // PATCH to trashed file succeeds with trashed: true
+    if (method === "PATCH" && url.includes("/trashed-file-1")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "trashed-file-1",
+          name: "kaizen-finance-quick-sync.kfb",
+          createdTime: "2026-11-20T05:00:00.000Z",
+          modifiedTime: "2026-11-20T06:31:00.000Z",
+          size: "3",
+          version: "2",
+          headRevisionId: "head-trashed",
+          trashed: true,
+        }),
+      };
+    }
+
+    // Active file listing in Backups folder returns no active Quick Sync file
+    if (method === "GET" && url.includes("trashed%20%3D%20false")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ files: [] }),
+      };
+    }
+
+    // POST creates a brand-new active Quick Sync file
+    if (method === "POST" && url.includes("upload/drive/v3/files")) {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "fresh-active-file-3",
+          name: "kaizen-finance-quick-sync.kfb",
+          createdTime: "2026-11-20T06:32:00.000Z",
+          modifiedTime: "2026-11-20T06:32:00.000Z",
+          size: "3",
+          version: "1",
+          headRevisionId: "head-fresh-3",
+          trashed: false,
+          appProperties: {
+            isQuickSync: "true",
+            syncRevisionId: "rev-fresh-3",
+          },
+        }),
+      };
+    }
+
+    throw new Error(`Unhandled fetch in P1-20 test: ${method} ${url}`);
+  };
+
+  const created = await realUploadOrUpdateQuickSyncBackup(
+    "test-token",
+    new Uint8Array([1, 2, 3]),
+    "trashed-file-1",
+    {
+      deviceId: "device-1",
+      deviceName: "📱".repeat(25),
+      syncRevisionId: "rev-fresh-3",
+    },
+  );
+  assert.equal(created.id, "fresh-active-file-3");
+  assert.equal(created.trashed, false);
+  assert.ok(
+    fetchCalls.some((c) => c.method === "POST" && c.url.includes("upload/drive/v3/files")),
+    "Adapter must create a new active Drive file when PATCH returns trashed=true",
+  );
 });

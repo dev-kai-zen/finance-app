@@ -440,7 +440,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-20 — Quick Sync: Trashed Drive File Loops Forever + Non-ASCII/Emoji Device Labels Fail with HTTP 400 + `resetAppData` Re-Dirties Pending Changes
+### [x] P1-20 — Quick Sync: Trashed Drive File Loops Forever + Non-ASCII/Emoji Device Labels Fail with HTTP 400 + `resetAppData` Re-Dirties Pending Changes (Implemented — Ready for User Verification)
 - **User Test Status:** *"Can't verify this properly"*
 - **How to Reproduce Easily (Without Needing Google Drive Web):**
   - You can verify the **Device Label HTTP 400 failure** directly inside the app in 15 seconds:
@@ -448,17 +448,22 @@ Use this document as our living checklist as we fix and verify each finding one 
     2. In the **Device label** input field, paste 25 emojis (for example: `📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱📱`) and tap **Save**.
     3. Now tap **Sync Now**.
     4. **Bug Observed:** Sync fails with an error because Google Drive's `appProperties` enforces a strict **124-byte UTF-8 limit** for `key + value` (`"lastUpdatedByDeviceName"` is 23 bytes + 25 emojis × 4 UTF-8 bytes = 123+ bytes > 124 bytes), whereas the app only sliced `.slice(0, 60)` by JavaScript characters!
-  - And for the **Trashed Drive file loop**: If a user deletes `kaizen-finance-quick-sync.kfb` into Google Drive's Trash bin on drive.google.com, `getRemoteQuickSyncMetadata()` filters `trashed = false` (returning `null`), but `uploadQuickSyncSnapshot()` still reuses `existingState.remoteFileId` and sends an HTTP `PATCH` to the trashed file—which succeeds with `200 OK` while keeping the file inside Google Drive Trash forever!
+  - And for the **Trashed Drive file loop**: If a user deletes `kaizen-finance-quick-sync.kfb` into Google Drive's Trash bin on drive.google.com, `getGoogleDriveQuickSyncFileMetadata()` filters `trashed = false` (returning `null`), but `uploadOrUpdateGoogleDriveQuickSyncBackup()` still reused `existingFileId` and sent an HTTP `PATCH` to the trashed file—which succeeds with `200 OK` while keeping the file inside Google Drive Trash forever!
 - **Files:**
   - `src/infrastructure/sync/adapters/google-drive-backup.adapter.ts`
-  - `src/modules/settings/services/reset-app-data.service.ts`
-- **How We Will Properly Fix It:**
-  1. **UTF-8 Byte Truncation Helper:** Add a `truncateUtf8Bytes(value, maxBytes)` utility in `google-drive-backup.adapter.ts` and cap `lastUpdatedByDeviceName` to `80` UTF-8 bytes (so `23 + 80 = 103 bytes ≤ 124 bytes` even for 4-byte emojis or 3-byte CJK characters).
-  2. **Trashed File Recovery:** In `uploadQuickSyncSnapshot()`, if `getRemoteQuickSyncMetadata()` found no active (`trashed = false`) file (or only pass `knownRemoteFileId` when `remoteCheck.remoteFile?.fileId` was confirmed active), clear the stale `remoteFileId` and create a fresh active Drive file instead of `PATCH`ing a trashed file ID.
-  3. **`resetAppData` Guard:** Wrap `resetAppData()` with `setDatabaseReplacing(true)` / `finally { setDatabaseReplacing(false) }` so row deletions during reset don't trigger `queueLocalSyncChange()`.
+  - `src/modules/google-drive-backup/services/quick-sync.service.ts`
+  - `src/modules/settings/services/reset-app-data.service.ts` (already guarded with `setDatabaseReplacing(true)` / `finally { setDatabaseReplacing(false) }` + `cancelDebouncedQuickSync()` + `clearQuickSyncRemoteTracking()`)
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
+- **How We Properly Fix It:**
+  1. **UTF-8 Byte Truncation Helper:** Added `truncateUtf8Bytes(value, maxBytes)` (code-point safe, never splitting UTF-16 surrogate pairs) and `fitDriveAppPropertyValue(key, rawValue)` in `google-drive-backup.adapter.ts` capping Quick Sync `appProperties` values to `Math.min(80, 124 - utf8Bytes(key))` so `key + value` never exceeds Google Drive's 124-byte UTF-8 limit even for 4-byte emojis or 3-byte CJK characters.
+  2. **Trashed File Recovery (Defense-in-Depth):**
+     - In `performSync()` (`quick-sync.service.ts`), clear `targetFileId = null` whenever the pre-upload remote check evaluates `status === "missing"` (and adopt `evaluation.remoteFile.id` on `up_to_date` / `adopt_self`) so stale/trashed IDs are not `PATCH`ed.
+     - In `uploadOrUpdateGoogleDriveQuickSyncBackup()` (`google-drive-backup.adapter.ts`), check `if (!updated.trashed)` before returning a `PATCH` response (and require `!file.trashed` in the folder scan), falling through to create a fresh active Drive file if a trashed file ID was `PATCH`ed (including during `forceOverwrite: true`).
+  3. **`resetAppData` Guard:** Verified `resetAppData()` wraps DB deletion in `setDatabaseReplacing(true)` / `finally { setDatabaseReplacing(false) }`, cancels debounced Quick Sync, and clears remote tracking (`P1-01`).
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Paste 25 emojis into **Device label**, tap **Save**, and tap **Sync Now**.
   2. **Expected Result:** Sync succeeds (`Synced`) with zero HTTP 400 error.
+  3. (Optional) Move `kaizen-finance-quick-sync.kfb` to Trash on drive.google.com and tap **Sync Now** — Quick Sync creates a fresh active `kaizen-finance-quick-sync.kfb` in `Kaizen Finance/Backups` instead of looping on the trashed file.
 
 ---
 

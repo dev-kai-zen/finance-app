@@ -5,6 +5,9 @@ const DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files";
 const BACKUP_NAME_PREFIX = "kaizen-finance-backup-";
 const MAX_MULTIPART_BYTES = 5 * 1024 * 1024;
+const MAX_DRIVE_APP_PROPERTY_BYTES = 124;
+const MAX_QUICK_SYNC_PROPERTY_VALUE_BYTES = 80;
+const utf8Encoder = new TextEncoder();
 const FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 const ROOT_FOLDER_NAME = "Kaizen Finance";
 const BACKUPS_FOLDER_NAME = "Backups";
@@ -316,7 +319,9 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
         QUICK_SYNC_BACKUP_NAME,
         quickSyncProperties,
       );
-      return toQuickSyncMetadata(updated);
+      if (!updated.trashed) {
+        return toQuickSyncMetadata(updated);
+      }
     } catch (error) {
       if (!(error instanceof GoogleDriveApiError && error.status === 404)) {
         throw error;
@@ -327,8 +332,9 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   const existingFiles = await listVisibleBackupFiles(accessToken, backupFolder.id);
   const quickSyncFile = existingFiles.find(
     (file) =>
-      file.name === QUICK_SYNC_BACKUP_NAME ||
-      file.appProperties?.[QUICK_SYNC_PROPERTY] === "true",
+      !file.trashed &&
+      (file.name === QUICK_SYNC_BACKUP_NAME ||
+        file.appProperties?.[QUICK_SYNC_PROPERTY] === "true"),
   );
 
   if (quickSyncFile) {
@@ -742,23 +748,62 @@ function toVisibleBackupFile(file: DriveFileResponse): GoogleDriveBackupFile {
   return toBackupFile(file, "visible");
 }
 
-function buildQuickSyncAppProperties(
+export function truncateUtf8Bytes(value: string, maxBytes: number): string {
+  if (maxBytes <= 0 || value.length === 0) return "";
+  let usedBytes = 0;
+  let result = "";
+  for (const char of value) {
+    const charBytes = utf8Encoder.encode(char).byteLength;
+    if (usedBytes + charBytes > maxBytes) {
+      break;
+    }
+    result += char;
+    usedBytes += charBytes;
+  }
+  return result.trimEnd();
+}
+
+function fitDriveAppPropertyValue(key: string, rawValue: string): string {
+  const keyBytes = utf8Encoder.encode(key).byteLength;
+  const maxValueBytes = Math.min(
+    MAX_QUICK_SYNC_PROPERTY_VALUE_BYTES,
+    MAX_DRIVE_APP_PROPERTY_BYTES - keyBytes,
+  );
+  return truncateUtf8Bytes(rawValue.trim(), maxValueBytes);
+}
+
+export function buildQuickSyncAppProperties(
   deviceProperties?: GoogleDriveQuickSyncDeviceProperties,
 ): Record<string, string> {
   const properties: Record<string, string> = {
     [QUICK_SYNC_PROPERTY]: "true",
   };
-  const deviceId = deviceProperties?.deviceId?.trim();
-  const deviceName = deviceProperties?.deviceName?.trim();
-  const syncRevisionId = deviceProperties?.syncRevisionId?.trim();
+  const deviceId = deviceProperties?.deviceId
+    ? fitDriveAppPropertyValue(
+        QUICK_SYNC_DEVICE_ID_PROPERTY,
+        deviceProperties.deviceId,
+      )
+    : "";
+  const deviceName = deviceProperties?.deviceName
+    ? fitDriveAppPropertyValue(
+        QUICK_SYNC_DEVICE_NAME_PROPERTY,
+        deviceProperties.deviceName,
+      )
+    : "";
+  const syncRevisionId = deviceProperties?.syncRevisionId
+    ? fitDriveAppPropertyValue(
+        QUICK_SYNC_REVISION_ID_PROPERTY,
+        deviceProperties.syncRevisionId,
+      )
+    : "";
   if (deviceId) {
-    properties[QUICK_SYNC_DEVICE_ID_PROPERTY] = deviceId.slice(0, 80);
+    properties[QUICK_SYNC_DEVICE_ID_PROPERTY] = deviceId;
   }
   if (deviceName) {
-    properties[QUICK_SYNC_DEVICE_NAME_PROPERTY] = deviceName.slice(0, 60);
+    properties[QUICK_SYNC_DEVICE_NAME_PROPERTY] = deviceName;
   }
   if (syncRevisionId) {
-    properties[QUICK_SYNC_REVISION_ID_PROPERTY] = syncRevisionId.slice(0, 80);
+    properties[QUICK_SYNC_REVISION_ID_PROPERTY] = syncRevisionId;
   }
   return properties;
 }

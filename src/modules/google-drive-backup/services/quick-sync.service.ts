@@ -360,6 +360,7 @@ async function performSync(
     }
 
     const deviceMetadata = getQuickSyncDeviceMetadata();
+    let targetFileId: string | null = existingFileId;
 
     // 2.5 Pre-Upload Gate: Check whether Drive moved ahead before uploading
     if (!forceOverwrite) {
@@ -381,12 +382,16 @@ async function performSync(
         hasUnsyncedLocalChanges: deviceMetadata.hasUnsyncedLocalChanges,
       });
 
-      if (evaluation.status === "remote_ahead") {
+      if (evaluation.status === "missing") {
+        // Active file is missing or was moved to Drive Trash: never PATCH a stale/trashed ID.
+        targetFileId = null;
+      } else if (evaluation.status === "remote_ahead") {
         setQuickSyncRemoteConflict(evaluation.conflict, { openPrompt: true });
         return false;
-      }
-
-      if (evaluation.status === "adopt_self") {
+      } else if (evaluation.status === "up_to_date") {
+        targetFileId = evaluation.remoteFile.id;
+      } else if (evaluation.status === "adopt_self") {
+        targetFileId = evaluation.remoteFile.id;
         saveQuickSyncConfig({
           fileId: evaluation.remoteFile.id,
           accountEmail: user.email,
@@ -431,7 +436,7 @@ async function performSync(
       uploadOrUpdateGoogleDriveQuickSyncBackup(
         accessToken,
         archive.bytes,
-        existingFileId,
+        targetFileId,
         {
           deviceId: deviceMetadata.deviceId,
           deviceName,
