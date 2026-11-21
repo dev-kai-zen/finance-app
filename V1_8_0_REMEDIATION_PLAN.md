@@ -674,7 +674,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-31 — Accounts Export: CSV Export Includes Archived Accounts & Ignores Active Search Filter
+### [x] P1-31 — Accounts Export: CSV Export Includes Archived Accounts & Ignores Active Search Filter (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/accounts/screens/accounts-screen.tsx`
@@ -682,11 +682,12 @@ Use this document as our living checklist as we fix and verify each finding one 
   1. Archive an account (e.g. `"Old Wallet"`).
   2. On **Accounts** (with Archived hidden), type `"Old Wallet"` in the search bar → screen shows *"No matching accounts"*.
   3. Tap **Export CSV** in the header.
-  4. **Bug Observed:** It exports `"Old Wallet"` anyway because `exportableAccounts` filters `data.accounts` (which includes archived accounts) instead of `filteredActive`!
-- **How We Will Properly Fix It:**
-  1. In `AccountsScreen` (`accounts-screen.tsx`, line 197), derive `exportableAccounts` from `filteredActive` (and only include `filteredArchived` when `showArchived` is actually toggled ON, or keep export scoped to the visible active accounts).
+  4. **Bug Observed:** It exported `"Old Wallet"` anyway because `runCsvExport` and `handleOpenExportCsv` filtered `data.accounts` (which includes archived accounts) instead of `filteredActive`!
+- **How We Properly Fix It:**
+  1. In `AccountsScreen` (`accounts-screen.tsx`), scoped both `handleOpenExportCsv` and `runCsvExport` directly to `filteredActive` and `activePockets` (matching the exact visible active accounts and active pockets on the screen, and respecting the active search query).
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Search for an archived account while Archived is collapsed/hidden → screen shows *"No matching accounts"* and tapping Export CSV shows the *"No accounts to export"* notice instead of secretly exporting hidden archived accounts.
+  1. Search for an archived account while Archived is hidden → screen shows *"No matching accounts"* and tapping **Export CSV** shows the *"No accounts to export"* notice instead of exporting hidden archived accounts.
+  2. Export CSV with or without an active search query → exported `.csv` contains only the visible active accounts matching the current search filter.
 
 ---
 

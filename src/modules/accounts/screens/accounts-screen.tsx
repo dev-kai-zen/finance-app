@@ -194,12 +194,7 @@ function AccountsScreenContent({
     void (async () => {
       try {
         setExportingCsv(true);
-        const exportableAccounts = normalizedSearchQuery
-          ? data.accounts.filter((account) =>
-              account.name.toLowerCase().includes(normalizedSearchQuery),
-            )
-          : data.accounts;
-        await action(exportableAccounts, data.pockets);
+        await action(filteredActive, activePockets);
       } catch (error) {
         if (error instanceof AccountCsvExportCancelledError) {
           return;
@@ -219,13 +214,7 @@ function AccountsScreenContent({
   };
 
   const handleOpenExportCsv = () => {
-    const exportableAccounts = normalizedSearchQuery
-      ? data.accounts.filter((account) =>
-          account.name.toLowerCase().includes(normalizedSearchQuery),
-        )
-      : data.accounts;
-
-    if (exportableAccounts.length === 0) {
+    if (filteredActive.length === 0) {
       setExportNotice({
         title: t("accounts.exportEmptyTitle"),
         message: t("accounts.exportEmptyMessage"),
@@ -440,6 +429,7 @@ function AccountsScreenContent({
       : undefined;
   const active = data.accounts.filter((a) => !a.isArchived);
   const archived = data.accounts.filter((a) => a.isArchived);
+  const activePockets = data.pockets.filter((pocket) => !pocket.isArchived);
   const archivedPockets = data.pockets.filter((pocket) => pocket.isArchived);
   const accountById = useMemo(
     () => new Map(data.accounts.map((account) => [account.id, account])),
