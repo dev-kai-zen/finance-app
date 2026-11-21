@@ -294,7 +294,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-13 — Budgets: Toggling a Budget OFF Drops Displayed Spent to `₱0.00` and Inflates Rollover Target
+### [x] P1-13 — Budgets: Toggling a Budget OFF Drops Displayed Spent to `₱0.00` and Inflates Rollover Target (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/budgets/services/calculate-category-budget.service.ts`

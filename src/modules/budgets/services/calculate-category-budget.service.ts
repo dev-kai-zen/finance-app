@@ -176,7 +176,6 @@ export function calculateBudgetStatusesBatch(
   >();
 
   for (const budget of budgets) {
-    if (!budget.isEnabled) continue;
     const category = flatCategoriesMap.get(budget.categoryId);
     if (!category) continue;
 

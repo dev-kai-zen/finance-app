@@ -231,3 +231,47 @@ test("budgets: calculateBudgetStatusesBatch accurately batches spend totals matc
   assert.equal(summary.exceededCount, 0);
   assert.equal(summary.nearLimitCount, 0);
 });
+
+test("budgets (P1-13): toggling a budget OFF preserves its displayed spentCents and rolloverCents in calculateBudgetStatusesBatch while excluding it from active summary totals", () => {
+  const db = setupTestDb();
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const prevMonthMid = new Date(year, month - 1, 15, 12, 0).getTime();
+  const currMonthMid = new Date(year, month, 15, 12, 0).getTime();
+  const startDateMs = new Date(year, month - 1, 1).getTime();
+
+  // Insert a paused budget (is_enabled = 0) with rollover enabled
+  sqlite.exec(`
+    INSERT INTO category_budgets (id, category_id, amount_minor_units, currency_code, frequency, is_enabled, allow_rollover, rollover_mode, notify_on_exceeded, start_date, created_at, updated_at)
+    VALUES ('b_dining_paused', 'cat_dining', 500000, 'PHP', 'monthly', 0, 1, 'positive_only', 1, ${startDateMs}, ${now.getTime()}, ${now.getTime()});
+  `);
+
+  // Spend 3,000 PHP last month (leaving 2,000 PHP rollover -> 7,000 PHP effective target) and 1,500 PHP this month
+  const insertTx = sqlite.prepare(`
+    INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, occurred_at, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  insertTx.run("tx_prev", "acc_1", "cat_dining", "expense", -300000, prevMonthMid, prevMonthMid, prevMonthMid);
+  insertTx.run("tx_curr", "acc_1", "cat_dining", "expense", -150000, currMonthMid, currMonthMid, currMonthMid);
+
+  const { listCategoryBudgetsSync } = require("../repositories/category-budgets.repository");
+  const { listCategoriesSync } = require("@/modules/categories/repositories/categories.repository");
+
+  const budgets = listCategoryBudgetsSync(db);
+  const categories = listCategoriesSync(db);
+  const flatMap = new Map(categories.map((c) => [c.id, c]));
+
+  const statuses = calculateBudgetStatusesBatch(budgets, flatMap, now, db);
+  assert.equal(statuses.length, 1);
+  assert.equal(statuses[0].budget.isEnabled, false);
+  assert.equal(statuses[0].spentCents, 150000);
+  assert.equal(statuses[0].rolloverCents, 200000);
+  assert.equal(statuses[0].effectiveTargetCents, 700000);
+
+  // Active summary excludes the paused budget
+  const summary = getBudgetsSummary(now, db);
+  assert.equal(summary.activeCount, 0);
+  assert.equal(summary.totalBudgetedCents, 0);
+  assert.equal(summary.totalSpentCents, 0);
+});
