@@ -33,8 +33,10 @@ export function getAccountIdsWithTransactionHistory(
 
 export function getAccountIdsInUseByTransactions(
   context: DbContext = db,
+  precomputedTransactionAccountIds?: ReadonlySet<string>,
 ): Set<string> {
-  const transactionAccountIds = getAccountIdsWithTransactions(context);
+  const transactionAccountIds =
+    precomputedTransactionAccountIds ?? getAccountIdsWithTransactions(context);
   const presetAccountIds = getAccountIdsWithPresets(context);
   const combined = new Set(transactionAccountIds);
   for (const id of presetAccountIds) {

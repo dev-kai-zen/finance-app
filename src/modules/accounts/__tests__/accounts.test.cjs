@@ -905,3 +905,19 @@ test("pocket restore is blocked when pockets are disabled on the parent account"
   );
 });
 
+test("account linked to a transaction preset with 0 transactions (P1-15) marks isDeletable=false so Archive is offered instead of dead-ending on Delete", () => {
+  const accountId = saveAccount(accountInput(undefined, "Preset Only Account", "100.00"));
+  const now = Date.now();
+  sqlite
+    .prepare(
+      "INSERT INTO transaction_presets (id, account_id, type, transaction_name, sort_order, created_at, updated_at) VALUES ('preset_1', ?, 'expense', 'Morning Coffee', 0, ?, ?)",
+    )
+    .run(accountId, now, now);
+
+  assert.equal(canDeleteAccount(accountId), false);
+  const item = getAccountsWithBalances().find((acc) => acc.id === accountId);
+  assert.ok(item);
+  assert.equal(item.isDeletable, false);
+  assert.equal(item.canChangeCurrency, true);
+});
+

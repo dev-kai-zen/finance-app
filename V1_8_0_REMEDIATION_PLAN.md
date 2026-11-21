@@ -329,7 +329,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-15 — Accounts: Accounts with Transaction Presets (and 0 Transactions/Schedules) Hit a Dead-End (Cannot Delete OR Archive)
+### [x] P1-15 — Accounts: Accounts with Transaction Presets (and 0 Transactions/Schedules) Hit a Dead-End (Cannot Delete OR Archive) (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (*"It shows delete but after clicking Delete, it says Unable to save account, Cannot permanently delete an account that has transaction history, presets or scheduled transaction, archived it instead"*)
 - **Files:**
   - `src/modules/accounts/services/get-accounts-with-balances.service.ts`
