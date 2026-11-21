@@ -301,6 +301,7 @@ function TransactionsScreenContent({
 
   const {
     transactions,
+    exchangeRates,
     deletedTransactions,
     totalCount,
     hasMore: hasMoreTransactions,
@@ -682,8 +683,9 @@ function TransactionsScreenContent({
         transactions,
         filterState.sortBy,
         currencyPreferences.defaultCurrency,
+        exchangeRates,
       ),
-    [transactions, filterState.sortBy, currencyPreferences.defaultCurrency],
+    [transactions, filterState.sortBy, currencyPreferences.defaultCurrency, exchangeRates],
   );
 
   const handleOpenNewTransaction = () => {

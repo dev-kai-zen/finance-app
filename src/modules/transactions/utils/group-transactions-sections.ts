@@ -1,3 +1,4 @@
+import { convertCurrencyMinorUnits } from "@/utils/currency";
 import type { TransactionListItem } from "../types/transaction.types";
 
 export interface TransactionSection {
@@ -62,6 +63,7 @@ export function buildTransactionSections(
   transactions: TransactionListItem[],
   sortBy: "date" | "amount",
   defaultCurrency: string,
+  exchangeRates?: Map<string, number> | Record<string, number>,
 ): TransactionSection[] {
   if (transactions.length === 0) {
     return [];
@@ -84,6 +86,7 @@ export function buildTransactionSections(
 
   const sections: TransactionSection[] = [];
   const map = new Map<string, TransactionSection>();
+  const currenciesBySection = new Map<string, Set<string>>();
 
   for (const tx of transactions) {
     const { key, label } = getDateGroupInfo(tx.occurredAt);
@@ -101,21 +104,34 @@ export function buildTransactionSections(
       };
       map.set(key, section);
       sections.push(section);
+      currenciesBySection.set(key, new Set());
     }
 
     section.data.push(tx);
     section.count += 1;
     if (tx.type !== "transfer") {
-      if (!section.hasNonTransfer) {
-        section.currencyCode = tx.currencyCode || defaultCurrency;
-      } else if (tx.currencyCode && tx.currencyCode !== section.currencyCode) {
-        section.currencyCode = defaultCurrency;
-      }
+      currenciesBySection.get(key)!.add(tx.accountCurrency || defaultCurrency);
       section.hasNonTransfer = true;
-      const delta = Math.abs(tx.amountMinorUnits);
-      section.netMinorUnits += tx.type === "income" ? delta : -delta;
     }
   }
 
+  for (const section of sections) {
+    const currencies = currenciesBySection.get(section.key)!;
+    section.currencyCode = currencies.size === 1
+      ? currencies.values().next().value!
+      : defaultCurrency;
+    for (const tx of section.data) {
+      if (tx.type === "transfer") continue;
+      // Ledger amounts are already signed and denominated in the account's currency.
+      section.netMinorUnits += currencies.size > 1
+        ? convertCurrencyMinorUnits(
+            tx.amountMinorUnits,
+            tx.accountCurrency || defaultCurrency,
+            defaultCurrency,
+            exchangeRates,
+          )
+        : tx.amountMinorUnits;
+    }
+  }
   return sections;
 }

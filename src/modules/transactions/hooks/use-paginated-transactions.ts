@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { DeviceEventEmitter } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { getExchangeRateMap } from "@/modules/currencies";
+import { DEFAULT_BASE_CURRENCY } from "@/utils/currency";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
@@ -41,6 +43,8 @@ export function usePaginatedTransactions({
   pageSize = 50,
 }: UsePaginatedTransactionsOptions) {
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
+  const [exchangeRates, setExchangeRates] = useState<Map<string, number> | undefined>();
+  const exchangeRatesRef = useRef<Map<string, number> | undefined>(undefined);
   const [deletedTransactions, setDeletedTransactions] = useState<
     TransactionListItem[]
   >([]);
@@ -119,6 +123,11 @@ export function usePaginatedTransactions({
           if (requestId !== requestIdRef.current) {
             return;
           }
+          const rates = filter.sortBy !== "amount" && page.items.some((tx) => tx.type !== "transfer")
+            ? getExchangeRateMap(DEFAULT_BASE_CURRENCY)
+            : undefined;
+          exchangeRatesRef.current = rates;
+          setExchangeRates(rates);
           nextCursorRef.current = page.nextCursor;
           hasMoreRef.current = page.hasMore;
           setTransactions(page.items);
@@ -160,6 +169,12 @@ export function usePaginatedTransactions({
         });
         if (requestId !== requestIdRef.current) {
           return;
+        }
+        if (!exchangeRatesRef.current && filterRef.current.sortBy !== "amount" &&
+            page.items.some((tx) => tx.type !== "transfer")) {
+          const rates = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+          exchangeRatesRef.current = rates;
+          setExchangeRates(rates);
         }
         nextCursorRef.current = page.nextCursor;
         hasMoreRef.current = page.hasMore;
@@ -387,6 +402,7 @@ export function usePaginatedTransactions({
 
   return {
     transactions,
+    exchangeRates,
     deletedTransactions,
     totalCount,
     hasMore,

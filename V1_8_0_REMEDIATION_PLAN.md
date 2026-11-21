@@ -956,7 +956,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-06 — [MEDIUM–HIGH — Currencies] Weak / 0-Decimal Currencies (`KRW`, `VND`, `IDR`, `JPY`) → `USD` Fail or Miscalculate by +50%
+### [x] P2-06 — [MEDIUM–HIGH — Currencies] Weak / 0-Decimal Currencies (`KRW`, `VND`, `IDR`, `JPY`) → `USD` Fail or Miscalculate by +50%
+- **Status:** Implemented; Android form verification and release-build frame profiling remain pending.
+- **Implementation:** Derive snapshots directly from the unrounded rate-book ratio at the existing eight-decimal major-to-major scale; `applyExchangeRate` continues to apply minor-unit exponents. Add 132 dated offline estimates to cover all 153 currencies in the current catalog, preserving the original 21 defaults. Retain fractional basis-point precision in integer conversion math and reject missing/invalid quotes instead of assuming peso parity. Rebase default quotes when a custom book base is requested. Added quotes use ExchangeRate-API USD data dated November 20, 2026, anchored to the existing USD/PHP default.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 23 focused tests passed. Five new source-based regression tests cover weak-currency transaction resolution, catalog coverage, every 23,256 distinct catalog pair within snapshot precision, signed amounts, zero/two/three-decimal currencies, fractional quotes, Map/object overrides, custom bases, decimal overrides, and invalid/unknown quotes. Existing formatting and real SQLite currency-seeding tests also pass. No Android device was connected.
+- **Performance:** Constant-time in-memory rate lookups and fixed-size BigInt arithmetic; no new runtime network calls, SQL reads, mount/focus work, or provider subscriptions. Only the offline lookup table grows; existing rate-map fallbacks read the added entries in memory.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test It Right Now in 20 Seconds):**
   1. Go to **Settings → Currency** and change your **Default Currency** to **`USD ($)`**.
@@ -977,7 +981,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-07 — [MEDIUM–HIGH — Transactions] Multi-Currency / Cross-Currency Daily Group Header Totals & Refund Signs Wrong
+### [x] P2-07 — [MEDIUM–HIGH — Transactions] Multi-Currency / Cross-Currency Daily Group Header Totals & Refund Signs Wrong
+- **Status:** Implemented; Android visual verification and release-build frame profiling remain pending.
+- **Implementation:** Fix the extracted `buildTransactionSections` utility to identify currencies from `accountCurrency`, preserve signed ledger amounts for refunds and income reversals, and convert each non-transfer row into the default currency only on mixed-currency days. Keep single-currency headers in their account currency. Load a rate snapshot inside the existing deferred page hook, reuse it on later pages, and pass it into the pure grouping utility. Preserve flat amount-sort ordering and transfer exclusion.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, nine new grouping/hook regressions, and all six existing pagination tests passed. Coverage includes cross-currency entry on a PHP account, mixed days/default changes, refunds and reversals, transfers, zero/three-decimal currencies, per-row rounding, same-day page boundaries, row ordering, metadata fallback, deferred rate reads, pagination reuse, empty/amount-sorted fast exits, and cancellation. Existing 10,000-row query-plan, statement-count, CSV parity, and historical-balance checks also pass.
+- **Performance:** O(N) grouping over loaded paginated rows, with no SQL or network during grouping/render. At most one additional deferred rate-book query per date-feed refresh with non-transfer rows; later pages reuse the snapshot. Transfer-only first pages defer the read, and empty or amount-sorted feeds skip it. State updates for rates and rows share the existing deferred commit; no new root provider or event subscriptions.
 - **User Note:** *"I don't know how to verify it"*
 - **Exact Step-by-Step Scenario (How You Can Verify It in 20 Seconds):**
   1. Use an account whose currency is **`PHP (₱)`** (e.g. `"Cash"` in PHP).

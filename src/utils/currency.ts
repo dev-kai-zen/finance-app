@@ -456,6 +456,140 @@ export const DEFAULT_EXCHANGE_RATES_TO_PHP_BPS: Record<string, number> = {
   TWD: 18_200,  // 1.82 PHP per 1 TWD
   CHF: 655_000, // 65.50 PHP per 1 CHF
   NZD: 355_000, // 35.50 PHP per 1 NZD
+  // Additional estimates: ExchangeRate-API USD quotes, 2026-11-20, anchored to USD/PHP above.
+  // https://open.er-api.com/v6/latest/USD (existing defaults above are preserved).
+  AFN: 8984.321944,
+  ALL: 7128.995208,
+  AMD: 1622.18397,
+  ANG: 326815.642458,
+  AOA: 629.27895,
+  ARS: 374.282793,
+  AWG: 326815.642458,
+  AZN: 344161.578272,
+  BAM: 328415.152682,
+  BBD: 292500,
+  BDT: 4701.982369,
+  BGN: 328415.152682,
+  BHD: 1555851.06383,
+  BIF: 194.605205,
+  BMD: 585000,
+  BND: 453191.514086,
+  BOB: 49884.591784,
+  BRL: 99266.951741,
+  BSD: 585000,
+  BTN: 6265.298171,
+  BWP: 40433.714834,
+  BYN: 195406.706492,
+  BZD: 292500,
+  CDF: 252.98851,
+  CLP: 580.477422,
+  COP: 174.867354,
+  CRC: 1313.958496,
+  CUP: 24375,
+  CVE: 5825.278624,
+  CZK: 26288.025629,
+  DJF: 3291.676279,
+  DKK: 85978.520067,
+  DOP: 9687.430661,
+  DZD: 4267.061071,
+  EGP: 10870.657333,
+  ERN: 39000,
+  ETB: 3615.329352,
+  FJD: 255465.989616,
+  FKP: 767350.986341,
+  GEL: 225685.040901,
+  GHS: 49645.58568,
+  GIP: 767350.986341,
+  GMD: 7824.090584,
+  GNF: 66.09784,
+  GTQ: 76580.413558,
+  GYD: 2798.536889,
+  HNL: 21778.453046,
+  HTG: 4465.062364,
+  HUF: 1730.307254,
+  ILS: 177174.046698,
+  IQD: 386.359608,
+  IRR: 0.322991,
+  ISK: 4688.057721,
+  JMD: 3692.510056,
+  JOD: 825105.782793,
+  KES: 4500.558035,
+  KGS: 6690.560775,
+  KHR: 143.853202,
+  KMF: 1305.622877,
+  KWD: 1880279.245574,
+  KYD: 702000.2808,
+  KZT: 1300.397951,
+  LAK: 26.152654,
+  LBP: 6.536313,
+  LKR: 1758.679003,
+  LRD: 3475.664446,
+  LSL: 33558.665912,
+  LYD: 90541.367732,
+  MAD: 58723.513437,
+  MDL: 31909.874732,
+  MGA: 127.823112,
+  MKD: 10468.551799,
+  MMK: 278.622166,
+  MNT: 162.252572,
+  MOP: 72404.628252,
+  MRU: 14427.769861,
+  MUR: 12439.212651,
+  MVR: 37902.031218,
+  MWK: 335.764719,
+  MXN: 30742.083953,
+  MZN: 9173.228949,
+  NAD: 33558.665912,
+  NGN: 432.394671,
+  NIO: 15907.673495,
+  NOK: 60095.320424,
+  NPR: 3915.811368,
+  OMR: 1521468.307945,
+  PAB: 585000,
+  PEN: 170559.90297,
+  PGK: 130166.178822,
+  PKR: 2116.033925,
+  PLN: 145085.579411,
+  PYG: 93.382464,
+  QAR: 160714.285714,
+  RON: 120188.875277,
+  RSD: 5462.195635,
+  RUB: 7132.252728,
+  RWF: 395.401011,
+  SBD: 72877.798507,
+  SCR: 41327.740925,
+  SDG: 1143.579257,
+  SEK: 57450.539505,
+  SHP: 767350.986341,
+  SLE: 25513.151244,
+  SOS: 1024.693633,
+  SRD: 15616.354279,
+  SSP: 100.710252,
+  STN: 26217.320614,
+  SYP: 4806.02351,
+  SZL: 33558.665912,
+  TJS: 63535.209856,
+  TMT: 167232.637179,
+  TND: 191563.604356,
+  TOP: 243980.663386,
+  TRY: 11576.303493,
+  TTD: 86450.233704,
+  TZS: 220.185936,
+  UAH: 12971.506788,
+  UGX: 141.354215,
+  UYU: 14412.63771,
+  UZS: 48.882577,
+  VES: 636.723467,
+  VUV: 4844.993943,
+  WST: 209996.780049,
+  XAF: 979.217159,
+  XCD: 216666.666667,
+  XOF: 979.217159,
+  XPF: 5382.666406,
+  YER: 2474.690829,
+  ZAR: 33602.110006,
+  ZMW: 28360.286756,
+  ZWL: 22017.478491,
 };
 
 /**
@@ -598,6 +732,34 @@ function formatAbsoluteNumber(
     : groupedInteger;
 }
 
+
+/** Resolves an explicit quote or a default quote rebased to the requested rate-book base. */
+function resolveBookRate(
+  code: string,
+  ratesMap: Map<string, number> | Record<string, number> | undefined,
+  baseCurrency: string,
+): number {
+  const explicit = ratesMap instanceof Map ? ratesMap.get(code) : ratesMap?.[code];
+  const quote = DEFAULT_EXCHANGE_RATES_TO_PHP_BPS[code];
+  const base = DEFAULT_EXCHANGE_RATES_TO_PHP_BPS[baseCurrency];
+  const rate = explicit ?? (code === baseCurrency ? 10_000 :
+    quote && base ? quote / base * 10_000 : NaN);
+  if (!Number.isFinite(rate) || rate <= 0) {
+    throw new Error(`No exchange rate available for ${code} against ${baseCurrency}.`);
+  }
+  return rate;
+}
+
+// Preserve sub-basis-point defaults without rounding money before the final conversion.
+function bookRateToBigInt(rate: number): bigint {
+  const precision = 100_000_000;
+  const scaled = Number.isSafeInteger(rate)
+    ? BigInt(rate) * BigInt(precision)
+    : BigInt(Math.round(rate * precision));
+  if (scaled <= 0n) throw new Error("Exchange rate is below the supported precision.");
+  return scaled;
+}
+
 /**
  * Convert an amount in integer minor units from one currency to another using exchange rates.
  * Exchange rates are expressed in basis points against baseCurrency (e.g. PHP):
@@ -621,30 +783,19 @@ export function convertCurrencyMinorUnits(
     return amountMinorUnits;
   }
 
-  const getRate = (code: string): number => {
-    if (ratesMap instanceof Map) {
-      const val = ratesMap.get(code);
-      if (val !== undefined) return val;
-    } else if (ratesMap && typeof ratesMap === "object") {
-      const val = ratesMap[code];
-      if (val !== undefined) return val;
-    }
-    return DEFAULT_EXCHANGE_RATES_TO_PHP_BPS[code] ?? (code === baseCurrency ? 10_000 : 10_000);
-  };
-
-  const fromRate = getRate(fromCurrency);
-  const toRate = getRate(toCurrency);
+  const fromRate = resolveBookRate(fromCurrency, ratesMap, baseCurrency);
+  const toRate = resolveBookRate(toCurrency, ratesMap, baseCurrency);
 
   const fromDecimals = getCurrencyMinorUnitExponent(fromCurrency);
   const toDecimals = getCurrencyMinorUnitExponent(toCurrency);
   const decimalDiff = toDecimals - fromDecimals;
 
-  let scaledAmount = BigInt(amountMinorUnits) * BigInt(fromRate);
+  let scaledAmount = BigInt(amountMinorUnits) * bookRateToBigInt(fromRate);
   if (decimalDiff > 0) {
     scaledAmount *= BigInt(10 ** decimalDiff);
   }
 
-  const divisor = BigInt(toRate) * (decimalDiff < 0 ? BigInt(10 ** -decimalDiff) : 1n);
+  const divisor = bookRateToBigInt(toRate) * (decimalDiff < 0 ? BigInt(10 ** -decimalDiff) : 1n);
 
   if (divisor === 0n) {
     return amountMinorUnits;
@@ -764,20 +915,14 @@ export function snapshotExchangeRateFromBook(
     throw new Error("Cannot snapshot rate for identical currencies.");
   }
 
-  const oneTypedMajorMinor = 10 ** getCurrencyMinorUnitExponent(typed);
-  const accountMinorForOneTypedMajor = convertCurrencyMinorUnits(
-    oneTypedMajorMinor,
-    typed,
-    account,
-    ratesMap,
-    baseCurrency,
+  const base = baseCurrency.trim().toUpperCase();
+  const typedRate = bookRateToBigInt(resolveBookRate(typed, ratesMap, base));
+  const accountRate = bookRateToBigInt(resolveBookRate(account, ratesMap, base));
+  // Snapshots express major-to-major units. applyExchangeRate handles minor-unit exponents.
+  const scaled = Number(
+    (typedRate * BigInt(EXCHANGE_RATE_SNAPSHOT_SCALE) + accountRate / 2n) / accountRate,
   );
-  const accountExp = getCurrencyMinorUnitExponent(account);
-  const accountMajor =
-    accountMinorForOneTypedMajor / 10 ** accountExp;
-
-  const scaled = Math.round(accountMajor * EXCHANGE_RATE_SNAPSHOT_SCALE);
-  if (!Number.isFinite(scaled) || scaled <= 0) {
+  if (!Number.isSafeInteger(scaled) || scaled <= 0) {
     throw new Error(
       `No exchange rate available for ${typed} to ${account}.`,
     );

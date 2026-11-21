@@ -637,7 +637,8 @@ test("P1-26: buildTransactionSections keeps amount-sorted feeds flat across page
   const makeTx = (id, amountMinorUnits, type, isoDate) => ({
     id,
     type,
-    amountMinorUnits,
+    amountMinorUnits: type === "expense" ? -amountMinorUnits : amountMinorUnits,
+    accountCurrency: "PHP",
     currencyCode: "PHP",
     occurredAt: new Date(isoDate),
   });
