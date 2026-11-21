@@ -59,6 +59,18 @@ export function useCalendarData() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<CalendarTab>("transactions");
   const [isTabLoading, setIsTabLoading] = useState(false);
+  const activeTabRef = useRef<CalendarTab>(activeTab);
+  activeTabRef.current = activeTab;
+  const selectedDayRef = useRef<string | null>(selectedDay);
+  selectedDayRef.current = selectedDay;
+  const tabLoadingCancelRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      tabLoadingCancelRef.current?.();
+      tabLoadingCancelRef.current = null;
+    };
+  }, []);
 
   const currentMonthKey = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
   const monthCacheRef = useRef<Map<string, TransactionListItem[]>>(new Map());
@@ -617,43 +629,54 @@ export function useCalendarData() {
     setSelectedDay(null);
   }, []);
 
-  const toggleSelectDay = useCallback((dateKey: string) => {
-    const cellParts = parseDateKey(dateKey);
-    // If the selected cell belongs to another month, switch to that month
-    setActiveMonth((prev) => {
-      if (prev.year !== cellParts.year || prev.month !== cellParts.month) {
-        return { year: cellParts.year, month: cellParts.month };
-      }
-      return prev;
-    });
-
-    setSelectedDay((prev) => (prev === dateKey ? null : dateKey));
+  const triggerTabTransitionLoading = useCallback(() => {
+    tabLoadingCancelRef.current?.();
     setIsTabLoading(true);
-    scheduleAfterPaint(() => {
+    tabLoadingCancelRef.current = scheduleAfterPaint(() => {
+      tabLoadingCancelRef.current = null;
       setIsTabLoading(false);
     });
   }, []);
+
+  const toggleSelectDay = useCallback(
+    (dateKey: string) => {
+      const cellParts = parseDateKey(dateKey);
+      // If the selected cell belongs to another month, switch to that month
+      setActiveMonth((prev) => {
+        if (prev.year !== cellParts.year || prev.month !== cellParts.month) {
+          return { year: cellParts.year, month: cellParts.month };
+        }
+        return prev;
+      });
+
+      const nextSelectedDay = selectedDayRef.current === dateKey ? null : dateKey;
+      selectedDayRef.current = nextSelectedDay;
+      setSelectedDay(nextSelectedDay);
+      triggerTabTransitionLoading();
+    },
+    [triggerTabTransitionLoading],
+  );
 
   const clearDaySelection = useCallback(() => {
+    if (selectedDayRef.current === null) {
+      return;
+    }
+    selectedDayRef.current = null;
     setSelectedDay(null);
-    setIsTabLoading(true);
-    scheduleAfterPaint(() => {
-      setIsTabLoading(false);
-    });
-  }, []);
+    triggerTabTransitionLoading();
+  }, [triggerTabTransitionLoading]);
 
-  const selectTab = useCallback((tab: CalendarTab) => {
-    setActiveTab((prev) => {
-      if (prev === tab) {
-        return prev;
+  const selectTab = useCallback(
+    (tab: CalendarTab) => {
+      if (activeTabRef.current === tab) {
+        return;
       }
-      setIsTabLoading(true);
-      scheduleAfterPaint(() => {
-        setIsTabLoading(false);
-      });
-      return tab;
-    });
-  }, []);
+      activeTabRef.current = tab;
+      setActiveTab(tab);
+      triggerTabTransitionLoading();
+    },
+    [triggerTabTransitionLoading],
+  );
 
   return {
     activeMonth,

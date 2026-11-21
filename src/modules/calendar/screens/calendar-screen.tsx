@@ -276,18 +276,38 @@ function CalendarScreenContent() {
 
   // List windowing (50 at a time) for 60-120fps smoothness without ANR
   const [visibleTxCount, setVisibleTxCount] = useState(50);
+  const visibleTxCountRef = useRef(visibleTxCount);
+  visibleTxCountRef.current = visibleTxCount;
+  const isPaginatingScrollRef = useRef(false);
+  const paginatedFromHeightRef = useRef(0);
 
   // Reset pagination when activeMonth or selectedDay changes
   useEffect(() => {
     setVisibleTxCount(50);
+    isPaginatingScrollRef.current = false;
+    paginatedFromHeightRef.current = 0;
   }, [activeMonth.year, activeMonth.month, selectedDay]);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       // Only paginate whole-month transaction list (single-day selection does not need windowing)
-      if (activeTab !== "transactions" || selectedDay !== null) return;
+      if (
+        activeTab !== "transactions" ||
+        selectedDay !== null ||
+        visibleTxCountRef.current >= scopedTransactions.length
+      ) {
+        return;
+      }
       const { layoutMeasurement, contentOffset, contentSize } =
         event.nativeEvent;
+
+      // Prevent momentum scroll frames from bursting multiple pages before layout expands
+      if (isPaginatingScrollRef.current) {
+        if (contentSize.height <= paginatedFromHeightRef.current) {
+          return;
+        }
+        isPaginatingScrollRef.current = false;
+      }
 
       // Ensure the content actually exceeds the viewport and user has scrolled down
       if (
@@ -295,6 +315,8 @@ function CalendarScreenContent() {
         contentSize.height > layoutMeasurement.height &&
         layoutMeasurement.height + contentOffset.y >= contentSize.height - 250
       ) {
+        isPaginatingScrollRef.current = true;
+        paginatedFromHeightRef.current = contentSize.height;
         setVisibleTxCount((prev) => {
           if (prev < scopedTransactions.length) {
             return Math.min(prev + 50, scopedTransactions.length);
@@ -307,6 +329,8 @@ function CalendarScreenContent() {
   );
 
   const handleLoadMoreTransactions = useCallback(() => {
+    isPaginatingScrollRef.current = false;
+    paginatedFromHeightRef.current = 0;
     setVisibleTxCount((prev) =>
       Math.min(prev + 50, scopedTransactions.length),
     );
@@ -317,7 +341,7 @@ function CalendarScreenContent() {
       <PageContainer
         onScroll={handleScroll}
         scrollContentRef={scrollContentRef}
-        scrollEventThrottle={16}
+        scrollEventThrottle={32}
         scrollRef={scrollRef}
         scrollEnabled={
           walkthroughIntro.scrollEnabled && !walkthrough.isWalkthroughActive

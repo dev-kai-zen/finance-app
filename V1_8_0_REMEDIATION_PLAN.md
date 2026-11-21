@@ -615,24 +615,26 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-28 — Calendar: Scroll Pagination Bursts Multiple Pages in One Flick & Re-Tapping Active Tab Flashes Skeleton
+### [x] P1-28 — Calendar: Scroll Pagination Bursts Multiple Pages in One Flick & Re-Tapping Active Tab Flashes Skeleton (Implemented — Ready for User Verification)
 - **User Test Status:** *"Can't verify it properly"*
 - **How to Verify Easily (Two Simple Checks):**
   1. **Check A (Re-tapping active tab flashes skeleton):**
      - Open **Calendar**. You are already on the **Transactions** tab (the first tab below the calendar grid).
      - Tap the **Transactions** tab button again (even though it is already selected).
-     - **Bug Observed:** The tab content flashes a loading skeleton for 2 frames every time you tap the already-active tab! (And tapping the already-active **Schedules**, **Net**, or **Balance Sheet** tab does the same thing).
+     - **Bug Observed:** Previously flashed a loading skeleton for 2 frames every time you tapped an already-active tab.
   2. **Check B (Scroll pagination burst):**
-     - On a month with >120 transactions, flick-scroll to the bottom of the Calendar Transactions list: `handleScroll` fires on every 16ms scroll frame without an in-flight guard, incrementing `visibleTxCount` from `50 → 100 → 150 → 200` all in a single flick.
+     - On a month with >120 transactions, flick-scroll to the bottom of the Calendar Transactions list: `handleScroll` fired on every 16ms scroll frame without an in-flight guard, incrementing `visibleTxCount` from `50 → 100 → 150 → 200` all in a single flick.
 - **Files:**
   - `src/modules/calendar/hooks/use-calendar-data.ts`
   - `src/modules/calendar/screens/calendar-screen.tsx`
-- **How We Will Properly Fix It:**
-  1. In `selectTab` (`use-calendar-data.ts`, line 606), return early if `tab === activeTab` (`setActiveTab((prev) => { if (prev === tab) return prev; ... })`) so tapping the already-selected tab is a no-op and never flashes the skeleton.
-  2. In `calendar-screen.tsx` (`handleScroll`, line 295), add a `loadingMoreScrollRef` guard reset on content size change so one bottom reach only advances `visibleTxCount` by one page (`+50`) at a time.
+- **How We Properly Fix It:**
+  1. In `use-calendar-data.ts`, replaced the impure state-updater side effect in `selectTab` with `activeTabRef` + `tabLoadingCancelRef` (cancelling stale `scheduleAfterPaint` timers on rapid switching and unmount), and added a `selectedDayRef` no-op guard on `clearDaySelection` so tapping an already-active tab (or clearing an already-null day) never flashes a skeleton.
+  2. In `calendar-screen.tsx` (`handleScroll`), added `isPaginatingScrollRef` + `paginatedFromHeightRef` so once a bottom-reach triggers `+50`, subsequent momentum scroll frames are ignored until `contentSize.height` actually expands past `paginatedFromHeightRef`, added an early return once `visibleTxCountRef.current >= scopedTransactions.length`, and bumped `scrollEventThrottle` from `16` to `32`.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Tap the currently active tab on **Calendar** (**Transactions**, **Schedules**, **Net**, or **Balance Sheet**).
-  2. **Expected Result:** Zero skeleton flash when tapping an already-active tab.
+     - **Expected Result:** Zero skeleton flash when tapping an already-active tab.
+  2. On a month with >120 transactions, flick-scroll to the bottom of the Calendar Transactions list.
+     - **Expected Result:** Advances cleanly by one page (`+50`) per bottom reach instead of bursting all pages in one flick.
 
 ---
 
