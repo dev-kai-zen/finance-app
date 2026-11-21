@@ -1244,6 +1244,8 @@ export const es = {
         "Renombra Fecha del saldo a Fecha de apertura y corrige el espaciado de tarjetas en el Paso 1 de importación.",
       fixItem8:
         "Mejora la estabilidad de memoria y evita cierres inesperados al restablecer datos tras registrar muchas transacciones.",
+      fixItem9:
+        "Evita saltos de botones al cambiar de pantalla y oculta los anuncios mientras el teclado está abierto.",
     },
     v170: {
       date: "18 de noviembre de 2026",

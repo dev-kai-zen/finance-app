@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Keyboard, Platform, StyleSheet, Text, View } from "react-native";
+import type { LayoutChangeEvent } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,7 +20,8 @@ export interface AnchoredAdDockProps {
  * Complies with Google AdMob's Anchored Adaptive Banner policy:
  * - Anchored to the bottom edge (zero layout shift on scrolling content above)
  * - Separated by a top hairline border and "SPONSORED" micro-label
- * - Automatically collapses to 0px for Pro users, Web, offline/no-fill, or blurred screens
+ * - Reserves the last loaded banner height across focus transitions
+ * - Collapses for Pro users, Web, failed loads, or an open software keyboard
  */
 export function AnchoredAdDock({
   placement,
@@ -29,21 +31,36 @@ export function AnchoredAdDock({
   const insets = useSafeAreaInsets();
   const styles = useThemeStyles(createStyles);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [bannerHeight, setBannerHeight] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(() => Keyboard.isVisible());
 
   const isDisabled = isPro || Platform.OS === "web";
-  const isVisible = !isDisabled && isLoaded;
+  const isVisible = !isDisabled && !isKeyboardVisible && isLoaded;
 
   useFocusEffect(
     useCallback(() => {
+      if (isDisabled) return;
+
+      // Reconcile when returning from another screen that opened/closed the keyboard.
+      setIsKeyboardVisible(Keyboard.isVisible());
+      const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+        setIsKeyboardVisible(true);
+      });
+      const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+        setIsKeyboardVisible(false);
+      });
+
       return () => {
-        setIsLoaded(false);
+        showSubscription.remove();
+        hideSubscription.remove();
       };
-    }, []),
+    }, [isDisabled]),
   );
 
   useEffect(() => {
     if (isDisabled) {
       setIsLoaded(false);
+      setBannerHeight(0);
     }
   }, [isDisabled]);
 
@@ -59,6 +76,12 @@ export function AnchoredAdDock({
     setIsLoaded(false);
   }, []);
 
+  const handleBannerLayout = useCallback((event: LayoutChangeEvent) => {
+    const height = event.nativeEvent.layout.height;
+    // AdBanner unmounts its native view on blur; retain its last nonzero height.
+    if (height > 0) setBannerHeight(height);
+  }, []);
+
   if (isDisabled) {
     return null;
   }
@@ -67,6 +90,7 @@ export function AnchoredAdDock({
     <View
       style={[
         styles.dockBase,
+        isKeyboardVisible && styles.dockHidden,
         isVisible && [
           styles.dockVisible,
           { paddingBottom: Math.max(insets.bottom, 6) },
@@ -78,13 +102,19 @@ export function AnchoredAdDock({
           <Text style={styles.sponsoredBadge}>SPONSORED</Text>
         </View>
       ) : null}
-      <AdBanner
-        onAdFailedToLoad={handleAdFailedToLoad}
-        onAdLoaded={handleAdLoaded}
-        placement={placement}
-        style={styles.bannerReset}
-        variant="plain"
-      />
+      <View style={isVisible ? { minHeight: bannerHeight } : undefined}>
+        <View onLayout={handleBannerLayout}>
+          {!isKeyboardVisible ? (
+            <AdBanner
+              onAdFailedToLoad={handleAdFailedToLoad}
+              onAdLoaded={handleAdLoaded}
+              placement={placement}
+              style={styles.bannerReset}
+              variant="plain"
+            />
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }
@@ -93,6 +123,9 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
     dockBase: {
       width: "100%",
+    },
+    dockHidden: {
+      display: "none",
     },
     dockVisible: {
       backgroundColor: theme.colors.surface,

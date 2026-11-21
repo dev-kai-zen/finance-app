@@ -1227,6 +1227,8 @@ export const en = {
         "Rename Balance date to Opening date and fix card spacing on Step 1 of data import.",
       fixItem8:
         "Improve memory stability and prevent unexpected app closures when resetting data after recording many transactions.",
+      fixItem9:
+        "Fix bottom ads shifting buttons when switching screens and hide ads while the keyboard is open.",
     },
     v170: {
       date: "November 18, 2026",

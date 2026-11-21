@@ -760,7 +760,10 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-35 — Ads / Layout: `AnchoredAdDock` Causes Layout Jump on Every Tab Focus & Renders Behind/Under Active Keyboard on Search Screens
+### [x] P1-35 — Ads / Layout: `AnchoredAdDock` Causes Layout Jump on Every Tab Focus & Renders Behind/Under Active Keyboard on Search Screens
+- **Implementation:** Preserve loaded state and the last nonzero measured banner height across blur/focus. Collapse and unmount the banner while the keyboard is open; reconcile keyboard visibility on focus and remove listeners on blur. Keep failure and Pro collapse behavior.
+- **Verification:** TypeScript and focused lifecycle checks passed (height retention, keyboard hide/restore, failure, Pro, listener cleanup). Android device verification remains pending; no device was connected.
+- **Performance:** Constant-time local state updates, no added database queries, focused keyboard listeners only; native ad views remain deferred and unmount offscreen or while typing.
 - **User Test Status & Question:** *"Keyboard covers the ads, it didn't go above the keyboard, or my verification is wrong?"*
 - **Why Your Verification Is Right (Android 15 Edge-to-Edge vs Focus Layout Jump):**
   - Your observation on Android is completely accurate! Here is why:

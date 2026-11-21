@@ -1258,6 +1258,8 @@ export const fil = {
         "Palitan ang Balance date sa Petsa ng pagbukas at ayusin ang pagitan ng mga card sa Hakbang 1 ng import.",
       fixItem8:
         "Pahusayin ang katatagan ng memorya at pigilan ang biglaang pagsara ng app kapag nag-reset ng data matapos ang maraming transaksyon.",
+      fixItem9:
+        "Ayusin ang pagtalon ng mga buton kapag lumilipat ng screen at itago ang mga ad habang bukas ang keyboard.",
     },
     v170: {
       date: "Nobyembre 18, 2026",
