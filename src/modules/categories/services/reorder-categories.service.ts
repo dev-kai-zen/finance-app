@@ -1,3 +1,4 @@
+import { notifyCategoryChanges } from "./category-changes.service";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { reorderCategoriesInDb } from "../repositories/categories.repository";
 
@@ -9,4 +10,5 @@ export async function reorderCategories(
     return;
   }
   await reorderCategoriesInDb(client, orderedIds);
+  if (client === db) notifyCategoryChanges();
 }

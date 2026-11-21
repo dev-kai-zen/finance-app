@@ -1,3 +1,4 @@
+import { notifyCategoryChanges } from "./category-changes.service";
 import { eq } from "drizzle-orm";
 import { db, type AppDatabase } from "@/infrastructure/database/client";
 import { transactions } from "@/infrastructure/database/schema/transactions";
@@ -50,5 +51,6 @@ export async function deleteCategory(
   });
 
   invalidateChatKeywordsCache();
+  if (client === db) notifyCategoryChanges();
   return true;
 }

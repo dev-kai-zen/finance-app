@@ -380,6 +380,7 @@ function TransactionFormModalInner({
   const [feeAccountManuallyChanged, setFeeAccountManuallyChanged] = useState(false);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
   const hasInitializedLabelsRef = useRef(false);
+  const submittingRef = useRef(false);
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -1513,6 +1514,9 @@ function TransactionFormModalInner({
           bypassMaintainingBalance?: boolean;
         } = false,
   ) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
     const bypassBudgetCheck =
       typeof bypassInput === "boolean"
         ? bypassInput
@@ -1831,6 +1835,9 @@ function TransactionFormModalInner({
         void playTransactionSavedSound();
         onClose();
       }
+    }
+    } finally {
+      submittingRef.current = false;
     }
   };
 

@@ -27,6 +27,10 @@ export const ACCOUNT_CSV_HEADERS = [
   "Updated At",
 ] as const;
 
+function protectCsvText(value: string): string {
+  return /^[\s\x00-\x1f]*[=+@-]/.test(value) || value.startsWith("'") ? "'" + value : value;
+}
+
 export function escapeCsvCell(value: string): string {
   if (/[",\r\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -111,7 +115,7 @@ export function accountToCsvRow(
           .join("; ")
       : "";
 
-  return [
+  const row = [
     account.id,
     account.name.trim(),
     account.accountType?.name?.trim() ?? "",
@@ -136,6 +140,8 @@ export function accountToCsvRow(
     formatLocalDateTime(new Date(account.createdAt)),
     formatLocalDateTime(new Date(account.updatedAt)),
   ];
+  for (const index of [0, 1, 2, 3, 4, 14, 18, 19]) row[index] = protectCsvText(row[index]);
+  return row;
 }
 
 export function buildAccountsCsv(

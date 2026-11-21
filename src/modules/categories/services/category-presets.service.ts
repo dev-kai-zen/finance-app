@@ -1,3 +1,4 @@
+import { notifyCategoryChanges } from "./category-changes.service";
 import { db, type AppDatabase } from "@/infrastructure/database/client";
 import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import {
@@ -22,6 +23,7 @@ export async function loadCategoryPresets(client: AppDatabase = db): Promise<voi
     }
   });
   invalidateChatKeywordsCache();
+  if (client === db) notifyCategoryChanges();
 }
 
 export async function deleteCategoryPresets(
@@ -66,4 +68,5 @@ export async function deleteCategoryPresets(
     }
   });
   invalidateChatKeywordsCache();
+  if (client === db) notifyCategoryChanges();
 }

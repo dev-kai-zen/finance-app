@@ -53,10 +53,20 @@ export function parseCsv(input: string, separator?: string): CsvDocument {
   endRecord();
   const headers = records.shift()?.cells ?? [];
   if (!headers.length || !records.length || headers.some((h) => !h) || new Set(headers.map((h) => h.toLowerCase())).size !== headers.length) throw new ImportValidationError("headers");
+  // Undo only our own account-export text escaping; arbitrary CSV text remains unchanged.
+  if (headers[0] === "Account ID" && headers.includes("Archived") && headers.includes("Opening Date")) {
+    const textColumns = new Set(["Account ID", "Account Name", "Account Type", "Account Group", "Currency", "Pockets Summary", "Note", "Icon Key"]);
+    for (const row of records) headers.forEach((header, index) => {
+      const value = row.cells[index] ?? "";
+      if (textColumns.has(header) && value.startsWith("'") &&
+          (value[1] === "'" || /^[\s\x00-\x1f]*[=+@-]/.test(value.slice(1)))) row.cells[index] = value.slice(1);
+    });
+  }
   return { headers, rows: records };
 }
 
 const aliases: Record<ImportField, string[]> = {
+  status: ["status", "archived", "is archived"],
   date: ["date", "transaction date", "occurred at"], time: ["time"], amount: ["amount"],
   debit: ["debit", "withdrawal"], credit: ["credit", "deposit"], type: ["type", "transaction type"],
   account: ["account", "account name", "from account"], toAccount: ["to account", "transfer account", "destination account"],
@@ -180,4 +190,11 @@ export function categoryMappingKey(type: string, category: string, subcategory =
 }
 export function transactionFingerprint(type: string, account: string, to: string, date: Date, amount: number, name: string): string {
   return JSON.stringify([type, account, to, date.getFullYear(), date.getMonth(), date.getDate(), amount, normalizeImportName(name)]);
+}
+
+export function parseImportArchived(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (["", "active", "false", "0"].includes(normalized)) return false;
+  if (["archived", "true", "1"].includes(normalized)) return true;
+  throw new ImportValidationError("unsupported");
 }

@@ -342,6 +342,7 @@ export const en = {
       creditLimit: "Credit limit",
       statementDay: "Statement cutoff day",
       paymentDueDay: "Payment due day",
+      status: "Status (Active / Archived)",
     },
     errors: {
       type: "Choose Expense, Income or Transfer for this entry.",

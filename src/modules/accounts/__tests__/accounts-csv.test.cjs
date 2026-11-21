@@ -325,3 +325,19 @@ test("ads (P1-22): iOS subscriptions banner placement falls back to iOS default 
     }
   }
 });
+
+test('P2-11d: account export protects formula-like text while preserving negative numeric balances', () => {
+  const { parseCsv } = require('../../data-import/utils/csv.ts');
+  for (const value of ['=1+1', '+SUM(1,2)', '-formula', '@value', '\t=1+1', "'=literal", "'ordinary"]) {
+    const account = { ...mockAccount, name: value.trim(), note: value, isArchived: true,
+      openingBalanceMinorUnits: -10000, currentBalanceMinorUnits: -25000 };
+    const cells = accountToCsvRow(account);
+    assert.ok(cells[1].startsWith("'")); assert.ok(cells[18].startsWith("'"));
+    assert.equal(cells[5], '-250.00'); assert.equal(cells[6], '-100.00'); assert.equal(cells[17], 'true');
+    const roundTrip = parseCsv(buildAccountsCsv([account]));
+    assert.equal(roundTrip.rows[0].cells[1], value.trim());
+    assert.equal(roundTrip.rows[0].cells[18], value.trim());
+  }
+  const external = parseCsv("Account,Note\nCash,'=literal");
+  assert.equal(external.rows[0].cells[1], "'=literal", 'Do not unescape unrelated CSV formats');
+});

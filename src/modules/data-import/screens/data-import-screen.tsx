@@ -267,6 +267,7 @@ export function DataImportScreenContent({
           "creditLimit",
           "statementDay",
           "paymentDueDay",
+          "status",
         ]
       : [
           "date",

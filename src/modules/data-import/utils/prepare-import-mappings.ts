@@ -15,7 +15,7 @@ export function prepareImportMappings(document: CsvDocument, options: ImportOpti
     const currency = get("currency").toUpperCase() || options.defaultCurrency;
     const typeName = get("accountType");
     const type = catalog.accountTypes.find((t) => normalizeImportName(t.name) === normalizeImportName(typeName));
-    const existing = catalog.accounts.filter((a) => !a.isArchived && normalizeImportName(a.name) === key && a.currencyCode === currency && (!typeName || a.accountTypeId === type?.id));
+    const existing = catalog.accounts.filter((a) => (options.kind === "accounts" || !a.isArchived) && normalizeImportName(a.name) === key && a.currencyCode === currency && (!typeName || a.accountTypeId === type?.id));
     let earliest = "";
     for (const source of document.rows) {
       if (![cellValue(source.cells, options, "account") || options.defaultAccount, cellValue(source.cells, options, "toAccount")].some((n) => normalizeImportName(n) === key)) continue;

@@ -5,7 +5,7 @@ export type ImportKind = "accounts" | "transactions";
 export type ImportTransactionType = "expense" | "income" | "transfer";
 export type ImportReviewGroup = "attention" | "excluded" | "ready";
 export type ImportStep = "file" | "columns" | "matching" | "categories" | "review" | "done" | "history";
-export type ImportField = "date" | "time" | "amount" | "debit" | "credit" | "type" | "account" | "toAccount" | "currency" | "category" | "subcategory" | "name" | "note" | "labels" | "sourceId" | "accountType" | "openingBalance" | "balanceDate" | "creditLimit" | "statementDay" | "paymentDueDay";
+export type ImportField = "date" | "time" | "amount" | "debit" | "credit" | "type" | "account" | "toAccount" | "currency" | "category" | "subcategory" | "name" | "note" | "labels" | "sourceId" | "accountType" | "openingBalance" | "balanceDate" | "creditLimit" | "statementDay" | "paymentDueDay" | "status";
 export type ImportIssue = "columns" | "date" | "amount" | "account" | "category" | "currency" | "unsupported" | "transfer" | "balance" | "name" | "duplicate" | "type" | "creditCardDetails" | "freeAccountLimit";
 export interface CsvDocument { headers: string[]; rows: { number: number; cells: string[] }[] }
 export interface AccountMapping {
@@ -63,6 +63,7 @@ export interface ImportCatalog {
 export interface PlannedAccount {
   key: string; id: string | null; name: string; accountTypeId: string; currency: string;
   openingBalance: number; balanceDate: Date; currentBalance: number; note?: string;
+  isArchived?: boolean;
   creditCardDetails?: { creditLimit: number; statementDay: number; paymentDueDay: number };
 }
 export interface PlannedTransaction {
@@ -83,6 +84,6 @@ export interface ImportPreview {
   income: Record<string, number>; expense: Record<string, number>;
   dateFrom?: Date; dateTo?: Date; signature: string;
 }
-export const IMPORT_FIELDS: ImportField[] = ["date", "time", "amount", "debit", "credit", "type", "account", "toAccount", "currency", "category", "subcategory", "name", "note", "labels", "sourceId", "accountType", "openingBalance", "balanceDate", "creditLimit", "statementDay", "paymentDueDay"];
+export const IMPORT_FIELDS: ImportField[] = ["date", "time", "amount", "debit", "credit", "type", "account", "toAccount", "currency", "category", "subcategory", "name", "note", "labels", "sourceId", "accountType", "openingBalance", "balanceDate", "creditLimit", "statementDay", "paymentDueDay", "status"];
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 export const MAX_IMPORT_ROWS = 1000;

@@ -53,7 +53,7 @@ export function getBudgetPeriodInfo(
     const startDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     const endDate = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
-    const prevDate = new Date(startDate.getTime() - 24 * 60 * 60 * 1000);
+    const prevDate = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
     const previousStartDate = new Date(
       prevDate.getFullYear(),
       prevDate.getMonth(),
@@ -119,7 +119,8 @@ export function getBudgetPeriodInfo(
     anchor.setHours(0, 0, 0, 0);
 
     const msInDay = 86400000;
-    const diffMs = d.getTime() - anchor.getTime();
+    const diffMs = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
+      Date.UTC(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
     const dayDiff = Math.floor(diffMs / msInDay);
     const cycleCount = Math.floor(dayDiff / 14);
 

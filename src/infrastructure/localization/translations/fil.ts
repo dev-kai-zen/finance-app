@@ -349,6 +349,7 @@ export const fil = {
       creditLimit: "Credit limit",
       statementDay: "Araw ng cutoff ng statement",
       paymentDueDay: "Araw ng takdang bayad",
+      status: "Katayuan (Aktibo / Naka-archive)",
     },
     errors: {
       type: "Pumili ng Kita, Gastos, o Paglipat para sa talang ito.",

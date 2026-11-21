@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { subscribeCategoryChanges } from "../services/category-changes.service";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { db } from "@/infrastructure/database/client";
 import { listCategories } from "../repositories/categories.repository";
@@ -21,31 +23,55 @@ export function useCategories(options?: UseCategoriesOptions) {
   const [loading, setLoading] = useState<boolean>(!skipQuery);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedOnceRef = useRef(false);
-
-  const refresh = useCallback(async () => {
-    try {
-      if (!hasLoadedOnceRef.current) {
-        setLoading(true);
-      }
-      setError(null);
-      const list = await listCategories(db);
-      setCategories(list);
-    } catch (err: any) {
-      console.error("[useCategories] Failed to load categories:", err);
-      setError(err?.message ?? "Failed to load categories.");
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
+  const focusedRef = useRef(false);
+  const requestIdRef = useRef(0);
+  const cancelPendingRef = useRef<(() => void) | null>(null);
+  const cancelPending = useCallback(() => {
+    ++requestIdRef.current;
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = null;
   }, []);
 
-  useEffect(() => {
-    if (skipQuery) return;
-    scheduleAfterPaint(() => {
-      void refresh();
+  const refresh = useCallback((): Promise<void> => {
+    cancelPending();
+    if (skipQuery || !focusedRef.current) return Promise.resolve();
+    const requestId = requestIdRef.current;
+    setLoading(true);
+    return new Promise((resolve) => {
+      const cancelPaint = scheduleAfterPaint(() => {
+        void (async () => {
+          try {
+            const list = await listCategories(db);
+            if (requestId !== requestIdRef.current) return;
+            setCategories(list);
+            setError(null);
+          } catch (err: any) {
+            if (requestId === requestIdRef.current) {
+              setError(err?.message ?? "Failed to load categories.");
+            }
+          } finally {
+            if (requestId === requestIdRef.current) {
+              cancelPendingRef.current = null;
+              setLoading(false);
+            }
+            resolve();
+          }
+        })();
+      });
+      cancelPendingRef.current = () => { cancelPaint(); resolve(); };
     });
-  }, [refresh, skipQuery]);
+  }, [cancelPending, skipQuery]);
+
+  useFocusEffect(useCallback(() => {
+    focusedRef.current = true;
+    if (!skipQuery) void refresh();
+    const unsubscribe = skipQuery ? undefined : subscribeCategoryChanges(() => { void refresh(); });
+    return () => {
+      focusedRef.current = false;
+      unsubscribe?.();
+      cancelPending();
+    };
+  }, [cancelPending, refresh, skipQuery]));
 
   const save = useCallback(
     async (input: CategoryInput, id?: string): Promise<Category | null> => {

@@ -59,7 +59,7 @@ export async function commitImport(
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");
       if (!isPro) {
         const existingActiveCount = freshCatalog.accounts.filter((a) => !a.isArchived).length;
-        const plannedNewAccounts = fresh.accounts.filter((a) => !a.id).length;
+        const plannedNewAccounts = fresh.accounts.filter((a) => !a.id && !a.isArchived).length;
         if (existingActiveCount + plannedNewAccounts > PRO_LIMITS.FREE_MAX_ACCOUNTS) {
           throw new ImportValidationError("freeAccountLimit");
         }
@@ -80,7 +80,7 @@ export async function commitImport(
                 paymentDueDay: String(account.creditCardDetails.paymentDueDay),
               }
             : undefined,
-        }, tx);
+        }, tx, { isArchived: account.isArchived });
         accountIds.set(account.key, id);
         if (!account.id) {
           newAccounts.push(id);

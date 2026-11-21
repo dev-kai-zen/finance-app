@@ -392,3 +392,33 @@ test("Sample Mode -> Guided Setup -> Import Accounts -> Finish Setup (P1-06): re
     ],
   );
 });
+
+test('P2-11d: exported archived accounts commit with status and protected text intact', async () => {
+  const { buildAccountsCsv } = require('../../accounts/utils/accounts-csv.ts');
+  const { prepareImportMappings } = require('../utils/prepare-import-mappings.ts');
+  const now = new Date(2026, 0, 1);
+  const base = { id: 'source', accountTypeId: 'wallet', name: '=Archived wallet', currencyCode: 'PHP',
+    accountType: { name: 'Wallet', accountGroup: 'asset' }, currentBalanceMinorUnits: -12300,
+    openingBalanceMinorUnits: -12300, openingBalanceAt: now, createdAt: now, updatedAt: now,
+    isArchived: true, note: '=1+1', sortOrder: 0 };
+  const d = draft(buildAccountsCsv([base, { ...base, id: 'active', name: 'Active Wallet', isArchived: false }]));
+  d.options.kind = 'accounts'; d.options.accounts = {};
+  Object.assign(d.options, prepareImportMappings(d.document, d.options, getImportCatalog()));
+  assert.equal(d.preview().ready, true);
+  await d.save();
+  const archived = sqlite.prepare("SELECT * FROM accounts WHERE name = '=Archived wallet'").get();
+  assert.equal(archived.is_archived, 1); assert.equal(archived.note, '=1+1');
+  assert.equal(archived.opening_balance_minor_units, -12300);
+  assert.equal(sqlite.prepare("SELECT is_archived FROM accounts WHERE name='Active Wallet'").get().is_archived, 0);
+});
+
+test('P2-11d: Status aliases validate strictly and archived imports do not consume active-account slots', async () => {
+  const d = draft('Account,Currency,Opening Balance,Opening Date,Status\nCash,PHP,1000,2026-01-01,Archived');
+  d.options.kind = 'accounts';
+  for (let i=0; i<5; i++) sqlite.prepare("INSERT INTO accounts (id,account_type_id,name,currency_code,opening_balance_minor_units,opening_balance_at,created_at,updated_at) VALUES (?, 'wallet', ?, 'PHP',0,0,0,0)").run('active_'+i,'Active '+i);
+  assert.equal(d.preview().ready, true); await d.save();
+  assert.equal(sqlite.prepare("SELECT is_archived FROM accounts WHERE name='Cash'").get().is_archived, 1);
+  const invalid = draft('Account,Currency,Opening Balance,Opening Date,Status\nSavings,PHP,1000,2026-01-01,unknown');
+  invalid.options.kind='accounts'; assert.equal(invalid.preview().ready, false);
+  assert.equal(invalid.preview().rows[0].issue, 'unsupported');
+});

@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { CsvDocument, ImportCatalog, ImportField, ImportOptions, ImportPreview, ImportPreviewConstraints, ImportPreviewRow, PlannedAccount, PlannedTransaction } from "../types/import.types";
-import { categoryMappingKey, ImportValidationError, normalizeImportName, parseImportAmount, parseImportCreditCardDetails, parseImportDate, transactionFingerprint } from "./csv";
+import { categoryMappingKey, ImportValidationError, parseImportArchived, normalizeImportName, parseImportAmount, parseImportCreditCardDetails, parseImportDate, transactionFingerprint } from "./csv";
 
 export function importDigest(value: string): string { return bytesToHex(sha256(utf8ToBytes(value))); }
 export function cellValue(cells: string[], options: ImportOptions, field: ImportField): string {
@@ -100,7 +100,7 @@ export function buildImportPreview(
     if (!mapping) throw new ImportValidationError("account");
     const existing = catalog.accounts.find((a) => a.id === mapping.existingId);
     if (mapping.existingId && !existing) throw new ImportValidationError("account");
-    if (existing?.isArchived) throw new ImportValidationError("unsupported");
+    if (existing?.isArchived && options.kind !== "accounts") throw new ImportValidationError("unsupported");
     const currency = existing?.currencyCode || mapping.currency.trim().toUpperCase();
     const rowCurrency = cellValue(cells, options, "currency").toUpperCase();
     if (!catalog.currencies.includes(currency) || (rowCurrency && rowCurrency !== currency)) throw new ImportValidationError("currency");
@@ -112,13 +112,14 @@ export function buildImportPreview(
         : undefined;
     const planned: PlannedAccount = existing ? {
       key, id: existing.id, name: existing.name, accountTypeId: existing.accountTypeId, currency,
-      openingBalance: existing.openingBalanceMinorUnits, balanceDate: existing.openingBalanceAt, currentBalance: existing.currentBalanceMinorUnits,
+      openingBalance: existing.openingBalanceMinorUnits, balanceDate: existing.openingBalanceAt, currentBalance: existing.currentBalanceMinorUnits, isArchived: existing.isArchived,
     } : {
       key, id: null, name: mapping.name.trim(), accountTypeId: type.id, currency,
       openingBalance: parseImportAmount(mapping.openingBalance, currency, options.decimal),
       balanceDate: parseImportDate(mapping.balanceDate, "ymd"),
       currentBalance: parseImportAmount(mapping.openingBalance, currency, options.decimal), note: mapping.note,
       creditCardDetails,
+      isArchived: options.kind === "accounts" ? parseImportArchived(cellValue(cells, options, "status")) : false,
     };
     if (!planned.name || planned.name.length > 100 || (planned.note?.length ?? 0) > 1000) throw new ImportValidationError("name");
     if (!planned.id && catalog.accounts.some((a) => normalizeImportName(a.name) === normalizeImportName(planned.name) && a.currencyCode === currency)) throw new ImportValidationError("account");
@@ -258,7 +259,7 @@ export function buildImportPreview(
   const blockedNewAccountKeys = new Set<string>();
   const reserveNewAccounts = (keys: (string | undefined)[]): boolean => {
     if (isPro) return true;
-    const needed = [...new Set(keys.filter((k): k is string => Boolean(k) && accounts.has(k!) && !accounts.get(k!)!.id))];
+    const needed = [...new Set(keys.filter((k): k is string => Boolean(k) && accounts.has(k!) && !accounts.get(k!)!.id && !accounts.get(k!)!.isArchived))];
     const unseen = needed.filter((k) => !acceptedNewAccountKeys.has(k));
     if (!unseen.length) return true;
     if (unseen.some((k) => blockedNewAccountKeys.has(k)) || acceptedNewAccountKeys.size + unseen.length > remainingFreeSlots) {

@@ -18,7 +18,7 @@ export function getAccountImportCatalog(context: DbContext = db) {
 }
 
 /** Create only: existing opening balances are never adjusted by an import. */
-export function createImportedAccount(input: AccountInput, context: DbContext): string {
+export function createImportedAccount(input: AccountInput, context: DbContext, options?: { isArchived?: boolean }): string {
   const value = accountInputSchema.parse(input);
   const type = requireAccountType(value.accountTypeId, context);
   const currencyCode = (value.currencyCode ?? "PHP").toUpperCase();
@@ -51,6 +51,7 @@ export function createImportedAccount(input: AccountInput, context: DbContext): 
     openingBalanceAt: parseOpeningDate(value.openingDate), note: value.note || null,
     startingBalanceLocked: false, hideFromSelection: false, hideFromReports: false,
     pocketEnabled: false, sortOrder: Math.max(-1, ...findAccountsByAccountTypeId(type.id, context).map((a) => a.sortOrder)) + 1,
+    isArchived: options?.isArchived ?? false,
     createdAt: now, updatedAt: now,
   }, context);
   if (creditCardValues) {

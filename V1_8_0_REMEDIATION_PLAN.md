@@ -1078,7 +1078,14 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-11 — [MEDIUM — Categories / Transactions / Budgets / CSV Round-Trip] 4 Smaller Polish & Integrity Fixes
+### [x] P2-11 — [MEDIUM — Categories / Transactions / Budgets / CSV Round-Trip] 4 Smaller Polish & Integrity Fixes
+- **Status:** All four fixes implemented; Android visual and release-build frame verification remain pending.
+- **11a:** Category mutations publish after successful default-database writes. `useCategories` loads after paint on focus, subscribes only while focused, coalesces repeated/self-refreshes, cancels pending work, and guards in-flight results with a request ID. Mutation-only `skipQuery` hosts remain query-free.
+- **11b:** Add a synchronous `submittingRef` around the complete transaction/transfer save handler, with `finally` cleanup for validation, warnings, success, cancellation/false results, and rejected callbacks.
+- **11c:** Use local calendar-day construction for the previous daily period and UTC calendar ordinals for biweekly day differences, preserving local midnight/end-of-day boundaries through DST and dates before the anchor.
+- **11d:** Protect formula-like text cells and leading apostrophes in Accounts CSV while leaving numeric balances intact. The importer reverses that protection only for recognized app account exports, maps both the existing `Archived` boolean column and `Status` Active/Archived values, validates unknown status values, and carries archived state through review and atomic creation. Archived rows do not consume active-account free slots; status labels are localized in all three languages.
+- **Verification:** All 116 focused tests passed, including nine new regressions for category event/focus/self-echo/stale-read behavior, extracted real save-handler double taps and guard release, DST checks across America/New_York/Europe/Berlin/Asia/Singapore, formula-safe text and negative balances, and real SQLite archived account export/import at the free active-account limit. `npx tsc --noEmit` and `git diff --check` passed. No Android device was connected.
+- **Performance:** Save guarding and budget date arithmetic are O(1), with no added SQL. Category refreshes replace the mount query with one deferred/coalesced load per focused consumer, retaining existing catalog reads and avoiding root Context updates or offscreen subscriptions. CSV protection/status handling adds linear text processing and no additional import/export queries; existing import row bounds remain unchanged.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenarios for Each of the 4 Sub-Items:**
   1. **11a — `CategoriesScreen` doesn't refresh after quick-adding a category inside `TransactionFormModal`:**

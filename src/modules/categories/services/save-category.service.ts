@@ -1,3 +1,4 @@
+import { notifyCategoryChanges } from "./category-changes.service";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { categoryInputSchema } from "../schemas/category.schema";
 import {
@@ -46,6 +47,7 @@ export async function saveCategory(
     if (!updated) {
       throw new Error(`Failed to update category ${id}`);
     }
+    if (client === db) notifyCategoryChanges();
     return updated;
   }
 
@@ -60,10 +62,12 @@ export async function saveCategory(
     );
   }
 
-  return insertCategory(client, {
+  const created = await insertCategory(client, {
     ...parsed,
     id: newId,
     sortOrder,
     isSystem: false,
   });
+  if (client === db) notifyCategoryChanges();
+  return created;
 }

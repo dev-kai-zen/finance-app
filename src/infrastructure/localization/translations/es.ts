@@ -349,6 +349,7 @@ export const es = {
       creditLimit: "Límite de crédito",
       statementDay: "Día de corte del estado de cuenta",
       paymentDueDay: "Día límite de pago",
+      status: "Estado (Activo / Archivado)",
     },
     errors: {
       type: "Elige Ingreso, Gasto o Transferencia para este registro.",
