@@ -96,3 +96,12 @@ export type {
   QuickSyncState,
   QuickSyncStatus,
 } from "./types";
+
+export {
+  getQuickSyncOperationGeneration,
+  invalidateQuickSyncOperations,
+  isQuickSyncOperationCurrent,
+  isQuickSyncReplacementPending,
+  trackQuickSyncOperation,
+  withQuickSyncReplacement,
+} from "./quick-sync-operation-coordinator";

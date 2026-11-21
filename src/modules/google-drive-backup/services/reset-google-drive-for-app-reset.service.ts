@@ -1,5 +1,6 @@
 import {
   cancelDebouncedQuickSync,
+  invalidateQuickSyncOperations,
   clearQuickSyncRemoteConflict,
   resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncLocalMetadata,
@@ -11,6 +12,7 @@ import {
 } from "./google-drive-auth.service";
 
 export async function resetGoogleDriveConnectionForAppReset(): Promise<void> {
+  invalidateQuickSyncOperations();
   cancelDebouncedQuickSync();
   resetQuickSyncLocalMetadata();
   resetQuickSyncDeviceIdentityForAppReset();

@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { invalidateQuickSyncOperations } from "@/infrastructure/sync/quick-sync-operation-coordinator";
 import { appLockLifecycle } from "@/modules/security";
 import type { OneTapUser } from "react-native-nitro-google-signin";
 
@@ -45,6 +46,7 @@ export async function restoreGoogleDriveSession(): Promise<GoogleDriveUser | nul
 }
 
 export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
+  invalidateQuickSyncOperations();
   return appLockLifecycle.withLockSuspended(async () => {
     const google = await getConfiguredGoogleModule();
     await google.GoogleOneTapSignIn.checkPlayServices();
@@ -57,12 +59,14 @@ export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
     }
 
     await ensureGoogleDriveScopes(google, response.data.scopes);
+    invalidateQuickSyncOperations();
 
     return toGoogleDriveUser(response.data.user);
   });
 }
 
 export async function disconnectGoogleDrive(): Promise<void> {
+  invalidateQuickSyncOperations();
   const google = await getConfiguredGoogleModule();
   await google.GoogleOneTapSignIn.signOut();
 }

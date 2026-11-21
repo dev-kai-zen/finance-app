@@ -65,6 +65,7 @@ async function setup(t, options = {}) {
   const auth = load("../services/google-drive-auth.service.ts", {
     "expo-constants": { default: { appOwnership: "standalone", expoVersion: null } },
     "@/modules/security": { appLockLifecycle },
+    "@/infrastructure/sync/quick-sync-operation-coordinator": { invalidateQuickSyncOperations() {} },
     "react-native-nitro-google-signin": google,
   }, { process: { env: { EXPO_OS: "android", EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: options.unconfigured ? "" : "test-client" } } });
   return {

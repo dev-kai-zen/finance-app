@@ -112,9 +112,10 @@ Module._load = function (request, parent, ...rest) {
   ) {
     return {
       restoreQuickSyncBackup: async (...args) => {
-        if (mockRestoreHandler) {
-          return mockRestoreHandler(...args);
-        }
+        const {withQuickSyncReplacement} = require("@/infrastructure/sync/quick-sync-operation-coordinator");
+        return withQuickSyncReplacement(async () => {
+          if (mockRestoreHandler) return mockRestoreHandler(...args);
+        });
       },
     };
   }
@@ -225,6 +226,8 @@ const {
   resolveQuickSyncConflictByRestore,
   restoreFromQuickSync,
   triggerQuickSync,
+  setQuickSyncEnabled,
+  resetQuickSyncConnection,
 } = require("@/modules/google-drive-backup/services/quick-sync.service");
 const {
   flushDebouncedQuickSync,
@@ -1266,6 +1269,7 @@ test("quick sync restore mutex (P1-23): cancels debounced sync, blocks concurren
   const restorePromise = restoreFromQuickSync("file-1");
   await Promise.resolve();
 
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(restoreStarted, true);
   flushDebouncedQuickSync();
   const concurrentTrigger = await triggerQuickSync({ immediate: true });
@@ -1310,6 +1314,8 @@ test("quick sync restore mutex (P1-23): cancels debounced sync, blocks concurren
   }
   assert.deepEqual(events, ["upload:start"]);
 
+  markQuickSyncLocalChangesPending();
+  void triggerQuickSync(); // Queue a follow-up before requesting restore.
   const queuedRestore = restoreFromQuickSync("file-1");
   await new Promise((resolve) => setTimeout(resolve, 10));
   assert.deepEqual(
@@ -1479,4 +1485,94 @@ test('V2-02: actual restore publishes the selected branch and preserves edits ma
     assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
     assert.equal(getQuickSyncState().status,'idle');
   } finally {mockReplaceDatabaseHandler=null;}
+});
+
+
+function deferredOperation() {
+  let resolve, reject;
+  const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
+  return {promise,resolve,reject};
+}
+function enablePersonalQuickSync() {
+  saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
+  saveQuickSyncConfig({enabled:true});
+  markQuickSyncLocalChangesPending();
+}
+
+test('V2-03: replacement drains active upload, drops stale completion, and blocks follow-up uploads', async () => {
+  enablePersonalQuickSync();
+  const {withQuickSyncReplacement,isQuickSyncReplacementPending}=require('@/infrastructure/sync');
+  const started=deferredOperation(), upload=deferredOperation();
+  let uploads=0;
+  mockUploadHandler=async()=>{uploads++;started.resolve();await upload.promise;return {id:'stale',modifiedTime:'2026-11-22T00:00:00Z',syncRevisionId:'stale'};};
+  const pending=triggerQuickSync();await started.promise;
+  void triggerQuickSync(); // A queued follow-up must not survive replacement.
+  let replaced=false;
+  const replacement=withQuickSyncReplacement(async()=>{
+    replaced=true;
+    saveQuickSyncConfig({lastSyncedAt:null});
+    clearQuickSyncRemoteBaselineOnManualRestore();
+    setQuickSyncRuntimeStatus('idle');
+  });
+  assert.equal(isQuickSyncReplacementPending(),true);
+  assert.equal(await triggerQuickSync(),false);
+  assert.equal(await checkQuickSyncRemoteStatus({force:true}),'skipped');
+  assert.equal(replaced,false);
+  upload.resolve();
+  assert.equal(await pending,false,'The invalidated upload must not publish metadata');
+  await replacement;
+  assert.equal(getQuickSyncDeviceMetadata().lastKnownRemoteSyncId,null);
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+  assert.equal(getQuickSyncState().status,'idle');
+  assert.equal(uploads,1);
+  assert.equal(isQuickSyncReplacementPending(),false);
+});
+
+test('V2-03: an in-flight remote check cannot adopt a baseline or upload after replacement', async () => {
+  enablePersonalQuickSync();
+  const {withQuickSyncReplacement}=require('@/infrastructure/sync');
+  const started=deferredOperation(), read=deferredOperation();let uploads=0;
+  mockGetRemoteMetadataHandler=async()=>{started.resolve();return read.promise;};
+  mockUploadHandler=async()=>{uploads++;throw new Error('Unexpected upload');};
+  const check=checkQuickSyncRemoteStatus({force:true});await started.promise;
+  const replacement=withQuickSyncReplacement(async()=>{clearQuickSyncRemoteBaselineOnManualRestore();});
+  read.resolve(null);
+  assert.equal(await check,'skipped');await replacement;
+  assert.equal(uploads,0);
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+  assert.equal(getQuickSyncDeviceMetadata().lastKnownRemoteFileId,null);
+});
+
+test('V2-03: disable and disconnect invalidate late upload success/failure without resurrecting state', async () => {
+  for (const disconnect of [false,true]) {
+    enablePersonalQuickSync();
+    const cachedConfig = getQuickSyncConfig();
+    const started=deferredOperation(), upload=deferredOperation();
+    mockUploadHandler=async()=>{started.resolve();return upload.promise;};
+    const pending=triggerQuickSync();await started.promise;
+    if(disconnect) resetQuickSyncConnection();else await setQuickSyncEnabled(false);
+    if(disconnect) upload.reject(new Error('Late network failure'));
+    else upload.resolve({id:'stale',modifiedTime:'2026-11-22T00:00:00Z'});
+    assert.equal(await pending,false);
+    assert.equal(getQuickSyncConfig().enabled,false);
+    assert.equal(getQuickSyncState().status,'disabled');
+    assert.equal(getQuickSyncDeviceMetadata().lastKnownRemoteFileId,null);
+    assert.equal(await triggerQuickSync({config:cachedConfig}),false);
+    assert.equal(await checkQuickSyncRemoteStatus({force:true,config:cachedConfig}),'skipped');
+  }
+});
+
+test('V2-03: failed replacement releases the gate and clears a stale syncing status', async () => {
+  enablePersonalQuickSync();
+  const {withQuickSyncReplacement,isQuickSyncReplacementPending}=require('@/infrastructure/sync');
+  const started=deferredOperation(), upload=deferredOperation();
+  mockUploadHandler=async()=>{started.resolve();return upload.promise;};
+  const pending=triggerQuickSync();await started.promise;
+  const restore=withQuickSyncReplacement(async()=>{throw new Error('Restore rejected');});
+  const rejected=assert.rejects(restore,/Restore rejected/);
+  upload.resolve({id:'stale',modifiedTime:'2026-11-22T00:00:00Z'});
+  await pending;await rejected;
+  assert.equal(isQuickSyncReplacementPending(),false);
+  assert.equal(getQuickSyncState().status,'idle');
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
 });

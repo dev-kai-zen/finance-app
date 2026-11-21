@@ -3,6 +3,11 @@ import NetInfo from "@react-native-community/netinfo";
 import { isDatabaseReplacing } from "@/infrastructure/database";
 import {
   cancelDebouncedQuickSync,
+  getQuickSyncOperationGeneration,
+  invalidateQuickSyncOperations,
+  isQuickSyncOperationCurrent,
+  isQuickSyncReplacementPending,
+  trackQuickSyncOperation,
   clearQuickSyncRemoteConflict,
   clearQuickSyncRemoteTracking,
   createQuickSyncRevisionId,
@@ -55,6 +60,7 @@ export type QuickSyncCheckResult =
 export { getQuickSyncState, subscribeToQuickSync };
 
 export function resetQuickSyncConnection(): void {
+  invalidateQuickSyncOperations();
   cancelDebouncedQuickSync();
   pendingFollowUpSync = false;
   pendingFollowUpForceOverwrite = false;
@@ -85,6 +91,7 @@ export function dismissQuickSyncConflictPrompt(): void {
 }
 
 export async function setQuickSyncEnabled(enabled: boolean): Promise<void> {
+  if (!enabled) invalidateQuickSyncOperations();
   saveQuickSyncConfig({ enabled });
   if (enabled) {
     clearQuickSyncRemoteConflict();
@@ -111,11 +118,12 @@ export async function checkQuickSyncRemoteStatus(options?: {
   openPromptOnConflict?: boolean;
   config?: ReturnType<typeof getQuickSyncConfig>;
 }): Promise<QuickSyncCheckResult> {
-  if (isDatabaseReplacing() || !isPersonalWorkspace()) {
+  if (isQuickSyncReplacementPending() || isDatabaseReplacing() || !isPersonalWorkspace()) {
     return "skipped";
   }
 
-  const config = options?.config ?? getQuickSyncConfig();
+  // A caller snapshot may predate a restore/reset or connection change.
+  const config = getQuickSyncConfig();
   if (!config.enabled) {
     setQuickSyncRuntimeStatus("disabled");
     return "skipped";
@@ -137,12 +145,13 @@ export async function checkQuickSyncRemoteStatus(options?: {
     return "skipped";
   }
 
-  activeCheckPromise = performRemoteCheck(
+  activeCheckPromise = trackQuickSyncOperation(performRemoteCheck(
     config,
     options?.openPromptOnConflict ?? true,
+    getQuickSyncOperationGeneration(),
   ).finally(() => {
     activeCheckPromise = null;
-  });
+  }));
 
   return activeCheckPromise;
 }
@@ -152,11 +161,12 @@ export async function triggerQuickSync(options?: {
   forceOverwrite?: boolean;
   config?: ReturnType<typeof getQuickSyncConfig>;
 }): Promise<boolean> {
-  if (isDatabaseReplacing() || isRestoringQuickSync) {
+  if (isQuickSyncReplacementPending() || isDatabaseReplacing() || isRestoringQuickSync) {
     return false;
   }
 
-  const config = options?.config ?? getQuickSyncConfig();
+  // A caller snapshot may predate a restore/reset or connection change.
+  const config = getQuickSyncConfig();
   if (!config.enabled) {
     setQuickSyncRuntimeStatus("disabled");
     return false;
@@ -182,15 +192,25 @@ export async function triggerQuickSync(options?: {
   pendingFollowUpSync = false;
   pendingFollowUpForceOverwrite = false;
 
-  activeSyncPromise = performSync(
+  const syncGeneration = getQuickSyncOperationGeneration();
+  activeSyncPromise = trackQuickSyncOperation(performSync(
     config.network,
     config.fileId,
     Boolean(options?.forceOverwrite),
+    syncGeneration,
   ).finally(() => {
+    if (!isQuickSyncOperationCurrent(syncGeneration) && !isQuickSyncReplacementPending() && !isRestoringQuickSync) {
+      try {
+        const state = getQuickSyncState();
+        if (state.status === "syncing") setQuickSyncRuntimeStatus(state.enabled ? "idle" : "disabled");
+      } catch {
+        // A status read failure must not prevent releasing the active operation.
+      }
+    }
     activeSyncPromise = null;
     pendingFollowUpSync = false;
     pendingFollowUpForceOverwrite = false;
-  });
+  }));
 
   return activeSyncPromise;
 }
@@ -209,33 +229,16 @@ async function runCoordinatedQuickSyncRestore(
 
   isRestoringQuickSync = true;
   const restorePromise = (async () => {
-    while (activeSyncPromise) {
-      await activeSyncPromise.catch(() => false);
-    }
-
-    cancelDebouncedQuickSync();
-    pendingFollowUpSync = false;
-    pendingFollowUpForceOverwrite = false;
     setQuickSyncRuntimeStatus("syncing");
-
-    let releaseSyncLock!: (ok: boolean) => void;
-    const syncLock = new Promise<boolean>((resolve) => {
-      releaseSyncLock = resolve;
-    });
-    activeSyncPromise = syncLock;
-
     try {
+      // The restore entry point acquires coordination immediately, invalidating
+      // active work before waiting so chained follow-ups cannot starve restore.
       await restoreQuickSyncBackup(explicitFileId);
       lastRemoteCheckCompletedAt = Date.now();
-      releaseSyncLock(true);
     } catch (error) {
-      onRestoreError?.(error);
-      releaseSyncLock(false);
+      if (!isQuickSyncReplacementPending() && getQuickSyncState().status !== "disabled") onRestoreError?.(error);
       throw error;
     } finally {
-      if (activeSyncPromise === syncLock) {
-        activeSyncPromise = null;
-      }
       pendingFollowUpSync = false;
       pendingFollowUpForceOverwrite = false;
     }
@@ -305,18 +308,19 @@ export async function resolveQuickSyncConflictByOverwrite(): Promise<boolean> {
 async function performRemoteCheck(
   config: ReturnType<typeof getQuickSyncConfig>,
   openPromptOnConflict: boolean,
+  operationGeneration: number,
 ): Promise<QuickSyncCheckResult> {
   try {
-    if (!isPersonalWorkspace() || isDatabaseReplacing()) {
+    if (!isQuickSyncOperationCurrent(operationGeneration) || !isPersonalWorkspace() || isDatabaseReplacing()) {
       return "skipped";
     }
 
     const user = await restoreGoogleDriveSession().catch(() => null);
-    if (!user) {
+    if (!isQuickSyncOperationCurrent(operationGeneration) || !user) {
       return "skipped";
     }
 
-    const networkOk = await verifyNetworkForQuickSync(config.network);
+    const networkOk = await verifyNetworkForQuickSync(config.network, operationGeneration);
     if (!networkOk) {
       return "skipped";
     }
@@ -328,6 +332,7 @@ async function performRemoteCheck(
     const remoteFile = await withGoogleDriveAccessToken((accessToken) =>
       getGoogleDriveQuickSyncFileMetadata(accessToken, config.fileId),
     );
+    if (!isQuickSyncOperationCurrent(operationGeneration)) return "skipped";
     lastRemoteCheckCompletedAt = Date.now();
 
     const deviceMetadata = getQuickSyncDeviceMetadata();
@@ -395,13 +400,14 @@ async function performRemoteCheck(
       const uploaded = await triggerQuickSync({
         config: getQuickSyncConfig(),
       });
+      if (!isQuickSyncOperationCurrent(operationGeneration)) return "skipped";
       return uploaded ? "uploaded" : "up_to_date";
     }
 
     return "up_to_date";
   } catch {
     // Background startup/resume checks are non-fatal and offline-first.
-    return "error";
+    return isQuickSyncOperationCurrent(operationGeneration) ? "error" : "skipped";
   }
 }
 
@@ -409,22 +415,24 @@ async function performSync(
   networkPreference: QuickSyncNetworkPreference,
   existingFileId: string | null,
   forceOverwrite: boolean,
+  operationGeneration: number,
 ): Promise<boolean> {
   try {
     // 0. Ensure app is in a valid completed personal workspace (never sync empty onboarding database)
-    if (!isPersonalWorkspace() || isDatabaseReplacing()) {
+    if (!isQuickSyncOperationCurrent(operationGeneration) || !isPersonalWorkspace() || isDatabaseReplacing()) {
       return false;
     }
 
     // 1. Verify Google Drive session is active
     const user = await restoreGoogleDriveSession().catch(() => null);
+    if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
     if (!user) {
       setQuickSyncRuntimeStatus("idle");
       return false;
     }
 
     // 2. Verify network connection
-    const networkOk = await verifyNetworkForQuickSync(networkPreference);
+    const networkOk = await verifyNetworkForQuickSync(networkPreference, operationGeneration);
     if (!networkOk) {
       return false;
     }
@@ -444,6 +452,7 @@ async function performSync(
       const remoteFile = await withGoogleDriveAccessToken((accessToken) =>
         getGoogleDriveQuickSyncFileMetadata(accessToken, existingFileId),
       );
+      if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
       lastRemoteCheckCompletedAt = Date.now();
 
       parentTokens = remoteFile?.tipTokens ?? (remoteFile?.revisionToken ? [remoteFile.revisionToken] : []);
@@ -502,6 +511,7 @@ async function performSync(
     pendingFollowUpForceOverwrite = false;
     cancelDebouncedQuickSync();
     const archive = await createBackupArchive(null);
+    if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
 
     const deviceName = formatQuickSyncDeviceDisplayName(
       deviceMetadata.customDeviceName,
@@ -510,8 +520,9 @@ async function performSync(
     const syncRevisionId = createQuickSyncRevisionId();
 
     // 5. Upload or update backup file in Google Drive with device attribution
-    const backupFile = await withGoogleDriveAccessToken((accessToken) =>
-      uploadOrUpdateGoogleDriveQuickSyncBackup(
+    const backupFile = await withGoogleDriveAccessToken((accessToken) => {
+      if (!isQuickSyncOperationCurrent(operationGeneration)) throw new Error("Quick Sync operation was superseded.");
+      return uploadOrUpdateGoogleDriveQuickSyncBackup(
         accessToken,
         archive.bytes,
         targetFileId,
@@ -521,8 +532,9 @@ async function performSync(
           syncRevisionId,
           parentTokens,
         },
-      ),
-    );
+      );
+    });
+    if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
     lastRemoteCheckCompletedAt = Date.now();
 
     if (backupFile.hasConcurrentRevisions) {
@@ -566,12 +578,14 @@ async function performSync(
         networkPreference,
         backupFile.id,
         nextForceOverwrite,
+        operationGeneration,
       );
     }
 
     setQuickSyncRuntimeStatus("synced");
     return true;
   } catch (error) {
+    if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
     const message =
       error instanceof Error ? error.message : "Quick sync failed.";
     setQuickSyncRuntimeStatus("error", message);
@@ -581,8 +595,10 @@ async function performSync(
 
 async function verifyNetworkForQuickSync(
   networkPreference: QuickSyncNetworkPreference,
+  operationGeneration: number,
 ): Promise<boolean> {
   const netState = await NetInfo.fetch();
+  if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
   if (!netState.isConnected) {
     setQuickSyncRuntimeStatus("waiting_network");
     return false;

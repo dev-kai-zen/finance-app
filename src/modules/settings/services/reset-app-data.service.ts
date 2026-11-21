@@ -13,13 +13,14 @@ import {
 } from "@/infrastructure/database";
 import {
   cancelDebouncedQuickSync,
+  withQuickSyncReplacement,
   clearQuickSyncRemoteTracking,
 } from "@/infrastructure/sync";
 import { deleteAllUserData } from "../repositories/reset-data.repository";
 import { invalidateExperiencePreferencesCache } from "./experience-preferences.service";
 
 export async function resetAppData(): Promise<void> {
-  return withDatabaseSnapshotLock(async () => {
+  return withQuickSyncReplacement(() => withDatabaseSnapshotLock(async () => {
     setDatabaseReplacing(true);
     try {
       const { resetGoogleDriveConnectionForAppReset } =
@@ -68,7 +69,7 @@ export async function resetAppData(): Promise<void> {
     } finally {
       setDatabaseReplacing(false);
     }
-  });
+  }));
 }
 
 async function recoverMalformedDatabase(): Promise<void> {
