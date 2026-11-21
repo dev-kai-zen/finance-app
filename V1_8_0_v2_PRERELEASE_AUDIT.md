@@ -57,6 +57,8 @@ Severity describes impact. Evidence distinguishes an executed reproduction from 
 
 ## V2-01 — Subscription auto-post records money in the wrong direction
 
+**Implementation update (November 21, 2026):** Subscription schedule creation now uses negative expense amounts. Named migration `0049_fix_subscription_schedule_payment_sign` repairs existing subscription-linked templates and due/failed occurrence snapshots. It preserves original templates and flags positive historical scheduled payments in `settings.__subscription_payment_sign_repair_v1` for review. Already-posted ledger rows and intentional general refunds remain unchanged. Regression tests cover Auto Post, Post Now, Mark Paid, renewal/payment history, migration scope, and repeat execution. Historical correction remains a review task; this update does not grant production approval for the other findings.
+
 **Evidence:** [subscription schedule construction](src/modules/subscriptions/services/save-subscription.service.ts#L121), [schedule posting](src/modules/scheduled-transactions/services/process-due-schedules.service.ts#L320), [explicit sign preservation](src/modules/transactions/services/transaction-exchange-snapshot.service.ts#L32).
 
 `syncSubscriptionScheduleInContext()` sets an expense schedule's amount to `Math.abs(sub.amountMinorUnits)`. Scheduled transactions now support signed expenses/refunds. Posting forwards that positive amount, and the transaction service correctly preserves its explicit sign. Consequently, the subscription adapter creates a refund-like expense instead of a payment.

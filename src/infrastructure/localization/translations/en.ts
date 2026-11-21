@@ -1236,6 +1236,8 @@ export const en = {
         "Fix the Monthly Budget widget showing an outdated target after changing a monthly budget override.",
       fixItem11:
         "Improve Dashboard loading, subscription refreshes, and CSV exports, and fix totals for large category selections.",
+      fixItem12:
+        "Fix scheduled subscription payments increasing account balances instead of reducing them.",
     },
     v170: {
       date: "November 18, 2026",

@@ -344,6 +344,13 @@
       "when": 1795098063739,
       "tag": "0048_add_transactions_active_feed_index",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "6",
+      "when": 1795269423189,
+      "tag": "0049_fix_subscription_schedule_payment_sign",
+      "breakpoints": true
     }
   ]
 }

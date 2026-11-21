@@ -204,6 +204,9 @@ Module._load = function (request, ...args) {
   if (request === "@/modules/scheduled-transactions") return {
     getScheduleBySubscriptionId: () => null,
     processDueSchedules() {},
+    saveScheduledTransactionInContext: (...args) => require("../../scheduled-transactions/services/save-scheduled-transaction.service").saveScheduledTransactionInContext(...args),
+    setScheduledTransactionPaused() {},
+    getScheduledTransaction: (...args) => require("../../scheduled-transactions/repositories/scheduled-transactions.repository").findScheduledTransaction(...args),
   };
   if (request === "@/modules/transactions") return {
     recordTransactionInContext(command, context) {
@@ -345,5 +348,63 @@ test("P2-05: legacy zero-cost subscriptions fail payment validation without writ
     assert.throws(() => recordSubscriptionPayment(id), /greater than zero/);
     assert.equal(sqlite.prepare("SELECT count(*) AS n FROM transactions").get().n, 0);
     assert.equal(sqlite.prepare("SELECT count(*) AS n FROM subscription_payments").get().n, 0);
+  } finally { sqlite.close(); }
+});
+
+
+test("V2-01: automatic, Post Now and Mark Paid all debit the ledger; general refunds retain their sign", () => {
+  const db = setupTestDb();
+  try {
+    const now = new Date();
+    const { processDueSchedules, postScheduledOccurrence } = require('../../scheduled-transactions/services/process-due-schedules.service');
+    for (const mode of ['auto', 'post', 'manual']) {
+      const id = saveSubscriptionInContext(input({name: mode, accountId:'acc_1', categoryId:'cat_dining', autoPost:mode === 'auto', firstBillingDate:now}), undefined, db);
+      if (mode === 'manual') recordSubscriptionPayment(id);
+      else {
+        processDueSchedules(new Date(now.getTime()+1000));
+        if (mode === 'post') {
+          const occurrence = sqlite.prepare("SELECT o.id FROM transaction_schedule_occurrences o JOIN transaction_schedules s ON s.id=o.schedule_id WHERE s.subscription_id=? AND o.status='due'").get(id);
+          postScheduledOccurrence(occurrence.id);
+        }
+      }
+      assert.equal(sqlite.prepare('SELECT amount_minor_units FROM transactions WHERE name=?').get(mode).amount_minor_units,-14900);
+      assert.equal(sqlite.prepare('SELECT count(*) n FROM subscription_payments WHERE subscription_id=?').get(id).n,1);
+      assert.ok(sqlite.prepare('SELECT next_renewal_date FROM subscriptions WHERE id=?').get(id).next_renewal_date > now.getTime());
+    }
+    const { createTransactionInContext } = require('../../transactions/services/create-transaction.service');
+    const refund=createTransactionInContext({accountId:'acc_1',categoryId:'cat_dining',type:'expense',amountMinorUnits:10000,occurredAt:now},db,{reconcileBilling:false});
+    assert.equal(refund.amountMinorUnits,10000);
+  } finally { sqlite.close(); }
+});
+
+test("V2-01: migration repairs only linked future payments, preserves history and recovery evidence, and is idempotent", () => {
+  const db=setupTestDb();
+  try {
+    const now=new Date();
+    const id=saveSubscriptionInContext(input({accountId:'acc_1',categoryId:'cat_dining',firstBillingDate:now}),undefined,db);
+    const schedule=sqlite.prepare('SELECT schedule_id FROM subscriptions WHERE id=?').get(id).schedule_id;
+    const { processDueSchedules }=require('../../scheduled-transactions/services/process-due-schedules.service');
+    processDueSchedules(new Date(now.getTime()+1000));
+    sqlite.prepare('UPDATE transaction_schedules SET amount_minor_units=14900 WHERE id=?').run(schedule);
+    sqlite.prepare("UPDATE transaction_schedule_occurrences SET template_snapshot=json_set(template_snapshot,'$.amountMinorUnits',14900) WHERE schedule_id=?").run(schedule);
+    const { saveScheduledTransactionInContext }=require('../../scheduled-transactions/services/save-scheduled-transaction.service');
+    const refund=saveScheduledTransactionInContext({transactionType:'expense',accountId:'acc_1',categoryId:'cat_dining',amountMinorUnits:10000,frequency:'once',intervalCount:1,startsAt:now,timeZone:'UTC',endMode:'never',weekendPolicy:'exact',autoPost:false},undefined,db);
+    const due=sqlite.prepare("SELECT id FROM transaction_schedule_occurrences WHERE schedule_id=? AND status='due'").get(schedule);
+    require('../../scheduled-transactions/services/process-due-schedules.service').postScheduledOccurrence(due.id);
+    sqlite.prepare('UPDATE transactions SET amount_minor_units=14900 WHERE id=(SELECT transaction_id FROM subscription_payments WHERE subscription_id=?)').run(id);
+    sqlite.prepare("DELETE FROM settings WHERE key='__subscription_payment_sign_repair_v1'").run();
+    sqlite.prepare("INSERT INTO transaction_schedule_occurrences (id,schedule_id,sequence_number,nominal_due_at,template_snapshot,status,created_at,updated_at) VALUES ('pending-sign',?,99,?,?,'failed',?,?)").run(schedule,now.getTime()+86400000,JSON.stringify({transactionType:'expense',amountMinorUnits:14900}),now.getTime(),now.getTime());
+    const postedSnapshot=sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE schedule_id=? AND status='posted'").get(schedule).template_snapshot;
+    const migration=fs.readFileSync(path.join(root,'../drizzle/0049_fix_subscription_schedule_payment_sign.sql'),'utf8');
+    sqlite.exec(migration);
+    const evidence=sqlite.prepare("SELECT value FROM settings WHERE key='__subscription_payment_sign_repair_v1'").get().value;
+    assert.equal(sqlite.prepare('SELECT amount_minor_units FROM transaction_schedules WHERE id=?').get(schedule).amount_minor_units,-14900);
+    assert.equal(sqlite.prepare('SELECT amount_minor_units FROM transaction_schedules WHERE id=?').get(refund.id).amount_minor_units,10000);
+    assert.equal(sqlite.prepare('SELECT amount_minor_units FROM transactions').get().amount_minor_units,14900,'Historical records require review');
+    assert.equal(JSON.parse(sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE id='pending-sign'").get().template_snapshot).amountMinorUnits,-14900);
+    assert.equal(sqlite.prepare("SELECT template_snapshot FROM transaction_schedule_occurrences WHERE schedule_id=? AND status='posted'").get(schedule).template_snapshot,postedSnapshot);
+    assert.equal(JSON.parse(evidence).postedPaymentsForReview.length,1);
+    sqlite.exec(migration);
+    assert.equal(sqlite.prepare("SELECT value FROM settings WHERE key='__subscription_payment_sign_repair_v1'").get().value,evidence);
   } finally { sqlite.close(); }
 });

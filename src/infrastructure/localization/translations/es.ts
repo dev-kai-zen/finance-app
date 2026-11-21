@@ -1253,6 +1253,8 @@ export const es = {
         "Corrige el objetivo desactualizado del widget de presupuesto al cambiar el objetivo de un mes específico.",
       fixItem11:
         "Mejorar la carga del panel, las suscripciones y las exportaciones CSV; corregir totales al seleccionar muchas categorías.",
+      fixItem12:
+        "Corrige los pagos programados de suscripciones que aumentaban el saldo en lugar de reducirlo.",
     },
     v170: {
       date: "18 de noviembre de 2026",

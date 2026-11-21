@@ -1267,6 +1267,8 @@ export const fil = {
         "Ayusin ang lumang target sa Monthly Budget widget matapos baguhin ang target para sa isang buwan.",
       fixItem11:
         "Pabilisin ang Dashboard, pag-refresh ng mga subscription, at CSV export, at ayusin ang kabuuan ng maraming kategorya.",
+      fixItem12:
+        "Ayusin ang naka-iskedyul na bayad sa subscription na nagdaragdag sa balanse sa halip na magbawas.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

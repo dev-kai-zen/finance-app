@@ -118,7 +118,7 @@ export function syncSubscriptionScheduleInContext(
       accountId: sub.accountId,
       pocketId: sub.pocketId ?? null,
       categoryId: sub.categoryId ?? null,
-      amountMinorUnits: Math.abs(sub.amountMinorUnits),
+      amountMinorUnits: -Math.abs(sub.amountMinorUnits),
       name: sub.name.trim(),
       note: sub.notes?.trim() || null,
       frequency,
