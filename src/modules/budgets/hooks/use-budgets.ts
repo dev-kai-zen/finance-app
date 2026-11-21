@@ -84,9 +84,10 @@ function summarizeBudgetStatuses(statuses: BudgetStatus[]): BudgetsSummary {
   };
 }
 
-export function useBudgets(referenceDate?: Date) {
+export function useBudgets(referenceDate?: Date, options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery ?? false;
   const referenceDateMs = referenceDate?.getTime();
-  const { categories, loading: categoriesLoading } = useCategories();
+  const { categories, loading: categoriesLoading } = useCategories({ skipQuery });
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -121,7 +122,7 @@ export function useBudgets(referenceDate?: Date) {
 
   const refresh = useCallback((): Promise<void> => {
     cancelPending();
-    if (!focusedRef.current || categoriesLoading) return Promise.resolve();
+    if (skipQuery || !focusedRef.current || categoriesLoading) return Promise.resolve();
     const requestId = requestIdRef.current;
 
     return new Promise((resolve) => {
@@ -162,11 +163,12 @@ export function useBudgets(referenceDate?: Date) {
         resolve();
       };
     });
-  }, [cancelPending, categoriesLoading, flatCategoriesMap, referenceDateMs]);
+  }, [cancelPending, categoriesLoading, flatCategoriesMap, referenceDateMs, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       focusedRef.current = true;
+      if (skipQuery) return () => { focusedRef.current = false; cancelPending(); };
       void refresh();
       const subscription = DeviceEventEmitter.addListener(
         "FINANCE_APP_TRANSACTION_MUTATED",
@@ -177,7 +179,7 @@ export function useBudgets(referenceDate?: Date) {
         subscription.remove();
         cancelPending();
       };
-    }, [cancelPending, refresh]),
+    }, [cancelPending, refresh, skipQuery]),
   );
 
   const saveBudget = useCallback(

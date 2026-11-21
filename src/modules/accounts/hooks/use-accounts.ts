@@ -9,6 +9,7 @@ import { getCreditCardMonitoring } from "@/modules/credit-cards";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 
 export type UseAccountsOptions = {
+  skipQuery?: boolean;
   /**
    * When true, calculates detailed credit card monitoring (statements, billing cycles, utilization).
    * Defaults to false so selectors, pickers, and modals remain fast and lightweight.
@@ -22,6 +23,7 @@ export type UseAccountsOptions = {
 };
 
 export function useAccounts(options?: UseAccountsOptions) {
+  const skipQuery = options?.skipQuery ?? false;
   const includeCreditCardMonitoring = options?.includeCreditCardMonitoring === true;
   const includeManagementFlags =
     options?.includeManagementFlags ?? includeCreditCardMonitoring;
@@ -36,6 +38,7 @@ export function useAccounts(options?: UseAccountsOptions) {
   const cancelPendingRef = useRef<(() => void) | null>(null);
   const refresh = useCallback(() => {
     cancelPendingRef.current?.();
+    if (skipQuery) return;
     cancelPendingRef.current = runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
@@ -89,7 +92,7 @@ export function useAccounts(options?: UseAccountsOptions) {
         }
       },
     );
-  }, [includeCreditCardMonitoring, includeManagementFlags]);
+  }, [includeCreditCardMonitoring, includeManagementFlags, skipQuery]);
   useFocusEffect(
     useCallback(() => {
       refresh();

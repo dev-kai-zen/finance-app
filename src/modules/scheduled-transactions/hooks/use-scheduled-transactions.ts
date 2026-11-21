@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { useFocusEffect } from "expo-router";
 
 import {
@@ -28,7 +29,10 @@ import type {
   ScheduledTransaction,
 } from "../types/scheduled-transaction.types";
 
-export function useScheduledTransactions() {
+export function useScheduledTransactions(options?: { skipQuery?: boolean; readOnly?: boolean }) {
+  const skipQuery = options?.skipQuery ?? false;
+  const readOnly = options?.readOnly ?? false;
+  const cancelPendingRef = useRef<(() => void) | null>(null);
   const [schedules, setSchedules] = useState<ScheduledTransaction[]>([]);
   const [occurrences, setOccurrences] = useState<ScheduleOccurrence[]>([]);
   const [scheduleIdsWithPostings, setScheduleIdsWithPostings] = useState<
@@ -37,33 +41,32 @@ export function useScheduledTransactions() {
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const hasLoadedOnceRef = useRef(false);
 
   const refresh = useCallback(() => {
-    if (!hasLoadedOnceRef.current) {
-      setLoading(true);
-    }
-    try {
-      reconcileOrphanedSubscriptionSchedules();
-      processDueSchedules();
-      setSchedules(listScheduledTransactions({ includeArchived: true }));
-      setOccurrences(listScheduleOccurrences());
-      setScheduleIdsWithPostings(getScheduleIdsWithPostings());
-      setError(null);
-    } catch (cause) {
-      setError(scheduledTransactionErrorMessage(cause));
-    } finally {
-      hasLoadedOnceRef.current = true;
-      setLoading(false);
-    }
-  }, []);
+    cancelPendingRef.current?.();
+    if (skipQuery) return;
+    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
+      try {
+        if (!readOnly) {
+          reconcileOrphanedSubscriptionSchedules();
+          processDueSchedules();
+        }
+        setSchedules(listScheduledTransactions({ includeArchived: true }));
+        if (!readOnly) {
+          setOccurrences(listScheduleOccurrences());
+          setScheduleIdsWithPostings(getScheduleIdsWithPostings());
+        }
+        setError(null);
+      } catch (cause) {
+        setError(scheduledTransactionErrorMessage(cause));
+      }
+    });
+  }, [readOnly, skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
-      const frameId = requestAnimationFrame(() => {
-        refresh();
-      });
-      return () => cancelAnimationFrame(frameId);
+      refresh();
+      return () => cancelPendingRef.current?.();
     }, [refresh]),
   );
 

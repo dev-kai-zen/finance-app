@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocalization } from "@/infrastructure/localization";
 import { useAccounts } from "@/modules/accounts";
 import { useCategories } from "@/modules/categories";
@@ -9,6 +9,7 @@ import { useNotes } from "@/modules/notes";
 import { useScheduledTransactions } from "@/modules/scheduled-transactions";
 import { useLabels } from "@/modules/labels";
 import { useSubscriptions } from "@/modules/subscriptions";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { formatCurrency } from "@/utils/currency";
 import {
   SEARCH_CATALOG,
@@ -21,14 +22,48 @@ import type {
 
 export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { t } = useLocalization();
-  const accountsHook = useAccounts({ includeCreditCardMonitoring: false });
-  const categoriesHook = useCategories();
-  const budgetsHook = useBudgets();
-  const goalsHook = useGoals();
-  const notesHook = useNotes({ skipQuery: !isOpen });
-  const schedulesHook = useScheduledTransactions();
-  const labelsHook = useLabels();
-  const subscriptionsHook = useSubscriptions();
+  const normalizedQuery = isOpen ? query.trim().toLowerCase() : "";
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchPending, setSearchPending] = useState(false);
+  const [transactionSnapshot, setTransactionSnapshot] = useState<{
+    query: string;
+    rows: ReturnType<typeof searchTransactions>;
+  }>({ query: "", rows: [] });
+
+  useEffect(() => {
+    if (!normalizedQuery) {
+      setSearchPending(false);
+      setDebouncedQuery("");
+      setTransactionSnapshot({ query: "", rows: [] });
+      return;
+    }
+    setSearchPending(true);
+    let cancelRead: (() => void) | undefined;
+    const timer = setTimeout(() => {
+      setDebouncedQuery(normalizedQuery);
+      cancelRead = scheduleAfterPaint(() => {
+        setTransactionSnapshot({ query: normalizedQuery, rows: searchTransactions(normalizedQuery, 8) });
+        setSearchPending(false);
+      });
+    }, 150);
+    return () => {
+      clearTimeout(timer);
+      cancelRead?.();
+    };
+  }, [normalizedQuery]);
+
+  // Clear/close immediately, even before effects reset the debounced snapshot.
+  const activeQuery = normalizedQuery ? debouncedQuery : "";
+  const skipQuery = !activeQuery;
+
+  const accountsHook = useAccounts({ includeCreditCardMonitoring: false, skipQuery });
+  const categoriesHook = useCategories({ skipQuery });
+  const budgetsHook = useBudgets(undefined, { skipQuery });
+  const goalsHook = useGoals({ skipQuery });
+  const notesHook = useNotes({ skipQuery });
+  const schedulesHook = useScheduledTransactions({ skipQuery, readOnly: true });
+  const labelsHook = useLabels({ skipQuery });
+  const subscriptionsHook = useSubscriptions({ skipQuery });
 
   const { accounts, pockets } = accountsHook;
   const { categories } = categoriesHook;
@@ -40,7 +75,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
   const { subscriptions } = subscriptionsHook;
 
   const sections = useMemo<SearchResultSection[]>(() => {
-    const trimmed = query.trim().toLowerCase();
+    const trimmed = activeQuery;
 
     // 1. If query is empty, show curated suggestions
     if (!trimmed) {
@@ -197,7 +232,7 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     // 6. Filter transactions (top 8 matches via targeted SQL query)
     const matchedTransactions: SearchResultItem[] = [];
     if (trimmed.length > 0) {
-      const searchResults = searchTransactions(trimmed, 8);
+      const searchResults = transactionSnapshot.query === trimmed ? transactionSnapshot.rows : [];
       for (const tx of searchResults) {
         const dateStr = new Date(tx.occurredAt).toLocaleDateString(undefined, {
           month: "short",
@@ -485,7 +520,8 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
 
     return resultSections;
   }, [
-    query,
+    activeQuery,
+    transactionSnapshot,
     t,
     accounts,
     pockets,
@@ -502,9 +538,17 @@ export function useGeneralSearch(query: string, isOpen: boolean = false) {
     return sections.reduce((acc, sec) => acc + sec.data.length, 0);
   }, [sections]);
 
+  const loading = Boolean(normalizedQuery) && (
+    searchPending || normalizedQuery !== activeQuery || transactionSnapshot.query !== activeQuery ||
+    accountsHook.loading || categoriesHook.loading || budgetsHook.loading ||
+    goalsHook.loading || notesHook.loading || schedulesHook.loading ||
+    labelsHook.loading || subscriptionsHook.loading
+  );
+
   return {
-    sections,
-    totalResults,
-    hasQuery: query.trim().length > 0,
+    sections: loading ? [] : sections,
+    totalResults: loading ? 0 : totalResults,
+    hasQuery: Boolean(normalizedQuery),
+    loading,
   };
 }

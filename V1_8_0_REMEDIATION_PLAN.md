@@ -1158,7 +1158,7 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 
 ---
 
-### [ ] P3-04 — Global Search Mount Storm & Un-Debounced SQL on Every Keystroke
+### [x] P3-04 — Global Search Mount Storm & Un-Debounced SQL on Every Keystroke
 - **How You Can Observe It on Your Phone:**
   1. Tap the top-right **Global Search (magnifying glass)** icon and type a word quickly (e.g. `"groceries"`).
   2. Right now:
@@ -1172,6 +1172,11 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Open **Global Search** and type quickly in the search bar.
   2. **Expected Result:** Modal opens without a mount hitch and typing stays completely fluid with zero keystroke lag.
+
+- **Implemented:** Added a 150ms normalized-input debounce with instant clear/closed-query gating. All eight domain hooks now skip queries while search is empty or closed; budget gating also propagates to its category dependency. Transaction SQL moved out of render/useMemo into a cancellable after-paint read, still limited to eight matches. Domain snapshot updates do not repeat transaction SQL. The modal displays a native-driven skeleton until the current query and domain reads resolve, hiding stale rows during typing.
+- **Read-only/lifecycle behavior:** Search requests read-only schedules, bypassing reconciliation, automatic posting, occurrences and posting-history queries; the management hook retains its default processing behavior. Added skip gates and captured deferred-read cancellation to accounts, budgets, goals, labels, subscriptions, and schedules. Clear, close, blur, superseding requests and unmount cancel pending work. Catalog suggestions and existing result routes/formatting remain intact.
+- **Verification:** Fake-clock behavioral tests cover all-domain gates, 150ms rapid-typing and edit-back behavior, after-paint SQL, immediate suggestions on clear, stale-result hiding, result sections/routes, cancellation, real domain-hook skip/defer/cleanup behavior, and schedule read-only/default modes. Existing in-memory SQLite transaction-search tests continue to cover bounded matches, deleted rows, transfers, splits, wildcard escaping and currencies.
+- **Performance assessment:** Empty/closed search performs zero domain reads or schedule writes. Keystrokes perform no transaction SQL; a settled query performs one bounded transaction search. Existing domain snapshots load after paint once per active search session (or focus refresh) and filter in memory; their existing aggregation costs remain dependent on domain size. No new root provider or navigation subscriptions are added. Android release-device/React Native Profiler checks remain pending; sustained 60-120fps is the target, not a measured result.
 
 ---
 

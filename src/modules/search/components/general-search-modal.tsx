@@ -55,6 +55,7 @@ import {
   Wallet,
   X,
 } from "lucide-react-native";
+import { PageLoadingState } from "@/components/page-container";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -169,7 +170,7 @@ function GeneralSearchModalContent({
   const { t } = useLocalization();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const { sections, hasQuery } = useGeneralSearch(searchQuery, true);
+  const { sections, hasQuery, loading } = useGeneralSearch(searchQuery, true);
 
   const handleClose = useCallback(() => {
     Keyboard.dismiss();
@@ -339,7 +340,9 @@ function GeneralSearchModalContent({
             keyboardShouldPersistTaps="handled"
             keyExtractor={(item) => item.id}
             ListEmptyComponent={
-              hasQuery ? (
+              loading ? (
+                <PageLoadingState variant="list" />
+              ) : hasQuery ? (
                 <View style={styles.emptyContainer}>
                   <View style={styles.emptyIconCircle}>
                     <SearchX color={theme.colors.textMuted} size={32} />

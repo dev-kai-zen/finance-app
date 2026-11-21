@@ -15,7 +15,8 @@ import type {
 
 export type GoalFilter = "all" | "in_progress" | "completed";
 
-export function useGoals() {
+export function useGoals(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery ?? false;
   const [goals, setGoals] = useState<GoalWithProgress[]>([]);
   const [summary, setSummary] = useState<GoalSummaryStats>({
     totalTargetMinorUnits: 0,
@@ -30,8 +31,11 @@ export function useGoals() {
   const [error, setError] = useState<string | null>(null);
   const hasLoadedOnceRef = useRef(false);
 
+  const cancelPendingRef = useRef<(() => void) | null>(null);
   const refresh = useCallback(() => {
-    runDeferredSyncQuery(
+    cancelPendingRef.current?.();
+    if (skipQuery) return;
+    cancelPendingRef.current = runDeferredSyncQuery(
       {
         hasCachedResult: hasLoadedOnceRef.current,
         setLoading,
@@ -50,11 +54,12 @@ export function useGoals() {
         }
       },
     );
-  }, []);
+  }, [skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
+      return () => cancelPendingRef.current?.();
     }, [refresh]),
   );
 

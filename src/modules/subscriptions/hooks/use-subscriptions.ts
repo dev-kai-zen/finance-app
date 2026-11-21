@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { useFocusEffect } from "expo-router";
 
 import { useLocalization } from "@/infrastructure/localization";
@@ -22,7 +23,9 @@ import type {
   SubscriptionStatus,
 } from "../types/subscription.types";
 
-export function useSubscriptions() {
+export function useSubscriptions(options?: { skipQuery?: boolean }) {
+  const skipQuery = options?.skipQuery ?? false;
+  const cancelPendingRef = useRef<(() => void) | null>(null);
   const { preferences } = useCurrencyPreferences();
   const [items, setItems] = useState<SubscriptionItem[]>([]);
   const [filter, setFilter] = useState<SubscriptionFilter>("active");
@@ -30,19 +33,22 @@ export function useSubscriptions() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(() => {
-    try {
-      const data = listSubscriptions({ includeArchived: true });
-      setItems(data);
-    } catch (err) {
-      console.warn("[useSubscriptions] Error reading subscriptions:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    cancelPendingRef.current?.();
+    if (skipQuery) return;
+    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
+      try {
+        const data = listSubscriptions({ includeArchived: true });
+        setItems(data);
+      } catch (err) {
+        console.warn("[useSubscriptions] Error reading subscriptions:", err);
+      }
+    });
+  }, [skipQuery]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
+      return () => cancelPendingRef.current?.();
     }, [refresh]),
   );
 
