@@ -64,10 +64,7 @@ function getIosPlacementUnitId(placement: AdBannerPlacement): string | undefined
         process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_GOALS
       );
     case "subscriptions":
-      return (
-        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS ||
-        process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS
-      );
+      return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS;
     case "settings":
       return process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SETTINGS;
     case "notes":

@@ -494,17 +494,18 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-22 — Accounts CSV Share Deletes Cache File Too Early on Android + iOS `subscriptions` Ad Fallback Uses Android Unit ID
+### [x] P1-22 — Accounts CSV Share Deletes Cache File Too Early on Android + iOS `subscriptions` Ad Fallback Uses Android Unit ID (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (*"it's said Couldn't attach file"*)
 - **Files:**
   - `src/modules/accounts/services/export-accounts-csv.service.ts`
   - `src/modules/ads/constants/ads.constants.ts`
+  - `src/modules/accounts/__tests__/accounts-csv.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
   1. On Android, go to **Accounts** → tap **Export CSV** → choose **Share** → pick Gmail, Google Drive, or WhatsApp.
   2. **Bug Observed:** Target app shows *"Couldn't attach file"* (or 0-byte attachment) because `shareAccountsCsv()` deletes the temporary file in `finally` before the receiving Android app finishes reading the file URI.
-- **How We Will Properly Fix It:**
-  1. In `shareAccountsCsv()` (`export-accounts-csv.service.ts`), remove the immediate `deleteAsync(tempUri)` in `finally` (matching `export-transactions.service.ts`, which writes to `FileSystem.cacheDirectory` and cleans up old temp export files on the *next* export call rather than deleting the active file while the Android share sheet / target app is reading it).
-  2. In `ads.constants.ts` (line 69), fix `getIosPlacementUnitId("subscriptions")` to fall back to `process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS` instead of `EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS`.
+- **How We Properly Fix It:**
+  1. In `shareAccountsCsv()` (`export-accounts-csv.service.ts`), removed the immediate `finally { file.delete() }` deletion so the shared `.csv` stays intact in `Paths.cache/accounts-csv-exports` while Android receiving apps read the URI (also passing `UTI: "public.comma-separated-values-text"`), and added best-effort `cleanupStaleCsvCacheFiles()` to prune `.csv` cache files older than 15 minutes on subsequent exports.
+  2. In `ads.constants.ts`, updated `getIosPlacementUnitId("subscriptions")` to return `process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS` (removing the Android fallback) so `getBannerAdUnitId()` falls back cleanly to `EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS` → `TestIds.BANNER`.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. On Android, go to **Accounts → Export CSV → Share** and pick Gmail or Google Drive.
   2. **Expected Result:** The `.csv` file attaches and uploads cleanly with all account rows intact.

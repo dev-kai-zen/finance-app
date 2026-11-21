@@ -140,3 +140,188 @@ test("accounts-csv: createAccountsCsvFileName produces accounts- timestamped nam
   const fileName = createAccountsCsvFileName(fixedDate);
   assert.equal(fileName, "accounts-2026-11-18-143000.csv");
 });
+
+test("accounts-csv (P1-22): shareAccountsCsv keeps active cache file intact after shareAsync and prunes stale exports", async () => {
+  const originalLoad = Module._load;
+  const createdFiles = new Map();
+  const sharedCalls = [];
+  let deletedUris = [];
+
+  class MockFile {
+    constructor(...parts) {
+      const normalized = parts.map((p) => (typeof p === "string" ? p : p.uri));
+      this.uri = normalized.join("/");
+      this.name = this.uri.split("/").pop();
+      this.exists = createdFiles.has(this.uri);
+      this.lastModified = createdFiles.get(this.uri)?.lastModified ?? null;
+    }
+    create() {
+      this.exists = true;
+      this.lastModified = Date.now();
+      createdFiles.set(this.uri, { bytes: null, lastModified: this.lastModified });
+    }
+    write(bytes) {
+      this.exists = true;
+      this.lastModified = Date.now();
+      createdFiles.set(this.uri, { bytes, lastModified: this.lastModified });
+    }
+    delete() {
+      this.exists = false;
+      deletedUris.push(this.uri);
+      createdFiles.delete(this.uri);
+    }
+  }
+
+  let cacheDirExists = true;
+  class MockDirectory {
+    constructor(...parts) {
+      const normalized = parts.map((p) => (typeof p === "string" ? p : p.uri));
+      this.uri = normalized.join("/");
+      this.exists = cacheDirExists;
+    }
+    create() {
+      cacheDirExists = true;
+      this.exists = true;
+    }
+    list() {
+      return Array.from(createdFiles.entries())
+        .filter(([uri]) => uri.startsWith(`${this.uri}/`))
+        .map(([uri, entry]) => {
+          const f = new MockFile(uri);
+          f.exists = true;
+          f.lastModified = entry.lastModified;
+          return f;
+        });
+    }
+  }
+
+  // Seed one stale file (20 min old) and one recent file (1 min old)
+  const staleUri = "file:///cache/accounts-csv-exports/accounts-stale.csv";
+  const recentUri = "file:///cache/accounts-csv-exports/accounts-recent.csv";
+  createdFiles.set(staleUri, {
+    bytes: new Uint8Array([1]),
+    lastModified: Date.now() - 20 * 60 * 1000,
+  });
+  createdFiles.set(recentUri, {
+    bytes: new Uint8Array([2]),
+    lastModified: Date.now() - 60 * 1000,
+  });
+
+  Module._load = function (request, parent, ...rest) {
+    if (request === "expo-crypto") {
+      return { randomUUID: () => "12345678-abcd-ef00-1234-567890abcdef" };
+    }
+    if (request === "expo-file-system") {
+      return {
+        Directory: MockDirectory,
+        File: MockFile,
+        Paths: { cache: { uri: "file:///cache" } },
+      };
+    }
+    if (request === "expo-sharing") {
+      return {
+        isAvailableAsync: async () => true,
+        shareAsync: async (uri, options) => {
+          sharedCalls.push({ uri, options });
+        },
+      };
+    }
+    if (request === "@/infrastructure/telemetry") {
+      return { logTelemetryEvent: () => {} };
+    }
+    if (request === "@/modules/security") {
+      return {
+        appLockLifecycle: {
+          withLockSuspended: async (fn) => fn(),
+        },
+      };
+    }
+    return originalLoad.call(this, request, parent, ...rest);
+  };
+
+  try {
+    const { shareAccountsCsv } = require("../services/export-accounts-csv.service.ts");
+    await shareAccountsCsv([mockAccount], mockPockets);
+
+    assert.equal(sharedCalls.length, 1);
+    const sharedUri = sharedCalls[0].uri;
+    assert.ok(sharedUri.startsWith("file:///cache/accounts-csv-exports/accounts-"));
+    assert.equal(sharedCalls[0].options.mimeType, "text/csv");
+    assert.equal(sharedCalls[0].options.UTI, "public.comma-separated-values-text");
+
+    // Newly shared file must remain on disk after shareAsync resolves
+    assert.equal(createdFiles.has(sharedUri), true);
+    assert.equal(deletedUris.includes(sharedUri), false);
+
+    // Stale (>15m) export was cleaned up, while recent (<15m) export was preserved
+    assert.equal(createdFiles.has(staleUri), false);
+    assert.equal(createdFiles.has(recentUri), true);
+  } finally {
+    Module._load = originalLoad;
+  }
+});
+
+test("ads (P1-22): iOS subscriptions banner placement falls back to iOS default unit ID, never Android", () => {
+  const originalLoad = Module._load;
+  const originalDev = globalThis.__DEV__;
+  const savedEnv = {
+    EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS:
+      process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS,
+    EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS:
+      process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS,
+    EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS:
+      process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS,
+  };
+
+  globalThis.__DEV__ = false;
+  delete process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS;
+  process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_ANDROID_SUBSCRIPTIONS =
+    "ca-app-pub-android-only/1111";
+  process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS = "ca-app-pub-ios-default/2222";
+
+  Module._load = function (request, parent, ...rest) {
+    if (request === "react-native") {
+      return { Platform: { OS: "ios" } };
+    }
+    if (request === "react-native-google-mobile-ads") {
+      return { TestIds: { BANNER: "ca-app-pub-test/banner" } };
+    }
+    return originalLoad.call(this, request, parent, ...rest);
+  };
+
+  try {
+    const adsPath = require.resolve("@/modules/ads/constants/ads.constants.ts");
+    delete require.cache[adsPath];
+    const { getBannerAdUnitId } = require("@/modules/ads/constants/ads.constants.ts");
+
+    assert.equal(
+      getBannerAdUnitId("subscriptions"),
+      "ca-app-pub-ios-default/2222",
+      "iOS subscriptions placement must fall back to EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS",
+    );
+
+    delete process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS;
+    assert.equal(
+      getBannerAdUnitId("subscriptions"),
+      "ca-app-pub-test/banner",
+      "When no iOS default unit ID is set, must fall back to TestIds.BANNER, never Android",
+    );
+
+    process.env.EXPO_PUBLIC_ADMOB_BANNER_UNIT_ID_IOS_SUBSCRIPTIONS =
+      "ca-app-pub-ios-subs/3333";
+    assert.equal(
+      getBannerAdUnitId("subscriptions"),
+      "ca-app-pub-ios-subs/3333",
+    );
+  } finally {
+    Module._load = originalLoad;
+    globalThis.__DEV__ = originalDev;
+    for (const [key, value] of Object.entries(savedEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+});

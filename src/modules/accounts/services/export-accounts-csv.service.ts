@@ -11,6 +11,9 @@ import {
 } from "../utils/accounts-csv";
 
 const CSV_MIME_TYPE = "text/csv";
+const CSV_UTI = "public.comma-separated-values-text";
+const ACCOUNTS_CSV_CACHE_DIR = "accounts-csv-exports";
+const STALE_EXPORT_MAX_AGE_MS = 15 * 60 * 1000;
 
 export class AccountCsvExportCancelledError extends Error {
   constructor() {
@@ -43,8 +46,33 @@ function createUniqueAccountsCsvFileName(): string {
   return base.replace(/\.csv$/i, `-${suffix}.csv`);
 }
 
+function cleanupStaleCsvCacheFiles(cacheDir: Directory): void {
+  try {
+    if (!cacheDir.exists) {
+      return;
+    }
+    const cutoff = Date.now() - STALE_EXPORT_MAX_AGE_MS;
+    for (const entry of cacheDir.list()) {
+      if (entry instanceof File && entry.name.endsWith(".csv")) {
+        const lastModified = entry.lastModified ?? 0;
+        if (lastModified > 0 && lastModified < cutoff) {
+          entry.delete();
+        }
+      }
+    }
+  } catch {
+    // Best-effort cleanup of stale export cache files
+  }
+}
+
 function writeCsvCacheFile(bytes: Uint8Array, name: string): File {
-  const file = new File(Paths.cache, name);
+  const cacheDir = new Directory(Paths.cache, ACCOUNTS_CSV_CACHE_DIR);
+  if (!cacheDir.exists) {
+    cacheDir.create({ intermediates: true, idempotent: true });
+  } else {
+    cleanupStaleCsvCacheFiles(cacheDir);
+  }
+  const file = new File(cacheDir, name);
   file.create({ intermediates: true, overwrite: true });
   file.write(bytes);
   return file;
@@ -77,25 +105,23 @@ export async function shareAccountsCsv(
   const name = createUniqueAccountsCsvFileName();
   const file = writeCsvCacheFile(bytes, name);
 
-  try {
-    await appLockLifecycle.withLockSuspended(async () => {
-      await Sharing.shareAsync(file.uri, {
-        dialogTitle: "Export accounts",
-        mimeType: CSV_MIME_TYPE,
-      });
+  // Android resolves shareAsync when the target app opens, before it finishes
+  // reading the attachment URI. Keep the cache file intact for the receiving app
+  // and prune stale exports on subsequent export calls instead.
+  await appLockLifecycle.withLockSuspended(async () => {
+    await Sharing.shareAsync(file.uri, {
+      dialogTitle: "Export accounts",
+      mimeType: CSV_MIME_TYPE,
+      UTI: CSV_UTI,
     });
-    const bracket =
-      accounts.length < 100
-        ? "under_100"
-        : accounts.length <= 1000
-          ? "100_to_1000"
-          : "over_1000";
-    logTelemetryEvent("csv_export_generated", { format: "csv", bracket });
-  } finally {
-    if (file.exists) {
-      file.delete();
-    }
-  }
+  });
+  const bracket =
+    accounts.length < 100
+      ? "under_100"
+      : accounts.length <= 1000
+        ? "100_to_1000"
+        : "over_1000";
+  logTelemetryEvent("csv_export_generated", { format: "csv", bracket });
 }
 
 export async function saveAccountsCsvToDevice(
