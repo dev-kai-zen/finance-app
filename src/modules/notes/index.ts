@@ -29,3 +29,5 @@ export type {
   CreateNoteInput,
   UpdateNoteInput,
 } from "./types/note.types";
+
+export { getNoteBackupAttachments, rebindNoteBackupAttachments, getNoteBackupAttachmentUri } from "./services/backup-attachments.service";

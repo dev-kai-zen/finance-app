@@ -86,6 +86,8 @@ Module._load = function (request, parent, ...rest) {
   }
   if (request === "@/modules/local-backup") {
     return {
+      prepareBackupRestore: async () => new Uint8Array([9]),
+      legacyAttachmentNotice: () => "",
       readDatabaseBackup: async () => ({ database: new Uint8Array([1]), createdAt: new Date() }),
       createBackupArchive: async (...args) => {
         if (mockCreateArchiveHandler) {
@@ -1464,7 +1466,7 @@ test('V2-02: explicit overwrite acknowledges the observed competing parents', as
 
 
 test('V2-02: actual restore publishes the selected branch and preserves edits made during publication', async () => {
-  mockReplaceDatabaseHandler=async()=>{};
+  mockReplaceDatabaseHandler=async snapshot=>{assert.deepEqual([...snapshot],[9]);};
   try {
     saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
     saveQuickSyncConfig({enabled:true});

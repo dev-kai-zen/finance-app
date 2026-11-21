@@ -9,3 +9,5 @@ export {
 } from "./utils/backup-format";
 
 export { createLocalBackup } from "./services/create-local-backup.service";
+
+export { prepareBackupRestore, legacyAttachmentNotice } from "./services/backup-attachments.service";

@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CloudDownload, LockKeyhole, RefreshCw, X } from "lucide-react-native";
 
+import { useLocalization } from "@/infrastructure/localization";
 import { isTabletOrDesktop } from "@/constants/layout";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
@@ -33,6 +34,7 @@ export function RestoreBackupModal({
   onSelect,
   visible,
 }: RestoreBackupModalProps) {
+  const { t } = useLocalization();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const isDesktop = isTabletOrDesktop(width);
@@ -61,7 +63,7 @@ export function RestoreBackupModal({
             <View style={styles.headerTextGroup}>
               <Text style={styles.modalTitle}>Restore from Backup</Text>
               <Text style={styles.modalSubtitle}>
-                Choose a Google Drive backup to restore
+                {t("googleDriveBackup.attachmentCoverage")}
               </Text>
             </View>
             <Pressable
@@ -138,6 +140,7 @@ export function RestoreBackupModal({
                     )}
                   </View>
                   <View style={styles.backupCopy}>
+                    <Text style={styles.backupMeta}>{t(file.attachmentCoverage === "included" ? "googleDriveBackup.attachmentsIncluded" : "googleDriveBackup.attachmentRecordsOnly")}</Text>
                     <Text selectable style={styles.backupDate}>
                       {formatDate(file.createdTime)}
                     </Text>

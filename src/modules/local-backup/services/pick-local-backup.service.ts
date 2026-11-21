@@ -2,7 +2,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 
 import type { LocalRestoreCandidate } from "@/modules/local-backup/types/backup.types";
-import { inspectDatabaseBackup } from "@/modules/local-backup/utils/backup-format";
+import { readLocalBackupInfo } from "../repositories/local-backup-files.repository";
 import { appLockLifecycle } from "@/modules/security";
 
 export async function pickLocalBackupForRestore(): Promise<LocalRestoreCandidate | null> {
@@ -16,12 +16,13 @@ export async function pickLocalBackupForRestore(): Promise<LocalRestoreCandidate
 
     const asset = result.assets[0];
     const file = new File(asset.uri);
-    const info = inspectDatabaseBackup(await file.bytes());
+    const info = readLocalBackupInfo(file.uri);
     return {
       name: asset.name,
       uri: asset.uri,
       createdAt: info.createdAt,
       passwordProtected: info.passwordProtected,
+      attachmentCoverage: info.attachmentCoverage,
     };
   });
 }

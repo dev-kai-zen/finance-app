@@ -1,7 +1,6 @@
 import { randomUUID } from "expo-crypto";
-import { Directory, File, FileMode, Paths } from "expo-file-system";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
+import { Directory, File, Paths } from "expo-file-system";
+import { hashFileIncrementally } from "@/infrastructure/files/hash-file";
 
 import type {
   TransactionAttachment,
@@ -11,7 +10,6 @@ import type { NewTransactionAttachmentRecord } from "../repositories/transaction
 
 const ATTACHMENTS_DIRECTORY_NAME = "transaction-attachments";
 const DISK_SPACE_RESERVE_BYTES = 5 * 1024 * 1024;
-const HASH_CHUNK_BYTES = 1024 * 1024;
 
 export interface PreparedTransactionAttachment {
   record: Omit<NewTransactionAttachmentRecord, "transactionId">;
@@ -105,19 +103,7 @@ function deleteAttachmentFileByUri(uri: string): void {
 export async function calculateTransactionAttachmentSha256(
   file: File,
 ): Promise<string> {
-  const handle = file.open(FileMode.ReadOnly);
-  const hasher = sha256.create();
-  try {
-    while ((handle.offset ?? 0) < (handle.size ?? file.size)) {
-      const remaining = (handle.size ?? file.size) - (handle.offset ?? 0);
-      const chunk = handle.readBytes(Math.min(HASH_CHUNK_BYTES, remaining));
-      if (chunk.byteLength === 0) break;
-      hasher.update(chunk);
-    }
-    return bytesToHex(hasher.digest());
-  } finally {
-    handle.close();
-  }
+  return hashFileIncrementally(file);
 }
 
 function normalizeFileName(value: string): string {

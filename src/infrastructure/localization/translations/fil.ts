@@ -954,6 +954,9 @@ export const fil = {
       "Ginagamit ang default na currency para sa pinagsamang total at mga bagong account. Mananatili ang currency ng mga kasalukuyang account. Hindi binabago ng mga display option ang naka-save na halaga.",
   },
   googleDriveBackup: {
+    attachmentsIncluded: "Kasama ang mga attachment file",
+    attachmentRecordsOnly: "Mga tala lang; walang attachment file",
+    attachmentCoverage: "Kasama sa mga bagong backup ang mga attachment file. Mga tala lang ang nasa lumang backup; hindi nito maibabalik ang nawawalang file.",
     helpTitle: "Tungkol sa Google Drive Backup",
     helpMessage:
       "Magtabi ng exported copy ng financial database sa Google Drive account mo at i-restore ito sa ibang device. Ikonekta ang account, gumawa ng backup kapag kailangan, at pumili ng naka-save na archive kapag magre-restore.",

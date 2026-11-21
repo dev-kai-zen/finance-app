@@ -14,6 +14,7 @@ import {
 import { finalizeRestoredWorkspace } from "@/modules/onboarding";
 import { readLocalBackupFile } from "@/modules/local-backup/repositories/local-backup-files.repository";
 import { readDatabaseBackup } from "@/modules/local-backup/utils/backup-format";
+import { prepareBackupRestore, legacyAttachmentNotice } from "./backup-attachments.service";
 import { createLocalBackup } from "./create-local-backup.service";
 
 let restoreNotice: string | null = null;
@@ -29,12 +30,13 @@ export async function restoreLocalBackup(
       const backup = await readDatabaseBackup(archive, passphrase);
 
       await createLocalBackup(null, "safety");
+      const snapshot = await prepareBackupRestore(backup, assertCurrent);
       assertCurrent();
       setDatabaseReplacing(true);
       try {
         cancelDebouncedQuickSync();
         replacementStarted = true;
-        await replaceDatabaseFromSnapshot(backup.database);
+        await replaceDatabaseFromSnapshot(snapshot);
         assertCurrent();
         finalizeRestoredWorkspace();
         saveQuickSyncConfig({ lastSyncedAt: null });
@@ -45,7 +47,7 @@ export async function restoreLocalBackup(
         setDatabaseReplacing(false);
       }
 
-      restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully. A pre-restore safety copy was saved.`;
+      restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully. A pre-restore safety copy was saved.` + legacyAttachmentNotice(backup);
     } finally {
       if (replacementStarted) {
         try { assertCurrent(); } catch {

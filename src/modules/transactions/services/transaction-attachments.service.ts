@@ -2,6 +2,10 @@ import { File } from "expo-file-system";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
+  getQuickSyncOperationGeneration,
+  isQuickSyncOperationCurrent,
+  isQuickSyncReplacementPending,
+  trackQuickSyncOperation,
   completeSyncOperation,
   deleteGoogleDriveAttachmentFile,
   downloadGoogleDriveAttachmentFile,
@@ -230,10 +234,11 @@ export async function getAvailableTransactionAttachmentUri(
 let activeSync: Promise<void> | null = null;
 
 export function syncPendingTransactionAttachments(): Promise<void> {
+  if (isQuickSyncReplacementPending()) return Promise.resolve();
   if (activeSync) return activeSync;
-  activeSync = runPendingSync().finally(() => {
+  activeSync = trackQuickSyncOperation(runPendingSync(getQuickSyncOperationGeneration()).finally(() => {
     activeSync = null;
-  });
+  }));
   return activeSync;
 }
 
@@ -254,7 +259,7 @@ export function retryTransactionAttachmentSync(id: string): void {
   triggerTransactionAttachmentSync();
 }
 
-async function runPendingSync(): Promise<void> {
+async function runPendingSync(operationGeneration: number): Promise<void> {
   const operations = listDueSyncOperations<AttachmentSyncPayload>(
     ATTACHMENT_SYNC_ENTITY,
   );
@@ -262,6 +267,7 @@ async function runPendingSync(): Promise<void> {
 
   await withGoogleDriveAccessToken(async (accessToken) => {
     for (const operation of operations) {
+      if (!isQuickSyncOperationCurrent(operationGeneration)) return;
       try {
         if (operation.operation === "upload") {
           const attachment = findTransactionAttachmentById(operation.entityId);
@@ -284,6 +290,7 @@ async function runPendingSync(): Promise<void> {
             sha256: attachment.sha256,
             localUri,
           });
+          if (!isQuickSyncOperationCurrent(operationGeneration)) return;
           updateTransactionAttachmentSync(attachment.id, {
             syncStatus: "synced",
             driveFileId: remote.id,
@@ -297,6 +304,7 @@ async function runPendingSync(): Promise<void> {
           if (driveFileId) {
             await deleteGoogleDriveAttachmentFile(accessToken, driveFileId);
           }
+          if (!isQuickSyncOperationCurrent(operationGeneration)) return;
           const storageKey =
             operation.payload.storageKey ?? attachment?.storageKey;
           if (storageKey) deleteTransactionAttachmentLocalFile(storageKey);
@@ -304,6 +312,7 @@ async function runPendingSync(): Promise<void> {
           completeSyncOperation(operation.id);
         }
       } catch (error) {
+        if (!isQuickSyncOperationCurrent(operationGeneration)) return;
         const message = getErrorMessage(error);
         const attemptCount = operation.attemptCount + 1;
         failSyncOperation(operation.id, attemptCount, message);

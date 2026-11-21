@@ -1,7 +1,6 @@
 import { randomUUID } from "expo-crypto";
-import { Directory, File, FileMode, Paths } from "expo-file-system";
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
+import { Directory, File, Paths } from "expo-file-system";
+import { hashFileIncrementally } from "@/infrastructure/files/hash-file";
 
 import {
   NOTES_ATTACHMENTS_FOLDER_NAME,
@@ -14,7 +13,6 @@ import type {
 import type { NewNoteAttachmentRecord } from "../repositories/note-attachments.repository";
 
 const DISK_SPACE_RESERVE_BYTES = 5 * 1024 * 1024; // 5 MB reserve
-const HASH_CHUNK_BYTES = 1024 * 1024; // 1 MB chunk
 
 export interface PreparedNoteAttachment {
   record: Omit<NewNoteAttachmentRecord, "noteId">;
@@ -114,19 +112,7 @@ function deleteAttachmentFileByUri(uri: string): void {
 }
 
 export async function calculateNoteAttachmentSha256(file: File): Promise<string> {
-  const handle = file.open(FileMode.ReadOnly);
-  const hasher = sha256.create();
-  try {
-    while ((handle.offset ?? 0) < (handle.size ?? file.size)) {
-      const remaining = (handle.size ?? file.size) - (handle.offset ?? 0);
-      const chunk = handle.readBytes(Math.min(HASH_CHUNK_BYTES, remaining));
-      if (chunk.byteLength === 0) break;
-      hasher.update(chunk);
-    }
-    return bytesToHex(hasher.digest());
-  } finally {
-    handle.close();
-  }
+  return hashFileIncrementally(file);
 }
 
 function normalizeFileName(value: string): string {

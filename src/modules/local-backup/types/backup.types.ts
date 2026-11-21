@@ -13,6 +13,7 @@ export interface LocalBackupFile {
   size: number;
   kind: LocalBackupKind;
   passwordProtected: boolean | null;
+  attachmentCoverage?: "included" | "legacy-records-only";
   valid: boolean;
 }
 
@@ -42,4 +43,5 @@ export interface LocalRestoreCandidate {
   uri: string;
   createdAt: Date;
   passwordProtected: boolean;
+  attachmentCoverage?: "included" | "legacy-records-only";
 }

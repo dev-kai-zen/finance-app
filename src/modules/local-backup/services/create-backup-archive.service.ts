@@ -1,9 +1,11 @@
 import Constants from "expo-constants";
+import { createPortableSnapshot } from "./backup-attachments.service";
 
 import { createDatabaseSnapshot } from "@/infrastructure/database";
 import { createDatabaseBackup } from "@/modules/local-backup/utils/backup-format";
 
 export interface CreatedBackupArchive {
+  attachmentCoverage: "included";
   bytes: Uint8Array;
   createdAt: Date;
 }
@@ -14,11 +16,11 @@ export async function createBackupArchive(
 ): Promise<CreatedBackupArchive> {
   const snapshot = await createDatabaseSnapshot();
   const bytes = await createDatabaseBackup(
-    snapshot,
+    await createPortableSnapshot(snapshot),
     passphrase,
     Constants.expoConfig?.version ?? "unknown",
     createdAt,
   );
 
-  return { bytes, createdAt };
+  return { bytes, createdAt, attachmentCoverage: "included" };
 }

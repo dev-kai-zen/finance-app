@@ -531,6 +531,7 @@ async function performSync(
           deviceName,
           syncRevisionId,
           parentTokens,
+          attachmentCoverage: archive.attachmentCoverage,
         },
       );
     });

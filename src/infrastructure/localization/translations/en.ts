@@ -927,6 +927,9 @@ export const en = {
       "The default currency is used for combined totals and new accounts. Existing accounts keep their saved currency. Display options never change stored financial values.",
   },
   googleDriveBackup: {
+    attachmentsIncluded: "Attachment files included",
+    attachmentRecordsOnly: "Records only; attachment files not included",
+    attachmentCoverage: "New backups include attachment files. Older backups contain records only and cannot recover missing files.",
     helpTitle: "About Google Drive Backup",
     helpMessage:
       "Keep an exported copy of your financial database in your Google Drive account and restore it on another device. Connect your account, create backups on demand, and choose a saved archive when restoring.",

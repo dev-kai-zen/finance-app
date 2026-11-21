@@ -25,7 +25,7 @@ import {
   type GoogleDriveQuickSyncMetadata,
 } from "@/infrastructure/sync";
 import { finalizeRestoredWorkspace } from "@/modules/onboarding";
-import { readDatabaseBackup } from "@/modules/local-backup";
+import { readDatabaseBackup, prepareBackupRestore, legacyAttachmentNotice } from "@/modules/local-backup";
 import {
   restoreGoogleDriveSession,
   withGoogleDriveAccessToken,
@@ -44,12 +44,13 @@ export async function restoreGoogleDriveBackup(
         downloadGoogleDriveBackupFile(accessToken, fileId),
       );
       const backup = await readDatabaseBackup(archive, passphrase);
+      const snapshot = await prepareBackupRestore(backup, assertCurrent);
       assertCurrent();
       setDatabaseReplacing(true);
       try {
         cancelDebouncedQuickSync();
         replacementStarted = true;
-        await replaceDatabaseFromSnapshot(backup.database);
+        await replaceDatabaseFromSnapshot(snapshot);
         assertCurrent();
         finalizeRestoredWorkspace();
         saveQuickSyncConfig({ lastSyncedAt: null });
@@ -60,7 +61,7 @@ export async function restoreGoogleDriveBackup(
         setDatabaseReplacing(false);
       }
 
-      restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully.`;
+      restoreNotice = `Backup from ${backup.createdAt.toLocaleString()} restored successfully.` + legacyAttachmentNotice(backup);
     } finally {
       if (replacementStarted) {
         try { assertCurrent(); } catch {
@@ -102,12 +103,13 @@ export async function restoreQuickSyncBackup(
       });
 
       const backup = await readDatabaseBackup(archive, null);
+      const snapshot = await prepareBackupRestore(backup, assertCurrent);
       assertCurrent();
       setDatabaseReplacing(true);
       try {
         cancelDebouncedQuickSync();
         replacementStarted = true;
-        await replaceDatabaseFromSnapshot(backup.database);
+        await replaceDatabaseFromSnapshot(snapshot);
         assertCurrent();
         finalizeRestoredWorkspace();
       } finally {
@@ -129,6 +131,7 @@ export async function restoreQuickSyncBackup(
               assertCurrent();
               return uploadOrUpdateGoogleDriveQuickSyncBackup(token, archive, null, {
                 deviceId: device.deviceId, syncRevisionId: revisionId, parentTokens: parents,
+                attachmentCoverage: backup.attachments === undefined ? "legacy-records-only" : "included",
               });
             });
           } catch (error) {
@@ -175,7 +178,7 @@ export async function restoreQuickSyncBackup(
       }
 
       const restoredAt = backup.createdAt.toLocaleString();
-      restoreNotice = `Quick Sync backup from ${restoredAt} restored successfully.`;
+      restoreNotice = `Quick Sync backup from ${restoredAt} restored successfully.` + legacyAttachmentNotice(backup);
     } finally {
       if (replacementStarted) {
         try { assertCurrent(); } catch {

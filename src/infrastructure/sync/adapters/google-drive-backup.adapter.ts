@@ -40,6 +40,7 @@ export interface GoogleDriveBackupFile {
   size: number;
   location: GoogleDriveBackupLocation;
   passwordProtected: boolean;
+  attachmentCoverage?: "included" | "legacy-records-only";
 }
 
 export interface GoogleDriveQuickSyncMetadata extends GoogleDriveBackupFile {
@@ -56,6 +57,7 @@ export interface GoogleDriveQuickSyncMetadata extends GoogleDriveBackupFile {
 }
 
 export interface GoogleDriveQuickSyncDeviceProperties {
+  attachmentCoverage?: "included" | "legacy-records-only";
   parentTokens?: readonly string[];
   deviceId?: string | null;
   deviceName?: string | null;
@@ -183,6 +185,7 @@ export async function uploadGoogleDriveBackupFile(
   bytes: Uint8Array,
   createdAt: Date,
   passwordProtected: boolean,
+  attachmentCoverage?: "included" | "legacy-records-only",
 ): Promise<GoogleDriveBackupFile> {
   const backupFolder = await ensureBackupFolder(accessToken);
   const name = `${BACKUP_NAME_PREFIX}${createdAt
@@ -197,6 +200,7 @@ export async function uploadGoogleDriveBackupFile(
     name,
     undefined,
     passwordProtected,
+    attachmentCoverage ? { backupAttachmentCoverage: attachmentCoverage } : undefined,
   ).then(toVisibleBackupFile);
 }
 
@@ -737,6 +741,7 @@ export function buildQuickSyncAppProperties(
 ): Record<string, string> {
   const properties: Record<string, string> = {
     [QUICK_SYNC_PROPERTY]: "true",
+    ...(deviceProperties?.attachmentCoverage ? { backupAttachmentCoverage: deviceProperties.attachmentCoverage } : {}),
   };
   const deviceId = deviceProperties?.deviceId
     ? fitDriveAppPropertyValue(
@@ -807,6 +812,7 @@ function toBackupFile(
     location,
     passwordProtected:
       file.appProperties?.[BACKUP_PROTECTION_PROPERTY] !== "none",
+    attachmentCoverage: file.appProperties?.backupAttachmentCoverage === "included" ? "included" : "legacy-records-only",
   };
 }
 

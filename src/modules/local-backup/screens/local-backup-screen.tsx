@@ -211,6 +211,7 @@ export function LocalBackupScreen() {
           visible={storageHelpVisible}
         />
         <PageContainer contentContainerStyle={styles.page} maxWidth={760}>
+          <Text style={styles.summaryDescription}>{t("googleDriveBackup.attachmentCoverage")}</Text>
       <View style={styles.summaryCard}>
         <View style={styles.summaryIcon}>
           <Archive color={theme.colors.primary} size={26} />
@@ -579,6 +580,7 @@ function BackupRow({
 }) {
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+  const { t } = useLocalization();
   const kindLabel =
     file.kind === "automatic"
       ? "Automatic backup"
@@ -597,6 +599,7 @@ function BackupRow({
         </View>
         <View style={styles.backupCopy}>
           <Text style={styles.rowTitle}>{kindLabel}</Text>
+          {file.valid && <Text style={styles.rowDescription}>{t(file.attachmentCoverage === "included" ? "googleDriveBackup.attachmentsIncluded" : "googleDriveBackup.attachmentRecordsOnly")}</Text>}
           <Text selectable style={styles.rowDescription}>
             {file.valid
               ? `${formatDateTime(file.createdAt)} · ${formatFileSize(file.size)} · ${file.passwordProtected ? "Protected" : "Unprotected"}`

@@ -1,4 +1,7 @@
 import * as SQLite from "expo-sqlite";
+import { drizzle } from "drizzle-orm/expo-sqlite";
+import * as schema from "./schema";
+import type { AppDatabase } from "./client";
 
 import migrations from "../../../drizzle/migrations";
 import { db, sqliteDatabase } from "./client";
@@ -204,4 +207,14 @@ function validateSnapshot(
       `The backup is not a Kaizen Finance database. Missing: ${missingTables.join(", ")}.`,
     );
   }
+}
+
+/** Inspect or prepare an isolated snapshot without touching the live connection. */
+export async function withSnapshotDatabase<T>(
+  snapshot: Uint8Array,
+  action: (context: AppDatabase, database: SQLite.SQLiteDatabase) => Promise<T>,
+): Promise<T> {
+  const database = await SQLite.deserializeDatabaseAsync(normalizeSerializedDatabaseForMemory(snapshot));
+  try { return await action(drizzle(database, { schema }), database); }
+  finally { await database.closeAsync(); }
 }

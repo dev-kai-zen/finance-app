@@ -942,6 +942,9 @@ export const es = {
       "La moneda predeterminada se usa en totales combinados y cuentas nuevas. Las cuentas existentes conservan su moneda. Las opciones de visualización no modifican los valores guardados.",
   },
   googleDriveBackup: {
+    attachmentsIncluded: "Incluye los archivos adjuntos",
+    attachmentRecordsOnly: "Solo registros; no incluye archivos adjuntos",
+    attachmentCoverage: "Las copias nuevas incluyen los archivos adjuntos. Las antiguas solo contienen registros y no recuperan archivos perdidos.",
     helpTitle: "Acerca de la copia en Google Drive",
     helpMessage:
       "Guarda una copia exportada de tu base de datos financiera en Google Drive y restáurala en otro dispositivo. Conecta tu cuenta, crea copias cuando quieras y elige un archivo guardado al restaurar.",

@@ -37,7 +37,7 @@ function setup() {
     async withDatabaseSnapshotLock(fn) { events.push('snapshot-lock'); return fn(); },
     sqliteDatabase: { getFirstSync: () => ({ foreign_keys: 0 }) },
     db: { transaction(fn) { return fn({}); } } };
-  const backups = { readDatabaseBackup: async () => ({ database: new Uint8Array([1]), createdAt: new Date() }),
+  const backups = { prepareBackupRestore: async backup => backup.database, legacyAttachmentNotice: () => "", readDatabaseBackup: async () => ({ database: new Uint8Array([1]), createdAt: new Date() }),
     createLocalBackup: async () => { events.push('safety'); }, clearLocalBackupStorage() {} };
   const imports = {
     '@/infrastructure/database': database, '@/infrastructure/sync': sync,
@@ -45,6 +45,7 @@ function setup() {
     '@/modules/local-backup/repositories/local-backup-files.repository': { readLocalBackupFile: async () => new Uint8Array([1]) },
     '@/modules/local-backup/utils/backup-format': backups,
     './create-local-backup.service': backups,
+    './backup-attachments.service': backups,
     '@/modules/local-backup': backups,
     './google-drive-auth.service': { withGoogleDriveAccessToken: async fn => fn('token') },
     'expo-sqlite': {}, 'drizzle-orm/expo-sqlite': {},
@@ -146,3 +147,55 @@ test('V2-03: invalidation during replacement quarantines restored connection set
   assert.equal(env.replacing, false);
   assert.equal(env.coordinator.isQuickSyncReplacementPending(), false);
 });
+
+for (const operation of ['upload','delete']) {
+  test(`V2-04: attachment ${operation} drains before restore and cannot publish stale file or row changes`, async () => {
+    const env=setup(), started=deferred(), network=deferred();
+    const changes=[]; let queries=0;
+    Object.assign(env.sync, {
+      listDueSyncOperations(){queries++;return [{id:'op',entityId:'attachment',operation,payload:{driveFileId:'remote',storageKey:'old.jpg'}}];},
+      uploadGoogleDriveAttachmentFile:async()=>{started.resolve();await network.promise;return {id:'remote'};},
+      deleteGoogleDriveAttachmentFile:async()=>{started.resolve();await network.promise;},
+      completeSyncOperation(){changes.push('completed');}, failSyncOperation(){changes.push('failed');},
+    });
+    const service=load('src/modules/transactions/services/transaction-attachments.service.ts',{
+      '@/infrastructure/database/client':{}, '@/infrastructure/sync':env.sync,
+      '@/modules/google-drive-backup':{withGoogleDriveAccessToken:async fn=>fn('token')},
+      'expo-file-system':{},
+      '../repositories/transaction-attachments.repository':{
+        findTransactionAttachmentById:()=>({id:'attachment',storageKey:'old.jpg',driveFileId:operation==='upload'?null:'remote'}),
+        updateTransactionAttachmentSync(_id,patch){changes.push(patch.syncStatus);},
+        deleteTransactionAttachmentRecord(){changes.push('deleted row');},
+      },
+      '../repositories/transactions.repository':{},
+      './transaction-attachment-storage.service':{
+        getTransactionAttachmentLocalUri:()=>'/old.jpg',
+        deleteTransactionAttachmentLocalFile(){changes.push('deleted file');},
+      },
+    });
+    const pending=service.syncPendingTransactionAttachments();await started.promise;
+    let replaced=false;
+    const replacement=env.coordinator.withQuickSyncReplacement(async()=>{replaced=true;});
+    await service.syncPendingTransactionAttachments();
+    assert.equal(queries,1,'Pending replacement must not query the attachment outbox');
+    assert.equal(replaced,false);
+    network.resolve();await pending;await replacement;
+    assert.equal(replaced,true);
+    assert.deepEqual(changes,operation==='upload'?['syncing']:[]);
+  });
+}
+
+for (const kind of ['local','drive']) {
+  test(`V2-04: ${kind} restore publishes the prepared snapshot only after file installation`,async()=>{
+    const env=setup();const installed=[];
+    const backups=env.imports['@/modules/local-backup'];
+    backups.prepareBackupRestore=async()=>{installed.push('files');return new Uint8Array([9]);};
+    env.imports['@/infrastructure/database'].replaceDatabaseFromSnapshot=async snapshot=>{
+      assert.deepEqual(installed,['files']);assert.deepEqual([...snapshot],[9]);installed.push('database');
+    };
+    env.sync.downloadGoogleDriveBackupFile=async()=>new Uint8Array([1]);
+    if(kind==='local')await load('src/modules/local-backup/services/restore-local-backup.service.ts',env.imports).restoreLocalBackup('file',null);
+    else await load('src/modules/google-drive-backup/services/restore-google-drive-backup.service.ts',env.imports).restoreGoogleDriveBackup('file',null);
+    assert.deepEqual(installed,['files','database']);
+  });
+}

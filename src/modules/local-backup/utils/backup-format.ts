@@ -1,14 +1,13 @@
+import { isPortableBackup, unpackPortableBackup, MAX_PORTABLE_BACKUP_BYTES, hashBackupBytes, copyBackupBytes, type AttachmentPayload } from "./portable-backup";
 import {
   AESEncryptionKey,
   AESSealedData,
   aesDecryptAsync,
   aesEncryptAsync,
-  CryptoDigestAlgorithm,
-  digest,
   getRandomBytesAsync,
 } from "expo-crypto";
 import { scryptAsync } from "@noble/hashes/scrypt.js";
-import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
+import { utf8ToBytes } from "@noble/hashes/utils.js";
 
 const ENCRYPTED_MAGIC = "KAIZENB1";
 const UNPROTECTED_MAGIC = "KAIZENP1";
@@ -53,6 +52,7 @@ interface UnprotectedBackupHeader {
 }
 
 export interface DecryptedBackup {
+  attachments?: AttachmentPayload[];
   database: Uint8Array;
   createdAt: Date;
   appVersion: string;
@@ -63,6 +63,7 @@ export interface DatabaseBackupInfo {
   appVersion: string;
   databaseBytes: number;
   passwordProtected: boolean;
+  attachmentCoverage?: "included" | "legacy-records-only";
 }
 
 export async function createDatabaseBackup(
@@ -76,7 +77,7 @@ export async function createDatabaseBackup(
   }
 
   const header: UnprotectedBackupHeader = {
-    formatVersion: FORMAT_VERSION,
+    formatVersion: isPortableBackup(database) ? 2 : FORMAT_VERSION,
     createdAt: createdAt.toISOString(),
     appVersion,
     databaseBytes: database.byteLength,
@@ -117,43 +118,31 @@ export async function readDatabaseBackup(
   }
 
   return {
-    database: payload,
+    ...(header.formatVersion === 2 ? await unpackPortableBackup(payload) : { database: payload }),
     createdAt: new Date(header.createdAt),
     appVersion: header.appVersion,
   };
 }
 
-export function inspectDatabaseBackup(
-  archive: Uint8Array,
-): DatabaseBackupInfo {
-  const magic = readMagic(archive);
-  const { headerBytes, payload } = splitArchive(archive);
+export function inspectDatabaseBackup(archive: Uint8Array): DatabaseBackupInfo {
+  return inspectDatabaseBackupHeader(archive, archive.byteLength);
+}
 
-  if (magic === ENCRYPTED_MAGIC) {
-    const header = parseAndValidateHeader(headerBytes);
-    return {
-      createdAt: new Date(header.createdAt),
-      appVersion: header.appVersion,
-      databaseBytes: header.databaseBytes,
-      passwordProtected: true,
-    };
-  }
-
-  if (magic !== UNPROTECTED_MAGIC) {
-    throw new Error("This file is not a Kaizen Finance backup.");
-  }
-
-  const header = parseAndValidateUnprotectedHeader(headerBytes);
-  if (payload.byteLength !== header.databaseBytes) {
+/** Metadata-only inspection: callers can read just the bounded archive header. */
+export function inspectDatabaseBackupHeader(prefix: Uint8Array, archiveBytes: number): DatabaseBackupInfo {
+  const magic = readMagic(prefix);
+  const headerLength = decodeUint32(prefix, ENCRYPTED_MAGIC.length);
+  if (headerLength <= 0 || headerLength > MAX_HEADER_BYTES || prefix.length < HEADER_PREFIX_LENGTH + headerLength ||
+      archiveBytes <= HEADER_PREFIX_LENGTH + headerLength) throw new Error("The backup header is invalid.");
+  const headerBytes = prefix.subarray(HEADER_PREFIX_LENGTH, HEADER_PREFIX_LENGTH + headerLength);
+  const encrypted = magic === ENCRYPTED_MAGIC;
+  if (!encrypted && magic !== UNPROTECTED_MAGIC) throw new Error("This file is not a Kaizen Finance backup.");
+  const header = encrypted ? parseAndValidateHeader(headerBytes) : parseAndValidateUnprotectedHeader(headerBytes);
+  if (!encrypted && archiveBytes - HEADER_PREFIX_LENGTH - headerLength !== header.databaseBytes) {
     throw new Error("The restored database size does not match the backup.");
   }
-
-  return {
-    createdAt: new Date(header.createdAt),
-    appVersion: header.appVersion,
-    databaseBytes: header.databaseBytes,
-    passwordProtected: false,
-  };
+  return { createdAt: new Date(header.createdAt), appVersion: header.appVersion, databaseBytes: header.databaseBytes,
+    passwordProtected: encrypted, attachmentCoverage: header.formatVersion === 2 ? "included" : "legacy-records-only" };
 }
 
 export async function encryptDatabaseBackup(
@@ -167,7 +156,7 @@ export async function encryptDatabaseBackup(
   const salt = await getRandomBytesAsync(16);
   const hash = await sha256(database);
   const header: BackupHeader = {
-    formatVersion: FORMAT_VERSION,
+    formatVersion: isPortableBackup(database) ? 2 : FORMAT_VERSION,
     createdAt: createdAt.toISOString(),
     appVersion,
     databaseBytes: database.byteLength,
@@ -254,7 +243,7 @@ export async function decryptDatabaseBackup(
     }
 
     return {
-      database,
+      ...(header.formatVersion === 2 ? await unpackPortableBackup(database) : { database }),
       createdAt: new Date(header.createdAt),
       appVersion: header.appVersion,
     };
@@ -301,7 +290,7 @@ async function deriveKey(
     p: SCRYPT_P,
     dkLen: KEY_BYTES,
     maxmem: 64 * 1024 * 1024,
-    asyncTick: 10,
+    asyncTick: 4,
   });
 }
 
@@ -338,12 +327,13 @@ function hasValidCommonHeader(
   header: Partial<UnprotectedBackupHeader | BackupHeader>,
 ): boolean {
   return (
-    header.formatVersion === FORMAT_VERSION &&
+    (header.formatVersion === FORMAT_VERSION || header.formatVersion === 2) &&
     typeof header.createdAt === "string" &&
     !Number.isNaN(Date.parse(header.createdAt)) &&
     typeof header.appVersion === "string" &&
     Number.isSafeInteger(header.databaseBytes) &&
     (header.databaseBytes ?? 0) > 0 &&
+    (header.formatVersion !== 2 || (header.databaseBytes ?? Infinity) <= MAX_PORTABLE_BACKUP_BYTES) &&
     typeof header.databaseSha256 === "string" &&
     /^[a-f0-9]{64}$/.test(header.databaseSha256)
   );
@@ -369,20 +359,16 @@ function splitArchive(archive: Uint8Array): {
     throw new Error("The backup header is invalid.");
   }
   return {
-    headerBytes: archive.slice(
+    headerBytes: archive.subarray(
       HEADER_PREFIX_LENGTH,
       HEADER_PREFIX_LENGTH + headerLength,
     ),
-    payload: archive.slice(HEADER_PREFIX_LENGTH + headerLength),
+    payload: archive.subarray(HEADER_PREFIX_LENGTH + headerLength),
   };
 }
 
 async function sha256(bytes: Uint8Array): Promise<string> {
-  return bytesToHex(
-    new Uint8Array(
-      await digest(CryptoDigestAlgorithm.SHA256, toNativeBytes(bytes)),
-    ),
-  );
+  return hashBackupBytes(bytes);
 }
 
 function encodeUint32(value: number): Uint8Array {
@@ -416,26 +402,14 @@ function base64ToBytes(value: string): Uint8Array {
   }
 }
 
-function toNativeBytes(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
-  if (
-    bytes.buffer instanceof ArrayBuffer &&
-    bytes.byteOffset === 0 &&
-    bytes.byteLength === bytes.buffer.byteLength
-  ) {
-    return bytes as Uint8Array<ArrayBuffer>;
-  }
-
-  return new Uint8Array(bytes);
-}
-
-function joinBytes(...parts: Uint8Array[]): Uint8Array {
+async function joinBytes(...parts: Uint8Array[]): Promise<Uint8Array> {
   const output = new Uint8Array(
     parts.reduce((length, part) => length + part.byteLength, 0),
   );
   let offset = 0;
-  parts.forEach((part) => {
-    output.set(part, offset);
+  for (const part of parts) {
+    await copyBackupBytes(output, part, offset);
     offset += part.byteLength;
-  });
+  }
   return output;
 }

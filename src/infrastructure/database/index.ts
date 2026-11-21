@@ -9,6 +9,7 @@ export {
 } from './database-replacement';
 export {
   createDatabaseSnapshot,
+  withSnapshotDatabase,
   isDatabaseReplacing,
   replaceDatabaseFromSnapshot,
   setDatabaseReplacing,

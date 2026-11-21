@@ -14,6 +14,7 @@ export async function createGoogleDriveBackup(
       archive.bytes,
       archive.createdAt,
       passphrase !== null,
+      archive.attachmentCoverage,
     ),
   );
 }

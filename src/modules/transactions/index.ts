@@ -354,3 +354,13 @@ export const createImportedTransactions = deferFunction(
   () => require("./services/import-transactions.service").createImportedTransactions,
 ) as typeof import("./services/import-transactions.service").createImportedTransactions;
 export type { ImportedTransactionCommand } from "./services/import-transactions.service";
+
+export const getTransactionBackupAttachments = deferFunction(
+  () => require("./services/backup-attachments.service").getTransactionBackupAttachments,
+) as typeof import("./services/backup-attachments.service").getTransactionBackupAttachments;
+export const rebindTransactionBackupAttachments = deferFunction(
+  () => require("./services/backup-attachments.service").rebindTransactionBackupAttachments,
+) as typeof import("./services/backup-attachments.service").rebindTransactionBackupAttachments;
+export const getTransactionBackupAttachmentUri = deferFunction(
+  () => require("./services/backup-attachments.service").getTransactionBackupAttachmentUri,
+) as typeof import("./services/backup-attachments.service").getTransactionBackupAttachmentUri;
