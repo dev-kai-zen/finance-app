@@ -102,23 +102,23 @@ export async function replaceDatabaseFromSnapshot(
 ): Promise<void> {
   return withDatabaseSnapshotLock(async () => {
     setDatabaseReplacing(true);
-    const replacement = await SQLite.deserializeDatabaseAsync(
-      normalizeSerializedDatabaseForMemory(snapshot),
-    );
-    let rollbackBytes: Uint8Array | null = null;
-    try {
-      await executeWalCheckpoint("TRUNCATE");
-      rollbackBytes = normalizeSerializedDatabaseForMemory(
-        await sqliteDatabase.serializeAsync(),
-      );
-    } catch {
-      // Best-effort rollback bytes capture
-    }
+    let replacement: SQLite.SQLiteDatabase | null = null;
     let rollback: SQLite.SQLiteDatabase | null = null;
     let replacementStarted = false;
+    let failed = false;
 
     try {
-      validateSnapshot(replacement, LEGACY_REQUIRED_TABLES);
+      replacement = await SQLite.deserializeDatabaseAsync(
+        normalizeSerializedDatabaseForMemory(snapshot),
+      );
+      await validateSnapshot(replacement, LEGACY_REQUIRED_TABLES);
+
+      // Never overwrite live data without an already-open, verified recovery copy.
+      await executeWalCheckpoint("TRUNCATE");
+      rollback = await SQLite.deserializeDatabaseAsync(
+        normalizeSerializedDatabaseForMemory(await sqliteDatabase.serializeAsync()),
+      );
+      await validateSnapshot(rollback, CURRENT_REQUIRED_TABLES);
 
       replacementStarted = true;
       await SQLite.backupDatabaseAsync({
@@ -129,16 +129,14 @@ export async function replaceDatabaseFromSnapshot(
       });
 
       await runSafeMigrations(db, migrations, { forceFullCheck: true });
-      validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
+      await validateSnapshot(sqliteDatabase, CURRENT_REQUIRED_TABLES);
       await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
       await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
       await executeWalCheckpoint("TRUNCATE");
     } catch (error) {
-      if (replacementStarted && rollbackBytes) {
+      failed = true;
+      if (replacementStarted && rollback) {
         try {
-          rollback = await SQLite.deserializeDatabaseAsync(
-            normalizeSerializedDatabaseForMemory(rollbackBytes),
-          );
           await SQLite.backupDatabaseAsync({
             sourceDatabase: rollback,
             sourceDatabaseName: "main",
@@ -148,17 +146,32 @@ export async function replaceDatabaseFromSnapshot(
           await sqliteDatabase.execAsync("PRAGMA journal_mode = WAL;");
           await sqliteDatabase.execAsync("PRAGMA foreign_keys = ON;");
           await executeWalCheckpoint("TRUNCATE");
-        } catch {
-          // Keep primary error on failed rollback
+        } catch (rollbackError) {
+          throw Object.assign(
+            new Error("Restore failed and the original database could not be restored. Recover from the pre-restore safety backup."),
+            { cause: error, errors: [error, rollbackError] },
+          );
         }
       }
       throw error;
     } finally {
-      setDatabaseReplacing(false);
-      await replacement.closeAsync();
-      if (rollback) {
-        await (rollback as SQLite.SQLiteDatabase).closeAsync();
+      let closeFailed = false;
+      let closeError: unknown;
+      try {
+        for (const handle of [replacement, rollback]) {
+          if (!handle) continue;
+          try {
+            await handle.closeAsync();
+          } catch (error) {
+            if (!closeFailed) closeError = error;
+            closeFailed = true;
+          }
+        }
+      } finally {
+        setDatabaseReplacing(false);
       }
+      // Cleanup failures never replace the primary restore/rollback error.
+      if (!failed && closeFailed) throw closeError;
     }
   });
 }
@@ -184,11 +197,11 @@ function normalizeSerializedDatabaseForMemory(
   return normalized;
 }
 
-function validateSnapshot(
+async function validateSnapshot(
   database: SQLite.SQLiteDatabase,
   requiredTables: readonly string[],
-): void {
-  const integrity = database.getFirstSync<{ integrity_check: string }>(
+): Promise<void> {
+  const integrity = await database.getFirstAsync<{ integrity_check: string }>(
     "PRAGMA integrity_check;",
   );
 
@@ -196,7 +209,7 @@ function validateSnapshot(
     throw new Error("The backup database failed its integrity check.");
   }
 
-  const tableRows = database.getAllSync<{ name: string }>(
+  const tableRows = await database.getAllAsync<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type = 'table';",
   );
   const tableNames = new Set(tableRows.map(({ name }) => name));
