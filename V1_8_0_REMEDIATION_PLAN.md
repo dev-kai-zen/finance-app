@@ -658,16 +658,16 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-30 — Dashboard: Deleting a Transaction in Kai on Dashboard Leaves `accounts` Balances Stale in `TransactionFormModal`
+### [x] P1-30 — Dashboard: Deleting a Transaction in Kai on Dashboard Leaves `accounts` Balances Stale in `TransactionFormModal` (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/dashboard/screens/dashboard-screen.tsx`
 - **Before-Fix Scenario (How to Reproduce):**
   1. On **Dashboard**, open **Chat with Kai**, save a transaction (or delete a saved transaction inside Kai), and close Kai.
   2. Still on **Dashboard**, tap `+` to open **New Transaction** and tap the **Account** field to open the Account Picker.
-  3. **Bug Observed:** The account balance shown inside the Account Picker still shows the old balance before the Kai deletion!
-- **How We Will Properly Fix It:**
-  1. In `DashboardScreen` (`dashboard-screen.tsx`, line 310), update the `FINANCE_APP_TRANSACTION_MUTATED` listener to call **both** `refreshDashboard()` **and** `refreshAccounts()`, and pass `sourceId` self-echo guarding so manual saves on Dashboard don't double-call `refreshDashboard()`.
+  3. **Bug Observed:** The account balance shown inside the Account Picker still showed the old balance before the Kai deletion!
+- **How We Properly Fix It:**
+  1. In `DashboardScreen` (`dashboard-screen.tsx`), updated the `FINANCE_APP_TRANSACTION_MUTATED` listener to call **both** `refreshDashboard()` **and** `refreshAccounts()` while focused, and removed redundant inline `refreshDashboard()` / `refreshAccounts()` calls after `recordTransaction`, `recordTransfer`, `editTransaction`, `editTransfer`, and `deleteTx` (which all already emit `FINANCE_APP_TRANSACTION_MUTATED`), eliminating double refreshes while keeping `accounts` balances always synchronized across Kai, form modals, and scheduled postings.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. On **Dashboard**, delete or save a transaction via **Chat with Kai**, close Kai, and open **New Transaction → Account Picker**.
   2. **Expected Result:** The Account Picker immediately shows the updated account balance.

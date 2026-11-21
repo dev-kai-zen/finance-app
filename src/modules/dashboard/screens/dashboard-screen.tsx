@@ -127,11 +127,12 @@ function DashboardScreenContent() {
       () => {
         if (isScreenActive) {
           refreshDashboard();
+          refreshAccounts();
         }
       },
     );
     return () => sub.remove();
-  }, [isScreenActive, refreshDashboard]);
+  }, [isScreenActive, refreshAccounts, refreshDashboard]);
   const {
     presets,
     archivedPresets,
@@ -348,8 +349,6 @@ function DashboardScreenContent() {
     setInspectedTransaction(null);
     const deleted = await deleteTx(pendingDeleteId);
     if (deleted) {
-      refreshAccounts();
-      refreshDashboard();
       setPendingDeleteId(null);
     }
   };
@@ -366,8 +365,6 @@ function DashboardScreenContent() {
     const isFirstEverTransaction = recentTx.length === 0;
     const res = await recordTransaction(input, preset, attachmentChanges);
     if (res) {
-      refreshAccounts();
-      refreshDashboard();
       refreshPresets();
       const cat = categories
         .flatMap((c) => [c, ...(c.subcategories ?? [])])
@@ -408,8 +405,6 @@ function DashboardScreenContent() {
     const isFirstEverTransaction = recentTx.length === 0;
     const res = await recordTransfer(input, preset, attachmentChanges);
     if (res) {
-      refreshAccounts();
-      refreshDashboard();
       refreshPresets();
       const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
       const toAcc = accounts.find((a) => a.id === input.toAccountId);
@@ -690,7 +685,6 @@ function DashboardScreenContent() {
         onUpdateTransaction={async (id, input, attachmentChanges) => {
           const success = await editTransaction(id, input, attachmentChanges);
           if (success) {
-            refreshAccounts();
             const cat = categories
               .flatMap((c) => [c, ...(c.subcategories ?? [])])
               .find((c) => c.id === input.categoryId);
@@ -718,7 +712,6 @@ function DashboardScreenContent() {
         onUpdateTransfer={async (input, attachmentChanges) => {
           const success = await editTransfer(input, attachmentChanges);
           if (success) {
-            refreshAccounts();
             const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
             const toAcc = accounts.find((a) => a.id === input.toAccountId);
             onChatEditSaved?.({
@@ -756,20 +749,8 @@ function DashboardScreenContent() {
           setOnChatEditSaved(() => onSaved ?? null);
           setIsModalOpen(true);
         }}
-        onSaveTransaction={async (input) => {
-          const res = await recordTransaction(input);
-          if (res) {
-            refreshAccounts();
-          }
-          return res;
-        }}
-        onSaveTransfer={async (input) => {
-          const res = await recordTransfer(input);
-          if (res) {
-            refreshAccounts();
-          }
-          return res;
-        }}
+        onSaveTransaction={recordTransaction}
+        onSaveTransfer={recordTransfer}
         pockets={pockets}
         visible={isChatModalOpen}
       />
