@@ -30,6 +30,31 @@ export function sourceAccountNames(document: CsvDocument, options: ImportOptions
   }
   return [...names].filter(Boolean);
 }
+export function findSourceRowCellsForAccount(
+  document: CsvDocument,
+  options: ImportOptions,
+  accountKey: string,
+): string[] | null {
+  let toAccountFallback: string[] | null = null;
+  for (const row of document.rows) {
+    const cells = options.rowEdits?.[row.number] ?? row.cells;
+    const primary = normalizeImportName(
+      cellValue(cells, options, "account") || options.defaultAccount,
+    );
+    if (primary === accountKey) {
+      return cells;
+    }
+    if (!toAccountFallback) {
+      const toAccount = normalizeImportName(
+        cellValue(cells, options, "toAccount"),
+      );
+      if (toAccount === accountKey) {
+        toAccountFallback = cells;
+      }
+    }
+  }
+  return toAccountFallback;
+}
 export function sourceCategories(document: CsvDocument, options: ImportOptions) {
   document = applyImportEdits(document, options);
   const values = new Map<string, { key: string; type: "income" | "expense"; name: string; parent: string }>();

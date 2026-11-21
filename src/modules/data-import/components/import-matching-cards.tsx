@@ -4,7 +4,7 @@ import { useAppTheme } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import type { useDataImport } from "../hooks/use-data-import";
 import { getImportCreditCardFieldErrors, normalizeImportName } from "../utils/csv";
-import { cellValue } from "../utils/import-preview";
+import { findSourceRowCellsForAccount } from "../utils/import-preview";
 import { AccountPickerModal, AccountTypeFormModal, AccountTypePickerModal, useAccountMutations, type AccountGroup } from "@/modules/accounts";
 import { CategoryPickerModal } from "@/modules/categories";
 import { matchCategoryWithKnowledge } from "@/modules/chat-with-kai";
@@ -38,20 +38,13 @@ export function ImportAccountCard({ name, state }: { name: string; state: Import
         state.options.decimal,
       )
     : null;
-  const sourceRow =
-    isCreditCardType && state.file
-      ? state.file.document.rows.find((row) => {
-          const cells = state.options.rowEdits?.[row.number] ?? row.cells;
-          return (
-            normalizeImportName(
-              cellValue(cells, state.options, "account") || state.options.defaultAccount,
-            ) === key
-          );
-        })
-      : undefined;
-  const sourceRowCells = sourceRow
-    ? (state.options.rowEdits?.[sourceRow.number] ?? sourceRow.cells)
-    : null;
+  const sourceRowCells = useMemo(
+    () =>
+      isCreditCardType && state.file
+        ? findSourceRowCellsForAccount(state.file.document, state.options, key)
+        : null,
+    [isCreditCardType, state.file, state.options, key],
+  );
   const fileColumnItems =
     isCreditCardType && state.file?.document.headers.length
       ? state.file.document.headers.map((header, index) => {

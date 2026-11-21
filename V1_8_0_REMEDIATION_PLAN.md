@@ -691,14 +691,16 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-32 — Data Import: *"Fill from a column in your file"* Silently Does Nothing for New Credit Cards Appearing Only in `To Account`
+### [x] P1-32 — Data Import: *"Fill from a column in your file"* Silently Does Nothing for New Credit Cards Appearing Only in `To Account` (Implemented — Ready for User Verification)
 - **User Test Status:** *"Can't verify properly"*
 - **Why It Happens & Exact CSV to Verify It:**
   - When importing a **Transactions CSV**, a new Credit Card account might only appear in the **`To Account`** column (for example, a CSV containing a credit card bill payment: `Type: Transfer, Account: BDO Savings, To Account: BPI Credit Card, Amount: 5000`).
   - During the **Match Accounts** step, `"BPI Credit Card"` is detected as a new account. When you change its Account Type to **Credit Card**, the form asks for **Credit Limit**, **Statement Day**, and **Payment Due Day**, and offers **"Fill from a column in your file"**.
-  - However, `fillAccountDetailFromColumn()` (`import-matching-cards.tsx`, line 46) only checks `if (normalizeImportName(accountName) !== accountKey) continue;` against the **`Account`** column—it never checks the **`To Account`** column! So picking a column does nothing at all!
+  - However, `ImportAccountCard` (`import-matching-cards.tsx`) only searched rows against the **`Account`** column—never checking the **`To Account`** column—so `sourceRowCells` was `null` and picking a column did nothing!
 - **Files:**
+  - `src/modules/data-import/utils/import-preview.ts`
   - `src/modules/data-import/components/import-matching-cards.tsx`
+  - `src/modules/data-import/__tests__/import-preview.test.cjs`
 - **Before-Fix Scenario (How to Reproduce Step-by-Step):**
   1. Create a 1-row Transactions CSV file:
      ```csv
@@ -707,12 +709,13 @@ Use this document as our living checklist as we fix and verify each finding one 
      ```
   2. Go to **Settings → Data Import → Import Transactions** and pick that CSV.
   3. On the **Accounts** matching step, find **`My New Visa Card`**, change its type to **Credit Card**, tap **Fill from a column in your file**, and select `Credit Limit`, `Statement Day`, or `Due Day`.
-  4. **Bug Observed:** Nothing is filled into the fields!
-- **How We Will Properly Fix It:**
-  1. In `fillAccountDetailFromColumn()` (`import-matching-cards.tsx`, lines 41–54), check if `accountKey` matches **either** the row's `account` cell **or** (when the row is a transfer) the row's `toAccount` cell.
+  4. **Bug Observed:** Nothing was filled into the fields!
+- **How We Properly Fix It:**
+  1. Added `findSourceRowCellsForAccount(document, options, accountKey)` in `import-preview.ts` which checks primary `account` matches first and falls back to `toAccount` matches in a single pass.
+  2. Memoized `sourceRowCells` via `useMemo` using `findSourceRowCellsForAccount` in `ImportAccountCard` (`import-matching-cards.tsx`).
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Repeat the 3 steps above with the 1-row Transfer CSV.
-  2. **Expected Result:** Selecting `Credit Limit`, `Statement Day`, and `Due Day` from *"Fill from a column in your file"* immediately populates `50000`, `15`, and `5` for `My New Visa Card`.
+  2. **Expected Result:** Selecting `Credit Limit`, `Statement Day`, and `Due Day` from *"Fill from a column in your file"* shows the row examples (`50000`, `15`, `5`) and immediately populates them into the Credit Card fields for `My New Visa Card`.
 
 ---
 

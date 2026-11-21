@@ -388,3 +388,35 @@ test("applying corrections never creates a previously imported status without sa
   s.data.sourceKeys.push(s.preview().rows[0].sourceKey);
   assert.equal(s.preview().rows[0].repeated, true); assert.equal(s.preview().accepted, 0);
 });
+test("P1-32: findSourceRowCellsForAccount matches new credit cards appearing only in To Account and prefers Account when both exist", () => {
+  const { findSourceRowCellsForAccount } = require("../utils/import-preview.ts");
+  const s = setup(
+    "Date,Type,Account,To Account,Amount,Credit Limit,Statement Day,Due Day\n" +
+      "2026-11-15,Transfer,Cash,My New Visa Card,1500,50000,15,5",
+  );
+  const toOnlyCells = findSourceRowCellsForAccount(
+    s.document,
+    s.options,
+    "my new visa card",
+  );
+  assert.ok(toOnlyCells);
+  assert.equal(toOnlyCells[5], "50000");
+  assert.equal(toOnlyCells[6], "15");
+  assert.equal(toOnlyCells[7], "5");
+
+  // When an account appears in To Account on row 1 and Account on row 2, prefer the Account row
+  const s2 = setup(
+    "Date,Type,Account,To Account,Amount,Credit Limit,Statement Day,Due Day\n" +
+      "2026-11-15,Transfer,Cash,My New Visa Card,1500,99999,1,2\n" +
+      "2026-11-16,Expense,My New Visa Card,,500,50000,15,5",
+  );
+  const preferredCells = findSourceRowCellsForAccount(
+    s2.document,
+    s2.options,
+    "my new visa card",
+  );
+  assert.ok(preferredCells);
+  assert.equal(preferredCells[5], "50000");
+  assert.equal(preferredCells[6], "15");
+  assert.equal(preferredCells[7], "5");
+});
