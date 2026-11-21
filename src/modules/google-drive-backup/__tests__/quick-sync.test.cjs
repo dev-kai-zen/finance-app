@@ -177,6 +177,7 @@ const {
   resetQuickSyncStateForTests,
 } = require("@/infrastructure/sync/quick-sync-state");
 const {
+  clearQuickSyncRemoteBaselineOnManualRestore,
   clearQuickSyncRemoteTracking,
   formatQuickSyncDeviceDisplayName,
   getQuickSyncDeviceMetadata,
@@ -194,6 +195,7 @@ const {
   resetGoogleDriveConnectionForAppReset,
 } = require("@/modules/google-drive-backup/services/reset-google-drive-for-app-reset.service");
 const {
+  checkQuickSyncRemoteStatus,
   dismissQuickSyncConflictPrompt,
   openQuickSyncConflictPrompt,
   resolveQuickSyncConflictByRestore,
@@ -937,4 +939,105 @@ test("quick sync conflict restore failure (P1-18): resets syncing status back to
   state = getQuickSyncState();
   assert.equal(state.status, "remote_ahead");
   assert.equal(state.conflictPromptVisible, true);
+});
+
+test("quick sync manual/local backup restore (P1-19): clearing baseline blocks adopt_self and silent Drive overwrite, surfacing conflict modal", async () => {
+  saveOnboardingSettings({
+    [ONBOARDING_SETTING_KEYS.status]: "completed",
+    [ONBOARDING_SETTING_KEYS.workspaceMode]: "personal",
+  });
+  setQuickSyncCustomDeviceName("Main Phone");
+  const localMetaBeforeRestore = getQuickSyncDeviceMetadata();
+
+  // Simulate state after syncing 5 transactions to Quick Sync on THIS device
+  saveQuickSyncConfig({
+    enabled: true,
+    network: "wifi_only",
+    fileId: "file-1",
+    accountEmail: "user@gmail.com",
+    lastSyncedAt: "2026-11-20T06:00:00.000Z",
+  });
+  updateQuickSyncDeviceMetadata({
+    lastKnownRemoteSyncId: "sync-rev-10",
+    lastKnownRemoteHeadRevisionId: "head-rev-10",
+    lastKnownRemoteVersion: 10,
+    lastKnownRemoteModifiedTime: "2026-11-20T06:00:00.000Z",
+    lastKnownRemoteFileId: "file-1",
+    hasUnsyncedLocalChanges: false,
+  });
+
+  // Cloud Drive still holds the 5-transaction Quick Sync uploaded by THIS same device
+  mockGetRemoteMetadataHandler = async () => ({
+    id: "file-1",
+    name: "kaizen-finance-quick-sync.kfb",
+    createdTime: "2026-11-20T05:00:00.000Z",
+    modifiedTime: "2026-11-20T06:00:00.000Z",
+    size: 4096,
+    location: "visible",
+    passwordProtected: false,
+    version: 10,
+    headRevisionId: "head-rev-10",
+    trashed: false,
+    syncRevisionId: "sync-rev-10",
+    lastUpdatedByDeviceId: localMetaBeforeRestore.deviceId,
+    lastUpdatedByDeviceName: "Main Phone (Google Pixel 8)",
+  });
+
+  let uploadCalls = 0;
+  mockUploadHandler = async (_token, _bytes, existingFileId, props) => {
+    uploadCalls += 1;
+    return {
+      id: existingFileId ?? "file-1",
+      modifiedTime: "2026-11-20T06:15:00.000Z",
+      version: 11,
+      headRevisionId: "head-rev-11",
+      syncRevisionId: props.syncRevisionId,
+    };
+  };
+
+  // Simulate restoring an older 2-transaction backup (whose settings had quick_sync enabled + old lastSyncedAt)
+  saveQuickSyncConfig({
+    enabled: true,
+    fileId: "file-1",
+    accountEmail: "user@gmail.com",
+    lastSyncedAt: null,
+  });
+  clearQuickSyncRemoteConflict();
+  const afterManualRestore = clearQuickSyncRemoteBaselineOnManualRestore();
+
+  assert.equal(afterManualRestore.deviceId, localMetaBeforeRestore.deviceId);
+  assert.equal(afterManualRestore.customDeviceName, "Main Phone");
+  assert.equal(afterManualRestore.lastKnownRemoteSyncId, null);
+  assert.equal(afterManualRestore.lastKnownRemoteHeadRevisionId, null);
+  assert.equal(afterManualRestore.lastKnownRemoteVersion, null);
+  assert.equal(afterManualRestore.lastKnownRemoteModifiedTime, null);
+  assert.equal(afterManualRestore.lastKnownRemoteFileId, null);
+  assert.equal(afterManualRestore.hasUnsyncedLocalChanges, true);
+
+  // Post-restore check must detect remote_ahead (NOT adopt_self or up_to_date) and must NOT upload
+  const checkResult = await checkQuickSyncRemoteStatus({
+    force: true,
+    openPromptOnConflict: true,
+  });
+  assert.equal(checkResult, "remote_ahead");
+  assert.equal(uploadCalls, 0);
+
+  let state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, true);
+  assert.equal(state.remoteConflict?.hasUnsyncedLocalChanges, true);
+
+  // Subsequent normal local edit / triggerQuickSync must stay blocked and NOT silently overwrite Drive
+  const normalSyncResult = await triggerQuickSync();
+  assert.equal(normalSyncResult, false);
+  assert.equal(uploadCalls, 0);
+
+  // Explicit user overwrite ("Overwrite Drive Data") must succeed and update the existing fileId
+  const overwriteResult = await triggerQuickSync({
+    immediate: true,
+    forceOverwrite: true,
+  });
+  assert.equal(overwriteResult, true);
+  assert.equal(uploadCalls, 1);
+  assert.equal(getQuickSyncState().status, "synced");
 });

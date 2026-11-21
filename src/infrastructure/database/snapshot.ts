@@ -29,14 +29,18 @@ const CURRENT_REQUIRED_TABLES = [
 ] as const;
 
 let snapshotLock = Promise.resolve();
-let isReplacing = false;
+let replacingDepth = 0;
 
 export function isDatabaseReplacing(): boolean {
-  return isReplacing;
+  return replacingDepth > 0;
 }
 
 export function setDatabaseReplacing(replacing: boolean): void {
-  isReplacing = replacing;
+  if (replacing) {
+    replacingDepth += 1;
+  } else {
+    replacingDepth = Math.max(0, replacingDepth - 1);
+  }
 }
 
 export async function withDatabaseSnapshotLock<T>(
@@ -94,7 +98,7 @@ export async function replaceDatabaseFromSnapshot(
   snapshot: Uint8Array,
 ): Promise<void> {
   return withDatabaseSnapshotLock(async () => {
-    isReplacing = true;
+    setDatabaseReplacing(true);
     const replacement = await SQLite.deserializeDatabaseAsync(
       normalizeSerializedDatabaseForMemory(snapshot),
     );
@@ -147,7 +151,7 @@ export async function replaceDatabaseFromSnapshot(
       }
       throw error;
     } finally {
-      isReplacing = false;
+      setDatabaseReplacing(false);
       await replacement.closeAsync();
       if (rollback) {
         await (rollback as SQLite.SQLiteDatabase).closeAsync();

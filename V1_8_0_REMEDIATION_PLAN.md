@@ -412,28 +412,31 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-19 — Quick Sync: Restoring Local Backup or Manual Google Drive Backup Leaves Stale Baseline & Overwrites Drive Quick Sync
+### [x] P1-19 — Quick Sync: Restoring Local Backup or Manual Google Drive Backup Leaves Stale Baseline & Overwrites Drive Quick Sync (Implemented — Ready for User Verification)
 - **User Test Status:** *"I can't verify this properly"*
 - **Why It Was Hard to Verify & Exact Step-by-Step Scenario:**
   - When you restore a **Local Backup (`.kfb`)** or a **Manual Google Drive Backup**, the SQLite database is replaced with an older snapshot, **but** `quick-sync-device.json` on disk keeps the `lastKnownRemoteSyncId` from *before* the restore!
   - Because `quick-sync-device.json` still says *"I already have the latest cloud revision `rev-10`"*, Quick Sync thinks your newly restored older database is up to date with `rev-10`—and as soon as you add or edit 1 transaction (or 1.5s after restoring a manual Google Drive backup), Quick Sync uploads the old backup over your newer cloud Quick Sync file!
 - **Files:**
+  - `src/infrastructure/database/snapshot.ts`
+  - `src/infrastructure/sync/quick-sync-device.storage.ts`
+  - `src/infrastructure/sync/index.ts`
   - `src/modules/local-backup/services/restore-local-backup.service.ts`
   - `src/modules/google-drive-backup/services/restore-google-drive-backup.service.ts`
-  - `src/infrastructure/sync/quick-sync-device.storage.ts`
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
 - **Before-Fix Scenario (How to Reproduce Step-by-Step):**
-  1. Start with **2 transactions** in the app. Go to **Settings → Local Backup → Create Backup** (this saves a 2-transaction `.kfb` file).
-  2. Enable **Quick Sync**, add **3 more transactions** (total = **5 transactions**), and tap **Sync Now** so Google Drive Quick Sync has **5 transactions**.
-  3. Now go to **Settings → Local Backup → Restore Backup** and select the older **2-transaction** `.kfb` file.
-  4. After the app reloads with 2 transactions, edit or add **1 transaction** (so total = 3) and wait 3 seconds.
-  5. **Bug Observed:** Quick Sync does **not** warn you that Google Drive has a different 5-transaction backup—it silently overwrites Google Drive Quick Sync with your 3-transaction database!
-- **How We Will Properly Fix It:**
-  1. When `restoreLocalBackup()` or `restoreSelectedGoogleDriveBackup()` replaces the local database, call `clearQuickSyncRemoteBaselineOnManualRestore()` (which clears `lastKnownRemoteSyncId`, `lastKnownRemoteHeadRevisionId`, and `lastKnownRemoteModifiedTime`, while setting `hasUnsyncedLocalChanges: true`).
-  2. In `restoreSelectedGoogleDriveBackup()`, wrap `replaceLocalDatabaseFromSnapshot()` with `setDatabaseReplacing(true)` / `finally { setDatabaseReplacing(false) }` (matching `restoreLocalBackup`).
-  3. That way, if Quick Sync is enabled, the next check immediately sees that a cloud Quick Sync backup exists with a different baseline and prompts the **Quick Sync Conflict Modal** so the user explicitly chooses whether to overwrite Quick Sync with the restored backup or keep the cloud Quick Sync backup.
+  1. Start with **2 transactions** in the app (with Quick Sync ON, or enable Quick Sync in step 2). Go to **Settings → Local Backup → Create Backup** (this saves a 2-transaction `.kfb` file).
+  2. Enable **Quick Sync** (if not already on), add **3 more transactions** (total = **5 transactions**), and tap **Sync Now** so Google Drive Quick Sync has **5 transactions**.
+  3. Now go to **Settings → Local Backup → Restore Backup** and select the older **2-transaction** `.kfb` file (or restore an older Manual Google Drive Backup).
+  4. After the app reloads with 2 transactions (re-enabling Quick Sync if it was OFF in that older backup), wait 2 seconds or edit/add 1 transaction.
+  5. **Bug Observed:** Quick Sync did **not** warn that Google Drive has a different 5-transaction backup—it silently overwrote Google Drive Quick Sync with your restored database!
+- **How We Properly Fix It:**
+  1. Added `clearQuickSyncRemoteBaselineOnManualRestore()` in `quick-sync-device.storage.ts` (exported via `@/infrastructure/sync`) to clear `lastKnownRemoteSyncId`, `lastKnownRemoteHeadRevisionId`, `lastKnownRemoteVersion`, `lastKnownRemoteModifiedTime`, and `lastKnownRemoteFileId` while preserving `deviceId`/`customDeviceName` and setting `hasUnsyncedLocalChanges: true`.
+  2. Made `setDatabaseReplacing()` in `snapshot.ts` re-entrant via a depth counter (`replacingDepth`) so outer restore services stay protected across `replaceDatabaseFromSnapshot`, `finalizeRestoredWorkspace`, and Quick Sync config updates.
+  3. In both `restoreLocalBackup()` and `restoreGoogleDriveBackup()`, wrapped the restore + finalization block in `setDatabaseReplacing(true)` / `finally { setDatabaseReplacing(false) }`, cancelled pending debounced Quick Sync timers, cleared stale `lastSyncedAt: null` in the restored DB's Quick Sync config (blocking `adopt_self` even when the same phone uploaded the cloud Quick Sync file), cleared any stale conflict, and called `clearQuickSyncRemoteBaselineOnManualRestore()`.
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Follow the 4 steps above (sync 5 transactions to Quick Sync → restore the 2-transaction Local Backup).
-  2. **Expected Result:** Quick Sync detects the mismatch against the cloud Quick Sync file and shows the **Quick Sync Conflict Modal** instead of silently overwriting Drive.
+  1. Follow the steps above (sync 5 transactions to Quick Sync → restore the older 2-transaction Local Backup or Manual Google Drive Backup).
+  2. **Expected Result:** Quick Sync detects the mismatch against the cloud Quick Sync file and shows the **Quick Sync Conflict Modal** (with *"This device has unsynced local changes"*) instead of silently overwriting Drive. Only explicitly tapping **Overwrite Drive Data** pushes the restored backup to Quick Sync.
 
 ---
 

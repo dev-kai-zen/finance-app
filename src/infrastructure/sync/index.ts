@@ -47,6 +47,7 @@ export {
   QUICK_SYNC_SETTINGS_KEYS,
 } from "./quick-sync-settings.repository";
 export {
+  clearQuickSyncRemoteBaselineOnManualRestore,
   clearQuickSyncRemoteTracking,
   createQuickSyncRevisionId,
   formatQuickSyncDeviceDisplayName,
