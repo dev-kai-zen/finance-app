@@ -137,6 +137,10 @@ export const fil = {
         "Pumili ng file mula sa lumang app o bangko. Gagabayan ka sa bawat hakbang bago mag-save.",
       needTemplate: "Kailangan ng halimbawang file?",
       formatsTitle: "Suriin ang petsa at numero",
+      amountInterpretation: "Paano babasahin ang mga halaga?",
+      amountInterpretationHint: "Pinapanatili ng signed amounts ang mga refund at pagbawi ng kita. Gumamit ng hindi negatibong halaga sa hiwalay na palabas/papasok na column; ang direksiyon ang batayan ng sign.",
+      signedAmounts: "Panatilihin ang sign: negatibo ang gastos, positibo ang refund",
+      unsignedAmounts: "Gamitin ang uri: palabas ang gastos, papasok ang kita",
       amountLayout: "Saan nakalagay ang mga halaga sa file?",
       oneAmount: "Isang column para sa halaga",
       oneAmountHelp:

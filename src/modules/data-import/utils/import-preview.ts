@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 import type { CsvDocument, ImportCatalog, ImportField, ImportOptions, ImportPreview, ImportPreviewConstraints, ImportPreviewRow, PlannedAccount, PlannedTransaction } from "../types/import.types";
-import { categoryMappingKey, ImportValidationError, parseImportArchived, normalizeImportName, parseImportAmount, parseImportCreditCardDetails, parseImportDate, transactionFingerprint } from "./csv";
+import { categoryMappingKey, resolveAmountInterpretation, ImportValidationError, parseImportArchived, normalizeImportName, parseImportAmount, parseImportCreditCardDetails, parseImportDate, transactionFingerprint } from "./csv";
 
 export function importDigest(value: string): string { return bytesToHex(sha256(utf8ToBytes(value))); }
 export function cellValue(cells: string[], options: ImportOptions, field: ImportField): string {
@@ -88,6 +88,7 @@ export function buildImportPreview(
   constraints?: ImportPreviewConstraints,
 ): ImportPreview {
   document = applyImportEdits(document, options);
+  const signedAmounts = resolveAmountInterpretation(document.headers, options) === "signed";
   const accounts = new Map<string, PlannedAccount>();
   const usedSourceKeys = new Set(catalog.sourceKeys);
   const fingerprints = new Set(catalog.fingerprints);
@@ -165,10 +166,10 @@ export function buildImportPreview(
         const credit = get("credit") ? parseImportAmount(get("credit"), account.currency, options.decimal) : 0;
         if (debit < 0 || credit < 0 || (!!debit === !!credit)) throw new ImportValidationError("amount");
         amount = credit - debit;
-        if ((type === "income" && debit) || (type === "expense" && credit)) throw new ImportValidationError("amount");
+        if (!signedAmounts && ((type === "income" && debit) || (type === "expense" && credit))) throw new ImportValidationError("amount");
       }
       if (!amount) throw new ImportValidationError("amount");
-      const transaction: PlannedTransaction = { type, accountKey: account.key, amount: type === "expense" ? -Math.abs(amount) : type === "income" ? Math.abs(amount) : amount, currency: account.currency, date, name: get("name"), note: get("note"), labels: [...new Set(get("labels").split(";").map((s) => s.trim()).filter(Boolean))] };
+      const transaction: PlannedTransaction = { type, accountKey: account.key, amount: signedAmounts ? amount : type === "expense" ? -Math.abs(amount) : type === "income" ? Math.abs(amount) : amount, currency: account.currency, date, name: get("name"), note: get("note"), labels: [...new Set(get("labels").split(";").map((s) => s.trim()).filter(Boolean))] };
       if (transaction.name.length > 200 || transaction.note.length > 1000 || transaction.labels.some((s) => s.length > 100)) throw new ImportValidationError("name");
       if (type === "transfer") {
         // Currency comes from the source; validate the destination independently.
@@ -301,7 +302,7 @@ export function buildImportPreview(
       addDelta(toKey, Math.abs(tx.amount));
     }
     if (tx.type === "income") income[tx.currency] = (income[tx.currency] || 0) + tx.amount;
-    if (tx.type === "expense") expense[tx.currency] = (expense[tx.currency] || 0) + Math.abs(tx.amount);
+    if (tx.type === "expense") expense[tx.currency] = (expense[tx.currency] || 0) - tx.amount;
   }
   const plannedAccounts = [...accounts.values()].filter((a) => actualAccounts.has(a.key));
   const balances = [...new Map(plannedAccounts.map((a) => [a.id || a.key, { key: a.key, name: a.name, currency: a.currency, before: a.currentBalance, after: a.currentBalance + (deltas.get(a.id || a.key) || 0) }])).values()];

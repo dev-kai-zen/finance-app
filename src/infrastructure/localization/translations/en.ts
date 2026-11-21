@@ -131,6 +131,10 @@ export const en = {
         "Choose a file exported from your old app or bank. We will guide you through each step before saving anything.",
       needTemplate: "Need an example file?",
       formatsTitle: "Check dates and numbers",
+      amountInterpretation: "How should amounts be interpreted?",
+      amountInterpretationHint: "Signed amounts preserve refunds and income reversals. Separate money-out/in columns must contain nonnegative values; their direction supplies the sign.",
+      signedAmounts: "Keep signs: expenses are negative, refunds positive",
+      unsignedAmounts: "Use transaction type: expenses spend, income earns",
       amountLayout: "Where are the amounts in your file?",
       oneAmount: "One column for amounts",
       oneAmountHelp:

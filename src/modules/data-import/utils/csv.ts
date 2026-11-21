@@ -1,5 +1,5 @@
 import { getCurrencyMinorUnitExponent } from "@/utils/currency";
-import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS, type CsvDocument, type ImportField } from "../types/import.types";
+import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS, type CsvDocument, type ImportField, type ImportOptions } from "../types/import.types";
 
 export class ImportValidationError extends Error {
   constructor(public readonly code: string) { super(code); }
@@ -63,6 +63,14 @@ export function parseCsv(input: string, separator?: string): CsvDocument {
     });
   }
   return { headers, rows: records };
+}
+
+// Full wire-format signature: a generic Amount/Type header is not enough to
+// infer signs. Round-trip tests keep this aligned with the transaction exporter.
+const APP_TRANSACTION_HEADERS = "Date,Time,Type,Name,Amount,Currency,Account,Pocket,Category,Labels,Note,Transfer Account,Transfer Pocket,Transfer Fee,Fee Account,Original Amount,Original Currency,Exchange Rate,Transaction ID".split(",");
+export function resolveAmountInterpretation(headers: readonly string[], options: ImportOptions): "signed" | "unsigned" {
+  if (options.amountInterpretation) return options.amountInterpretation;
+  return headers.length === APP_TRANSACTION_HEADERS.length && headers.every((header, index) => header === APP_TRANSACTION_HEADERS[index]) ? "signed" : "unsigned";
 }
 
 const aliases: Record<ImportField, string[]> = {

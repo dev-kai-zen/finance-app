@@ -420,3 +420,44 @@ test("P1-32: findSourceRowCellsForAccount matches new credit cards appearing onl
   assert.equal(preferredCells[6], "15");
   assert.equal(preferredCells[7], "5");
 });
+
+test("V2-05: signed input preserves refunds/reversals, totals and signed duplicate identities", () => {
+  const s = setup("Date,Type,Amount,Account,Category,Name\n2026-01-02,expense,-150,Cash,Food,Purchase\n2026-01-02,expense,100,Cash,Food,Refund\n2026-01-02,income,200,Cash,Salary,Pay\n2026-01-02,income,-25,Cash,Salary,Reversal");
+  s.options.amountInterpretation = "signed";
+  const p = s.preview();
+  assert.equal(p.ready, true);
+  assert.deepEqual(p.rows.map(r => r.transaction.amount), [-15000,10000,20000,-2500]);
+  assert.equal(p.balances[0].after, 112500);
+  assert.equal(p.expense.PHP, 5000); assert.equal(p.income.PHP,17500);
+  s.data.fingerprints.push(transactionFingerprint("expense", "a0", "", new Date(2026,0,2),10000,"Refund"));
+  assert.equal(s.preview().rows[1].issue,"duplicate");
+  s.options.decisions[3]="import"; assert.equal(s.preview().accepted,4);
+  s.options.amountInterpretation="unsigned";
+  assert.notEqual(s.preview().signature,p.signature);
+  assert.equal(s.preview().rows[1].duplicate,false);
+  assert.equal(s.preview().rows[1].transaction.amount,-10000);
+});
+
+test("V2-05: debit/credit directions preserve reversals only in signed mode", () => {
+  const s=setup("Date,Type,Debit,Credit,Account,Category\n2026-01-02,expense,0,100,Cash,Food\n2026-01-03,income,25,0,Cash,Salary");
+  assert.equal(s.preview().errors,2);
+  s.options.amountInterpretation="signed";
+  const p=s.preview(); assert.equal(p.ready,true);
+  assert.deepEqual(p.rows.map(r=>r.transaction.amount),[10000,-2500]);
+  assert.equal(p.balances[0].after,107500);
+  assert.equal(p.expense.PHP,-10000); assert.equal(p.income.PHP,-2500);
+  s.document.rows[0].cells[2]="-10"; assert.equal(s.preview().rows[0].issue,"amount");
+  s.document.rows[0].cells[2]="10"; assert.equal(s.preview().rows[0].issue,"amount");
+});
+
+test("V2-05: only the full app export signature defaults to signed, with an explicit override", () => {
+  const {TRANSACTION_CSV_HEADERS,buildTransactionsCsv}=require("../../transactions/utils/transactions-csv.ts");
+  const {resolveAmountInterpretation}=require("../utils/csv.ts");
+  const csv=buildTransactionsCsv([{id:"refund", type:"expense",amountMinorUnits:10000,currencyCode:"PHP",accountCurrency:"PHP",accountName:"Cash",categoryName:"Food",occurredAt:new Date(2026,0,2)}]);
+  const s=setup(csv); assert.equal(s.preview().ready,true);
+  assert.equal(s.preview().rows[0].transaction.amount,10000);
+  assert.equal(resolveAmountInterpretation(TRANSACTION_CSV_HEADERS,s.options),"signed");
+  assert.equal(resolveAmountInterpretation(["Date","Type","Amount","Transaction ID"],s.options),"unsigned");
+  s.options.amountInterpretation="unsigned";
+  assert.equal(s.preview().rows[0].transaction.amount,-10000);
+});

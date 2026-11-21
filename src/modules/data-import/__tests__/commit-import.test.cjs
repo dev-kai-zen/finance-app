@@ -422,3 +422,38 @@ test('P2-11d: Status aliases validate strictly and archived imports do not consu
   invalid.options.kind='accounts'; assert.equal(invalid.preview().ready, false);
   assert.equal(invalid.preview().rows[0].issue, 'unsupported');
 });
+
+for (const [currency,unit] of [["JPY",1],["PHP",100],["KWD",1000]]) {
+  test("V2-05: exported signed ledger round-trips through SQLite in "+currency,async()=>{
+    const {buildTransactionsCsv}=require("../../transactions/utils/transactions-csv.ts");
+    sqlite.prepare("INSERT OR IGNORE INTO currencies (code,name,symbol,minor_unit_exponent,is_active,created_at,updated_at) VALUES (?,?,?,?,1,0,0)").run(currency,currency,currency,unit===1?0:unit===100?2:3);
+    const values=[-150*unit,100*unit,200*unit,-25*unit];
+    const csv=buildTransactionsCsv(values.map((amountMinorUnits,i)=>({id:"source-"+i,type:i<2?"expense":"income",amountMinorUnits,currencyCode:currency,accountCurrency:currency,accountName:"Cash",categoryName:i<2?"Food":"Salary",name:"Row "+i,occurredAt:new Date(2026,0,2,12,i)})));
+    const d=draft(csv); d.options.accounts.cash.currency=currency;
+    const p=d.preview(); assert.equal(p.ready,true);
+    assert.deepEqual(p.rows.map(r=>r.transaction.amount),values);
+    assert.equal(p.expense[currency],50*unit);assert.equal(p.income[currency],175*unit);
+    assert.equal(p.balances[0].after,1125*unit);
+    await d.save();
+    const rows=sqlite.prepare("SELECT type,amount_minor_units FROM transactions ORDER BY occurred_at,id").all();
+    assert.deepEqual(rows.map(r=>r.amount_minor_units),values);
+    assert.deepEqual(rows.map(r=>r.type),["expense","expense","income","income"]);
+    const account=getAccountsWithBalances().find(a=>a.name==="Cash");
+    assert.equal(account.currentBalanceMinorUnits,p.balances[0].after);
+    d.options.accounts.cash.existingId=account.id;
+    assert.equal(d.preview().skipped,4);
+    d.options.source="Another file"; // distinct provenance still requires duplicate review
+    assert.equal(d.preview().errors,4);
+    d.options.decisions={2:"import",3:"import",4:"import",5:"import"};
+    assert.equal(d.preview().accepted,4); await d.save();
+    assert.equal(getAccountsWithBalances().find(a=>a.id===account.id).currentBalanceMinorUnits,1250*unit);
+  });
+}
+
+test("V2-05: signed debit/credit refunds and reversals commit with preview parity",async()=>{
+  const d=draft("Date,Type,Debit,Credit,Account,Category\n2026-01-02,expense,0,100,Cash,Food\n2026-01-03,income,25,0,Cash,Salary");
+  d.options.amountInterpretation="signed";
+  const p=d.preview(); assert.equal(p.ready,true);await d.save();
+  assert.deepEqual(sqlite.prepare("SELECT amount_minor_units FROM transactions ORDER BY occurred_at,id").all().map(r=>r.amount_minor_units),[10000,-2500]);
+  assert.equal(getAccountsWithBalances().find(a=>a.name==="Cash").currentBalanceMinorUnits,p.balances[0].after);
+});

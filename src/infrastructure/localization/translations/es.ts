@@ -137,6 +137,10 @@ export const es = {
         "Elige un archivo exportado de tu aplicaci\u00f3n anterior o banco. Te guiaremos por cada paso antes de guardar.",
       needTemplate: "\u00bfNecesitas un archivo de ejemplo?",
       formatsTitle: "Revisa fechas y n\u00fameros",
+      amountInterpretation: "¿Cómo se deben interpretar los importes?",
+      amountInterpretationHint: "Los importes con signo conservan reembolsos y reversiones de ingresos. Las columnas separadas de salida/entrada deben tener valores no negativos; su dirección determina el signo.",
+      signedAmounts: "Conservar signos: gastos negativos, reembolsos positivos",
+      unsignedAmounts: "Usar el tipo: gastos salen, ingresos entran",
       amountLayout: "\u00bfD\u00f3nde est\u00e1n los importes en tu archivo?",
       oneAmount: "Una columna de importes",
       oneAmountHelp:

@@ -34,6 +34,7 @@ export interface ImportOptions {
   defaultAccount: string;
   transferMode: "single" | "paired";
   amountLayout?: "single" | "separate";
+  amountInterpretation?: "signed" | "unsigned";
   accounts: Record<string, AccountMapping>;
   categories: Record<string, string>;
   decisions: Record<number, "skip" | "import">;

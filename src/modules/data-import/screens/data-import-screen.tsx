@@ -55,6 +55,7 @@ import {
   getImportCreditCardFieldErrors,
   normalizeImportName,
   suggestColumns,
+  resolveAmountInterpretation,
 } from "../utils/csv";
 import { validateColumnSample } from "../utils/validate-column-sample";
 import { cellValue } from "../utils/import-preview";
@@ -931,6 +932,24 @@ export function DataImportScreenContent({
                       decisions: {},
                     });
                   }}
+                />
+                <Text style={styles.label}>
+                  {t("dataImport.wizard.amountInterpretation")}
+                </Text>
+                <Text style={styles.body}>
+                  {t("dataImport.wizard.amountInterpretationHint")}
+                </Text>
+                <ImportChoice
+                  title={t("dataImport.wizard.signedAmounts")}
+                  selected={resolveAmountInterpretation(state.file!.document.headers, state.options) === "signed"}
+                  disabled={state.busy}
+                  onPress={() => state.patch({ amountInterpretation: "signed", decisions: {} })}
+                />
+                <ImportChoice
+                  title={t("dataImport.wizard.unsignedAmounts")}
+                  selected={resolveAmountInterpretation(state.file!.document.headers, state.options) === "unsigned"}
+                  disabled={state.busy}
+                  onPress={() => state.patch({ amountInterpretation: "unsigned", decisions: {} })}
                 />
               </>
             )}
