@@ -1,6 +1,8 @@
 import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import { resolveScheduleOccurrencePaidInContext } from "@/modules/scheduled-transactions";
+import { getDefaultExpenseCategoryId } from "@/modules/categories";
+import { subscriptionFormSchema } from "../schemas/subscription.schema";
 import { recordTransactionInContext } from "@/modules/transactions";
 import {
   findSubscriptionById,
@@ -64,6 +66,12 @@ export function recordSubscriptionPaymentInContext(
       ? Math.abs(options.amountMinorUnits)
       : subscription.amountMinorUnits;
 
+  subscriptionFormSchema.shape.amountMinorUnits.parse(paymentAmount);
+  const categoryId = subscription.categoryId ?? getDefaultExpenseCategoryId(context);
+  if (!categoryId) {
+    throw new Error("Create an expense category before recording a subscription payment.");
+  }
+
   // 1. Post expense transaction into general ledger via transactions service
   const txRecord = recordTransactionInContext(
     {
@@ -71,7 +79,7 @@ export function recordSubscriptionPaymentInContext(
       input: {
         accountId,
         pocketId,
-        categoryId: subscription.categoryId,
+        categoryId,
         type: "expense",
         amountMinorUnits: -paymentAmount,
         currencyCode: subscription.currencyCode,
@@ -109,6 +117,7 @@ export function recordSubscriptionPaymentInContext(
     subscription.id,
     {
       nextRenewalDate: nextRenewal,
+      categoryId,
       updatedAt: new Date(),
     },
     context,

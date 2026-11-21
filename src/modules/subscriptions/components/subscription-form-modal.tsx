@@ -37,6 +37,7 @@ import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
 import { AccountPickerModal, useAccounts } from "@/modules/accounts";
 import { CategoryPickerModal, useCategories } from "@/modules/categories";
+import { subscriptionFormSchema } from "../schemas/subscription.schema";
 import { BILLING_CYCLE_OPTIONS } from "../constants/subscription.constants";
 import { SUBSCRIPTION_PRESETS } from "../constants/subscription-presets.constants";
 import type {
@@ -372,9 +373,10 @@ function SubscriptionFormModalContent({
     });
   }, [trialEndsAt, t]);
 
+  const isAmountValid = subscriptionFormSchema.shape.amountMinorUnits.safeParse(amountMinorUnits).success;
   const isValid =
     name.trim().length > 0 &&
-    (isTrial || amountMinorUnits > 0) &&
+    isAmountValid &&
     Boolean(accountId) &&
     Boolean(categoryId);
 
@@ -415,6 +417,11 @@ function SubscriptionFormModalContent({
       icon,
     };
 
+    const validation = subscriptionFormSchema.safeParse(input);
+    if (!validation.success) {
+      setInfoModalContent({ title: t("subscriptions.checkDetails"), message: validation.error.issues[0].message });
+      return;
+    }
     onSave(input, subscription?.id);
   };
 
@@ -509,7 +516,7 @@ function SubscriptionFormModalContent({
               {t("subscriptions.amountLabel", {
                 defaultValue: "Amount / Cost",
               })}
-              {!isTrial && <Text style={styles.requiredAsterisk}> *</Text>}
+              <Text style={styles.requiredAsterisk}> *</Text>
             </Text>
             <AmountCalculatorField
               amountMinorUnits={amountMinorUnits}
@@ -518,6 +525,11 @@ function SubscriptionFormModalContent({
               onOpenCalculator={() => setIsCalculatorOpen(true)}
               showSignToggle={false}
             />
+            {!isAmountValid && (
+              <Text accessibilityRole="alert" style={{ color: theme.colors.danger }}>
+                {t("subscriptions.amountPositive")}
+              </Text>
+            )}
           </View>
 
           {/* Billing Cycle Row */}

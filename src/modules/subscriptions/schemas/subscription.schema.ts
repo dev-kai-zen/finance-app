@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const subscriptionFormSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
-  amountMinorUnits: z.number().int().min(0, "Amount must be zero or positive"),
+  amountMinorUnits: z.number().int().positive("Enter an amount greater than zero"),
   currencyCode: z.string().min(1).default("PHP"),
   billingCycle: z.enum([
     "weekly",

@@ -892,7 +892,7 @@ Below are the exact step-by-step reproduction instructions (especially for items
 ---
 
 ### [x] P2-04 — [HIGH — Calendar & Dashboard] Split Transactions Broken in Calendar Net Tab & Dashboard Top Categories; Calendar Net Labels Subcategories `"Other"`
-- **Status:** Implemented; Android visual verification and release-build profiling remain pending.
+- **Status:** Resolved; Android visual verification and release-build profiling remain pending.
 - **Implementation:** Calendar Net flattens the category tree and attributes hydrated `splitEntries` to their child categories without counting the parent. Dashboard uses the transactions public grouped-expense service for the month, summing ordinary expenses without entries plus split entries. Category metadata is fetched via a public categories service in chunks of at most 500 IDs; uncategorized legacy expenses retain their fallback.
 - **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 15 focused tests passed. Three new real SQLite regressions verify Calendar/Dashboard totals and percentages, subcategory names/icons/colors, split parents, duplicate category entries, fees, deleted rows, transfers/income, month boundaries, tied times, mixed currencies, fixed statement counts with 1,000 rows, indexed split probes, indexed metadata lookups without temporary sorting, empty fast exits, and 500-ID metadata chunks. Twelve existing budget, dashboard, and calendar tests also passed. No Android device was connected.
 - **Performance:** Calendar adds no SQL and uses linear maps over scoped transactions, entries, and categories before sorting the resulting categories. Dashboard hydrates grouped category/currency totals instead of individual monthly ledger rows, using two period-filtered aggregate queries and bounded metadata batches. Existing tab gating and deferred dashboard loading remain in place; no new root subscriptions or duplicate focus loads.
@@ -921,7 +921,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-05 — [HIGH — Subscriptions] Subscriptions Saved with `amount = 0` or `categoryId = null` Crash "Mark Paid"; Picking `firstBillingDate = Today` Skips a Full Month
+### [x] P2-05 — [HIGH — Subscriptions] Subscriptions Saved with `amount = 0` or `categoryId = null` Crash "Mark Paid"; Picking `firstBillingDate = Today` Skips a Full Month
+- **Status:** Implemented; Android form verification remains pending.
+- **Implementation:** Require a positive integer renewal amount in the schema, form, save service, and payment service, including trials. Show a localized amount prompt. When a payment category was deleted, resolve the default expense category or a bounded expense-category fallback through the categories public API and persist that category in the existing atomic payment operation. Compare local calendar date keys for upcoming renewals so today remains due today; preserve the original creation timestamp when editing.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 17 subscription tests passed, including seven new real SQLite regressions covering invalid amounts before SQL, all billing cycles with today at midnight, past/future/explicit dates, edit timestamps, category deletion, default/alternate category selection, no-category failure, payment rollback, legacy zero-cost payment rejection, and bounded indexed fallback probes without temporary sorting. Android visual checks and release-build frame profiling remain pending; no device was connected.
+- **Performance:** No added mount/focus queries, subscriptions, or per-keystroke SQL. Amount validation is constant-time JS; fallback performs at most two indexed probes only when the category is missing, then saves the resolved category to avoid repeated fallback work. Date resolution retains the existing recurrence loop and caches the current calendar date key.
 - **User Note:** *"I don't know how to come up this, since when I open the form, account and categories are pre select"*
 - **Why Account & Category Are Pre-Selected on Open, and How This Bug Actually Happens:**
   - You are completely right that `SubscriptionFormModal` pre-selects an account and a category when you open it! Here are the **3 real ways** users trigger this bug in the form right now:

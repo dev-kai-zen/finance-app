@@ -1111,6 +1111,8 @@ export const fil = {
     nameLabel: "Pangalan ng Subscription",
     namePlaceholder: "hal. Netflix, Spotify, Gym",
     amountLabel: "Halaga / Gastos",
+    amountPositive: "Maglagay ng halagang higit sa zero, kasama ang bayad sa pag-renew pagkatapos ng trial.",
+    checkDetails: "Suriin ang detalye ng suskripsyon",
     billingCycle: "Siklo ng Paniningil",
     paymentAccount: "Binabayaran Mula sa Account",
     selectAccount: "Pumili ng Account",

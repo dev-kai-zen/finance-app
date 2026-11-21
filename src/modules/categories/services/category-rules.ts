@@ -3,7 +3,9 @@ import {
   findCategoryById,
   findCategoriesByIds,
   findChildCategories,
+  findFirstCategoryByType,
 } from "../repositories/categories.repository";
+import { DEFAULT_OTHERS_CATEGORY_IDS } from "../constants/categories.constants";
 
 export function requireCategory(id: string, context: DbContext) {
   const category = findCategoryById(id, context);
@@ -25,4 +27,11 @@ export function getCategoryChildren(parentId: string, context: DbContext = db) {
 /** Resolves category metadata for reports without loading unrelated categories. */
 export function getCategoriesByIds(ids: string[], context: DbContext = db) {
   return findCategoriesByIds(ids, context);
+}
+
+/** Resolves a current expense category after a previously linked category was deleted. */
+export function getDefaultExpenseCategoryId(context: DbContext = db): string | null {
+  const preferred = findCategoryById(DEFAULT_OTHERS_CATEGORY_IDS.expense, context);
+  if (preferred?.type === "expense") return preferred.id;
+  return findFirstCategoryByType("expense", context)?.id ?? null;
 }

@@ -1080,6 +1080,8 @@ export const en = {
     nameLabel: "Subscription Name",
     namePlaceholder: "e.g. Netflix, Spotify, Gym",
     amountLabel: "Amount / Cost",
+    amountPositive: "Enter an amount greater than zero, including the renewal cost after a trial.",
+    checkDetails: "Check subscription details",
     billingCycle: "Billing Cycle",
     paymentAccount: "Paid From Account",
     selectAccount: "Select Account",

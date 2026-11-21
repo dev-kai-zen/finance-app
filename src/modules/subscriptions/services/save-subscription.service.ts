@@ -13,6 +13,7 @@ import type {
   SubscriptionItem,
   SubscriptionStatus,
 } from "../types/subscription.types";
+import { subscriptionFormSchema } from "../schemas/subscription.schema";
 import { calculateNextRenewal } from "../utils/renewal-calculator";
 import {
   getScheduleBySubscriptionId,
@@ -57,17 +58,17 @@ function resolveUpcomingRenewal(
 ): Date {
   if (explicitRenewal) return explicitRenewal;
 
-  const now = new Date();
+  const todayKey = toDateKey(new Date());
   let candidate = new Date(firstBillingDate.getTime());
   const anchorDay = firstBillingDate.getDate();
 
   // If firstBillingDate is today or in the future, that is the next renewal
-  if (candidate.getTime() >= now.getTime()) {
+  if (toDateKey(candidate) >= todayKey) {
     return candidate;
   }
 
   // Roll forward until it is in the future or today
-  while (candidate.getTime() < now.getTime()) {
+  while (toDateKey(candidate) < todayKey) {
     candidate = calculateNextRenewal(
       candidate,
       billingCycle,
@@ -187,6 +188,7 @@ export function saveSubscriptionInContext(
   existingId: string | undefined,
   context: DbContext,
 ): string {
+  subscriptionFormSchema.parse(input);
   const subscriptionId = existingId || generateSubscriptionId(context);
   const now = new Date();
 
@@ -250,7 +252,7 @@ export function saveSubscriptionInContext(
     notes: input.notes?.trim() || null,
     color: input.color || null,
     icon: input.icon || null,
-    createdAt: now,
+    createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     archivedAt: null,
   };

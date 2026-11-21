@@ -1097,6 +1097,8 @@ export const es = {
     nameLabel: "Nombre de Suscripción",
     namePlaceholder: "ej. Netflix, Spotify, Gimnasio",
     amountLabel: "Importe / Costo",
+    amountPositive: "Introduce un importe mayor que cero, incluido el costo de renovación tras la prueba.",
+    checkDetails: "Revisa los detalles de la suscripción",
     billingCycle: "Ciclo de Facturación",
     paymentAccount: "Pagado Desde Cuenta",
     selectAccount: "Seleccionar Cuenta",

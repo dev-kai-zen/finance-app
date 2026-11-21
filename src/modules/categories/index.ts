@@ -41,6 +41,10 @@ export const getCategory = deferFunction(
   () => require("./services/category-rules").getCategory,
 ) as typeof import("./services/category-rules").getCategory;
 
+export const getDefaultExpenseCategoryId = deferFunction(
+  () => require("./services/category-rules").getDefaultExpenseCategoryId,
+) as typeof import("./services/category-rules").getDefaultExpenseCategoryId;
+
 export const getCategoriesByIds = deferFunction(
   () => require("./services/category-rules").getCategoriesByIds,
 ) as typeof import("./services/category-rules").getCategoriesByIds;
