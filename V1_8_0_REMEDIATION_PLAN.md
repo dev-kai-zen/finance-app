@@ -347,7 +347,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-16 — Fresh Onboarding → Import Accounts: 4 Coupled Issues (Guided Currency Ignored → All Accounts Become PHP, App Kill Skips Seeding, Back Button Traps User, `setupStrategy: "import"` Dropped)
+### [x] P1-16 — Fresh Onboarding → Import Accounts: 4 Coupled Issues (Guided Currency Ignored → All Accounts Become PHP, App Kill Skips Seeding, Back Button Traps User, `setupStrategy: "import"` Dropped) (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (*"all accounts become PHP"*)
 - **Files:**
   - `src/modules/onboarding/screens/onboarding-screen.tsx`

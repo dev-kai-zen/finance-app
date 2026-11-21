@@ -8,6 +8,7 @@ export {
 export {
   clearSampleWorkspaceIfNeeded,
   finalizeRestoredWorkspace,
+  markOnboardingPendingInContext,
 } from "./services/workspace.service";
 export type {
   WorkspaceMode,

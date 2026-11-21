@@ -115,16 +115,18 @@ export function DataImportScreenContent({
   initialKind = "transactions",
   lockKind = false,
   allowOnboarding = false,
+  defaultCurrency,
   onCancel,
   onComplete,
 }: {
   initialKind?: ImportKind;
   lockKind?: boolean;
   allowOnboarding?: boolean;
+  defaultCurrency?: string;
   onCancel?: () => void;
   onComplete?: (result: { imported: number; skipped: number }) => void;
 } = {}) {
-  const state = useDataImport(initialKind, { allowOnboarding }),
+  const state = useDataImport(initialKind, { allowOnboarding, defaultCurrency }),
     theme = useAppTheme(),
     styles = useThemeStyles(createStyles);
   const walkthrough = useDataImportWalkthrough();

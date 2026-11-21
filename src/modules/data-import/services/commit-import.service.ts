@@ -8,6 +8,7 @@ import { createLocalBackup } from "@/modules/local-backup";
 import {
   canImportWorkspaceData,
   clearSampleWorkspaceIfNeeded,
+  markOnboardingPendingInContext,
 } from "@/modules/onboarding";
 import { getCurrentProStatus, PRO_LIMITS } from "@/modules/pro";
 import { createImportedTransactions, type ImportedTransactionCommand } from "@/modules/transactions";
@@ -50,6 +51,9 @@ export async function commitImport(
     const committed = db.transaction((tx) => {
       if (!canImportWorkspaceData(tx, { allowOnboarding })) throw new ImportValidationError("workspace");
       clearSampleWorkspaceIfNeeded(tx, { preserveAccountTypes: true });
+      if (allowOnboarding) {
+        markOnboardingPendingInContext(tx, draft.defaultCurrency);
+      }
       const freshCatalog = getImportCatalog(tx);
       const fresh = buildImportPreview(document, draft, freshCatalog, fileHash, previewConstraints);
       if (!fresh.ready || fresh.signature !== signature) throw new ImportValidationError("changed");

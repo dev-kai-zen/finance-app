@@ -417,7 +417,7 @@ test("canImportWorkspaceData returns true in pending onboarding", () => {
   assert.equal(canImportWorkspaceData(), true);
 });
 
-test("guided setup with import strategy finalizes categories and settings", async () => {
+test("guided setup with import strategy finalizes categories and settings and preserves setupStrategy='import' on reload (P1-16)", async () => {
   await workspace.completeGuidedSetup({
     currencyCode: "USD",
     accountStrategy: "import",
@@ -440,4 +440,34 @@ test("guided setup with import strategy finalizes categories and settings", asyn
     sqlite.prepare("SELECT count(*) AS count FROM categories").get().count,
     DEFAULT_SEED_CATEGORIES.length,
   );
+
+  // Reloading workspace state from DB preserves setupStrategy: "import" and primaryCurrency: "USD"
+  const reloaded = workspace.initializeWorkspaceState();
+  assert.deepEqual(reloaded, {
+    status: "completed",
+    mode: "personal",
+    primaryCurrency: "USD",
+    setupStrategy: "import",
+  });
+});
+
+test("mid-onboarding account import (P1-16): app restart before Finish Setup keeps status='pending' instead of skipping category/nickname/currency seeding", () => {
+  // User is in Guided Setup (picked USD) and imported an account on the import step
+  workspace.markOnboardingPendingInContext(database, "USD");
+  accountWorkspace.createInitialAccount(
+    { name: "Imported USD Account", openingAmount: "500", template: "cash" },
+    database,
+    new Date(),
+    "USD",
+  );
+
+  // Simulating app kill & relaunch before tapping Finish Setup:
+  // initializeWorkspaceState() must stay "pending" with "USD", NOT auto-complete!
+  const stateAfterKill = workspace.initializeWorkspaceState();
+  assert.deepEqual(stateAfterKill, {
+    status: "pending",
+    mode: null,
+    primaryCurrency: "USD",
+    setupStrategy: null,
+  });
 });

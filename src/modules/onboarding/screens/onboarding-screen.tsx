@@ -161,7 +161,7 @@ export function OnboardingScreen() {
       setStep(
         accountStrategy === "custom"
           ? "account"
-          : accountStrategy === "import"
+          : accountStrategy === "import" && importedAccountCount === 0
             ? "import"
             : "accountChoice",
       );
@@ -587,6 +587,7 @@ export function OnboardingScreen() {
         <WalkthroughRegistryProvider>
           <DataImportScreenContent
             allowOnboarding
+            defaultCurrency={guidedCurrency}
             initialKind="accounts"
             lockKind
             onCancel={() => {

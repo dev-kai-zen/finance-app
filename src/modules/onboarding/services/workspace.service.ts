@@ -84,16 +84,21 @@ function readWorkspaceStateFromDatabase(context: DbContext = db): WorkspaceState
     );
   }
 
-  // Databases created before onboarding existed must remain immediately usable.
-  if (hasAccountWorkspaceData(context)) {
+  // Databases created before onboarding existed (where status was never written)
+  // must remain immediately usable, whereas an explicit "pending" status means
+  // onboarding is still in progress (e.g. accounts were just imported on the
+  // Guided Setup import step, but Finish Setup has not run yet).
+  if (status !== "pending" && hasAccountWorkspaceData(context)) {
     saveCompletedSettings("personal", null, context);
     return completedState("personal", null);
   }
 
+  const pendingCurrency = values[ONBOARDING_SETTING_KEYS.primaryCurrency];
   return {
     status: "pending",
     mode: null,
-    primaryCurrency: "PHP",
+    primaryCurrency:
+      pendingCurrency && pendingCurrency.length === 3 ? pendingCurrency : "PHP",
     setupStrategy: null,
   };
 }
@@ -286,12 +291,28 @@ function isWorkspaceMode(value: string | undefined): value is WorkspaceMode {
   return value === "personal" || value === "sample";
 }
 
+export function markOnboardingPendingInContext(
+  context: DbContext,
+  primaryCurrency?: string,
+): void {
+  const patch: Record<string, string> = {
+    [ONBOARDING_SETTING_KEYS.status]: "pending",
+    [ONBOARDING_SETTING_KEYS.workspaceMode]: "",
+    [ONBOARDING_SETTING_KEYS.sampleVersion]: "0",
+  };
+  if (primaryCurrency && primaryCurrency.length === 3) {
+    patch[ONBOARDING_SETTING_KEYS.primaryCurrency] = primaryCurrency.toUpperCase();
+  }
+  saveOnboardingSettings(patch, context);
+}
+
 function parseSetupStrategy(
   value: string | undefined,
 ): WorkspaceSetupStrategy | null {
   return value === "manual" ||
     value === "recommended" ||
-    value === "guided"
+    value === "guided" ||
+    value === "import"
     ? value
     : null;
 }
