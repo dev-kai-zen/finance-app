@@ -532,6 +532,7 @@ async function performSync(
           syncRevisionId,
           parentTokens,
           attachmentCoverage: archive.attachmentCoverage,
+          assertCurrent: () => { if (!isQuickSyncOperationCurrent(operationGeneration)) throw new Error("Quick Sync operation was superseded."); },
         },
       );
     });

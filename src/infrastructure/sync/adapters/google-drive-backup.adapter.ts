@@ -1,10 +1,10 @@
 import { fetch } from "expo/fetch";
 import { File, UploadType } from "expo-file-system";
+import { uploadResumableDriveBackup } from "./google-drive-resumable-upload";
 
 const DRIVE_FILES_URL = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files";
 const BACKUP_NAME_PREFIX = "kaizen-finance-backup-";
-const MAX_MULTIPART_BYTES = 5 * 1024 * 1024;
 const MAX_DRIVE_APP_PROPERTY_BYTES = 124;
 const MAX_QUICK_SYNC_PROPERTY_VALUE_BYTES = 80;
 const utf8Encoder = new TextEncoder();
@@ -57,6 +57,7 @@ export interface GoogleDriveQuickSyncMetadata extends GoogleDriveBackupFile {
 }
 
 export interface GoogleDriveQuickSyncDeviceProperties {
+  assertCurrent?: () => void;
   attachmentCoverage?: "included" | "legacy-records-only";
   parentTokens?: readonly string[];
   deviceId?: string | null;
@@ -99,6 +100,8 @@ export class GoogleDriveApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly retryable = false,
+    public readonly retryAfterMs = 0,
   ) {
     super(message);
     this.name = "GoogleDriveApiError";
@@ -213,49 +216,24 @@ async function uploadBackupToFolder(
   legacyFileId?: string,
   passwordProtected = true,
   extraProperties?: Record<string, string>,
+  assertCurrent?: () => void,
 ): Promise<DriveFileResponse> {
-  if (bytes.byteLength > MAX_MULTIPART_BYTES) {
-    throw new Error(
-      "This backup is larger than 5 MB. Resumable uploads are not available in Phase 1.",
-    );
-  }
-
-  const boundary = `kaizen-finance-${Date.now()}`;
-  const encoder = new TextEncoder();
-  const metadata = JSON.stringify({
-    name,
-    parents: [folderId],
-    appProperties: {
-      [APP_PROPERTY_KIND]: BACKUP_FILE_KIND,
-      [ORIGINAL_CREATED_AT_PROPERTY]: originalCreatedAt,
-      [BACKUP_PROTECTION_PROPERTY]: passwordProtected ? "password" : "none",
-      ...(legacyFileId ? { [LEGACY_FILE_ID_PROPERTY]: legacyFileId } : {}),
-      ...(extraProperties ?? {}),
-    },
-  });
-  const prefix = encoder.encode(
-    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
-      `--${boundary}\r\nContent-Type: application/octet-stream\r\n\r\n`,
-  );
-  const suffix = encoder.encode(`\r\n--${boundary}--\r\n`);
-  const body = joinBytes(prefix, bytes, suffix);
-  const fields = encodeURIComponent(
-    "id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties",
-  );
-  const response = await driveFetch(
-    `${DRIVE_UPLOAD_URL}?uploadType=multipart&fields=${fields}`,
-    accessToken,
+  return uploadResumableDriveBackup<DriveFileResponse>(
+    (url, options, accepted) => driveFetch(url, accessToken, options, accepted),
+    bytes,
     {
-      method: "POST",
-      headers: {
-        "Content-Type": `multipart/related; boundary=${boundary}`,
+      name,
+      parents: [folderId],
+      appProperties: {
+        [APP_PROPERTY_KIND]: BACKUP_FILE_KIND,
+        [ORIGINAL_CREATED_AT_PROPERTY]: originalCreatedAt,
+        [BACKUP_PROTECTION_PROPERTY]: passwordProtected ? "password" : "none",
+        ...(legacyFileId ? { [LEGACY_FILE_ID_PROPERTY]: legacyFileId } : {}),
+        ...(extraProperties ?? {}),
       },
-      body: body as BodyInit,
     },
+    assertCurrent,
   );
-  const file = (await response.json()) as DriveFileResponse;
-
-  return { ...file, size: file.size ?? String(bytes.byteLength) };
 }
 
 // V2 files deliberately omit the legacy Quick Sync marker/name, so older apps
@@ -326,6 +304,7 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   existingFileId?: string | null,
   deviceProperties?: GoogleDriveQuickSyncDeviceProperties,
 ): Promise<GoogleDriveQuickSyncMetadata> {
+  deviceProperties?.assertCurrent?.();
   const revisions = await listQuickSyncRevisions(accessToken);
   const revisionId = deviceProperties?.syncRevisionId;
   if (!revisionId) throw new Error('A revision ID is required for Quick Sync.');
@@ -347,7 +326,7 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
     const folder = await ensureBackupFolder(accessToken);
     const now = new Date().toISOString();
     created = await uploadBackupToFolder(accessToken, bytes, folder.id, now,
-      BACKUP_NAME_PREFIX + 'quick-sync-' + revisionId + '.kfb', undefined, false, properties);
+      BACKUP_NAME_PREFIX + 'quick-sync-' + revisionId + '.kfb', undefined, false, properties, deviceProperties?.assertCurrent);
   }
   const latest = await listQuickSyncRevisions(accessToken);
   // A listing may lag publication. Always retain our successfully created node.
@@ -832,6 +811,7 @@ async function driveFetch(
   url: string,
   accessToken: string,
   options: RequestInit = {},
+  acceptedStatuses: readonly number[] = [],
 ): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -846,11 +826,13 @@ async function driveFetch(
       signal: controller.signal,
     });
 
-    if (!response.ok) {
+    if (!response.ok && !acceptedStatuses.includes(response.status)) {
       const details = await response.text().catch(() => "");
       throw new GoogleDriveApiError(
         getDriveErrorMessage(response.status, details),
         response.status,
+        response.status === 403 && /"reason"\s*:\s*"(?:rateLimitExceeded|userRateLimitExceeded)"/.test(details),
+        parseRetryAfter(response.headers?.get("retry-after") ?? null),
       );
     }
 
@@ -868,7 +850,11 @@ async function driveFetch(
 
 function getDriveErrorMessage(status: number, details: string): string {
   if (status === 401) return "Your Google session expired. Please sign in again.";
-  if (status === 403) return "Google Drive access was denied for this account.";
+  if (status === 403) {
+    if (details.includes('"storageQuotaExceeded"')) return "Google Drive storage is full. Free up space and try the backup again.";
+    if (/"reason"\s*:\s*"(?:rateLimitExceeded|userRateLimitExceeded)"/.test(details)) return "Google Drive is busy. Try the backup again shortly.";
+    return "Google Drive access was denied for this account. Check its permissions and sign in again.";
+  }
   if (status === 404) return "That backup no longer exists in Google Drive.";
 
   try {
@@ -879,14 +865,10 @@ function getDriveErrorMessage(status: number, details: string): string {
   }
 }
 
-function joinBytes(...parts: Uint8Array[]): Uint8Array {
-  const output = new Uint8Array(
-    parts.reduce((length, part) => length + part.byteLength, 0),
-  );
-  let offset = 0;
-  parts.forEach((part) => {
-    output.set(part, offset);
-    offset += part.byteLength;
-  });
-  return output;
+function parseRetryAfter(value: string | null): number {
+  if (!value) return 0;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : 0;
 }

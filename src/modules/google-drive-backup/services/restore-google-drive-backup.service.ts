@@ -130,7 +130,7 @@ export async function restoreQuickSyncBackup(
             restoredFile = await withGoogleDriveAccessToken(token => {
               assertCurrent();
               return uploadOrUpdateGoogleDriveQuickSyncBackup(token, archive, null, {
-                deviceId: device.deviceId, syncRevisionId: revisionId, parentTokens: parents,
+                deviceId: device.deviceId, syncRevisionId: revisionId, parentTokens: parents, assertCurrent,
                 attachmentCoverage: backup.attachments === undefined ? "legacy-records-only" : "included",
               });
             });

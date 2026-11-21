@@ -1188,8 +1188,12 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
       };
     }
 
-    // POST creates a brand-new active Quick Sync file
+    if (url.includes("/generateIds")) return { ok: true, status: 200, json: async () => ({ ids: ["fresh-active-file-3"] }) };
     if (method === "POST" && url.includes("upload/drive/v3/files")) {
+      return { ok: true, status: 200, headers: new Headers({ location: "https://www.googleapis.com/upload/drive/v3/files?upload_id=test" }) };
+    }
+    // POST creates a brand-new active Quick Sync file
+    if (method === "PUT" && url.includes("upload_id=test")) {
       return {
         ok: true,
         status: 200,
@@ -1199,6 +1203,7 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
           createdTime: "2026-11-20T06:32:00.000Z",
           modifiedTime: "2026-11-20T06:32:00.000Z",
           size: "3",
+          md5Checksum: "5289df737df57326fcdd22597afb1fac",
           version: "1",
           headRevisionId: "head-fresh-3",
           trashed: false,
@@ -1391,16 +1396,22 @@ test("quick sync NetInfo double-fire coalescing (P1-25): preserves force=true ac
 
 
 test('V2-02: immutable concurrent branches survive, paginate, retry and explicitly resolve', async () => {
-  const files=[]; const payloads=new Map(); const calls=[];
+  const files=[]; const payloads=new Map(); const calls=[]; const sessions=new Map(); let generated=0;
   mockFetchHandler=async (url,init={})=>{
     calls.push(init.method ?? 'GET');
     const parsed=new URL(url), q=parsed.searchParams.get('q') ?? '';
     let body;
-    if(q.includes('mimeType')) body={files:[{id:'folder',name:'Backups'}]};
+    if(parsed.pathname.endsWith('/generateIds')) body={ids:['file-'+(++generated)]};
+    else if(q.includes('mimeType')) body={files:[{id:'folder',name:'Backups'}]};
     else if(init.method === 'POST') {
-      const raw=new TextDecoder().decode(init.body);
-      const metadata=JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n')[0]);
-      const file={...metadata,id:'file-'+(files.length+1),createdTime:'2026-11-21T00:00:00Z',modifiedTime:'2026-11-21T00:00:00Z'};
+      const metadata=JSON.parse(init.body);
+      const location='https://www.googleapis.com/upload/drive/v3/files?upload_id='+metadata.id;
+      sessions.set(location,metadata);
+      return {ok:true,status:200,headers:new Headers({location})};
+    } else if(init.method === 'PUT') {
+      const metadata=sessions.get(url);
+      const file={...metadata,createdTime:'2026-11-21T00:00:00Z',modifiedTime:'2026-11-21T00:00:00Z',
+        size:String(init.body.length),md5Checksum:require('node:crypto').createHash('md5').update(init.body).digest('hex')};
       files.push(file);payloads.set(file.id,Buffer.from(init.body));body=file;
     } else if(q) {
       const offset=Number(parsed.searchParams.get('pageToken') ?? 0);
@@ -1577,4 +1588,20 @@ test('V2-03: failed replacement releases the gate and clears a stale syncing sta
   assert.equal(isQuickSyncReplacementPending(),false);
   assert.equal(getQuickSyncState().status,'idle');
   assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+});
+
+
+test('V2-07: failed large upload preserves the last-success timestamp and dirty local state', async()=>{
+  saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
+  const last='2026-11-20T00:00:00Z';
+  saveQuickSyncConfig({enabled:true,fileId:'old-file',lastSyncedAt:last});
+  markQuickSyncLocalChangesPending();
+  mockGetRemoteMetadataHandler=async()=>null;
+  mockCreateArchiveHandler=async()=>({bytes:new Uint8Array(6*1024*1024),createdAt:new Date()});
+  mockUploadHandler=async(_token,bytes)=>{assert.ok(bytes.length>5*1024*1024);throw new Error('Upload interrupted. Try again.');};
+  assert.equal(await triggerQuickSync(),false);
+  assert.equal(getQuickSyncConfig().lastSyncedAt,last);
+  assert.equal(getQuickSyncConfig().fileId,'old-file');
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+  assert.equal(getQuickSyncState().status,'error');
 });
