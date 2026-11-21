@@ -136,9 +136,9 @@ export function computeCreditCardAccountMonitoring(
       (statement) => statement.remainingAmountMinorUnits > 0,
     )?.dueOn ?? null;
   const rawLedger = getAccountLedgerTransactions(account.id);
-  const ledger = excludeTransactionId
-    ? rawLedger.filter((transaction) => transaction.id !== excludeTransactionId)
-    : rawLedger;
+  const ledger = rawLedger.filter((transaction) =>
+    !transaction.deletedAt && transaction.id !== excludeTransactionId,
+  );
   const ledgerById = new Map(ledger.map((transaction) => [transaction.id, transaction]));
   const plans = listInstallmentPlansForAccount(account.id);
   const planTransactionIds = new Set(
@@ -149,14 +149,15 @@ export function computeCreditCardAccountMonitoring(
     .flatMap((statement) =>
       statement.entries
         .filter((entry) =>
-          ["opening_balance", "charge", "installment"].includes(
-            entry.entryType,
-          ),
+          ["opening_balance", "charge", "installment"].includes(entry.entryType) &&
+          (entry.transactionId ? ledgerById.has(entry.transactionId) : entry.entryType === "opening_balance"),
         )
         .map((entry) => ({
           id: entry.id,
           description: entry.descriptionSnapshot ?? "Billed item",
-          amountMinorUnits: Math.max(0, entry.amountMinorUnits),
+          amountMinorUnits: entry.entryType === "charge" && entry.transactionId
+            ? Math.max(0, -ledgerById.get(entry.transactionId)!.amountMinorUnits)
+            : Math.max(0, entry.amountMinorUnits),
           occurredOn: entry.occurredOnSnapshot,
           detail:
             statement.kind === "opening"

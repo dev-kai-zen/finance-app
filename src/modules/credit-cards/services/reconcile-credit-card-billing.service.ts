@@ -164,6 +164,13 @@ function reconcileAccount(
       .map((plan) => plan.purchaseTransactionId),
   );
 
+  const existingStatements = listStatementsForAccount(account.id, context);
+  const linkedTransactionIds = new Set(
+    listEntriesForStatements(existingStatements.map((statement) => statement.id), context)
+      .filter((entry) => entry.entryType !== "adjustment")
+      .map((entry) => entry.transactionId),
+  );
+
   for (const transaction of activeTransactions) {
     if (transaction.amountMinorUnits >= 0) continue;
     if (activePlanTransactionIds.has(transaction.id)) continue;
@@ -172,16 +179,7 @@ function reconcileAccount(
       details.statementDay,
     );
     if (statementOn > todayOn) continue;
-    const existingEntries = listStatementsForAccount(account.id, context);
-    const linked = listEntriesForStatements(
-      existingEntries.map((statement) => statement.id),
-      context,
-    ).some(
-      (entry) =>
-        entry.transactionId === transaction.id &&
-        entry.entryType !== "adjustment",
-    );
-    if (linked) continue;
+    if (linkedTransactionIds.has(transaction.id)) continue;
     const statement = ensureStatement(
       account.id,
       statementOn,
@@ -273,7 +271,10 @@ function reconcileAccount(
         (sum, entry) => sum + entry.amountMinorUnits,
         0,
       );
-      const target = transaction.deletedAt ? 0 : base;
+      const isCharge = statementEntries.some((entry) => entry.entryType === "charge");
+      const target = transaction.deletedAt ? 0 : isCharge
+        ? Math.max(0, -transaction.amountMinorUnits)
+        : base;
       const difference = target - net;
       if (difference === 0) continue;
       insertStatementEntry(
@@ -286,7 +287,7 @@ function reconcileAccount(
           amountMinorUnits: difference,
           descriptionSnapshot: transaction.deletedAt
             ? "Transaction removed"
-            : "Transaction restored",
+            : net === 0 ? "Transaction restored" : "Transaction amount adjusted",
           occurredOnSnapshot: todayOn,
           reversesEntryId: statementEntries.at(-1)?.id ?? null,
           createdAt: new Date(),
@@ -356,17 +357,20 @@ function reconcileAccount(
     statements.map((statement) => statement.id),
     context,
   );
+  // Payment reversals restore the remaining balance but do not increase issued charges.
+  const paymentTransactionIds = new Set(
+    entries.filter((entry) => entry.entryType === "payment").map((entry) => entry.transactionId),
+  );
+  const issuedByStatement = new Map<string, number>();
+  for (const entry of entries) {
+    if (entry.entryType === "payment") continue;
+    if (entry.entryType === "adjustment" && entry.transactionId &&
+        paymentTransactionIds.has(entry.transactionId)) continue;
+    issuedByStatement.set(entry.statementId,
+      (issuedByStatement.get(entry.statementId) ?? 0) + entry.amountMinorUnits);
+  }
   for (const statement of statements) {
-    const issuedAmount = entries
-      .filter(
-        (entry) =>
-          entry.statementId === statement.id &&
-          ["opening_balance", "charge", "installment", "refund"].includes(
-            entry.entryType,
-          ),
-      )
-      .reduce((sum, entry) => sum + entry.amountMinorUnits, 0);
-    const nextIssuedAmount = Math.max(0, issuedAmount);
+    const nextIssuedAmount = Math.max(0, issuedByStatement.get(statement.id) ?? 0);
     if (nextIssuedAmount !== statement.issuedAmountMinorUnits) {
       updateStatementIssuedAmount(statement.id, nextIssuedAmount, context);
     }

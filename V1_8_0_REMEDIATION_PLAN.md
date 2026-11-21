@@ -1005,7 +1005,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-08 — [MEDIUM — Credit Cards] Editing an Already-Billed Charge Amount Never Adjusts Statement; `billedItems` Includes Deleted Charges
+### [x] P2-08 — [MEDIUM — Credit Cards] Editing an Already-Billed Charge Amount Never Adjusts Statement; `billedItems` Includes Deleted Charges
+- **Status:** Implemented; Android statement-view verification and release-build frame profiling remain pending.
+- **Implementation:** Reconcile billed charge targets against the current signed ledger amount and record only the net adjustment needed, preserving history and idempotent delete/restore behavior. Include charge/opening/refund adjustments in issued amounts while excluding payment reversals. Reuse the active ledger to omit deleted/missing billed transactions and display current edited charge amounts; preserve scheduled installment amounts. The current schema uses adjustment entries rather than a separate `adjustedAmountMinorUnits` column.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 23 credit-card tests passed, including seven new real SQLite regressions for charge increases/decreases, delete/edit-in-Trash/restore, monitoring item amounts, payment preservation and reversal, installment preservation, repeated reconciliation, atomic rollback on adjustment failure, 1,000 already-billed charges with bounded read counts and zero writes, indexed entry lookup, and ordered 500-ID statement-entry batches. Android visual checks remain pending; no device was connected.
+- **Performance:** No added monitoring SQL, root providers, or focus subscriptions. Batch statement linkage into a Set instead of querying every existing charge; calculate issued totals in one Map pass rather than scanning all entries per statement. Existing account-ledger reconciliation still scales with ledger/entry size; statement-entry reads are chunked at 500 IDs. No new mount/focus work is introduced.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test It in 30 Seconds):**
   1. Create a **Credit Card** account with **Credit Limit = `50,000`**, **Statement Day = `10`**, and **Payment Due Day = `25`**.

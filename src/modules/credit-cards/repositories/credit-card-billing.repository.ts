@@ -77,15 +77,25 @@ export function listEntriesForStatements(
   context: DbContext = db,
 ) {
   if (statementIds.length === 0) return [];
-  return context
-    .select()
-    .from(creditCardStatementEntries)
-    .where(inArray(creditCardStatementEntries.statementId, statementIds))
-    .orderBy(
-      asc(creditCardStatementEntries.occurredOnSnapshot),
-      asc(creditCardStatementEntries.createdAt),
-    )
-    .all();
+  const entries: Array<typeof creditCardStatementEntries.$inferSelect> = [];
+  for (let offset = 0; offset < statementIds.length; offset += 500) {
+    entries.push(...context
+      .select()
+      .from(creditCardStatementEntries)
+      .where(inArray(creditCardStatementEntries.statementId, statementIds.slice(offset, offset + 500)))
+      .orderBy(
+        asc(creditCardStatementEntries.occurredOnSnapshot),
+        asc(creditCardStatementEntries.createdAt),
+      )
+      .all());
+  }
+  if (statementIds.length > 500) {
+    entries.sort((left, right) =>
+      left.occurredOnSnapshot.localeCompare(right.occurredOnSnapshot) ||
+      left.createdAt.getTime() - right.createdAt.getTime(),
+    );
+  }
+  return entries;
 }
 
 export function listEntriesForTransaction(
