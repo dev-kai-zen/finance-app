@@ -379,6 +379,7 @@ function TransactionFormModalInner({
   const [feeCategoryId, setFeeCategoryId] = useState("");
   const [feeAccountManuallyChanged, setFeeAccountManuallyChanged] = useState(false);
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
+  const hasInitializedLabelsRef = useRef(false);
 
   // Sub-modal states
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -663,6 +664,8 @@ function TransactionFormModalInner({
                 .map((l) => l.id)
             : [],
         );
+        hasInitializedLabelsRef.current =
+          !initialTransaction.labels?.length || labels.length > 0;
       } else {
         const createMode = initialType ?? "expense";
         setMode(createMode);
@@ -720,6 +723,7 @@ function TransactionFormModalInner({
         setOccurredAt(getCurrentTransactionDate());
         setNote("");
         setSelectedLabelIds([]);
+        hasInitializedLabelsRef.current = true;
         setInstallmentEnabled(false);
         setInstallmentTermOption("12");
         setCustomTermMonths("12");
@@ -836,14 +840,22 @@ function TransactionFormModalInner({
   ]);
 
   useEffect(() => {
-    if (!visible || !initialTransaction?.labels?.length) return;
-    setSelectedLabelIds((current) => {
-      if (current.length > 0) return current;
-      const ids = initialTransaction.labels!
-        .filter((label) => labels.some((item) => item.id === label.id))
-        .map((label) => label.id);
-      return ids.length > 0 ? ids : current;
-    });
+    if (!visible) {
+      hasInitializedLabelsRef.current = false;
+      return;
+    }
+    if (
+      hasInitializedLabelsRef.current ||
+      !initialTransaction?.labels?.length ||
+      labels.length === 0
+    ) {
+      return;
+    }
+    hasInitializedLabelsRef.current = true;
+    const ids = initialTransaction.labels
+      .filter((label) => labels.some((item) => item.id === label.id))
+      .map((label) => label.id);
+    setSelectedLabelIds((current) => (current.length > 0 ? current : ids));
   }, [initialTransaction, labels, visible]);
 
   useEffect(() => {
@@ -2954,11 +2966,12 @@ function TransactionFormModalInner({
                             accessibilityLabel={`Remove label ${lbl.name}`}
                             accessibilityRole="button"
                             hitSlop={8}
-                            onPress={() =>
+                            onPress={() => {
+                              hasInitializedLabelsRef.current = true;
                               setSelectedLabelIds((prev) =>
                                 prev.filter((item) => item !== lbl.id),
-                              )
-                            }
+                              );
+                            }}
                             style={styles.removeLabelChipBtn}
                           >
                             <X size={13} color={badgeColor} strokeWidth={2.5} />
@@ -3288,7 +3301,10 @@ function TransactionFormModalInner({
           setIsLabelPickerOpen(false);
           refreshLabels();
         }}
-        onSelectLabels={setSelectedLabelIds}
+        onSelectLabels={(ids) => {
+          hasInitializedLabelsRef.current = true;
+          setSelectedLabelIds(ids);
+        }}
         selectedLabelIds={selectedLabelIds}
         visible={isLabelPickerOpen}
       />

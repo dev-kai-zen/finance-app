@@ -599,19 +599,19 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-27 — Transactions: Unchecking All Labels While Editing + Creating/Editing Any Label in Picker Reverts Removed Labels
+### [x] P1-27 — Transactions: Unchecking All Labels While Editing + Creating/Editing Any Label in Picker Reverts Removed Labels (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/transactions/components/transaction-form-modal.tsx`
 - **Before-Fix Scenario (How to Reproduce):**
   1. Edit an existing transaction that has at least 1 label attached.
   2. Open the Label Picker, **uncheck all labels** (so `selectedLabelIds` is now `[]`), then tap **+ New Label** inside the picker (or edit a label name) and close the picker.
-  3. **Bug Observed:** The old label you just unchecked comes right back! (Because line 821 checks `if (selectedLabelIds.length === 0 && initialValue.labels.length > 0)` whenever `labels` refreshes and re-seeds `initialValue.labels`!).
-- **How We Will Properly Fix It:**
-  1. In `TransactionFormModalContent`, guard the fallback label initialization effect with a `hasInitializedLabelsRef` ref (reset only when the form session / `initialValue?.id` changes) so intentionally clearing all labels to `[]` is never overwritten when the labels catalog refreshes.
+  3. **Bug Observed:** The old label you just unchecked comes right back! (Because the fallback hydration `useEffect` checked `if (current.length > 0) return current` whenever `labels` refreshed and re-seeded `initialTransaction.labels`!).
+- **How We Properly Fix It:**
+  1. In `TransactionFormModalContent`, added `hasInitializedLabelsRef` (set to `true` once labels are initialized for the form session or manually modified via the picker or chip remove button, and reset when `!visible`). The async fallback hydration `useEffect` now runs at most once when `labels` first loads after opening, so intentionally clearing all labels to `[]` is never overwritten when `refreshLabels()` runs after creating/editing a label in `LabelPickerModal`.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Repeat the exact scenario above.
-  2. **Expected Result:** Unchecked labels stay unchecked after creating or editing a label in the picker.
+  2. **Expected Result:** Unchecked labels stay unchecked after creating or editing a label in the picker and closing it.
 
 ---
 
