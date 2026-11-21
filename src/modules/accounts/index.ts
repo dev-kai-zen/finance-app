@@ -204,3 +204,8 @@ export const shareAccountsCsv = deferFunction(
 ) as typeof import("./services/export-accounts-csv.service").shareAccountsCsv;
 
 export { AccountCsvExportCancelledError } from "./services/export-accounts-csv.service";
+
+export const AccountSearchBox = deferComponent(
+  () => require("./components/account-search-box").AccountSearchBox,
+  "AccountSearchBox",
+) as typeof import("./components/account-search-box").AccountSearchBox;

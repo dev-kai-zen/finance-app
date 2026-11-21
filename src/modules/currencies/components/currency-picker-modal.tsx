@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  FlatList,
+  Keyboard,
+  type ListRenderItemInfo,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,9 +14,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
-import { AccountSearchBox } from "@/modules/accounts/components/account-search-box";
+import { AccountSearchBox } from "@/modules/accounts";
+import { PageLoadingState } from "@/components/page-container";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
-import { useCurrencies } from "../hooks/use-currencies";
+import { useCurrencyOptions } from "../hooks/use-currency-options";
+import type { Currency } from "../types/currency.types";
 
 export interface CurrencyPickerModalProps {
   visible: boolean;
@@ -41,21 +45,42 @@ function CurrencyPickerModalContent({
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const insets = useSafeAreaInsets();
-  const { currencies, loading } = useCurrencies();
+  const { currencies, loading } = useCurrencyOptions();
   const [search, setSearch] = useState("");
   const [pendingCode, setPendingCode] = useState<string | null>(null);
 
-  const handleSelect = (code: string) => {
-    if (pendingCode !== null) return;
+  const selectionPendingRef = useRef(false);
+  const cancelSelectionRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => () => cancelSelectionRef.current?.(), []);
+
+  const handleClose = useCallback(() => {
+    cancelSelectionRef.current?.();
+    Keyboard.dismiss();
+    onClose();
+  }, [onClose]);
+
+  const handleSelect = useCallback((code: string) => {
+    if (selectionPendingRef.current) return;
+    selectionPendingRef.current = true;
     setPendingCode(code);
-    scheduleAfterPaint(() => {
+    Keyboard.dismiss();
+    cancelSelectionRef.current = scheduleAfterPaint(() => {
+      cancelSelectionRef.current = null;
       onSelect(code);
-      onClose();
-      scheduleAfterPaint(() => {
-        setPendingCode(null);
-      });
+      handleClose();
     });
-  };
+  }, [onSelect, handleClose]);
+
+  const effectiveSelectedCode = (pendingCode ?? selectedCode).trim().toUpperCase();
+  const renderItem = useCallback(({ item }: ListRenderItemInfo<Currency>) => (
+    <CurrencyRow
+      currency={item}
+      selected={item.code.toUpperCase() === effectiveSelectedCode}
+      disabled={pendingCode !== null}
+      onSelect={handleSelect}
+    />
+  ), [effectiveSelectedCode, pendingCode, handleSelect]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -70,13 +95,13 @@ function CurrencyPickerModalContent({
   }, [currencies, search]);
 
   return (
-    <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
+    <Modal animationType="slide" transparent visible={visible} onRequestClose={handleClose}>
       <KeyboardAvoidingView
         automaticOffset
         behavior="height"
         style={styles.overlay}
       >
-        <Pressable accessibilityLabel="Close" style={styles.backdrop} onPress={onClose} />
+        <Pressable accessibilityLabel="Close" style={styles.backdrop} onPress={handleClose} />
         <View
           style={[
             styles.sheet,
@@ -85,63 +110,88 @@ function CurrencyPickerModalContent({
         >
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable accessibilityRole="button" hitSlop={12} onPress={onClose}>
+            <Pressable accessibilityRole="button" hitSlop={12} onPress={handleClose}>
               <X color={theme.colors.textSecondary} size={22} />
             </Pressable>
           </View>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           <AccountSearchBox
+            accessibilityLabel="Search currencies"
             clearAccessibilityLabel="Clear"
             placeholder="Search currencies"
             value={search}
             onChangeText={setSearch}
           />
-          <ScrollView
-            contentContainerStyle={styles.list}
-            keyboardShouldPersistTaps="handled"
-            style={styles.listScroll}
-          >
-            {loading ? (
-              <Text style={styles.muted}>Loading…</Text>
-            ) : filtered.length === 0 ? (
-              <Text style={styles.muted}>No currencies found.</Text>
-            ) : (
-              filtered.map((currency) => {
-                const effectiveSelectedCode = (pendingCode ?? selectedCode).trim().toUpperCase();
-                const selected =
-                  currency.code.toUpperCase() === effectiveSelectedCode;
-                return (
-                  <Pressable
-                    key={currency.code}
-                    accessibilityRole="button"
-                    disabled={pendingCode !== null}
-                    onPress={() => handleSelect(currency.code)}
-                    style={({ pressed }) => [
-                      styles.row,
-                      selected && styles.rowSelected,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <View style={styles.symbolBadge}>
-                      <Text style={styles.symbolText}>{currency.symbol.trim()}</Text>
-                    </View>
-                    <View style={styles.copy}>
-                      <Text style={styles.code}>{currency.code}</Text>
-                      <Text style={styles.name} numberOfLines={1}>
-                        {currency.name}
-                      </Text>
-                    </View>
-                    {selected ? <Text style={styles.check}>Selected</Text> : null}
-                  </Pressable>
-                );
-              })
-            )}
-          </ScrollView>
+          {loading ? (
+            <PageLoadingState message="Loading currencies" variant="list" />
+          ) : (
+            <FlatList
+              data={filtered}
+              renderItem={renderItem}
+              keyExtractor={currencyKeyExtractor}
+              extraData={effectiveSelectedCode}
+              initialNumToRender={15}
+              maxToRenderPerBatch={15}
+              windowSize={5}
+              contentContainerStyle={styles.list}
+              ItemSeparatorComponent={CurrencySeparator}
+              ListEmptyComponent={<Text style={styles.muted}>No currencies found.</Text>}
+              keyboardShouldPersistTaps="handled"
+              style={styles.listScroll}
+            />
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
+
+function currencyKeyExtractor(currency: Currency): string {
+  return currency.code;
+}
+
+function CurrencySeparator() {
+  const styles = useThemeStyles(createStyles);
+  return <View style={styles.separator} />;
+}
+
+const CurrencyRow = memo(function CurrencyRow({
+  currency,
+  selected,
+  disabled,
+  onSelect,
+}: {
+  currency: Currency;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: (code: string) => void;
+}) {
+  const styles = useThemeStyles(createStyles);
+  const handlePress = useCallback(() => onSelect(currency.code), [onSelect, currency.code]);
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
+      onPress={handlePress}
+      style={({ pressed }) => [
+        styles.row,
+        selected && styles.rowSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      <View style={styles.symbolBadge}>
+        <Text style={styles.symbolText}>{currency.symbol.trim()}</Text>
+      </View>
+      <View style={styles.copy}>
+        <Text style={styles.code}>{currency.code}</Text>
+        <Text style={styles.name} numberOfLines={1}>{currency.name}</Text>
+      </View>
+      {selected ? <Text style={styles.check}>Selected</Text> : null}
+    </Pressable>
+  );
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({
@@ -176,7 +226,8 @@ function createStyles(theme: AppTheme) {
       fontSize: theme.typography.fontSize.sm,
       lineHeight: theme.typography.lineHeight.sm,
     },
-    list: { gap: theme.spacing.xs, paddingBottom: theme.spacing.lg },
+    list: { paddingBottom: theme.spacing.lg },
+    separator: { height: theme.spacing.xs },
     row: {
       alignItems: "center",
       borderColor: theme.colors.border,

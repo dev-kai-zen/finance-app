@@ -1123,7 +1123,7 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 
 ---
 
-### [ ] P3-02 — Picker Scroll/Mount Jank: `CurrencyPickerModal` Renders All 155 Currencies in a `<ScrollView>` Instead of `<FlatList>`
+### [x] P3-02 — Picker Scroll/Mount Jank: `CurrencyPickerModal` Renders All 155 Currencies in a `<ScrollView>` Instead of `<FlatList>`
 - **How You Can Observe It on Your Phone Right Now:**
   1. Open **Settings → Currency** and tap **Default Currency** (or open any Account form and tap **Currency**) to open the **Currency Picker Modal**.
   2. Notice the slight pause when the modal opens and when typing in the `"Search currency..."` box—because `<ScrollView>` mounts **all 155 currency rows (~1,000+ React Native views)** at once instead of virtualizing the 10 visible rows on screen!
@@ -1134,6 +1134,10 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Open the **Currency Picker Modal** and rapidly type/clear in the search box and flick-scroll from `PHP` to `ZWL`.
   2. **Expected Result:** Opens on frame 1 and scrolls/filters at a locked 60–120fps.
+
+- **Implemented:** Replaced the eager ScrollView/map with FlatList (15 initial rows, 15 per batch, windowSize 5), memoized currency rows, stable row/selection callbacks and code keys, and a themed separator. Search, selected-state feedback, custom currencies, and keyboard tap persistence are preserved; this picker has no creation form to move.
+- **Mount/read performance:** The visibility guard remains. A picker-only hook defers one read-only currency-catalog query until after paint, shows a native-driven skeleton, and cancels/coalesces pending reads on replacement/unmount. It skips per-currency ledger usage checks and seeding on picker mount. Filtering is O(C) over the catalog in memory, with zero SQL per keystroke and no root/context subscriptions added. Closing dismisses the keyboard and cancels deferred selection.
+- **Verification:** Behavioral tests cover closed-modal gating, lazy list data, code/name/symbol searches and clear, custom/inactive currencies, selected-code normalization, stable render callbacks during typing, duplicate selection prevention, keyboard dismissal, cancellation, and deferred/coalesced read cleanup. Release-device scrolling and React Native Profiler checks remain pending; 60-120fps is the target, not an automated device measurement.
 
 ---
 
