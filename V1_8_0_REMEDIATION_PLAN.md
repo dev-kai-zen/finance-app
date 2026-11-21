@@ -392,20 +392,23 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-18 — Quick Sync: Failed Restore Inside `QuickSyncConflictModal` Deadlocks UI in `"syncing"`
+### [x] P1-18 — Quick Sync: Failed Restore Inside `QuickSyncConflictModal` Deadlocks UI in `"syncing"` (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
+  - `src/infrastructure/sync/quick-sync-state.ts`
   - `src/modules/google-drive-backup/services/quick-sync.service.ts`
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
   1. Trigger `QuickSyncConflictModal`.
   2. Turn on **Airplane Mode** and tap **Restore Quick Sync Data**.
   3. After the error message appears, tap **Decide later**.
   4. **Bug Observed:** The top header sync chip pulses **Syncing...** forever and all Quick Sync buttons remain permanently disabled.
-- **How We Will Properly Fix It:**
-  1. In `resolveQuickSyncConflictByRestore()` (`quick-sync.service.ts`), reset `currentStatus = "idle"` inside the `catch` block before calling `setQuickSyncRemoteConflict(conflict, message)` so `getQuickSyncState()` returns `status: "conflict"` instead of `"syncing"`.
+- **How We Properly Fix It:**
+  1. In `setQuickSyncRemoteConflict()` (`quick-sync-state.ts`), reset `currentStatus = "idle"` whenever `currentStatus === "syncing"` and a non-null conflict is recorded, and accept an optional `errorMessage` option so state transitions happen in a single atomic `notifySubscribers()` broadcast.
+  2. In `resolveQuickSyncConflictByRestore()` (`quick-sync.service.ts`), pass `errorMessage: message` into `setQuickSyncRemoteConflict(conflict, { openPrompt: true, errorMessage: message })` inside the `catch` block so `getQuickSyncState()` immediately returns `status: "remote_ahead"` instead of staying stuck in `"syncing"`.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Repeat the exact Airplane Mode conflict restore failure and tap **Decide later**.
-  2. **Expected Result:** The header chip immediately displays **Update available** (conflict state) instead of being stuck in **Syncing...**, and tapping it reopens the conflict modal.
+  2. **Expected Result:** The header chip immediately displays **Update available** (`remote_ahead`) instead of being stuck in **Syncing...**, Quick Sync controls remain responsive, and tapping the chip reopens the conflict modal.
 
 ---
 

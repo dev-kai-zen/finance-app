@@ -117,7 +117,7 @@ export function setQuickSyncRuntimeStatus(
 
 export function setQuickSyncRemoteConflict(
   conflict: QuickSyncRemoteConflict | null,
-  options?: { openPrompt?: boolean },
+  options?: { openPrompt?: boolean; errorMessage?: string | null },
 ): void {
   if (idleResetTimer) {
     clearTimeout(idleResetTimer);
@@ -131,7 +131,10 @@ export function setQuickSyncRemoteConflict(
       currentStatus = "idle";
     }
   } else {
-    lastErrorMessage = null;
+    if (currentStatus === "syncing") {
+      currentStatus = "idle";
+    }
+    lastErrorMessage = options?.errorMessage ?? null;
     if (options?.openPrompt !== undefined) {
       conflictPromptVisible = options.openPrompt;
     } else {

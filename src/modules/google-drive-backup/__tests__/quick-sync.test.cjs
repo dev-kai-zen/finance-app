@@ -38,6 +38,7 @@ let mockNetInfoState = { isConnected: true, type: "wifi" };
 let mockUploadHandler = null;
 let mockGetRemoteMetadataHandler = null;
 let mockCreateArchiveHandler = null;
+let mockRestoreHandler = null;
 let mockGoogleUser = { email: "user@gmail.com" };
 
 Module._load = function (request, parent, ...rest) {
@@ -89,6 +90,18 @@ Module._load = function (request, parent, ...rest) {
       withGoogleDriveAccessToken: async (fn) => fn("test-access-token"),
       disconnectGoogleDrive: async () => {},
       getGoogleDriveConfigurationError: () => null,
+    };
+  }
+  if (
+    request === "./restore-google-drive-backup.service" &&
+    parent?.filename?.includes("google-drive-backup")
+  ) {
+    return {
+      restoreQuickSyncBackup: async (...args) => {
+        if (mockRestoreHandler) {
+          return mockRestoreHandler(...args);
+        }
+      },
     };
   }
   if (request.endsWith("drizzle/migrations")) {
@@ -181,6 +194,9 @@ const {
   resetGoogleDriveConnectionForAppReset,
 } = require("@/modules/google-drive-backup/services/reset-google-drive-for-app-reset.service");
 const {
+  dismissQuickSyncConflictPrompt,
+  openQuickSyncConflictPrompt,
+  resolveQuickSyncConflictByRestore,
   triggerQuickSync,
 } = require("@/modules/google-drive-backup/services/quick-sync.service");
 const {
@@ -311,6 +327,7 @@ afterEach(() => {
   mockUploadHandler = null;
   mockGetRemoteMetadataHandler = null;
   mockCreateArchiveHandler = null;
+  mockRestoreHandler = null;
   mockGoogleUser = { email: "user@gmail.com" };
   resetQuickSyncStateForTests();
   resetQuickSyncDeviceMetadataForTests();
@@ -873,4 +890,51 @@ test("quick sync mixed v1.8.0 + v1.7.0 devices (P1-03): detects v1.7.0 PATCH upl
   assert.equal(resultWithoutHeadRevision.status, "remote_ahead");
   assert.equal(resultWithoutHeadRevision.conflict.remoteDeviceId, null);
   assert.equal(resultWithoutHeadRevision.conflict.remoteDeviceName, null);
+});
+
+test("quick sync conflict restore failure (P1-18): resets syncing status back to remote_ahead instead of deadlocking UI", async () => {
+  saveQuickSyncConfig({ enabled: true });
+
+  const conflict = {
+    fileId: "file-1",
+    remoteVersion: 14,
+    remoteModifiedTime: "2026-11-20T06:10:00.000Z",
+    remoteDeviceId: "device-other",
+    remoteDeviceName: "Partner's Phone (Pixel 8)",
+    localLastSyncedAt: "2026-11-20T05:30:00.000Z",
+    hasUnsyncedLocalChanges: false,
+  };
+  setQuickSyncRemoteConflict(conflict, { openPrompt: true });
+
+  mockRestoreHandler = async () => {
+    assert.equal(
+      getQuickSyncState().status,
+      "syncing",
+      "Status must be syncing while restore is in flight",
+    );
+    throw new Error("Network request failed");
+  };
+
+  await assert.rejects(
+    () => resolveQuickSyncConflictByRestore(),
+    /Network request failed/,
+  );
+
+  // Immediately after failure, status must return to remote_ahead (not stuck in syncing)
+  let state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, true);
+  assert.equal(state.lastError, "Network request failed");
+  assert.equal(state.remoteConflict?.fileId, "file-1");
+
+  // Dismissing the modal ("Decide later") must keep status as remote_ahead so header chip can reopen it
+  dismissQuickSyncConflictPrompt();
+  state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, false);
+
+  openQuickSyncConflictPrompt();
+  state = getQuickSyncState();
+  assert.equal(state.status, "remote_ahead");
+  assert.equal(state.conflictPromptVisible, true);
 });

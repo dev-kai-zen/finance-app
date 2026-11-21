@@ -203,7 +203,10 @@ export async function resolveQuickSyncConflictByRestore(): Promise<void> {
     const message =
       error instanceof Error ? error.message : "Could not restore Quick Sync backup.";
     if (conflict) {
-      setQuickSyncRemoteConflict(conflict, { openPrompt: true });
+      setQuickSyncRemoteConflict(conflict, {
+        openPrompt: true,
+        errorMessage: message,
+      });
     } else {
       setQuickSyncRuntimeStatus("error", message);
     }
