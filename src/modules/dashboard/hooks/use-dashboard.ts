@@ -48,7 +48,15 @@ export function useDashboard() {
           const quick = getDashboardSummary(undefined, new Date(), {
             includeNetWorthHistory: false,
           });
-          setSummary(quick);
+          setSummary((prev) =>
+            prev
+              ? {
+                  ...quick,
+                  netWorthHistory: prev.netWorthHistory,
+                  netWorthChangePercentage: prev.netWorthChangePercentage,
+                }
+              : quick,
+          );
           cancelPendingHistoryRef.current = scheduleAfterPaint(() => {
             cancelPendingHistoryRef.current = null;
             if (requestId !== requestIdRef.current) {

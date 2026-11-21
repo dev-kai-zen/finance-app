@@ -310,7 +310,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-14 — Dashboard: Flashes `"No prior month"` and Collapses Net Worth Chart / Year Pills on Every Focus or Mutation
+### [x] P1-14 — Dashboard: Flashes `"No prior month"` and Collapses Net Worth Chart / Year Pills on Every Focus or Mutation (Implemented — Ready for User Verification)
 - **User Test Status:** *"I can't see the difference actually"*
 - **Why You Didn't Notice It & How to Trigger It Clearly:**
   - If your Net Worth Trend card on the Dashboard is set to the default **`6M`** filter and you only have transactions in the current year, the chart height stays similar and the 2-frame (~32ms) reset happens very fast.
