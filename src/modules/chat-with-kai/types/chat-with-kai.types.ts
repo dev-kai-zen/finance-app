@@ -168,6 +168,8 @@ export interface ChatSavedTransactionResult {
   pocketName?: string | null;
   transferAccountId?: string | null;
   transferAccountName?: string | null;
+  transferPocketId?: string | null;
+  transferPocketName?: string | null;
 }
 
 export interface ChatWithKaiModalProps {

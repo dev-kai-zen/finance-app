@@ -29,6 +29,7 @@ import type {
   ParsedTransactionProposal,
 } from "../types/chat-with-kai.types";
 import { useChatWithKai } from "../hooks/use-chat-with-kai";
+import { validateProposalReferences } from "../utils/validate-proposal-references";
 import { ChatMessageBubble } from "./chat-message-bubble";
 import type {
   CreateTransactionInput,
@@ -73,6 +74,7 @@ function ChatWithKaiModalContent({
   const { mode, setMode } = useChatTransactionMode();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const effectiveDefaultExpenseAccountId =
     propsDefaultExpenseAccountId !== undefined
@@ -295,6 +297,14 @@ function ChatWithKaiModalContent({
                 updatedData.transferAccountName !== undefined
                   ? updatedData.transferAccountName
                   : proposal.transferAccountName,
+              transferPocketId:
+                updatedData.transferPocketId !== undefined
+                  ? updatedData.transferPocketId
+                  : proposal.transferPocketId,
+              transferPocketName:
+                updatedData.transferPocketName !== undefined
+                  ? updatedData.transferPocketName
+                  : proposal.transferPocketName,
               transactionId: updatedData.id ?? proposal.transactionId,
               isSaved: true,
             });
@@ -310,6 +320,18 @@ function ChatWithKaiModalContent({
   const handleSave = async (
     proposal: ParsedTransactionProposal,
   ): Promise<boolean> => {
+    setSaveError(null);
+    const referenceError = validateProposalReferences(
+      proposal,
+      accounts,
+      pockets,
+      categories,
+    );
+    if (referenceError) {
+      setSaveError(referenceError);
+      return false;
+    }
+
     try {
       if (proposal.type === "transfer") {
         if (!onSaveTransfer || !proposal.transferAccountId) {
@@ -320,6 +342,8 @@ function ChatWithKaiModalContent({
         const transferInput: CreateTransferInput = {
           fromAccountId: proposal.accountId,
           toAccountId: proposal.transferAccountId,
+          fromPocketId: proposal.pocketId ?? null,
+          toPocketId: proposal.transferPocketId ?? null,
           amountMinorUnits: proposal.amountMinorUnits,
           name: proposal.name ?? null,
           note: proposal.note ?? null,
@@ -336,6 +360,10 @@ function ChatWithKaiModalContent({
               typeof res === "string" ? res : undefined,
             );
           }
+        } else {
+          setSaveError(
+            "Could not save this transfer. Tap Edit to review its details.",
+          );
         }
         return success;
       }
@@ -366,9 +394,18 @@ function ChatWithKaiModalContent({
             typeof res === "string" ? res : undefined,
           );
         }
+      } else {
+        setSaveError(
+          "Could not save this transaction. Tap Edit to review its details.",
+        );
       }
       return success;
-    } catch {
+    } catch (error) {
+      setSaveError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Could not save this transaction. Tap Edit to review its details.",
+      );
       return false;
     }
   };
@@ -503,6 +540,20 @@ function ChatWithKaiModalContent({
             )}
             showsVerticalScrollIndicator={false}
           />
+
+          {saveError ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{saveError}</Text>
+              <Pressable
+                accessibilityLabel="Dismiss error"
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => setSaveError(null)}
+              >
+                <X color={theme.colors.danger} size={16} />
+              </Pressable>
+            </View>
+          ) : null}
 
           {/* Input Bar */}
           <View
@@ -646,6 +697,23 @@ function createStyles(theme: AppTheme) {
     listContent: {
       paddingHorizontal: theme.spacing.md,
       paddingTop: theme.spacing.md,
+    },
+    errorBanner: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.danger}14`,
+      borderTopColor: `${theme.colors.danger}40`,
+      borderTopWidth: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    errorBannerText: {
+      color: theme.colors.danger,
+      flex: 1,
+      fontSize: 13,
+      lineHeight: 18,
     },
     inputBar: {
       alignItems: "center",

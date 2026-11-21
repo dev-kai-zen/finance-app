@@ -737,22 +737,26 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-34 — Chat with Kai: Stale Proposals After Account/Category Delete, Missing `defaultCurrency` on Transactions Screen & Missing Edit Badges in Global Host
+### [x] P1-34 — Chat with Kai: Stale Proposals After Account/Category Delete, Missing `defaultCurrency` on Transactions Screen & Missing Edit Badges in Global Host (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
+  - `src/modules/chat-with-kai/utils/validate-proposal-references.ts`
+  - `src/modules/chat-with-kai/types/chat-with-kai.types.ts`
   - `src/modules/chat-with-kai/components/chat-with-kai-modal.tsx`
   - `src/modules/transactions/screens/transactions-screen.tsx`
   - `src/modules/gestures/components/global-quick-entry-host.tsx`
+  - `src/modules/chat-with-kai/__tests__/parse-chat-transaction.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
-  1. Set Default Currency to **USD (`$`)**, go to **Transactions**, open **Chat with Kai**, and type `"coffee 5 or 10"` → the ambiguity chips show `₱5.00` / `₱10.00` instead of `$5.00` / `$10.00` because `TransactionsScreen` forgot to pass `defaultCurrency={defaultCurrency}` to `<ChatWithKaiModal>`.
-  2. Draft a Kai proposal (do not save yet), close Kai, delete the account or category used by that proposal, reopen Kai, and tap **Save** → fails silently with no user feedback.
-- **How We Will Properly Fix It:**
-  1. Pass `defaultCurrency={defaultCurrency}` to `<ChatWithKaiModal>` in `transactions-screen.tsx`.
-  2. In `chat-with-kai-modal.tsx` (`handleSave`), validate that the proposal's `accountId`, `toAccountId`, and `categoryId` still exist in active `accounts`/`categories` (or catch the error from `onConfirmSave` and show an actionable error message / fallback instead of failing silently).
-  3. In `global-quick-entry-host.tsx`, include `pocketName` and `currencyCode` when updating a saved Kai proposal after editing.
+  1. Set Default Currency to **USD (`$`)**, go to **Transactions**, open **Chat with Kai**, and type `"coffee 5 or 10"` → the ambiguity chips showed `₱5.00` / `₱10.00` instead of `$5.00` / `$10.00` because `TransactionsScreen` forgot to pass `defaultCurrency={currencyPreferences.defaultCurrency}` to `<ChatWithKaiModal>`.
+  2. Draft a Kai proposal (do not save yet), close Kai, delete/archive the account or delete the category used by that proposal, reopen Kai, and tap **Save** → failed silently with no user feedback.
+- **How We Properly Fix It:**
+  1. Passed `defaultCurrency={currencyPreferences.defaultCurrency}` to `<ChatWithKaiModal>` in `transactions-screen.tsx`.
+  2. Added `validateProposalReferences()` in `validate-proposal-references.ts` and called it in `ChatWithKaiModal`'s `handleSave` to verify active accounts, pockets, and categories (including subcategories), plus surfaced a clear dismissible error banner in `ChatWithKaiModal` whenever validation fails, save returns falsy, or an error is thrown.
+  3. Updated all 4 `onChatEditSaved` callbacks in `global-quick-entry-host.tsx` (and `ChatSavedTransactionResult` / `updateProposalData`) to include `pocketName`, `currencyCode`, `transferPocketId`, and `transferPocketName` so edited Kai proposals display updated pocket & currency badges.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Set Default Currency to **USD**, open Kai on **Transactions**, type `"coffee 5 or 10"` → chips display `$5.00` and `$10.00`.
-  2. Delete an account referenced by an unsaved Kai proposal, reopen Kai, and tap **Save** → displays a clear validation message or falls back gracefully instead of silently doing nothing.
+  2. Delete/archive an account or delete a category referenced by an unsaved Kai proposal, reopen Kai, and tap **Save** → displays a clear dismissible inline error banner prompting the user to tap Edit instead of failing silently.
+  3. Edit a saved Kai proposal from the global Quick Entry host (changing pocket or currency) → returned Kai message card shows updated pocket and currency badges.
 
 ---
 

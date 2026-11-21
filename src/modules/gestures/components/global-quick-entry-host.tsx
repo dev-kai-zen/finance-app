@@ -259,6 +259,9 @@ function QuickEntryActiveModals({
           .flatMap((c) => [c, ...(c.subcategories ?? [])])
           .find((c) => c.id === input.categoryId);
         const acc = accounts.find((a) => a.id === input.accountId);
+        const pocket = input.pocketId
+          ? pockets.find((p) => p.id === input.pocketId)
+          : undefined;
         onChatEditSaved?.({
           id: typeof id === "string" ? id : undefined,
           type: input.type,
@@ -274,6 +277,7 @@ function QuickEntryActiveModals({
           categoryIcon: cat?.icon ?? null,
           categoryColor: cat?.hexColorsId ?? null,
           pocketId: input.pocketId ?? null,
+          pocketName: pocket?.name ?? null,
         });
         setOnChatEditSaved(null);
         return true;
@@ -285,6 +289,7 @@ function QuickEntryActiveModals({
       notifyChange,
       categories,
       accounts,
+      pockets,
       onChatEditSaved,
       setOnChatEditSaved,
     ],
@@ -301,17 +306,28 @@ function QuickEntryActiveModals({
         notifyChange();
         const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
         const toAcc = accounts.find((a) => a.id === input.toAccountId);
+        const fromPocket = input.fromPocketId
+          ? pockets.find((p) => p.id === input.fromPocketId)
+          : undefined;
+        const toPocket = input.toPocketId
+          ? pockets.find((p) => p.id === input.toPocketId)
+          : undefined;
         onChatEditSaved?.({
           id: typeof id === "string" ? id : undefined,
           type: "transfer",
           amountMinorUnits: Math.abs(input.amountMinorUnits),
+          currencyCode: fromAcc?.currencyCode ?? currencyPrefs.defaultCurrency,
           name: input.name ?? null,
           note: input.note ?? null,
           occurredAt: input.occurredAt ?? new Date(),
           accountId: input.fromAccountId,
           accountName: fromAcc?.name ?? null,
+          pocketId: input.fromPocketId ?? null,
+          pocketName: fromPocket?.name ?? null,
           transferAccountId: input.toAccountId,
           transferAccountName: toAcc?.name ?? null,
+          transferPocketId: input.toPocketId ?? null,
+          transferPocketName: toPocket?.name ?? null,
         });
         setOnChatEditSaved(null);
         return true;
@@ -322,6 +338,8 @@ function QuickEntryActiveModals({
       handleSaveTransfer,
       notifyChange,
       accounts,
+      pockets,
+      currencyPrefs.defaultCurrency,
       onChatEditSaved,
       setOnChatEditSaved,
     ],
@@ -421,6 +439,9 @@ function QuickEntryActiveModals({
               .flatMap((c) => [c, ...(c.subcategories ?? [])])
               .find((c) => c.id === input.categoryId);
             const acc = accounts.find((a) => a.id === input.accountId);
+            const pocket = input.pocketId
+              ? pockets.find((p) => p.id === input.pocketId)
+              : undefined;
             onChatEditSaved?.({
               id,
               type: input.type,
@@ -436,6 +457,7 @@ function QuickEntryActiveModals({
               categoryIcon: cat?.icon ?? null,
               categoryColor: cat?.hexColorsId ?? null,
               pocketId: input.pocketId ?? null,
+              pocketName: pocket?.name ?? null,
             });
             setOnChatEditSaved(null);
           }
@@ -447,17 +469,29 @@ function QuickEntryActiveModals({
             notifyChange();
             const fromAcc = accounts.find((a) => a.id === input.fromAccountId);
             const toAcc = accounts.find((a) => a.id === input.toAccountId);
+            const fromPocket = input.fromPocketId
+              ? pockets.find((p) => p.id === input.fromPocketId)
+              : undefined;
+            const toPocket = input.toPocketId
+              ? pockets.find((p) => p.id === input.toPocketId)
+              : undefined;
             onChatEditSaved?.({
               id: input.transactionGroupId,
               type: "transfer",
               amountMinorUnits: Math.abs(input.amountMinorUnits),
+              currencyCode:
+                fromAcc?.currencyCode ?? currencyPrefs.defaultCurrency,
               name: input.name ?? null,
               note: input.note ?? null,
               occurredAt: input.occurredAt ?? new Date(),
               accountId: input.fromAccountId,
               accountName: fromAcc?.name ?? null,
+              pocketId: input.fromPocketId ?? null,
+              pocketName: fromPocket?.name ?? null,
               transferAccountId: input.toAccountId,
               transferAccountName: toAcc?.name ?? null,
+              transferPocketId: input.toPocketId ?? null,
+              transferPocketName: toPocket?.name ?? null,
             });
             setOnChatEditSaved(null);
           }

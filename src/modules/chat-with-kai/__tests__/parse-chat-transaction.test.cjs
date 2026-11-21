@@ -806,3 +806,114 @@ test("chat-keywords-cache (P1-21): invalidation clears cache, increments version
   invalidateChatKeywordsCache();
   assert.equal(notifications, 1);
 });
+
+test("validateProposalReferences (P1-34): blocks saving stale proposals referencing deleted/archived accounts, pockets, or categories", () => {
+  const {
+    validateProposalReferences,
+  } = require("@/modules/chat-with-kai/utils/validate-proposal-references");
+
+  const activeAccounts = [
+    { id: "acc-1", name: "Wallet", isArchived: false },
+    { id: "acc-arch", name: "Archived Bank", isArchived: true },
+  ];
+  const activePockets = [
+    { id: "pkt-1", accountId: "acc-1", name: "Travel", isArchived: false },
+  ];
+  const activeCategories = [
+    {
+      id: "cat-food",
+      name: "Food",
+      subcategories: [{ id: "cat-coffee", name: "Coffee" }],
+    },
+  ];
+
+  // Valid expense with subcategory and active pocket
+  assert.equal(
+    validateProposalReferences(
+      {
+        type: "expense",
+        amountMinorUnits: 15000,
+        currencyCode: "USD",
+        name: "Latte",
+        note: null,
+        occurredAt: new Date(),
+        accountId: "acc-1",
+        accountName: "Wallet",
+        pocketId: "pkt-1",
+        pocketName: "Travel",
+        categoryId: "cat-coffee",
+        categoryName: "Coffee",
+      },
+      activeAccounts,
+      activePockets,
+      activeCategories,
+    ),
+    null,
+  );
+
+  // Deleted or archived account
+  assert.match(
+    validateProposalReferences(
+      {
+        type: "expense",
+        amountMinorUnits: 15000,
+        currencyCode: "USD",
+        name: "Latte",
+        note: null,
+        occurredAt: new Date(),
+        accountId: "acc-deleted",
+        accountName: "Old Cash",
+        categoryId: "cat-food",
+        categoryName: "Food",
+      },
+      activeAccounts,
+      activePockets,
+      activeCategories,
+    ),
+    /Old Cash.*no longer available/,
+  );
+
+  // Deleted category
+  assert.match(
+    validateProposalReferences(
+      {
+        type: "expense",
+        amountMinorUnits: 15000,
+        currencyCode: "USD",
+        name: "Latte",
+        note: null,
+        occurredAt: new Date(),
+        accountId: "acc-1",
+        accountName: "Wallet",
+        categoryId: "cat-deleted",
+        categoryName: "Removed Category",
+      },
+      activeAccounts,
+      activePockets,
+      activeCategories,
+    ),
+    /Removed Category.*no longer available/,
+  );
+
+  // Transfer with archived destination account
+  assert.match(
+    validateProposalReferences(
+      {
+        type: "transfer",
+        amountMinorUnits: 50000,
+        currencyCode: "USD",
+        name: "Move",
+        note: null,
+        occurredAt: new Date(),
+        accountId: "acc-1",
+        accountName: "Wallet",
+        transferAccountId: "acc-arch",
+        transferAccountName: "Archived Bank",
+      },
+      activeAccounts,
+      activePockets,
+      activeCategories,
+    ),
+    /Archived Bank.*no longer available/,
+  );
+});

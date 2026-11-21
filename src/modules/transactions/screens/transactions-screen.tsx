@@ -1631,6 +1631,7 @@ function TransactionsScreenContent({
       <ChatWithKaiModal
         accounts={accounts}
         categories={categories}
+        defaultCurrency={currencyPreferences.defaultCurrency}
         onClose={() => setIsChatModalOpen(false)}
         onDeleteTransaction={deleteTx}
         onEditInForm={(prefilled, onSaved, isEditing = false) => {
