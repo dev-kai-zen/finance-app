@@ -1251,6 +1251,8 @@ export const es = {
         "Evita saltos de botones al cambiar de pantalla y oculta los anuncios mientras el teclado está abierto.",
       fixItem10:
         "Corrige el objetivo desactualizado del widget de presupuesto al cambiar el objetivo de un mes específico.",
+      fixItem11:
+        "Mejorar la carga del panel, las suscripciones y las exportaciones CSV; corregir totales al seleccionar muchas categorías.",
     },
     v170: {
       date: "18 de noviembre de 2026",

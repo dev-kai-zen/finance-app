@@ -13,5 +13,6 @@ export function getTransactionsForExport(
   filter?: TransactionPageFilter,
   context: DbContext = db,
 ): TransactionListItem[] {
-  return listAllFilteredTransactions(filter, context);
+  // CSV has no running-balance columns; skip historical balance hydration.
+  return listAllFilteredTransactions({ ...filter, includeBalances: false }, context);
 }

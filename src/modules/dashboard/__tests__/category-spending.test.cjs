@@ -331,3 +331,72 @@ test("P2-04: SQL aggregation has a fixed statement count and indexed split probe
     assert.ok(queries.every(query => (query.match(/\?/g) ?? []).length <= 500));
   } finally { sqlite.close(); }
 });
+
+
+test("P3-05: category filters chunk at 500 unique IDs with split and currency parity", () => {
+  const f = fixture();
+  try {
+    const ids = [];
+    const insert = sqlite.prepare("INSERT INTO categories (id, name, type, icon, created_at, updated_at) VALUES (?, ?, 'expense', 'tag', ?, ?)");
+    for (let i = 0; i < 1001; i++) {
+      const id = "chunk_" + i;
+      ids.push(id);
+      insert.run(id, id, f.time, f.time);
+    }
+    f.transaction("first", ids[0], 123);
+    f.transaction("boundary", ids[499], 2, { currency: "USD" });
+    f.transaction("second-chunk", ids[500], 456);
+    f.transaction("last-split", ids[1000], 100, { entries: [
+      { categoryId: ids[0], amountMinorUnits: 40 },
+      { categoryId: ids[1000], amountMinorUnits: 60 },
+    ] });
+    f.transaction("deleted-chunk", ids[500], 999, { deleted: true });
+    f.transaction("income-chunk", ids[500], 999, { type: "income" });
+    f.transaction("transfer-chunk", ids[500], 999, { type: "transfer" });
+    f.transaction("outside-chunk", ids[500], 999, { occurredAt: f.time - 86400000 });
+    const query = { categoryIds: [...ids, ids[0], ids[499], ids[1000]], startDate: f.date, endDate: f.date, targetCurrencyCode: "PHP" };
+    queries = [];
+    const grouped = getCategoryExpenseTotalsGrouped(query, f.db);
+    const aggregates = queries.filter(sql => sql.includes('sum('));
+    assert.equal(aggregates.length, 6, "Three unsplit and three split aggregations");
+    assert.ok(aggregates.every(sql => (sql.match(/\?/g) ?? []).length <= 503));
+    assert.deepEqual(grouped, { [ids[0]]: 163, [ids[499]]: 100, [ids[500]]: 456, [ids[1000]]: 60 });
+    const { getCategoryExpenseTotal } = require("@/modules/transactions");
+    const { listExpenseEntryTotalsByCategory } = require("../../transactions/repositories/transaction-entries.repository");
+    queries = [];
+    assert.equal(getCategoryExpenseTotal(query, f.db), 779);
+    assert.equal(queries.filter(sql => sql.includes('sum(')).length, 6);
+    assert.equal(getCategoryExpenseTotal({ ...query, targetCurrencyCode: "USD" }, f.db), 16, "Convert once after combining chunks to preserve rounding");
+    assert.equal(getCategoryExpenseTotal({ ...query, excludeTransactionId: "last-split" }, f.db), 679);
+    assert.deepEqual(listExpenseEntryTotalsByCategory(query, f.db), [
+      { categoryId: ids[0], currencyCode: "PHP", total: 40 },
+      { categoryId: ids[1000], currencyCode: "PHP", total: 60 },
+    ]);
+    queries = [];
+    assert.equal(getCategoryExpenseTotal({ ...query, categoryIds: [] }, f.db), 0);
+    assert.deepEqual(listExpenseEntryTotalsByCategory({ ...query, categoryIds: [] }, f.db), []);
+    assert.equal(queries.length, 0);
+    assert.deepEqual(getCategoryExpenseTotalsGrouped({ ...query, categoryIds: undefined }, f.db), grouped);
+  } finally { sqlite.close(); }
+});
+
+test("P3-05: Dashboard balances skip management scans and retain amounts", () => {
+  const f = fixture();
+  try {
+    f.transaction("expense", "shopping", 200);
+    const { getAccountsWithBalances } = require("@/modules/accounts");
+    const { getAccountDynamicBalances, getDashboardSummary } = require("../repositories/dashboard.repository");
+    queries = [];
+    const baseline = getAccountsWithBalances(f.db);
+    const managementCount = queries.length;
+    queries = [];
+    const lean = getAccountDynamicBalances(f.db);
+    assert.ok(queries.length < managementCount);
+    assert.deepEqual(lean, baseline.map(({ isDeletable, canChangeCurrency, ...account }) => account));
+    queries = [];
+    const summary = getDashboardSummary(f.db, f.date, { includeNetWorthHistory: false, includeRecentTransactions: false, includeCategoryBreakdown: false });
+    assert.deepEqual(summary.accountsWithBalances, lean);
+    assert.equal(queries.filter(sql => sql.includes('from "accounts"')).length, 1, "Fetch account snapshot once");
+    assert.ok(!queries.some(sql => sql.includes('from "schedules"')));
+  } finally { sqlite.close(); }
+});

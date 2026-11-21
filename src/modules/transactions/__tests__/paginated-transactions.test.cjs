@@ -765,3 +765,25 @@ test("P3-03: large Trash hydrates metadata in batches of at most 500 IDs", () =>
     assert.ok(queries.every(query => !query.sql.includes('"transactions"."deleted_at" is null')));
   } finally { sqlite.close(); }
 });
+
+
+test("P3-05: CSV export skips balance hydration and preserves all CSV fields", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { buildTransactionsCsv } = require("../utils/transactions-csv");
+    const filter = { sortBy: "date", sortOrder: "desc", includeBalances: true };
+    queries = [];
+    const baseline = listAllFilteredTransactions(filter, database);
+    const baselineQueries = queries.length;
+    queries = [];
+    const exported = getTransactionsForExport(filter, database);
+    assert.equal(buildTransactionsCsv(exported), buildTransactionsCsv(baseline));
+    assert.ok(queries.length < baselineQueries, "No historical balance queries for CSV");
+    assert.ok(exported.every(row => row.accountBalanceAfterMinorUnits === null));
+    assert.ok(!queries.some(query => /sum\(/i.test(query.sql)), "No balance sum scans");
+    assert.equal(filter.includeBalances, true, "Never mutate the screen filter");
+    const withoutBalances = row => Object.fromEntries(Object.entries(row).filter(([key]) => !key.includes("BalanceAfter") && !key.includes("LocationBalanceAfter")));
+    assert.deepEqual(exported.map(withoutBalances), baseline.map(withoutBalances));
+  } finally { sqlite.close(); }
+});

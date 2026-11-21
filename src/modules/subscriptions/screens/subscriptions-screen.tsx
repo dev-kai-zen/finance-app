@@ -494,7 +494,9 @@ function SubscriptionsScreenContent({
         )}
 
         {/* Subscription Cards List or Empty State */}
-        {!hasSubscriptions ? (
+        {loading ? (
+          <PageLoadingState />
+        ) : !hasSubscriptions ? (
           <View style={styles.emptyContainer}>
             <PageEmptyState
               actionLabel={t("subscriptions.addFirstAction", {

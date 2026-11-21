@@ -1265,6 +1265,8 @@ export const fil = {
         "Ayusin ang pagtalon ng mga buton kapag lumilipat ng screen at itago ang mga ad habang bukas ang keyboard.",
       fixItem10:
         "Ayusin ang lumang target sa Monthly Budget widget matapos baguhin ang target para sa isang buwan.",
+      fixItem11:
+        "Pabilisin ang Dashboard, pag-refresh ng mga subscription, at CSV export, at ayusin ang kabuuan ng maraming kategorya.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

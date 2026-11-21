@@ -1,10 +1,5 @@
-import { and, eq, gte, inArray, isNull, lte, ne, notExists, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import {
-  accounts,
-  transactionEntries,
-  transactions,
-} from "@/infrastructure/database/schema";
+import { listUnsplitExpenseTotals } from "../repositories/category-expense-totals.repository";
 import { listExpenseEntryTotalsByCategory } from "../repositories/transaction-entries.repository";
 import {
   createCurrencyMinorUnitsBucket,
@@ -36,36 +31,7 @@ export function getCategoryExpenseTotal(
     return 0;
   }
 
-  const conditions = [
-    isNull(transactions.deletedAt),
-    eq(transactions.type, "expense"),
-    inArray(transactions.categoryId, query.categoryIds),
-    gte(transactions.occurredAt, query.startDate),
-    lte(transactions.occurredAt, query.endDate),
-    notExists(
-      context
-        .select({ id: transactionEntries.id })
-        .from(transactionEntries)
-        .where(eq(transactionEntries.transactionId, transactions.id)),
-    ),
-  ];
-
-  if (query.excludeTransactionId) {
-    conditions.push(ne(transactions.id, query.excludeTransactionId));
-  }
-
-  const rows = context
-    .select({
-      currencyCode: accounts.currencyCode,
-      total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as(
-        "total",
-      ),
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(and(...conditions))
-    .groupBy(accounts.currencyCode)
-    .all();
+  const rows = listUnsplitExpenseTotals({ ...query, groupByCategory: false }, context);
 
   const buckets = createCurrencyMinorUnitsBucket();
   for (const row of rows) {
@@ -126,33 +92,7 @@ export function getCategoryExpenseTotalsGrouped(
     getCurrencyPreferences(context).defaultCurrency;
   const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
 
-  const rows = context
-    .select({
-      categoryId: transactions.categoryId,
-      currencyCode: accounts.currencyCode,
-      total: sql<number>`coalesce(sum(abs(${transactions.amountMinorUnits})), 0)`.as(
-        "total",
-      ),
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(
-      and(
-        isNull(transactions.deletedAt),
-        eq(transactions.type, "expense"),
-        query.categoryIds ? inArray(transactions.categoryId, query.categoryIds) : undefined,
-        gte(transactions.occurredAt, query.startDate),
-        lte(transactions.occurredAt, query.endDate),
-        notExists(
-          context
-            .select({ id: transactionEntries.id })
-            .from(transactionEntries)
-            .where(eq(transactionEntries.transactionId, transactions.id)),
-        ),
-      ),
-    )
-    .groupBy(transactions.categoryId, accounts.currencyCode)
-    .all();
+  const rows = listUnsplitExpenseTotals(query, context);
 
   const splitRows = listExpenseEntryTotalsByCategory(
     {

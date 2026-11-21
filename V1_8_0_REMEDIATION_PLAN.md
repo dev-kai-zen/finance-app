@@ -1180,7 +1180,7 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 
 ---
 
-### [ ] P3-05 — Unneeded Synchronous Work on Focus/Navigation & CSV Export
+### [x] P3-05 — Unneeded Synchronous Work on Focus/Navigation & CSV Export (Implemented — Ready for User Verification)
 - **What This Covers & How We Will Fix & Verify Each Sub-Item:**
   1. **Transactions CSV Export runs 2 full-ledger balance scans for columns CSV doesn't even include (`transactions-screen.tsx` line 552):**
      - Pass `includeBalances: false` inside `handlePrepareExportCsv()` so exporting CSV doesn't run two full-ledger running-balance scans that aren't even written to the CSV!
@@ -1193,3 +1193,12 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Navigate across **Dashboard**, **Subscriptions**, and **Transactions → Export CSV**, plus run `npm test` and `npx tsc --noEmit`.
   2. **Expected Result:** Zero frame drops on screen transitions, faster CSV preparation, and 100% test pass rate.
+
+- **P3-05 Implementation & Automated Verification:**
+  - CSV export now disables balance hydration in its dedicated export service; full CSV contents and filter ordering are preserved.
+  - Dashboard account balances explicitly skip management flags and reuse one account snapshot per summary.
+  - Subscription focus reads already defer until after paint and cancel on refresh/blur/unmount; regression tests now cover that behavior. Refreshes show a skeleton even when cached subscriptions exist.
+  - Category expense queries now use deduplicated 500-ID batches for unsplit and split expenses. Currency buckets merge before conversion to preserve rounding; empty filters execute no SQL. SQL lives in repositories.
+  - Automated checks: `npx tsc --noEmit` passed; full `npm test` passed (614 tests); targeted SQLite and hook tests cover query counts, 1,001 IDs, duplicate IDs, split/deleted/date/type filters, currencies, rounding, CSV parity, and cancellation.
+  - Performance: removes export balance scans and Dashboard management scans; category query count is 2 x ceil(unique IDs / 500), with linear ID deduplication and no new context subscriptions. Subscription reads remain synchronous after paint, so device frame-rate profiling is still required.
+  - **Manual verification pending:** navigate Dashboard / Subscriptions / Transactions CSV export and profile a release build with a large ledger; automated tests do not certify 60–120fps.

@@ -1234,6 +1234,8 @@ export const en = {
         "Fix bottom ads shifting buttons when switching screens and hide ads while the keyboard is open.",
       fixItem10:
         "Fix the Monthly Budget widget showing an outdated target after changing a monthly budget override.",
+      fixItem11:
+        "Improve Dashboard loading, subscription refreshes, and CSV exports, and fix totals for large category selections.",
     },
     v170: {
       date: "November 18, 2026",

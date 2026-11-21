@@ -6,6 +6,7 @@ import {
   transactionEntries,
   transactions,
 } from "@/infrastructure/database/schema";
+import { categoryIdChunks } from "../utils/category-id-chunks";
 import type { TransactionSplitEntryListItem } from "../types/transaction.types";
 function generateId(context: DbContext = db): string {
   return context.get<{ id: string }>(sql`SELECT lower(hex(randomblob(16))) AS id`)!.id;
@@ -167,33 +168,37 @@ export function listExpenseEntryTotalsByCategory(
     return [];
   }
 
-  const conditions = [
-    query.categoryIds ? inArray(transactionEntries.categoryId, query.categoryIds) : undefined,
-    isNull(transactions.deletedAt),
-    eq(transactions.type, "expense"),
-    gte(transactions.occurredAt, query.startDate),
-    lte(transactions.occurredAt, query.endDate),
-  ];
+  const rows: { categoryId: string; currencyCode: string; total: number }[] = [];
+  for (const categoryIds of categoryIdChunks(query.categoryIds)) {
+    const conditions = [
+      categoryIds ? inArray(transactionEntries.categoryId, categoryIds) : undefined,
+      isNull(transactions.deletedAt),
+      eq(transactions.type, "expense"),
+      gte(transactions.occurredAt, query.startDate),
+      lte(transactions.occurredAt, query.endDate),
+    ];
 
-  if (query.excludeTransactionId) {
-    conditions.push(ne(transactions.id, query.excludeTransactionId));
+    if (query.excludeTransactionId) {
+      conditions.push(ne(transactions.id, query.excludeTransactionId));
+    }
+
+    rows.push(...context
+      .select({
+        categoryId: transactionEntries.categoryId,
+        currencyCode: accounts.currencyCode,
+        total: sql<number>`coalesce(sum(${transactionEntries.amountMinorUnits}), 0)`.as(
+          "total",
+        ),
+      })
+      .from(transactionEntries)
+      .innerJoin(
+        transactions,
+        eq(transactionEntries.transactionId, transactions.id),
+      )
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(and(...conditions))
+      .groupBy(transactionEntries.categoryId, accounts.currencyCode)
+      .all());
   }
-
-  return context
-    .select({
-      categoryId: transactionEntries.categoryId,
-      currencyCode: accounts.currencyCode,
-      total: sql<number>`coalesce(sum(${transactionEntries.amountMinorUnits}), 0)`.as(
-        "total",
-      ),
-    })
-    .from(transactionEntries)
-    .innerJoin(
-      transactions,
-      eq(transactionEntries.transactionId, transactions.id),
-    )
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(and(...conditions))
-    .groupBy(transactionEntries.categoryId, accounts.currencyCode)
-    .all();
+  return rows;
 }

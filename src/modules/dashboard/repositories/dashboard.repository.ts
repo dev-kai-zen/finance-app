@@ -31,7 +31,7 @@ const NET_WORTH_PERIODS: NetWorthPeriod[] = ["1W", "3M", "6M", "1Y", "ALL"];
 export function getAccountDynamicBalances(
   context: DbContext = db,
 ): AccountWithBalance[] {
-  return getAccountsWithBalances(context);
+  return getAccountsWithBalances(context, { includeManagementFlags: false });
 }
 
 export function getMonthlyCashflow(
