@@ -440,20 +440,16 @@ function TransactionsScreenContent({
       return;
     }
     if (targetId === "txFirstItem") {
-      const scrollResponder = sectionListRef.current?.getScrollResponder();
-      if (scrollResponder?.scrollTo) {
-        scrollResponder.scrollTo({ y: 0, animated: true });
-      } else {
-        try {
-          sectionListRef.current?.scrollToLocation({
-            sectionIndex: 0,
-            itemIndex: 0,
-            viewOffset: 0,
-            animated: true,
-          });
-        } catch {
-          // Ignore if SectionList has not laid out yet
-        }
+      try {
+        sectionListRef.current?.scrollToLocation({
+          sectionIndex: 0,
+          itemIndex: 0,
+          viewPosition: 0.25,
+          animated: true,
+        });
+      } catch {
+        const scrollResponder = sectionListRef.current?.getScrollResponder();
+        scrollResponder?.scrollTo?.({ y: 0, animated: true });
       }
     }
   }, []);
@@ -1485,6 +1481,10 @@ function TransactionsScreenContent({
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           onScroll={handleScroll}
+          onScrollToIndexFailed={() => {
+            const scrollResponder = sectionListRef.current?.getScrollResponder();
+            scrollResponder?.scrollTo?.({ y: 0, animated: true });
+          }}
           scrollEventThrottle={32}
           ListFooterComponent={
             !isFilterTransitioning && hasMoreTransactions ? (

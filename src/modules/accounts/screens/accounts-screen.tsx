@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   DeviceEventEmitter,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,6 +20,7 @@ import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useExperiencePreferences } from "@/modules/settings";
 import { useLocalization } from "@/infrastructure/localization";
+import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import { Download, FolderDown, Share2, Wallet } from "lucide-react-native";
 import {
   AccountCsvExportCancelledError,
@@ -296,19 +298,46 @@ function AccountsScreenContent({
     onScrollToTarget: handleScrollToTarget,
   });
 
+  const walkthroughStartCancelRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    return () => {
+      walkthroughStartCancelRef.current?.();
+      walkthroughStartCancelRef.current = null;
+    };
+  }, []);
+
+  const handleStartWalkthrough = useCallback(() => {
+    Keyboard.dismiss();
+    const hadSearchQuery = searchQuery.trim().length > 0;
+    if (hadSearchQuery) {
+      setSearchQuery("");
+    }
+    setGroupOverrides({});
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+    walkthroughStartCancelRef.current?.();
+    if (hadSearchQuery) {
+      walkthroughStartCancelRef.current = scheduleAfterPaint(() => {
+        walkthroughStartCancelRef.current = null;
+        walkthrough.startWalkthrough();
+      });
+    } else {
+      walkthrough.startWalkthrough();
+    }
+  }, [searchQuery, walkthrough]);
+
   useHeaderWalkthroughAction(
     useMemo(
       () => ({
-        onStart: walkthrough.startWalkthrough,
+        onStart: handleStartWalkthrough,
         isActive: walkthrough.isWalkthroughActive,
       }),
-      [walkthrough.startWalkthrough, walkthrough.isWalkthroughActive],
+      [handleStartWalkthrough, walkthrough.isWalkthroughActive],
     ),
   );
 
   const walkthroughIntro = useWalkthroughIntro({
     promptKey: "accountsWalkthroughDismissed",
-    onStart: walkthrough.startWalkthrough,
+    onStart: handleStartWalkthrough,
   });
 
   useEffect(() => {
@@ -610,7 +639,11 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
-                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  isGroupCollapsed={
+                    walkthrough.isWalkthroughActive || normalizedSearchQuery
+                      ? () => false
+                      : isGroupCollapsed
+                  }
                   onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>
@@ -637,7 +670,11 @@ function AccountsScreenContent({
                   types={data.types}
                   onEditType={handleEditType}
                   expandedPocketAccountIds={expandedPocketAccountIds}
-                  isGroupCollapsed={normalizedSearchQuery ? () => false : isGroupCollapsed}
+                  isGroupCollapsed={
+                    walkthrough.isWalkthroughActive || normalizedSearchQuery
+                      ? () => false
+                      : isGroupCollapsed
+                  }
                   onToggleGroupCollapse={handleToggleGroupCollapse}
                   onAddPocket={handleOpenCreatePocket}
                   onEditPocket={(pocket) =>

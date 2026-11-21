@@ -719,19 +719,20 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-33 — Walkthrough: Accounts Tour Shows Solid Dark Backdrop When Search Hides Sections; Transactions Tour `txFirstItem` Scrolls to Top Instead of Row
+### [x] P1-33 — Walkthrough: Accounts Tour Shows Solid Dark Backdrop When Search Hides Sections; Transactions Tour `txFirstItem` Scrolls to Top Instead of Row (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/accounts/screens/accounts-screen.tsx`
   - `src/modules/transactions/screens/transactions-screen.tsx`
 - **Before-Fix Scenario (How to Reproduce):**
   1. On **Accounts**, type a search query that matches only 1 Asset account (hiding Liabilities), then tap the `?` walkthrough button and step through the tour → when it reaches the missing section step, the spotlight disappears leaving a solid dark backdrop.
-  2. On **Transactions** on a smaller screen, tap `?` to start the tour → when advancing from the Filter Panel step to **First Transaction Row**, it scrolls to `y: 0` (top header) instead of scrolling the first transaction row into view.
-- **How We Will Properly Fix It:**
-  1. In `AccountsScreen`, clear the active search query (`setSearchQuery("")`) and expand collapsed groups when starting the walkthrough so all tour target sections are mounted and visible (or dynamically filter walkthrough steps to only mounted target keys).
-  2. In `TransactionsScreen`, measure or scroll to the first transaction row (`scrollToLocation({ sectionIndex: 0, itemIndex: 0 })`) when entering the `txFirstItem` walkthrough step instead of scrolling to `offset: 0`.
+  2. On **Transactions** on a smaller screen, tap `?` to start the tour → when advancing from the Filter Panel step to **First Transaction Row**, it scrolled to `y: 0` (top header) instead of scrolling the first transaction row into view.
+- **How We Properly Fix It:**
+  1. In `AccountsScreen` (`accounts-screen.tsx`), added `handleStartWalkthrough` (wired to both `useHeaderWalkthroughAction` and `useWalkthroughIntro`) to dismiss the keyboard, clear any active `searchQuery`, reset per-group collapse overrides, scroll to top, and wait `scheduleAfterPaint` when clearing search so both `assetsSection` and `liabilitiesSection` mount before measuring; also forced `isGroupCollapsed` to `() => false` while `walkthrough.isWalkthroughActive` is true without overwriting the user's saved `viewMode` preference.
+  2. In `TransactionsScreen` (`transactions-screen.tsx`), updated `handleScrollToTarget("txFirstItem")` to call `sectionListRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, viewPosition: 0.25, animated: true })` directly (only falling back to `scrollTo({ y: 0 })` on error or `onScrollToIndexFailed`) so the first transaction row scrolls directly into view.
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Start the Accounts walkthrough while searching/collapsed → search clears and every step highlights its target cleanly.
+  1. Start the Accounts walkthrough while searching or with groups collapsed → search clears, groups expand for the tour, and every step highlights its target cleanly with no solid dark backdrop.
+  2. Start the Transactions walkthrough on a smaller screen and advance to **First Transaction Row** → the first transaction row scrolls cleanly into view and is highlighted.
   2. Start the Transactions walkthrough → `txFirstItem` scrolls the actual first transaction row into the spotlight.
 
 ---
