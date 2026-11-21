@@ -62,6 +62,11 @@ export function CurrencyPreferencesProvider({ children }: PropsWithChildren) {
     () =>
       subscribeToDatabaseReplacement(() => {
         try {
+          seedCurrenciesIfEmpty();
+        } catch {
+          // Database may not be ready during replacement.
+        }
+        try {
           setPreferences(getCurrencyPreferences());
         } catch {
           setPreferences(DEFAULT_CURRENCY_PREFERENCES);

@@ -231,26 +231,18 @@ export function GuidedCurrencyStep({
   const { t } = useLocalization();
   const [search, setSearch] = useState("");
 
-  const codes = useMemo(() => {
-    const nonPhpCodes = SUPPORTED_CURRENCY_CODES.filter((code) => code !== "PHP");
-    return ["PHP", ...nonPhpCodes];
-  }, []);
-
   const filteredCodes = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) {
-      if (selectedCode && selectedCode !== "PHP") {
-        return [selectedCode, ...codes.filter((c) => c !== selectedCode)];
-      }
-      return codes;
+      return SUPPORTED_CURRENCY_CODES;
     }
-    return codes.filter((code) => {
+    return SUPPORTED_CURRENCY_CODES.filter((code) => {
       const name = CURRENCY_NAMES[code]?.toLowerCase() ?? "";
       const symbol = CURRENCY_SYMBOLS[code]?.toLowerCase() ?? "";
       const lowerCode = code.toLowerCase();
       return lowerCode.includes(q) || name.includes(q) || symbol.includes(q);
     });
-  }, [codes, search, selectedCode]);
+  }, [search]);
 
   const title = nickname?.trim()
     ? t("onboarding.currencyTitleAssisted", { name: nickname.trim() })

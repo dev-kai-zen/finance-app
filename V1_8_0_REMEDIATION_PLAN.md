@@ -371,24 +371,24 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-17 — Currency Upgrade (`v1.7.0 → v1.8.0`): Scrambled Currency Picker Sort Order, Boot Stall (134–155 Unbatched Commits) & Stale Catalog After Restore
-- **User Test Status & Question:** *"Valid, but PHP was set to be first in the list, or it must be sorted properly?"*
-- **Answer to Your Question:**
-  - **Yes! `PHP` is intentionally #1 (`sortOrder = 0`) at the very top of the list**, and the remaining 154 currencies are supposed to be sorted alphabetically from `AED` to `ZWL` (`sortOrder = 1..154`).
-  - **Why it broke on upgrade:** On a fresh install, `missingCodes` has all 155 currencies, so `PHP = 0` and `AED..ZWL = 1..154`. But on an **upgrade from v1.7.0**, the 21 original currencies already had `sortOrder = 0..20` (`AUD = 1`, `CAD = 2`, `CHF = 3`...), and the 134 newly added currencies were also given `sortOrder = 1..134` (`AED = 1`, `AFN = 2`, `ALL = 3`...). Because both sets shared `sortOrder` 1 through 20, the top of the list after `PHP` became scrambled: `PHP, AED, AUD, AFN, CAD, ALL, CHF, AMD, CNY...`!
+### [x] P1-17 — Currency Upgrade (`v1.7.0 → v1.8.0`): Scrambled Currency Picker Sort Order, Boot Stall (134–155 Unbatched Commits) & Stale Catalog After Restore (Implemented — Ready for User Verification)
+- **User Test Status & Decision:** Valid — user explicitly requested to **include `PHP` in pure alphabetical `A → Z` order** (do NOT pin `PHP` first in the list).
 - **Files:**
   - `src/modules/currencies/services/seed-currencies.service.ts`
   - `src/modules/currencies/providers/currency-preferences-provider.tsx`
+  - `src/modules/onboarding/components/guided-onboarding-steps.tsx`
+  - `src/modules/currencies/__tests__/seed-currencies.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
-  1. Open any **Currency Picker** on a database upgraded from v1.7.0 (or after restoring a v1.7.0 backup).
-  2. **Bug Observed:** `PHP` is first, followed by scrambled currencies (`AED, AUD, AFN, CAD, ALL, CHF...`) instead of clean alphabetical order (`AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD...`).
-- **How We Will Properly Fix It:**
-  1. Compute the canonical sort order from the full sorted catalog (`PHP` → `0`, all other built-in codes sorted `A → Z` → `1..154`).
-  2. Wrap all inserts and `sortOrder` normalization for built-in (`isCustom = false`) currencies inside a single atomic `db.transaction((tx) => ...)` so 155 individual disk commits never stall app startup (also fixing **Part 3 #1**!).
-  3. In `CurrencyPreferencesProvider`, call `seedCurrenciesIfEmpty()` and `refreshActiveCurrencyCatalog()` inside `subscribeToDatabaseReplacement` so restoring an older v1.7.0 backup immediately seeds and sorts all 155 currencies without requiring an app restart.
+  1. Open any **Currency Picker** on a database upgraded from v1.7.0 (or after restoring a v1.7.0 backup), or open the Guided Onboarding currency step.
+  2. **Bug Observed:** `PHP` was pinned at index 0, followed on upgrades by scrambled currencies (`AED, AUD, AFN, CAD, ALL, CHF...`), seeding ran 134–155 unbatched disk commits on boot, and restoring a v1.7.0 backup did not re-seed/refresh the catalog until app restart.
+- **How We Properly Fixed It:**
+  1. In `seed-currencies.service.ts`, assign canonical alphabetical `sortOrder = index` (`0..154`, `AED → ZWL`) across all built-in ISO currencies including `PHP`, and normalize any existing built-in rows (`!isCustom`) whose `sortOrder !== index` while leaving custom currencies (`isCustom = true`, `sortOrder = 9000`) untouched.
+  2. Wrap all missing inserts and `sortOrder` normalization writes in a single atomic `context.transaction((tx) => ...)` (with a 0-write fast path once already seeded and sorted), eliminating the 134–155 unbatched disk commits boot stall.
+  3. In `CurrencyPreferencesProvider`, call `seedCurrenciesIfEmpty()` inside `subscribeToDatabaseReplacement` before `setPreferences(getCurrencyPreferences())` so restoring an older v1.7.0 backup immediately seeds missing currencies, fixes sort order, and refreshes the active currency catalog without requiring an app restart.
+  4. In `GuidedCurrencyStep` (`guided-onboarding-steps.tsx`), removed the hardcoded `"PHP"`-first pinning so onboarding currency selection also displays pure alphabetical `A → Z` order.
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Open the **Currency Picker** after upgrading or restoring a v1.7.0 backup.
-  2. **Expected Result:** `PHP` is #1 at the top, and every currency after `PHP` is in strict alphabetical order (`AED, AFN, ALL, AMD, ANG, AOA, ARS, AUD... ZWL`).
+  1. Open any **Currency Picker**, **Currency Catalog**, or **Guided Onboarding Currency Step** (including after upgrading or restoring a v1.7.0 backup).
+  2. **Expected Result:** All built-in currencies are sorted strictly `A → Z` (`AED, AFN, ALL, ..., PHP, ..., ZWL`) with `PHP` in its alphabetical position (not pinned first), custom currencies appear after built-ins, and restoring an older backup immediately reflects all 155 currencies without restarting the app.
 
 ---
 
