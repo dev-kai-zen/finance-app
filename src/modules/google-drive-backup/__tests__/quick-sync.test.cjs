@@ -1357,3 +1357,41 @@ test("quick sync device label sanitization (P1-24): double-space input matches s
   const updated = setQuickSyncCustomDeviceName(nextNormalized);
   assert.equal(updated.customDeviceName, "Work Phone");
 });
+
+test("quick sync NetInfo double-fire coalescing (P1-25): preserves force=true across overlapping deferred check resets", () => {
+  const {
+    mergeDeferredQuickSyncCheck,
+  } = require("@/modules/google-drive-backup/components/quick-sync-processor");
+
+  // Reconnect event #1 schedules { requireNetworkMatch: true, force: true }
+  const first = mergeDeferredQuickSyncCheck(null, {
+    requireNetworkMatch: true,
+    force: true,
+  });
+  assert.deepEqual(first, { requireNetworkMatch: true, force: true });
+
+  // Reconnect event #2 (50ms later on Android) sends { requireNetworkMatch: true, force: false }
+  const afterSecondNetInfo = mergeDeferredQuickSyncCheck(first, {
+    requireNetworkMatch: true,
+    force: false,
+  });
+  assert.deepEqual(
+    afterSecondNetInfo,
+    { requireNetworkMatch: true, force: true },
+    "Second NetInfo event must not downgrade force=true to force=false",
+  );
+
+  // Startup check (requireNetworkMatch: false, force: true) followed by initial NetInfo event
+  const startup = mergeDeferredQuickSyncCheck(null, {
+    requireNetworkMatch: false,
+    force: true,
+  });
+  const afterInitialNetInfo = mergeDeferredQuickSyncCheck(startup, {
+    requireNetworkMatch: true,
+    force: false,
+  });
+  assert.deepEqual(afterInitialNetInfo, {
+    requireNetworkMatch: false,
+    force: true,
+  });
+});

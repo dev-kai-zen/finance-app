@@ -551,25 +551,26 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-25 — Quick Sync: Android `NetInfo` Double-Fire Cancels `force: true` Reconnect Check Behind 12s Cooldown
+### [x] P1-25 — Quick Sync: Android `NetInfo` Double-Fire Cancels `force: true` Reconnect Check Behind 12s Cooldown (Implemented — Ready for User Verification)
 - **User Test Status:** *"Can't verify it properly"*
 - **Why It Happens & How to Verify:**
-  - In `quick-sync-processor.tsx` (lines 77–96), when Android reconnects to Wi-Fi, `NetInfo.addEventListener` often fires **twice** within 100ms (once when `isConnected` becomes `true`, and 50ms later when `isInternetReachable` becomes `true`).
-  - Event #1 sees `wasOffline === true` and schedules a 2-second timer with **`force: true`** (to bypass the 12-second cooldown).
-  - 50ms later, Event #2 sees `wasOffline === false` (because Event #1 already updated `wasReachableRef.current = true`!), **cancels Event #1's timer**, and replaces it with **`force: false`**!
-  - If you had synced less than 12 seconds earlier, `force: false` hits the 12-second cooldown (`now - lastCheckTimestamp < 12000`) and skips the reconnect sync!
+  - In `quick-sync-processor.tsx`, when Android reconnects to Wi-Fi, `NetInfo.addEventListener` often fires **twice** within 100ms (once when `isConnected` becomes `true`, and 50ms later when `isInternetReachable` becomes `true`).
+  - Event #1 saw `wasDisconnected === true` and scheduled a 1.5s timer with **`force: true`** (to bypass the 12-second cooldown).
+  - 50ms later, Event #2 saw `wasDisconnected === false`, **cancelled Event #1's timer**, and replaced it with **`force: false`**!
+  - If you had synced less than 12 seconds earlier, `force: false` hit the 12-second cooldown and skipped the reconnect sync!
 - **Files:**
   - `src/modules/google-drive-backup/components/quick-sync-processor.tsx`
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
 - **Before-Fix Scenario (How to Reproduce in 10 Seconds):**
-  1. With Quick Sync ON, tap **Sync Now** (this sets `lastCheckTimestamp = now`).
+  1. With Quick Sync ON, tap **Sync Now** (this sets `lastRemoteCheckCompletedAt = now`).
   2. Immediately turn **Airplane Mode ON**, add 1 transaction, and turn **Airplane Mode OFF** within **8 seconds** of step 1.
   3. Watch the Quick Sync status chip after Wi-Fi reconnects.
-  4. **Bug Observed:** Because less than 12 seconds elapsed since Step 1 and the second `NetInfo` event downgraded `force: true` to `force: false`, the reconnect check is skipped by the 12-second cooldown!
-- **How We Will Properly Fix It:**
-  1. Track a `pendingForceNetCheckRef = useRef(false)` in `QuickSyncProcessor`. When `wasOffline && isReachable` sets `pendingForceNetCheckRef.current = true`, preserve `force: true` across any coalesced `NetInfo` timer resets until the scheduled timer actually fires.
+  4. **Bug Observed:** Because less than 12 seconds elapsed since Step 1 and the second `NetInfo` event downgraded `force: true` to `force: false`, the reconnect check was skipped by the 12-second cooldown!
+- **How We Properly Fix It:**
+  1. Added `pendingScheduledCheck` and `mergeDeferredQuickSyncCheck()` in `quick-sync-processor.tsx` so any coalesced `scheduleDeferredRemoteCheck()` call preserves `force: existing.force || incoming.force` and `requireNetworkMatch: existing.requireNetworkMatch && incoming.requireNetworkMatch` until the timer actually fires (and also preserves `force: true` if the app locks while the timer is pending).
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Tap **Sync Now** → toggle Airplane Mode ON → add 1 transaction → toggle Airplane Mode OFF within 8 seconds.
-  2. **Expected Result:** 2 seconds after Wi-Fi reconnects, Quick Sync automatically uploads the offline transaction.
+  2. **Expected Result:** ~1.5 seconds after Wi-Fi reconnects, Quick Sync automatically bypasses the 12-second cooldown and uploads the offline transaction.
 
 ---
 

@@ -32,21 +32,41 @@ function shouldQueueQuickSyncForDatabaseChange(
 
 const QUICK_SYNC_RESUME_DELAY_MS = 1500;
 
+export interface DeferredQuickSyncCheck {
+  requireNetworkMatch: boolean;
+  force: boolean;
+}
+
+export function mergeDeferredQuickSyncCheck(
+  existing: DeferredQuickSyncCheck | null,
+  incoming: DeferredQuickSyncCheck,
+): DeferredQuickSyncCheck {
+  if (!existing) {
+    return incoming;
+  }
+  return {
+    requireNetworkMatch:
+      existing.requireNetworkMatch && incoming.requireNetworkMatch,
+    force: existing.force || incoming.force,
+  };
+}
+
 export function QuickSyncProcessor() {
   useEffect(() => {
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
     let latestNetState: { isConnected: boolean | null; type: string } | null =
       null;
-    let pendingLockedCheck: {
-      requireNetworkMatch: boolean;
-      force: boolean;
-    } | null = null;
+    let pendingScheduledCheck: DeferredQuickSyncCheck | null = null;
+    let pendingLockedCheck: DeferredQuickSyncCheck | null = null;
     let wasAppLocked = appLockLifecycle.getIsLocked();
 
-    const clearPendingResumeTimer = () => {
+    const clearPendingResumeTimer = (resetPending = true) => {
       if (resumeTimer !== null) {
         clearTimeout(resumeTimer);
         resumeTimer = null;
+      }
+      if (resetPending) {
+        pendingScheduledCheck = null;
       }
     };
 
@@ -54,35 +74,37 @@ export function QuickSyncProcessor() {
       requireNetworkMatch: boolean,
       force = false,
     ) => {
-      clearPendingResumeTimer();
+      const merged = mergeDeferredQuickSyncCheck(pendingScheduledCheck, {
+        requireNetworkMatch,
+        force,
+      });
+      clearPendingResumeTimer(false);
       if (appLockLifecycle.getIsLocked()) {
-        pendingLockedCheck = {
-          requireNetworkMatch:
-            pendingLockedCheck !== null
-              ? pendingLockedCheck.requireNetworkMatch && requireNetworkMatch
-              : requireNetworkMatch,
-          force: Boolean(pendingLockedCheck?.force || force),
-        };
+        pendingScheduledCheck = null;
+        pendingLockedCheck = mergeDeferredQuickSyncCheck(
+          pendingLockedCheck,
+          merged,
+        );
         return;
       }
 
+      pendingScheduledCheck = merged;
       resumeTimer = setTimeout(() => {
+        const scheduled = pendingScheduledCheck ?? merged;
         resumeTimer = null;
+        pendingScheduledCheck = null;
         if (appLockLifecycle.getIsLocked()) {
-          pendingLockedCheck = {
-            requireNetworkMatch:
-              pendingLockedCheck !== null
-                ? pendingLockedCheck.requireNetworkMatch && requireNetworkMatch
-                : requireNetworkMatch,
-            force: Boolean(pendingLockedCheck?.force || force),
-          };
+          pendingLockedCheck = mergeDeferredQuickSyncCheck(
+            pendingLockedCheck,
+            scheduled,
+          );
           return;
         }
         const config = getQuickSyncConfig();
         if (!config.enabled) {
           return;
         }
-        if (requireNetworkMatch && latestNetState) {
+        if (scheduled.requireNetworkMatch && latestNetState) {
           if (
             !latestNetState.isConnected ||
             (config.network !== "any" &&
@@ -94,7 +116,7 @@ export function QuickSyncProcessor() {
         }
         void checkQuickSyncRemoteStatus({
           config,
-          force,
+          force: scheduled.force,
           openPromptOnConflict: true,
         });
       }, QUICK_SYNC_RESUME_DELAY_MS);
@@ -107,11 +129,11 @@ export function QuickSyncProcessor() {
     const unsubscribeAppLock = appLockLifecycle.subscribe((isLocked) => {
       if (isLocked) {
         wasAppLocked = true;
-        if (resumeTimer !== null && pendingLockedCheck === null) {
-          pendingLockedCheck = {
-            requireNetworkMatch: false,
-            force: false,
-          };
+        if (pendingScheduledCheck !== null) {
+          pendingLockedCheck = mergeDeferredQuickSyncCheck(
+            pendingLockedCheck,
+            pendingScheduledCheck,
+          );
         }
         clearPendingResumeTimer();
         return;
