@@ -26,7 +26,10 @@ import { ThemedSwitch } from "@/components/themed-switch";
 import type { AppTheme } from "@/constants/theme";
 import { useAppTheme, useThemeStyles } from "@/hooks/use-app-theme";
 import { useLocalization } from "@/infrastructure/localization";
-import type { QuickSyncNetworkPreference } from "@/infrastructure/sync";
+import {
+  sanitizeQuickSyncCustomDeviceName,
+  type QuickSyncNetworkPreference,
+} from "@/infrastructure/sync";
 import { ProFeatureModal, useProStatus } from "@/modules/pro";
 import { useQuickSync } from "../hooks/use-quick-sync";
 
@@ -59,9 +62,9 @@ export function QuickSyncCard({ onShowToast }: QuickSyncCardProps = {}) {
   const isRemoteAhead =
     quickSync.status === "remote_ahead" && quickSync.remoteConflict !== null;
 
-  const trimmedDraft = deviceLabelDraft.trim();
+  const sanitizedDraft = sanitizeQuickSyncCustomDeviceName(deviceLabelDraft) ?? "";
   const savedCustomLabel = quickSync.customDeviceName ?? "";
-  const isDeviceLabelDirty = trimmedDraft !== savedCustomLabel;
+  const isDeviceLabelDirty = sanitizedDraft !== savedCustomLabel;
 
   const handleToggle = (value: boolean) => {
     if (value && !isPro) {
@@ -78,10 +81,11 @@ export function QuickSyncCard({ onShowToast }: QuickSyncCardProps = {}) {
 
   const handleSaveDeviceLabel = () => {
     if (!isDeviceLabelDirty) return;
-    quickSync.setDeviceLabel(trimmedDraft.length > 0 ? trimmedDraft : null);
+    quickSync.setDeviceLabel(sanitizedDraft.length > 0 ? sanitizedDraft : null);
+    setDeviceLabelDraft(sanitizedDraft);
     Keyboard.dismiss();
     onShowToast?.(
-      trimmedDraft.length > 0
+      sanitizedDraft.length > 0
         ? t("quickSync.deviceLabelSaved")
         : t("quickSync.deviceLabelReset"),
     );

@@ -196,6 +196,7 @@ const {
   markQuickSyncLocalChangesPending,
   resetQuickSyncDeviceIdentityForAppReset,
   resetQuickSyncDeviceMetadataForTests,
+  sanitizeQuickSyncCustomDeviceName,
   setQuickSyncCustomDeviceName,
   updateQuickSyncDeviceMetadata,
 } = require("@/infrastructure/sync/quick-sync-device.storage");
@@ -1340,4 +1341,19 @@ test("quick sync restore mutex (P1-23): cancels debounced sync, blocks concurren
     "restore:start",
     "restore:end",
   ]);
+});
+
+test("quick sync device label sanitization (P1-24): double-space input matches sanitized saved label", () => {
+  const saved = setQuickSyncCustomDeviceName("My Phone");
+  assert.equal(saved.customDeviceName, "My Phone");
+
+  // Double-space / surrounding-whitespace draft normalizes to the same saved label -> not dirty
+  const doubleSpaceNormalized = sanitizeQuickSyncCustomDeviceName("  My   Phone  ") ?? "";
+  assert.equal(doubleSpaceNormalized, saved.customDeviceName);
+
+  // Distinct label with extra internal spaces normalizes cleanly when saved
+  const nextNormalized = sanitizeQuickSyncCustomDeviceName("Work   Phone") ?? "";
+  assert.equal(nextNormalized, "Work Phone");
+  const updated = setQuickSyncCustomDeviceName(nextNormalized);
+  assert.equal(updated.customDeviceName, "Work Phone");
 });

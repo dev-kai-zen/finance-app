@@ -534,19 +534,20 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-24 — Quick Sync: Device Label Sanitization Mismatch (`"My  Phone"` Double Space) Leaves Save Button Stuck Active
+### [x] P1-24 — Quick Sync: Device Label Sanitization Mismatch (`"My  Phone"` Double Space) Leaves Save Button Stuck Active (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/google-drive-backup/components/quick-sync-card.tsx`
+  - `src/modules/google-drive-backup/__tests__/quick-sync.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
   1. In **Google Drive Backup → Quick Sync**, save device label as `"My Phone"`.
   2. Edit the input to `"My  Phone"` (two spaces) and tap **Save**.
-  3. **Bug Observed:** Save button stays enabled and shows *"Device label saved"* on every tap because `isDeviceNameDirty` compares raw trimmed text (`"My  Phone"`) against sanitized stored text (`"My Phone"`), and doesn't normalize the local input state to the saved sanitized value.
-- **How We Will Properly Fix It:**
-  1. In `quick-sync-card.tsx`, compute `isDeviceNameDirty` using the same whitespace-collapsed sanitizer (`sanitizeDeviceLabel(deviceNameInput) !== (quickSyncState.customDeviceName ?? "")`), and update `setDeviceNameInput(nextState.customDeviceName ?? "")` after saving.
+  3. **Bug Observed:** Save button stays enabled and shows *"Device label saved"* on every tap because `isDeviceLabelDirty` compared raw trimmed text (`"My  Phone"`) against sanitized stored text (`"My Phone"`), and didn't normalize the local input state to the saved sanitized value.
+- **How We Properly Fix It:**
+  1. In `quick-sync-card.tsx`, computed `sanitizedDraft = sanitizeQuickSyncCustomDeviceName(deviceLabelDraft) ?? ""` using the exact same sanitizer as storage, compared `sanitizedDraft !== savedCustomLabel` for `isDeviceLabelDirty`, and normalized `setDeviceLabelDraft(sanitizedDraft)` on save.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Save `"My Phone"`, then type `"My  Phone"` (double space).
-  2. **Expected Result:** The Save button recognizes it normalizes to the same label (or upon saving, collapses the input to `"My Phone"` and disables the Save button).
+  2. **Expected Result:** The Save button recognizes it normalizes to `"My Phone"` and stays disabled; saving a new label with multiple spaces (e.g. `"Work  Phone"`) immediately collapses the input to `"Work Phone"` and disables the Save button.
 
 ---
 
