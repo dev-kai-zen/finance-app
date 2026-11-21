@@ -10,6 +10,13 @@ import {
   downloadGoogleDriveBackupFile,
   getGoogleDriveQuickSyncFileMetadata,
   getQuickSyncConfig,
+  getQuickSyncDeviceMetadata,
+  getQuickSyncLocalChangeGeneration,
+  queueDebouncedQuickSync,
+  createQuickSyncRevisionId,
+  uploadOrUpdateGoogleDriveQuickSyncBackup,
+  evaluateQuickSyncRemoteState,
+  setQuickSyncRemoteConflict,
   resolveGoogleDriveQuickSyncBackupFile,
   saveQuickSyncConfig,
   setQuickSyncRuntimeStatus,
@@ -58,13 +65,10 @@ export async function restoreQuickSyncBackup(
   let resolvedMetadata: GoogleDriveQuickSyncMetadata | null = null;
 
   const archive = await withGoogleDriveAccessToken(async (accessToken) => {
-    const isAccountMatch =
-      !config.accountEmail || config.accountEmail === currentUser?.email;
-    const preferredFileId =
-      explicitFileId ?? (isAccountMatch ? config.fileId : null);
+    const preferredFileId = explicitFileId;
 
     resolvedMetadata =
-      (await getGoogleDriveQuickSyncFileMetadata(accessToken, preferredFileId)) ??
+      (await getGoogleDriveQuickSyncFileMetadata(accessToken, preferredFileId, true)) ??
       (await resolveGoogleDriveQuickSyncBackupFile(accessToken));
 
     if (!resolvedMetadata) {
@@ -80,8 +84,29 @@ export async function restoreQuickSyncBackup(
     cancelDebouncedQuickSync();
     await replaceDatabaseFromSnapshot(backup.database);
     finalizeRestoredWorkspace();
+  } finally {
+    setDatabaseReplacing(false);
+  }
 
-    const restoredFile = resolvedMetadata as GoogleDriveQuickSyncMetadata | null;
+  const restoredGeneration = getQuickSyncLocalChangeGeneration();
+  {
+    let restoredFile = resolvedMetadata as GoogleDriveQuickSyncMetadata | null;
+    let publicationError: string | null = null;
+    // Restoring a branch resolves only the tips observed when the user chose it.
+    // A later concurrent branch remains a conflict, and all source bytes survive.
+    if (restoredFile?.hasConcurrentRevisions) {
+      const device = getQuickSyncDeviceMetadata();
+      const parents = restoredFile.tipTokens;
+      const revisionId = createQuickSyncRevisionId();
+      try {
+        restoredFile = await withGoogleDriveAccessToken(token =>
+          uploadOrUpdateGoogleDriveQuickSyncBackup(token, archive, null, {
+            deviceId: device.deviceId, syncRevisionId: revisionId, parentTokens: parents,
+          }));
+      } catch (error) {
+        publicationError = error instanceof Error ? error.message : 'Could not publish the restored Quick Sync revision.';
+      }
+    }
     if (restoredFile) {
       saveQuickSyncConfig({
         enabled: true,
@@ -96,15 +121,28 @@ export async function restoreQuickSyncBackup(
         lastKnownRemoteVersion: restoredFile.version,
         lastKnownRemoteModifiedTime: restoredFile.modifiedTime,
         lastKnownRemoteFileId: restoredFile.id,
-        hasUnsyncedLocalChanges: false,
+        hasUnsyncedLocalChanges: getQuickSyncLocalChangeGeneration() !== restoredGeneration,
       });
     }
 
     clearQuickSyncRemoteConflict();
-    setQuickSyncRuntimeStatus("synced");
+    if (publicationError) {
+      clearQuickSyncRemoteBaselineOnManualRestore();
+      setQuickSyncRuntimeStatus("error", publicationError);
+    } else if (restoredFile?.hasConcurrentRevisions) {
+      const evaluation = evaluateQuickSyncRemoteState(restoredFile.concurrentFile ?? restoredFile, {
+        ...getQuickSyncDeviceMetadata(), fileId: restoredFile.id,
+        lastSyncedAt: restoredFile.modifiedTime,
+      });
+      if (evaluation.status === "remote_ahead") setQuickSyncRemoteConflict(evaluation.conflict, { openPrompt: true });
+    } else {
+      setQuickSyncRuntimeStatus("synced");
+    }
     cancelDebouncedQuickSync();
-  } finally {
-    setDatabaseReplacing(false);
+    if (getQuickSyncLocalChangeGeneration() !== restoredGeneration) {
+      queueDebouncedQuickSync();
+      if (!publicationError && !restoredFile?.hasConcurrentRevisions) setQuickSyncRuntimeStatus("idle");
+    }
   }
 
   const restoredAt = backup.createdAt.toLocaleString();

@@ -38,7 +38,7 @@ export function evaluateQuickSyncRemoteState(
     return { status: "missing" };
   }
 
-  const isRemoteAhead = detectRemoteAhead(remoteFile, local);
+  const isRemoteAhead = remoteFile.hasConcurrentRevisions || detectRemoteAhead(remoteFile, local);
   if (!isRemoteAhead) {
     return { status: "up_to_date", remoteFile };
   }
@@ -53,6 +53,7 @@ export function evaluateQuickSyncRemoteState(
   // device uploaded new content via Drive PATCH (which preserves stale appProperties
   // such as syncRevisionId and lastUpdatedByDeviceId while advancing headRevisionId).
   if (
+    !remoteFile.hasConcurrentRevisions &&
     !hasLocalNeverSynced(local) &&
     !legacyWriterAhead &&
     remoteFile.lastUpdatedByDeviceId &&

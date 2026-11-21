@@ -439,12 +439,14 @@ async function performSync(
     let targetFileId: string | null = existingFileId;
 
     // 2.5 Pre-Upload Gate: Check whether Drive moved ahead before uploading
-    if (!forceOverwrite) {
+    let parentTokens: string[] = [];
+    {
       const remoteFile = await withGoogleDriveAccessToken((accessToken) =>
         getGoogleDriveQuickSyncFileMetadata(accessToken, existingFileId),
       );
       lastRemoteCheckCompletedAt = Date.now();
 
+      parentTokens = remoteFile?.tipTokens ?? (remoteFile?.revisionToken ? [remoteFile.revisionToken] : []);
       const evaluation = evaluateQuickSyncRemoteState(remoteFile, {
         fileId: config.fileId,
         lastSyncedAt: config.lastSyncedAt,
@@ -461,7 +463,7 @@ async function performSync(
       if (evaluation.status === "missing") {
         // Active file is missing or was moved to Drive Trash: never PATCH a stale/trashed ID.
         targetFileId = null;
-      } else if (evaluation.status === "remote_ahead") {
+      } else if (evaluation.status === "remote_ahead" && !forceOverwrite) {
         setQuickSyncRemoteConflict(evaluation.conflict, { openPrompt: true });
         return false;
       } else if (evaluation.status === "up_to_date") {
@@ -481,7 +483,7 @@ async function performSync(
           lastKnownRemoteFileId: evaluation.remoteFile.id,
         });
         clearQuickSyncRemoteConflict();
-        if (!deviceMetadata.hasUnsyncedLocalChanges) {
+        if (!deviceMetadata.hasUnsyncedLocalChanges && !forceOverwrite) {
           setQuickSyncRuntimeStatus("synced");
           return true;
         }
@@ -517,10 +519,22 @@ async function performSync(
           deviceId: deviceMetadata.deviceId,
           deviceName,
           syncRevisionId,
+          parentTokens,
         },
       ),
     );
     lastRemoteCheckCompletedAt = Date.now();
+
+    if (backupFile.hasConcurrentRevisions) {
+      const evaluation = evaluateQuickSyncRemoteState(backupFile.concurrentFile ?? backupFile, {
+        fileId: config.fileId, lastSyncedAt: config.lastSyncedAt,
+        ...deviceMetadata,
+      });
+      if (evaluation.status === "remote_ahead") {
+        setQuickSyncRemoteConflict(evaluation.conflict, { openPrompt: true });
+      }
+      return false;
+    }
 
     const hasNewerLocalChanges =
       pendingFollowUpSync ||

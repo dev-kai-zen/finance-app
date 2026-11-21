@@ -40,9 +40,11 @@ let mockGetRemoteMetadataHandler = null;
 let mockCreateArchiveHandler = null;
 let mockRestoreHandler = null;
 let mockFetchHandler = null;
+let mockReplaceDatabaseHandler = null;
 let mockGoogleUser = { email: "user@gmail.com" };
 
 Module._load = function (request, parent, ...rest) {
+  if (request === "@/infrastructure/database" && mockReplaceDatabaseHandler) return { ...originalLoad.call(this, request, parent, ...rest), replaceDatabaseFromSnapshot: (...args) => mockReplaceDatabaseHandler(...args) };
   if (request === "expo-device") {
     return {
       brand: "google",
@@ -84,6 +86,7 @@ Module._load = function (request, parent, ...rest) {
   }
   if (request === "@/modules/local-backup") {
     return {
+      readDatabaseBackup: async () => ({ database: new Uint8Array([1]), createdAt: new Date() }),
       createBackupArchive: async (...args) => {
         if (mockCreateArchiveHandler) {
           return mockCreateArchiveHandler(...args);
@@ -210,6 +213,7 @@ const {
   QUICK_SYNC_REVISION_ID_PROPERTY,
   truncateUtf8Bytes,
   uploadOrUpdateGoogleDriveQuickSyncBackup: realUploadOrUpdateQuickSyncBackup,
+  getGoogleDriveQuickSyncFileMetadata: realGetQuickSyncMetadata,
 } = require("@/infrastructure/sync/adapters/google-drive-backup.adapter");
 const {
   resetGoogleDriveConnectionForAppReset,
@@ -1117,7 +1121,7 @@ test("quick sync appProperties UTF-8 byte cap (P1-20): truncates emoji and CJK d
   assert.equal(truncateUtf8Bytes("a📱b", 5), "a📱");
 });
 
-test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileId on performSync and creates fresh active file when PATCH returns trashed=true", async () => {
+test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileId and publishes a new active snapshot without PATCH", async () => {
   saveOnboardingSettings({
     [ONBOARDING_SETTING_KEYS.status]: "completed",
     [ONBOARDING_SETTING_KEYS.workspaceMode]: "personal",
@@ -1153,8 +1157,7 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
   );
   assert.equal(getQuickSyncConfig().fileId, "fresh-active-file-2");
 
-  // 2. Adapter layer (e.g. forceOverwrite: true or file trashed mid-flight):
-  // PATCH on trashed existingFileId returns 200 OK with trashed: true -> must create fresh active file
+  // The adapter never overwrites a trashed or active file.
   const fetchCalls = [];
   mockFetchHandler = async (url, init = {}) => {
     const method = init.method ?? "GET";
@@ -1171,26 +1174,8 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
       };
     }
 
-    // PATCH to trashed file succeeds with trashed: true
-    if (method === "PATCH" && url.includes("/trashed-file-1")) {
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({
-          id: "trashed-file-1",
-          name: "kaizen-finance-quick-sync.kfb",
-          createdTime: "2026-11-20T05:00:00.000Z",
-          modifiedTime: "2026-11-20T06:31:00.000Z",
-          size: "3",
-          version: "2",
-          headRevisionId: "head-trashed",
-          trashed: true,
-        }),
-      };
-    }
-
     // Active file listing in Backups folder returns no active Quick Sync file
-    if (method === "GET" && url.includes("trashed%20%3D%20false")) {
+    if (method === "GET" && new URL(url).searchParams.get("q")?.includes("trashed = false")) {
       return {
         ok: true,
         status: 200,
@@ -1237,7 +1222,7 @@ test("quick sync trashed Drive file recovery (P1-20): clears stale trashed fileI
   assert.equal(created.trashed, false);
   assert.ok(
     fetchCalls.some((c) => c.method === "POST" && c.url.includes("upload/drive/v3/files")),
-    "Adapter must create a new active Drive file when PATCH returns trashed=true",
+    "Adapter must publish a new active snapshot",
   );
 });
 
@@ -1394,4 +1379,104 @@ test("quick sync NetInfo double-fire coalescing (P1-25): preserves force=true ac
     requireNetworkMatch: false,
     force: true,
   });
+});
+
+
+test('V2-02: immutable concurrent branches survive, paginate, retry and explicitly resolve', async () => {
+  const files=[]; const payloads=new Map(); const calls=[];
+  mockFetchHandler=async (url,init={})=>{
+    calls.push(init.method ?? 'GET');
+    const parsed=new URL(url), q=parsed.searchParams.get('q') ?? '';
+    let body;
+    if(q.includes('mimeType')) body={files:[{id:'folder',name:'Backups'}]};
+    else if(init.method === 'POST') {
+      const raw=new TextDecoder().decode(init.body);
+      const metadata=JSON.parse(raw.split('\r\n\r\n')[1].split('\r\n')[0]);
+      const file={...metadata,id:'file-'+(files.length+1),createdTime:'2026-11-21T00:00:00Z',modifiedTime:'2026-11-21T00:00:00Z'};
+      files.push(file);payloads.set(file.id,Buffer.from(init.body));body=file;
+    } else if(q) {
+      const offset=Number(parsed.searchParams.get('pageToken') ?? 0);
+      body={files:files.slice(offset,offset+1),...(offset+1<files.length?{nextPageToken:String(offset+1)}:{})};
+    } else body=files.find(file=>parsed.pathname.endsWith('/'+file.id));
+    return {ok:true,status:200,json:async()=>body};
+  };
+  const upload=(id,parents=[])=>realUploadOrUpdateQuickSyncBackup('token',new Uint8Array([id.charCodeAt(0)]),null,{deviceId:id,syncRevisionId:id,parentTokens:parents});
+  const base=await upload('base');
+  // Both devices captured the same parent before either publication.
+  const [a,b]=await Promise.all([upload('A',[base.revisionToken]),upload('B',[base.revisionToken])]);
+  assert.equal(files.length,3);
+  assert.ok(payloads.has(a.id) && payloads.has(b.id));
+  const conflict=await realGetQuickSyncMetadata('token',a.id);
+  assert.equal(conflict.hasConcurrentRevisions,true);
+  assert.deepEqual(new Set(conflict.tipTokens),new Set([a.id,b.id]));
+  await upload('A',[base.revisionToken]);
+  assert.equal(files.length,3,'Retry reuses publication');
+  const resolved=await upload('resolve',conflict.tipTokens);
+  const latest=await realGetQuickSyncMetadata('token',base.id);
+  assert.equal(latest.id,resolved.id);
+  assert.equal((await realGetQuickSyncMetadata('token',a.id,true)).id,a.id,'Explicit restore keeps the chosen snapshot');
+  assert.equal(latest.hasConcurrentRevisions,false);
+  assert.ok(files.every(file=>file.appProperties.isQuickSync === undefined),'Legacy clients cannot discover immutable files');
+  assert.ok(!calls.includes('PATCH'),'No client overwrites any snapshot');
+  files.push({id:'legacy',name:'kaizen-finance-quick-sync.kfb',headRevisionId:'old-head',appProperties:{isQuickSync:'true'}});
+  const legacyConflict=await realGetQuickSyncMetadata('token');
+  assert.equal(legacyConflict.hasConcurrentRevisions,true);
+  await upload('legacy-resolution',legacyConflict.tipTokens);
+  assert.equal((await realGetQuickSyncMetadata('token')).hasConcurrentRevisions,false);
+  files.find(file=>file.id==='legacy').headRevisionId='changed-by-old-app';
+  assert.equal((await realGetQuickSyncMetadata('token')).hasConcurrentRevisions,true,'Old app updates produce a new branch');
+  assert.ok(payloads.has(a.id) && payloads.has(b.id),'Resolution retains both backups');
+});
+
+
+test('V2-02: competing publication retains dirty local state and cannot adopt self', async () => {
+  saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
+  saveQuickSyncConfig({enabled:true});
+  markQuickSyncLocalChangesPending();
+  const before=getQuickSyncDeviceMetadata();
+  mockUploadHandler=async()=>({id:'ours',modifiedTime:'2026-11-21T00:00:00Z',syncRevisionId:'ours',headRevisionId:'h',version:1,hasConcurrentRevisions:true,lastUpdatedByDeviceId:before.deviceId});
+  assert.equal(await triggerQuickSync(),false);
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+  assert.equal(getQuickSyncState().status,'remote_ahead');
+  assert.equal(getQuickSyncDeviceMetadata().lastKnownRemoteSyncId,before.lastKnownRemoteSyncId);
+});
+
+
+test('V2-02: explicit overwrite acknowledges the observed competing parents', async () => {
+  saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
+  saveQuickSyncConfig({enabled:true});
+  markQuickSyncLocalChangesPending();
+  mockGetRemoteMetadataHandler=async()=>({id:'A',modifiedTime:'2026-11-21T00:00:00Z',hasConcurrentRevisions:true,tipTokens:['A','B']});
+  mockUploadHandler=async(_token,_bytes,_file,properties)=>{
+    assert.deepEqual(properties.parentTokens,['A','B']);
+    return {id:'merge',syncRevisionId:properties.syncRevisionId,modifiedTime:'2026-11-21T01:00:00Z',headRevisionId:'merge-head',version:1};
+  };
+  assert.equal(await triggerQuickSync({forceOverwrite:true}),true);
+  assert.equal(getQuickSyncState().status,'synced');
+  assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,false);
+});
+
+
+test('V2-02: actual restore publishes the selected branch and preserves edits made during publication', async () => {
+  mockReplaceDatabaseHandler=async()=>{};
+  try {
+    saveOnboardingSettings({[ONBOARDING_SETTING_KEYS.status]:'completed',[ONBOARDING_SETTING_KEYS.workspaceMode]:'personal'});
+    saveQuickSyncConfig({enabled:true});
+    mockGetRemoteMetadataHandler=async(_token,id,exact)=>{
+      assert.equal(id,'selected'); assert.equal(exact,true);
+      return {id:'selected',hasConcurrentRevisions:true,tipTokens:['selected','other'],modifiedTime:'2026-11-21T00:00:00Z'};
+    };
+    mockFetchHandler=async()=>({ok:true,status:200,arrayBuffer:async()=>new Uint8Array([1]).buffer});
+    mockUploadHandler=async(_token,_bytes,_file,properties)=>{
+      assert.deepEqual(properties.parentTokens,['selected','other']);
+      const {isDatabaseReplacing}=require('@/infrastructure/database');
+      assert.equal(isDatabaseReplacing(),false,'Network publication must not suppress local writes');
+      markQuickSyncLocalChangesPending();
+      return {id:'resolved',syncRevisionId:properties.syncRevisionId,modifiedTime:'2026-11-21T01:00:00Z'};
+    };
+    await require('@/modules/google-drive-backup/services/restore-google-drive-backup.service').restoreQuickSyncBackup('selected');
+    assert.equal(getQuickSyncConfig().fileId,'resolved');
+    assert.equal(getQuickSyncDeviceMetadata().hasUnsyncedLocalChanges,true);
+    assert.equal(getQuickSyncState().status,'idle');
+  } finally {mockReplaceDatabaseHandler=null;}
 });
