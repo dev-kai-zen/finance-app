@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { appLockLifecycle } from "@/modules/security";
 import type { OneTapUser } from "react-native-nitro-google-signin";
 
 import type { GoogleDriveUser } from "@/modules/google-drive-backup/types/google-drive-backup.types";
@@ -44,19 +45,21 @@ export async function restoreGoogleDriveSession(): Promise<GoogleDriveUser | nul
 }
 
 export async function connectGoogleDrive(): Promise<GoogleDriveUser | null> {
-  const google = await getConfiguredGoogleModule();
-  await google.GoogleOneTapSignIn.checkPlayServices();
+  return appLockLifecycle.withLockSuspended(async () => {
+    const google = await getConfiguredGoogleModule();
+    await google.GoogleOneTapSignIn.checkPlayServices();
 
-  const response =
-    await google.GoogleOneTapSignIn.presentExplicitSignIn();
-  if (google.isCancelledResponse(response)) return null;
-  if (!google.isSuccessResponse(response)) {
-    throw new Error("Google sign-in could not be completed.");
-  }
+    const response =
+      await google.GoogleOneTapSignIn.presentExplicitSignIn();
+    if (google.isCancelledResponse(response)) return null;
+    if (!google.isSuccessResponse(response)) {
+      throw new Error("Google sign-in could not be completed.");
+    }
 
-  await ensureGoogleDriveScopes(google, response.data.scopes);
+    await ensureGoogleDriveScopes(google, response.data.scopes);
 
-  return toGoogleDriveUser(response.data.user);
+    return toGoogleDriveUser(response.data.user);
+  });
 }
 
 export async function disconnectGoogleDrive(): Promise<void> {

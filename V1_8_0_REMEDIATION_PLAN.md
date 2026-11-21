@@ -1056,7 +1056,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-10 — [MEDIUM — Security / Auth] `connectGoogleDrive()` Doesn't Suspend App Lock
+### [x] P2-10 — [MEDIUM — Security / Auth] `connectGoogleDrive()` Doesn't Suspend App Lock
+- **Status:** Implemented; native Android Google sign-in verification remains pending.
+- **Implementation:** Wrap the complete `connectGoogleDrive` flow in the existing public `appLockLifecycle.withLockSuspended` helper, covering module configuration, Play Services, account selection, and Drive scope consent. Its `finally` cleanup releases only this operation's suspension on success, cancellation, or failure, preserving nested suspensions and the existing grace/failsafe behavior.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 46 auth/security/quick-sync tests passed. Ten new tests execute the real auth and app-lock lifecycle services with mocked native sign-in: Android inactive/background/active transitions during all dialog stages, successful and already-authorized sign-in, cancellation, Play Services/sign-in/consent errors, permission denial, configuration errors, unexpected responses, nested suspension, and immediate locking on a subsequent normal background/resume. No Android device was connected.
+- **Performance:** O(1) suspension bookkeeping using the existing timer and counter, only when connecting. No added SQLite queries, React state updates, root subscriptions, mount/focus work, or synchronous JS work while native dialogs are pending.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test It in 20 Seconds):**
   1. Go to **Settings → Security**, enable **App Lock** with a password, and set **Auto-Lock Timeout** to **Immediate**.
