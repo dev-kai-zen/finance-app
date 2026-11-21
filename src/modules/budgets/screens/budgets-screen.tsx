@@ -111,6 +111,7 @@ function BudgetsScreenContent({
     loading,
     saving,
     error,
+    clearError,
     saveBudget,
     toggleBudget,
     deleteBudget,
@@ -123,7 +124,7 @@ function BudgetsScreenContent({
     try {
       await refresh();
     } finally {
-      setTimeout(() => setIsPullRefreshing(false), 500);
+      setIsPullRefreshing(false);
     }
   }, [refresh]);
 
@@ -569,7 +570,7 @@ function BudgetsScreenContent({
       {/* Notification Modal for error */}
       <NotificationModal
         message={error || ""}
-        onClose={() => {}}
+        onClose={clearError}
         title="Error"
         variant="error"
         visible={Boolean(error)}

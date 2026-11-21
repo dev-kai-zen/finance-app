@@ -823,6 +823,7 @@ Below are the exact step-by-step reproduction instructions (especially for items
 ---
 
 ### [x] P2-01 — [HIGH — Security] Setting a New App Lock Password Doesn't Activate Auto-Lock Until Force-Restart
+- **Status:** Resolved.
 - **Implementation:** Publish an in-memory config-change event after successful password setup/change, removal (including biometrics), biometric preference changes, and credential reset. `useAppLock` subscribes and refreshes its config, ignores stale asynchronous reads, and unsubscribes on unmount. The existing lifecycle service already checks current config on resume.
 - **Verification:** `npx tsc --noEmit` and all 16 security tests passed, including mounted-hook password setup followed by background/resume without restart, completed-write notifications, rejected operations, removal, stale reads, and unmount cleanup. Android device verification remains pending; no device was connected.
 - **Performance:** No added SQLite queries, polling, or navigation/focus subscriptions. Config changes trigger a fixed number of asynchronous secure-storage and biometric-capability reads per mounted lock hook; notification dispatch is linear only in the small number of subscribers.
@@ -845,6 +846,7 @@ Below are the exact step-by-step reproduction instructions (especially for items
 ---
 
 ### [x] P2-02 — [HIGH — Budgets] `BudgetLiveIndicator` & Save-Time `checkBudgetExceeded` Ignore All Subcategory Spending on Parent Budgets
+- **Status:** Resolved.
 - **Implementation:** The shared live/save snapshot fetches actual child categories through the categories public service instead of relying on the unpopulated `getCategory().subcategories`. Use an indexed parent-only lookup rather than loading the full category catalog; exclude children with their own enabled budgets, matching the existing budget calculator.
 - **Verification:** `npx tsc --noEmit`, all six real SQLite budget tests, and `git diff --check` passed. Tests confirm the 110% sibling-spending case, preview/save parity, enabled/paused child budgets, edit exclusions, splits, deleted/transfer/out-of-period rows, bounded query count, parent-index usage without a temporary sort, zero-query amount evaluation, and 500-ID lookup chunks. Android visual verification remains pending; no device was connected.
 - **Performance:** Adds one indexed child-category read plus one enabled-budget lookup per 500 children only when a snapshot is loaded or save-time validation runs. No full-category or ledger hydration, new focus queries, provider subscriptions, or per-keystroke SQL; amount evaluation remains O(1).
@@ -864,7 +866,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-03 — [HIGH — Budgets] Budgets Screen Stays Stale After Returning from "View Transactions" & Error Modal Cannot Be Dismissed
+### [x] P2-03 — [HIGH — Budgets] Budgets Screen Stays Stale After Returning from "View Transactions" & Error Modal Cannot Be Dismissed
+- **Status:** Implemented; Android navigation and device profiling remain pending.
+- **Implementation:** Replace mount-only and multi-stage loading with one focused, cancellable `runDeferredSyncQuery` pipeline. Subscribe to transaction mutations only while focused, coalesce pending refreshes, cancel on blur/unmount, and commit budgets, statuses, totals, and loading together. Expose `clearError` and wire the error modal close action; end pull-to-refresh when its request resolves.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all ten budget tests passed (six real SQLite calculation tests plus four hook lifecycle tests). Coverage includes refocus spending updates, focused mutation events, burst coalescing, cancellation, loading transitions, dismissible errors, empty results, category readiness, stable dates, and post-save refresh.
+- **Performance:** No duplicate mount/focus budget load or offscreen transaction listener. Reads and existing period/currency batched aggregates run after paint behind the native-driven page skeleton; summary currency reads also move out of render. Flattening remains O(C), status sorting O(B log B), and repeated events share one pending refresh.
 - **User Note:** *"I don't how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test It Right Now in 15 Seconds):**
   1. Go to **Budgets** (make sure you have at least 1 active budget, e.g. **Food & Dining** showing `₱1,000 / ₱5,000`).
