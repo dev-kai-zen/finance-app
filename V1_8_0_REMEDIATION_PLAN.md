@@ -246,7 +246,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-11 — Calendar: Permanent Loading Skeleton Deadlock on Rapid Month Toggle (`A → B → A`) & Unintended Month Jump on Padding Day Tap
+### [x] P1-11 — Calendar: Permanent Loading Skeleton Deadlock on Rapid Month Toggle (`A → B → A`) & Unintended Month Jump on Padding Day Tap (Implemented — Ready for User Verification)
 - **User Test Status & Observation:** *"I can't verify it properly but what I notice it jumps to different month"*
 - **Why You Noticed It Jumping to a Different Month & Why the Deadlock Is Hard to Hit Manually:**
   1. **Why it jumped months:** In `use-calendar-data.ts` (`toggleSelectDay`, line 584), tapping any leading/trailing padding day cell on the first or last row of the calendar grid (e.g. tapping Oct 30 or Dec 2 while viewing November) automatically switches `activeMonth` to that adjacent month!
@@ -271,7 +271,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-12 — Calendar Balance Sheet Tab: Flashes `₱0.00` / Previous Day's Data & Breaks Default Pocket Auto-Expansion
+### [x] P1-12 — Calendar Balance Sheet Tab: Flashes `₱0.00` / Previous Day's Data & Breaks Default Pocket Auto-Expansion (Implemented — Ready for User Verification)
 - **User Test Status:** *"I can't see it properly"*
 - **Why It Happens & How to Clearly Observe It:**
   - Two things happen on the **Calendar → Balance Sheet** tab:

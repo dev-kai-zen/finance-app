@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   Calendar as CalendarIcon,
@@ -65,6 +65,28 @@ export function CalendarBalanceSheetTab({
     }
     return set;
   });
+  const hasSeededDefaultPocketsRef = useRef(expandedPockets.size > 0);
+
+  useEffect(() => {
+    if (hasSeededDefaultPocketsRef.current) {
+      return;
+    }
+    const next = new Set<string>();
+    for (const group of [
+      ...balanceSheet.assets.accountTypes,
+      ...balanceSheet.liabilities.accountTypes,
+    ]) {
+      for (const acc of group.accounts) {
+        if (acc.pockets.length > 0) {
+          next.add(acc.id);
+        }
+      }
+    }
+    if (next.size > 0) {
+      hasSeededDefaultPocketsRef.current = true;
+      setExpandedPockets(next);
+    }
+  }, [balanceSheet.assets.accountTypes, balanceSheet.liabilities.accountTypes]);
 
   const togglePockets = (accountId: string) => {
     setExpandedPockets((prev) => {

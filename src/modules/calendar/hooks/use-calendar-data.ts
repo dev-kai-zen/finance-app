@@ -87,13 +87,14 @@ export function useCalendarData() {
     const key = `${activeMonth.year}-${String(activeMonth.month + 1).padStart(2, "0")}`;
 
     if (loadedMonthKeyRef.current === key) {
+      setIsMonthLoading(false);
       return;
     }
 
     setIsMonthLoading(true);
     let cancelled = false;
 
-    scheduleAfterPaint(() => {
+    const cancelPaint = scheduleAfterPaint(() => {
       if (cancelled) return;
 
       if (monthCacheRef.current.has(key)) {
@@ -113,13 +114,17 @@ export function useCalendarData() {
         setTransactions(fresh);
       } catch (err) {
         console.error("[useCalendarData] Failed to load month transactions:", err);
+        loadedMonthKeyRef.current = key;
       } finally {
-        setIsMonthLoading(false);
+        if (!cancelled) {
+          setIsMonthLoading(false);
+        }
       }
     });
 
     return () => {
       cancelled = true;
+      cancelPaint();
     };
   }, [activeMonth.year, activeMonth.month]);
 
@@ -391,31 +396,47 @@ export function useCalendarData() {
     liabilities: { totalMinorUnits: 0, accountTypes: [] },
     netWorthMinorUnits: 0,
   }));
+  const [isBalanceSheetLoading, setIsBalanceSheetLoading] = useState(false);
+  const loadedBalanceSheetKeyRef = useRef<string | null>(null);
+  const balanceSheetTargetKey = `${balanceSheetCutoffDate.getTime()}-${preferences.defaultCurrency}`;
+  const isBalanceSheetPending =
+    activeTab === "balance_sheet" &&
+    loadedBalanceSheetKeyRef.current !== balanceSheetTargetKey;
 
   useEffect(() => {
     if (activeTab !== "balance_sheet") {
+      setIsBalanceSheetLoading(false);
       return;
     }
 
     let cancelled = false;
-    scheduleAfterPaint(() => {
+    setIsBalanceSheetLoading(true);
+    const cancelPaint = scheduleAfterPaint(() => {
       if (cancelled) return;
       try {
         const fresh = getBalanceSheet(balanceSheetCutoffDate);
         if (!cancelled) {
+          loadedBalanceSheetKeyRef.current = balanceSheetTargetKey;
           setBalanceSheetData(fresh);
         }
       } catch (err) {
         console.error("[useCalendarData] Failed to compute balance sheet:", err);
+        loadedBalanceSheetKeyRef.current = balanceSheetTargetKey;
+      } finally {
+        if (!cancelled) {
+          setIsBalanceSheetLoading(false);
+        }
       }
     });
 
     return () => {
       cancelled = true;
+      cancelPaint();
     };
   }, [
     activeTab,
     balanceSheetCutoffDate,
+    balanceSheetTargetKey,
     transactions,
     accounts,
     pockets,
@@ -622,10 +643,15 @@ export function useCalendarData() {
   }, []);
 
   const selectTab = useCallback((tab: CalendarTab) => {
-    setActiveTab(tab);
-    setIsTabLoading(true);
-    scheduleAfterPaint(() => {
-      setIsTabLoading(false);
+    setActiveTab((prev) => {
+      if (prev === tab) {
+        return prev;
+      }
+      setIsTabLoading(true);
+      scheduleAfterPaint(() => {
+        setIsTabLoading(false);
+      });
+      return tab;
     });
   }, []);
 
@@ -634,7 +660,8 @@ export function useCalendarData() {
     selectedDay,
     activeTab,
     loading,
-    isTabLoading,
+    isTabLoading:
+      isTabLoading || isBalanceSheetPending || isBalanceSheetLoading,
     gridCells,
     scopedTransactions,
     scopedSchedules,
