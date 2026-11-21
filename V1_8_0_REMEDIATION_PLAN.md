@@ -891,7 +891,11 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-04 — [HIGH — Calendar & Dashboard] Split Transactions Broken in Calendar Net Tab & Dashboard Top Categories; Calendar Net Labels Subcategories `"Other"`
+### [x] P2-04 — [HIGH — Calendar & Dashboard] Split Transactions Broken in Calendar Net Tab & Dashboard Top Categories; Calendar Net Labels Subcategories `"Other"`
+- **Status:** Implemented; Android visual verification and release-build profiling remain pending.
+- **Implementation:** Calendar Net flattens the category tree and attributes hydrated `splitEntries` to their child categories without counting the parent. Dashboard uses the transactions public grouped-expense service for the month, summing ordinary expenses without entries plus split entries. Category metadata is fetched via a public categories service in chunks of at most 500 IDs; uncategorized legacy expenses retain their fallback.
+- **Verification:** `npx tsc --noEmit`, `git diff --check`, and all 15 focused tests passed. Three new real SQLite regressions verify Calendar/Dashboard totals and percentages, subcategory names/icons/colors, split parents, duplicate category entries, fees, deleted rows, transfers/income, month boundaries, tied times, mixed currencies, fixed statement counts with 1,000 rows, indexed split probes, indexed metadata lookups without temporary sorting, empty fast exits, and 500-ID metadata chunks. Twelve existing budget, dashboard, and calendar tests also passed. No Android device was connected.
+- **Performance:** Calendar adds no SQL and uses linear maps over scoped transactions, entries, and categories before sorting the resulting categories. Dashboard hydrates grouped category/currency totals instead of individual monthly ledger rows, using two period-filtered aggregate queries and bounded metadata batches. Existing tab gating and deferred dashboard loading remain in place; no new root subscriptions or duplicate focus loads.
 - **User Note:** *"I don't know how to test it"*
 - **Exact Step-by-Step Scenario (How You Can Test All 3 Symptoms in 30 Seconds):**
   1. **Symptom A (Subcategory shows as `"Other"` in Calendar Net tab):**

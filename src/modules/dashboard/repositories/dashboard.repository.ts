@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, categories, transactions } from "@/infrastructure/database/schema";
+import { accounts, transactions } from "@/infrastructure/database/schema";
+import { getCategoriesByIds } from "@/modules/categories";
 import { getAccountsWithBalances } from "@/modules/accounts";
 import {
   getCurrencyPreferences,
@@ -9,6 +10,7 @@ import {
 import {
   getAccountBalanceDeltasAtDates,
   getRecentTransactions,
+  getCategoryExpenseTotalsGrouped,
 } from "@/modules/transactions";
 import {
   convertCurrencyMinorUnits,
@@ -111,68 +113,30 @@ export function getCategorySpendingBreakdown(
   const startOfMonth = new Date(year, month, 1, 0, 0, 0, 0);
   const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-  const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY, context);
-  const homeCurrency = getCurrencyPreferences(context).defaultCurrency;
-
-  const txRows = context
-    .select({
-      transaction: transactions,
-      category: categories,
-      accountCurrencyCode: accounts.currencyCode,
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(
-      and(
-        eq(transactions.type, "expense"),
-        isNull(transactions.deletedAt),
-        gte(transactions.occurredAt, startOfMonth),
-        lte(transactions.occurredAt, endOfMonth),
-      ),
-    )
-    .all();
-
-  const spendingByCategory: Record<
-    string,
-    {
-      name: string;
-      color: string | null;
-      icon: string | null;
-      total: number;
-    }
-  > = {};
-
+  const totals = getCategoryExpenseTotalsGrouped(
+    { startDate: startOfMonth, endDate: endOfMonth },
+    context,
+  );
+  const categoryMap = new Map(
+    getCategoriesByIds(Object.keys(totals), context).map((category) => [category.id, category]),
+  );
+  const spendingByCategory: Record<string, {
+    name: string;
+    color: string | null;
+    icon: string | null;
+    total: number;
+  }> = {};
   let overallExpense = 0;
-
-  for (const { transaction: tx, category: cat, accountCurrencyCode } of txRows) {
-    const catId = cat?.id ?? "uncategorized";
-    const catName = cat?.name ?? "Uncategorized";
-    const catColor = cat?.hexColorsId
-      ? cat.hexColorsId.startsWith("color_")
-        ? cat.hexColorsId.replace("color_", "")
-        : cat.hexColorsId
-      : "slate";
-    const catIcon = cat?.icon ?? "tag";
-
-    if (!spendingByCategory[catId]) {
-      spendingByCategory[catId] = {
-        name: catName,
-        color: catColor,
-        icon: catIcon,
-        total: 0,
-      };
-    }
-
-    const expenseMagnitude = convertCurrencyMinorUnits(
-      Math.abs(tx.amountMinorUnits),
-      accountCurrencyCode ?? DEFAULT_BASE_CURRENCY,
-      homeCurrency,
-      ratesMap,
-      DEFAULT_BASE_CURRENCY,
-    );
-    spendingByCategory[catId].total += expenseMagnitude;
-    overallExpense += expenseMagnitude;
+  for (const [id, total] of Object.entries(totals)) {
+    const category = categoryMap.get(id);
+    const color = category?.hexColorsId;
+    spendingByCategory[id] = {
+      name: category?.name ?? "Uncategorized",
+      color: color ? color.startsWith("color_") ? color.replace("color_", "") : color : "slate",
+      icon: category?.icon ?? "tag",
+      total,
+    };
+    overallExpense += total;
   }
 
   const items: CategorySpendingItem[] = Object.entries(spendingByCategory).map(

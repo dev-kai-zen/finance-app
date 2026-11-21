@@ -1,6 +1,7 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
   findCategoryById,
+  findCategoriesByIds,
   findChildCategories,
 } from "../repositories/categories.repository";
 
@@ -19,4 +20,9 @@ export function getCategory(id: string, context: DbContext = db) {
 /** Returns the direct children used when applying a parent category's rules. */
 export function getCategoryChildren(parentId: string, context: DbContext = db) {
   return findChildCategories(parentId, context);
+}
+
+/** Resolves category metadata for reports without loading unrelated categories. */
+export function getCategoriesByIds(ids: string[], context: DbContext = db) {
+  return findCategoriesByIds(ids, context);
 }

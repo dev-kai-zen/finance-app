@@ -153,6 +153,20 @@ export function listCategoriesSync(
   return parentCategories;
 }
 
+export function findCategoriesByIds(ids: string[], context: DbContext): Category[] {
+  const result: Category[] = [];
+  for (let offset = 0; offset < ids.length; offset += 500) {
+    const rows = context
+      .select({ category: categories, hexColor: hexColors })
+      .from(categories)
+      .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
+      .where(inArray(categories.id, ids.slice(offset, offset + 500)))
+      .all();
+    for (const { category, hexColor } of rows) result.push(mapCategory(category, hexColor));
+  }
+  return result;
+}
+
 export function findChildCategories(parentId: string, context: DbContext): Category[] {
   return context
     .select({ category: categories, hexColor: hexColors })

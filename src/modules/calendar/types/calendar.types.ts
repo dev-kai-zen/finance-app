@@ -42,3 +42,12 @@ export interface CalendarSummaryMetrics {
   balanceSheetLiabilitiesMinorUnits?: number;
   balanceSheetNetWorthMinorUnits?: number;
 }
+
+export interface CategoryExpenseBreakdown {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  totalMinorUnits: number;
+  percentage: number;
+}

@@ -19,12 +19,14 @@ import {
   getCalendarMonthTransactions,
   type TransactionListItem,
 } from "@/modules/transactions";
+import { buildCategoryExpenseBreakdown } from "../utils/category-expense-breakdown";
 import { scheduleAfterPaint } from "@/utils/schedule-after-paint";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
 import type {
+  CategoryExpenseBreakdown,
   CalendarDayCellData,
   CalendarMonth,
   CalendarSummaryMetrics,
@@ -39,14 +41,7 @@ import {
   parseDateKey,
 } from "../utils/calendar-dates";
 
-export interface CategoryExpenseBreakdown {
-  id: string;
-  name: string;
-  icon: string | null;
-  color: string | null;
-  totalMinorUnits: number;
-  percentage: number;
-}
+export type { CategoryExpenseBreakdown } from "../types/calendar.types";
 
 export function useCalendarData() {
   const todayParts = useMemo(() => getTodayParts(), []);
@@ -564,42 +559,7 @@ export function useCalendarData() {
       return [];
     }
 
-    const categoryTotals = new Map<string, number>();
-    let totalExpenseInScope = 0;
-
-    for (const tx of scopedTransactions) {
-      if (tx.type === "expense" && tx.categoryId) {
-        const amt = Math.abs(
-          convertToDefaultCurrency(tx.amountMinorUnits, tx.accountCurrency),
-        );
-        const current = categoryTotals.get(tx.categoryId) ?? 0;
-        categoryTotals.set(tx.categoryId, current + amt);
-        totalExpenseInScope += amt;
-      }
-    }
-
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
-    const result: CategoryExpenseBreakdown[] = [];
-
-    for (const [catId, total] of categoryTotals.entries()) {
-      const cat = categoryMap.get(catId);
-      const percentage =
-        totalExpenseInScope > 0
-          ? Math.round((total / totalExpenseInScope) * 100)
-          : 0;
-
-      result.push({
-        id: catId,
-        name: cat?.name ?? "Other",
-        icon: cat?.icon ?? null,
-        color: cat?.color ?? null,
-        totalMinorUnits: total,
-        percentage,
-      });
-    }
-
-    result.sort((a, b) => b.totalMinorUnits - a.totalMinorUnits);
-    return result;
+    return buildCategoryExpenseBreakdown(scopedTransactions, categories, convertToDefaultCurrency);
   }, [activeTab, scopedTransactions, categories, convertToDefaultCurrency]);
 
   // Navigation handlers

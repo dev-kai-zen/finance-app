@@ -156,19 +156,19 @@ export function listSplitEntryBreakdownRows(
 
 export function listExpenseEntryTotalsByCategory(
   query: {
-    categoryIds: string[];
+    categoryIds?: string[];
     startDate: Date;
     endDate: Date;
     excludeTransactionId?: string | null;
   },
   context: DbContext = db,
 ): { categoryId: string; currencyCode: string; total: number }[] {
-  if (!query.categoryIds.length) {
+  if (query.categoryIds && !query.categoryIds.length) {
     return [];
   }
 
   const conditions = [
-    inArray(transactionEntries.categoryId, query.categoryIds),
+    query.categoryIds ? inArray(transactionEntries.categoryId, query.categoryIds) : undefined,
     isNull(transactions.deletedAt),
     eq(transactions.type, "expense"),
     gte(transactions.occurredAt, query.startDate),

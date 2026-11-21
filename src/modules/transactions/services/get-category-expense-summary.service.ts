@@ -109,14 +109,15 @@ export function getCategoryExpenseTotal(
  */
 export function getCategoryExpenseTotalsGrouped(
   query: {
-    categoryIds: string[];
+    /** Omit to aggregate all categories within the required date window. */
+    categoryIds?: string[];
     startDate: Date;
     endDate: Date;
     targetCurrencyCode?: string;
   },
   context: DbContext = db,
 ): Record<string, number> {
-  if (!query.categoryIds.length) {
+  if (query.categoryIds && !query.categoryIds.length) {
     return {};
   }
 
@@ -139,7 +140,7 @@ export function getCategoryExpenseTotalsGrouped(
       and(
         isNull(transactions.deletedAt),
         eq(transactions.type, "expense"),
-        inArray(transactions.categoryId, query.categoryIds),
+        query.categoryIds ? inArray(transactions.categoryId, query.categoryIds) : undefined,
         gte(transactions.occurredAt, query.startDate),
         lte(transactions.occurredAt, query.endDate),
         notExists(
@@ -165,15 +166,15 @@ export function getCategoryExpenseTotalsGrouped(
   const bucketsByCategory = new Map<string, ReturnType<typeof createCurrencyMinorUnitsBucket>>();
 
   for (const row of rows) {
-    if (!row.categoryId) continue;
+    const categoryId = row.categoryId ?? "uncategorized";
     const buckets =
-      bucketsByCategory.get(row.categoryId) ?? createCurrencyMinorUnitsBucket();
+      bucketsByCategory.get(categoryId) ?? createCurrencyMinorUnitsBucket();
     addToCurrencyMinorUnitsBucket(
       buckets,
       row.currencyCode,
       Math.abs(Number(row.total) || 0),
     );
-    bucketsByCategory.set(row.categoryId, buckets);
+    bucketsByCategory.set(categoryId, buckets);
   }
 
   for (const row of splitRows) {
