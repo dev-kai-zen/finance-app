@@ -761,6 +761,7 @@ Use this document as our living checklist as we fix and verify each finding one 
 ---
 
 ### [x] P1-35 — Ads / Layout: `AnchoredAdDock` Causes Layout Jump on Every Tab Focus & Renders Behind/Under Active Keyboard on Search Screens
+- **Status:** Resolved.
 - **Implementation:** Preserve loaded state and the last nonzero measured banner height across blur/focus. Collapse and unmount the banner while the keyboard is open; reconcile keyboard visibility on focus and remove listeners on blur. Keep failure and Pro collapse behavior.
 - **Verification:** TypeScript and focused lifecycle checks passed (height retention, keyboard hide/restore, failure, Pro, listener cleanup). Android device verification remains pending; no device was connected.
 - **Performance:** Constant-time local state updates, no added database queries, focused keyboard listeners only; native ad views remain deferred and unmount offscreen or while typing.
@@ -794,7 +795,11 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-36 — Widgets: `WidgetSyncProcessor` Omits `budget_monthly_targets`, Leaving Monthly Budget Widget Stale on Monthly Override Edit
+### [x] P1-36 — Widgets: `WidgetSyncProcessor` Omits `budget_monthly_targets`, Leaving Monthly Budget Widget Stale on Monthly Override Edit
+- **Status:** Implemented; Android home-screen verification pending.
+- **Verification:** `npx tsc --noEmit`, all 12 widget tests, and `git diff --check` passed. A focused processor execution check confirmed monthly-target refreshes, burst coalescing, settings/unrelated-table exclusion, and pending-work cancellation on unmount. No Android device was connected.
+- **Implementation:** Add `budget_monthly_targets` to `SYNCED_TABLES` so monthly override changes trigger the existing debounced widget refresh. Keep `settings` excluded to prevent snapshot self-invalidation.
+- **Performance:** O(1) event filtering; no new mount/focus queries. Override changes reuse the existing one-second debounce and installed-widget gate before snapshot queries.
 - **User Test Status:** Unverified in first pass
 - **Files:**
   - `src/modules/widgets/components/widget-sync-processor.tsx`

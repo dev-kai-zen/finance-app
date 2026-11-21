@@ -42,6 +42,7 @@ export const RELEASE_NOTES: ReleaseNoteBlock[] = [
           "versionHistory.v180.fixItem7",
           "versionHistory.v180.fixItem8",
           "versionHistory.v180.fixItem9",
+          "versionHistory.v180.fixItem10",
         ],
       },
     ],

@@ -1260,6 +1260,8 @@ export const fil = {
         "Pahusayin ang katatagan ng memorya at pigilan ang biglaang pagsara ng app kapag nag-reset ng data matapos ang maraming transaksyon.",
       fixItem9:
         "Ayusin ang pagtalon ng mga buton kapag lumilipat ng screen at itago ang mga ad habang bukas ang keyboard.",
+      fixItem10:
+        "Ayusin ang lumang target sa Monthly Budget widget matapos baguhin ang target para sa isang buwan.",
     },
     v170: {
       date: "Nobyembre 18, 2026",

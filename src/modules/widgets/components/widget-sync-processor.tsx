@@ -16,6 +16,7 @@ const SYNCED_TABLES = new Set([
   "accounts",
   "categories",
   "category_budgets",
+  "budget_monthly_targets",
   "exchange_rates",
 ]);
 

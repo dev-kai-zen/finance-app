@@ -1246,6 +1246,8 @@ export const es = {
         "Mejora la estabilidad de memoria y evita cierres inesperados al restablecer datos tras registrar muchas transacciones.",
       fixItem9:
         "Evita saltos de botones al cambiar de pantalla y oculta los anuncios mientras el teclado está abierto.",
+      fixItem10:
+        "Corrige el objetivo desactualizado del widget de presupuesto al cambiar el objetivo de un mes específico.",
     },
     v170: {
       date: "18 de noviembre de 2026",
