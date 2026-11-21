@@ -844,7 +844,10 @@ Below are the exact step-by-step reproduction instructions (especially for items
 
 ---
 
-### [ ] P2-02 — [HIGH — Budgets] `BudgetLiveIndicator` & Save-Time `checkBudgetExceeded` Ignore All Subcategory Spending on Parent Budgets
+### [x] P2-02 — [HIGH — Budgets] `BudgetLiveIndicator` & Save-Time `checkBudgetExceeded` Ignore All Subcategory Spending on Parent Budgets
+- **Implementation:** The shared live/save snapshot fetches actual child categories through the categories public service instead of relying on the unpopulated `getCategory().subcategories`. Use an indexed parent-only lookup rather than loading the full category catalog; exclude children with their own enabled budgets, matching the existing budget calculator.
+- **Verification:** `npx tsc --noEmit`, all six real SQLite budget tests, and `git diff --check` passed. Tests confirm the 110% sibling-spending case, preview/save parity, enabled/paused child budgets, edit exclusions, splits, deleted/transfer/out-of-period rows, bounded query count, parent-index usage without a temporary sort, zero-query amount evaluation, and 500-ID lookup chunks. Android visual verification remains pending; no device was connected.
+- **Performance:** Adds one indexed child-category read plus one enabled-budget lookup per 500 children only when a snapshot is loaded or save-time validation runs. No full-category or ledger hydration, new focus queries, provider subscriptions, or per-keystroke SQL; amount evaluation remains O(1).
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/budgets/services/check-budget-exceeded.service.ts`

@@ -93,6 +93,27 @@ export function listCategoryBudgetsSync(
   );
 }
 
+export function findEnabledBudgetCategoryIds(
+  categoryIds: string[],
+  context: DbContext = db,
+): Set<string> {
+  const ids = new Set<string>();
+  for (let offset = 0; offset < categoryIds.length; offset += 500) {
+    const rows = context
+      .select({ categoryId: categoryBudgets.categoryId })
+      .from(categoryBudgets)
+      .where(
+        and(
+          eq(categoryBudgets.isEnabled, true),
+          inArray(categoryBudgets.categoryId, categoryIds.slice(offset, offset + 500)),
+        ),
+      )
+      .all();
+    for (const row of rows) ids.add(row.categoryId);
+  }
+  return ids;
+}
+
 export function findCategoryBudgetByCategoryId(
   categoryId: string,
   context: DbContext = db,

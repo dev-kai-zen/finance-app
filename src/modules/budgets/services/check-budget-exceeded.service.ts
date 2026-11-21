@@ -1,11 +1,14 @@
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { getCategory } from "@/modules/categories";
+import { getCategory, getCategoryChildren } from "@/modules/categories";
 import { getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
-import { findCategoryBudgetByCategoryId } from "../repositories/category-budgets.repository";
+import {
+  findCategoryBudgetByCategoryId,
+  findEnabledBudgetCategoryIds,
+} from "../repositories/category-budgets.repository";
 import type { BudgetCheckResult } from "../types/budget.types";
 import { calculateCategoryBudgetStatus } from "./calculate-category-budget.service";
 
@@ -41,7 +44,7 @@ export interface BudgetLiveSnapshot {
 const EMPTY_RATES = new Map<string, number>();
 
 /**
- * Queries SQLite once for the active budget and period spend baseline for a
+ * Loads the active budget and period spending baseline from SQLite for a
  * category/date/currency. Pair with `evaluateBudgetSnapshot` so live typing
  * previews run in O(1) JS without re-querying SQLite on every keystroke.
  */
@@ -105,10 +108,17 @@ export function getBudgetLiveSnapshot(
     };
   }
 
+  const childCategories = getCategoryChildren(budgetedCategory.id, context);
+  const activeBudgetCategoryIds = findEnabledBudgetCategoryIds(
+    childCategories.map((child) => child.id),
+    context,
+  );
+
   const status = calculateCategoryBudgetStatus({
     budget,
     category: budgetedCategory,
-    childCategories: budgetedCategory.subcategories || [],
+    childCategories,
+    activeBudgetCategoryIds,
     referenceDate: occurredAt,
     excludeTransactionId,
     context,

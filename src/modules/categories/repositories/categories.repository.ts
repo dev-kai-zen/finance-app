@@ -153,6 +153,16 @@ export function listCategoriesSync(
   return parentCategories;
 }
 
+export function findChildCategories(parentId: string, context: DbContext): Category[] {
+  return context
+    .select({ category: categories, hexColor: hexColors })
+    .from(categories)
+    .leftJoin(hexColors, eq(categories.hexColorsId, hexColors.id))
+    .where(eq(categories.parentId, parentId))
+    .all()
+    .map(({ category, hexColor }) => mapCategory(category, hexColor));
+}
+
 export function findCategoryById(
   id: string,
   context: DbContext,

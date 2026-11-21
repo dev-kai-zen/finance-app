@@ -41,6 +41,10 @@ export const getCategory = deferFunction(
   () => require("./services/category-rules").getCategory,
 ) as typeof import("./services/category-rules").getCategory;
 
+export const getCategoryChildren = deferFunction(
+  () => require("./services/category-rules").getCategoryChildren,
+) as typeof import("./services/category-rules").getCategoryChildren;
+
 export const clearCustomWorkspaceCategories = deferFunction(
   () =>
     require("./services/prepare-workspace-categories.service")

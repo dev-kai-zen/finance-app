@@ -9,6 +9,7 @@ const { DatabaseSync } = require("node:sqlite");
 const root = path.resolve(__dirname, "../../..");
 let sqlite;
 let database;
+let queries = [];
 
 const originalResolve = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, ...rest) {
@@ -131,6 +132,7 @@ const {
 } = require("../services/calculate-category-budget.service");
 
 function setupTestDb() {
+  queries = [];
   sqlite = new DatabaseSync(":memory:");
   sqlite.exec("PRAGMA foreign_keys = ON;");
 
@@ -149,6 +151,7 @@ function setupTestDb() {
   database = drizzle(
     {
       prepareSync(query) {
+        queries.push(query);
         return {
           executeSync(params) {
             const stmt = sqlite.prepare(query);
@@ -274,4 +277,109 @@ test("budgets (P1-13): toggling a budget OFF preserves its displayed spentCents 
   assert.equal(summary.activeCount, 0);
   assert.equal(summary.totalBudgetedCents, 0);
   assert.equal(summary.totalSpentCents, 0);
+});
+
+
+const {
+  getBudgetLiveSnapshot,
+  evaluateBudgetSnapshot,
+  checkBudgetExceeded,
+} = require("../services/check-budget-exceeded.service");
+
+function setupParentBudget() {
+  const db = setupTestDb();
+  const date = new Date(2026, 10, 15, 12);
+  const time = date.getTime();
+  sqlite.prepare("UPDATE categories SET parent_id = ? WHERE id = ?").run("cat_dining", "cat_groceries");
+  sqlite.prepare("INSERT INTO categories (id, name, type, parent_id, created_at, updated_at) VALUES (?, ?, 'expense', ?, ?, ?)")
+    .run("cat_restaurants", "Restaurants", "cat_dining", time, time);
+  sqlite.prepare("INSERT INTO category_budgets (id, category_id, amount_minor_units, currency_code, start_date, created_at, updated_at) VALUES (?, ?, ?, 'PHP', ?, ?, ?)")
+    .run("b_parent", "cat_dining", 500000, new Date(2026, 10, 1).getTime(), time, time);
+  function expense(id, categoryId, amount, occurredAt = time, type = "expense") {
+    sqlite.prepare("INSERT INTO transactions (id, account_id, category_id, type, amount_minor_units, occurred_at, created_at, updated_at) VALUES (?, 'acc_1', ?, ?, ?, ?, ?, ?)")
+      .run(id, categoryId, type, -amount, occurredAt, occurredAt, occurredAt);
+  }
+  expense("groceries", "cat_groceries", 450000);
+  return { db, date, time, expense };
+}
+
+test("budgets (P2-02): sibling spending counts in parent live preview and save warning", () => {
+  const { db, date } = setupParentBudget();
+  const input = { categoryId: "cat_restaurants", occurredAt: date, context: db };
+  const snapshot = getBudgetLiveSnapshot(input);
+  const queryCount = queries.length;
+  const preview = evaluateBudgetSnapshot(snapshot, 100000);
+  assert.equal(preview.currentSpentCents, 450000);
+  assert.equal(preview.newSpentCents, 550000);
+  assert.equal(preview.effectiveBudgetCents, 500000);
+  assert.equal(preview.remainingAfterCents, -50000);
+  assert.equal(preview.exceededByCents, 50000);
+  assert.equal(preview.exceeds, true);
+  assert.equal(preview.notifyOnExceeded, true);
+  assert.equal(Math.round(preview.newSpentCents / preview.effectiveBudgetCents * 100), 110);
+  for (let amount = 0; amount < 100000; amount += 1000) evaluateBudgetSnapshot(snapshot, amount);
+  assert.equal(queries.length, queryCount, "Typing performs zero SQL queries");
+  assert.deepEqual(checkBudgetExceeded({ ...input, amountMinorUnits: 100000 }), preview);
+  assert.equal(getBudgetsSummary(date, db).totalSpentCents, preview.currentSpentCents);
+  queries = [];
+  getBudgetLiveSnapshot(input);
+  assert.ok(queries.length <= 12, "Fixed snapshot query bound: " + queries.length);
+  const childrenQuery = queries.find(query => query.includes('where "categories"."parent_id" = ?'));
+  assert.ok(childrenQuery, "Children are filtered in SQLite");
+  const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + childrenQuery).all("cat_dining");
+  assert.ok(plan.some(row => row.detail.includes("categories_parent_id_index")));
+  assert.ok(plan.every(row => !row.detail.includes("TEMP B-TREE")));
+});
+
+test("budgets (P2-02): child budgets override parent budgets and paused children fall back", () => {
+  const { db, date, time } = setupParentBudget();
+  sqlite.prepare("INSERT INTO category_budgets (id, category_id, amount_minor_units, currency_code, start_date, created_at, updated_at) VALUES (?, ?, ?, 'PHP', ?, ?, ?)")
+    .run("b_child", "cat_groceries", 600000, time, time, time);
+  const parent = getBudgetLiveSnapshot({ categoryId: "cat_restaurants", occurredAt: date, context: db });
+  assert.equal(parent.currentSpentCents, 0, "Separately budgeted siblings do not consume parent budget");
+  const child = getBudgetLiveSnapshot({ categoryId: "cat_groceries", occurredAt: date, context: db });
+  assert.equal(child.effectiveBudgetCents, 600000);
+  assert.equal(child.currentSpentCents, 450000);
+  sqlite.exec("UPDATE category_budgets SET is_enabled = 0 WHERE id = 'b_child'");
+  const fallback = getBudgetLiveSnapshot({ categoryId: "cat_groceries", occurredAt: date, context: db });
+  assert.equal(fallback.effectiveBudgetCents, 500000);
+  assert.equal(fallback.currentSpentCents, 450000);
+  assert.equal(fallback.currentSpentCents, getBudgetsSummary(date, db).totalSpentCents);
+  const edit = getBudgetLiveSnapshot({ categoryId: "cat_restaurants", occurredAt: date, excludeTransactionId: "groceries", context: db });
+  assert.equal(edit.currentSpentCents, 0);
+});
+
+test("budgets (P2-02): parent spending includes direct expenses and splits, excluding deleted, transfer and old rows", () => {
+  const { db, date, time, expense } = setupParentBudget();
+  expense("fee", "cat_dining", 1000);
+  expense("split", "cat_dining", 10000);
+  const insertEntry = sqlite.prepare("INSERT INTO transaction_entries (id, transaction_id, category_id, amount_minor_units, created_at, updated_at) VALUES (?, 'split', ?, ?, ?, ?)");
+  insertEntry.run("entry_a", "cat_groceries", 4000, time, time);
+  insertEntry.run("entry_b", "cat_restaurants", 6000, time, time);
+  expense("deleted", "cat_groceries", 100000);
+  sqlite.prepare("UPDATE transactions SET deleted_at = ? WHERE id = 'deleted'").run(time);
+  expense("transfer", "cat_groceries", 100000, time, "transfer");
+  expense("old", "cat_groceries", 100000, new Date(2026, 9, 15).getTime());
+  const snapshot = getBudgetLiveSnapshot({ categoryId: "cat_dining", occurredAt: date, context: db });
+  assert.equal(snapshot.currentSpentCents, 461000);
+  assert.equal(snapshot.currentSpentCents, getBudgetsSummary(date, db).totalSpentCents);
+  const edit = getBudgetLiveSnapshot({ categoryId: "cat_restaurants", occurredAt: date, excludeTransactionId: "split", context: db });
+  assert.equal(edit.currentSpentCents, 451000);
+});
+
+test("budgets (P2-02): missing budgets skip child reads; enabled-budget lookups chunk IDs", () => {
+  const { db, date } = setupParentBudget();
+  sqlite.exec("UPDATE category_budgets SET is_enabled = 0");
+  queries = [];
+  assert.equal(getBudgetLiveSnapshot({ categoryId: "cat_restaurants", occurredAt: date, context: db }).hasBudget, false);
+  assert.ok(queries.every(query => !query.includes('where "categories"."parent_id"')));
+  const { findEnabledBudgetCategoryIds } = require("../repositories/category-budgets.repository");
+  queries = [];
+  assert.equal(findEnabledBudgetCategoryIds([], db).size, 0);
+  assert.equal(queries.length, 0);
+  sqlite.exec("UPDATE category_budgets SET is_enabled = 1");
+  const ids = Array.from({ length: 1000 }, (_, i) => "missing_" + i).concat("cat_dining");
+  assert.deepEqual([...findEnabledBudgetCategoryIds(ids, db)], ["cat_dining"]);
+  assert.equal(queries.length, 3);
+  assert.ok(queries.every(query => (query.match(/\?/g) || []).length <= 501));
 });
