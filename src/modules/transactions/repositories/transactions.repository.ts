@@ -1420,18 +1420,13 @@ export function listDeletedTransactions(
     return [];
   }
 
-  const balanceAfterByTransactionId = getBalanceAfterByTransactionId(
-    null,
-    context,
-  );
-  const pocketBalanceAfterByTransactionId =
-    getPocketBalanceAfterByTransactionId(null, context);
+  // Deleted rows have no active-ledger balance; avoid scanning the active ledger.
+  const balanceAfterByTransactionId = new Map<string, number>();
+  const pocketBalanceAfterByTransactionId = new Map<string, number>();
+  const transactionIds = rows.map((row) => row.transaction.id);
   const attachmentCountByTransactionId =
-    getAttachmentCountByTransactionId(context);
-  const labelsByTransactionId = getLabelsByTransactionIds(
-    rows.map((row) => row.transaction.id),
-    context,
-  );
+    getAttachmentCountByTransactionId(context, transactionIds);
+  const labelsByTransactionId = getLabelsByTransactionIds(transactionIds, context);
   return applySplitListMetadata(
     groupTransferRows(
       rows.map((row) =>

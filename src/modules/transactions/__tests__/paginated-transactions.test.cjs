@@ -10,6 +10,7 @@ const root = path.resolve(__dirname, "../../..");
 let sqlite;
 let database;
 let statements = 0;
+let queries = [];
 
 const originalResolve = Module._resolveFilename;
 Module._resolveFilename = function (request, parent, ...rest) {
@@ -132,6 +133,7 @@ const schema = require("@/infrastructure/database/schema");
 const {
   listTransactions,
   listTransactionsPage,
+  listDeletedTransactions,
   listAllFilteredTransactions,
   findTransactionListItemById,
 } = require("../repositories/transactions.repository");
@@ -160,8 +162,11 @@ function connectAndMigrate() {
     },
     prepareSync(query) {
       statements += 1;
+      const trace = { sql: query, params: [] };
+      queries.push(trace);
       return {
         executeSync(params = []) {
+          trace.params = params;
           const stmt = sqlite.prepare(query);
           if (
             /^\s*(select|pragma|with)\b/i.test(query) ||
@@ -180,6 +185,7 @@ function connectAndMigrate() {
           };
         },
         executeForRawResultSync(params = []) {
+          trace.params = params;
           const stmt = sqlite.prepare(aliasSelectColumns(query));
           const rows = stmt.all(...params);
           return {
@@ -682,4 +688,80 @@ test("P1-26: buildTransactionSections keeps amount-sorted feeds flat across page
   // Empty list returns []
   assert.deepEqual(buildTransactionSections([], "amount", "PHP"), []);
   assert.deepEqual(buildTransactionSections([], "date", "PHP"), []);
+});
+
+
+test("P3-03: empty Trash executes only its row query", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    sqlite.exec("UPDATE transactions SET deleted_at = NULL");
+    queries = [];
+    assert.deepEqual(listDeletedTransactions(database), []);
+    assert.equal(queries.length, 1);
+  } finally { sqlite.close(); }
+});
+
+test("P3-03: Trash preserves transfer/fee/split metadata without active-ledger reads as the ledger grows", () => {
+  connectAndMigrate();
+  try {
+    const { baseTime } = seedMixedLedger();
+    sqlite.prepare("UPDATE transactions SET deleted_at = ? WHERE id IN ('tx_tr_out', 'tx_tr_in', 'tx_tr_fee', 'tx_split', 'tx_orphan_tr', 'tx_02a')").run(baseTime + 10000);
+    sqlite.exec("UPDATE transaction_attachments SET transaction_id = 'tx_tr_out' WHERE id = 'att_del'");
+    queries = [];
+    const before = listDeletedTransactions(database);
+    const countBefore = queries.length;
+    assert.equal(before.length, 6);
+    const transfer = before.find(item => item.id === "tx_tr_out");
+    assert.equal(transfer.transferAccountId, "acc_save");
+    assert.equal(transfer.transferPocketId, "poc_emerg");
+    assert.equal(transfer.transferFeeAccountId, "acc_card");
+    assert.equal(transfer.transferFeeAmountMinorUnits, 25);
+    assert.equal(transfer.amountMinorUnits, 15000);
+    assert.equal(transfer.attachmentCount, 2, "Both transfer legs count; deleted attachments do not");
+    assert.equal(transfer.labels[0].name, "Work Trip");
+    const split = before.find(item => item.id === "tx_split");
+    assert.equal(split.isSplit, true);
+    assert.deepEqual(split.splitEntries.map(entry => entry.amountMinorUnits), [2500, 1000]);
+    assert.equal(before.find(item => item.id === "tx_02a").labels[0].name, "50% Promo");
+    assert.ok(before.some(item => item.id === "tx_orphan_tr"));
+    for (const item of before) {
+      assert.ok(item.deletedAt);
+      for (const field of ["accountBalanceAfterMinorUnits", "locationBalanceAfterMinorUnits", "destinationBalanceAfterMinorUnits", "destinationLocationBalanceAfterMinorUnits"]) assert.equal(item[field], null);
+    }
+
+    // Leave Trash fixed while adding a large active ledger and unrelated attachments.
+    sqlite.exec(`WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<10000)
+      INSERT INTO transactions (id, account_id, pocket_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at)
+      SELECT 'active_'||x, 'acc_main', 'poc_travel', 'expense', 'PHP', -100, 'Active row', x, x, x FROM n`);
+    sqlite.exec(`INSERT INTO transaction_attachments (id, transaction_id, original_name, storage_key, mime_type, size_bytes, sha256, sync_status, created_at, updated_at)
+      SELECT 'att_'||id, id, 'receipt.jpg', id, 'image/jpeg', 1, id, 'synced', 1, 1 FROM transactions WHERE id LIKE 'active_%'`);
+    queries = [];
+    assert.deepEqual(listDeletedTransactions(database), before, "Every returned field must remain unchanged");
+    assert.equal(queries.length, countBefore);
+    assert.equal(queries.length, 4, "Only Trash rows and scoped attachments, labels, and splits are queried");
+    assert.ok(queries.every(query => !query.sql.includes('"transactions"."deleted_at" is null')));
+    const attachmentQuery = queries.find(query => query.sql.includes('from "transaction_attachments"'));
+    assert.ok(attachmentQuery.sql.includes('"transaction_attachments"."transaction_id" in'));
+    assert.ok(attachmentQuery.params.every(id => !id.startsWith('active_')));
+    const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + attachmentQuery.sql).all(...attachmentQuery.params);
+    assert.ok(plan.some(row => row.detail.includes("transaction_attachments_transaction_index")));
+    assert.ok(plan.every(row => !row.detail.includes("TEMP B-TREE")));
+  } finally { sqlite.close(); }
+});
+
+test("P3-03: large Trash hydrates metadata in batches of at most 500 IDs", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    sqlite.exec(`WITH RECURSIVE n(x) AS (VALUES(1) UNION ALL SELECT x+1 FROM n WHERE x<1001)
+      INSERT INTO transactions (id, account_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at, deleted_at)
+      SELECT 'trash_'||x, 'acc_main', 'expense', 'PHP', -1, 'Deleted', 1, 1, 1, 2 FROM n`);
+    queries = [];
+    const rows = listDeletedTransactions(database);
+    assert.equal(rows.length, 1002);
+    assert.ok(queries.every(query => query.params.length <= 500));
+    assert.equal(queries.filter(query => query.sql.includes('from "transaction_attachments"')).length, 3);
+    assert.ok(queries.every(query => !query.sql.includes('"transactions"."deleted_at" is null')));
+  } finally { sqlite.close(); }
 });

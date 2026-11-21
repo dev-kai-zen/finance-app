@@ -1141,7 +1141,7 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 
 ---
 
-### [ ] P3-03 — Trash Full-Ledger Double Scan: `listDeletedTransactions()` Scans All Active Transactions Twice Whenever Trash Has ≥1 Item
+### [x] P3-03 — Trash Full-Ledger Double Scan: `listDeletedTransactions()` Scans All Active Transactions Twice Whenever Trash Has ≥1 Item
 - **How You Can Observe It:**
   1. If a workspace has thousands of active transactions and you delete just **1 transaction** to Trash, opening the **Trash** tab on the Transactions screen calls `getBalanceAfterByTransactionId(null)` and `getPocketBalanceAfterByTransactionId(null)`—which scan **every active transaction in the entire database twice**, even though deleted rows aren't even in the active balance map!
 - **Files:**
@@ -1151,6 +1151,10 @@ You mentioned *"I don't know how to verify it"* for Part 3 `#1` through `#5`. Be
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Open **Transactions → Trash** with ≥1 deleted transaction.
   2. **Expected Result:** Trash opens instantaneously (`O(deleted_rows)` instead of `2 × O(all_active_transactions)`), verified with a SQLite query-count unit test.
+
+- **Implemented:** In the current `transactions.repository.ts`, replaced both active-ledger balance calculations with empty typed maps; deleted rows retain null source/destination account/pocket balances. Attachment counts now use the same Trash transaction IDs as label hydration, reusing the existing 500-ID chunking. Transfer grouping, fees, split metadata, and the empty fast exit are preserved.
+- **Automated verification:** Real in-memory SQLite regression tests confirm one query for empty Trash, four queries for a mixed Trash fixture, exact field-by-field result stability after adding 10,000 active transactions and attachments, null historical balances, transfer/fee/label/split parity, and no active-ledger balance reads. A 1,002-row Trash fixture verifies attachment batching at at most 500 IDs; EXPLAIN QUERY PLAN confirms the scoped attachment lookup uses transaction_attachments_transaction_index without a temporary B-tree.
+- **Performance assessment:** Removes two O(active-ledger) JS hydration/balance passes and the global attachment aggregation. Supporting hydration now scales with Trash IDs; no new mount/focus queries, navigation subscriptions, or render cascades are introduced. The existing Trash row query and sort remain unchanged, so total SQLite cost still depends on its query plan; release-device timing/60-120fps checks remain pending.
 
 ---
 
