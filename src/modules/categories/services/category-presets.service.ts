@@ -1,4 +1,5 @@
 import { db, type AppDatabase } from "@/infrastructure/database/client";
+import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import {
   DEFAULT_SEED_CATEGORIES,
   isProtectedCategoryId,
@@ -20,6 +21,7 @@ export async function loadCategoryPresets(client: AppDatabase = db): Promise<voi
       await insertCategoryPreset(tx, category, sortOrder, now);
     }
   });
+  invalidateChatKeywordsCache();
 }
 
 export async function deleteCategoryPresets(
@@ -63,4 +65,5 @@ export async function deleteCategoryPresets(
       await deleteCategoryPresetData(tx, id, EXPENSE_FALLBACK_ID);
     }
   });
+  invalidateChatKeywordsCache();
 }

@@ -573,7 +573,10 @@ function ChatWithKaiModalContent({
       <KaiChatSettingsModal
         mode={mode}
         onClose={() => setIsSettingsOpen(false)}
-        onOpenKnowledge={() => router.push("/kai-knowledge")}
+        onOpenKnowledge={() => {
+          onClose();
+          router.push("/kai-knowledge");
+        }}
         onSelectMode={(newMode) => {
           setMode(newMode);
         }}

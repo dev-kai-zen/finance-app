@@ -467,26 +467,30 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-21 — Chat with Kai: "Manage Kai Knowledge" Doesn't Close Modal + `chat-keywords-cache` Missing Invalidation on Deletions
+### [x] P1-21 — Chat with Kai: "Manage Kai Knowledge" Doesn't Close Modal + `chat-keywords-cache` Missing Invalidation on Deletions (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (Confirmed)
 - **Files:**
   - `src/modules/chat-with-kai/components/chat-with-kai-modal.tsx`
   - `src/modules/chat-with-kai/hooks/use-chat-with-kai.ts`
+  - `src/modules/chat-with-kai/utils/chat-keywords-cache.ts`
+  - `src/modules/chat-with-kai/index.ts`
   - `src/modules/accounts/services/delete-account.service.ts`
   - `src/modules/categories/services/delete-category.service.ts`
   - `src/modules/categories/services/category-presets.service.ts`
+  - `src/modules/chat-with-kai/__tests__/parse-chat-transaction.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
   1. Open **Chat with Kai** → tap the gear icon (Settings) → tap **Manage Kai Knowledge**.
   2. Add a custom keyword (e.g. `"boba"` under Food & Dining), then press Back to return to Chat with Kai.
   3. Type `"boba 150"`.
   4. **Bug Observed:** Kai does not recognize `"boba"` until you completely close and reopen Chat with Kai (and on iOS, the Kai Knowledge screen opens *behind* the still-open Kai modal).
-- **How We Will Properly Fix It:**
-  1. In `chat-with-kai-modal.tsx` (line 574), call `onClose()` before `router.push("/kai-knowledge")` so the modal dismisses cleanly before navigating to the screen.
-  2. Subscribe `useChatWithKai` to `chat-keywords-cache` invalidation (via a version counter or listener) and never cache an empty map while `categories.length === 0`.
-  3. Call `invalidateChatKeywordsCache()` inside `deleteAccount`, `deleteCategory`, and `deleteCategoryPreset`.
+- **How We Properly Fix It:**
+  1. In `chat-with-kai-modal.tsx`, call `onClose()` before `router.push("/kai-knowledge")` so the modal dismisses cleanly before navigating to the Kai Knowledge screen.
+  2. In `chat-keywords-cache.ts`, added a monotonic `cacheVersion` counter and `subscribeChatKeywordsCacheInvalidation()` listener registry notified on every `invalidateChatKeywordsCache()`, and exported `invalidateChatKeywordsCache` through `@/modules/chat-with-kai` (`deferFunction`).
+  3. In `use-chat-with-kai.ts`, subscribed to cache invalidation so mounted Kai instances immediately reload fresh keywords, avoided caching empty maps while `context.categories.length === 0`, and guarded writes with `requestVersion` so stale in-flight loads never overwrite a newer invalidation.
+  4. Called `invalidateChatKeywordsCache()` after committed transactions in `deleteAccount`, `deleteCategory`, `deleteCategoryPresets`, and `loadCategoryPresets`.
 - **Post-Fix Verification (How to Confirm Resolved):**
-  1. Open **Chat with Kai** → Settings → **Manage Kai Knowledge** → Kai modal closes and navigates to Kai Knowledge.
-  2. Add keyword `"boba"` → reopen Kai and type `"boba 150"` → immediately matches the category.
+  1. Open **Chat with Kai** → Settings → **Manage Kai Knowledge** → Kai modal closes cleanly and navigates to Kai Knowledge.
+  2. Add keyword `"boba"` → return and reopen Kai, then type `"boba 150"` → immediately matches the category without stale keywords (and deleting an account/category/preset clears stale cached keywords).
 
 ---
 

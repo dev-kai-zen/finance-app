@@ -10,6 +10,7 @@ import {
 } from "@/modules/accounts/repositories/pockets.repository";
 import { requireAccount } from "@/modules/accounts/services/account-rules";
 import { canDeleteAccount } from "@/modules/accounts/services/can-delete-account.service";
+import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import {
   getDefaultAccounts,
   setDefaultExpenseAccount,
@@ -37,4 +38,5 @@ export function deleteAccount(id: string): void {
     deletePocketsForAccount(id, tx);
     deleteAccountRecord(id, tx);
   });
+  invalidateChatKeywordsCache();
 }

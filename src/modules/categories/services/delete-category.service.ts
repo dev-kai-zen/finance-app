@@ -7,6 +7,7 @@ import {
   hasSubcategories,
 } from "../repositories/categories.repository";
 import { isProtectedCategoryId } from "../constants/categories.constants";
+import { invalidateChatKeywordsCache } from "@/modules/chat-with-kai";
 import { reassignTransactionPresetCategory } from "@/modules/transactions";
 
 export async function deleteCategory(
@@ -48,5 +49,6 @@ export async function deleteCategory(
     }
   });
 
+  invalidateChatKeywordsCache();
   return true;
 }

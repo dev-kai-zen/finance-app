@@ -771,3 +771,38 @@ test("chat-session-store: preserves conversation and updates drafted proposals a
   assert.equal(getChatSessionSnapshot().messages.length, 0);
   assert.equal(getChatSessionSnapshot().inputText, "");
 });
+
+test("chat-keywords-cache (P1-21): invalidation clears cache, increments version, and notifies active subscribers", () => {
+  const {
+    getCachedChatKeywords,
+    getChatKeywordsCacheVersion,
+    invalidateChatKeywordsCache,
+    setCachedChatKeywords,
+    subscribeChatKeywordsCacheInvalidation,
+  } = require("@/modules/chat-with-kai/utils/chat-keywords-cache");
+
+  invalidateChatKeywordsCache();
+  const initialVersion = getChatKeywordsCacheVersion();
+  let notifications = 0;
+  const unsubscribe = subscribeChatKeywordsCacheInvalidation(() => {
+    notifications += 1;
+  });
+
+  setCachedChatKeywords({
+    categoryKeywordsMap: new Map([["boba", "cat-food"]]),
+    accountKeywordsMap: new Map([["gcash", "acc-gcash"]]),
+    actionKeywordsMap: new Map([["spent", "expense"]]),
+    merchantKeywordsMap: new Map(),
+  });
+  assert.equal(getCachedChatKeywords()?.categoryKeywordsMap.get("boba"), "cat-food");
+  assert.equal(notifications, 0);
+
+  invalidateChatKeywordsCache();
+  assert.equal(getCachedChatKeywords(), null);
+  assert.equal(getChatKeywordsCacheVersion(), initialVersion + 1);
+  assert.equal(notifications, 1);
+
+  unsubscribe();
+  invalidateChatKeywordsCache();
+  assert.equal(notifications, 1);
+});

@@ -26,7 +26,9 @@ import {
 } from "../utils/chat-session-store";
 import {
   getCachedChatKeywords,
+  getChatKeywordsCacheVersion,
   setCachedChatKeywords,
+  subscribeChatKeywordsCacheInvalidation,
 } from "../utils/chat-keywords-cache";
 import {
   addCategoryKeyword,
@@ -89,7 +91,12 @@ export function useChatWithKai(
     Map<string, MerchantLookupInfo>
   >(() => initialKeywords?.merchantKeywordsMap ?? new Map());
 
+  const hasCategories = context.categories.length > 0;
+  const hasCategoriesRef = useRef(hasCategories);
+  hasCategoriesRef.current = hasCategories;
+
   const reloadKeywords = useCallback(async () => {
+    const requestVersion = getChatKeywordsCacheVersion();
     try {
       await Promise.all([
         seedDefaultChatKnowledgeIfEmpty(),
@@ -102,12 +109,17 @@ export function useChatWithKai(
         getActionKeywordMap(),
         getMerchantKeywordMap(),
       ]);
-      setCachedChatKeywords({
-        categoryKeywordsMap: catMap,
-        accountKeywordsMap: accMap,
-        actionKeywordsMap: actMap,
-        merchantKeywordsMap: merchMap,
-      });
+      if (
+        hasCategoriesRef.current &&
+        getChatKeywordsCacheVersion() === requestVersion
+      ) {
+        setCachedChatKeywords({
+          categoryKeywordsMap: catMap,
+          accountKeywordsMap: accMap,
+          actionKeywordsMap: actMap,
+          merchantKeywordsMap: merchMap,
+        });
+      }
       if (!isMountedRef.current) return;
       setCategoryKeywordsMap(catMap);
       setAccountKeywordsMap(accMap);
@@ -120,15 +132,19 @@ export function useChatWithKai(
 
   useEffect(() => {
     const cached = getCachedChatKeywords();
-    if (cached) {
+    if (cached && hasCategories) {
       setCategoryKeywordsMap(cached.categoryKeywordsMap);
       setAccountKeywordsMap(cached.accountKeywordsMap);
       setActionKeywordsMap(cached.actionKeywordsMap);
       setMerchantKeywordsMap(cached.merchantKeywordsMap);
-      return;
+    } else {
+      void reloadKeywords();
     }
-    void reloadKeywords();
-  }, [reloadKeywords]);
+
+    return subscribeChatKeywordsCacheInvalidation(() => {
+      void reloadKeywords();
+    });
+  }, [hasCategories, reloadKeywords]);
 
   const initialPrompts = useMemo(
     () =>

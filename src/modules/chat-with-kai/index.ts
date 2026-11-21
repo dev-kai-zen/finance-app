@@ -250,6 +250,10 @@ export const reassignCategoryKeyword = deferFunction(
   () => require("./repositories/chat-knowledge.repository").reassignCategoryKeyword,
 ) as typeof import("./repositories/chat-knowledge.repository").reassignCategoryKeyword;
 
+export const invalidateChatKeywordsCache = deferFunction(
+  () => require("./utils/chat-keywords-cache").invalidateChatKeywordsCache,
+) as typeof import("./utils/chat-keywords-cache").invalidateChatKeywordsCache;
+
 export type {
   ChatWithKaiModalProps,
   ChatToEncodeModalProps,
