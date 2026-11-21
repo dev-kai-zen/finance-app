@@ -628,3 +628,57 @@ test("Chat with Kai transfer edit and delete by transactionGroupId (P1-07): find
 
   sqlite.close();
 });
+
+test("P1-26: buildTransactionSections keeps amount-sorted feeds flat across pages without retro-merging into earlier date headers", () => {
+  const {
+    buildTransactionSections,
+  } = require("@/modules/transactions/utils/group-transactions-sections");
+
+  const makeTx = (id, amountMinorUnits, type, isoDate) => ({
+    id,
+    type,
+    amountMinorUnits,
+    currencyCode: "PHP",
+    occurredAt: new Date(isoDate),
+  });
+
+  // Page 1 (amount DESC): Nov 18 (50,000), Nov 15 (40,000)
+  // Page 2 (amount DESC): Nov 18 (200), Nov 15 (100)
+  const amountSortedPages = [
+    makeTx("tx_p1_a", 5000000, "expense", "2026-11-18T10:00:00.000Z"),
+    makeTx("tx_p1_b", 4000000, "expense", "2026-11-15T10:00:00.000Z"),
+    makeTx("tx_p2_a", 20000, "expense", "2026-11-18T08:00:00.000Z"),
+    makeTx("tx_p2_b", 10000, "income", "2026-11-15T08:00:00.000Z"),
+  ];
+
+  const amountSections = buildTransactionSections(
+    amountSortedPages,
+    "amount",
+    "PHP",
+  );
+  assert.equal(amountSections.length, 1);
+  assert.equal(amountSections[0].isFlat, true);
+  assert.deepEqual(
+    amountSections[0].data.map((t) => t.id),
+    ["tx_p1_a", "tx_p1_b", "tx_p2_a", "tx_p2_b"],
+    "Page 2 items must append strictly below Page 1 in exact amount order",
+  );
+
+  // Date-sorted feed still groups by date with accurate net totals and counts
+  const dateSorted = [
+    makeTx("tx_d1", 5000000, "expense", "2026-11-18T10:00:00.000Z"),
+    makeTx("tx_d2", 20000, "income", "2026-11-18T08:00:00.000Z"),
+    makeTx("tx_d3", 4000000, "expense", "2026-11-15T10:00:00.000Z"),
+  ];
+  const dateSections = buildTransactionSections(dateSorted, "date", "PHP");
+  assert.equal(dateSections.length, 2);
+  assert.equal(dateSections[0].isFlat, false);
+  assert.equal(dateSections[0].count, 2);
+  assert.equal(dateSections[0].netMinorUnits, -4980000);
+  assert.equal(dateSections[1].count, 1);
+  assert.equal(dateSections[1].netMinorUnits, -4000000);
+
+  // Empty list returns []
+  assert.deepEqual(buildTransactionSections([], "amount", "PHP"), []);
+  assert.deepEqual(buildTransactionSections([], "date", "PHP"), []);
+});

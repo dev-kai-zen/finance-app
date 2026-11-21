@@ -72,6 +72,7 @@ import {
   type TransactionFilterState,
 } from "../components/transaction-filter-modal";
 import { normalizeDateRange } from "../utils/transaction-date-filter";
+import { buildTransactionSections } from "../utils/group-transactions-sections";
 import { TransactionDetailModal } from "../components/transaction-detail-modal";
 import { DeletedTransactionsModal } from "../components/deleted-transactions-modal";
 import { TransactionFormModal } from "../components/transaction-form-modal";
@@ -160,55 +161,6 @@ function resolveDateRangeForFilter(filterState: TransactionFilterState): {
     default:
       return {};
   }
-}
-
-interface DateGroup {
-  key: string;
-  label: string;
-  items: TransactionListItem[];
-  netMinorUnits: number;
-  currencyCode: string;
-  hasNonTransfer: boolean;
-}
-
-function getDateGroupInfo(occurredAt: Date | string | undefined): {
-  key: string;
-  label: string;
-} {
-  if (!occurredAt) {
-    return { key: "unknown", label: "Unknown Date" };
-  }
-  const date = new Date(occurredAt);
-  const now = new Date();
-
-  const isSameDay =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  const yesterday = new Date();
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday =
-    date.getFullYear() === yesterday.getFullYear() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getDate() === yesterday.getDate();
-
-  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-
-  if (isSameDay) {
-    return { key, label: "Today" };
-  }
-  if (isYesterday) {
-    return { key, label: "Yesterday" };
-  }
-
-  const label = date.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-
-  return { key, label };
 }
 
 function initialFilterState(
@@ -726,44 +678,17 @@ function TransactionsScreenContent({
     return count;
   }, [filterState]);
 
-  // Group paginated transactions by date (already filtered & sorted in SQLite)
-  const groupedTransactions = useMemo(() => {
-    const groups: DateGroup[] = [];
-    const map = new Map<string, DateGroup>();
-
-    for (const tx of transactions) {
-      const { key, label } = getDateGroupInfo(tx.occurredAt);
-      if (!map.has(key)) {
-        const group: DateGroup = {
-          key,
-          label,
-          items: [],
-          netMinorUnits: 0,
-          currencyCode: currencyPreferences.defaultCurrency,
-          hasNonTransfer: false,
-        };
-        map.set(key, group);
-        groups.push(group);
-      }
-      const group = map.get(key)!;
-      group.items.push(tx);
-      if (tx.type !== "transfer") {
-        if (!group.hasNonTransfer) {
-          group.currencyCode = tx.currencyCode || currencyPreferences.defaultCurrency;
-        } else if (
-          tx.currencyCode &&
-          tx.currencyCode !== group.currencyCode
-        ) {
-          group.currencyCode = currencyPreferences.defaultCurrency;
-        }
-        group.hasNonTransfer = true;
-        const delta = Math.abs(tx.amountMinorUnits);
-        group.netMinorUnits += tx.type === "income" ? delta : -delta;
-      }
-    }
-
-    return groups;
-  }, [transactions, currencyPreferences.defaultCurrency]);
+  // Group date-sorted feeds by day; keep amount-sorted feeds flat so Page 2+ never
+  // retro-merges rows into earlier date sections above the viewport.
+  const sections = useMemo(
+    () =>
+      buildTransactionSections(
+        transactions,
+        filterState.sortBy,
+        currencyPreferences.defaultCurrency,
+      ),
+    [transactions, filterState.sortBy, currencyPreferences.defaultCurrency],
+  );
 
   const handleOpenNewTransaction = () => {
     setPrefilledTransaction(null);
@@ -1041,20 +966,6 @@ function TransactionsScreenContent({
       handleInspectTransaction,
       viewMode,
     ],
-  );
-
-  const sections = useMemo(
-    () =>
-      groupedTransactions.map((group) => ({
-        key: group.key,
-        title: group.label,
-        count: group.items.length,
-        netMinorUnits: group.netMinorUnits,
-        currencyCode: group.currencyCode,
-        hasNonTransfer: group.hasNonTransfer,
-        data: group.items,
-      })),
-    [groupedTransactions],
   );
 
   return (
@@ -1519,6 +1430,7 @@ function TransactionsScreenContent({
           }
           contentContainerStyle={[
             styles.listContentContainer,
+            filterState.sortBy === "amount" && { paddingTop: theme.spacing.xs },
             {
               paddingBottom:
                 (isBottomAdVisible ? 16 : Math.max(insets.bottom, 24)) + 80,
@@ -1529,37 +1441,42 @@ function TransactionsScreenContent({
           maxToRenderPerBatch={15}
           removeClippedSubviews={Platform.OS !== "web"}
           renderItem={renderTransactionItem}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.dateGroupHeader}>
-              <Text style={styles.dateGroupTitle}>{section.title}</Text>
-              {section.hasNonTransfer ? (
-                <Text
-                  style={[
-                    styles.dateNetText,
-                    currencyPreferences.colorAmounts &&
-                      (section.netMinorUnits > 0
-                        ? { color: theme.colors.success }
-                        : section.netMinorUnits < 0
-                          ? { color: theme.colors.danger }
-                          : null),
-                  ]}
-                >
-                  {isPrivate
-                    ? "••••••"
-                    : formatCurrency(
-                        section.netMinorUnits,
-                        section.currencyCode,
-                        true,
-                      )}
-                </Text>
-              ) : null}
-              <View style={styles.dateCountBadge}>
-                <Text style={styles.dateCountBadgeText}>
-                  {section.count} {section.count === 1 ? "record" : "records"}
-                </Text>
+          renderSectionHeader={({ section }) => {
+            if (section.isFlat) {
+              return null;
+            }
+            return (
+              <View style={styles.dateGroupHeader}>
+                <Text style={styles.dateGroupTitle}>{section.title}</Text>
+                {section.hasNonTransfer ? (
+                  <Text
+                    style={[
+                      styles.dateNetText,
+                      currencyPreferences.colorAmounts &&
+                        (section.netMinorUnits > 0
+                          ? { color: theme.colors.success }
+                          : section.netMinorUnits < 0
+                            ? { color: theme.colors.danger }
+                            : null),
+                    ]}
+                  >
+                    {isPrivate
+                      ? "••••••"
+                      : formatCurrency(
+                          section.netMinorUnits,
+                          section.currencyCode,
+                          true,
+                        )}
+                  </Text>
+                ) : null}
+                <View style={styles.dateCountBadge}>
+                  <Text style={styles.dateCountBadgeText}>
+                    {section.count} {section.count === 1 ? "record" : "records"}
+                  </Text>
+                </View>
               </View>
-            </View>
-          )}
+            );
+          }}
           sections={isFilterTransitioning ? [] : sections}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}

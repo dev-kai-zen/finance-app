@@ -574,23 +574,25 @@ Use this document as our living checklist as we fix and verify each finding one 
 
 ---
 
-### [ ] P1-26 — Transactions: Amount-Sort Pagination Auto-Scrolls / Jumps Rows Into Earlier Date Headers on Page 2
+### [x] P1-26 — Transactions: Amount-Sort Pagination Auto-Scrolls / Jumps Rows Into Earlier Date Headers on Page 2 (Implemented — Ready for User Verification)
 - **User Test Status:** **Valid** (*"it auto scroll going up"*)
 - **Why It Auto-Scrolled Up When You Reached Page 2:**
   - `TransactionsScreen` renders a `<SectionList>` grouped by **Date**.
   - When sorting by **Amount (High → Low)**, Page 1 loads the 50 largest transactions across various dates (e.g., Nov 18 has a `₱50,000` item at the very top of the list).
   - When you scroll down past item 50, Page 2 loads smaller transactions (e.g., a `₱200` item that ALSO happened on Nov 18).
-  - Because `groupedSections` merges all items with the same date (`2026-11-18`) into the **existing Nov 18 section at the top of Page 1**, inserting new rows above your current scroll position causes React Native's `<SectionList>` to shift/auto-scroll upward and breaks the global Amount sort order!
+  - Because `groupedTransactions` merged all items with the same date (`2026-11-18`) into the **existing Nov 18 section at the top of Page 1**, inserting new rows above your current scroll position caused React Native's `<SectionList>` to shift/auto-scroll upward and broke the global Amount sort order!
 - **Files:**
+  - `src/modules/transactions/utils/group-transactions-sections.ts`
   - `src/modules/transactions/screens/transactions-screen.tsx`
+  - `src/modules/transactions/__tests__/paginated-transactions.test.cjs`
 - **Before-Fix Scenario (How to Reproduce):**
   1. On **Transactions** with >50 transactions, change Sort to **Amount: High to Low** (or **Low to High**).
   2. Scroll down past the 50th transaction to load Page 2.
   3. **Bug Observed:** Newly loaded Page 2 rows are inserted into earlier date sections at the top of the list, causing the scroll position to jump/auto-scroll upward and placing smaller amounts above larger amounts.
-- **How We Will Properly Fix It:**
-  1. In `groupedSections` (`transactions-screen.tsx`, line 730):
-     - When sorting by **Date (`date-desc` / `date-asc`)**, keep the existing contiguous date-grouped sections.
-     - When sorting by **Amount (`amount-desc` / `amount-asc`)**, only group **contiguous** adjacent transactions that share the same date (or render flat amount-ordered sections without retro-merging Page 2 items into earlier date buckets above the fold) so Page 2 items are always appended strictly *below* Page 1 items in true amount order with zero upward scroll jump!
+- **How We Properly Fix It:**
+  1. Extracted `buildTransactionSections(transactions, sortBy, defaultCurrency)` in `src/modules/transactions/utils/group-transactions-sections.ts` and used it directly in `transactions-screen.tsx`:
+     - When `sortBy === "date"`, preserves calendar-day grouped sections with daily net totals and record counts (`isFlat: false`).
+     - When `sortBy === "amount"`, returns a single flat section (`isFlat: true`) in exact SQLite amount order (each `TransactionRow` already displays its own full date & time) and skips rendering date group headers (`if (section.isFlat) return null`), so Page 2+ items strictly append below Page 1 with zero upward scroll jump.
 - **Post-Fix Verification (How to Confirm Resolved):**
   1. Sort Transactions by **Amount: High to Low** on >50 transactions and scroll through Page 1 → Page 2 → Page 3.
   2. **Expected Result:** Every single row stays strictly in descending amount order from top to bottom, and loading Page 2 never causes the list to auto-scroll upward.
