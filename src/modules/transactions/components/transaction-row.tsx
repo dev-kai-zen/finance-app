@@ -525,7 +525,7 @@ export const TransactionRow = memo(function TransactionRow({
             <View style={styles.detailLine}>
               <View style={styles.feeBadge}>
                 <Text style={styles.feeBadgeText}>
-                  Fee: {formatCurrency(transaction.transferFeeAmountMinorUnits, transaction.accountCurrency ?? "PHP", false)}
+                  Fee: {formatCurrency(transaction.transferFeeAmountMinorUnits, transaction.transferFeeCurrencyCode ?? transaction.accountCurrency ?? "PHP", false)}
                 </Text>
               </View>
             </View>

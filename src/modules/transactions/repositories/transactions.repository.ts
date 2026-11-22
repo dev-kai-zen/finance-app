@@ -95,6 +95,7 @@ function mapRowToListItem(r: {
     destinationBalanceAfterMinorUnits: null,
     destinationLocationBalanceAfterMinorUnits: null,
     transferFeeAmountMinorUnits: null,
+    transferFeeCurrencyCode: null,
     transferFeeAccountId: null,
     transferFeeAccountName: null,
     transferFeePocketId: null,
@@ -235,6 +236,7 @@ function groupTransferRows(items: TransactionListItem[]): TransactionListItem[] 
       destinationLocationBalanceAfterMinorUnits:
         inLeg.locationBalanceAfterMinorUnits,
       transferFeeAmountMinorUnits: feeItem ? Math.abs(feeItem.amountMinorUnits) : null,
+      transferFeeCurrencyCode: feeItem ? (feeItem.currencyCode ?? feeItem.accountCurrency ?? null) : null,
       transferFeeAccountId: feeItem?.accountId ?? null,
       transferFeeAccountName: feeItem?.accountName ?? null,
       transferFeePocketId: feeItem?.pocketId ?? null,

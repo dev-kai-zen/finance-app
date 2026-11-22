@@ -1326,4 +1326,59 @@ test("B07: pre-commit SQL failure DOES discard uncommitted prepared files", asyn
   } finally { sqlite.close(); }
 });
 
+test("R2: transfer fee currency code is hydrated and formatted with fee currency instead of source currency", () => {
+  connectAndMigrate();
+  try {
+    seedMixedLedger();
+    const { createTransferInContext } = require("../services/create-transfer.service");
+    const { findTransactionListItemById } = require("../repositories/transactions.repository");
+    const { buildTransactionsCsv } = require("../utils/transactions-csv");
+    const { formatCurrency } = require("../../../utils/currency");
+
+    // Create a USD account
+    const typeId = sqlite.prepare("SELECT id FROM account_types LIMIT 1").get().id;
+    sqlite
+      .prepare(
+        "INSERT INTO accounts (id, name, account_type_id, currency_code, opening_balance_minor_units, opening_balance_at, is_archived, sort_order, hide_from_selection, hide_from_reports, pocket_enabled, created_at, updated_at) VALUES (?, ?, ?, 'USD', 1000000, ?, 0, 0, 0, 0, 0, ?, ?)",
+      )
+      .run("acc_usd_fee", "US Dollar Account", typeId, Date.now(), Date.now(), Date.now());
+
+    // Transfer PHP to PHP, fee paid from USD account ($5.00 = 500 minor units)
+    const created = createTransferInContext(
+      {
+        fromAccountId: "acc_main",
+        toAccountId: "acc_save",
+        amountMinorUnits: 100000, // ₱1,000.00
+        fee: {
+          accountId: "acc_usd_fee",
+          categoryId: "cat_fee",
+          amountMinorUnits: 500, // $5.00
+        },
+        occurredAt: new Date(),
+      },
+      database,
+    );
+
+    const item = findTransactionListItemById(created.transactionGroupId, database);
+    assert.ok(item, "Grouped transfer item must exist");
+    assert.equal(item.accountCurrency, "PHP", "Source account currency is PHP");
+    assert.equal(item.transferFeeAmountMinorUnits, 500);
+    assert.equal(item.transferFeeCurrencyCode, "USD", "Fee currency must be hydrated as USD");
+
+    // Verify row & modal formatting
+    const formatted = formatCurrency(
+      item.transferFeeAmountMinorUnits,
+      item.transferFeeCurrencyCode ?? item.accountCurrency ?? "PHP",
+      false,
+    );
+    assert.ok(formatted.includes("$"), `Expected '$' in formatted fee, got: ${formatted}`);
+    assert.ok(!formatted.includes("₱"), `Should not contain '₱' in fee formatted string: ${formatted}`);
+
+    // Verify CSV export
+    const csv = buildTransactionsCsv([item]);
+    assert.ok(csv.includes("5.00"), `CSV should include formatted fee 5.00: ${csv}`);
+  } finally { sqlite.close(); }
+});
+
+
 

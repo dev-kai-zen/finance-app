@@ -295,7 +295,7 @@ function TransactionDetailModalContent({
                       <Text style={styles.detailValue}>
                         {formatCurrency(
                           transaction.transferFeeAmountMinorUnits,
-                          transaction.accountCurrency ?? "PHP",
+                          transaction.transferFeeCurrencyCode ?? transaction.accountCurrency ?? "PHP",
                           false,
                         )}
                       </Text>

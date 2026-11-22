@@ -78,6 +78,7 @@ export interface TransactionListItem extends Transaction {
   destinationLocationBalanceAfterMinorUnits: number | null;
   /** Transfer fee details on grouped transfer rows */
   transferFeeAmountMinorUnits?: number | null;
+  transferFeeCurrencyCode?: string | null;
   transferFeeAccountId?: string | null;
   transferFeeAccountName?: string | null;
   transferFeePocketId?: string | null;

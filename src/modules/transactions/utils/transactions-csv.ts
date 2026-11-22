@@ -129,11 +129,16 @@ export function transactionToCsvRow(transaction: TransactionListItem): string[] 
           .join(" | ")
       : (transaction.categoryName ?? "");
 
+  const feeCurrency =
+    transaction.transferFeeCurrencyCode ??
+    transaction.currencyCode ??
+    transaction.accountCurrency;
+
   const transferFee =
     transaction.transferFeeAmountMinorUnits != null
       ? formatMinorUnitsForCsv(
           Math.abs(transaction.transferFeeAmountMinorUnits),
-          amountCurrency,
+          feeCurrency,
         )
       : "";
 
