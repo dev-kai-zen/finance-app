@@ -41,13 +41,13 @@ export function UnsavedChangesModal({
   discardLabel,
   keepEditingLabel,
 }: UnsavedChangesModalProps) {
-  if (!visible) return null;
-
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
   const { t } = useLocalization();
+
+  if (!visible) return null;
 
   const resolvedTitle = title ?? t("common.unsavedChangesTitle");
   const resolvedMessage = message ?? t("common.unsavedChangesMessage");

@@ -39,12 +39,12 @@ export function NotificationModal({
   variant,
   onClose,
 }: NotificationModalProps) {
-  if (!visible) return null;
-
   const { width } = useWindowDimensions();
   const isDesktop = isTabletOrDesktop(width);
   const theme = useAppTheme();
   const styles = useThemeStyles(createStyles);
+
+  if (!visible) return null;
   const accentColor =
     variant === "success"
       ? theme.colors.success

@@ -48,8 +48,6 @@ export function ActionBottomSheet({
   items,
   title,
 }: ActionBottomSheetProps) {
-  if (!visible) return null;
-
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const styles = useThemeStyles(createStyles);
@@ -68,6 +66,8 @@ export function ActionBottomSheet({
       dragStartY.set(0);
     });
   }, [dragStartY, onClose, translateY]);
+
+  if (!visible) return null;
 
   const dragGesture = useMemo(
     () =>
