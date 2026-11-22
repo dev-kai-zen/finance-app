@@ -1861,3 +1861,294 @@ export function getPocketIdsWithTransactions(
   }
   return ids;
 }
+
+export function findCategoryBreakdownRows(
+  query: { type: "expense" | "income"; startDate: Date; endDate: Date },
+  context: DbContext = db,
+) {
+  return context
+    .select({
+      transaction: transactions,
+      category: categories,
+      accountCurrencyCode: accounts.currencyCode,
+    })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(
+      and(
+        eq(transactions.type, query.type),
+        isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, query.startDate),
+        lte(transactions.occurredAt, query.endDate),
+      ),
+    )
+    .all();
+}
+
+export function findAccountBalanceDeltaRows(
+  context: DbContext = db,
+): Array<{ accountId: string; delta: number }> {
+  return context
+    .select({
+      accountId: transactions.accountId,
+      delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
+    })
+    .from(transactions)
+    .where(isNull(transactions.deletedAt))
+    .groupBy(transactions.accountId)
+    .all();
+}
+
+export function findAccountTransactionDeltasUpToDate(
+  maxCutoffDate: Date,
+  context: DbContext = db,
+): Array<{ accountId: string; amountMinorUnits: number; occurredAt: Date }> {
+  return context
+    .select({
+      accountId: transactions.accountId,
+      amountMinorUnits: transactions.amountMinorUnits,
+      occurredAt: transactions.occurredAt,
+    })
+    .from(transactions)
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        lte(transactions.occurredAt, maxCutoffDate),
+      ),
+    )
+    .orderBy(asc(transactions.occurredAt))
+    .all();
+}
+
+export function findPocketTransactionDeltaRows(
+  context: DbContext = db,
+): Array<{ pocketId: string | null; amountMinorUnits: number }> {
+  return context
+    .select({
+      pocketId: transactions.pocketId,
+      amountMinorUnits: transactions.amountMinorUnits,
+    })
+    .from(transactions)
+    .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
+    .all();
+}
+
+export function findPocketTransactionDeltasWithOccurredAt(
+  context: DbContext = db,
+): Array<{ pocketId: string | null; amountMinorUnits: number; occurredAt: Date }> {
+  return context
+    .select({
+      pocketId: transactions.pocketId,
+      amountMinorUnits: transactions.amountMinorUnits,
+      occurredAt: transactions.occurredAt,
+    })
+    .from(transactions)
+    .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
+    .all();
+}
+
+export function findCashFlowHistoryRows(
+  startDate: Date,
+  endDate: Date,
+  context: DbContext = db,
+) {
+  return context
+    .select({
+      type: transactions.type,
+      amountMinorUnits: transactions.amountMinorUnits,
+      occurredAt: transactions.occurredAt,
+      accountCurrencyCode: accounts.currencyCode,
+    })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, startDate),
+        lte(transactions.occurredAt, endDate),
+      ),
+    )
+    .all();
+}
+
+export function findLabelBreakdownRows(
+  query: { type: "expense" | "income"; startDate: Date; endDate: Date },
+  context: DbContext = db,
+) {
+  return context
+    .select({
+      transaction: transactions,
+      accountCurrencyCode: accounts.currencyCode,
+    })
+    .from(transactions)
+    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+    .where(
+      and(
+        eq(transactions.type, query.type),
+        isNull(transactions.deletedAt),
+        gte(transactions.occurredAt, query.startDate),
+        lte(transactions.occurredAt, query.endDate),
+      ),
+    )
+    .all();
+}
+
+export function findMerchantHistoryTransactions(
+  cleanName: string,
+  limit: number = 50,
+  context: DbContext = db,
+) {
+  return context
+    .select({
+      id: transactions.id,
+      accountId: transactions.accountId,
+      categoryId: transactions.categoryId,
+      amountMinorUnits: transactions.amountMinorUnits,
+      occurredAt: transactions.occurredAt,
+    })
+    .from(transactions)
+    .where(
+      and(
+        sql`lower(${transactions.name}) = ${cleanName}`,
+        isNull(transactions.deletedAt),
+      ),
+    )
+    .orderBy(desc(transactions.occurredAt))
+    .limit(limit)
+    .all();
+}
+
+export function findRecentDuplicateTransactions(
+  targetAmount: number,
+  sinceDate: Date,
+  cleanName?: string | null,
+  limit: number = 5,
+  context: DbContext = db,
+): Array<{ id: string; occurredAt: Date }> {
+  const conditions = [
+    sql`abs(${transactions.amountMinorUnits}) = ${targetAmount}`,
+    gte(transactions.occurredAt, sinceDate),
+    isNull(transactions.deletedAt),
+  ];
+
+  if (cleanName) {
+    conditions.push(sql`lower(${transactions.name}) = ${cleanName}`);
+  }
+
+  return context
+    .select({
+      id: transactions.id,
+      occurredAt: transactions.occurredAt,
+    })
+    .from(transactions)
+    .where(and(...conditions))
+    .orderBy(desc(transactions.occurredAt))
+    .limit(limit)
+    .all();
+}
+
+export interface SearchTransactionRow {
+  id: string;
+  name: string | null;
+  note: string | null;
+  categoryName: string | null;
+  occurredAt: Date;
+  amountMinorUnits: number;
+  currencyCode: string;
+  type: string;
+}
+
+function searchCanonicalTransferCondition(): SQL {
+  return sql`NOT (
+    "transactions"."type" = 'transfer'
+    AND "transactions"."transaction_group_id" IS NOT NULL
+    AND (
+      SELECT count(*) FROM transactions g
+      WHERE g.deleted_at IS NULL
+        AND g.type = 'transfer'
+        AND g.transaction_group_id = "transactions"."transaction_group_id"
+    ) = 2
+    AND EXISTS (
+      SELECT 1 FROM transactions other_leg
+      WHERE other_leg.deleted_at IS NULL
+        AND other_leg.type = 'transfer'
+        AND other_leg.transaction_group_id = "transactions"."transaction_group_id"
+        AND other_leg.id != "transactions"."id"
+        AND (
+          (other_leg.amount_minor_units < 0 AND "transactions"."amount_minor_units" >= 0)
+          OR (
+            ((other_leg.amount_minor_units < 0) = ("transactions"."amount_minor_units" < 0))
+            AND other_leg.id < "transactions"."id"
+          )
+        )
+    )
+  )`;
+}
+
+export function findSearchTransactionsRows(
+  term: string,
+  limit: number = 20,
+  context: DbContext = db,
+): SearchTransactionRow[] {
+  return context
+    .select({
+      id: transactions.id,
+      name: transactions.name,
+      note: transactions.note,
+      categoryName: sql<string | null>`coalesce(
+        ${categories.name},
+        (
+          SELECT sc.name
+          FROM transaction_entries se
+          INNER JOIN categories sc ON sc.id = se.category_id
+          WHERE se.transaction_id = "transactions"."id"
+            AND (
+              lower(sc.name) LIKE ${term} ESCAPE '\\'
+              OR lower(coalesce(se.note, '')) LIKE ${term} ESCAPE '\\'
+            )
+          ORDER BY se.created_at ASC, se.id ASC
+          LIMIT 1
+        ),
+        (
+          SELECT sc.name
+          FROM transaction_entries se
+          INNER JOIN categories sc ON sc.id = se.category_id
+          WHERE se.transaction_id = "transactions"."id"
+          ORDER BY se.created_at ASC, se.id ASC
+          LIMIT 1
+        )
+      )`,
+      occurredAt: transactions.occurredAt,
+      amountMinorUnits: transactions.amountMinorUnits,
+      currencyCode: sql<string>`coalesce(${accounts.currencyCode}, ${transactions.currencyCode})`,
+      type: transactions.type,
+    })
+    .from(transactions)
+    .leftJoin(accounts, eq(transactions.accountId, accounts.id))
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(
+      and(
+        isNull(transactions.deletedAt),
+        searchCanonicalTransferCondition(),
+        sql`(
+          lower(coalesce("transactions"."name", '')) LIKE ${term} ESCAPE '\\'
+          OR lower(coalesce("transactions"."note", '')) LIKE ${term} ESCAPE '\\'
+          OR lower(coalesce(${categories.name}, '')) LIKE ${term} ESCAPE '\\'
+          OR EXISTS (
+            SELECT 1
+            FROM transaction_entries se
+            INNER JOIN categories sc ON sc.id = se.category_id
+            WHERE se.transaction_id = "transactions"."id"
+              AND (
+                lower(sc.name) LIKE ${term} ESCAPE '\\'
+                OR lower(coalesce(se.note, '')) LIKE ${term} ESCAPE '\\'
+              )
+          )
+        )`,
+      ),
+    )
+    .orderBy(desc(transactions.occurredAt))
+    .limit(limit)
+    .all();
+}

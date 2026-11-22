@@ -1,11 +1,10 @@
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
+import { findCashFlowHistoryRows } from "../repositories/transactions.repository";
 
 export interface CashFlowPeriodPoint {
   periodKey: string; // e.g. "2026-10"
@@ -86,23 +85,7 @@ export function getCashFlowHistory(
     periodMap.set(p.periodKey, p);
   }
 
-  const txRows = context
-    .select({
-      type: transactions.type,
-      amountMinorUnits: transactions.amountMinorUnits,
-      occurredAt: transactions.occurredAt,
-      accountCurrencyCode: accounts.currencyCode,
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(
-      and(
-        isNull(transactions.deletedAt),
-        gte(transactions.occurredAt, query.startDate),
-        lte(transactions.occurredAt, query.endDate),
-      ),
-    )
-    .all();
+  const txRows = findCashFlowHistoryRows(query.startDate, query.endDate, context);
 
   let overallInflow = 0;
   let overallOutflow = 0;

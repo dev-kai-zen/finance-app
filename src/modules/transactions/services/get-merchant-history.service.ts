@@ -1,6 +1,5 @@
-import { and, desc, isNull, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import { findMerchantHistoryTransactions } from "../repositories/transactions.repository";
 
 export interface MerchantHistoryInsight {
   merchantName: string;
@@ -24,24 +23,7 @@ export function getMerchantHistory(
   }
 
   // Get matching transactions (non-deleted) ordered by occurredAt desc
-  const rows = context
-    .select({
-      id: transactions.id,
-      accountId: transactions.accountId,
-      categoryId: transactions.categoryId,
-      amountMinorUnits: transactions.amountMinorUnits,
-      occurredAt: transactions.occurredAt,
-    })
-    .from(transactions)
-    .where(
-      and(
-        sql`lower(${transactions.name}) = ${cleanName}`,
-        isNull(transactions.deletedAt),
-      ),
-    )
-    .orderBy(desc(transactions.occurredAt))
-    .limit(50)
-    .all();
+  const rows = findMerchantHistoryTransactions(cleanName, 50, context);
 
   if (rows.length === 0) {
     return null;

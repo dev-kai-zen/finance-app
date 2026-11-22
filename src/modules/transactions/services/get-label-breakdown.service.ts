@@ -1,12 +1,11 @@
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import { getLabelsByTransactionIds, type Label } from "@/modules/labels";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
+import { findLabelBreakdownRows } from "../repositories/transactions.repository";
 
 export interface LabelBreakdownQuery {
   type: "expense" | "income";
@@ -40,22 +39,7 @@ export function getLabelBreakdown(
   query: LabelBreakdownQuery,
   context: DbContext = db,
 ): LabelBreakdownResult {
-  const rows = context
-    .select({
-      transaction: transactions,
-      accountCurrencyCode: accounts.currencyCode,
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .where(
-      and(
-        eq(transactions.type, query.type),
-        isNull(transactions.deletedAt),
-        gte(transactions.occurredAt, query.startDate),
-        lte(transactions.occurredAt, query.endDate),
-      ),
-    )
-    .all();
+  const rows = findLabelBreakdownRows(query, context);
 
   const txIds = rows.map((r) => r.transaction.id);
   const labelMapByTxId = new Map<string, Label[]>();

@@ -1,6 +1,5 @@
-import { and, desc, gte, isNull, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import { findRecentDuplicateTransactions } from "../repositories/transactions.repository";
 
 export interface DuplicateCheckInput {
   amountMinorUnits: number;
@@ -27,26 +26,13 @@ export function findRecentDuplicateTransaction(
   const targetAmount = Math.abs(input.amountMinorUnits);
   const cleanName = input.name?.trim().toLowerCase();
 
-  const conditions = [
-    sql`abs(${transactions.amountMinorUnits}) = ${targetAmount}`,
-    gte(transactions.occurredAt, sinceDate),
-    isNull(transactions.deletedAt),
-  ];
-
-  if (cleanName) {
-    conditions.push(sql`lower(${transactions.name}) = ${cleanName}`);
-  }
-
-  const rows = context
-    .select({
-      id: transactions.id,
-      occurredAt: transactions.occurredAt,
-    })
-    .from(transactions)
-    .where(and(...conditions))
-    .orderBy(desc(transactions.occurredAt))
-    .limit(5)
-    .all();
+  const rows = findRecentDuplicateTransactions(
+    targetAmount,
+    sinceDate,
+    cleanName,
+    5,
+    context,
+  );
 
   return {
     isDuplicate: rows.length > 0,

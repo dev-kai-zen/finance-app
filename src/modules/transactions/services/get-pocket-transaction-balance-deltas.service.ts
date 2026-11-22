@@ -1,18 +1,13 @@
-import { and, isNotNull, isNull } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
+import {
+  findPocketTransactionDeltaRows,
+  findPocketTransactionDeltasWithOccurredAt,
+} from "../repositories/transactions.repository";
 
 export function getPocketTransactionBalanceDeltas(
   context: DbContext = db,
 ): Record<string, number> {
-  const rows = context
-    .select({
-      pocketId: transactions.pocketId,
-      amountMinorUnits: transactions.amountMinorUnits,
-    })
-    .from(transactions)
-    .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
-    .all();
+  const rows = findPocketTransactionDeltaRows(context);
   const deltas: Record<string, number> = {};
   for (const row of rows) {
     if (row.pocketId) {
@@ -27,15 +22,7 @@ export function getPocketBalanceDeltasAtDate(
   context: DbContext = db,
 ): Record<string, number> {
   const cutoffTime = cutoffDate.getTime();
-  const rows = context
-    .select({
-      pocketId: transactions.pocketId,
-      amountMinorUnits: transactions.amountMinorUnits,
-      occurredAt: transactions.occurredAt,
-    })
-    .from(transactions)
-    .where(and(isNotNull(transactions.pocketId), isNull(transactions.deletedAt)))
-    .all();
+  const rows = findPocketTransactionDeltasWithOccurredAt(context);
 
   const deltas: Record<string, number> = {};
   for (const row of rows) {

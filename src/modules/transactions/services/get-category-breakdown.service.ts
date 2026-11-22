@@ -1,12 +1,11 @@
-import { and, eq, gte, isNull, lte } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { accounts, categories, transactions } from "@/infrastructure/database/schema";
 import { getCurrencyPreferences, getExchangeRateMap } from "@/modules/currencies";
 import {
   convertCurrencyMinorUnits,
   DEFAULT_BASE_CURRENCY,
 } from "@/utils/currency";
 import { listSplitEntryBreakdownRows } from "../repositories/transaction-entries.repository";
+import { findCategoryBreakdownRows } from "../repositories/transactions.repository";
 
 export interface CategoryBreakdownQuery {
   type: "expense" | "income";
@@ -37,24 +36,7 @@ export function getCategoryBreakdown(
   query: CategoryBreakdownQuery,
   context: DbContext = db,
 ): CategoryBreakdownResult {
-  const rows = context
-    .select({
-      transaction: transactions,
-      category: categories,
-      accountCurrencyCode: accounts.currencyCode,
-    })
-    .from(transactions)
-    .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-    .leftJoin(categories, eq(transactions.categoryId, categories.id))
-    .where(
-      and(
-        eq(transactions.type, query.type),
-        isNull(transactions.deletedAt),
-        gte(transactions.occurredAt, query.startDate),
-        lte(transactions.occurredAt, query.endDate),
-      ),
-    )
-    .all();
+  const rows = findCategoryBreakdownRows(query, context);
 
   const map = new Map<
     string,

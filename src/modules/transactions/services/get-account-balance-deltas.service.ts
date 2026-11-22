@@ -1,7 +1,9 @@
-import { and, asc, isNull, lte, sql } from "drizzle-orm";
 import { db, type DbContext } from "@/infrastructure/database/client";
-import { transactions } from "@/infrastructure/database/schema";
-import { findAccountTransactionDelta } from "../repositories/transactions.repository";
+import {
+  findAccountBalanceDeltaRows,
+  findAccountTransactionDelta,
+  findAccountTransactionDeltasUpToDate,
+} from "../repositories/transactions.repository";
 
 /**
  * Calculates the net transaction balance delta in minor units (cents)
@@ -13,15 +15,7 @@ import { findAccountTransactionDelta } from "../repositories/transactions.reposi
 export function getAccountBalanceDeltas(
   context: DbContext = db,
 ): Record<string, number> {
-  const rows = context
-    .select({
-      accountId: transactions.accountId,
-      delta: sql<number>`coalesce(sum(${transactions.amountMinorUnits}), 0)`.as("delta"),
-    })
-    .from(transactions)
-    .where(isNull(transactions.deletedAt))
-    .groupBy(transactions.accountId)
-    .all();
+  const rows = findAccountBalanceDeltaRows(context);
 
   const deltasByAccountId: Record<string, number> = {};
   for (const row of rows) {
@@ -48,21 +42,10 @@ export function getAccountBalanceDeltasAtDates(
     if (t > maxCutoffTime) maxCutoffTime = t;
   }
 
-  const rows = context
-    .select({
-      accountId: transactions.accountId,
-      amountMinorUnits: transactions.amountMinorUnits,
-      occurredAt: transactions.occurredAt,
-    })
-    .from(transactions)
-    .where(
-      and(
-        isNull(transactions.deletedAt),
-        lte(transactions.occurredAt, new Date(maxCutoffTime)),
-      ),
-    )
-    .orderBy(asc(transactions.occurredAt))
-    .all();
+  const rows = findAccountTransactionDeltasUpToDate(
+    new Date(maxCutoffTime),
+    context,
+  );
 
   // Create an array of cutoff indices sorted chronologically: [0, 1, ..., K-1]
   const sortedIndices = Array.from({ length: cutoffDates.length }, (_, i) => i)
