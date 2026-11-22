@@ -514,7 +514,9 @@ async function performSync(
     pendingFollowUpSync = false;
     pendingFollowUpForceOverwrite = false;
     cancelDebouncedQuickSync();
-    const archive = await createBackupArchive(null);
+    const archive = await createBackupArchive(null, undefined, {
+      skipAttachments: !config.syncAttachments,
+    });
     if (!isQuickSyncOperationCurrent(operationGeneration)) return false;
 
     const deviceName = formatQuickSyncDeviceDisplayName(

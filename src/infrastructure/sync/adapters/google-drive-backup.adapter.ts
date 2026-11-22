@@ -236,66 +236,44 @@ async function uploadBackupToFolder(
   );
 }
 
-// V2 files deliberately omit the legacy Quick Sync marker/name, so older apps
-// cannot discover and PATCH these immutable snapshots.
-const QUICK_SYNC_PROTOCOL = 'quickSyncProtocol';
-const MAX_QUICK_SYNC_PARENTS = 16;
-
-function revisionToken(file: DriveFileResponse): string {
-  return file.appProperties?.[QUICK_SYNC_PROTOCOL] === '2'
-    ? file.id
-    : file.id + '@' + (file.headRevisionId ?? file.version ?? file.modifiedTime ?? 'unknown');
-}
-
-async function listQuickSyncRevisions(accessToken: string): Promise<DriveFileResponse[]> {
-  const files: DriveFileResponse[] = [];
-  const seenPages = new Set<string>();
-  let pageToken: string | undefined;
-  do {
-    const query = new URLSearchParams({
-      spaces: 'drive', pageSize: '100',
-      q: "trashed = false and (appProperties has { key='quickSyncProtocol' and value='2' } or appProperties has { key='isQuickSync' and value='true' } or name = 'kaizen-finance-quick-sync.kfb')",
-      fields: 'nextPageToken,files(id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties)',
-      ...(pageToken ? { pageToken } : {}),
-    });
-    const response = await driveFetch(DRIVE_FILES_URL + '?' + query, accessToken);
-    const page = await response.json() as DriveFileListResponse;
-    files.push(...(page.files ?? []));
-    pageToken = page.nextPageToken;
-    // Fail closed instead of silently dropping old branches or exhausting memory.
-    if (files.length > 10000) throw new Error('Quick Sync revision history needs review before syncing.');
-    if (pageToken && seenPages.has(pageToken)) throw new Error("Drive repeated a revision history page.");
-    if (pageToken) seenPages.add(pageToken);
-  } while (pageToken);
-  return files;
-}
-
-async function revisionTips(files: DriveFileResponse[]): Promise<DriveFileResponse[]> {
-  const parents = new Set<string>();
-  for (let offset = 0; offset < files.length; offset += 250) {
-    for (const file of files.slice(offset, offset + 250)) {
-      for (let i = 0; i < MAX_QUICK_SYNC_PARENTS; i++) {
-        const parent = file.appProperties?.['syncParent' + i];
-        if (parent) parents.add(parent);
-      }
+export async function pruneLegacyQuickSyncFiles(
+  accessToken: string,
+): Promise<number> {
+  try {
+    const q = `trashed = false and (name contains 'quick-sync-' or appProperties has { key='quickSyncProtocol' and value='2' }) and name != '${QUICK_SYNC_BACKUP_NAME}'`;
+    const query = [
+      "spaces=drive",
+      `q=${encodeURIComponent(q)}`,
+      "pageSize=20",
+      `fields=${encodeURIComponent("files(id,name)")}`,
+    ].join("&");
+    const response = await driveFetch(`${DRIVE_FILES_URL}?${query}`, accessToken);
+    const body = (await response.json()) as DriveFileListResponse;
+    const files = body.files ?? [];
+    for (const file of files) {
+      await driveFetch(`${DRIVE_FILES_URL}/${encodeURIComponent(file.id)}`, accessToken, {
+        method: "DELETE",
+      }).catch(() => {});
     }
-    if (offset + 250 < files.length) await new Promise<void>(resolve => setTimeout(resolve, 0));
+    return files.length;
+  } catch {
+    return 0;
   }
-  const tips: DriveFileResponse[] = [];
-  for (let offset = 0; offset < files.length; offset += 250) {
-    for (const file of files.slice(offset, offset + 250)) {
-      if (!parents.has(revisionToken(file))) tips.push(file);
-    }
-    if (tips.length > MAX_QUICK_SYNC_PARENTS) throw new Error('Too many competing Quick Sync revisions. Review backups before syncing.');
-    if (offset + 250 < files.length) await new Promise<void>(resolve => setTimeout(resolve, 0));
-  }
-  return tips.sort((a, b) => (b.createdTime ?? '').localeCompare(a.createdTime ?? '') ||
-    (b.id > a.id ? 1 : b.id < a.id ? -1 : 0));
 }
 
-function revisionMetadata(file: DriveFileResponse, tips: DriveFileResponse[]): GoogleDriveQuickSyncMetadata {
-  return { ...toQuickSyncMetadata(file), revisionToken: revisionToken(file),
-    tipTokens: tips.map(revisionToken), hasConcurrentRevisions: tips.length > 1 };
+async function findQuickSyncFile(
+  accessToken: string,
+): Promise<DriveFileResponse | null> {
+  const q = `name = '${QUICK_SYNC_BACKUP_NAME}' and trashed = false`;
+  const query = [
+    "spaces=drive",
+    `q=${encodeURIComponent(q)}`,
+    "pageSize=1",
+    `fields=${encodeURIComponent("files(id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties)")}`,
+  ].join("&");
+  const response = await driveFetch(`${DRIVE_FILES_URL}?${query}`, accessToken);
+  const body = (await response.json()) as DriveFileListResponse;
+  return body.files?.[0] ?? null;
 }
 
 export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
@@ -305,36 +283,58 @@ export async function uploadOrUpdateGoogleDriveQuickSyncBackup(
   deviceProperties?: GoogleDriveQuickSyncDeviceProperties,
 ): Promise<GoogleDriveQuickSyncMetadata> {
   deviceProperties?.assertCurrent?.();
-  const revisions = await listQuickSyncRevisions(accessToken);
-  const revisionId = deviceProperties?.syncRevisionId;
-  if (!revisionId) throw new Error('A revision ID is required for Quick Sync.');
-  const parents = [...new Set(deviceProperties?.parentTokens ?? [])];
-  if (parents.length > MAX_QUICK_SYNC_PARENTS) throw new Error('Too many competing Quick Sync revisions. Review backups before syncing.');
+
   const properties = buildQuickSyncAppProperties(deviceProperties);
-  delete properties[QUICK_SYNC_PROPERTY];
-  properties[QUICK_SYNC_PROTOCOL] = '2';
-  parents.forEach((parent, index) => {
-    const key = 'syncParent' + index;
-    if (utf8Encoder.encode(key + parent).length > MAX_DRIVE_APP_PROPERTY_BYTES) throw new Error('Quick Sync parent revision is too long.');
-    properties[key] = parent;
-  });
-  // Reuse the same publication after a lost response/auth retry. Never PATCH.
-  let created = revisions.find(file => file.appProperties?.[QUICK_SYNC_PROTOCOL] === '2' &&
-    file.appProperties?.[QUICK_SYNC_REVISION_ID_PROPERTY] === revisionId &&
-    file.appProperties?.[QUICK_SYNC_DEVICE_ID_PROPERTY] === deviceProperties?.deviceId);
-  if (!created) {
-    const folder = await ensureBackupFolder(accessToken);
-    const now = new Date().toISOString();
-    created = await uploadBackupToFolder(accessToken, bytes, folder.id, now,
-      BACKUP_NAME_PREFIX + 'quick-sync-' + revisionId + '.kfb', undefined, false, properties, deviceProperties?.assertCurrent);
+  properties[APP_PROPERTY_KIND] = BACKUP_FILE_KIND;
+  properties[BACKUP_PROTECTION_PROPERTY] = "none";
+  properties[QUICK_SYNC_PROPERTY] = "true";
+
+  // Look up the active untrashed canonical file on Google Drive
+  const existing = await findQuickSyncFile(accessToken);
+  let targetFileId = (existing && !existing.trashed) ? existing.id : null;
+
+  // Attempt in-place update if targetFileId exists
+  if (targetFileId) {
+    try {
+      const updated = await uploadResumableDriveBackup<DriveFileResponse>(
+        (url, options, accepted) => driveFetch(url, accessToken, options, accepted),
+        bytes,
+        {
+          id: targetFileId,
+          isUpdate: true,
+          name: QUICK_SYNC_BACKUP_NAME,
+          appProperties: properties,
+        },
+        deviceProperties?.assertCurrent,
+      );
+      void pruneLegacyQuickSyncFiles(accessToken).catch(() => {});
+      return toQuickSyncMetadata(updated);
+    } catch (error) {
+      // If the target file no longer exists (404), fall through to creating a new canonical file
+      if (error instanceof GoogleDriveApiError && error.status === 404) {
+        targetFileId = null;
+      } else {
+        throw error;
+      }
+    }
   }
-  const latest = await listQuickSyncRevisions(accessToken);
-  // A listing may lag publication. Always retain our successfully created node.
-  const tips = await revisionTips([...latest.filter(file => file.id !== created!.id), created]);
-  const result = revisionMetadata(created, tips);
-  const competing = tips.find(file => file.id !== created.id);
-  if (tips.length > 1 && competing) result.concurrentFile = revisionMetadata(competing, tips);
-  return result;
+
+  // Create new canonical file in Backups folder
+  const folder = await ensureBackupFolder(accessToken);
+  const now = new Date().toISOString();
+  properties[ORIGINAL_CREATED_AT_PROPERTY] = now;
+  const created = await uploadResumableDriveBackup<DriveFileResponse>(
+    (url, options, accepted) => driveFetch(url, accessToken, options, accepted),
+    bytes,
+    {
+      name: QUICK_SYNC_BACKUP_NAME,
+      parents: [folder.id],
+      appProperties: properties,
+    },
+    deviceProperties?.assertCurrent,
+  );
+  void pruneLegacyQuickSyncFiles(accessToken).catch(() => {});
+  return toQuickSyncMetadata(created);
 }
 
 export async function getGoogleDriveQuickSyncFileMetadata(
@@ -342,15 +342,32 @@ export async function getGoogleDriveQuickSyncFileMetadata(
   existingFileId?: string | null,
   exact = false,
 ): Promise<GoogleDriveQuickSyncMetadata | null> {
-  if (exact && existingFileId) {
-    const fields = 'id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties';
-    const response = await driveFetch(DRIVE_FILES_URL + '/' + encodeURIComponent(existingFileId) + '?fields=' + encodeURIComponent(fields), accessToken);
-    const file = await response.json() as DriveFileResponse;
-    return file.trashed ? null : revisionMetadata(file, await revisionTips(await listQuickSyncRevisions(accessToken)));
+  const fields = "id,name,createdTime,modifiedTime,size,version,headRevisionId,trashed,appProperties";
+  if (existingFileId) {
+    try {
+      const response = await driveFetch(
+        `${DRIVE_FILES_URL}/${encodeURIComponent(existingFileId)}?fields=${encodeURIComponent(fields)}`,
+        accessToken,
+      );
+      const file = (await response.json()) as DriveFileResponse;
+      if (file.trashed) {
+        return null;
+      }
+      if (exact || isQuickSyncBackupFile(file)) {
+        return toQuickSyncMetadata(file);
+      }
+    } catch (error) {
+      if (exact) throw error;
+      if (error instanceof GoogleDriveApiError && error.status === 404) {
+        // Stale fileId, fall through to lookup
+      } else {
+        throw error;
+      }
+    }
   }
-  const tips = await revisionTips(await listQuickSyncRevisions(accessToken));
-  const selected = tips.length > 1 ? tips.find(file => file.id !== existingFileId) ?? tips[0] : tips[0];
-  return selected ? revisionMetadata(selected, tips) : null;
+
+  const found = await findQuickSyncFile(accessToken);
+  return found && !found.trashed ? toQuickSyncMetadata(found) : null;
 }
 
 export async function resolveGoogleDriveQuickSyncBackupFile(
@@ -516,14 +533,41 @@ export async function downloadGoogleDriveAttachmentFile(
   destinationUri: string,
 ): Promise<void> {
   const destination = new File(destinationUri);
-  await File.downloadFileAsync(
-    `${DRIVE_FILES_URL}/${encodeURIComponent(fileId)}?alt=media`,
-    destination,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      idempotent: true,
-    },
-  );
+  try {
+    await File.downloadFileAsync(
+      `${DRIVE_FILES_URL}/${encodeURIComponent(fileId)}?alt=media`,
+      destination,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        idempotent: true,
+      },
+    );
+  } catch (error) {
+    if (destination.exists) {
+      try {
+        destination.delete();
+      } catch {
+        // ignore delete failure
+      }
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("404") || message.includes("not found")) {
+      throw new GoogleDriveApiError(
+        "Attachment not found or might be deleted.",
+        404,
+      );
+    }
+    if (message.includes("401") || message.includes("403")) {
+      throw new GoogleDriveApiError(
+        "Google Drive access was denied or expired. Please sign in again.",
+        403,
+      );
+    }
+    throw new GoogleDriveApiError(
+      "Unable to download attachment. Check your connection and try again.",
+      0,
+    );
+  }
 }
 
 export async function deleteGoogleDriveAttachmentFile(
@@ -683,7 +727,9 @@ function isQuickSyncBackupFile(file: {
 }): boolean {
   return (
     file.name === QUICK_SYNC_BACKUP_NAME ||
-    file.appProperties?.[QUICK_SYNC_PROPERTY] === "true"
+    file.appProperties?.[QUICK_SYNC_PROPERTY] === "true" ||
+    file.appProperties?.quickSyncProtocol === "2" ||
+    file.name.startsWith(BACKUP_NAME_PREFIX + "quick-sync-")
   );
 }
 
@@ -761,6 +807,9 @@ function toQuickSyncMetadata(
 
   return {
     ...base,
+    revisionToken: file.id,
+    tipTokens: [file.id],
+    hasConcurrentRevisions: false,
     version: Number.isFinite(parsedVersion) ? parsedVersion : null,
     headRevisionId: file.headRevisionId ?? null,
     trashed: Boolean(file.trashed),

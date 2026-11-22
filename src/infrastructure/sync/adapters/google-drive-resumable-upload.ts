@@ -80,7 +80,7 @@ async function checksum(bytes: Uint8Array, assertCurrent?: () => void): Promise<
   return bytesToHex(hash.digest());
 }
 
-/** Publish a new immutable file; never PATCH an existing financial snapshot. */
+/** Publish an immutable archive or update an existing canonical sync file. */
 export async function uploadResumableDriveBackup<T extends UploadedFile>(
   request: Request,
   bytes: Uint8Array,
@@ -88,7 +88,7 @@ export async function uploadResumableDriveBackup<T extends UploadedFile>(
   assertCurrent?: () => void,
 ): Promise<T> {
   if (bytes.length === 0) throw new Error("The backup archive is empty.");
-  const key = JSON.stringify([metadata.parents, metadata.name, metadata.appProperties &&
+  const key = JSON.stringify([metadata.id, metadata.parents, metadata.name, metadata.appProperties &&
     Object.entries(metadata.appProperties).filter(([name]) => name !== "originalCreatedAt")]);
   let archiveSessions = sessions.get(bytes);
   if (!archiveSessions) { archiveSessions = new Map(); sessions.set(bytes, archiveSessions); }
@@ -104,7 +104,7 @@ export async function uploadResumableDriveBackup<T extends UploadedFile>(
     }
   }
   if (!state) {
-    state = { id: "", checksum: "", metadata: { ...metadata } };
+    state = { id: (typeof metadata.id === "string" ? metadata.id : ""), checksum: "", metadata: { ...metadata } };
     archiveSessions.set(key, state);
   }
   if (state.busy) throw new Error("This backup upload is already in progress.");
@@ -140,10 +140,18 @@ export async function uploadResumableDriveBackup<T extends UploadedFile>(
       assertCurrent?.();
       if (!current.session) {
         try {
-          const response = await request(UPLOAD_URL + "?uploadType=resumable&fields=" + encodeURIComponent(FIELDS), {
-            method: "POST", redirect: "manual",
+          const isUpdate = Boolean(current.metadata.isUpdate && current.id);
+          const uploadEndpoint = isUpdate
+            ? `${UPLOAD_URL}/${encodeURIComponent(current.id)}?uploadType=resumable&fields=${encodeURIComponent(FIELDS)}`
+            : `${UPLOAD_URL}?uploadType=resumable&fields=${encodeURIComponent(FIELDS)}`;
+          const uploadMethod = isUpdate ? "PATCH" : "POST";
+          const uploadBody = isUpdate
+            ? JSON.stringify({ name: current.metadata.name, appProperties: current.metadata.appProperties })
+            : JSON.stringify(current.metadata);
+          const response = await request(uploadEndpoint, {
+            method: uploadMethod, redirect: "manual",
             headers: { "Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Type": "application/octet-stream", "X-Upload-Content-Length": String(bytes.length) },
-            body: JSON.stringify(current.metadata),
+            body: uploadBody,
           });
           const location = response.headers.get("location");
           // Never forward a bearer token to an arbitrary session URL.

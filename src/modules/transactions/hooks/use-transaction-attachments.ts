@@ -404,7 +404,19 @@ function isBenignShareInterruption(error: unknown): boolean {
 }
 
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error && error.message
-    ? error.message
-    : "The attachment operation failed.";
+  const raw =
+    error instanceof Error && error.message
+      ? error.message
+      : "The attachment operation failed.";
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes("404") ||
+    lower.includes("not found") ||
+    lower.includes("might be deleted") ||
+    lower.includes("no longer available") ||
+    lower.includes("downloadfileasync")
+  ) {
+    return "Attachment not found or might be deleted.";
+  }
+  return raw;
 }

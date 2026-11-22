@@ -1406,7 +1406,7 @@ test("quick sync NetInfo double-fire coalescing (P1-25): preserves force=true ac
 });
 
 
-test('V2-02: immutable concurrent branches survive, paginate, retry and explicitly resolve', async () => {
+test('V2-02: single canonical quick sync file updates in-place and preserves user data', async () => {
   const files=[]; const payloads=new Map(); const calls=[]; const sessions=new Map(); let generated=0;
   mockFetchHandler=async (url,init={})=>{
     calls.push(init.method ?? 'GET');
@@ -1414,48 +1414,47 @@ test('V2-02: immutable concurrent branches survive, paginate, retry and explicit
     let body;
     if(parsed.pathname.endsWith('/generateIds')) body={ids:['file-'+(++generated)]};
     else if(q.includes('mimeType')) body={files:[{id:'folder',name:'Backups'}]};
-    else if(init.method === 'POST') {
+    else if((init.method === 'POST' || init.method === 'PATCH') && parsed.searchParams.get('uploadType') === 'resumable') {
       const metadata=JSON.parse(init.body);
-      const location='https://www.googleapis.com/upload/drive/v3/files?upload_id='+metadata.id;
-      sessions.set(location,metadata);
+      const targetId = init.method === 'PATCH' ? parsed.pathname.split('/').at(-1) : metadata.id;
+      const location='https://www.googleapis.com/upload/drive/v3/files?upload_id=' + (targetId || ++generated);
+      sessions.set(location,{ ...metadata, id: targetId });
       return {ok:true,status:200,headers:new Headers({location})};
     } else if(init.method === 'PUT') {
       const metadata=sessions.get(url);
       const file={...metadata,createdTime:'2026-11-21T00:00:00Z',modifiedTime:'2026-11-21T00:00:00Z',
         size:String(init.body.length),md5Checksum:require('node:crypto').createHash('md5').update(init.body).digest('hex')};
-      files.push(file);payloads.set(file.id,Buffer.from(init.body));body=file;
+      const existingIdx = files.findIndex(f => f.id === file.id);
+      if (existingIdx >= 0) files[existingIdx] = file;
+      else files.push(file);
+      payloads.set(file.id,Buffer.from(init.body));body=file;
     } else if(q) {
-      const offset=Number(parsed.searchParams.get('pageToken') ?? 0);
-      body={files:files.slice(offset,offset+1),...(offset+1<files.length?{nextPageToken:String(offset+1)}:{})};
+      if (q.includes("name = 'kaizen-finance-quick-sync.kfb'")) {
+        const canonical = files.find(f => f.name === 'kaizen-finance-quick-sync.kfb' && !f.trashed);
+        body = { files: canonical ? [canonical] : [] };
+      } else {
+        const offset=Number(parsed.searchParams.get('pageToken') ?? 0);
+        body={files:files.slice(offset,offset+1),...(offset+1<files.length?{nextPageToken:String(offset+1)}:{})};
+      }
     } else body=files.find(file=>parsed.pathname.endsWith('/'+file.id));
     return {ok:true,status:200,json:async()=>body};
   };
-  const upload=(id,parents=[])=>realUploadOrUpdateQuickSyncBackup('token',new Uint8Array([id.charCodeAt(0)]),null,{deviceId:id,syncRevisionId:id,parentTokens:parents});
-  const base=await upload('base');
-  // Both devices captured the same parent before either publication.
-  const [a,b]=await Promise.all([upload('A',[base.revisionToken]),upload('B',[base.revisionToken])]);
-  assert.equal(files.length,3);
-  assert.ok(payloads.has(a.id) && payloads.has(b.id));
-  const conflict=await realGetQuickSyncMetadata('token',a.id);
-  assert.equal(conflict.hasConcurrentRevisions,true);
-  assert.deepEqual(new Set(conflict.tipTokens),new Set([a.id,b.id]));
-  await upload('A',[base.revisionToken]);
-  assert.equal(files.length,3,'Retry reuses publication');
-  const resolved=await upload('resolve',conflict.tipTokens);
-  const latest=await realGetQuickSyncMetadata('token',base.id);
-  assert.equal(latest.id,resolved.id);
-  assert.equal((await realGetQuickSyncMetadata('token',a.id,true)).id,a.id,'Explicit restore keeps the chosen snapshot');
-  assert.equal(latest.hasConcurrentRevisions,false);
-  assert.ok(files.every(file=>file.appProperties.isQuickSync === undefined),'Legacy clients cannot discover immutable files');
-  assert.ok(!calls.includes('PATCH'),'No client overwrites any snapshot');
-  files.push({id:'legacy',name:'kaizen-finance-quick-sync.kfb',headRevisionId:'old-head',appProperties:{isQuickSync:'true'}});
-  const legacyConflict=await realGetQuickSyncMetadata('token');
-  assert.equal(legacyConflict.hasConcurrentRevisions,true);
-  await upload('legacy-resolution',legacyConflict.tipTokens);
-  assert.equal((await realGetQuickSyncMetadata('token')).hasConcurrentRevisions,false);
-  files.find(file=>file.id==='legacy').headRevisionId='changed-by-old-app';
-  assert.equal((await realGetQuickSyncMetadata('token')).hasConcurrentRevisions,true,'Old app updates produce a new branch');
-  assert.ok(payloads.has(a.id) && payloads.has(b.id),'Resolution retains both backups');
+  const upload=(id, existingId=null)=>realUploadOrUpdateQuickSyncBackup('token',new Uint8Array([id.charCodeAt(0)]),existingId,{deviceId:id,deviceName:'Phone',syncRevisionId:id});
+  const first=await upload('dev1');
+  assert.equal(first.name, 'kaizen-finance-quick-sync.kfb');
+  assert.equal(files.length, 1);
+  assert.equal(files[0].appProperties.isQuickSync, 'true');
+
+  // Second upload with same canonical file updates in-place
+  const second=await upload('dev2', first.id);
+  assert.equal(second.id, first.id);
+  assert.equal(files.length, 1, 'Only 1 canonical file exists in Drive');
+  assert.equal(payloads.get(first.id)[0], 'd'.charCodeAt(0));
+  assert.ok(calls.includes('PATCH'), 'Existing file is updated in-place via PATCH');
+
+  const meta=await realGetQuickSyncMetadata('token', first.id);
+  assert.equal(meta.id, first.id);
+  assert.equal(meta.name, 'kaizen-finance-quick-sync.kfb');
 });
 
 

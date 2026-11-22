@@ -103,9 +103,7 @@ export function AttachmentViewerModal({
       })
       .catch((err: unknown) => {
         if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load attachment file.",
-          );
+          setError(formatAttachmentError(err));
         }
       })
       .finally(() => {
@@ -319,6 +317,32 @@ export function formatBytes(bytes: number): string {
     unitIndex += 1;
   }
   return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function formatAttachmentError(error: unknown): string {
+  const rawMessage = error instanceof Error ? error.message : String(error ?? "");
+  const lower = rawMessage.toLowerCase();
+
+  if (
+    lower.includes("404") ||
+    lower.includes("not found") ||
+    lower.includes("might be deleted") ||
+    lower.includes("no longer available") ||
+    lower.includes("missing locally") ||
+    lower.includes("unavailable")
+  ) {
+    return "Attachment not found or might be deleted.";
+  }
+  if (lower.includes("401") || lower.includes("403") || lower.includes("expired") || lower.includes("denied")) {
+    return "Google Drive access was denied or expired. Please sign in again.";
+  }
+  if (lower.includes("integrity check") || lower.includes("corrupt")) {
+    return "The attachment file appears corrupted and could not be verified.";
+  }
+  if (lower.includes("downloadfileasync") || lower.includes("network") || lower.includes("unable to reach")) {
+    return "Unable to download attachment. Check your connection and try again.";
+  }
+  return rawMessage || "Attachment not found or might be deleted.";
 }
 
 function createStyles(theme: AppTheme) {

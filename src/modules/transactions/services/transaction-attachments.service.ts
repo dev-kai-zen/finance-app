@@ -215,21 +215,33 @@ export async function getAvailableTransactionAttachmentUri(
 ): Promise<string> {
   const attachment = findTransactionAttachmentById(id);
   if (!attachment || attachment.deletedAt) {
-    throw new Error("This attachment is no longer available.");
+    throw new Error("Attachment not found or might be deleted.");
   }
   const localUri = getTransactionAttachmentLocalUri(attachment.storageKey);
   if (isTransactionAttachmentAvailableLocally(attachment)) return localUri;
   if (!attachment.driveFileId) {
-    throw new Error("This attachment has not been uploaded and is missing locally.");
+    throw new Error("Attachment not found or might be deleted.");
   }
 
-  await withGoogleDriveAccessToken((accessToken) =>
-    downloadGoogleDriveAttachmentFile(
-      accessToken,
-      attachment.driveFileId!,
-      localUri,
-    ),
-  );
+  try {
+    await withGoogleDriveAccessToken((accessToken) =>
+      downloadGoogleDriveAttachmentFile(
+        accessToken,
+        attachment.driveFileId!,
+        localUri,
+      ),
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (
+      message.includes("404") ||
+      message.includes("not found") ||
+      message.includes("might be deleted")
+    ) {
+      throw new Error("Attachment not found or might be deleted.");
+    }
+    throw error;
+  }
   const downloaded = new File(localUri);
   const sha256 = await calculateTransactionAttachmentSha256(downloaded);
   if (sha256 !== attachment.sha256) {

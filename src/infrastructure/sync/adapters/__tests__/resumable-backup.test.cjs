@@ -22,18 +22,19 @@ function setup() {
     const parsed = new URL(url);
     let response;
     if (parsed.pathname.endsWith('/generateIds')) response = json({ ids: ['reserved-' + ++generated] });
-    else if (method === 'POST' && parsed.searchParams.get('uploadType') === 'resumable') {
+    else if ((method === 'POST' || method === 'PATCH') && parsed.searchParams.get('uploadType') === 'resumable') {
       const data = JSON.parse(options.body);
-      if (files.has(data.id)) response = json({}, 409);
+      const targetId = method === 'PATCH' ? parsed.pathname.split('/').at(-1) : data.id;
+      if (method === 'POST' && files.has(data.id)) response = json({}, 409);
       else {
         const location = 'https://www.googleapis.com/upload/drive/v3/files?upload_id=' + ++sessionCount;
-        sessions.set(location, { metadata: data, bytes: new Uint8Array(Number(headers.get('X-Upload-Content-Length'))), offset: 0 });
+        sessions.set(location, { metadata: { ...data, id: targetId }, bytes: new Uint8Array(Number(headers.get('X-Upload-Content-Length'))), offset: 0 });
         response = new Response(null, { status: 200, headers: { location } });
       }
     } else if (method === 'PUT') {
       const session = sessions.get(url);
       if (!session) response = json({}, 404);
-      else if (files.has(session.metadata.id)) response = json(metadata(session));
+      else if (files.has(session.metadata.id) && session.offset === session.bytes.length) response = json(metadata(session));
       else {
         const range = headers.get('content-range');
         if (!range.startsWith('bytes */')) {
@@ -200,7 +201,7 @@ test('V2-07: retry exhaustion, stalled ranges, invalid ranges, and checksum mism
   }
 });
 
-test('V2-07: superseded Quick Sync stops issuing chunks and preserves immutable parent metadata', async () => {
+test('V2-07: superseded Quick Sync stops issuing chunks and sets properties', async () => {
   const env = setup(); let current = true;
   env.after((call, response) => { if (call.method === 'PUT') current = false; });
   await assert.rejects(env.api.uploadOrUpdateGoogleDriveQuickSyncBackup('token', new Uint8Array(2 * CHUNK), 'old-file', {
@@ -209,10 +210,30 @@ test('V2-07: superseded Quick Sync stops issuing chunks and preserves immutable 
   }), /superseded/);
   assert.equal(env.calls.filter(c => c.method === 'PUT').length, 1);
   const metadata = [...env.sessions.values()][0].metadata;
-  assert.equal(metadata.appProperties.syncParent0, 'old-file');
-  assert.equal(metadata.appProperties.quickSyncProtocol, '2');
-  assert.equal(metadata.appProperties.isQuickSync, undefined);
-  assert.equal(env.files.size, 0); assert.ok(env.calls.every(c => c.method !== 'PATCH'));
+  assert.equal(metadata.appProperties.isQuickSync, 'true');
+  assert.equal(metadata.appProperties.lastUpdatedByDeviceId, 'device');
+  assert.equal(env.files.size, 0);
+});
+
+test('GDB-F01: Quick Sync updates single canonical file in-place with PATCH', async () => {
+  const env = setup();
+  const bytes1 = new Uint8Array(10).fill(1);
+  const first = await env.api.uploadOrUpdateGoogleDriveQuickSyncBackup('token', bytes1, null, {
+    deviceId: 'device-1', deviceName: 'Phone', syncRevisionId: 'rev-1',
+  });
+  assert.equal(first.name, 'kaizen-finance-quick-sync.kfb');
+  assert.equal(first.lastUpdatedByDeviceId, 'device-1');
+  assert.equal(env.files.size, 1);
+
+  // Second sync with existingFileId updates that same file in-place
+  const bytes2 = new Uint8Array(20).fill(2);
+  const second = await env.api.uploadOrUpdateGoogleDriveQuickSyncBackup('token', bytes2, first.id, {
+    deviceId: 'device-1', deviceName: 'Phone', syncRevisionId: 'rev-2',
+  });
+  assert.equal(second.id, first.id);
+  assert.equal(second.syncRevisionId, 'rev-2');
+  assert.equal(env.files.size, 1); // EXACTLY ONE FILE in Drive!
+  assert.ok(env.calls.some(c => c.method === 'PATCH' && c.url.includes(first.id)));
 });
 
 test('V2-07: concurrent attempts on the same archive cannot create duplicate sessions', async () => {
