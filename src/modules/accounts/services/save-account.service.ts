@@ -3,6 +3,7 @@ import { accountInputSchema, type AccountInput } from "@/modules/accounts/schema
 import { findAccountsByAccountTypeId, insertAccount, newAccountRecordId, updateAccountRecord } from "@/modules/accounts/repositories/accounts.repository";
 import {
   deleteCreditCardDetails,
+  findCreditCardDetailsByAccountId,
   upsertCreditCardDetails,
 } from "@/modules/accounts/repositories/credit-card-details.repository";
 import { listPocketsForAccount } from "@/modules/accounts/repositories/pockets.repository";
@@ -30,6 +31,10 @@ export function saveAccount(input: AccountInput, id?: string): string {
   const value = accountInputSchema.parse(input);
   return db.transaction((tx) => {
     const existing = id ? requireAccount(id, tx) : null;
+    const existingCardDetails = existing
+      ? findCreditCardDetailsByAccountId(existing.id, tx)
+      : null;
+    const wasCreditCard = existingCardDetails !== null;
     let currencyCode: string;
     if (existing) {
       const existingCurrency = normalizeCurrencyCode(existing.currencyCode);
@@ -151,16 +156,19 @@ export function saveAccount(input: AccountInput, id?: string): string {
       );
     }
 
-    if (creditCardType && creditCardValues) {
+    const isCreditCard = Boolean(creditCardType && creditCardValues);
+    if (isCreditCard && creditCardValues) {
       upsertCreditCardDetails(
         { accountId, ...creditCardValues },
         tx,
       );
-    } else {
+    } else if (wasCreditCard) {
       deleteCreditCardDetails(accountId, tx);
     }
 
-    reconcileCreditCardBillingInContext(new Date(), tx);
+    if (isCreditCard || wasCreditCard) {
+      reconcileCreditCardBillingInContext(new Date(), tx);
+    }
     return accountId;
   });
 }

@@ -571,6 +571,40 @@ test("credit card details are required, validated, and removed when the type cha
   assert.equal(creditCardsRepo.findCreditCardDetailsByAccountId(id), null);
 });
 
+test("A-F02: saveAccount scopes credit card reconciliation to credit card accounts", () => {
+  const creditCards = require("@/modules/credit-cards");
+  const originalReconcile = creditCards.reconcileCreditCardBillingInContext;
+  let reconcileCount = 0;
+  creditCards.reconcileCreditCardBillingInContext = (...args) => {
+    reconcileCount += 1;
+    return originalReconcile(...args);
+  };
+  try {
+    // 1. Create a cash account
+    const cashId = saveAccount(accountInput(system.ASSET_OTHERS, "Cash Wallet"));
+    assert.equal(reconcileCount, 0, "Saving cash account must not reconcile credit card billing");
+
+    // 2. Update a cash account
+    saveAccount(accountInput(system.ASSET_OTHERS, "Updated Wallet"), cashId);
+    assert.equal(reconcileCount, 0, "Updating cash account must not reconcile credit card billing");
+
+    // 3. Create a credit card account
+    const cardId = saveAccount(accountInput(system.LIABILITY_CREDIT_CARD, "Rewards Card"));
+    assert.equal(reconcileCount, 1, "Saving credit card account must reconcile credit card billing");
+
+    // 4. Update credit card account
+    saveAccount(accountInput(system.LIABILITY_CREDIT_CARD, "Updated Card"), cardId);
+    assert.equal(reconcileCount, 2, "Updating credit card account must reconcile credit card billing");
+
+    // 5. Change account type from Credit Card to Cash/Bank
+    saveAccount(accountInput(system.ASSET_OTHERS, "Converted Account"), cardId);
+    assert.equal(reconcileCount, 3, "Changing type away from credit card must reconcile credit card billing");
+    assert.equal(creditCardsRepo.findCreditCardDetailsByAccountId(cardId), null);
+  } finally {
+    creditCards.reconcileCreditCardBillingInContext = originalReconcile;
+  }
+});
+
 test("pocket transfers create two grouped transaction legs without changing the account balance", () => {
   const accountId = saveAccount({
     ...accountInput(undefined, "Checking", "1000.50"),
