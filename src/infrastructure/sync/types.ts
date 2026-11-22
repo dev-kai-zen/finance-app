@@ -3,6 +3,7 @@ export type QuickSyncNetworkPreference = "wifi_only" | "any";
 export interface QuickSyncConfig {
   enabled: boolean;
   network: QuickSyncNetworkPreference;
+  syncAttachments: boolean;
   lastSyncedAt: string | null;
   fileId: string | null;
   accountEmail?: string | null;
@@ -40,6 +41,7 @@ export interface QuickSyncDeviceMetadata {
 
 export interface QuickSyncState {
   enabled: boolean;
+  syncAttachments: boolean;
   status: QuickSyncStatus;
   networkPreference: QuickSyncNetworkPreference;
   lastSyncedAt: string | null;

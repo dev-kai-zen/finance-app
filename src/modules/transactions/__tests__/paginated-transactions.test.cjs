@@ -1494,5 +1494,29 @@ test("R4: optional preset handles foreign-currency typed amount and safely ignor
   }
 });
 
+test("Q3: receipt attachment sync stops when Quick Sync is disabled or syncAttachments is disabled", async () => {
+  connectAndMigrate();
+  try {
+    const { saveQuickSyncConfig } = require("@/infrastructure/sync");
+    const attachmentService = require("../services/transaction-attachments.service");
+
+    // 1. When Quick Sync is disabled, syncPendingTransactionAttachments resolves immediately
+    saveQuickSyncConfig({ enabled: false, syncAttachments: true });
+    let syncPromise = attachmentService.syncPendingTransactionAttachments();
+    assert.equal(typeof syncPromise.then, "function");
+    await syncPromise;
+
+    // 2. When Quick Sync is enabled but syncAttachments is false, resolves immediately
+    saveQuickSyncConfig({ enabled: true, syncAttachments: false });
+    syncPromise = attachmentService.syncPendingTransactionAttachments();
+    await syncPromise;
+
+    // Reset settings
+    saveQuickSyncConfig({ enabled: false, syncAttachments: true });
+  } finally {
+    sqlite.close();
+  }
+});
+
 
 

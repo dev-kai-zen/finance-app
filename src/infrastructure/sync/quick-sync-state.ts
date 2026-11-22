@@ -44,6 +44,7 @@ export function getQuickSyncState(): QuickSyncState {
 
   return {
     enabled: config.enabled,
+    syncAttachments: config.syncAttachments,
     status,
     networkPreference: config.network,
     lastSyncedAt: config.lastSyncedAt,

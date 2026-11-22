@@ -113,6 +113,10 @@ export function setQuickSyncNetworkPreference(
   }
 }
 
+export function setQuickSyncSyncAttachments(syncAttachments: boolean): void {
+  saveQuickSyncConfig({ syncAttachments });
+}
+
 export async function checkQuickSyncRemoteStatus(options?: {
   force?: boolean;
   openPromptOnConflict?: boolean;

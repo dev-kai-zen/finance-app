@@ -79,6 +79,10 @@ export function QuickSyncCard({ onShowToast }: QuickSyncCardProps = {}) {
     quickSync.setNetworkPreference(pref);
   };
 
+  const handleToggleSyncAttachments = (value: boolean) => {
+    quickSync.setSyncAttachments(value);
+  };
+
   const handleSaveDeviceLabel = () => {
     if (!isDeviceLabelDirty) return;
     quickSync.setDeviceLabel(sanitizedDraft.length > 0 ? sanitizedDraft : null);
@@ -244,6 +248,25 @@ export function QuickSyncCard({ onShowToast }: QuickSyncCardProps = {}) {
                 </Text>
               </Pressable>
             </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Attachments Sync Toggle */}
+          <View style={styles.attachmentSyncRow}>
+            <View style={styles.attachmentSyncCopy}>
+              <Text style={styles.attachmentSyncTitle}>
+                {t("quickSync.syncAttachmentsTitle")}
+              </Text>
+              <Text style={styles.attachmentSyncDescription}>
+                {t("quickSync.syncAttachmentsDescription")}
+              </Text>
+            </View>
+            <ThemedSwitch
+              accessibilityLabel={t("quickSync.syncAttachmentsTitle")}
+              onValueChange={handleToggleSyncAttachments}
+              value={quickSync.syncAttachments}
+            />
           </View>
 
           <View style={styles.divider} />
@@ -523,6 +546,26 @@ function createStyles(theme: AppTheme) {
     },
     networkSection: {
       gap: theme.spacing.sm,
+    },
+    attachmentSyncRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: theme.spacing.md,
+    },
+    attachmentSyncCopy: {
+      flex: 1,
+      gap: 2,
+    },
+    attachmentSyncTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: 13,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    attachmentSyncDescription: {
+      color: theme.colors.textSecondary,
+      fontSize: 11,
+      lineHeight: 15,
     },
     deviceLabelSection: {
       gap: theme.spacing.xs,

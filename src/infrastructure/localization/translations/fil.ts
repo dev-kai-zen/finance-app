@@ -656,6 +656,9 @@ export const fil = {
     wifiOnlyDescription: "I-sync lamang kapag nakakonekta sa Wi-Fi",
     anyNetwork: "Wi-Fi at Mobile data",
     anyNetworkDescription: "I-sync sa Wi-Fi o mobile data",
+    syncAttachmentsTitle: "I-sync ang mga larawan at file ng resibo",
+    syncAttachmentsDescription:
+      "Awtomatikong i-upload ang mga larawan at file ng resibo sa Google Drive",
     statusLabel: "Status",
     lastSynced: "Huling na-sync: %{time}",
     neverSynced: "Hindi pa na-sync",

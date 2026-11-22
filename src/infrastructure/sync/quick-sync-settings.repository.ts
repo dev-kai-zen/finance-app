@@ -9,6 +9,7 @@ import type {
 
 export const QUICK_SYNC_ENABLED_KEY = "quick_sync_enabled";
 export const QUICK_SYNC_NETWORK_KEY = "quick_sync_network";
+export const QUICK_SYNC_SYNC_ATTACHMENTS_KEY = "quick_sync_sync_attachments";
 export const QUICK_SYNC_LAST_SYNCED_AT_KEY = "quick_sync_last_synced_at";
 export const QUICK_SYNC_FILE_ID_KEY = "quick_sync_file_id";
 export const QUICK_SYNC_ACCOUNT_EMAIL_KEY = "quick_sync_account_email";
@@ -16,6 +17,7 @@ export const QUICK_SYNC_ACCOUNT_EMAIL_KEY = "quick_sync_account_email";
 export const QUICK_SYNC_SETTINGS_KEYS = [
   QUICK_SYNC_ENABLED_KEY,
   QUICK_SYNC_NETWORK_KEY,
+  QUICK_SYNC_SYNC_ATTACHMENTS_KEY,
   QUICK_SYNC_LAST_SYNCED_AT_KEY,
   QUICK_SYNC_FILE_ID_KEY,
   QUICK_SYNC_ACCOUNT_EMAIL_KEY,
@@ -53,6 +55,7 @@ export function getQuickSyncConfig(context: DbContext = db): QuickSyncConfig {
   return {
     enabled: values[QUICK_SYNC_ENABLED_KEY] === "true",
     network: normalizeNetworkPreference(values[QUICK_SYNC_NETWORK_KEY]),
+    syncAttachments: values[QUICK_SYNC_SYNC_ATTACHMENTS_KEY] !== "false",
     lastSyncedAt: values[QUICK_SYNC_LAST_SYNCED_AT_KEY] || null,
     fileId: values[QUICK_SYNC_FILE_ID_KEY] || null,
     accountEmail: values[QUICK_SYNC_ACCOUNT_EMAIL_KEY] || null,
@@ -71,6 +74,9 @@ export function saveQuickSyncConfig(
   }
   if (patch.network !== undefined) {
     entries[QUICK_SYNC_NETWORK_KEY] = patch.network;
+  }
+  if (patch.syncAttachments !== undefined) {
+    entries[QUICK_SYNC_SYNC_ATTACHMENTS_KEY] = String(patch.syncAttachments);
   }
   if (patch.lastSyncedAt !== undefined) {
     entries[QUICK_SYNC_LAST_SYNCED_AT_KEY] = patch.lastSyncedAt;

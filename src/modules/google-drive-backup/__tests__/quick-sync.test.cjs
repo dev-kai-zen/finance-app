@@ -381,6 +381,7 @@ test("quick sync: returns default configuration when not set", () => {
   const config = getQuickSyncConfig();
   assert.equal(config.enabled, false);
   assert.equal(config.network, "wifi_only");
+  assert.equal(config.syncAttachments, true);
   assert.equal(config.lastSyncedAt, null);
   assert.equal(config.fileId, null);
 });
@@ -393,6 +394,16 @@ test("quick sync: saves and loads enabled toggle", () => {
   saveQuickSyncConfig({ enabled: false });
   config = getQuickSyncConfig();
   assert.equal(config.enabled, false);
+});
+
+test("quick sync: saves and loads syncAttachments toggle", () => {
+  saveQuickSyncConfig({ syncAttachments: false });
+  let config = getQuickSyncConfig();
+  assert.equal(config.syncAttachments, false);
+
+  saveQuickSyncConfig({ syncAttachments: true });
+  config = getQuickSyncConfig();
+  assert.equal(config.syncAttachments, true);
 });
 
 test("quick sync: saves and normalizes network preference", () => {

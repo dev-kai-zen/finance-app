@@ -10,6 +10,7 @@ import {
   setQuickSyncDeviceLabel,
   setQuickSyncEnabled,
   setQuickSyncNetworkPreference,
+  setQuickSyncSyncAttachments,
   subscribeToQuickSync,
   triggerQuickSync,
 } from "../services/quick-sync.service";
@@ -26,6 +27,7 @@ export function useQuickSync() {
     ...state,
     setEnabled: setQuickSyncEnabled,
     setNetworkPreference: setQuickSyncNetworkPreference,
+    setSyncAttachments: setQuickSyncSyncAttachments,
     setDeviceLabel: setQuickSyncDeviceLabel,
     checkRemoteStatus: () =>
       checkQuickSyncRemoteStatus({ force: true, openPromptOnConflict: true }),

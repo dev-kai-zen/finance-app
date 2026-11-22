@@ -640,6 +640,9 @@ export const en = {
     wifiOnlyDescription: "Only sync when connected to Wi-Fi",
     anyNetwork: "Wi-Fi & Mobile data",
     anyNetworkDescription: "Sync over Wi-Fi or mobile data",
+    syncAttachmentsTitle: "Sync receipt photos & files",
+    syncAttachmentsDescription:
+      "Automatically back up transaction receipt photos to Google Drive",
     statusLabel: "Status",
     lastSynced: "Last synced: %{time}",
     neverSynced: "Never synced",

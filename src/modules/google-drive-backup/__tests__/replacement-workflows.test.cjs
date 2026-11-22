@@ -28,6 +28,7 @@ function setup() {
     './quick-sync-state': { getQuickSyncState: () => ({status:'idle'}), setQuickSyncRuntimeStatus() {} },
   });
   const sync = { ...coordinator, cancelDebouncedQuickSync() {}, clearQuickSyncRemoteConflict() {},
+    getQuickSyncConfig: () => ({ enabled: true, syncAttachments: true, network: 'any', lastSyncedAt: null, fileId: 'file' }),
     saveQuickSyncConfig() { events.push('config'); },
     clearQuickSyncRemoteBaselineOnManualRestore() { events.push('baseline'); },
     clearQuickSyncRemoteTracking() {}, setQuickSyncRuntimeStatus() {} };

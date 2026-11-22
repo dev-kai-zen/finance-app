@@ -2,6 +2,7 @@ import { File } from "expo-file-system";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
+  getQuickSyncConfig,
   getQuickSyncOperationGeneration,
   isQuickSyncOperationCurrent,
   isQuickSyncReplacementPending,
@@ -242,6 +243,8 @@ let activeSync: Promise<void> | null = null;
 
 export function syncPendingTransactionAttachments(): Promise<void> {
   if (isQuickSyncReplacementPending()) return Promise.resolve();
+  const config = getQuickSyncConfig();
+  if (!config.enabled || !config.syncAttachments) return Promise.resolve();
   if (activeSync) return activeSync;
   activeSync = trackQuickSyncOperation(runPendingSync(getQuickSyncOperationGeneration()).finally(() => {
     activeSync = null;
@@ -258,6 +261,8 @@ export function triggerTransactionAttachmentSync(): void {
 export function retryTransactionAttachmentSync(id: string): void {
   const attachment = findTransactionAttachmentById(id);
   if (!attachment || attachment.deletedAt) return;
+  const config = getQuickSyncConfig();
+  if (!config.enabled || !config.syncAttachments) return;
   retrySyncOperationsForEntity(ATTACHMENT_SYNC_ENTITY, id);
   updateTransactionAttachmentSync(id, {
     syncStatus: "pending",

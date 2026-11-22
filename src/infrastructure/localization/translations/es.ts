@@ -649,6 +649,9 @@ export const es = {
     wifiOnlyDescription: "Solo sincronizar al conectarse a Wi-Fi",
     anyNetwork: "Wi-Fi y Datos móviles",
     anyNetworkDescription: "Sincronizar por Wi-Fi o datos móviles",
+    syncAttachmentsTitle: "Sincronizar fotos y archivos de recibos",
+    syncAttachmentsDescription:
+      "Subir automáticamente fotos y archivos de recibos a Google Drive",
     statusLabel: "Estado",
     lastSynced: "Última sincronización: %{time}",
     neverSynced: "Nunca sincronizado",
