@@ -241,18 +241,17 @@ flowchart TD
 | **A-F04 — RESOLVED** | Archiving an account or pocket retains its setting key while `resolveAccountLocation` and `TransactionFormModal` automatically fall back to Available/None. If the account or pocket is later restored, the user's default setting is seamlessly preserved without manual reconfiguration. | Tested and confirmed: runtime resolution gracefully guards against archived accounts and pockets by design, while preserving configured defaults upon restore. |
 | **A-F02 — RESOLVED** | `saveAccount` called `reconcileCreditCardBillingInContext` unconditionally on every account save, causing unnecessary SQLite scans across all credit cards and statements on cash/bank saves. | **Resolved** in `save-account.service.ts`. Inspects `wasCreditCard` and `isCreditCard`; only deletes credit card details when changing type away from card (`wasCreditCard && !isCreditCard`), and only invokes `reconcileCreditCardBillingInContext` when `isCreditCard || wasCreditCard`. Regression test in `accounts.test.cjs`. |
 | **A-F03 — RESOLVED** | `checkMaintainingBalance` called `getAccountLedgerTransactions(accountId, context)`, materializing and sorting all historical active transaction objects into JS heap memory before calculating the balance in JS. | **Resolved**: Added native SQLite scalar aggregate query `findAccountTransactionDelta` in `transactions.repository.ts` (`coalesce(sum(amount_minor_units), 0)` with optional `excludeTransactionId`), exposed via `getAccountTransactionDelta` service in `transactions` module's public boundary. Replaced ledger hydration in `check-maintaining-balance.service.ts` with direct scalar delta. Tests in `account-balance-deltas.test.cjs` and `accounts.test.cjs`. |
+| **A-F01 — RESOLVED (INTENDED DESIGN)** | Cross-group Fund Group parent-child overlap: while intra-group overlap is blocked, Account A can be in Group 1 while its Pocket X is in Group 2. | **Settled & Documented**: Fund Groups intentionally function as flexible virtual perspectives rather than strictly partitioned mutual envelopes. Users may track a high-level account in one group while tracking a dedicated pocket in another specialized group. Intra-group double counting remains strictly prohibited by `saveFundGroup`. |
 
 ### Source findings requiring Stage 2 validation
 
-| ID / Priority | Finding and Evidence | Minimal Direction if Confirmed | Regression Proof |
-|---|---|---|---|
-| **A-F01 — Medium** | **Cross-group Fund Group Parent-Child Overlap**<br>While `saveFundGroup` prohibits selecting both an account and its pocket within the *same* group, it does not prevent Group 1 containing Account A while Group 2 contains Pocket X of Account A. Because Account A's balance includes Pocket X's balance, the same money is counted across multiple fund groups. | In `saveFundGroup`, verify that no pocket belonging to an account in another fund group can be added, and that adding an account does not overlap with existing pocket memberships in other groups. | Create Group 1 with Account A; attempt to create Group 2 with Pocket of Account A. Assert validation error. |
+*(None — all findings have been investigated, remediated, or validated as intentional design).*
 
 ### Architectural questions and policy decisions
 
 | ID | Decision / Uncertainty | How to Settle It |
 |---|---|---|
-| **Q-A1** | **Fund Groups: Strict Envelope Partition vs Flexible Virtual Buckets?**<br>Should Fund Groups be strictly mutually exclusive partitions of total wealth, or flexible user-defined tags? If mutually exclusive, A-F01 must block cross-group parent-pocket overlap. | Clarify product requirement with user. If flexible, document that overlapping groups intentionally allow double-counted envelope perspectives. |
+| **Q-A1 — SETTLED** | **Fund Groups: Strict Envelope Partition vs Flexible Virtual Buckets?**<br>Decision: Flexible Virtual Buckets. Cross-group parent account and child pocket memberships are permitted by design so users can monitor high-level bank totals in one group while tracking specific pockets in specialized target groups. | Confirmed with user. Status quo maintained; documented in finding A-F01. |
 | **Q-A2** | **Account Type Change History Retention**<br>If an account type is changed from Credit Card to Bank Account, credit card details are deleted. Should existing historical statement entries be preserved or purged? | Current schema cascades statements on account deletion, but preserves statements if only the type is changed. Confirm this matches intended auditability. |
 | **Q-A3** | **Starting Balance Lock Reversibility**<br>Starting balance lock is currently irreversible. Should a Pro or Settings override exist, or should it remain strictly permanent? | Accounting best practice supports permanent locking to prevent accidental distortion of historical net worth. Recommend keeping as permanent. |
 
@@ -339,7 +338,7 @@ Before writing or modifying any production code, AI agents and developers must a
 ## 12. Feature sign-off checklist
 
 - [ ] Core accounting guarantees (derived balances, currency immutability, starting balance locking) verified by repeatable tests.
-- [ ] Finding A-F01 (Fund Groups cross-group parent-child overlap) reviewed and decided with team.
+- [x] Finding A-F01 (Fund Groups cross-group parent-child overlap) reviewed and decided with team: confirmed flexible virtual views by design.
 - [x] Finding A-F02 (Credit card reconciliation scoping on cash saves) resolved: scoped to credit card additions, modifications, and removals; covered by automated unit test.
 - [x] Finding A-F03 (Maintaining balance aggregate query optimization) resolved: replaced $O(N)$ ledger hydration with native SQLite $O(1)$ scalar aggregate `getAccountTransactionDelta`. Covered by unit and integration tests.
 - [x] Finding A-F04 resolved: confirmed graceful fallback via `resolveAccountLocation` and setting preservation on unarchive.
