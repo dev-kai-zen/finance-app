@@ -2933,6 +2933,7 @@ export const en = {
     transferFeeHelpMessage:
       "Deduct an instant transaction fee (e.g. InstaPay, GCash, bank charges).",
     transferTypeLockedHint: "Transfer type cannot be changed.",
+    feeTypeLockedHint: "Transfer fee type cannot be changed.",
     cannotConvertToTransfer:
       "Cannot convert an existing transaction to a transfer.",
     cannotConvertFromTransfer:

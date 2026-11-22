@@ -346,6 +346,12 @@ function TransactionFormModalInner({
   const isEditingNonTransfer = Boolean(
     isEditing && initialTransaction && initialTransaction.type !== "transfer",
   );
+  const isEditingGroupedFee = Boolean(
+    isEditing &&
+      initialTransaction &&
+      initialTransaction.type === "expense" &&
+      initialTransaction.transactionGroupId,
+  );
 
   const [mode, setMode] = useState<TransactionType>("expense");
   const [name, setName] = useState<string>("");
@@ -910,6 +916,9 @@ function TransactionFormModalInner({
       return;
     }
     if (isEditingNonTransfer && newMode === "transfer") {
+      return;
+    }
+    if (isEditingGroupedFee && newMode !== "expense") {
       return;
     }
     setMode(newMode);
@@ -2077,15 +2086,19 @@ function TransactionFormModalInner({
           <View ref={typePickerRef} style={styles.typePickerSpacing}>
             <TransactionTypePicker
               allowTransfer={allowTransfer}
-              disabled={pending || isEditingTransfer}
+              disabled={pending || isEditingTransfer || isEditingGroupedFee}
               onChange={handleModeChange}
               value={mode}
             />
-            {isEditingTransfer ? (
+            {isEditingTransfer || isEditingGroupedFee ? (
               <Text style={styles.typeLockedHint}>
-                {t("transactions.transferTypeLockedHint", {
-                  defaultValue: "Transfer type cannot be changed.",
-                })}
+                {isEditingTransfer
+                  ? t("transactions.transferTypeLockedHint", {
+                      defaultValue: "Transfer type cannot be changed.",
+                    })
+                  : t("transactions.feeTypeLockedHint", {
+                      defaultValue: "Transfer fee type cannot be changed.",
+                    })}
               </Text>
             ) : null}
           </View>

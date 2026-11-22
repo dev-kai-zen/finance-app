@@ -2965,6 +2965,7 @@ export const es = {
     transferFeeHelpMessage:
       "Deduce una comisión de transacción instantánea (ej. InstaPay, GCash, cargos bancarios).",
     transferTypeLockedHint: "El tipo de transferencia no se puede cambiar.",
+    feeTypeLockedHint: "El tipo de comisión de transferencia no se puede cambiar.",
     cannotConvertToTransfer:
       "No se puede convertir una transacción existente en una transferencia.",
     cannotConvertFromTransfer:

@@ -2981,6 +2981,7 @@ export const fil = {
     transferFeeHelpMessage:
       "Magbawas ng agarang bayad sa transaksyon (hal. InstaPay, GCash, bank charges).",
     transferTypeLockedHint: "Hindi maaaring baguhin ang uri ng transfer.",
+    feeTypeLockedHint: "Hindi maaaring baguhin ang uri ng bayad sa transfer.",
     cannotConvertToTransfer:
       "Hindi maaaring i-convert ang kasalukuyang transaksyon sa isang transfer.",
     cannotConvertFromTransfer:

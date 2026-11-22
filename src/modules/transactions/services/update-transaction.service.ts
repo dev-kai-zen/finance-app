@@ -63,9 +63,19 @@ export function updateTransactionInContext(
   }
     const existing = findTransactionById(id, context);
     if (!existing) throw new Error(`Transaction with ID ${id} was not found.`);
-    if (existing.type === "transfer" || existing.transactionGroupId) {
+    if (existing.type === "transfer") {
       throw new Error(
         "Transfers cannot be updated with updateTransaction. Use updateTransfer.",
+      );
+    }
+    if (existing.transactionGroupId && input.type !== existing.type) {
+      throw new Error(
+        "Grouped transactions cannot change their transaction type.",
+      );
+    }
+    if (existing.transactionGroupId && input.installment) {
+      throw new Error(
+        "Installment plans cannot be attached to transfer fees.",
       );
     }
     const account = requireAccount(input.accountId, context);

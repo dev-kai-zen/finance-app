@@ -635,6 +635,122 @@ test("Chat with Kai transfer edit and delete by transactionGroupId (P1-07): find
   sqlite.close();
 });
 
+test("R1: updateTransactionInContext successfully updates transfer fee expenses and preserves transactionGroupId", async () => {
+  const {
+    findTransactionListItemById,
+    findTransactionsByGroupId,
+  } = require("../repositories/transactions.repository");
+  const { updateTransactionInContext } = require("../services/update-transaction.service");
+
+  connectAndMigrate();
+  seedMixedLedger();
+
+  const now = Date.now();
+  const groupId = "tgrp_fee_test";
+
+  // Seed 2-leg transfer + 1 fee expense
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'transfer', 'PHP', ?, 'Bank Transfer Out', ?, ?, ?)",
+    )
+    .run("tx_fee_out", "acc_main", groupId, -50000, now, now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, ?, 'transfer', 'PHP', ?, 'Bank Transfer In', ?, ?, ?)",
+    )
+    .run("tx_fee_in", "acc_save", groupId, 50000, now, now, now);
+  sqlite
+    .prepare(
+      "INSERT INTO transactions (id, account_id, category_id, transaction_group_id, type, currency_code, amount_minor_units, name, occurred_at, created_at, updated_at) VALUES (?, ?, 'cat_fee', ?, 'expense', 'PHP', ?, 'Transfer Fee', ?, ?, ?)",
+    )
+    .run("tx_fee_expense", "acc_main", groupId, -2500, now, now, now);
+
+  // 1. Updating transfer leg with updateTransactionInContext is blocked
+  assert.throws(
+    () => {
+      updateTransactionInContext(
+        "tx_fee_out",
+        {
+          accountId: "acc_main",
+          categoryId: "cat_fee",
+          type: "expense",
+          amountMinorUnits: -50000,
+          occurredAt: new Date(now),
+        },
+        database,
+      );
+    },
+    /Transfers cannot be updated with updateTransaction\. Use updateTransfer\./,
+  );
+
+  // 2. Converting fee to income is blocked
+  assert.throws(
+    () => {
+      updateTransactionInContext(
+        "tx_fee_expense",
+        {
+          accountId: "acc_main",
+          categoryId: "cat_salary",
+          type: "income",
+          amountMinorUnits: 2500,
+          occurredAt: new Date(now),
+        },
+        database,
+      );
+    },
+    /Grouped transactions cannot change their transaction type\./,
+  );
+
+  // 3. Converting fee to transfer is blocked
+  assert.throws(
+    () => {
+      updateTransactionInContext(
+        "tx_fee_expense",
+        {
+          accountId: "acc_main",
+          categoryId: "cat_fee",
+          type: "transfer",
+          amountMinorUnits: -2500,
+          occurredAt: new Date(now),
+        },
+        database,
+      );
+    },
+    /Grouped transactions cannot change their transaction type\./,
+  );
+
+  // 4. Updating the fee expense succeeds
+  updateTransactionInContext(
+    "tx_fee_expense",
+    {
+      accountId: "acc_main",
+      categoryId: "cat_fee",
+      type: "expense",
+      amountMinorUnits: -3500,
+      name: "Transfer Fee",
+      note: "Updated ATM Fee",
+      occurredAt: new Date(now),
+    },
+    database,
+  );
+
+  // 5. Verify the fee record in SQLite
+  const feeRow = sqlite
+    .prepare("SELECT * FROM transactions WHERE id = 'tx_fee_expense'")
+    .get();
+  assert.ok(feeRow);
+  assert.equal(feeRow.amount_minor_units, -3500);
+  assert.equal(feeRow.note, "Updated ATM Fee");
+  assert.equal(feeRow.transaction_group_id, groupId); // preserved!
+
+  // 6. Canonical transfer group item reflects updated fee
+  const resolvedTransfer = findTransactionListItemById(groupId, database);
+  assert.ok(resolvedTransfer);
+  assert.equal(resolvedTransfer.transferFeeAmountMinorUnits, 3500);
+
+  sqlite.close();
+});
+
 test("P1-26: buildTransactionSections keeps amount-sorted feeds flat across pages without retro-merging into earlier date headers", () => {
   const {
     buildTransactionSections,
