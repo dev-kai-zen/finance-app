@@ -2986,6 +2986,11 @@ export const fil = {
       "Hindi maaaring i-convert ang kasalukuyang transaksyon sa isang transfer.",
     cannotConvertFromTransfer:
       "Hindi maaaring i-convert ang kasalukuyang transfer sa kita o gastos.",
+    transferReceivedTitle: "Halagang Matatanggap",
+    transferReceivedCustomHint: "Custom na halaga ng palitan • Pindutin para i-edit",
+    transferReceivedEstimatedHint: "Tantiya ayon sa market rate • Pindutin para i-edit",
+    transferReceivedEditButton: "I-edit",
+    transferReceivedResetRate: "I-reset",
   },
   chatWithKai: {
     modalTitle: "Makipag-chat kay Kai",

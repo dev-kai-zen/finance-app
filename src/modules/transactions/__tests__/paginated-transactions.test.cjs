@@ -751,6 +751,81 @@ test("R1: updateTransactionInContext successfully updates transfer fee expenses 
   sqlite.close();
 });
 
+test("R3: editing note on cross-currency transfer preserves custom destination amount", async () => {
+  const {
+    findTransactionListItemById,
+  } = require("../repositories/transactions.repository");
+  const { createTransferInContext } = require("../services/create-transfer.service");
+  const { updateTransferInContext } = require("../services/update-transfer.service");
+
+  connectAndMigrate();
+  seedMixedLedger();
+
+  // Create USD account
+  const typeId = sqlite.prepare("SELECT id FROM account_types LIMIT 1").get().id;
+  sqlite
+    .prepare(
+      "INSERT INTO accounts (id, name, account_type_id, currency_code, opening_balance_minor_units, opening_balance_at, is_archived, sort_order, hide_from_selection, hide_from_reports, pocket_enabled, created_at, updated_at) VALUES (?, ?, ?, 'USD', 1000000, ?, 0, 0, 0, 0, 0, ?, ?)",
+    )
+    .run("acc_usd", "US Bank", typeId, Date.now(), Date.now(), Date.now());
+
+  const now = new Date();
+
+  // 1. Create FX transfer with custom destination amount (e.g. $100 USD -> 5,850.00 PHP)
+  const createdGroup = createTransferInContext(
+    {
+      fromAccountId: "acc_usd",
+      toAccountId: "acc_main",
+      amountMinorUnits: 10000,
+      destinationAmountMinorUnits: 585000,
+      note: "Initial remittance memo",
+      occurredAt: now,
+    },
+    database,
+  );
+
+  assert.ok(createdGroup.transactionGroupId);
+
+  // 2. Fetch canonical transaction item
+  const item = findTransactionListItemById(createdGroup.transactionGroupId, database);
+  assert.ok(item);
+  assert.equal(item.transferDestinationAmountMinorUnits, 585000);
+  assert.equal(item.note, "Initial remittance memo");
+
+  // 3. User edits only the note (simulating Form submission with preserved destination amount)
+  updateTransferInContext(
+    {
+      transactionGroupId: createdGroup.transactionGroupId,
+      fromAccountId: "acc_usd",
+      toAccountId: "acc_main",
+      amountMinorUnits: 10000,
+      destinationAmountMinorUnits: item.transferDestinationAmountMinorUnits,
+      note: "Updated memo only",
+      occurredAt: now,
+    },
+    database,
+  );
+
+  // 4. Verify in database that the destination amount is strictly preserved
+  const inLeg = sqlite
+    .prepare("SELECT * FROM transactions WHERE transaction_group_id = ? AND amount_minor_units > 0")
+    .get(createdGroup.transactionGroupId);
+  assert.ok(inLeg);
+  assert.equal(inLeg.amount_minor_units, 585000);
+  assert.equal(inLeg.currency_code, "PHP");
+  assert.equal(inLeg.note, "Updated memo only");
+
+  const outLeg = sqlite
+    .prepare("SELECT * FROM transactions WHERE transaction_group_id = ? AND amount_minor_units < 0")
+    .get(createdGroup.transactionGroupId);
+  assert.ok(outLeg);
+  assert.equal(outLeg.amount_minor_units, -10000);
+  assert.equal(outLeg.currency_code, "USD");
+  assert.equal(outLeg.note, "Updated memo only");
+
+  sqlite.close();
+});
+
 test("P1-26: buildTransactionSections keeps amount-sorted feeds flat across pages without retro-merging into earlier date headers", () => {
   const {
     buildTransactionSections,

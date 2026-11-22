@@ -13,10 +13,13 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  ArrowDownLeft,
   ChevronRight,
   Paperclip,
+  Pencil,
   Plus,
   Receipt,
+  RotateCcw,
   SlidersHorizontal,
   Sparkles,
   X,
@@ -394,6 +397,10 @@ function TransactionFormModalInner({
   const [accountAmountMinorUnits, setAccountAmountMinorUnits] = useState(0);
   const [transferDestinationAmountMinorUnits, setTransferDestinationAmountMinorUnits] =
     useState(0);
+  const [
+    transferDestinationManuallyEdited,
+    setTransferDestinationManuallyEdited,
+  ] = useState(false);
   const [exchangeRateScaled, setExchangeRateScaled] = useState<number | null>(
     null,
   );
@@ -609,6 +616,20 @@ function TransactionFormModalInner({
             (accounts.find((a) => a.id !== initialTransaction.accountId)?.id ?? "")
         );
         setTransferToPocketId(initialTransaction.transferPocketId);
+        if (
+          initialTransaction.type === "transfer" &&
+          initialTransaction.transferDestinationAmountMinorUnits !== null &&
+          initialTransaction.transferDestinationAmountMinorUnits !== undefined &&
+          initialTransaction.transferDestinationAmountMinorUnits > 0
+        ) {
+          setTransferDestinationAmountMinorUnits(
+            initialTransaction.transferDestinationAmountMinorUnits,
+          );
+          setTransferDestinationManuallyEdited(true);
+        } else {
+          setTransferDestinationAmountMinorUnits(0);
+          setTransferDestinationManuallyEdited(false);
+        }
         setSelectedCategoryId(initialTransaction.categoryId || "");
         if (
           initialTransaction.isSplit &&
@@ -724,6 +745,7 @@ function TransactionFormModalInner({
         setAmountMinorUnits(0);
         setAccountAmountMinorUnits(0);
         setTransferDestinationAmountMinorUnits(0);
+        setTransferDestinationManuallyEdited(false);
         setExchangeRateScaled(null);
         setExchangeRateText("");
         setExchangeLastEdited("typed");
@@ -1037,6 +1059,23 @@ function TransactionFormModalInner({
     if (!visible || !isTransferCrossCurrency || amountMinorUnits <= 0) {
       return;
     }
+    if (isEditing && initialTransaction?.type === "transfer") {
+      const accountsUnchanged =
+        selectedAccountId === initialTransaction.accountId &&
+        transferToAccountId === (initialTransaction.transferAccountId ?? "");
+      const amountUnchanged =
+        Math.abs(amountMinorUnits) ===
+        Math.abs(
+          initialTransaction.originalAmountMinorUnits ??
+            initialTransaction.amountMinorUnits,
+        );
+      if (accountsUnchanged && amountUnchanged) {
+        return;
+      }
+    }
+    if (transferDestinationManuallyEdited) {
+      return;
+    }
     const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
     const suggested = Math.abs(
       convertCurrencyMinorUnits(
@@ -1054,6 +1093,11 @@ function TransactionFormModalInner({
     amountMinorUnits,
     accountCurrencyCode,
     transferToCurrencyCode,
+    isEditing,
+    initialTransaction,
+    selectedAccountId,
+    transferToAccountId,
+    transferDestinationManuallyEdited,
   ]);
 
   useEffect(() => {
@@ -2465,21 +2509,81 @@ function TransactionFormModalInner({
                   <ChevronRight size={18} color={theme.colors.textMuted} />
                   </Pressable>
                   {isTransferCrossCurrency && transferToAccount ? (
-                    <Pressable
-                      accessibilityLabel={`Destination amount ${formatCurrency(transferDestinationAmountMinorUnits, transferToAccount.currencyCode)}`}
-                      accessibilityRole="button"
-                      onPress={() => setIsAccountAmountCalculatorOpen(true)}
-                      style={[styles.accountAmountChip, { marginTop: 8 }]}
-                    >
-                      <Text style={styles.accountAmountChipText}>
-                        Received:{" "}
-                        {formatCurrency(
-                          transferDestinationAmountMinorUnits,
-                          transferToAccount.currencyCode,
-                          false,
-                        )}
-                      </Text>
-                    </Pressable>
+                    <View style={styles.transferReceivedCard}>
+                      <View style={styles.transferReceivedTopRow}>
+                        <View style={styles.transferReceivedLeft}>
+                          <View style={styles.transferReceivedIconWrap}>
+                            <ArrowDownLeft size={16} color={theme.colors.primary} />
+                          </View>
+                          <Text style={styles.transferReceivedTitle}>
+                            {t("transactions.transferReceivedTitle", {
+                              defaultValue: "Amount Received",
+                            })}
+                          </Text>
+                        </View>
+                        {transferDestinationManuallyEdited ? (
+                          <Pressable
+                            accessibilityLabel={t("transactions.transferReceivedResetRate", {
+                              defaultValue: "Reset",
+                            })}
+                            accessibilityRole="button"
+                            hitSlop={8}
+                            onPress={() => {
+                              setTransferDestinationManuallyEdited(false);
+                              const ratesMap = getExchangeRateMap(DEFAULT_BASE_CURRENCY);
+                              const suggested = Math.abs(
+                                convertCurrencyMinorUnits(
+                                  amountMinorUnits,
+                                  accountCurrencyCode,
+                                  transferToCurrencyCode,
+                                  ratesMap,
+                                  DEFAULT_BASE_CURRENCY,
+                                ),
+                              );
+                              setTransferDestinationAmountMinorUnits(suggested);
+                            }}
+                            style={styles.transferReceivedResetPill}
+                          >
+                            <RotateCcw size={12} color={theme.colors.textMuted} />
+                            <Text style={styles.transferReceivedResetText}>
+                              {t("transactions.transferReceivedResetRate", {
+                                defaultValue: "Reset",
+                              })}
+                            </Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
+
+                      <Pressable
+                        accessibilityHint="Tap to edit the received amount in the destination currency"
+                        accessibilityLabel={`${t("transactions.transferReceivedTitle", { defaultValue: "Amount Received" })} ${formatCurrency(transferDestinationAmountMinorUnits, transferToAccount.currencyCode)}`}
+                        accessibilityRole="button"
+                        onPress={() => setIsAccountAmountCalculatorOpen(true)}
+                        style={({ pressed }) => [
+                          styles.transferReceivedAmountPressable,
+                          pressed && styles.transferReceivedAmountPressablePressed,
+                        ]}
+                      >
+                        <View style={styles.transferReceivedAmountRow}>
+                          <Text style={styles.transferReceivedAmountText}>
+                            {formatCurrency(
+                              transferDestinationAmountMinorUnits,
+                              transferToAccount.currencyCode,
+                              false,
+                            )}
+                          </Text>
+                          <View style={styles.transferReceivedEditBadge}>
+                            <Pencil size={12} color={theme.colors.primary} />
+                            <Text style={styles.transferReceivedEditBadgeText}>
+                              {t("transactions.transferReceivedEditButton", {
+                                defaultValue: "Edit",
+                              })}
+                            </Text>
+                            <ChevronRight size={14} color={theme.colors.primary} />
+                          </View>
+                        </View>
+                      </Pressable>
+                    </View>
                   ) : null}
                 </View>
                 <View style={styles.transferFeePanel}>
@@ -3164,6 +3268,7 @@ function TransactionFormModalInner({
         onConfirm={(minorUnits) => {
           if (mode === "transfer" && isTransferCrossCurrency) {
             setTransferDestinationAmountMinorUnits(Math.abs(minorUnits));
+            setTransferDestinationManuallyEdited(true);
           } else {
             setExchangeLastEdited("account");
             if (mode === "income" && minorUnits < 0) {
@@ -3710,6 +3815,89 @@ function createStyles(theme: AppTheme) {
     accountAmountChipText: {
       color: theme.colors.textSecondary,
       fontSize: theme.typography.fontSize.sm,
+    },
+    transferReceivedCard: {
+      backgroundColor: `${theme.colors.primary}0C`,
+      borderColor: `${theme.colors.primary}2E`,
+      borderRadius: theme.borderRadius.medium,
+      borderWidth: 1,
+      marginTop: theme.spacing.sm,
+      padding: theme.spacing.md,
+      gap: theme.spacing.sm,
+    },
+    transferReceivedTopRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    transferReceivedLeft: {
+      alignItems: "center",
+      flex: 1,
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    transferReceivedIconWrap: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}1A`,
+      borderRadius: 14,
+      height: 28,
+      justifyContent: "center",
+      width: 28,
+    },
+    transferReceivedTitle: {
+      color: theme.colors.textPrimary,
+      fontSize: theme.typography.fontSize.sm,
+      fontWeight: theme.typography.fontWeight.semibold,
+    },
+    transferReceivedResetPill: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.textMuted}14`,
+      borderRadius: theme.borderRadius.small,
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    transferReceivedResetText: {
+      color: theme.colors.textMuted,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.medium,
+    },
+    transferReceivedAmountPressable: {
+      backgroundColor: theme.colors.surface,
+      borderColor: `${theme.colors.primary}33`,
+      borderRadius: theme.borderRadius.small,
+      borderWidth: 1,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+    },
+    transferReceivedAmountPressablePressed: {
+      backgroundColor: `${theme.colors.primary}08`,
+      opacity: 0.8,
+    },
+    transferReceivedAmountRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    transferReceivedAmountText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.lg,
+      fontWeight: theme.typography.fontWeight.bold,
+    },
+    transferReceivedEditBadge: {
+      alignItems: "center",
+      backgroundColor: `${theme.colors.primary}14`,
+      borderRadius: 999,
+      flexDirection: "row",
+      gap: 4,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+    },
+    transferReceivedEditBadgeText: {
+      color: theme.colors.primary,
+      fontSize: theme.typography.fontSize.xs,
+      fontWeight: theme.typography.fontWeight.semibold,
     },
     nameDateGroup: {
       marginBottom: 16,

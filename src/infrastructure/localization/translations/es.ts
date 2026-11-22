@@ -2970,6 +2970,11 @@ export const es = {
       "No se puede convertir una transacción existente en una transferencia.",
     cannotConvertFromTransfer:
       "No se puede convertir una transferencia existente en un ingreso o gasto.",
+    transferReceivedTitle: "Monto recibido",
+    transferReceivedCustomHint: "Monto personalizado • Toca para editar",
+    transferReceivedEstimatedHint: "Estimado según tasa de mercado • Toca para editar",
+    transferReceivedEditButton: "Editar",
+    transferReceivedResetRate: "Restablecer",
   },
   chatWithKai: {
     modalTitle: "Chatear con Kai",

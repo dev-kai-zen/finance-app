@@ -2938,6 +2938,11 @@ export const en = {
       "Cannot convert an existing transaction to a transfer.",
     cannotConvertFromTransfer:
       "Cannot convert an existing transfer to an income or expense.",
+    transferReceivedTitle: "Amount Received",
+    transferReceivedCustomHint: "Custom exchange amount • Tap to edit",
+    transferReceivedEstimatedHint: "Estimated by market rate • Tap to edit",
+    transferReceivedEditButton: "Edit",
+    transferReceivedResetRate: "Reset",
   },
   chatWithKai: {
     modalTitle: "Chat with Kai",
