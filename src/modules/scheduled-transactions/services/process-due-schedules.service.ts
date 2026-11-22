@@ -1,3 +1,4 @@
+import { reconcileImportedCreditCardBillingWork } from "@/modules/credit-cards";
 import { DeviceEventEmitter } from "react-native";
 import { db, type DbContext } from "@/infrastructure/database/client";
 import {
@@ -46,10 +47,74 @@ export interface DueScheduleProcessingResult {
   failed: number;
 }
 
-const MAX_OCCURRENCES_PER_RUN = 500;
+const MAX_OCCURRENCES_PER_RUN = 1;
+
+let suspended = false;
+export function setScheduleProcessingSuspended(value: boolean): void { suspended = value; }
+let requestedAt = 0;
+let activeCatchUp: Promise<void> | null = null;
+const yieldToInput = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+/** Coalesced, restartable catch-up. Only private staging work yields inside a transaction. */
+export function processDueSchedulesAsync(now = new Date(), options?: { isCancelled?: () => boolean }): Promise<void> {
+  const { StagedDatabaseChangedError, withStagedDatabaseTransaction } = require("@/infrastructure/database/staged-transaction") as typeof import("@/infrastructure/database/staged-transaction");
+  requestedAt = activeCatchUp ? Math.max(requestedAt, now.getTime()) : now.getTime();
+  if (activeCatchUp) return activeCatchUp;
+  const cancelled = () => suspended || Boolean(options?.isCancelled?.());
+  activeCatchUp = (async () => {
+    await yieldToInput();
+    while (!cancelled() && listDueScheduledTransactions(new Date(requestedAt), 1).length) {
+      now = new Date(requestedAt);
+      try {
+        const posted = await withStagedDatabaseTransaction(async (context) => {
+          let count = 0;
+          const accounts = new Set<string>();
+          for (let index = 0; index < 8; index++) {
+            await yieldToInput();
+            if (cancelled()) throw new CatchUpCancelled();
+            const schedule = listDueScheduledTransactions(now, 1, context)[0];
+            if (!schedule) break;
+            accounts.add(schedule.accountId);
+            if (schedule.toAccountId) accounts.add(schedule.toAccountId);
+            try { if (processNextOccurrence(schedule.id, now, context, false) === "posted") count++; }
+            catch (cause) { throw new OccurrencePostingFailed(schedule, cause); }
+          }
+          if (count) for (const _step of reconcileImportedCreditCardBillingWork([...accounts], now, context)) {
+            await yieldToInput();
+            if (cancelled()) throw new CatchUpCancelled();
+          }
+          if (cancelled()) throw new CatchUpCancelled();
+          return count;
+        });
+        if (posted) DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED", { sourceId: "schedule-catch-up" });
+        DeviceEventEmitter.emit("FINANCE_APP_SCHEDULES_CHANGED");
+      } catch (error) {
+        if (error instanceof CatchUpCancelled) break;
+        if (error instanceof StagedDatabaseChangedError) { await yieldToInput(); continue; }
+        // Retry just one occurrence through the existing failure-recording path.
+        // This preserves failed snapshots without publishing any part of the rejected batch.
+        if (!(error instanceof OccurrencePostingFailed)) throw error;
+        const current = findScheduledTransaction(error.schedule.id);
+        if (current && current.nextOccurrenceNumber === error.schedule.nextOccurrenceNumber &&
+            serializeScheduleTemplateSnapshot(current) === serializeScheduleTemplateSnapshot(error.schedule)) {
+          recordFailedOccurrence(current.id, now, error.cause);
+        }
+        DeviceEventEmitter.emit("FINANCE_APP_SCHEDULES_CHANGED");
+      }
+      await yieldToInput();
+    }
+  })().finally(() => { activeCatchUp = null; });
+  return activeCatchUp;
+}
+
+class CatchUpCancelled extends Error {}
+class OccurrencePostingFailed extends Error {
+  constructor(readonly schedule: ScheduledTransaction, readonly cause: unknown) { super("Schedule posting failed"); }
+}
 
 export function processDueSchedules(
   now = new Date(),
+  limit = MAX_OCCURRENCES_PER_RUN,
 ): DueScheduleProcessingResult {
   const result: DueScheduleProcessingResult = {
     processed: 0,
@@ -59,7 +124,7 @@ export function processDueSchedules(
     failed: 0,
   };
 
-  while (result.processed < MAX_OCCURRENCES_PER_RUN) {
+  while (result.processed < Math.min(limit, MAX_OCCURRENCES_PER_RUN)) {
     const schedule = listDueScheduledTransactions(now, 1)[0];
     if (!schedule) break;
 
@@ -76,9 +141,10 @@ export function processDueSchedules(
   }
 
   if (result.posted > 0) {
-    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED");
+    DeviceEventEmitter.emit("FINANCE_APP_TRANSACTION_MUTATED", { sourceId: "schedule-processing" });
   }
 
+  if (result.processed) DeviceEventEmitter.emit("FINANCE_APP_SCHEDULE_CATCH_UP_REQUESTED");
   return result;
 }
 
@@ -86,6 +152,7 @@ function processNextOccurrence(
   scheduleId: string,
   now: Date,
   context: DbContext,
+  reconcileBilling = true,
 ): "posted" | "due" | "skipped" {
   const schedule = findScheduledTransaction(scheduleId, context);
   if (!schedule || schedule.status !== "active") {
@@ -153,6 +220,7 @@ function processNextOccurrence(
       occurrence.effectiveAt ?? occurrence.nominalAt,
       now,
       context,
+      reconcileBilling,
     );
     if (schedule.subscriptionId && postedResult && "id" in postedResult) {
       try {
@@ -293,6 +361,7 @@ export function postSnapshot(
   occurredAt: Date,
   now: Date,
   context: DbContext,
+  reconcileBilling = true,
 ): Transaction | TransferResult {
   let result: Transaction | TransferResult;
   if (snapshot.transactionType === "transfer") {
@@ -311,6 +380,7 @@ export function postSnapshot(
         },
       },
       context,
+      { reconcileBilling },
     );
     insertSchedulePosting(occurrenceId, result.outLeg.id, now, context);
     insertSchedulePosting(occurrenceId, result.inLeg.id, now, context);
@@ -332,6 +402,7 @@ export function postSnapshot(
       },
     },
     context,
+    { reconcileBilling },
   );
   insertSchedulePosting(occurrenceId, result.id, now, context);
   return result;

@@ -1,9 +1,10 @@
+import { DeviceEventEmitter } from "react-native";
 import { useCallback, useRef, useState } from "react";
 import { runDeferredSyncQuery } from "@/utils/run-deferred-sync-query";
 import { useFocusEffect } from "expo-router";
 
 import {
-  listScheduleOccurrences,
+  listActionableScheduleOccurrences,
   listScheduledTransactions,
 } from "../repositories/scheduled-transactions.repository";
 import { scheduledTransactionErrorMessage } from "../schemas/scheduled-transaction.schema";
@@ -18,10 +19,9 @@ import {
 import { advancePostScheduledTransaction } from "../services/advance-post-schedule.service";
 import {
   postScheduledOccurrence,
-  processDueSchedules,
+  processDueSchedulesAsync,
   skipScheduledOccurrence,
 } from "../services/process-due-schedules.service";
-import { reconcileOrphanedSubscriptionSchedules } from "../services/reconcile-orphaned-schedules.service";
 import { saveScheduledTransaction } from "../services/save-scheduled-transaction.service";
 import type {
   SaveScheduledTransactionInput,
@@ -38,6 +38,7 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
   const [scheduleIdsWithPostings, setScheduleIdsWithPostings] = useState<
     Set<string>
   >(new Set());
+  const [hasMoreOccurrences, setHasMoreOccurrences] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,13 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
     cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
       try {
         if (!readOnly) {
-          reconcileOrphanedSubscriptionSchedules();
-          processDueSchedules();
+          void processDueSchedulesAsync().catch((cause) => setError(scheduledTransactionErrorMessage(cause)));
         }
         setSchedules(listScheduledTransactions({ includeArchived: true }));
         if (!readOnly) {
-          setOccurrences(listScheduleOccurrences());
+          const rows = listActionableScheduleOccurrences(101);
+          setOccurrences(rows.slice(0, 100));
+          setHasMoreOccurrences(rows.length > 100);
           setScheduleIdsWithPostings(getScheduleIdsWithPostings());
         }
         setError(null);
@@ -66,7 +68,8 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
   useFocusEffect(
     useCallback(() => {
       refresh();
-      return () => cancelPendingRef.current?.();
+      const subscription = DeviceEventEmitter.addListener("FINANCE_APP_SCHEDULES_CHANGED", refresh);
+      return () => { cancelPendingRef.current?.(); subscription.remove(); };
     }, [refresh]),
   );
 
@@ -146,9 +149,24 @@ export function useScheduledTransactions(options?: { skipQuery?: boolean; readOn
     [runMutation],
   );
 
+  const loadMoreOccurrences = useCallback(() => {
+    if (loading || !hasMoreOccurrences || !occurrences.length) return;
+    const last = occurrences[occurrences.length - 1];
+    cancelPendingRef.current?.();
+    cancelPendingRef.current = runDeferredSyncQuery({ hasCachedResult: false, setLoading }, () => {
+      try {
+        const rows = listActionableScheduleOccurrences(101, undefined, { date: last.nominalDueAt, id: last.id });
+        setOccurrences((previous) => [...previous, ...rows.slice(0, 100)]);
+        setHasMoreOccurrences(rows.length > 100);
+      } catch (cause) { setError(scheduledTransactionErrorMessage(cause)); }
+    });
+  }, [loading, hasMoreOccurrences, occurrences]);
+
   return {
     schedules,
-    occurrences,
+    occurrences: loading ? [] : occurrences,
+    hasMoreOccurrences,
+    loadMoreOccurrences,
     scheduleIdsWithPostings,
     loading,
     pending,

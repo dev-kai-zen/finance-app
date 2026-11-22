@@ -3,11 +3,14 @@ import {
   asc,
   desc,
   eq,
+  getTableColumns,
   isNotNull,
   isNull,
   lte,
+  lt,
   or,
   sql,
+  type SQL,
 } from "drizzle-orm";
 
 import { db, type DbContext } from "@/infrastructure/database/client";
@@ -171,17 +174,11 @@ export function hasSchedulePostings(
 export function listScheduleIdsWithPostings(
   context: DbContext = db,
 ): Set<string> {
-  const rows = context
-    .selectDistinct({ scheduleId: transactionScheduleOccurrences.scheduleId })
-    .from(transactionSchedulePostings)
-    .innerJoin(
-      transactionScheduleOccurrences,
-      eq(
-        transactionSchedulePostings.occurrenceId,
-        transactionScheduleOccurrences.id,
-      ),
-    )
-    .all();
+  // Probe by schedule instead of scanning and deduplicating the entire posting history.
+  const rows = context.select({ scheduleId: transactionSchedules.id }).from(transactionSchedules)
+    .where(sql`EXISTS (SELECT 1 FROM transaction_schedule_occurrences occurrence
+      INNER JOIN transaction_schedule_postings posting ON posting.occurrence_id = occurrence.id
+      WHERE occurrence.schedule_id = "transaction_schedules"."id" LIMIT 1)`).all();
   return new Set(rows.map((row) => row.scheduleId));
 }
 
@@ -448,4 +445,17 @@ export function getPocketIdsWithSchedules(
     if (row.toPocketId) set.add(row.toPocketId);
   }
   return set;
+}
+
+/** Management only needs actionable records; posted history stays out of focus reads. */
+export function listActionableScheduleOccurrences(limit: number, context: DbContext = db, cursor?: { date: Date; id: string }): ScheduleOccurrence[] {
+  const columns = getTableColumns(transactionScheduleOccurrences);
+  const selection = Object.fromEntries(Object.entries(columns).map(([key, column]) => [key, sql`${column}`.mapWith(column)])) as {
+    [K in keyof typeof columns]: SQL<(typeof transactionScheduleOccurrences.$inferSelect)[K]>
+  };
+  return context.select(selection)
+    .from(sql`${transactionScheduleOccurrences} INDEXED BY schedule_occurrences_actionable_index`).where(
+    and(sql`${transactionScheduleOccurrences.status} IN ('due', 'failed')`,
+      cursor ? or(lt(transactionScheduleOccurrences.nominalDueAt, cursor.date), and(eq(transactionScheduleOccurrences.nominalDueAt, cursor.date), lt(transactionScheduleOccurrences.id, cursor.id))) : undefined),
+  ).orderBy(desc(transactionScheduleOccurrences.nominalDueAt), desc(transactionScheduleOccurrences.id)).limit(limit).all().map(mapOccurrence);
 }

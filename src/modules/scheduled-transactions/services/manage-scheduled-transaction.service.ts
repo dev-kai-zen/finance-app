@@ -61,7 +61,7 @@ export function setScheduledTransactionPaused(
     db.transaction(runner);
     if (!paused) {
       try {
-        processDueSchedules(new Date());
+        processDueSchedules(new Date(), 1);
       } catch {
         // Ignore
       }

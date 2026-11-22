@@ -981,6 +981,7 @@ export const es = {
     noResultsDescription: "Prueba otro nombre de idioma o código regional.",
   },
   scheduledTransactions: {
+    loadMoreOccurrences: "Cargar m?s ocurrencias",
     helpTitle: "Acerca de las transacciones programadas",
     helpMessage:
       "Configura ingresos, gastos o transferencias recurrentes. Elige si cada ocurrencia se registra automáticamente o espera tu confirmación. Los elementos vencidos o fallidos aparecen en Necesita atención; puedes pausar, finalizar o archivar programaciones sin eliminar las transacciones ya registradas.",

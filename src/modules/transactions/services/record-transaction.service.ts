@@ -106,26 +106,30 @@ export async function recordTransaction(
 export function recordTransactionInContext(
   command: Extract<RecordTransactionCommand, { kind: "transaction" }>,
   context: DbContext,
+  options?: { reconcileBilling?: boolean },
 ): Transaction;
 export function recordTransactionInContext(
   command: Extract<RecordTransactionCommand, { kind: "transfer" }>,
   context: DbContext,
+  options?: { reconcileBilling?: boolean },
 ): TransferResult;
 export function recordTransactionInContext(
   command: RecordTransactionCommand,
   context: DbContext,
+  options?: { reconcileBilling?: boolean },
 ): Transaction | TransferResult {
-  return recordTransactionCommandInContext(command, context);
+  return recordTransactionCommandInContext(command, context, options);
 }
 
 function recordTransactionCommandInContext(
   command: RecordTransactionCommand,
   context: DbContext,
+  options?: { reconcileBilling?: boolean },
 ): Transaction | TransferResult {
   const result =
     command.kind === "transaction"
-      ? createTransactionInContext(command.input, context)
-      : createTransferInContext(command.input, context);
+      ? createTransactionInContext(command.input, context, options)
+      : createTransferInContext(command.input, context, options);
 
   const saveRequest = command.preset?.saveRequest;
   if (saveRequest) {

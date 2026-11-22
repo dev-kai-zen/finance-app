@@ -165,6 +165,7 @@ for (const [module, hook] of [["accounts", "useAccounts"], ["budgets", "useBudge
     const imports = {};
     const functionMock = name => (...args) => {
       calls.push(name);
+      if (name === "processDueSchedulesAsync") return Promise.resolve();
       if (name === "getGoalsWithProgress") return { goals: [], summary: {} };
       return [];
     };
@@ -187,7 +188,7 @@ for (const [module, hook] of [["accounts", "useAccounts"], ["budgets", "useBudge
     assert.equal(calls.filter(name => name !== "calculateBurnRateSummary").length, 0);
     await h.paint();
     assert.ok(calls.some(name => /^(list|get)/.test(name)));
-    assert.equal(calls.includes("processDueSchedules"), false);
+    assert.equal(calls.includes("processDueSchedulesAsync"), false);
     assert.equal(calls.includes("reconcileOrphanedSubscriptionSchedules"), false);
     render().refresh();
     skipQuery = true; render();
@@ -195,8 +196,8 @@ for (const [module, hook] of [["accounts", "useAccounts"], ["budgets", "useBudge
     if (module === "scheduled-transactions") {
       h.render(exports => exports[hook]());
       await h.paint();
-      assert.ok(calls.includes("processDueSchedules"), "The management hook retains its default posting behavior");
-      assert.ok(calls.includes("reconcileOrphanedSubscriptionSchedules"));
+      assert.ok(calls.includes("processDueSchedulesAsync"), "The management hook retains its default posting behavior");
+      assert.equal(calls.includes("reconcileOrphanedSubscriptionSchedules"), false, "Maintenance belongs to the startup processor");
     }
     skipQuery = false;
     render().refresh();

@@ -147,6 +147,61 @@ function draft(csv = "Date,Type,Amount,Account,Category,Name,Labels,Source ID\n2
 }
 const count = (table) => sqlite.prepare(`SELECT count(*) AS n FROM ${table}`).get().n;
 
+test("V2-09: 501 overdue occurrences coalesce, cancel between atomic batches, and resume without duplicates", async () => {
+  const d = draft(); await d.save();
+  const transaction = sqlite.prepare("SELECT account_id,category_id FROM transactions LIMIT 1").get();
+  const { saveScheduledTransaction } = require("@/modules/scheduled-transactions/services/save-scheduled-transaction.service");
+  const { processDueSchedulesAsync } = require("@/modules/scheduled-transactions/services/process-due-schedules.service");
+  saveScheduledTransaction({
+    transactionType: "expense", accountId: transaction.account_id, categoryId: transaction.category_id,
+    amountMinorUnits: -100, frequency: "daily", intervalCount: 1, startsAt: new Date(2020, 0, 1),
+    timeZone: "UTC", endMode: "after_count", maxOccurrences: 501, weekendPolicy: "exact", autoPost: true,
+  });
+  let cancelled = false, commits = 0, writes = 0;
+  bridgeOptions.beforeRun = async () => { writes++; };
+  bridgeOptions.beforeExec = async (query) => {
+    if (query === "COMMIT;") { assert.ok(writes <= 200); commits++; cancelled = true; }
+  };
+  const first = processDueSchedulesAsync(new Date(2023, 0, 1), { isCancelled: () => cancelled });
+  assert.equal(processDueSchedulesAsync(new Date(2023, 0, 1)), first);
+  await first;
+  assert.equal(commits, 1); assert.equal(count("transactions"), 9);
+  bridgeOptions = {};
+  await processDueSchedulesAsync(new Date(2023, 0, 1));
+  assert.equal(count("transactions"), 502); assert.equal(count("transaction_schedule_occurrences"), 501);
+  assert.equal(count("transaction_schedule_postings"), 501);
+  await processDueSchedulesAsync(new Date(2023, 0, 1));
+  assert.equal(count("transactions"), 502);
+  const { listActionableScheduleOccurrences } = require("@/modules/scheduled-transactions/repositories/scheduled-transactions.repository");
+  assert.deepEqual(listActionableScheduleOccurrences(101), []);
+});
+
+test("V2-09: actionable SQL uses the partial index and stable keyset pages", async () => {
+  const d = draft(); await d.save();
+  const row = sqlite.prepare("SELECT account_id,category_id FROM transactions LIMIT 1").get();
+  const { saveScheduledTransaction } = require("@/modules/scheduled-transactions/services/save-scheduled-transaction.service");
+  const schedule = saveScheduledTransaction({
+    transactionType: "expense", accountId: row.account_id, categoryId: row.category_id,
+    amountMinorUnits: -100, frequency: "daily", intervalCount: 1, startsAt: new Date(2020, 0, 1),
+    timeZone: "UTC", endMode: "after_count", maxOccurrences: 1, weekendPolicy: "exact", autoPost: false,
+  });
+  const id = typeof schedule === "string" ? schedule : schedule.id;
+  const insert = sqlite.prepare("INSERT INTO transaction_schedule_occurrences(id,schedule_id,sequence_number,nominal_due_at,effective_due_at,template_snapshot,status,created_at,updated_at) VALUES (?,?,?,?,0,'{}',?,0,0)");
+  sqlite.exec("BEGIN");
+  for (let i = 0; i < 501; i++) insert.run("page-" + String(i).padStart(4, "0"), id, i + 1, i, i < 300 ? "posted" : "due");
+  sqlite.exec("COMMIT");
+  statements.length = 0;
+  const { listActionableScheduleOccurrences } = require("@/modules/scheduled-transactions/repositories/scheduled-transactions.repository");
+  const first = listActionableScheduleOccurrences(101);
+  const last = first[99], second = listActionableScheduleOccurrences(101, undefined, { date: last.nominalDueAt, id: last.id });
+  assert.equal(first.length, 101); assert.equal(second.length, 101);
+  assert.equal(new Set([...first.slice(0,100), ...second].map((r) => r.id)).size, 201);
+  for (const { query, params } of statements) {
+    const plan = sqlite.prepare("EXPLAIN QUERY PLAN " + query).all(...params).map((r) => r.detail).join("\n");
+    assert.match(plan, /schedule_occurrences_actionable_index/); assert.doesNotMatch(plan, /TEMP B-TREE/);
+  }
+});
+
 test("commit writes real accounts, categories, labels, transactions, and provenance atomically", async () => {
   const d = draft(); assert.equal(d.preview().ready, true);
   const result = await d.save();
@@ -210,9 +265,11 @@ test("sample workspaces cannot receive personal imports", async () => {
   assert.equal(backupCalls, 0); assert.equal(count("accounts"), 0);
 });
 test("a second submission is rejected while the first import is backing up", async () => {
-  const d = draft(); let release;
-  backupAction = () => new Promise((resolve) => { release = resolve; });
+  const d = draft(); let release, entered;
+  const backingUp = new Promise((resolve) => { entered = resolve; });
+  backupAction = () => new Promise((resolve) => { release = resolve; entered(); });
   const saving = d.save();
+  await backingUp;
   await assert.rejects(d.save(), /busy/);
   release(); await saving;
   assert.equal(count("transactions"), 1); assert.equal(count("import_batches"), 1);

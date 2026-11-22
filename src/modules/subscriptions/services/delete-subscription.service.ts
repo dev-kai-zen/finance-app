@@ -57,7 +57,7 @@ export function archiveSubscriptionInContext(
 export function restoreSubscription(subscriptionId: string): void {
   db.transaction((tx) => restoreSubscriptionInContext(subscriptionId, tx));
   try {
-    processDueSchedules(new Date());
+    processDueSchedules(new Date(), 1);
   } catch {
     // Ignore if processing encounters an issue
   }

@@ -176,7 +176,7 @@ export function saveSubscription(
 ): string {
   const result = db.transaction((tx) => saveSubscriptionInContext(input, id, tx));
   try {
-    processDueSchedules(new Date());
+    processDueSchedules(new Date(), 1);
   } catch {
     // Ignore
   }

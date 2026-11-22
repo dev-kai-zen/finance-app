@@ -176,6 +176,7 @@ export const transactionScheduleOccurrences = sqliteTable(
     uniqueIndex(
       "transaction_schedule_occurrences_schedule_nominal_unique",
     ).on(table.scheduleId, table.nominalDueAt),
+    index("schedule_occurrences_actionable_index").on(table.nominalDueAt, table.id).where(sql`${table.status} IN ('due', 'failed')`),
     index("transaction_schedule_occurrences_status_due_index").on(
       table.status,
       table.effectiveDueAt,

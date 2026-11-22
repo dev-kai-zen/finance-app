@@ -111,6 +111,10 @@ export const processDueSchedules = deferFunction(
     require("./services/process-due-schedules.service").processDueSchedules,
 ) as typeof import("./services/process-due-schedules.service").processDueSchedules;
 
+export const processDueSchedulesAsync = deferFunction(
+  () => require("./services/process-due-schedules.service").processDueSchedulesAsync,
+) as typeof import("./services/process-due-schedules.service").processDueSchedulesAsync;
+
 export const reconcileOrphanedSubscriptionSchedules = deferFunction(
   () =>
     require("./services/reconcile-orphaned-schedules.service")

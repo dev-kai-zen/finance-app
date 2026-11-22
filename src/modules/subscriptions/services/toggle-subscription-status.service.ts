@@ -17,7 +17,7 @@ export function setSubscriptionStatus(
   db.transaction((tx) => setSubscriptionStatusInContext(subscriptionId, newStatus, tx));
   if (newStatus === "active" || newStatus === "trial") {
     try {
-      processDueSchedules(new Date());
+      processDueSchedules(new Date(), 1);
     } catch {
       // Ignore
     }

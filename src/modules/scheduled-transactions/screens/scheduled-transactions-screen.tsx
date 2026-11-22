@@ -103,6 +103,8 @@ function ScheduledTransactionsScreenContent({
   const {
     schedules,
     occurrences,
+    hasMoreOccurrences,
+    loadMoreOccurrences,
     loading,
     pending,
     error,
@@ -405,7 +407,7 @@ function ScheduledTransactionsScreenContent({
 
   const hasSchedules = activeSchedules.length > 0;
   const showDueSection =
-    selectedFilters.has("active") && actionableOccurrences.length > 0;
+    selectedFilters.has("active") && (actionableOccurrences.length > 0 || hasMoreOccurrences);
   const showFirstItem = visibleSchedules.length > 0;
 
   const handleScrollToTarget = useCallback(
@@ -550,6 +552,11 @@ function ScheduledTransactionsScreenContent({
                 />
               );
             })}
+            {hasMoreOccurrences && (
+              <Pressable accessibilityRole="button" disabled={loading} onPress={loadMoreOccurrences} style={{ minHeight: 44, justifyContent: "center" }}>
+                <Text>{t("scheduledTransactions.loadMoreOccurrences")}</Text>
+              </Pressable>
+            )}
           </View>
         ) : null}
 
